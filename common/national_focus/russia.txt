@@ -1,3 +1,5 @@
+# Author(s): Angriest Bird
+# Last Modified: Feb 4., 2022 - Angriest Bird
 focus_tree = {
 	id = russia_focus
 	country = {
@@ -11,7 +13,7 @@ focus_tree = {
 
 	focus = {
 		id = SOV_attack_chechnya
-		icon = attack_chechnya
+		icon = battle_in_chechnia
 		x = 13
 		y = 0
 		cost = 1
@@ -27,10 +29,6 @@ focus_tree = {
 				NOT = { country_exists = CHE }
 			}
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 		complete_tooltip = {
@@ -57,15 +55,14 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_attack_chechnya }
 		available = {
-			always = no
+			custom_trigger_tooltip = {
+				tooltip = SOV_election_2000_TT
+				always = no
+			}
 		}
 		bypass = {
 			has_start_date > 2005.1.1
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_presidential_election_of_2000"
@@ -95,82 +92,27 @@ focus_tree = {
 		mutually_exclusive = { focus = SOV_yavlinsky }
 		available = {
 			custom_trigger_tooltip = {
-				check_variable = { party_pop_array^6 > 0.30 }
-				tooltip = SOV_more_than_30_support_for_united_russia_TT
+				tooltip = SOV_putin_elected_2000
+				always = no
 			}
 		}
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_putin"
-			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 6 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 6 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-				set_leader = yes
-				}
+			if = { limit = { NOT = { is_in_array = { ruling_party = 6 } } }
+				set_temp_variable = { rul_party_temp = 6 }
+				change_ruling_party_effect = yes
 				set_politics = {
 					ruling_party = communism
 					elections_allowed = yes
 				}
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^6 = 0.075 }
-				recalculate_party = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 6 } }
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^6 = 0.075 }
-				recalculate_party = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 50
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PUTIN
-				}
-				add = 50
-			}
-			modifier = {
-				has_country_flag = SOV_zhirinovsky_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_zyungaov_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_yavlinsky_elected_2000_flag
-				factor = 0
-			}
-
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 	}
 
@@ -189,79 +131,26 @@ focus_tree = {
 		mutually_exclusive = { focus = SOV_yavlinsky }
 		available = {
 			custom_trigger_tooltip = {
-				check_variable = { party_pop_array^20 > 0.30 }
-				tooltip = SOV_more_than_30_support_for_nationals_TT
+				tooltip = SOV_zhirinovsky_elected_2000
+				always = no
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zhirinovsky"
-			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 20 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 20 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-				}
+			if = { limit = { NOT = { is_in_array = { ruling_party = 20 } } }
+				set_temp_variable = { rul_party_temp = 20 }
+				change_ruling_party_effect = yes
 				set_politics = {
 					ruling_party = nationalist
 					elections_allowed = yes
 				}
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.075
-				}
-				add_to_variable = { party_pop_array^20 = 0.075 }
-				recalculate_party = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 20 } }
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.075
-				}
-				add_to_variable = { party_pop_array^20 = 0.075 }
-				recalculate_party = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = RISE_OF_RUSSIA
-				}
-				add = 50
-			}
-			modifier = {
-				has_country_flag = SOV_putin_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_zyungaov_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_yavlinsky_elected_2000_flag
-				factor = 0
-			}
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 	}
 
@@ -280,78 +169,26 @@ focus_tree = {
 		mutually_exclusive = { focus = SOV_yavlinsky }
 		available = {
 			custom_trigger_tooltip = {
-				check_variable = { party_pop_array^4 > 0.30 }
-				tooltip = SOV_more_than_30_support_for_commies_TT
+				tooltip = SOV_zyuganov_elected_2000
+				always = no
 			}
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zyuganov"
-			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 4 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 4 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
-				}
+			if = { limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+				set_temp_variable = { rul_party_temp = 4 }
+				change_ruling_party_effect = yes
 				set_politics = {
 					ruling_party = communism
 					elections_allowed = yes
 				}
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^4 = 0.15 }
-				recalculate_party = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 4 } }
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^4 = 0.15 }
-				recalculate_party = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = THE_RED_MENACE
-				}
-				add = 50
-			}
-			modifier = {
-				has_country_flag = SOV_putin_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_zhirinovsky_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_yavlinsky_elected_2000_flag
-				factor = 0
-			}
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 	}
 
@@ -370,79 +207,26 @@ focus_tree = {
 		mutually_exclusive = { focus = SOV_zyuganov }
 		available = {
 			custom_trigger_tooltip = {
-				check_variable = { party_pop_array^2 > 0.30 }
-				tooltip = SOV_more_than_30_support_for_liberals_TT
+				tooltip = SOV_yavlinsky_elected_2000
+				always = no
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_yavlinsky"
-			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 2 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 2 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
-				set_leader = yes
-				}
+			if = { limit = { NOT = { is_in_array = { ruling_party = 2 } } }
+				set_temp_variable = { rul_party_temp = 2 }
+				change_ruling_party_effect = yes
 				set_politics = {
 					ruling_party = democratic
 					elections_allowed = yes
 				}
-				add_popularity = {
-					ideology = democratic
-					popularity = 0.15
-				}
-				add_to_variable = { party_pop_array^2 = 0.15 }
-				recalculate_party = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 2 } }
-				add_popularity = {
-					ideology = democratic
-					popularity = 0.15
-				}
-				add_to_variable = { party_pop_array^2 = 0.15 }
-				recalculate_party = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PEACEFUL_REFORM
-				}
-				add = 50
-			}
-			modifier = {
-				has_country_flag = SOV_putin_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_zhirinovsky_elected_2000_flag
-				factor = 0
-			}
-			modifier = {
-				has_country_flag = SOV_zyungaov_elected_2000_flag
-				factor = 0
-			}
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			add_relative_party_popularity = yes
 		}
 	}
 
@@ -460,14 +244,11 @@ focus_tree = {
 		prerequisite = { focus = SOV_putin }
 		mutually_exclusive = { focus = SOV_fight_corruption }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_empower_putins_cronies"
-			increase_oligarchs_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
 			swap_ideas = {
 				remove_idea = SOV_corrupt_oligarchy
 				add_idea = idea_SOV_oligarchic_republic
@@ -510,17 +291,13 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INTERNAL_FACTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_corruption"
 			decrease_corruption = yes
-			decrease_oligarchs_opinion  = yes
-			decrease_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_fossil_fuel_industry_opinion = yes
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -539,41 +316,30 @@ focus_tree = {
 		prerequisite = { focus = SOV_empower_putins_cronies }
 		mutually_exclusive = { }
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_oligarchs_positive_tt
-				OR = {
-					has_country_flag = positive_oligarchs
-					has_country_flag = enthusiastic_oligarchs
-				}
-			}
+			oligarchs_at_least_positive_opinion = yes
 		}
 		historical_ai = { }
 		select_effect = { }
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE FOCUS_FILTER_CORRUPTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_gazprom"
-			increase_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
 			random_owned_state = {
 				add_resource = {
-					type = oil
-					amount = 5
+					type = rubber
+					amount = 4
 				}
 			}
 			random_owned_state = {
 				add_resource = {
-					type = oil
-					amount = 5
+					type = rubber
+					amount = 4
 				}
 			}
-			increase_corruption = yes
 		}
 
 		ai_will_do = {
@@ -591,10 +357,6 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_fight_corruption }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_weaken_the_oligarchs"
@@ -602,8 +364,9 @@ focus_tree = {
 				limit = { has_idea = SOV_corrupt_oligarchy }
 				remove_ideas = SOV_corrupt_oligarchy
 			}
-			decrease_oligarchs_opinion  = yes
-			decrease_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_fossil_fuel_industry_opinion = yes
+			change_oligarchs_opinion = yes
 			add_stability = 0.05
 		}
 
@@ -622,29 +385,15 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_gazprom }
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_oligarchs_positive_tt
-				OR = {
-					has_country_flag = positive_oligarchs
-					has_country_flag = enthusiastic_oligarchs
-				}
-			}
+			oligarchs_at_least_positive_opinion = yes
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_putins_position"
-			hidden_effect = {
-				set_temp_variable = { party_pop_array^4 = p1 }
-				divide_temp_variable = { p1 = 2 }
-				add_to_variable = { party_pop_array^6 = p1 }
-				subtract_from_variable = { party_pop_array^4 = p1 }
-				recalculate_party = yes
-			}
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = party_pop_array^4 }
+			add_relative_party_popularity = yes
 			custom_effect_tooltip = SOV_secure_putins_position_TT
 			increase_corruption = yes
 		}
@@ -663,22 +412,12 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_weaken_the_oligarchs }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_nationalize_oligarch_factories"
-			decrease_oligarchs_opinion  = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_oligarchs_opinion = yes
 			custom_effect_tooltip = SOV_nationalize_oligarch_factories_toolie_TT
 			add_stability = -0.02
 			hidden_effect = {
@@ -790,15 +529,11 @@ focus_tree = {
 		}
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: focus SOV_moscow_military_factories"
-			subtract_from_variable = { treasury = 7.5 }
-			custom_effect_tooltip = 7.5_billion_expense_tt
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 			652 = { #Moskova
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -828,16 +563,11 @@ focus_tree = {
 		}
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_republican_industrial_project"
-			subtract_from_variable = { treasury = 22.5 }
-			custom_effect_tooltip = 22_5_billion_expense_tt
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
 			random_owned_state = {
 				prioritize = { 644 647 }
 				add_building_construction = {
@@ -872,7 +602,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_take_control_of_the_justice_system
-		icon = home_defense
+		icon = Controlled_Government
 		x = -2
 		y = 5
 
@@ -882,19 +612,8 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_secure_putins_position
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_take_control_of_the_justice_system"
 			add_political_power = 150
@@ -908,7 +627,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_republican_military_project
-		icon = army_logistics
+		icon = russian_military_oficier_school
 		x = 0
 		y = 5
 
@@ -919,15 +638,11 @@ focus_tree = {
 		prerequisite = { focus = SOV_republican_industrial_project }
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_republican_military_project"
-			subtract_from_variable = { treasury = 15.0 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				if = {
 					limit = {
@@ -984,18 +699,11 @@ focus_tree = {
 		prerequisite = { focus = SOV_take_control_of_the_justice_system }
 
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_education_reform"
 			increase_education_budget = yes
-			add_research_slot = 1
-			hidden_effect = { add_to_variable = { treasury = -10 } }
-			custom_effect_tooltip = 10_billion_expense_tt
+			add_ideas = SOV_idea_reforming_education
 		}
 		ai_will_do = {
 			factor = 1
@@ -1003,7 +711,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_st_petersburg_military_factories
-		icon = industry_military
+		icon = ak103
 		x = -1
 		y = 6
 
@@ -1011,23 +719,12 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_moscow_military_factories }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_st_petersburg_military_factories"
-			subtract_from_variable = { treasury = 15.0 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			644 = { #Lenningrad
 				add_building_construction = {
 					type = arms_factory
@@ -1043,7 +740,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_take_control_of_local_administrations
-		icon = national_unity_red
+		icon = Russia_of_Patriots
 		x = -2
 		y = 7
 
@@ -1051,22 +748,12 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_take_control_of_the_justice_system }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_take_control_of_local_administrations"
-			add_political_power = 150 #Temp
+			add_political_power = 50
+			add_ideas = SOV_idea_greased_palms_make_light_work
 		}
 		ai_will_do = {
 			factor = 1
@@ -1074,7 +761,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_oppress_the_opposition
-		icon = propaganda
+		icon = putin
 		x = -3
 		y = 8
 
@@ -1082,19 +769,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_take_control_of_local_administrations }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_oppress_the_opposition"
 			set_country_flag = party5_banned
@@ -1115,19 +791,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_take_control_of_local_administrations }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_encourage_industrial_growth"
 			add_political_power = -100
@@ -1155,7 +820,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_aggressive_foreign_policy
-		icon = lion
+		icon = tsarist_russia
 		x = -3
 		y = 9
 
@@ -1164,12 +829,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_oppress_the_opposition }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_aggressive_foreign_policy"
 			add_ideas = SOV_aggresive_foriegn_policy_putin_idea
@@ -1190,19 +850,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_encourage_industrial_growth }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_encourage_military_production"
 			add_timed_idea = {
@@ -1217,7 +866,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_the_dictatorship
-		icon = dangerous_deal2
+		icon = putin2
 		x = -2
 		y = 10
 
@@ -1233,12 +882,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_dictatorship"
 			hidden_effect = {
@@ -1265,7 +909,7 @@ focus_tree = {
 	##Putin-Zhirinovsky Shared
 	focus = {
 		id = SOV_russian_national_interests
-		icon = communism11
+		icon = third_rome
 		x = 3
 		y = 1
 
@@ -1276,19 +920,8 @@ focus_tree = {
 			focus = SOV_putin
 			focus = SOV_zhirinovsky
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_national_interests"
 			add_war_support = 0.10
@@ -1300,7 +933,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_undermine_georgia
-		icon = attack_georgia
+		icon = saakash_triuph
 		x = -1
 		y = 1
 
@@ -1309,30 +942,28 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_russian_national_interests }
 		prerequisite = { focus = SOV_putin }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_undermine_georgia"
 			add_political_power = -100
 			GEO = {
-				generic_grant_5_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 			SOO = {
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 			ABK = {
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 
 		}
@@ -1343,7 +974,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_annex_abkhazia_and_south_ossetia
-		icon = gunpoint_diplomacy
+		icon = ossetiabkhaz_priznat
 		x = 1
 		y = 1
 
@@ -1364,26 +995,51 @@ focus_tree = {
 		}
 		historical_ai = { }
 		select_effect = { }
-		bypass = { }
+		bypass = {
+
+		}
 		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
+		# if subjects, imediate integrate nations...
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_annex_abkhazia_and_south_ossetia"
 			hidden_effect = {
 				706 = { add_core_of = SOV } #Abkhazia
 				705 = { add_core_of = SOV } #South Ossetia
 			}
-			SOO = {
-				country_event = { id = russia.11 days = 1 }
+			if = { limit = { country_exists = SOO }
+				SOO = {
+					country_event = { id = russia.11 days = 1 }
+				}
 			}
-			ABK = {
-				country_event = { id = russia.11 days = 4 }
+			else = {
+				random_country = {
+					limit = { owns_state = 705 }
+				}
+				SOV = {
+					create_wargoal = {
+						type = take_state_focus
+						target = PREV
+						generator = { 705 }
+					}
+				}
+			}
+			if = { limit = { country_exists = ABK }
+				ABK = {
+					country_event = { id = russia.11 days = 4 }
+				}
+			}
+			else = {
+				random_country = {
+					limit = { owns_state = 706 }
+				}
+				SOV = {
+					create_wargoal = {
+						type = take_state_focus
+						target = PREV # prev equals scope for random country who owns state XXX
+						generator = { 706 }
+					}
+				}
 			}
 		}
 
@@ -1401,19 +1057,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_undermine_georgia }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_2008_military_reforms"
 			increase_military_spending = yes
@@ -1429,7 +1074,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_reassure_belarus
-		icon = military_mission
+		icon = special_defensive_agreement
 		x = 0
 		y = 2
 
@@ -1437,25 +1082,17 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_undermine_georgia }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reassure_belarus"
 			add_opinion_modifier = { target = BLR modifier = has_expressed_loyalty }
 			reverse_add_opinion_modifier = { target = BLR modifier = has_expressed_loyalty }
 			BLR = {
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -1473,19 +1110,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_annex_abkhazia_and_south_ossetia }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_tighten_the_union_state"
 			BLR = { country_event = { id = russia.2 days = 1 } }
@@ -1536,15 +1162,14 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pressure_ukraine"
 			UKR = {
-				generic_grant_5_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -1554,7 +1179,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_condemn_ukrainian_russophobes
-		icon = attack_ukraine
+		icon = pro_russian_government_in_power
 		x = -1
 		y = 4
 
@@ -1591,10 +1216,6 @@ focus_tree = {
 				}
 			}
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_condemn_ukrainian_russophobes"
@@ -1636,36 +1257,27 @@ focus_tree = {
 			NOT = { country_exists = BLR }
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_demand_belarussian_annexation"
-			BLR = { country_event = { id = russia.10 days = 1 } }
-			effect_tooltip = {
-				if = {
-					limit = { BLR = { is_puppet_of = SOV } }
-					BLR = {
-						every_owned_state = {
-							add_core_of = SOV
-						}
+			custom_effect_tooltip = SOV_annex_belarus_TT
+			if = {
+				limit = { BLR = { is_subject_of = SOV } }
+				BLR = {
+					every_owned_state = {
+						add_core_of = SOV
 					}
-					annex_country = { target = SOV transfer_troops = yes }
 				}
-				if = {
-					limit = { BLR = { NOT = { is_puppet_of = SOV } } }
-					BLR = {
-						every_owned_state = {
-							add_core_of = SOV
-						}
+				annex_country = { target = BLR transfer_troops = yes }
+			}
+			if = {
+				limit = { BLR = { NOT = { is_subject_of = SOV } } }
+					every_state = { limit = { is_belarus_state = yes }
+						add_core_of = SOV
 					}
-					declare_war_on = {
-						target = BLR
-						type = annex_everything
-					}
+				create_wargoal = {
+					target = BLR
+					type = annex_everything
 				}
 			}
 		}
@@ -1676,27 +1288,32 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_take_crimea
-		icon = GFX_crimea
+		icon = crimea_alt
 		x = -1
 		y = 5
 
 		relative_position_id = SOV_russian_national_interests
-		cost = 2.5
+		cost = 2.9
 
 		will_lead_to_war_with = UKR
 		prerequisite = { focus = SOV_condemn_ukrainian_russophobes }
-		mutually_exclusive = { focus = SOV_southern_defensive_option }
 		available = {
 			UKR = { owns_state = 669 }
 			NOT = { SOV = { owns_state = 669 } }
 		}
 		bypass ={
-			SOV = { owns_state = 669 }
+			OR = {
+				SOV = { owns_state = 669 }
+				UKR = {
+					OR = {
+						is_subject_of = SOV
+						has_completed_focus = UKR_pro_russian_government_in_power
+						is_in_faction_with = SOV
+						exists = no
+					}
+				}
+			}
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
@@ -1717,7 +1334,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_southern_defensive_option
-		icon = small_arms
+		icon = def_of_moscow
 		x = 1
 		y = 5
 
@@ -1725,7 +1342,6 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_condemn_ukrainian_russophobes }
-		mutually_exclusive = { focus = SOV_take_crimea }
 		available = {
 			OR = {
 				country_exists = ABK
@@ -1741,12 +1357,7 @@ focus_tree = {
 			NOT = { country_exists = SOO }
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_southern_defensive_option"
 			if = {
@@ -1780,14 +1391,14 @@ focus_tree = {
 		y = 6
 
 		relative_position_id = SOV_russian_national_interests
-		cost = 2.50
+		cost = 2.9
 
 		will_lead_to_war_with = UKR
 
 		prerequisite = { focus = SOV_take_crimea }
 		available = {
 			custom_trigger_tooltip = {
-				UKR = { check_variable { UKR_chance_of_collapse_var > 5 } }
+				UKR = { check_variable = { UKR_chance_of_collapse_var > 5 } }
 				tooltip = UKR_has_cor_over_5_tooltip
 			}
 			NOT = { UKR = { is_in_faction_with = SOV } }
@@ -1806,17 +1417,11 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_novorossiyan_uprising"
 			add_political_power = -100
 			UKR = { country_event = { id = ukraine_revolution.1 } }
 		}
-
 
 		ai_will_do = {
 			factor = 1
@@ -1840,12 +1445,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_annex_novorossiya"
 			annex_country = { target = NOV transfer_troops = yes }
@@ -1861,7 +1461,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_demand_baltic_loyalty
-		icon = dangerous_deal
+		icon = baltic_security
 		x = 0
 		y = 7
 
@@ -1899,10 +1499,6 @@ focus_tree = {
 			NOT = { country_exists = EST }
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_demand_baltic_loyalty"
@@ -1910,7 +1506,10 @@ focus_tree = {
 				limit = { country_exists = LAT }
 				LAT = {
 					add_war_support = 0.10
-					generic_grant_5_percent_influence_of_ROOT = yes
+					set_temp_variable = { percent_change = 5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
 					add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
 					reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
 				}
@@ -1919,7 +1518,10 @@ focus_tree = {
 				limit = { country_exists = LIT }
 				LIT = {
 					add_war_support = 0.10
-					generic_grant_5_percent_influence_of_ROOT = yes
+					set_temp_variable = { percent_change = 5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
 					add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
 					reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
 				}
@@ -1928,7 +1530,10 @@ focus_tree = {
 				limit = { country_exists = EST }
 				EST = {
 					add_war_support = 0.10
-					generic_grant_5_percent_influence_of_ROOT = yes
+					set_temp_variable = { percent_change = 5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
 					add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
 					reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_disloyalty }
 				}
@@ -1966,8 +1571,6 @@ focus_tree = {
 				NOT = { is_in_faction_with = SOV }
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
 		bypass = {
 			OR = {
 				NOT = { country_exists = EST }
@@ -1983,10 +1586,6 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_settle_the_estonian_question"
@@ -1999,6 +1598,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -2033,10 +1636,6 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_settle_the_latvian_question"
@@ -2049,6 +1648,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -2084,10 +1687,6 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_lithuania"
@@ -2100,6 +1699,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -2134,12 +1737,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_finland"
 			create_wargoal = {
@@ -2150,6 +1748,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -2184,10 +1786,6 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_poland"
@@ -2199,6 +1797,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -2232,9 +1834,7 @@ focus_tree = {
 				has_war_with = SWE
 			}
 		}
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
@@ -2248,6 +1848,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -2282,12 +1886,7 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attack_germany"
 			create_wargoal = {
@@ -2299,13 +1898,17 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 
 	##Zhirinovsky
 	focus = {
 		id = SOV_arrest_zyuganov
-		icon = anti_communism
+		icon = penal_battalions
 		x = 0
 		y = 1
 
@@ -2314,21 +1917,17 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_zhirinovsky }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_arrest_zyuganov"
-			hidden_effect = {
-				add_popularity = { ideology = communism popularity = -0.05 }
-				add_popularity = { ideology = nationalist popularity = 0.05 }
-				subtract_from_variable = { party_pop_array^4 = -0.05 }
-				add_to_variable = { party_pop_array^20 = 0.05 }
-			}
-			custom_effect_tooltip = SOV_lose_5_cprf_support_TT
-			custom_effect_tooltip = SOV_gain_5_LDPR_support_TT
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -2337,7 +1936,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_political_purges
-		icon = fascism
+		icon = Zhirinovsky_Nationalism
 		x = 2
 		y = 1
 
@@ -2346,22 +1945,17 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_zhirinovsky }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_political_purges"
-			hidden_effect = {
-				subtract_from_variable = { party_pop_array^6 = 0.10 }
-				add_to_variable = { party_pop_array^20 = 0.10 }
-				add_popularity = { ideology = nationalist popularity = 0.10 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_10_LDPR_support_TT
-			custom_effect_tooltip = SOV_lose_10_united_russia_support_TT
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = -0.10 }
+			set_temp_variable = { temp_outlook_increase = -0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
 		}
 
 
@@ -2371,7 +1965,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_crush_the_communists
-		icon = anti_communism2
+		icon = RUS_Tsar_Eternal
 		x = 0
 		y = 2
 
@@ -2380,12 +1974,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_arrest_zyuganov }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_crush_the_communists"
 			set_country_flag = party5_banned
@@ -2399,7 +1988,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_increase_military_spending
-		icon = entente
+		icon = restore_cossack_units
 		x = 2
 		y = 2
 
@@ -2410,10 +1999,6 @@ focus_tree = {
 		available = {
 			NOT = { has_idea = no_military }
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
@@ -2431,7 +2016,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_hyper_nationalism
-		icon = political_pressure_dark_green
+		icon = panslavic_nationalism
 		x = 1
 		y = 3
 
@@ -2440,10 +2025,6 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_increase_military_spending }
 		prerequisite = { focus = SOV_crush_the_communists }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -2461,7 +2042,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_punish_yeltsins_cronies
-		icon = dangerous_deal
+		icon = RUS_Military_Coup
 		x = 0
 		y = 4
 
@@ -2471,14 +2052,14 @@ focus_tree = {
 		prerequisite = { focus = SOV_hyper_nationalism }
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = SOV_has_oligarchs_TT
+				tooltip = has_oligarchs_tt
 				has_idea = oligarchs
 			}
 		}
 		bypass = {
 			NOT = {
 				custom_trigger_tooltip = {
-					tooltip = SOV_has_oligarchs_TT
+					tooltip = has_oligarchs_tt
 					has_idea = oligarchs
 				}
 			}
@@ -2486,20 +2067,17 @@ focus_tree = {
 		cancel = {
 			NOT = {
 				custom_trigger_tooltip = {
-					tooltip = SOV_has_oligarchs_TT
+					tooltip = has_oligarchs_tt
 					has_idea = oligarchs
 				}
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_punish_yeltsins_cronies"
-			decrease_oligarchs_opinion  = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_oligarchs_opinion = yes
 			add_political_power = 150
 		}
 
@@ -2509,7 +2087,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_revoke_personal_freedoms
-		icon = dangerous_laws
+		icon = ch_of_all_russia
 		x = 2
 		y = 4
 
@@ -2518,21 +2096,14 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_hyper_nationalism }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_revoke_personal_freedoms"
 			add_stability = -0.03
-			hidden_effect = {
-				add_popularity = { ideology = nationalist popularity = 0.05 }
-				add_to_variable = { party_pop_array^20 = 0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_5_LDPR_support_TT
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -2541,7 +2112,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_execute_the_oligarchs
-		icon = espionage2
+		icon = zemsky_sobor
 		x = 0
 		y = 5
 
@@ -2552,7 +2123,7 @@ focus_tree = {
 		mutually_exclusive = { }
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = SOV_has_oligarchs_TT
+				tooltip = has_oligarchs_tt
 				has_idea = oligarchs
 			}
 		}
@@ -2561,7 +2132,7 @@ focus_tree = {
 		bypass = {
 			NOT = {
 				custom_trigger_tooltip = {
-					tooltip = SOV_has_oligarchs_TT
+					tooltip = has_oligarchs_tt
 					has_idea = oligarchs
 				}
 			}
@@ -2569,20 +2140,15 @@ focus_tree = {
 		cancel = {
 			NOT = {
 				custom_trigger_tooltip = {
-					tooltip = SOV_has_oligarchs_TT
+					tooltip = has_oligarchs_tt
 					has_idea = oligarchs
 				}
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL  FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_execute_the_oligarchs"
-			decrease_oligarchs_opinion  = yes
 			hidden_effect = {
 				if = {
 					limit = { has_idea = oligarchs }
@@ -2593,7 +2159,6 @@ focus_tree = {
 				}
 			}
 			remove_ideas = SOV_corrupt_oligarchy
-			custom_effect_tooltip = SOV_execute_the_oligarchs_TT
 		}
 
 		ai_will_do = {
@@ -2602,7 +2167,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_persecute_minorities
-		icon = demand_territory
+		icon = transcaucasian_republic
 		x = 2
 		y = 5
 
@@ -2611,17 +2176,16 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_revoke_personal_freedoms }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_persecute_minorities"
 			add_war_support = 0.075
 			add_manpower = -10000
 			add_stability = -0.02
-			add_popularity = { ideology = nationalist popularity = 0.02 }
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -2630,7 +2194,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_the_end_of_the_republic
-		icon = renounce_treaty
+		icon = Rus_wake_up
 		x = 1
 		y = 6
 
@@ -2648,10 +2212,6 @@ focus_tree = {
 		cancel = {
 			has_elections = no
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -2679,7 +2239,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_encourage_foreign_cheap_laborers
-		icon = construction2
+		icon = ivan_plays_baseball
 		x = 3
 		y = 6
 
@@ -2687,10 +2247,6 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_persecute_minorities }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
@@ -2714,12 +2270,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_the_end_of_the_republic }
 		mutually_exclusive = { focus = SOV_claim_the_crown }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_dictatorial_coup"
 			add_ideas = SOV_russian_ceasar_idea
@@ -2741,20 +2292,15 @@ focus_tree = {
 		prerequisite = { focus = SOV_the_end_of_the_republic }
 		mutually_exclusive = { focus = SOV_dictatorial_coup }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_claim_the_crown"
 			add_ideas = SOV_the_new_tsar_idea
+
 			hidden_effect = {
-				set_temp_variable = { party_pop_array^20 = P2 }
-				add_to_variable = { party_pop_array^23 = P2 }
-				recalculate_party = yes
-			}
-			hidden_effect = {
+				set_temp_variable = { party_index = 23 }
+				set_temp_variable = { party_popularity_increase = party_pop_array^20 }
+				add_relative_party_popularity = yes
 				clear_array = ruling_party
 				clear_array = gov_coalition_array
 				add_to_array = { ruling_party = 23 }
@@ -2762,12 +2308,7 @@ focus_tree = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 				set_politics = {
 					ruling_party = nationalist
@@ -2796,7 +2337,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_reinforce_the_one_party_state
-		icon = fascism3
+		icon = Focus_Romanov
 		x = -1
 		y = 8
 
@@ -2807,10 +2348,6 @@ focus_tree = {
 		available = {
 			has_elections = no
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -2829,7 +2366,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_ensure_military_loyalty
-		icon = infantry_allies
+		icon = my_brothers_keeper
 		x = 1
 		y = 8
 
@@ -2844,15 +2381,11 @@ focus_tree = {
 			NOT = { has_idea = no_military }
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ensure_military_loyalty"
 			add_ideas = SOV_russian_militarism_idea
-			add_research_slot = 1
+			add_ideas = SOV_idea_expanding_military_research
 		}
 
 		ai_will_do = {
@@ -2870,12 +2403,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_claim_the_crown }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_honor_the_romanovs"
 			add_popularity = { ideology = nationalist popularity = 0.10 }
@@ -2919,9 +2447,7 @@ focus_tree = {
 		}
 
 		will_lead_to_war_with = KAZ
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
@@ -2934,21 +2460,14 @@ focus_tree = {
 				target = KAZ
 				type = puppet_wargoal_focus
 			}
-			CHI = {
-				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
-				add_ai_strategy = { type = contain id = "SOV" value = 200 }
-				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
-				add_ai_strategy = { type = protect id = "KYR" value = 200 }
-				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
-				add_ai_strategy = { type = protect id = "TRK" value = 200 }
-				add_ai_strategy = { type = protect id = "UZB" value = 200 }
-			}
-			add_ai_strategy = { type = contain id = "CHI" value = 50 }
-			add_ai_strategy = { type = conquer id = "KAZ" value = 150 }
 		}
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -2981,9 +2500,7 @@ focus_tree = {
 		will_lead_to_war_with = TRK
 		will_lead_to_war_with = UZB
 		will_lead_to_war_with = KYR
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
@@ -3016,24 +2533,14 @@ focus_tree = {
 					type = puppet_wargoal_focus
 				}
 			}
-			CHI = {
-				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
-				add_ai_strategy = { type = contain id = "SOV" value = 200 }
-				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
-				add_ai_strategy = { type = protect id = "KYR" value = 200 }
-				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
-				add_ai_strategy = { type = protect id = "TRK" value = 200 }
-				add_ai_strategy = { type = protect id = "UZB" value = 200 }
-			}
-			add_ai_strategy = { type = conquer id = "KAZ" value = 200 }
-			add_ai_strategy = { type = conquer id = "KYR" value = 200 }
-			add_ai_strategy = { type = conquer id = "TAJ" value = 200 }
-			add_ai_strategy = { type = conquer id = "TRK" value = 200 }
-			add_ai_strategy = { type = conquer id = "UZB" value = 200 }
 		}
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -3052,12 +2559,7 @@ focus_tree = {
 			country_exists = FIN
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_secure_the_grand_duchy"
 			if = {
@@ -3078,14 +2580,18 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 
-	##Zyuganov
+	# Zyuganov
 
 	focus = {
 		id = SOV_fight_international_capitalists
-		icon = communism2
+		icon = international_union_of_soviet_republics
 		x = -1
 		y = 1
 
@@ -3093,23 +2599,14 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_zyuganov }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_international_capitalists"
-			decrease_oligarchs_opinion  = yes
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_oligarchs_opinion = yes
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -3118,7 +2615,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_mobilize_the_masses
-		icon = communism5
+		icon = the_supreme_soviet
 		x = 1
 		y = 1
 
@@ -3126,30 +2623,17 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_zyuganov }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_mobilize_the_masses"
 			add_timed_idea = {
 				idea = idea_focus_generic_path_of_equality
 				days = 90
 			}
-			hidden_effect = {
-				add_to_variable = { party_pop_array^4 = 0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_5_cprf_support_TT
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -3158,7 +2642,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_weaken_the_banks
-		icon = communist_repression
+		icon = proclaim_soviet_hegemony
 		x = -1
 		y = 1
 
@@ -3166,27 +2650,13 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_fight_international_capitalists }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_weaken_the_banks"
-			hidden_effect = {
-				add_to_variable = { party_pop_array^4 = 0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_5_cprf_support_TT
-
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -3195,7 +2665,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_crackdown_on_nationalists
-		icon = anti_nationalism
+		icon = the_last_purge
 		x = 1
 		y = 1
 
@@ -3204,10 +2674,6 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_fight_international_capitalists }
 		prerequisite = { focus = SOV_mobilize_the_masses }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -3240,12 +2706,17 @@ focus_tree = {
 			is_subject = no
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_fifth_international"
+			if = {
+				limit = { has_idea = CSTO_member }
+				remove_ideas = CSTO_member
+				remove_from_array = { global.CSTO_member = THIS }
+			}
+			if = {
+				limit = { has_dlc = "Together for Victory" }
+				ROOT = { remove_from_tech_sharing_group = CSTO_Tech_Share }
+			}
 			if = {
 				limit = { is_in_faction = yes }
 				dismantle_faction = yes
@@ -3255,6 +2726,7 @@ focus_tree = {
 				limit = { is_in_faction = no }
 				create_faction = SOV_the_fifth_international
 			}
+			add_ideas = faction_fifth_international_member
 			every_country = {
 				limit = {
 					is_in_array = { ruling_party = 4 }
@@ -3279,19 +2751,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_weaken_the_banks }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_five_year_plans"
 			add_political_power = -150
@@ -3315,28 +2776,16 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_crackdown_on_nationalists }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_crackdown_on_liberals"
-			hidden_effect = {
-				add_to_variable = { party_pop_array^4 = 0.05 }
-				subtract_from_variable = { party_pop_array^2 = 0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_5_cprf_support_TT
-			custom_effect_tooltip = SOV_lose_5_yabloko_support_TT
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -3345,7 +2794,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_empower_the_communist_party
-		icon = communism3
+		icon = the_path_of_marxism_leninism
 		x = 3
 		y = 2
 
@@ -3353,26 +2802,13 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_the_fifth_international }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_empower_the_communist_party"
-			hidden_effect = {
-				add_to_variable = { party_pop_array^4 = 0.10 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_10_cprf_support_TT
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -3381,7 +2817,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_take_control_of_the_oligarchy
-		icon = communist_factories
+		icon = bukharan_republic
 		x = 1
 		y = 3
 
@@ -3391,37 +2827,17 @@ focus_tree = {
 		prerequisite = { focus = SOV_five_year_plans }
 		prerequisite = { focus = SOV_crackdown_on_liberals }
 		prerequisite = { focus = SOV_empower_the_communist_party }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_take_control_of_the_oligarchy"
-			hidden_effect = {
-				if = {
-					limit = { has_idea = oligarchs }
-					swap_ideas = {
-						remove_idea = oligarchs
-						add_idea = communist_cadres
-					}
-					clr_country_flag = enthusiastic_oligarchs
-					clr_country_flag = positive_oligarchs
-					clr_country_flag = indifferent_oligarchs
-					clr_country_flag = negative_oligarchs
-					clr_country_flag = hostile_oligarchs
-					set_country_flag = positive_communist_cadres
+			if = {
+				limit = { has_idea = oligarchs }
+				swap_ideas = {
+					remove_idea = oligarchs
+					add_idea = communist_cadres
 				}
 			}
-			custom_effect_tooltip = SOV_take_control_of_the_oligarchy_TT
 			remove_ideas = SOV_corrupt_oligarchy
 		}
 
@@ -3441,15 +2857,11 @@ focus_tree = {
 		prerequisite = { focus = SOV_take_control_of_the_oligarchy }
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_civilian_industrial_councils"
-			subtract_from_variable = { treasury = 22.5 }
-			custom_effect_tooltip = 22_5_billion_expense_tt
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				if = {
 					limit = {
@@ -3509,7 +2921,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_military_industrial_councils
-		icon = industry_communist2
+		icon = the_glory_of_the_red_army_communism
 		x = 1
 		y = 1
 
@@ -3519,15 +2931,11 @@ focus_tree = {
 		prerequisite = { focus = SOV_take_control_of_the_oligarchy }
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_military_industrial_councils"
-			subtract_from_variable = { treasury = 15.0 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				if = {
 					limit = {
@@ -3570,7 +2978,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_the_sfsr
-		icon = communism6
+		icon = organization_centralization_discipline
 		x = 0
 		y = 2
 
@@ -3581,12 +2989,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_military_industrial_councils }
 		mutually_exclusive = { focus = SOV_the_ussr }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_sfsr"
 			add_stability = 0.05
@@ -3600,7 +3003,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_the_ussr
-		icon = communism2
+		icon = ussr
 		x = 2
 		y = 2
 
@@ -3610,11 +3013,6 @@ focus_tree = {
 		prerequisite = { focus = SOV_military_industrial_councils }
 		mutually_exclusive = { focus = SOV_the_sfsr }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_ussr"
 			set_cosmetic_tag = SOV_USSR_AUTH_S
@@ -3648,17 +3046,11 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_civilian_industrial_councils }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_scientific_councils"
-			add_research_slot = 1
 			add_ideas = idea_focus_generic_reckless_progress
-			hidden_effect = { add_to_variable = { treasury = -10 } }
-			custom_effect_tooltip = 10_billion_expense_tt
+			add_ideas = SOV_idea_communist_education
 		}
 
 		ai_will_do = {
@@ -3667,7 +3059,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_the_red_army
-		icon = communist_army
+		icon = builder_of_the_red_army
 		x = 1
 		y = 3
 
@@ -3675,10 +3067,6 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_the_sfsr focus = SOV_the_ussr }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
@@ -3696,7 +3084,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_defensive_precautions_west
-		icon = tanks2
+		icon = reinforce_western_naval_bases
 		x = 0
 		y = 4
 
@@ -3705,11 +3093,6 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_the_red_army }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_defensive_precautions_west"
 			add_ideas = defensive_constructions3
@@ -3721,7 +3104,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_communist_ambitions
-		icon = communism
+		icon = m_in_one_country
 		x = 2
 		y = 4
 
@@ -3730,12 +3113,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_the_ussr }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_communist_ambitions"
 			add_timed_idea = {
@@ -3754,7 +3132,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_defensive_precautions_south
-		icon = tanks2
+		icon = reinforce_southern_naval_bases
 		x = 0
 		y = 5
 
@@ -3763,11 +3141,6 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_defensive_precautions_west }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_defensive_precautions_south"
 			swap_ideas = {
@@ -3782,7 +3155,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_territorial_demands
-		icon = demand_territory3
+		icon = the_comecon
 		x = 2
 		y = 5
 
@@ -3792,162 +3165,20 @@ focus_tree = {
 		prerequisite = { focus = SOV_communist_ambitions }
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_territorial_demands"
 			hidden_effect = {
-				#Baltic Countries
-				EST = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				LAT = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				LIT = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				#Cacaus Republic
-				ABK = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				SOO = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				GEO = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				AZE = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				ARM = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				NKR = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				#Southern Republics
-				KAZ = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				TAJ = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				UZB = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				TRK = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				KYR = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				UKR = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				MLV = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				PMR = {
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
-				if = {
-					limit = {
-						any_owned_state = {
-							NOT = { is_core_of = SOV }
-						}
-					}
-					every_owned_state = {
-						limit = { NOT = { is_core_of = SOV } }
-						add_core_of = SOV
-					}
-				}
+				every_state = {#add core for former Soviet Union states
+		        limit = {
+			    is_soviet_union_state = yes
+		        }
+		        add_core_of = SOV
+	            }
 			}
-			##AI Strategy to have Russia Attack the Former Soviet States
-			add_ai_strategy = { type = conquer id = "UKR" value = 100 }
-			add_ai_strategy = { type = conquer id = "PMR" value = 100 }
-			add_ai_strategy = { type = conquer id = "MLV" value = 100 }
-			add_ai_strategy = {	type = conquer id = "NKR" value = 100 }
-			add_ai_strategy = { type = conquer id = "TRK" value = 100 }
-			add_ai_strategy = { type = conquer id = "KAZ" value = 100 }
-			add_ai_strategy = { type = conquer id = "UZB" value = 100 }
-			add_ai_strategy = { type = conquer id = "TAJ" value = 100 }
-			add_ai_strategy = { type = conquer id = "KYR" value = 100 }
-			add_ai_strategy = { type = conquer id = "ARM" value = 100 }
-			add_ai_strategy = { type = conquer id = "AZE" value = 100 }
-			add_ai_strategy = { type = conquer id = "GEO" value = 100 }
-			add_ai_strategy = { type = conquer id = "SOO" value = 100 }
-			add_ai_strategy = { type = conquer id = "ABK" value = 100 }
-			add_ai_strategy = { type = conquer id = "EST" value = 100 }
-			add_ai_strategy = { type = conquer id = "LIT" value = 100 }
-			add_ai_strategy = { type = conquer id = "LAT" value = 100 }
 			set_country_flag = SOV_seeks_to_restore_the_ussr
 			add_political_power = -300
 			custom_effect_tooltip = SOV_territorial_demands_cores_TT
-			CHI = {
-				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
-				add_ai_strategy = { type = contain id = "SOV" value = 200 }
-				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
-				add_ai_strategy = { type = protect id = "KYR" value = 200 }
-				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
-				add_ai_strategy = { type = protect id = "TRK" value = 200 }
-				add_ai_strategy = { type = protect id = "UZB" value = 200 }
-			}
 		}
 
 		ai_will_do = {
@@ -3956,7 +3187,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_baltic_republics
-		icon = war2
+		icon = father_of_nations
 		x = 0
 		y = 6
 
@@ -3965,12 +3196,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_territorial_demands }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_baltic_republics"
 			create_wargoal = {
@@ -3989,11 +3215,15 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
 		id = SOV_caucasian_republics
-		icon = war2_green
+		icon = focus_ZSFSR
 		x = 2
 		y = 6
 
@@ -4001,19 +3231,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_territorial_demands }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_caucasian_republics"
 			create_wargoal = {
@@ -4044,11 +3263,15 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
 		id = SOV_southern_republics
-		icon = war3
+		icon = south_manchuria_railway
 		x = 4
 		y = 6
 
@@ -4056,19 +3279,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_territorial_demands }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_southern_republics"
 			create_wargoal = {
@@ -4095,11 +3307,15 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
 		id = SOV_communist_europe
-		icon = forceful_treaty
+		icon = Focus_COMECON
 		x = 2
 		y = 7
 
@@ -4109,19 +3325,8 @@ focus_tree = {
 		prerequisite = { focus = SOV_baltic_republics }
 		prerequisite = { focus = SOV_caucasian_republics }
 		prerequisite = { focus = SOV_southern_republics }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_communist_europe"
 			every_country = {
@@ -4134,9 +3339,10 @@ focus_tree = {
 					idea = SOV_russian_communism_idea
 					days = 730
 				}
-				add_popularity = { ideology = communism popularity = 0.10 }
-				add_to_variable = { party_pop_array^4 = 0.10 }
-				recalculate_party = yes
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { temp_outlook_increase = 0.10 }
+				add_relative_party_popularity = yes
 			}
 		}
 
@@ -4148,7 +3354,7 @@ focus_tree = {
 	##Yavlinsky
 	focus = {
 		id = SOV_deals_with_europe
-		icon = align_to_europe
+		icon = European_Society
 		x = -2
 		y = 1
 
@@ -4165,12 +3371,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_deals_with_europe"
 			every_country = {
@@ -4178,7 +3379,10 @@ focus_tree = {
 					has_idea = EU_member
 					NOT = { has_war_with = SOV }
 				}
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -4197,12 +3401,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_yavlinsky }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_national_economic_goals"
 			add_timed_idea = {
@@ -4240,11 +3439,6 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_baltic_economic_cooperation"
 			if = {
@@ -4290,10 +3484,6 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_deals_with_europe }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_european_university_connections"
@@ -4315,12 +3505,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_national_economic_goals }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_defensive_preparations"
 			add_timed_idea = {
@@ -4347,15 +3532,11 @@ focus_tree = {
 		mutually_exclusive = { }
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_kaliningrad_development"
-			subtract_from_variable = { treasury = 15.0 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			642 = { #Kaliningrad
 				add_building_construction = {
 					type = industrial_complex
@@ -4381,23 +3562,13 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_european_university_connections }
 		prerequisite = { focus = SOV_russian_defensive_preparations }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_the_elites"
-			decrease_oligarchs_opinion  = yes
 			remove_ideas = SOV_corrupt_oligarchy
+			set_temp_variable = { temp_opinion = -5 }
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4414,27 +3585,14 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_kaliningrad_development }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_democratic_idealism"
-			hidden_effect = {
-				add_popularity = { ideology = democratic popularity = 0.10 }
-				add_to_variable = { party_pop_array^2 = 0.075 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_10_yabloko_support_TT
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.075 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -4453,15 +3611,11 @@ focus_tree = {
 		prerequisite = { focus = SOV_kaliningrad_development }
 		available = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_kaliningrad_military_sector"
-			subtract_from_variable = { treasury = 15 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			642 = {
 				add_building_construction = {
 					type = arms_factory
@@ -4487,16 +3641,10 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_european_university_connections }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expand_the_university_of_moscow"
-			add_research_slot = 1
-			subtract_from_variable = { treasury = 10 }
-			custom_effect_tooltip = 10_billion_expense_tt
+			add_ideas = SOV_idea_investing_in_universities
 		}
 
 		ai_will_do = {
@@ -4514,21 +3662,13 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_democratic_idealism }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_soviet_trials"
-			hidden_effect = {
-				subtract_from_variable = { party_pop_array^4 = 0.05 }
-				add_popularity = { ideology = communism popularity = -0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_lose_5_cprf_support_TT
-
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -4550,10 +3690,6 @@ focus_tree = {
 			NOT = { has_idea = no_military }
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reformed_russian_armed_forces"
 			increase_military_spending = yes
@@ -4573,10 +3709,6 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_expand_the_university_of_moscow }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
@@ -4599,12 +3731,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_fight_the_elites }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_infrastructure_program"
 			add_timed_idea = {
@@ -4629,19 +3756,13 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_soviet_trials }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fight_communism"
-			hidden_effect = {
-				subtract_from_variable = { party_pop_array^4 = 0.05 }
-				add_popularity = { ideology = communism popularity = -0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_lose_5_cprf_support_TT
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
 			add_stability = -0.02
 		}
 
@@ -4659,10 +3780,6 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_soviet_trials }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -4699,10 +3816,6 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_NATO }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_approach_nato"
@@ -4717,15 +3830,6 @@ focus_tree = {
 				limit = { has_idea = NATO_member }
 				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-			}
-			CHI = {
-				add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
-				add_ai_strategy = { type = contain id = "SOV" value = 200 }
-				add_ai_strategy = { type = protect id = "KAZ" value = 200 }
-				add_ai_strategy = { type = protect id = "KYR" value = 200 }
-				add_ai_strategy = { type = protect id = "TAJ" value = 200 }
-				add_ai_strategy = { type = protect id = "TRK" value = 200 }
-				add_ai_strategy = { type = protect id = "UZB" value = 200 }
 			}
 		}
 
@@ -4755,18 +3859,14 @@ focus_tree = {
 		prerequisite = { focus = SOV_fight_communism }
 		mutually_exclusive = { focus = SOV_approach_nato }
 		available = {
-			#is_faction_leader = yes
+			is_faction_leader = yes
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_maintain_csto"
 			every_country = {
-				limit = { is_guaranteed_by = ROOT }
+				limit = { is_in_faction_with = ROOT }
 				add_opinion_modifier = { target = ROOT modifier = maintained_CSTO }
 				reverse_add_opinion_modifier = { target = ROOT modifier = maintained_CSTO }
 			}
@@ -4791,38 +3891,17 @@ focus_tree = {
 			focus = SOV_maintain_csto
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_bastion_of_democracy"
-			hidden_effect = {
-				add_popularity = { ideology = democratic popularity = 0.10 }
-				add_to_variable = { party_pop_array^2 = 0.05 }
-				add_to_variable = { party_pop_array^1 = 0.05 }
-				recalculate_party = yes
-			}
-			if = {
-				limit = { NOT = { CHI = { has_completed_focus = CHI_An_Open_Window } } }
-				CHI = {
-					add_ai_strategy = { type = antagonize id = "SOV" value = 200 }
-					add_ai_strategy = { type = contain id = "SOV" value = 200 }
-					add_ai_strategy = { type = protect id = "KAZ" value = 200 }
-					add_ai_strategy = { type = protect id = "KYR" value = 200 }
-					add_ai_strategy = { type = protect id = "TAJ" value = 200 }
-					add_ai_strategy = { type = protect id = "TRK" value = 200 }
-					add_ai_strategy = { type = protect id = "UZB" value = 200 }
-				}
-			}
-			if = {
-				limit = { country_exists = USA }
-				add_ai_strategy = { type = befriend id = "USA" value = 50 }
-				USA = { add_ai_strategy = { type = befriend id = "SOV" value = 50 } }
-			}
-			custom_effect_tooltip = SOV_bastion_of_democracy_TT
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -4839,19 +3918,8 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = SOV_bastion_of_democracy }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_bring_democracy_to_central_asia"
 			if = {
@@ -4893,6 +3961,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
 		}
 	}
 	focus = {
@@ -4906,26 +3978,14 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_bastion_of_democracy }
 		mutually_exclusive = { focus = SOV_russian_values }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_liberalize_russian_society"
-			hidden_effect = {
-				add_popularity = { ideology = democratic popularity = 0.05 }
-				add_to_variable = { party_pop_array^2 = 0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_5_yabloko_support_TT
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			add_stability = 0.025
 		}
 
@@ -4951,25 +4011,21 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_values"
 			add_war_support = 0.025
 			every_neighbor_country = {
 				limit = { NOT = { has_war_with = SOV } }
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
-			hidden_effect = {
-				add_popularity = { ideology = nationalist popularity = 0.05 }
-				add_to_variable = { party_pop_array^20 = 0.05 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = SOV_gain_5_LDPR_support_TT
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -4989,19 +4045,8 @@ focus_tree = {
 			focus = SOV_liberalize_russian_society
 			focus = SOV_russian_values
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reform_the_oblasts"
 			add_political_power = 100
@@ -5023,19 +4068,8 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_liberalize_russian_society
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_EXPENDITURE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_encourage_free_thought"
 			increase_education_budget = yes
@@ -5057,19 +4091,8 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_russian_values
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_MILITARY_LAWS }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_army_of_the_republic"
 			increase_military_spending = yes
@@ -5094,19 +4117,8 @@ focus_tree = {
 			focus = SOV_army_of_the_republic
 		}
 		prerequisite = { focus = SOV_reform_the_oblasts }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reform_the_army"
 			increase_intervention_law_effect = yes
@@ -5140,12 +4152,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_STABILITY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_encourage_free_expression"
 			add_stability = 0.05
@@ -5157,7 +4164,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_embrace_the_orthodox_church
-		icon = orthodox_reform
+		icon = rebuild_the_savior_cathedral
 		x = 3
 		y = 12
 
@@ -5167,19 +4174,8 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_army_of_the_republic
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_WAR_SUPPORT }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_embrace_the_orthodox_church"
 			add_stability = 0.025
@@ -5204,19 +4200,8 @@ focus_tree = {
 			focus = SOV_embrace_the_orthodox_church
 		}
 		prerequisite = { focus = SOV_reform_the_army }
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_more_universities"
 			add_timed_idea = {
@@ -5241,25 +4226,14 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_encourage_free_expression
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_full_secularism"
 			if = {
 				limit = { has_idea = orthodox_christian }
 				swap_ideas = {
-					add_idea = pluralist
 					remove_idea = orthodox_christian
+					add_idea = pluralist
 				}
 			}
 		}
@@ -5281,11 +4255,6 @@ focus_tree = {
 			focus = SOV_embrace_the_orthodox_church
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_religious_republicanism"
 			if = {
@@ -5305,34 +4274,21 @@ focus_tree = {
 	#Military Reform
 	focus = {
 		id = SOV_military_reform
-		icon = infantry_allies
+		icon = military_purge
 		x = 18
 		y = 1
 
 		relative_position_id = SOV_attack_chechnya
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_attack_chechnya
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_attack_chechnya }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_military_reform"
-			army_experience = 5
-			navy_experience = 5
-			air_experience = 5
+			army_experience = 75
+			navy_experience = 75
+			air_experience = 75
 			increase_military_spending = yes
 		}
 
@@ -5353,19 +4309,8 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_military_reform
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_army_reform"
 			add_war_support = 0.05
@@ -5392,22 +4337,9 @@ focus_tree = {
 		relative_position_id = SOV_army_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_army_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_army_reform }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_armored_reform"
 			add_ideas = SOV_armored_production_idea
@@ -5422,29 +4354,16 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_infantry_modernization
-		icon = infiltration
+		icon = small_arms_east
 		x = 1
 		y = 1
 
 		relative_position_id = SOV_army_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_army_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_army_reform }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_infantry_modernization"
 			add_tech_bonus = {
@@ -5457,6 +4376,7 @@ focus_tree = {
 				idea = rifle_production_bonus2
 				days = 365
 			}
+			one_random_arms_factory = yes
 		}
 
 		ai_will_do = {
@@ -5466,29 +4386,16 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_rifle_renovations
-		icon = small_arms2
+		icon = ak12
 		x = 0
 		y = 2
 
 		relative_position_id = SOV_army_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_infantry_modernization
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_infantry_modernization }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rifle_renovations"
 			if = {
@@ -5517,29 +4424,16 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_special_forces
-		icon = tanks2
+		icon = soldier2
 		x = 2
 		y = 2
 
 		relative_position_id = SOV_army_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_infantry_modernization
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_infantry_modernization }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_special_forces"
 			add_tech_bonus = {
@@ -5562,19 +4456,13 @@ focus_tree = {
 		relative_position_id = SOV_army_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_armored_reform
-		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_armored_reform }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_t14_armata"
 			add_tech_bonus = {
-				name = Cat_MBT
+				name = SOV_t14_armata
 				bonus = 0.40
 				category = Cat_MBT
 			}
@@ -5586,42 +4474,29 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_expand_the_speznaz
-		icon = paratroopers
+		icon = wagner
 		x = 1
 		y = 3
 
 		relative_position_id = SOV_army_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_special_forces
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_special_forces }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expand_the_speznaz"
 			add_tech_bonus = {
-				name = expand_special_forces
-				bonus = 0.3
-				uses = 2
-				technology = command_control_equipment
-				technology = command_control_equipment1
-				technology = command_control_equipment2
-				technology = command_control_equipment3
-				technology = command_control_equipment4
-				technology = command_control_equipment5
-				technology = command_control_equipment6
+				name = SOV_expand_the_speznaz
+				bonus = 0.5
+				uses = 1
+				category = Cat_CnC
+			}
+			add_tech_bonus = {
+				name = SOV_expand_the_speznaz
+				bonus = 0.5
+				uses = 1
+				category = Cat_SPECIAL_FORCES
 			}
 		}
 
@@ -5638,27 +4513,13 @@ focus_tree = {
 		relative_position_id = SOV_army_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_special_forces
-		}
-		prerequisite = {
-			focus = SOV_naval_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		prerequisite = { focus = SOV_special_forces }
+		prerequisite = { focus = SOV_naval_reform }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_amphibious_infantry"
 			army_experience = 35
+			navy_experience = 35
 		}
 
 		ai_will_do = {
@@ -5668,32 +4529,18 @@ focus_tree = {
 	##Naval Reform
 	focus = {
 		id = SOV_naval_reform
-		icon = navy2
+		icon = ship_bleur_point
 		x = 0
 		y = 1
 
 		relative_position_id = SOV_military_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_military_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		prerequisite = { focus = SOV_military_reform }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_naval_reform"
 			navy_experience = 50
-
 		}
 
 		ai_will_do = {
@@ -5709,44 +4556,16 @@ focus_tree = {
 		relative_position_id = SOV_naval_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_naval_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {
-			has_tech = destroyer_1
-			has_tech = destroyer_2
-			has_tech = missile_destroyer_1
-			has_tech = missile_destroyer_2
-			has_tech = missile_destroyer_3
-			has_tech = missile_destroyer_4
-			has_tech = missile_destroyer_5
-			has_tech = missile_destroyer_6
-		}
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_naval_reform }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_destroyer_reform"
 			add_tech_bonus = {
-				name = destroyer_bonus
-				bonus = 0.25
-				technology = destroyer_1
-				technology = destroyer_2
-				technology = missile_destroyer_1
-				technology = missile_destroyer_2
-				technology = missile_destroyer_3
-				technology = missile_destroyer_4
-				technology = missile_destroyer_5
-				technology = missile_destroyer_6
+				name = SOV_destroyer_reform
+				bonus = 0.50
+				uses = 1
+				category = Cat_DESTROYER
 			}
 		}
 
@@ -5767,69 +4586,16 @@ focus_tree = {
 			focus = SOV_naval_reform
 			focus = SOV_air_force_reform
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {
-			has_tech = Nuclear_carrier_0
-			has_tech = Nuclear_carrier_1
-			has_tech = Nuclear_carrier_2
-			has_tech = Nuclear_carrier_3
-			has_tech = Nuclear_carrier_4
-			has_tech = Nuclear_carrier_5
-			has_tech = modern_carrier_1
-			has_tech = modern_carrier_2
-			has_tech = modern_carrier_3
-			has_tech = modern_carrier_4
-			has_tech = modern_carrier_5
-			has_tech = modern_carrier_6
-			has_tech = LHA_0
-			has_tech = LHA_1
-			has_tech = LHA_2
-			has_tech = LHA_3
-			has_tech = LHA_4
-			has_tech = LPD_0
-			has_tech = LPD_1
-			has_tech = LPD_2
-			has_tech = LPD_3
-			has_tech = LPD_4
-		}
-		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_carrier_modernization"
 			add_tech_bonus = {
-				name = carrier_expansion
-				bonus = 0.25
-				technology = Nuclear_carrier_0
-				technology = Nuclear_carrier_1
-				technology = Nuclear_carrier_2
-				technology = Nuclear_carrier_3
-				technology = Nuclear_carrier_4
-				technology = Nuclear_carrier_5
-				technology = modern_carrier_1
-				technology = modern_carrier_2
-				technology = modern_carrier_3
-				technology = modern_carrier_4
-				technology = modern_carrier_5
-				technology = modern_carrier_6
-				technology = LHA_0
-				technology = LHA_1
-				technology = LHA_2
-				technology = LHA_3
-				technology = LHA_4
-				technology = LPD_0
-				technology = LPD_1
-				technology = LPD_2
-				technology = LPD_3
-				technology = LPD_4
+				name = SOV_carrier_modernization
+				bonus = 0.50
+				uses = 2
+				category = Cat_CARRIER
 			}
 		}
 
@@ -5846,68 +4612,16 @@ focus_tree = {
 		relative_position_id = SOV_naval_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_destroyer_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {
-			has_tech = attack_submarine_1
-			has_tech = attack_submarine_2
-			has_tech = attack_submarine_3
-			has_tech = attack_submarine_4
-			has_tech = attack_submarine_5
-			has_tech = attack_submarine_6
-			has_tech = attack_submarine_7
-			has_tech = missile_submarine_1
-			has_tech = missile_submarine_2
-			has_tech = missile_submarine_3
-			has_tech = missile_submarine_5
-			has_tech = missile_submarine_6
-			has_tech = missile_submarine_7
-			has_tech = diesel_attack_submarine_1
-			has_tech = diesel_attack_submarine_2
-			has_tech = diesel_attack_submarine_3
-			has_tech = diesel_attack_submarine_4
-			has_tech = diesel_attack_submarine_5
-			has_tech = diesel_attack_submarine_6
-			has_tech = diesel_attack_submarine_7
-		}
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_destroyer_reform }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_lada_class_submarines"
 			add_tech_bonus = {
-				name = submarine_bonus
-				bonus = 0.25
-				technology = attack_submarine_1
-				technology = attack_submarine_2
-				technology = attack_submarine_3
-				technology = attack_submarine_4
-				technology = attack_submarine_5
-				technology = attack_submarine_6
-				technology = attack_submarine_7
-				technology = missile_submarine_1
-				technology = missile_submarine_2
-				technology = missile_submarine_3
-				technology = missile_submarine_5
-				technology = missile_submarine_6
-				technology = missile_submarine_7
-				technology = diesel_attack_submarine_1
-				technology = diesel_attack_submarine_2
-				technology = diesel_attack_submarine_3
-				technology = diesel_attack_submarine_4
-				technology = diesel_attack_submarine_5
-				technology = diesel_attack_submarine_6
-				technology = diesel_attack_submarine_7
+				name = SOV_lada_class_submarines
+				bonus = 0.50
+				uses = 2
+				category = Cat_SUB
 			}
 		}
 
@@ -5918,28 +4632,15 @@ focus_tree = {
 	##Air Force Reform
 	focus = {
 		id = SOV_air_force_reform
-		icon = air_force
+		icon = advan_fighters
 		x = 4
 		y = 1
 
 		relative_position_id = SOV_military_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_military_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		prerequisite = { focus = SOV_military_reform }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_air_force_reform"
 			add_timed_idea = {
@@ -5961,21 +4662,8 @@ focus_tree = {
 		relative_position_id = SOV_air_force_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_air_force_reform
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		prerequisite = { focus = SOV_air_force_reform }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ka_226"
 			air_experience = 25 #temp
@@ -5994,48 +4682,15 @@ focus_tree = {
 		relative_position_id = SOV_air_force_reform
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_ka_226
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = {
-			has_tech = AS_Fighter1
-			has_tech = AS_Fighter2
-			has_tech = AS_Fighter3
-			has_tech = AS_Fighter4
-			has_tech = AS_Fighter5
-			has_tech = AS_Fighter6
-			has_tech = AS_Fighter7
-			has_tech = AS_upgrade_1
-			has_tech = AS_upgrade_2
-			has_tech = AS_upgrade_3
-		}
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_ka_226 }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_yak_130"
 			add_tech_bonus = {
-				name = fighter_bonus
+				name = SOV_yak_130
 				bonus = 0.25
-				technology = AS_Fighter1
-				technology = AS_Fighter2
-				technology = AS_Fighter3
-				technology = AS_Fighter4
-				technology = AS_Fighter5
-				technology = AS_Fighter6
-				technology = AS_Fighter7
-				technology = AS_upgrade_1
-				technology = AS_upgrade_2
-				technology = AS_upgrade_3
+				category = Cat_AS_FIGHTER
 			}
 		}
 
@@ -6044,42 +4699,34 @@ focus_tree = {
 		}
 	}
 
-	####Economic Program
+	# Economic Program
 	focus = {
 		id = SOV_economic_programs
-		icon = industry
+		icon = organize_wreckers
 		x = 30
 		y = 1
 
 		relative_position_id = SOV_attack_chechnya
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_attack_chechnya
-		}
-		mutually_exclusive = { }
+		prerequisite = { focus = SOV_attack_chechnya }
 		available = {
 			NOT = { has_war_with = CHE }
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_RESEARCH }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_programs"
 			add_stability = 0.05
 			add_tech_bonus = {
+				name = SOV_economic_programs
 				bonus = 0.5
 				uses = 2
 				category = industry
 			}
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.04 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6096,30 +4743,32 @@ focus_tree = {
 		relative_position_id = SOV_economic_programs
 		cost = 5.0
 
-		prerequisite = {
-			focus = SOV_attack_chechnya
-		}
+		prerequisite = { focus = SOV_attack_chechnya }
 		available = {
 			owns_state = 672
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		cancel = {
+			NOT = { owns_state = 672 }
+		}
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rebuild_grozny"
-			subtract_from_variable = { treasury = 5.0 }
-			custom_effect_tooltip = 5_billion_expense_tt
+			set_temp_variable = { treasury_change = -13.50 }
+			modify_treasury_effect = yes
 			672 = { #Chechyna
 				add_building_construction = {
 					type = infrastructure
 					instant_build = yes
 					level = 1
 				}
+				add_building_construction = {
+					type = industrial_complex
+					instant_build = yes
+					level = 1
+				}
 			}
-			add_stability = 0.03
+			add_stability = 0.05
 		}
 
 		ai_will_do = {
@@ -6128,27 +4777,22 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_please_the_moscow_oligarchs
-		icon = industry_civilian
+		icon = business_man2
 		x = -3
 		y = 1
 
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_economic_programs
-		}
-
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_economic_programs }
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_please_the_moscow_oligarchs"
-			increase_oligarchs_opinion = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_oligarchs_opinion = yes
+			change_fossil_fuel_industry_opinion = yes
+			change_industrial_conglomerates_opinion = yes
 		}
 
 		ai_will_do = {
@@ -6157,27 +4801,20 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_diversify_the_economy
-		icon = construction
+		icon = breadbasket_of_the_union
 		x = -1
 		y = 1
 
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_economic_programs
-		}
-		available = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_economic_programs }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_diversify_the_economy"
-			subtract_from_variable = { treasury = 27.0 }
-			custom_effect_tooltip = 27_billion_expense_tt
+			set_temp_variable = { treasury_change = -27 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				if = {
 					limit = {
@@ -6244,18 +4881,15 @@ focus_tree = {
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_diversify_the_economy
-		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_diversify_the_economy }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expansionary_monetary_policy"
 			increase_economic_growth = yes
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.02 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6271,20 +4905,13 @@ focus_tree = {
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_economic_programs
-		}
-		available = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_economic_programs }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_decree_no_585"
-			custom_effect_tooltip = 10_billion_expense_tt
-			subtract_from_variable = { treasury = 10.0 }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				if = {
 					limit = {
@@ -6351,21 +4978,13 @@ focus_tree = {
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_decree_no_585
-		}
-		mutually_exclusive = { }
-		available = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_decree_no_585 }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_regauge_the_sakhalin_railway"
-			subtract_from_variable = { treasury = 3.5 }
-			custom_effect_tooltip = 3_5_billion_expense_tt
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
 			691 = { #Sakhalin
 				if = {
 					limit = {
@@ -6402,29 +5021,13 @@ focus_tree = {
 			focus = SOV_decree_no_585
 			focus = SOV_expansionary_monetary_policy
 		}
-		available = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_stimulus"
-			add_political_power = -100
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-			}
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-			}
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-			}
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-			}
+			one_random_industrial_complex = yes
+			one_office_construction = yes
+			increase_economic_growth = yes
 		}
 
 		ai_will_do = {
@@ -6445,15 +5048,12 @@ focus_tree = {
 			focus = SOV_please_the_moscow_oligarchs
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_federation_stabilization_fund"
 			add_stability = 0.025
-			decrease_oligarchs_opinion  = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -6462,7 +5062,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_overcome_the_1998_crisis
-		icon = industry_civilian
+		icon = radical_tax_reform
 		x = 0
 		y = 1
 
@@ -6472,10 +5072,6 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_please_the_moscow_oligarchs
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		complete_tooltip = {
 			custom_effect_tooltip = SOV_reduction_of_interest_rate_TT
@@ -6496,7 +5092,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_heavy_industry_investments
-		icon = industry3
+		icon = construction_engineering
 		x = -1
 		y = 2
 
@@ -6506,72 +5102,12 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_overcome_the_1998_crisis
 		}
-		available = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_heavy_industry_investments"
-			subtract_from_variable = { treasury = 22.5 }
-			custom_effect_tooltip = 22_5_billion_expense_tt
-			random_owned_controlled_state = {
-				if = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-
-				}
-			}
-			random_owned_controlled_state = {
-				if = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-
-				}
-			}
-			random_owned_controlled_state = {
-				if = {
-					limit = {
-						free_building_slots = {
-							building = industrial_complex
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = industrial_complex
-						level = 1
-						instant_build = yes
-					}
-
-				}
-			}
-
+			three_random_industrial_complex = yes
+			one_office_construction = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -6579,28 +5115,16 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_attract_international_investors
-		icon = consumer_goods
+		icon = Canned_Fish
 		x = 1
 		y = 2
 
 		relative_position_id = SOV_please_the_moscow_oligarchs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_overcome_the_1998_crisis
-		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
+		prerequisite = { focus = SOV_overcome_the_1998_crisis }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_attract_international_investors"
 			every_country = {
@@ -6615,6 +5139,7 @@ focus_tree = {
 				add_opinion_modifier = { target = ROOT modifier = global_trade }
 				reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
 			}
+			increase_exports = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -6623,7 +5148,7 @@ focus_tree = {
 
 	focus = {
 		id = SOV_international_oil_price_agreements
-		icon = oil_trade
+		icon = Rosneft
 		x = -3
 		y = 2
 
@@ -6634,12 +5159,7 @@ focus_tree = {
 			focus = SOV_russian_federation_stabilization_fund
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_RESOURCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_international_oil_price_agreements"
 			random_owned_controlled_state = {
@@ -6647,12 +5167,15 @@ focus_tree = {
 					has_resources_amount = {
 						resource = oil
 						amount < 10
+					}
+					has_resources_amount = {
+						resource = oil
 						amount > 1
 					}
 				}
 				add_resource = {
 					type = oil
-					amount = 5
+					amount = 15
 				}
 			}
 			random_owned_controlled_state = {
@@ -6660,16 +5183,19 @@ focus_tree = {
 					has_resources_amount = {
 						resource = oil
 						amount < 10
+					}
+					has_resources_amount = {
+						resource = oil
 						amount > 1
 					}
 				}
 				add_resource = {
 					type = oil
-					amount = 5
+					amount = 15
 				}
 			}
-			subtract_from_variable = { treasury = 10.0 }
-			custom_effect_tooltip = 10_billion_expense_tt
+			set_temp_variable = { treasury_change = -22.50 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -6703,12 +5229,7 @@ focus_tree = {
 		bypass = { }
 		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_resist_international_sanctions"
 			add_political_power = 50
@@ -6738,7 +5259,6 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_resist_international_sanctions
 		}
-		mutually_exclusive = { }
 		available = {
 			OR = {
 				has_opinion_modifier = minor_sanctions
@@ -6746,16 +5266,7 @@ focus_tree = {
 				has_opinion_modifier = sanctions
 			}
 		}
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_european_interaction_plan"
 			every_country = {
@@ -6786,18 +5297,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_resist_international_sanctions
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_appease_foreign_powers"
 			every_country = {
@@ -6817,31 +5317,24 @@ focus_tree = {
 
 	focus = {
 		id = SOV_nordstream
-		icon = oil_production
+		icon = volgograd_refineries
 		x = 3
 		y = 3
 
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_european_interaction_plan
-		}
-		available = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_european_interaction_plan }
 
 		search_filters = { FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_nordstream"
-			subtract_from_variable = { treasury = 5.0 }
-			custom_effect_tooltip = 5_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			642 = { #Kallingrad
 				add_resource = {
 					type = oil
-					amount = 3
+					amount = 16
 				}
 			}
 			if = {
@@ -6914,10 +5407,6 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_discuss_lifting_sanctions"
 			if = {
@@ -6959,30 +5448,25 @@ focus_tree = {
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_nordstream
-		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = SOV_nordstream }
 
 		search_filters = { FOCUS_FILTER_RESOURCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_south_stream"
 			668 = {
 				add_resource = {
 					type = oil
-					amount = 3
+					amount = 12
 				}
 			}
 			667 = {
 				add_resource = {
 					type = oil
-					amount = 3
+					amount = 12
 				}
 			}
+			set_temp_variable = { treasury_change = -17.00 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -7003,10 +5487,6 @@ focus_tree = {
 			focus = SOV_nordstream
 			focus = SOV_discuss_lifting_sanctions
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		completion_reward = {
@@ -7035,12 +5515,7 @@ focus_tree = {
 		available = { }
 		cancel = { }
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_intice_foreign_investment"
 			random_owned_controlled_state = {
@@ -7081,12 +5556,7 @@ focus_tree = {
 			has_war_with = CHI
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_trade_with_the_east"
 			CHI = {
@@ -7094,7 +5564,10 @@ focus_tree = {
 					target = ROOT
 					modifier = improve_trade
 				}
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 		ai_will_do = {
@@ -7125,12 +5598,7 @@ focus_tree = {
 			has_war_with = NKO
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_trade_with_nko"
 			NKO = {
@@ -7138,7 +5606,10 @@ focus_tree = {
 					target = ROOT
 					modifier = improve_trade
 				}
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 		ai_will_do = {
@@ -7167,10 +5638,6 @@ focus_tree = {
 			has_war_with = KOR
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_trade_with_sko"
@@ -7179,7 +5646,10 @@ focus_tree = {
 					target = ROOT
 					modifier = improve_trade
 				}
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 		ai_will_do = {
@@ -7200,12 +5670,7 @@ focus_tree = {
 			focus = SOV_trade_with_nko
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_trade_with_authoritarianism"
 			every_country = {
@@ -7218,7 +5683,10 @@ focus_tree = {
 					target = ROOT
 					modifier = improve_trade
 				}
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 		ai_will_do = {
@@ -7239,10 +5707,6 @@ focus_tree = {
 			focus = SOV_trade_with_sko
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_trade_with_democratic_countries"
@@ -7256,7 +5720,10 @@ focus_tree = {
 					target = ROOT
 					modifier = improve_trade
 				}
-				generic_grant_2_percent_influence_of_ROOT = yes
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 		}
 		ai_will_do = {
@@ -7278,11 +5745,6 @@ focus_tree = {
 			focus = SOV_trade_with_democratic_countries
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expansionary_trade_policy"
 			every_country = {
@@ -7326,15 +5788,12 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rise_of_the_oligarchs"
-			increase_oligarchs_opinion = yes
-			increase_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_oligarchs_opinion = yes
+			change_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -7344,7 +5803,7 @@ focus_tree = {
 
 	focus = {
 		id = SOV_state_run_capitalism
-		icon = industry_democratic
+		icon = merge_plants
 		x = -1
 		y = 4
 
@@ -7365,15 +5824,12 @@ focus_tree = {
 			}
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_state_run_capitalism"
-			decrease_oligarchs_opinion  = yes
-			decrease_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_oligarchs_opinion = yes
+			change_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -7395,18 +5851,8 @@ focus_tree = {
 			focus = SOV_rise_of_the_oligarchs
 		}
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_oligarchs_positive_tt
-				OR = {
-					has_country_flag = positive_oligarchs
-					has_country_flag = enthusiastic_oligarchs
-				}
-			}
+			oligarchs_at_least_positive_opinion = yes
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_CORRUPTION }
 		completion_reward = {
@@ -7463,36 +5909,23 @@ focus_tree = {
 		relative_position_id = SOV_economic_programs
 		cost = 10
 
-		prerequisite = {
-			focus = SOV_rise_of_the_oligarchs
-		}
+		prerequisite = { focus = SOV_rise_of_the_oligarchs }
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_oligarchs_positive_tt
-				OR = {
-					has_country_flag = positive_oligarchs
-					has_country_flag = enthusiastic_oligarchs
-				}
-			}
+			oligarchs_at_least_positive_opinion = yes
 		}
-
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_request_a_handout"
-			increase_oligarchs_opinion = yes
-			hidden_effect = {
-				add_popularity = { ideology = neutrality popularity = 0.05 }
-				add_to_variable = { party_pop_array^15 = 0.05 }
-				recalculate_party = yes
-			}
-			add_to_variable = { treasury = 20.0 }
-			custom_effect_tooltip = SOV_gain_5_rodina_support_TT
-			custom_effect_tooltip = 20_billion_revenue_tt
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
+
+			set_temp_variable = { treasury_change = 20 }
+			modify_treasury_effect = yes
+			set_temp_variable = { party_index = 15 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -7519,25 +5952,16 @@ focus_tree = {
 			focus = SOV_intice_oligarchic_investment
 		}
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_oligarchs_positive_tt
-				OR = {
-					has_country_flag = positive_oligarchs
-					has_country_flag = enthusiastic_oligarchs
-				}
-			}
+			oligarchs_at_least_positive_opinion = yes
 		}
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_deregulation"
 			add_stability = -0.05
 			add_political_power = 100
-			increase_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -7559,16 +5983,13 @@ focus_tree = {
 			focus = SOV_state_run_capitalism
 		}
 
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_regulate_the_market"
 			add_stability = 0.025
-			decrease_fossil_fuel_industry_opinion = yes
-			decrease_oligarchs_opinion  = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_fossil_fuel_industry_opinion = yes
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -7588,24 +6009,15 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_state_run_capitalism
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INTERNAL_FACTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_nationalize_foreign_industry"
-			increase_oligarchs_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
 			custom_effect_tooltip = SOV_nationalize_foreign_industry_TT
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
 			hidden_effect = {
 				random_owned_controlled_state = {
 					if = {
@@ -7680,24 +6092,15 @@ focus_tree = {
 		prerequisite = {
 			focus = SOV_regulate_the_market
 		}
-		mutually_exclusive = { }
-		available = { }
-		historical_ai = { }
-		select_effect = { }
-		bypass = { }
-		cancel = { }
-
-		cancel_if_invalid = yes
-		continue_if_invalid = yes
-		available_if_capitulated = no
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INTERNAL_FACTION }
-		complete_tooltip = { }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_root_out_the_oligarchs"
-			decrease_oligarchs_opinion  = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_oligarchs_opinion = yes
 			add_stability = 0.05
-			boost_domestic_influence_1_percent = yes
+			set_temp_variable = { percent_change = 1 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {

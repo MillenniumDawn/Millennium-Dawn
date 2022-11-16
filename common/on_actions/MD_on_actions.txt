@@ -1,59 +1,5 @@
-# monthly on_action by Yard1
+# Author(s): Angriest Bird
 on_actions = {
-	on_startup = { # on_daily is executed before on_startup
-		effect = {
-			add_to_variable = { global.next_month = 1 }
-		}
-	}
-	on_daily = {
-		effect = {
-			if = {
-				# don't touch!
-				limit = {
-					NOT = {
-						has_global_flag = on_monthly_done
-					}
-					meta_trigger = {
-						text = {
-							date > [YEAR].[MONTH].1
-						}
-						YEAR = "[?global.yyear]"
-						MONTH = "[?global.next_month]"
-					}
-				}
-				add_to_variable = { global.month = 1 }
-				add_to_variable = { global.next_month = 1 }
-				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
-				if = {
-					limit = { check_variable = { global.month > 12 } }
-					set_variable = { global.month = 1 }
-				}
-				if = {
-					limit = { check_variable = { global.next_month > 12 } }
-					set_variable = { global.next_month = 1 }
-
-					set_global_flag = { flag = on_monthly_done value = 1 days = 31 }
-				}
-				# this is done only ONCE per month, even though on_daily fires for every country
-				# will also be done on startup
-
-				# your code here
-				country_event = { id = low_stability.1 }
-				set_power_ranking_ideas_for_every_country = yes
-
-				#killrabbit stuff
-				every_country = {
-					recalculate_party = yes
-				}
-			}
-			if = {
-				limit = { NOT = { has_country_flag = has_done_intro_startup } }
-				ingame_update_setup = yes
-				set_country_flag = has_done_intro_startup
-			}
-		}
-	}
-
 	on_weekly = {
 		effect = {
 			#Update money system right before adjusting weekly value
@@ -62,36 +8,615 @@ on_actions = {
 			add_to_variable = { treasury = treasury_rate }
 			#Automated taking debt - has calculate_interest_rate at the end
 			automated_debt_taker = yes
-		}
-	}
 
-	on_weekly = {
-		effect = {
-			if = {
-				limit = {
-					has_idea = child_soldiers
+			# Force Update Influencer Map Mode
+			recalculate_influence = yes
+			force_update_map_mode = { mapmode = influence_map_mode }
+
+			# Cancel Invalid Projects
+			if = { limit = { check_variable = { active_projects > 0 } }
+				# Project loop.
+				for_each_loop = { array = project_array
+
+					if = { limit = { check_variable = { v < 0 } }
+
+						set_variable = { project_type = i }
+
+						if = {
+							limit = {
+								OR = {
+									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
+									var:v = { NOT = { investment_building_slot_available = yes } } # building slot unavailable in target state
+								}
+							}
+
+							set_variable = { project = i }
+							log = "AC Project Deletion - [GetDate] [This.GetTag] - on_weekly - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
+							end_project = yes
+						}
+					}
 				}
+
+				clear_variable = project_type
+			}
+			# If child soldier thing
+			if = { limit = { has_idea = child_soldiers }
 				add_to_variable = { child_soldiers = child_soldiers_recruitment }
 			}
-		}
-	}
-	
-	on_monthly = {
-		effect = {
+
+			# Raise/Lower Conservative Society
 			if = {
 				limit = {
 					OR = {
-						original_tag = WAA
-						original_tag = KAR
-						original_tag = SHA
-						original_tag = KAC
+						AND = {
+							has_idea = conservative_society
+							check_variable = { social_conservatism_society > 90 }
+						}
+						AND = {
+							has_idea = moderately_conservative_society
+							check_variable = { social_conservatism_society > 64 }
+						}
+						AND = {
+							has_idea = moderately_liberal_society
+							check_variable = { social_conservatism_society > 49 }
+						}
+						AND = {
+							has_idea = liberal_society
+							check_variable = { social_conservatism_society > 29 }
+						}
+						AND = {
+							has_idea = extremely_liberal_society
+							check_variable = { social_conservatism_society > 9 }
+						}
+						AND = {
+							has_idea = shia_conservative_society
+							check_variable = { social_conservatism_society > 90 }
+						}
+						AND = {
+							has_idea = shia_moderately_conservative_society
+							check_variable = { social_conservatism_society > 64 }
+						}
+						AND = {
+							has_idea = shia_moderately_liberal_society
+							check_variable = { social_conservatism_society > 49 }
+						}
+						AND = {
+							has_idea = shia_liberal_society
+							check_variable = { social_conservatism_society > 29 }
+						}
+						AND = {
+							has_idea = shia_extremely_liberal_society
+							check_variable = { social_conservatism_society > 9 }
+						}
 					}
-					has_idea = Ethnic_Insurgencies
-					has_country_flag = ceasefire
 				}
-				ROOT = { generic_grant_1_percent_influence_of_BRM = yes }
+				country_event = { id = radicalization.5 days = 1 }
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_idea = extremely_conservative_society
+							check_variable = { social_conservatism_society < 91 }
+						}
+						AND = {
+							has_idea = conservative_society
+							check_variable = { social_conservatism_society < 65 }
+						}
+						AND = {
+							has_idea = moderately_conservative_society
+							check_variable = { social_conservatism_society < 50 }
+						}
+						AND = {
+							has_idea = moderately_liberal_society
+							check_variable = { social_conservatism_society < 30 }
+						}
+						AND = {
+							has_idea = liberal_society
+							check_variable = { social_conservatism_society < 10 }
+						}
+						AND = {
+							has_idea = shia_extremely_conservative_society
+							check_variable = { social_conservatism_society < 91 }
+						}
+						AND = {
+							has_idea = shia_conservative_society
+							check_variable = { social_conservatism_society < 65 }
+						}
+						AND = {
+							has_idea = shia_moderately_conservative_society
+							check_variable = { social_conservatism_society < 50 }
+						}
+						AND = {
+							has_idea = shia_moderately_liberal_society
+							check_variable = { social_conservatism_society < 30 }
+						}
+						AND = {
+							has_idea = shia_liberal_society
+							check_variable = { social_conservatism_society < 10 }
+						}
+					}
+				}
+				country_event = { id = radicalization.6 days = 2 }
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							NOT = { has_idea = foreign_military_advisors1 }
+							check_variable = { foreign_advisors > 0 }
+							check_variable = { foreign_advisors < 6 }
+						}
+						AND = {
+							NOT = { has_idea = foreign_military_advisors2 }
+							check_variable = { foreign_advisors > 5 }
+							check_variable = { foreign_advisors < 11 }
+						}
+						AND = {
+							NOT = { has_idea = foreign_military_advisors3 }
+							check_variable = { foreign_advisors > 10 }
+						}
+						AND = {
+							OR = {
+								has_idea = foreign_military_advisors1
+								has_idea = foreign_military_advisors2
+								has_idea = foreign_military_advisors3
+							}
+							check_variable = { foreign_advisors = 0 }
+						}
+					}
+				}
+				country_event = { id = advisors.1 days = 2 }
+			}
+			if = {
+				limit = {
+					is_in_array = { global.ct_states = THIS }
+					has_country_flag = jihadist_uprising_imminent
+				}
+				country_event = { id = terror.14 }
+			}
+			if = {
+				limit = {
+					has_war = no
+				}
+				if = {
+					limit = {
+						has_idea = defence_02
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -0.35 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
+				else_if = {
+					limit = {
+						has_idea = defence_03
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -0.7 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
+				else_if = {
+					limit = {
+						has_idea = defence_04
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -1.05 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
+				else_if = {
+					limit = {
+						has_idea = defence_05
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -1.4 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
+				else_if = {
+					limit = {
+						has_idea = defence_06
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -1.75 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
+				else_if = {
+					limit = {
+						has_idea = defence_07
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -2.1 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
+				else_if = {
+					limit = {
+						has_idea = defence_08
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -2.45 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
+				else_if = {
+					limit = {
+						has_idea = defence_09
+					}
+					set_temp_variable = { peacetime_mil_spending_pp_loss = -2.8 }
+					set_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = modifier@political_power_factor }
+					add_to_temp_variable = { peacetime_mil_spending_pp_loss_multiplier = 1 }
+					multiply_temp_variable = { peacetime_mil_spending_pp_loss = peacetime_mil_spending_pp_loss_multiplier }
+					add_political_power = peacetime_mil_spending_pp_loss
+				}
 			}
 		}
 	}
 
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = ARM
+					}
+					FROM = {
+						original_tag = GEO
+					}
+				}
+				ROOT = {
+					add_ideas = ARM_GEO_religion_problem
+					add_ideas = ARM_GEO_language
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = ARM
+					}
+					FROM = {
+						original_tag = AZE
+					}
+				}
+				ROOT = {
+					add_ideas = ARM_AZE_small_people
+				}
+			}
+		}
+	}
+
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = ARM
+					}
+					FROM = {
+						original_tag = TUR
+					}
+				}
+				ROOT = {
+					add_ideas = ARM_turkish_peasants
+				}
+			}
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			# MD Custom On_Actions
+			if = { limit = { NOT = { has_global_flag = on_monthly_done } }
+				# Jan = 1, Feb = 2, March = 3, April = 4, May = 5,
+				if = { limit = { check_variable = { global.month < 12 } }
+					add_to_variable = { global.month = 1 }
+				}
+				else = {
+					set_variable = { global.month = 1 }
+				}
+
+				# National Updates:
+				set_power_ranking_ideas_for_every_country = yes
+
+				# Counter Terror System
+				if = { limit = { check_variable = { global.month = 6 } }
+					random_scope_in_array = {
+						array = global.ct_states
+						limit = {
+							is_in_array = { global.ct_states = THIS }
+							no_jihadist_government = yes
+							has_country_flag = threat_level_critical
+							NOT = {
+								OR = {
+									tag = ROJ
+									tag = KUR
+									if = {
+										limit = { country_exists = SYR }
+										tag = FSA
+									}
+									if = {
+										limit = { country_exists = YEM }
+										tag = HOU
+									}
+								}
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = SYR
+										tag = FSA
+									}
+								}
+								NOT = { country_exists = NUS }
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = HOU
+										tag = YEM
+									}
+								}
+								NOT = { country_exists = AQY }
+							}
+							if = {
+								limit = {
+									tag = IRQ
+								}
+								NOT = { country_exists = ISI }
+							}
+							if = {
+								limit = {
+									tag = SOM
+								}
+								NOT = { country_exists = SHB }
+							}
+							if = {
+								limit = {
+									tag = AFG
+								}
+								NOT = { country_exists = TAL }
+							}
+							NOT = { has_country_flag = jihadist_uprising_imminent }
+							NOT = {
+								any_home_area_neighbor_country = {
+									OR = {
+										has_country_flag = jihadist_uprising_imminent
+										has_civil_war = yes
+									}
+								}
+							}
+						}
+						country_event = { id = terror.12 random_days = 50 }
+					}
+					random_scope_in_array = {
+						array = global.ct_states
+						limit = {
+							no_jihadist_government = yes
+							has_country_flag = threat_level_critical
+							if = {
+								limit = {
+									OR = {
+										tag = SYR
+										tag = FSA
+										tag = ROJ
+									}
+								}
+								NOT = { country_exists = NUS }
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = HOU
+										tag = YEM
+									}
+								}
+								NOT = { country_exists = AQY }
+							}
+							if = {
+								limit = {
+									OR = {
+										tag = KUR
+										tag = IRQ
+									}
+								}
+								NOT = { country_exists = ISI }
+							}
+							if = {
+								limit = {
+									tag = SOM
+								}
+								NOT = { country_exists = SHB }
+							}
+							if = {
+								limit = {
+									tag = AFG
+								}
+								NOT = { country_exists = TAL }
+							}
+							has_country_flag = jihadist_uprising_imminent
+							NOT = {
+								any_home_area_neighbor_country = {
+									OR = {
+										has_country_flag = jihadist_uprising_imminent
+										has_civil_war = yes
+									}
+								}
+							}
+						}
+						country_event = { id = terror.13 random_days = 50 }
+					}
+
+				}
+
+				#killrabbit stuff
+				every_country = {
+					recalculate_party = yes
+
+					# Middle East Counter Terror
+					if = {
+						limit = {
+							any_of_scopes = {
+								array = global.middle_east_ct_states
+								no_jihadist_government = yes
+								is_top5_influencer_PREV = yes
+							}
+							NOT = { has_country_flag = middle_east_influencer }
+						}
+						set_country_flag = middle_east_influencer
+					}
+					else_if = {
+						limit = {
+							NOT = {
+								any_of = {
+									array = global.middle_east_ct_states
+									no_jihadist_government = yes
+									is_top5_influencer = yes
+								}
+							}
+							has_country_flag = middle_east_influencer
+						}
+						clr_country_flag = middle_east_influencer
+					}
+
+					# Africa Counter Terror
+					if = {
+						limit = {
+							any_of_scopes = {
+								array = global.africa_ct_states
+								no_jihadist_government = yes
+								is_top5_influencer_PREV = yes
+							}
+							NOT = { has_country_flag = africa_influencer }
+						}
+						set_country_flag = africa_influencer
+					}
+					else_if = {
+						limit = {
+							NOT = {
+								any_of_scopes = {
+									array = global.africa_ct_states
+									no_jihadist_government = yes
+									is_top5_influencer_PREV = yes
+								}
+							}
+							has_country_flag = africa_influencer
+						}
+						clr_country_flag = africa_influencer
+					}
+
+					# Asia Counter Terror
+					if = {
+						limit = {
+							any_of_scopes = {
+								array = global.asia_ct_states
+								no_jihadist_government = yes
+								is_top5_influencer_PREV = yes
+							}
+							NOT = { has_country_flag = asia_influencer }
+						}
+						set_country_flag = asia_influencer
+					}
+					else_if = {
+						limit = {
+							NOT = {
+								any_of_scopes = {
+									array = global.asia_ct_states
+									no_jihadist_government = yes
+									is_top5_influencer_PREV = yes
+								}
+							}
+							has_country_flag = asia_influencer
+						}
+						clr_country_flag = asia_influencer
+					}
+				}
+
+				# PMC Content
+				if = { limit = { check_variable = { global.month = 1 } }
+					# name - expansion - upgrade
+					# B-1-2; w-0--1;A-1-0,C-0-1,M-0--1
+					if = {
+						# B-2-3; w-0-0;A-1-0,C-1-2,M-0-0
+						limit = { check_variable = { global.year = 2003 } }
+						add_to_variable = { global.merc_capacity^0 = 2 }
+						add_to_variable = { global.merc_upgrade^0 = 1 }
+						# MD founded
+						add_to_variable = { global.merc_upgrade^4 = 1 }
+						# Constellis upgrade
+						add_to_variable = { global.merc_capacity^3 = 2 }
+						add_to_variable = { global.merc_upgrade^3 = 1 }
+						if = {
+							limit = { SOV = { is_ai = yes } }
+							# found Wagner if AI
+							set_variable = { global.merc_upgrade^1 = 1 }
+						}
+					}
+					else_if = {
+						# B-3-3; w-1-1;A-2-1,C-1-2,M-1-1
+						limit = { check_variable = { global.year = 2007 } }
+						add_to_variable = { global.merc_capacity^0 = 2 }
+
+						add_to_variable = { global.merc_capacity^2 = 2 }
+						add_to_variable = { global.merc_upgrade^2 = 1 }
+
+						add_to_variable = { global.merc_capacity^4 = 2 }
+						add_to_variable = { global.merc_upgrade^4 = 1 }
+						if = {
+							limit = { SOV = { is_ai = yes } }
+							add_to_variable = { global.merc_capacity^1 = 2 }
+							add_to_variable = { global.merc_upgrade^1 = 1 }
+						}
+					}
+					else_if = {
+						# B-3-3; w-1-1;A-2-1,C-2-3,M-2-2
+						limit = { check_variable = { global.year = 2011 } }
+						add_to_variable = { global.merc_capacity^3 = 2 }
+						add_to_variable = { global.merc_upgrade^3 = 1 }
+
+						add_to_variable = { global.merc_capacity^4 = 2 }
+						add_to_variable = { global.merc_upgrade^4 = 1 }
+					}
+					else_if = {
+						# B-3-3; w-2-2;A-3-2,C-2-3,M-3-3
+						limit = { check_variable = { global.year = 2014 } }
+						add_to_variable = { global.merc_capacity^2 = 2 }
+						add_to_variable = { global.merc_upgrade^2 = 1 }
+
+						add_to_variable = { global.merc_capacity^4 = 2 }
+						add_to_variable = { global.merc_upgrade^4 = 1 }
+						if = {
+							limit = { SOV = { is_ai = yes } }
+							add_to_variable = { global.merc_capacity^1 = 2 }
+							add_to_variable = { global.merc_upgrade^1 = 1 }
+						}
+					}
+					else_if = {
+						# B-3-3; w-3-3;A-3-3,C-3-3,M-3-3
+						limit = { check_variable = { global.year = 2017 } }
+						add_to_variable = { global.merc_capacity^3 = 2 }
+						add_to_variable = { global.merc_upgrade^2 = 1 }
+						if = {
+							limit = { SOV = { is_ai = yes } }
+							add_to_variable = { global.merc_capacity^1 = 2 }
+							add_to_variable = { global.merc_upgrade^1 = 1 }
+						}
+					}
+				}
+				# On Monthly Flag:
+				# Set this to 27 days to time out so that way February isn't missed
+				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
+				log = "[GetDateText]: [Root.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+			}
+		}
+	}
 }

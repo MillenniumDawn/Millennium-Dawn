@@ -7,7 +7,26 @@ on_actions = {
 	on_subject_free = {
 		effect = {
 			ROOT = {
-				country_event = { id = init.2 }
+				calculate_influence_percentage = yes #set alignment drifts from influence
+				startup_politics = yes
+				ingame_update_setup = yes 	#money system
+				setup_init_factions = yes 	#flags for int. factions
+				set_law_vars = yes 	#vars for change laws secondary effects
+				update_neighbors_effects = yes # Updates Neighbor Effects
+				economic_cycle_drift_popularity = yes # Actually impacts the economic cycle drifts
+				if = { limit = { is_ai = yes }
+					ai_update_build_units = yes
+				}
+
+				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+				country_event = { id = brotherhood.2 }
+				if = {
+					limit = {
+						NOT = { has_variable = domestic_influence_amount }
+					}
+					set_variable = { domestic_influence_amount = 100 }
+				}
+				recalculate_influence = yes
 			}
 		}
 	}
@@ -37,6 +56,26 @@ on_actions = {
 		effect = {
 			ROOT = {
 				effect_puppet_match_ruling_party_to_overlord = yes
+				set_temp_variable = { percent_change = 30 }
+				set_temp_variable = { tag_index = FROM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			if = {
+				limit = { FROM = { has_idea = faction_resistance_axis_member } }
+				ROOT = { add_ideas = faction_resistance_axis_member }
+			}
+		}
+	}
+
+	#ROOT = nation being liberated, FROM = leader of the liberators
+	on_liberate = {
+		effect = {
+			ROOT = {
+				set_temp_variable = { percent_change = 15 }
+				set_temp_variable = { tag_index = FROM.id }
+				set_temp_variable = { influence_target = ROOT.id }
+				change_influence_percentage = yes
 			}
 		}
 	}
@@ -52,9 +91,8 @@ on_actions = {
 					limit = {
 						NOT = { has_variable = domestic_influence_amount }
 					}
-					set_variable = { domestic_influence_amount = 45 }
+					set_variable = { domestic_influence_amount = 100 }
 				}
-				log = "[GetDateText]: [This.GetName]: init.2 completed"
 				if = {
 					limit = { FROM = { has_government = democratic } }
 					set_politics = {
@@ -155,25 +193,29 @@ on_actions = {
 					}
 					clr_country_flag = no_leader_change
 				}
-				init_investment_system = yes
+				ingame_init_investment_system = yes
 				inherit_technology = FROM
 				if = {
 					limit = {
-						check_variable = { tax_rate < 1 }
+						OR = {
+							NOT = { has_variable = corporate_tax_rate }
+							NOT = { has_variable = population_tax_rate }
+						}
 					}
 					set_variable = { var = corporate_tax_rate value = 20 }
 					set_variable = { var = population_tax_rate value = 20 }
 				}
-				add_tax_laws = yes
+
 				calculate_influence_percentage = yes #set alignment drifts from influence
 				startup_politics = yes
 				ingame_update_setup = yes 	#money system
 				setup_init_factions = yes 	#flags for int. factions
 				set_law_vars = yes 	#vars for change laws secondary effects
-				init_neighbor_drift_1 = yes #drift from neighbor
-				init_neighbor_drift_2 = yes #drift from neighbor
+				update_neighbors_effects = yes # Updates Neighbor Effects
+				economic_cycle_drift_popularity = yes #drift from neighbor
 				ai_update_build_units = yes
 				effect_puppet_match_ruling_party_to_overlord = yes #Just to ensure a correct thing
+				research_slot_init_for_country = yes
 			}
 		}
 	}
@@ -181,39 +223,39 @@ on_actions = {
 	#ROOT is free nation FROM is releaser
 	on_release_as_free = {
 		effect = {
-			if = {
-				limit = {
-					NOT = { country_exists = ROOT }
-				}
-				ROOT = {
-					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
-					country_event = { id = brotherhood.2 }
-					if = {
-						limit = {
-							NOT = { has_variable = domestic_influence_amount }
-						}
-						set_variable = { domestic_influence_amount = 45 }
+			ROOT = {
+				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+				country_event = { id = brotherhood.2 }
+				if = {
+					limit = {
+						NOT = { has_variable = domestic_influence_amount }
 					}
-					init_investment_system = yes
-					if = {
-						limit = {
-							check_variable = { tax_rate < 1 }
-						}
-						set_variable = { var = corporate_tax_rate value = 20 }
-						set_variable = { var = population_tax_rate value = 20 }
-					}
-					add_tax_laws = yes
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					startup_politics = yes
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					set_law_vars = yes 	#vars for change laws secondary effects
-					init_neighbor_drift_1 = yes #drift from neighbor
-					init_neighbor_drift_2 = yes #drift from neighbor
-					ai_update_build_units = yes
+					set_variable = { domestic_influence_amount = 100 }
 				}
+				if = {
+					limit = { NOT = { has_variable = corporate_tax_rate } }
+					set_variable = { var = corporate_tax_rate value = 20 }
+				}
+				if = {
+					limit = { NOT = { has_variable = population_tax_rate } }
+					set_variable = { var = population_tax_rate value = 20 }
+				}
+				ingame_init_investment_system = yes
+
+				calculate_influence_percentage = yes #set alignment drifts from influence
+				startup_politics = yes
+				ingame_update_setup = yes 	#money system
+				setup_init_factions = yes 	#flags for int. factions
+				set_law_vars = yes 	#vars for change laws secondary effects
+				update_neighbors_effects = yes # Updates Neighbor Effects
+				economic_cycle_drift_popularity = yes #drift from neighbor
+				ai_update_build_units = yes
 			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = ROOT.id }
+			change_influence_percentage = yes
+			research_slot_init_for_country = yes
 		}
 	}
-
 }

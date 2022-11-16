@@ -1,0 +1,105 @@
+# Author(s): Angriest Bird, Razmode
+
+init_equipment_purchasing_order_system = {
+	every_country = {
+		resize_array = { array = order_number value = 0 size = 5 } # Index starts at 0
+	}
+}
+
+# Variables:
+# order_equipment_type = equipment_selected_index
+# order_equipment_amount = amount_selected
+# order_equipment_producer = order_purchaser_tag
+# order_delivery_time = timeset
+
+start_order_construction = {
+	get_available_order_number = yes
+
+		if = { limit = { has_variable = new_order }
+
+			# Initialize the Project
+			set_variable = { order_number^new_order = 1 }
+
+			set_variable = { order_equipment_type^new_order = equipment_selected_index }
+			set_variable = { order_equipment_amount^new_order = amount_selected }
+			set_variable = { order_equipment_producer^new_order = order_purchaser_tag }
+			set_variable = { order_delivery_time^new_order = timeset }
+			set_variable = { order_delivery_price^new_order = price }
+
+			if = { limit = { check_variable = { new_order = 0 } }
+				add_to_variable	= { active_equipment_orders = 1 }
+				activate_mission = order_number_0_mission
+			}
+			else_if = { limit = { check_variable = { new_order = 1 } }
+				add_to_variable	= { active_equipment_orders = 1 }
+				activate_mission = order_number_1_mission
+			}
+			else_if = { limit = { check_variable = { new_order = 2 } }
+				add_to_variable	= { active_equipment_orders = 1 }
+				activate_mission = order_number_2_mission
+			}
+			else_if = { limit = { check_variable = { new_order = 3 } }
+				add_to_variable	= { active_equipment_orders = 1 }
+				activate_mission = order_number_3_mission
+			}
+			else_if = { limit = { check_variable = { new_order = 4 } }
+				add_to_variable	= { active_equipment_orders = 1 }
+				activate_mission = order_number_4_mission
+			}
+
+			clear_variable = new_order
+		}
+}
+
+# add_equipment_to_purchase_effect
+# Purpose: Used as a catchall for the order variables to "implement" a selected equipment type
+# set_temp_variable = { equipment_selected_index = 0 - 15 }
+# set_temp_variable = { amount_selected = +- }
+# set_temp_variable = { purchaser_tag = +- }
+add_equipment_to_purchaser_effect = {
+	add_equipment_to_stockpile = {
+		type = var:equipment_selected_index
+		amount = var:amount_selected
+		producer = var:purchaser_tag
+	}
+}
+
+get_available_order_number = {
+	for_each_loop = {
+		array = order_number
+		if = {
+			limit = { check_variable = { v = 0 } }
+
+			set_variable = { new_order = i }
+			set_temp_variable = { break = 1 }
+		}
+	}
+}
+
+#slot_0_decrease_button_active = {
+#	if = { limit = { check_variable = { slot_0_number  = slot_min_number } } }
+#	else = {
+#		subtract_from_variable = {
+#			var = slot_0_number
+#			value = slot_min_number
+#		}
+#		subtract_from_variable = {
+#			var = slot_0_price
+#			value = slot_0_price_base
+#		}
+#	}
+#}
+
+#slot_0_increase_button_active = {
+#	if = { limit = { check_variable = { slot_0_number = slot_max_number } } }
+#	else = {
+#		add_to_variable = {
+#			var = slot_0_number
+#			value = slot_min_number
+#		}
+#		add_to_variable = {
+#			var = slot_0_price
+#			value = slot_0_price_base
+#		}
+#	}
+#}

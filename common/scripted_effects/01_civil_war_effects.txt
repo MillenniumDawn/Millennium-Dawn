@@ -17,76 +17,116 @@ put_the_largest_opposition_party_in_power = {
 			set_temp_variable = { opposition_party_popularity = v }
 		}
 	}
-	
+
 	#Save current ruling data
 	set_temp_variable = { party_index = 0 }
 	set_temp_variable_to_ruling_party = yes
 	set_temp_variable = { current_ruling_popularity = party_pop_array^party_index }
-	
+
 	#Set new politics for us
 	clear_array = ruling_party
 	clear_array = gov_coalition_array
 	add_to_array = { ruling_party = opposition_party_index }
 	update_party_name = yes
 	set_coalition_drift = yes
-	update_government_coalition_strength = yes	
-	if = {
-		limit = { 
-			check_variable = { opposition_party_index < 4 }
-		}
-		set_politics = {
-			ruling_party = democratic
-			elections_allowed = yes
-		}
-	}
-	if = {
-		limit = { 
-			check_variable = { opposition_party_index > 3 } 
-			check_variable = { opposition_party_index < 10 } 
-		}
-		set_politics = {
-			ruling_party = communism
-			elections_allowed = yes
-		}
-	}
-	if = {
-		limit = { 
-			check_variable = { opposition_party_index > 9 } 
-			check_variable = { opposition_party_index < 12 } 
-		}
-		set_politics = {
-			ruling_party = fascism
-			elections_allowed = no
-		}
-	}
-	if = {
-		limit = { 
-			check_variable = { opposition_party_index > 11 } 
-			check_variable = { opposition_party_index < 20 } 
-		}
-		set_politics = {
-			ruling_party = neutrality
-			elections_allowed = yes
-		}
-	}
-	if = {
-		limit = { 
-			check_variable = { opposition_party_index > 19 } 
-		}
-		set_politics = {
-			ruling_party = nationalist
-			elections_allowed = yes
-		}
-	}
+	update_government_coalition_strength = yes
 	hidden_effect = {
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_RULING_PARTY]
-			}
-			META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-		}
+		set_ruling_leader = yes
 		set_leader = yes
 		set_variable = { current_term = 0 } #not a full term
+	}
+	if = {
+		limit = {
+			check_variable = { opposition_party_index < 4 }
+		}
+		if = {
+			limit = { has_elections = yes }
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+		else = {
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { opposition_party_index > 3 }
+			check_variable = { opposition_party_index < 10 }
+		}
+		if = {
+			limit = { has_elections = yes }
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+		}
+		else = {
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { opposition_party_index > 9 }
+			check_variable = { opposition_party_index < 12 }
+		}
+		if = {
+			limit = { has_elections = yes }
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+			}
+		}
+		else = {
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { opposition_party_index > 11 }
+			check_variable = { opposition_party_index < 20 }
+		}
+		if = {
+			limit = { has_elections = yes }
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+		else = {
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { opposition_party_index > 19 }
+		}
+		if = {
+			limit = { has_elections = yes }
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = yes
+			}
+		}
+		else = {
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = yes
+			}
+		}
 	}
 }
 
@@ -109,20 +149,20 @@ start_civil_war_against_the_strongest_opposition = {
 			set_temp_variable = { opposition_party_popularity = v }
 		}
 	}
-	
+
 	#Set size for the civil war (2xpopularity)
 	multiply_temp_variable = { opposition_party_popularity = 2 }
 	clamp_temp_variable = {
-		variable = opposition_party_popularity
+		var = opposition_party_popularity
 		min = 0
 		max = 1
 	}
 	custom_effect_tooltip = start_civil_war_against_the_strongest_opposition_tt
-	
+
 	hidden_effect = {
 		#Start the civil war
 		if = {
-			limit = { 
+			limit = {
 				check_variable = { opposition_party_index < 4 }
 			}
 			start_civil_war = {
@@ -131,9 +171,9 @@ start_civil_war_against_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { opposition_party_index > 3 } 
-				check_variable = { opposition_party_index < 10 } 
+			limit = {
+				check_variable = { opposition_party_index > 3 }
+				check_variable = { opposition_party_index < 10 }
 			}
 			start_civil_war = {
 				ideology = communism
@@ -141,9 +181,9 @@ start_civil_war_against_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { opposition_party_index > 9 } 
-				check_variable = { opposition_party_index < 12 } 
+			limit = {
+				check_variable = { opposition_party_index > 9 }
+				check_variable = { opposition_party_index < 12 }
 			}
 			start_civil_war = {
 				ideology = fascism
@@ -151,9 +191,9 @@ start_civil_war_against_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { opposition_party_index > 11 } 
-				check_variable = { opposition_party_index < 20 } 
+			limit = {
+				check_variable = { opposition_party_index > 11 }
+				check_variable = { opposition_party_index < 20 }
 			}
 			start_civil_war = {
 				ideology = neutrality
@@ -161,15 +201,15 @@ start_civil_war_against_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { opposition_party_index > 19 } 
+			limit = {
+				check_variable = { opposition_party_index > 19 }
 			}
 			start_civil_war = {
 				ideology = nationalist
 				size = opposition_party_popularity
 			}
 		}
-		
+
 		#Set the revolting side correctly
 		random_enemy_country = {
 			limit = { original_tag = ROOT }
@@ -180,39 +220,34 @@ start_civil_war_against_the_strongest_opposition = {
 			set_coalition_drift = yes
 			update_government_coalition_strength = yes
 			hidden_effect = {
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 				set_variable = { current_term = 0 } #not a full term
 			}
 		}
 	}
-	
+
 }
 
 start_civil_war_as_the_strongest_opposition = {
 
 	hidden_effect = { put_the_largest_opposition_party_in_power = yes }
-	
+
 	#Set size for the civil war (2xpopularity)
 	multiply_temp_variable = { current_ruling_popularity = 2 }
 	clamp_temp_variable = {
-		variable = current_ruling_popularity
+		var = current_ruling_popularity
 		min = 0
 		max = 1
 	}
-	
+
 	custom_effect_tooltip = start_civil_war_as_the_strongest_opposition_tt
-	
-	hidden_effect = {		
+
+	hidden_effect = {
 		#Start the civil war
 		set_country_flag = no_leader_change
 		if = {
-			limit = { 
+			limit = {
 				check_variable = { party_index < 4 }
 			}
 			start_civil_war = {
@@ -221,9 +256,9 @@ start_civil_war_as_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { party_index > 3 } 
-				check_variable = { party_index < 10 } 
+			limit = {
+				check_variable = { party_index > 3 }
+				check_variable = { party_index < 10 }
 			}
 			start_civil_war = {
 				ideology = communism
@@ -231,9 +266,9 @@ start_civil_war_as_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { party_index > 9 } 
-				check_variable = { party_index < 12 } 
+			limit = {
+				check_variable = { party_index > 9 }
+				check_variable = { party_index < 12 }
 			}
 			start_civil_war = {
 				ideology = fascism
@@ -241,9 +276,9 @@ start_civil_war_as_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { party_index > 11 } 
-				check_variable = { party_index < 20 } 
+			limit = {
+				check_variable = { party_index > 11 }
+				check_variable = { party_index < 20 }
 			}
 			start_civil_war = {
 				ideology = neutrality
@@ -251,8 +286,8 @@ start_civil_war_as_the_strongest_opposition = {
 			}
 		}
 		if = {
-			limit = { 
-				check_variable = { party_index > 19 } 
+			limit = {
+				check_variable = { party_index > 19 }
 			}
 			start_civil_war = {
 				ideology = nationalist
@@ -268,7 +303,7 @@ start_civil_war_as_the_strongest_opposition = {
 			set_coalition_drift = yes
 			update_government_coalition_strength = yes
 		}
-		clr_country_flag = no_leader_change 
+		clr_country_flag = no_leader_change
 	}
-	
+
 }

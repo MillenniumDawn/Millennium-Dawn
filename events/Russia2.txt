@@ -55,10 +55,9 @@ country_event = {
 #Kursk Submarine Disaster
 country_event = {
 	id = russia.1
-	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.1" }
 	title = russia.1.t
 	desc = russia.1.d
-	picture = GFX_generic_submarine
+	picture = GFX_submarine
 	fire_only_once = yes
 	trigger = {
 		tag = SOV
@@ -69,9 +68,7 @@ country_event = {
 	immediate = {
 		set_country_flag = sov_kursk_sinking
 	}
-	mean_time_to_happen = {
-		days = 45
-	}
+	is_triggered_only = yes
 
 	option = {	#Horrible!
 		name = russia.1.o1
@@ -79,12 +76,11 @@ country_event = {
 		navy_experience = 2
 		add_stability = -0.02
 		add_political_power = -10
-		hidden_effect = {
-			add_popularity = { ideology = communism popularity = -0.05 }
-			subtract_from_variable = { party_pop_array^6 = 0.05 }
-			recalculate_party = yes
-		}
-		custom_effect_tooltip = SOV_lose_5_united_russia_support_TT
+		set_temp_variable = { party_index = 6 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
 		news_event = {
 			hours = 6
 			id = russia_news.50
@@ -184,6 +180,18 @@ country_event = {
 		effect_tooltip = {
 			add_opinion_modifier = { target = BLR modifier = betrayed_our_cause }
 		}
+		if = {
+			limit = { BLR = { NOT = { is_subject_of = SOV } } }
+				every_state = { limit = { is_controlled_by = BLR }
+					SOV =  { add_state_core = PREV }
+				}
+			SOV = {
+				create_wargoal = {
+					target = BLR
+					type = annex_everything
+				}
+			}
+		}
 	}
 }
 
@@ -238,7 +246,10 @@ country_event = {
 			}
 		}
 		add_political_power = -100
-		generic_grant_2_percent_influence_of_SOV = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = SOV.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 	}
 }
 
@@ -259,7 +270,10 @@ country_event = {
 		navy_experience = 10
 		air_experience = 10
 		SOV = { give_guarantee = ROOT }
-		generic_grant_5_percent_influence_of_SOV = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 		SOV = { country_event = { id = diplomatic_response.1 days = 1 } }
 		ai_chance = {
 			factor = 50
@@ -490,7 +504,7 @@ country_event = {
 			SOV = {
 				create_wargoal = {
 					target = BLR
-					type = annex_everything
+					type = take_state_focus
 				}
 			}
 		}
@@ -525,7 +539,7 @@ country_event = {
 	picture = GFX_southern_options
 	immediate = { log = "[GetDateText]: [Root.GetName]: event russia.11" }
 	is_triggered_only = yes
-	fire_only_once = yes
+	#fire_only_once = yes
 
 	##Accept the Integration
 	option = {
@@ -533,29 +547,29 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: russia.11.o1 executed"
 		if = {
 			limit = { tag = ABK }
+			SOV = { set_country_flag = ABK_accepts_annexation }
 			effect_tooltip = {
 				ABK = {
 					every_unit_leader = {
 						set_nationality = SOV
 					}
 				}
-				annex_country = { target = ABK transfer_troops = yes }
-				SOV = { set_country_flag = ABK_accepts_annexation }
+				SOV = { annex_country = { target = ABK transfer_troops = yes } }
 			}
 		}
 		if = {
 			limit = { tag = SOO }
+			SOV = { set_country_flag = SOO_accepts_annexation }
 			effect_tooltip = {
 				SOO = {
 					every_unit_leader = {
 						set_nationality = SOV
 					}
 				}
-				annex_country = { target = SOO transfer_troops = yes }
-				SOV = { set_country_flag = SOO_accepts_annexation }
+				SOV = { annex_country = { target = SOO transfer_troops = yes }}
 			}
 		}
-		SOV = { country_event = { id = russia.12 days = 3 } }
+		SOV = { country_event = { id = russia.12 days = 1 } }
 		ai_chance = {
 			factor = 50
 			modifier = {
@@ -610,25 +624,25 @@ country_event = {
 	id = russia.12
 	title = {
 		trigger = {
-			has_country_flag = ABK_accepts_annexation
+			SOV = { has_country_flag = ABK_accepts_annexation }
 		}
 		text = russia.12.t1
 	}
 	title = {
 		trigger = {
-			has_country_flag = SOO_accepts_annexation
+			SOV = { has_country_flag = SOO_accepts_annexation }
 		}
 		text = russia.12.t2
 	}
 	desc = {
 		trigger = {
-			has_country_flag = ABK_accepts_annexation
+			SOV = { has_country_flag = ABK_accepts_annexation }
 		}
 		text = russia.12.d1
 	}
 	desc = {
 		trigger = {
-			has_country_flag = SOO_accepts_annexation
+			SOV = { has_country_flag = SOO_accepts_annexation }
 		}
 		text = russia.12.d2
 	}
@@ -640,7 +654,7 @@ country_event = {
 		name = russia.12.o1
 		log = "[GetDateText]: [This.GetName]: russia.12.o1 executed"
 		if = {
-			limit = { has_country_flag = ABK_accepts_annexation }
+			limit = { SOV = { has_country_flag = ABK_accepts_annexation } }
 			ABK = {
 				if = {
 					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
@@ -652,10 +666,10 @@ country_event = {
 					set_nationality = SOV
 				}
 			}
-			annex_country = { target = ABK transfer_troops = yes }
+			SOV = { annex_country = { target = ABK transfer_troops = yes }}
 		}
 		if = {
-			limit = { has_country_flag = SOO_accepts_annexation }
+			limit = { SOV = { has_country_flag = SOO_accepts_annexation } }
 			SOO = {
 				if = {
 					limit = { any_owned_state = { NOT = { is_core_of = SOV } } }
@@ -667,7 +681,8 @@ country_event = {
 					set_nationality = SOV
 				}
 			}
-			annex_country = { target = SOO transfer_troops = yes }
+			SOV = { annex_country = { target = SOO transfer_troops = yes }}
+			clr_country_flag = SOO_accepts_annexation
 		}
 	}
 }
@@ -749,11 +764,15 @@ country_event = {
 			}
 			add_extra_state_shared_building_slots = 1
 		}
-		generic_grant_5_percent_influence_of_SOV = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 		SOV = {
-			custom_effect_tooltip = 10_billion_expense_tt
-			add_to_variable = { int_investments = 10.0 }
-			subtract_from_variable = { treasury = 10.0 }
+			set_temp_variable = { int_investment_change = 10 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 			country_event = { id = diplomatic_response.1 days = 1 }
 		}
 		ai_chance = {
@@ -775,10 +794,13 @@ country_event = {
 
 	#Refuse
 	option = {
-		name = russia.14.o1
+		name = russia.14.o2
 		log = "[GetDateText]: [This.GetName]: russia.14.o2 executed"
 
-		generic_lower_2_percent_influence_of_SOV = yes
+		set_temp_variable = { percent_change = -5 }
+		set_temp_variable = { tag_index = SOV.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 		add_opinion_modifier = { target = SOV modifier = diplomatic_distance }
 		reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_distance }
 		SOV = { country_event = { id = diplomatic_response.2 days = 1 } }
@@ -838,65 +860,39 @@ country_event = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
 				ruling_party = communism
 				elections_allowed = yes
 			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = { party_pop_array^6 = 0.075 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 		else_if = {
 			limit = { is_in_array = { ruling_party = 6 } }
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = { party_pop_array^6 = 0.075 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 		ai_chance = {
 			base = 10
 			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PUTIN
+				OR = {
+					has_global_flag = SOV_PUTIN_PATH
+					is_historical_focus_on = yes
 				}
-				factor = 2
+				factor = 10
 			}
 			modifier = {
-				is_historical_focus_on = yes
-				factor = 2
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PEACEFUL_REFORM
-				}
-				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = RISE_OF_RUSSIA
-				}
-				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = THE_RED_MENACE
+				OR = {
+					has_global_flag = SOV_RISE_OF_RUSSIA_PATH
+					has_global_flag = SOV_THE_RED_MENACE_PATH
+					has_global_flag = SOV_PEACEFUL_REFORM_PATH
 				}
 				factor = 0
 			}
@@ -905,7 +901,6 @@ country_event = {
 	#Zhirinovsky
 	option = {
 		name = election_SOV.1.o2
-
 		log = "[GetDateText]: [This.GetName]: election_SOV.1.o2 executed"
 		complete_national_focus = SOV_zhirinovsky
 		news_event = russia_news.2
@@ -918,65 +913,37 @@ country_event = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
 				ruling_party = nationalist
 				elections_allowed = yes
 			}
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.075
-			}
-			add_to_variable = { party_pop_array^20 = 0.075 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 		else_if = {
 			limit = { is_in_array = { ruling_party = 20 } }
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.075
-			}
-			add_to_variable = { party_pop_array^20 = 0.075 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 		ai_chance = {
 			base = 10
 			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PUTIN
-				}
-				factor = 0
-			}
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PEACEFUL_REFORM
-				}
-				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = RISE_OF_RUSSIA
-				}
+				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				factor = 10
 			}
 			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = THE_RED_MENACE
+				OR = {
+					has_global_flag = SOV_PUTIN_PATH
+					has_global_flag = SOV_THE_RED_MENACE_PATH
+					has_global_flag = SOV_PEACEFUL_REFORM_PATH
+					is_historical_focus_on = yes
 				}
 				factor = 0
 			}
@@ -985,7 +952,6 @@ country_event = {
 
 	option = { #Zyuganov
 		name = election_SOV.1.o3
-
 		log = "[GetDateText]: [This.GetName]: election_SOV.1.o3 executed"
 		complete_national_focus = SOV_zyuganov
 		news_event = russia_news.3
@@ -998,67 +964,39 @@ country_event = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
 				ruling_party = communism
 				elections_allowed = yes
 			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = { party_pop_array^4 = 0.15 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 		else_if = {
 			limit = { is_in_array = { ruling_party = 4 } }
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = { party_pop_array^4 = 0.15 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 		ai_chance = {
 			base = 10
 			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PUTIN
-				}
-				factor = 0
-			}
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PEACEFUL_REFORM
-				}
-				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = RISE_OF_RUSSIA
-				}
+				has_global_flag = SOV_THE_RED_MENACE_PATH
 				factor = 10
 			}
 			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = THE_RED_MENACE
-				}
 				factor = 0
+				OR = {
+					has_global_flag = SOV_PUTIN_PATH
+					has_global_flag = SOV_RISE_OF_RUSSIA_PATH
+					has_global_flag = SOV_PEACEFUL_REFORM_PATH
+					is_historical_focus_on = yes
+				}
 			}
 		}
 	}
@@ -1078,67 +1016,39 @@ country_event = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
 				ruling_party = democratic
 				elections_allowed = yes
 			}
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.15
-			}
-			add_to_variable = { party_pop_array^2 = 0.15 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			add_relative_party_popularity = yes
 		}
 		else_if = {
 			limit = { is_in_array = { ruling_party = 2 } }
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.15
-			}
-			add_to_variable = { party_pop_array^2 = 0.15 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			add_relative_party_popularity = yes
 		}
 		ai_chance = {
 			base = 10
 			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PUTIN
-				}
-				factor = 0
-			}
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = PEACEFUL_REFORM
-				}
+				has_global_flag = SOV_PEACEFUL_REFORM_PATH
 				factor = 10
 			}
 			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = RISE_OF_RUSSIA
-				}
 				factor = 0
-			}
-			modifier = {
-				has_game_rule = {
-					rule = RUS_ai_behavior
-					option = THE_RED_MENACE
+				OR = {
+					has_global_flag = SOV_PUTIN_PATH
+					has_global_flag = SOV_RISE_OF_RUSSIA_PATH
+					has_global_flag = SOV_THE_RED_MENACE_PATH
+					is_historical_focus_on = yes
 				}
-				factor = 0
 			}
 		}
 	}

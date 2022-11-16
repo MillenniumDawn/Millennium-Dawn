@@ -1,4 +1,4 @@
-### Other generic politics decisions at the bottom of the file ###
+ ### Other generic politics decisions at the bottom of the file ###
 coalition_decisions = {
 	###Decisions countdown ###
 	#activate_decision
@@ -11,7 +11,7 @@ coalition_decisions = {
 			OR = {
 				custom_trigger_tooltip = {
 					tooltip = has_formed_coalition_TT
-					check_variable = { government_coalition_strength_elect > majority_threshold }
+					check_variable = { var = government_coalition_strength_elect value = majority_threshold compare = greater_than_or_equals }
 				}
 				has_elections = no
 			}
@@ -31,9 +31,16 @@ coalition_decisions = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout coalition_countdown"
-			add_political_power = -300
+			if = {
+				limit = {
+					has_country_leader_with_trait = western_technocrat
+				}
+				country_event = { id = MD4_election_campaign.0 }
+			}
+			clr_country_flag = coalition_reshuffling
 			if = {
 				limit = { is_ai = no }
+				add_political_power = -300
 				add_to_variable = { current_term = 1 }
 				if = {
 					limit = {
@@ -41,12 +48,7 @@ coalition_decisions = {
 						check_variable = { current_term > term_limit }
 					}
 					hidden_effect = {
-						meta_effect = {
-							text = {
-								set_country_flag = [META_SET_RULING_PARTY]
-							}
-							META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-						}
+						set_ruling_leader = yes
 						set_leader = yes
 					}
 				}
@@ -258,7 +260,14 @@ coalition_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision coalition_countdown"
+			clr_country_flag = coalition_reshuffling
 			clr_country_flag = coalition_forming
+			if = {
+				limit = {
+					tag = ITA
+				}
+				add_political_power = 150
+			}
 		}
 	}
 
@@ -288,14 +297,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^0 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_zero = yes
 					}
 					#won't join coalition if:
 					is_in_array = { gov_coalition_array = 4 } #emerging communist
@@ -389,69 +391,65 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 1 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 1 }
-						NOT = { TAG = GER }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^1 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 1 }
 						}
-					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 4 } #emerging communist
-						is_in_array = { gov_coalition_array = 5 } #left-wing radical
-						is_in_array = { gov_coalition_array = 8 } #mod shiite islamist
-						is_in_array = { gov_coalition_array = 9 } #shiite islamist
-						is_in_array = { gov_coalition_array = 11 } #jihadist
-						is_in_array = { gov_coalition_array = 19 } #neutral communist
-						is_in_array = { gov_coalition_array = 21 } #fascist
-						is_in_array = { ruling_party = 4 } #emerging communist
-						is_in_array = { ruling_party = 5 } #left-wing radical
-						is_in_array = { ruling_party = 8 } #mod shiite islamist
-						is_in_array = { ruling_party = 9 } #shiite islamist
-						is_in_array = { ruling_party = 11 } #jihadist
-						is_in_array = { ruling_party = 19 } #neutral communist
-						is_in_array = { ruling_party = 21 } #fascist
-					#}
-					#won't join social democrats if both are strong
-					custom_trigger_tooltip = {
-						tooltip = mutual_socialism_20_tt
-						AND = {
-							OR = {
-								is_in_array = { gov_coalition_array = 3 } #social democrats
-								is_in_array = { ruling_party = 3 } #social democrats
-							}
-							check_variable = { party_pop_elect_array^3 > 0.2 } #social democrats
-							check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 1 }
 							NOT = { TAG = GER }
 						}
-					}
-					custom_trigger_tooltip = {
-						tooltip = mutual_neutral_Social_20_tt
-						#won't join democratic socialists if both are strong
-						AND = {
-							OR = {
-								is_in_array = { gov_coalition_array = 18 } #social democrats
-								is_in_array = { ruling_party = 18 } #social democrats
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_one = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 4 } #emerging communist
+							is_in_array = { gov_coalition_array = 5 } #left-wing radical
+							is_in_array = { gov_coalition_array = 8 } #mod shiite islamist
+							is_in_array = { gov_coalition_array = 9 } #shiite islamist
+							is_in_array = { gov_coalition_array = 11 } #jihadist
+							is_in_array = { gov_coalition_array = 19 } #neutral communist
+							is_in_array = { gov_coalition_array = 21 } #fascist
+							is_in_array = { ruling_party = 4 } #emerging communist
+							is_in_array = { ruling_party = 5 } #left-wing radical
+							is_in_array = { ruling_party = 8 } #mod shiite islamist
+							is_in_array = { ruling_party = 9 } #shiite islamist
+							is_in_array = { ruling_party = 11 } #jihadist
+							is_in_array = { ruling_party = 19 } #neutral communist
+							is_in_array = { ruling_party = 21 } #fascist
+						#}
+						#won't join social democrats if both are strong
+						custom_trigger_tooltip = {
+							tooltip = mutual_socialism_20_tt
+							AND = {
+								OR = {
+									is_in_array = { gov_coalition_array = 3 } #social democrats
+									is_in_array = { ruling_party = 3 } #social democrats
+								}
+								check_variable = { party_pop_elect_array^3 > 0.2 } #social democrats
+								check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+								NOT = { TAG = GER }
 							}
-							check_variable = { party_pop_elect_array^18 > 0.2 } #social democrats
-							check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+						}
+						custom_trigger_tooltip = {
+							tooltip = mutual_neutral_Social_20_tt
+							#won't join democratic socialists if both are strong
+							AND = {
+								OR = {
+									is_in_array = { gov_coalition_array = 18 } #social democrats
+									is_in_array = { ruling_party = 18 } #social democrats
+								}
+								check_variable = { party_pop_elect_array^18 > 0.2 } #social democrats
+								check_variable = { party_pop_elect_array^1 > 0.2 } #western conservative
+							}
 						}
 					}
 				}
@@ -532,98 +530,94 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 2 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 2 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^2 > [META_RULING_PARTY_PERCENTAGE]
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 2 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 2 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_two = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 4 } #Communist-State
+							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
+							is_in_array = { gov_coalition_array = 6 } #Autocracy
+							is_in_array = { gov_coalition_array = 7 } #Conservative (reactionary)
+							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							#won't join coalition if:
+							is_in_array = { ruling_party = 4 } #Communist-State
+							is_in_array = { ruling_party = 5 } #anarchist_communism
+							is_in_array = { ruling_party = 6 } #Autocracy
+							is_in_array = { ruling_party = 7 } #Conservative (reactionary)
+							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 19 } #Neutral_Communism
+							is_in_array = { ruling_party = 21 } #Nat_Fascism
+							is_in_array = { ruling_party = 22 } #Nat_Autocracy
+							is_in_array = { ruling_party = 23 } #Monarchist
+						#}
+						custom_trigger_tooltip = {
+							tooltip = mutual_conservatism_25_tt
+							#won't join conservatives if both are strong
+							AND = {
+								OR = {
+									is_in_array = { gov_coalition_array = 1 } #conservatives
+									is_in_array = { ruling_party = 1 } #conservatives
 								}
+								check_variable = { party_pop_elect_array^1 > 0.25 } #conservatives
+								check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
 							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
 						}
-					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 6 } #Autocracy
-						is_in_array = { gov_coalition_array = 7 } #Conservative (reactionary)
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
-						#won't join coalition if:
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 6 } #Autocracy
-						is_in_array = { ruling_party = 7 } #Conservative (reactionary)
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
-					custom_trigger_tooltip = {
-						tooltip = mutual_conservatism_25_tt
-						#won't join conservatives if both are strong
-						AND = {
-							OR = {
-								is_in_array = { gov_coalition_array = 1 } #conservatives
-								is_in_array = { ruling_party = 1 } #conservatives
+						custom_trigger_tooltip = {
+							tooltip = mutual_socialism_25_tt
+							#won't join social democrats if both are strong
+							AND = {
+								NOT = { TAG = USA }
+								OR = {
+									is_in_array = { gov_coalition_array = 3 } #social democrats
+									is_in_array = { ruling_party = 3 } #social democrats
+								}
+								check_variable = { party_pop_elect_array^3 > 0.25 } #social democrats
+								check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
 							}
-							check_variable = { party_pop_elect_array^1 > 0.25 } #conservatives
-							check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
 						}
-					}
-					custom_trigger_tooltip = {
-						tooltip = mutual_socialism_25_tt
-						#won't join social democrats if both are strong
-						AND = {
-							NOT = { TAG = USA }
-							OR = {
-								is_in_array = { gov_coalition_array = 3 } #social democrats
-								is_in_array = { ruling_party = 3 } #social democrats
+						custom_trigger_tooltip = {
+							tooltip = USA_dems_reps_tt
+							#USA - Democrats (liberalism) and Republicans can't team up unless one is insignificant
+							AND = {
+								TAG = USA
+								OR = {
+									is_in_array = { gov_coalition_array = 1 } #conservatives
+									is_in_array = { ruling_party = 1 } #conservatives
+								}
+								check_variable = { party_pop_elect_array^1 > 0.05 } #conservatives
+								check_variable = { party_pop_elect_array^2 > 0.05 } #liberalism
 							}
-							check_variable = { party_pop_elect_array^3 > 0.25 } #social democrats
-							check_variable = { party_pop_elect_array^2 > 0.25 } #liberalism
-						}
-					}
-					custom_trigger_tooltip = {
-						tooltip = USA_dems_reps_tt
-						#USA - Democrats (liberalism) and Republicans can't team up unless one is insignificant
-						AND = {
-							TAG = USA
-							OR = {
-								is_in_array = { gov_coalition_array = 1 } #conservatives
-								is_in_array = { ruling_party = 1 } #conservatives
-							}
-							check_variable = { party_pop_elect_array^1 > 0.05 } #conservatives
-							check_variable = { party_pop_elect_array^2 > 0.05 } #liberalism
-						}
-						AND = {
-							TAG = USA
-							OR = {
-								is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-								is_in_array = { ruling_party = 14 } #Neutral_conservatism
+							AND = {
+								TAG = USA
+								OR = {
+									is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
+									is_in_array = { ruling_party = 14 } #Neutral_conservatism
+								}
 							}
 						}
 					}
@@ -702,30 +696,23 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 3 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 3 }
-						NOT = { TAG = GER }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^3 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 3 }
 						}
-					}
-					#hidden_trigger = {
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 3 }
+							NOT = { TAG = GER }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							bigger_than_ruling_elect_three = yes
+						}
 						#won't join coalition if:
 						is_in_array = { gov_coalition_array = 6 } #Autocracy
 						is_in_array = { gov_coalition_array = 7 } #Conservative (reactionary)
@@ -733,8 +720,13 @@ coalition_decisions = {
 						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
 						is_in_array = { gov_coalition_array = 10 } #Kingdom
 						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 14 } #
-						is_in_array = { gov_coalition_array = 16 } #
+						AND = {
+							NOT = {
+								tag = ITA
+							}
+							is_in_array = { gov_coalition_array = 14 } #neutral conservatives
+						}
+						is_in_array = { gov_coalition_array = 16 } #libertarians
 						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
 						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
 						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
@@ -746,34 +738,39 @@ coalition_decisions = {
 						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
 						is_in_array = { ruling_party = 10 } #Kingdom
 						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 14 } #
-						is_in_array = { ruling_party = 16 } #
+						AND = {
+							NOT = {
+								tag = ITA
+							}
+							is_in_array = { ruling_party = 14 } #neutral conservatives
+						}
+						is_in_array = { ruling_party = 16 } #libertarians
 						is_in_array = { ruling_party = 20 } #Nat_Populism
 						is_in_array = { ruling_party = 21 } #Nat_Fascism
 						is_in_array = { ruling_party = 22 } #Nat_Autocracy
 						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
-					#won't join conservatives if both are strong
-					custom_trigger_tooltip = {
-						tooltip = mutual_conservatism_20_tt
-						AND = {
-							OR = {
-								is_in_array = { gov_coalition_array = 1 } #conservatives
-								is_in_array = { ruling_party = 1 } #conservatives
+						#won't join conservatives if both are strong
+						custom_trigger_tooltip = {
+							tooltip = mutual_conservatism_20_tt
+							AND = {
+								OR = {
+									is_in_array = { gov_coalition_array = 1 } #conservatives
+									is_in_array = { ruling_party = 1 } #conservatives
+								}
+								check_variable = { party_pop_elect_array^1 > 0.2 } #conservatives
+								check_variable = { party_pop_elect_array^3 > 0.2 } #socialism
+								NOT = { TAG = GER }
 							}
-							check_variable = { party_pop_elect_array^1 > 0.2 } #conservatives
-							check_variable = { party_pop_elect_array^3 > 0.2 } #socialism
-							NOT = { TAG = GER }
 						}
-					}
-					#USA - Democrats and Republicans can't team up at all
-					custom_trigger_tooltip = {
-						tooltip = USA_dems_reps_tt
-						AND = {
-							TAG = USA
-							OR = {
-								is_in_array = { gov_coalition_array = 1 } #conservatives
-								is_in_array = { ruling_party = 1 } #conservatives
+						#USA - Democrats and Republicans can't team up at all
+						custom_trigger_tooltip = {
+							tooltip = USA_dems_reps_tt
+							AND = {
+								tag = USA
+								OR = {
+									is_in_array = { gov_coalition_array = 1 } #conservatives
+									is_in_array = { ruling_party = 1 } #conservatives
+								}
 							}
 						}
 					}
@@ -853,61 +850,55 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 4 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 4 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^4 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 4 }
 						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 4 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							bigger_than_ruling_elect_four = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
+							is_in_array = { gov_coalition_array = 1 } #conservatism
+							is_in_array = { gov_coalition_array = 2 } #liberalism
+							is_in_array = { gov_coalition_array = 6 } #Conservative (reactionary)
+							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
+							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
+							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
+							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							#won't join coalition if:
+							is_in_array = { ruling_party = 0 } #Western_Autocracy
+							is_in_array = { ruling_party = 1 } #conservatism
+							is_in_array = { ruling_party = 2 } #liberalism
+							is_in_array = { ruling_party = 6 } #Conservative (reactionary)
+							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { ruling_party = 14 } #Neutral_conservatism
+							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
+							is_in_array = { ruling_party = 20 } #Nat_Populism
+							is_in_array = { ruling_party = 21 } #Nat_Fascism
+							is_in_array = { ruling_party = 23 } #Monarchist
+						#}
 					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 6 } #Conservative (reactionary)
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
-						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 6 } #Conservative (reactionary)
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 14 } #Neutral_conservatism
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
 				}
 			}
 		}
@@ -940,8 +931,6 @@ coalition_decisions = {
 	}
 	Communist-State_remove = {
 		icon = decision
-		available = {
-		}
 		visible = { is_in_array = { gov_coalition_array = 4 } }
 
 		cost = 0
@@ -987,61 +976,56 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 5 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 5 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^5 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 5 }
 						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 5 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_five = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
+							is_in_array = { gov_coalition_array = 1 } #conservatism
+							is_in_array = { gov_coalition_array = 2 } #liberalism
+							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
+							is_in_array = { gov_coalition_array = 15 } #oligarchism
+							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
+							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
+							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							#won't join coalition if:
+							is_in_array = { ruling_party = 0 } #Western_Autocracy
+							is_in_array = { ruling_party = 1 } #conservatism
+							is_in_array = { ruling_party = 2 } #liberalism
+							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 14 } #Neutral_conservatism
+							is_in_array = { ruling_party = 15 } #oligarchism
+							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
+							is_in_array = { ruling_party = 20 } #Nat_Populism
+							is_in_array = { ruling_party = 21 } #Nat_Fascism
+							is_in_array = { ruling_party = 22 } #Nat_Autocracy
+							is_in_array = { ruling_party = 23 } #Monarchist
+						#}
 					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-						is_in_array = { gov_coalition_array = 15 } #oligarchism
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
-						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 14 } #Neutral_conservatism
-						is_in_array = { ruling_party = 15 } #oligarchism
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
 				}
 			}
 		}
@@ -1121,55 +1105,58 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 6 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 6 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^6 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 6 }
 						}
-					}
-					#hidden_trigger = {
-						#won't join coalition if:
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 6 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_six = yes
+						}
+					#won't join coalition if:
 						is_in_array = { gov_coalition_array = 1 } #conservatism
 						is_in_array = { gov_coalition_array = 2 } #liberalism
 						is_in_array = { gov_coalition_array = 3 } #socialism
 						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
+						AND = {
+							NOT = {
+								tag = ITA
+							}
+							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
+						}
 						is_in_array = { gov_coalition_array = 10 } #Kingdom
 						is_in_array = { gov_coalition_array = 11 } #Caliphate
 						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
 						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
 						is_in_array = { gov_coalition_array = 18 } #neutral_Social
 						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						#won't join coalition if:
+					#won't join coalition if:
 						is_in_array = { ruling_party = 1 } #conservatism
 						is_in_array = { ruling_party = 2 } #liberalism
 						is_in_array = { ruling_party = 3 } #socialism
 						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
+						AND = {
+							NOT = {
+								tag = ITA
+							}
+							is_in_array = { ruling_party = 5 } #anarchist_communism
+						}
 						is_in_array = { ruling_party = 10 } #Kingdom
 						is_in_array = { ruling_party = 11 } #Caliphate
 						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
 						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
 						is_in_array = { ruling_party = 18 } #neutral_Social
 						is_in_array = { ruling_party = 19 } #Neutral_Communism
-					#}
+					}
 				}
 			}
 		}
@@ -1263,14 +1250,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^7 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_seven = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -1386,14 +1366,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^8 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_eight = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -1514,14 +1487,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^9 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_nine = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -1644,14 +1610,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^10 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_ten = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -1775,14 +1734,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^11 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_eleven = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -1915,14 +1867,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^12 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_twelve = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -2049,14 +1994,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^13 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_thirteen = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -2161,32 +2099,29 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 14 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 14 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^14 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 14 }
 						}
-					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 3 } #socialist
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 14 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_fourteen = yes
+						}
+						AND = {
+							NOT = {
+								tag = ITA
+							}
+							is_in_array = { gov_coalition_array = 3 } #socialist
+						}
 						is_in_array = { gov_coalition_array = 4 } #Communist-State
 						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
 						is_in_array = { gov_coalition_array = 10 } #Kingdom
@@ -2196,7 +2131,12 @@ coalition_decisions = {
 						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
 						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
 						#won't join coalition if:
-						is_in_array = { ruling_party = 3 } #socialist
+						AND = {
+							NOT = {
+								tag = ITA
+							}
+							is_in_array = { ruling_party = 3 } #socialist
+						}
 						is_in_array = { ruling_party = 4 } #Communist-State
 						is_in_array = { ruling_party = 5 } #anarchist_communism
 						is_in_array = { ruling_party = 10 } #Kingdom
@@ -2205,7 +2145,7 @@ coalition_decisions = {
 						is_in_array = { ruling_party = 19 } #Neutral_Communism
 						is_in_array = { ruling_party = 21 } #Nat_Fascism
 						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-					#}
+					}
 				}
 			}
 		}
@@ -2299,14 +2239,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^15 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_fifteen = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -2407,67 +2340,62 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 16 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 16 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^16 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 16 }
 						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 16 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_sixteen = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
+							is_in_array = { gov_coalition_array = 3 } #socialism
+							is_in_array = { gov_coalition_array = 4 } #Communist-State
+							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
+							is_in_array = { gov_coalition_array = 7 } #Autocracy
+							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
+							is_in_array = { gov_coalition_array = 15 } #oligarchism
+							is_in_array = { gov_coalition_array = 18 } #neutral_Social
+							is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							#won't join coalition if:
+							is_in_array = { ruling_party = 0 } #Western_Autocracy
+							is_in_array = { ruling_party = 3 } #socialism
+							is_in_array = { ruling_party = 4 } #Communist-State
+							is_in_array = { ruling_party = 5 } #anarchist_communism
+							is_in_array = { ruling_party = 7 } #Autocracy
+							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
+							is_in_array = { ruling_party = 15 } #oligarchism
+							is_in_array = { ruling_party = 18 } #neutral_Social
+							is_in_array = { ruling_party = 19 } #Neutral_Communism
+							is_in_array = { ruling_party = 21 } #Nat_Fascism
+							is_in_array = { ruling_party = 22 } #Nat_Autocracy
+							is_in_array = { ruling_party = 23 } #Monarchist
+						#}
 					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 7 } #Autocracy
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-						is_in_array = { gov_coalition_array = 15 } #oligarchism
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
-						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 7 } #Autocracy
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-						is_in_array = { ruling_party = 15 } #oligarchism
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
 				}
 			}
 		}
@@ -2547,57 +2475,52 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 17 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 17 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^17 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 17 }
 						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 17 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_seventeen = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
+							is_in_array = { gov_coalition_array = 6 } #Conservative
+							is_in_array = { gov_coalition_array = 7 } #Autocracy
+							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
+							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
+							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							#won't join coalition if:
+							is_in_array = { ruling_party = 0 } #Western_Autocracy
+							is_in_array = { ruling_party = 6 } #Conservative
+							is_in_array = { ruling_party = 7 } #Autocracy
+							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
+							is_in_array = { ruling_party = 20 } #Nat_Populism
+							is_in_array = { ruling_party = 21 } #Nat_Fascism
+							is_in_array = { ruling_party = 22 } #Nat_Autocracy
+							is_in_array = { ruling_party = 23 } #Monarchist
+						#}
 					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 6 } #Conservative
-						is_in_array = { gov_coalition_array = 7 } #Autocracy
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
-						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 6 } #Conservative
-						is_in_array = { ruling_party = 7 } #Autocracy
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
 				}
 			}
 		}
@@ -2677,60 +2600,56 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 18 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 18 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^18 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 18 }
 						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 18 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_eighteen = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
+							is_in_array = { gov_coalition_array = 1 } #conservatism
+							is_in_array = { gov_coalition_array = 2 } #liberalism
+							is_in_array = { gov_coalition_array = 6 } #Conservative
+							is_in_array = { gov_coalition_array = 7 } #Autocracy
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
+							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
+							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
+							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
+							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+							is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
+							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							#won't join coalition if:
+							is_in_array = { ruling_party = 0 } #Western_Autocracy
+							is_in_array = { ruling_party = 1 } #conservatism
+							is_in_array = { ruling_party = 2 } #liberalism
+							is_in_array = { ruling_party = 6 } #Conservative
+							is_in_array = { ruling_party = 7 } #Autocracy
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
+							is_in_array = { ruling_party = 14 } #Neutral_conservatism
+							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
+							is_in_array = { ruling_party = 20 } #Nat_Populism
+							is_in_array = { ruling_party = 21 } #Nat_Fascism
+							is_in_array = { ruling_party = 22 } #Nat_Autocracy
+							is_in_array = { ruling_party = 23 } #Monarchist
+						#}
 					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 6 } #Conservative
-						is_in_array = { gov_coalition_array = 7 } #Autocracy
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-						is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 22 } #Nat_Autocracy
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
-						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 6 } #Conservative
-						is_in_array = { ruling_party = 7 } #Autocracy
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-						is_in_array = { ruling_party = 14 } #Neutral_conservatism
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 22 } #Nat_Autocracy
-						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
 				}
 			}
 		}
@@ -2810,67 +2729,62 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 19 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 19 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^19 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 19 }
 						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 19 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_nineteen = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
+							is_in_array = { gov_coalition_array = 1 } #conservatism
+							is_in_array = { gov_coalition_array = 2 } #liberalism
+							is_in_array = { gov_coalition_array = 6 } #Conservative
+							is_in_array = { gov_coalition_array = 7 } #Autocracy
+							is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
+							is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
+							is_in_array = { gov_coalition_array = 15 } #oligarchism
+							is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
+							is_in_array = { gov_coalition_array = 20 } #Nat_Populism
+							is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
+							is_in_array = { gov_coalition_array = 23 } #Monarchist
+							#won't join coalition if:
+							is_in_array = { ruling_party = 0 } #Western_Autocracy
+							is_in_array = { ruling_party = 1 } #conservatism
+							is_in_array = { ruling_party = 2 } #liberalism
+							is_in_array = { ruling_party = 6 } #Conservative
+							is_in_array = { ruling_party = 7 } #Autocracy
+							is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
+							is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { ruling_party = 13 } #Neutral_Autocracy
+							is_in_array = { ruling_party = 14 } #Neutral_conservatism
+							is_in_array = { ruling_party = 15 } #oligarchism
+							is_in_array = { ruling_party = 16 } #Neutral_Libertarian
+							is_in_array = { ruling_party = 20 } #Nat_Populism
+							is_in_array = { ruling_party = 21 } #Nat_Fascism
+							is_in_array = { ruling_party = 23 } #Monarchist
+						#}
 					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 0 } #Western_Autocracy
-						is_in_array = { gov_coalition_array = 1 } #conservatism
-						is_in_array = { gov_coalition_array = 2 } #liberalism
-						is_in_array = { gov_coalition_array = 6 } #Conservative
-						is_in_array = { gov_coalition_array = 7 } #Autocracy
-						is_in_array = { gov_coalition_array = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 9 } #Vilayat_e_Faqih
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 13 } #Neutral_Autocracy
-						is_in_array = { gov_coalition_array = 14 } #Neutral_conservatism
-						is_in_array = { gov_coalition_array = 15 } #oligarchism
-						is_in_array = { gov_coalition_array = 16 } #Neutral_Libertarian
-						is_in_array = { gov_coalition_array = 20 } #Nat_Populism
-						is_in_array = { gov_coalition_array = 21 } #Nat_Fascism
-						is_in_array = { gov_coalition_array = 23 } #Monarchist
-						#won't join coalition if:
-						is_in_array = { ruling_party = 0 } #Western_Autocracy
-						is_in_array = { ruling_party = 1 } #conservatism
-						is_in_array = { ruling_party = 2 } #liberalism
-						is_in_array = { ruling_party = 6 } #Conservative
-						is_in_array = { ruling_party = 7 } #Autocracy
-						is_in_array = { ruling_party = 8 } #Mod_Vilayat_e_Faqih
-						is_in_array = { ruling_party = 9 } #Vilayat_e_Faqih
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 13 } #Neutral_Autocracy
-						is_in_array = { ruling_party = 14 } #Neutral_conservatism
-						is_in_array = { ruling_party = 15 } #oligarchism
-						is_in_array = { ruling_party = 16 } #Neutral_Libertarian
-						is_in_array = { ruling_party = 20 } #Nat_Populism
-						is_in_array = { ruling_party = 21 } #Nat_Fascism
-						is_in_array = { ruling_party = 23 } #Monarchist
-					#}
 				}
 			}
 		}
@@ -2950,51 +2864,46 @@ coalition_decisions = {
 			}
 		}
 		available = {
-			NOT = {
-				OR = {
-
-					custom_trigger_tooltip = {
-						tooltip = is_biggest_party
-						check_variable = { max_index_1 = 20 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = is_second_biggest_party
-						check_variable = { max_index_2 = 20 }
-					}
-					custom_trigger_tooltip = {
-						tooltip = bigger_than_ruling_tt
-						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^20 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				NOT = {
+					OR = {
+						custom_trigger_tooltip = {
+							tooltip = is_biggest_party
+							check_variable = { max_index_1 = 20 }
 						}
+						custom_trigger_tooltip = {
+							tooltip = is_second_biggest_party
+							check_variable = { max_index_2 = 20 }
+						}
+						custom_trigger_tooltip = {
+							tooltip = bigger_than_ruling_tt
+							#is bigger than ruling party
+							bigger_than_ruling_elect_twenty = yes
+						}
+						#hidden_trigger = {
+							#won't join coalition if:
+							is_in_array = { gov_coalition_array = 3 } #socialism
+							is_in_array = { gov_coalition_array = 4 } #Communist-State
+							is_in_array = { gov_coalition_array = 5 } #anarchist_communism
+							is_in_array = { gov_coalition_array = 10 } #Kingdom
+							is_in_array = { gov_coalition_array = 11 } #Caliphate
+							is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { gov_coalition_array = 17 } #Neutral_green
+							is_in_array = { gov_coalition_array = 18 } #neutral_Social
+							is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
+							#won't join coalition if:
+							is_in_array = { ruling_party = 3 } #socialism
+							is_in_array = { ruling_party = 4 } #Communist-State
+							is_in_array = { ruling_party = 5 } #anarchist_communism
+							is_in_array = { ruling_party = 10 } #Kingdom
+							is_in_array = { ruling_party = 11 } #Caliphate
+							is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
+							is_in_array = { ruling_party = 17 } #Neutral_green
+							is_in_array = { ruling_party = 18 } #neutral_Social
+							is_in_array = { ruling_party = 19 } #Neutral_Communism
+						#}
 					}
-					#hidden_trigger = {
-						#won't join coalition if:
-						is_in_array = { gov_coalition_array = 3 } #socialism
-						is_in_array = { gov_coalition_array = 4 } #Communist-State
-						is_in_array = { gov_coalition_array = 5 } #anarchist_communism
-						is_in_array = { gov_coalition_array = 10 } #Kingdom
-						is_in_array = { gov_coalition_array = 11 } #Caliphate
-						is_in_array = { gov_coalition_array = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { gov_coalition_array = 17 } #Neutral_green
-						is_in_array = { gov_coalition_array = 18 } #neutral_Social
-						is_in_array = { gov_coalition_array = 19 } #Neutral_Communism
-						#won't join coalition if:
-						is_in_array = { ruling_party = 3 } #socialism
-						is_in_array = { ruling_party = 4 } #Communist-State
-						is_in_array = { ruling_party = 5 } #anarchist_communism
-						is_in_array = { ruling_party = 10 } #Kingdom
-						is_in_array = { ruling_party = 11 } #Caliphate
-						is_in_array = { ruling_party = 12 } #Neutral_Muslim_Brotherhood
-						is_in_array = { ruling_party = 17 } #Neutral_green
-						is_in_array = { ruling_party = 18 } #neutral_Social
-						is_in_array = { ruling_party = 19 } #Neutral_Communism
-					#}
 				}
 			}
 		}
@@ -3088,14 +2997,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^21 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_twenty_one = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -3225,14 +3127,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^22 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_twenty_two = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -3352,14 +3247,7 @@ coalition_decisions = {
 					custom_trigger_tooltip = {
 						tooltip = bigger_than_ruling_tt
 						#is bigger than ruling party
-						meta_trigger = {
-							text = {
-								check_variable = {
-									party_pop_elect_array^23 > [META_RULING_PARTY_PERCENTAGE]
-								}
-							}
-							META_RULING_PARTY_PERCENTAGE = "[meta_ruling_elect_percentage]"
-						}
+						bigger_than_ruling_elect_twenty_three = yes
 					}
 					#hidden_trigger = {
 						#won't join coalition if:
@@ -3459,14 +3347,15 @@ coalition_decisions = {
 
 		visible = {
 			NOT = {
+				has_country_leader_with_trait = western_technocrat
+				has_country_flag = coalition_reshuffling
 				OR = {
-					check_variable = { government_coalition_strength_elect > majority_threshold }
+					check_variable = { var = government_coalition_strength_elect value = majority_threshold compare = greater_than_or_equals }
 					is_in_array = { ruling_party = max_index_1 }
 				}
 			}
 		}
 		available = {
-
 		}
 
 		cost = 0
@@ -3477,12 +3366,7 @@ coalition_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision give_up_coalition_0"
-			meta_effect = {
-				text = {
-					set_country_flag = [META_SET_PARTY1]
-				}
-				META_SET_PARTY1 = "[meta_set_ideology1]"
-			}
+			set_max_index_1 = yes
 			country_event = { id = coalition_pass.0 }
 		}
 	}
@@ -3491,14 +3375,15 @@ coalition_decisions = {
 
 		visible = {
 			NOT = {
+				has_country_leader_with_trait = western_technocrat
+				has_country_flag = coalition_reshuffling
 				OR = {
-					check_variable = { government_coalition_strength_elect > majority_threshold }
+					check_variable = { var = government_coalition_strength_elect value = majority_threshold compare = greater_than_or_equals }
 					is_in_array = { ruling_party = max_index_2 }
 				}
 			}
 		}
 		available = {
-
 		}
 
 		cost = 0
@@ -3509,12 +3394,7 @@ coalition_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision give_up_coalition_1"
-			meta_effect = {
-				text = {
-					set_country_flag = [META_SET_PARTY2]
-				}
-				META_SET_PARTY2 = "[meta_set_ideology2]"
-			}
+			set_max_index_2 = yes
 			country_event = { id = coalition_pass.1 }
 		}
 	}

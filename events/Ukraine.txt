@@ -1,12 +1,12 @@
-﻿add_namespace = ukraine_md
+# Author(s): Birdy
+# Last Modified March 1st, 2022
+add_namespace = ukraine_md
 add_namespace = ukraine_news
 add_namespace = ukraine_hidden
 add_namespace = ukraine_debates
 add_namespace = ukraine_revolution
 
-#Author: Birdy
 ### Constitutional referendum
-
 news_event = {
 	id = ukraine_news.1
 	title = {
@@ -27,6 +27,10 @@ news_event = {
 	}
 	picture = GFX_ukrainian_referendum
 	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_news.1.a
@@ -34,15 +38,17 @@ news_event = {
 	}
 }
 
-### Referendum results implementation (news)
-
+# Referendum results implementation (news)
 news_event = {
 	id = ukraine_news.2
 	title = ukraine_news.2.t
 	desc = ukraine_news.2.d
 	picture = GFX_verkhovna_rada
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_news.2.a
@@ -51,27 +57,28 @@ news_event = {
 	}
 }
 
-####Ukraine Debates - Peoples Referendum
-
-#(debates 1)
+# Ukraine Debates - Peoples Referendum
+# (debates 1)
 country_event = {
 	id = ukraine_debates.1
 	title = ukraine_debates.1.t
 	desc = ukraine_debates.1.d
 	picture = GFX_negotiations
 	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_debates.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_debates.1.a executed"
-		set_country_flag = debates.1.agree
+		add_to_variable = { debates_agree = 1 }
 
 		add_political_power = -25
 
-		add_timed_idea = {
-			idea = UKR_political_support
-			days = 180
-		}
+		add_timed_idea = { idea = UKR_political_support days = 180 }
 
 		custom_effect_tooltip = debates_agree_tt
 
@@ -79,19 +86,26 @@ country_event = {
 
 		ai_chance = {
 			factor = 15
+			modifier = {
+				factor = 2.0
+				has_government = neutrality
+			}
 		}
 	}
 
 	option = {
 		name = ukraine_debates.1.b
 		log = "[GetDateText]: [This.GetName]: ukraine_debates.1.b executed"
-		set_country_flag = debates.1.disagree
-
 		custom_effect_tooltip = debates_disagree_tt
 
 		country_event = { id = ukraine_debates.2 days = 23 }
+
 		ai_chance = {
-			factor = 5
+			factor = 2
+			modifier = {
+				factor = 0.5
+				has_government = communism
+			}
 		}
 	}
 }
@@ -103,19 +117,20 @@ country_event = {
 	desc = ukraine_debates.2.d
 	picture = GFX_negotiations
 	is_triggered_only = yes
-
+	fire_only_once = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_debates.2.a
 		log = "[GetDateText]: [This.GetName]: ukraine_debates.2.a executed"
-		set_country_flag = debates.2.agree
+		add_to_variable = { debates_agree = 1 }
 
 		add_political_power = -50
 
-		add_timed_idea = {
-			idea = UKR_neglect_of_state_interests
-			days = 180
-		}
+		add_timed_idea = { idea = UKR_neglect_of_state_interests days = 180 }
 
 		custom_effect_tooltip = debates_agree_tt
 
@@ -128,7 +143,6 @@ country_event = {
 	option = {
 		name = ukraine_debates.2.b
 		log = "[GetDateText]: [This.GetName]: ukraine_debates.2.b executed"
-		set_country_flag = debates.2.disagree
 
 		custom_effect_tooltip = debates_disagree_tt
 
@@ -145,25 +159,24 @@ country_event = {
 	title = ukraine_debates.3.t
 	desc = ukraine_debates.3.d
 	picture = GFX_negotiations
-
 	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_debates.3.a
 		log = "[GetDateText]: [This.GetName]: ukraine_debates.3.a executed"
-		set_country_flag = debates.3.agree
+		add_to_variable = { debates_agree = 1 }
 
 		add_political_power = -75
 
-		add_timed_idea = {
-			idea = UKR_eco_factories
-			days = 180
-		}
+		add_timed_idea = { idea = UKR_eco_factories days = 180 }
 		news_event = ukraine_news.3
 		custom_effect_tooltip = debates_agree_tt
-		hidden_effect = {
-			country_event = { id = ukraine_hidden.1 days = 1 }
-		}
+
 		ai_chance = {
 			factor = 15
 		}
@@ -172,100 +185,41 @@ country_event = {
 	option = {
 		name = ukraine_debates.3.b
 		log = "[GetDateText]: [This.GetName]: ukraine_debates.3.b executed"
-		set_country_flag = debates.3.disagree
+
 		news_event = ukraine_news.3
 		custom_effect_tooltip = debates_disagree_tt
-		hidden_effect = {
-			country_event = { id = ukraine_hidden.1 days = 1 }
-		}
 		ai_chance = {
 			factor = 5
 		}
 	}
 }
 
-### Votes
+# Count the Votes
 news_event = {
 	id = ukraine_news.3
 	title = ukraine_news.3.t
 	desc = ukraine_news.3.d
 	picture = GFX_verkhovna_rada
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_news.3.a
 		log = "[GetDateText]: [This.GetName]: ukraine_news.3.a executed"
+		hidden_effect = {
+			if = { limit = { check_variable = { debates_agree > 1 } }
+				UKR = { country_event = { id = ukraine_md.1 days = 3 } }
+			}
+			else = {
+				UKR = { country_event = { id = ukraine_md.2 days = 3 } }
+			}
+		}
 	}
 }
 
-#(debates 4) Final result (hidden)
-country_event = {
-	id = ukraine_hidden.1
-	is_triggered_only = yes
-	hidden = yes
-	option = {
-		name = ukraine_hidden.1.a # < 2/3 agree
-		log = "[GetDateText]: [This.GetName]: ukraine_hidden.1.a executed"
-		trigger = {
-			OR = {
-				AND = {
-					has_country_flag = debates.1.agree
-					has_country_flag = debates.2.agree
-				}
-				AND = {
-					has_country_flag = debates.1.agree
-					has_country_flag = debates.3.agree
-				}
-				AND = {
-					has_country_flag = debates.2.agree
-					has_country_flag = debates.3.agree
-				}
-			}
-		}
-
-		UKR = { country_event = { id = ukraine_md.1 days = 3 } }
-
-		clr_country_flag = debates.1.agree
-		clr_country_flag = debates.2.agree
-		clr_country_flag = debates.3.agree
-		##Failsafe to ensure proper thingies
-		clr_country_flag = debates.1.disagree
-		clr_country_flag = debates.2.disagree
-		clr_country_flag = debates.3.disagree
-	}
-
-	option = {
-		name = ukraine_hidden.1.b # < 2/3 disagree
-		log = "[GetDateText]: [This.GetName]: ukraine_hidden.1.b executed"
-		trigger = {
-			OR = {
-				AND = {
-					has_country_flag = debates.1.disagree
-					has_country_flag = debates.2.disagree
-				}
-				AND = {
-					has_country_flag = debates.1.disagree
-					has_country_flag = debates.3.disagree
-				}
-				AND = {
-					has_country_flag = debates.2.disagree
-					has_country_flag = debates.3.disagree
-				}
-			}
-		}
-
-		UKR = { country_event = { id = ukraine_md.2 days = 3 } }
-
-		clr_country_flag = debates.1.agree
-		clr_country_flag = debates.2.agree
-		clr_country_flag = debates.3.agree
-		##Failsafe to ensure proper thingies
-		clr_country_flag = debates.1.disagree
-		clr_country_flag = debates.2.disagree
-		clr_country_flag = debates.3.disagree
-	}
-}
 
 ### Law pass
 country_event = {
@@ -273,8 +227,11 @@ country_event = {
 	title = ukraine_md.1.t
 	desc = ukraine_md.1.d
 	picture = GFX_verkhovna_rada_vote
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_md.1.a
@@ -290,19 +247,22 @@ country_event = {
 	title = ukraine_md.2.t
 	desc = ukraine_md.2.d
 	picture = GFX_treaty_rejected
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_md.2.a
 		log = "[GetDateText]: [This.GetName]: ukraine_md.2.a executed"
-		add_stability = -0.10
 		set_country_flag = UKR_failed_referendum
+		add_stability = -0.10
 		news_event = ukraine_news.1
 	}
 }
 
-### Deal with Gongadze
+# Deal with Gongadze
 country_event = {
 	id = ukraine_md.3
 	title = ukraine_md.3.t
@@ -310,7 +270,8 @@ country_event = {
 	picture = GFX_georgiy_gongadze
 	is_triggered_only = yes
 	trigger = {
-		tag = UKR
+		original_tag = UKR
+		date < 2016.1.1
 	}
 
 	option = {
@@ -332,29 +293,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukraine_md.3.b executed"
 		country_event = { id = ukraine_md.4 days = 90 }
 		ai_chance = {
-			factor = 15
+			factor = 5
 			modifier = {
 				is_historical_focus_on = no
 				add = 10
 			}
 		}
-	}
-}
-
-### Cassette Scandal (lead to 2001's protests)
-country_event = {
-	id = ukraine_md.6
-	title = ukraine_md.6.t
-	desc = ukraine_md.6.d
-	picture = GFX_treaty_rejected
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_md.6.a
-		log = "[GetDateText]: [This.GetName]: ukraine_md.6.a executed"
-		add_ideas = UKR_ukraine_without_kuchma
-		set_country_flag = UKR_cassette_scandal
-		news_event = { id = ukraine_news.5 days = 28 }
 	}
 }
 
@@ -365,30 +309,84 @@ country_event = {
 	desc = ukraine_md.4.d
 	picture = GFX_verkhovna_rada_vote
 	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_md.4.a
 		log = "[GetDateText]: [This.GetName]: ukraine_md.4.a executed"
-		add_political_power = -25
+		add_political_power = -50
 		add_timed_idea = { idea = UKR_anti_gov_news days = 365 }
 	}
 }
 
-### Ukraine without Kuchma (2001's protests)
+
+# Cassette Scandal (lead to 2001's protests)
+country_event = {
+	id = ukraine_md.6
+	title = ukraine_md.6.t
+	desc = ukraine_md.6.d
+	picture = GFX_treaty_rejected
+	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
+
+	option = {
+		name = ukraine_md.6.a
+		log = "[GetDateText]: [This.GetName]: ukraine_md.6.a executed"
+		# set_country_flag = UKR_cassette_scandal
+		news_event = { id = ukraine_news.5 days = 28 }
+	}
+}
+
+# Ukraine without Kuchma (2001's protests)
 news_event = {
 	id = ukraine_news.5
 	title = ukraine_news.5.t
 	desc = ukraine_news.5.d
-	picture = GFX_news_ukraine_without_kuchma
+	picture = GFX_ukraine_without_kuchma
 	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		date < 2016.1.1
+	}
 
 	option = {
 		name = ukraine_news.5.a
 		log = "[GetDateText]: [This.GetName]: ukraine_news.5.a executed"
+
+		add_ideas = UKR_ukraine_without_kuchma
+
+		country_event = { id = ukraine_md.17 days = 60 random_days = 10 }
 	}
 }
 
-###Supporters in the Government
+# 2001 Protests Cooldown
+country_event = {
+	id = ukraine_md.17
+	title = ukraine_md.17.t
+	desc = ukraine_md.17.d
+	picture = GFX_ukraine_without_kuchma
+	is_triggered_only = yes
+	trigger = {
+		original_tag = UKR
+		has_idea = UKR_ukraine_without_kuchma
+		date < 2016.1.1
+	}
+
+	option = {
+		name = ukraine_md.17.a
+		log = "[GetDateText]: [This.GetName]: ukraine_md.17.a executed"
+
+		remove_ideas = UKR_ukraine_without_kuchma
+	}
+}
+
+# Supporters in the Government
 country_event = {
 	id = ukraine_md.5
 	title = ukraine_md.5.t
@@ -407,7 +405,7 @@ country_event = {
 				OR = {
 					has_completed_focus = UKR_western_doctrine
 					has_completed_focus = UKR_own_union_theory
-					has_completed_focus = UKR_guam_reogranization
+					has_completed_focus = UKR_guam_reorganization
 					has_completed_focus = UKR_baltic_black_sea_union
 					has_completed_focus = UKR_nato_membership_action_plan
 					has_completed_focus = UKR_consolidation
@@ -428,81 +426,20 @@ country_event = {
 				add = 10
 			}
 			modifier = {
-				has_completed_focus = UKR_aplly_to_join_csto
+				has_completed_focus = UKR_apply_to_join_csto
 				add = 20
 			}
-		}
-	}
-}
-
-country_event = { ##Ukraine Trying to Join the CSTO!
-	id = ukraine_md.7
-	title = ukraine_md.7.t
-	desc = ukraine_md.7.d
-	picture = GFX_join_the_csto
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_md.7.a
-		log = "[GetDateText]: [This.GetName]: ukraine_md.7.a executed"
-		SOV = { give_guarantee = UKR }
-		UKR = {
-			country_event = diplomatic_response.1
-			give_guarantee = SOV
-		}
-		news_event = ukraine_news.6
-
-		ai_chance = {
-			factor = 15
-		}
-	}
-	option = {
-		name = ukraine_md.7.b
-		log = "[GetDateText]: [This.GetName]: ukraine_md.7.b executed"
-		UKR = { country_event = diplomatic_response.2 }
-
-		ai_chance = {
-			factor = 5
-
-		}
-	}
-}
-
-news_event = { ##Ukraine Joins the CSTO
-	id = ukraine_news.6
-	title = ukraine_news.6.t
-	desc = ukraine_news.6.d
-	picture = GFX_news_csto
-
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_news.6.a
-		log = "[GetDateText]: [This.GetName]: ukraine_news.6.a executed"
-		trigger = {
-			original_tag = UKR
-		}
-	}
-	option = {
-		name = ukraine_news.6.b
-		log = "[GetDateText]: [This.GetName]: ukraine_news.6.b executed"
-		trigger = {
-			original_tag = SOV
-		}
-	}
-	option = {
-		name = ukraine_news.6.c
-		log = "[GetDateText]: [This.GetName]: ukraine_news.6.c executed"
-		trigger = {
-			NOT = {
-				original_tag = UKR
-				original_tag = SOV
+			# Ukraine shouldn't go pro-Russian
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
 			}
 		}
 	}
 }
 
-country_event = { #Request European Investments from the Majors
+# Request European Investments from the Majors
+country_event = {
 	id = ukraine_md.8
 	title = ukraine_md.8.t
 	desc = ukraine_md.8.d
@@ -514,9 +451,12 @@ country_event = { #Request European Investments from the Majors
 		name = ukraine_md.8.a
 		log = "[GetDateText]: [This.GetName]: ukraine_md.8.a executed"
 		UKR = {
-			generic_grant_2_percent_influence_of_ROOT = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
 			random_list = {
-				60 = {
+				50 = {
 					random_owned_state = {
 						add_building_construction = {
 							type = industrial_complex
@@ -535,25 +475,37 @@ country_event = { #Request European Investments from the Majors
 						}
 					}
 				}
+				10 = {
+					random_owned_state = {
+						add_building_construction = {
+							type = offices
+							level = 1
+							instant_build = yes
+						}
+						add_extra_state_shared_building_slots = 1
+					}
+				}
 			}
 		}
 		UKR = { country_event = diplomatic_response.1 }
 		ai_chance = {
-			base = 25
+			base = 20
 		}
 	}
 
 	option = {
 		name = ukraine_md.8.b
 		log = "[GetDateText]: [This.GetName]: ukraine_md.8.b executed"
-		UKR = { country_event = diplomatic_response.2
+		UKR = {
+			country_event = diplomatic_response.2
 			add_opinion_modifier = {
 				target = ROOT
 				modifier = loan_denied
 			}
 		}
+
 		ai_chance = {
-			base = 10
+			base = 5
 		}
 	}
 }
@@ -562,7 +514,7 @@ country_event = { ###Ukraine Aligns with the EU
 	id = ukraine_md.9
 	title = ukraine_md.9.t
 	desc = ukraine_md.9.d
-	picture = GFX_eu
+	picture = GFX_UKR_generic # TODO: Create a EU specific event picture file
 
 	is_triggered_only = yes
 
@@ -590,7 +542,8 @@ country_event = { ###Ukraine Aligns with the EU
 	}
 }
 
-country_event = { #Open Conversation about a baltic black sea alliance
+# Open Conversation about a Baltic Black Sea Alliance
+country_event = {
 	id = ukraine_md.10
 	title = ukraine_md.10.t
 	desc = ukraine_md.10.d
@@ -604,32 +557,28 @@ country_event = { #Open Conversation about a baltic black sea alliance
 		set_country_flag = supported_the_baltic_black_sea_union
 		add_to_array = { global.baltic_black_sea_union_member = ROOT }
 		UKR = { country_event = diplomatic_response.1 }
+
 		ai_chance = {
 			base = 40
+
 			modifier = {
 				add = 40
-				has_government = communism
-				UKR = { has_government = communism }
-			}
-			modifier = {
-				add = 40
-				has_government = democratic
-				UKR = { has_government = democratic }
-			}
-			modifier = {
-				add = 40
-				has_government = neutrality
-				UKR = { has_government = neutrality }
-			}
-			modifier = {
-				add = 30
-				has_government = democratic
-				UKR = { has_government = neutrality }
-			}
-			modifier = {
-				add = 30
-				has_government = neutrality
-				UKR = { has_government = democratic }
+				if = { limit = { has_government = communism }
+					has_government = communism
+					UKR = { has_government = communism }
+				}
+				else_if = { limit = { has_government = neutrality }
+					has_government = neutrality
+					UKR = { has_government = neutrality }
+				}
+				else_if = { limit = { has_government = democratic }
+					has_government = democratic
+					UKR = { has_government = neutrality }
+				}
+				else_if = { limit = { has_government = neutrality }
+					has_government = neutrality
+					UKR = { has_government = democratic }
+				}
 			}
 		}
 	}
@@ -638,7 +587,7 @@ country_event = { #Open Conversation about a baltic black sea alliance
 	option = {
 		name = ukraine_md.10.b
 		log = "[GetDateText]: [This.GetName]: ukraine_md.10.b executed"
-		set_country_flag = did_not_support_the_balatic_black_sea_union
+		set_country_flag = did_not_support_the_baltic_black_sea_union
 		UKR = { country_event = diplomatic_response.2 }
 		ai_chance = {
 			base = 10
@@ -670,7 +619,8 @@ country_event = { #Open Conversation about a baltic black sea alliance
 	}
 }
 
-country_event = { #Invited Country to the Alliance
+# Invited Country to the Alliance
+country_event = {
 	id = ukraine_md.11
 	title = ukraine_md.11.t
 	desc = ukraine_md.11.d
@@ -681,24 +631,27 @@ country_event = { #Invited Country to the Alliance
 	option = {
 		name = ukraine_md.11.a
 		log = "[GetDateText]: [This.GetName]: ukraine_md.11.a executed"
-		UKR = { add_to_faction = ROOT }
-		UKR = { country_event = diplomatic_response.1 }
 		if = {
 			limit = { has_idea = NATO_member }
-			remove_ideas = NATO_member
+			NATO_leave = yes
 		}
-		add_ai_strategy = { type = befriend id = "UKR" value = 200 }
-		add_ai_strategy = { type = alliance id = "UKR" value = 200 }
+		if = {
+			limit = { is_in_faction = yes NOT = { original_tag = UKR } }
+			leave_faction = yes
+		}
+		add_ideas = faction_baltic_black_sea_union_member
+		UKR = { add_to_faction = ROOT }
+		UKR = { country_event = diplomatic_response.1 }
 		hidden_effect = {
 			if = {
 				limit = {
 					OR = {
 						has_country_flag = supported_the_baltic_black_sea_union
-						has_country_flag = did_not_support_the_balatic_black_sea_union
+						has_country_flag = did_not_support_the_baltic_black_sea_union
 					}
 				}
 				clr_country_flag = supported_the_baltic_black_sea_union
-				clr_country_flag = did_not_support_the_balatic_black_sea_union
+				clr_country_flag = did_not_support_the_baltic_black_sea_union
 			}
 		}
 		ai_chance = {
@@ -714,11 +667,11 @@ country_event = { #Invited Country to the Alliance
 				limit = {
 					OR = {
 						has_country_flag = supported_the_baltic_black_sea_union
-						has_country_flag = did_not_support_the_balatic_black_sea_union
+						has_country_flag = did_not_support_the_baltic_black_sea_union
 					}
 				}
 				clr_country_flag = supported_the_baltic_black_sea_union
-				clr_country_flag = did_not_support_the_balatic_black_sea_union
+				clr_country_flag = did_not_support_the_baltic_black_sea_union
 			}
 		}
 		ai_chance = {
@@ -734,7 +687,8 @@ country_event = { #Invited Country to the Alliance
 	}
 }
 
-country_event = { ###Kharkiv Pact
+# Kharkiv Pact
+country_event = {
 	id = ukraine_md.12
 	title = ukraine_md.12.t
 	desc = ukraine_md.12.d
@@ -778,6 +732,64 @@ country_event = { ###Kharkiv Pact
 	}
 }
 
+# Servant of the People Forms
+# Meme Ukraine Event -- 5% chance to fire on any given start of 2017
+country_event = {
+	id = ukraine_md.13
+	title = ukraine_md.13.t
+	desc = ukraine_md.13.d
+	picture = GFX_UKR_meme
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = UKR
+		date > 2016.1.1
+	}
+
+	option = {
+		name = ukraine_md.13.a
+		log = "[GetDateText]: [This.GetName]: ukraine_md.13.a executed"
+		set_country_flag = UKR_servant_of_the_people_formed
+		capital_scope = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.01
+			}
+		}
+	}
+}
+
+# Servant of the People
+# Non-Meme Event -- 95% chance to fire at any given start of 2017
+country_event = {
+	id = ukraine_md.14
+	title = ukraine_md.14.t
+	desc = ukraine_md.14.d
+	picture = GFX_UKR_zelenskyy
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = UKR
+		date > 2016.1.1
+	}
+	immediate = {
+		set_country_flag = UKR_servant_of_the_people_formed
+	}
+
+	option = {
+		name = ukraine_md.14.a
+		log = "[GetDateText]: [This.GetName]: ukraine_md.14.a executed"
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		add_relative_party_popularity = yes
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.05
+		}
+	}
+}
+
+
 ############ Revolution Events/Tied to the UKR specific variables
 #New Event goes here/###Euromaidan revolution!
 #Help Event in Decisions to better help#
@@ -810,21 +822,41 @@ country_event = { ##Ukrainian Civil War
 		news_event = ukraine_news.7
 		NOV = {
 			transfer_state = 693
+			transfer_state = 1075
 			set_country_flag = NOV_civil_war_in_the_donbass_flag
 			declare_war_on = {
 				target = UKR
 				type = annex_everything
 			}
+			create_country_leader = {
+				name = "Oleg Tsaryov"
+				picture = "oleg_tsaryov.dds"
+				ideology = Autocracy
+				traits = {
+					emerging_Autocracy
+					career_politician
+					pro_russia
+					cautious
+				}
+			}
+
+			set_variable = { corporate_tax_rate = UKR.corporate_tax_rate }
+			set_variable = { population_tax_rate = UKR.population_tax_rate }
 		}
 		hidden_effect = {
-			if = {
-				limit = {
-					669 = { NOT = { is_owned_by = SOV } }
-				}
-				SOV = { country_event = { id = ukraine_revolution.2 days = 14 } }
+			if = { limit = { 669 = { NOT = { is_owned_by = SOV } } }
+				SOV = { country_event = { id = ukraine_revolution.2 days = 7 } }
 			}
 			NOV = {
-				load_oob = "NOV_2017_civil_war"
+				if = {
+					limit = { has_dlc = "No Step Back" }
+
+					load_oob = "NOV_2017_civil_war_nsb"
+				}
+				else = {
+					load_oob = "NOV_2017_civil_war_nonnsb"
+				}
+
 				set_equipment_fraction = 0.25
 			}
 		}
@@ -895,7 +927,11 @@ country_event = { ##Annexation of Crimea if the Soviet Player doesn't already Ow
 			factor = 50
 			modifier = {
 				factor = 2
-				SOV = { has_reactionary_governemnt_or_in_coalition = yes }
+				SOV = { has_reactionary_government_or_in_coalition = yes }
+			}
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
 			}
 		}
 	}
@@ -904,22 +940,39 @@ country_event = { ##Annexation of Crimea if the Soviet Player doesn't already Ow
 		name = ukraine_revolution.2.b
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.2.b executed"
 		SOV = {
-			669 = {
-				add_core_of = SOV
-			}
+			add_state_core = 669
+			country_event = ukraine_revolution.7
 		}
-		SOV = { country_event = ukraine_revolution.7 }
 		ai_chance = {
 			factor = 1
 			modifier = {
 				UKR = { has_war_with = NOV }
 				factor = 15
 			}
+			modifier = {
+				factor = 2
+				is_historical_focus_on = no
+			}
+			modifier = {
+				factor = 2
+				UKR = { has_government = communism }
+			}
+			modifier = {
+				factor = 0.5
+				UKR = { has_government = democratic }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					UKR = { has_idea = EU_member }
+					UKR = { has_idea = NATO_member }
+				}
+			}
 		}
 	}
 }
 
-country_event = { ###Russia Annexes Crimea
+country_event = { # Russia Annexes Crimea
 	id = ukraine_revolution.6
 	title = ukraine_revolution.6.t
 	desc = ukraine_revolution.6.d
@@ -937,7 +990,7 @@ country_event = { ###Russia Annexes Crimea
 	}
 }
 
-country_event = { ###Russia Denies the People of Crimea
+country_event = { # Russia Denies the People of Crimea
 	id = ukraine_revolution.7
 	title = ukraine_revolution.7.t
 	desc = ukraine_revolution.7.d
@@ -963,9 +1016,7 @@ news_event = { ##Annexation of the Crimea
 	option = {
 		name = ukraine_news.8.a
 		log = "[GetDateText]: [This.GetName]: ukraine_news.8.a executed"
-		trigger = {
-			tag = UKR
-		}
+		trigger = { tag = UKR }
 	}
 	option = {
 		name = ukraine_news.8.b
@@ -993,48 +1044,14 @@ country_event = { ##End of the Civil War
 	title = ukraine_revolution.3.t
 	desc = ukraine_revolution.3.d
 	picture = GFX_ukraine_revolution1
-
 	trigger = {
 		OR = {
-			AND = {
-				UKR = {
-					has_country_flag = UKR_civil_war_in_the_donbass_flag
-				}
-				OR = {
-					NOT = { country_exists = NOV }
-					UKR = { NOT = { has_war_with = NOV } }
-				}
-				UKR = {
-					owns_state = 693
-				}
-				date < 2016.12.31
-			}
-			AND = {
-				NOV = {
-					has_country_flag = NOV_civil_war_in_the_donbass_flag
-				}
-				OR = {
-					NOV = { NOT = { has_war_with = UKR } }
-					NOT = { country_exists = UKR }
-				}
-				NOV = { owns_state = 693 }
-				date < 2016.12.31
-			}
-			AND = {
-				UKR = { NOT = { has_war_with = NOV } }
-				country_exists = NOV
-				NOV = { NOT = { is_puppet_of = UKR } }
-				date < 2016.12.31
-			}
+			tag = NOV
+			tag = UKR
 		}
 	}
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
-	mean_time_to_happen = {
-		days = 31
-
-	}
 
 	option = {
 		name = ukraine_revolution.3.a
@@ -1076,8 +1093,10 @@ country_event = { ##End of the Civil War
 		name = ukraine_revolution.3.c
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.3.c executed"
 		trigger = {
-			tag = UKR
-			tag = NOV
+			OR = {
+				tag = UKR
+				tag = NOV
+			}
 			country_exists = NOV
 			UKR = { NOT = { has_war_with = NOV } }
 		}
@@ -1190,6 +1209,7 @@ country_event = { ##Reign in the Donbas
 			add_stability = 0.02
 			add_war_support = -0.02
 			transfer_state = 693
+			transfer_state = 1075
 			country_event = { id = diplomatic_response.1 hours = 4 }
 		}
 		ai_chance = {
@@ -1215,7 +1235,7 @@ country_event = { ##Reign in the Donbas
 			create_wargoal = {
 				type = take_state_focus
 				target = NOV
-				generator = { 693 }
+				generator = { 693 1075 }
 			}
 		}
 		ai_chance = {
@@ -1232,7 +1252,8 @@ country_event = { ##Reign in the Donbas
 	}
 }
 
-country_event = { ###Russia Refuses to Return Crimea
+# Russia Refuses to Return Crimea
+country_event = {
 	id = ukraine_revolution.9
 	title = ukraine_revolution.9.t
 	desc = ukraine_revolution.9.d
@@ -1272,52 +1293,8 @@ country_event = { ###Russia Returns the Crimea
 	}
 }
 
-##Dispatcher Event - triggers random events below
+# Random Modeled SOR and COR events - Event One - Protestors
 country_event = {
-	id = ukraine_revolution.100
-	immediate = { log = "[GetDateText]: [Root.GetName]: event  ukraine_revolution.100" }
-	hidden = yes
-	is_triggered_only = yes
-
-	trigger = { tag = UKR }
-
-	immediate = {
-		random_list = {
-			10 = {
-				modifier = {
-					check_variable = { UKR_chance_of_collapse_var > 5 }
-					factor = 1
-				}
-				modifier = {
-					check_variable = { UKR_chance_of_collapse_var > 10 }
-					factor = 2.50
-				}
-				modifier = {
-					has_stability < 0.50
-					factor = 1.0
-				}
-				country_event = { id = ukraine_revolution.12 days = 45 random = 10 }
-				#violent oppposition
-			}
-			30 = {
-				country_event = { id = ukraine_revolution.13 days = 45 random = 10 }
-			}
-			60 = {
-				modifier = {
-					check_variable = { UKR_chance_of_collapse_var > 3 }
-					factor = 2
-				}
-				modifier = {
-					check_variable = { UKR_stability_of_ukraine_var > 40 }
-					factor = 3
-				}
-				country_event = { id = ukraine_revolution.11 days = 45 random = 10 } #Light Protests
-			}
-		}
-	}
-}
-
-country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 	id = ukraine_revolution.11
 	title = ukraine_revolution.11.t
 	desc = ukraine_revolution.11.d
@@ -1340,9 +1317,6 @@ country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_1_TT
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_3_TT
 
-		hidden_effect = {
-			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
-		}
 		ai_chance = {
 			factor = 5
 			modifier = {
@@ -1376,9 +1350,6 @@ country_event = { ##Random Modeled SOR and COR events - Event One - Protestors
 		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_2_TT
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_5_TT
 
-		hidden_effect = {
-			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
-		}
 		ai_chance = {
 			factor = 5
 			modifier = {
@@ -1419,14 +1390,8 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 		}
 		any_owned_state = {
 			industrial_complex > 0
-		}
-		any_owned_state = {
 			infrastructure > 0
-		}
-		any_owned_state = {
 			dockyard > 0
-		}
-		any_owned_state = {
 			arms_factory > 0
 		}
 	}
@@ -1439,11 +1404,9 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 		add_to_variable = { UKR_chance_of_collapse_var = 3 }
 		custom_effect_tooltip = UKR_raise_chance_of_revolt_by_3_TT
 		add_manpower = -25
-		if = {
-			limit = {
-				check_variable = { UKR_chance_of_collapse_var > 1 }
-				check_variable = { UKR_chance_of_collapse_var < 6 }
-			}
+
+		# Sabotage Events
+		if = { limit = { check_variable = { UKR_chance_of_collapse_var < 6 } }
 			random_owned_state = {
 				limit = {
 					industrial_complex > 0
@@ -1463,7 +1426,7 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 				}
 			}
 		}
-		if = {
+		else_if = {
 			limit = {
 				check_variable = { UKR_chance_of_collapse_var > 6 }
 				check_variable = { UKR_chance_of_collapse_var < 9 }
@@ -1497,10 +1460,7 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 				}
 			}
 		}
-		if = {
-			limit = {
-				check_variable = { UKR_chance_of_collapse_var > 9 }
-			}
+		else_if = { limit = { check_variable = { UKR_chance_of_collapse_var > 8 } }
 			random_owned_state = {
 				limit = {
 					industrial_complex > 0
@@ -1540,9 +1500,6 @@ country_event = { ##Random Modeled SOR and COR events - Event Two - New Russian 
 			}
 		}
 
-		hidden_effect = {
-			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
-		}
 
 		ai_chance = {
 			factor = 1
@@ -1557,8 +1514,6 @@ country_event = {
 	title = ukraine_revolution.13.t
 	desc = ukraine_revolution.13.d
 	picture = GFX_kurd_riot
-
-
 	is_triggered_only = yes
 	trigger = {	tag = UKR }
 
@@ -1573,11 +1528,10 @@ country_event = {
 		}
 		custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_5_TT
-		decrease_popularity_1 = yes
+		set_temp_variable = { arg_popularity = -0.01 }
+		add_ruling_outlook_popularity = yes
 
-		hidden_effect = {
-			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
-		}
+
 		ai_chance = {
 			factor = 5
 			modifier = {
@@ -1603,11 +1557,9 @@ country_event = {
 		}
 		custom_effect_tooltip = UKR_stability_of_ukraine_var_raises_by_3_TT
 		custom_effect_tooltip = UKR_lowers_chance_of_revolt_by_1_TT
-		add_1_popularity = yes
+		set_temp_variable = { arg_popularity = 0.01 }
+		add_ruling_outlook_popularity = yes
 
-		hidden_effect = {
-			country_event = { id = ukraine_revolution.100 days = 70 random = 20 }
-		}
 		ai_chance = {
 			factor = 3
 			modifier = {
@@ -1616,5 +1568,28 @@ country_event = {
 				add = 3
 			}
 		}
+	}
+}
+#Kerch Strait Incident
+country_event = {
+	id = ukraine_md.15
+	title = ukraine_kerch_strait.15.t
+	desc = ukraine_kerch_strait.15.d
+	picture = GFX_UKR_kerch_strait
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = UKR
+		date > 2018.11.25
+	}
+	option = {
+		name = ukraine_revolution.15.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.15.a"
+		add_popularity = {
+			ideology = communism
+			popularity = -0.05
+		  }
+		add_opinion_modifier = { target = SOV modifier = maritime_border_dispute }
+		add_war_support = 0.05
 	}
 }

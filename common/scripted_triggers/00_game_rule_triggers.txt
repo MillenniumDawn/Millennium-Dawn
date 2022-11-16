@@ -35,50 +35,49 @@
 # This specifically overrides the rule check as to whether or not you can guarantee other ideologies
 DIPLOMACY_GUARANTEE_ENABLE_TRIGGER_OVERRIDES_GAME = {
 	NOT = {
-		has_game_rule = {
-			rule = allow_guarantees
-			option = LIMITED
-		}
+		has_global_flag = GAME_RULE_limited_guarantees
 	}
 }
 
 DIPLOMACY_GUARANTEE_ENABLE_TRIGGER = {
+	#With free guarantees, all in-game rules are disalbed
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_guarantees
-				option = ALWAYS_FREE
-			}
+			has_global_flag = GAME_RULE_always_free_guarantees
 		}
 		always = yes
 	}
-	if = {
+	#With limited or same ideology guarantees, NATO rules still apply
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_guarantees
-				option = LIMITED
+			OR = {
+				has_global_flag = GAME_RULE_limited_guarantees
+				has_global_flag = GAME_RULE_same_ideology_guarantees
 			}
 		}
-		always = yes # Handled by game logic.
+		if = {
+			limit = {
+				has_global_flag = GAME_RULE_same_ideology_guarantees
+			}
+			custom_trigger_tooltip = {
+				tooltip = RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP
+				has_government = FROM
+			}
+		}
+		if = {
+			limit = { has_idea = NATO_member }
+			custom_trigger_tooltip = {
+				tooltip = NATO_guarantee_rule_tt
+				is_faction_leader = yes
+			}
+		}
+		else = {
+			always = yes # Handled by game logic.
+		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_guarantees
-				option = SAME_IDEOLOGY
-			}
-		}
-		custom_trigger_tooltip = {
-			tooltip = RULE_ALLOW_GUARANTEES_SAME_IDEOLOGY_TOOLTIP
-			has_government = FROM
-		}
-	}
-	if = {
-		limit = {
-			has_game_rule = {
-				rule = allow_guarantees
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_blocked_guarantees
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_GUARANTEES_BLOCKED_TOOLTIP
@@ -90,10 +89,7 @@ DIPLOMACY_GUARANTEE_ENABLE_TRIGGER = {
 DIPLOMACY_REVOKE_GUARANTEE_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_revoke_guarantees
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_blocked_revoke_guarantees
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_REVOKE_GUARANTEES_BLOCKED_TOOLTIP
@@ -105,31 +101,22 @@ DIPLOMACY_REVOKE_GUARANTEE_ENABLE_TRIGGER = {
 DIPLOMACY_MILACC_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_access_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_access_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT
 			has_government = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_access_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT
@@ -140,31 +127,22 @@ DIPLOMACY_MILACC_ENABLE_TRIGGER = {
 DIPLOMACY_OFFER_MILACC_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_access_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_access_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT
 			has_government = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_access_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT
@@ -175,31 +153,22 @@ DIPLOMACY_OFFER_MILACC_ENABLE_TRIGGER = {
 DIPLOMACY_DOCKING_RIGHTS_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_access_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_access_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT
 			has_government = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_access_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT
@@ -210,19 +179,13 @@ DIPLOMACY_DOCKING_RIGHTS_ENABLE_TRIGGER = {
 DIPLOMACY_OFFER_DOCKING_RIGHTS_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_access_free
 		}
 		always = yes
 	}
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_access_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_SAME_IDEOLOGY_TT
@@ -231,10 +194,7 @@ DIPLOMACY_OFFER_DOCKING_RIGHTS_ENABLE_TRIGGER = {
 	}
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_access
-				option = BLOCKED
-			}
+				has_global_flag = GAME_RULE_allow_access_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_MILITARY_ACCESS_BLOCKED_TT
@@ -245,52 +205,37 @@ DIPLOMACY_OFFER_DOCKING_RIGHTS_ENABLE_TRIGGER = {
 DIPLOMACY_LEND_LEASE_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = LIMITED
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_limited
 		}
 		always = yes #handled by game logic, see above
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT
 			has_government = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = SAME_FACTION
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_same_faction
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT
 			is_in_faction_with = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LEND_LEASE_BLOCKED_TT
@@ -301,52 +246,37 @@ DIPLOMACY_LEND_LEASE_ENABLE_TRIGGER = {
 DIPLOMACY_INCOMING_LEND_LEASE_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = LIMITED
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_limited
 		}
 		always = yes #handled by game logic, see above
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LEND_LEASE_SAME_IDEOLOGY_TT
 			has_government = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = SAME_FACTION
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_same_faction
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LEND_LEASE_SAME_FACTION_TT
 			is_in_faction_with = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_lend_lease
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_lend_lease_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LEND_LEASE_BLOCKED_TT
@@ -357,43 +287,31 @@ DIPLOMACY_INCOMING_LEND_LEASE_ENABLE_TRIGGER = {
 DIPLOMACY_REQUEST_LICENSED_PRODUCTION_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_licensing
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_licensing_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_licensing
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_licensing_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LICENSING_SAME_IDEOLOGY_TT
 			has_government = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_licensing
-				option = SAME_FACTION
-			}
+			has_global_flag = GAME_RULE_allow_licensing_same_faction
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LICENSING_SAME_FACTION_TT
 			is_in_faction_with = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_licensing
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_licensing_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LICENSING_BLOCKED_TT
@@ -404,64 +322,43 @@ DIPLOMACY_REQUEST_LICENSED_PRODUCTION_ENABLE_TRIGGER = {
 DIPLOMACY_GENERATE_WARGOAL_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_wargoals
-				option = ALWAYS_FREE
-			}
+			has_global_flag = GAME_RULE_allow_wargoals_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_wargoals
-				option = LIMITED
-			}
+			has_global_flag = GAME_RULE_allow_wargoals_limited
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_wargoals
-				option = FREE_25
-			}
+			has_global_flag = GAME_RULE_allow_wargoals_free_25
 		}
 		threat > 0.24
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_wargoals
-				option = FREE_50
-			}
+			has_global_flag = GAME_RULE_allow_wargoals_free_50
 		}
 		threat > 0.49
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_wargoals
-				option = FREE_75
-			}
+			has_global_flag = GAME_RULE_allow_wargoals_free_75
 		}
 		threat > 0.74
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_wargoals
-				option = FREE_100
-			}
+			has_global_flag = GAME_RULE_allow_wargoals_free_100
 		}
 		threat > 0.99
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_wargoals
-				option = FOCUSES_ONLY
-			}
+			has_global_flag = GAME_RULE_allow_wargoals_focuses_only
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_WARGOALS_BLOCKED_TT
@@ -472,43 +369,31 @@ DIPLOMACY_GENERATE_WARGOAL_ENABLE_TRIGGER = {
 DIPLOMACY_BOOST_PARTY_POPULARITY_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_party_boosting
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_party_boosting_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_party_boosting
-				option = AI_ONLY
-			}
+			has_global_flag = GAME_RULE_allow_party_boosting_ai_only
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_BOOST_PARTY_AI_ONLY_TT
 			FROM = { is_ai = yes }
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_party_boosting
-				option = PLAYER_ONLY
-			}
+			has_global_flag = GAME_RULE_allow_party_boosting_player_only
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_BOOST_PARTY_PLAYER_ONLY_TT
 			FROM = { is_ai = no }
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_party_boosting
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_party_boosting_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_BOOST_PARTY_BLOCKED_TT
@@ -519,31 +404,22 @@ DIPLOMACY_BOOST_PARTY_POPULARITY_ENABLE_TRIGGER = {
 DIPLOMACY_STAGE_COUP_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_coups
-				option = FREE
-			}
+			has_global_flag = GAME_RULE_allow_coups_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_coups
-				option = AI_ONLY
-			}
+			has_global_flag = GAME_RULE_allow_coups_ai_only
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_COUP_AI_ONLY_TT
 			FROM = { is_ai = yes }
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_coups
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_coups_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_COUP_BLOCKED_TT
@@ -554,51 +430,45 @@ DIPLOMACY_STAGE_COUP_ENABLE_TRIGGER = {
 DIPLOMACY_LEAVE_FACTION_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_leave_faction
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_leave_faction_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ALLOW_LEAVE_FACTION_BLOCKED_TOOLTIP
 			always = no
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			any_country = {
-				is_in_faction_with = ROOT
-				has_country_flag = Leader_of_NATO
+			has_idea = NATO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = NATO_leave_faction_rule_tt
+			always = no
+		}
+	}
+	else_if = {
+		limit = {
+			original_tag = CHI
+			OR = {
+				has_idea = sco_member
+				has_idea = sco_member_econ
+				has_idea = sco_member_pol
+				has_idea = sco_member_mil
 			}
 		}
 		custom_trigger_tooltip = {
-			tooltip = RULE_CANT_LEAVE_NATO
+			tooltip = sco_member_leave_faction_rule_tt
 			always = no
 		}
 	}
 }
- DIPLOMACY_ASSUME_FACTION_LEADERSHIP_ENABLE_TRIGGER = {
+DIPLOMACY_ASSUME_FACTION_LEADERSHIP_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_take_over_faction
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_take_over_faction_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_ASSUME_LEADERSHIP_BLOCKED_TOOLTIP
-			always = no
-		}
-	}
-	if = {
-		limit = {
-			any_country = {
-				is_in_faction_with = ROOT
-				has_country_flag = Leader_of_NATO
-			}
-		}
-		custom_trigger_tooltip = {
-			tooltip = RULE_CANT_ASSUME_LEADERSHIP_OF_NATO
 			always = no
 		}
 	}
@@ -606,22 +476,45 @@ DIPLOMACY_LEAVE_FACTION_ENABLE_TRIGGER = {
 DIPLOMACY_KICK_FROM_FACTION_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_kick_faction
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_kick_faction_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_KICK_FROM_FACTION_BLOCKED_TOOLTIP
 			always = no
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_country_flag = Leader_of_NATO
+			has_idea = NATO_member
 		}
 		custom_trigger_tooltip = {
-			tooltip = RULE_CANT_KICK_OUT_OF_NATO
+			tooltip = NATO_kick_from_faction_rule_tt
+			always = no
+		}
+	}
+}
+DIPLOMACY_DISMANTLE_FACTION_ENABLE_TRIGGER = {
+	if = {
+		limit = {
+			has_idea = NATO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = NATO_dismantle_faction_rule_tt
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			original_tag = CHI
+			OR = {
+				has_idea = sco_member
+				has_idea = sco_member_econ
+				has_idea = sco_member_pol
+				has_idea = sco_member_mil
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = sco_member_dismantle_faction_rule_tt
 			always = no
 		}
 	}
@@ -629,44 +522,473 @@ DIPLOMACY_KICK_FROM_FACTION_ENABLE_TRIGGER = {
 DIPLOMACY_SEND_VOLUNTEERS_ENABLE_TRIGGER = {
 	if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_volunteers
-				option = ALWAYS_FREE
-			}
+			has_global_flag = GAME_RULE_allow_volunteers_free
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_volunteers
-				option = LIMITED
-			}
+			has_global_flag = GAME_RULE_allow_volunteers_limited
 		}
 		always = yes
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_volunteers
-				option = SAME_IDEOLOGY
-			}
+			has_global_flag = GAME_RULE_allow_volunteers_same_ideology
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_VOLUNTEERS_SAME_IDEOLOGY_TT
 			has_government = FROM
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
-			has_game_rule = {
-				rule = allow_volunteers
-				option = BLOCKED
-			}
+			has_global_flag = GAME_RULE_allow_volunteers_blocked
 		}
 		custom_trigger_tooltip = {
 			tooltip = RULE_VOLUNTEERS_BLOCKED_TT
 			always = no
+		}
+	}
+}
+
+DIPLOMACY_CALL_ALLY_ENABLE_TRIGGER = {
+	#NATO countries can only call allies in defensive wars
+	if = {
+		limit = {
+			has_idea = NATO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = NATO_call_ally_rule_tt
+			has_defensive_war = yes
+		}
+	}
+	#CSTO countries can only join allies in defensive wars
+	if = {
+		limit = {
+			has_idea = CSTO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = CSTO_call_ally_rule_tt
+			has_defensive_war = yes
+		}
+	}
+	#Black Sea Union is a defensive alliance
+	if = {
+		limit = {
+			has_idea = faction_baltic_black_sea_union_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_baltic_black_sea_union_member_call_ally_rule_tt
+			has_defensive_war = yes
+		}
+	}
+	#Monroe Alliance is defensive
+	if = {
+		limit = {
+			has_idea = faction_monroe_alliance
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_monroe_alliance_call_ally_rule_tt
+			has_defensive_war = yes
+		}
+	}
+}
+
+DIPLOMACY_JOIN_ALLY_ENABLE_TRIGGER = {
+	#NATO countries can only join allies in defensive wars
+	if = {
+		limit = {
+			has_idea = NATO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = NATO_join_ally_rule_tt
+			FROM = { has_defensive_war = yes }
+		}
+	}
+	#CSTO countries can only join allies in defensive wars
+	if = {
+		limit = {
+			has_idea = CSTO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = CSTO_join_ally_rule_tt
+			FROM = { has_defensive_war = yes }
+		}
+	}
+	#Black Sea Union is a defensive alliance
+	if = {
+		limit = {
+			has_idea = faction_baltic_black_sea_union_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_baltic_black_sea_union_member_join_ally_rule_tt
+			FROM = { has_defensive_war = yes }
+		}
+	}
+	#Monroe Alliance is defensive
+	if = {
+		limit = {
+			OR = {
+				FROM = { has_idea = faction_monroe_alliance }
+				has_idea = faction_monroe_alliance
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_monroe_alliance_join_ally_rule_tt
+			FROM = { has_defensive_war = yes }
+		}
+	}
+}
+
+DIPLOMACY_JOIN_FACTION_ENABLE_TRIGGER = {
+	#Other countries can't join NATO
+	if = {
+		limit = {
+			FROM = { has_idea = NATO_member }
+		}
+		custom_trigger_tooltip = {
+			tooltip = NATO_join_faction_rule_tt
+			always = no
+		}
+	}
+	#Only Shias can join Axis of Resistance
+	if = {
+		limit = {
+			FROM = { has_idea = faction_resistance_axis_member }
+		}
+		custom_trigger_tooltip = {
+			tooltip = resistance_axis_join_faction_rule_tt
+			has_idea = shia
+		}
+	}
+	#Can only invite post-Soviet states into faction
+	if = {
+		limit = {
+			FROM = { has_idea = CSTO_member }
+		}
+		custom_trigger_tooltip = {
+			tooltip = CSTO_join_faction_rule_tt
+			OR = {
+				original_tag = SOV
+				original_tag = EST
+				original_tag = LAT
+				original_tag = LIT
+				original_tag = BLR
+				original_tag = UKR
+				original_tag = NOV
+				original_tag = MLV
+				original_tag = PMR
+				original_tag = GEO
+				original_tag = ABK
+				original_tag = SOO
+				original_tag = AZE
+				original_tag = ARM
+				original_tag = NKR
+				original_tag = KAZ
+				original_tag = UZB
+				original_tag = TRK
+				original_tag = TAJ
+				original_tag = KYR
+			}
+		}
+	}
+	#Only communists allowed in the 5th internatioanl
+	if = {
+		limit = {
+			FROM = { has_idea = faction_fifth_international_member }
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_fifth_international_member_join_faction_rule_tt
+			OR = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 19 }
+			}
+		}
+	}
+	#Only certain countries allowd in the Black Sea Union
+	if = {
+		limit = {
+			FROM = { has_idea = faction_baltic_black_sea_union_member }
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_baltic_black_sea_union_member_join_faction_rule_tt
+			original_tag = EST
+			original_tag = LAT
+			original_tag = LIT
+			original_tag = BLR
+			original_tag = UKR
+			original_tag = POL
+			original_tag = MLV
+			original_tag = ROM
+		}
+	}
+	#Israel and neighbours are allowed in the Jerusalem Defence Pact
+	if = {
+		limit = {
+			FROM = { has_idea = faction_jerusalem_defence_pact_member }
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_jerusalem_defence_pact_member_join_faction_rule_tt
+			OR = {
+				original_tag = ISR
+				is_neighbor_of = ISR
+			}
+		}
+	}
+	#GCC is limited to GCC members
+	if = {
+		limit = {
+			FROM = { has_idea = idea_gcc_member_state }
+		}
+		custom_trigger_tooltip = {
+			tooltip = gcc_member_state_join_faction_rule_tt
+			has_idea = idea_gcc_member_state
+		}
+	}
+	#British Commonwealth only accepts Commonwealth members
+	if = {
+		limit = {
+			FROM = { has_idea = faction_british_commonwealth }
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_british_commonwealth_join_faction_rule_tt
+			has_idea = commonwealth_of_nations_member
+		}
+	}
+	#Monroe Alliance only for North and South America
+	if = {
+		limit = {
+			FROM = { has_idea = faction_monroe_alliance }
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_monroe_alliance_join_faction_rule_tt
+			capital_scope = {
+				OR = {
+					is_on_continent = north_america
+					is_on_continent = south_america
+				}
+			}
+		}
+	}
+	#Chinese United Front only for certain countries
+	if = {
+		limit = {
+			FROM = { has_idea = faction_chinese_united_front }
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_chinese_united_front_join_faction_rule_tt
+			OR = {
+				original_tag = CHI
+				original_tag = TAI
+				original_tag = TIB
+				original_tag = ETK
+			}
+		}
+	}
+	if = {
+		limit = {
+			FROM = {
+				original_tag = CHI
+				OR = {
+					has_idea = sco_member
+					has_idea = sco_member_econ
+					has_idea = sco_member_pol
+					has_idea = sco_member_mil
+				}
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = sco_member_join_faction_rule_tt
+			OR = {
+				has_idea = sco_member
+				has_idea = sco_member_econ
+				has_idea = sco_member_pol
+				has_idea = sco_member_mil
+			}
+		}
+	}
+}
+
+DIPLOMACY_OFFER_JOIN_FACTION_ENABLE_TRIGGER = {
+	#Can't invite other countries to NATO
+	if = {
+		limit = {
+			has_idea = NATO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = NATO_offer_join_faction_rule_tt
+			always = no
+		}
+	}
+	#Can't invite non-Shias to Axis of Resistance
+	if = {
+		limit = {
+			has_idea = faction_resistance_axis_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = resistance_axis_offer_join_faction_rule_tt
+			FROM = { has_idea = shia }
+		}
+	}
+	#Can only invite post-Soviet states into faction
+	if = {
+		limit = {
+			has_idea = CSTO_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = CSTO_offer_join_faction_rule_tt
+			FROM = {
+				OR = {
+					original_tag = SOV
+					original_tag = EST
+					original_tag = LAT
+					original_tag = LIT
+					original_tag = BLR
+					original_tag = UKR
+					original_tag = NOV
+					original_tag = MLV
+					original_tag = PMR
+					original_tag = GEO
+					original_tag = ABK
+					original_tag = SOO
+					original_tag = AZE
+					original_tag = ARM
+					original_tag = NKR
+					original_tag = KAZ
+					original_tag = UZB
+					original_tag = TRK
+					original_tag = TAJ
+					original_tag = KYR
+				}
+			}
+		}
+	}
+	#Only communists allowed in the 5th internatioanl
+	if = {
+		limit = {
+			has_idea = faction_fifth_international_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_fifth_international_member_offer_join_faction_rule_tt
+			FROM = {
+				OR = {
+					is_in_array = { ruling_party = 4 }
+					is_in_array = { ruling_party = 19 }
+				}
+			}
+		}
+	}
+	#Only certain countries allowd in the Black Sea Union
+	if = {
+		limit = {
+			has_idea = faction_baltic_black_sea_union_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_baltic_black_sea_union_member_offer_join_faction_rule_tt
+			FROM = {
+				original_tag = EST
+				original_tag = LAT
+				original_tag = LIT
+				original_tag = BLR
+				original_tag = UKR
+				original_tag = POL
+				original_tag = MLV
+				original_tag = ROM
+			}
+		}
+	}
+	#Israel and neighbours are allowed in the Jerusalem Defence Pact
+	if = {
+		limit = {
+			has_idea = faction_jerusalem_defence_pact_member
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_jerusalem_defence_pact_member_offer_join_faction_rule_tt
+			FROM = {
+				OR = {
+					original_tag = ISR
+					is_neighbor_of = ISR
+				}
+			}
+		}
+	}
+	#GCC is limited to GCC members
+	if = {
+		limit = {
+			has_idea = idea_gcc_member_state
+		}
+		custom_trigger_tooltip = {
+			tooltip = gcc_member_state_offer_join_faction_rule_tt
+			FROM = {
+				has_idea = idea_gcc_member_state
+			}
+		}
+	}
+	#British Commonwealth only accepts Commonwealth members
+	if = {
+		limit = {
+			has_idea = faction_british_commonwealth
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_british_commonwealth_offer_join_faction_rule_tt
+			FROM = { has_idea = commonwealth_of_nations_member }
+		}
+	}
+	#Monroe Alliance only for North and South America
+	if = {
+		limit = {
+			has_idea = faction_monroe_alliance
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_monroe_alliance_offer_join_faction_rule_tt
+			FROM = {
+				capital_scope = {
+					OR = {
+						is_on_continent = north_america
+						is_on_continent = south_america
+					}
+				}
+			}
+		}
+	}
+	#Chinese United Front only for certain countries
+	if = {
+		limit = {
+			has_idea = faction_chinese_united_front
+		}
+		custom_trigger_tooltip = {
+			tooltip = faction_chinese_united_front_offer_join_faction_rule_tt
+			FROM = {
+				OR = {
+					original_tag = CHI
+					original_tag = TAI
+					original_tag = TIB
+					original_tag = ETK
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			original_tag = CHI
+			OR = {
+				has_idea = sco_member
+				has_idea = sco_member_econ
+				has_idea = sco_member_pol
+				has_idea = sco_member_mil
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = sco_member_offer_join_faction_rule_tt
+			FROM = {
+				OR = {
+					has_idea = sco_member
+					has_idea = sco_member_econ
+					has_idea = sco_member_pol
+					has_idea = sco_member_mil
+				}
+			}
 		}
 	}
 }

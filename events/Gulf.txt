@@ -16,7 +16,7 @@ news_event = {
 	title = gulf.5.t
 	desc = gulf.5.d
 
-	picture = GFX_market_crash
+	picture = GFX_news_market_crash
 
 	is_triggered_only = yes
 
@@ -67,21 +67,44 @@ country_event = {
 		else_if = {
 			limit = { has_stability > 0.59 has_stability < 0.7 }
 			random_list = {
-				66 = { news_event = { id = gulf.7 } }
+				10 = { news_event = { id = gulf.37 } }
+				56 = { news_event = { id = gulf.7 } }
 				34 = { news_event = { id = gulf.8 } }
 			}
 		}
 		else_if = {
 			limit = { has_stability > 0.69 has_stability < 0.9 }
 			random_list = {
-				75 = { news_event = { id = gulf.7 } }
+				20 = { news_event = { id = gulf.37 } }
+				55 = { news_event = { id = gulf.7 } }
 				25 = { news_event = { id = gulf.8 } }
 			}
 		}
 		else_if = {
 			limit = { has_stability > 0.89 }
-			news_event = { id = gulf.7 }
+			random_list = {
+				30 = { news_event = { id = gulf.37 } }
+				70 = { news_event = { id = gulf.7 } }
+			}
 		}
+	}
+}
+
+#The IPO went flawlessly (fiction)
+news_event = {
+	id = gulf.37
+	title = gulf.37.t
+	desc = gulf.37.d
+
+	picture = GFX_world_stockmarket
+
+	is_triggered_only = yes
+
+	option = {
+		name = gulf.37.a #Perfect!
+		log = "[GetDateText]: [This.GetName]: gulf.7.a executed"
+		add_political_power = 100
+		set_country_flag = ipo_very_successful
 	}
 }
 
@@ -91,7 +114,7 @@ news_event = {
 	title = gulf.7.t
 	desc = gulf.7.d
 
-	picture = GFX_update_gdpc
+	picture = GFX_world_stockmarket
 
 	is_triggered_only = yes
 
@@ -99,7 +122,7 @@ news_event = {
 		name = gulf.7.a #Perfect!
 		log = "[GetDateText]: [This.GetName]: gulf.7.a executed"
 		add_political_power = 100
-		set_country_flag = ipo_success
+		set_country_flag = ipo_successful
 	}
 }
 
@@ -109,7 +132,7 @@ news_event = {
 	title = gulf.8.t
 	desc = gulf.8.d
 
-	picture = GFX_market_crash
+	picture = GFX_news_market_crash
 
 	is_triggered_only = yes
 
@@ -137,10 +160,12 @@ country_event = {
 		if = {
 			limit = { is_faction_leader = yes }
 			add_to_faction = FROM
+			FROM = { add_ideas = faction_resistance_axis_member }
 		}
 		else_if = {
 			limit = { is_faction_leader = no }
 			FROM = { add_to_faction = ROOT }
+			add_ideas = faction_resistance_axis_member
 		}
 		FROM = {
 			country_event = { days = 1 id = gulf.10  }
@@ -301,6 +326,7 @@ country_event = {
 	picture = GFX_Assad_parade
 
 	is_triggered_only = yes
+	fire_only_once = yes
 
 	option = {
 		name = gulf.16.a #Time to bring down the dictator.
@@ -1516,7 +1542,10 @@ country_event = {
 				modifier = expelled_forces
 			}
 		}
-		generic_grant_2_percent_influence_of_FROM = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = FROM.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 		ai_chance = {
 			factor = 1
 			modifier = {
@@ -1537,21 +1566,36 @@ country_event = {
 			factor = 1
 			modifier = {
 				add = 1
-				set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						value = v
-						index = i
-						if = {
-							limit = { var:v = { tag = FROM } }
-							set_temp_variable = { temp_idx = i }
-							always = yes
-						}
-						else = { always = no }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 < 20 }
 					}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-
+					AND = {
+						check_variable = { influence_array^1 = ROOT }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = ROOT }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = ROOT }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = ROOT }
+						check_variable = { influence_array_val^4 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = ROOT }
+						check_variable = { influence_array_val^5 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = ROOT }
+						check_variable = { influence_array_val^6 < 20 }
+					}
+				}
 			}
 			modifier = {
 				add = 1
@@ -1919,13 +1963,15 @@ country_event = {
 			limit = { NOT = { has_idea = large_shia_population } }
 			add_ideas = unrepresentative_government_shia
 		}
-		generic_grant_1_percent_influence_of_PER = yes
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = PER.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 		add_ideas = iranian_aid
 		swap_ideas = {
 			remove_idea = saudi_royal_family
 			add_idea = iranian_quds_force
 		}
-		set_country_flag = positive_iranian_quds_force
 		every_country = { news_event = { id = shia_terror.6 } }
 		log = "[GetDateText]: [This.GetName]: shia_terror.5.a executed"
 	}
@@ -1943,7 +1989,10 @@ country_event = {
 		}
 		add_political_power = -200
 		add_stability = -0.1
-		generic_grant_2_percent_influence_of_SAU = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = SAU.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 		every_country = { news_event = { id = shia_terror.7 } }
 		log = "[GetDateText]: [This.GetName]: shia_terror.5.b executed"
 	}
@@ -2021,7 +2070,7 @@ news_event = {
 	title = shia_terror.6.t
 	desc = shia_terror.6.d
 
-	picture = GFX_Yem_CivilWar_End
+	picture = GFX_news_Yem_CivilWar_End
 
 	is_triggered_only = yes
 
@@ -2067,7 +2116,7 @@ news_event = {
 		trigger = { NOT = { SAU = { has_war_with = QTF } } }
 	}
 
-	picture = GFX_Yem_CivilWar_End
+	picture = GFX_news_Yem_CivilWar_End
 
 	is_triggered_only = yes
 
@@ -3495,8 +3544,8 @@ news_event = {
 		if = {
 			limit = { has_country_flag = being_expelled }
 			remove_ideas = idea_gcc_member_state
-			remove_from_array = { global.gcc_members = THIS }
 			add_to_array = { global.possible_gcc_members = THIS }
+			force_update_map_mode = { mapmode = GCC_map_mode }
 			set_country_flag = recently_expelled_from_gcc
 			hidden_effect = {
 				remove_from_tech_sharing_group = GCC_Tech_Share
@@ -3774,13 +3823,8 @@ news_event = {
 							has_government = communism
 						}
 					}
-					custom_effect_tooltip = GCC_unity_decrease_25_tt
-					subtract_from_variable = { global.gcc_unity = 25 }
-					clamp_variable = {
-						var = global.gcc_unity
-						min = 0
-						max = 100
-					}
+					set_temp_variable = { temp_modify_gcc_unity = -25 }
+					modify_gcc_unity = yes
 				}
 				else_if = {
 					limit = {
@@ -3794,13 +3838,8 @@ news_event = {
 							}
 						}
 					}
-					custom_effect_tooltip = GCC_unity_decrease_20_tt
-					subtract_from_variable = { global.gcc_unity = 20 }
-					clamp_variable = {
-						var = global.gcc_unity
-						min = 0
-						max = 100
-					}
+					set_temp_variable = { temp_modify_gcc_unity = -20 }
+					modify_gcc_unity = yes
 				}
 				else_if = {
 					limit = {
@@ -3814,13 +3853,8 @@ news_event = {
 							}
 						}
 					}
-					custom_effect_tooltip = GCC_unity_decrease_10_tt
-					subtract_from_variable = { global.gcc_unity = 10 }
-					clamp_variable = {
-						var = global.gcc_unity
-						min = 0
-						max = 100
-					}
+					set_temp_variable = { temp_modify_gcc_unity = -10 }
+					modify_gcc_unity = yes
 				}
 				else_if = {
 					limit = {
@@ -3834,13 +3868,8 @@ news_event = {
 							}
 						}
 					}
-					custom_effect_tooltip = GCC_unity_decrease_5_tt
-					subtract_from_variable = { global.gcc_unity = 5 }
-					clamp_variable = {
-						var = global.gcc_unity
-						min = 0
-						max = 100
-					}
+					set_temp_variable = { temp_modify_gcc_unity = -5 }
+					modify_gcc_unity = yes
 				}
 			}
 		}
@@ -3860,8 +3889,8 @@ country_event = {
 	option = {
 		name = gcc.22.a #Let's give them the guns
 		log = "[GetDateText]: [This.GetName]: gcc.22.a executed"
-		add_to_variable = { treasury = 25 }
-		custom_effect_tooltip = 25_billion_revenue_tt
+		set_temp_variable = { treasury_change = 25 }
+		modify_treasury_effect = yes
 		if = {
 			limit = { BHR = { has_idea = idea_gcc_member_state }}
 			send_equipment = {
@@ -3875,7 +3904,7 @@ country_event = {
 				target = BHR
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = BHR
 			}
@@ -3898,7 +3927,7 @@ country_event = {
 				target = EGY
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = EGY
 			}
@@ -3921,7 +3950,7 @@ country_event = {
 				target = IRQ
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = IRQ
 			}
@@ -3944,7 +3973,7 @@ country_event = {
 				target = JOR
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = JOR
 			}
@@ -3967,7 +3996,7 @@ country_event = {
 				target = KUW
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = KUW
 			}
@@ -3990,7 +4019,7 @@ country_event = {
 				target = MOR
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = MOR
 			}
@@ -4013,7 +4042,7 @@ country_event = {
 				target = OMA
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = OMA
 			}
@@ -4036,7 +4065,7 @@ country_event = {
 				target = QAT
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = QAT
 			}
@@ -4059,7 +4088,7 @@ country_event = {
 				target = SAU
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = SAU
 			}
@@ -4082,7 +4111,7 @@ country_event = {
 				target = UAE
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = UAE
 			}
@@ -4105,7 +4134,7 @@ country_event = {
 				target = YEM
 			}
 			send_equipment = {
-				equipment = MBT_Equipment
+				equipment = mbt_hull
 				amount = 20
 				target = YEM
 			}
@@ -4138,23 +4167,18 @@ news_event = {
 	title = gcc.23.t
 	desc = gcc.23.d
 
-	picture = GFX_report_event_united_states_air_force
+	picture = GFX_news_usa_RAFO_Masriah
 
 	is_triggered_only = yes
 
 	option = {
 		name = gcc.21.a
-		custom_effect_tooltip = GCC_unity_increase_5_tt
+		set_temp_variable = { temp_modify_gcc_unity = 5 }
+		modify_gcc_unity = yes
 		if = {
 			limit = { has_country_flag = gcc_dominant_member }
-			subtract_from_variable = { treasury = 25 }
-			custom_effect_tooltip = 25_billion_expense_tt
-			add_to_variable = { global.gcc_unity = 5 }
-			clamp_variable = {
-				var = global.gcc_unity
-				min = 0
-				max = 100
-			}
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
 		}
 		if = {
 			limit = { has_idea = idea_gcc_member_state }
@@ -4171,7 +4195,7 @@ news_event = {
 						target = ROOT
 					}
 					send_equipment = {
-						equipment = MBT_Equipment
+						equipment = mbt_hull
 						amount = 20
 						target = ROOT
 					}
@@ -4213,105 +4237,125 @@ country_event = {
 			factor = 1
 			modifier = {
 				add = 1
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 4.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = FROM }
+						check_variable = { influence_array_val^4 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = FROM }
+						check_variable = { influence_array_val^5 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = FROM }
+						check_variable = { influence_array_val^6 > 4.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.05 }
 			}
 			modifier = {
 				add = 1
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 9.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = FROM }
+						check_variable = { influence_array_val^4 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = FROM }
+						check_variable = { influence_array_val^5 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = FROM }
+						check_variable = { influence_array_val^6 > 9.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.1 }
 			}
 			modifier = {
 				add = 1
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 19.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 19.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 19.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 > 19.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.2 }
 			}
 			modifier = {
 				add = 1
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 29.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 29.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.3 }
 			}
 			modifier = {
 				add = 1
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 39.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 39.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.4 }
 			}
 			modifier = {
 				add = 1
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.5 }
+				check_variable = { influence_array^0 = FROM }
+				check_variable = { influence_array_val^0 > 49.999 }
 			}
 		}
 	}
@@ -4327,120 +4371,209 @@ country_event = {
 		}
 		if = {
 			limit = {
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 4.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = FROM }
+						check_variable = { influence_array_val^4 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = FROM }
+						check_variable = { influence_array_val^5 > 4.999 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = FROM }
+						check_variable = { influence_array_val^6 > 4.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.05 }
-				check_variable = { influence_array_calc^temp_idx < 0.1 }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 < 10 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 < 10 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 < 10 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 < 10 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = FROM }
+						check_variable = { influence_array_val^4 < 10 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = FROM }
+						check_variable = { influence_array_val^5 < 10 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = FROM }
+						check_variable = { influence_array_val^6 < 10 }
+					}
+				}
 			}
 			add_political_power = -10
 		}
 		else_if = {
 			limit = {
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 9.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = FROM }
+						check_variable = { influence_array_val^4 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = FROM }
+						check_variable = { influence_array_val^5 > 9.999 }
+					}
+					AND = {
+						check_variable = { influence_array^6 = FROM }
+						check_variable = { influence_array_val^6 > 9.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.09 }
-				check_variable = { influence_array_calc^temp_idx < 0.2 }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 < 20 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 < 20 }
+					}
+				}
 			}
 			add_political_power = -25
 		}
 		else_if = {
 			limit = {
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 19.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 19.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 19.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FROM }
+						check_variable = { influence_array_val^3 > 19.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.19 }
-				check_variable = { influence_array_calc^temp_idx < 0.3 }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 < 30 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 < 30 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 < 30 }
+					}
+				}
 			}
 			add_political_power = -50
 		}
 		else_if = {
 			limit = {
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 29.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 29.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.29 }
-				check_variable = { influence_array_calc^temp_idx < 0.4 }
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 < 40 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 < 40 }
+					}
+				}
 			}
 			add_political_power = -75
 		}
 		else_if = {
 			limit = {
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 39.999 }
 					}
-					else = { always = no }
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 39.999 }
+					}
 				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.39 }
-				check_variable = { influence_array_calc^temp_idx < 0.5 }
+				check_variable = { influence_array^0 = FROM }
+				check_variable = { influence_array_val^0 < 50 }
 			}
 			add_political_power = -100
 		}
 		else_if = {
 			limit = {
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					value = v
-					index = i
-					if = {
-						limit = { var:v = { tag = FROM } }
-						set_temp_variable = { temp_idx = i }
-						always = yes
-					}
-					else = { always = no }
-				}
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx > 0.49 }
+				check_variable = { influence_array^0 = FROM }
+				check_variable = { influence_array_val^0 > 49.999 }
 			}
 			add_political_power = -150
 		}
@@ -4769,7 +4902,7 @@ country_event = {
 			custom_effect_tooltip = MBS_strengthened_tt
 			add_to_variable = { mbs = 1 }
 		}
-		every_other_country = { news_event = { id = sau_royal.4 }}
+		every_other_country = { news_event = { id = saudi_royal.4 }}
 		ai_chance = {
 			factor = 1
 		}
@@ -4828,9 +4961,8 @@ country_event = {
 			}
 			if = {
 				limit = { has_idea = saudi_royal_family }
-				visually_display_opinion_rise_saudi_royal_family = yes
-				set_country_flag = current_saudi_royal_family
-				increase_internal_faction_opinion = yes
+				set_temp_variable = { temp_opinion = 5 }
+				change_saudi_royal_family_opinion = yes
 			}
 		}
 		else_if = {
@@ -4929,7 +5061,7 @@ news_event = {
 		trigger = { SAU = { has_country_flag = SAU_no_action }}
 	}
 
-	picture = GFX_SAU_QAT_CRISIS
+#	picture = GFX_SAU_QAT_CRISIS
 
 	is_triggered_only = yes
 
@@ -4966,10 +5098,7 @@ country_event = {
 			has_country_flag = SAU_operatives_punished
 			has_country_flag = SAU_no_action
 		}
-		OR = {
-			has_country_flag = negative_saudi_royal_family
-			has_country_flag = hostile_saudi_royal_family
-		}
+		check_variable = { saudi_royal_family_opinion < 51 }
 		OR = {
 			has_idea = restoring_hope
 			YEM = { has_government = communism }
@@ -4987,23 +5116,16 @@ country_event = {
 		add_political_power = -300
 		set_variable = { mbs = 0 }
 		if = {
-			limit = { has_dlc = "La Resistance"}
+			limit = { has_dlc = "La Resistance" }
 			swap_ideas = {
 				remove_idea = SAU_crown_prince_mbs
 				add_idea = SAU_crown_prince_mbn_lar
 			}
-			if = {
-				limit = { has_idea = saudi_royal_family }
-				visually_display_opinion_rise_saudi_royal_family = yes
-				set_country_flag = current_saudi_royal_family
-				increase_internal_faction_opinion = yes
-			}
 		}
 		if = {
 			limit = { has_idea = saudi_royal_family }
-			visually_display_opinion_rise_saudi_royal_family = yes
-			set_country_flag = current_saudi_royal_family
-			increase_internal_faction_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_saudi_royal_family_opinion = yes
 		}
 		every_country = { news_event = { id = saudi_royal.8 }}
 		ai_chance = {
@@ -5020,9 +5142,8 @@ country_event = {
 		set_country_flag = SAU_purge
 		if = {
 			limit = { has_idea = saudi_royal_family }
-			visually_display_opinion_fall_saudi_royal_family = yes
-			set_country_flag = current_saudi_royal_family
-			decrease_internal_faction_opinion = yes
+			set_temp_variable = { saudi_royal_family = -5 }
+			change_saudi_royal_family_opinion = yes
 		}
 		every_country = { news_event = { id = saudi_royal.9 }}
 		ai_chance = {
@@ -5037,7 +5158,7 @@ news_event = {
 	title = saudi_royal.8.t
 	desc = saudi_royal.8.d
 
-	picture = GFX_SAU_QAT_CRISIS
+#	picture = GFX_SAU_QAT_CRISIS
 
 	is_triggered_only = yes
 
@@ -5053,7 +5174,7 @@ news_event = {
 	title = saudi_royal.9.t
 	desc = saudi_royal.9.d
 
-	picture = GFX_SAU_QAT_CRISIS
+#	picture = GFX_SAU_QAT_CRISIS
 
 	is_triggered_only = yes
 
@@ -5069,7 +5190,7 @@ news_event = {
 	title = saudi_royal.10.t
 	desc = saudi_royal.10.d
 
-	picture = GFX_SAU_QAT_CRISIS
+#	picture = GFX_SAU_QAT_CRISIS
 
 	trigger = {
 		tag = SAU
@@ -5113,9 +5234,8 @@ news_event = {
 			}
 			if = {
 				limit = { has_idea = saudi_royal_family }
-				visually_display_opinion_fall_saudi_royal_family = yes
-				set_country_flag = current_saudi_royal_family
-				decrease_internal_faction_opinion = yes
+				set_temp_variable = { saudi_royal_family = -5 }
+				change_saudi_royal_family_opinion = yes
 			}
 			every_other_country = { news_event = { id = saudi_royal.11 }}
 		}
@@ -5127,7 +5247,7 @@ news_event = {
 	title = saudi_royal.10.t
 	desc = saudi_royal.10.d
 
-	picture = GFX_SAU_QAT_CRISIS
+#	picture = GFX_SAU_QAT_CRISIS
 
 	is_triggered_only = yes
 
@@ -5404,9 +5524,8 @@ country_event = {
 		}
 		if = {
 			limit = { has_idea = the_military }
-			visually_display_opinion_rise_the_military = yes
-			set_country_flag = current_the_military
-			increase_internal_faction_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 		ai_chance = {
 			factor = 0
@@ -5430,9 +5549,8 @@ country_event = {
 		}
 		if = {
 			limit = { has_idea = the_military }
-			visually_display_opinion_rise_the_military = yes
-			set_country_flag = current_the_military
-			increase_internal_faction_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 		ai_chance = {
 			factor = 0
@@ -5455,9 +5573,8 @@ country_event = {
 		}
 		if = {
 			limit = { has_idea = small_medium_business_owners }
-			visually_display_opinion_rise_small_medium_business_owners = yes
-			set_country_flag = current_small_medium_business_owners
-			increase_internal_faction_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
 		}
 		ai_chance = {
 			factor = 1

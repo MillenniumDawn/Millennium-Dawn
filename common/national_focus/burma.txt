@@ -1,4 +1,4 @@
-focus_tree = {
+﻿focus_tree = {
 
 	id = burma_focus
 
@@ -163,7 +163,7 @@ focus_tree = {
 				news_event = {
 					id = Burma_News.1
 					days = 2
-					random = 4
+					random_hours = 4
 				}
 
 			}
@@ -173,7 +173,9 @@ focus_tree = {
 				popularity = 0.05
 			}
 			recalculate_party = yes
-			increase_the_priesthood_opinion = yes
+
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -214,7 +216,7 @@ focus_tree = {
 				news_event = {
 				id = Burma_News.2
 				days = 2
-				random = 4
+				random_hours = 4
 				}
 			}
 			add_political_power = 50
@@ -300,15 +302,9 @@ focus_tree = {
 		y = 4
 		cost = 15
 
-		prerequisite = {
-		focus = BRM_allow_labour_strikes_and_unions
-		}
-		prerequisite = {
-		focus = BRM_relax_media_censorship
-		}
-		prerequisite = {
-		focus = BRM_release_opposition_figures
-		}
+		prerequisite = { focus = BRM_allow_labour_strikes_and_unions }
+		prerequisite = { focus = BRM_relax_media_censorship }
+		prerequisite = { focus = BRM_release_opposition_figures }
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY}
 		available = {
 			if = {
@@ -324,36 +320,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_cede_power_to_the_nld"
 
-			if = {
-				limit = {
-					BRM = {
-						has_start_date < 2016.01.01
-					}
-				}
+			if = { limit = { has_start_date < 2016.01.01 }
 				news_event = {
-				id = Burma_News.3
-				days = 2
-				random = 4
+					id = Burma_News.3
+					days = 2
+					random_hours = 4
 				}
 			}
-
-			hidden_effect = {
-				drop_cosmetic_tag = yes
-			}
-
 			add_stability = 0.1
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 16 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-			}
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
 			create_country_leader = {
 				name = "Aung San Suu Kyi"
 				picture = "Western_Aung_San_Suu_Kyi.dds"
@@ -366,25 +340,45 @@ focus_tree = {
 					rational
 				}
 			}
-			set_variable = {
-				Neutral_Libertarian_leader = 1
+
+			set_country_flag = no_leader_change
+			hidden_effect = {
+				drop_cosmetic_tag = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 16 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				add_to_variable = { Neutral_Libertarian_leader = 1 } # Skips Aung in the Lineup
 			}
-			if = {
-				limit = {
-					has_idea = Reduced_Western_Sanctions
+			meta_effect = {
+				text = {
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = yes
+						last_election = "[YEAR].[MONTH].1"
+						election_frequency = 60
+					}
 				}
+				YEAR = global.year
+				MONTH = global.month
+			}
+			clr_country_flag = no_leader_change
+
+			if = { limit = { has_idea = Reduced_Western_Sanctions }
 				remove_ideas = Reduced_Western_Sanctions
 			}
-			if = {
-				limit = {
-					has_idea = Western_Sanctions
-				}
+			else_if = { limit = { has_idea = Western_Sanctions }
 				swap_ideas = {
 					remove_idea = Western_Sanctions
 					add_idea = Reduced_Western_Sanctions
 				}
 			}
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -409,9 +403,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_promote_civilian_enterprises"
-			add_research_slot = 1
-			subtract_from_variable = { treasury = 24 }
-			custom_effect_tooltip = 24_billion_expense_tt
+			add_ideas = BRM_promote_civilian_enterprises_research_boost
+			set_temp_variable = { treasury_change = -24 }
+			modify_treasury_effect = yes
 			504 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -477,7 +471,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_end_isolationism"
 			add_stability = 0.02
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -646,7 +641,8 @@ focus_tree = {
 					add_idea = Massive_International_Sanctions
 				}
 			}
-			increase_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -691,8 +687,8 @@ focus_tree = {
 				}
 			}
 			CHI = {
-				subtract_from_variable = { treasury = 14 }
-				custom_effect_tooltip = 14_billion_expense_tt
+				set_temp_variable = { treasury_change = -14 }
+				modify_treasury_effect = yes
 			}
 		}
 
@@ -786,11 +782,9 @@ focus_tree = {
 				}
 				add_opinion_modifier = { target = ROOT modifier = gave_the_rohingya_citizenship }
 			}
-
-
-			decrease_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_priesthood_opinion = yes
 		}
-
 
 		ai_will_do = {
 			factor = 0
@@ -851,8 +845,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_request_western_development_aid"
-			custom_effect_tooltip = 11_aid_tt
-			add_to_variable = { treasury = 15 }
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -917,16 +911,8 @@ focus_tree = {
 
 		available = {
 			NOT = { is_in_faction_with = CHI }
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
+			CHI = {
+				influence_less_20 = yes
 			}
 		}
 
@@ -936,7 +922,7 @@ focus_tree = {
 				country_event = {
 					id = Burma.1
 					days = 2
-					random = 2
+					random_hours = 2
 				}
 			}
 			CHI = {
@@ -954,14 +940,16 @@ focus_tree = {
 				OR = {
 					is_historical_focus_on = no
 					AND = {
-						set_temp_variable = { temp_idx = -1 }
-						any_of = {
-							array = influence_array
-							check_variable = { v = CHI }
-						}
-						set_temp_variable = { temp_idx = i }
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx > 0.30 }
+						check_variable = { influence_array^0 = CHI }
+						check_variable = { influence_array_val^0 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = CHI }
+						check_variable = { influence_array_val^1 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = CHI }
+						check_variable = { influence_array_val^2 > 29.999 }
 					}
 				}
 			}
@@ -981,17 +969,7 @@ focus_tree = {
 		search_filters = {FOCUS_FILTER_RESEARCH}
 		available = {
 			NOT = { is_in_faction_with = CHI }
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			CHI = { influence_less_20 = yes }
 			USA = { has_guaranteed = BRM }
 		}
 
@@ -1002,7 +980,10 @@ focus_tree = {
 				limit = { has_dlc = "Together for Victory" }
 				add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
 			}
-			generic_grant_3_percent_influence_of_USA = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = USA.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1028,8 +1009,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_encourage_investment_from_asean_firms"
-			add_to_variable = {	treasury = -15 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
@@ -1072,7 +1053,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_security_cooperation_with_asean"
-			add_research_slot = 1
+			add_ideas = BRM_improve_security_cooperation_with_asean_research_boost
 			every_country = {
 				limit = {
 					NOT = { tag = BRM }
@@ -1116,17 +1097,8 @@ focus_tree = {
 				}
 				threat > 0.2
 			}
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			CHI = { influence_less_20 = yes }
+			USA = { influence_less_20 = yes }
 		}
 
 		completion_reward = {
@@ -1139,7 +1111,7 @@ focus_tree = {
 				country_event = {
 					id = Burma.4
 					days = 1
-					random = 3
+					random_hours = 3
 				}
 			}
 			hidden_effect = {
@@ -1184,8 +1156,8 @@ focus_tree = {
 				}
 			}
 			CHI = {
-				hidden_effect = { add_to_variable = { treasury = -14 } }
-				custom_effect_tooltip = 14_billion_expense_tt
+				set_temp_variable = { treasury_change = -14 }
+				modify_treasury_effect = yes
 			}
 		}
 
@@ -1215,17 +1187,7 @@ focus_tree = {
 
 		available = {
 			NOT = { is_in_faction_with = USA }
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_USA_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = USA }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			USA = { influence_less_20 = yes }
 		}
 
 		completion_reward = {
@@ -1268,14 +1230,16 @@ focus_tree = {
 				OR = {
 					is_historical_focus_on = no
 					AND = {
-						set_temp_variable = { temp_idx = -1 }
-						any_of = {
-							array = influence_array
-							check_variable = { v = USA }
-						}
-						set_temp_variable = { temp_idx = i }
-						check_variable = { temp_idx > -1 }
-						check_variable = { influence_array_calc^temp_idx > 0.30 }
+						check_variable = { influence_array^0 = USA }
+						check_variable = { influence_array_val^0 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = USA }
+						check_variable = { influence_array_val^1 > 29.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = USA }
+						check_variable = { influence_array_val^2 > 29.999 }
 					}
 				}
 			}
@@ -1295,17 +1259,7 @@ focus_tree = {
 
 		available = {
 			NOT = { is_in_faction_with = USA }
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_USA_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = USA }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			USA = { influence_less_20 = yes }
 		}
 
 		completion_reward = {
@@ -1352,12 +1306,13 @@ focus_tree = {
 			news_event = {
 				id = Burma_News.4
 				days = 1
-				random = 3
+				random_hours = 3
 			}
 
 			add_ideas = Struggle_for_power
 			GCC_open_nation_level_up = yes
-			decrease_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1398,7 +1353,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_accept_the_role_of_the_tatmadaw"
 			add_stability = 0.1
 
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1427,7 +1383,8 @@ focus_tree = {
 			}
 			recalculate_party = yes
 
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 			GCC_censored_nation_level_up = yes
 		}
 
@@ -1461,7 +1418,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_pursue_rapprochement_with_rebel_groups"
 			add_stability = 0.02
-			decrease_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1513,7 +1471,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_target_the_corruption_of_military_enterprises"
 			decrease_corruption = yes
-			decrease_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1523,7 +1482,7 @@ focus_tree = {
 
 	focus = {
 		id = BRM_mobilize_the_workers
-		icon = mobilize_the_workers
+		icon = industry_communist2
 		x = -1
 		y = 9
 		cost = 10
@@ -1556,7 +1515,7 @@ focus_tree = {
 
 	focus = {
 		id = BRM_mobilize_the_students
-		icon = mobilize_the_students
+		icon = university
 		x = 1
 		y = 9
 		cost = 10
@@ -1583,7 +1542,7 @@ focus_tree = {
 
 	focus = {
 		id = BRM_mobilize_the_monks
-		icon = mobilize_the_monks
+		icon = buddhism
 		x = 3
 		y = 9
 		cost = 10
@@ -1598,10 +1557,9 @@ focus_tree = {
 			if = {
 				limit = { has_idea = the_priesthood }
 				custom_trigger_tooltip = {
-					tooltip = 11_monks_enthusiastic_tt
-					hidden_trigger = {
-						has_country_flag = enthusiastic_the_priesthood
-					}
+					# Opinion must be greater than 80 to be enthusiastic
+					tooltip = the_priesthood_at_least_enthusiastic_tt
+					check_variable = { the_priesthood_opinion > 79 }
 				}
 			}
 		}
@@ -1610,6 +1568,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_mobilize_the_monks"
 			add_political_power = 100
 			add_stability = -0.02
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1739,7 +1699,7 @@ focus_tree = {
 			country_event = {
 				id = Burma.5
 				days = 2
-				random = 3
+				random_hours = 3
 			}
 
 			remove_ideas = {
@@ -1802,18 +1762,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_promise_autonomy"
 			add_stability = 0.02
-			KAC = {
-				generic_lower_2_percent_influence_of_BRM = yes
-			}
-			KAR = {
-				generic_lower_2_percent_influence_of_BRM = yes
-			}
-			SHN = {
-				generic_lower_2_percent_influence_of_BRM = yes
-			}
-			WAA = {
-				generic_lower_2_percent_influence_of_BRM = yes
-			}
+			set_temp_variable = { percent_change = -2 }
+			set_temp_variable = { tag_index = BRM.id }
+			set_temp_variable = { influence_target = KAC }
+			change_influence_percentage = yes
+			set_temp_variable = { tag_index = BRM.id }
+			set_temp_variable = { influence_target = KAR }
+			change_influence_percentage = yes
+			set_temp_variable = { tag_index = BRM.id }
+			set_temp_variable = { influence_target = SHN }
+			change_influence_percentage = yes
+			set_temp_variable = { tag_index = BRM.id }
+			set_temp_variable = { influence_target = WAA }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1835,48 +1796,17 @@ focus_tree = {
 		available = {
 			has_war = no
 			NOT = { has_idea = Buddhism_Official }
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_rebel_influence_higher_25_tt
-				KAC = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
-					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
-				}
-				KAR = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
-					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
-				}
-				SHN = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
-					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
-				}
-				WAA = {
-					set_temp_variable = { temp_idx = -1 }
-					any_of = {
-						array = influence_array
-						check_variable = { v = BRM }
-					}
-					set_temp_variable = { temp_idx = i }
-					check_variable = { temp_idx > -1 }
-					check_variable = { influence_array_calc^temp_idx > 0.25 }
-				}
+			KAC = {
+				influence_higher_25 = yes
+			}
+			KAR = {
+				influence_higher_25 = yes
+			}
+			SHN = {
+				influence_higher_25 = yes
+			}
+			WAA = {
+				influence_higher_25 = yes
 			}
 			custom_trigger_tooltip = {
 				tooltip = 11_BRM_NCA_tt
@@ -1905,7 +1835,7 @@ focus_tree = {
 			news_event = {
 				id = Burma_News.6
 				days = 1
-				random = 3
+				random_hours = 3
 			}
 			if = {
 				limit = {
@@ -1979,17 +1909,7 @@ focus_tree = {
 		search_filters = {FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL}
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			CHI = { influence_less_20 = yes }
 		}
 
 		bypass = {
@@ -2008,7 +1928,8 @@ focus_tree = {
 				popularity = 0.05
 			}
 			recalculate_party = yes
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2036,7 +1957,7 @@ focus_tree = {
 			news_event = {
 				id = Burma_News.7
 				days = 2
-				random = 3
+				random_hours = 3
 			}
 			every_country = {
 				limit = {
@@ -2049,7 +1970,8 @@ focus_tree = {
 			}
 			add_ideas = { Anti_tatmadaw_sentiment }
 			add_manpower = -1000
-			decrease_the_priesthood_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2134,7 +2056,8 @@ focus_tree = {
 					modifier = asean_plus_three_relations
 				}
 			}
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -2197,7 +2120,8 @@ focus_tree = {
 				}
 			}
 			add_stability = 0.1
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2255,8 +2179,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_the_tatmadaws_role_in_the_economy"
-			custom_effect_tooltip = 15_billion_expense_tt
-			subtract_from_variable = { treasury = 15 }
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
@@ -2294,12 +2218,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_construct_military_industries"
-			hidden_effect = {
-				add_to_variable = {
-					treasury = -15
-				}
-			}
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 3
 				add_building_construction = {
@@ -2350,7 +2270,7 @@ focus_tree = {
 			news_event = {
 				id = Burma_News.5
 				days = 1
-				random = 3
+				random_hours = 3
 			}
 			add_war_support = 0.1
 		}
@@ -2380,6 +2300,7 @@ focus_tree = {
 				country_exists = KAR
 			}
 		}
+		will_lead_to_war_with = KAR
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_karen"
@@ -2415,6 +2336,7 @@ focus_tree = {
 				country_exists = KAC
 			}
 		}
+		will_lead_to_war_with = KAC
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_kachin"
@@ -2450,6 +2372,7 @@ focus_tree = {
 				country_exists = SHN
 			}
 		}
+		will_lead_to_war_with = SHN
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_shan"
@@ -2486,17 +2409,7 @@ focus_tree = {
 
 		available = {
 			has_war = no
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			CHI = { influence_less_20 = yes }
 		}
 
 		bypass = {
@@ -2504,6 +2417,7 @@ focus_tree = {
 				country_exists = WAA
 			}
 		}
+		will_lead_to_war_with = WAA
 
 		search_filters = {FOCUS_FILTER_ANNEXATION}
 
@@ -2547,8 +2461,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_internal_colonialism"
-			custom_effect_tooltip = 4_billion_expense_tt
-			subtract_from_variable = { treasury = 4 }
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
 			496 = {
 				add_resource = {
 					type = tungsten
@@ -2658,7 +2572,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_reject_foreign_interference"
 			add_political_power = 100
 			add_stability = 0.1
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -2740,7 +2655,8 @@ focus_tree = {
 					modifier = criticized_us
 				}
 			}
-			boost_domestic_influence_2_percent = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -2789,16 +2705,15 @@ focus_tree = {
 
 	focus = {
 		id = BRM_strike_our_age_old_enemy
-		icon = anti_thai
+		icon = war2_green
 		x = 15
 		y = 8
 		cost = 10
 
-		prerequisite = {
-		focus = BRM_provoke_clashes_on_the_thai_border
-		}
+		prerequisite = { focus = BRM_provoke_clashes_on_the_thai_border }
 
-		search_filters = {FOCUS_FILTER_ANNEXATION}
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = SIA
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_our_age_old_enemy"
@@ -2826,17 +2741,7 @@ focus_tree = {
 		}
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			CHI = { influence_less_20 = yes }
 		}
 
 		completion_reward = {
@@ -2878,7 +2783,7 @@ focus_tree = {
 
 	focus = {
 		id = BRM_ultimatum_to_china
-		icon = anti_china
+		icon = attack_china
 		x = 17
 		y = 8
 		cost = 10
@@ -2888,17 +2793,7 @@ focus_tree = {
 		}
 		search_filters = {FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT}
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_CHI_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			CHI = { influence_less_20 = yes }
 		}
 
 		completion_reward = {
@@ -2945,19 +2840,10 @@ focus_tree = {
 			has_civil_war = no
 			nationalist > 0.5
 			has_stability > 0.4
-			if = {
-				limit = { has_idea = the_priesthood }
-				if = {
-					limit = { has_idea = the_priesthood }
-					custom_trigger_tooltip = {
-						tooltip = 11_monks_indifferent_tt
-						hidden_trigger = {
-							NOT = {
-								has_country_flag = hostile_the_priesthood
-								has_country_flag = negative_the_priesthood
-							}
-						}
-					}
+			if = { limit = { has_idea = the_priesthood }
+				custom_trigger_tooltip = {
+					tooltip = the_priesthood_at_least_indifferent_tt
+					check_variable = { the_priesthood_opinion > 49 }
 				}
 			}
 		}
@@ -2965,6 +2851,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_achieve_acceptance_of_military_rule"
 			remove_ideas = Anti_tatmadaw_sentiment
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3064,8 +2952,8 @@ focus_tree = {
 				}
 			}
 			CHI = {
-				hidden_effect = { add_to_variable = { treasury = -21 } }
-				custom_effect_tooltip = 21_billion_expense_tt
+				set_temp_variable = { treasury_change = -21 }
+				modify_treasury_effect = yes
 			}
 		}
 
@@ -3094,9 +2982,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_secure_chinese_assistance_in_crushing_dissent"
 			GCC_censored_nation_level_up = yes
-			BRM = {
-				generic_grant_3_percent_influence_of_CHI = yes
-			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -3130,7 +3019,10 @@ focus_tree = {
 			}
 			BRM = {
 				add_opinion_modifier = { target = CHI modifier = chinese_preferential_trade }
-				generic_grant_4_percent_influence_of_CHI = yes
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = CHI.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
 			}
 			CHI = {
 				add_opinion_modifier = { target = ROOT modifier = chinese_preferential_trade }
@@ -3146,7 +3038,6 @@ focus_tree = {
 		}
 	}
 
-
 	focus = {
 		id = BRM_request_chinese_protection
 		icon = peoples_liberation_army
@@ -3154,23 +3045,11 @@ focus_tree = {
 		y = 10
 		cost = 15
 
-		prerequisite = {
-		focus = BRM_give_china_preferential_trade_agreements
-		}
+		prerequisite = { focus = BRM_give_china_preferential_trade_agreements }
 
 		available = {
 			NOT = { is_in_faction_with = USA }
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_USA_influence_lower_20_tt
-				set_temp_variable = { temp_idx = -1 }
-				any_of = {
-					array = influence_array
-					check_variable = { v = CHI }
-				}
-				set_temp_variable = { temp_idx = i }
-				check_variable = { temp_idx > -1 }
-				check_variable = { influence_array_calc^temp_idx < 0.20 }
-			}
+			USA = { influence_less_20 = yes }
 		}
 
 		completion_reward = {
@@ -3179,12 +3058,13 @@ focus_tree = {
 				country_event = {
 					id = Burma.7
 					days = 2
-					random = 3
+					random_hours = 3
 				}
 			}
-			BRM = {
-				generic_grant_5_percent_influence_of_CHI = yes
-			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = BRM }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -3210,7 +3090,8 @@ focus_tree = {
 			add_political_power = 50
 			army_experience = 10
 
-			increase_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3547,12 +3428,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_our_army_doctrine"
-			add_tech_bonus = {
-				name = land_doctrine
-				bonus = 0.5
-				uses = 2
-				category = land_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = BRM_improve_our_army_doctrine
+                category = land_doctrine
+                uses = 2
+                cost_reduction = 0.5
+            }
 		}
 
 		ai_will_do = {
@@ -3598,11 +3479,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_counter_insurgency_techniques"
-			add_tech_bonus = {
-				name = land_doctrine
-				bonus = 0.20
+			add_doctrine_cost_reduction = {
+				name = BRM_improve_counter_insurgency_techniques
+				category = land_doctrine
 				uses = 1
-				technology = COIN
+				cost_reduction = 0.2
 			}
 			add_tech_bonus = {
 				name = infantry_bonus
@@ -3729,8 +3610,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_construct_naval_bases"
-			custom_effect_tooltip = 4.5_billion_expense_tt
-			subtract_from_variable = { treasury = 4.5 }
+			set_temp_variable = { treasury_change = -4.5 }
+			modify_treasury_effect = yes
 			504 = {
 				add_building_construction = {
 				type = naval_base
@@ -3760,8 +3641,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_construct_ports"
-			custom_effect_tooltip = 15_billion_expense_tt
-			subtract_from_variable = { treasury = 15 }
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			504 = {
 				add_building_construction = {
 				type = dockyard
@@ -3783,9 +3664,7 @@ focus_tree = {
 		y = 3
 		cost = 10
 
-		prerequisite = {
-		focus = BRM_strengthen_the_other_arms
-		}
+		prerequisite = { focus = BRM_strengthen_the_other_arms }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_bolster_the_air_force"
@@ -3816,12 +3695,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_our_air_doctrine"
-			add_tech_bonus = {
-				name = air_doctrine
-				bonus = 0.5
-				uses = 1
-				category = air_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = BRM_improve_our_air_doctrine
+                category = air_doctrine
+                uses = 1
+                cost_reduction = 0.5
+            }
 		}
 
 		ai_will_do = {
@@ -3850,8 +3729,8 @@ focus_tree = {
 				instant_build = yes
 				}
 			}
-			custom_effect_tooltip = 4.5_billion_expense_tt
-			subtract_from_variable = { treasury = 4.5 }
+			set_temp_variable = { treasury_change = -4.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -3937,8 +3816,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_singaporean_armour"
-			subtract_from_variable = { treasury = 5 }
-			custom_effect_tooltip = 5_billion_expense_tt
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
 				type = IFV_4
 				amount = 20
@@ -4007,8 +3886,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_chinese_air_power"
-			subtract_from_variable = { treasury = 10 }
-			custom_effect_tooltip = 10_billion_expense_tt
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
 				type = AS_Fighter2
 				amount = 10

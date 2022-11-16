@@ -1,7 +1,6 @@
-###Jumaron and Angriest Bird
-
+﻿# Author(s): Jumaron & Angriest Bird
+# Last Modified: Feb. 03 2022 by Angriest Bird
 focus_tree = {
-
 	id = united_kingdom_focus
 
 	country = {
@@ -12,11 +11,12 @@ focus_tree = {
 			original_tag = ENG
 		}
 	}
-	continuous_focus_position = { x = 300 y = 300 }
+	# Continuous Focus Position
+	continuous_focus_position = { x = 400 y = 900 }
 
 	focus = {
 		id = ENG_vitalize_westminster
-		icon = demand_territory2
+		icon = invest_in_britain
 		x = 6
 		y = 0
 		cost = 10
@@ -26,14 +26,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_vitalize_westminster"
 			add_political_power = 50
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.03
-			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.03
-			}
+			add_popularity = { ideology = democratic popularity = 0.03 }
+			add_popularity = { ideology = communism popularity = 0.03 }
 			recalculate_party = yes
 		}
 
@@ -44,7 +38,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_the_future_of_britain
-		icon = propaganda
+		icon = british_nationalism
 		x = 27
 		y = 0
 		cost = 10
@@ -53,7 +47,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_the_future_of_britain"
-			add_political_power = 50
+			add_political_power = 150
 		}
 
 		ai_will_do = {
@@ -63,44 +57,56 @@ focus_tree = {
 
 	focus = {
 		id = ENG_british_armed_forces
-		icon = army_logistics
+		icon = iwo_britannia
 		x = 46
 		y = 0
 		cost = 10
 
+		available = {
+			NOT = { has_idea = no_military }
+		}
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_british_armed_forces"
-			army_experience = 5
-			navy_experience = 5
+			army_experience = 15
+			navy_experience = 15
+			air_experience = 15
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			change_intelligence_community_opinion = yes
 		}
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_idea = no_military
+			}
 		}
 	}
 
+	# Economic Section of the Tree
 	focus = {
 		id = ENG_economic_stimulus
-		icon = consumer_goods
+		icon = pound_sterling
 		x = 2
 		y = 1
-		cost = 10
+		cost = 5
 
-		prerequisite = {
-			focus = ENG_vitalize_westminster
-		}
-
+		prerequisite = { focus = ENG_vitalize_westminster }
 		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_economic_stimulus"
 			add_tech_bonus = {
-				name = industrial_bonus
-				bonus = 0.4
+				name = ENG_economic_stimulus
+				bonus = 0.5
 				uses = 1
 				category = industry
 			}
-			add_2_popularity = yes
+			set_temp_variable = { arg_popularity = 0.02 }
+			add_ruling_outlook_popularity = yes
 		}
 
 		ai_will_do = {
@@ -109,8 +115,697 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ENG_english_industry
+		icon = centralization
+		x = -2
+		y = 1
+		relative_position_id = ENG_economic_stimulus
+		cost = 10
+
+		prerequisite = { focus = ENG_economic_stimulus }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			OR = {
+				has_full_control_of_state = 955
+				has_full_control_of_state = 16
+				has_full_control_of_state = 973
+				has_full_control_of_state = 12
+				has_full_control_of_state = 15
+				has_full_control_of_state = 13
+				has_full_control_of_state = 14
+				has_full_control_of_state = 11
+				has_full_control_of_state = 10
+			}
+		}
+		cancel_if_invalid = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_english_industry"
+			random_owned_state = {
+				limit = {
+					region = 1
+					free_building_slots = {
+						building = industrial_complex
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 2
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 2
+			}
+			random_owned_state = {
+				limit = {
+					region = 1
+					free_building_slots = {
+						building = industrial_complex
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 2
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 2
+			}
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+			change_industrial_conglomerates_opinion = yes
+		}
+	}
+
+	focus = {
+		id = ENG_scottish_industry
+		icon = factory_planning
+		x = 0
+		y = 1
+		relative_position_id = ENG_economic_stimulus
+		cost = 10
+
+		prerequisite = { focus = ENG_economic_stimulus }
+		bypass = {
+			NOT = { owns_state = 9 }
+			NOT = { owns_state = 437 }
+		}
+
+		search_filters = {FOCUS_FILTER_INDUSTRY}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_scottish_industry"
+			if = {
+				limit = {
+					9 = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+					}
+				}
+				9 = {
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 2
+				}
+			}
+			else = {
+				random_owned_state = {
+					limit = {
+						region = 3
+						free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 2
+				}
+			}
+			if = {
+				limit = {
+					437 = {
+						free_building_slots = {
+							building = industrial_complex
+							size > 1
+							include_locked = yes
+						}
+					}
+				}
+				437 = {
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+			}
+			else = {
+				random_owned_state = {
+					limit = {
+						region = 3
+						free_building_slots = {
+							building = industrial_complex
+							size > 0
+							include_locked = yes
+						}
+					}
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+			}
+			set_temp_variable = { treasury_change = -30.0 }
+			modify_treasury_effect = yes
+
+		}
+	}
+
+	focus = {
+		id = ENG_imperial_industry
+		icon = industry_communist2
+		x = 2
+		y = 1
+		relative_position_id = ENG_economic_stimulus
+		cost = 10
+
+		prerequisite = { focus = ENG_economic_stimulus }
+
+		search_filters = {FOCUS_FILTER_INDUSTRY}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_imperial_industry"
+			random_owned_state = {
+				limit = {
+					NOT = { region = 1 }
+					NOT = { region = 2 }
+					NOT = { region = 3 }
+					NOT = { region = 4 }
+					state_population > 3000
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	focus = {
+		id = ENG_dockyards_1
+		icon = Generic_Maritime
+		x = -1
+		y = 2
+		relative_position_id = ENG_economic_stimulus
+		cost = 10
+
+		prerequisite = {
+			focus = ENG_english_industry
+			focus = ENG_scottish_industry
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY FOCUS_FILTER_INTERNAL_FACTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_dockyards_1"
+			navy_experience = 15
+			random_owned_state = {
+				limit = {
+					OR = {
+						region = 1
+						region = 2
+						region = 3
+						region = 4
+					}
+					free_building_slots = {
+						building = dockyard
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				limit = {
+					OR = {
+						region = 1
+						region = 2
+						region = 3
+						region = 4
+					}
+					free_building_slots = {
+						building = dockyard
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_defense_industry_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = ENG_north_sea_oil
+		icon = royal_dutch_shell
+		x = 1
+		y = 2
+		relative_position_id = ENG_economic_stimulus
+		cost = 10
+
+		prerequisite = { focus = ENG_scottish_industry }
+
+		search_filters = {FOCUS_FILTER_RESOURCE}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_north_sea_oil"
+			if = {
+				limit = {
+					OR = {
+						owns_state = 14
+						any_of_scopes = {
+							array = subjects
+							owns_state = 14
+						}
+					}
+				}
+				add_resource = {	#Aberdeenshire
+					type = oil
+					amount = 5
+					state = 14
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						owns_state = 276
+						any_of_scopes = {
+							array = subjects
+							owns_state = 276
+						}
+					}
+				}
+				add_resource = { 	#Lothian
+					type = oil
+					amount = 7
+					state = 276
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						owns_state = 8
+						any_of_scopes = {
+							array = subjects
+							owns_state = 8
+						}
+					}
+				}
+				add_resource = {	#Northern England
+					type = oil
+					amount = 5
+					state = 8
+				}
+			}
+
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = ENG_imperial_dockyards
+		icon = naval_dockyard
+		x = 5
+		y = 3
+		cost = 10
+
+		prerequisite = {
+			focus = ENG_imperial_industry
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY FOCUS_FILTER_INTERNAL_FACTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_imperial_dockyards"
+			navy_experience = 5
+			random_owned_state = {
+				limit = {
+					NOT = {
+						region = 1
+						region = 2
+						region = 3
+						region = 4
+					}
+					free_building_slots = {
+						building = dockyard
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_defense_industry_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = ENG_dockyards_2
+		icon = naval_dockyard
+		x = 1
+		y = 4
+		cost = 10
+
+		prerequisite = {
+			focus = ENG_dockyards_1
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY FOCUS_FILTER_INTERNAL_FACTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_dockyards_2"
+			navy_experience = 10
+			random_owned_state = {
+				limit = {
+					OR = {
+						region = 1
+						region = 2
+						region = 3
+						region = 4
+					}
+					free_building_slots = {
+						building = dockyard
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				limit = {
+					OR = {
+						region = 1
+						region = 2
+						region = 3
+						region = 4
+					}
+					free_building_slots = {
+						building = dockyard
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_defense_industry_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = ENG_fortify_the_empire
+		icon = coastal_fort
+		x = 5
+		y = 4
+		cost = 10
+
+		prerequisite = { focus = ENG_imperial_dockyards }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_fortify_the_empire"
+			#Gibraltar
+			if = {
+				limit = { 19 = { is_owned_by = ENG } }
+				19 = {
+					add_building_construction = {
+						type = bunker
+						province = 4135
+						level = 2
+						instant_build = yes
+					}
+					add_building_construction = {
+						type = coastal_bunker
+						province = 4135
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			#Falklands
+			if = {
+				limit = { 26 = { is_owned_by = ENG } }
+				26 = {
+					add_building_construction = {
+						type = coastal_bunker
+						province = 12960
+						level = 3
+						instant_build = yes
+					}
+				}
+			}
+			#South Georgia
+			if = {
+				limit = { 22 = { is_owned_by = ENG } }
+				22 = {
+					add_building_construction = {
+						type = coastal_bunker
+						province = 10995
+						level = 3
+						instant_build = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = ENG_english_factories
+		icon = factory_complex
+		x = 0
+		y = 5
+		cost = 10
+
+		prerequisite = {
+			focus = ENG_english_industry
+		}
+
+		search_filters = {FOCUS_FILTER_INDUSTRY}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_english_factories"
+			random_owned_state = {
+				limit = {
+					region = 1
+					free_building_slots = {
+						building = arms_factory
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 2
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 2
+			}
+			random_owned_state = {
+				limit = {
+					region = 1
+					free_building_slots = {
+						building = arms_factory
+						size > 1
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 2
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 2
+			}
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_defense_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = ENG_scottish_factories
+		icon = industry_military
+		x = 2
+		y = 5
+		cost = 10
+
+		prerequisite = {
+			focus = ENG_scottish_industry
+		}
+
+		bypass = {
+			NOT = { owns_state = 437 }
+			NOT = { owns_state = 9 }
+		}
+
+		search_filters = {FOCUS_FILTER_INDUSTRY}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_scottish_factories"
+			if = {
+				limit = {
+					9 = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				9 = {
+					add_building_construction = {
+						type = arms_factory
+						level = 2
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 2
+				}
+			}
+			if = {
+				limit = {
+					437 = {
+						free_building_slots = {
+							building = arms_factory
+							size > 0
+							include_locked = yes
+						}
+					}
+				}
+				437 = {
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+			}
+
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_defense_industry_opinion = yes
+		}
+
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = ENG_extra_research_slot_1
+		icon = research
+		x = -1
+		y = 5
+		relative_position_id = ENG_economic_stimulus
+		cost = 10
+
+		prerequisite = { focus = ENG_english_factories }
+		prerequisite = { focus = ENG_dockyards_2 }
+		prerequisite = { focus = ENG_scottish_factories }
+
+		search_filters = {FOCUS_FILTER_RESEARCH}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ENG_extra_research_slot_1"
+			add_ideas = ENG_idea_Expanding_research_facilities
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
 		id = ENG_political_reform
-		icon = demand_territory
+		icon = big_ben_gay
 		x = 10
 		y = 1
 		cost = 10
@@ -133,7 +828,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_democratic_tradition
-		icon = democracy
+		icon = Election_graphics
 		x = 22
 		y = 1
 		cost = 10
@@ -150,9 +845,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_democratic_tradition"
-			EU_eurosceptic_decline_3_percent = yes
-			ROOT_eurosceptic_decline_5_percent = yes
-			add_5_popularity = yes
+			set_temp_variable = { modify_eurosceptic = -0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
+			set_temp_variable = { arg_popularity = 0.05 }
+			add_ruling_outlook_popularity = yes
 		}
 
 		ai_will_do = {
@@ -178,9 +877,6 @@ focus_tree = {
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		available = {
-			#NOT = {
-			#	has_idea = EU_member
-			#}
 		}
 
 		completion_reward = {
@@ -224,7 +920,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_focus_on_the_navy
-		icon = navy2
+		icon = ship_bleur_point
 		x = 48
 		y = 1
 		cost = 10
@@ -244,175 +940,8 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ENG_english_industry
-		icon = industry_civilian
-		x = 0
-		y = 2
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_economic_stimulus
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_english_industry"
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-					}
-					free_building_slots = {
-						building = industrial_complex
-						size > 1
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-					}
-					free_building_slots = {
-						building = industrial_complex
-						size > 1
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
-			subtract_from_variable = { treasury = 30 }
-			custom_effect_tooltip = 30_billion_expense_tt
-		}
-	}
-
-	focus = {
-		id = ENG_scottish_industry
-		icon = industry_civilian
-		x = 2
-		y = 2
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_economic_stimulus
-		}
-
-		bypass = {
-			NOT = { owns_state = 9 }
-			NOT = { owns_state = 437 }
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_scottish_industry"
-			random_owned_state = {
-				limit = {
-					region = 3
-					free_building_slots = {
-						building = industrial_complex
-						size > 1
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
-			random_owned_state = {
-				limit = {
-					region = 3
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			subtract_from_variable = { treasury = 22.5 }
-			custom_effect_tooltip = 22_5_billion_expense_tt
-		}
-	}
-
-	focus = {
-		id = ENG_imperial_industry
-		icon = industry_civilian
-		x = 4
-		y = 2
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_economic_stimulus
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-		available = {
-			custom_trigger_tooltip = {
-				OR = {
-					is_ai = yes
-					check_variable = { treasury > 9.99 }
-				}
-				tooltip = 1_billion_currently_in_treasury_tt
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_imperial_industry"
-			random_owned_state = {
-				limit = {
-					NOT = { region = 1 }
-					NOT = { region = 2 }
-					NOT = { region = 3 }
-					NOT = { region = 4 }
-					state_population > 3000
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			subtract_from_variable = { treasury = 7.5 }
-			custom_effect_tooltip = 7.5_billion_expense_tt
-		}
-	}
-
-	focus = {
 		id = ENG_expand_the_home_ministry
-		icon = race_relations2
+		icon = housing_secured
 		x = 8
 		y = 2
 		cost = 10
@@ -435,7 +964,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_expand_the_foreign_ministry
-		icon = alliance
+		icon = Generic_Big_Ben02
 		x = 13
 		y = 2
 		cost = 10
@@ -481,7 +1010,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_europe_is_the_future
-		icon = align_to_europe
+		icon = eu_investments
 		x = 18
 		y = 2
 		cost = 10
@@ -505,8 +1034,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_europe_is_the_future"
-			EU_eurosceptic_decline_5_percent = yes
-			ROOT_eurosceptic_decline_10_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.10 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_political_power = 25
 			add_popularity = {
 				popularity = 0.05
@@ -530,7 +1062,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_careful_cooperation
-		icon = molotov_ribbentrop_pact
+		icon = calm_down_england
 		x = 22
 		y = 2
 		cost = 10
@@ -550,8 +1082,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_careful_cooperation"
-			EU_eurosceptic_decline_3_percent = yes
-			ROOT_eurosceptic_decline_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_political_power = 25
 			add_popularity = {
 				popularity = 0.05
@@ -567,7 +1102,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_distance_from_europe
-		icon = align_to_britain
+		icon = PB_ENG_Haig_Initial
 		x = 26
 		y = 2
 		cost = 10
@@ -587,8 +1122,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_distance_from_europe"
-			EU_eurosceptic_rise_5_percent = yes
-			ROOT_eurosceptic_rise_10_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.05 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = 0.10 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_political_power = 50
 			add_popularity = {
 				popularity = 0.05
@@ -607,7 +1145,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_towards_the_left
-		icon = communism
+		icon = generic_communism_focus
 		x = 29
 		y = 2
 		cost = 10
@@ -636,7 +1174,7 @@ focus_tree = {
 			recalculate_party = yes
 			if = {
 				limit = { has_idea = NATO_member }
-				remove_ideas = NATO_member
+				NATO_leave = yes
 			}
 		}
 
@@ -677,7 +1215,7 @@ focus_tree = {
 			recalculate_party = yes
 			if = {
 				limit = { has_idea = NATO_member }
-				remove_ideas = NATO_member
+				NATO_leave = yes
 			}
 		}
 
@@ -719,8 +1257,8 @@ focus_tree = {
 				}
 				add_extra_state_shared_building_slots = 2
 			}
-			subtract_from_variable = { treasury = 15 }
-			custom_effect_tooltip = 15_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -730,7 +1268,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_training
-		icon = infantry_axis
+		icon = PB_ENG_Haig_Son
 		x = 42
 		y = 2
 		cost = 10
@@ -825,195 +1363,8 @@ focus_tree = {
 				}
 				add_extra_state_shared_building_slots = 2
 			}
-			subtract_from_variable = { treasury = 15 }
-			custom_effect_tooltip = 15_billion_expense_tt
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = ENG_dockyards_1
-		icon = naval_dockyard
-		x = 1
-		y = 3
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_english_industry
-			focus = ENG_scottish_industry
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_dockyards_1"
-			navy_experience = 5
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = dockyard
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = dockyard
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			subtract_from_variable = { treasury = 15 }
-			custom_effect_tooltip = 15_billion_expense_tt
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = ENG_north_sea_oil
-		icon = oil_production
-		x = 3
-		y = 3
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_scottish_industry
-		}
-
-		search_filters = {FOCUS_FILTER_RESOURCE}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_north_sea_oil"
-			if = {
-				limit = {
-					OR = {
-						owns_state = 14
-						any_of_scopes = {
-							array = subjects
-							owns_state = 14
-						}
-					}
-				}
-				add_resource = {	#Aberdeenshire
-					type = oil
-					amount = 5
-					state = 14
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						owns_state = 276
-						any_of_scopes = {
-							array = subjects
-							owns_state = 276
-						}
-					}
-				}
-				add_resource = { 	#Lothian
-					type = oil
-					amount = 7
-					state = 276
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						owns_state = 8
-						any_of_scopes = {
-							array = subjects
-							owns_state = 8
-						}
-					}
-				}
-				add_resource = {	#Northern England
-					type = oil
-					amount = 5
-					state = 8
-				}
-			}
-
-			subtract_from_variable = { treasury = 7.0 }
-			custom_effect_tooltip = 7_billion_expense_tt
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = ENG_imperial_dockyards
-		icon = naval_dockyard
-		x = 5
-		y = 3
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_imperial_industry
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_imperial_dockyards"
-			navy_experience = 5
-			random_owned_state = {
-				limit = {
-					NOT = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = dockyard
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			subtract_from_variable = { treasury = 7.5 }
-			custom_effect_tooltip = 7.5_billion_expense_tt
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -1023,7 +1374,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_freedom_first
-		icon = democracy
+		icon = split_britian_map
 		x = 7
 		y = 3
 		cost = 10
@@ -1036,16 +1387,16 @@ focus_tree = {
 			focus = ENG_security_first
 		}
 
-		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT}
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_INTERNAL_FACTION }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_freedom_first"
 			add_war_support = 0.05
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.02
-			}
+			add_popularity = { ideology = democratic popularity = 0.02 }
 			recalculate_party = yes
+
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1114,8 +1465,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_go_with_europe"
-			EU_eurosceptic_decline_3_percent = yes
-			ROOT_eurosceptic_decline_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			every_country = {
 				limit = {
 					OR = {
@@ -1140,7 +1494,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_go_with_the_commonwealth
-		icon = infantry_commonwealth
+		icon = Rule_Britannia
 		x = 13
 		y = 3
 		cost = 10
@@ -1201,8 +1555,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_britain_first"
-			EU_eurosceptic_rise_3_percent = yes
-			ROOT_eurosceptic_rise_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = 0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_political_power = 20
 			every_country = {
 				limit = {
@@ -1228,7 +1585,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_european_cooperation_1
-		icon = major_alliance
+		icon = green_england
 		x = 18
 		y = 3
 		cost = 10
@@ -1306,7 +1663,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_special_treatment
-		icon = intelligence_exchange
+		icon = wooden_wall
 		x = -1
 		y = 1
 		relative_position_id = ENG_careful_cooperation
@@ -1321,8 +1678,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_special_treatment"
 			add_political_power = 150
-			EU_eurosceptic_rise_5_percent = yes
-			ROOT_eurosceptic_decline_10_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.05 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.10 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			every_country = {
 				limit = {
 					NOT = { tag = ENG }
@@ -1362,11 +1722,12 @@ focus_tree = {
 				}
 			}
 		}
+		cancel = { NOT = { has_idea = EU_member } }
 
 		search_filters = {FOCUS_FILTER_EUROPEAN_UNION}
 
 		available = {
-				has_idea = EU_member
+			has_idea = EU_member
 		}
 
 		completion_reward = {
@@ -1380,8 +1741,11 @@ focus_tree = {
 						compare = greater_than_or_equals
 					}
 				}
-				EU_eurosceptic_rise_5_percent = yes
-				ROOT_eurosceptic_rise_20_percent = yes
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				EU_eurosceptic_change = yes
+				set_temp_variable = { modify_eurosceptic = 0.20 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 				every_country = {
 					limit = {
 						has_idea = EU_member
@@ -1395,8 +1759,11 @@ focus_tree = {
 			else = {
 				random_list = {
 					60 = {
-						EU_eurosceptic_rise_5_percent = yes
-						ROOT_eurosceptic_rise_20_percent = yes
+						set_temp_variable = { modify_eurosceptic = 0.05 }
+						EU_eurosceptic_change = yes
+						set_temp_variable = { modify_eurosceptic = 0.20 }
+						set_temp_variable = { modify_eurosceptic_target = ROOT }
+						eurosceptic_change = yes
 						every_country = {
 							limit = {
 								has_idea = EU_member
@@ -1407,8 +1774,11 @@ focus_tree = {
 						}
 					}
 					40 = {
-						EU_eurosceptic_decline_5_percent = yes
-						ROOT_eurosceptic_decline_20_percent = yes
+						set_temp_variable = { modify_eurosceptic = -0.05 }
+						EU_eurosceptic_change = yes
+						set_temp_variable = { modify_eurosceptic = -0.20 }
+						set_temp_variable = { modify_eurosceptic_target = ROOT }
+						eurosceptic_change = yes
 						every_country = {
 							limit = {
 								has_idea = EU_member
@@ -1438,7 +1808,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_new_diplomatic_initiatives
-		icon = national_unity
+		icon = paternal_conservatism
 		x = -1
 		y = 1
 		relative_position_id = ENG_distance_from_europe
@@ -1452,7 +1822,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_new_diplomatic_initiatives"
-			ROOT_eurosceptic_rise_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_war_support = 0.05
 			add_political_power = 25
 		}
@@ -1464,7 +1836,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_abolish_the_monarchy
-		icon = communism2
+		icon = anti_monarchism4
 		x = 29
 		y = 3
 		cost = 10
@@ -1485,7 +1857,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_empower_the_throne
-		icon = monarchism
+		icon = british_monarchy
 		x = 33
 		y = 3
 		cost = 10
@@ -1514,7 +1886,7 @@ focus_tree = {
 				hidden_effect = {
 					random_list = {
 						80 = { }
-						20 = { country_event = britain_md.6 }
+						20 = { news_event = britain_md.6 }
 					}
 				}
 			}
@@ -1527,7 +1899,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_empower_the_government
-		icon = demand_territory2
+		icon = british_cabinet
 		x = 37
 		y = 3
 		cost = 10
@@ -1551,7 +1923,7 @@ focus_tree = {
 				hidden_effect = {
 					random_list = {
 						20 = { }
-						80 = { country_event = britain_md.6 }
+						80 = { news_event = britain_md.6 }
 					}
 				}
 			}
@@ -1634,7 +2006,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_develop_our_fighters"
 			add_tech_bonus = {
-				name = fighter_bonus
+				name = ENG_develop_our_fighters
 				bonus = 0.4
 				uses = 2
 				category = Cat_FIGHTER
@@ -1662,7 +2034,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_develop_heavy_planes"
 			add_tech_bonus = {
-				name = bomber_bonus
+				name = ENG_develop_heavy_planes
 				bonus = 0.6
 				uses = 1
 				category = Cat_H_AIR
@@ -1676,7 +2048,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_develop_submarines
-		icon = submarines
+		icon = ENG_Fleet_in_Being2
 		x = 49
 		y = 3
 		cost = 10
@@ -1690,7 +2062,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_develop_submarines"
 			add_tech_bonus = {
-				name = sub_bonus
+				name = ENG_develop_submarines
 				bonus = 0.25
 				uses = 2
 				category = Cat_SUB
@@ -1704,7 +2076,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_develop_carriers
-		icon = carriers
+		icon = ENG_Embrace_Carriers
 		x = 51
 		y = 3
 		cost = 10
@@ -1718,7 +2090,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_develop_carriers"
 			add_tech_bonus = {
-				name = carrier_bonus
+				name = ENG_develop_carriers
 				bonus = 0.35
 				uses = 3
 				category = Cat_CARRIER
@@ -1730,138 +2102,11 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = ENG_dockyards_2
-		icon = naval_dockyard
-		x = 1
-		y = 4
-		cost = 10
 
-		prerequisite = {
-			focus = ENG_dockyards_1
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_dockyards_2"
-			navy_experience = 10
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = dockyard
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = dockyard
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			subtract_from_variable = { treasury = 15 }
-			custom_effect_tooltip = 15_billion_expense_tt
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = ENG_fortify_the_empire
-		icon = coastal_fort
-		x = 5
-		y = 4
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_imperial_dockyards
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_fortify_the_empire"
-			#Gibraltar
-			if = {
-				limit = { 19 = { is_owned_by = ENG } }
-				19 = {
-					add_building_construction = {
-						type = bunker
-						province = 4135
-						level = 2
-						instant_build = yes
-					}
-					add_building_construction = {
-						type = coastal_bunker
-						province = 4135
-						level = 2
-						instant_build = yes
-					}
-				}
-			}
-			#Falklands
-			if = {
-				limit = { 26 = { is_owned_by = ENG } }
-				26 = {
-					add_building_construction = {
-						type = coastal_bunker
-						province = 12960
-						level = 3
-						instant_build = yes
-					}
-				}
-			}
-			#South Georgia
-			if = {
-				limit = { 22 = { is_owned_by = ENG } }
-				22 = {
-					add_building_construction = {
-						type = coastal_bunker
-						province = 10995
-						level = 3
-						instant_build = yes
-					}
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
 
 	focus = {
 		id = ENG_assure_individual_freedoms
-		icon = industry_democratic
+		icon = torchbearers_of_tomorrow
 		x = 7
 		y = 4
 		cost = 10
@@ -1884,7 +2129,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_public_CCTV_systems
-		icon = propaganda
+		icon = cctv2
 		x = 9
 		y = 4
 		cost = 10
@@ -1898,13 +2143,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_public_CCTV_systems"
 			add_ideas = ENG_CCTV_systems
-
-				if = {
-				limit = { has_idea = intelligence_community }
-					set_country_flag = current_intelligence_community
-					visually_display_opinion_rise_intelligence_community = yes
-					increase_internal_faction_opinion = yes
-					}
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1914,7 +2154,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_european_logistics
-		icon = intelligence_exchange
+		icon = euro
 		x = 18
 		y = 4
 		cost = 15
@@ -1927,7 +2167,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_european_logistics"
-			ROOT_eurosceptic_decline_3_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.03 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_ideas = ENG_european_logistics_idea
 		}
 
@@ -1957,6 +2199,8 @@ focus_tree = {
 			NOT = { has_idea = EU_member }
 		}
 
+		cancel = { NOT = { has_idea = EU_member } }
+
 		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 
 		available = {
@@ -1968,14 +2212,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_defy_remain"
-			EU_eurosceptic_rise_5_percent = yes
-			ROOT_eurosceptic_rise_25_percent = yes
-			add_ideas = {
-				ENG_irish_nationalism_idea
+			if = {
+				limit = { has_idea = EU_member }
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				EU_eurosceptic_change = yes
+				set_temp_variable = { modify_eurosceptic = 0.25 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-			add_ideas = {
-				ENG_scottish_nationalism_idea
-			}
+			add_ideas = ENG_irish_nationalism_idea
+			add_ideas =	ENG_scottish_nationalism_idea
 			create_country_leader = {
 				name = "Boris Johnson"
 				picture = "Boris_Johnson.dds"
@@ -1997,12 +2243,7 @@ focus_tree = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
@@ -2010,21 +2251,18 @@ focus_tree = {
 				elections_allowed = yes
 			}
 			clr_country_flag = no_leader_change
-
-
-
 		}
 
 		ai_will_do = {
 			factor = 1
-				modifier = {
-					factor = 5
-					gov_is_eurosceptical = yes
-				}
-				modifier = {
-					factor = 0
-					NOT = { gov_is_eurosceptical = yes }
-				}
+			modifier = {
+				factor = 5
+				gov_is_eurosceptical = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { gov_is_eurosceptical = yes }
+			}
 		}
 	}
 
@@ -2044,74 +2282,74 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_irish_referendum"
 			custom_effect_tooltip = tooltip_ENG_irish_referendum
 			hidden_effect = {
-			if = {
-				limit = {
-					check_variable = {
-						var = global.var_europeanism
-						value = 0.6
-						compare = less_than
-					}
-				}
-				remove_ideas = {
-					ENG_irish_nationalism_idea
-				}
-				news_event = {
-					id = britain_news.65
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						var = global.var_europeanism
-						value = 0.90
-						compare = greater_than_or_equals
-					}
-				}
-				random_list = {
-					70 = {
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.65
+				if = {
+					limit = {
+						check_variable = {
+							var = global.var_europeanism
+							value = 0.6
+							compare = less_than
 						}
 					}
-					30 = {
-						IRE = {
-							transfer_state = 17
-						}
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.66
-						}
+					remove_ideas = {
+						ENG_irish_nationalism_idea
+					}
+					news_event = {
+						id = britain_news.65
 					}
 				}
-			}
-			else = {
-				random_list = {
-					90 = {
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.65
+				else_if = {
+					limit = {
+						check_variable = {
+							var = global.var_europeanism
+							value = 0.90
+							compare = greater_than_or_equals
 						}
 					}
-					10 = {
-						IRE = {
-							transfer_state = 17
+					random_list = {
+						70 = {
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.65
+							}
 						}
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.66
+						30 = {
+							IRE = {
+								transfer_state = 17
+							}
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.66
+							}
 						}
 					}
 				}
-			}
+				else = {
+					random_list = {
+						90 = {
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.65
+							}
+						}
+						10 = {
+							IRE = {
+								transfer_state = 17
+							}
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.66
+							}
+						}
+					}
+				}
 			} ### End of hidden_effect
 		}
 
@@ -2231,6 +2469,9 @@ focus_tree = {
 				has_idea = no_deal_exit
 			}
 		}
+
+		cancel = { has_idea = EU_member }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_global_britain"
 			add_ideas = ENG_global_britain_idea
@@ -2243,7 +2484,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_investments_abroad_1
-		icon = trade_with_europe
+		icon = europe_ship
 		x = 0
 		y = 2
 		relative_position_id = ENG_careful_cooperation
@@ -2264,7 +2505,9 @@ focus_tree = {
 					has_idea = EU_member
 					capital_scope = { is_on_continent = europe }
 				}
-				THIS_eurosceptic_decline_3_percent = yes
+				set_temp_variable = { modify_eurosceptic = -0.03 }
+				set_temp_variable = { modify_eurosceptic_target = THIS }
+				eurosceptic_change = yes
 				country_event = britain_md.8
 			}
 			every_country = {
@@ -2284,7 +2527,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_national_development_1
-		icon = construction3
+		icon = focus_trade_republic
 		x = 1
 		y = 1
 		relative_position_id = ENG_distance_from_europe
@@ -2308,7 +2551,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_fight_capitalism
-		icon = communism4
+		icon = Fabianist
 		x = 29
 		y = 4
 		cost = 10
@@ -2317,11 +2560,9 @@ focus_tree = {
 			communism > 0.35
 		}
 
-		prerequisite = {
-			focus = ENG_abolish_the_monarchy
-		}
+		prerequisite = { focus = ENG_abolish_the_monarchy }
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = {FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_fight_capitalism"
@@ -2335,18 +2576,9 @@ focus_tree = {
 				}
 				country_event = britain_md.10
 			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.10
-			}
+			add_popularity = { ideology = communism popularity = 0.10 }
 			recalculate_party = yes
 			custom_effect_tooltip = ENG_fight_capitalism_TT
-					if = {
-					limit = { has_idea = international_bankers }
-						set_country_flag = current_international_bankers
-						visually_display_opinion_fall_international_bankers = yes
-						decrease_internal_faction_opinion = yes
-						}
 			hidden_effect = {
 				clear_array = ruling_party
 				clear_array = gov_coalition_array
@@ -2354,18 +2586,23 @@ focus_tree = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
+				set_ruling_leader = yes
+				set_leader = yes
 			}
 			set_politics = {
 				ruling_party = communism
 				elections_allowed = no
 			}
+
+			# Internal Faction Effects
+			set_temp_variable = { temp_opinion = 10 }
+			change_communist_cadres_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_farmers_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_international_bankers_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+			change_industrial_conglomerates_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2388,10 +2625,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_benevolent_monarchy"
-			add_popularity = { ideology = nationalist popularity = 0.10 }
-			add_to_variable = { party_pop_array^23 = 0.25 }
-			add_to_variable = { party_pop_array^20 = -0.15 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.25 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
 			hidden_effect = {
 				clear_array = ruling_party
 				clear_array = gov_coalition_array
@@ -2400,12 +2637,7 @@ focus_tree = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
@@ -2421,7 +2653,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_imperialism
-		icon = colonialism
+		icon = the_new_commonealth
 		x = 35
 		y = 4
 		cost = 10
@@ -2446,7 +2678,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_nationalism
-		icon = fascism2
+		icon = Focus_ENG_Mosleys_New_Deal
 		x = 38
 		y = 4
 		cost = 10
@@ -2459,10 +2691,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_nationalism"
-			add_popularity = { ideology = nationalist popularity = 0.10 }
-			add_to_variable = { party_pop_array^21 = 0.25 }
-			subtract_from_variable = { party_pop_array^20 = 0.10 }
-			recalculate_party = yes
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.25 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
 			hidden_effect = {
 				clear_array = ruling_party
 				clear_array = gov_coalition_array
@@ -2470,12 +2705,7 @@ focus_tree = {
 				update_government_coalition_strength = yes
 				update_party_name = yes
 				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-				}
+				set_ruling_leader = yes
 				set_leader = yes
 			}
 			set_politics = {
@@ -2491,7 +2721,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_doctrine_1
-		icon = army_doctrine
+		icon = Generic_British_Soldier_Flag
 		x = 42
 		y = 4
 		cost = 10
@@ -2505,12 +2735,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_army_doctrine_1"
-			add_tech_bonus = {
-				name = land_doctrine
-				bonus = 0.4
-				uses = 1
-				category = land_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_army_doctrine_1
+                category = land_doctrine
+                uses = 1
+                cost_reduction = 0.4
+            }
 		}
 
 		ai_will_do = {
@@ -2530,16 +2760,16 @@ focus_tree = {
 			focus = ENG_develop_heavy_planes
 		}
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = {FOCUS_FILTER_RESEARCH FOCUS_FILTER_AIRCRAFT}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_air_force_doctrine_1"
-			add_tech_bonus = {
-				name = air_doctrine
-				bonus = 0.4
-				uses = 1
-				category = air_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_air_force_doctrine_1
+                category = air_doctrine
+                uses = 1
+                cost_reduction = 0.4
+            }
 		}
 
 		ai_will_do = {
@@ -2549,7 +2779,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_naval_doctrine_1
-		icon = naval_doctrine
+		icon = navy3
 		x = 50
 		y = 4
 		cost = 10
@@ -2563,137 +2793,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_naval_doctrine_1"
-			add_tech_bonus = {
-				name = Cat_NAVAL_EQP
-				bonus = 0.2
-				uses = 1
-				category = Cat_NAVAL_EQP
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_naval_doctrine_1
+                category = Cat_naval_doctrine
+                uses = 1
+                cost_reduction = 0.2
+            }
 		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = ENG_english_factories
-		icon = industry_military
-		x = 0
-		y = 5
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_english_industry
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_english_factories"
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-					}
-					free_building_slots = {
-						building = arms_factory
-						size > 1
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
-			random_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-					}
-					free_building_slots = {
-						building = arms_factory
-						size > 1
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
-			subtract_from_variable = { treasury = 30 }
-			custom_effect_tooltip = 30_billion_expense_tt
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = ENG_scottish_factories
-		icon = industry_military
-		x = 2
-		y = 5
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_scottish_industry
-		}
-
-		bypass = {
-			NOT = { owns_state = 437 }
-			NOT = { owns_state = 9 }
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_scottish_factories"
-			random_owned_state = {
-				limit = {
-					region = 3
-					free_building_slots = {
-						building = arms_factory
-						size > 1
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
-			random_owned_state = {
-				limit = {
-					region = 3
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 1
-			}
-			subtract_from_variable = { treasury = 22.5 }
-			custom_effect_tooltip = 22_5_billion_expense_tt
-		}
-
 
 		ai_will_do = {
 			factor = 1
@@ -2718,6 +2824,12 @@ focus_tree = {
 			add_ideas = ENG_liberal_economics_idea
 			add_popularity = { ideology = democratic	popularity = 0.03	}
 			recalculate_party = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+			change_industrial_conglomerates_opinion = yes
+			change_international_bankers_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2727,7 +2839,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_internet_surveillance
-		icon = propaganda
+		icon = internet_censorship
 		x = 9
 		y = 5
 		cost = 10
@@ -2741,13 +2853,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_internet_surveillance"
 			add_stability = 0.05
-
-				if = {
-					limit = { has_idea = intelligence_community }
-						set_country_flag = current_intelligence_community
-						visually_display_opinion_rise_intelligence_community = yes
-						increase_internal_faction_opinion = yes
-						}
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2757,7 +2866,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_EU_border_compromise
-		icon = align_to_europe
+		icon = generic_euroscepticism
 		x = 11
 		y = 4
 		cost = 10
@@ -2770,8 +2879,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_EU_border_compromise"
-			EU_eurosceptic_decline_3_percent = yes
-			ROOT_eurosceptic_decline_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			country_event = britain_md.11
 		}
 
@@ -2782,7 +2894,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_propose_the_CANZUK_alliance
-		icon = improve_relations
+		icon = Focus_ENG_Hoare_at_the_Helm
 		x = 13
 		y = 4
 		cost = 10
@@ -2793,21 +2905,18 @@ focus_tree = {
 
 		available = {
 			has_government = democratic
-
-			OR = {
-				is_faction_leader = yes
-				is_in_faction = no
-			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_propose_the_CANZUK_alliance"
 			if = {
 				limit = {
-					is_in_faction = no
+					has_idea = NATO_member
 				}
-				create_faction = british_commonwealth
+				NATO_leave = yes
 			}
+			add_ideas = faction_british_commonwealth
+			create_faction = british_commonwealth
 			CAN = { country_event = britain_md.12 }
 			AST = { country_event = britain_md.12 }
 			NZL = { country_event = britain_md.12 }
@@ -2820,7 +2929,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_the_british_alliance
-		icon = tripartite_pact
+		icon = focus_generic_league_of_nations
 		x = 15
 		y = 4
 		cost = 10
@@ -2833,8 +2942,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_the_british_alliance"
-			EU_eurosceptic_rise_3_percent = yes
-			ROOT_eurosceptic_rise_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = 0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
+			if = {
+				limit = { has_idea = NATO_member }
+				NATO_leave = yes
+			}
 			create_faction = british_alliance
 		}
 
@@ -2845,7 +2961,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_european_cooperation_2
-		icon = major_alliance
+		icon = EU_policies
 		x = 17
 		y = 5
 		cost = 10
@@ -2925,25 +3041,21 @@ focus_tree = {
 
 	focus = {
 		id = ENG_investments_at_home
-		icon = construction2
+		icon = lion_economy
 		x = -1
 		y = 1
 		relative_position_id = ENG_investments_abroad_1
 		cost = 10
 
-		prerequisite = {
-			focus = ENG_investments_abroad_1
-		}
+		prerequisite = { focus = ENG_investments_abroad_1 }
+		mutually_exclusive = { focus = ENG_workforce_deal_with_ireland }
 
-		mutually_exclusive = {
-			focus = ENG_workforce_deal_with_ireland
-		}
-
-		search_filters = {FOCUS_FILTER_INDUSTRY}
+		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_EUROPEAN_UNION}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_investments_at_home"
-			EU_eurosceptic_rise_3_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.03 }
+			EU_eurosceptic_change = yes
 			random_owned_state = {
 				limit = {
 					free_building_slots = {
@@ -2989,16 +3101,16 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			subtract_from_variable = { treasury = 22.5 }
-			custom_effect_tooltip = 22_5_billion_expense_tt
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			factor = 1
-				modifier = {
-					factor = 10
-					gov_is_eurosceptical = yes
-				}
+			modifier = {
+				factor = 10
+				gov_is_eurosceptical = yes
+			}
 		}
 	}
 
@@ -3010,13 +3122,8 @@ focus_tree = {
 		relative_position_id = ENG_investments_abroad_1
 		cost = 10
 
-		prerequisite = {
-			focus = ENG_investments_abroad_1
-		}
-
-		mutually_exclusive = {
-			focus = ENG_investments_at_home
-		}
+		prerequisite = { focus = ENG_investments_abroad_1 }
+		mutually_exclusive = { focus = ENG_investments_at_home }
 
 		search_filters = {FOCUS_FILTER_EUROPEAN_UNION}
 
@@ -3028,8 +3135,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_workforce_deal_with_ireland"
-			ROOT_eurosceptic_decline_10_percent = yes
-			IRE = { THIS_eurosceptic_decline_10_percent = yes }
+			set_temp_variable = { modify_eurosceptic = -0.10 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.10 }
+			set_temp_variable = { modify_eurosceptic_target = IRE }
+			eurosceptic_change = yes
 			IRE = { country_event = britain_md.13 }
 		}
 
@@ -3048,15 +3159,13 @@ focus_tree = {
 
 	focus = {
 		id = ENG_national_development_2
-		icon = construction3
+		icon = Generic_Loadsamoney
 		x = 0
 		y = 1
 		relative_position_id = ENG_national_development_1
 		cost = 10
 
-		prerequisite = {
-			focus = ENG_national_development_1
-		}
+		prerequisite = { focus = ENG_national_development_1 }
 
 		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_POLITICAL}
 
@@ -3073,7 +3182,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_break_the_banks
-		icon = communism3
+		icon = communist_slums
 		x = 28
 		y = 5
 		cost = 10
@@ -3087,24 +3196,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_break_the_banks"
 			add_ideas = ENG_broken_the_banks
-			hidden_effect = {
 			if = {
-					limit = { has_idea = international_bankers }
-					swap_ideas = {
-							remove_idea = international_bankers
-							add_idea = labour_unions
-					}
-					clr_country_flag = enthusiastic_international_bankers
-					clr_country_flag = positive_international_bankers
-					clr_country_flag = indifferent_international_bankers
-					clr_country_flag = negative_international_bankers
-					clr_country_flag = hostile_international_bankers
-					set_country_flag = positive_labour_unions
-					}
-					visually_display_opinion_fall_international_bankers = yes
-					decrease_internal_faction_opinion = yes
-					}
-			custom_effect_tooltip = ENG_break_the_banks_TT
+				limit = { has_idea = international_bankers }
+				swap_ideas = {
+					remove_idea = international_bankers
+					add_idea = labour_unions
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3114,7 +3212,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_persecute_lobbyists
-		icon = communism
+		icon = british_decolonization
 		x = 30
 		y = 5
 		cost = 10
@@ -3129,15 +3227,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_persecute_lobbyists"
 			add_war_support = 0.03
 			add_ideas = ENG_persecuted_lobbyists
-
-				if = {
-					limit = { has_idea = international_bankers }
-						set_country_flag = current_international_bankers
-						visually_display_opinion_fall_international_bankers = yes
-						decrease_internal_faction_opinion = yes
-				}
-
-
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_international_bankers_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+			change_industrial_conglomerates_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3147,7 +3242,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_royal_office_of_employment
-		icon = production2
+		icon = Generic_Ultranationalist_Monarchy
 		x = 32
 		y = 5
 		cost = 10
@@ -3162,6 +3257,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_royal_office_of_employment"
 			add_war_support = 0.05
 			add_ideas = ENG_royal_office_of_employment_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_farmers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -3171,7 +3268,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_restore_the_british_empire
-		icon = british_global_defense
+		icon = united_anglosphere
 		x = 34
 		y = 5
 		cost = 10
@@ -3188,30 +3285,23 @@ focus_tree = {
 				limit = {
 					has_completed_focus = ENG_empower_the_throne
 				}
-				hidden_effect = {
-					add_popularity = {
-						ideology = nationalist
-						popularity = 0.1
-					}
-					add_to_variable = { party_pop_array^23 = 0.075 }
-					add_to_variable = { party_pop_array^20 = 0.025 }
-				}
-				custom_effect_tooltip = ENG_gain_7_5_monarchist_support_TT
-				recalculate_party = yes
+				set_temp_variable = { party_index = 23 }
+				set_temp_variable = { party_popularity_increase = 0.075 }
+				set_temp_variable = { temp_outlook_increase = 0.075 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { party_index = 20 }
+				set_temp_variable = { party_popularity_increase = 0.025 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
 			}
 			if = {
 				limit = {
 					has_completed_focus = ENG_empower_the_government
 				}
-				hidden_effect = {
-					add_popularity = {
-						ideology = nationalist
-						popularity = 0.1
-					}
-					add_to_variable = { party_pop_array^21 = 0.10 }
-				}
-				custom_effect_tooltip = ENG_gain_10_fascism_support_TT
-				recalculate_party = yes
+				set_temp_variable = { party_index = 21 }
+				set_temp_variable = { party_popularity_increase = 0.1 }
+				set_temp_variable = { temp_outlook_increase = 0.1 }
+				add_relative_party_popularity = yes
 			}
 		}
 
@@ -3239,30 +3329,23 @@ focus_tree = {
 				limit = {
 					has_completed_focus = ENG_empower_the_throne
 				}
-				hidden_effect = {
-					add_popularity = {
-						ideology = nationalist
-						popularity = 0.1
-					}
-					add_to_variable = { party_pop_array^23 = 0.075 }
-					add_to_variable = { party_pop_array^20 = 0.025 }
-				}
-				custom_effect_tooltip = ENG_gain_7_5_monarchist_support_TT
-				recalculate_party = yes
+				set_temp_variable = { party_index = 23 }
+				set_temp_variable = { party_popularity_increase = 0.075 }
+				set_temp_variable = { temp_outlook_increase = 0.075 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { party_index = 20 }
+				set_temp_variable = { party_popularity_increase = 0.025 }
+				set_temp_variable = { temp_outlook_increase = 0.025 }
+				add_relative_party_popularity = yes
 			}
 			if = {
 				limit = {
 					has_completed_focus = ENG_empower_the_government
 				}
-				hidden_effect = {
-					add_popularity = {
-						ideology = nationalist
-						popularity = 0.1
-					}
-					add_to_variable = { party_pop_array^21 = 0.10 }
-				}
-				custom_effect_tooltip = ENG_gain_10_fascism_support_TT
-				recalculate_party = yes
+				set_temp_variable = { party_index = 21 }
+				set_temp_variable = { party_popularity_increase = 0.1 }
+				set_temp_variable = { temp_outlook_increase = 0.1 }
+				add_relative_party_popularity = yes
 			}
 		}
 
@@ -3296,7 +3379,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_school_for_strategic_warfare
-		icon = general_staff
+		icon = chiefs_of_staff_committee
 		x = 41
 		y = 5
 		cost = 10
@@ -3354,12 +3437,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_air_force_doctrine_2"
-			add_tech_bonus = {
-				name = air_doctrine
-				bonus = 0.4
-				uses = 2
-				category = air_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_air_force_doctrine_2
+                category = air_doctrine
+                uses = 2
+                cost_reduction = 0.4
+            }
 		}
 
 		ai_will_do = {
@@ -3391,35 +3474,6 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = ENG_extra_research_slot_1
-		icon = research
-		x = 1
-		y = 6
-		cost = 10
-
-		prerequisite = {
-			focus = ENG_english_factories
-		}
-		prerequisite = {
-			focus = ENG_dockyards_2
-		}
-		prerequisite = {
-			focus = ENG_scottish_factories
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ENG_extra_research_slot_1"
-			add_research_slot = 1
-			SE_remove_10_treasury = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
 
 	focus = {
 		id = ENG_air_travel_agreements_with_europe
@@ -3436,8 +3490,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_air_travel_agreements_with_europe"
-			EU_eurosceptic_decline_3_percent = yes
-			ROOT_eurosceptic_decline_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			country_event = britain_md.14
 		}
 
@@ -3448,7 +3505,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_invite_the_united_states
-		icon = align_to_america
+		icon = unite_the_anglosphere
 		x = 13
 		y = 5
 		cost = 10
@@ -3486,8 +3543,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_diplomatic_sovereignity"
-			EU_eurosceptic_rise_3_percent = yes
-			ROOT_eurosceptic_rise_5_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.03 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = 0.05 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_ideas = ENG_diplomatic_sovereignity_idea
 		}
 
@@ -3500,7 +3560,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_investments_abroad_2
-		icon = trade
+		icon = economic_prosperity2
 		x = 1
 		y = 1
 		relative_position_id = ENG_investments_at_home
@@ -3515,7 +3575,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_investments_abroad_2"
-			EU_eurosceptic_rise_10_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.10 }
+			EU_eurosceptic_change = yes
 			add_political_power = 15
 			every_country = {
 				limit = {
@@ -3583,7 +3644,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_universal_employment
-		icon = communism4
+		icon = worker_paradise
 		x = 29
 		y = 6
 		cost = 10
@@ -3610,7 +3671,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_royal_industries
-		icon = industry_civilian
+		icon = chefs_best_cooks
 		x = 32
 		y = 6
 		cost = 10
@@ -3690,7 +3751,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_subjugate_ireland
-		icon = war2
+		icon = attack_ireland
 		x = 36
 		y = 6
 		cost = 10
@@ -3720,7 +3781,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_reorganize_the_education_system
-		icon = military_academy
+		icon = Focus_ENG_Gallacher_On_Top
 		x = 38
 		y = 6
 		cost = 10
@@ -3743,7 +3804,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_doctrine_2
-		icon = army_doctrine
+		icon = Generic_British_Soldiers03
 		x = 42
 		y = 6
 		cost = 10
@@ -3756,12 +3817,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_army_doctrine_2"
-			add_tech_bonus = {
-				name = land_doctrine
-				bonus = 0.4
-				uses = 1
-				category = land_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_army_doctrine_2
+                category = land_doctrine
+                uses = 1
+                cost_reduction = 0.4
+            }
 		}
 
 		ai_will_do = {
@@ -3785,12 +3846,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_ground_crew_training"
 			air_experience = 30
-			add_tech_bonus = {
-				name = air_doctrine
-				bonus = 0.2
-				uses = 1
-				category = air_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_ground_crew_training
+                category = air_doctrine
+                uses = 1
+                cost_reduction = 0.2
+            }
 		}
 
 		ai_will_do = {
@@ -3814,12 +3875,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_naval_doctrine_2"
 			air_experience = 10
-			add_tech_bonus = {
-				name = naval_bonus
-				bonus = 0.2
-				uses = 1
-				category = Cat_NAVAL_EQP
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_naval_doctrine_2
+                category = Cat_naval_doctrine
+                uses = 1
+                cost_reduction = 0.2
+            }
 		}
 
 		ai_will_do = {
@@ -3829,9 +3890,9 @@ focus_tree = {
 
 	focus = {
 		id = ENG_european_cooperation_3
-		icon = major_alliance
-		x = 2
-		y = 0
+		icon = association_agreement
+		x = 1
+		y = 1
 		relative_position_id = ENG_european_cooperation_2
 		cost = 10
 
@@ -3922,31 +3983,23 @@ focus_tree = {
 			focus = ENG_investments_abroad_2
 		}
 
+		bypass = {
+			all_owned_state = {
+				free_building_slots = {
+					building = infrastructure
+					size < 1
+					include_locked = yes
+				}
+			}
+		}
+
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_develop_infrastructure"
-			every_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			subtract_from_variable = { treasury = 42 }
-			custom_effect_tooltip = 42_billion_expense_tt
+			three_random_infrastructure = yes
+			three_random_infrastructure = yes
+			one_random_infrastructure = yes
 		}
 
 		ai_will_do = {
@@ -3956,7 +4009,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_national_development_3
-		icon = construction3
+		icon = PB_ENG_Moderateplan
 		x = 0
 		y = 1
 		relative_position_id = ENG_defensive_constructions
@@ -3982,7 +4035,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_invest_in_resources
-		icon = oil_production
+		icon = PB_ENG_Target_Monopolies
 		x = 28
 		y = 7
 		cost = 10
@@ -4018,8 +4071,8 @@ focus_tree = {
 				}
 
 			}
-			subtract_from_variable = { treasury = 7.0 }
-			custom_effect_tooltip = 7_billion_expense_tt
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -4029,7 +4082,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_establish_a_revolutionary_committee
-		icon = communism3
+		icon = Focus_Socialist_Propaganda
 		x = 30
 		y = 7
 		cost = 10
@@ -4063,7 +4116,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_royal_factories
-		icon = industry_military
+		icon = Focus_Let_Them_Eat_Cake
 		x = 32
 		y = 7
 		cost = 10
@@ -4077,12 +4130,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_royal_factories"
 			add_ideas = ENG_royal_military_construction
-				if = {
-					limit = { has_idea = defense_industry }
-						set_country_flag = current_defense_industry
-						visually_display_opinion_rise_defense_industry = yes
-						increase_internal_faction_opinion = yes
-						}
+			set_temp_variable = { temp_opinion = 5 }
+			change_defense_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4092,7 +4141,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_restore_the_cape_colony
-		icon = colonial_crackdown
+		icon = british_global_defense
 		x = 35
 		y = 7
 		cost = 10
@@ -4134,7 +4183,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_maintain_a_multiethnic_army
-		icon = fascism
+		icon = british_imperialism
 		x = 37
 		y = 7
 		cost = 10
@@ -4166,7 +4215,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_national_office_for_the_colored_workforce
-		icon = fascism2
+		icon = colonial_immigration
 		x = 39
 		y = 7
 		cost = 10
@@ -4214,6 +4263,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_army_of_quality"
 			add_ideas = ENG_army_of_quality_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4241,6 +4292,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_army_of_quantity"
 			add_ideas = ENG_army_of_quantity_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4250,7 +4303,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_improve_our_small_ships
-		icon = cruisers
+		icon = longboat
 		x = 49
 		y = 7
 		cost = 20
@@ -4262,6 +4315,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_improve_our_small_ships"
 			add_ideas = ENG_small_ship_project
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4283,6 +4338,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_improve_our_large_ships"
 			add_ideas = ENG_large_ship_project
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4294,7 +4351,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_investments_abroad_3
-		icon = trade
+		icon = Focus_ENG_Prime_Minister_Russel
 		x = 0
 		y = 2
 		relative_position_id = ENG_investments_abroad_2
@@ -4308,7 +4365,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_investments_abroad_3"
-			EU_eurosceptic_rise_15_percent = yes
+			set_temp_variable = { modify_eurosceptic = 0.15 }
+			EU_eurosceptic_change = yes
 			add_political_power = 15
 			every_country = {
 				limit = {
@@ -4323,6 +4381,8 @@ focus_tree = {
 				}
 				country_event = britain_md.8
 			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4344,6 +4404,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_socialist_secret_police"
 			add_ideas = ENG_secret_police
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4353,7 +4415,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_the_throne_of_all_britons
-		icon = monarchism2
+		icon = royal_wedding
 		x = 32
 		y = 8
 		cost = 10
@@ -4374,6 +4436,8 @@ focus_tree = {
 			}
 			recalculate_party = yes
 			add_ideas = ENG_the_great_throne
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
 		}
 
 		ai_will_do = {
@@ -4441,7 +4505,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_jingoism
-		icon = war
+		icon = Ultranationalism_2
 		x = 38
 		y = 8
 		cost = 10
@@ -4465,7 +4529,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_doctrine_3
-		icon = army_doctrine
+		icon = Generic_ENG_SAS
 		x = 42
 		y = 8
 		cost = 10
@@ -4480,12 +4544,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_army_doctrine_3"
 			army_experience = 25
-			add_tech_bonus = {
-				name = land_doctrine
-				bonus = 0.4
-				uses = 1
-				category = land_doctrine
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_army_doctrine_3
+                category = land_doctrine
+                uses = 1
+                cost_reduction = 0.4
+            }
 		}
 
 		ai_will_do = {
@@ -4495,7 +4559,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_naval_doctrine_3
-		icon = naval_doctrine
+		icon = wolfpacks
 		x = 50
 		y = 8
 		cost = 10
@@ -4512,12 +4576,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_naval_doctrine_3"
 			navy_experience = 25
-			add_tech_bonus = {
-				name = naval_bonus
-				bonus = 0.3
-				uses = 1
-				category = Cat_NAVAL_EQP
-			}
+			add_doctrine_cost_reduction = {
+				name = ENG_naval_doctrine_3
+                category = Cat_naval_doctrine
+                uses = 1
+                cost_reduction = 0.3
+            }
 		}
 
 		ai_will_do = {
@@ -4548,8 +4612,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_one_union"
-			EU_eurosceptic_decline_5_percent = yes
-			ROOT_eurosceptic_decline_15_percent = yes
+			set_temp_variable = { modify_eurosceptic = -0.05 }
+			EU_eurosceptic_change = yes
+			set_temp_variable = { modify_eurosceptic = -0.15 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
 			add_political_power = 25
 		}
 
@@ -4615,7 +4682,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_defensive_assistance
-		icon = military_academy
+		icon = Focus_ENG_Mitford_Faction
 		x = -1
 		y = 1
 		relative_position_id = ENG_one_union
@@ -4642,7 +4709,9 @@ focus_tree = {
 					}
 				}
 				country_event = britain_md.21
-				THIS_eurosceptic_decline_5_percent = yes
+				set_temp_variable = { modify_eurosceptic = -0.05 }
+				set_temp_variable = { modify_eurosceptic_target = THIS }
+				eurosceptic_change = yes
 			}
 		}
 
@@ -4659,7 +4728,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_european_cooperation_4
-		icon = major_alliance
+		icon = EU_reform
 		x = -1
 		y = 2
 		relative_position_id = ENG_european_cooperation_3
@@ -4736,7 +4805,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_extra_research_slot_2
-		icon = research
+		icon = Focus_ENG_Eden_Redeemed
 		x = 1
 		y = 1
 		relative_position_id = ENG_european_cooperation_4
@@ -4750,8 +4819,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_extra_research_slot_2"
-			add_research_slot = 1
-			SE_remove_10_treasury = yes
+			add_ideas = ENG_idea_european_research_cooperation
 		}
 
 		ai_will_do = {
@@ -4763,7 +4831,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_european_cooperation_5
-		icon = major_alliance
+		icon = closer_ties_with_eu
 		x = -1
 		y = 1
 		relative_position_id = ENG_european_cooperation_4
@@ -4836,13 +4904,13 @@ focus_tree = {
 		}
 	}
 
-##############################
-###	Start of EU Focus Tree ###	x = 15 y = 18
-##############################
+	##############################
+	###	Start of EU Focus Tree ###	x = 15 y = 18
+	##############################
 
-shared_focus = EU001
+	shared_focus = EU001
 
-############################
-### End of EU Focus Tree ###
-############################
+	############################
+	### End of EU Focus Tree ###
+	############################
 }

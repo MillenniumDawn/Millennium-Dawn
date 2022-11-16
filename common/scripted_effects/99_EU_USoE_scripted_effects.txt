@@ -3,23 +3,23 @@
 #############################
 
 update_EU_military_leaders = {
-	custom_effect_tooltip = "Remove trait Military Reorganization from every unit leader."
+	custom_effect_tooltip = tooltip_update_EU_military_leaders
 	every_unit_leader = {
 		limit = {
 			has_unit_leader_flag = USoE_unit_leader
-		}			
+		}
 		remove_unit_leader_trait = military_reorganization
-	}	
+	}
 }
 
 update_EU_country_leaders = {
-	custom_effect_tooltip = "European country leader become availible."
+	custom_effect_tooltip = tooltip_update_EU_country_leaders
 	set_country_flag = USoE_country_leader
 	set_country_flag = USoE_political_parties
 }
 
 create_eurosphere = {
-	every_country = {		
+	every_country = {
 		limit = {
 			capital_scope = {
 				OR = {
@@ -27,12 +27,15 @@ create_eurosphere = {
 					is_on_continent = africa
 					is_on_continent = middle_east
 				}
-			}	
+			}
 			is_neighbor_of = PREV
-			ROOT_influence_on_THIS_50_percent =	no	
+			ROOT_influence_on_THIS_50_percent =	no
 		}
 		custom_effect_tooltip = tooltip_create_eurosphere
-		add_influence_50pts = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
 	}
 }
 
@@ -47,17 +50,17 @@ catholic_leadership = {
 			target = ROOT
 			modifier = friendly_monarchy
 		}
-	}	
+	}
 }
 
 christian_leadership = {
 	every_country = {
-		limit = {  
+		limit = {
 			OR = {
 				has_idea = christian
 				has_idea = orthodox_christian
 			}
-		}	
+		}
 		add_opinion_modifier = {
 			target = ROOT
 			modifier = friendly_monarchy
@@ -65,31 +68,11 @@ christian_leadership = {
 		reverse_add_opinion_modifier = {
 			target = ROOT
 			modifier = friendly_monarchy
-		}						
+		}
 	}
 }
 
-add_influence_50pts = {
-	for_loop_effect = { 
-		end = influence_array^num value = v 
-			if = { 
-				limit = { 
-					check_variable = { influence_array^v = ROOT } 
-				} 
-				add_to_variable = { influence_array_val^v = 50 }
-				set_country_flag = found 
-			} 
-	} 
-	if = { 
-		limit = { 
-			NOT = { has_country_flag = found } 
-		} 
-		add_to_array = { influence_array = ROOT.id }
-		add_to_array = { influence_array_val = 50 } 
-	} 
-	clr_country_flag = found
-	recalculate_influence = yes
-}
+
 
 set_USoE_flag_of_the_house = {
 	if = {
@@ -157,7 +140,7 @@ set_USoE_flag_of_the_house = {
 			has_country_flag = USoE_house_of_hohenzollern
 		}
 		set_cosmetic_tag = USoE_HOH
-	}		
+	}
 }
 
 ########################################
@@ -169,6 +152,12 @@ focus_USoE001_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE001"
 	remove_ideas = EU_member
 	add_political_power = 100
+	if = {
+		limit = {
+			has_idea = german_legacy
+		}
+		remove_ideas = german_legacy
+	}
 }
 #A European Officer Corps
 focus_USoE002_effect = {
@@ -268,7 +257,7 @@ focus_USoE203_effect = {
 focus_USoE204_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE204"
 	set_country_flag = eurosphere
-	custom_effect_tooltip = "Get decision Create the Euroshpere:"
+	custom_effect_tooltip = tooltip_USoE204_effect
 	custom_effect_tooltip = tooltip_create_eurosphere
 }
 #Clash of Civilizations
@@ -282,7 +271,7 @@ focus_USoE300_effect = {
 #The Rest of the West
 focus_USoE301_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE301"
-	remove_ideas = NATO_member
+	NATO_leave = yes
 	USA = {
 		add_opinion_modifier = {
 			target = ROOT
@@ -315,7 +304,8 @@ focus_USoE302_effect = {
 	recalculate_party = yes
 	add_ideas = christian
 	#show_ideas_tooltip = christian
-	increase_The_Clergy_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_clergy_opinion = yes
 	add_war_support = 0.1
 }
 #The Pope and the Patriarch
@@ -628,21 +618,8 @@ focus_USoE402_effect = {
 focus_USoE403_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE403"
 	set_cosmetic_tag = USoE_com
-	hidden_effect = {
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 5 }
-		update_government_coalition_strength = yes
-		update_party_name = yes
-		set_coalition_drift = yes
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_RULING_PARTY]
-			}
-			META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-		}
-		set_leader = yes
-	}
+	set_temp_variable = { rul_party_temp = 5 }
+	change_ruling_party_effect = yes
 	set_politics = {
 		ruling_party = communism
 		elections_allowed = no
@@ -653,7 +630,6 @@ focus_USoE403_effect = {
 	}
 	add_to_variable = { party_pop_array^5 = 0.30 }
 	recalculate_party = yes
-	custom_effect_tooltip = tooltip_USoE403_effect
 }
 #AI Government
 focus_USoE404_effect = {
@@ -661,7 +637,7 @@ focus_USoE404_effect = {
 	add_ideas = USoE_AI_government
 	#show_ideas_tooltip = USoE_AI_government
 	hidden_effect = {
-		add_ideas = negligible_corruption    
+		add_ideas = negligible_corruption
 		ingame_update_setup = yes
 	}
 	custom_effect_tooltip = tooltip_USoE404_effect
@@ -676,34 +652,23 @@ focus_USoE500_effect = {
 	custom_effect_tooltip = tooltip_USoE_Neutral_green_rise_20
 	add_to_variable = { party_pop_array^17 = 0.20 }
 	recalculate_party = yes
-	increase_farmers_opinion = yes
-	increase_small_medium_business_owners_opinion = yes
-	decrease_industrial_conglomerates_opinion = yes
-	decrease_fossil_fuel_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_farmers_opinion = yes
+	change_small_medium_business_owners_opinion = yes
+	set_temp_variable = { temp_opinion = -5 }
+	change_industrial_conglomerates_opinion = yes
+	change_fossil_fuel_industry_opinion = yes
 }
 #Environmental Empire
 focus_USoE501_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE501"
 	add_stability = 0.1
-	custom_effect_tooltip = "Handicaps Industrial Conglomerates."
-	decrease_industrial_conglomerates_opinion = yes
-	decrease_fossil_fuel_industry_opinion = yes
+	set_temp_variable = { temp_opinion = -5 }
+	change_industrial_conglomerates_opinion = yes
+	change_fossil_fuel_industry_opinion = yes
 	set_cosmetic_tag = USoE_green
-	hidden_effect = {
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 17 }
-		update_government_coalition_strength = yes
-		update_party_name = yes
-		set_coalition_drift = yes
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_RULING_PARTY]
-			}
-			META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-		}
-		set_leader = yes
-	}
+	set_temp_variable = { rul_party_temp = 17 }
+	change_ruling_party_effect = yes
 	set_politics = {
 		ruling_party = neutrality
 		elections_allowed = yes
@@ -714,15 +679,14 @@ focus_USoE501_effect = {
 	}
 	add_to_variable = { party_pop_array^17 = 0.30 }
 	recalculate_party = yes
-	custom_effect_tooltip = tooltip_USoE501_effect
 }
 #Environmental Imperialism
 focus_USoE502_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE502"
 	set_country_flag = environmental_imperialism
-	custom_effect_tooltip = "Favors The Farmers & International Bankers."
-	increase_farmers_opinion = yes
-	increase_international_bankers_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_farmers_opinion = yes
+	change_international_bankers_opinion = yes
 }
 #North America
 focus_USoE503_effect = {
@@ -786,16 +750,17 @@ focus_USoE600_effect = {
 	recalculate_party = yes
 	add_ideas = christian
 	#show_ideas_tooltip = christian
-	increase_The_Clergy_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_clergy_opinion = yes
 	add_war_support = 0.1
 }
 #The New Knights
 focus_USoE601_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE601"
-	custom_effect_tooltip = "Favors The Military, Military-Industrial Complex and The Maritime Industry."
-	increase_the_military_opinion = yes
-	increase_defense_industry_opinion = yes
-	increase_maritime_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_military_opinion = yes
+	change_defense_industry_opinion = yes
+	change_maritime_industry_opinion = yes
 	army_experience = 100
 	air_experience = 100
 	navy_experience = 100
@@ -804,9 +769,9 @@ focus_USoE601_effect = {
 #General of the European Armies
 focus_USoE602_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE602"
-	custom_effect_tooltip = "Favors The Military & Military-Industrial Complex."
-	increase_the_military_opinion = yes
-	increase_defense_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_military_opinion = yes
+	change_defense_industry_opinion = yes
 	army_experience = 400
 	swap_ideas = {
 		remove_idea = USoE_knights_of_the_new_empire
@@ -816,9 +781,9 @@ focus_USoE602_effect = {
 #Air Marshal of Europe
 focus_USoE603_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE603"
-	custom_effect_tooltip = "Favors The Military & The Intelligence Community."
-	increase_the_military_opinion = yes
-	increase_intelligence_community_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_military_opinion = yes
+	change_intelligence_community_opinion = yes
 	air_experience = 400
 	swap_ideas = {
 		remove_idea = USoE_knights_of_the_new_empire
@@ -828,9 +793,9 @@ focus_USoE603_effect = {
 #Fleet Admiral of Europe
 focus_USoE604_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE604"
-	custom_effect_tooltip = "Favors The Military & The Maritime Industry."
-	increase_the_military_opinion = yes
-	increase_maritime_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_military_opinion = yes
+	change_maritime_industry_opinion = yes
 	navy_experience = 400
 	swap_ideas = {
 		remove_idea = USoE_knights_of_the_new_empire
@@ -860,21 +825,8 @@ focus_USoE605_effect = {
 		}
 		set_cosmetic_tag = USoE_navy
 	}
-	hidden_effect = {
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 22 }
-		update_government_coalition_strength = yes
-		update_party_name = yes
-		set_coalition_drift = yes
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_RULING_PARTY]
-			}
-			META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-		}
-		set_leader = yes
-	}
+	set_temp_variable = { rul_party_temp = 22 }
+	change_ruling_party_effect = yes
 	set_politics = {
 		ruling_party = nationalist
 		elections_allowed = no
@@ -885,7 +837,6 @@ focus_USoE605_effect = {
 	}
 	add_to_variable = { party_pop_array^22 = 0.30 }
 	recalculate_party = yes
-	custom_effect_tooltip = tooltip_USoE605_effect
 }
 #The New Emperor
 focus_USoE620_effect = {
@@ -901,11 +852,12 @@ focus_USoE621_effect = {
 #House of Savoy
 focus_USoE622_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE622"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Savoy."
+	custom_effect_tooltip = tooltip_USoE622_effect
 	set_country_flag = USoE_house_of_savoy
-	custom_effect_tooltip = "Favors The Intelligence Community."
-	increase_intelligence_community_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_intelligence_community_opinion = yes
 	add_tech_bonus = {
+		name = USoE622
 		bonus = 0.5
 		uses = 1
 		category = Cat_CORVETTE
@@ -922,11 +874,12 @@ focus_USoE622_effect = {
 #House of Wittelsbach
 focus_USoE623_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE623"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Wittelsbach."
+	custom_effect_tooltip = tooltip_USoE623_effect
 	set_country_flag = USoE_house_of_wittelsbach
-	custom_effect_tooltip = "Favors Small & Medium Business Owners."
-	increase_small_medium_business_owners_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_small_medium_business_owners_opinion = yes
 	add_tech_bonus = {
+		name = USoE623
 		bonus = 0.5
 		uses = 1
 		category = Cat_AI
@@ -943,11 +896,12 @@ focus_USoE623_effect = {
 #House of Borbón-Anjou
 focus_USoE624_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE624"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Borbón-Anjou."
+	custom_effect_tooltip = tooltip_USoE624_effect
 	set_country_flag = USoE_house_of_borbon_anjou
-	custom_effect_tooltip = "Favors The Clergy."
-	increase_The_Clergy_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_clergy_opinion = yes
 	add_tech_bonus = {
+		name = USoE624
 		bonus = 0.5
 		uses = 1
 		category = Cat_APC
@@ -964,11 +918,12 @@ focus_USoE624_effect = {
 #House of Bourbon
 focus_USoE625_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE625"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Bourbon."
+	custom_effect_tooltip = tooltip_USoE625_effect
 	set_country_flag = USoE_house_of_bourbon
-	custom_effect_tooltip = "Favors Military-Industrial Complex."
-	increase_defense_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_defense_industry_opinion = yes
 	add_tech_bonus = {
+		name = USoE625
 		bonus = 0.5
 		uses = 1
 		category = Cat_FIGHTER
@@ -985,11 +940,12 @@ focus_USoE625_effect = {
 #House of Hanover
 focus_USoE626_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE626"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Hanover."
+	custom_effect_tooltip = tooltip_USoE626_effect
 	set_country_flag = USoE_house_of_hanover
-	custom_effect_tooltip = "Favors The Farmers."
-	increase_farmers_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_farmers_opinion = yes
 	add_tech_bonus = {
+		name = USoE626
 		bonus = 0.5
 		uses = 1
 		category = Cat_GENES
@@ -1006,11 +962,12 @@ focus_USoE626_effect = {
 #House of Glücksburg
 focus_USoE627_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE627"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Glücksburg."
+	custom_effect_tooltip = tooltip_USoE627_effect
 	set_country_flag = USoE_house_of_glucksburg
-	custom_effect_tooltip = "Favors The Maritime Industry."
-	increase_maritime_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_maritime_industry_opinion = yes
 	add_tech_bonus = {
+		name = USoE627
 		bonus = 0.5
 		uses = 1
 		category = Cat_INF
@@ -1027,11 +984,12 @@ focus_USoE627_effect = {
 #House of Windsor
 focus_USoE628_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE628"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Windsor."
+	custom_effect_tooltip = tooltip_USoE628_effect
 	set_country_flag = USoE_house_of_windsor
-	custom_effect_tooltip = "Favors International Bankers."
-	increase_international_bankers_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_international_bankers_opinion = yes
 	add_tech_bonus = {
+		name = USoE628
 		bonus = 0.5
 		uses = 1
 		category = Cat_DESTROYER
@@ -1048,11 +1006,12 @@ focus_USoE628_effect = {
 #House of Orange-Nassau
 focus_USoE629_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE629"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Orange-Nassau."
+	custom_effect_tooltip = tooltip_USoE629_effect
 	set_country_flag = USoE_house_of_orange_nassau
-	custom_effect_tooltip = "Favors Fossil Fuel Industry."
-	increase_fossil_fuel_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_fossil_fuel_industry_opinion = yes
 	add_tech_bonus = {
+		name = USoE629
 		bonus = 0.5
 		uses = 1
 		category = Cat_FRIGATE
@@ -1069,12 +1028,13 @@ focus_USoE629_effect = {
 #House of Habsburg-Lorraine
 focus_USoE630_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE630"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Habsburg-Lorraine."
+	custom_effect_tooltip = tooltip_USoE630_effect
 	set_country_flag = USoE_house_of_habsburg_lorraine
-	custom_effect_tooltip = "Favors The Intelligence Community & The Landowners."
-	increase_intelligence_community_opinion = yes
-	increase_landowners_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_intelligence_community_opinion = yes
+	change_landowners_opinion = yes
 	add_tech_bonus = {
+		name = USoE630
 		bonus = 0.5
 		uses = 1
 		category = Cat_INF
@@ -1091,12 +1051,13 @@ focus_USoE630_effect = {
 #House of Bonaparte
 focus_USoE631_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE631"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Bonaparte."
+	custom_effect_tooltip = tooltip_USoE631_effect
 	set_country_flag = USoE_house_of_bonaparte
-	custom_effect_tooltip = "Favors The Military & Military-Industrial Complex."
-	increase_the_military_opinion = yes
-	increase_defense_industry_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_military_opinion = yes
+	change_defense_industry_opinion = yes
 	add_tech_bonus = {
+		name = USoE631
 		bonus = 0.5
 		uses = 1
 		category = Cat_ARTILLERY
@@ -1113,12 +1074,13 @@ focus_USoE631_effect = {
 #House of Hohenzollern
 focus_USoE632_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE632"
-	custom_effect_tooltip = "The Emperor will be a member of the House of Hohenzollern."
+	custom_effect_tooltip = tooltip_USoE632_effect
 	set_country_flag = USoE_house_of_hohenzollern
-	custom_effect_tooltip = "Favors The Landowners & The Military."
-	increase_landowners_opinion = yes
-	increase_the_military_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_military_opinion = yes
+	change_landowners_opinion = yes
 	add_tech_bonus = {
+		name = USoE632
 		bonus = 0.5
 		uses = 1
 		category = Cat_MBT
@@ -1132,7 +1094,7 @@ focus_USoE632_effect = {
 		}
 	}
 }
-#Choose a Palace 
+#Choose a Palace
 focus_USoE633_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE633"
 	add_political_power = 100
@@ -1141,7 +1103,7 @@ focus_USoE633_effect = {
 focus_USoE634_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE634"
 	set_country_flag = USoE_capital_moved
-	set_capital = 81
+	set_capital = { state = 81 }
 	81 = {
 		add_extra_state_shared_building_slots = 2
 		add_building_construction = {
@@ -1156,7 +1118,7 @@ focus_USoE634_effect = {
 				type = industrial_complex
 				level = 2
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1164,7 +1126,7 @@ focus_USoE634_effect = {
 focus_USoE635_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE635"
 	set_country_flag = USoE_capital_moved
-	set_capital = 43
+	set_capital = { state = 43 }
 	43 = {
 		add_extra_state_shared_building_slots = 1
 		add_building_construction = {
@@ -1179,7 +1141,7 @@ focus_USoE635_effect = {
 				type = industrial_complex
 				level = 1
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1187,7 +1149,7 @@ focus_USoE635_effect = {
 focus_USoE636_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE636"
 	set_country_flag = USoE_capital_moved
-	set_capital = 91
+	set_capital = { state = 91 }
 	91 = {
 		add_extra_state_shared_building_slots = 2
 		add_building_construction = {
@@ -1202,7 +1164,7 @@ focus_USoE636_effect = {
 				type = industrial_complex
 				level = 1
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1210,7 +1172,7 @@ focus_USoE636_effect = {
 focus_USoE637_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE637"
 	set_country_flag = USoE_capital_moved
-	set_capital = 56
+	set_capital = { state = 56 }
 	56 = {
 		add_extra_state_shared_building_slots = 3
 		add_building_construction = {
@@ -1225,7 +1187,7 @@ focus_USoE637_effect = {
 				type = industrial_complex
 				level = 1
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1233,7 +1195,7 @@ focus_USoE637_effect = {
 focus_USoE638_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE638"
 	set_country_flag = USoE_capital_moved
-	set_capital = 13
+	set_capital = { state = 13 }
 	13 = {
 		add_extra_state_shared_building_slots = 5
 		add_building_construction = {
@@ -1248,7 +1210,7 @@ focus_USoE638_effect = {
 				type = industrial_complex
 				level = 1
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1256,7 +1218,7 @@ focus_USoE638_effect = {
 focus_USoE639_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE639"
 	set_country_flag = USoE_capital_moved
-	set_capital = 76
+	set_capital = { state = 76 }
 	76 = {
 		add_extra_state_shared_building_slots = 1
 		add_building_construction = {
@@ -1271,7 +1233,7 @@ focus_USoE639_effect = {
 				type = industrial_complex
 				level = 1
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1279,7 +1241,7 @@ focus_USoE639_effect = {
 focus_USoE640_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE640"
 	set_country_flag = USoE_capital_moved
-	set_capital = 45
+	set_capital = { state = 45 }
 	45 = {
 		add_extra_state_shared_building_slots = 2
 		add_building_construction = {
@@ -1294,7 +1256,7 @@ focus_USoE640_effect = {
 				type = industrial_complex
 				level = 1
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1302,7 +1264,7 @@ focus_USoE640_effect = {
 focus_USoE641_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE641"
 	set_country_flag = USoE_capital_moved
-	set_capital = 50
+	set_capital = { state = 50 }
 	50 = {
 		add_extra_state_shared_building_slots = 4
 		add_building_construction = {
@@ -1317,7 +1279,7 @@ focus_USoE641_effect = {
 				type = industrial_complex
 				level = 1
 				instant_build = yes
-			}	
+			}
 		}
 	}
 }
@@ -1330,37 +1292,24 @@ focus_USoE642_effect = {
 focus_USoE643_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE643"
 	catholic_leadership = yes
-	custom_effect_tooltip = "The Emperor will continue the legacy of the Holy Roman Empire."
+	custom_effect_tooltip = tooltip_USoE643_effect
 	set_country_flag = USoE_imperial_crown
 }
 #A New Ecumenical Crown
 focus_USoE644_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE644"
 	christian_leadership = yes
-	custom_effect_tooltip = "The Emperor will continue the legacy of his house."
+	custom_effect_tooltip = tooltip_USoE644_effect
 	set_country_flag = USoE_new_crown
 }
 #By the Pope
 focus_USoE645_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE645"
-	custom_effect_tooltip = "Favors The Clergy."
-	increase_The_Clergy_opinion = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_the_clergy_opinion = yes
 	set_USoE_flag_of_the_house = yes
-	hidden_effect = {
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 23 }
-		update_government_coalition_strength = yes
-		update_party_name = yes
-		set_coalition_drift = yes
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_RULING_PARTY]
-			}
-			META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-		}
-		set_leader = yes
-	}
+	set_temp_variable = { rul_party_temp = 23 }
+	change_ruling_party_effect = yes
 	set_politics = {
 		ruling_party = nationalist
 		elections_allowed = no
@@ -1376,24 +1325,11 @@ focus_USoE645_effect = {
 #By the People
 focus_USoE646_effect = {
 	log = "[GetDateText]: [Root.GetName]: Focus USoE646"
-	custom_effect_tooltip = "Handicaps The Clergy."
-	decrease_The_Clergy_opinion = yes
+	set_temp_variable = { temp_opinion = -5 }
+	change_the_clergy_opinion = yes
 	set_USoE_flag_of_the_house = yes
-	hidden_effect = {
-		clear_array = ruling_party
-		clear_array = gov_coalition_array
-		add_to_array = { ruling_party = 23 }
-		update_government_coalition_strength = yes
-		update_party_name = yes
-		set_coalition_drift = yes
-		meta_effect = {
-			text = {
-				set_country_flag = [META_SET_RULING_PARTY]
-			}
-			META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-		}
-		set_leader = yes
-	}
+	set_temp_variable = { rul_party_temp = 23 }
+	change_ruling_party_effect = yes
 	set_politics = {
 		ruling_party = nationalist
 		elections_allowed = yes
@@ -1404,7 +1340,7 @@ focus_USoE646_effect = {
 	}
 	add_to_variable = { party_pop_array^23 = 0.20 }
 	recalculate_party = yes
-	custom_effect_tooltip = tooltip_USoE646_effect
+	custom_effect_tooltip = tooltip_USoE645_effect
 }
 #The Holy European Empire
 focus_USoE647_effect = {

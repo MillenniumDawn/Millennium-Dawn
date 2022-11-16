@@ -1,0 +1,6261 @@
+# Author(s): Crocomoth
+# merc_deploy_cost and mercs_cost and mercs_weekly_cost:
+# 0 = light infantry
+# 1 = motorised infantry
+# 2 = mech infantry
+# 3 = heavy mech unit
+# 4 = special(unique?) unit
+# 5 = tank unit
+# 6 = special forces unit
+
+# merc_deployed and merc_capacity
+# 0 = Blackwater, USA equipment, USA aligned, NOT government-tied
+# 1 = Wagner, SOV equipment, SOV aligned, government-tied
+# 2 = Aegis, ENG equipment, ENG aligned, NOT government-tied
+# 3 = Constellis, mostly US equipment, non-aligned
+# 4 = MD ;), mix of EU and US eq + soviet armor, non-aligned
+
+pmc_category = {
+	# Blackwater
+	open_blackwater = {
+		visible = { NOT = { has_country_flag = blackwater_opened } }
+		fire_only_once = no
+		complete_effect = { set_country_flag = blackwater_opened }
+		# keep it open
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	close_blackwater = {
+		visible = { has_country_flag = blackwater_opened }
+		fire_only_once = no
+		complete_effect = { clr_country_flag = blackwater_opened }
+	}
+
+	get_blackwater_light_infantry = {
+		visible = { has_country_flag = blackwater_opened }
+		available = {
+			if = {
+				limit = { NOT = { tag = USA } }
+				USA = { has_opinion = { target = ROOT value > 0 } }
+			}
+
+			set_temp_variable = { sum = global.merc_deploy_cost^0 }
+			add_to_temp_variable = { sum = global.merc_deployed^0 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^0 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_0_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^0 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^0 = global.merc_deploy_cost^0 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^0 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_recruited_blackwater_light }
+				add_to_variable = { ROOT.pmc_blackwater_light_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_recruited_blackwater_light
+				set_variable = { ROOT.pmc_blackwater_light_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Blackwater Light Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Arty_Bat = { x = 0 y = 4 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+							L_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 1 y = 4 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_light_infantry_blackwater = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = USA value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_blackwater_light_infantry = {
+		available = {
+			NOT = { has_decision = get_blackwater_light_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_recruited_blackwater_light
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_light_infantry_blackwater = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_blackwater_mot_infantry = {
+		visible = {
+			has_country_flag = blackwater_opened
+			check_variable = { global.merc_upgrade^0 > 0 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = USA } }
+				USA = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^1 }
+			add_to_temp_variable = { sum = global.merc_deployed^0 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^0 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_1_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^1 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^0 = global.merc_deploy_cost^1 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^1 }
+			if = {
+				limit = { tag = USA }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_blackwater_mot }
+				add_to_variable = { ROOT.pmc_blackwater_mot_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_blackwater_mot
+				set_variable = { ROOT.pmc_blackwater_mot_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Blackwater Motorized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+						}
+						support = {
+							Mot_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mot_infantry_blackwater = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = USA value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_blackwater_mot_infantry = {
+		available = {
+			NOT = { has_decision = get_blackwater_mot_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_blackwater_mot
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mot_infantry_blackwater = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_blackwater_mech_infantry = {
+		visible = {
+			has_country_flag = blackwater_opened
+			check_variable = { global.merc_upgrade^0 > 0 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = USA } }
+				USA = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^2 }
+			add_to_temp_variable = { sum = global.merc_deployed^0 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^0 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_2_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^2 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^0 = global.merc_deploy_cost^2 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^2 }
+			if = {
+				limit = { tag = USA }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_blackwater_mech }
+				add_to_variable = { ROOT.pmc_blackwater_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_blackwater_mech
+				set_variable = { ROOT.pmc_blackwater_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Blackwater Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mech_Inf_Bat = { x = 0 y = 0 }
+							Mech_Inf_Bat = { x = 0 y = 1 }
+							Mech_Inf_Bat = { x = 0 y = 2 }
+							Mech_Inf_Bat = { x = 1 y = 0 }
+							Mech_Inf_Bat = { x = 1 y = 1 }
+							Mech_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Mech_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mech_infantry_blackwater = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = USA value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_blackwater_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_blackwater_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_blackwater_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mech_infantry_blackwater = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_blackwater_heavy_mech_infantry = {
+		visible = {
+			has_country_flag = blackwater_opened
+			check_variable = { global.merc_upgrade^0 > 1 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = USA } }
+				USA = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^3 }
+			add_to_temp_variable = { sum = global.merc_deployed^0 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^0 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_3_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^3 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^0 = global.merc_deploy_cost^3 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^3 }
+			if = {
+				limit = { tag = USA }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_blackwater_heavy_mech }
+				add_to_variable = { ROOT.pmc_blackwater_heavy_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_blackwater_heavy_mech
+				set_variable = { ROOT.pmc_blackwater_heavy_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Blackwater Heavy Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_heavy_mech_infantry_blackwater = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = USA value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_blackwater_heavy_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_blackwater_heavy_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_blackwater_heavy_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_heavy_mech_infantry_blackwater = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_blackwater_special_infantry = {
+		visible = {
+			has_country_flag = blackwater_opened
+			check_variable = { global.merc_upgrade^0 > 1 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = USA } }
+				USA = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^4 }
+			add_to_temp_variable = { sum = global.merc_deployed^0 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^0 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_4_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^4 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^0 = global.merc_deploy_cost^4 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^4 }
+			if = {
+				limit = { tag = USA }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_blackwater_special_unit }
+				add_to_variable = { ROOT.pmc_blackwater_special_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_blackwater_special_unit
+				set_variable = { ROOT.pmc_blackwater_special_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Blackwater Special Assault Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 0 y = 3 }
+							Arm_Inf_Bat = { x = 0 y = 4 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 3 }
+							Arm_Inf_Bat = { x = 1 y = 4 }
+							SP_Arty_Bat = { x = 2 y = 0 }
+							SP_AA_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+							SP_Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_special_blackwater = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = USA value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_blackwater_special_infantry = {
+		available = {
+			NOT = { has_decision = get_blackwater_special_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_blackwater_special_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_special_unit_blackwater = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_blackwater_tank = {
+		visible = {
+			has_country_flag = blackwater_opened
+			check_variable = { global.merc_upgrade^0 > 2 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = USA } }
+				USA = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^5 }
+			add_to_temp_variable = { sum = global.merc_deployed^0 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^0 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_5_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^5 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^0 = global.merc_deploy_cost^5 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^5 }
+			if = {
+				limit = { tag = USA }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_blackwater_tank }
+				add_to_variable = { ROOT.pmc_blackwater_tank_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_blackwater_tank
+				set_variable = { ROOT.pmc_blackwater_tank_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Blackwater Tank Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							armor_Bat = { x = 0 y = 0 }
+							armor_Bat = { x = 0 y = 1 }
+							armor_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 2 y = 0 }
+							SP_Arty_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+						}
+						support = {
+							SP_AA_Battery = { x = 0 y = 0 }
+							armor_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_tank_blackwater = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = USA value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_blackwater_tank = {
+		available = {
+			NOT = { has_decision = get_blackwater_tank }
+		}
+
+		visible = {
+			has_country_flag = pmc_blackwater_tank
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_tank_unit_blackwater = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_blackwater_specops = {
+		visible = {
+			has_country_flag = blackwater_opened
+			check_variable = { global.merc_upgrade^0 > 2 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = USA } }
+				USA = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^6 }
+			add_to_temp_variable = { sum = global.merc_deployed^0 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^0 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_6_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^6 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = USA }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^0 = global.merc_deploy_cost^6 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^6 }
+			if = {
+				limit = { tag = USA }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_blackwater_specops }
+				add_to_variable = { ROOT.pmc_blackwater_specops_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_blackwater_specops
+				set_variable = { ROOT.pmc_blackwater_specops_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Blackwater SpecOps Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+							Arty_Bat = { x = 2 y = 2 }
+							Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							H_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+							SP_AA_Battery = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_specops_blackwater = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = USA value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_blackwater_specops = {
+		available = {
+			NOT = { has_decision = get_blackwater_specops }
+		}
+
+		visible = {
+			has_country_flag = pmc_blackwater_specops
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_specops_unit_blackwater = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	# Wagner
+	open_wagner = {
+		visible = {
+			check_variable = { global.merc_upgrade^1 > -1 }
+			NOT = { has_country_flag = wagner_opened }
+		}
+		fire_only_once = no
+		complete_effect = { set_country_flag = wagner_opened }
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	close_wagner = {
+		visible = { has_country_flag = wagner_opened }
+		fire_only_once = no
+		complete_effect = { clr_country_flag = wagner_opened }
+	}
+
+	get_wagner_light_infantry = {
+		visible = {
+			has_country_flag = wagner_opened
+			check_variable = { global.merc_upgrade^1 > -1 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = SOV } }
+				SOV = { has_opinion = { target = ROOT value > 0 } }
+
+				custom_trigger_tooltip = {
+					tooltip = banned_pmc_operations_TT
+					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+				}
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^0 }
+			add_to_temp_variable = { sum = global.merc_deployed^1 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^1 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_0_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^0 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+				modify_treasury_effect = yes
+			}
+			else = {
+				modify_treasury_effect = yes
+				multiply_temp_variable = { treasury_change = -0.2 }
+				SOV = {
+					modify_treasury_effect = yes
+				}
+			}
+
+			add_to_variable = { global.merc_deployed^1 = global.merc_deploy_cost^0 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^0 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_recruited_wagner_light }
+				add_to_variable = { ROOT.pmc_wagner_light_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_recruited_wagner_light
+				set_variable = { ROOT.pmc_wagner_light_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Wagner Light Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Arty_Bat = { x = 0 y = 4 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+							L_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 1 y = 4 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_light_infantry_wagner = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = SOV value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_wagner_light_infantry = {
+		available = {
+			NOT = { has_decision = get_wagner_light_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_recruited_wagner_light
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_light_infantry_wagner = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_wagner_mot_infantry = {
+		visible = {
+			has_country_flag = wagner_opened
+			check_variable = { global.merc_upgrade^1 > 0 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = SOV } }
+				SOV = { has_opinion = { target = ROOT value > 0 } }
+
+				custom_trigger_tooltip = {
+					tooltip = banned_pmc_operations_TT
+					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+				}
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^1 }
+			add_to_temp_variable = { sum = global.merc_deployed^1 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^1 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_1_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^1 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^1 = global.merc_deploy_cost^1 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_wagner_mot }
+				add_to_variable = { ROOT.pmc_wagner_mot_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_wagner_mot
+				set_variable = { ROOT.pmc_wagner_mot_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Wagner Motorized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+						}
+						support = {
+							Mot_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mot_infantry_wagner = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = SOV value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_wagner_mot_infantry = {
+		available = {
+			NOT = { has_decision = get_wagner_mot_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_wagner_mot
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mot_infantry_wagner = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_wagner_mech_infantry = {
+		visible = {
+			has_country_flag = wagner_opened
+			check_variable = { global.merc_upgrade^1 > 0 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = SOV } }
+				SOV = { has_opinion = { target = ROOT value > 0 } }
+
+				custom_trigger_tooltip = {
+					tooltip = banned_pmc_operations_TT
+					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+				}
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^2 }
+			add_to_temp_variable = { sum = global.merc_deployed^1 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^1 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_2_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^2 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^1 = global.merc_deploy_cost^2 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^2 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_wagner_mech }
+				add_to_variable = { ROOT.pmc_wagner_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_wagner_mech
+				set_variable = { ROOT.pmc_wagner_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Wagner Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mech_Inf_Bat = { x = 0 y = 0 }
+							Mech_Inf_Bat = { x = 0 y = 1 }
+							Mech_Inf_Bat = { x = 0 y = 2 }
+							Mech_Inf_Bat = { x = 1 y = 0 }
+							Mech_Inf_Bat = { x = 1 y = 1 }
+							Mech_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Mech_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mech_infantry_wagner = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = SOV value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_wagner_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_wagner_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_wagner_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mech_infantry_wagner = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_wagner_heavy_mech_infantry = {
+		visible = {
+			has_country_flag = wagner_opened
+			check_variable = { global.merc_upgrade^1 > 1 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = SOV } }
+				SOV = { has_opinion = { target = ROOT value > 0 } }
+
+				custom_trigger_tooltip = {
+					tooltip = banned_pmc_operations_TT
+					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+				}
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^3 }
+			add_to_temp_variable = { sum = global.merc_deployed^1 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^1 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_3_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^3 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^1 = global.merc_deploy_cost^3 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^3 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_wagner_heavy_mech }
+				add_to_variable = { ROOT.pmc_wagner_heavy_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_wagner_heavy_mech
+				set_variable = { ROOT.pmc_wagner_heavy_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Wagner Heavy Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_heavy_mech_infantry_wagner = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = SOV value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_wagner_heavy_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_wagner_heavy_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_wagner_heavy_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_heavy_mech_infantry_wagner = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_wagner_special_infantry = {
+		visible = {
+			has_country_flag = wagner_opened
+			check_variable = { global.merc_upgrade^1 > 1 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = SOV } }
+				SOV = { has_opinion = { target = ROOT value > 0 } }
+
+				custom_trigger_tooltip = {
+					tooltip = banned_pmc_operations_TT
+					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+				}
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^4 }
+			add_to_temp_variable = { sum = global.merc_deployed^1 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^1 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_4_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^4 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^1 = global.merc_deploy_cost^4 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^4 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_wagner_special_unit }
+				add_to_variable = { ROOT.pmc_wagner_special_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_wagner_special_unit
+				set_variable = { ROOT.pmc_wagner_special_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Wagner Special Assault Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 0 y = 3 }
+							Arm_Inf_Bat = { x = 0 y = 4 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 3 }
+							Arm_Inf_Bat = { x = 1 y = 4 }
+							SP_Arty_Bat = { x = 2 y = 0 }
+							SP_AA_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+							SP_Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_special_wagner = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = SOV value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_wagner_special_infantry = {
+		available = {
+			NOT = { has_decision = get_wagner_special_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_wagner_special_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_special_unit_wagner = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_wagner_tank = {
+		visible = {
+			has_country_flag = wagner_opened
+			check_variable = { global.merc_upgrade^1 > 2 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = SOV } }
+				SOV = { has_opinion = { target = ROOT value > 0 } }
+
+				custom_trigger_tooltip = {
+					tooltip = banned_pmc_operations_TT
+					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+				}
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^5 }
+			add_to_temp_variable = { sum = global.merc_deployed^1 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^1 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_5_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^5 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^1 = global.merc_deploy_cost^5 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^5 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_wagner_tank }
+				add_to_variable = { ROOT.pmc_wagner_tank_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_wagner_tank
+				set_variable = { ROOT.pmc_wagner_tank_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Wagner Tank Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							armor_Bat = { x = 0 y = 0 }
+							armor_Bat = { x = 0 y = 1 }
+							armor_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 2 y = 0 }
+							SP_Arty_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+						}
+						support = {
+							SP_AA_Battery = { x = 0 y = 0 }
+							armor_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_tank_wagner = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = SOV value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_wagner_tank = {
+		available = {
+			NOT = { has_decision = get_wagner_tank }
+		}
+
+		visible = {
+			has_country_flag = pmc_wagner_tank
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_tank_unit_wagner = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_wagner_specops = {
+		visible = {
+			has_country_flag = wagner_opened
+			check_variable = { global.merc_upgrade^1 > 2 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = SOV } }
+				SOV = { has_opinion = { target = ROOT value > 0 } }
+
+				custom_trigger_tooltip = {
+					tooltip = banned_pmc_operations_TT
+					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+				}
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^6 }
+			add_to_temp_variable = { sum = global.merc_deployed^1 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^1 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_6_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^6 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^1 = global.merc_deploy_cost^6 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^6 }
+			if = {
+				limit = { tag = SOV }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+			else = {
+				set_temp_variable = { temp_profit = temp_expense }
+				multiply_temp_variable = { temp_profit = 0.2 }
+				SOV = {
+					modify_pmc_profits = yes
+				}
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_wagner_specops }
+				add_to_variable = { ROOT.pmc_wagner_specops_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_wagner_specops
+				set_variable = { ROOT.pmc_wagner_specops_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Wagner SpecOps Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+							Arty_Bat = { x = 2 y = 2 }
+							Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							H_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+							SP_AA_Battery = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_specops_wagner = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = SOV value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_wagner_specops = {
+		available = {
+			NOT = { has_decision = get_wagner_specops }
+		}
+
+		visible = {
+			has_country_flag = pmc_wagner_specops
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_specops_unit_wagner = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	# Aegis
+	open_aegis = {
+		visible = { NOT = { has_country_flag = aegis_opened } }
+		fire_only_once = no
+		complete_effect = { set_country_flag = aegis_opened }
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	close_aegis = {
+		visible = { has_country_flag = aegis_opened }
+		fire_only_once = no
+		complete_effect = { clr_country_flag = aegis_opened }
+	}
+
+	get_aegis_light_infantry = {
+		visible = {
+			has_country_flag = aegis_opened
+		}
+		available = {
+			if = {
+				limit = { NOT = { tag = ENG } }
+				ENG = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^0 }
+			add_to_temp_variable = { sum = global.merc_deployed^2 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^2 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_0_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^0 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^2 = global.merc_deploy_cost^0 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^0 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			if = {
+				limit = { has_country_flag = pmc_recruited_aegis_light }
+				add_to_variable = { ROOT.pmc_aegis_light_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_recruited_aegis_light
+				set_variable = { ROOT.pmc_aegis_light_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Aegis Light Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Arty_Bat = { x = 0 y = 4 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+							L_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 1 y = 4 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_light_infantry_aegis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = ENG value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_aegis_light_infantry = {
+		available = {
+			NOT = { has_decision = get_aegis_light_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_recruited_aegis_light
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_light_infantry_aegis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_aegis_mot_infantry = {
+		visible = {
+			has_country_flag = aegis_opened
+			check_variable = { global.merc_upgrade^2 > 0 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = ENG } }
+				ENG = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^1 }
+			add_to_temp_variable = { sum = global.merc_deployed^2 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^2 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_1_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^1 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^2 = global.merc_deploy_cost^1 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^1 }
+			if = {
+				limit = { tag = ENG }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_aegis_mot }
+				add_to_variable = { ROOT.pmc_aegis_mot_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_aegis_mot
+				set_variable = { ROOT.pmc_aegis_mot_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Aegis Motorized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+						}
+						support = {
+							Mot_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mot_infantry_aegis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = ENG value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_aegis_mot_infantry = {
+		available = {
+			NOT = { has_decision = get_aegis_mot_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_aegis_mot
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mot_infantry_aegis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_aegis_mech_infantry = {
+		visible = {
+			has_country_flag = aegis_opened
+			check_variable = { global.merc_upgrade^2 > 0 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = ENG } }
+				ENG = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^2 }
+			add_to_temp_variable = { sum = global.merc_deployed^2 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^2 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_2_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^2 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^2 = global.merc_deploy_cost^2 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^2 }
+			if = {
+				limit = { tag = ENG }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_aegis_mech }
+				add_to_variable = { ROOT.pmc_aegis_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_aegis_mech
+				set_variable = { ROOT.pmc_aegis_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Aegis Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mech_Inf_Bat = { x = 0 y = 0 }
+							Mech_Inf_Bat = { x = 0 y = 1 }
+							Mech_Inf_Bat = { x = 0 y = 2 }
+							Mech_Inf_Bat = { x = 1 y = 0 }
+							Mech_Inf_Bat = { x = 1 y = 1 }
+							Mech_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Mech_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mech_infantry_aegis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = ENG value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_aegis_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_aegis_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_aegis_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mech_infantry_aegis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_aegis_heavy_mech_infantry = {
+		visible = {
+			has_country_flag = aegis_opened
+			check_variable = { global.merc_upgrade^2 > 1 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = ENG } }
+				ENG = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^3 }
+			add_to_temp_variable = { sum = global.merc_deployed^2 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^2 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_3_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^3 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^2 = global.merc_deploy_cost^3 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^3 }
+			if = {
+				limit = { tag = ENG }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_aegis_heavy_mech }
+				add_to_variable = { ROOT.pmc_aegis_heavy_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_aegis_heavy_mech
+				set_variable = { ROOT.pmc_aegis_heavy_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Aegis Heavy Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_heavy_mech_infantry_aegis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = ENG value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_aegis_heavy_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_aegis_heavy_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_aegis_heavy_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_heavy_mech_infantry_aegis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_aegis_special_infantry = {
+		visible = {
+			has_country_flag = aegis_opened
+			check_variable = { global.merc_upgrade^2 > 1 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = ENG } }
+				ENG = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^4 }
+			add_to_temp_variable = { sum = global.merc_deployed^2 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^2 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_4_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^4 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^2 = global.merc_deploy_cost^4 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^4 }
+			if = {
+				limit = { tag = ENG }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_aegis_special_unit }
+				add_to_variable = { ROOT.pmc_aegis_special_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_aegis_special_unit
+				set_variable = { ROOT.pmc_aegis_special_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Aegis Special Assault Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 0 y = 3 }
+							Arm_Inf_Bat = { x = 0 y = 4 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 3 }
+							Arm_Inf_Bat = { x = 1 y = 4 }
+							SP_Arty_Bat = { x = 2 y = 0 }
+							SP_AA_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+							SP_Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_special_aegis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = ENG value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_aegis_special_infantry = {
+		available = {
+			NOT = { has_decision = get_aegis_special_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_aegis_special_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_special_unit_aegis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_aegis_tank = {
+		visible = {
+			has_country_flag = aegis_opened
+			check_variable = { global.merc_upgrade^2 > 2 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = ENG } }
+				ENG = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^5 }
+			add_to_temp_variable = { sum = global.merc_deployed^2 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^2 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_5_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^5 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^2 = global.merc_deploy_cost^5 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^5 }
+			if = {
+				limit = { tag = ENG }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_aegis_tank }
+				add_to_variable = { ROOT.pmc_aegis_tank_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_aegis_tank
+				set_variable = { ROOT.pmc_aegis_tank_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Aegis Tank Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							armor_Bat = { x = 0 y = 0 }
+							armor_Bat = { x = 0 y = 1 }
+							armor_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 2 y = 0 }
+							SP_Arty_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+						}
+						support = {
+							SP_AA_Battery = { x = 0 y = 0 }
+							armor_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_tank_aegis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = ENG value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_aegis_tank = {
+		available = {
+			NOT = { has_decision = get_aegis_tank }
+		}
+
+		visible = {
+			has_country_flag = pmc_aegis_tank
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_tank_unit_aegis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_aegis_specops = {
+		visible = {
+			has_country_flag = aegis_opened
+			check_variable = { global.merc_upgrade^2 > 2 }
+		}
+
+		available = {
+			if = {
+				limit = { NOT = { tag = ENG } }
+				ENG = { has_opinion = { target = ROOT value > 0 } }
+			}
+			set_temp_variable = { sum = global.merc_deploy_cost^6 }
+			add_to_temp_variable = { sum = global.merc_deployed^2 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^2 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_6_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^6 }
+			multiply_temp_variable = { treasury_change = -1 }
+			if = {
+				limit = { tag = ENG }
+				# with discount for overlord
+				multiply_temp_variable = { treasury_change = 0.8 }
+			}
+
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^2 = global.merc_deploy_cost^6 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^6 }
+			if = {
+				limit = { tag = ENG }
+				# discount
+				multiply_temp_variable = { temp_expense = 0.8 }
+			}
+
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_aegis_specops }
+				add_to_variable = { ROOT.pmc_aegis_specops_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_aegis_specops
+				set_variable = { ROOT.pmc_aegis_specops_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Aegis SpecOps Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+							Arty_Bat = { x = 2 y = 2 }
+							Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							H_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+							SP_AA_Battery = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_specops_aegis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -1
+				ROOT = { has_opinion = { target = ENG value > 10 } }
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_aegis_specops = {
+		available = {
+			NOT = { has_decision = get_aegis_specops }
+		}
+
+		visible = {
+			has_country_flag = pmc_aegis_specops
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_specops_unit_aegis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	# Constellis
+	open_constellis = {
+		visible = { NOT = { has_country_flag = constellis_opened } }
+		fire_only_once = no
+		complete_effect = { set_country_flag = constellis_opened }
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	close_constellis = {
+		visible = { has_country_flag = constellis_opened }
+		fire_only_once = no
+		complete_effect = { clr_country_flag = constellis_opened }
+	}
+
+	get_constellis_light_infantry = {
+		visible = { has_country_flag = constellis_opened }
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^0 }
+			add_to_temp_variable = { sum = global.merc_deployed^3 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^3 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_0_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^0 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^3 = global.merc_deploy_cost^0 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^0 }
+			modify_pmc_expenses = yes
+
+			if = {
+				limit = { has_country_flag = pmc_recruited_constellis_light }
+				add_to_variable = { ROOT.pmc_constellis_light_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_recruited_constellis_light
+				set_variable = { ROOT.pmc_constellis_light_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Constellis Light Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Arty_Bat = { x = 0 y = 4 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+							L_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 1 y = 4 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_light_infantry_constellis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_constellis_light_infantry = {
+		available = {
+			NOT = { has_decision = get_constellis_light_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_recruited_constellis_light
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_light_infantry_constellis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_constellis_mot_infantry = {
+		visible = {
+			has_country_flag = constellis_opened
+			check_variable = { global.merc_upgrade^3 > 0 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^1 }
+			add_to_temp_variable = { sum = global.merc_deployed^3 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^3 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_1_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^1 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^3 = global.merc_deploy_cost^1 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^1 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_constellis_mot }
+				add_to_variable = { ROOT.pmc_constellis_mot_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_constellis_mot
+				set_variable = { ROOT.pmc_constellis_mot_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Constellis Motorized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+						}
+						support = {
+							Mot_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mot_infantry_constellis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_constellis_mot_infantry = {
+		available = {
+			NOT = { has_decision = get_constellis_mot_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_constellis_mot
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mot_infantry_constellis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_constellis_mech_infantry = {
+		visible = {
+			has_country_flag = constellis_opened
+			check_variable = { global.merc_upgrade^3 > 0 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^2 }
+			add_to_temp_variable = { sum = global.merc_deployed^3 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^3 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_2_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^2 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^3 = global.merc_deploy_cost^2 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^2 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_constellis_mech }
+				add_to_variable = { ROOT.pmc_constellis_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_constellis_mech
+				set_variable = { ROOT.pmc_constellis_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Constellis Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mech_Inf_Bat = { x = 0 y = 0 }
+							Mech_Inf_Bat = { x = 0 y = 1 }
+							Mech_Inf_Bat = { x = 0 y = 2 }
+							Mech_Inf_Bat = { x = 1 y = 0 }
+							Mech_Inf_Bat = { x = 1 y = 1 }
+							Mech_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Mech_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mech_infantry_constellis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_constellis_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_constellis_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_constellis_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mech_infantry_constellis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_constellis_heavy_mech_infantry = {
+		visible = {
+			has_country_flag = constellis_opened
+			check_variable = { global.merc_upgrade^3 > 1 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^3 }
+			add_to_temp_variable = { sum = global.merc_deployed^3 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^3 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_3_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^3 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^3 = global.merc_deploy_cost^3 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^3 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_constellis_heavy_mech }
+				add_to_variable = { ROOT.pmc_constellis_heavy_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_constellis_heavy_mech
+				set_variable = { ROOT.pmc_constellis_heavy_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Constellis Heavy Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_heavy_mech_infantry_constellis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_constellis_heavy_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_constellis_heavy_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_constellis_heavy_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_heavy_mech_infantry_constellis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_constellis_special_infantry = {
+		visible = {
+			has_country_flag = constellis_opened
+			check_variable = { global.merc_upgrade^3 > 1 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^4 }
+			add_to_temp_variable = { sum = global.merc_deployed^3 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^3 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_4_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^4 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^3 = global.merc_deploy_cost^4 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^4 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_constellis_special_unit }
+				add_to_variable = { ROOT.pmc_constellis_special_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_constellis_special_unit
+				set_variable = { ROOT.pmc_constellis_special_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Constellis Special Assault Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 0 y = 3 }
+							Arm_Inf_Bat = { x = 0 y = 4 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 3 }
+							Arm_Inf_Bat = { x = 1 y = 4 }
+							SP_Arty_Bat = { x = 2 y = 0 }
+							SP_AA_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+							SP_Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_special_constellis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_constellis_special_infantry = {
+		available = {
+			NOT = { has_decision = get_constellis_special_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_constellis_special_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_special_unit_constellis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_constellis_tank = {
+		visible = {
+			has_country_flag = constellis_opened
+			check_variable = { global.merc_upgrade^3 > 2 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^5 }
+			add_to_temp_variable = { sum = global.merc_deployed^3 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^3 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_5_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^5 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^3 = global.merc_deploy_cost^5 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^5 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_constellis_tank }
+				add_to_variable = { ROOT.pmc_constellis_tank_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_constellis_tank
+				set_variable = { ROOT.pmc_constellis_tank_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Constellis Tank Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							armor_Bat = { x = 0 y = 0 }
+							armor_Bat = { x = 0 y = 1 }
+							armor_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 2 y = 0 }
+							SP_Arty_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+						}
+						support = {
+							SP_AA_Battery = { x = 0 y = 0 }
+							armor_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_tank_constellis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_constellis_tank = {
+		available = {
+			NOT = { has_decision = get_constellis_tank }
+		}
+
+		visible = {
+			has_country_flag = pmc_constellis_tank
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_tank_unit_constellis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_constellis_specops = {
+		visible = {
+			has_country_flag = constellis_opened
+			check_variable = { global.merc_upgrade^3 > 2 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^6 }
+			add_to_temp_variable = { sum = global.merc_deployed^3 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^3 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_6_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^6 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^3 = global.merc_deploy_cost^6 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^6 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_constellis_specops }
+				add_to_variable = { ROOT.pmc_constellis_specops_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_constellis_specops
+				set_variable = { ROOT.pmc_constellis_specops_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Constellis SpecOps Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+							Arty_Bat = { x = 2 y = 2 }
+							Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							H_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+							SP_AA_Battery = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_specops_constellis = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_constellis_specops = {
+		available = {
+			NOT = { has_decision = get_constellis_specops }
+		}
+
+		visible = {
+			has_country_flag = pmc_constellis_specops
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_specops_unit_constellis = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	# MD
+	open_md = {
+		visible = {
+			check_variable = { global.merc_upgrade^4 > -1 }
+			NOT = { has_country_flag = md_opened }
+		}
+		fire_only_once = no
+		complete_effect = { set_country_flag = md_opened }
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	close_md = {
+		visible = { has_country_flag = md_opened }
+		fire_only_once = no
+		complete_effect = { clr_country_flag = md_opened }
+	}
+
+	get_md_light_infantry = {
+		visible = {
+			has_country_flag = md_opened
+			check_variable = { global.merc_upgrade^4 > -1 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^0 }
+			add_to_temp_variable = { sum = global.merc_deployed^4 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^4 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_0_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^0 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^4 = global.merc_deploy_cost^0 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^0 }
+			modify_pmc_expenses = yes
+
+			if = {
+				limit = { has_country_flag = pmc_recruited_md_light }
+				add_to_variable = { ROOT.pmc_md_light_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_recruited_md_light
+				set_variable = { ROOT.pmc_md_light_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "MD Light Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Arty_Bat = { x = 0 y = 4 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+							L_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 1 y = 4 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_light_infantry_md = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_md_light_infantry = {
+		available = {
+			NOT = { has_decision = get_md_light_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_recruited_md_light
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_light_infantry_md = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_md_mot_infantry = {
+		visible = {
+			has_country_flag = md_opened
+			check_variable = { global.merc_upgrade^4 > 0 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^1 }
+			add_to_temp_variable = { sum = global.merc_deployed^4 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^4 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_1_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^1 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^4 = global.merc_deploy_cost^1 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^1 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_md_mot }
+				add_to_variable = { ROOT.pmc_md_mot_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_md_mot
+				set_variable = { ROOT.pmc_md_mot_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "MD Motorized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+						}
+						support = {
+							Mot_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mot_infantry_md = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_md_mot_infantry = {
+		available = {
+			NOT = { has_decision = get_md_mot_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_md_mot
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mot_infantry_md = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_md_mech_infantry = {
+		visible = {
+			has_country_flag = md_opened
+			check_variable = { global.merc_upgrade^4 > 0 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^2 }
+			add_to_temp_variable = { sum = global.merc_deployed^4 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^4 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_2_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^2 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^4 = global.merc_deploy_cost^2 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^2 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_md_mech }
+				add_to_variable = { ROOT.pmc_md_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_md_mech
+				set_variable = { ROOT.pmc_md_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "MD Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mech_Inf_Bat = { x = 0 y = 0 }
+							Mech_Inf_Bat = { x = 0 y = 1 }
+							Mech_Inf_Bat = { x = 0 y = 2 }
+							Mech_Inf_Bat = { x = 1 y = 0 }
+							Mech_Inf_Bat = { x = 1 y = 1 }
+							Mech_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Mech_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mech_infantry_md = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_md_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_md_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_md_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mech_infantry_md = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_md_heavy_mech_infantry = {
+		visible = {
+			has_country_flag = md_opened
+			check_variable = { global.merc_upgrade^4 > 1 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^3 }
+			add_to_temp_variable = { sum = global.merc_deployed^4 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^4 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_3_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^3 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^4 = global.merc_deploy_cost^3 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^3 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_md_heavy_mech }
+				add_to_variable = { ROOT.pmc_md_heavy_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_md_heavy_mech
+				set_variable = { ROOT.pmc_md_heavy_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "MD Heavy Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_heavy_mech_infantry_md = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_md_heavy_mech_infantry = {
+		available = {
+			NOT = { has_decision = get_md_heavy_mech_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_md_heavy_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_heavy_mech_infantry_md = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_md_special_infantry = {
+		visible = {
+			has_country_flag = md_opened
+			check_variable = { global.merc_upgrade^4 > 1 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^4 }
+			add_to_temp_variable = { sum = global.merc_deployed^4 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^4 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_4_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^4 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^4 = global.merc_deploy_cost^4 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^4 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_md_special_unit }
+				add_to_variable = { ROOT.pmc_md_special_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_md_special_unit
+				set_variable = { ROOT.pmc_md_special_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "MD Special Assault Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 0 y = 3 }
+							Arm_Inf_Bat = { x = 0 y = 4 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 3 }
+							Arm_Inf_Bat = { x = 1 y = 4 }
+							SP_Arty_Bat = { x = 2 y = 0 }
+							SP_AA_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+							SP_Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_special_md = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_md_special_infantry = {
+		available = {
+			NOT = { has_decision = get_md_special_infantry }
+		}
+
+		visible = {
+			has_country_flag = pmc_md_special_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_special_unit_md = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_md_tank = {
+		visible = {
+			has_country_flag = md_opened
+			check_variable = { global.merc_upgrade^4 > 2 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^5 }
+			add_to_temp_variable = { sum = global.merc_deployed^4 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^4 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_5_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^5 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^4 = global.merc_deploy_cost^5 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^5 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_md_tank }
+				add_to_variable = { ROOT.pmc_md_tank_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_md_tank
+				set_variable = { ROOT.pmc_md_tank_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "MD Tank Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							armor_Bat = { x = 0 y = 0 }
+							armor_Bat = { x = 0 y = 1 }
+							armor_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 2 y = 0 }
+							SP_Arty_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+						}
+						support = {
+							SP_AA_Battery = { x = 0 y = 0 }
+							armor_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_tank_md = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_md_tank = {
+		available = {
+			NOT = { has_decision = get_md_tank }
+		}
+
+		visible = {
+			has_country_flag = pmc_md_tank
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_tank_unit_md = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	get_md_specops = {
+		visible = {
+			has_country_flag = md_opened
+			check_variable = { global.merc_upgrade^4 > 2 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^6 }
+			add_to_temp_variable = { sum = global.merc_deployed^4 }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > global.merc_capacity^4 } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_6_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^6 }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { global.merc_deployed^4 = global.merc_deploy_cost^6 }
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^6 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_md_specops }
+				add_to_variable = { ROOT.pmc_md_specops_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_md_specops
+				set_variable = { ROOT.pmc_md_specops_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "MD SpecOps Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+							Arty_Bat = { x = 2 y = 2 }
+							Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							H_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+							SP_AA_Battery = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_specops_md = yes
+			}
+		}
+
+		ai_will_do = {
+			# only at war
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			# not used when in advantage
+			modifier = {
+				factor = 0
+				OR = {
+					alliance_strength_ratio > 2
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				add = 1
+				alliance_strength_ratio < 1
+			}
+			modifier = {
+				add = -2
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+
+	disband_md_specops = {
+		available = {
+			NOT = { has_decision = get_md_specops }
+		}
+
+		visible = {
+			has_country_flag = pmc_md_specops
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_specops_unit_md = yes
+		}
+
+		ai_will_do = {
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { debt_ratio > 1.50 }
+				surrender_progress < 0.4
+			}
+		}
+	}
+}
+
+pmc_global_management = {
+	found_pmc_global = {
+		visible = {
+			check_variable = { global.merc_upgrade^ROOT.pmc_index < 0 }
+		}
+
+		fire_only_once = yes
+
+		days_remove = 10
+
+		remove_effect = {
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { global.merc_upgrade^ROOT.pmc_index = 1 }
+		}
+	}
+
+	expand_operations = {
+		visible = {
+			check_variable = { global.merc_upgrade^ROOT.pmc_index > -1 }
+			check_variable = { global.merc_capacity^ROOT.pmc_index < 10 }
+		}
+
+		fire_only_once = no
+		days_remove = 100
+		days_re_enable = 200
+
+		remove_effect = {
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { global.merc_capacity^ROOT.pmc_index = 2 }
+		}
+	}
+
+	expand_quality = {
+		visible = {
+			check_variable = { global.merc_upgrade^ROOT.pmc_index > -1 }
+			check_variable = { global.merc_upgrade^ROOT.pmc_index < 5 }
+		}
+
+		fire_only_once = no
+		days_remove = 100
+		days_re_enable = 100
+
+		remove_effect = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			add_to_variable = { global.merc_upgrade^ROOT.pmc_index = 1 }
+		}
+	}
+
+	ban_from_operating = {
+		visible = {
+			check_variable = { global.merc_upgrade^ROOT.pmc_index > -1 }
+			NOT = { has_country_flag = banned_pmc_operations }
+		}
+
+		fire_only_once = no
+		days_remove = 10
+		days_re_enable = 10
+
+		remove_effect = {
+			set_country_flag = banned_pmc_operations
+		}
+	}
+
+	lift_ban_from_operating = {
+		visible = {
+			check_variable = { global.merc_upgrade^ROOT.pmc_index > -1 }
+			has_country_flag = banned_pmc_operations
+		}
+
+		fire_only_once = no
+		days_remove = 10
+		days_re_enable = 10
+
+		remove_effect = {
+			clr_country_flag = banned_pmc_operations
+		}
+	}
+
+	call_pmc_back_sov = {
+		fire_only_once = no
+		days_remove = 100
+		days_re_enable = 200
+
+		visible = {
+			tag = SOV
+			check_variable = { global.merc_upgrade^ROOT.pmc_index > -1 }
+			check_variable = { global.merc_deployed^1 > 0 }
+		}
+
+		# notify countries that we are pulling them out
+		complete_effect = {
+			every_other_country = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = pmc_recruited_wagner_light
+							has_country_flag = pmc_wagner_mot
+							has_country_flag = pmc_wagner_mech
+							has_country_flag = pmc_wagner_heavy_mech
+							has_country_flag = pmc_wagner_special_unit
+							has_country_flag = pmc_wagner_tank
+							has_country_flag = pmc_wagner_specops
+						}
+					}
+
+					country_event = pmc_events.1
+				}
+			}
+		}
+
+		remove_effect = {
+			set_temp_variable = { compensation = 0 }
+			every_other_country = {
+				if = {
+					# copy paste from remove decision
+					limit = { has_country_flag = pmc_recruited_wagner_light }
+
+					delete_light_infantry_wagner = yes
+					add_to_temp_variable = { compensation = global.mercs_cost^0 }
+					set_temp_variable = { treasury_change = global.mercs_cost^0 }
+					modify_treasury_effect = yes
+				}
+				if = {
+					limit = { has_country_flag = pmc_wagner_mot }
+
+					delete_mot_infantry_wagner = yes
+					add_to_temp_variable = { compensation = global.mercs_cost^1 }
+					set_temp_variable = { treasury_change = global.mercs_cost^1 }
+					modify_treasury_effect = yes
+				}
+				if = {
+					limit = { has_country_flag = pmc_wagner_mech }
+
+					delete_mech_infantry_wagner = yes
+					add_to_temp_variable = { compensation = global.mercs_cost^2 }
+					set_temp_variable = { treasury_change = global.mercs_cost^2 }
+					modify_treasury_effect = yes
+				}
+				if = {
+					limit = { has_country_flag = pmc_wagner_heavy_mech }
+
+					delete_heavy_mech_infantry_wagner = yes
+					add_to_temp_variable = { compensation = global.mercs_cost^3 }
+					set_temp_variable = { treasury_change = global.mercs_cost^3 }
+					modify_treasury_effect = yes
+				}
+				if = {
+					limit = { has_country_flag = pmc_wagner_special_unit }
+
+					delete_special_unit_wagner = yes
+					add_to_temp_variable = { compensation = global.mercs_cost^4 }
+					set_temp_variable = { treasury_change = global.mercs_cost^4 }
+					modify_treasury_effect = yes
+				}
+				if = {
+					limit = { has_country_flag = pmc_wagner_tank }
+
+					delete_tank_unit_wagner = yes
+					add_to_temp_variable = { compensation = global.mercs_cost^5 }
+					set_temp_variable = { treasury_change = global.mercs_cost^5 }
+					modify_treasury_effect = yes
+				}
+				if = {
+					limit = { has_country_flag = pmc_wagner_specops }
+
+					delete_specops_unit_wagner = yes
+					add_to_temp_variable = { compensation = global.mercs_cost^6 }
+					set_temp_variable = { treasury_change = global.mercs_cost^6 }
+					modify_treasury_effect = yes
+				}
+			}
+
+			# pay the cost
+			multiply_temp_variable = { compensation = -1 }
+			set_temp_variable = { treasury_change = compensation }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+pmc_local_management = {
+	form_local_pmc = {
+		visible = {
+			NOT = { has_country_flag = founded_pmc }
+		}
+
+		fire_only_once = yes
+		days_remove = 100
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_variable = { ROOT.merc_capacity = 3 }
+			set_variable = { ROOT.merc_upgrade = 0 }
+			set_variable = { ROOT.merc_deployed = 0 }
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_founded_TT
+			set_country_flag = founded_pmc
+		}
+	}
+
+	expand_operations_local = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { ROOT.merc_capacity < 7 }
+		}
+
+		fire_only_once = no
+		days_remove = 100
+		days_re_enable = 200
+
+		remove_effect = {
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { ROOT.merc_capacity = 2 }
+		}
+	}
+
+	expand_quality_local = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { ROOT.merc_upgrade < 5 }
+		}
+
+		fire_only_once = no
+		days_remove = 100
+		days_re_enable = 100
+
+		remove_effect = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			add_to_variable = { ROOT.merc_upgrade = 1 }
+		}
+	}
+
+	recruit_light_unit = {
+		visible = {
+			has_country_flag = founded_pmc
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^0 }
+			add_to_temp_variable = { sum = merc_deployed }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > merc_capacity } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_0_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^0 }
+			# with discount for overlord
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { ROOT.merc_deployed = global.merc_deploy_cost^0 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^0 }
+			# discount
+			multiply_temp_variable = { temp_expense = 0.8 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_local_light }
+				add_to_variable = { ROOT.pmc_local_light_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_local_light
+				set_variable = { ROOT.pmc_local_light_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Mercenary Light Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Arty_Bat = { x = 0 y = 4 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+							L_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 1 y = 4 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_light_infantry_local = yes
+			}
+		}
+	}
+
+	disband_light_infantry = {
+		available = {
+			NOT = { has_decision = recruit_light_unit }
+		}
+
+		visible = {
+			has_country_flag = pmc_local_light
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_light_infantry_local = yes
+		}
+	}
+
+	recruit_motorised_unit = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { merc_upgrade > 0 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^1 }
+			add_to_temp_variable = { sum = merc_deployed }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > merc_capacity } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_1_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^1 }
+			# with discount for overlord
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { ROOT.merc_deployed = global.merc_deploy_cost^1 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^1 }
+			# discount
+			multiply_temp_variable = { temp_expense = 0.8 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_local_mot }
+				add_to_variable = { ROOT.pmc_local_mot_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_local_mot
+				set_variable = { ROOT.pmc_local_mot_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Mercenary Motorized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+							Mot_Inf_Bat = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+						}
+						support = {
+							Mot_Recce_Comp = { x = 0 y = 0 }
+							L_Engi_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mot_infantry_local = yes
+			}
+		}
+	}
+
+	disband_motorised_unit = {
+		available = {
+			NOT = { has_decision = recruit_motorised_unit }
+		}
+
+		visible = {
+			has_country_flag = pmc_local_mot
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mot_infantry_local = yes
+		}
+	}
+
+	recruit_mechanized_unit = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { merc_upgrade > 0 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^2 }
+			add_to_temp_variable = { sum = merc_deployed }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > merc_capacity } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_2_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^2 }
+			# with discount for overlord
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { ROOT.merc_deployed = global.merc_deploy_cost^2 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^2 }
+			# discount
+			multiply_temp_variable = { temp_expense = 0.8 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_local_mech }
+				add_to_variable = { ROOT.pmc_local_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_local_mech
+				set_variable = { ROOT.pmc_local_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Mercenary Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Mech_Inf_Bat = { x = 0 y = 0 }
+							Mech_Inf_Bat = { x = 0 y = 1 }
+							Mech_Inf_Bat = { x = 0 y = 2 }
+							Mech_Inf_Bat = { x = 1 y = 0 }
+							Mech_Inf_Bat = { x = 1 y = 1 }
+							Mech_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Mech_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_mech_infantry_local = yes
+			}
+		}
+	}
+
+	disband_mechanized_unit = {
+		available = {
+			NOT = { has_decision = recruit_mechanized_unit }
+		}
+
+		visible = {
+			has_country_flag = pmc_local_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_mech_infantry_local = yes
+		}
+	}
+
+	recruit_heavy_mechanized_unit = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { merc_upgrade > 1 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^3 }
+			add_to_temp_variable = { sum = merc_deployed }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > merc_capacity } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_3_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^3 }
+			# with discount for overlord
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { ROOT.merc_deployed = global.merc_deploy_cost^3 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^3 }
+			# discount
+			multiply_temp_variable = { temp_expense = 0.8 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_local_heavy_mech }
+				add_to_variable = { ROOT.pmc_local_heavy_mech_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_local_heavy_mech
+				set_variable = { ROOT.pmc_local_heavy_mech_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Mercenary Heavy Mechanized Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_heavy_mech_infantry_local = yes
+			}
+		}
+	}
+
+	disband_heavy_mechanized_unit = {
+		available = {
+			NOT = { has_decision = recruit_heavy_mechanized_unit }
+		}
+
+		visible = {
+			has_country_flag = pmc_local_heavy_mech
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_heavy_mech_infantry_local = yes
+		}
+	}
+
+	recruit_special_unit = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { merc_upgrade > 1 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^4 }
+			add_to_temp_variable = { sum = merc_deployed }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > merc_capacity } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_4_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^4 }
+			# with discount for overlord
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { ROOT.merc_deployed = global.merc_deploy_cost^4 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^4 }
+			# discount
+			multiply_temp_variable = { temp_expense = 0.8 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_local_special_unit }
+				add_to_variable = { ROOT.pmc_local_special_unit_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_local_special_unit
+				set_variable = { ROOT.pmc_local_special_unit_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Mercenary Special Assault Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Arm_Inf_Bat = { x = 0 y = 0 }
+							Arm_Inf_Bat = { x = 0 y = 1 }
+							Arm_Inf_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 0 y = 3 }
+							Arm_Inf_Bat = { x = 0 y = 4 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 3 }
+							Arm_Inf_Bat = { x = 1 y = 4 }
+							SP_Arty_Bat = { x = 2 y = 0 }
+							SP_AA_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+							SP_Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arm_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_special_unit_local = yes
+			}
+		}
+	}
+
+	disband_special_unit = {
+		available = {
+			NOT = { has_decision = recruit_special_unit }
+		}
+
+		visible = {
+			has_country_flag = pmc_local_special_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_special_unit_local = yes
+		}
+	}
+
+	recruit_tank_unit = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { merc_upgrade > 2 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^5 }
+			add_to_temp_variable = { sum = merc_deployed }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > merc_capacity } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_5_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^5 }
+			# with discount for overlord
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { ROOT.merc_deployed = global.merc_deploy_cost^5 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^5 }
+			# discount
+			multiply_temp_variable = { temp_expense = 0.8 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_local_tank_unit }
+				add_to_variable = { ROOT.pmc_local_tank_unit_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_local_tank_unit
+				set_variable = { ROOT.pmc_local_tank_unit_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Mercenary Tank Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							armor_Bat = { x = 0 y = 0 }
+							armor_Bat = { x = 0 y = 1 }
+							armor_Bat = { x = 0 y = 2 }
+							Arm_Inf_Bat = { x = 1 y = 0 }
+							Arm_Inf_Bat = { x = 1 y = 1 }
+							Arm_Inf_Bat = { x = 1 y = 2 }
+							Arm_Inf_Bat = { x = 2 y = 0 }
+							SP_Arty_Bat = { x = 2 y = 1 }
+							SP_Arty_Bat = { x = 2 y = 2 }
+						}
+						support = {
+							SP_AA_Battery = { x = 0 y = 0 }
+							armor_Recce_Comp = { x = 0 y = 1 }
+							H_Engi_Comp = { x = 0 y = 2 }
+							combat_service_support_company = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_tank_local = yes
+			}
+		}
+	}
+
+	disband_tank_unit = {
+		available = {
+			NOT = { has_decision = recruit_tank_unit }
+		}
+
+		visible = {
+			has_country_flag = pmc_local_tank_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_tank_unit_local = yes
+		}
+	}
+
+	recruit_specops_unit = {
+		visible = {
+			has_country_flag = founded_pmc
+			check_variable = { merc_upgrade > 2 }
+		}
+
+		available = {
+			set_temp_variable = { sum = global.merc_deploy_cost^6 }
+			add_to_temp_variable = { sum = merc_deployed }
+			pmc_can_recruit = yes
+			custom_trigger_tooltip = {
+				tooltip = pmc_surpassing_TT
+				NOT = { check_variable = { sum > merc_capacity } }
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 20
+		days_re_enable = 10
+
+		complete_effect = {
+			custom_effect_tooltip = pmc_unit_6_TT
+			set_temp_variable = { treasury_change = global.mercs_cost^6 }
+			# with discount for overlord
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+
+			add_to_variable = { ROOT.merc_deployed = global.merc_deploy_cost^6 }
+
+			set_temp_variable = { temp_expense = global.mercs_weekly_cost^6 }
+			# discount
+			multiply_temp_variable = { temp_expense = 0.8 }
+			modify_pmc_expenses = yes
+
+			# if we have - increase count (to count money on disband correctly), if not - set flag, set amount, load header
+			if = {
+				limit = { has_country_flag = pmc_local_specops_unit }
+				add_to_variable = { ROOT.pmc_local_specops_unit_recruited = 1 }
+			}
+			else = {
+				set_country_flag = pmc_local_specops_unit
+				set_variable = { ROOT.pmc_local_specops_unit_recruited = 1 }
+				hidden_effect = {
+					division_template = {
+						name = "Mercenary SpecOps Unit"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+							Arty_Bat = { x = 2 y = 0 }
+							Arty_Bat = { x = 2 y = 1 }
+							Arty_Bat = { x = 2 y = 2 }
+							Arty_Bat = { x = 2 y = 3 }
+						}
+						support = {
+							H_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+							armor_Comp = { x = 0 y = 2 }
+							SP_AA_Battery = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = { check_variable = { ROOT.pmc_bought > 0 } }
+				add_to_variable = { ROOT.pmc_bought = 1 }
+			}
+			else = {
+				set_variable = { ROOT.pmc_bought = 1 }
+			}
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = pmc_spawn_TT
+			hidden_effect = {
+				spawn_specops_local = yes
+			}
+		}
+	}
+
+	disband_specops_unit = {
+		available = {
+			NOT = { has_decision = recruit_specops_unit }
+		}
+
+		visible = {
+			has_country_flag = pmc_local_specops_unit
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			delete_specops_unit_local = yes
+		}
+	}
+}

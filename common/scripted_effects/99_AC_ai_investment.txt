@@ -143,3 +143,162 @@ invest_biofuel_refinery = {
 		}
 	}
 }
+
+# Building Type 1: Civvie industry
+AI_get_civilian_industry_score = {
+	if = {
+		limit = { free_building_slots = { building = industrial_complex size > 0  include_locked = no } }
+		# Score Modeling
+		set_temp_variable = { AI_score = 0 }
+
+		# 20 building level
+		set_temp_variable = { v1 = 140 }
+		set_temp_variable = { v2 = building_level@industrial_complex }
+		multiply_temp_variable = { v2 = 2 } # 40
+
+		subtract_from_temp_variable = { v1 = v2 } # 60 score
+
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 15 } }
+			subtract_from_temp_variable = { AI_score = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 30 } }
+			subtract_from_temp_variable = { AI_score = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 45 } }
+			subtract_from_temp_variable = { AI_score = 10 }
+		}
+
+		add_to_temp_variable = { AI_score = v1 }
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 1 }
+		}
+	}
+}
+
+# Building Type 2: Military Industry
+AI_get_military_industry_score = {
+	set_temp_variable = { AI_score = 0 }
+
+	set_temp_variable = { v1 = 120 }
+	set_temp_variable = { v2 = 20 } # Basis
+	if = { limit = { CONTROLLER = { has_war = yes } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 15 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 10 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 5 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	multiply_temp_variable = { v2 = 2 }
+	subtract_from_temp_variable = { v1 = v2 }
+
+	add_to_temp_variable = { AI_score = v1 }
+
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = 2 }
+	}
+}
+
+# Building Type 3: Dockyards
+AI_get_dockyard_score = {
+	set_temp_variable = { AI_score = 0 }
+
+	set_temp_variable = { v1 = 150 }
+	set_temp_variable = { v2 = 20 } # Basis
+	if = { limit = { CONTROLLER = { has_war = yes } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 15 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 10 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 5 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	multiply_temp_variable = { v2 = 2 }
+	subtract_from_temp_variable = { v1 = v2 }
+
+	add_to_temp_variable = { AI_score = v1 }
+
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = 3 }
+	}
+}
+
+# Building Type 4: Infrastructure
+AI_get_infrastructure_score = {
+	if = { limit = { free_building_slots = { building = infrastructure size > 0  include_locked = no } }
+		# Score Modeling
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 200 }
+		set_temp_variable = { v2 = building_level@infrastructure } #
+		multiply_temp_variable = { v2 = 20 }
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 4 }
+		}
+	}
+	# Ignore if you have 10 infrastructure or if it breaks and you somehow got more
+}
+
+# Building Type 5: Offices
+AI_get_offices_score = {
+	set_temp_variable = { AI_score = 0 }
+
+	set_temp_variable = { v1 = 175 }
+	set_temp_variable = { v2 = 10 }
+	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 1 } }
+		add_to_temp_variable = { v2 = 15 }
+	}
+	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
+		add_to_temp_variable = { v2 = 12 }
+	}
+	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		add_to_temp_variable = { v2 = 8 }
+	}
+	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+		add_to_temp_variable = { v2 = 5 }
+	}
+
+	if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 9.999 } } }
+		add_to_temp_variable = { v2 = 5 }
+	}
+	multiply_temp_variable = { v2 = 10 }
+	subtract_from_temp_variable = { v1 = v2 }
+	add_to_temp_variable = { AI_score = v1 }
+
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = 5 }
+	}
+}

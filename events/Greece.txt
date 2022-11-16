@@ -329,7 +329,10 @@ country_event = {
 	option = {
 		name = greece.12.a
 		log = "[GetDateText]: [This.GetName]: greece.12.a executed"
-		add_5_emerging_left_wing_radical = yes
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
 		create_country_leader = {
 			name = "Alexis Tsipras"
 			picture = "alexistspiras.dds"
@@ -379,7 +382,8 @@ country_event = {
 			remove_idea = GRE_wild_unions
 			add_idea = GRE_wild_unions_2
 		}
-		increase_labour_unions_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
 	}
 }
 #Labour Unions Demand More Concessions
@@ -409,7 +413,8 @@ country_event = {
 			remove_idea = GRE_wild_unions_2
 			add_idea = GRE_wild_unions_3
 		}
-		increase_labour_unions_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
 	}
 }
 #A cracked foundation
@@ -496,11 +501,14 @@ country_event = { #Greece offers us Piraeus
 		log = "[GetDateText]: [This.GetName]: greece.18.a executed"
 		GRE = {
 			country_event = greece.19
-			generic_grant_5_percent_influence_of_CHI = yes
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
 			set_country_flag = GRE_piraeus
 		}
-		subtract_from_variable = { treasury = 1 }
-		custom_effect_tooltip = 1_billion_expense_tt
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
 	}
 	option = { #deny
 		name = greece.18.b
@@ -520,8 +528,8 @@ country_event = { #China accepts
 	option = { #Excellent... I suppose...
 		name = greece.19.a
 		log = "[GetDateText]: [This.GetName]: greece.19.a executed"
-		add_to_variable = { treasury = 1 }
-		custom_effect_tooltip = 1_billion_revenue_tt
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
 	}
 }
 country_event = { #China denies
@@ -542,7 +550,7 @@ news_event = { #Second Greek Civil War
 	id = greece.21
 	title = greece.21.t
 	desc = greece.21.d
-	picture = GFX_generic_soldiers
+	picture = GFX_news_generic_soldiers
 	major = yes
 	fire_only_once = yes
 
@@ -598,4 +606,130 @@ country_event = {
 		name = greece.22.a
 		log = "[GetDateText]: [This.GetName]: greece.22.a executed"
 	}
+}
+
+country_event = { # ENOSIS AT LAST
+	id = greece.23
+	title = greece.23.t
+	desc = greece.23.d
+	#picture =
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.23.a
+		log = "[GetDateText]: [This.GetName]: greece.23.a executed"
+		ENG = { country_event = { id = greece.24 } }
+		812 = {
+			add_core_of = GRE
+		}
+	}
+	option = {
+		name = greece.23.b
+		log = "[GetDateText]: [This.GetName]: greece.23.b executed"
+		ENG = {	country_event = { id = greece.25 } }
+	}
+}
+
+country_event = { # RETURN AKROTIRI
+	id = greece.24
+	title = greece.24.t
+	desc = greece.24.d
+	#picture =
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.24.a
+		log = "[GetDateText]: [This.GetName]: greece.24.a executed"
+		GRE = {
+			country_event = { id = greece.26 }
+			IF = {
+				limit = { has_country_flag = GRE_British_Akrotiri }
+				clr_country_flag = GRE_British_Akrotiri
+			}
+		}
+		ai_chance = {
+			factor = 0.25
+			modifier = {
+				OR = {
+					has_war = yes
+					threat > 0.10
+					has_country_flag = ai_yes_unit_build
+					has_country_flag = AI_is_threatened
+				}
+				factor = 0.25
+			}
+		}
+	}
+	option = {
+		name = greece.24.b
+		log = "[GetDateText]: [This.GetName]: greece.24.b executed"
+		GRE = {
+			country_event = { id = greece.27 }
+			IF = {
+				limit = {
+					NOT = { has_country_flag = GRE_British_Akrotiri }
+				}
+				set_country_flag = GRE_British_Akrotiri
+			}
+		}
+		ai_chance = {
+			factor = 0.75
+			modifier = {
+				OR = {
+				has_war = yes
+				threat > 0.10
+				has_country_flag = ai_yes_unit_build
+				has_country_flag = AI_is_threatened
+					}
+				factor = 4
+			}
+		}
+	}
+}
+
+country_event = { # STAY IN CYPRUS
+	id = greece.25
+	title = greece.25.t
+	desc = greece.25.d
+	#picture =
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.25.a
+		log = "[GetDateText]: [This.GetName]: greece.25.a executed"
+	}
+}
+
+country_event = { # BRITS AGREE
+	id = greece.26
+	title = greece.26.t
+	desc = greece.26.d
+	picture = GFX_british_flag_two
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.26.a
+		log = "[GetDateText]: [This.GetName]: greece.26.a executed"
+		GRE = {
+			transfer_state = 812
+		}
+	}
+}
+
+country_event = { # BRITS DISAGREE
+	id = greece.27
+	title = greece.27.t
+	desc = greece.27.d
+	picture = GFX_declined_offer_no
+
+	is_triggered_only = yes
+
+	option = {
+		name = greece.27.a
+		log = "[GetDateText]: [This.GetName]: greece.27.a executed"
+		}
 }

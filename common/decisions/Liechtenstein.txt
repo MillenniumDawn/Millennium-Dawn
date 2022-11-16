@@ -1,0 +1,700 @@
+LIC_enlist_refugees = {
+	LIC_enlist_small = {
+		icon = decision
+		available = {
+			tag = LIC
+			has_stability > 0.35
+			has_war_support > 0.05
+			has_completed_focus = LIC_refugees
+		}
+
+		cost = 50
+		days_remove = 25
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_enlist_small"
+			947 = {
+			add_manpower = 2500
+			}
+			add_stability = -0.025
+			add_war_support = -0.025
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_enlist_medium = {
+		icon = decision
+
+		allowed = {
+			original_tag = LIC
+		}
+
+		available = {
+			tag = LIC
+			has_stability > 0.45
+			has_war_support > 0.10
+			has_completed_focus = LIC_austria_refugees
+			has_completed_focus = LIC_switzerland_refugees
+		}
+
+		cost = 75
+		days_remove = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_enlist_medium"
+			947 = {
+				add_manpower = 5000
+				}
+			add_stability = -0.05
+			add_war_support = -0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_enlist_large = {
+		icon = decision
+		available = {
+			tag = LIC
+			has_stability > 0.55
+			has_war_support > 0.20
+			has_completed_focus = LIC_growth_boost
+		}
+
+		cost = 100
+		days_remove = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_enlist_large"
+			947 = {
+				add_manpower = 10000
+				}
+			add_stability = -0.1
+			add_war_support = -0.1
+
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+LIC_internal_investment_category = {
+	LIC_internal_investment = {
+		icon = generic_construction
+		allowed = {original_tag = LIC}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = LIC_internal_investment_count
+				check_variable = { LIC_internal_invested_count < 5 } # set to 0 in focus
+			}
+			has_completed_focus = LIC_focus_internally
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.4 }
+		}
+
+		custom_cost_text = cost_2_5
+		days_remove = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_internal_investment"
+			947 = {
+			add_extra_state_shared_building_slots = 2
+			}
+			set_temp_variable = {treasury_change = -2.5}
+			modify_treasury_effect = yes
+			add_to_variable = {LIC_internal_invested_count = 1}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = {treasury < 1}
+					AND = {
+						check_variable = {treasury < 2.5}
+						check_variable = {debt_ratio > 0.1}
+					}
+				}
+			}
+		}
+	}
+}
+LIC_holy_roman_empire_category = {
+	LIC_form_HRE = {
+		icon = GFX_decision_category_generic_monarchism
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {has_completed_focus = LIC_claim_the_HRE tag = LIC}
+		fire_only_once = yes
+		available = {
+			#states:
+				# Bohemia: 117
+				# Wien: 76
+				# Frankfurt/hessen: 41
+				# Brandenburg: 45
+				# Holland: 46
+				117 = {
+					CONTROLLER = {
+						OR = {
+							tag = ROOT
+							is_subject_of = ROOT
+						}
+					}
+				}
+				76 = {
+					CONTROLLER = {
+						OR = {
+							tag = ROOT
+							is_subject_of = ROOT
+						}
+					}
+				}
+				41 = {
+					CONTROLLER = {
+						OR = {
+							tag = ROOT
+							is_subject_of = ROOT
+						}
+					}
+				}
+				45 = {
+					CONTROLLER = {
+						OR = {
+							tag = ROOT
+							is_subject_of = ROOT
+						}
+					}
+				}
+				46 = {
+					CONTROLLER = {
+						OR = {
+							tag = ROOT
+							is_subject_of = ROOT
+						}
+					}
+				}
+		}
+		cost = 100
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_form_hre"
+			set_cosmetic_tag = LIC_AUTH_SS
+			set_variable = {LIC_formed_HRE = 1}
+			add_ideas = {LIC_idea_HRE_government}
+			every_state = {
+				limit = {
+				  is_on_continent = europe
+				  NOT = { is_core_of = LIC }
+					OR = {
+						is_core_of = GER
+						is_core_of = LUX
+						is_core_of = BEL
+						is_core_of = HOL
+						is_core_of = CZE
+						is_core_of = SWI
+						is_core_of = AUS
+						is_core_of = SLV
+						is_core_of = SMA
+						is_core_of = HLS
+						state = 57
+						state = 77
+						state = 80
+						state = 265
+						state = 78
+						state = 285
+						state = 79
+						state = 960
+						state = 81
+						state = 115
+						state = 626
+						state = 625
+						state = 474
+						state = 113
+						state = 111
+						state = 857
+				}
+			}
+			add_core_of = LIC
+		}
+
+	}
+		ai_will_do = {
+			factor = 3
+		}
+	}
+	LIC_capital_rome = {
+		icon = generic_nationalism
+
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			has_full_control_of_state = 81
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_rome"
+			81 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			custom_effect_tooltip = LIC_set_capital_rome_tt
+			hidden_effect = {
+				every_state = {
+					limit = {
+						is_core_of = ITA
+					}
+					add_core_of = LIC
+				}
+				set_capital = {state = 81}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	LIC_capital_wien = {
+		icon = austria
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			has_full_control_of_state = 76
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_wien"
+			76 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			custom_effect_tooltip = LIC_set_capital_wien_tt
+			hidden_effect = {
+				set_capital = {state = 76}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	LIC_capital_constantinople = {
+		icon = generic_form_nation
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			has_full_control_of_state = 934
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_constantinople"
+			934 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			custom_effect_tooltip = LIC_set_capital_constantinople_tt
+			add_to_array = {eastern_empire_array = 124}
+			add_to_array = {eastern_empire_array = 125}
+			add_to_array = {eastern_empire_array = 126}
+			add_to_array = {eastern_empire_array = 127}
+			add_to_array = {eastern_empire_array = 129}
+			add_to_array = {eastern_empire_array = 128}
+			add_to_array = {eastern_empire_array = 130}
+			add_to_array = {eastern_empire_array = 131}
+			add_to_array = {eastern_empire_array = 132}
+			add_to_array = {eastern_empire_array = 133}
+			add_to_array = {eastern_empire_array = 134}
+			add_to_array = {eastern_empire_array = 998}
+			add_to_array = {eastern_empire_array = 135}
+			add_to_array = {eastern_empire_array = 136}
+			add_to_array = {eastern_empire_array = 137}
+			add_to_array = {eastern_empire_array = 138}
+			add_to_array = {eastern_empire_array = 139}
+			add_to_array = {eastern_empire_array = 140}
+			add_to_array = {eastern_empire_array = 141}
+			add_to_array = {eastern_empire_array = 142}
+			add_to_array = {eastern_empire_array = 143}
+			add_to_array = {eastern_empire_array = 144}
+			add_to_array = {eastern_empire_array = 156}
+			add_to_array = {eastern_empire_array = 155}
+			add_to_array = {eastern_empire_array = 934}
+			add_to_array = {eastern_empire_array = 974}
+			add_to_array = {eastern_empire_array = 153}
+			add_to_array = {eastern_empire_array = 154}
+			add_to_array = {eastern_empire_array = 157}
+
+			for_each_loop = {
+				array = eastern_empire_array
+				var:eastern_empire_array^i = {
+					add_core_of = LIC
+				}
+			}
+
+			hidden_effect = {
+				set_province_name = {
+				ID = 9833
+				name = "Constantinople"
+				}
+				set_capital = {state = 934}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_capital_paris = {
+		icon = GFX_decision_category_generic_monarchism
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			has_full_control_of_state = 56
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_paris"
+			56 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			custom_effect_tooltip = LIC_set_capital_paris_tt
+
+			hidden_effect = {
+				every_state = {
+					limit = {
+						is_core_of = FRA
+					}
+					add_core_of = LIC
+				}
+				set_capital = {state = 56}
+
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_capital_brussels = {
+		icon = GFX_decision_category_generic_formable_nations
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			has_full_control_of_state = 50
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_brussels"
+			50 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			custom_effect_tooltip = LIC_set_capital_brussels_tt
+			hidden_effect = {
+				set_capital = {state = 50}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_capital_berlin = {
+		icon = GFX_decision_category_ger_reichskommissariats
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			has_full_control_of_state = 45
+		}
+		cost = 50
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_berlin"
+			45 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			custom_effect_tooltip = LIC_set_capital_berlin_tt
+			hidden_effect = {
+				set_capital = {state = 45}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_capital_prague = {
+		icon = armed_forces_officers
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			has_full_control_of_state = 117
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_prague"
+			117 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			custom_effect_tooltip = LIC_set_capital_prague_tt
+			hidden_effect = {
+				every_state = {
+					limit = {
+						is_core_of = SLO
+					}
+					add_core_of = LIC
+				}
+				set_capital = {state = 17}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_capital_vatican = {
+		icon = GFX_decision_cat_french_happiness
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_completed_focus = LIC_new_capital
+			capital_scope = {
+				NOT = {
+					OR = {
+						state = 81 #Rome
+						state = 76 #Wien
+						state = 45 #Berlin
+						state = 56 #Paris
+						state = 50 #Brussels
+						state = 117 #Prague
+						state = 934 #Constantinople
+						state = 929 #Vatican
+					}
+				}
+			}
+		}
+		available = {
+			tag = LIC
+			has_war = no
+			is_subject = no
+			OR = {
+				HLS = {has_full_control_of_state = 929}
+				LIC = {has_full_control_of_state = 929}
+			}
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_capital_vatican"
+			annex_country = {target = HLS transfer_troops = yes}
+			929 = {
+				add_manpower = 1000000
+				add_manpower = 2000000
+				add_extra_state_shared_building_slots = 10
+			}
+			add_stability = 0.05
+			add_political_power = 100
+			custom_effect_tooltip = LIC_set_capital_vatican_tt
+			hidden_effect = {
+				set_capital = {state = 929}
+				every_state = {
+					limit = {
+						is_core_of = ITA
+					}
+					add_core_of = LIC
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	LIC_remove_auxillaries = {
+		icon = generic_army_support_new
+
+		allowed = {
+			original_tag = LIC
+		}
+		visible = {
+			has_idea = LIC_idea_auxillaries
+		}
+
+		cost = 50
+		ai_will_do = {
+			factor = 0
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LIC_remove_auxillaries"
+			remove_ideas = LIC_idea_auxillaries
+		}
+	}
+}
