@@ -52,33 +52,23 @@ ideas = {
 					has_idea = bureau_02
 					ai_has_minor_economic_problems = yes
 				}
-				modifier = { ##Totally disregard if have no issues with current spending values
-					factor = 0
-					has_idea = bureau_02
-					ai_has_minor_economic_problems = no
-					ai_has_major_economic_problems = no
-					ai_has_moderate_economic_problems = no
-					ai_has_acceptable_deficit = yes
-				}
 				modifier = { # Make law more appealing to reduce if is above desired level
 					add = 25
 					has_idea = bureau_02
 					has_country_flag = wants_bureau_01
 				}
-				modifier = { # Make law more appealing to keep if is at desired level
-					factor = 1.0
-					OR = {
-						has_idea = bureau_01
-					}
-					has_country_flag = wants_bureau_01
-				}
+				# Killswitch for the AI
+				# reference 00_desire_law_triggers.txt
 				modifier = {
 					factor = 0
-					has_bureau_idea_law_desired = yes
-				}
-				modifier = { #Don't take this if you don't want it
-					factor = 0
-					NOT = { has_country_flag = wants_bureau_01 }
+					OR = {
+						NOT = { has_country_flag = wants_bureau_01 }
+						has_bureau_idea_law_desired = yes
+						AND = {
+							has_idea = bureau_02
+							check_variable = { treasury_rate > 0.99 }
+						}
+					}
 				}
 			}
 
@@ -124,8 +114,8 @@ ideas = {
 			}
 
 			modifier = {
-				political_power_gain = 0.12
-				production_speed_arms_factory_factor = 0.05
+				political_power_gain = 0.2
+				production_speed_buildings_factor = -0.05
 			}
 
 			ai_will_do = {
@@ -150,14 +140,7 @@ ideas = {
 					has_idea = bureau_03
 					has_country_flag = wants_bureau_02
 				}
-				modifier = { # Low priority to increase, if has no issues with current spending values
-					factor = 0
-					has_idea = bureau_01
-					ai_has_major_economic_problems = no
-					ai_has_moderate_economic_problems = no
-					ai_has_minor_economic_problems = no
-					ai_has_acceptable_deficit = yes
-				}
+
 				modifier = {
 					add = 25
 					has_idea = bureau_03
@@ -165,10 +148,8 @@ ideas = {
 				}
 				modifier = { # High priority to downsize if major economic problems
 					add = 8
-					AND = {
-						has_idea = bureau_03
-						ai_has_major_economic_problems = yes
-					}
+					has_idea = bureau_03
+					ai_has_major_economic_problems = yes
 				}
 				modifier = { # Moderate priority to downsize if moderate economic problems
 					add = 4
@@ -202,23 +183,29 @@ ideas = {
 						has_country_flag = wants_bureau_02
 					}
 				}
-				modifier = { # Make law more appealing to keep if is at desired level
-					add = 4
-					OR = {
-						has_idea = bureau_02
-					}
-					has_country_flag = wants_bureau_02
-				}
-				modifier = {
-					factor = 0
-					has_idea = bureau_03
-					NOT = { has_country_flag = wants_bureau_02 }
-					ai_has_acceptable_surplus_factories = yes
-				}
 				modifier = {
 					add = 15
 					has_idea = bureau_01
 					is_major = yes
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_bureau_idea_law_desired = yes
+						AND = {
+							has_idea = bureau_01
+							check_variable = { treasury_rate < 0 }
+						}
+						AND = {
+							has_idea = bureau_03
+							check_variable = { treasury_rate > 0.99 }
+						}
+					}
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = bureau_01
+					ai_has_deficit = yes
 				}
 			}
 
@@ -264,8 +251,8 @@ ideas = {
 				bureau_law_desire_logger = yes
 			}
 			modifier = {
-				political_power_gain = 0.25
-				production_speed_arms_factory_factor = 0.1
+				political_power_gain = 0.4
+				production_speed_buildings_factor = -0.1
 			}
 
 			ai_will_do = {
@@ -317,17 +304,6 @@ ideas = {
 						has_country_flag = wants_bureau_03
 					}
 				}
-				modifier = { # Make law more appealing to keep if is at desired level
-					add = 4
-					OR = {
-						has_idea = bureau_03
-					}
-					has_country_flag = wants_bureau_03
-				}
-				modifier = {
-					factor = 0
-					has_bureau_idea_law_desired = yes
-				}
 				modifier = {
 					factor = 0
 					has_idea = bureau_04
@@ -338,6 +314,25 @@ ideas = {
 					add = 15
 					has_idea = bureau_02
 					is_major = yes
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_bureau_idea_law_desired = yes
+						AND = {
+							has_idea = bureau_02
+							check_variable = { treasury_rate < 0 }
+						}
+						AND = {
+							has_idea = bureau_04
+							check_variable = { treasury_rate > 0.99 }
+						}
+					}
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = bureau_02
+					ai_has_deficit = yes
 				}
 			}
 
@@ -383,8 +378,8 @@ ideas = {
 			}
 
 			modifier = {
-				political_power_gain = 0.36
-				production_speed_arms_factory_factor = 0.15
+				political_power_gain = 0.6
+				production_speed_buildings_factor = -0.15
 			}
 
 			ai_will_do = {
@@ -436,17 +431,6 @@ ideas = {
 						has_country_flag = wants_bureau_04
 					}
 				}
-				modifier = { # Make law more appealing to keep if is at desired level
-					add = 4
-					OR = {
-						has_idea = bureau_04
-					}
-					has_country_flag = wants_bureau_04
-				}
-				modifier = {
-					factor = 0
-					has_bureau_idea_law_desired = yes
-				}
 				modifier = { #Try to not lower law if you have acceptable surplus
 					factor = 0
 					has_idea = bureau_05
@@ -457,6 +441,25 @@ ideas = {
 					add = 15
 					has_idea = bureau_03
 					is_major = yes
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_bureau_idea_law_desired = yes
+						AND = {
+							has_idea = bureau_03
+							check_variable = { treasury_rate < 0 }
+						}
+						AND = {
+							has_idea = bureau_05
+							check_variable = { treasury_rate > 0.99 }
+						}
+					}
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = bureau_03
+					ai_has_deficit = yes
 				}
 			}
 
@@ -494,8 +497,8 @@ ideas = {
 			}
 
 			modifier = {
-				political_power_gain = 0.5
-				production_speed_arms_factory_factor = 0.2
+				political_power_gain = 0.8
+				production_speed_buildings_factor = -0.2
 			}
 
 			ai_will_do = {
@@ -513,16 +516,21 @@ ideas = {
 					has_idea = bureau_04
 					has_country_flag = wants_bureau_05
 				}
-				modifier = { # Make law more appealing to keep if is at desired level
-					add = 4
-					OR = {
-						has_idea = bureau_05
-					}
-					has_country_flag = wants_bureau_05
-				}
 				modifier = {
 					factor = 0
-					has_bureau_idea_law_desired = yes
+					OR = {
+						NOT = { has_country_flag = wants_bureau_05 }
+						has_bureau_idea_law_desired = yes
+						AND = {
+							has_idea = bureau_04
+							check_variable = { treasury_rate < 0 }
+						}
+					}
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = bureau_04
+					ai_has_deficit = yes
 				}
 			}
 
@@ -720,6 +728,11 @@ ideas = {
 					has_idea = police_01
 					has_country_flag = AI_economic_downspiral
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = police_01
+					ai_has_deficit = yes
+				}
 			}
 
 			cancel_if_invalid = no
@@ -836,6 +849,11 @@ ideas = {
 					has_idea = police_02
 					has_country_flag = AI_economic_downspiral
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = police_02
+					ai_has_deficit = yes
+				}
 			}
 			cancel_if_invalid = no
 		}
@@ -951,6 +969,11 @@ ideas = {
 					has_idea = police_03
 					has_country_flag = AI_economic_downspiral
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = police_03
+					ai_has_deficit = yes
+				}
 			}
 
 			cancel_if_invalid = no
@@ -1050,6 +1073,11 @@ ideas = {
 					has_idea = police_04
 					has_country_flag = AI_economic_downspiral
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = police_04
+					ai_has_deficit = yes
+				}
 			}
 
 			cancel_if_invalid = no
@@ -1133,6 +1161,7 @@ ideas = {
 				}
 				modifier = { #ABSOLUTELY NO CHANGE IF YOU HAVE REACHED DESIRED LAW
 					factor = 0
+					NOT = { has_global_flag = GAME_RULE_enabled_hard_economic_ai }
 					has_education_law_desired = yes
 				}
 			}
@@ -1243,10 +1272,34 @@ ideas = {
 						has_country_flag = wants_edu_02
 					}
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = edu_01
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 10
+					has_idea = edu_01
+					check_variable = { treasury_rate > 1.00 }
+					OR = {
+						has_country_flag = wants_edu_02
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 20
+					has_idea = edu_01
+					check_variable = { treasury_rate > 5.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = { #ABSOLUTELY NO CHANGE IF YOU HAVE REACHED DESIRED LAW
 					factor = 0
+					NOT = { has_global_flag = GAME_RULE_enabled_hard_economic_ai }
 					has_education_law_desired = yes
 				}
+
 			}
 
 			modifier = {
@@ -1357,8 +1410,30 @@ ideas = {
 						has_country_flag = wants_edu_03
 					}
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = edu_02
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 10
+					has_idea = edu_02
+					check_variable = { treasury_rate > 2.00 }
+					OR = {
+						has_country_flag = wants_edu_03
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 20
+					has_idea = edu_02
+					check_variable = { treasury_rate > 7.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = { #ABSOLUTELY NO CHANGE IF YOU HAVE REACHED DESIRED LAW
 					factor = 0
+					NOT = { has_global_flag = GAME_RULE_enabled_hard_economic_ai }
 					has_education_law_desired = yes
 				}
 			}
@@ -1474,8 +1549,29 @@ ideas = {
 						has_country_flag = wants_edu_04
 					}
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = edu_03
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 10
+					has_idea = edu_03
+					check_variable = { treasury_rate > 3.00 }
+					OR = {
+						has_country_flag = wants_edu_04
+						has_country_flag = wants_edu_05
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 20
+					has_idea = edu_03
+					check_variable = { treasury_rate > 8.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = { #ABSOLUTELY NO CHANGE IF YOU HAVE REACHED DESIRED LAW
 					factor = 0
+					NOT = { has_global_flag = GAME_RULE_enabled_hard_economic_ai }
 					has_education_law_desired = yes
 				}
 			}
@@ -1543,10 +1639,29 @@ ideas = {
 					has_idea = edu_05
 					has_country_flag = wants_edu_05
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = edu_04
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 10
+					has_idea = edu_04
+					check_variable = { treasury_rate > 4.00 }
+					has_country_flag = wants_edu_05
+				}
+				modifier = { #for BRIKS members
+					factor = 20
+					has_idea = edu_04
+					check_variable = { treasury_rate > 11.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = { #ABSOLUTELY NO CHANGE IF YOU HAVE REACHED DESIRED LAW
 					factor = 0
+					NOT = { has_global_flag = GAME_RULE_enabled_hard_economic_ai }
 					has_education_law_desired = yes
 				}
+				
 			}
 
 			modifier = {
@@ -1769,10 +1884,34 @@ ideas = {
 					has_idea = health_02
 					has_country_flag = wants_health_02
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = health_01
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 9
+					has_idea = health_01
+					check_variable = { treasury_rate > 1.00 }
+					OR = {
+						has_country_flag = wants_health_02
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 19
+					has_idea = health_01
+					check_variable = { treasury_rate > 5.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = {
 					factor = 0
 					has_health_law_desired = yes
 				}
+			
 			}
 
 			modifier = {
@@ -1888,6 +2027,28 @@ ideas = {
 					factor = 20
 					has_idea = health_03
 					has_country_flag = wants_health_03
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = health_02
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 9
+					has_idea = health_02
+					check_variable = { treasury_rate > 2.00 }
+					OR = {
+						has_country_flag = wants_health_03
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 19
+					has_idea = health_02
+					check_variable = { treasury_rate > 9.00 }
+					ai_check_briks_gseven = yes
 				}
 				modifier = {
 					factor = 0
@@ -2009,6 +2170,27 @@ ideas = {
 					factor = 20
 					has_idea = health_04
 					has_country_flag = wants_health_04
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = health_03
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 9
+					has_idea = health_03
+					check_variable = { treasury_rate > 3.00 }
+					OR = {
+						has_country_flag = wants_health_04
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 19
+					has_idea = health_03
+					check_variable = { treasury_rate > 13.00 }
+					ai_check_briks_gseven = yes
 				}
 				modifier = {
 					factor = 0
@@ -2135,6 +2317,26 @@ ideas = {
 					has_idea = health_05
 					has_country_flag = wants_health_05
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = health_04
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 9
+					has_idea = health_04
+					check_variable = { treasury_rate > 5.00 }
+					OR = {
+						has_country_flag = wants_health_05
+						has_country_flag = wants_health_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 19
+					has_idea = health_04
+					check_variable = { treasury_rate > 15.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = {
 					factor = 0
 					has_health_law_desired = yes
@@ -2217,6 +2419,23 @@ ideas = {
 					factor = 20
 					has_idea = health_06
 					has_country_flag = wants_health_06
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = health_05
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 9
+					has_idea = health_05
+					check_variable = { treasury_rate > 6.00 }
+					has_country_flag = wants_health_06
+				}
+				modifier = { #for BRIKS members
+					factor = 19
+					has_idea = health_05
+					check_variable = { treasury_rate > 18.00 }
+					ai_check_briks_gseven = yes
 				}
 				modifier = {
 					factor = 0
@@ -2445,6 +2664,29 @@ ideas = {
 					has_idea = social_02
 					has_country_flag = wants_social_02
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = social_01
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 8
+					has_idea = social_01
+					check_variable = { treasury_rate > 1.00 }
+					OR = {
+						has_country_flag = wants_social_02
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 18
+					has_idea = social_01
+					check_variable = { treasury_rate > 6.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = {
 					factor = 0
 					has_social_law_desired = yes
@@ -2563,6 +2805,28 @@ ideas = {
 					factor = 20
 					has_idea = social_03
 					has_country_flag = wants_social_03
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = social_02
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 8
+					has_idea = social_02
+					check_variable = { treasury_rate > 2.00 }
+					OR = {
+						has_country_flag = wants_social_03
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 18
+					has_idea = social_02
+					check_variable = { treasury_rate > 9.00 }
+					ai_check_briks_gseven = yes
 				}
 				modifier = {
 					factor = 0
@@ -2683,6 +2947,27 @@ ideas = {
 					factor = 20
 					has_idea = social_04
 					has_country_flag = wants_social_04
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = social_03
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 8
+					has_idea = social_03
+					check_variable = { treasury_rate > 4.00 }
+					OR = {
+						has_country_flag = wants_social_04
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 18
+					has_idea = social_03
+					check_variable = { treasury_rate > 11.00 }
+					ai_check_briks_gseven = yes
 				}
 				modifier = {
 					factor = 0
@@ -2806,6 +3091,26 @@ ideas = {
 					has_idea = social_05
 					has_country_flag = wants_social_05
 				}
+				modifier = { # no money
+					factor = 0
+					has_idea = social_04
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 8
+					has_idea = social_04
+					check_variable = { treasury_rate > 5.00 }
+					OR = {
+						has_country_flag = wants_social_05
+						has_country_flag = wants_social_06
+					}
+				}
+				modifier = { #for BRIKS members
+					factor = 18
+					has_idea = social_04
+					check_variable = { treasury_rate > 14.00 }
+					ai_check_briks_gseven = yes
+				}
 				modifier = {
 					factor = 0
 					has_social_law_desired = yes
@@ -2882,6 +3187,23 @@ ideas = {
 					factor = 20
 					has_idea = social_06
 					has_country_flag = wants_social_06
+				}
+				modifier = { # no money
+					factor = 0
+					has_idea = social_05
+					ai_has_deficit = yes
+				}
+				modifier = { # money? go!
+					factor = 8
+					has_idea = social_05
+					check_variable = { treasury_rate > 6.00 }
+					has_country_flag = wants_social_06
+				}
+				modifier = { #for BRIKS members
+					factor = 18
+					has_idea = social_05
+					check_variable = { treasury_rate > 18.00 }
+					ai_check_briks_gseven = yes
 				}
 				modifier = {
 					factor = 0

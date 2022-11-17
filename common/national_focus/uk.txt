@@ -12,7 +12,7 @@ focus_tree = {
 		}
 	}
 	# Continuous Focus Position
-	continuous_focus_position = { x = 300 y = 1000 }
+	continuous_focus_position = { x = 400 y = 900 }
 
 	focus = {
 		id = ENG_vitalize_westminster
@@ -100,7 +100,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_economic_stimulus"
 			add_tech_bonus = {
-				name = industrial_bonus
+				name = ENG_economic_stimulus
 				bonus = 0.5
 				uses = 1
 				category = industry
@@ -794,9 +794,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_extra_research_slot_1"
-			add_research_buff = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
+			add_ideas = ENG_idea_Expanding_research_facilities
 		}
 
 		ai_will_do = {
@@ -1104,7 +1102,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_distance_from_europe
-		icon = align_to_britain
+		icon = PB_ENG_Haig_Initial
 		x = 26
 		y = 2
 		cost = 10
@@ -1270,7 +1268,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_training
-		icon = infantry_axis
+		icon = PB_ENG_Haig_Son
 		x = 42
 		y = 2
 		cost = 10
@@ -1376,7 +1374,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_freedom_first
-		icon = democracy2
+		icon = split_britian_map
 		x = 7
 		y = 3
 		cost = 10
@@ -1724,11 +1722,12 @@ focus_tree = {
 				}
 			}
 		}
+		cancel = { NOT = { has_idea = EU_member } }
 
 		search_filters = {FOCUS_FILTER_EUROPEAN_UNION}
 
 		available = {
-				has_idea = EU_member
+			has_idea = EU_member
 		}
 
 		completion_reward = {
@@ -1777,7 +1776,7 @@ focus_tree = {
 					40 = {
 						set_temp_variable = { modify_eurosceptic = -0.05 }
 						EU_eurosceptic_change = yes
-						set_temp_variable = { modify_eurosceptic = -20 }
+						set_temp_variable = { modify_eurosceptic = -0.20 }
 						set_temp_variable = { modify_eurosceptic_target = ROOT }
 						eurosceptic_change = yes
 						every_country = {
@@ -2049,7 +2048,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_develop_submarines
-		icon = submarines
+		icon = ENG_Fleet_in_Being2
 		x = 49
 		y = 3
 		cost = 10
@@ -2077,7 +2076,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_develop_carriers
-		icon = carriers
+		icon = ENG_Embrace_Carriers
 		x = 51
 		y = 3
 		cost = 10
@@ -2200,6 +2199,8 @@ focus_tree = {
 			NOT = { has_idea = EU_member }
 		}
 
+		cancel = { NOT = { has_idea = EU_member } }
+
 		search_filters = {FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL}
 
 		available = {
@@ -2211,17 +2212,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_defy_remain"
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			EU_eurosceptic_change = yes
-			set_temp_variable = { modify_eurosceptic = 0.25 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
-			add_ideas = {
-				ENG_irish_nationalism_idea
+			if = {
+				limit = { has_idea = EU_member }
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				EU_eurosceptic_change = yes
+				set_temp_variable = { modify_eurosceptic = 0.25 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-			add_ideas = {
-				ENG_scottish_nationalism_idea
-			}
+			add_ideas = ENG_irish_nationalism_idea
+			add_ideas =	ENG_scottish_nationalism_idea
 			create_country_leader = {
 				name = "Boris Johnson"
 				picture = "Boris_Johnson.dds"
@@ -2251,21 +2251,18 @@ focus_tree = {
 				elections_allowed = yes
 			}
 			clr_country_flag = no_leader_change
-
-
-
 		}
 
 		ai_will_do = {
 			factor = 1
-				modifier = {
-					factor = 5
-					gov_is_eurosceptical = yes
-				}
-				modifier = {
-					factor = 0
-					NOT = { gov_is_eurosceptical = yes }
-				}
+			modifier = {
+				factor = 5
+				gov_is_eurosceptical = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { gov_is_eurosceptical = yes }
+			}
 		}
 	}
 
@@ -2285,74 +2282,74 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_irish_referendum"
 			custom_effect_tooltip = tooltip_ENG_irish_referendum
 			hidden_effect = {
-			if = {
-				limit = {
-					check_variable = {
-						var = global.var_europeanism
-						value = 0.6
-						compare = less_than
-					}
-				}
-				remove_ideas = {
-					ENG_irish_nationalism_idea
-				}
-				news_event = {
-					id = britain_news.65
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						var = global.var_europeanism
-						value = 0.90
-						compare = greater_than_or_equals
-					}
-				}
-				random_list = {
-					70 = {
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.65
+				if = {
+					limit = {
+						check_variable = {
+							var = global.var_europeanism
+							value = 0.6
+							compare = less_than
 						}
 					}
-					30 = {
-						IRE = {
-							transfer_state = 17
-						}
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.66
-						}
+					remove_ideas = {
+						ENG_irish_nationalism_idea
+					}
+					news_event = {
+						id = britain_news.65
 					}
 				}
-			}
-			else = {
-				random_list = {
-					90 = {
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.65
+				else_if = {
+					limit = {
+						check_variable = {
+							var = global.var_europeanism
+							value = 0.90
+							compare = greater_than_or_equals
 						}
 					}
-					10 = {
-						IRE = {
-							transfer_state = 17
+					random_list = {
+						70 = {
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.65
+							}
 						}
-						remove_ideas = {
-							ENG_irish_nationalism_idea
-						}
-						news_event = {
-							id = britain_news.66
+						30 = {
+							IRE = {
+								transfer_state = 17
+							}
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.66
+							}
 						}
 					}
 				}
-			}
+				else = {
+					random_list = {
+						90 = {
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.65
+							}
+						}
+						10 = {
+							IRE = {
+								transfer_state = 17
+							}
+							remove_ideas = {
+								ENG_irish_nationalism_idea
+							}
+							news_event = {
+								id = britain_news.66
+							}
+						}
+					}
+				}
 			} ### End of hidden_effect
 		}
 
@@ -2472,6 +2469,9 @@ focus_tree = {
 				has_idea = no_deal_exit
 			}
 		}
+
+		cancel = { has_idea = EU_member }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_global_britain"
 			add_ideas = ENG_global_britain_idea
@@ -2678,7 +2678,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_nationalism
-		icon = fascism2
+		icon = Focus_ENG_Mosleys_New_Deal
 		x = 38
 		y = 4
 		cost = 10
@@ -2721,7 +2721,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_doctrine_1
-		icon = army_doctrine
+		icon = Generic_British_Soldier_Flag
 		x = 42
 		y = 4
 		cost = 10
@@ -2894,7 +2894,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_propose_the_CANZUK_alliance
-		icon = improve_relations
+		icon = Focus_ENG_Hoare_at_the_Helm
 		x = 13
 		y = 4
 		cost = 10
@@ -2929,7 +2929,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_the_british_alliance
-		icon = internationalism
+		icon = focus_generic_league_of_nations
 		x = 15
 		y = 4
 		cost = 10
@@ -3671,7 +3671,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_royal_industries
-		icon = industry_civilian
+		icon = chefs_best_cooks
 		x = 32
 		y = 6
 		cost = 10
@@ -3781,7 +3781,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_reorganize_the_education_system
-		icon = military_academy
+		icon = Focus_ENG_Gallacher_On_Top
 		x = 38
 		y = 6
 		cost = 10
@@ -3804,7 +3804,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_doctrine_2
-		icon = army_doctrine
+		icon = Generic_British_Soldiers03
 		x = 42
 		y = 6
 		cost = 10
@@ -3983,31 +3983,23 @@ focus_tree = {
 			focus = ENG_investments_abroad_2
 		}
 
+		bypass = {
+			all_owned_state = {
+				free_building_slots = {
+					building = infrastructure
+					size < 1
+					include_locked = yes
+				}
+			}
+		}
+
 		search_filters = {FOCUS_FILTER_INDUSTRY}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_develop_infrastructure"
-			every_owned_state = {
-				limit = {
-					OR = {
-						region = 1
-						region = 2
-						region = 3
-						region = 4
-					}
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -42 }
-			modify_treasury_effect = yes
+			three_random_infrastructure = yes
+			three_random_infrastructure = yes
+			one_random_infrastructure = yes
 		}
 
 		ai_will_do = {
@@ -4017,7 +4009,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_national_development_3
-		icon = market_economy
+		icon = PB_ENG_Moderateplan
 		x = 0
 		y = 1
 		relative_position_id = ENG_defensive_constructions
@@ -4043,7 +4035,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_invest_in_resources
-		icon = oil_production
+		icon = PB_ENG_Target_Monopolies
 		x = 28
 		y = 7
 		cost = 10
@@ -4124,7 +4116,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_royal_factories
-		icon = industry_military
+		icon = Focus_Let_Them_Eat_Cake
 		x = 32
 		y = 7
 		cost = 10
@@ -4359,7 +4351,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_investments_abroad_3
-		icon = GENERIC_austerity_measures
+		icon = Focus_ENG_Prime_Minister_Russel
 		x = 0
 		y = 2
 		relative_position_id = ENG_investments_abroad_2
@@ -4537,7 +4529,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_army_doctrine_3
-		icon = army_doctrine
+		icon = Generic_ENG_SAS
 		x = 42
 		y = 8
 		cost = 10
@@ -4690,7 +4682,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_defensive_assistance
-		icon = military_academy
+		icon = Focus_ENG_Mitford_Faction
 		x = -1
 		y = 1
 		relative_position_id = ENG_one_union
@@ -4813,7 +4805,7 @@ focus_tree = {
 
 	focus = {
 		id = ENG_extra_research_slot_2
-		icon = research
+		icon = Focus_ENG_Eden_Redeemed
 		x = 1
 		y = 1
 		relative_position_id = ENG_european_cooperation_4
@@ -4827,9 +4819,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ENG_extra_research_slot_2"
-			add_research_buff = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
+			add_ideas = ENG_idea_european_research_cooperation
 		}
 
 		ai_will_do = {
