@@ -1,0 +1,214 @@
+# AUTHOR(S): DREAD
+# fix in future | FOR ME (OR ANYONE ELSE) TO ADD/CHANGE AT A LATER DATE, EX. ADDITIONAL CONTENT ADDED
+
+peace_ai_desires = {
+	# COUNTRY SPECIFIC
+		# AFG
+			AFG_pashto_claims = { # AFGHANISTAN SHOULD OVERRIDE TO YOINK CLAIMS IN PASHTO REGION
+				peace_action_type = { take_states }
+				enable = {
+					AFG = {
+						count_triggers = {
+							amount = 1
+							has_completed_focus = AFG_aggresive_foreign_policy
+							has_government = fascism
+							has_government = nationalist
+						}
+					}
+					tag = AFG
+					FROM = { tag = ROOT }
+					ROOT.FROM.FROM.FROM = { is_claimed_by = AFG }
+				}
+				ai_desire = 500
+			}
+			AFG_taliban_bad_stop_puppeting_them = { # AFGHANISTAN WILL STOP TRYING TO PUPPET TALIBAN IN PAKISTAN
+				peace_action_type = { puppet }
+				enable = {
+					tag = AFG
+					ROOT.FROM = { tag = ROOT }
+					ROOT.FROM.FROM.FROM = { is_core_of = TAL }
+				}
+				ai_desire = -1000
+			}
+			AFG_pakistani_puppetmaster = { # HOPING THIS RESOLVES THE PUPPETING ISSUE 2.0, AFGHANISTAN PLEASE, YOU'RE KILLIN' YOUR DA
+				peace_action_type = { puppet }
+				enable = {
+					tag = AFG
+					ROOT.FROM = { tag = ROOT }
+					ROOT.FROM.FROM.FROM = { is_core_of = PAK }
+				}
+				ai_desire = 400
+			}
+		# ALA - THIS IS TO STOP THE AI RELEASING THEM ALL THE DAMN TIME
+			ALA_go_away_your_content_isnt_finished_yet = {
+				peace_action_type = { liberate puppet }
+				enable = {
+					tag = ROOT
+					ROOT.FROM = { tag = ROOT }
+					ROOT.FROM.FROM.FROM = { is_core_of = ALA }
+				}
+				ai_desire = -1000
+			}
+		# DRU - ANOTHER ISSUE OF THE AI LEAVING THEM GO TOO MUCH
+			DRU_same_as_alawites_come_back_later = {
+				peace_action_type = { liberate puppet }
+				enable = {
+					tag = ROOT
+					ROOT.FROM = { tag = ROOT }
+					ROOT.FROM.FROM.FROM = { is_core_of = DRU }
+				}
+				ai_desire = -1000
+			}
+		# ITA
+			ITA_cringe_roman_shit = { # AFTER TERRITORIAL CLAIMS FOCUS ITALY WILL YOINK CLAIMED STATES
+				peace_action_type = { take_states }
+				enable = {
+					tag = ITA
+					ITA = {
+						has_completed_focus = ITA_territorial_claims
+					}
+					FROM = { tag = ROOT }
+					ROOT.FROM.FROM.FROM = { is_claimed_by = ITA }
+				}
+				ai_desire = 500
+			}
+			ITA_romanisation_go_brrrt = { # AFTER TERRITORIAL CLAIMS FOCUS ITALY WON'T PUPPET CLAIMS
+				peace_action_type = { puppet }
+				enable = {
+					tag = ITA
+					ITA = {
+						has_completed_focus = ITA_territorial_claims
+					}
+					ROOT.FROM = { tag = ROOT }
+					ROOT.FROM.FROM.FROM = { is_claimed_by = ITA }
+				}
+				ai_desire = -1000
+			}
+		# PER
+			PER_isntreal = {
+				peace_action_type = { liberate }
+				enable = {
+					ROOT = {
+						tag = PER
+						OR = {
+							is_in_array = { ruling_party = 8 }
+							is_in_array = { ruling_party = 9 }
+						}
+					}
+					ROOT.FROM = {
+						pc_is_liberated = yes
+						tag = PAL
+					}
+					ROOT.FROM.FROM.FROM = { is_core_of = PAL }
+				}
+				ai_desire = 500
+			}
+			PER_syrian_golan = {
+				peace_action_type = { liberate }
+				enable = {
+					ROOT = {
+						tag = PER
+						OR = {
+							is_in_array = { ruling_party = 8 }
+							is_in_array = { ruling_party = 9 }
+						}
+					}
+					ROOT.FROM = {
+						tag = SYR
+						has_government = communism
+					}
+					ROOT.FROM.FROM.FROM = { is_core_of = SYR }
+				}
+				ai_desire = 500
+			}
+	# MAIN AI
+		GENERIC_wants_its_cores = {
+			peace_action_type = { take_states }
+			enable = {
+				tag = ROOT
+				FROM = { tag = ROOT.FROM }
+				ROOT.FROM.FROM.FROM = { is_core_of = ROOT.FROM }
+			}
+			ai_desire = 100
+		}
+		GENERIC_does_not_want_cores_of_other = {
+			peace_action_type = { take_states }
+			enable = {
+				tag = ROOT
+				FROM = { tag = ROOT.FROM }
+				ROOT.FROM.FROM.FROM = { NOT = { is_core_of = ROOT.FROM } }
+			}
+			ai_desire = -100
+		}
+		GENERIC_wants_to_make_puppets = {
+			peace_action_type = { puppet }
+			enable = {
+				tag = ROOT
+				ROOT.FROM.FROM.FROM = { is_core_of = FROM }
+			}
+			ai_desire = 125
+		}
+		GENERIC_dont_liberate_self = { # IF AFGHANISTAN DOES THIS AGAIN I WILL SHIT A BRICK
+			peace_action_type = { liberate }
+			enable = {
+				tag = ROOT
+				FROM = { tag = ROOT.FROM }
+				ROOT.FROM.FROM.FROM = {
+					OR = {
+						is_core_of = ROOT
+						is_claimed_by = ROOT
+					}
+				}
+			}
+			ai_desire = -200
+		}
+		GENERIC_no_puppet_bordergore = {
+			peace_action_type = { puppet }
+			enable = {
+				tag = ROOT
+				FROM.FROM.FROM = { # State
+					any_neighbor_state = {
+						NOT = { is_owned_by = ROOT }
+					}
+					any_neighbor_state = {
+						NOT = { pc_is_state_claimed_by = ROOT.FROM }
+					}
+				}
+			}
+			ai_desire = -50
+		}
+		GENERIC_wants_puppet_borders_close = {
+			peace_action_type = { puppet }
+			enable = {
+				tag = ROOT
+				FROM.FROM.FROM = {
+					any_neighbor_state = {
+						is_owned_by = ROOT
+					}
+				}
+			}
+			ai_desire = 25
+		}
+		GENERIC_liberate_countries_that_exist = {
+			peace_action_type = { liberate }
+			enable = {
+				tag = ROOT
+				country_exists = FROM
+				FROM.FROM.FROM = {
+					is_core_of = FROM
+				}
+			}
+			ai_desire = 500
+		}
+		GENERIC_dont_puppet_what_isnt_there = {
+			peace_action_type = { puppet }
+			enable = {
+				tag = ROOT
+				NOT = { country_exists = FROM }
+				FROM.FROM.FROM = {
+					is_core_of = FROM
+				}
+			}
+			ai_desire = -500
+		}
+}

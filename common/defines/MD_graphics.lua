@@ -1,9 +1,9 @@
 
 	NDefines.NWiki.BASE_URL = ""
-	NDefines.NWiki.FORUM_URL = "https://millennium_dawn.gitlab.io/modernday4.gitlab.io"
+	NDefines.NWiki.FORUM_URL = "https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/home"
 
 	NDefines.NMapIcons.STATES_PRIORITY_VICTORY_POINTS = 0
-	
+
 	NDefines.NAirGfx.AIRPLANES_ANIMATION_GLOBAL_SPEED_PER_GAMESPEED = { 0.3, 0.35, 0.40, 0.45, 0.50, 0.55 } -- Speed factor for each game speed (begin with paused). Larger value = faster animation.
 	NDefines.NAirGfx.ROCKET_SPEED = 15.0							-- Speed of rockets launched from rocket sites
 	NDefines.NAirGfx.AIRPLANES_CURVE_POINT_DENSITY = 5.0 			-- Higher value = more midpoints in the flight path.
@@ -35,16 +35,16 @@
 	NDefines.NAirGfx.TRANSPORT_DIVISION_FACTOR = 60
 	NDefines.NAirGfx.MAX_MISSILE_BOMBING_SCENARIOS = 2				-- Max number of missile bombing scenarios in a strategic region.
 	NDefines.NAirGfx.MAX_PATROL_SCENARIOS = 2						-- Max number of patrol scenarios in a strategic region.
-	NDefines.NAirGfx.MAX_BOMBING_SCENARIOS = 2						-- Max number of bombings scenarios in a strategic region.			
+	NDefines.NAirGfx.MAX_BOMBING_SCENARIOS = 2						-- Max number of bombings scenarios in a strategic region.
 	NDefines.NAirGfx.MAX_DOGFIGHTS_SCENARIOS = 2					-- Max number of dogfight scenarios in a strategic region.
 	NDefines.NAirGfx.MAX_TRANSPORT_SCENARIOS = 2					-- Max number of transport scenarios in a strategic region
 	NDefines.NAirGfx.MAX_TRAINING_SCENARIOS = 2						-- Max number of training scenarios in a strategic region
 	NDefines.NAirGfx.MAX_SCOUT_SCENARIOS = 2
-	
+
 	NDefines.NGraphics.PROVINCE_NAME_DRAW_DISTANCE = 800.0
 	NDefines.NGraphics.DRAW_SHADOWS_CUTOFF = 200
 	NDefines.NGraphics.DRAW_SHADOWS_FADE_LENGTH = 80
-	
+
 	--GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 2.0, -- The center gradient is linear 1/255 per pixel for this many pixels --1
 	--GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 25.0, --25
 	NDefines.NGraphics.GRADIENT_BORDERS_THICKNESS_STATE = 50.0 --11
@@ -53,16 +53,16 @@
 	NDefines.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_STRATEGIC_REGIONS = 0.999
 	NDefines.NGraphics.STRATEGIC_AIR_COLOR_NEUTRAL = {165.0/255, 165.0/255, 165.0/255, 1} -- {140.0/255, 131.0/255, 119.0/255, 1}
 	NDefines.NGraphics.STRATEGIC_NAVY_COLOR_NEUTRAL = {41.0/255, 45.0/255, 64.0/255, 1} -- {0.3, 0.3, 0.3, 0}
-	NDefines.NGraphics.COUNTRY_FLAG_TEX_MAX_SIZE = 512							-- Vanilla is 256, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
-	NDefines.NGraphics.COUNTRY_FLAG_SMALL_TEX_MAX_SIZE = 2048					-- Vanilla is 64, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
-	NDefines.NGraphics.COUNTRY_FLAG_STRIPE_TEX_MAX_WIDTH = 10					-- Vanilla is 10
-	NDefines.NGraphics.COUNTRY_FLAG_STRIPE_TEX_MAX_HEIGHT = 4096				-- Vanilla is 2048
-	NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_WIDTH = 41					-- Vanilla is 41
-	NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 8192				-- Vanilla is 8192
+ 	NDefines.NGraphics.COUNTRY_FLAG_TEX_MAX_SIZE = 512							-- Vanilla is 256, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
+	NDefines.NGraphics.COUNTRY_FLAG_SMALL_TEX_MAX_SIZE = 1024					-- Vanilla is 64, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
+	-- -- NDefines.NGraphics.COUNTRY_FLAG_STRIPE_TEX_MAX_WIDTH = 10					-- Vanilla is 10
+	-- -- NDefines.NGraphics.COUNTRY_FLAG_STRIPE_TEX_MAX_HEIGHT = 4096				-- Vanilla is 2048
+	-- -- NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_WIDTH = 41					-- Vanilla is 41
+	-- -- NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 8192				-- Vanilla is 8192
 	NDefines.NGraphics.VICTORY_POINT_MAP_ICON_AFTER = {0, 4}
 	NDefines.NGraphics.VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 420, 1000}
 	NDefines.NGraphics.VICTORY_POINTS_DISTANCE_CUTOFF = {180, 420, 1000}
-	NDefines.NGraphics.NAVALBASE_ICON_DISTANCE_CUTOFF = 900			  
+	NDefines.NGraphics.NAVALBASE_ICON_DISTANCE_CUTOFF = 900
 	NDefines.NGraphics.CAPITAL_ICON_CUTOFF = 1000
 	NDefines.NGraphics.MAP_ICONS_GROUP_CAM_DISTANCE = 120.0
 	NDefines.NGraphics.MAP_ICONS_STATE_GROUP_CAM_DISTANCE = 330.0
@@ -75,6 +75,6 @@
 	NDefines.NGraphics.CAMERA_ZOOM_SPEED = 12
 	NDefines.NGraphics.CAMERA_ZOOM_KEY_SCALE = 0.01
 	NDefines.NGraphics.CAMERA_ZOOM_SPEED_DISTANCE_MULT = 50.0
-	
+
 	NDefines.NFrontend.CAMERA_LOOKAT_SETTINGS_X = 2058.0
 	NDefines.NFrontend.CAMERA_MIN_HEIGHT = 30.0

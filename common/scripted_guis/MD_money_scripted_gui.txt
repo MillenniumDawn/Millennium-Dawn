@@ -256,6 +256,19 @@ scripted_gui = {
 					}
 				}
 			}
+			debt_bg_alt_right_click = {
+				ai_will_do = {
+					factor = 100
+					modifier = {
+						factor = 2
+						check_variable = { treasury > debt}
+					}
+					modifier = {
+						factor = 0
+						check_variable = { treasury < debt }
+					}
+				}
+			}
 		}
 	}
 	# Treasury Topbar Container
@@ -472,6 +485,18 @@ scripted_gui = {
 			}
 		}
 
+		properties = {
+			# Project Property Files
+			lease_military_factories = { image = "[LeaseMilitaryFactoriesGlowTexture]" }
+			lease_civilian_factories = { image = "[LeaseCivilianFactoriesGlowTexture]" }
+			lease_naval_dockyards = { image = "[LeaseNavalDockyardsGlowTexture]" }
+			industrial_projects = { image = "[IndustrialProjectsEnabledTexture]" }
+			service_constructions = { image = "[OfficeProjectsEnabledTexture]" }
+			infrastructure_investiture = { image = "[InfraProjectsEnabledTexture]" }
+			arms_industry_stipends = { image = "[ArmsIndustryEnabledTexture]" }
+			retool_shipyards = { image = "[RetoolShipyardsEnabledTexture]" }
+		}
+
 		triggers = {
 			# Population taxes
 			increase_population_tax_click_enabled = {
@@ -613,6 +638,44 @@ scripted_gui = {
 					has_country_flag = service_constructions_flag
 					has_country_flag = arms_industry_stipends_flag
 				}
+			}
+
+			### BOTTOM BAR
+			bottom_bar_debt_bg_right_click_enabled = {
+				check_variable = { treasury > 1 }
+				check_variable = { debt > 1 }
+			}
+			bottom_bar_debt_bg_control_right_click_enabled = {
+				check_variable = { treasury > 10 }
+				check_variable = { debt > 10 }
+			}
+			bottom_bar_debt_bg_shift_right_click_enabled = {
+				check_variable = { treasury > 100 }
+				check_variable = { debt > 100 }
+			}
+			bottom_bar_debt_bg_alt_right_click_enabled = {
+				check_variable = { treasury > debt }
+				NOT = { has_idea = bankrupcy }
+			}
+
+			bottom_bar_debt_bg_click_enabled = {
+				NOT = { has_idea = bankrupcy }
+			}
+			bottom_bar_debt_bg_control_click_enabled = {
+				NOT = { has_idea = bankrupcy }
+			}
+			bottom_bar_debt_bg_shift_click_enabled = {
+				NOT = { has_idea = bankrupcy }
+			}
+
+			bottom_bar_int_investments_bg_right_click_enabled = {
+				check_variable = { int_investments > 1 }
+			}
+			bottom_bar_int_investments_bg_control_right_click_enabled = {
+				check_variable = { int_investments > 10 }
+			}
+			bottom_bar_int_investments_bg_shift_right_click_enabled = {
+				check_variable = { int_investments > 100 }
 			}
 		}
 
@@ -915,6 +978,95 @@ scripted_gui = {
 				refresh_gui = yes
 			}
 
+			## BOTTOM BAR
+			bottom_bar_debt_bg_click = {
+				if = {
+					limit = { check_variable = { interest_rate < 20 } }
+					add_to_variable = { treasury = 1 }
+					add_to_variable = { debt = 1.01 }
+					ingame_update_setup = yes
+					refresh_gui = yes
+				}
+				log = "[GetDateText]: [Root.GetName]: 1k debt taken (Total Debt: Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury], Total Treasury:[?treasury])"
+			}
+			bottom_bar_debt_bg_control_click = {
+				if = {
+					limit = { check_variable = { interest_rate < 20 } }
+					add_to_variable = { treasury = 10 }
+					add_to_variable = { debt = 10.1 }
+					ingame_update_setup = yes
+					refresh_gui = yes
+				}
+				log = "[GetDateText]: [Root.GetName]: 10k debt taken (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+			}
+			bottom_bar_debt_bg_shift_click = {
+				if = {
+					limit = { check_variable = { interest_rate < 20 } }
+					add_to_variable = { treasury = 100 }
+					add_to_variable = { debt = 101 }
+					ingame_update_setup = yes
+					refresh_gui = yes
+				}
+				log = "[GetDateText]: [Root.GetName]: 100k debt taken (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+			}
+
+		  	#Repay debt
+			bottom_bar_debt_bg_right_click = {
+				if = {
+					limit = { check_variable = { treasury > 1 } }
+					subtract_from_variable = { treasury = 1 }
+					subtract_from_variable = { debt = 1 }
+					ingame_update_setup = yes
+					refresh_gui = yes
+					log = "[GetDateText]: [Root.GetName]: 1k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+				}
+			}
+			bottom_bar_debt_bg_control_right_click = {
+				if = {
+					limit = { check_variable = { treasury > 10 } }
+					subtract_from_variable = { treasury = 10 }
+					subtract_from_variable = { debt = 10 }
+					ingame_update_setup = yes
+					refresh_gui = yes
+					log = "[GetDateText]: [Root.GetName]: 10k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+				}
+			}
+			bottom_bar_debt_bg_shift_right_click = {
+				if = {
+					limit = { check_variable = { treasury > 100 } }
+					subtract_from_variable = { treasury = 100 }
+					subtract_from_variable = { debt = 100 }
+					ingame_update_setup = yes
+					refresh_gui = yes
+					log = "[GetDateText]: [Root.GetName]: 100k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+				}
+			}
+			#Pay off all debt
+			bottom_bar_debt_bg_alt_right_click = {
+				if = {
+					limit = { check_variable = { treasury > debt } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					ingame_update_setup = yes
+					refresh_gui = yes
+				}
+			}
+
+			bottom_bar_int_investments_bg_right_click = {
+				subtract_from_variable = { int_investments = 1 }
+				add_to_variable = { treasury = 0.60 }
+				ingame_update_setup = yes
+			}
+			bottom_bar_int_investments_bg_control_right_click = {
+				subtract_from_variable = { int_investments = 10 }
+				add_to_variable = { treasury = 6.0 }
+				ingame_update_setup = yes
+			}
+			bottom_bar_int_investments_bg_shift_right_click = {
+				subtract_from_variable = { int_investments = 100 }
+				add_to_variable = { treasury = 60 }
+				ingame_update_setup = yes
+			}
 		}
 
 		# AI Section
@@ -938,6 +1090,47 @@ scripted_gui = {
 			increase_population_tax_click = {
 				ai_will_do = {
 					factor = 25
+					modifier = {
+						factor = 0
+						NOT = {
+							tag = SOV
+							tag = USA
+						}
+						date < 2006.6.1
+						OR = {
+							has_idea = medium_corruption
+							has_idea = widespread_corruption
+							has_idea = systematic_corruption
+							has_idea = unrestrained_corruption
+							has_idea = rampant_corruption
+							has_idea = crippling_corruption
+							has_idea = paralyzing_corruption
+						}
+
+					}
+					modifier = {
+						factor = 0
+						tag = SOV
+						date < 2006.6.1
+						check_variable = { population_tax_rate > 15 }
+					}
+					#help stupid uSA.
+					modifier = {
+						factor = 0
+						tag = USA
+						date < 2002.6.1
+						check_variable = { population_tax_rate < 20 }
+					}
+					#nonono stupid AI. No click!
+					modifier = {
+						factor = 0
+						NOT = {
+							tag = SOV
+							tag = USA
+						}
+						date < 2006.6.1
+						check_variable = { population_tax_rate > 30 }
+					}
 					# General Economic Factors
 					modifier = {
 						set_temp_variable = { interest_rate_tmp = interest_rate }
@@ -966,6 +1159,13 @@ scripted_gui = {
 					modifier = {
 						factor = 0.40
 						has_idea = economic_boom
+					}
+					# We are a poor country, we do not have industry. People are new gold!
+					modifier = {
+						factor = 1.10
+						check_variable = { treasury_rate < 0 }
+						has_stability > 0.45
+						num_of_civilian_factories < 5
 					}
 					# Killswitch
 					modifier = {
@@ -1019,6 +1219,29 @@ scripted_gui = {
 							has_country_flag = temp_increase_population_taxes
 							has_country_flag = no_personal_tax_rate_change
 							check_variable = { treasury_rate < 0 }
+							check_variable = { corporate_tax_rate < 10 }
+						}
+					}
+					modifier = {
+						factor = 0.1
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+							has_idea = social_03
+							has_idea = social_04
+							has_idea = social_05
+							has_idea = social_06
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = health_03
+							has_idea = health_04
+							has_idea = health_05
+							has_idea = health_06
+							has_idea = edu_01
+							has_idea = edu_02
+							has_idea = edu_03
+							has_idea = edu_04
+							has_idea = edu_05
 						}
 					}
 				}
@@ -1027,6 +1250,71 @@ scripted_gui = {
 			increase_corporate_tax_click = {
 				ai_will_do = {
 					factor = 25
+					modifier = {
+						factor = 0
+						date < 2006.6.1
+						NOT = {
+							tag = SOV
+							tag = USA
+						}
+						check_variable = { corporate_tax_rate > 20 }
+					}
+
+					modifier = {
+						factor = 0
+						date < 2006.6.1
+						OR = {
+							has_idea = medium_corruption
+							has_idea = widespread_corruption
+							has_idea = systematic_corruption
+							has_idea = unrestrained_corruption
+							has_idea = rampant_corruption
+							has_idea = crippling_corruption
+							has_idea = paralyzing_corruption
+						}
+						num_of_available_civilian_factories < 50
+					}
+
+					modifier = {
+						factor = 0
+						date < 2006.6.1
+						tag = SOV
+						check_variable = { corporate_tax_rate > 15 }
+					}
+					#help stupid uSA.
+					modifier = {
+						factor = 10
+						tag = USA
+						#date < 2006.6.1
+						#check_variable = { corporate_tax_rate > 20 }
+						has_idea = draft_army
+					}
+					modifier = {
+						factor = 0.25
+						#date > 2002.1.1
+						# OR = {
+						# 	tag = USA
+						# 	tag = SOV
+						# 	tag = CHI
+						# }
+						NOT = {
+							has_idea = social_06
+							has_idea = health_06
+							has_idea = edu_05
+						}
+						ai_has_high_surplus = no
+					}
+					modifier = {
+						factor = 0.25
+						OR = {
+							tag = USA
+							tag = SOV
+							tag = CHI
+						}
+						check_variable = { treasury_rate > 2.00 }
+						check_variable = { treasury_rate < 10.00 }
+						#ai_has_high_surplus = no
+					}
 					# Generic Economic
 					modifier = {
 						set_temp_variable = { interest_rate_tmp = interest_rate }
@@ -1061,6 +1349,7 @@ scripted_gui = {
 							has_country_flag = temp_decrease_corporate_taxes
 							has_country_flag = no_corporate_tax_rate_change
 							check_variable = { treasury_rate > 9.99 }
+							num_of_civilian_factories < 5
 						}
 					}
 				}
@@ -1068,6 +1357,52 @@ scripted_gui = {
 			decrease_corporate_tax_click = {
 				ai_will_do = {
 					factor = 25
+					modifier = {
+						factor = 0
+						tag = CHI
+						check_variable = { corporate_tax_rate < 14 }
+					}
+					modifier = {
+						factor = 0
+						date > 2002.1.1
+						OR = {
+							tag = USA
+							tag = SOV
+							tag = CHI
+						}
+						NOT = {
+							has_idea = social_06
+							has_idea = health_06
+							has_idea = edu_05
+						}
+						ai_has_high_surplus = no
+					}
+					#Let's help the stupid United States regain the ability to build factories >8)
+					modifier = {
+						factor = 5.0
+						tag = USA
+						date < 2006.6.2
+						check_variable = { corporate_tax_rate > 27 }
+					}
+					modifier = {
+						factor = 200
+						tag = USA
+						date < 2000.6.2
+						check_variable = { corporate_tax_rate > 31 }
+					}
+					modifier = {
+						factor = 0
+						tag = USA
+						date > 2000.6.1
+						date < 2002.6.1
+						check_variable = { corporate_tax_rate < 31 }
+					}
+					modifier = {
+						factor = 25
+						tag = USA
+						date > 2006.6.1
+						check_variable = { corporate_tax_rate > 30 }
+					}
 					# Generic Economic
 					modifier = {
 						set_temp_variable = { negative_interest_rate = interest_rate }

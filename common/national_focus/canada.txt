@@ -29,6 +29,7 @@ focus_tree = {
 				set_variable = { CAN_production_speed_infrastructure_factor_var = 0.01 }
 				set_variable = { CAN_production_oil_var = 0.01 }
 				set_variable = { CAN_subsidy_total = 0.25 }
+				ingame_update_setup = yes
 			}
 			add_dynamic_modifier = { modifier = CAN_canadian_economy_dynamic_modifier }
 			force_update_dynamic_modifier = yes
@@ -770,6 +771,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Refineries_Abroad"
 			custom_effect_tooltip = CAN_Refineries_Abroad_tt
+			set_temp_variable = { percent_change = 2 }
 			if = {
 				limit = { has_country_flag = CAN_rosneft_done }
 				set_temp_variable = { treasury_change = -2.6 }
@@ -779,12 +781,9 @@ focus_tree = {
 					amount = 10
 					state = 688
 				}
-				SOV = {
-					set_temp_variable = { percent_change = 2 }
-					set_temp_variable = { tag_index = CAN.id }
-					set_temp_variable = { influence_target = THIS.id }
-					change_influence_percentage = yes
-				}
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = SOV }
+				change_influence_percentage = yes
 			}
 			if = {
 				limit = { has_country_flag = CAN_saudi_done }
@@ -795,12 +794,9 @@ focus_tree = {
 					amount = 8
 					state = 176
 				}
-				SAU = {
-					set_temp_variable = { percent_change = 2 }
-					set_temp_variable = { tag_index = CAN.id }
-					set_temp_variable = { influence_target = THIS.id }
-					change_influence_percentage = yes
-				}
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = SAU }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -892,6 +888,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Abqaiq_Refineries"
 			set_temp_variable = { treasury_change = -8 }
 			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
 			if = {
 				limit = { 174 = { is_owned_by = SAU } }
 				SAU = {
@@ -902,7 +899,6 @@ focus_tree = {
 							instant_build = yes
 						}
 					}
-					set_temp_variable = { percent_change = 1 }
 					set_temp_variable = { tag_index = CAN.id }
 					set_temp_variable = { influence_target = THIS.id }
 					change_influence_percentage = yes
@@ -918,7 +914,6 @@ focus_tree = {
 							instant_build = yes
 						}
 					}
-					set_temp_variable = { percent_change = 1 }
 					set_temp_variable = { tag_index = CAN.id }
 					set_temp_variable = { influence_target = THIS.id }
 					change_influence_percentage = yes
@@ -1136,28 +1131,7 @@ focus_tree = {
 				remove_idea = CAN_oil_prospects_idea3
 				add_idea = CAN_oil_prospects_idea4
 			}
-			if = {
-				limit = {
-					has_idea = CAN_overburdened_economy
-				}
-				swap_ideas = {
-					remove_idea = CAN_overburdened_economy
-					add_idea = CAN_overburdened_economy1
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = CAN_overburdened_economy1
-				}
-				swap_ideas = {
-					remove_idea = CAN_overburdened_economy1
-					add_idea = CAN_overburdened_economy2
-				}
-			}
-			else_if = {
-				limit = { has_idea = CAN_overburdened_economy2 }
-				remove_ideas = CAN_overburdened_economy2
-			}
+			CAN_update_overburdened_economy = yes
 		}
 
 		ai_will_do = {
@@ -1522,28 +1496,7 @@ focus_tree = {
 			else = {
 				custom_effect_tooltip = "The effect will vary depending on your choice above."
 			}
-			if = {
-				limit = {
-					has_idea = CAN_overburdened_economy
-				}
-				swap_ideas = {
-					remove_idea = CAN_overburdened_economy
-					add_idea = CAN_overburdened_economy1
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = CAN_overburdened_economy1
-				}
-				swap_ideas = {
-					remove_idea = CAN_overburdened_economy1
-					add_idea = CAN_overburdened_economy2
-				}
-			}
-			else_if = {
-				limit = { has_idea = CAN_overburdened_economy2 }
-				remove_ideas = CAN_overburdened_economy2
-			}
+			CAN_update_overburdened_economy = yes
 		}
 
 		ai_will_do = {
@@ -1609,12 +1562,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Federal_Gas_Tax_Fund"
 			set_temp_variable = { subsidy_change_tmp = 0.1 }
 			CAN_modify_subsidy_changes = yes
-			add_to_variable = {
-				var = CAN_production_oil_var
-				value = 0.05
-				tooltip = CAN_increase_synthetic_oil_5_tt
-			}
-			force_update_dynamic_modifier = yes
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = 0.05 }
+			CAN_change_synthetic_oil = yes
 		}
 
 		ai_will_do = {
@@ -1666,12 +1616,9 @@ focus_tree = {
 				idea = CAN_build
 				days = 730
 			}
-			subtract_from_variable = {
-				var = CAN_stability_factor_var
-				value = 0.05
-				tooltip = CAN_decrease_stability_factor_5_tt
-			}
-			force_update_dynamic_modifier = yes
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = -0.05 }
+			CAN_change_stability_factor = yes
 		}
 
 		ai_will_do = {
@@ -1694,17 +1641,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canada_Strategic_Infrastructure_Fund"
 			set_temp_variable = { subsidy_change_tmp = 0.1 }
 			CAN_modify_subsidy_changes = yes
-			add_to_variable = {
-				var = CAN_production_speed_infrastructure_factor_var
-				value = 0.05
-				tooltip = CAN_increase_infrastructure_construction_speed_5_tt
-			}
-			subtract_from_variable = {
-				var = CAN_stability_factor_var
-				value = 0.03
-				tooltip = CAN_decrease_stability_factor_3_tt
-			}
-			force_update_dynamic_modifier = yes
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = 0.05 }
+			CAN_change_infrastructure = yes
+			set_temp_variable = { CAN_value_change = -0.03 }
+			CAN_change_stability_factor = yes
 		}
 
 		ai_will_do = {
@@ -1726,13 +1667,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_P3_Projects"
-			add_to_variable = {
-				var = CAN_production_speed_buildings_var
-				value = 0.10
-				tooltip = CAN_increase_construction_speed_10_tt
-			}
 			set_temp_variable = { subsidy_change_tmp = 0.750 }
 			CAN_modify_subsidy_changes = yes
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = 0.15 }
+			CAN_change_building_speed_factor = yes
 		}
 
 		ai_will_do = {
@@ -2130,28 +2069,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CAN_Industrial_Expertise"
 			add_ideas = CAN_expertise
-			if = {
-				limit = {
-					has_idea = CAN_overburdened_economy
-				}
-				swap_ideas = {
-					remove_idea = CAN_overburdened_economy
-					add_idea = CAN_overburdened_economy1
-				}
-			}
-			else_if = {
-				limit = {
-					has_idea = CAN_overburdened_economy1
-				}
-				swap_ideas = {
-					remove_idea = CAN_overburdened_economy1
-					add_idea = CAN_overburdened_economy2
-				}
-			}
-			else_if = {
-				limit = { has_idea = CAN_overburdened_economy2 }
-				remove_ideas = CAN_overburdened_economy2
-			}
+			CAN_update_overburdened_economy = yes
 		}
 
 		ai_will_do = {
