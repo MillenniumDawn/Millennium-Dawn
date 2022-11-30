@@ -1,10 +1,10 @@
--- Last Modified 09/10/2022 - Bird: Refactored the Defines so it is no organized by section
+-- Last Modified 10/11/2022 - Dread: Added a load of peace based defines, tweaked for fine tuning of AI peace deals
 
 	-- NGame ssection
 	NDefines.NGame.START_DATE = "2000.1.1.12"
 	NDefines.NGame.END_DATE = "2070.1.1.1"
 	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
-    NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
+	NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
 
 	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 250
@@ -75,6 +75,65 @@
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_COOLDOWN_WEIGHT = 1			-- Importance of leadership change cooldown when determining how close a faction member is to being able to assume leadership.
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_MANPOWER_WEIGHT = 2			-- Importance of manpower in field when determining how close a faction member is to being able to assume leadership.
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_FACTORY_WEIGHT = 2			-- Importance of factory count when determining how close a faction member is to being able to assume leadership.
+
+
+	-- Peace related defines
+	NDefines.NDiplomacy.BASE_PEACE_PUPPET_FACTOR = 100							-- (100 in vanilla) Base factor for puppet in %.
+	NDefines.NDiplomacy.BASE_PEACE_LIBERATE_FACTOR = 100						-- (100 in vanilla) Base factor for liberate in %.
+	NDefines.NDiplomacy.BASE_PEACE_TAKE_UNCONTROLLED_STATE_FACTOR = 10.0		-- (10.0 in vanilla) Base factor for taking state you do not control
+	NDefines.NDiplomacy.BASE_PEACE_TAKE_FACTION_CONTROLLED_STATE_FACTOR = 0.5	-- (0.5 in vanilla) Base factor for taking state you do not control, but someone in faction does
+	NDefines.NDiplomacy.BASE_PEACE_FORCE_GOVERNMENT_COST = 100 				-- (100 in vanilla) Base cost for forcing a country to change government.
+	-- In peace conference, cost is factored based on how many times the state has been contested and for how long it has been uncontested (for everyone else)
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_CONTESTED_MAX = 10										-- (15 in vanilla) To prevent overflows due to the exponential increase, cap the contested factor to this
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_MAX = 10										-- (15 in vanilla) To prevent overflows due to the exponential increase, cap the uncontested factor to this
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_CONTESTED_BID = 1.20										-- (1.20 in vanilla) Cost factor for each contested bid on the state.
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_MIN = 1.15								-- (1.15 in vanilla) Minimum cost factor for each turn a bid has been uncontested on the state.
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_MAX = 1.60								-- (1.60 in vanilla) Maximum cost factor for each turn a bid has been uncontested on the state.
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_STEP = 0.15								-- (0.15 in vanilla) Uncontested cost factor will increase by this much each turn.
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_CAPITAL_SHIP_IC = 0.005									-- (0.005 in vanilla) In peace conference, cost for taking one capital ship per IC
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_SCREENING_SHIP_IC = 0.005								-- (0.005 in vanilla) In peace conference, cost for taking a part of the screening ships per IC
+	NDefines.NDiplomacy.PEACE_INCREASE_COST_FACTOR_PER_MISSING_PERCENT_FOR_CAPITULATION = 0.002	-- (0.002 in vanilla) increase factor if loser has not capitulated, for every percent between surrender level and BASE_SURRENDER_LEVEL
+	-- peace action taker has a discount if they occupy the state depending on compliance
+	-- it's a table where first value is the compliance level, and the second the factor
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_COMPLIANCE_STEPS = {
+		0,   1.0, -- between 0%  and 30% compliance, factor is 1.0
+		30,  0.9, -- between 30% and 70%
+		70,  0.8, -- above 70%
+	}
+	-- In peace conference, adding a stackable to a peace action, increment the cost by a percentage
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_STACK_DEMILITARIZED_ZONE = 0.1 -- vanilla is 0.25
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_STACK_WAR_REPARATION = 0.1 -- vanilla is 0.25
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_STACK_RESOURCE_RIGHTS = 0.3 -- vanilla is 0.25
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_STACK_DISMANTLE_INDUSTRY = 0.4 -- vanilla is 0.25
+	-- peace conference can set timed effect, set length in days
+	NDefines.NDiplomacy.PEACE_TIMED_EFFECT_LENGTH_DEMILITARIZED_ZONE = 1095 -- vanilla is 1825 days (5 years)
+	NDefines.NDiplomacy.PEACE_TIMED_EFFECT_LENGTH_WAR_REPARATION = 1095
+	NDefines.NDiplomacy.PEACE_TIMED_EFFECT_LENGTH_RESOURCE_RIGHTS = 1095
+	NDefines.NDiplomacy.PEACE_TIMED_EFFECT_RATIO_CIVILIAN_FACTORY_WAR_REPARATION = 0.5 	-- ratio of civilian factories taken via stackable war reparation
+
+	-- The Influence cost modifier is basically the inverse of distance. Nearby states are cheaper, and far-away states are more expensive.
+	-- We basically do a two-segment lerp:
+	-- if distance is between [0, NEUTRAL_DIST], we lerp the cost modifier between [MIN_DIST_COST_MODIFIER, 1.0]
+	-- if distance is between [NEUTRAL_DIST, MAX_DIST], we lerp the cost modifier between [1.0, MAX_DIST_COST_MODIFIER]
+	-- The below values represent (pixel distance / INFLUENCE_DISTANCE_DIVISOR)
+	NDefines.NDiplomacy.INFLUENCE_NEUTRAL_DIST_CAPITAL = 80.0			-- distance to capital that results in a cost modifier of 1.0
+	NDefines.NDiplomacy.INFLUENCE_MAX_DIST_CAPITAL = 100.0				-- distance to capital that results in a cost modifier of INFLUENCE_MAX_DIST_COST_MODIFIER
+	NDefines.NDiplomacy.INFLUENCE_NEUTRAL_DIST_CORE = 20.0				-- distance to nearest core state that results in a cost modifier of 1.0
+	NDefines.NDiplomacy.INFLUENCE_MAX_DIST_CORE = 30.0					-- distance to nearest core state that results in a cost modifier of INFLUENCE_MAX_DIST_COST_MODIFIER
+	NDefines.NDiplomacy.INFLUENCE_NEUTRAL_DIST_CONTROLLED = 10.0		-- distance to nearest controlled state that results in a cost modifier of 1.0
+	NDefines.NDiplomacy.INFLUENCE_MAX_DIST_CONTROLLED = 14.0			-- distance to nearest controlled state that results in a cost modifier of INFLUENCE_MAX_DIST_COST_MODIFIER
+	NDefines.NDiplomacy.INFLUENCE_MIN_DIST_COST_MODIFIER = 0.80		-- Cost modifier at min (zero) distance
+	NDefines.NDiplomacy.INFLUENCE_MAX_DIST_COST_MODIFIER = 1.20		-- Cost modifier at max distance
+	NDefines.NDiplomacy.INFLUENCE_RATIO_CAPITAL = 0.2					-- Ratio of influence based on distance to capital
+	NDefines.NDiplomacy.INFLUENCE_RATIO_CORE = 0.3						-- Ratio of influence based on distance to nearest core territory
+	NDefines.NDiplomacy.INFLUENCE_RATIO_CONTROLLED = 0.5				-- Ratio of influence based on distance to neared controlled territory (including uncontested peace conference bids)
+	NDefines.NDiplomacy.INFLUENCE_DISTANCE_DIVISOR = 30.0				-- Divide pixel distance with this when determining distance to capital / core / controlled states. Just an arbitrary way of scaling the distance numbers.
+
+	NDefines.NDiplomacy.INFLUENCE_MAJOR_FACTOR = 1.0					--How much influence discount a major will get
+	NDefines.NDiplomacy.INFLUENCE_MINOR_FACTOR = 0.65					--How much influence discount a minor will get
+
+	NDefines.NDiplomacy.PEACE_TRIGGER_AI_MAX_INFLUENCE_VALUE = 0.89	-- Max influence value for pc_is_state_outside_influence_for trigger
+
 
 	-- NCountry Releated Defines
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
@@ -570,7 +629,7 @@
 	NDefines.NAI.ASSIGN_TANKS_TO_MOUNTAINS = -26.0                           -- factor for assigning tank divisions to fronts with mountains (proportional to how much of that terrain type)
 	NDefines.NAI.ASSIGN_TANKS_TO_JUNGLE = -6.0                              -- factor for assigning tank divisions to fronts with jungle (proportional to how much of that terrain type)
 	NDefines.NAI.UNIT_ASSIGNMENT_TERRAIN_IMPORTANCE = 10.0                  -- Terrain score for units are multiplied by this when the AI is deciding which front they should be assigned to
-	-- 
+	--
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
 	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
@@ -763,7 +822,7 @@
 	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.7
 	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
-	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of pirority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
+	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
 		'internet_station','industrial_complex', 'offices', 'arms_factory'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
@@ -783,6 +842,19 @@
 	--	0, -- RESERVE_FLEET
 	--	100, -- NAVAL INVASION SUPPORT
 	-- }
+
+	-- Peace deal AI stuff
+	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.5			-- 0.5 in vanilla
+	NDefines.NAI.PEACE_BID_FOLD_AGAINST_AI_CHANCE_UNCONTROLLED = 0.40	-- 0.40 in vanilla
+	NDefines.NAI.PEACE_BID_FOLD_AGAINST_LIBERATE_CONTEST = 1.0			-- 1.0 in vanilla
+	NDefines.NAI.PEACE_BID_FOLD_MINOR_VS_MAJOR = 1.0					-- 1.0 in vanilla
+	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = true					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
+	NDefines.NAI.PEACE_AI_EVALUATE_FOR_SUBJECTS = true					-- Whether AI should include subjects when evaluating giving states to other winners (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_FOR_ALLIES = true					-- Whether AI should include allies when evaluating giving states to other winners (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_FOR_NON_ALLIES = false				-- Whether AI should include non-allies (not in same faction) when evaluating giving states to other winners (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
+	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
 
 	-- NOperatives Defines
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
@@ -877,7 +949,7 @@
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 1.0             -- try merge task force if main ship ratio is lower than this.
 	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 1.002           -- if resulting main ship ratio would be at most this, allow merging into this task force.
 	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 3.6                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
-	
+
 	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		200, -- PATROL
