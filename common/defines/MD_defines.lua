@@ -254,7 +254,7 @@
 	NDefines.NMilitary.SLOWEST_SPEED = 8 -- 4
 	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
-	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.15 -- 0.25
+	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.7 -- 1.00
 	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
 	NDefines.NMilitary.BATALION_CHANGED_EXPERIENCE_DROP = 0.25 -- 0.5
@@ -285,9 +285,9 @@
 	NDefines.NMilitary.RETREAT_SPEED_FACTOR = 1.0 -- 0.25
 	NDefines.NMilitary.WITHDRAWING_SPEED_FACTOR = 0.35 -- 0.15
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_BASE = 5.0               -- Base speed of strategic redeployment when not on railways
-    NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
-    NDefines.NMilitary.STRATEGIC_SPEED_RAIL_BASE = 20.0               -- Base speed of strategic redeployment when on railways -- vanilla is 15
-    NDefines.NMilitary.STRATEGIC_SPEED_RAIL_MAX = 40.0                -- Additional speed of strategic redeployment on max-level railways -- vanilla is 25
+	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
+	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_BASE = 20.0               -- Base speed of strategic redeployment when on railways -- vanilla is 15
+	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_MAX = 40.0                -- Additional speed of strategic redeployment on max-level railways -- vanilla is 25
 	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.5 -- 0.1
 	NDefines.NMilitary.LAND_EQUIPMENT_BASE_COST = 5 -- 10 --Used to determine Upgrade Cost
 	NDefines.NMilitary.LAND_EQUIPMENT_RAMP_COST = 3 -- 5
@@ -312,9 +312,10 @@
 	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.25 -- 1.0
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.002 -- 0.0015
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
-	NDefines.NMilitary.UNIT_EXP_LEVELS = {0.1, 0.3, 0.75, 0.9} -- {0.1, 0.3, 0.75, 0.9}
+	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }
+	NDefines.NMilitary.ARMY_EXP_BASE_LEVEL = 3
+	NDefines.NMilitary.TRAINING_MAX_LEVEL = 6
 	NDefines.NMilitary.FIELD_EXPERIENCE_SCALE = 0.001 -- 0.0015
-	NDefines.NMilitary.TRAINING_MAX_LEVEL = 3 -- 2
 	NDefines.NMilitary.FIELD_EXPERIENCE_MAX_PER_DAY = 2 -- 1.2
 	NDefines.NMilitary.LEADER_EXPERIENCE_SCALE = 1.25 -- 1.0
 	NDefines.NMilitary.BASE_LEADER_TRAIT_GAIN_XP = 0.55 -- 0.45
@@ -327,8 +328,8 @@
 	NDefines.NMilitary.ENGAGEMENT_WIDTH_PER_WIDTH = 3.0			-- how much enemy combat width we are allowed to engage per width of our own -- vanilla is 2.0
 
 	NDefines.NMilitary.NEW_ARMY_LEADER_LEVEL_CHANCES = {			-- chances for new army leaders to start at a given level
-        0.90, -- 90% for level one
-        0.10  -- 10% for level two
+		0.90, -- 90% for level one
+		0.10  -- 10% for level two
 			  -- 0% for level three to ten
 	}
 	NDefines.NMilitary.BATALION_NOT_CHANGED_EXPERIENCE_DROP = 0.0		-- Division experience drop if unit has same batalion
@@ -549,10 +550,10 @@
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
 	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CARRIERS = 2.0 -- 1.0
 	NDefines.NNavy.NEW_NAVY_LEADER_LEVEL_CHANCES = {                                -- chances for new navy leaders to start at a given level
-        0.90, -- 90% for level one
-        0.10  -- 10% for level two
+		0.90, -- 90% for level one
+		0.10  -- 10% for level two
               -- 0% for level three to ten
-    }
+	}
 	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1 		-- optimum carrier count for carrier taskforces
 	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6 		-- optimum capital count for capital taskforces
 	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2			-- optimum screen count for screen taskforces
