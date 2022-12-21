@@ -314,7 +314,8 @@
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
 	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }
 	NDefines.NMilitary.ARMY_EXP_BASE_LEVEL = 3
-	NDefines.NMilitary.TRAINING_MAX_LEVEL = 6
+	NDefines.NMilitary.TRAINING_MAX_LEVEL = 5
+	NDefines.NMilitary.DEPLOY_TRAINING_MAX_LEVEL = 2
 	NDefines.NMilitary.FIELD_EXPERIENCE_SCALE = 0.001 -- 0.0015
 	NDefines.NMilitary.FIELD_EXPERIENCE_MAX_PER_DAY = 2 -- 1.2
 	NDefines.NMilitary.LEADER_EXPERIENCE_SCALE = 1.25 -- 1.0
