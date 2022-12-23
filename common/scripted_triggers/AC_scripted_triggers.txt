@@ -27,6 +27,9 @@ AC_building_infra_available = {
 		else_if = { limit = { check_variable = { project_build_amount^-1 = 5 } }
 			PREV = { free_building_slots = { building = infrastructure size > 4 include_locked = no } }
 		}
+		else = {
+			always = no
+		}
 	}
 }
 
@@ -91,6 +94,9 @@ AC_building_antiair_available = {
 		}
 		else_if = { limit = { check_variable = { project_build_amount^-1 = 5 } }
 			PREV = { free_building_slots = { building = anti_air_building size > 4 include_locked = no } }
+		}
+		else = {
+			always = no
 		}
 	}
 }
@@ -210,6 +216,9 @@ AC_building_offices_available = {
 		else_if = { limit = { check_variable = { project_build_amount^-1 = 5 } }
 			PREV = { free_building_slots = { building = offices size > 4 include_locked = no } }
 		}
+		else = {
+			always = no
+		}
 	}
 }
 
@@ -255,22 +264,12 @@ AC_building_ref_available = {
 	ROOT = { has_tech = fuel_silos }
 	#always = no
 	if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 1 } } }
-		OR = {
-			free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
-			free_building_slots = { building = industrial_complex size > 0 include_locked = no }
-			free_building_slots = { building = arms_factory size > 0 include_locked = no }
-			free_building_slots = { building = dockyard size > 0 include_locked = no }
-		}
-		synthetic_refinery < 1
+		free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
+		synthetic_refinery < 2
 	}
 	else_if = { limit = { ROOT = { check_variable = { project_build_amount^-1 = 2 } has_tech = synth_oil_experiments } }
-		OR = {
-			free_building_slots = { building = synthetic_refinery size > 1 include_locked = no }
-			free_building_slots = { building = industrial_complex size > 1 include_locked = no }
-			free_building_slots = { building = arms_factory size > 1 include_locked = no }
-			free_building_slots = { building = dockyard size > 1 include_locked = no }
-		}
-		synthetic_refinery < 2
+		free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
+		synthetic_refinery < 3
 	}
 	else = { always = no }
 }
@@ -295,6 +294,9 @@ building_internet_station_available = {
 		else_if = { limit = { check_variable = { project_build_amount^-1 = 6 } }
 			PREV = { free_building_slots = { building = internet_station size > 5 include_locked = no } }
 		}
+		else = {
+			always = no
+		}
 	}
 }
 
@@ -316,6 +318,9 @@ building_fuel_silos_available = {
 		}
 		else_if = { limit = { check_variable = { project_build_amount^-1 = 1 } }
 			PREV = { free_building_slots = { building = fuel_silo size > 0 include_locked = no } }
+		}
+		else = {
+			always = no
 		}
 	}
 }
@@ -354,14 +359,8 @@ investment_building_slot_available = {
 		free_building_slots = { building = internet_station size > 0 include_locked = no }
 	}
 	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project_type = 11 } }
-		OR = {
-			free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
-			free_building_slots = { building = industrial_complex size > 0 include_locked = no }
-			free_building_slots = { building = arms_factory size > 0 include_locked = no }
-			free_building_slots = { building = dockyard size > 0 include_locked = no }
-			free_building_slots = { building = offices size > 0 include_locked = no }
-		}
-		synthetic_refinery < 2
+		free_building_slots = { building = synthetic_refinery size > 0 include_locked = no }
+		synthetic_refinery < 3
 	}
 }
 
@@ -370,5 +369,19 @@ AI_is_ready_for_another_project = {
 	AND = {
 		is_ai = yes
 		check_variable = { active_projects < 15 }
+	}
+}
+
+currently_is_considering_a_project = {
+	custom_trigger_tooltip = {
+		tooltip = this_investment_offer_pending_tt
+		ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+	}
+}
+
+has_available_treasury_investment = {
+	custom_trigger_tooltip = {
+		tooltip = has_available_treasury_tt
+		NOT = { check_variable = { treasury < project_monetary_cost^-1 } }
 	}
 }

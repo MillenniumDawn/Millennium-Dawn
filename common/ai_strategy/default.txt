@@ -1,4 +1,4 @@
-# Written by Hiddengearz, Improved by Bird
+# Written by Hiddengearz, Improved by Bird, KyCb(rockon)
 # Intelligence Agency AI Strategies moved to intelligence_agency.txt --Bird
 # Default Unit Production
 default_army_production_strategy = {
@@ -10,14 +10,19 @@ default_army_production_strategy = {
 		}
 	}
 	enable = { always = yes }
-	ai_strategy = { type = role_ratio id = L_Inf value = 20 }
-	ai_strategy = { type = role_ratio id = Militia value = 0 }
-	ai_strategy = { type = role_ratio id = infantry value = 60 }
-	ai_strategy = { type = role_ratio id = garrison value = 0 }
-	ai_strategy = { type = role_ratio id = mechanized value = 60 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 60 }
+	ai_strategy = { type = role_ratio id = Militia value = 1 }
+	ai_strategy = { type = role_ratio id = infantry value = 20 }
+	ai_strategy = { type = role_ratio id = garrison value = 1 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 30 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 30 }
 	ai_strategy = { type = role_ratio id = armor value = 30 }
-	ai_strategy = { type = role_ratio id = marines value = 15 }
-	ai_strategy = { type = role_ratio id = Air_assault value = 15 }
+	ai_strategy = { type = role_ratio id = marines value = 20 }
+	ai_strategy = { type = role_ratio id = mot_marines value = 15 }
+	ai_strategy = { type = role_ratio id = meh_marines value = 30 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 10 }
+	ai_strategy = { type = role_ratio id = Air_arm value = 10 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = 25 }
 }
 
@@ -33,33 +38,44 @@ focus_on_motorized_units = {
 		disabled_ai_for_units = yes
 	}
 	enable = {
-		has_equipment = { util_vehicle_equipment > 3000 }
+		has_equipment = { util_vehicle_equipment > 1500 }
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = role_ratio id = infantry value = 200 }
-	ai_strategy = { type = build_army id = infantry value = 100 }
+	ai_strategy = { type = role_ratio id = mot_marines value = 25 }
+	ai_strategy = { type = build_army id = mot_marines value = 15 }
+	ai_strategy = { type = role_ratio id = infantry value = 100 }
+	ai_strategy = { type = build_army id = infantry value = 50 }
 }
 
-focus_on_mechanized = {
+focus_on_apc_mechanized = {
 	allowed = {
 		disabled_ai_for_units = yes
 	}
 	enable = {
-		OR = {
-			has_equipment = { APC_Equipment > 2000 }
-			has_equipment = { IFV_Equipment > 2000 }
-		}
+		has_equipment = { APC_Equipment > 2000 }
 	}
 	abort = {
-		OR = {
-			has_equipment = { APC_Equipment < 1000 }
-			has_equipment = { IFV_Equipment < 1000 }
-		}
+		has_equipment = { APC_Equipment < 1000 }
 	}
 
-	ai_strategy = { type = role_ratio id = mechanized value = 200 }
-	ai_strategy = { type = build_army id = mechanized value = 100 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 200 }
+	ai_strategy = { type = build_army id = apc_mechanized value = 100 }
+}
+
+focus_on_ifv_mechanized = {
+	allowed = {
+		disabled_ai_for_units = yes
+	}
+	enable = {
+		has_equipment = { IFV_Equipment > 2000 }
+	}
+	abort = {
+		has_equipment = { IFV_Equipment < 1000 }
+	}
+
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 200 }
+	ai_strategy = { type = build_army id = ifv_mechanized value = 100 }
 }
 
 focus_on_armor = {
@@ -82,15 +98,20 @@ DEFAULT_template_design = { #Generic across the board. This is just upgrading
 		disabled_ai_for_units = yes
 	}
 	enable = { always = yes }
-	ai_strategy = { type = template_prio id = L_Inf value = 100 }
-	ai_strategy = { type = template_prio id = Militia value = 100 }
-	ai_strategy = { type = template_prio id = infantry value = 100 }
-	ai_strategy = { type = template_prio id = garrison value = 100 }
-	ai_strategy = { type = template_prio id = mechanized value = 100 }
-	ai_strategy = { type = template_prio id = armor value = 100 }
-	ai_strategy = { type = template_prio id = marines value = 100 }
-	ai_strategy = { type = template_prio id = Air_assault value = 100 }
-	ai_strategy = { type = template_prio id = Special_Forces value = 100 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 100 }
+	ai_strategy = { type = role_ratio id = Militia value = 100 }
+	ai_strategy = { type = role_ratio id = infantry value = 100 }
+	ai_strategy = { type = role_ratio id = garrison value = 100 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 100 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 100 }
+	ai_strategy = { type = role_ratio id = armor value = 100 }
+	ai_strategy = { type = role_ratio id = marines value = 100 }
+	ai_strategy = { type = role_ratio id = mot_marines value = 100 }
+	ai_strategy = { type = role_ratio id = meh_marines value = 100 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = 100 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 100 }
+	ai_strategy = { type = role_ratio id = Air_arm value = 100 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 100 }
 }
 
 default_air_unit_production = {
@@ -106,14 +127,15 @@ default_air_unit_production = {
 
 	ai_strategy = { type = unit_ratio id = fighter value = 100 }
 	ai_strategy = { type = unit_ratio id = cas value = 40 }
-	ai_strategy = { type = unit_ratio id = tactical_bomber value = 40 }
-	ai_strategy = { type = unit_ratio id = strategic_bomber value = 35 }
-	ai_strategy = { type = unit_ratio id = naval_bomber value = 50 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 5 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 5 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 25 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 4 }
 }
 
 default_garrison_strategy = {
 	enable = { always = yes }
-	ai_strategy = { type = garrison value = 1 }
+	ai_strategy = { type = garrison value = 10 }
 }
 
 save_admiral_pp_for_later = {
