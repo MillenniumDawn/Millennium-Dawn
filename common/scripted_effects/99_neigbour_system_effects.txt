@@ -1,0 +1,94 @@
+# Author(s): Angriest Bird
+update_neighbors_effects = {
+	set_temp_variable = { total_neighbour_count = 0 }
+	# Unstable Neighbour Effects
+	set_temp_variable = { unstable_neighbor_count_temp = 0 }
+
+	# Ideology Neighbour Drifts
+	set_temp_variable = { salafist_neighbor_count_temp = 0 }
+	set_temp_variable = { democratic_neighbor_count_temp = 0 }
+	set_temp_variable = { nationalist_neighbor_count_temp = 0 }
+	set_temp_variable = { neutrality_neighbor_count_temp = 0 }
+	set_temp_variable = { communism_neighbor_count_temp = 0 }
+
+	for_each_scope_loop = {
+		array = neighbors
+
+		add_to_temp_variable = { PREV.total_neighbour_count = 1 }
+
+		# Stability Impact
+		if = {
+			limit = {
+				OR = {
+					has_stability < 0.20 # Lowering Stability Count
+					has_civil_war = yes
+				}
+			}
+			add_to_temp_variable = { PREV.unstable_neighbor_count = 1 }
+		}
+		# Neighbour Ideology Drift
+		if = { limit = { is_major = yes }
+			if = { limit = { has_government = democratic }
+				add_to_temp_variable = { PREV.democratic_neighbor_count_temp = 2 }
+			}
+			else_if = { limit = { has_government = neutrality }
+				add_to_temp_variable = { PREV.neutrality_neighbor_count_temp = 2 }
+			}
+			else_if = { limit = { has_government = nationalist }
+				add_to_temp_variable = { PREV.nationalist_neighbor_count_temp = 2 }
+			}
+			else_if = { limit = { has_government = communism }
+				add_to_temp_variable = { PREV.communism_neighbor_count_temp = 2 }
+			}
+			else_if = { limit = { has_government = fascism }
+				add_to_temp_variable = { PREV.salafist_neighbor_count_temp = 2 }
+			}
+		}
+		else = {
+			if = { limit = { has_government = democratic }
+				add_to_temp_variable = { PREV.democratic_neighbor_count_temp = 1 }
+			}
+			else_if = { limit = { has_government = neutrality }
+				add_to_temp_variable = { PREV.neutrality_neighbor_count_temp = 1 }
+			}
+			else_if = { limit = { has_government = nationalist }
+				add_to_temp_variable = { PREV.nationalist_neighbor_count_temp = 1 }
+			}
+			else_if = { limit = { has_government = communism }
+				add_to_temp_variable = { PREV.communism_neighbor_count_temp = 1 }
+			}
+			else_if = { limit = { has_government = fascism }
+				add_to_temp_variable = { PREV.salafist_neighbor_count_temp = 1 }
+			}
+		}
+	}
+
+	# Dynamic Modifier for Neighbor Effects
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = neighbor_effect_modifiers } } }
+		add_dynamic_modifier = { modifier = neighbor_effect_modifiers }
+	}
+
+	# Calculate Effects
+	multiply_temp_variable = { unstable_neighbor_count = -0.02 }
+	multiply_temp_variable = { democratic_neighbor_count_temp = 0.01 }
+	multiply_temp_variable = { neutrality_neighbor_count_temp = 0.01 }
+	multiply_temp_variable = { nationalist_neighbor_count_temp = 0.01 }
+	multiply_temp_variable = { communism_neighbor_count_temp = 0.01 }
+	multiply_temp_variable = { salafist_neighbor_count_temp = 0.01 }
+
+	clamp_variable = { var = unstable_neighbor_count min = -0.25 max = 0 }
+	clamp_variable = { var = democratic_neighbor_count_temp min = 0 max = 0.15 }
+	clamp_variable = { var = neutrality_neighbor_count_temp min = 0 max = 0.15 }
+	clamp_variable = { var = nationalist_neighbor_count_temp min = 0 max = 0.15 }
+	clamp_variable = { var = communism_neighbor_count_temp min = 0 max = 0.15 }
+	clamp_variable = { var = salafist_neighbor_count_temp min = 0 max = 0.15 }
+
+	# Set Dynamic Modifier Variables
+	set_variable = { stability_factor_neighbor_var = unstable_neighbor_count }
+	set_variable = { nationalist_drift_neighbor_var = nationalist_neighbor_count_temp }
+	set_variable = { fascism_drift_neighbor_var = salafist_neighbor_count_temp }
+	set_variable = { neutrality_drift_neighbor_var = neutrality_neighbor_count_temp }
+	set_variable = { communism_drift_neighbor_var = communism_neighbor_count_temp }
+	set_variable = { democratic_drift_neighbor_var = democratic_neighbor_count_temp }
+	force_update_dynamic_modifier = yes
+}
