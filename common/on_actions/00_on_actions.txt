@@ -575,6 +575,62 @@ on_actions = {
 			# Neighbor Updates
 			update_neighbors_effects = yes # Updates Neighbor Effects
 
+			# Auto-Influence Call
+			if = {
+				limit = {
+					is_ai = no
+					any_of = {
+						array = auto_influence_array
+						NOT = { check_variable = { v = 0 } }
+					}
+				}
+				set_variable = { current_political_power_cost = 0 }
+				set_variable = { nations_influenced = 0 }
+
+				if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_spread }
+					set_temp_variable = { percent_change = 0.5 }
+				}
+				else_if = { limit = { has_global_flag = GAME_RULE_gain_3_percent_spread }
+					set_temp_variable = { percent_change = 3 }
+				}
+				else_if = { limit = { has_global_flag = GAME_RULE_gain_4_percent_spread }
+					set_temp_variable = { percent_change = 4 }
+				}
+				else = {
+					set_temp_variable = { percent_change = 2 }
+				}
+				set_temp_variable = { tag_index = THIS.id }
+				for_each_loop = {
+					array = auto_influence_array
+					if = {
+						limit = {
+							NOT = { check_variable = { v = 0 } }
+							check_variable = { current_political_power_cost < political_power }
+							var:v = { ROOT = { NOT = { has_country_flag = spread_influence@PREV } } }
+						}
+						set_temp_variable = { influence_target = v }
+						change_influence_percentage = yes
+						add_to_variable = { nations_influenced = 1 }
+						add_to_variable = { current_political_power_cost = -50 }
+						var:v = {
+							ROOT = {
+								if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
+									set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
+								}
+								else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
+									set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
+								}
+								else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
+									set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+								}
+							}
+						}
+					}
+				}
+
+				country_event = influence.54
+			}
+
 			country_event = egypt.100
 		}
 	}
@@ -2429,6 +2485,7 @@ on_actions = {
 				init_investment_system = yes
 
 				init_equipment_purchasing_order_system = yes
+				init_auto_influence_array = yes
 
 				# Together for Victory Configuration
 				if = { limit = { has_dlc = "Together for Victory" has_idea = NATO_member }
