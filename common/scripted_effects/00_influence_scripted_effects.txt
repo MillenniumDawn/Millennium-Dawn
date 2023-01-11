@@ -643,3 +643,68 @@ change_influence_percentage = {
 	}
 	set_temp_variable = { percent_change = percent_change_temp }
 }
+
+# Utility Section:
+# Auto-Influence Utilities
+init_auto_influence_array = {
+	set_variable = { auto_influence_cap = 3 }
+	set_variable = { auto_influence_users = 0 }
+
+	add_to_variable = { auto_influence_cap = modifier@foreign_influence_auto_influence_cap_modifier }
+	resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
+}
+
+update_auto_influence_array = {
+	set_variable = { auto_influence_cap = 3 }
+	add_to_variable = { auto_influence_cap = modifier@foreign_influence_auto_influence_cap_modifier }
+
+	for_each_loop = {
+		array = auto_influence_array
+		if = { limit = { check_variable = { i > auto_influence_cap } }
+			set_variable = { auto_influence_array^i = 0 }
+		}
+	}
+	clamp_variable = { var = auto_influence_users min = 0 max = auto_influence_cap }
+}
+
+# SCOPE: Executed in ROOT
+# get_available_auto_influence_slot
+get_influencer_slot = {
+	for_each_loop = {
+		array = auto_influence_array
+		if = {
+			limit = { check_variable = { v = 0 } }
+
+			set_variable = { new_auto_influencer = i }
+			set_temp_variable = { break = 1 }
+		}
+	}
+}
+
+create_new_auto_influencer_request = {
+	log = "[GetDateText]: [Root.GetName]: Creation of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
+	get_influencer_slot = yes
+	if = { limit = { has_variable = new_auto_influencer }
+		set_variable = { auto_influence_array^new_auto_influencer = PREV.id }
+		add_to_variable = { auto_influence_users = 1 }
+		clamp_variable = { var = auto_influence_users min = 0 max = auto_influence_cap }
+		clear_variable = new_auto_influencer
+	}
+	custom_effect_tooltip = influence_create_new_auto_request_TT
+}
+
+remove_auto_influencer_request = {
+	log = "[GetDateText]: [Root.GetName]: Creation of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
+	set_temp_variable = { index = 0 }
+	for_each_loop = {
+		array = auto_influence_array
+		if = { limit = { check_variable = { v = PREV.id } }
+			set_temp_variable = { index = i }
+		}
+	}
+
+	set_variable = { auto_influence_array^index = 0 }
+	subtract_from_variable = { auto_influence_users = 1 }
+	clamp_variable = { var = auto_influence_users min = 0 max = auto_influence_cap }
+	custom_effect_tooltip = influence_remove_auto_request_TT
+}
