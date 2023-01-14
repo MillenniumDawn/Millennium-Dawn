@@ -1,0 +1,543 @@
+on_actions = {
+	on_weekly_SPR = {
+		effect = {
+			#calculate cap for regulares divisions
+			set_variable = { SPR_regulare_cap = 0 }
+			every_owned_state = {
+				limit = { not = { is_core_of = SPR } }
+				add_to_variable = { PREV.SPR_regulare_cap= state_population_k }
+			}
+
+			divide_variable = { SPR_regulare_cap  = SPR_regulare_cap_ratio }
+			round_variable = SPR_regulare_cap
+
+			#calculate cap for foreign legion divisions
+			set_variable = {SPR_legion_cap = max_available_manpower_k}
+			set_variable = {SPR_legion_cap_ratio = 40}
+
+			divide_variable = { SPR_legion_cap = SPR_legion_cap_ratio }
+			round_variable = SPR_legion_cap
+
+			if = { limit = { has_completed_focus = SPR_sector_servicios_espanol}
+				if = { limit = { has_war = yes }
+					set_variable = {SPR_tourism_1_effect = 0 }
+					set_variable = {SPR_tourism_2_effect = 0 }
+					set_variable = {SPR_tourism_3_effect = 0 }
+				}
+				else = {
+					set_variable = {SPR_tourism_1_effect = 0.4 }
+					set_variable = {SPR_tourism_2_effect = 0.8 }
+					set_variable = {SPR_tourism_3_effect = 1.2 }
+				}
+
+				if = { limit = { has_stability < 0.5 }
+					set_variable = {SPR_tourism_1_effect = 0 }
+					set_variable = {SPR_tourism_2_effect = 0 }
+					set_variable = {SPR_tourism_3_effect = 0 }
+				}
+				else = {
+					set_variable = {SPR_tourism_1_effect = 0.4 }
+					set_variable = {SPR_tourism_2_effect = 0.8 }
+					set_variable = {SPR_tourism_3_effect = 1.2 }
+				}
+
+			}
+		}
+	}
+
+	# Custom Monthly Pulses for SPR
+	on_monthly_SPR = {
+		effect = {
+			# Pulse Check for Yearly Flavor Events
+			if = { limit = { check_variable = { global.month = 1 } }
+
+				# Prestige Event
+				if = { limit = { check_variable = { global.year > 2002 } }
+					if = { limit = { NOT = { has_country_flag = SPR_prestige_oil_spill } }
+						random_list = {
+							50 = {
+								#spill will happen this pulse
+								country_event = { id = spain.85 random_days = 210 random = 10 }
+							}
+							50 = {
+								#spill will not happen this pulse
+							}
+						}
+					}
+				}
+				if = { limit = { check_variable = { global.year > 2009 } }
+					if = {
+						limit = {
+							NOT = {
+								has_country_flag = SPR_metropol_parasol_project_ignored
+								has_country_flag = SPR_metropol_parsol_project_complete
+							}
+						}
+						random_list = {
+							40 = {
+								modifier = {
+									factor = 1.25
+									has_country_flag = { flag = SPR_metropol_parasol_project_money value < 2 }
+								}
+								modifier = {
+									factor = 1.25
+									has_country_flag = { flag = SPR_metropol_parasol_project_money value > 1 }
+								}
+								modifier = {
+									factor = 1.05
+									has_country_flag = SPR_metropol_parasol_project_political
+								}
+								country_event = { id = spain.247 random_days = 180 random = 24 }
+							}
+							60 = {
+								# DO NOTHING
+							}
+						}
+					}
+				}
+				if = { limit = { check_variable = { global.year > 2016 } }
+					if = { limit = { NOT = { has_country_flag = SPR_sagrada_familia_complete_flag } }
+						random_list = {
+							30 = {
+								modifier = {
+									factor = 1.5
+									has_country_flag = SPR_sagra_familia_additional_funding_flag
+								}
+								country_event = { id = spain.254 random_days = 180 }
+							}
+							70 = {
+								# NOTHING
+							}
+						}
+					}
+				}
+
+				# Historical Events
+				if = { limit = { check_variable = { global.year = 2001 } }
+					# ETA Car Bombing
+					country_event = { id = spain.214 random_days = 360 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2002 } }
+				 	# Gibraltar 2002 Referendum
+					country_event = { id = spain.261 days = 90 random_days = 210 random = 24 }
+					# Espana 2000 Forms
+					country_event = { id = spain.208 random_days = 180 random = 24 }
+					# Spain Commits State Terrorism
+					country_event = { id = spain.243 days = 60 random_days = 90 random = 24 }
+					# Banning Batasuna
+					country_event = { id = spain.215 random_days = 360 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2003 } }
+					# Alternativa Espanola
+					country_event = { id = spain.209 random_days = 180 random = 24 }
+					# San Sebastian Attacks Thwarted
+					country_event = { id = spain.216 random_days = 360 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2004 } }
+					# Constitution Day Bombings
+					country_event = { id = spain.222 days = 340 random = 24 }
+					# 2004 Madrid Train Bombings
+					country_event = { id = spain.255 days = 90 random_days = 7 }
+				}
+				if = { limit = { check_variable = { global.year = 2005 } }
+					# Cidudanos Forms
+					country_event = { id = spain.206 random_days = 280 random = 24 }
+					# Metropol Parasol Project
+					country_event = { id = spain.245 days = 30 random_days = 210 random = 24 }
+					# Another Car Bombing In Madrid
+					country_event = { id = spain.223 random_days = 360 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2006 } }
+					# Madrid–Barajas Airport bombing
+					country_event = { id = spain.217 random_days = 360 random = 24 }
+					# Statute of Autonomy of Catalonia
+					country_event = { id = spain.230 random_days = 180 random = 24 }
+			    }
+				if = { limit = { check_variable = { global.year = 2008 } }
+					# 2008 Barcelona Terror Plot Thwarted
+					country_event = { id = spain.258 days = 45 random_days = 210 random = 24 }
+					# Funding for the Sagrada Familia
+					country_event = { id = spain.253 days = 90 random_days = 210 random = 24 }
+					# Basque Self-determination Referendum
+					country_event = { id = spain.218 random_days = 360 random = 24 }
+					# Funding Request for Metropol Parasol Project
+					if = { limit = { NOT = { has_country_flag = SPR_metropol_parasol_project_ignored } }
+						country_event = { id = spain.246 random_days = 360 random = 24 }
+					}
+				}
+				if = { limit = { check_variable = { global.year = 2009 } }
+					# Jurdan Martitegi Arrested
+					country_event = { id = spain.219 random_days = 360 random = 24 }
+					# Guardia Civil Bombings
+					country_event = { id = spain.220 random_days = 360 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2010 } }
+					# Death of Charlie Sheen
+					country_event = { id = spain.205 random_days = 210 random = 24 }
+					# 2010 Bilbao Receives the Nobel Prize
+					country_event = { id = spain.212 random_days = 180 random = 24 }
+					# Spanish Constitutional Court Revises the Statute of Autonomy
+					country_event = { id = spain.231 days = 40 random_days = 20 }
+				}
+				if = { limit = { check_variable = { global.year = 2011 } }
+					# Permenant Ceasefire With The ETA
+					country_event = { id = spain.221 random_days = 360 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2012 } }
+					# Death of Antonio Cubillo
+					country_event = { id = spain.244 random_days = 210 random = 24 }
+					# Catalonia Demands Independence
+					country_event = { id = spain.233 days = 40 random_days = 180 }
+				}
+				if = { limit = { check_variable = { global.year = 2013 } }
+					# Vox Forms
+					country_event = { id = spain.207 random_days = 180 random = 72 }
+					# Abdication of Juan Carlos
+					country_event = { id = spain.204 random_days = 450 random = 24 }
+					# Catalan Way 2013
+					country_event = { id = spain.234 random_days = 280 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2014 } }
+					# Catalan Way 2014
+					country_event = { id = spain.235 random_days = 180 random = 24 }
+					# Catalan Self-Determination Referendum
+					country_event = { id = spain.236 days = 190 random_days = 30 }
+				}
+				if = { limit = { check_variable = { global.year = 2016 } }
+					# Unidos Podemos Forms
+					country_event = { id = spain.210 random_days = 90 random = 24 }
+					#  Go Ahead Catalan Republic!
+					country_event = { id = spain.237 random_days = 280 random = 24 }
+				}
+				if = { limit = { check_variable = { global.year = 2017 } }
+					# Barcelona Terror Attacks
+					country_event = { id = spain.259 days = 120 random_days = 120 random = 24 }
+					country_event = { id = spain.238 days = 120 random_days = 30 }
+				}
+				if = { limit = { check_variable = { global.year = 2019 } }
+					# Unidas Podemos
+					country_event = { id = spain.211 random_days = 180 random = 24 }
+
+					country_event = { id = spain.240 days = 120 random_days = 30 }
+				}
+				if = { limit = { check_variable = { global.year = 2021 } }
+					# September 17th Attacks
+					country_event = { id = spain.260 days = 190 random_days = 130 random = 24 }
+
+					country_event = { id = spain.241 days = 120 random_days = 30 }
+				}
+			}
+
+
+
+			if = {
+				limit = {
+					OR = {
+						check_variable = { global.month = 4 } # April
+						check_variable = { global.month = 8 } # August
+						check_variable = { global.month = 12 } # December
+					}
+				}
+			#Migrant Crisis
+			if = { limit = { date > 2005.1.1 }
+				if = {
+					limit = {
+						NOT = { has_country_flag = SPR_mirgrant_crisis_start }
+						NOT = {
+							has_idea = SPR_idea_open_borders_1
+							has_idea = SPR_idea_open_borders_2
+						}
+					}
+					random_list = {
+						50 = {
+							#crisis will happen this pulse
+							country_event = { id = spain.201 random_days = 60 }
+						}
+						50 = {
+							#crisis will not happen this pulse
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = SPR_mirgrant_crisis_start
+						NOT = { has_country_flag = SPR_increased_immigration }
+						has_country_flag = SPR_refused_immigrants
+						NOT = {
+							has_idea = SPR_idea_open_borders_1
+							has_idea = SPR_idea_open_borders_2
+						}
+					}
+					random_list = {
+						50 = {
+							#ceuta assault
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = SPR_border_massacre
+									has_country_flag = SPR_ceuta_assault
+								}
+							}
+
+							country_event = { id = spain.202 random_days = 60 }
+						}
+						50 = {
+							#mellila assault
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = SPR_border_massacre
+									has_country_flag = SPR_mellila_assault
+								}
+							}
+
+							country_event = { id = spain.203 random_days = 60 }
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = SPR_mirgrant_crisis_start
+						has_country_flag = SPR_increased_immigration
+						NOT = {
+							has_idea = SPR_idea_open_borders_1
+							has_idea = SPR_idea_open_borders_2
+						}
+					}
+					random_list = {
+						40 = {
+							#ceuta assault
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = SPR_border_massacre
+									has_country_flag = SPR_ceuta_assault
+								}
+							}
+
+							country_event = { id = spain.202 random_days = 60 }
+						}
+						40 = {
+							#mellila assault
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = SPR_border_massacre
+									has_country_flag = SPR_mellila_assault
+								}
+							}
+							country_event = { id = spain.203 random_days = 60 }
+						}
+						20 = {
+							#assault will not happen
+							set_country_flag = SPR_no_border_assaults
+						}
+					}
+				}
+			}
+
+				set_variable = { SPR_basque_support_chance_factor = 1 }
+				set_variable = { SPR_basque_protest_chance_factor = 1 }
+
+				if = { limit = { check_variable = { SPR_culture_opinion^1 > 50 } }
+					set_variable = { SPR_basque_support_chance_modifier = SPR_culture_opinion^1 }
+					add_to_variable = { SPR_basque_support_chance_modifier = -50 }
+					divide_variable = { SPR_basque_support_chance_modifier  = 10 }
+					round_variable = SPR_basque_support_chance_modifier
+					add_to_variable = { SPR_basque_support_chance_factor = SPR_basque_support_chance_modifier }
+
+				}
+				if = { limit = { check_variable = { SPR_culture_opinion^1 < 50 } }
+					set_variable = { SPR_basque_protest_chance_modifier = 50 }
+					set_variable = { SPR_basque_opinion_below_50 = SPR_culture_opinion^1}
+					multiply_variable = { SPR_basque_opinion_negative = -1 }
+					add_to_variable = { SPR_basque_protest_chance_modifier = SPR_basque_opinion_negative }
+					divide_variable = { SPR_basque_protest_chance_modifier = 10 }
+					round_variable = SPR_basque_protest_chance_modifier
+					add_to_variable = { SPR_basque_protest_chance_factor = SPR_basque_protest_chance_modifier }
+				}
+
+				set_variable = { SPR_galician_support_chance_factor = 1 }
+				set_variable = { SPR_galician_protest_chance_factor = 1 }
+
+				if = { limit = { check_variable = { SPR_culture_opinion^2 > 50 } }
+					set_variable = { SPR_galician_support_chance_modifier = SPR_culture_opinion^2 }
+					add_to_variable = { SPR_galician_support_chance_modifier = -50 }
+					divide_variable = { SPR_galician_support_chance_modifier  = 10 }
+					round_variable = SPR_galician_support_chance_modifier
+					add_to_variable = { SPR_galician_support_chance_factor = SPR_galician_support_chance_modifier }
+
+				}
+				if = { limit = { check_variable = { SPR_culture_opinion^2 < 50 } }
+					set_variable = { SPR_galician_protest_chance_modifier = 50 }
+					set_variable = { SPR_galician_opinion_below_50 = SPR_culture_opinion^1}
+					multiply_variable = { SPR_galician_opinion_negative = -1 }
+					add_to_variable = { SPR_galician_protest_chance_modifier = SPR_galician_opinion_negative }
+					divide_variable = { SPR_galician_protest_chance_modifier = 10 }
+					round_variable = SPR_galician_protest_chance_modifier
+					add_to_variable = { SPR_galician_protest_chance_factor = SPR_basque_protest_chance_modifier }
+				}
+
+				set_variable = { SPR_catalonian_support_chance_factor = 1 }
+				set_variable = { SPR_catalonian_protest_chance_factor = 1 }
+
+				if = { limit = { check_variable = { SPR_culture_opinion^0 > 50 } }
+					set_variable = { SPR_catalonian_support_chance_modifier = SPR_culture_opinion^0 }
+					add_to_variable = { SPR_catalonian_support_chance_modifier = -50 }
+					divide_variable = { SPR_catalonian_support_chance_modifier  = 10 }
+					round_variable = SPR_catalonian_support_chance_modifier
+					add_to_variable = { SPR_catalonian_support_chance_factor = SPR_catalonian_support_chance_modifier }
+
+				}
+				if = { limit = { check_variable = { SPR_culture_opinion^0 < 50 } }
+					set_variable = { SPR_catalonian_protest_chance_modifier = 50 }
+					set_variable = { SPR_catalonian_opinion_below_50 = SPR_culture_opinion^1}
+					multiply_variable = { SPR_catalonian_opinion_negative = -1 }
+					add_to_variable = { SPR_catalonian_protest_chance_modifier = SPR_catalonian_opinion_negative }
+					divide_variable = { SPR_catalonian_protest_chance_modifier = 10 }
+					round_variable = SPR_catalonian_protest_chance_modifier
+					add_to_variable = { SPR_catalonian_protest_chance_factor = SPR_basque_protest_chance_modifier }
+				}
+
+				set_variable = { SPR_andalucian_support_chance_factor = 1 }
+				set_variable = { SPR_andalucian_protest_chance_factor = 1 }
+
+				if = { limit = { check_variable = { SPR_culture_opinion^3 > 50 } }
+					set_variable = { SPR_andalucian_support_chance_modifier = SPR_culture_opinion^3 }
+					add_to_variable = { SPR_andalucian_support_chance_modifier = -50 }
+					divide_variable = { SPR_andalucian_support_chance_modifier  = 10 }
+					round_variable = SPR_andalucian_support_chance_modifier
+					add_to_variable = { SPR_andalucian_support_chance_factor = SPR_andalucian_support_chance_modifier }
+
+				}
+				if = { limit = { check_variable = { SPR_culture_opinion^3 < 50 } }
+					set_variable = { SPR_andalucian_protest_chance_modifier = 50 }
+					set_variable = { SPR_andalucian_opinion_below_50 = SPR_culture_opinion^1}
+					multiply_variable = { SPR_andalucian_opinion_negative = -1 }
+					add_to_variable = { SPR_andalucian_protest_chance_modifier = SPR_andalucian_opinion_negative }
+					divide_variable = { SPR_andalucian_protest_chance_modifier = 10 }
+					round_variable = SPR_andalucian_protest_chance_modifier
+					add_to_variable = { SPR_andalucian_protest_chance_factor = SPR_basque_protest_chance_modifier }
+				}
+
+				# Random List to Choose the Culture Group
+				random_list = {
+					15 = {
+						modifier = {
+							factor = 0
+							SPR = { owns_state = 88 }
+							88 = {
+								NOT = { is_core_of = NAV }
+							}
+						}
+						# Basque
+						random_list = {
+							50 = {
+								# support event
+								modifier = {
+									factor = SPR_basque_support_chance_factor
+								}
+								modifier = {
+									factor = 0
+									nationalist_fascists_are_in_power_or_coalition = yes
+								}
+
+								country_event = { id = spain.8 random_days = 60 }
+							}
+							50 = {
+								#protest event
+								modifier = {
+									factor = SPR_basque_protest_chance_factor
+								}
+								country_event = { id = spain.9 random_days = 60 }
+							}
+						}
+					}
+					15 = {
+						modifier = {
+							factor = 0
+							if = { limit = { SPR = { owns_state = 944 } }
+								944 = { NOT = { is_core_of = GAL } }
+							}
+							if = { limit = { SPR = { owns_state = 1055 } }
+								1055 = { NOT = { is_core_of = GAL } }
+							}
+						}
+						# Galegos
+						random_list = {
+							50 = {
+								# support event
+								modifier = {
+									factor = SPR_galician_support_chance_factor
+								}
+								country_event = { id = spain.12 random_days = 60 }
+							}
+							50 = {
+								#protest event
+								modifier = {
+									factor = SPR_galician_protest_chance_factor
+								}
+								country_event = { id = spain.13 random_days = 60 }
+							}
+						}
+					}
+					15 = {
+						modifier = {
+							factor = 0
+							SPR = { owns_state = 86 }
+							86 = { NOT = { is_core_of = CAT } }
+						}
+						# Catalonians
+						random_list = {
+							50 = {
+								# support event
+								modifier = {
+									factor = SPR_catalonian_support_chance_factor
+								}
+								modifier = {
+									factor = 0
+									nationalist_fascists_are_in_power_or_coalition = yes
+								}
+
+								country_event = { id = spain.16 random_days = 60 }
+							}
+							50 = {
+								#protest event
+								modifier = {
+									factor = SPR_catalonian_protest_chance_factor
+								}
+								country_event = { id = spain.17 random_days = 60 }
+							}
+						}
+					}
+					15 = {
+						modifier = {
+							factor = 0
+							SPR = { owns_state = 93 }
+							93 = { NOT = { is_core_of = CAT } }
+						}
+						# Andalucians
+						random_list = {
+							50 = {
+								# support event
+								modifier = {
+									factor = SPR_andalucian_support_chance_factor
+								}
+								country_event = { id = spain.20 random_days = 60 }
+							}
+							50 = {
+								#protest event
+								modifier = {
+									factor = SPR_andalucian_protest_chance_factor
+								}
+								country_event = { id = spain.21 random_days = 60 }
+							}
+						}
+					}
+					40 = {}
+				}
+			}
+		}
+	}
+}
+

@@ -10,16 +10,85 @@
 @attack_sub_armor = 4
 @missile_sub_armor = 6
 
+@corvette_hp = 60
+@frigate_hp = 160
+@destroyer_hp = 240
+@cruiser_hp = 440
+@helicopter_operator_hp = 800
+@battlecruiser_hp = 800
+@battleship_hp = 1250
+@carrier_hp = 800
+@attack_sub_hp = 90
+@missile_sub_hp = 150
+
+@corvette_build_cost = 2100
+@frigate_build_cost = 5600
+@destroyer_build_cost = 8400
+@cruiser_build_cost = 15400
+@helicopter_operator_build_cost = 28000
+@battlecruiser_build_cost = 28000
+@battleship_build_cost = 43750
+@carrier_build_cost = 28000
+@attack_sub_build_cost = 3150
+@missile_sub_build_cost = 5250
+
+@corvette_fuel_consumption = 30
+@frigate_fuel_consumption = 80
+@destroyer_fuel_consumption = 120
+@cruiser_fuel_consumption = 220
+@helicopter_operator_fuel_consumption = 400
+@battlecruiser_fuel_consumption = 400
+@battleship_fuel_consumption = 625
+@carrier_fuel_consumption = 400
+@attack_sub_fuel_consumption = 45
+@missile_sub_fuel_consumption = 75
+
+@corvette_org = 0.171
+@frigate_org = 0.355
+@destroyer_org = 0.436
+@cruiser_org = 0.677
+@helicopter_operator_org = 1.6
+@battlecruiser_org = 1.143
+@battleship_org = 1.786
+@carrier_org = 1.143
+@attack_sub_org = 0.3
+@missile_sub_org = 0.428
+
+#speed in kn, most of the final value will come from engine module
+@corvette_speed = 9
+@frigate_speed = 8.5
+@destroyer_speed = 8
+@cruiser_speed = 7.5
+@helicopter_operator_speed = 7.5
+@battlecruiser_speed = 7
+@battleship_speed = 6.5
+@carrier_speed = 7.5
+@attack_sub_speed = 8
+@missile_sub_speed = 7
+
+@corvette_range = 0
+@frigate_range = 500
+@destroyer_range = 1000
+@cruiser_range = 1500
+@helicopter_operator_range = 1500
+@battlecruiser_range = 2000
+@battleship_range = 2500
+@carrier_range = 2500
+@attack_sub_range = 0
+@missile_sub_range = 1500
+
 ###MDs Naval Ships
 
 # IC cost of 10 strength = 350 IC
-# modified by multiplicative values for each hull type based on number of available module slots
+
+# was modified by multiplicative values for each hull type based on number of available module slots but removed for balance reasons (corvettes too strong)
 
 # Manpower cost of 10 strength = 10
 
-# base visibility = 1 for each module slot of the hull
-# Visibility of 10 strength = 0.125
+# base visibility = 0.5 for each module slot of the hull
+# Visibility of 10 strength = 0.5
 # visibility reduced by 5% every 10 year for tech increase
+# added 5 base visibility to every ship for balance reason (corvettes too strong) (subs excluded)
 
 equipments = {
 #MTG CORVETTES
@@ -61,6 +130,7 @@ equipments = {
 					module_minelaying_category
 					module_mineclearing_category
 					module_anti_submarine_mortar_category
+					module_vls_category
 				}
 			}
 			fixed_ship_radar_slot = {
@@ -78,13 +148,13 @@ equipments = {
 			front_1_custom_slot = {
 				required = no
 				allowed_module_categories = {
+					module_light_guns_category
 					module_torpedoes_category
 					module_anti_ship_torpedoes_category
 					module_minelaying_category
 					module_point_defense_system_category
 					module_turret_missile_category
 					module_anti_submarine_mortar_category
-					module_vls_category
 				}
 			}
 			rear_1_custom_slot = {
@@ -94,7 +164,6 @@ equipments = {
 					module_anti_submarine_mortar_category
 					module_point_defense_system_category
 					module_light_helipad_category
-					module_vls_category
 					module_anti_submarine_mortar_category
 					module_torpedoes_category
 					module_anti_ship_torpedoes_category
@@ -105,20 +174,18 @@ equipments = {
 
 		default_modules = {
 			fixed_ship_engine_slot = module_light_surface_diesel_power
-				fixed_ship_fire_control_system_slot = module_analog_fire_control
-				fixed_ship_radar_slot = module_radar_1
-				fixed_ship_auxillary_slot = module_mineclearing
-				fixed_ship_battery_slot = module_76mm_gun_1
-				front_1_custom_slot = module_chain_gun
-				rear_1_custom_slot = module_minelaying
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_1
+			fixed_ship_auxillary_slot = module_mineclearing
+			fixed_ship_battery_slot = module_76mm_gun_1
+			front_1_custom_slot = module_chain_gun
+			rear_1_custom_slot = module_minelaying
 		}
 
 		module_count_limit = { category = module_radar_category count < 2 }
 		module_count_limit = { category = module_sonar_category count < 2 }
 		module_count_limit = { category = module_mineclearing_category count < 2 }
 		module_count_limit = { category = module_minelaying_category count < 2 }
-		module_count_limit = { category = module_torpedoes_category count < 2 }
-		module_count_limit = { category = module_anti_ship_torpedoes_category count < 2 }
 		module_count_limit = { category = module_vls_category count < 2 }
 
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
@@ -132,21 +199,20 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @corvette_armor ##No armor module so ships have their own
-		surface_detection = 15
-		sub_detection = 6
-		surface_visibility = 7.5
-		naval_speed = 15 #kn
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 11.5
+		naval_speed = @corvette_speed
 		reliability = 0.80
-		naval_range = 0
-		max_strength = 40
-		fuel_consumption = 20
-
-		build_cost_ic = 700
+		naval_range = @corvette_range
+		max_organisation = @corvette_org
+		max_strength = @corvette_hp
+		fuel_consumption = @corvette_fuel_consumption
+		build_cost_ic = @corvette_build_cost
+		manpower = @corvette_hp
 		resources = {
-			steel = 2
+			steel = 5
 		}
-
-		manpower = 40
 	}
 
 	##Is just basically the base concept
@@ -163,40 +229,7 @@ equipments = {
 		parent = corvette_hull_1
 		priority = 100
 
-		module_slots = {
-			front_1_custom_slot = {
-				required = no
-				allowed_module_categories = {
-					module_torpedoes_category
-					module_anti_ship_torpedoes_category
-					module_minelaying_category
-					module_point_defense_system_category
-					module_turret_missile_category
-					module_anti_submarine_mortar_category
-					module_vls_category
-				}
-			}
-			rear_1_custom_slot = {
-				required = no
-				allowed_module_categories = {
-					module_turret_missile_category
-					module_anti_submarine_mortar_category
-					module_point_defense_system_category
-					module_light_helipad_category
-					module_vls_category
-					module_anti_submarine_mortar_category
-					module_torpedoes_category
-					module_anti_ship_torpedoes_category
-					module_minelaying_category
-				}
-			}
-			fixed_ship_battery_slot = inherit
-			fixed_ship_auxillary_slot = inherit
-			fixed_ship_radar_slot = inherit
-			fixed_ship_fire_control_system_slot = inherit
-			fixed_ship_engine_slot = inherit
-		}
-
+		module_slots = inherit
 		default_modules = {
 				fixed_ship_engine_slot = module_light_surface_diesel_power
 				fixed_ship_fire_control_system_slot = module_analog_fire_control
@@ -218,22 +251,21 @@ equipments = {
 
 		#Misc Stats
 		armor_value = @corvette_armor
-		surface_detection = 15
-		sub_detection = 8
-		surface_visibility = 7.053
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 10.638
+		naval_speed = @corvette_speed
 		reliability = 0.82
-		naval_range = 0
-		max_strength = 50
-		max_organisation = 0.143
-		fuel_consumption = 25
-		build_cost_ic = 825
-
+		naval_range = @corvette_range
+		max_strength = @corvette_hp
+		max_organisation = @corvette_org
+		fuel_consumption = @corvette_fuel_consumption
+		build_cost_ic = @corvette_build_cost
+		manpower = @corvette_hp
 		resources = {
-			steel = 2
+			steel = 5
 			aluminium = 1
 		}
-		manpower = 50
 	}
 
 	corvette_hull_3 = {
@@ -243,7 +275,6 @@ equipments = {
 		priority = 100
 
 		module_slots = inherit
-
 		default_modules = {
 				fixed_ship_engine_slot = module_light_surface_diesel_power
 				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
@@ -265,21 +296,21 @@ equipments = {
 
 		#Misc Stats
 		armor_value = @corvette_armor
-		surface_detection = 15
-		sub_detection = 10
-		surface_visibility = 6.587
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 9.775
+		naval_speed = @corvette_speed
 		reliability = 0.84
-		naval_range = 0
-		max_strength = 60
-		max_organisation = 0.171
-		fuel_consumption = 30
-		build_cost_ic = 1050
+		naval_range = @corvette_range
+		max_strength = @corvette_hp
+		max_organisation = @corvette_org
+		fuel_consumption = @corvette_fuel_consumption
+		build_cost_ic = @corvette_build_cost
+		manpower = @corvette_hp
 		resources = {
-			steel = 2
-			aluminium = 1
+			steel = 5
+			aluminium = 2
 		}
-		manpower = 60
 	}
 
 	corvette_hull_4 = {
@@ -290,7 +321,6 @@ equipments = {
 		priority = 100
 
 		module_slots = inherit
-
 		default_modules = {
 				fixed_ship_engine_slot = module_light_surface_jet_turbine_power
 				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
@@ -312,22 +342,22 @@ equipments = {
 
 		#Misc Stats
 		armor_value = @corvette_armor
-		surface_detection = 15
-		sub_detection = 12
-		surface_visibility = 6.2
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 8.913
+		naval_speed = @corvette_speed
 		reliability = 0.88
-		naval_range = 0
-		max_strength = 80
-		max_organisation = 0.229
-		fuel_consumption = 40
-		build_cost_ic = 1400
+		naval_range = @corvette_range
+		max_strength = @corvette_hp
+		max_organisation = @corvette_org
+		fuel_consumption = @corvette_fuel_consumption
+		build_cost_ic = @corvette_build_cost
+		manpower = @corvette_hp
 		resources = {
-			steel = 4
-			aluminium = 1
+			steel = 5
+			aluminium = 2
 			chromium = 1
 		}
-		manpower = 80
 	}
 
 	corvette_hull_5 = {
@@ -337,7 +367,6 @@ equipments = {
 		priority = 100
 
 		module_slots = inherit
-
 		default_modules = {
 				fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
 				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
@@ -359,22 +388,22 @@ equipments = {
 
 		#Misc stats
 		armor_value = @corvette_armor
-		surface_detection = 15
-		sub_detection = 13
-		surface_visibility = 5.687
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 8.05
+		naval_speed = @corvette_speed
 		reliability = 0.90
-		naval_range = 0
-		max_strength = 90
-		max_organisation = 0.257
-		fuel_consumption = 45
-		build_cost_ic = 1575
+		naval_range = @corvette_range
+		max_strength = @corvette_hp
+		max_organisation = @corvette_org
+		fuel_consumption = @corvette_fuel_consumption
+		build_cost_ic = @corvette_build_cost
+		manpower = @corvette_hp
 		resources = {
-			steel = 4
-			aluminium = 1
+			steel = 5
+			aluminium = 3
 			chromium = 1
 		}
-		manpower = 90
 	}
 
 	corvette_hull_6 = {
@@ -384,7 +413,6 @@ equipments = {
 		priority = 100
 
 		module_slots = inherit
-
 		default_modules = {
 				fixed_ship_engine_slot = module_light_surface_jet_turbine_power3
 				fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
@@ -406,22 +434,22 @@ equipments = {
 
 		#Misc stats
 		armor_value = @corvette_armor
-		surface_detection = 15
-		sub_detection = 14
-		surface_visibility = 5.234
-		naval_speed = 20
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 7.188
+		naval_speed = @corvette_speed
 		reliability = 0.92
-		naval_range = 1000
-		max_strength = 110
-		max_organisation = 0.314
-		fuel_consumption = 65
-		build_cost_ic = 1925
+		naval_range = @corvette_range
+		max_strength = @corvette_hp
+		max_organisation = @corvette_org
+		fuel_consumption = @corvette_fuel_consumption
+		build_cost_ic = @corvette_build_cost
+		manpower = @corvette_hp
 		resources = {
 			steel = 5
-			aluminium = 1
-			chromium = 1
+			aluminium = 3
+			chromium = 2
 		}
-		manpower = 110
 	}
 
 #NON-MTG CORVETTES
@@ -518,7 +546,7 @@ equipments = {
 
 		build_cost_ic = 2020.60
 		resources = {
-			steel = 3
+			steel = 5
 		}
 
 		manpower = 400
@@ -895,8 +923,8 @@ equipments = {
 			fixed_ship_battery_slot = {
 				required = no
 				allowed_module_categories = {
-					 module_light_guns_category
-					 module_gun_battery_category
+					module_light_guns_category
+					module_gun_battery_category
 				}
 			}
 			fixed_ship_auxillary_slot = {
@@ -961,7 +989,7 @@ equipments = {
 			fixed_ship_engine_slot = {
 				required = yes
 				allowed_module_categories = {
-					 module_light_surface_power_source_category
+					module_light_surface_power_source_category
 				}
 			}
 		}
@@ -995,22 +1023,20 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @frigate_armor
-		surface_detection = 15
-		sub_detection = 10
-		surface_visibility = 10.5
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 17.5
+		naval_speed = @frigate_speed
 		reliability = 0.80
-		naval_range = 0
-		max_strength = 120
-		max_organisation = 0.267
-		fuel_consumption = 60
-
-		build_cost_ic = 2700
+		naval_range = @frigate_range
+		max_strength = @frigate_hp
+		max_organisation = @frigate_org
+		fuel_consumption = @frigate_fuel_consumption
+		build_cost_ic = @frigate_build_cost
+		manpower = @frigate_hp
 		resources = {
-			steel = 3
-			aluminium = 1
+			steel = 5
 		}
-		manpower = 120
 	}
 
 	frigate_hull_1 = { #The Archetype can't be buildable. This is just a buildable version
@@ -1052,23 +1078,21 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @frigate_armor
-		surface_detection = 15
-		sub_detection = 12
-		surface_visibility = 9.944
-		naval_speed = 16
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 16.188
+		naval_speed = @frigate_speed
 		reliability = 0.82
-		naval_range = 500
-		max_strength = 140
-		max_organisation = 0.311
-		fuel_consumption = 70
-
-		build_cost_ic = 3150
+		naval_range = @frigate_range
+		max_strength = @frigate_hp
+		max_organisation = @frigate_org
+		fuel_consumption = @frigate_fuel_consumption
+		build_cost_ic = @frigate_build_cost
+		manpower = @frigate_hp
 		resources = {
-			steel = 3
+			steel = 5
 			aluminium = 1
 		}
-
-		manpower = 140
 	}
 
 	frigate_hull_3 = {
@@ -1103,23 +1127,21 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @frigate_armor
-		surface_detection = 15
-		sub_detection = 15
-		surface_visibility = 9.35
-		naval_speed = 16.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 14.875
+		naval_speed = @frigate_speed
 		reliability = 0.82
-		naval_range = 550
-		max_strength = 160
-		max_organisation = 0.355
-		fuel_consumption = 80
-
-		build_cost_ic = 3600
+		naval_range = @frigate_range
+		max_strength = @frigate_hp
+		max_organisation = @frigate_org
+		fuel_consumption = @frigate_fuel_consumption
+		build_cost_ic = @frigate_build_cost
+		manpower = @frigate_hp
 		resources = {
-			steel = 4
-			aluminium = 1
+			steel = 5
+			aluminium = 2
 		}
-
-		manpower = 160
 	}
 
 	frigate_hull_4 = {
@@ -1153,25 +1175,22 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @frigate_armor
-		surface_detection = 15
-		sub_detection = 20
-		surface_visibility = 8.912
-		naval_speed = 16.75
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 13.563
+		naval_speed = @frigate_speed
 		reliability = 0.82
-		naval_range = 650
-		max_strength = 200
-		max_organisation = 0.444
-		fuel_consumption = 100
-
-		build_cost_ic = 4500
+		naval_range = @frigate_range
+		max_strength = @frigate_hp
+		max_organisation = @frigate_org
+		fuel_consumption = @frigate_fuel_consumption
+		build_cost_ic = @frigate_build_cost
+		manpower = @frigate_hp
 		resources = {
 			steel = 5
-			tungsten = 1
-			aluminium = 1
+			aluminium = 2
 			chromium = 1
 		}
-
-		manpower = 200
 	}
 
 	frigate_hull_5 = {
@@ -1190,7 +1209,7 @@ equipments = {
 				fixed_ship_auxillary_slot_1 = module_asm_3
 				fixed_ship_auxillary_slot = module_vls_sam_2
 				fixed_ship_battery_slot = module_76mm_gun_2
-				front_1_custom_slot = module_torpedoes_3
+				front_1_custom_slot = module_torpedoes_2
 				rear_1_custom_slot = module_light_helipad_2
 		}
 
@@ -1205,25 +1224,22 @@ equipments = {
 
 		#Miscellanous Stats
 		armor_value = @frigate_armor
-		surface_detection = 16
-		sub_detection = 22
-		surface_visibility = 8.225
-		naval_speed = 17
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 12.25
+		naval_speed = @frigate_speed
 		reliability = 0.90
-		naval_range = 650
-		max_strength = 220
-		max_organisation = 0.489
-		fuel_consumption = 110
-
-		build_cost_ic = 4950
+		naval_range = @frigate_range
+		max_strength = @frigate_hp
+		max_organisation = @frigate_org
+		fuel_consumption = @frigate_fuel_consumption
+		build_cost_ic = @frigate_build_cost
+		manpower = @frigate_hp
 		resources = {
-			steel = 6
+			steel = 5
+			aluminium = 3
 			chromium = 1
-			aluminium = 1
-			tungsten = 1
 		}
-
-		manpower = 220
 	}
 
 	frigate_hull_6 = {
@@ -1257,25 +1273,22 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @frigate_armor
-		surface_detection = 16.25
-		sub_detection = 26
-		surface_visibility = 7.656
-		naval_speed = 20
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 10.938
+		naval_speed = @frigate_speed
 		reliability = 0.92
-		naval_range = 700
-		max_strength = 260
-		max_organisation = 0.578
-		fuel_consumption = 130
-
-		build_cost_ic = 5850
+		naval_range = @frigate_range
+		max_strength = @frigate_hp
+		max_organisation = @frigate_org
+		fuel_consumption = @frigate_fuel_consumption
+		build_cost_ic = @frigate_build_cost
+		manpower = @frigate_hp
 		resources = {
-			steel = 7
-			chromium = 1
-			aluminium = 2
-			tungsten = 1
+			steel = 5
+			aluminium = 3
+			chromium = 2
 		}
-
-		manpower = 260
 	}
 
 #NON-MTG FRIGATES
@@ -1355,7 +1368,7 @@ equipments = {
 		}
 		build_cost_ic = 4580.49
 		resources = {
-			steel = 3
+			steel = 5
 		}
 		manpower = 375 ##Reprsents AI and automation becoming more prevalent
 	}
@@ -1588,7 +1601,6 @@ equipments = {
 #MTG DESTROYERS
 	destroyer = {
 		year = 1965
-
 		is_archetype = yes
 		is_buildable = no
 		type = capital_ship
@@ -1616,6 +1628,7 @@ equipments = {
 					module_torpedoes_category
 					module_anti_ship_torpedoes_category
 					module_fuel_tanks_category
+					module_railguns_category
 				}
 			}
 			mid_1_custom_slot = {
@@ -1652,6 +1665,7 @@ equipments = {
 					module_anti_submarine_mortar_category
 					module_point_defense_system_category
 					module_fuel_tanks_category
+					module_railguns_category
 				}
 			}
 			fixed_ship_battery_slot = {
@@ -1659,6 +1673,7 @@ equipments = {
 				allowed_module_categories = {
 					module_light_guns_category
 					module_gun_battery_category
+					module_railguns_category
 				}
 			}
 			fixed_ship_auxillary_slot = {
@@ -1725,9 +1740,7 @@ equipments = {
 		module_count_limit = { category = module_sonar_category count < 2 }
 		module_count_limit = { category = module_mineclearing_category count < 2 }
 		module_count_limit = { category = module_minelaying_category count < 2 }
-		module_count_limit = { category = module_torpedoes_category count < 2 }
-		module_count_limit = { category = module_anti_ship_torpedoes_category count < 2 }
-
+		module_count_limit = { category = module_railguns_category count < 3 }
 
 		default_modules = {
 				fixed_ship_engine_slot = module_surface_diesel_power
@@ -1754,41 +1767,34 @@ equipments = {
 
 		#Misc Stats
 		armor_value = @destroyer_armor
-		surface_detection = 17
-		sub_detection = 10
-		surface_visibility = 12.875
-		naval_speed = 12
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 22.5
+		naval_speed = @destroyer_speed
 		reliability = 0.80
-		naval_range = 0
-		max_strength = 150
-		max_organisation = 0.273
-		fuel_consumption = 75
-
-		build_cost_ic = 4125
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = @destroyer_build_cost
+		manpower = @destroyer_hp
 		resources = {
-			steel = 4
-			aluminium = 1
+			steel = 5
 		}
-
-		manpower = 150
 	}
 
 	destroyer_hull_1 = {
 		year = 1965
-
 		archetype = destroyer
 		priority = 5
-
 		module_slots = inherit
 	}
 
 	destroyer_hull_2 = {
 		year = 1990
-
 		archetype = destroyer
 		parent = destroyer_hull_1
 		priority = 6
-
 		module_slots = inherit
 		default_modules = {
 				fixed_ship_engine_slot = module_surface_diesel_power
@@ -1819,87 +1825,29 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @destroyer_armor
-		surface_detection = 17
-		sub_detection = 14
-		surface_visibility = 11.594
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 19.688
+		naval_speed = @destroyer_speed
 		reliability = 0.8
-		naval_range = 500
-		max_strength = 180
-		max_organisation = 0.327
-		fuel_consumption = 90
-
-		build_cost_ic = 4950
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = @destroyer_build_cost
+		manpower = @destroyer_hp
 		resources = {
-			steel = 4
-			tungsten = 1
-			aluminium = 1
+			steel = 5
+			aluminium = 2
 		}
-
-		manpower = 180
 	}
 
 	destroyer_hull_3 = {
 		year = 2005
-
 		archetype = destroyer
 		parent = destroyer_hull_2
 		priority = 8
-
-		module_slots = {
-			front_1_custom_slot = inherit
-			mid_1_custom_slot = inherit
-			mid_2_custom_slot = inherit
-			rear_1_custom_slot = inherit
-			fixed_ship_battery_slot = {
-				required = no
-				allowed_module_categories = { module_light_guns_category module_railguns_category }
-			}
-			fixed_ship_auxillary_slot = {
-				required = no
-				allowed_module_categories = {
-					module_point_defense_system_category
-					module_turret_missile_category
-					module_light_guns_category
-					module_torpedoes_category
-					module_anti_ship_torpedoes_category
-					module_mineclearing_category
-					module_anti_submarine_mortar_category
-					module_vls_category
-					module_esm_category
-				}
-			}
-			fixed_ship_auxillary_slot_2 = {
-				required = no
-				allowed_module_categories = {
-					module_point_defense_system_category
-					module_turret_missile_category
-					module_light_guns_category
-					module_torpedoes_category
-					module_anti_ship_torpedoes_category
-					module_mineclearing_category
-					module_anti_submarine_mortar_category
-					module_vls_category
-				}
-			}
-			fixed_ship_auxillary_slot_3 = {
-				required = no
-				allowed_module_categories = {
-					module_point_defense_system_category
-					module_turret_missile_category
-					module_light_guns_category
-					module_torpedoes_category
-					module_anti_ship_torpedoes_category
-					module_mineclearing_category
-					module_anti_submarine_mortar_category
-					module_vls_category
-				}
-			}
-			fixed_ship_radar_slot = inherit
-			fixed_ship_fire_control_system_slot = inherit
-			fixed_ship_engine_slot = inherit
-		}
-
+		module_slots = inherit
 		default_modules = {
 				fixed_ship_engine_slot = module_surface_jet_turbine_power
 				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
@@ -1929,34 +1877,29 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @destroyer_armor
-		surface_detection = 17
-		sub_detection = 21
-		surface_visibility = 11.2
-		naval_speed = 16.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 18
+		naval_speed = @destroyer_speed
 		reliability = 0.84
-		naval_range = 600
-		max_strength = 240
-		max_organisation = 0.436
-		fuel_consumption = 120
-
-		build_cost_ic = 6600
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = @destroyer_build_cost
+		manpower = @destroyer_hp
 		resources = {
-			steel = 6
-			tungsten = 1
-			aluminium = 1
-			chromium = 2
+			steel = 5
+			aluminium = 2
+			chromium = 1
 		}
-
-		manpower = 240
 	}
 
 	destroyer_hull_4 = {
 		year = 2025
-
 		archetype = destroyer
 		parent = destroyer_hull_3
 		priority = 10
-
 		module_slots = inherit
 		default_modules = {
 				fixed_ship_engine_slot = module_surface_jet_turbine_power2
@@ -1987,34 +1930,29 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @destroyer_armor
-		surface_detection = 17
-		sub_detection = 27
-		surface_visibility = 10.325
-		naval_speed = 18
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 15.75
+		naval_speed = @destroyer_speed
 		reliability = 0.88
-		naval_range = 700
-		max_strength = 300
-		max_organisation = 0.545
-		fuel_consumption = 150
-
-		build_cost_ic = 8250
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = @destroyer_build_cost
+		manpower = @destroyer_hp
 		resources = {
-			steel = 6
-			chromium = 2
-			aluminium = 2
-			tungsten = 1
+			steel = 5
+			aluminium = 3
+			chromium = 1
 		}
-
-		manpower = 300
 	}
 
 	destroyer_hull_5 = {
 		year = 2045
-
 		archetype = destroyer
 		parent = destroyer_hull_4
 		priority = 12
-
 		module_slots = inherit
 		default_modules = {
 				fixed_ship_engine_slot = module_surface_jet_turbine_power3
@@ -2045,26 +1983,22 @@ equipments = {
 
 		#misc stats
 		armor_value = @destroyer_armor
-		surface_detection = 17
-		sub_detection = 34
-		surface_visibility = 9.3
-		naval_speed = 18.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 13.5
+		naval_speed = @destroyer_speed
 		reliability = 0.92
-		naval_range = 750
-		max_strength = 360
-		max_organisation = 0.654
-		fuel_consumption = 180
-
-		build_cost_ic = 9900
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = @destroyer_build_cost
+		manpower = @destroyer_hp
 		resources = {
-			steel = 7
+			steel = 5
+			aluminium = 3
 			chromium = 2
-			aluminium = 2
-			tungsten = 1
-
 		}
-
-		manpower = 360
 	}
 
 	stealth_destroyer = {
@@ -2185,8 +2119,8 @@ equipments = {
 			}
 		}
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power2
-				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
+				fixed_ship_engine_slot = module_surface_jet_turbine_power
+				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
 				fixed_ship_radar_slot = module_radar_4
 				fixed_ship_auxillary_slot_3 = module_vls_asm_3
 				fixed_ship_auxillary_slot_2 = module_anti_submarine_missile_3
@@ -2213,30 +2147,26 @@ equipments = {
 
 		#misc stats
 		armor_value = @destroyer_armor
-		surface_detection = 18
-		sub_detection = 20
-		surface_visibility = 7.188 #not directly related to size because of special case
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 11.813 #not directly related to size because of special case (70% of expected visibility)
+		naval_speed = @destroyer_speed
 		reliability = 0.80
-		naval_range = 750
-		max_strength = 270
-		max_organisation = 0.491
-		fuel_consumption = 135
-
-		build_cost_ic = 12600 #not directly related to size because of special case
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = 10560 #not directly related to size because of special case (160% of base cost)
+		manpower = @destroyer_hp
 		resources = {
 			steel = 5
 			chromium = 2
 			aluminium = 2
-			tungsten = 1
 		}
-
-		manpower = 270
 	}
 
 	stealth_destroyer_hull_1 = {
 		year = 2015
-
 		archetype = stealth_destroyer
 		priority = 5
 		module_slots = inherit
@@ -2244,13 +2174,10 @@ equipments = {
 
 	stealth_destroyer_hull_2 = {
 		year = 2030
-
 		archetype = stealth_destroyer
 		parent = stealth_destroyer_hull_1
 		priority = 6
-
 		module_slots = inherit
-
 		default_modules = {
 				fixed_ship_engine_slot = module_surface_jet_turbine_power3
 				fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
@@ -2269,7 +2196,6 @@ equipments = {
 		module_count_limit = { category = module_mineclearing_category count < 2 }
 		module_count_limit = { category = module_minelaying_category count < 2 }
 
-
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
 		lg_armor_piercing = 0
 		lg_attack = 0
@@ -2281,36 +2207,30 @@ equipments = {
 
 		#Miocs sats
 		armor_value = @destroyer_armor
-		surface_detection = 18
-		sub_detection = 25
-		surface_visibility = 5.823 #not directly related to size because of special case
-		naval_speed = 16.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 9.113 #not directly related to size because of special case (60% of expected visibility)
+		naval_speed = @destroyer_speed
 		reliability = 0.82
-		naval_range = 850
-		max_strength = 300
-		max_organisation = 0.545
-		fuel_consumption = 150
-
-		build_cost_ic = 14700  #not directly related to size because of special case
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = 11880  #not directly related to size because of special case (180% of base cost)
+		manpower = @destroyer_hp
 		resources = {
 			steel = 5
-			chromium = 2
-			aluminium = 2
-			tungsten = 1
+			chromium = 3
+			aluminium = 3
 		}
-
-		manpower = 300
 	}
 
 	stealth_destroyer_hull_3 = {
 		year = 2045
-
 		archetype = stealth_destroyer
 		parent = stealth_destroyer_hull_2
 		priority = 8
-
 		module_slots = inherit
-
 		default_modules = {
 				fixed_ship_engine_slot = module_surface_fut_reactor_power
 				fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
@@ -2340,25 +2260,22 @@ equipments = {
 
 		#Misc stats
 		armor_value = @destroyer_armor
-		surface_detection = 18
-		sub_detection = 34
-		surface_visibility = 4.66 #not directly related to size because of special case
-		naval_speed = 20
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 6.75 #not directly related to size because of special case (50% of expected visibility)
+		naval_speed = @destroyer_speed
 		reliability = 0.86
-		naval_range = 1000
-		max_strength = 360
-		max_organisation = 0.654
-		fuel_consumption = 180
-
-		build_cost_ic = 18393  #not directly related to size because of special case
+		naval_range = @destroyer_range
+		max_strength = @destroyer_hp
+		max_organisation = @destroyer_org
+		fuel_consumption = @destroyer_fuel_consumption
+		build_cost_ic = 13200  #not directly related to size because of special case (200% of base cost)
+		manpower = @destroyer_hp
 		resources = {
-			steel = 6
-			chromium = 3
-			aluminium = 2
-			tungsten = 1
+			steel = 5
+			chromium = 4
+			aluminium = 4
 		}
-
-		manpower = 360
 	}
 
 #NON-MTG Destroyers
@@ -2465,7 +2382,7 @@ equipments = {
 
 		build_cost_ic = 7417.66
 		resources = {
-			steel = 3
+			steel = 5
 		}
 
 		manpower = 400
@@ -2521,7 +2438,7 @@ equipments = {
 
 		build_cost_ic = 7417.66
 		resources = {
-			steel = 3
+			steel = 5
 		}
 
 		manpower = 400
@@ -2577,7 +2494,7 @@ equipments = {
 		build_cost_ic = 7417.66
 		resources = {
 			aluminium = 1
-			steel = 3
+			steel = 5
 		}
 
 		manpower = 420
@@ -2810,7 +2727,6 @@ equipments = {
 
 	cruiser = {
 		year = 1965
-
 		is_archetype = yes
 		is_buildable = no
 		type = capital_ship
@@ -2976,24 +2892,25 @@ equipments = {
 			}
 		}
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power
-				fixed_ship_fire_control_system_slot = module_analog_fire_control
-				fixed_ship_radar_slot = module_radar_2
-				fixed_ship_battery_slot_4 = module_vls_sam_1
-				fixed_ship_battery_slot_3 = module_ciws_1
-				fixed_ship_battery_slot_2 = module_torpedoes_1
-				fixed_ship_battery_slot = module_127mm_guns_1
-				front_1_custom_slot = module_vls_asm_1
-				front_2_custom_slot = module_vls_sam_1
-				mid_1_custom_slot = module_ciws_1
-				mid_2_custom_slot = module_anti_submarine_missile_1
-				rear_1_custom_slot = module_vls_lam_1
-				rear_2_custom_slot = module_light_helipad_1
+			fixed_ship_engine_slot = module_surface_oil_power
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_1
+			fixed_ship_battery_slot_4 = module_vls_sam_1
+			fixed_ship_battery_slot_3 = module_ciws_1
+			fixed_ship_battery_slot_2 = module_torpedoes_1
+			fixed_ship_battery_slot = module_127mm_guns_1
+			front_1_custom_slot = module_vls_asm_1
+			front_2_custom_slot = module_vls_sam_1
+			mid_1_custom_slot = module_ciws_1
+			mid_2_custom_slot = module_anti_submarine_missile_1
+			rear_1_custom_slot = module_vls_lam_1
+			rear_2_custom_slot = module_light_helipad_1
 		}
 		module_count_limit = { category = module_radar_category count < 2 }
 		module_count_limit = { category = module_sonar_category count < 2 }
 		module_count_limit = { category = module_mineclearing_category count < 2 }
 		module_count_limit = { category = module_minelaying_category count < 2 }
+		module_count_limit = { category = module_gun_battery_category count < 3 }
 
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
 		lg_armor_piercing = 0
@@ -3006,48 +2923,43 @@ equipments = {
 
 		#misc stats
 		armor_value = @cruiser_armor
-		surface_detection = 20
-		sub_detection = 12
-		surface_visibility = 17
-		naval_speed = 12
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 33.5
+		naval_speed = @cruiser_speed
 		reliability = 0.80
-		naval_range = 600
-		max_strength = 320
-		max_organisation = 0.492
-		fuel_consumption = 160
-
-		build_cost_ic = 10400
+		naval_range = @cruiser_range
+		max_strength = @cruiser_hp
+		max_organisation = @cruiser_org
+		fuel_consumption = @cruiser_fuel_consumption
+		build_cost_ic = @cruiser_build_cost
 		resources = {
-			steel = 4
-			aluminium = 1
+			steel = 5
 		}
-
-		manpower = 320
+		manpower = @cruiser_hp
 	}
 
 	cruiser_hull_1 = {
 		year = 1965
-
 		is_archetype = no
 		is_buildable = yes
 		archetype = cruiser
 		priority = 5
-
 		module_slots = inherit
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power
-				fixed_ship_fire_control_system_slot = module_analog_fire_control
-				fixed_ship_radar_slot = module_radar_2
-				fixed_ship_battery_slot_4 = module_vls_sam_1
-				fixed_ship_battery_slot_3 = module_ciws_1
-				fixed_ship_battery_slot_2 = module_torpedoes_1
-				fixed_ship_battery_slot = module_127mm_guns_1
-				front_1_custom_slot = module_vls_asm_1
-				front_2_custom_slot = module_vls_sam_1
-				mid_1_custom_slot = module_ciws_1
-				mid_2_custom_slot = module_anti_submarine_missile_1
-				rear_1_custom_slot = module_vls_lam_1
-				rear_2_custom_slot = module_light_helipad_1
+			fixed_ship_engine_slot = module_surface_oil_power
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_1
+			fixed_ship_battery_slot_4 = module_vls_sam_1
+			fixed_ship_battery_slot_3 = module_ciws_1
+			fixed_ship_battery_slot_2 = module_torpedoes_1
+			fixed_ship_battery_slot = module_127mm_guns_1
+			front_1_custom_slot = module_vls_asm_1
+			front_2_custom_slot = module_vls_sam_1
+			mid_1_custom_slot = module_ciws_1
+			mid_2_custom_slot = module_anti_submarine_missile_1
+			rear_1_custom_slot = module_vls_lam_1
+			rear_2_custom_slot = module_light_helipad_1
 		}
 		module_count_limit = { category = module_radar_category count < 2 }
 		module_count_limit = { category = module_sonar_category count < 2 }
@@ -3057,28 +2969,26 @@ equipments = {
 
 	cruiser_hull_2 = {
 		year = 1985
-
 		is_archetype = no
 		is_buildable = yes
 		archetype = cruiser
 		parent = cruiser_hull_1
 		priority = 7
-
 		module_slots = inherit
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power
-				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_3
-				fixed_ship_battery_slot_4 = module_vls_sam_2
-				fixed_ship_battery_slot_3 = module_ciws_2
-				fixed_ship_battery_slot_2 = module_torpedoes_1
-				fixed_ship_battery_slot = module_127mm_guns_2
-				front_1_custom_slot = module_vls_asm_2
-				front_2_custom_slot = module_vls_sam_2
-				mid_1_custom_slot = module_ciws_2
-				mid_2_custom_slot = module_anti_submarine_missile_2
-				rear_1_custom_slot = module_vls_lam_2
-				rear_2_custom_slot = module_light_helipad_1
+			fixed_ship_engine_slot = module_surface_jet_turbine_power
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_1
+			fixed_ship_battery_slot_4 = module_vls_sam_1
+			fixed_ship_battery_slot_3 = module_ciws_1
+			fixed_ship_battery_slot_2 = module_torpedoes_1
+			fixed_ship_battery_slot = module_127mm_guns_1
+			front_1_custom_slot = module_vls_asm_1
+			front_2_custom_slot = module_vls_sam_1
+			mid_1_custom_slot = module_ciws_1
+			mid_2_custom_slot = module_anti_submarine_missile_1
+			rear_1_custom_slot = module_vls_lam_1
+			rear_2_custom_slot = module_light_helipad_1
 		}
 		module_count_limit = { category = module_radar_category count < 2 }
 		module_count_limit = { category = module_sonar_category count < 2 }
@@ -3096,50 +3006,45 @@ equipments = {
 
 		#misc stats
 		armor_value = @cruiser_armor
-		surface_detection = 20.5
-		sub_detection = 20
-		surface_visibility = 16.2
-		naval_speed = 13
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 30.15
+		naval_speed = @cruiser_speed
 		reliability = 0.84
-		naval_range = 750
-		max_strength = 400
-		max_organisation = 0.615
-		fuel_consumption = 200
-
-		build_cost_ic = 13000
+		naval_range = @cruiser_range
+		max_strength = @cruiser_hp
+		max_organisation = @cruiser_org
+		fuel_consumption = @cruiser_fuel_consumption
+		build_cost_ic = @cruiser_build_cost
+		manpower = @cruiser_hp
 		resources = {
-			steel = 4
-			tungsten = 1
+			steel = 5
 			aluminium = 1
 		}
-
-		manpower = 400
 	}
 
 	cruiser_hull_3 = {
 		year = 2005
-
 		is_archetype = no
 		is_buildable = yes
 		archetype = cruiser
 		parent = cruiser_hull_2
 		priority = 8
-
 		module_slots = inherit
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power
-				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_4
-				fixed_ship_battery_slot_4 = module_vls_sam_3
-				fixed_ship_battery_slot_3 = module_ciws_3
-				fixed_ship_battery_slot_2 = module_torpedoes_3
-				fixed_ship_battery_slot = module_127mm_guns_2
-				front_1_custom_slot = module_vls_asm_3
-				front_2_custom_slot = module_vls_sam_3
-				mid_1_custom_slot = module_ciws_3
-				mid_2_custom_slot = module_anti_submarine_missile_3
-				rear_1_custom_slot = module_vls_lam_3
-				rear_2_custom_slot = module_light_helipad_2
+			fixed_ship_engine_slot = module_surface_jet_turbine_power
+			fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+			fixed_ship_radar_slot = module_radar_3
+			fixed_ship_battery_slot_4 = module_vls_sam_2
+			fixed_ship_battery_slot_3 = module_ciws_2
+			fixed_ship_battery_slot_2 = module_torpedoes_2
+			fixed_ship_battery_slot = module_127mm_guns_2
+			front_1_custom_slot = module_vls_asm_2
+			front_2_custom_slot = module_vls_sam_2
+			mid_1_custom_slot = module_ciws_2
+			mid_2_custom_slot = module_anti_submarine_missile_2
+			rear_1_custom_slot = module_vls_lam_2
+			rear_2_custom_slot = module_light_helipad_1
 		}
 
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
@@ -3153,30 +3058,25 @@ equipments = {
 
 		#misc Stats
 		armor_value = @cruiser_armor
-		surface_detection = 21
-		sub_detection = 26
-		surface_visibility = 14.8
-		naval_speed = 15
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 26.8
+		naval_speed = @cruiser_speed
 		reliability = 0.86
-		naval_range = 800
-		max_strength = 440
-		max_organisation = 0.677
-		fuel_consumption = 220
-
-		build_cost_ic = 14300
+		naval_range = @cruiser_range
+		max_strength = @cruiser_hp
+		max_organisation = @cruiser_org
+		fuel_consumption = @cruiser_fuel_consumption
+		build_cost_ic = @cruiser_build_cost
+		manpower = @cruiser_hp
 		resources = {
 			steel = 5
-			tungsten = 1
 			aluminium = 2
-			chromium = 2
 		}
-
-		manpower = 440
 	}
 
 	cruiser_hull_4 = {
 		year = 2025
-
 		is_archetype = no
 		is_buildable = yes
 		archetype = cruiser
@@ -3185,19 +3085,19 @@ equipments = {
 
 		module_slots = inherit
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power2
-				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_5
-				fixed_ship_battery_slot_4 = module_vls_sam_4
-				fixed_ship_battery_slot_3 = module_ciws_4
-				fixed_ship_battery_slot_2 = module_torpedoes_5
-				fixed_ship_battery_slot = module_127mm_guns_3
-				front_1_custom_slot = module_vls_asm_4
-				front_2_custom_slot = module_vls_sam_4
-				mid_1_custom_slot = module_ciws_4
-				mid_2_custom_slot = module_anti_submarine_missile_4
-				rear_1_custom_slot = module_vls_lam_4
-				rear_2_custom_slot = module_light_helipad_2
+			fixed_ship_engine_slot = module_surface_jet_turbine_power2
+			fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
+			fixed_ship_radar_slot = module_radar_5
+			fixed_ship_battery_slot_4 = module_vls_sam_4
+			fixed_ship_battery_slot_3 = module_ciws_4
+			fixed_ship_battery_slot_2 = module_torpedoes_4
+			fixed_ship_battery_slot = module_127mm_guns_3
+			front_1_custom_slot = module_vls_asm_4
+			front_2_custom_slot = module_vls_sam_4
+			mid_1_custom_slot = module_ciws_4
+			mid_2_custom_slot = module_anti_submarine_missile_4
+			rear_1_custom_slot = module_vls_lam_4
+			rear_2_custom_slot = module_light_helipad_2
 		}
 
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
@@ -3211,51 +3111,46 @@ equipments = {
 
 		#Misc Stats
 		armor_value = @cruiser_armor
-		surface_detection = 21.5
-		sub_detection = 30
-		surface_visibility = 13.3
-		naval_speed = 16
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 23.45
+		naval_speed = @cruiser_speed
 		reliability = 0.88
-		naval_range = 1000
-		max_strength = 480
-		max_organisation = 0.738
-		fuel_consumption = 240
-
-		build_cost_ic = 15600
+		naval_range = @cruiser_range
+		max_strength = @cruiser_hp
+		max_organisation = @cruiser_org
+		fuel_consumption = @cruiser_fuel_consumption
+		build_cost_ic = @cruiser_build_cost
+		manpower = @cruiser_hp
 		resources = {
 			steel = 5
-			chromium = 2
 			aluminium = 2
-			tungsten = 1
+			chromium = 2
 		}
-
-		manpower = 480
 	}
 
 	cruiser_hull_5 = {
 		year = 2045
-
 		is_archetype = no
 		is_buildable = yes
 		archetype = cruiser
 		parent = cruiser_hull_4
 		priority = 11
-
 		module_slots = inherit
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power3
-				fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_6
-				fixed_ship_battery_slot_4 = module_vls_sam_5
-				fixed_ship_battery_slot_3 = module_ciws_5
-				fixed_ship_battery_slot_2 = module_torpedoes_5
-				fixed_ship_battery_slot = module_railgun_2
-				front_1_custom_slot = module_vls_asm_5
-				front_2_custom_slot = module_vls_sam_5
-				mid_1_custom_slot = module_ciws_5
-				mid_2_custom_slot = module_anti_submarine_missile_5
-				rear_1_custom_slot = module_vls_lam_5
-				rear_2_custom_slot = module_light_helipad_2
+			fixed_ship_engine_slot = module_surface_jet_turbine_power3
+			fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
+			fixed_ship_radar_slot = module_radar_6
+			fixed_ship_battery_slot_4 = module_vls_sam_5
+			fixed_ship_battery_slot_3 = module_ciws_5
+			fixed_ship_battery_slot_2 = module_torpedoes_4
+			fixed_ship_battery_slot = module_railgun_2
+			front_1_custom_slot = module_vls_asm_5
+			front_2_custom_slot = module_vls_sam_5
+			mid_1_custom_slot = module_ciws_5
+			mid_2_custom_slot = module_anti_submarine_missile_5
+			rear_1_custom_slot = module_vls_lam_5
+			rear_2_custom_slot = module_light_helipad_2
 		}
 
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
@@ -3269,25 +3164,22 @@ equipments = {
 
 		#Misc Stats
 		armor_value = @cruiser_armor
-		surface_detection = 22
-		sub_detection = 36
-		surface_visibility = 12
-		naval_speed = 18
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 20.1
+		naval_speed = @cruiser_speed
 		reliability = 0.92
-		naval_range = 1400
-		max_strength = 560
-		max_organisation = 0.861
-		fuel_consumption = 280
-
-		build_cost_ic = 18200
+		naval_range = @cruiser_range
+		max_strength = @cruiser_hp
+		max_organisation = @cruiser_org
+		fuel_consumption = @cruiser_fuel_consumption
+		build_cost_ic = @cruiser_build_cost
+		manpower = @cruiser_hp
 		resources = {
 			steel = 5
+			aluminium = 3
 			chromium = 2
-			aluminium = 2
-			tungsten = 1
 		}
-
-		manpower = 560
 	}
 
 #NON-MTG CRUISERS
@@ -3598,6 +3490,9 @@ equipments = {
 					module_point_defense_system_category
 					module_light_guns_category
 					module_gun_battery_category
+					module_vls_category
+					module_turret_missile_category
+					module_torpedoes_category
 				}
 			}
 			mid_2_custom_slot = {
@@ -3607,6 +3502,9 @@ equipments = {
 					module_point_defense_system_category
 					module_light_guns_category
 					module_gun_battery_category
+					module_vls_category
+					module_turret_missile_category
+					module_torpedoes_category
 				}
 			}
 			rear_1_custom_slot = {
@@ -3618,35 +3516,75 @@ equipments = {
 					module_gun_battery_category
 					module_railguns_category
 					module_light_helipad_category
+					module_heavy_guns_category
+					module_vls_category
+					module_turret_missile_category
 				}
 			}
 			rear_2_custom_slot = {
 				required = no
 				allowed_module_categories = {
 					module_fuel_tanks_category
-					module_light_helipad_category
 					module_point_defense_system_category
+					module_light_guns_category
+					module_gun_battery_category
+					module_railguns_category
+					module_light_helipad_category
+					module_heavy_guns_category
+					module_vls_category
+					module_turret_missile_category
 				}
 			}
 			fixed_ship_battery_slot = {
 				required = no
-				allowed_module_categories = { module_light_guns_category module_heavy_guns_category module_railguns_category module_gun_battery_category }
+				allowed_module_categories = {
+					module_light_guns_category
+					module_gun_battery_category
+				}
 			}
 			fixed_ship_battery_slot_2 = {
 				required = no
-				allowed_module_categories = { module_esm_category module_light_guns_category module_gun_battery_category module_heavy_guns_category module_torpedoes_category module_anti_ship_torpedoes_category module_turret_missile_category module_point_defense_system_category }
+				allowed_module_categories = {
+					module_esm_category
+					module_light_guns_category
+					module_gun_battery_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_turret_missile_category
+					module_point_defense_system_category
+				}
 			}
 			fixed_ship_battery_slot_3 = {
 				required = no
-				allowed_module_categories = { module_light_guns_category module_heavy_guns_category module_gun_battery_category module_torpedoes_category module_anti_ship_torpedoes_category module_turret_missile_category module_anti_submarine_mortar_category module_point_defense_system_category }
+				allowed_module_categories = {
+					module_esm_category
+					module_light_guns_category
+					module_gun_battery_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_turret_missile_category
+					module_anti_submarine_mortar_category
+					module_point_defense_system_category
+				}
 			}
 			fixed_ship_battery_slot_4 = {
 				required = no
-				allowed_module_categories = { module_light_guns_category module_heavy_guns_category module_gun_battery_category module_torpedoes_category module_anti_ship_torpedoes_category module_turret_missile_category module_anti_submarine_mortar_category }
+				allowed_module_categories = {
+					module_esm_category
+					module_light_guns_category
+					module_gun_battery_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_turret_missile_category
+					module_anti_submarine_mortar_category
+				}
 			}
 			fixed_ship_radar_slot = {
 				required = no
-				allowed_module_categories = { module_radar_category module_sonar_category }
+				allowed_module_categories = {
+					module_radar_category
+					module_sonar_category
+				}
 			}
 			fixed_ship_fire_control_system_slot = {
 				required = no
@@ -3661,6 +3599,8 @@ equipments = {
 		module_count_limit = { category = module_railguns_category count < 4 }
 		module_count_limit = { category = module_radar_category count < 2 }
 		module_count_limit = { category = module_sonar_category count < 2 }
+		module_count_limit = { category = module_gun_battery_category count < 4 }
+		module_count_limit = { category = module_esm_category count < 2 }
 
 		default_modules = {
 			front_1_custom_slot = empty
@@ -3685,29 +3625,24 @@ equipments = {
 
 		##Misc Stats
 		armor_value = @battlecruiser_armor
-		surface_detection = 30
-		sub_detection = 6
-		surface_visibility = 24
-		naval_speed = 11 #kn
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 51.5
+		naval_speed = @battlecruiser_speed
 		reliability = 0.80
-		naval_range = 600
-		max_strength = 800
-		max_organisation = 1.143
-		fuel_consumption = 400
-
-		build_cost_ic = 28000
+		naval_range = @battlecruiser_range
+		max_strength = @battlecruiser_hp
+		max_organisation = @battlecruiser_org
+		fuel_consumption = @battlecruiser_fuel_consumption
+		build_cost_ic = @battlecruiser_build_cost
+		manpower = @battlecruiser_hp
 		resources = {
-			steel = 6
-			aluminium = 1
-			tungsten = 1
+			steel = 5
 		}
-
-		manpower = 800
 	}
 
 	battle_cruiser_hull_1 = {
 		year = 1965
-
 		is_archetype = no
 		is_buildable = yes
 		archetype = battle_cruiser
@@ -3717,7 +3652,6 @@ equipments = {
 
 	battle_cruiser_hull_2 = {
 		year = 1985
-
 		is_archetype = no
 		is_buildable = yes
 		archetype = battle_cruiser
@@ -3726,20 +3660,17 @@ equipments = {
 		module_slots = inherit
 
 		armor_value = @battlecruiser_armor
-		surface_visibility = 23.85
-		naval_speed = 14 #kn
-		max_strength = 1000
-		max_organisation = 1.428
-		fuel_consumption = 500
-
-		build_cost_ic = 35000
+		surface_visibility = 46.35
+		naval_speed = @battlecruiser_speed
+		max_strength = @battlecruiser_hp
+		max_organisation = @battlecruiser_org
+		fuel_consumption = @battlecruiser_fuel_consumption
+		build_cost_ic = @battlecruiser_build_cost
+		manpower = @battlecruiser_hp
 		resources = {
-			steel = 8
-			aluminium = 2
-			tungsten = 2
+			steel = 5
+			aluminium = 1
 		}
-
-		manpower = 1000
 	}
 
 	battle_cruiser_hull_3 = {
@@ -3752,21 +3683,18 @@ equipments = {
 		module_slots = inherit
 
 		armor_value = @battlecruiser_armor
-		surface_visibility = 21.75
-		naval_speed = 17 #kn
-		max_strength = 1200
-		max_organisation = 1.714
-		fuel_consumption = 600
-
-		build_cost_ic = 42000
+		surface_visibility = 38.625
+		naval_speed = @battlecruiser_speed
+		max_strength = @battlecruiser_hp
+		max_organisation = @battlecruiser_org
+		fuel_consumption = @battlecruiser_fuel_consumption
+		build_cost_ic = @battlecruiser_build_cost
+		manpower = @battlecruiser_hp
 		resources = {
-			steel = 10
-			aluminium = 3
-			tungsten = 3
-			chromium = 2
+			steel = 5
+			aluminium = 2
+			chromium = 1
 		}
-
-		manpower = 1200
 	}
 
 #NON-MTG BATTLECRUISERS
@@ -3964,53 +3892,75 @@ equipments = {
 			front_1_custom_slot = {
 				required = no
 				allowed_module_categories = {
-					module_light_guns_category
 					module_heavy_guns_category
-					module_gun_battery_category
 					module_railguns_category
-					module_turret_missile_category
+					module_light_guns_category
+					module_gun_battery_category
 					module_vls_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_point_defense_system_category
+					module_turret_missile_category
+					module_fuel_tanks_category
+					module_anti_submarine_mortar_category
 				}
 			}
 			front_2_custom_slot = {
 				required = no
 				allowed_module_categories = {
-					module_light_guns_category
 					module_heavy_guns_category
-					module_gun_battery_category
 					module_railguns_category
-					module_turret_missile_category
+					module_light_guns_category
+					module_gun_battery_category
 					module_vls_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_point_defense_system_category
+					module_turret_missile_category
+					module_fuel_tanks_category
+					module_anti_submarine_mortar_category
 				}
 			}
 			mid_1_custom_slot = {
 				required = no
 				allowed_module_categories = {
-					module_fuel_tanks_category
-					module_point_defense_system_category
-					module_turret_missile_category
 					module_light_guns_category
 					module_gun_battery_category
+					module_vls_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_point_defense_system_category
+					module_turret_missile_category
+					module_fuel_tanks_category
+					module_anti_submarine_mortar_category
 				}
 			}
 			mid_2_custom_slot = {
 				required = no
 				allowed_module_categories = {
-					module_fuel_tanks_category
-					module_point_defense_system_category
-					module_turret_missile_category
 					module_light_guns_category
 					module_gun_battery_category
+					module_vls_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_point_defense_system_category
+					module_turret_missile_category
+					module_fuel_tanks_category
+					module_anti_submarine_mortar_category
 				}
 			}
 			mid_3_custom_slot = {
 				required = no
 				allowed_module_categories = {
-					module_fuel_tanks_category
-					module_point_defense_system_category
-					module_turret_missile_category
 					module_light_guns_category
 					module_gun_battery_category
+					module_vls_category
+					module_torpedoes_category
+					module_anti_ship_torpedoes_category
+					module_point_defense_system_category
+					module_turret_missile_category
+					module_fuel_tanks_category
+					module_anti_submarine_mortar_category
 				}
 			}
 			rear_1_custom_slot = {
@@ -4049,7 +3999,6 @@ equipments = {
 					module_turret_missile_category
 					module_fuel_tanks_category
 					module_anti_submarine_mortar_category
-					module_railguns_category
 				}
 			}
 			fixed_ship_auxillary_slot_1 = {
@@ -4079,6 +4028,7 @@ equipments = {
 					module_turret_missile_category
 					module_fuel_tanks_category
 					module_anti_submarine_mortar_category
+					module_esm_category
 				}
 			}
 			fixed_ship_auxillary_slot_3 = {
@@ -4093,6 +4043,7 @@ equipments = {
 					module_turret_missile_category
 					module_fuel_tanks_category
 					module_anti_submarine_mortar_category
+					module_esm_category
 				}
 			}
 			fixed_ship_radar_slot = {
@@ -4108,6 +4059,13 @@ equipments = {
 				allowed_module_categories = { module_surface_power_source_category }
 			}
 		}
+
+		module_count_limit = { category = module_railguns_category count < 6 }
+		module_count_limit = { category = module_radar_category count < 2 }
+		module_count_limit = { category = module_sonar_category count < 2 }
+		module_count_limit = { category = module_gun_battery_category count < 6 }
+		module_count_limit = { category = module_heavy_guns_category count < 6 }
+		module_count_limit = { category = module_esm_category count < 2 }
 
 		default_modules = {
 			front_1_custom_slot = empty
@@ -4132,24 +4090,20 @@ equipments = {
 
 		##Misc Stats
 		armor_value = 45 ##No armor module so ships have their own
-		surface_detection = 30
-		sub_detection = 6
-		surface_visibility = 26.5
-		naval_speed = 10 #kn
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 74.5
+		naval_speed = @battleship_speed
 		reliability = 0.80
-		naval_range = 600
-		max_strength = 1000
-		max_organisation = 1.428
-		fuel_consumption = 500
-
-		build_cost_ic = 35000
+		naval_range = @battleship_range
+		max_strength = @battleship_hp
+		max_organisation = @battleship_org
+		fuel_consumption = @battleship_fuel_consumption
+		build_cost_ic = @battleship_build_cost
+		manpower = @battleship_hp
 		resources = {
-			steel = 8
-			aluminium = 2
-			tungsten = 2
+			steel = 5
 		}
-
-		manpower = 1000
 	}
 
 	battleship_hull_1 = {
@@ -4170,21 +4124,17 @@ equipments = {
 		module_slots = inherit
 
 		armor_value = 60
-		surface_visibility = 26.662
-		naval_speed = 12.5 #kn
-		max_strength = 1250
-		max_organisation = 1.786
-		fuel_consumption = 625
-
-		build_cost_ic = 43750
-
+		surface_visibility = 67.05
+		naval_speed = @battleship_speed
+		max_strength = @battleship_hp
+		max_organisation = @battleship_org
+		fuel_consumption = @battleship_fuel_consumption
+		build_cost_ic = @battleship_build_cost
+		manpower = @battleship_hp
 		resources = {
-			steel = 10
-			aluminium = 3
-			tungsten = 3
+			steel = 5
+			aluminium = 1
 		}
-
-		manpower = 1250
 
 	}
 	battleship_hull_3 = {
@@ -4197,29 +4147,24 @@ equipments = {
 		module_slots = inherit
 
 		armor_value = 75
-		surface_visibility = 24.562
-		naval_speed = 15 #kn
-		max_strength = 1500
-		max_organisation = 2.143
-		fuel_consumption = 750
-
-		build_cost_ic = 52500
-
+		surface_visibility = 55.875
+		naval_speed = @battleship_speed
+		max_strength = @battleship_hp
+		max_organisation = @battleship_org
+		fuel_consumption = @battleship_fuel_consumption
+		build_cost_ic = @battleship_build_cost
+		manpower = @battleship_hp
 		resources = {
-			steel = 12
-			aluminium = 4
-			tungsten = 4
-			chromium = 3
+			steel = 5
+			aluminium = 2
+			chromium = 1
 		}
-
-		manpower = 1500
 
 	}
 
 #MTG HELICOPTER OPERATORS
 	helicopter_operator = {
-		year = 1975
-
+		year = 1970
 		is_archetype = yes
 		is_buildable = no
 		type = carrier
@@ -4337,18 +4282,17 @@ equipments = {
 		module_count_limit = { category = module_esm_category count < 2 }
 
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power2
-				fixed_ship_fire_control_system_slot = module_analog_fire_control
-				fixed_ship_radar_slot = module_radar_2
-				fixed_ship_auxillary_slot_3 = module_ciws_1
-				fixed_ship_auxillary_slot_2 = module_fuel_tank
-				fixed_ship_auxillary_slot = module_esm_1
-				fixed_ship_battery_slot = module_light_flight_deck_1
-				front_1_custom_slot = module_helipads_1
-				mid_1_custom_slot = module_aa_missiles_1
-				rear_1_custom_slot = module_helipads_1
+			fixed_ship_engine_slot = module_surface_diesel_power
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_2
+			fixed_ship_auxillary_slot_3 = module_ciws_1
+			fixed_ship_auxillary_slot_2 = module_fuel_tank
+			fixed_ship_auxillary_slot = module_esm_1
+			fixed_ship_battery_slot = module_light_flight_deck_1
+			front_1_custom_slot = module_helipads_1
+			mid_1_custom_slot = module_aa_missiles_1
+			rear_1_custom_slot = module_helipads_1
 		}
-
 
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
 		lg_armor_piercing = 0
@@ -4360,221 +4304,169 @@ equipments = {
 		anti_air_attack = 0
 
 		armor_value = @helicopter_operator_armor
-
-
 		surface_detection = 22
 		sub_detection = 4
-		surface_visibility = 19.5
-		naval_speed = 14
+		surface_visibility = 48.75
+		naval_speed = @helicopter_operator_speed
 		reliability = 0.775
-
-		naval_range = 500
-
-		max_strength = 800
-		max_organisation = 1.6
-
-		fuel_consumption = 400
-
-		build_cost_ic = 20000
+		naval_range = @helicopter_operator_range
+		max_strength = @helicopter_operator_hp
+		max_organisation = @helicopter_operator_org
+		fuel_consumption = @helicopter_operator_fuel_consumption
+		build_cost_ic = @helicopter_operator_build_cost
+		manpower = @helicopter_operator_hp
 		resources = {
-			steel = 10
-			aluminium = 2
-			tungsten = 2
+			steel = 5
 		}
-
-		manpower = 800
 	}
 
 	helicopter_operator_hull_1 = {
 		year = 1970
-
 		archetype = helicopter_operator
 		priority = 5
 		module_slots = inherit
 		resources = {
-			steel = 10
-			tungsten = 2
-			aluminium = 2
+			steel = 5
 		}
 	}
 
 	helicopter_operator_hull_2 = {
 		year = 1995
-
 		archetype = helicopter_operator
 		parent = helicopter_operator_hull_1
 		priority = 6
-
 		module_slots = inherit
-
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power2
-				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
-				fixed_ship_radar_slot = module_radar_3
-				fixed_ship_auxillary_slot_3 = module_ciws_2
-				fixed_ship_auxillary_slot_2 = module_fuel_tank
-				fixed_ship_auxillary_slot = module_esm_1
-				fixed_ship_battery_slot = module_light_flight_deck_3
-				front_1_custom_slot = module_helipads_1
-				mid_1_custom_slot = module_aa_missiles_2
-				rear_1_custom_slot = module_helipads_1
+			fixed_ship_engine_slot = module_surface_jet_turbine_power
+			fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+			fixed_ship_radar_slot = module_radar_3
+			fixed_ship_auxillary_slot_3 = module_ciws_2
+			fixed_ship_auxillary_slot_2 = module_fuel_tank
+			fixed_ship_auxillary_slot = module_esm_1
+			fixed_ship_battery_slot = module_light_flight_deck_2
+			front_1_custom_slot = module_helipads_1
+			mid_1_custom_slot = module_aa_missiles_2
+			rear_1_custom_slot = module_helipads_1
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @helicopter_operator_armor
-
-
 		surface_detection = 22.5
 		sub_detection = 5
-		surface_visibility = 18.062
-		naval_speed = 15
+		surface_visibility = 42.5
+		naval_speed = @helicopter_operator_speed
 		reliability = 0.825
-
-		naval_range = 700
-
-		max_strength = 900
-		max_organisation = 1.8
-
-		fuel_consumption = 450
-
-		build_cost_ic = 22500
+		naval_range = @helicopter_operator_range
+		max_strength = @helicopter_operator_hp
+		max_organisation = @helicopter_operator_org
+		fuel_consumption = @helicopter_operator_fuel_consumption
+		build_cost_ic = @helicopter_operator_build_cost
+		manpower = @helicopter_operator_hp
 		resources = {
-			steel = 12
-			tungsten = 2
+			steel = 5
 			aluminium = 2
 		}
-
-		manpower = 900
 	}
 
 	helicopter_operator_hull_3 = {
 		year = 2020
-
 		archetype = helicopter_operator
 		parent = helicopter_operator_hull_2
 		priority = 7
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power3
-				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_4
-				fixed_ship_auxillary_slot_3 = module_ciws_4
-				fixed_ship_auxillary_slot_2 = module_fuel_tank
-				fixed_ship_auxillary_slot = module_esm_2
-				fixed_ship_battery_slot = module_light_flight_deck_5
-				front_1_custom_slot = module_helipads_2
-				mid_1_custom_slot = module_vls_sam_3
-				rear_1_custom_slot = module_helipads_2
+			fixed_ship_engine_slot = module_surface_jet_turbine_power3
+			fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
+			fixed_ship_radar_slot = module_radar_4
+			fixed_ship_auxillary_slot_3 = module_ciws_4
+			fixed_ship_auxillary_slot_2 = module_fuel_tank
+			fixed_ship_auxillary_slot = module_esm_2
+			fixed_ship_battery_slot = module_light_flight_deck_3
+			front_1_custom_slot = module_helipads_2
+			mid_1_custom_slot = module_vls_sam_3
+			rear_1_custom_slot = module_helipads_2
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @helicopter_operator_armor
-
-
 		surface_detection = 23
 		sub_detection = 6
-		surface_visibility = 16.312
-		naval_speed = 15.5
+		surface_visibility = 36.25
+		naval_speed = @helicopter_operator_speed
 		reliability = 0.85
-
-		naval_range = 1500
-
-		max_strength = 1000
-		max_organisation = 2
-
-		fuel_consumption = 500
-
-		build_cost_ic = 25000
+		naval_range = @helicopter_operator_range
+		max_strength = @helicopter_operator_hp
+		max_organisation = @helicopter_operator_org
+		fuel_consumption = @helicopter_operator_fuel_consumption
+		build_cost_ic = @helicopter_operator_build_cost
+		manpower = @helicopter_operator_hp
 		resources = {
-			steel = 14
+			steel = 5
 			tungsten = 2
-			aluminium = 3
 			chromium = 2
 		}
-
-		manpower = 1000
 	}
 
 	helicopter_operator_hull_4 = {
 		year = 2045
-
 		archetype = helicopter_operator
 		parent = helicopter_operator_hull_3
 		priority = 10
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_fut_reactor_power
-				fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_6
-				fixed_ship_auxillary_slot_3 = module_ciws_5
-				fixed_ship_auxillary_slot_2 = module_fuel_tank
-				fixed_ship_auxillary_slot = module_esm_3
-				fixed_ship_battery_slot = module_light_flight_deck_6
-				front_1_custom_slot = module_helipads_3
-				mid_1_custom_slot = module_vls_sam_4
-				rear_1_custom_slot = module_helipads_3
+			fixed_ship_engine_slot = module_surface_fut_reactor_power
+			fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
+			fixed_ship_radar_slot = module_radar_6
+			fixed_ship_auxillary_slot_3 = module_ciws_5
+			fixed_ship_auxillary_slot_2 = module_fuel_tank
+			fixed_ship_auxillary_slot = module_esm_3
+			fixed_ship_battery_slot = module_light_flight_deck_3
+			front_1_custom_slot = module_helipads_3
+			mid_1_custom_slot = module_vls_sam_4
+			rear_1_custom_slot = module_helipads_3
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @helicopter_operator_armor
-
-
 		surface_detection = 24
 		sub_detection = 7
-		surface_visibility = 15
-		naval_speed = 19
+		surface_visibility = 30
+		naval_speed = @helicopter_operator_speed
 		reliability = 0.925
-
-		naval_range = 2200
-
-		max_strength = 1200
-		max_organisation = 2.4
-
-		fuel_consumption = 600
-
-		build_cost_ic = 30000
+		naval_range = @helicopter_operator_range
+		max_strength = @helicopter_operator_hp
+		max_organisation = @helicopter_operator_org
+		fuel_consumption = @helicopter_operator_fuel_consumption
+		build_cost_ic = @helicopter_operator_build_cost
+		manpower = @helicopter_operator_hp
 		resources = {
-			steel = 16
-			chromium = 3
+			steel = 5
 			aluminium = 3
-			tungsten = 2
+			chromium = 2
 		}
-
-		manpower = 1200
 	}
 
 #MTG CARRIERS
@@ -4733,20 +4625,20 @@ equipments = {
 		module_count_limit = { category = module_flight_decks_category count < 2 }
 		module_count_limit = { category = module_esm_category count < 2 }
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_oil_power
-				fixed_ship_fire_control_system_slot = module_analog_fire_control
-				fixed_ship_radar_slot = module_radar_2
-				fixed_ship_auxillary_slot_2 = module_ciws_1
-				fixed_ship_auxillary_slot_1 = module_ram_1
-				fixed_ship_auxillary_slot = module_esm_1
-				fixed_ship_flight_deck = module_flight_deck_3
-				front_1_custom_slot = module_helipads_1
-				front_2_custom_slot = module_ciws_1
-				mid_1_custom_slot = module_ciws_1
-				mid_2_custom_slot = module_fuel_tank
-				mid_3_custom_slot = module_helipads_1
-				rear_1_custom_slot = module_ram_1
-				rear_2_custom_slot = module_helipads_1
+			fixed_ship_engine_slot = module_surface_oil_power
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_2
+			fixed_ship_auxillary_slot_2 = module_ciws_1
+			fixed_ship_auxillary_slot_1 = module_ram_1
+			fixed_ship_auxillary_slot = module_esm_1
+			fixed_ship_flight_deck = module_flight_deck_3
+			front_1_custom_slot = module_helipads_1
+			front_2_custom_slot = module_ciws_1
+			mid_1_custom_slot = module_ciws_1
+			mid_2_custom_slot = module_fuel_tank
+			mid_3_custom_slot = module_helipads_1
+			rear_1_custom_slot = module_ram_1
+			rear_2_custom_slot = module_helipads_1
 		}
 
 		#Combat Stats --Hulls have no intrinsic combat stats. I don't see ship hulls firing cannons
@@ -4760,308 +4652,249 @@ equipments = {
 
 		#Misc Stats
 		armor_value = 40
-		surface_detection = 27
-		sub_detection = 2
-		surface_visibility = 20.25
-		naval_speed = 8
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 52
+		naval_speed = @carrier_speed
 		reliability = 0.70
-		naval_range = 800
-		max_strength = 500
-		max_organisation = 0.714
-		fuel_consumption = 250
-
-		build_cost_ic = 17500
+		naval_range = @carrier_range
+		max_strength = @carrier_hp
+		max_organisation = @carrier_org
+		fuel_consumption = @carrier_fuel_consumption
+		build_cost_ic = @carrier_build_cost
+		manpower = @carrier_hp
 		resources = {
-			steel = 12
-			aluminium = 2
+			steel = 5
 		}
-
-		manpower = 500
 	}
 
 	carrier_hull_1 = {
 		year = 1965
-
 		archetype = carrier
 		priority = 5
-
 		module_slots = inherit
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_oil_power
-				fixed_ship_fire_control_system_slot = module_analog_fire_control
-				fixed_ship_radar_slot = module_radar_1
-				fixed_ship_auxillary_slot_2 = module_ciws_1
-				fixed_ship_auxillary_slot_1 = module_ram_1
-				fixed_ship_auxillary_slot = module_fuel_tank
-				fixed_ship_flight_deck = module_flight_deck_3
-				front_1_custom_slot = module_helipads_1
-				front_2_custom_slot = module_ciws_1
-				mid_1_custom_slot = module_ciws_1
-				mid_2_custom_slot = module_fuel_tank
-				mid_3_custom_slot = module_helipads_1
-				rear_1_custom_slot = module_ram_1
-				rear_2_custom_slot = module_helipads_1
+			fixed_ship_engine_slot = module_surface_oil_power
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_1
+			fixed_ship_auxillary_slot_2 = module_ciws_1
+			fixed_ship_auxillary_slot_1 = module_ram_1
+			fixed_ship_auxillary_slot = module_fuel_tank
+			fixed_ship_flight_deck = module_flight_deck_3
+			front_1_custom_slot = module_helipads_1
+			front_2_custom_slot = module_ciws_1
+			mid_1_custom_slot = module_ciws_1
+			mid_2_custom_slot = module_fuel_tank
+			mid_3_custom_slot = module_helipads_1
+			rear_1_custom_slot = module_ram_1
+			rear_2_custom_slot = module_helipads_1
 		}
 		resources = {
-			steel = 12
-			tungsten = 2
-			aluminium = 2
+			steel = 5
 		}
 	}
 
 	carrier_hull_2 = {
 		year = 1985
-
 		archetype = carrier
 		parent = carrier_hull_1
 		priority = 6
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_diesel_power
-				fixed_ship_fire_control_system_slot = module_analog_fire_control
-				fixed_ship_radar_slot = module_radar_2
-				fixed_ship_auxillary_slot_2 = module_ciws_2
-				fixed_ship_auxillary_slot_1 = module_ram_2
-				fixed_ship_auxillary_slot = module_fuel_tank
-				fixed_ship_flight_deck = module_flight_deck_4
-				front_1_custom_slot = module_helipads_1
-				front_2_custom_slot = module_ciws_2
-				mid_1_custom_slot = module_ciws_2
-				mid_2_custom_slot = module_fuel_tank
-				mid_3_custom_slot = module_helipads_1
-				rear_1_custom_slot = module_ram_2
-				rear_2_custom_slot = module_helipads_1
+			fixed_ship_engine_slot = module_surface_diesel_power
+			fixed_ship_fire_control_system_slot = module_analog_fire_control
+			fixed_ship_radar_slot = module_radar_2
+			fixed_ship_auxillary_slot_2 = module_ciws_2
+			fixed_ship_auxillary_slot_1 = module_ram_2
+			fixed_ship_auxillary_slot = module_fuel_tank
+			fixed_ship_flight_deck = module_flight_deck_4
+			front_1_custom_slot = module_helipads_1
+			front_2_custom_slot = module_ciws_2
+			mid_1_custom_slot = module_ciws_2
+			mid_2_custom_slot = module_fuel_tank
+			mid_3_custom_slot = module_helipads_1
+			rear_1_custom_slot = module_ram_2
+			rear_2_custom_slot = module_helipads_1
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = 45
-
-
-		surface_detection = 27
-		sub_detection = 3
-		surface_visibility = 19.35
-		naval_speed = 8.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 46.8
+		naval_speed = @carrier_speed
 		reliability = 0.725
-
-		naval_range = 925
-
-		max_strength = 600
-		max_organisation = 0.857
-
-		fuel_consumption = 300
-
-		build_cost_ic = 21000
+		naval_range = @carrier_range
+		max_strength = @carrier_hp
+		max_organisation = @carrier_org
+		fuel_consumption = @carrier_fuel_consumption
+		build_cost_ic = @carrier_build_cost
+		manpower = @carrier_hp
 		resources = {
-			steel = 13
-			tungsten = 3
-			aluminium = 3
+			steel = 5
+			aluminium = 1
 		}
-
-		manpower = 600
 	}
 
 	carrier_hull_3 = {
 		year = 2005
-
 		archetype = carrier
 		parent = carrier_hull_2
 		priority = 8
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power
-				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
-				fixed_ship_radar_slot = module_radar_4
-				fixed_ship_auxillary_slot_2 = module_ciws_2
-				fixed_ship_auxillary_slot_1 = module_ram_2
-				fixed_ship_auxillary_slot = module_esm_1
-				fixed_ship_flight_deck = module_flight_deck_6
-				front_1_custom_slot = module_helipads_1
-				front_2_custom_slot = module_ciws_2
-				mid_1_custom_slot = module_ciws_2
-				mid_2_custom_slot = module_helipads_1
-				mid_3_custom_slot = module_helipads_1
-				rear_1_custom_slot = module_ram_2
-				rear_2_custom_slot = module_helipads_1
+			fixed_ship_engine_slot = module_surface_jet_turbine_power
+			fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+			fixed_ship_radar_slot = module_radar_4
+			fixed_ship_auxillary_slot_2 = module_ciws_2
+			fixed_ship_auxillary_slot_1 = module_ram_2
+			fixed_ship_auxillary_slot = module_esm_1
+			fixed_ship_flight_deck = module_flight_deck_6
+			front_1_custom_slot = module_helipads_1
+			front_2_custom_slot = module_ciws_2
+			mid_1_custom_slot = module_ciws_2
+			mid_2_custom_slot = module_helipads_1
+			mid_3_custom_slot = module_helipads_1
+			rear_1_custom_slot = module_ram_2
+			rear_2_custom_slot = module_helipads_1
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = 55
-
-
-		surface_detection = 27.5
-		sub_detection = 4
-		surface_visibility = 19.2
-		naval_speed = 9.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 41.6
+		naval_speed = @carrier_speed
 		reliability = 0.775
-
-		naval_range = 1150
-
-		max_strength = 800
-		max_organisation = 1.143
-
-		fuel_consumption = 400
-
-		build_cost_ic = 28000
+		naval_range = @carrier_range
+		max_strength = @carrier_hp
+		max_organisation = @carrier_org
+		fuel_consumption = @carrier_fuel_consumption
+		build_cost_ic = @carrier_build_cost
+		manpower = @carrier_hp
 		resources = {
-			steel = 16
-			tungsten = 3
-			aluminium = 3
-			chromium = 3
+			steel = 5
+			aluminium = 2
+			chromium = 1
 		}
-
-		manpower = 800
 	}
 
 	carrier_hull_4 = {
 		year = 2025
-
 		archetype = carrier
 		parent = carrier_hull_3
 		priority = 10
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power2
-				fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_5
-				fixed_ship_auxillary_slot_2 = module_ciws_3
-				fixed_ship_auxillary_slot_1 = module_ram_3
-				fixed_ship_auxillary_slot = module_esm_2
-				fixed_ship_flight_deck = module_flight_deck_8
-				front_1_custom_slot = module_helipads_2
-				front_2_custom_slot = module_ciws_3
-				mid_1_custom_slot = module_ciws_3
-				mid_2_custom_slot = module_helipads_2
-				mid_3_custom_slot = module_helipads_2
-				rear_1_custom_slot = module_ram_3
-				rear_2_custom_slot = module_helipads_2
+			fixed_ship_engine_slot = module_surface_jet_turbine_power2
+			fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
+			fixed_ship_radar_slot = module_radar_5
+			fixed_ship_auxillary_slot_2 = module_ciws_3
+			fixed_ship_auxillary_slot_1 = module_ram_3
+			fixed_ship_auxillary_slot = module_esm_2
+			fixed_ship_flight_deck = module_flight_deck_8
+			front_1_custom_slot = module_helipads_2
+			front_2_custom_slot = module_ciws_3
+			mid_1_custom_slot = module_ciws_3
+			mid_2_custom_slot = module_helipads_2
+			mid_3_custom_slot = module_helipads_2
+			rear_1_custom_slot = module_ram_3
+			rear_2_custom_slot = module_helipads_2
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = 65
-
-
-		surface_detection = 28
-		sub_detection = 5
-		surface_visibility = 18.55
-		naval_speed = 10.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 36.4
+		naval_speed = @carrier_speed
 		reliability = 0.825
-
-		naval_range = 1500
-
-		max_strength = 1000
-		max_organisation = 1.428
-
-		fuel_consumption = 500
-
-		build_cost_ic = 35000
+		naval_range = @carrier_range
+		max_strength = @carrier_hp
+		max_organisation = @carrier_org
+		fuel_consumption = @carrier_fuel_consumption
+		build_cost_ic = @carrier_build_cost
+		manpower = @carrier_hp
 		resources = {
-			steel = 16
-			chromium = 4
-			aluminium = 4
-			tungsten = 3
+			steel = 5
+			aluminium = 2
+			chromium = 2
 		}
-
-		manpower = 1000
 	}
 
 	carrier_hull_5 = {
 		year = 2045
-
 		archetype = carrier
 		parent = carrier_hull_4
 		priority = 12
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_surface_jet_turbine_power3
-				fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
-				fixed_ship_radar_slot = module_radar_6
-				fixed_ship_auxillary_slot_2 = module_ciws_5
-				fixed_ship_auxillary_slot_1 = module_ram_5
-				fixed_ship_auxillary_slot = module_esm_3
-				fixed_ship_flight_deck = module_flight_deck_10
-				front_1_custom_slot = module_helipads_3
-				front_2_custom_slot = module_ciws_5
-				mid_1_custom_slot = module_ciws_5
-				mid_2_custom_slot = module_helipads_3
-				mid_3_custom_slot = module_helipads_3
-				rear_1_custom_slot = module_ram_5
-				rear_2_custom_slot = module_helipads_3
+			fixed_ship_engine_slot = module_surface_jet_turbine_power3
+			fixed_ship_fire_control_system_slot = module_futuristic_integrated_missile_radar_control
+			fixed_ship_radar_slot = module_radar_6
+			fixed_ship_auxillary_slot_2 = module_ciws_5
+			fixed_ship_auxillary_slot_1 = module_ram_5
+			fixed_ship_auxillary_slot = module_esm_3
+			fixed_ship_flight_deck = module_flight_deck_10
+			front_1_custom_slot = module_helipads_3
+			front_2_custom_slot = module_ciws_5
+			mid_1_custom_slot = module_ciws_5
+			mid_2_custom_slot = module_helipads_3
+			mid_3_custom_slot = module_helipads_3
+			rear_1_custom_slot = module_ram_5
+			rear_2_custom_slot = module_helipads_3
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = 75
-
-
-		surface_detection = 29
-		sub_detection = 7
-		surface_visibility = 17.4
-		naval_speed = 11.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 31.2
+		naval_speed = @carrier_speed
 		reliability = 0.875
-
-		naval_range = 2500
-
-		max_strength = 1200
-		max_organisation = 1.714
-
-		fuel_consumption = 600
-
-		build_cost_ic = 42000
+		naval_range = @carrier_range
+		max_strength = @carrier_hp
+		max_organisation = @carrier_org
+		fuel_consumption = @carrier_fuel_consumption
+		build_cost_ic = @carrier_build_cost
+		manpower = @carrier_hp
 		resources = {
-			steel = 18
-			chromium = 5
-			aluminium = 4
-			tungsten = 3
+			steel = 5
+			aluminium = 3
+			chromium = 2
 		}
-
-		manpower = 1200
 	}
 
 #NON-MTG Carriers
@@ -6008,7 +5841,7 @@ equipments = {
 
 		build_cost_ic = 7000.00
 		resources = {
-			steel = 3
+			steel = 5
 		}
 
 		manpower = 4500
@@ -6256,12 +6089,10 @@ equipments = {
 #MTG Attack Submarines
 	attack_submarine = {
 		year = 1965
-
 		is_archetype = yes
 		is_buildable = no
 		type = submarine
 		interface_category = interface_category_other_ships
-
 		upgrades = {
 			ship_reliability_upgrade
 			sub_displacement
@@ -6315,390 +6146,276 @@ equipments = {
 			category = module_sub_esm_category
 			count < 2
 		}
-		module_count_limit = {
-			category = module_torpedoes_category
-			count < 4
-		}
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power
-				fixed_ship_radar_slot = module_sonar_2
-				fixed_ship_auxillary_slot_3 = empty
-				fixed_ship_auxillary_slot_2 = module_torpedoes_1
-				fixed_ship_auxillary_slot_1 = module_anti_ship_torpedoes_1
-				fixed_ship_auxillary_slot = module_minelaying
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_1
+			fixed_ship_engine_slot = module_sub_diesel_electric_power
+			fixed_ship_radar_slot = module_sonar_2
+			fixed_ship_auxillary_slot_3 = empty
+			fixed_ship_auxillary_slot_2 = module_torpedoes_1
+			fixed_ship_auxillary_slot_1 = module_anti_ship_torpedoes_1
+			fixed_ship_auxillary_slot = module_minelaying
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_1
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @attack_sub_armor
-
-		sub_visibility = 6.75
-		surface_detection = 15
-		sub_detection = 4
-		surface_visibility = 6.75
-		naval_speed = 8
+		sub_visibility = 8
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 8
+		naval_speed = @attack_sub_speed
 		reliability = 0.72
-
-		naval_range = 100
-
-		max_strength = 60
-		max_organisation = 0.2
-
-		fuel_consumption = 30
-
-		build_cost_ic = 900
+		naval_range = @attack_sub_range
+		max_strength = @attack_sub_hp
+		max_organisation = @attack_sub_org
+		fuel_consumption = @attack_sub_fuel_consumption
+		build_cost_ic = @attack_sub_build_cost
+		manpower = @attack_sub_hp
 		resources = {
-			steel = 6
-			aluminium = 1
+			steel = 5
 		}
-
-		manpower = 60
 	}
 	attack_submarine_hull_1 = {
 		year = 1965
-
 		archetype = attack_submarine
 		priority = 5
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power
-				fixed_ship_radar_slot = module_sonar_1
-				fixed_ship_auxillary_slot_3 = empty
-				fixed_ship_auxillary_slot_2 = module_torpedoes_1
-				fixed_ship_auxillary_slot_1 = module_torpedoes_1
-				fixed_ship_auxillary_slot = module_minelaying
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_1
+			fixed_ship_engine_slot = module_sub_diesel_electric_power
+			fixed_ship_radar_slot = module_sonar_1
+			fixed_ship_auxillary_slot_3 = empty
+			fixed_ship_auxillary_slot_2 = module_torpedoes_1
+			fixed_ship_auxillary_slot_1 = module_torpedoes_1
+			fixed_ship_auxillary_slot = module_minelaying
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_1
 		}
 		resources = {
-			steel = 6
-			tungsten = 2
-			aluminium = 1
+			steel = 5
 		}
 	}
 	attack_submarine_hull_2 = {
 		year = 1980
-
 		archetype = attack_submarine
 		parent = attack_submarine_hull_1
 		priority = 6
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power2
-				fixed_ship_radar_slot = module_sonar_2
-				fixed_ship_auxillary_slot_3 = empty
-				fixed_ship_auxillary_slot_2 = module_torpedoes_1
-				fixed_ship_auxillary_slot_1 = module_torpedoes_1
-				fixed_ship_auxillary_slot = module_minelaying
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_1
+			fixed_ship_engine_slot = module_sub_diesel_electric_power2
+			fixed_ship_radar_slot = module_sonar_2
+			fixed_ship_auxillary_slot_3 = empty
+			fixed_ship_auxillary_slot_2 = module_torpedoes_1
+			fixed_ship_auxillary_slot_1 = module_torpedoes_1
+			fixed_ship_auxillary_slot = module_minelaying
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_1
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @attack_sub_armor
-
-		sub_visibility = 6.417
-		surface_detection = 15
-		sub_detection = 6
-		surface_visibility = 6.417
-		naval_speed = 9
+		sub_visibility = 7.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 7.4
+		naval_speed = @attack_sub_speed
 		reliability = 0.74
-
-		naval_range = 200
-
-		max_strength = 75
-		max_organisation = 0.25
-
-		fuel_consumption = 37.5
-
-		build_cost_ic = 1125
+		naval_range = @attack_sub_range
+		max_strength = @attack_sub_hp
+		max_organisation = @attack_sub_org
+		fuel_consumption = @attack_sub_fuel_consumption
+		build_cost_ic = @attack_sub_build_cost
+		manpower = @attack_sub_hp
 		resources = {
-			steel = 6
-			tungsten = 2
-			aluminium = 2
+			steel = 5
+			aluminium = 1
 		}
-
-		manpower = 75
 	}
 	attack_submarine_hull_3 = {
 		year = 1995
-
 		archetype = attack_submarine
 		parent = attack_submarine_hull_2
 		priority = 7
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power2
-				fixed_ship_radar_slot = module_sonar_3
-				fixed_ship_auxillary_slot_3 = empty
-				fixed_ship_auxillary_slot_2 = module_sub_esm_1
-				fixed_ship_auxillary_slot_1 = module_torpedoes_2
-				fixed_ship_auxillary_slot = module_torpedoes_2
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_2
+			fixed_ship_engine_slot = module_sub_diesel_electric_power2
+			fixed_ship_radar_slot = module_sonar_3
+			fixed_ship_auxillary_slot_3 = empty
+			fixed_ship_auxillary_slot_2 = module_sub_esm_1
+			fixed_ship_auxillary_slot_1 = module_torpedoes_2
+			fixed_ship_auxillary_slot = module_torpedoes_2
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_2
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @attack_sub_armor
-
-		sub_visibility = 6.056
-		surface_detection = 15
-		sub_detection = 8
-		surface_visibility = 6.056
-		naval_speed = 10
+		sub_visibility = 6.8
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 6.8
+		naval_speed = @attack_sub_speed
 		reliability = 0.76
-
-		naval_range = 500
-
-		max_strength = 90
-		max_organisation = 0.3
-
-		fuel_consumption = 45
-
-		build_cost_ic = 1350
+		naval_range = @attack_sub_range
+		max_strength = @attack_sub_hp
+		max_organisation = @attack_sub_org
+		fuel_consumption = @attack_sub_fuel_consumption
+		build_cost_ic = @attack_sub_build_cost
+		manpower = @attack_sub_hp
 		resources = {
-			steel = 6
-			tungsten = 3
+			steel = 5
 			aluminium = 2
 		}
-
-		manpower = 90
 	}
 	attack_submarine_hull_4 = {
 		year = 2010
-
 		archetype = attack_submarine
 		parent = attack_submarine_hull_3
 		priority = 8
-
 		module_slots = inherit
-
-		module_count_limit = {
-			category = module_vls_sub_category
-			count < 2
-		}
-		module_count_limit = {
-			category = module_fuel_tanks_category
-			count < 2
-		}
-		module_count_limit = {
-			category = module_torpedoes_category
-			count < 4
-		}
-		module_count_limit = {
-			category = module_sub_esm_category
-			count < 2
-		}
-
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power3
-				fixed_ship_radar_slot = module_sonar_4
-				fixed_ship_auxillary_slot_3 = module_torpedoes_4
-				fixed_ship_auxillary_slot_2 = module_sub_esm_1
-				fixed_ship_auxillary_slot_1 = module_vls_sub_asm_3
-				fixed_ship_auxillary_slot = module_torpedoes_4
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_4
+			fixed_ship_engine_slot = module_sub_diesel_electric_power3
+			fixed_ship_radar_slot = module_sonar_4
+			fixed_ship_auxillary_slot_3 = module_torpedoes_1
+			fixed_ship_auxillary_slot_2 = module_sub_esm_1
+			fixed_ship_auxillary_slot_1 = module_vls_sub_asm_3
+			fixed_ship_auxillary_slot = module_torpedoes_1
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_1
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @attack_sub_armor
-
-		sub_visibility = 5.667
-		surface_detection = 15.5
-		sub_detection = 8
-		surface_visibility = 5.667
-		naval_speed = 11
+		sub_visibility = 6.2
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 6.2
+		naval_speed = @attack_sub_speed
 		reliability = 0.78
-
-		naval_range = 750
-
-		max_strength = 105
-		max_organisation = 0.35
-
-		fuel_consumption = 52.5
-
-		build_cost_ic = 1575
+		naval_range = @attack_sub_range
+		max_strength = @attack_sub_hp
+		max_organisation = @attack_sub_org
+		fuel_consumption = @attack_sub_fuel_consumption
+		build_cost_ic = @attack_sub_build_cost
+		manpower = @attack_sub_hp
 		resources = {
-			steel = 8
-			tungsten = 3
+			steel = 5
 			aluminium = 2
-			chromium = 2
+			chromium = 1
 		}
-
-		manpower = 105
 	}
 	attack_submarine_hull_5 = {
 		year = 2025
-
 		archetype = attack_submarine
 		parent = attack_submarine_hull_4
 		priority = 10
-
 		module_slots = inherit
-
-		module_count_limit = {
-			category = module_vls_sub_category
-			count < 2
-		}
-		module_count_limit = {
-			category = module_fuel_tanks_category
-			count < 2
-		}
-		module_count_limit = {
-			category = module_torpedoes_category
-			count < 4
-		}
-		module_count_limit = {
-			category = module_sub_esm_category
-			count < 2
-		}
-
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_mod_reactor_power
-				fixed_ship_radar_slot = module_sonar_5
-				fixed_ship_auxillary_slot_3 = module_torpedoes_4
-				fixed_ship_auxillary_slot_2 = module_sub_esm_2
-				fixed_ship_auxillary_slot_1 = module_vls_sub_asm_4
-				fixed_ship_auxillary_slot = module_torpedoes_5
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_5
+			fixed_ship_engine_slot = module_sub_mod_reactor_power
+			fixed_ship_radar_slot = module_sonar_5
+			fixed_ship_auxillary_slot_3 = module_torpedoes_2
+			fixed_ship_auxillary_slot_2 = module_sub_esm_2
+			fixed_ship_auxillary_slot_1 = module_vls_sub_asm_4
+			fixed_ship_auxillary_slot = module_torpedoes_2
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_2
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @attack_sub_armor
-
-		sub_visibility = 5.381
-		surface_detection = 16.5
-		sub_detection = 8
-		surface_visibility = 5.381
-		naval_speed = 13
+		sub_visibility = 5.6
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 5.6
+		naval_speed = @attack_sub_speed
 		reliability = 0.82
-
-		naval_range = 1000
-
-		max_strength = 135
-		max_organisation = 0.45
-
-		fuel_consumption = 67.5
-
-		build_cost_ic = 2025
+		naval_range = @attack_sub_range
+		max_strength = @attack_sub_hp
+		max_organisation = @attack_sub_org
+		fuel_consumption = @attack_sub_fuel_consumption
+		build_cost_ic = @attack_sub_build_cost
+		manpower = @attack_sub_hp
 		resources = {
-			steel = 10
-			chromium = 3
+			steel = 5
 			aluminium = 2
-			tungsten = 2
+			chromium = 2
 		}
-
-		manpower = 135
 	}
 	attack_submarine_hull_6 = {
 		year = 2040
-
 		archetype = attack_submarine
 		parent = attack_submarine_hull_5
 		priority = 12
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_fut_reactor_power
-				fixed_ship_radar_slot = module_sonar_6
-				fixed_ship_auxillary_slot_3 = module_torpedoes_5
-				fixed_ship_auxillary_slot_2 = module_sub_esm_3
-				fixed_ship_auxillary_slot_1 = module_vls_sub_asm_5
-				fixed_ship_auxillary_slot = module_torpedoes_5
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_5
+			fixed_ship_engine_slot = module_sub_fut_reactor_power
+			fixed_ship_radar_slot = module_sonar_6
+			fixed_ship_auxillary_slot_3 = module_torpedoes_4
+			fixed_ship_auxillary_slot_2 = module_sub_esm_3
+			fixed_ship_auxillary_slot_1 = module_vls_sub_asm_5
+			fixed_ship_auxillary_slot = module_torpedoes_4
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_4
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @attack_sub_armor
-
-		sub_visibility = 5.039
-		surface_detection = 17.5
-		sub_detection = 10
-		surface_visibility = 5.039
-		naval_speed = 15
+		sub_visibility = 5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 5
+		naval_speed = @attack_sub_speed
 		reliability = 0.86
-
-		naval_range = 3000
-
-		max_strength = 165
-		max_organisation = 0.55
-
-		fuel_consumption = 82.5
-
-		build_cost_ic = 2475
+		naval_range = @attack_sub_range
+		max_strength = @attack_sub_hp
+		max_organisation = @attack_sub_org
+		fuel_consumption = @attack_sub_fuel_consumption
+		build_cost_ic = @attack_sub_build_cost
+		manpower = @attack_sub_hp
 		resources = {
-			steel = 12
-			chromium = 4
+			steel = 5
 			aluminium = 3
-			tungsten = 2
+			chromium = 2
 		}
-
-		manpower = 165
 	}
 
 #NON-MTG ATTACK SUBMARINES
@@ -6857,7 +6574,7 @@ equipments = {
 		manpower = 200
 		build_cost_ic = 15780.45
 		resources = {
-			steel = 3
+			steel = 5
 			tungsten = 1
 			aluminium = 5
 		}
@@ -7461,7 +7178,6 @@ equipments = {
 #MTG Missile Submarines
 	missile_submarine = {
 		year = 1965
-
 		is_archetype = yes
 		is_buildable = no
 		type = submarine
@@ -7518,14 +7234,14 @@ equipments = {
 		}
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power2
-				fixed_ship_radar_slot = module_sonar_1
-				fixed_ship_auxillary_slot_3 = module_anti_ship_torpedoes_category
-				fixed_ship_auxillary_slot_2 = module_fuel_tank
-				fixed_ship_auxillary_slot_1 = module_vls_sub_lam_1
-				fixed_ship_auxillary_slot = module_vls_sub_asm_1
-				front_1_custom_slot = module_vls_sub_lam_1
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_1
+			fixed_ship_engine_slot = module_sub_diesel_electric_power2
+			fixed_ship_radar_slot = module_sonar_1
+			fixed_ship_auxillary_slot_3 = module_anti_ship_torpedoes_category
+			fixed_ship_auxillary_slot_2 = module_fuel_tank
+			fixed_ship_auxillary_slot_1 = module_vls_sub_lam_1
+			fixed_ship_auxillary_slot = module_vls_sub_asm_1
+			front_1_custom_slot = module_vls_sub_lam_1
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_1
 		}
 
 		module_count_limit = {
@@ -7551,61 +7267,47 @@ equipments = {
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @missile_sub_armor
-
-		sub_visibility = 8.5
-		surface_detection = 12
-		sub_detection = 10
-		surface_visibility = 8.5
-		naval_speed = 7
+		sub_visibility = 11.5
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 11.5
+		naval_speed = @missile_sub_speed
 		reliability = 0.72
-
-		naval_range = 1000
-
-		max_strength = 120
-		max_organisation = 0.343
-
-		fuel_consumption = 60
-
-		build_cost_ic = 2100
+		naval_range = @missile_sub_range
+		max_strength = @missile_sub_hp
+		max_organisation = @missile_sub_org
+		fuel_consumption = @missile_sub_fuel_consumption
+		build_cost_ic = @missile_sub_build_cost
+		manpower = @missile_sub_hp
 		resources = {
-			steel = 6
-			aluminium = 1
+			steel = 5
 		}
-
-		manpower = 120
 	}
 
 	missile_submarine_hull_1 = {
 		year = 1965
-
 		archetype = missile_submarine
 		priority = 5
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power2
-				fixed_ship_radar_slot = module_sonar_1
-				fixed_ship_auxillary_slot_2 = module_fuel_tank
-				fixed_ship_auxillary_slot_1 = module_vls_sub_lam_1
-				fixed_ship_auxillary_slot = module_vls_sub_asm_1
-				front_1_custom_slot = module_vls_sub_lam_1
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_1
+			fixed_ship_engine_slot = module_sub_diesel_electric_power2
+			fixed_ship_radar_slot = module_sonar_1
+			fixed_ship_auxillary_slot_2 = module_fuel_tank
+			fixed_ship_auxillary_slot_1 = module_vls_sub_lam_1
+			fixed_ship_auxillary_slot = module_vls_sub_asm_1
+			front_1_custom_slot = module_vls_sub_lam_1
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_1
 		}
 		resources = {
-			steel = 6
-			tungsten = 2
-			aluminium = 1
+			steel = 5
 		}
 	}
 
@@ -7619,277 +7321,218 @@ equipments = {
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power2
-				fixed_ship_radar_slot = module_sonar_2
-				fixed_ship_auxillary_slot_2 = module_fuel_tank
-				fixed_ship_auxillary_slot_1 = module_vls_sub_lam_2
-				fixed_ship_auxillary_slot = module_vls_sub_asm_2
-				front_1_custom_slot = module_vls_sub_lam_2
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_1
+			fixed_ship_engine_slot = module_sub_diesel_electric_power2
+			fixed_ship_radar_slot = module_sonar_2
+			fixed_ship_auxillary_slot_2 = module_fuel_tank
+			fixed_ship_auxillary_slot_1 = module_vls_sub_lam_2
+			fixed_ship_auxillary_slot = module_vls_sub_asm_2
+			front_1_custom_slot = module_vls_sub_lam_2
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_1
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @missile_sub_armor
-
-		sub_visibility = 8.209
-		surface_detection = 12
-		sub_detection = 12
-		surface_visibility = 8.209
-		naval_speed = 8
+		sub_visibility = 10.638
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 10.638
+		naval_speed = @missile_sub_speed
 		reliability = 0.74
-
-		naval_range = 2000
-
-		max_strength = 150
-		max_organisation = 0.428
-
-		fuel_consumption = 75
-
-		build_cost_ic = 2625
+		naval_range = @missile_sub_range
+		max_strength = @missile_sub_hp
+		max_organisation = @missile_sub_org
+		fuel_consumption = @missile_sub_fuel_consumption
+		build_cost_ic = @missile_sub_build_cost
+		manpower = @missile_sub_hp
 		resources = {
-			steel = 6
-			tungsten = 3
-			aluminium = 2
+			steel = 5
+			aluminium = 1
 		}
-
-		manpower = 150
 	}
 
 	missile_submarine_hull_3 = {
 		year = 1995
-
 		archetype = missile_submarine
 		parent = missile_submarine_hull_2
 		priority = 7
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_diesel_electric_power3
-				fixed_ship_radar_slot = module_sonar_3
-				fixed_ship_auxillary_slot_2 = module_sub_esm_1
-				fixed_ship_auxillary_slot_1 = module_vls_sub_lam_2
-				fixed_ship_auxillary_slot = module_vls_sub_asm_2
-				front_1_custom_slot = module_vls_sub_lam_2
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_2
+			fixed_ship_engine_slot = module_sub_diesel_electric_power3
+			fixed_ship_radar_slot = module_sonar_3
+			fixed_ship_auxillary_slot_2 = module_sub_esm_1
+			fixed_ship_auxillary_slot_1 = module_vls_sub_lam_2
+			fixed_ship_auxillary_slot = module_vls_sub_asm_2
+			front_1_custom_slot = module_vls_sub_lam_2
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_2
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @missile_sub_armor
-
-		sub_visibility = 7.862
-		surface_detection = 12
-		sub_detection = 14
-		surface_visibility = 7.862
-		naval_speed = 9
+		sub_visibility = 9.775
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 9.775
+		naval_speed = @missile_sub_speed
 		reliability = 0.76
-
-		naval_range = 2500
-
-		max_strength = 180
-		max_organisation = 0.514
-
-		fuel_consumption = 90
-
-		build_cost_ic = 3150
+		naval_range = @missile_sub_range
+		max_strength = @missile_sub_hp
+		max_organisation = @missile_sub_org
+		fuel_consumption = @missile_sub_fuel_consumption
+		build_cost_ic = @missile_sub_build_cost
+		manpower = @missile_sub_hp
 		resources = {
-			steel = 7
-			tungsten = 3
+			steel = 5
 			aluminium = 2
 		}
-
-		manpower = 180
 	}
 
 	missile_submarine_hull_4 = {
 		year = 2010
-
 		archetype = missile_submarine
 		parent = missile_submarine_hull_3
 		priority = 8
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_adv_reactor_power
-				fixed_ship_radar_slot = module_sonar_4
-				fixed_ship_auxillary_slot_2 = module_sub_esm_1
-				fixed_ship_auxillary_slot_1 = module_vls_sub_lam_3
-				fixed_ship_auxillary_slot = module_vls_sub_asm_3
-				front_1_custom_slot = module_vls_sub_lam_3
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_3
+			fixed_ship_engine_slot = module_sub_adv_reactor_power
+			fixed_ship_radar_slot = module_sonar_4
+			fixed_ship_auxillary_slot_2 = module_sub_esm_1
+			fixed_ship_auxillary_slot_1 = module_vls_sub_lam_3
+			fixed_ship_auxillary_slot = module_vls_sub_asm_3
+			front_1_custom_slot = module_vls_sub_lam_3
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_2
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @missile_sub_armor
-
-		sub_visibility = 7.459
-		surface_detection = 12
-		sub_detection = 16
-		surface_visibility = 7.459
-		naval_speed = 10
+		sub_visibility = 8.913
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 8.913
+		naval_speed = @missile_sub_speed
 		reliability = 0.78
-
-		naval_range = 3000
-
-		max_strength = 210
-		max_organisation = 0.6
-
-		fuel_consumption = 105
-
-		build_cost_ic = 3675
+		naval_range = @missile_sub_range
+		max_strength = @missile_sub_hp
+		max_organisation = @missile_sub_org
+		fuel_consumption = @missile_sub_fuel_consumption
+		build_cost_ic = @missile_sub_build_cost
+		manpower = @missile_sub_hp
 		resources = {
-			steel = 8
-			tungsten = 3
+			steel = 5
 			aluminium = 2
-			chromium = 2
+			chromium = 1
 		}
-
-		manpower = 210
 	}
 
 	missile_submarine_hull_5 = {
 		year = 2025
-
 		archetype = missile_submarine
 		parent = missile_submarine_hull_4
 		priority = 10
-
 		module_slots = inherit
 
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_mod_reactor_power
-				fixed_ship_radar_slot = module_sonar_5
-				fixed_ship_auxillary_slot_2 = module_sub_esm_3
-				fixed_ship_auxillary_slot_1 = module_vls_sub_lam_4
-				fixed_ship_auxillary_slot = module_vls_sub_asm_4
-				front_1_custom_slot = module_vls_sub_lam_4
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_4
+			fixed_ship_engine_slot = module_sub_mod_reactor_power
+			fixed_ship_radar_slot = module_sonar_5
+			fixed_ship_auxillary_slot_2 = module_sub_esm_3
+			fixed_ship_auxillary_slot_1 = module_vls_sub_lam_4
+			fixed_ship_auxillary_slot = module_vls_sub_asm_4
+			front_1_custom_slot = module_vls_sub_lam_4
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_3
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @missile_sub_armor
-
-		sub_visibility = 7.262
-		surface_detection = 12
-		sub_detection = 18
-		surface_visibility = 7.262
-		naval_speed = 12
+		sub_visibility = 8.05
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 8.05
+		naval_speed = @missile_sub_speed
 		reliability = 0.82
-
-		naval_range = 5000
-
-		max_strength = 270
-		max_organisation = 0.771
-
-		fuel_consumption = 135
-
-		build_cost_ic = 4725
+		naval_range = @missile_sub_range
+		max_strength = @missile_sub_hp
+		max_organisation = @missile_sub_org
+		fuel_consumption = @missile_sub_fuel_consumption
+		build_cost_ic = @missile_sub_build_cost
+		manpower = @missile_sub_hp
 		resources = {
-			steel = 10
-			chromium = 4
-			aluminium = 2
-			tungsten = 2
+			steel = 5
+			aluminium = 3
+			chromium = 1
 		}
-
-		manpower = 270
 	}
 
 	missile_submarine_hull_6 = {
 		year = 2040
-
 		archetype = missile_submarine
 		parent = missile_submarine_hull_5
 		priority = 12
-
 		module_slots = inherit
-
 		default_modules = {
-				fixed_ship_engine_slot = module_sub_fut_reactor_power
-				fixed_ship_radar_slot = module_sonar_6
-				fixed_ship_auxillary_slot_2 = module_sub_esm_3
-				fixed_ship_auxillary_slot_1 = module_vls_sub_lam_5
-				fixed_ship_auxillary_slot = module_vls_sub_asm_5
-				front_1_custom_slot = module_vls_sub_lam_5
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_5
+			fixed_ship_engine_slot = module_sub_fut_reactor_power
+			fixed_ship_radar_slot = module_sonar_6
+			fixed_ship_auxillary_slot_2 = module_sub_esm_3
+			fixed_ship_auxillary_slot_1 = module_vls_sub_lam_5
+			fixed_ship_auxillary_slot = module_vls_sub_asm_5
+			front_1_custom_slot = module_vls_sub_lam_5
+			fixed_ship_battery_slot = module_anti_ship_torpedoes_4
 		}
 
 		lg_armor_piercing = 0
 		lg_attack = 0
-
 		hg_armor_piercing = 0
 		hg_attack = 0
-
 		torpedo_attack = 0
 		sub_attack = 0
-
 		anti_air_attack = 0
 
 		armor_value = @missile_sub_armor
-
-		sub_visibility = 6.953
-		surface_detection = 12
-		sub_detection = 22
-		surface_visibility = 6.953
-		naval_speed = 14
+		sub_visibility = 7.188
+		surface_detection = 10
+		sub_detection = 0
+		surface_visibility = 7.188
+		naval_speed = @missile_sub_speed
 		reliability = 0.86
-
-		naval_range = 6000
-
-		max_strength = 330
-		max_organisation = 0.943
-
-		fuel_consumption = 165
-
-		build_cost_ic = 5775
+		naval_range = @missile_sub_range
+		max_strength = @missile_sub_hp
+		max_organisation = @missile_sub_org
+		fuel_consumption = @missile_sub_fuel_consumption
+		build_cost_ic = @missile_sub_build_cost
+		manpower = @missile_sub_hp
 		resources = {
-			steel = 12
-			chromium = 4
+			steel = 5
 			aluminium = 3
-			tungsten = 2
+			chromium = 2
 		}
-
-		manpower = 330
 	}
 
 #NON-MTG MISSILE SUBMARINES

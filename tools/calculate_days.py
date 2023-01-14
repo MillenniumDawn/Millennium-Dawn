@@ -1,5 +1,5 @@
 days_per_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-start_year = 2000
+start_year = 2017
 
 while True:
 	provided_date = [int(x) for x in input("Enter day you want the event to fire (YYYY.MM.DD):").split(".")]
@@ -14,7 +14,7 @@ while True:
 			for y in days_per_month:
 				days += y
 	else:
-		print("Error: Year is less than " + start_year + ".")
+		print("Error: Year is less than " + str(start_year) + ".")
 		continue
 
 	# Check if provided month is in range

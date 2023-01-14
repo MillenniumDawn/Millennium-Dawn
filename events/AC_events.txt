@@ -60,6 +60,7 @@ country_event = {
 			# Investor Nation Begins Project
 			FROM = {
 				start_project_two = yes
+				clr_country_flag = this_investment_offer_pending@PREV
 			}
 			# Influence Section
 			if = {
@@ -88,13 +89,12 @@ country_event = {
 				}
 			}
 
+
 			# THIS Nation
 			# take 10% of the cost of the project
-			custom_effect_tooltip = AC_event.1.o1_TT
-
-			set_temp_variable = { temp_investment = FROM.project_monetary_cost_effect }
-			multiply_temp_variable = { temp_investment = 0.10 }
-			add_to_variable = { treasury = temp_investment }
+			set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
+			multiply_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
 		}
 
 		# AI Chance of taking the Investment Project
@@ -105,28 +105,10 @@ country_event = {
 				ai_has_same_organization = yes
 			}
 			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 10 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 30 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 60 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 100 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 140 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value > 180 }
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = 0.05 }
+				check_variable = { opinion_calculator > -30 }
+				add = opinion_calculator
 			}
 			modifier = {
 				add = 1
@@ -155,6 +137,10 @@ country_event = {
 			}
 			modifier = {
 				factor = 2
+				is_subject_of = FROM
+			}
+			modifier = {
+				factor = 2
 				check_variable = { gdp_per_capita < 15 }
 			}
 			modifier = {
@@ -171,13 +157,12 @@ country_event = {
 					check_variable = { influence_array^0 = FROM }
 					check_variable = { influence_array^1 = FROM }
 					check_variable = { influence_array^2 = FROM }
+					check_variable = { influence_array^3 = FROM }
 				}
 			}
 			modifier = {
 				factor = 0
 				OR = {
-					check_variable = { influence_array_val^0 > 59.999 }
-					check_variable = { debt_ratio > 0.90 }
 					check_variable = { interest_rate > 9.999 }
 					has_country_flag = recently_refused@FROM
 				}
@@ -190,8 +175,6 @@ country_event = {
 		# FROM is the original investor nation
 		# THIS is the target nation
 		FROM = {
-			# @PREV is looking at the target nation
-			set_country_flag = this_investment_offer_pending@PREV
 			country_event = AC_event.11
 		}
 		set_country_flag = { flag = recently_refused@FROM days = 30 value = 1 }
@@ -200,32 +183,10 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < 0 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -10 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -30 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -60 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -100 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -140 }
-			}
-			modifier = {
-				add = 1
-				has_opinion = { target = FROM value < -180 }
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = -0.05 }
+				check_variable = { opinion_calculator > -30 }
+				add = opinion_calculator
 			}
 			modifier = {
 				factor = 2
@@ -260,21 +221,39 @@ country_event = {
 					}
 				}
 			}
-			modifier = { #More likely if you are a top influencer
+			modifier = { #Less likely is not a top influencer
 				add = 1
 				OR = {
 					NOT = { check_variable = { influence_array^0 = FROM } }
 					NOT = { check_variable = { influence_array^1 = FROM } }
 					NOT = { check_variable = { influence_array^2 = FROM } }
+					NOT = { check_variable = { influence_array^3 = FROM } }
 				}
 			}
 			# Tag Specific Rejections
 			modifier = {
 				add = 20
-				tag = NKO
+				OR = {
+					AND = {
+						original_tag = NKO
+						FROM = { NOT = { original_tag = CHI } }
+					}
+					AND = {
+						original_tag = PER
+						FROM = { NOT = { has_government = communism } }
+					}
+					AND = {
+						OR = {
+							original_tag = CHI
+							original_tag = SOV
+						}
+						FROM = { original_tag = USA }
+					}
+				}
 			}
+			# Reject ALL investments if I recently rejected an offer
 			modifier = {
-				factor = 500
+				factor = 1000
 				has_country_flag = recently_refused@FROM
 			}
 		}
@@ -294,9 +273,6 @@ country_event = {
 		name = AC_event.2.o1
 		log = "[GetDateText]: [This.GetName]: AC_event.11.o1 executed"
 		clr_country_flag = this_investment_offer_pending@FROM
-		add_to_variable = { var = treasury value = AC_build_cost }
-		subtract_from_variable = { var = int_investments value = AC_build_cost }
-		calculate_int_investments_rate = yes
 	}
 }
 
@@ -553,23 +529,6 @@ country_event = {
 					AI_get_infrastructure_score = yes
 					# Offices - Building Type - 5
 					AI_get_offices_score = yes
-					# # SAM - Building Type - 6
-					# if = { limit = { ROOT = { has_idea = defense_industry } }
-
-					# }
-					# # Radar - Building Type - 7
-					# if = { limit = { ROOT = { has_idea = defense_industry } }
-
-					# }
-					# # Air Bases - Building Type - 8
-					# if = { limit = { ROOT = { has_idea = defense_industry } }
-
-					# }
-					# Fuel Silo - Building Type - 9
-
-					# Internet Station - Building Type - 10
-
-					# Biofuel Refineries - Building Type - 11
 				}
 			}
 		}
@@ -598,7 +557,7 @@ country_event = {
 					}
 					ROOT = { country_event = { id = AC_event.3 } }
 				}
-				log = "AC - [GetDate] [This.GetTag] project type [?project_building_type^-1] (x [?project_build_amount^-1]) in [?AI_best_target.GetName], Nation [?ROOT.AC_nation_target.GetName], score = [?AC_AI_best_score]"
+				log = "AI Investment Succeeded [GetDate] [ROOT.GetName]: project type [?project_building_type^-1] (x [?project_build_amount^-1]) in [?AI_best_target.GetName], Nation [?ROOT.AC_nation_target.GetName], score = [?AC_AI_best_score]"
 				else = {
 					log = "AI Investment Failed [ROOT.GetName]: No valid state target found. [?AI_best_target.GetName] scored a [?AC_AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
 				}

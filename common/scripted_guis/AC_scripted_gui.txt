@@ -33,7 +33,7 @@ scripted_gui = {
 
 		parent_window_token = selected_state_view
 
-		dirty = ROOT.refresh_gui
+		dirty = global.refresh_gui
 
 		visible = {
 			OR = {
@@ -57,7 +57,7 @@ scripted_gui = {
 		window_name = "AC_allied_construction_window"
 		parent_window_token = selected_state_view
 
-		dirty = ROOT.refresh_gui
+		dirty = global.refresh_gui
 
 		visible = {
 			OR = {
@@ -97,7 +97,10 @@ scripted_gui = {
 					THIS = {
 						set_variable = { ROOT.AC_state_target = THIS.id }
 						# CONTROLLER is pretty obvious
-						CONTROLLER = { set_variable = { ROOT.AC_nation_target = THIS.id } }
+						CONTROLLER = {
+							set_variable = { ROOT.AC_nation_target = THIS.id }
+							ROOT = { set_country_flag = this_investment_offer_pending@PREV }
+						}
 					}
 					ROOT = {
 						update_gui = yes
@@ -257,15 +260,16 @@ scripted_gui = {
 			# Index 1: CIC
 			AC_building_cic_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 1 }
 					update_gui = yes
 				}
-
 				refresh_gui = yes
 			}
 			# Index 2: MIC
 			AC_building_mic_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 2 }
 					update_gui = yes
 				}
@@ -275,6 +279,7 @@ scripted_gui = {
 			# Index 3: NIC
 			AC_building_nic_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 3 }
 					update_gui = yes
 				}
@@ -284,6 +289,7 @@ scripted_gui = {
 			# Index 4: Infrastructure
 			AC_building_infra_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 4 }
 					update_gui = yes
 				}
@@ -293,6 +299,7 @@ scripted_gui = {
 			# Index 5: Offices
 			AC_building_offices_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 5 }
 					update_gui = yes
 				}
@@ -302,6 +309,7 @@ scripted_gui = {
 			# Index 6: SAM
 			AC_building_antiair_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 6 }
 					update_gui = yes
 				}
@@ -311,6 +319,7 @@ scripted_gui = {
 			# Index 7: Radar
 			AC_building_radar_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 7 }
 					update_gui = yes
 				}
@@ -320,6 +329,7 @@ scripted_gui = {
 			# Index 8: Air Bases
 			AC_building_airbase_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 8 }
 					update_gui = yes
 				}
@@ -329,6 +339,7 @@ scripted_gui = {
 			#Index 9: Fuel Silos
 			AC_building_fuel_silos_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 9 }
 					update_gui = yes
 				}
@@ -338,6 +349,7 @@ scripted_gui = {
 			#Index 10: Internet Station
 			AC_building_internet_station_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 10 }
 					update_gui = yes
 				}
@@ -347,6 +359,7 @@ scripted_gui = {
 			#Index 11: Biofuel Refineries
 			AC_building_ref_button_click = {
 				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 11 }
 					update_gui = yes
 				}
@@ -358,73 +371,64 @@ scripted_gui = {
 		triggers = {
 			# Build Button Click Enabled
 			AC_build_button_click_enabled = {
-				PREV = { CONTROLLER = { NOT = { tag = ROOT } } }
-				PREV = { CONTROLLER = { NOT = { has_war_with = ROOT } } }
-				ROOT = { NOT = { is_justifying_wargoal_against = PREV.CONTROLLER } }
-				if = {
-					limit = {
-						OR = {
-							check_variable = { project_building_type^-1 = 2 } #MIC
-							check_variable = { project_building_type^-1 = 6 } #Anti-Air
-						}
-					}
-					ROOT = { has_idea = defense_industry }
-				}
-				if = {
-					limit = {
-						check_variable = { project_building_type^-1 = 3 }
-					}
-					ROOT = { has_idea = maritime_industry }
+				hidden_trigger = {
+					PREV = { CONTROLLER = { NOT = { tag = ROOT } } }
 				}
 				# #Cannot be at war
 				# NOT = { OWNER = { has_war_with = ROOT } }
 				# NOT = { ROOT = { controls_state = PREV.id } }
 				# #Cannot be being justified upon investment country
 				# ROOT = { not = { is_justifying_wargoal_against = PREV } }
-				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } }
+				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } currently_is_considering_a_project = yes }
 					ROOT = {
 						check_variable = { active_projects < 15 }
 						check_variable = { project_building_type^-1 > 0 }
 						check_variable = { project_build_amount^-1 > 0 }
+						NOT = { has_war_with = PREV.CONTROLLER }
 						NOT = { is_justifying_wargoal_against = PREV.CONTROLLER }
-
 						# General things
-						NOT = { check_variable = { treasury < project_monetary_cost^-1 } }
-
-						if = { limit = { check_variable = { project_building_type^-1 = 1 } }
-							PREV = { AC_building_cic_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 2 } }
-							PREV = { AC_building_mic_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 3 } }
-							PREV = { AC_building_nic_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
-							PREV = { AC_building_infra_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
-							PREV = { AC_building_offices_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 6 } }
-							PREV = { AC_building_antiair_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
-							PREV = { AC_building_radar_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 8 } }
-							PREV = { AC_building_airbase_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
-							PREV = { building_fuel_silos_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
-							PREV = { building_internet_station_available = yes }
-						}
-						else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
-							PREV = { AC_building_ref_available = yes }
-						}
+						has_available_treasury_investment = yes
+						currently_is_considering_a_project = yes
 					}
+					if = { limit = { check_variable = { ROOT.project_building_type^-1 = 1 } }
+						AC_building_cic_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 2 } }
+						AC_building_mic_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 3 } }
+						AC_building_nic_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 4 } }
+						AC_building_infra_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 5 } }
+						AC_building_offices_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 6 } }
+						AC_building_antiair_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 7 } }
+						AC_building_radar_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 8 } }
+						AC_building_airbase_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 9 } }
+						building_fuel_silos_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 10 } }
+						building_internet_station_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 11 } }
+						AC_building_ref_available = yes
+					}
+				}
+				else_if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } currently_is_considering_a_project = yes } }
+					currently_is_considering_a_project = yes
+				}
+				else = {
+					always = yes
 				}
 			}
 
@@ -432,7 +436,7 @@ scripted_gui = {
 			# Page 1 - Index One: Civilian Industry
 			AC_building_cic_button_click_enabled = {
 				AC_building_cic_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_cic_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 1 } }
@@ -440,7 +444,7 @@ scripted_gui = {
 			# Index Two: Military Industry
 			AC_building_mic_button_click_enabled = {
 				AC_building_mic_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_mic_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 1 } }
@@ -448,7 +452,7 @@ scripted_gui = {
 			# Index Three: Naval Dockyard
 			AC_building_nic_button_click_enabled = {
 				AC_building_nic_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_nic_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 1 } }
@@ -456,7 +460,7 @@ scripted_gui = {
 			# Index Four: Infrastructure
 			AC_building_infra_button_click_enabled = {
 				AC_building_infra_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_infra_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 1 } }
@@ -464,7 +468,7 @@ scripted_gui = {
 			# Index Five: Offices
 			AC_building_offices_button_click_enabled = {
 				AC_building_offices_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_offices_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 1 } }
@@ -472,7 +476,7 @@ scripted_gui = {
 			# Index Six: SAM
 			AC_building_antiair_button_click_enabled = {
 				AC_building_antiair_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_antiair_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 1 } }
@@ -480,7 +484,7 @@ scripted_gui = {
 			# Index Seven: Radar
 			AC_building_radar_button_click_enabled = {
 				AC_building_radar_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_radar_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 1 } }
@@ -489,7 +493,7 @@ scripted_gui = {
 			# Index Eight: Air Bases
 			AC_building_airbase_button_click_enabled = {
 				AC_building_airbase_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_airbase_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 2 } }
@@ -497,7 +501,7 @@ scripted_gui = {
 			# Index Nine: Fuel Silo
 			AC_building_fuel_silos_button_click_enabled = {
 				building_fuel_silos_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_fuel_silos_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 2 } }
@@ -505,7 +509,7 @@ scripted_gui = {
 			# Index Ten: Internet Station
 			AC_building_internet_station_button_click_enabled = {
 				building_internet_station_available = yes
-				ROOT = { NOT = { has_country_flag = this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_internet_station_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 2 } }
@@ -513,7 +517,7 @@ scripted_gui = {
 			# Index Eleven: Refineries
 			AC_building_ref_button_click_enabled = {
 				AC_building_ref_available = yes
-				ROOT = { NOT = { has_country_flag =  this_investment_offer_pending@PREV } }
+				currently_is_considering_a_project = yes
 			}
 			AC_building_ref_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 2 } }
