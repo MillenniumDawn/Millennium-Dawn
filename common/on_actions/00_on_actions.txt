@@ -587,18 +587,7 @@ on_actions = {
 				set_variable = { current_political_power_cost = 0 }
 				set_variable = { nations_influenced = 0 }
 
-				if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_spread }
-					set_temp_variable = { percent_change = 0.5 }
-				}
-				else_if = { limit = { has_global_flag = GAME_RULE_gain_3_percent_spread }
-					set_temp_variable = { percent_change = 3 }
-				}
-				else_if = { limit = { has_global_flag = GAME_RULE_gain_4_percent_spread }
-					set_temp_variable = { percent_change = 4 }
-				}
-				else = {
-					set_temp_variable = { percent_change = 2 }
-				}
+				set_temp_variable = { percent_change = global.percent_change_value }
 				set_temp_variable = { tag_index = THIS.id }
 				for_each_loop = {
 					array = auto_influence_array
@@ -606,7 +595,10 @@ on_actions = {
 						limit = {
 							NOT = { check_variable = { v = 0 } }
 							check_variable = { current_political_power_cost < political_power }
-							var:v = { ROOT = { NOT = { has_country_flag = spread_influence@PREV } } }
+							var:v = {
+								ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
+								exists = yes
+							}
 						}
 						set_temp_variable = { influence_target = v }
 						change_influence_percentage = yes
@@ -626,6 +618,17 @@ on_actions = {
 							}
 						}
 					}
+
+					#
+					if = { limit = { var:v = { exists = no } }
+						var:v = {
+							ROOT = {
+								remove_auto_influencer_request = yes
+								update_auto_influence_array = yes
+								update_dirty_influence_var = yes
+							}
+						}
+					}
 				}
 
 				country_event = influence.54
@@ -634,6 +637,7 @@ on_actions = {
 			country_event = egypt.100
 		}
 	}
+
 
 	on_thri_yearly_pulse = { }
 
@@ -2488,6 +2492,19 @@ on_actions = {
  					size = 24
 				}
 				calculate_abandon_coalition_threshold = yes
+			}
+
+			if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_spread }
+				set_variable = { global.percent_change_value = 0.5 }
+			}
+			else_if = { limit = { has_global_flag = GAME_RULE_gain_3_percent_spread }
+				set_variable = { global.percent_change_value = 3 }
+			}
+			else_if = { limit = { has_global_flag = GAME_RULE_gain_4_percent_spread }
+				set_variable = { global.percent_change_value = 4 }
+			}
+			else = {
+				set_variable = { global.percent_change_value = 2 }
 			}
 
 			every_country = {
