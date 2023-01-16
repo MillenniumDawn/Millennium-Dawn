@@ -19,7 +19,11 @@ startup_influence = {
 
 # Update
 update_dirty_influence_var = {
-	if = { limit = { NOT = { has_variable = global.update_influence_ui } }
+	if = {
+		limit = {
+			NOT = { has_variable = global.update_influence_ui }
+			check_variable = { global.update_influence_ui = 100 }
+		}
 		set_variable = { global.update_influence_ui = 1 }
 	}
 	else = {
@@ -173,18 +177,7 @@ spread_influence = {
 	log = "[GetDateText]: [Root.GetName]: On Actions -- [ROOT.GetName] influence action in [THIS.GetName]"
 	PREV = { add_political_power = -50 }
 
-	if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_spread }
-		set_temp_variable = { percent_change = 0.5 }
-	}
-	else_if = { limit = { has_global_flag = GAME_RULE_gain_3_percent_spread }
-		set_temp_variable = { percent_change = 3 }
-	}
-	else_if = { limit = { has_global_flag = GAME_RULE_gain_4_percent_spread }
-		set_temp_variable = { percent_change = 4 }
-	}
-	else = {
-		set_temp_variable = { percent_change = 2 }
-	}
+	set_temp_variable = { percent_change = global.percent_change_value }
 	set_temp_variable = { tag_index = PREV.id }
 	set_temp_variable = { influence_target = THIS.id }
 	change_influence_percentage = yes
@@ -694,7 +687,7 @@ create_new_auto_influencer_request = {
 }
 
 remove_auto_influencer_request = {
-	log = "[GetDateText]: [Root.GetName]: Creation of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
+	log = "[GetDateText]: [Root.GetName]: Removal of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
 	set_temp_variable = { index = 0 }
 	for_each_loop = {
 		array = auto_influence_array
