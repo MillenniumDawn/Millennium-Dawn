@@ -1802,7 +1802,7 @@ focus_tree = {
 	focus = {
 		id = CUB_military_start
 		
-		x = 55
+		x = 50
 		y = 0
 		
 		cost = 10
@@ -1813,286 +1813,55 @@ focus_tree = {
 			factor = 1
 		}
 	}
-
-
-#Naval Reform
+	
+	#Expand Fund Union de Industrias Militares
 	focus = {
-		id = CUB_naval_reform
-		icon = navy
+		id = CUB_military_industrias 
+		icon = general_staff
 
-		x = 49
+		x = 0
 		y = 1
+		relative_position_id = CUB_military_start
 
 		cost = 10
-		prerequisite = { focus = CUB_military_start  }
-		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
-		available = { any_owned_state = { is_coastal = yes } }
+
+		search_filters = {FOCUS_FILTER_RESEARCH }
+		prerequisite = { focus = CUB_military_start }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_naval_reform"
-			navy_experience = 25
-			add_doctrine_cost_reduction = {
-				name = CUB_naval_reform
-				category = Cat_naval_doctrine
-				uses = 1
-				cost_reduction = 0.5
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_military_industrias"
+			set_temp_variable = { treasury_change = -0.500 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = Cat_INF_WEP
+				bonus = 0.5
+				uses = 2
+				category = Cat_INF_WEP
 			}
-			set_temp_variable = { temp_opinion = 5 }
-			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
 	}
+ 
+	#Army Reform
 	focus = {
-		id = CUB_naval_bases
-		icon = navy2
+		id = CUB_army_reform
+		icon = infantry_allies
 
 		x = -3
 		y = 1
-		relative_position_id = CUB_naval_reform
-
+		relative_position_id = CUB_military_industrias 
 		cost = 10
-
-		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
-		prerequisite = { focus = CUB_naval_reform }
-
+		prerequisite = { focus = CUB_military_industrias   }
+		available = { NOT = { has_idea = no_military } }
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_naval_bases"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				limit = {
-					is_coastal = yes
-					free_building_slots = {
-						building = dockyard
-						size > 1
-						include_locked = yes
-					}
-				}
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = dockyard
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { temp_opinion = 5 }
-			change_maritime_industry_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 0
-				disabled_ai_unit_list = yes
-			}
-		}
-	}
-	focus = {
-		id = CUB_submarines
-		icon = submarines
-
-		x = -1
-		y = 1
-		relative_position_id = CUB_naval_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_naval_reform }
-		available = { num_of_naval_factories > 3 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_submarines"
-			add_tech_bonus = {
-				name = Cat_SUB
-				uses = 2
-				bonus = 0.5
-				category = Cat_SUB
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_surface_ships
-		icon = frigates
-
-		x = 1
-		y = 1
-		relative_position_id = CUB_naval_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_naval_reform }
-		available = { num_of_naval_factories > 3 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_surface_ships"
-			add_tech_bonus = {
-				name = Cat_SURFACE_SHIP
-				uses = 2
-				bonus = 0.5
-				category = Cat_SURFACE_SHIP
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_dockyards
-		icon = naval_dockyard
-
-		x = -4
-		y = 2
-		relative_position_id = CUB_naval_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION}
-		prerequisite = { focus = CUB_naval_bases }
-
-		available = {
-			num_of_factories > 0
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_dockyards"
-			if = {
-				limit = {
-					num_of_factories < 10
-				}
-				set_temp_variable = { treasury_change = -7.5 }
-				modify_treasury_effect = yes
-				random_owned_state = {
-					limit = { is_coastal = yes }
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = dockyard
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
-			else = {
-				set_temp_variable = { treasury_change = -15 }
-				modify_treasury_effect = yes
-				random_owned_state = {
-					limit = { is_coastal = yes }
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = dockyard
-						level = 1
-						instant_build = yes
-					}
-				}
-				random_owned_state = {
-					limit = { is_coastal = yes }
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = dockyard
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
-			set_temp_variable = { temp_opinion = 5 }
-			change_maritime_industry_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 0
-				disabled_ai_unit_list = yes
-			}
-		}
-	}
-	focus = {
-		id = CUB_nuclear_submarines
-		icon = wolfpacks
-
-		x = -2
-		y = 2
-		relative_position_id = CUB_naval_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_submarines }
-		available = { num_of_naval_factories > 7 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_nuclear_submarines"
-			add_tech_bonus = {
-				name = Cat_NUKE_SUB
-				uses = 2
-				bonus = 0.5
-				category = Cat_NUKE_SUB
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_naval_doctrine_innovations
-		icon = naval_upgrade
-
-		x = 0
-		y = 2
-		relative_position_id = CUB_naval_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_naval_reform }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_naval_doctrine_innovations"
-			add_doctrine_cost_reduction = {
-				name = CUB_naval_doctrine_innovations
-				category = Cat_naval_doctrine
-				uses = 2
-				cost_reduction = 0.5
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_aircraft_carriers
-		icon = carriers2
-
-		x = 2
-		y = 2
-		relative_position_id = CUB_naval_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_surface_ships }
-		prerequisite = { focus = CUB_fighter_planes }
-		available = { num_of_naval_factories > 5 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_aircraft_carriers"
-			add_tech_bonus = {
-				name = CUB_aircraft_carriers
-				uses = 2
-				bonus = 0.5
-				category = Cat_CARRIER
-			}
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_army_reform"
+			army_experience = 25
+			add_command_power = 20
+			increase_military_spending = yes
 		}
 
 		ai_will_do = {
@@ -2100,44 +1869,17 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = CUB_naval_doctrine_expertise
-		icon = naval_doctrine
-
-		x = 0
-		y = 3
-		relative_position_id = CUB_naval_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_naval_doctrine_innovations }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_naval_doctrine_expertise"
-			add_doctrine_cost_reduction = {
-				name = CUB_naval_doctrine_expertise
-				category = Cat_naval_doctrine
-				uses = 2
-				cost_reduction = 0.5
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
 
 	#Air Force Reform
 	focus = {
 		id = CUB_air_force_reform
 		icon = air_force
 
-		x = 54
+		x = 0
 		y = 1
-
+		relative_position_id = CUB_military_industrias 
 		cost = 10
-		prerequisite = { focus = CUB_military_start  }
+		prerequisite = { focus = CUB_military_industrias   }
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
 		completion_reward = {
@@ -2161,173 +1903,30 @@ focus_tree = {
 			factor = 1
 		}
 	}
+#Naval Reform
 	focus = {
-		id = CUB_fighter_planes
-		icon = fighter_plane
+		id = CUB_naval_reform
+		icon = navy
 
-		x = -1
+		x = 3
 		y = 1
-		relative_position_id = CUB_air_force_reform
-
+		relative_position_id = CUB_military_industrias 
 		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_air_force_reform }
-		available = { num_of_military_factories > 3 }
+		prerequisite = { focus = CUB_military_industrias   }
+		search_filters = {FOCUS_FILTER_INTERNAL_FACTION}
+		available = { any_owned_state = { is_coastal = yes } }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_fighter_planes"
-			add_tech_bonus = {
-				name = CUB_fighter_planes
-				uses = 2
-				bonus = 0.5
-				category = CAT_FIXED_WING
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_air_doctrine_innovations
-		icon = air_doctrine
-
-		x = 1
-		y = 1
-		relative_position_id = CUB_air_force_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = {
-			focus = CUB_air_force_reform
-			focus = CUB_military_emergency
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_air_doctrine_innovations"
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_naval_reform"
+			navy_experience = 25
 			add_doctrine_cost_reduction = {
-				name = CUB_air_doctrine_innovations
-				category = air_doctrine
+				name = CUB_naval_reform
+				category = Cat_naval_doctrine
 				uses = 1
 				cost_reduction = 0.5
 			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_countermeasures_against_aircraft
-		icon = naval_bombers
-
-		x = 0
-		y = 2
-		relative_position_id = CUB_air_force_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = {
-			focus = CUB_fighter_planes
-			focus = CUB_air_doctrine_innovations
-		}
-		available = { num_of_military_factories > 4 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_countermeasures_against_aircraft"
-			add_tech_bonus = {
-				name = Cat_AA
-				uses = 2
-				bonus = 0.5
-				category = Cat_AA
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_bomber_planes
-		icon = modern_bomber
-
-		x = -1
-		y = 3
-		relative_position_id = CUB_air_force_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_fighter_planes }
-		available = { num_of_military_factories > 5 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_bomber_planes"
-			add_tech_bonus = {
-				name = Cat_STR_BOMBER
-				uses = 2
-				bonus = 0.5
-				category = Cat_STR_BOMBER
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_drones
-		icon = drone2
-
-		x = 1
-		y = 3
-		relative_position_id = CUB_air_force_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_air_doctrine_innovations }
-		prerequisite = { focus = CUB_infantry_equipment_development }
-		available = { num_of_military_factories > 3 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_drones"
-			add_tech_bonus = {
-				name = CUB_drones
-				uses = 2
-				bonus = 0.5
-				category = Cat_L_DRONE
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_air_doctrine_expertise
-		icon = air_doctrine
-
-		x = 0
-		y = 4
-		relative_position_id = CUB_air_force_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_countermeasures_against_aircraft }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_air_doctrine_expertise"
-			add_doctrine_cost_reduction = {
-				name = CUB_air_doctrine_expertise
-                category = air_doctrine
-                uses = 2
-                cost_reduction = 0.5
-            }
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2335,334 +1934,15 @@ focus_tree = {
 		}
 	}
 
-	#Army Reform
-	focus = {
-		id = CUB_army_reform
-		icon = infantry_allies
 
-		x = 60
-		y = 1
 
-		cost = 10
-		prerequisite = { focus = CUB_military_start  }
-		available = { NOT = { has_idea = no_military } }
-		search_filters = { FOCUS_FILTER_EXPENDITURE }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_army_reform"
-			army_experience = 25
-			add_command_power = 20
-			increase_military_spending = yes
-		}
 
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_military_emergency
-		icon = tanks2
 
-		x = -3
-		y = 0
-		relative_position_id = CUB_army_reform
 
-		cost = 2
 
-		available = {
-			OR = {
-				has_defensive_war = yes
-				surrender_progress > 0.05
-			}
-		}
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_military_emergency"
-			army_experience = 20
-			air_experience = 20
-		}
 
-		ai_will_do = {
-			factor = 1
-		}
-	}
 
-	focus = {
-		id = CUB_military_emergency
-		icon = soliger_plain
-
-		x = -2
-		y = 1
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = {
-			focus = CUB_army_reform
-			focus = CUB_military_emergency
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_military_emergency"
-			add_doctrine_cost_reduction = {
-				name = CUB_military_emergency
-				category = land_doctrine
-				uses = 2
-				cost_reduction = 0.5
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_military_exercises
-		icon = army_reform
-
-		x = 0
-		y = 1
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		prerequisite = { focus = CUB_army_reform }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_military_exercises"
-			army_experience = 50
-			add_war_support = 0.05
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_military_education_reform
-		icon = recruitment
-
-		x = 2
-		y = 1
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_MILITARY_LAWS}
-		prerequisite = { focus = CUB_army_reform }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_military_education_reform"
-			increase_officer_training_level = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_infantry_equipment_development
-		icon = small_arms2
-
-		x = -3
-		y = 2
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_military_emergency }
-		available = { num_of_military_factories > 2 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_infantry_equipment_development"
-			add_tech_bonus = {
-				name = CUB_infantry_equipment_development
-				uses = 2
-				bonus = 0.5
-				category = Cat_INF_WEP
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_land_doctrine_expertise
-		icon = army_doctrine
-
-		x = -1
-		y = 2
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_military_emergency }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_land_doctrine_expertise"
-			add_doctrine_cost_reduction = {
-				name = CUB_land_doctrine_expertise
-				category = land_doctrine
-				uses = 2
-				cost_reduction = 0.5
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_artillery_experiments
-		icon = artillery
-
-		x = 1
-		y = 2
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_military_exercises }
-		available = { num_of_military_factories > 3 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_artillery_experiments"
-			add_tech_bonus = {
-				name = CUB_artillery_experiments
-				uses = 2
-				bonus = 0.5
-				category = Cat_ARTY
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_uniform_improvements
-		icon = general_staff
-
-		x = -2
-		y = 3
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_infantry_equipment_development }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_uniform_improvements"
-			add_tech_bonus = {
-				name = CUB_uniform_improvements
-				uses = 2
-				bonus = 0.5
-				technology = body_armor_1980
-				technology = body_armor_2000
-				technology = body_armor_2010
-				technology = body_armor_2030
-				technology = camouflage
-				technology = camouflage2
-				technology = camouflage3
-				technology = camouflage4
-				technology = camouflage5
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_self_propelled_artillery
-		icon = combined_arms
-
-		x = 0
-		y = 3
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_land_doctrine_expertise }
-		prerequisite = { focus = CUB_artillery_experiments }
-		available = { num_of_military_factories > 4 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_self_propelled_artillery"
-			add_tech_bonus = {
-				name = CUB_self_propelled_artillery
-				uses = 2
-				bonus = 0.5
-				category = Cat_SP_R_ARTY
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_develop_armor_prototypes
-		icon = tanks4
-
-		x = 2
-		y = 3
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_artillery_experiments }
-		available = { num_of_military_factories > 5 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_develop_armor_prototypes"
-			add_tech_bonus = {
-				name = CUB_develop_armor_prototypes
-				uses = 2
-				bonus = 0.5
-				category = Cat_ARMOR
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CUB_countermeasures_against_armored_units
-		icon = tanks3
-
-		x = 2
-		y = 4
-		relative_position_id = CUB_army_reform
-
-		cost = 10
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-		prerequisite = { focus = CUB_develop_armor_prototypes }
-		available = { num_of_military_factories > 5 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_countermeasures_against_armored_units"
-			add_tech_bonus = {
-				name = CUB_countermeasures_against_armored_units
-				uses = 2
-				bonus = 0.5
-				category = Cat_AT
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
 
 }
 
