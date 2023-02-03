@@ -6,9 +6,9 @@ from tokenize import Ignore
 #############################
 ###
 ### HOI 4 GFX file generator by AngriestBird, originally for Millennium Dawn Mod
-### Written in Python 3.10.5
+### Written in Python 3.11.1
 ###
-### Copyright (c) 2022 Ken McCormick (AngriestBird)
+### Copyright (c) 2023 Ken McCormick (AngriestBird)
 ### Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 ### The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 ### THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -40,7 +40,8 @@ tgalist = []
 country_tag_list = []
 inputpath = ""
 
-# Change
+# Modfolder = the mod folder name
+# mod = The mod name
 modfolder = 'Millennium_Dawn\\'
 mod = 'Millennium_Dawn'
 
@@ -48,7 +49,7 @@ def main():
 	path = os.path.abspath(os.path.join(os.path.dirname(mod),'..'))
 	country_tag_list = createcountrytaglist()
 
-	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\nPlease enter the number of the option you'd like: "))
+	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx. \nPlease enter the number of the option you'd like: "))
 
 	if selection == 1:
 		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\gfx\interface\goals'))
@@ -67,8 +68,13 @@ def main():
 
 		print(path)
 		getfiles(path)
+	elif selection == 5:
+		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\\gfx\\texticons\\parties_icons'))
+
+		print(path)
+		getfiles(path)
 	else:
-		print(f"{bcolors.FAIL}1 through 4 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
+		print(f"{bcolors.FAIL}1 through 5 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
 		return
 
 	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
@@ -212,6 +218,28 @@ def main():
 				ffile.write('}')
 			print(f"{bcolors.INFO} {count} files were skipped due to being generic or module files.{bcolors.RESET}")
 			print("Generation of the technologies.gfx...")
+			return
+		elif selection == 5: # Party Icons
+			print("Generating MD_parties_icons.gfx...")
+			with open ("MD_parties_icons.gfx", "w") as ffile:
+				ffile.write('spriteTypes = {\n')
+				for fname in ddsdict:
+					file_location = fname
+					file_location = file_location.split(modfolder)
+					texture_path = file_location[1] # Should Retrieve the Path
+					file_utility = texture_path
+					texture_path = texture_path.replace("\\", "/")
+					file_utility = file_utility.replace("gfx\\texticons\\parties_icons\\", "")
+					file_utility = file_utility.split("\\")
+
+					texture_name = createitemcall(file_utility)
+
+					ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + texture_name + '\"\n\t\ttexturefile = \"' + texture_path + '\"\n\t\tlegacy_lazy_load = no\n\t}\n')
+
+				ffile.write('}')
+			print("Generation of MD_parties_icons is complete.")
+			movefilestointerface('MD_parties_icons.gfx')
+			print(f"\nMD_parties_icons.gfx has been generated for {len(ddslist)} party icons.\n\nThe file \"MD_parties_icons.gfx\" has been outputted to the interface directory.")
 			return
 		else:
 			print(f"{bcolors.FAIL}1 through 4 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
