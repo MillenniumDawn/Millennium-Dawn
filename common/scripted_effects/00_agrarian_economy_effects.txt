@@ -1,0 +1,190 @@
+AGRI_plant_the_seeds = {
+	if = { limit = { is_agrarian_economy = yes }
+		add_ideas = agrarian_economy
+		AGRI_difficulty_settings = yes
+	}
+}
+
+AGRI_difficulty_settings = {
+	if = { limit = { is_ai = no }
+		if = {
+			limit = { difficulty < 1 }
+			add_to_variable = { agri_crop_price^0 = 10 }
+			add_to_variable = { agri_crop_price^1 = 15 }
+		}
+		if = {
+			limit = {
+				difficulty > 0
+				difficulty < 2
+			}
+			add_to_variable = { agri_crop_price^0 = 5 }
+			add_to_variable = { agri_crop_price^1 = 10 }
+		}
+		if = {
+			limit = {
+				difficulty > 2
+				difficulty < 4
+			}
+			add_to_variable = { agri_crop_price^0 = -5 }
+			add_to_variable = { agri_crop_price^1 = -10 }
+		}
+		if = {
+			limit = {
+				difficulty > 3
+				difficulty < 5
+			}
+			add_to_variable = { agri_crop_price^0 = -10 }
+			add_to_variable = { agri_crop_price^1 = -15 }
+		}
+	}
+	if = { limit = { is_ai = yes }
+		if = {
+			limit = {
+				difficulty > 2
+				difficulty < 4
+			}
+			add_to_variable = { agri_crop_price^0 = 5 }
+			add_to_variable = { agri_crop_price^1 = 10 }
+		}
+		if = {
+			limit = {
+				difficulty > 3
+				difficulty < 5
+			}
+			add_to_variable = { agri_crop_price^0 = 10 }
+			add_to_variable = { agri_crop_price^1 = 15 }
+		}
+	}
+	AGRI_update_math_variables = yes
+}
+
+AGRI_civil_war = {
+	if = {
+		limit = { FROM = { is_agrarian_economy = yes } }
+		AGRI_plant_the_seeds = yes
+		set_variable = { ROOT.agri_crop_allocation^0 = FROM.agri_crop_allocation^0 }
+		set_variable = { ROOT.agri_crop_allocation^1 = FROM.agri_crop_allocation^1 }
+		set_variable = { ROOT.agri_crop_price^0 = FROM.agri_crop_price^0 }
+		set_variable = { ROOT.agri_crop_price^1 = FROM.agri_crop_price^1 }
+		AGRI_difficulty_settings = yes
+	}
+}
+
+AGRI_allocation_change_effect = {
+	add_to_variable = { agri_crop_allocation^crop_type = allocation_change }
+	clamp_variable = {
+		var = agri_crop_allocation^crop_type
+		min = 0
+		max = 1
+	}
+	custom_effect_tooltip = agri_allocation_change
+}
+
+AGRI_price_change_effect = {
+	add_to_variable = { agri_crop_price^crop_type = price_change }
+	clamp_variable = {
+		var = agri_crop_price^crop_type
+		min = 0
+		max = 50
+	}
+	custom_effect_tooltip = agri_price_change
+}
+
+AGRI_protection_update = {
+	add_to_variable = { AGRI_protection = AGRI_protections_change }
+	custom_effect_tooltip = AGRI_protections_effect
+}
+
+AGRI_banked_changes_update_basic = {
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_banked_changes_update_basic"
+	set_variable = { AGRI_PP_calculate_basic = AGRI_banked_changes_cash }
+	multiply_variable = { AGRI_PP_calculate_basic = 1000 }
+	set_variable = { AGRI_pp_cost = AGRI_PP_calculate_basic }
+	set_variable = { AGRI_pp_check = AGRI_pp_cost }
+	multiply_variable = { AGRI_pp_check = -1 }
+	log = "[GetDateText]: [ROOT.GetName]: Effect Completed: AGRI_banked_changes_update_basic"
+}
+
+AGRI_banked_changes_update_cash = {
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_banked_changes_update_cash"
+	set_variable = { AGRI_PP_calculate_cash = AGRI_banked_changes_basic }
+	multiply_variable = { AGRI_PP_calculate_cash = 1000 }
+	set_variable = { AGRI_pp_cost = AGRI_PP_calculate_cash }
+	set_variable = { AGRI_pp_check = AGRI_pp_cost }
+	multiply_variable = { AGRI_pp_check = -1 }
+	log = "[GetDateText]: [ROOT.GetName]: Effect Completed: AGRI_banked_changes_update_cash"
+}
+
+AGRI_clear_banked_variables = {
+	clear_variable = AGRI_banked_changes_basic
+	clear_variable = AGRI_banked_changes_cash
+	clear_variable = AGRI_pp_cost
+}
+
+AGRI_monthly_changes_math = {
+	set_variable = { AGRI_monthly_changes_basic = AGRI_banked_changes_basic }
+	divide_variable = { AGRI_monthly_changes_basic = 2 }
+	set_variable = { AGRI_monthly_changes_cash = AGRI_banked_changes_cash }
+	divide_variable = { AGRI_monthly_changes_cash = 2 }
+}
+
+AGRI_update_math_variables = {
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_math_variables"
+	# CROP OUTPUT
+	set_variable = { basic_crop_output = population_total_m }
+	multiply_variable = { basic_crop_output = agri_crop_allocation^0 }
+	set_variable = { cash_crop_output = population_total_m }
+	multiply_variable = { cash_crop_output = agri_crop_allocation^1 }
+	# CROP TOTAL VALUE
+	set_variable = { basic_crop_total_value = basic_crop_output }
+	multiply_variable = { basic_crop_total_value = agri_crop_price^0 }
+	set_variable = { cash_crop_total_value = cash_crop_output }
+	multiply_variable = { cash_crop_total_value = agri_crop_price^1 }
+	# TOTAL CROP INCOME
+	set_variable = { combined_crop_value = basic_crop_total_value }
+	add_to_variable = { combined_crop_value = cash_crop_total_value }
+	# YEARLY HARVEST
+	set_variable = { yearly_harvest_value = combined_crop_value }
+	divide_variable = { yearly_harvest_value = literacy_rate }
+	# ADDITIONAL INCOME
+	set_variable = { weekly_harvest_value = yearly_harvest_value }
+	divide_variable = { weekly_harvest_value = 52 }
+	# BILLION CONVERTER
+	set_variable = { weekly_harvest_billion = weekly_harvest_value }
+	divide_variable = { weekly_harvest_billion = 100 }
+	# VARIABLE DISPLAY MATH
+	# ANNUAL HARVEST DISPLAY
+	set_variable = { annual_harvest_display = yearly_harvest_value }
+	divide_variable = { annual_harvest_display = 10 }
+	# WEEKLY HARVEST DISPLAY
+	set_variable = { weekly_harvest_display = weekly_harvest_value }
+	multiply_variable = { weekly_harvest_display = 100 }
+	log = "[GetDateText]: [ROOT.GetName]: Effect Completed: AGRI_update_math_variables"
+}
+
+AGRI_plow_the_fields = {
+	if = { # ALLOCATION CHANGES
+		limit = {
+			OR = {
+				has_country_flag = agriculture_allocation_drift_basic
+				has_country_flag = agriculture_allocation_drift_cash
+			}
+		}
+		set_temp_variable = { allocation_change = AGRI_monthly_changes_basic }
+		set_temp_variable = { crop_type = 0 }
+		AGRI_allocation_change_effect = yes
+		set_temp_variable = { allocation_change = AGRI_monthly_changes_cash }
+		set_temp_variable = { crop_type = 1 }
+		AGRI_allocation_change_effect = yes
+	}
+}
+
+# AGRI_drought_check = {
+# 	if = {
+# 		limit = {
+# 			ROOT = {
+# 				is_neighbor_of = THIS
+# 			}
+# 		}
+# 	}
+# }

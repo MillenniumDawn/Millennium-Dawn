@@ -1,0 +1,75 @@
+# Author(s): AngriestBird
+#Is triggered for the first anti bully war. It will only trigger again when another anti bully war starts
+#and there is no other active anti bully war at the time of the second anti bully war
+AB_war_main = {
+	if = { #If you have an AB war continue to increase penalty
+		limit = {
+			has_an_AB_war = yes
+		}
+		add_to_variable = { penalty_factor = 2 }
+		public_war_weariness_penalty_effect = yes
+		country_event = { id = anti_bully.3 days = 45 } #delay the next increase in AB penalty for x days
+	}
+	else = {
+		add_to_variable = { penalty_factor = -2 }
+		public_war_weariness_penalty_effect = yes
+		country_event = { id = anti_bully.3 days = 45 }
+	}
+}
+
+#Second function that runs for every AB war. Will decrease total_AB_wars flag when each AB war is over
+#When total_AB_wars is 0 AB_war_main will begin to decrease AB war penalty
+AB_war_second = {
+	if = { limit = { still_in_this_AB_war = no }
+		add_to_variable = { anti_bully_wars = -2 }
+		else = {
+			country_event = { id = anti_bully.4 days = 30 } #check again in 30 days
+		}
+	}
+}
+
+public_war_weariness_effect = {
+	#Used in MD4_Anti_bully decisions
+	if = { limit = { NOT = { has_global_flag = GAME_RULE_disable_anti_bully } }
+		hidden_effect = { add_timed_idea = { idea = three_months_of_war days = 90 } }
+		FROM = { hidden_effect = { add_timed_idea = { idea = three_months_of_war days = 90 } } }
+	}
+	# Initializes the Anti-Bully (Public War Weariness) system
+	if = {
+		limit = {
+			NOT = { has_global_flag = GAME_RULE_disable_anti_bully }
+			FROM = {
+				is_major = no
+				ic_ratio = { tag = ROOT ratio < 0.4 }
+			}
+			NOT = { has_government = fascism }
+			# TODO: Tension seems odd here. Potential look into cutting this
+			threat < 0.60
+			# TODO: Potential review this as well. I think that it would still trigger a Public War Weariness war
+			FROM = { any_owned_state = { NOT = { is_core_of = ROOT } } }
+		}
+
+		# Initialize the System
+		if = { limit = { NOT = { has_variable = anti_bully_wars } }
+			set_variable = { anti_bully_wars = 0 }
+			set_variable = { penalty_factor = 0 }
+			set_variable = { war_support_factor_var = 0 }
+			add_dynamic_modifier = { modifier = public_war_weariness_effect }
+		}
+		hidden_effect = {
+			save_event_target_as = AB_ATT
+			FROM = { save_event_target_as = AB_DEFF }
+			country_event = { id = anti_bully.1 }
+		}
+	}
+}
+
+public_war_weariness_penalty_effect = {
+	set_temp_variable = { add_t = penalty_factor }
+
+	set_variable = { war_support_factor_var = add_t }
+	multiply_variable = { war_support_factor_var = -0.005 }
+
+	# Force the Update Dynamic Modifier with new Calculated Effects
+	force_update_dynamic_modifier = yes
+}
