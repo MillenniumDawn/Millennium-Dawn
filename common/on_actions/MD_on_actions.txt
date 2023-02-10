@@ -44,6 +44,25 @@ on_actions = {
 				add_to_variable = { child_soldiers = child_soldiers_recruitment }
 			}
 
+			# Update Ledger
+			if = {
+				limit = {
+					check_variable = { ledger_open > 0 }
+					NOT = { has_global_flag = ledger_on_daily_weekly }
+				}
+				if = {
+					limit = { is_ai = yes }
+					clear_variable = ledger_open
+				}
+				else = {
+					every_country = {
+						get_strategic_building_levels = yes
+						update_misc_vars = yes
+					}
+					set_global_flag = { flag = ledger_on_daily_weekly value = 1 days = 6 }
+				}
+			}
+
 			# Raise/Lower Conservative Society
 			if = {
 				limit = {
@@ -175,10 +194,9 @@ on_actions = {
 				}
 				country_event = { id = terror.14 }
 			}
-			if = {
-				limit = {
-					has_war = no
-				}
+
+			# Simone's Political Power Mechanic
+			if = { limit = { is_ai = no has_war = no }
 				if = {
 					limit = {
 						has_idea = defence_02
@@ -326,7 +344,6 @@ on_actions = {
 				}
 
 				# National Updates:
-				country_event = { id = low_stability.1 }
 				set_power_ranking_ideas_for_every_country = yes
 
 				# Counter Terror System
