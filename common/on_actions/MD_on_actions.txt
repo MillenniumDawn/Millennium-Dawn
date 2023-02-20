@@ -13,6 +13,29 @@ on_actions = {
 			recalculate_influence = yes
 			force_update_map_mode = { mapmode = influence_map_mode }
 
+			if = {
+				limit = {
+					is_ai = yes
+					check_variable = { interest_rate < 6.000 }
+					OR = {
+						has_idea = regional_power
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+
+					# wait for apc-ifv stuff to merge
+					#NOT = { has_idea = mp_optimization_idea }
+				}
+
+				if = {
+					limit = { NOT = { has_country_flag = investment_targets_are_set_up } }
+					yearly_investment_targets_routine = yes
+				}
+
+				country_event = AC_event.500
+			}
+
 			# Cancel Invalid Projects
 			if = { limit = { check_variable = { active_projects > 0 } }
 				# Project loop.
@@ -556,6 +579,29 @@ on_actions = {
 							has_country_flag = asia_influencer
 						}
 						clr_country_flag = asia_influencer
+					}
+				}
+
+				# Reset Investments
+				if = {
+					limit = { check_variable = { global.month = 1 } }
+					every_country = {
+						if = {
+							limit = {
+								is_ai = yes
+								OR = {
+									has_idea = regional_power
+									has_idea = large_power
+									has_idea = great_power
+									has_idea = superpower
+								}
+
+								# wait for apc-ifv stuff to merge
+								#NOT = { has_idea = mp_optimization_idea }
+							}
+
+							yearly_investment_targets_routine = yes
+						}
 					}
 				}
 
