@@ -1,0 +1,182 @@
+@CONST_max_inv_targets_regional_base = 5
+@CONST_max_inv_targets_large_base = 8
+@CONST_max_inv_targets_global_base = 12
+@CONST_max_inv_targets_super_base = 15
+
+@CONST_max_inv_targets_regional_friends = 5
+@CONST_max_inv_targets_large_friends = 7
+@CONST_max_inv_targets_global_friends = 9
+@CONST_max_inv_targets_super_friends = 10
+
+@CONST_max_inv_targets_regional_allies = 3
+@CONST_max_inv_targets_large_allies = 4
+@CONST_max_inv_targets_global_allies = 5
+@CONST_max_inv_targets_super_allies = 6
+
+yearly_investment_targets_routine = {
+	clear_array = investment_targets
+	set_temp_variable = { targets_count = 0 }
+	set_temp_variable = { friends_targets_count = 0 }
+	set_temp_variable = { allies_targets_count = 0 }
+
+	if = {
+		limit = { has_idea = regional_power }
+		set_temp_variable = { targets_count = @CONST_max_inv_targets_regional_base }
+		set_temp_variable = { friends_targets_count = @CONST_max_inv_targets_regional_friends }
+		set_temp_variable = { allies_targets_count = @CONST_max_inv_targets_regional_allies }
+	}
+	else_if = {
+		limit = { has_idea = large_power }
+		set_temp_variable = { targets_count = @CONST_max_inv_targets_large_base }
+		set_temp_variable = { friends_targets_count = @CONST_max_inv_targets_large_friends }
+		set_temp_variable = { allies_targets_count = @CONST_max_inv_targets_large_allies }
+	}
+	else_if = {
+		limit = { has_idea = great_power }
+		set_temp_variable = { targets_count = @CONST_max_inv_targets_global_base }
+		set_temp_variable = { friends_targets_count = @CONST_max_inv_targets_global_friends }
+		set_temp_variable = { allies_targets_count = @CONST_max_inv_targets_global_allies }
+	}
+	else = {
+		set_temp_variable = { targets_count = @CONST_max_inv_targets_super_base }
+		set_temp_variable = { friends_targets_count = @CONST_max_inv_targets_super_friends }
+		set_temp_variable = { allies_targets_count = @CONST_max_inv_targets_super_allies }
+	}
+
+	# we get random countries which are not hostile and store them as investment targets
+	get_random_investment_targets = yes
+	# we add countries which are friendly to us
+	get_random_friend_investment_targets = yes
+	# we add allies/repeat for friends if not in faction
+	get_random_allies_investment_targets = yes
+	# add permanent targets from special array
+	add_permanent_investment_targets = yes
+
+	if = {
+		limit = { NOT = { has_country_flag = investment_targets_are_set_up } }
+		set_country_flag = investment_targets_are_set_up
+	}
+}
+
+get_random_investment_targets = {
+	set_temp_variable = { country_counter = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { country_counter < targets_count }
+		}
+
+		random_scope_in_array = {
+			array = global.countries
+			limit = {
+				PREV = {
+					has_opinion = { target = THIS value > -25 }
+				}
+			}
+
+			add_to_array = { PREV.investment_targets = THIS }
+		}
+
+		add_to_temp_variable = { country_counter = 1 }
+	}
+}
+
+get_random_friend_investment_targets = {
+	set_temp_variable = { country_counter = 0 }
+	while_loop_effect = {
+		limit = {
+			check_variable = { country_counter < friends_targets_count }
+		}
+
+		random_scope_in_array = {
+			array = global.countries
+			limit = {
+				PREV = {
+					has_opinion = { target = THIS value > 75 }
+				}
+			}
+
+			if = {
+				limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } }
+				add_to_array = { PREV.investment_targets = THIS }
+			}
+		}
+
+		add_to_temp_variable = { country_counter = 1 }
+	}
+}
+
+get_random_allies_investment_targets = {
+	if = {
+		limit = { is_in_faction = yes }
+
+		set_temp_variable = { country_counter = 0 }
+		while_loop_effect = {
+			limit = {
+				check_variable = { country_counter < allies_targets_count }
+			}
+
+			random_scope_in_array = {
+				array = THIS.allies
+				if = {
+					limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } }
+					add_to_array = { PREV.investment_targets = THIS }
+				}
+			}
+
+			add_to_temp_variable = { country_counter = 1 }
+		}
+	}
+	else = {
+		set_temp_variable = { country_counter = 0 }
+		while_loop_effect = {
+			limit = {
+				check_variable = { country_counter < allies_targets_count }
+			}
+
+			random_scope_in_array = {
+				array = global.countries
+				limit = {
+					PREV = {
+						has_opinion = { target = THIS value > 75 }
+					}
+				}
+
+				if = {
+					limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } }
+					add_to_array = { PREV.investment_targets = THIS }
+				}
+			}
+
+			add_to_temp_variable = { country_counter = 1 }
+		}
+	}
+}
+
+add_permanent_investment_targets = {
+	for_each_scope_loop = {
+		array = PREV.permanent_investment_targets
+		if = {
+			limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } }
+			add_to_array = { PREV.investment_targets = THIS }
+		}
+	}
+}
+
+# purpose: remove permanent_investment_target or add permanent_investment_target
+# target_nation - The nation that is the nation we want to impact their investment targets
+# adding_nation - The nation that is being added to the investment targeted
+# remove_nation - Executes the removal version of this script
+change_permanent_investment_target = {
+	if = {
+		limit = {
+			NOT = { is_in_array = { target_nation.permanent_investment_targets = adding_nation } }
+			check_variable = { adding_nation = 0 }
+		}
+		custom_effect_tooltip = change_permanent_investment_target_tt
+		add_to_array = { target_nation.permanent_investment_targets = adding_nation }
+	}
+	else = {
+		custom_effect_tooltip = change_permanent_investment_target_tt
+		remove_from_array = { target_nation.permanent_investment_targets = adding_nation }
+	}
+}
