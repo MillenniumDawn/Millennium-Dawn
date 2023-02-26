@@ -1,4 +1,4 @@
-version="1.1"
+version="1.8.0"
 name="Millennium_Dawn DEV"
 tags={
 	"Alternative History"
@@ -54,4 +54,3 @@ replace_path = "history/countries/"
 replace_path = "events/"
 replace_path = "gfx/loadingscreens"
 replace_path = "portraits"
-replace_path = "localisation/braz_por"
