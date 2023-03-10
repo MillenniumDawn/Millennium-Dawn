@@ -1,4 +1,4 @@
-version="1.1"
+version="1.8.0"
 name="Millennium_Dawn DEV"
 tags={
 	"Alternative History"

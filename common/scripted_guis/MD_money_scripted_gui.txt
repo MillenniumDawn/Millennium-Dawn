@@ -326,6 +326,17 @@ scripted_gui = {
 				add_to_variable = { treasury = 60 }
 				ingame_update_setup = yes
 			}
+
+			# Reinvestment Feature
+			int_investments_bg_shift_click = {
+				if = { limit = { has_country_flag = int_reinvestment_flag }
+					clr_country_flag = int_reinvestment_flag
+				}
+				else = {
+					set_country_flag = int_reinvestment_flag
+				}
+				ingame_update_setup = yes
+			}
 		}
 
 		triggers = {
@@ -1124,10 +1135,7 @@ scripted_gui = {
 					#nonono stupid AI. No click!
 					modifier = {
 						factor = 0
-						NOT = {
-							tag = SOV
-							tag = USA
-						}
+						has_stability < 0.26
 						date < 2006.6.1
 						check_variable = { population_tax_rate > 30 }
 					}
@@ -1170,10 +1178,24 @@ scripted_gui = {
 					# Killswitch
 					modifier = {
 						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_a
+						NOT = {
+							has_idea = economic_boom
+						}
+					}
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_a
+						NOT = {
+							has_idea = negligible_corruption
+						}
+					}
+					modifier = {
+						factor = 0
 						OR = {
 							has_country_flag = temp_decrease_population_taxes
 							has_country_flag = no_personal_tax_rate_change
-							has_stability < 0.25
+							has_stability < 0.15 # minimal stability for all = 15%
 							check_variable = { treasury_rate > 9.99 }
 						}
 					}
@@ -1212,14 +1234,30 @@ scripted_gui = {
 						factor = 1.15
 						has_idea = economic_boom
 					}
+
+
 					# Killswitch
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_a
+						NOT = {
+							has_idea = economic_boom
+						}
+					}
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_a
+						NOT = {
+							has_idea = negligible_corruption
+						}
+					}
 					modifier = {
 						factor = 0
 						OR = {
 							has_country_flag = temp_increase_population_taxes
 							has_country_flag = no_personal_tax_rate_change
 							check_variable = { treasury_rate < 0 }
-							check_variable = { corporate_tax_rate < 10 }
+							check_variable = { population_tax_rate < 10 } #minimal population tax rate for all = 9
 						}
 					}
 					modifier = {
@@ -1273,6 +1311,12 @@ scripted_gui = {
 							has_idea = paralyzing_corruption
 						}
 						num_of_available_civilian_factories < 50
+					}
+
+					modifier = {
+						factor = 0
+						num_of_available_civilian_factories < 16
+
 					}
 
 					modifier = {
@@ -1343,6 +1387,20 @@ scripted_gui = {
 						}
 					}
 					# Killswitch
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_a
+						NOT = {
+							has_idea = economic_boom
+						}
+					}
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_a
+						NOT = {
+							has_idea = negligible_corruption
+						}
+					}
 					modifier = {
 						factor = 0
 						OR = {
@@ -1430,6 +1488,12 @@ scripted_gui = {
 							has_idea = economic_boom
 						}
 					}
+
+					modifier = {
+						factor = 1.15
+						num_of_available_civilian_factories < 16
+					}
+
 					# Killswitch
 					modifier = {
 						factor = 0
@@ -1437,6 +1501,7 @@ scripted_gui = {
 							has_country_flag = temp_increase_corporate_taxes
 							has_country_flag = no_corporate_tax_rate_change
 							check_variable = { treasury_rate < 0 }
+							check_variable = { corporate_tax_rate < 6 } #minimal tax rate for all = 5
 						}
 					}
 				}
