@@ -77,7 +77,7 @@ ingame_update_setup = {
 	update_display = yes
 	if = {
 		limit = { is_debug = yes }
-		log = "[GetDateText]: [Root.GetName]: Ingame Update Setup Treasury: [?ROOT.treasury] Treasury Rate: [?ROOT.treasury_rate] Debt: [?ROOT.debt]"
+		log = "[GetDateText]: [THIS.GetName]: Ingame Update Setup Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt]"
 	}
 	if = { limit = { is_ai = no }
 		force_update_map_mode = { mapmode = absolute_gdp_map_mode }
@@ -324,6 +324,33 @@ calculate_additional_income_rate = {
 		set_variable = { AZE_indian_ports_idea_gain = 0.25 }
 		add_to_variable = { additional_income_rate = AZE_indian_ports_idea_gain }
 	}
+	if = {
+		limit = { has_country_flag = CARTEL_deal_with_the_devil_flag }
+		set_variable = { cartel_deal_with_the_devil = gdp_total_display }
+		multiply_variable = { cartel_deal_with_the_devil = 0.005 }
+		add_to_variable = { additional_income_rate = cartel_deal_with_the_devil }
+	}
+	if = {
+		limit = {
+			OR = {
+				neutrality_neutral_oligarch_are_in_power = yes
+				has_dynamic_modifier = { modifier = narco_state_bonuses }
+			}
+		}
+		set_variable = { CARTEL_drug_trade_money = gdp_total_display }
+		multiply_variable = { CARTEL_drug_trade_money = 0.009 }
+		set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+		divide_temp_variable = { strength_modifier = 100 }
+		add_to_temp_variable = { strength_modifier = 1 }
+		multiply_variable = { CARTEL_drug_trade_money = strength_modifier }
+
+		add_to_variable = { additional_income_rate = CARTEL_drug_trade_money }
+	}
+	if = {
+		limit = { has_idea = agrarian_economy }
+		set_variable = { additional_income_agrarian_economy = weekly_harvest_billion }
+		add_to_variable = { additional_income_rate = additional_income_agrarian_economy }
+	}
 
 	# EU
 	if = {
@@ -344,7 +371,7 @@ calculate_additional_income_rate = {
 	}
 	if = {
 		limit = { has_idea = blood_diamond_trade }
-		set_variable = { additional_income_blood_diamond_trade = 0.02 }
+		set_variable = { additional_income_blood_diamond_trade = 0.04 }
 		add_to_variable = { additional_income_rate = additional_income_blood_diamond_trade }
 	}
 	if = {
@@ -1211,7 +1238,7 @@ update_police_rate = {
 	clear_array = array_security_spend
 
 	#Set the base cost of policing (billion $ per 10 000 000 people)
-	set_temp_variable = { police_base_cost = 0.012 }
+	set_temp_variable = { police_base_cost = 0.014 }
 
 	# Recreate the Array
 	resize_array = { array = array_security_spend size = 5 value = 0 }
@@ -1666,6 +1693,12 @@ calculate_additional_expense_rate = {
 	if = { limit = { has_idea = EU_member }
 		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
 	}
+	# Cartel Mechanic Costs
+	if = { limit = { has_country_flag = anti_cartel_propaganda_flag }
+		set_variable = { anti_cartel_propaganda_var = gdp_total_display }
+		multiply_variable = { anti_cartel_propaganda_var = 0.001 }
+		add_to_variable = { additional_expenses_rate = anti_cartel_propaganda_var }
+	}
 	# Country Specific
 	if = {
 		limit = { tag = CAN }
@@ -1770,11 +1803,13 @@ calculate_int_investments_rate = {
 	# Modifier for ROI
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
 
+
 	#This is how much money we get back in a year
 	set_variable = { int_investments_rate = int_investments }
 	multiply_variable = { int_investments_rate = roi_rate }
 
 	divide_variable = { int_investments_rate = 365 }	#Per day
+
 	multiply_variable = { int_investments_rate = 7 } #7 days worth of income
 }
 
@@ -1884,7 +1919,9 @@ update_display = {
 
 	set_variable = { display_income = tax_gain }
 	add_to_variable = { display_income = resource_sale_rate }
-	add_to_variable = { display_income = int_investments_rate }
+	if = { limit = { NOT = { has_country_flag = int_reinvestment_flag } }
+		add_to_variable = { display_income = int_investments_rate }
+	}
 	add_to_variable = { display_income = additional_income_rate }
 
 	set_variable = { treasury_rate = display_income }
@@ -2036,9 +2073,11 @@ automated_debt_taker = {
 
 update_state_variables = {
 	set_variable = { var = population_total value = 0 }
-	set_variable = { var = ROOT.office_park_total value = 0 }
-	set_variable = { var = ROOT.industrial_complex_total value = 0 }
-	set_variable = { var = ROOT.biofuel_refineries value = 0 }
+	set_variable = { var = office_park_total value = 0 }
+	set_variable = { var = industrial_complex_total value = 0 }
+	set_variable = { var = biofuel_refineries value = 0 }
+	set_variable = { var = nuclear_reactors value = 0 }
+	set_variable = { var = rocket_sites value = 0 }
 
 	# missile_silo
 	set_temp_variable = { num_missile_silo = 0 }
@@ -2057,14 +2096,23 @@ update_state_variables = {
 			add_to_temp_variable = { PREV.num_TEL_base = building_level@TEL_base }
 			add_to_temp_variable = { PREV.num_anti_air_building = building_level@anti_air_building }
 			add_to_temp_variable = { PREV.num_missile_defense_station = building_level@missile_defense_station }
+			add_to_variable = { PREV.rocket_sites = building_level@missile_silo }
+			add_to_variable = { PREV.rocket_sites = building_level@TEL_base }
+			add_to_variable = { PREV.rocket_sites = building_level@anti_air_building }
+			add_to_variable = { PREV.rocket_sites = building_level@missile_defense_station }
 			add_to_variable = { PREV.office_park_total = building_level@offices }
 			add_to_variable = { PREV.industrial_complex_total = building_level@industrial_complex }
 			add_to_variable = { PREV.biofuel_refineries = building_level@synthetic_refinery }
+			add_to_variable = { PREV.nuclear_reactors = building_level@nuclear_reactor }
+
 			set_temp_variable = { var = temp_pop value = state_population_k } # 10000 in thousands
 			divide_temp_variable = { var = temp_pop value = 100 } # 100 in hundred thousands
 			add_to_variable = { PREV.population_total = temp_pop } # Population Total is in hundreds of thousands
 		}
 	}
+
+	set_variable = { population_total_m = population_total }
+	divide_variable = { population_total_m = 10 }
 
 	calculate_gdp = yes
 }

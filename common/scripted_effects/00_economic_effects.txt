@@ -482,3 +482,63 @@ civ_factory_relocate_from_from_build_loop_effect = {
 		}
 	}
 }
+
+# Set/Remove Improved Trade Agreement
+# sender_nation --- the nation sending the trade agreement
+# receiver_nation --- Nation retrieving the agreement
+# remove_agreement -- OPTIONAL (Set to 1)
+set_improved_trade_agreement = {
+	if = {
+		limit = {
+			var:receiver_nation = {
+				var:sender_nation = {
+					NOT = { has_country_flag = trade_agreement@PREV }
+				}
+			}
+			NOT = { check_variable = { remove_agreement = 1 } }
+		}
+		var:receiver_nation = {
+			var:sender_nation = {
+				add_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }
+				add_opinion_modifier = { target = PREV modifier = mutual_trade_opinion }
+				reverse_add_opinion_modifier = { target = PREV modifier = mutual_trade_opinion }
+				reverse_add_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }
+
+				hidden_effect = {
+					set_country_flag = trade_agreement@PREV
+					var:receiver_nation = {
+						set_country_flag = trade_agreement@PREV
+					}
+				}
+			}
+		}
+		custom_effect_tooltip = set_improved_trade_agreement_tt
+	}
+	if = {
+		limit = {
+			var:receiver_nation = {
+				var:sender_nation = {
+					has_country_flag = trade_agreement@PREV
+				}
+			}
+			check_variable = { remove_agreement = 1 }
+		}
+		var:receiver_nation = {
+			var:sender_nation = {
+				remove_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }
+				remove_opinion_modifier = { target = PREV modifier = mutual_trade_opinion }
+				add_opinion_modifier = { target = PREV modifier = broke_trade_agreement }
+
+				clr_country_flag = trade_agreement@PREV
+				var:receiver_nation = {
+					remove_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }
+					remove_opinion_modifier = { target = PREV modifier = mutual_trade_opinion }
+					add_opinion_modifier = { target = PREV modifier = broke_trade_agreement }
+					clr_country_flag = trade_agreement@PREV
+				}
+			}
+		}
+		custom_effect_tooltip = remove_improved_trade_agreement_tt
+	}
+}
+
