@@ -1,0 +1,1338 @@
+add_namespace = singapore
+add_namespace = singapore_elections
+add_namespace = singapore_news
+add_namespace = singapore_alignment_help
+
+# Index
+# Industrial Events: 0 - 25
+# Political Events: 25 - 50
+# Diplomacy EVents: 51 - 75
+# Military Events: 76 - 100
+# Generic Flavor Events: 101+
+
+# The Tiger of the Peninsula
+country_event = {
+	id = singapore.0
+	title = singapore.0.t
+	desc = singapore.0.d
+	picture = GFX_southeast_asian_tiger
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	# Listen to Our Roar
+	option = {
+		name = singapore.0.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.0.a"
+		add_stability = 0.05
+		add_political_power = 100
+	}
+}
+
+# A New Singaporean March
+country_event = {
+	id = singapore.3
+	title = singapore.3.t
+	desc = singapore.3.d
+	picture = GFX_sing_mil_matrch
+	is_triggered_only = yes
+
+	# The Military Seizes Power
+	option = {
+		name = singapore.3.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.3.a"
+		add_political_power = -75
+		set_temp_variable = { rul_party_temp = 22 }
+		change_ruling_party_effect = yes
+		set_politics = {
+			ruling_party = nationalist
+			elections_allowed = no
+		}
+		set_country_flag = SIN_nationalist_march
+
+		news_event = singapore.4
+	}
+
+	# Collusion with the PAP
+	option = {
+		name = singapore.3.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.3.a"
+		set_temp_variable = { rul_party_temp = 22 }
+		set_temp_variable = { rul_party_temp = 7 }
+		change_ruling_party_effect = yes
+		set_politics = {
+			ruling_party = nationalist
+			elections_allowed = no
+		}
+		set_country_flag = SIN_collusion_pap_march
+
+		news_event = singapore.4
+	}
+}
+
+# The March of the Sinagporean Military
+news_event = {
+	id = singapore.4
+	title = singapore.4.t
+	desc = {
+		text = singapore.4.d1
+		trigger = {
+			SIN = { has_country_flag = SIN_nationalist_march }
+		}
+	}
+	desc = {
+		text = singapore.4.d2
+		trigger ={
+			SIN = { has_country_flag = SIN_collusion_pap_march }
+		}
+	}
+	is_triggered_only = yes
+	major = yes
+
+	# A New Path of Singapore
+	option = {
+		name = singapore.4.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.4.a"
+
+		hidden_effect = {
+			clr_country_flag = SIN_collusion_pap_march
+			clr_country_flag = SIN_nationalist_march
+		}
+	}
+}
+
+# Demand the Riau Islands
+country_event = {
+	id = singapore.5
+	title = singapore.5.t
+	desc = singapore.5.d
+	picture = GFX_riau_islands
+	is_triggered_only = yes
+
+	# Concede the Islands
+	option = {
+		name = singapore.5.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.5.a"
+		effect_tooltip = {
+			SIN = {
+				transfer_state = 627
+			}
+		}
+		add_stability = -0.05
+		add_war_support = -0.10
+		SIN = {
+			country_event = { id = singapore.6 days = 2 random_days = 4 }
+			set_country_flag = SIN_indonesia_backsdown_on_riau
+		}
+
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				SIN = {
+					strength_ratio = {
+						tag = IND
+						ratio > 0.5
+					}
+				}
+			}
+			modifier = {
+				factor = 10
+				IND = {
+					check_variable = { influence_array^0 = SIN.id }
+					check_variable = { influence_array_val^0 > 59.99}
+				}
+			}
+		}
+	}
+
+	# Deny the Demand
+	option = {
+		name = singapore.5.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.5.b"
+
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+
+		SIN = {
+			country_event = { id = singapore.7 days = 2 random_days = 4 }
+			set_country_flag = SIN_indonesia_denies_the_demand
+		}
+
+		ai_chance = {
+			factor = 90
+		}
+	}
+}
+
+# Indonesia Concedes the Riau Islands
+country_event = {
+	id = singapore.6
+	title = singapore.6.t
+	desc = singapore.6.d
+	picture = GFX_riau_islands
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.6.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.6.a"
+		SIN = {
+			transfer_state = 627
+		}
+		add_war_support = 0.05
+		add_political_power = 150
+
+		news_event = singapore.8
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Indonesia Denies the Concession
+country_event = {
+	id = singapore.7
+	title = singapore.7.t
+	desc = singapore.7.d
+	picture = GFX_riau_islands
+	is_triggered_only = yes
+
+	# The Riau Islands Crisis
+	option = {
+		name = singapore.7.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.7.a"
+		activate_mission = SIN_riau_islands_crisis_mission
+		news_event = singapore.9
+	}
+}
+
+# Indonesia Rejects the Concessions
+news_event = {
+	id = singapore.8
+	title = singapore.8.t
+	desc = singapore.8.d
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.8.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.8.a"
+	}
+}
+
+# The Riau Islands Crisis Begins
+news_event = {
+	id = singapore.9
+	title = singapore.9.t
+	desc = singapore.9.d
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.9.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.9.a"
+	}
+}
+
+# 2000 - Singapore Airlines 747
+country_event = {
+	id = singapore.101
+	title = singapore.101.t
+	desc = singapore.101.d
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.101.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.101.a"
+		add_political_power = -25
+		add_stability = 0.02
+
+		ai_chance = {
+			factor = 0.10
+			modifier = {
+				factor = 2
+				has_stability < 0.25
+			}
+		}
+	}
+
+	option = {
+		name = singapore.101.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.101.b"
+
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		set_temp_variable = { temp_outlook_increase = -0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = singapore.101.c
+		log = "[GetDateText]: [THIS.GetName]: event singapore.101.c"
+		set_temp_variable = { treasury_change = -0.25 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = singapore.101.e
+		log = "[GetDateText]: [THIS.GetName]: event singapore.101.e"
+		set_temp_variable = { treasury_change = -0.25 }
+		modify_treasury_effect = yes
+		TAI = {
+			set_temp_variable = { treasury_change = 0.25 }
+			modify_treasury_effect = yes
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# 2001 - Singapore Embassies Attack Plot
+country_event = {
+	id = singapore.102
+	title = singapore.102.t
+	desc = singapore.102.d
+	is_triggered_only = yes
+	picture = GFX_attack_plot_embas
+
+	option = {
+		name = singapore.102.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.102.a"
+		add_political_power = -25
+
+		ai_chance = {
+			factor = 2
+		}
+	}
+
+	option = {
+		name = singapore.102.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.102.b"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.04 }
+		set_temp_variable = { temp_outlook_increase = -0.04 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# 2001 - End of Malaysian-Singaporean Disputes
+country_event = {
+	id = singapore.103
+	title = singapore.103.t
+	desc = singapore.103.d
+	picture = GFX_pedra_xuyedra
+	is_triggered_only = yes
+	trigger = {
+		original_tag = SIN
+		NOT = { has_war_with = MAY }
+		OR = {
+			country_exists = MAY
+			MAY = { is_subject_of = MAY }
+		}
+	}
+
+	option = {
+		name = singapore.103.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.103.a"
+		add_political_power = 75
+		add_stability = 0.02
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+
+# Hidden Trigger Event for 104
+country_event = {
+	id = singapore.10000
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = { limit = { country_exists = MAY }
+			MAY = {
+				country_event = { id = singapore.104 days = 1 }
+			}
+		}
+		SIN = {
+			country_event = { id = singapore.104 days = 1 }
+		}
+	}
+}
+
+# 2001 - Tropical Storm Varnei
+country_event = {
+	id = singapore.104
+	title = singapore.104.t
+	desc = singapore.104.d
+	is_triggered_only = yes
+	picture = GFX_whooaa_mtf_vameistorm
+
+	immediate = {
+		if = { limit = { original_tag = MAY }
+			527 = {
+				damage_building = {
+					type = infrastructure
+					damage = 0.10
+				}
+			}
+		}
+		else = {
+			530 = {
+				damage_building = {
+					type = infrastructure
+					damage = 0.10
+				}
+			}
+		}
+	}
+
+	option = {
+		name = singapore.104.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.104.a"
+		add_political_power = -25
+	}
+
+	option = {
+		name = singapore.104.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.104.b"
+		set_temp_variable = { treasury_change = gdp_total_display }
+		multiply_temp_variable = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+	}
+}
+
+# 2002 - The Esplanade
+country_event = {
+	id = singapore.105
+	title = singapore.105.t
+	desc = singapore.106.d
+	picture = GFX_esplanade_theatre
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.105.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.105.b"
+		add_political_power = 25
+	}
+
+	option = {
+		name = singapore.105.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.105.b"
+		add_political_power = -15
+		add_stability = 0.03
+	}
+}
+
+# 2003 - Sars Virus Outbreak
+country_event = {
+	id = singapore.106
+	title = singapore.106.t
+	desc = singapore.106.d
+	is_triggered_only = yes
+	picture = GFX_sars_sex_virus
+
+	option = {
+		name = singapore.106.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.106.a"
+		set_temp_variable = { treasury_change = gdp_total_display }
+		multiply_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
+		add_stability = -0.01
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = singapore.106.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.106.n"
+		add_political_power = -50
+		add_stability = -0.03
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = singapore.106.c
+		log = "[GetDateText]: [THIS.GetName]: event singapore.106.c"
+		add_stability = -0.05
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# 2003 - Major Research Center Opens
+country_event = {
+	id = singapore.107
+	title = singapore.107.t
+	desc = singapore.107.d
+	is_triggered_only = yes
+	picture = GFX_biopolis_sing
+
+	option = {
+		name = singapore.107.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.107.a"
+		add_timed_idea = {
+			idea = scientific_advances3
+			days = 90
+		}
+	}
+
+	option = {
+		name = singapore.107.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.107.b"
+		set_temp_variable = { treasury_change = gdp_total_display }
+		multiply_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
+		add_timed_idea = {
+			idea = scientific_advances3
+			days = 180
+		}
+	}
+}
+
+# 2004 - Stepping Down of Goh Chok Tong
+country_event = {
+	id = singapore.108
+	title = singapore.108.t
+	desc = singapore.108.d
+	is_triggered_only = yes
+	picture = GFX_lee_loong_shloong
+
+	option = {
+		name = singapore.108.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.108.a"
+		set_country_flag = goh_chok_tong_resigns
+		set_variable = { conservatism_leader = 1 }
+		set_variable = { Autocracy_leader = 1 }
+		set_variable = { Neutral_Autocracy_leader = 1 }
+		if = { limit = { is_in_array = { ruling_party = 1 } }
+			set_temp_variable = { rul_party_temp = 1 }
+			set_temp_variable = { col_one = 7 }
+			set_temp_variable = { col_two = 13 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+		else_if = { limit = { is_in_array = { ruling_party = 7 } }
+			set_temp_variable = { rul_party_temp = 7 }
+			set_temp_variable = { col_one = 1 }
+			set_temp_variable = { col_two = 13 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+		}
+		else_if = { limit = { is_in_array = { ruling_party = 13 } }
+			set_temp_variable = { rul_party_temp = 13 }
+			set_temp_variable = { col_one = 1 }
+			set_temp_variable = { col_two = 7 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+	}
+}
+
+# 2004 - Nicoll Highway Collapses
+country_event = {
+	id = singapore.109
+	title = singapore.109.t
+	desc = singapore.109.d
+	is_triggered_only = yes
+	picture = GFX_bridge_nicoll_broke
+	immediate = {
+		530 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.05
+			}
+		}
+	}
+
+	option = {
+		name = singapore.109.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.109.a"
+		add_political_power = -25
+		add_stability = -0.01
+	}
+
+	option = {
+		name = singapore.109.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.109.a"
+		add_stability = -0.05
+	}
+
+	option = {
+		name = singapore.109.c
+		log = "[GetDateText]: [THIS.GetName]: event singapore.109.a"
+		set_temp_variable = { treasury_change = gdp_total_display }
+		multiply_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+		add_stability = 0.02
+	}
+}
+
+# 2005 - Marina Bay Floating Platform
+country_event = {
+	id = singapore.110
+	title = singapore.110.t
+	desc = singapore.110.d
+	is_triggered_only = yes
+	picture = GFX_marinana_gordegard_glesgorv_bay_platform
+
+	option = {
+		name = singapore.110.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.110.a"
+		add_political_power = 50
+	}
+}
+
+# 2007 - An Execution
+country_event = {
+	id = singapore.111
+	title = singapore.111.t
+	desc = singapore.111.d
+	picture = GFX_slip_knot
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.111.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.111.a"
+		every_country = {
+			add_opinion_modifier = {
+				target = SIN
+				modifier = SIN_provided_clemency_to_african_men
+			}
+		}
+	}
+
+	option = {
+		name = singapore.111.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.111.b"
+		every_country = {
+			add_opinion_modifier = {
+				target = SIN
+				modifier = SIN_executed_african_men
+			}
+		}
+	}
+}
+
+# 2008 - Reintroduce the Singaporean Grand Prix
+country_event = {
+	id = singapore.112
+	title = singapore.112.t
+	desc = singapore.112.d
+	picture = GFX_grand_pricks_sing
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.112.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.112.a"
+		every_country = {
+			add_opinion_modifier = {
+				target = SIN
+				modifier = SIN_provided_clemency_to_african_men
+			}
+		}
+
+	}
+
+	option = {
+		name = singapore.112.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.112.b"
+		every_country = {
+			add_opinion_modifier = {
+				target = SIN
+				modifier = SIN_executed_african_men
+			}
+		}
+	}
+}
+
+# 2008 - Mas Selamat Kastari Escapes
+country_event = {
+	id = singapore.113
+	title = singapore.113.t
+	desc = singapore.113.d
+	is_triggered_only = yes
+	picture = GFX_based_toiled_escape_selamat
+
+	option = {
+		name = singapore.113.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.113.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# 2009 50 Years of Self Governance
+
+country_event = {
+	id = singapore.114
+	title = singapore.114.t
+	desc = singapore.114.d
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.114.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.114.a"
+		add_political_power = 100
+		add_stability = 0.05
+	}
+}
+
+# 2010 - City Harvest Church Case
+country_event = {
+	id = singapore.115
+	title = singapore.115.t
+	desc = singapore.115.d
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.115.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.115.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { treasury_change = gdp_total_display }
+		multiply_temp_variable = { treasury_change = 0.05 }
+		modify_treasury_effect = yes
+		random_list = {
+			25 = {
+				increase_corruption = yes
+			}
+			75 = { }
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	option = {
+		name = singapore.115.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.115.b"
+		add_political_power = 50
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# 2010 - Alan Shadrake Convicted for Insulting Judiciary
+country_event = {
+	id = singapore.116
+	title = singapore.116.t
+	desc = singapore.116.d
+	picture = GFX_shadrake_concincted
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.116.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.116.a"
+		every_country = {
+			add_opinion_modifier = { target = SIN modifier = SIN_released_alan_shadrake }
+		}
+	}
+
+	option = {
+		name = singapore.116.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.116.b"
+		every_country = {
+			add_opinion_modifier = { target = SIN modifier = SIN_heavy_punishment_alan_shadrake }
+		}
+	}
+
+	option = {
+		name = singapore.116.c
+		log = "[GetDateText]: [THIS.GetName]: event singapore.116.c"
+		every_country = {
+			add_opinion_modifier = { target = SIN modifier = SIN_trial_by_jury_shadrake }
+		}
+	}
+}
+
+# 2012 - The Chinese Bus Driver Strike
+country_event = {
+	id = singapore.117
+	title = singapore.117.t
+	desc = singapore.117.d
+	picture = GFX_chinese_bus_strike
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.117.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.117.a"
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		add_stability = -0.03
+		add_war_support = 0.05
+	}
+
+	option = {
+		name = singapore.117.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.117.b"
+		set_temp_variable = { treasury_change = gdp_total_display }
+		multiply_temp_variable = { treasury_change = -0.04 }
+		modify_treasury_effect = yes
+		add_political_power = 100
+	}
+
+	option = {
+		name = singapore.117.c
+		log = "[GetDateText]: [THIS.GetName]: event singapore.117.c"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		set_temp_variable = { temp_outlook_increase = -0.03 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# 2013 - Little India Riot
+country_event = {
+	id = singapore.118
+	title = singapore.118.t
+	desc = singapore.118.d
+	is_triggered_only = yes
+	picture = GFX_indians_riot_thing
+
+	option = {
+		name = singapore.118.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.118.a"
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		add_stability = 0.04
+		add_political_power = -75
+	}
+
+	option = {
+		name = singapore.118.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.118.b"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		set_temp_variable = { temp_outlook_increase = -0.03 }
+		add_relative_party_popularity = yes
+		add_stability = 0.02
+		add_political_power = -25
+	}
+
+	option = {
+		name = singapore.118.c
+		log = "[GetDateText]: [THIS.GetName]: event singapore.118.c"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.07 }
+		set_temp_variable = { temp_outlook_increase = -0.07 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# 2013 - Foreign Worker Protests
+country_event = {
+	id = singapore.119
+	title = singapore.119.t
+	desc = singapore.119.d
+	is_triggered_only = yes
+	picture = GFX_foreign_workers_riot
+	trigger = {
+		original_tag = SIN
+	}
+
+	option = {
+		name = singapore.119.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.119.a"
+		capital_scope = {
+			if = {
+				limit = { SIN = { has_completed_focus = SIN_encourage_migration } }
+				damage_building = {
+					type = infrastructure
+					damage = 0.20
+				}
+			}
+			else_if = {
+				limit = { SIN = { has_completed_focus = SIN_import_cheap_labour } }
+				damage_building = {
+					type = infrastructure
+					damage = 0.30
+				}
+			}
+			else = {
+				damage_building = {
+					type = infrastructure
+					damage = 0.10
+				}
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.04 }
+		set_temp_variable = { temp_outlook_increase = -0.04 }
+		add_relative_party_popularity = yes
+		add_stability = -0.03
+
+		hidden_effect = {
+			country_event = { id = singapore.119 days = 90 random_days = 30 }
+		}
+	}
+}
+
+# 2013 - Anti-Migrant Worker Demonstrations
+country_event = {
+	id = singapore.120
+	title = singapore.120.t
+	desc = singapore.120.d
+	is_triggered_only = yes
+	trigger = {
+		original_tag = SIN
+		NOT = {
+			has_completed_focus = SIN_singaporeans_first
+			has_completed_focus = SIN_restrict_migration
+		}
+	}
+
+	option = {
+		name = singapore.120.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.120.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+	}
+
+	option = {
+		name = singapore.120.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.120.b"
+		set_country_flag = SIN_allowed_the_new_migration_policy
+		add_political_power = 100
+		add_stability = 0.05
+		hidden_effect = {
+			country_event = { id = singapore.119 }
+		}
+	}
+}
+
+# 2014 - Defamation around CPF
+country_event = {
+	id = singapore.121
+	title = singapore.121.t
+	desc = singapore.121.d
+	picture = GFX_cpf_defamation
+	is_triggered_only = yes
+
+	option = {
+		name = singapore.121.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.121.a"
+		SIN_censorship_law_decrease = yes
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		add_political_power = 75
+	}
+
+	option = {
+		name = singapore.121.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.121.b"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		SIN_censorship_law_increase = yes
+		add_stability = 0.02
+	}
+}
+
+# 2014 - MRT Line Construction
+country_event = {
+	id = singapore.122
+	title = singapore.122.t
+	desc = singapore.122.d
+	is_triggered_only = yes
+	picture = GFX_mrt_ssp_construction
+
+	option = {
+		name = singapore.122.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.122.a"
+		add_political_power = 50
+	}
+
+	option = {
+		name = singapore.122.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.122.b"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		add_timed_idea = {
+			idea = railway_construction_effort
+			days = 180
+		}
+	}
+}
+
+# 2015 - Death of Lee Kuan Yew
+country_event = {
+	id = singapore.123
+	title = singapore.123.t
+	desc = singapore.123.d
+	is_triggered_only = yes
+	picture = GFX_death_of_lee_kuan
+
+	option = {
+		name = singapore.123.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.123.a"
+		add_stability = 0.02
+	}
+}
+
+# 2015 - 15 Suspected Militants of Jemaah Islami
+country_event = {
+	id = singapore.124
+	title = singapore.124.t
+	desc = singapore.124.d
+	is_triggered_only = yes
+	picture = GFX_fifteen_gfunny_men
+
+	option = {
+		name = singapore.124.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.124.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+	}
+
+	option = {
+		name = singapore.124.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.124.b"
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		set_temp_variable = { temp_outlook_increase = 0.04 }
+		add_relative_party_popularity = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+	}
+
+}
+
+# 2015 - Reduction of Banned Books
+country_event = {
+	id = singapore.125
+	title = singapore.125.t
+	desc = singapore.125.d
+	is_triggered_only = yes
+	picture = GFX_pile_of_books
+
+	option = {
+		name = singapore.125.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.125.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+		add_political_power = 35
+	}
+	option = {
+		name = singapore.125.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.125.b"
+		add_stability = 0.01
+	}
+
+}
+
+# 2016 - Eight Bangladeshi Men Arrested
+country_event = {
+	id = singapore.126
+	title = singapore.126.t
+	desc = singapore.126.d
+	is_triggered_only = yes
+	picture = GFX_bangladeshi_genlemen
+
+	option = {
+		name = singapore.126.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.126.a"
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+
+	}
+
+	option = {
+		name = singapore.126.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.126.b"
+		BAN = {
+			add_opinion_modifier = { target = SIN modifier = SIN_extradited_to_bangladesh }
+		}
+		add_political_power = 50
+	}
+}
+
+# 2017 - Protest Against Halimah Yacob
+country_event = {
+	id = singapore.127
+	title = singapore.127.t
+	desc = singapore.127.d
+	is_triggered_only = yes
+	picture = GFX_protests_against_halimah
+
+	option = {
+		name = singapore.127.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.127.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+	}
+
+	option = {
+		name = singapore.127.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore.127.b"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+		add_political_power = -50
+	}
+}
+
+# Singapore Alignment Help Event
+country_event = {
+	id = singapore_alignment_help.0
+	title = singapore_alignment_help.0.t
+	desc = singapore_alignment_help.0.d
+	is_triggered_only = yes
+
+	option = { # Okay
+		name = singapore_alignment_help.0.a
+	}
+}
+
+# Singaporean Custom Elections
+country_event = {
+	id = singapore_elections.0
+	title = singapore_elections.0.t
+	desc = singapore_elections.0.desc
+	is_triggered_only = yes
+	immediate = {
+		set_variable = { largest_party = -1 }
+		find_highest_in_array = {
+			array = party_pop_array
+			value = value
+			index = index
+		}
+		# Value
+		set_variable = { largest_party = index }
+		set_variable = { largest_party_val = value }
+
+		log = "Largest Party: [?largest_party] and Largest Party Value: [?largest_party_val]"
+	}
+	trigger = {
+		original_tag = SIN
+		has_elections = yes
+	}
+
+	option = {
+		name = singapore_elections.0.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore_elections.0.a"
+		trigger = { check_variable = { largest_party = 1 } }
+
+		if = { limit = { is_in_array = { ruling_party = 1 } }
+			add_political_power = 150
+		}
+		else = {
+			set_temp_variable = { rul_party_temp = 1 }
+			set_temp_variable = { col_one = 7 }
+			set_temp_variable = { col_two = 13 }
+			set_temp_variable = { change_leader_temp = 1 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+
+		if = { limit = { NOT = { has_country_leader_with_trait = pro_western_clique } }
+			add_country_leader_trait = pro_western_clique
+		}
+
+		# Clearing Shit
+		clear_variable = largest_party
+		clear_variable = largest_party_val
+	}
+
+	option = {
+		name = singapore_elections.0.b
+		log = "[GetDateText]: [THIS.GetName]: event singapore_elections.0.b"
+		trigger = { check_variable = { largest_party = 7 } }
+
+		if = { limit = { is_in_array = { ruling_party = 7 } }
+			add_political_power = 150
+		}
+		else = {
+			set_temp_variable = { rul_party_temp = 7 }
+			set_temp_variable = { col_one = 1 }
+			set_temp_variable = { col_two = 13 }
+			set_temp_variable = { change_leader_temp = 1 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+		}
+
+		if = { limit = { NOT = { has_country_leader_with_trait = emerging_clique } }
+			add_country_leader_trait = emerging_clique
+		}
+
+
+		# Clearing Shit
+		clear_variable = largest_party
+		clear_variable = largest_party_val
+	}
+
+	option = {
+		name = singapore_elections.0.c
+		log = "[GetDateText]: [THIS.GetName]: event singapore_elections.0.c"
+		trigger = { check_variable = { largest_party = 13 } }
+
+		if = { limit = { is_in_array = { ruling_party = 13 } }
+			add_political_power = 150
+		}
+		else = {
+			set_temp_variable = { rul_party_temp = 13 }
+			set_temp_variable = { col_one = 1 }
+			set_temp_variable = { col_two = 7 }
+			set_temp_variable = { change_leader_temp = 1 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+
+		if = { limit = { NOT = { has_country_leader_with_trait = neutrality_clique } }
+			add_country_leader_trait = neutrality_clique
+		}
+
+		# Clearing Shit
+		clear_variable = largest_party
+		clear_variable = largest_party_val
+	}
+
+	option = {
+		name = singapore_elections.0.d
+		log = "[GetDateText]: [THIS.GetName]: event singapore_elections.0.d"
+		trigger = {
+			NOT = {
+				check_variable = { largest_party = 1 }
+				check_variable = { largest_party = 7 }
+				check_variable = { largest_party = 13 }
+			}
+		}
+
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = largest_party }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+		}
+		if = { limit = { check_variable = { largest_party < 4 } }
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { largest_party > 3 }
+				check_variable = { largest_party < 11 }
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { largest_party > 9 }
+				check_variable = { largest_party < 12 }
+			}
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { largest_party > 11 }
+				check_variable = { largest_party < 20 }
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+		else_if = { limit = { check_variable = { largest_party > 19 } }
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = yes
+			}
+		}
+
+		# Clearing Shit
+		clear_variable = largest_party
+		clear_variable = largest_party_val
+	}
+}
