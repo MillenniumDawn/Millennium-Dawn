@@ -1,0 +1,108 @@
+# Author(s): CeruleanEyes, AngriestBird
+calculate_cartel_penalty = {
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = cartel_penalties } } }
+		add_dynamic_modifier = { modifier = cartel_penalties }
+	}
+
+	# Set Cartel Penalty to Strength of Cartels
+	set_variable = { CAR_political_power_factor = strength_of_cartels } # -0.25
+	set_variable = { CAR_corruption_cost_factor = strength_of_cartels } # -1.00
+	set_variable = { CAR_industry_free_repair_factor = strength_of_cartels } # = -0.5
+	set_variable = { CAR_stability_factor = strength_of_cartels } # -0.20
+	set_variable = { CAR_monthly_population = strength_of_cartels } # -0.20
+	set_variable = { CAR_army_morale_factor = strength_of_cartels } # -0.10
+	set_variable = { CAR_army_org_factor = strength_of_cartels } # -0.10
+	set_variable = { CAR_tax_gain_multiplier_modifier = strength_of_cartels } # -0.25
+	set_variable = { CAR_neutrality_drift = cartel_political_influence }
+
+	# Make the Bonuses Negative
+	multiply_variable = { CAR_political_power_factor = -1 }
+	multiply_variable = { CAR_corruption_cost_factor = 1 } # This one is positive due to the nature of it
+	multiply_variable = { CAR_industry_free_repair_factor = -1 }
+	multiply_variable = { CAR_stability_factor = -1 }
+	multiply_variable = { CAR_monthly_population = -1 }
+	multiply_variable = { CAR_army_morale_factor = -1 }
+	multiply_variable = { CAR_army_org_factor = -1 }
+	multiply_variable = { CAR_tax_gain_multiplier_modifier = -1 }
+
+	# Multiply to get Maximum Penalty
+	multiply_variable = { CAR_political_power_factor = 0.003 } # -0.25
+	multiply_variable = { CAR_corruption_cost_factor = 0.015 } # 1.50
+	multiply_variable = { CAR_industry_free_repair_factor = 0.002 } # -0.20
+	multiply_variable = { CAR_stability_factor = 0.002 } # -0.20
+	multiply_variable = { CAR_monthly_population = 0.002 } # -0.10
+	multiply_variable = { CAR_army_morale_factor = 0.001 } # -0.10
+	multiply_variable = { CAR_army_org_factor = 0.001 } # -0.10
+	multiply_variable = { CAR_tax_gain_multiplier_modifier = 0.003 } # -0.25
+	multiply_variable = { CAR_neutrality_drift = 0.002 } # 0.20
+
+	force_update_dynamic_modifier = yes
+}
+
+calculate_cartel_bonuses = {
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = narco_state_bonuses } } }
+		add_dynamic_modifier = { modifier = narco_state_bonuses }
+	}
+	set_variable = { CAR_political_power_factor = strength_of_cartels } # 0.25
+	set_variable = { CAR_corruption_cost_factor = strength_of_cartels } # 1.00
+	set_variable = { CAR_industry_free_repair_factor = strength_of_cartels } # = 0.15
+	set_variable = { CAR_stability_factor = strength_of_cartels } # -0.20
+	set_variable = { CAR_monthly_population = strength_of_cartels } # -0.20
+	set_variable = { CAR_army_morale_factor = strength_of_cartels } # -0.10
+	set_variable = { CAR_army_org_factor = strength_of_cartels } # -0.10
+	set_variable = { CAR_tax_gain_multiplier_modifier = strength_of_cartels } # -0.50
+	set_variable = { CAR_neutrality_drift = cartel_political_influence }
+	set_variable = { CAR_foreign_influence_modifier = cartel_political_influence }
+
+	multiply_variable = { CAR_political_power_factor = 0.003 } # 30%
+	multiply_variable = { CAR_corruption_cost_factor = 0.015 } # 100%
+	multiply_variable = { CAR_industry_free_repair_factor = 0.003 } # 30%
+	multiply_variable = { CAR_stability_factor = 0.001 } # 10%
+	multiply_variable = { CAR_army_morale_factor = 0.001 }
+	multiply_variable = { CAR_army_org_factor = 0.001 }
+	multiply_variable = { CAR_tax_gain_multiplier_modifier = -0.005 }
+	multiply_variable = { CAR_neutrality_drift = 0.002 } # 0.20
+	multiply_variable = { CAR_foreign_influence_modifier = 0.001 } # 10%
+
+	force_update_dynamic_modifier = yes
+}
+
+# remove_cartel_cleanup
+# Purpose: Cartel cleanup is used to ensure stuff is removed if it is no longer viable
+removed_cartel_cleanup = {
+	remove_dynamic_modifier = {
+		modifier = cartel_penalties
+	}
+	clear_variable = CAR_political_power_factor
+	clear_variable = CAR_corruption_cost_factor
+	clear_variable = CAR_industry_free_repair_factor
+	clear_variable = CAR_stability_factor
+	clear_variable = CAR_monthly_population
+	clear_variable = CAR_army_morale_factor
+	clear_variable = CAR_army_org_factor
+	clear_variable = CAR_tax_gain_multiplier_modifier
+	clear_variable = CAR_neutrality_drift
+}
+
+# modify_cartel_variables_effect
+# Purpose: Handles the macro for needing to change any cartel strength or cartel political influence
+# set_temp_variable = { cart_strength_change = +- x }
+# set_temp_variable = { cart_influence_change = +- x }
+modify_cartel_variables_effect = {
+	if = { limit = { NOT = { check_variable = { cart_strength_change = 0 } } }
+		round_variable = cart_strength_change
+		add_to_variable = { strength_of_cartels = cart_strength_change }
+		custom_effect_tooltip = modify_cartel_strength_effect_tt
+	}
+	if = { limit = { NOT = { check_variable = { cart_influence_change = 0 } } }
+		round_variable = cart_influence_change
+		add_to_variable = { cartel_political_influence = cart_influence_change }
+		custom_effect_tooltip = modify_cartel_political_influence_effect_tt
+	}
+	# Round to Keep it normalized
+	round_variable = cartel_political_influence
+	round_variable = strength_of_cartels
+	clamp_variable = { var = strength_of_cartels min = 0 max = 100 }
+	clamp_variable = { var = cartel_political_influence min = 0 max = 100 }
+	calculate_cartel_penalty = yes
+}
