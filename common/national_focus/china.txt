@@ -4605,6 +4605,13 @@ focus_tree = {
 		        }
 		        remove_core_of = TAI
 	            }
+				every_state = {#remove claim for former Mainland states
+		        limit = {
+			    is_greater_china_state = yes
+		        }
+		        remove_claim_by = TAI
+	            }
+				1011 = { remove_claim_by = TAI }
 				every_state = {#add core for current own
 		        limit = {
 			    is_taiwan_area_state = yes
@@ -4621,7 +4628,7 @@ focus_tree = {
 					remove_state_core = 430
 					transfer_state = 491
 					transfer_state = 1015
-					491 = { remove_core_of = TAI }
+					491 = { remove_claim_by = TAI }
 					1015 = { remove_core_of = TAI }
 				}
 			}
@@ -4916,18 +4923,17 @@ focus_tree = {
 		id = CHI_Anti_Japanese_Communique
 		icon = japanese_imperialism
 
-		x = -1
+		x = 0
 		y = 12
 		relative_position_id = CHI_One_China_Policy
 
-		prerequisite = { focus = CHI_A_New_United_Front focus = CHI_Establish_Joint_Control_Zones }
+		prerequisite = { focus = CHI_A_New_United_Front focus = CHI_Establish_Joint_Control_Zones focus = CHI_End_of_ROC }
 
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 
 		cost = 10
 
 		available = {
-			NOT = { has_war_with = TAI }
 			custom_trigger_tooltip = {
 				tooltip = CHI_JAP_influence_below_5_tt
 				TAI = {
@@ -4978,20 +4984,30 @@ focus_tree = {
 				idea = our_national_enemy
 				days = 180
 			}
+			if = {
+				limit = {
+					country_exists = TAI
+				}
 			TAI = {
 				add_timed_idea = {
 					idea = our_national_enemy
 					days = 180
 				}
 			}
+			}
 			JAP = {
 				add_opinion_modifier = {
 					modifier = anti_japanese_communique
 					target = CHI
 				}
+				if = {
+				limit = {
+					country_exists = TAI
+				}
 				add_opinion_modifier = {
 					modifier = anti_japanese_communique
 					target = TAI
+				}
 				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Anti_Japanese_Communique executed"
@@ -5279,6 +5295,7 @@ focus_tree = {
 			TAI = {
 				#set_cosmetic_tag = TAI_SAR
 				clr_country_flag = dynamic_flag
+				add_ideas = Non_State_Actor	
 				if = {
 					limit = { has_idea = legacy_of_1949 }
 					remove_ideas = legacy_of_1949
@@ -5300,6 +5317,13 @@ focus_tree = {
 		        }
 		        remove_core_of = TAI
 	            }
+				every_state = {#remove claim for former Mainland states
+		        limit = {
+			    is_greater_china_state = yes
+		        }
+		        remove_claim_by = TAI
+	            }
+				1011 = { remove_claim_by = TAI }
 				every_state = {#add core for current own
 		        limit = {
 			    is_taiwan_area_state = yes
@@ -5432,7 +5456,15 @@ focus_tree = {
 				target = HKG
 				transfer_troops = yes
 			}
+			if = {
+				limit = {
+					country_exists = TAI
+				}
 			add_ideas = CHI_Hong_Kong_Protests_01
+			}
+			hidden_effect = {
+			 595 = { remove_core_of = HKG }
+			}
 			every_other_country = {
 				limit = { NOT = { original_tag = ENG } }
 				country_event = { id = hongkong.3 }
@@ -5484,7 +5516,7 @@ focus_tree = {
 
 	focus = {
 		id = CHI_Fight_ROC_Recognition
-		icon = political_pressure_blue
+		icon = smash_kmt
 
 		x = 3
 		y = 4
@@ -5758,6 +5790,60 @@ focus_tree = {
 			set_temp_variable = { modify_chinese_aggression = 5 }
 			CHI_modify_chinese_aggression = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Resume_the_Civil_War executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	
+	focus = {
+		id = CHI_End_of_ROC
+		icon = taiwan
+
+		x = 3
+		y = 11
+		relative_position_id = CHI_One_China_Policy
+
+		prerequisite = { focus = CHI_Resume_the_Civil_War }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+		
+        available = {
+			NOT = { country_exists = TAI }
+			NOT = { has_war = yes }
+			
+		}
+		cost = 10
+		bypass = {
+			
+		}
+		completion_reward = {
+		    if = {
+				limit = {
+					has_idea = CHI_Hong_Kong_Protests_01
+				}
+				remove_ideas = CHI_Hong_Kong_Protests_01
+		    }
+			custom_effect_tooltip = TAI_loses_cores_tt
+				hidden_effect = {
+				every_state = {#remove core for former Mainland states
+		        limit = {
+			    is_greater_china_state = yes
+		        }
+		        remove_core_of = TAI
+	            }
+				every_state = {#remove claim for former Mainland states
+		        limit = {
+			    is_greater_china_state = yes
+		        }
+		        remove_claim_by = TAI
+	            }
+				1011 = { remove_claim_by = TAI }
+			    }
+			set_temp_variable = { modify_chinese_aggression = 2 }
+			CHI_modify_chinese_aggression = yes
+			log = "[GetDateText]: [This.GetName]: focus CHI_End_of_ROC executed"
 		}
 
 		ai_will_do = {
@@ -7155,7 +7241,7 @@ communist_cadres_at_least_positive_opinion = yes
 
 	focus = {
 		id = CHI_Chinese_High_Speed_Rail_System
-		icon = infrastructure
+		icon = china_railway
 
 		x = 0
 		y = 1
@@ -14071,7 +14157,7 @@ communist_cadres_at_least_positive_opinion = yes
 
 	focus = {
 		id = CHI_Annex_Bhutan
-		icon = skull
+		icon = annex_country_2
 
 		x = 4
 		y = 6
@@ -14091,7 +14177,17 @@ communist_cadres_at_least_positive_opinion = yes
 		will_lead_to_war_with = BHU
 
 		completion_reward = {
-			484 = { add_core_of = ROOT }
+		    custom_effect_tooltip = CHI_bhutan_cores_TT
+		    hidden_effect = {
+			every_state = {  #add core for Bhutan
+					limit = {
+						OR = {
+							is_bhutan_state = yes
+						}
+					}
+					add_core_of = CHI
+				}
+				}
 			if = {
 				limit = {
 					BHU = {
@@ -14609,6 +14705,484 @@ communist_cadres_at_least_positive_opinion = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Decouple_Japan executed"
 		}
 
+		ai_will_do = {
+			base = 1
+		}
+	}
+	
+	focus = {
+		id = CHI_The_Inland_Prairie
+		icon = focus_generic_horse_studs
+
+		x = 20
+		y = 1
+		relative_position_id = CHI_Regional_Influence
+
+		cost = 5
+
+		prerequisite = { focus = CHI_Regional_Influence }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+		}
+
+		completion_reward = {
+			add_political_power = 50
+			log = "[GetDateText]: [This.GetName]: focus CHI_The_Inland_Prairie executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	
+	focus = {
+		id = CHI_Inscription_of_Yanran
+		icon = Generic_Sun_Tzu
+
+		x = 19
+		y = 2
+		relative_position_id = CHI_Regional_Influence
+
+		cost = 5
+
+		prerequisite = { focus = CHI_The_Inland_Prairie }
+		mutually_exclusive = { focus = CHI_Sino_Mongol_Friendship_Treaty }
+
+		available = {
+		}
+
+		completion_reward = {
+		    add_war_support = 0.05
+			set_temp_variable = { temp_opinion = 3 }
+			change_communist_cadres_opinion = yes
+			custom_effect_tooltip = CHI_khalkha_cores_TT
+			hidden_effect = {
+			 every_state = {  #add core for Khalkharegion
+					limit = {
+						OR = {
+							is_outer_mongolia_state = yes
+						}
+					}
+					add_core_of = CHI
+				}
+				}
+			every_other_country = {
+				limit = { OR = { original_tag = SOV original_tag = MON } }
+				add_opinion_modifier = {
+					target = CHI
+					modifier = inscription_of_yanran
+				}
+			}
+			set_temp_variable = { modify_chinese_aggression = 1 }
+			CHI_modify_chinese_aggression = yes
+			log = "[GetDateText]: [This.GetName]: focus CHI_Inscription_of_Yanran executed"
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				OR = {
+					is_historical_focus_on = no
+					has_idea = superpower
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = CHI_Ceremony_in_Khentii_Mountains
+		icon = a_land_of_mountains
+
+		x = 19
+		y = 3
+		relative_position_id = CHI_Regional_Influence
+
+		cost = 5
+
+		prerequisite = { focus = CHI_Inscription_of_Yanran }
+        
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+		
+		available = {
+		}
+
+		completion_reward = {
+            CHI = { create_wargoal = {
+					type = annex_everything
+					target = MON
+				}
+				}
+			set_temp_variable = { modify_chinese_aggression = 1 }
+			CHI_modify_chinese_aggression = yes
+			log = "[GetDateText]: [This.GetName]: focus CHI_Ceremony_in_Khentii_Mountains executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	
+	focus = {
+		id = CHI_Khalkha_Ore_Production
+		icon = production2
+		x = 19
+		y = 4
+		relative_position_id = CHI_Regional_Influence
+		cost = 10
+
+		prerequisite = { focus = CHI_Ceremony_in_Khentii_Mountains }
+
+		search_filters = { FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus CHI_Khalkha_Ore_Production executed"
+			596 = { add_resource = { type = oil amount = 5 } }
+			597 = { add_resource = { type = chromium amount = 3 } }
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHI_Khalkha_Return
+		icon = one_china_policy_ext
+
+		x = 20
+		y = 5
+		relative_position_id = CHI_Regional_Influence
+
+		cost = 10
+
+		prerequisite = { focus = CHI_Khalkha_Ore_Production focus = CHI_New_Northern_Artery }
+		
+		available = {
+		    OR = { NOT = {country_exists = MON}
+			       MON = { is_subject_of = CHI
+                           influence_higher_90 = yes }
+				  }
+		}
+
+		completion_reward = {
+		    add_stability = 0.1
+			add_ideas = khalkha_return		
+			596 = {
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+			}
+			hidden_effect = {
+			if = {
+				limit = {
+					has_idea = CHI_Hong_Kong_Protests_01
+				}
+			remove_ideas = CHI_Hong_Kong_Protests_01
+			}
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_Khalkha_Return executed"
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	
+	focus = {
+		id = CHI_Sino_Mongol_Friendship_Treaty
+		icon = align_to_mongolia
+
+		x = 21
+		y = 2
+		relative_position_id = CHI_Regional_Influence
+
+		cost = 10
+
+		prerequisite = { focus = CHI_The_Inland_Prairie }
+		mutually_exclusive = { focus = CHI_Inscription_of_Yanran }
+
+		search_filters = { FOCUS_FILTER_CHI_AGGRESSION }
+
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = CHI_aggression_less_10_tt
+				check_variable = { chinese_aggression < 11 }
+			}
+		}
+
+		completion_reward = {
+			every_other_country = {
+				limit = { OR = { original_tag = SOV original_tag = MON } }
+				add_opinion_modifier = {
+					target = CHI
+					modifier = political_outreach
+				}
+			}
+			set_temp_variable = { modify_chinese_aggression = -1 }
+			CHI_modify_chinese_aggression = yes
+			log = "[GetDateText]: [This.GetName]: focus CHI_China_Mongol_Friendship_Treaty executed"
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				OR = {
+					is_historical_focus_on = no
+					has_government = democratic
+					has_government = neutrality
+				}
+			}
+		}
+	}
+	
+	focus = {
+		id = CHI_Outer_Mongolia_SAR
+		icon = mongolia
+
+		x = 21
+		y = 3
+		relative_position_id = CHI_Regional_Influence
+
+		prerequisite = { focus = CHI_Sino_Mongol_Friendship_Treaty }
+
+		cost = 10
+        
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+		
+		available = {
+			  country_exists = MON
+			   NOT = { has_war_with = MON }
+				MON = {
+					has_opinion = {
+						target = CHI
+						value > 74
+					}	
+				}
+				MON = {
+					influence_higher_50 = yes
+				}
+			
+		}
+
+		bypass = { MON = { is_puppet = yes } }
+
+		completion_reward = {
+			
+			CHI = { add_stability = 0.05
+			    set_autonomy = {
+				target = MON
+				autonomy_state = autonomy_special_administrative_region
+			}
+			set_temp_variable = { temp_opinion = 2 }
+			change_communist_cadres_opinion = yes
+			}
+			MON = {
+				#set_cosmetic_tag = MON_SAR
+				clr_country_flag = dynamic_flag
+				add_ideas = Non_State_Actor	
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_government = communism }
+					MON = {
+						set_popularities = {
+							democratic = 0.0
+							communism = 51.0
+							fascism = 0.0
+							neutrality = 8.0
+							nationalist = 41.0
+						}
+						set_variable = { party_pop_array^4 = 0.40 } #Communist
+						set_variable = { party_pop_array^5 = 0.04 } #Socialist
+						set_variable = { party_pop_array^6 = 0.07 } #Reactionary
+						set_variable = { party_pop_array^19 = 0.08 } #Maoist
+						set_variable = { party_pop_array^20 = 0.03 } #Populist
+						set_variable = { party_pop_array^23 = 0.39 } #Monarchist
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 4 }
+						if = {
+							limit = { CHI = { has_elections = no }}
+							set_politics = {
+								ruling_party = communism
+								elections_allowed = no
+							}
+						}
+						else = {
+							set_politics = {
+								ruling_party = communism
+								elections_allowed = yes
+							}
+						}
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						recalculate_party = yes
+					}
+				}
+				else_if = {
+					limit = { has_government = democratic }
+					MON = {
+						set_popularities = {
+							democratic = 44.0
+							communism = 0.0
+							fascism = 0.0
+							neutrality = 15.0
+							nationalist = 41.0
+						}
+						set_variable = { party_pop_array^1 = 0.34 } #conservatism
+						set_variable = { party_pop_array^3 = 0.10 } #social
+						set_variable = { party_pop_array^19 = 0.15 } #Maoist
+						set_variable = { party_pop_array^20 = 0.02 } #Populist
+						set_variable = { party_pop_array^23 = 0.39 } #Monarchist
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 1 }
+						set_politics = {
+							ruling_party = democratic
+							elections_allowed = yes
+						}
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						recalculate_party = yes
+					}
+				}
+				else_if = {
+					limit = { has_government = neutrality }
+					MON = {
+						set_popularities = {
+							democratic = 0.0
+							communism = 0.0
+							fascism = 0.0
+							neutrality = 59.0
+							nationalist = 41.0
+						}
+						set_variable = { party_pop_array^14 = 0.31 } #Neutral_conservatism
+						set_variable = { party_pop_array^18 = 0.10 } #social
+						set_variable = { party_pop_array^19 = 0.18 } #Maoist
+						set_variable = { party_pop_array^20 = 0.02 } #Populist
+						set_variable = { party_pop_array^23 = 0.39 } #Monarchist
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 14 }
+						set_politics = {
+							ruling_party = neutrality
+							elections_allowed = yes
+						}
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						recalculate_party = yes
+					}
+				}
+				else_if = {
+					limit = { has_government = nationalist }
+					MON = {
+						set_popularities = {
+							democratic = 0.0
+							communism = 0.0
+							fascism = 0.0
+							neutrality = 24.0
+							nationalist = 76.0
+						}
+						set_variable = { party_pop_array^18 = 0.06 } #social
+						set_variable = { party_pop_array^19 = 0.18 } #Maoist
+						set_variable = { party_pop_array^22 = 0.37 } #Nat_Autocracy
+						set_variable = { party_pop_array^23 = 0.39 } #Monarchist
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 22 }
+						if = {
+							limit = { CHI = { has_elections = no }}
+							set_politics = {
+								ruling_party = nationalist
+								elections_allowed = no
+							}
+						}
+						else = {
+							set_politics = {
+								ruling_party = nationalist
+								elections_allowed = yes
+							}
+						}
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						recalculate_party = yes
+					}
+				}
+			}
+			
+			every_country = {
+				news_event = {
+					id = china.66
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_Outer_Mongolia_SAR executed"
+		}
+
+    }
+	
+	focus = {
+		id = CHI_New_Northern_Artery
+		icon = infrastructure
+
+		x = 21
+		y = 4
+		relative_position_id = CHI_Regional_Influence
+		prerequisite = {
+			focus = CHI_Outer_Mongolia_SAR
+		}
+
+		cost = 10
+		search_filters = {}
+
+		cancel_if_invalid = no
+
+
+		available = {
+			OR = { 
+			       NOT = {country_exists = MON}
+			       MON = { is_puppet_of = CHI  }
+				  }
+		}
+		completion_reward = {
+		    set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+				build_railway = {
+				level = 1
+				path = { 10612 14428 4792 13945 10708 14432 7885 7823 1961 13960 4801 13958 13973 14274 14273 13983 1798 13979 1728 12675 12544 10563 14279 1774 13988 4849 4823}
+				start_state = 1097
+				target_state = 592
+				start_province = 10612
+				target_province = 4823
+			}
+			596 = {
+				add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+				}
+			}
+			597 = {
+				add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus CHI_New_Northern_Artery executed"
+		}
 		ai_will_do = {
 			base = 1
 		}
