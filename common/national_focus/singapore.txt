@@ -1,0 +1,5155 @@
+# Author(s): Angriest Bird
+focus_tree = {
+	id = singapore_focus
+	country = {
+		factor = 0
+		modifier = { add = 25 tag = SIN }
+	}
+	continuous_focus_position = { x = 50 y = 1100 }
+	# shared_focus = ASEAN_asean ##ASEAN shit
+
+	# General Economic Tree
+	# Section that handles all industrial growth for Singapore
+	focus = {
+		id = SIN_tiger_of_the_peninsula
+		icon = south_asian_tiger
+		x = 3
+		y = 0
+		cost = 7.9 # 55 dys
+		search_filters = { FOCUS_FILTER_STABILITY }
+		available = {
+			is_subject = no
+		}
+		select_effect = { country_event = { id = singapore.0 random_days = 5 } }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus SIN_tiger_of_the_peninsula"
+			effect_tooltip = {
+				add_stability = 0.05
+				add_political_power = 100
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				is_historical_focus_on = yes
+				add = 2
+			}
+			modifier = {
+				num_of_factories < 20
+				factor = 2
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_business_is_booming
+		icon = economic_prosperity2
+		x = -3
+		y = 1
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 4.3 # 30 days
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = must_have_at_least_stable_growth_tt
+				OR = {
+					has_idea = stable_growth
+					has_idea = fast_growth
+					has_idea = economic_boom
+					is_ai = yes
+				}
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
+		prerequisite = { focus = SIN_tiger_of_the_peninsula }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_tiger_of_the_peninsula"
+			capital_scope = {
+				add_resource = {
+					type = steel
+					amount = 3
+				}
+			}
+			# Half a Factory
+			set_temp_variable = { treasury_change = -3.75 }
+			modify_treasury_effect = yes
+
+			increase_economic_growth = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				num_of_factories < 20
+				add = 1
+			}
+			modifier = {
+				OR = {
+					has_idea = stagnation
+					has_idea = recession
+					has_idea = depression
+				}
+				add = 5 #Extra Important
+			}
+			modifier = {
+				factor = 5
+				OR = {
+					has_idea = economic_boom
+					has_idea = fast_growth
+					has_idea = stable_growth
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_expand_the_entrepot
+		icon = maritime_trade
+
+		x = -1
+		y = 1
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 8.6 # 60 Days
+
+		available = {
+			is_subject = no
+			NOT = { has_idea = md_closed_economy }
+		}
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_tiger_of_the_peninsula }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_the_entrepot"
+			swap_ideas = {
+				remove_idea = SIN_entrepot_trade
+				add_idea = SIN_entrepot_trade_expanded
+			}
+			unlock_decision_category_tooltip = SIN_expand_the_entreport_decision_categories
+		}
+
+		ai_will_do = {
+			factor = 3
+			modifier = {
+				add = 4
+				has_war = no
+			}
+			modifier = {
+				is_subject = yes
+				factor = 0.2
+			}
+			modifier = {
+				factor = 1.5
+				has_idea = mixed_economy
+			}
+			modifier = {
+				factor = 2.5
+				has_idea = export_economy
+			}
+			modifier = {
+				factor = 3.5
+				has_idea = globalized_trade_economy
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_bankers_of_asia
+		icon = generic_banks
+
+		x = 1
+		y = 1
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 8.6 # 60 Days
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = SIN_tiger_of_the_peninsula }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_bankers_of_asia"
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.05 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				check_variable = { int_investment < 600 }
+				add = 4
+			} #Singapore needs to invest globally. Core gameplay mechanic!!
+			modifier = {
+				add = 2
+				has_idea = international_bankers
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_build_the_safety_net
+		icon = generic_hospital
+
+		x = 3
+		y = 1
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 8.6 # 60 Days
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		prerequisite = { focus = SIN_tiger_of_the_peninsula }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_build_the_safety_net"
+			increase_social_spending = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 2
+				# Western Clique likes this
+				is_in_array = { ruling_party = 1 }
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_the_singaporean_bull
+		icon = market_economy
+
+		x = -3
+		y = 2
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 12.85 # 90 Days
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = must_have_at_least_stable_growth_tt
+				OR = {
+					has_idea = stable_growth
+					has_idea = fast_growth
+					has_idea = economic_boom
+					is_ai = yes
+				}
+			}
+			if = {
+				limit = { has_start_date < 2016.12.31 }
+				NOT = { has_idea = asian_crisis }
+			}
+		}
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_business_is_booming }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_singaporean_bull"
+			add_timed_idea = {
+				idea = SIN_singaporean_bull
+				days = 730
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_mouth_of_malay
+		icon = liberalization
+
+		x = -1
+		y = 2
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		available = {
+			is_subject = no
+			NOT = { has_decision = SIN_facilitate_trade_expansion }
+		}
+
+		cost = 7.15
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_expand_the_entrepot }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_mouth_of_malay"
+			one_random_industrial_complex = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				num_of_factories < 50
+				add = 2
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_extreme_financing
+		icon = industry_civilian
+
+		x = 1
+		y = 2
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_CORRUPTION }
+
+		prerequisite = { focus = SIN_bankers_of_asia }
+		available = {
+			NOT = { has_idea = paralyzing_corruption }
+		}
+		bypass_if_unavailable = yes # Skip if at max corruption
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_extreme_financing"
+			set_temp_variable = { treasury_change = 100 }
+			modify_treasury_effect = yes
+			increase_corruption = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				check_variable = { treasury < 50 }
+				add = 3
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_human_rights
+		icon = union_negotiations
+
+		x = 3
+		y = 2
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = SIN_build_the_safety_net }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_human_rights"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_popularity = { ideology = communism popularity = 0.05 }
+			add_stability = 0.03
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_idea = landowners
+				add = 2
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_entice_foreign_investment
+		icon =  gold_standard
+
+		x = -3
+		y = 3
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_the_singaporean_bull }
+		prerequisite = { focus = SIN_mouth_of_malay }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_entice_foreign_investment"
+            add_offsite_building = {
+				type = industrial_complex
+				level = 1
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				NOT = { check_variable = { treasury < 200 } }
+				factor = 2.5
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_continue_the_rise
+		icon = BRA_economic_liberalization
+
+		x = 0
+		y = 3
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_STABILITY }
+
+		prerequisite = { focus = SIN_mouth_of_malay }
+		prerequisite = { focus = SIN_extreme_financing }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_continue_the_rise"
+			increase_economic_growth = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				NOT = {
+					has_idea = economic_boom
+					has_idea = fast_growth
+					has_idea = stable_growth
+				}
+				add = 3
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_labour_rights
+		icon = social_democracy
+
+		x = 2
+		y = 3
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_extreme_financing }
+		prerequisite = { focus = SIN_human_rights }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_labour_rights"
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_eyeing_the_west
+		icon = align_to_america
+
+		x = -4
+		y = 4
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_entice_foreign_investment }
+		mutually_exclusive = { focus = SIN_sino_singaporean_discussion }
+		available = {
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			if = { limit = { USA = { NOT = { is_in_faction_with = CHI } } }
+				NOT = { is_in_faction_with = CHI }
+			}
+
+			if = { limit = { USA = { has_government = democratic } }
+				has_government = democratic
+			}
+			else_if = { limit = { USA = { has_government = communism } }
+				has_government = communism
+			}
+			else_if = { limit = { USA = { has_government = neutrality } }
+				has_government = neutrality
+			}
+			else = {
+				has_government = nationalist
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_eyeing_the_west"
+			every_country = {
+				limit = {
+					has_idea = NATO_member
+					has_government = democratic
+				}
+				add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = SIN_sino_singaporean_discussion
+		icon = align_to_china
+
+		x = -2
+		y = 4
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_entice_foreign_investment }
+		mutually_exclusive = { focus = SIN_eyeing_the_west }
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			if = { limit = { CHI = { NOT = { is_in_faction_with = USA } } }
+				NOT = { is_in_faction_with = USA }
+			}
+
+			# China's
+			if = { limit = { CHI = { has_government = democratic } }
+				has_government = democratic
+			}
+			else_if = { limit = { CHI = { has_government = communism } }
+				has_government = communism
+			}
+			else_if = { limit = { CHI = { has_government = neutrality } }
+				has_government = neutrality
+			}
+			else = {
+				has_government = nationalist
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_sino_singaporean_discussion"
+			every_country = {
+				limit = {
+					OR = {
+						tag = CHI
+						tag = NKO
+						is_in_faction_with = CHI
+						has_idea = sco_member
+					}
+				}
+				add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
+				reverse_add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_worker
+		icon = liberalized_socialism
+
+		x = 1
+		y = 4
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.15
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = SIN_labour_rights }
+		mutually_exclusive = { focus = SIN_the_business }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_worker"
+			if = { limit = { has_idea = landowners }
+				remove_ideas = landowners
+				add_ideas = labour_unions
+				set_temp_variable = { temp_opinion = 5 }
+			}
+			else_if = { limit = { has_idea = labour_unions }
+				set_temp_variable = { temp_opinion = 10 }
+			}
+			change_labour_unions_opinion = yes
+			add_ideas = SIN_support_for_the_workers
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_business
+		icon = business_man
+
+		x = 3
+		y = 4
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.15
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = SIN_labour_rights }
+		mutually_exclusive = { focus = SIN_the_worker }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_business"
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+			set_temp_variable = { temp_opinion = 3 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_farmers_opinion = yes
+
+			add_ideas = SIN_support_for_the_business
+			increase_corruption = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expand_the_maritime_industry
+		icon = naval_industry
+
+		x = 0
+		y = 5
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		prerequisite = { focus = SIN_continue_the_rise }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_the_maritime_industry"
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
+
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			530 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expand_the_shipyards
+		icon = naval_dockyard
+
+		x = -3
+		y = 6
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_expand_the_maritime_industry }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_the_shipyards"
+			530 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_machinery_improvements
+		icon = factory_complex
+
+		x = 0
+		y = 6
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_expand_the_maritime_industry }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_machinery_improvements"
+			random_owned_controlled_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_precious_metal_trade
+		icon = gold_standard
+
+		x = 3
+		y = 6
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+		available = {
+			is_subject = no
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_expand_the_maritime_industry }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_precious_metal_trade"
+			add_ideas = SIN_precious_metal_trade_boom_one
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_improved_exporting_processes
+		icon = market_economy
+
+		x = -4
+		y = 7
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_expand_the_shipyards }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_improved_exporting_processes"
+			if = { limit = { has_idea = consumption_economy }
+				swap_ideas = {
+					remove_idea = consumption_economy
+					add_idea = mixed_economy
+				}
+				set_temp_variable = { treasury_change = 15.00 }
+				modify_treasury_effect = yes
+			}
+			else_if = { limit = { has_idea = mixed_economy }
+				swap_ideas = {
+					remove_idea = mixed_economy
+					add_idea = export_economy
+				}
+				set_temp_variable = { treasury_change = 25.00 }
+				modify_treasury_effect = yes
+			}
+			else_if = { limit = { has_idea = export_economy }
+				swap_ideas = {
+					remove_idea = export_economy
+					add_idea = globalized_trade_economy
+				}
+				set_temp_variable = { treasury_change = 50.00 }
+				modify_treasury_effect = yes
+			}
+			else = {
+				set_temp_variable = { treasury_change = 75.00 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_port_of_singapore
+		icon = naval_dockyard
+
+		x = -2
+		y = 7
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+
+		prerequisite = { focus = SIN_expand_the_shipyards }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_port_of_singapore"
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_intermediate_part_production
+		icon = generic_machinery
+
+		x = 0
+		y = 7
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+
+		prerequisite = { focus = SIN_machinery_improvements }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_intermediate_part_production"
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_restrict_the_market
+		icon = anarchist_economy
+
+		x = 2
+		y = 7
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+		available = {
+			is_subject = no
+		}
+
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_precious_metal_trade }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_restrict_the_market"
+            swap_ideas = {
+			    remove_idea = SIN_precious_metal_trade_boom_one
+				add_idea = SIN_precious_metal_trade_boom_two
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_dominate_the_gold_trade
+		icon = gold_standard
+
+		x = 4
+		y = 7
+		relative_position_id = SIN_tiger_of_the_peninsula
+
+		cost = 7.86
+		available = {
+			is_subject = no
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+
+		prerequisite = { focus = SIN_precious_metal_trade }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_dominate_the_gold_trade"
+			530 = {
+				add_resource = {
+					type = chromium
+					amount = 10
+				}
+			}
+            set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	###Military
+	focus = {
+		id = SIN_total_defence
+		icon = SIN_total_defense
+
+		x = 10
+		y = 0
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_total_defence"
+			add_war_support = 0.05
+			increase_intervention_law_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_st_kinetics_investments
+		icon = industry_tanks
+
+		x = -2
+		y = 1
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_total_defence }
+		prerequisite = { focus = SIN_tiger_of_the_peninsula }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_st_kinetics_investments"
+			one_random_arms_factory = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_city_defenses
+		icon = military_fort
+
+		x = 0
+		y = 1
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		prerequisite = { focus = SIN_total_defence }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_city_defenses"
+			capital_scope = {
+				add_building_construction = {
+					type = bunker
+					province = 12299
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = coastal_bunker
+					province = 12299
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			set_temp_variable = { treasury_change = -1.0 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_singaporean_armor
+		icon = tanks5
+
+		x = 2
+		y = 1
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		prerequisite = { focus = SIN_total_defence }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singaporean_armor"
+			add_tech_bonus = {
+				name = Cat_TANKS
+				bonus = 0.5
+				uses = 2
+				category = Cat_TANKS
+			}
+
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_outsourced_military_industry
+		icon = industry_military
+
+		x = -2
+		y = 2
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		prerequisite = { focus = SIN_st_kinetics_investments }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_total_defence"
+			add_offsite_building = {
+				type = arms_factory
+				level = 1
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_shorad_anti_air
+		icon = air_defense2
+
+		x = 0
+		y = 2
+		relative_position_id = SIN_total_defence
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_city_defenses }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_shorad_anti_air"
+			capital_scope = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_mechanized_combined_arms
+		icon = combined_arms
+
+		x = 2
+		y = 2
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_singaporean_armor }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_mechanized_combined_arms"
+			add_tech_bonus = {
+				name = CHI_Armored_Vehicles
+				bonus = 0.5
+				uses = 2
+				category = Cat_AFV
+			}
+
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expanded_military_research
+		icon = Focus_Examine_Foreign_Tanks
+
+		x = -3
+		y = 3
+		relative_position_id = SIN_total_defence
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		prerequisite = { focus = SIN_outsourced_military_industry }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expanded_military_research"
+			add_timed_idea = {
+				idea = scientific_advances2
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_arms_exporter
+		icon = arms_treade_deals
+
+		x = -1
+		y = 3
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+
+		prerequisite = { focus = SIN_outsourced_military_industry }
+		prerequisite = { focus = SIN_shorad_anti_air }
+
+		available = {
+			has_equipment = { IFV_Equipment > 59 }
+			has_equipment = { APC_Equipment > 59 }
+			has_equipment = { Inf_equipment > 1999 }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_arms_exporter"
+		    add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -2000
+				producer = SIN
+			}
+			add_equipment_to_stockpile = {
+				type = APC_Equipment
+				amount = -60
+				producer = SIN
+			}
+			add_equipment_to_stockpile = {
+				type = IFV_Equipment
+				amount = -60
+				producer = SIN
+			}
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_defensive_force
+		icon = generic_entrenchment
+
+		x = 1
+		y = 3
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_mechanized_combined_arms }
+		prerequisite = { focus = SIN_shorad_anti_air }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_arms_exporter"
+			every_army_leader = {
+				add_defense = 1
+				add_planning = 1
+			}
+			every_navy_leader = {
+				add_defense = 1
+			}
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_air_investments
+		icon = Singaporean_Air_Force_1
+
+		x = 3
+		y = 3
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_mechanized_combined_arms }
+		prerequisite = { focus = SIN_shorad_anti_air }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_investments"
+			add_tech_bonus = {
+				name = GENERIC_air_force_reform
+				uses = 2
+				bonus = 0.5
+				category = Cat_AIR_EQP
+			}
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_coastal_navy
+		icon = Singaporean_Navy_1
+
+		x = -2.5
+		y = 4
+		relative_position_id = SIN_total_defence
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_expanded_military_research }
+		prerequisite = { focus = SIN_arms_exporter }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_investments"
+			add_doctrine_cost_reduction = {
+				name = GENERIC_naval_reform
+				category = Cat_green_water_navy
+				uses = 2
+				cost_reduction = 0.5
+			}
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_conscription_question
+		icon = Singaporean_Army_1
+
+		x = 0
+		y = 4
+		relative_position_id = SIN_total_defence
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_defensive_force }
+		prerequisite = { focus = SIN_arms_exporter }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_investments"
+			army_experience = 5
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_entrenched_singapore
+		icon = static_defense
+
+		x = 2.5
+		y = 4
+		relative_position_id = SIN_total_defence
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_defensive_force }
+		prerequisite = { focus = SIN_air_investments }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_investments"
+			capital_scope = {
+				add_building_construction = {
+					type = bunker
+					province = 12299
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = coastal_bunker
+					province = 12299
+					level = 2
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_commission_frigates
+		icon = navy3
+
+		x = -3
+		y = 5
+		relative_position_id = SIN_total_defence
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_coastal_navy }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_investments"
+			add_doctrine_cost_reduction = {
+				name = Cat_FRIGATE
+				category = Cat_FRIGATE
+				uses = 1
+				cost_reduction = 0.5
+			}
+			add_doctrine_cost_reduction = {
+				name = Cat_NAVAL_EQP
+				category = Cat_NAVAL_EQP
+				uses = 2
+				cost_reduction = 0.5
+			}
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expand_the_draft
+		icon = infantry_allies
+
+		x = -1
+		y = 5
+		relative_position_id = SIN_total_defence
+
+		cost = 7.8
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		prerequisite = { focus = SIN_the_conscription_question }
+		mutually_exclusive = { focus = SIN_volunteer_service }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_the_draft"
+			increase_conscription_effect = yes
+			add_ideas = SIN_conscription_expansion_1
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_volunteer_service
+		icon = volunteers
+
+		x = 1
+		y = 5
+		relative_position_id = SIN_total_defence
+
+		cost = 7.8
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_the_conscription_question }
+		mutually_exclusive = { focus = SIN_expand_the_draft }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_volunteer_service"
+			decrease_conscription_effect = yes
+			add_ideas = SIN_volunteer_service_1
+	    }
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expansionary_military_policy
+		icon = military_bases
+
+		x = -1
+		y = 6
+		relative_position_id = SIN_total_defence
+
+		cost = 6
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_expand_the_draft }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_volunteer_service"
+			increase_military_spending = yes
+			swap_ideas = {
+				remove_idea = SIN_conscription_expansion_1
+				add_idea = SIN_conscription_expansion_2
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_deduction_policy
+		icon = recruitment
+
+		x = 1
+		y = 6
+		relative_position_id = SIN_total_defence
+
+		cost = 6
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_volunteer_service }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_deduction_policy"
+			decrease_military_spending = yes
+			swap_ideas = {
+				remove_idea = SIN_volunteer_service_1
+				add_idea = SIN_volunteer_service_2
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_army_of_many
+		icon = coalition_army
+
+		x = -1
+		y = 7
+		relative_position_id = SIN_total_defence
+
+		cost = 7.2
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_expansionary_military_policy }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_army_of_many"
+			add_war_support = 0.05
+			army_experience = 25
+			swap_ideas = {
+				remove_idea = SIN_conscription_expansion_2
+				add_idea = SIN_conscription_expansion_3
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_military_discipline
+		icon = rearmament
+
+		x = 1
+		y = 7
+		relative_position_id = SIN_total_defence
+
+		cost = 7.2
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = { focus = SIN_deduction_policy }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_military_discipline"
+			army_experience = 25
+			swap_ideas = {
+				remove_idea = SIN_volunteer_service_2
+				add_idea = SIN_volunteer_service_3
+			}
+			increase_officer_training_level = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_punching_above_our_weight
+		icon = special_forces
+
+		x = 0
+		y = 8
+		relative_position_id = SIN_total_defence
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+
+		prerequisite = {
+			focus = SIN_army_of_many
+			focus = SIN_military_discipline
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_punching_above_our_weight"
+			army_experience = 30
+			navy_experience = 30
+			air_experience = 30
+			add_ideas = SIN_punching_above_our_weight_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	# Military Junta
+	# This section deals with a supposed drift into a Military Coup D'Etat
+	focus = {
+		id = SIN_sinister_ideas
+		icon = Paternal_Autocrat
+		x = 13
+		y = 6
+
+		cost = 8.6
+
+		available = {
+			35_percent_nationalist_nat_autocracy_popularity = yes
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = {
+			focus = SIN_entrenched_singapore
+			focus = SIN_expand_the_total_defence_strategy
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_punching_above_our_weight"
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.07 }
+			set_temp_variable = { temp_outlook_increase = 0.07 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	focus = {
+		id = SIN_a_new_march
+		icon = Ultranationalism
+		x = 0
+		y = 1
+		relative_position_id = SIN_sinister_ideas
+
+		cost = 8.6
+
+		available = {
+			45_percent_nationalist_nat_autocracy_popularity = yes
+		}
+		bypass = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = SIN_sinister_ideas }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_a_new_march"
+			country_event = { id = singapore.3 }
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	focus = {
+		id = SIN_military_politicians
+		icon = Generic_Ultranationalist_Government
+		x = -1
+		y = 2
+		relative_position_id = SIN_sinister_ideas
+
+		cost = 8.6
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+			40_percent_government_popularity = yes
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = SIN_a_new_march }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_military_politicians"
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.07 }
+			set_temp_variable = { temp_outlook_increase = 0.07 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	focus = {
+		id = SIN_propaganda_campaigns
+		icon = elections_banned
+		x = 1
+		y = 2
+		relative_position_id = SIN_sinister_ideas
+
+		cost = 8.6
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+			40_percent_government_popularity = yes
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = SIN_a_new_march }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_propaganda_campaigns"
+			add_timed_idea = {
+				idea = SIN_reeducation_idea
+				days = 730
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	# The Alignment
+	# This section determines global policy. Western, Emerging, Alone
+	focus = {
+		id = SIN_the_republic
+		icon = singapore_elect
+
+		x = 20
+		y = 0
+
+		cost = 6.8
+
+		available = {
+			is_subject = no
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_republic"
+			add_political_power = 50
+			add_stability = 0.03
+			custom_effect_tooltip = SIN_the_republic_tt
+		}
+	}
+
+	focus = {
+		id = SIN_centralized_education
+		icon = pass_legislation
+
+		x = -3
+		y = 1
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+		available = {
+			is_subject = no
+			NOT = { has_idea = SIN_reeducation_idea }
+		}
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+
+		prerequisite = { focus = SIN_the_republic }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_centralized_education"
+			add_ideas = SIN_centralized_education_idea
+			if = { limit = { has_idea = edu_01 }
+				remove_ideas = edu_01
+				add_ideas = edu_03
+			}
+			else_if = { limit = { has_idea = edu_02 }
+				remove_ideas = edu_02
+				add_ideas = edu_03
+			}
+			unlock_decision_tooltip = SIN_replace_centralized_education_system
+			unlock_decision_tooltip = SIN_repeal_centralized_education_system
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_decentralize_the_government
+		icon = government_beu
+
+		x = -1
+		y = 1
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_the_republic }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_decentralize_the_government"
+			if = { limit = { has_idea = bureau_05 }
+				remove_ideas = bureau_05
+				add_ideas = bureau_03
+			}
+			else_if = { limit = { has_idea = bureau_04 }
+				remove_ideas = bureau_04
+				add_ideas = bureau_03
+			}
+			add_ideas = SIN_decentralize_the_government_idea
+			unlock_decision_tooltip = SIN_repeal_decentralization_protocol_decision
+			unlock_decision_tooltip = SIN_enact_decentralization_protocol_decision
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_reinforce_the_state
+		icon = self_management
+
+		x = 1
+		y = 1
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_the_republic }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_reinforce_the_state"
+			add_timed_idea = {
+				idea = SIN_administrative_reforms_idea
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_reform_the_monetary_system
+		icon = economic_prosperity
+
+		x = 3
+		y = 1
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_the_republic }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_reform_the_monetary_system"
+			add_ideas = SIN_economic_reform_1_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_military_budget_amendment
+		icon = draw_up_war_plans
+
+		x = -3
+		y = 2
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_centralized_education }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_reform_the_monetary_system"
+			increase_military_spending = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_faith_in_the_establishment
+		icon = election2
+
+		x = -1
+		y = 2
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_decentralize_the_government }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_faith_in_the_establishment"
+			add_political_power = 120
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_administrative_reforms
+		icon = examine_foreign_laws
+
+		x = 1
+		y = 2
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_reinforce_the_state }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_administrative_reforms"
+			if = { limit = { has_idea = SIN_administrative_reforms_idea }
+				modify_timed_idea = {
+					idea = SIN_administrative_reforms_idea
+					days = 365
+				}
+			}
+			else = {
+				add_timed_idea = {
+					idea = SIN_administrative_reforms_idea
+					days = 365
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_economic_equality
+		icon = concessions2
+
+		x = 3
+		y = 2
+		relative_position_id = SIN_the_republic
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_reform_the_monetary_system }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_economic_equality"
+			swap_ideas = {
+				remove_idea = SIN_economic_reform_1_idea
+				add_idea = SIN_economic_reform_2_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_status_quo
+		icon = self_management
+
+		x = -3
+		y = 3
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		available = {
+			count_triggers = {
+				amount = 2
+				has_completed_focus = SIN_military_budget_amendment
+				has_completed_focus = SIN_administrative_reforms
+				has_completed_focus = SIN_faith_in_the_establishment
+				has_completed_focus = SIN_economic_equality
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = {
+			focus = SIN_military_budget_amendment
+			focus = SIN_administrative_reforms
+			focus = SIN_economic_equality
+			focus = SIN_faith_in_the_establishment
+		}
+		mutually_exclusive = { focus = SIN_electoral_reform }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_status_quo"
+			add_political_power = -50
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_electoral_reform
+		icon = anti_establishment2
+
+		x = 3
+		y = 3
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		available = {
+			count_triggers = {
+				amount = 2
+				has_completed_focus = SIN_military_budget_amendment
+				has_completed_focus = SIN_administrative_reforms
+				has_completed_focus = SIN_faith_in_the_establishment
+				has_completed_focus = SIN_economic_equality
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = {
+			focus = SIN_military_budget_amendment
+			focus = SIN_administrative_reforms
+			focus = SIN_economic_equality
+			focus = SIN_faith_in_the_establishment
+		}
+
+		mutually_exclusive = { focus = SIN_the_status_quo }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_electoral_reform"
+			add_political_power = 100
+			add_stability = -0.05
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 3 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 18 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				is_historical_focus_on = no
+			}
+		}
+	}
+
+
+	focus = {
+		id = SIN_defence_strategy
+		icon = defense
+
+		x = -4
+		y = 4
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_the_status_quo }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_defence_strategy"
+			if = {
+				limit = { has_idea = SIN_defence_strategy_idea }
+				swap_ideas = {
+					remove_idea = SIN_defence_strategy_idea
+					add_idea = SIN_defence_strategy_two_idea
+				}
+			}
+			else = {
+				add_ideas = SIN_defence_strategy_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_conservative_singapore
+		icon = conservative
+
+		x = -2
+		y = 4
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_the_status_quo }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_conservative_singapore"
+			add_ideas = SIN_conservative_singapore_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_anti_corruption_measures
+		icon = union_negotiations
+
+		x = 0
+		y = 4
+		relative_position_id = SIN_the_republic
+
+		cost = 7.15
+
+		search_filters = { FOCUS_FILTER_CORRUPTION }
+
+		available = {
+			NOT = { has_idea = negligible_corruption }
+		}
+		bypass_if_unavailable = yes
+
+		prerequisite = {
+			focus = SIN_electoral_reform
+			focus = SIN_the_status_quo
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_anti_corruption_measures"
+			decrease_corruption = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = SIN_fair_and_free
+		icon = election2
+
+		x = 2
+		y = 4
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_electoral_reform }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_fair_and_free"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 7 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 13 }
+			add_relative_party_popularity = yes
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_support_the_opposition
+		icon = focus_ITA_liberation_or_death
+
+		x = 4
+		y = 4
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_electoral_reform }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_support_the_opposition"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 3 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 18 }
+			add_relative_party_popularity = yes
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = SIN_expand_the_total_defence_strategy
+		icon = SIN_total_defense
+
+		x = -5
+		y = 5
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = {
+			focus = SIN_entrenched_singapore
+			focus = SIN_defence_strategy
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_the_total_defence_strategy"
+			if = {
+				limit = { has_idea = SIN_defence_strategy_idea }
+				swap_ideas = {
+					remove_idea = SIN_defence_strategy_idea
+					add_idea = SIN_defence_strategy_two_idea
+				}
+			}
+			else = {
+				add_ideas = SIN_defence_strategy_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_maintain_singapore
+		icon = Focus_Parliament_Constitution
+
+		x = -2
+		y = 5
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_conservative_singapore }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_maintain_singapore"
+			swap_ideas = {
+				remove_idea = SIN_conservative_singapore_idea
+				add_idea = SIN_conservative_singapore_2_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_increase_police_funding
+		icon = counter
+
+		x = 0
+		y = 5
+		relative_position_id = SIN_the_republic
+
+		cost = 7.15
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+
+
+		prerequisite = { focus = SIN_anti_corruption_measures }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_increase_police_funding"
+			add_stability = 0.05
+			add_ideas = SIN_police_funding_expenditure
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_encourage_the_multi_party_system
+		icon = "Social Liberalism"
+
+		x = 2
+		y = 5
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_fair_and_free }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_encourage_the_multi_party_system"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 7 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 13 }
+			add_relative_party_popularity = yes
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_liberalization
+		icon = "Liberal Conservatism"
+
+		x = 4
+		y = 5
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_support_the_opposition }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_liberalization"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 3 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 18 }
+			add_relative_party_popularity = yes
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_autocracy_for_democracy
+		icon = elections_rigged
+
+		x = -3
+		y = 6
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		available = {
+			NOT = { has_completed_focus = SIN_a_new_march }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_expand_the_total_defence_strategy }
+		prerequisite = { focus = SIN_maintain_singapore }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_autocracy_for_democracy"
+
+			set_temp_variable = { threshold_change = 0.05 }
+			modify_election_threshold = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_new_singapore
+		icon = diplomacy
+
+		x = 3
+		y = 6
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		available = {
+			NOT = { has_completed_focus = SIN_a_new_march }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_encourage_the_multi_party_system }
+		prerequisite = { focus = SIN_liberalization }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_new_singapore"
+			set_temp_variable = { threshold_change = -0.03 }
+			modify_election_threshold = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_impose_harder_censorship
+		icon = generic_controlled_press
+
+		x = -5
+		y = 7
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_autocracy_for_democracy }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_impose_harder_censorship"
+			SIN_censorship_law_increase = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_greater_control
+		icon = focus_LAT_suspend_constitution_of_latvia
+
+		x = -3
+		y = 7
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_autocracy_for_democracy }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_greater_control"
+			add_stability = 0.03
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_liberties_for_stability
+		icon = MEX_Defy_the_constitution
+
+		x = -1
+		y = 7
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_autocracy_for_democracy }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_liberties_for_stability"
+			add_ideas = SIN_liberties_for_stability_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expand_freedom_of_press
+		icon = liberal_press
+
+		x = 1
+		y = 7
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_new_singapore }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_freedom_of_press"
+			SIN_censorship_law_decrease = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_grant_lgbtq_rights
+		icon = pro_lgbt
+
+		x = 3
+		y = 7
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_new_singapore }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_grant_lgbtq_rights"
+			add_ideas = SPR_pro_lgbtqa_stance_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_address_human_rights
+		icon = Social_democracy
+
+		x = 5
+		y = 7
+		relative_position_id = SIN_the_republic
+
+		cost = 8.6
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_new_singapore }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			add_political_power = 100
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			change_communist_cadres_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##The Alignment
+	focus = {
+		id = SIN_the_alignment
+		icon = Election_graphics
+
+		x = 33
+		y = 0
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			add_stability = 0.03
+			custom_effect_tooltip = SIN_the_republic_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+
+		}
+	}
+
+	focus = {
+		id = SIN_western_identity
+		icon = blue_democracy
+
+		x = -4
+		y = 1
+		relative_position_id = SIN_the_alignment
+
+		cost = 4.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power_or_coalition = yes
+				western_liberal_are_in_power_or_coalition = yes
+				western_socialism_are_in_power_or_coalition = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_the_alignment }
+		mutually_exclusive = { focus = SIN_singapore_alone }
+		mutually_exclusive = { focus = SIN_strength_in_asia }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_western_identity"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				is_historical_focus_on = no
+			}
+			modifier = {
+				factor = 2
+				has_global_flag = SIN_GLOBAL_DIPLOMACY_PATH
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = SIN_PRESSURE_SOUTH_ASIAN_SEAS_PATH
+					has_global_flag = SIN_SINGAPORE_ALONE_PATH
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_singapore_alone
+		icon = "National Autocracy"
+
+		x = 0
+		y = 1
+		relative_position_id = SIN_the_alignment
+
+		cost = 4.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power_or_coalition = yes
+				neutrality_neutral_autocracy_in_power_or_coalition = yes
+				neutrality_neutral_social_in_power_or_coalition = yes
+				emerging_anarchist_communism_in_power_or_coalition = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_the_alignment }
+		mutually_exclusive = { focus = SIN_western_identity }
+		mutually_exclusive = { focus = SIN_strength_in_asia }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singapore_alone"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 13 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 10
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 2
+				has_global_flag = SIN_SINGAPORE_ALONE_PATH
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = SIN_PRESSURE_SOUTH_ASIAN_SEAS_PATH
+					has_global_flag = SIN_GLOBAL_DIPLOMACY_PATH
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_strength_in_asia
+		icon = focus_generic_military_dictatorship
+
+		x = 4
+		y = 1
+		relative_position_id = SIN_the_alignment
+
+		cost = 4.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power_or_coalition = yes
+				emerging_autocracy_in_power_or_coalition = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_the_alignment }
+		mutually_exclusive = { focus = SIN_western_identity }
+		mutually_exclusive = { focus = SIN_singapore_alone }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_strength_in_asia"
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				is_historical_focus_on = no
+			}
+			modifier = {
+				factor = 2
+				has_global_flag = SIN_PRESSURE_SOUTH_ASIAN_SEAS_PATH
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = SIN_SINGAPORE_ALONE_PATH
+					has_global_flag = SIN_GLOBAL_DIPLOMACY_PATH
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_allow_foreign_media
+		icon = social_media
+
+		x = -2
+		y = 3
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			NOT = { has_idea = SIN_extreme_censorship_idea }
+			OR = {
+				western_conservatism_are_in_power_or_coalition = yes
+				western_liberal_are_in_power_or_coalition = yes
+				western_socialism_are_in_power_or_coalition = yes
+				neutrality_neutral_autocracy_in_power_or_coalition = yes
+				neutrality_neutral_social_in_power_or_coalition = yes
+				emerging_anarchist_communism_in_power_or_coalition = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_finance_western_projects }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			SIN_censorship_law_decrease = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_strength_in_straits
+		icon = support_the_left_right
+
+		x = 0
+		y = 2
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_singapore_alone }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_strength_in_straits"
+			add_political_power = 100
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_nationalize_foreign_companies
+		icon = central_planned_economy3
+
+		x = 2
+		y = 2
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			has_more_than_one_trade_agreement = yes
+			OR = {
+				western_conservatism_are_in_power_or_coalition = yes
+				nationalist_military_junta_are_in_power_or_coalition = yes
+				neutrality_neutral_autocracy_in_power_or_coalition = yes
+				neutrality_neutral_social_in_power_or_coalition = yes
+				emerging_anarchist_communism_in_power_or_coalition = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = {
+			focus = SIN_singapore_alone
+			focus = SIN_strength_in_asia
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_nationalize_foreign_companies"
+			random_owned_state = {
+				add_building_construction = {
+					type = offices
+					instant_build = yes
+					level = 1
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			every_country = {
+				limit = {
+					OR = {
+						is_in_array = { SIN.influence_array = THIS.id }
+						is_in_array = { SIN.SIN_singaporean_trade_agreement = THIS.id }
+					}
+				}
+				add_opinion_modifier = { target = SIN modifier = nationalized_companies }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_return_from_flawed_democracy
+		icon = Election
+
+		x = -4
+		y = 3
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_western_identity }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_return_from_flawed_democracy"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { threshold_change = -0.01 }
+			modify_election_threshold = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_finance_western_projects
+		icon = ECB_intervention
+
+		x = -2
+		y = 2
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = {
+			focus = SIN_singapore_alone
+			focus = SIN_western_identity
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_finance_western_projects"
+			add_timed_idea = {
+				idea = SIN_finance_western_projects_idea
+				days = 360
+			}
+			unlock_decision_tooltip = SIN_extend_finance_western_projects
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_singaporean_identity
+		icon = focus_generic_improve_the_administration
+
+		x = 0
+		y = 3
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_strength_in_straits }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singaporean_identity"
+			add_ideas = SIN_singaporean_identity_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_befriend_the_sco
+		icon = sco
+
+		x = 2
+		y = 4
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			CHI = {
+				has_idea = sco_member
+			}
+			OR = {
+				western_conservatism_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+
+		prerequisite = { focus = SIN_the_chinese_media_model }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_befriend_the_sco"
+			set_temp_variable = { tag_index = SIN.id }
+			set_temp_variable = { percent_change = 1 }
+			every_country = {
+				limit = {
+					OR = {
+						is_in_array = { global.sco_members = THIS.id  }
+						original_tag = CHI
+						is_in_faction_with = CHI
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_anti_opposition_laws
+		icon = aristocratic_funding
+
+		x = 4
+		y = 3
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_strength_in_asia }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_anti_opposition_laws"
+			add_ideas = SIN_anti_opposition_laws_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_european_democracy
+		icon = align_to_europe
+
+		x = -4
+		y = 4
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_electoral_reform }
+		prerequisite = { focus = SIN_return_from_flawed_democracy }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_european_democracy"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_greater_ties_with_europe
+		icon = trade_with_europe
+
+		x = -2
+		y = 4
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_allow_foreign_media }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_greater_ties_with_europe"
+			set_temp_variable = { tag_index = SIN.id }
+			set_temp_variable = { percent_change = 1 }
+			every_country = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_pap
+		icon = sing_pap
+
+		x = 0
+		y = 4
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_singaporean_identity }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_pap"
+			swap_ideas = {
+				remove_idea = SIN_singaporean_identity_idea
+				add_idea = SIN_singaporean_identity_2_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_chinese_media_model
+		icon = great_firewall_china
+
+		x = 2
+		y = 3
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			NOT = { has_idea = SIN_loose_censorship_idea }
+			OR = {
+				western_conservatism_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_nationalize_foreign_companies }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_chinese_media_model"
+			SIN_censorship_law_increase = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_harsher_state
+		icon = golden_shield_project
+
+		x = 4
+		y = 4
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_anti_opposition_laws }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_harsher_state"
+			custom_effect_tooltip = SPR_harsher_state_tt
+			hidden_effect = {
+				set_country_flag = party2_banned
+				set_country_flag = party3_banned
+				set_country_flag = party4_banned
+				set_country_flag = party5_banned
+				set_country_flag = party6_banned
+				set_country_flag = party8_banned
+				set_country_flag = party9_banned
+				set_country_flag = party10_banned
+				set_country_flag = party11_banned
+				set_country_flag = party12_banned
+				set_country_flag = party14_banned
+				set_country_flag = party15_banned
+				set_country_flag = party16_banned
+				set_country_flag = party17_banned
+				set_country_flag = party18_banned
+				set_country_flag = party19_banned
+				set_country_flag = party20_banned
+				set_country_flag = party21_banned
+				set_country_flag = party23_banned
+				set_country_flag = party24_banned
+			}
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_global_initiative
+		icon = global_community
+
+		x = -4
+		y = 5
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		mutually_exclusive = { focus = SIN_pressure_the_south_asian_seas }
+		mutually_exclusive = { focus = SIN_singapore_on_the_rise }
+		prerequisite = {
+			focus = SIN_the_pap
+			focus = SIN_european_democracy
+	 	}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_global_initiative"
+			add_ideas = SIN_global_diplomacy_1_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_singapore_on_the_rise
+		icon = sing_on_rise
+
+		x = 0
+		y = 5
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+		mutually_exclusive = { focus = SIN_pressure_the_south_asian_seas }
+		mutually_exclusive = { focus = SIN_global_initiative }
+		prerequisite = {
+			focus = SIN_the_pap
+			focus = SIN_european_democracy
+			focus = SIN_harsher_state
+		 }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singapore_on_the_rise"
+			add_ideas = SIN_economic_champion_1_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_pressure_the_south_asian_seas
+		icon = Generic_Unchecked_Expansionism
+
+		x = 4
+		y = 5
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		mutually_exclusive = { focus = SIN_singapore_on_the_rise }
+		mutually_exclusive = { focus = SIN_global_initiative }
+
+		prerequisite = {
+			focus = SIN_the_pap
+			focus = SIN_harsher_state
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			increase_intervention_law_effect = yes
+			increase_military_spending = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_operation_enticement
+		icon = champagne_green
+
+		x = -5
+		y = 6
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_global_initiative }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_operation_enticement"
+			if = { limit = { has_dlc = "La Resistance" }
+				add_ideas = SIN_spy_agency_expansion_lar
+				if = { limit = { has_intelligence_agency = no }
+					create_intelligence_agency = {
+						name = "Security and Intelligence Division (SID)"
+						icon = GFX_intelligence_agency_logo_sin
+					}
+				}
+			}
+			else = {
+				add_ideas = SIN_spy_agency_expansion
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_political_maneuvering
+		icon = USA_political_revolution
+
+		x = -3
+		y = 6
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_global_initiative }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			swap_ideas = {
+				remove_idea = SIN_global_diplomacy_1_idea
+				add_idea = SIN_global_diplomacy_2_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_demand_special_treatment
+		icon = economic_prosperity2
+
+		x = -1
+		y = 6
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+
+		prerequisite = { focus = SIN_singapore_on_the_rise }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_demand_special_treatment"
+			add_political_power = 125
+			swap_ideas = {
+				remove_idea = SIN_economic_champion_1_idea
+				add_idea = SIN_economic_champion_2_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_economic_champion
+		icon = legislation
+
+		x = 1
+		y = 6
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+
+		prerequisite = { focus = SIN_singapore_on_the_rise }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_economic_champion"
+			increase_economic_growth = yes
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = -0.07 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = treasury_change }
+			multiply_temp_variable = { int_investment_change = -1.25 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.05 }
+			modify_debt_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_demand_malaysian_concessions
+		icon = military_bases
+
+		x = 3
+		y = 6
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_WAR_SUPPORT }
+
+		prerequisite = { focus = SIN_pressure_the_south_asian_seas }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_demand_malaysian_concessions"
+			one_random_arms_factory = yes
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_archipelago
+		icon = attack_indonesia
+
+		x = 5
+		y = 6
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		bypass = {
+			OR = {
+				owns_state = 627
+				IND = { is_subject_of = SIN }
+			}
+		}
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ANNEXATION }
+
+		prerequisite = { focus = SIN_pressure_the_south_asian_seas }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_archipelago"
+			add_state_claim = 627
+			IND = {
+				country_event = { id = singapore.5 days = 5 }
+			}
+			set_country_flag = SIN_demanding_the_riau_islands
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_prioritize_diplomacy
+		icon = treaty4
+
+		x = -5
+		y = 7
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_operation_enticement }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			set_temp_variable = { tag_index = SIN.id }
+			set_temp_variable = { percent_change = 1.5 }
+			every_country = {
+				limit = {
+					NOT = {
+						original_tag = SIN
+						has_war_with = SIN
+					}
+
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_condemn_aggression
+		icon = internationalism
+
+		x = -3
+		y = 7
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_political_maneuvering }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			swap_ideas = {
+				remove_idea = SIN_global_diplomacy_2_idea
+				add_idea = SIN_global_diplomacy_3_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_require_unfair_treaties
+		icon = Generic_Loadsamoney
+
+		x = -1
+		y = 7
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+
+		prerequisite = { focus = SIN_demand_special_treatment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_require_unfair_treaties"
+			swap_ideas = {
+				remove_idea = SIN_economic_champion_2_idea
+				add_idea = SIN_economic_champion_3_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_nationalistic_rise
+		icon = focus_generic_fascist_propaganda
+
+		x = 1
+		y = 7
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_economic_champion }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_nationalistic_rise"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 13 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_seize_the_peninsula
+		icon = attack_malaysia
+
+		x = 3
+		y = 7
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ANNEXATION }
+
+
+		prerequisite = { focus = SIN_demand_malaysian_concessions }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_seize_the_peninsula"
+			add_state_claim = 527
+			add_state_claim = 528
+			add_state_claim = 529
+			if = { limit = { NOT = { has_war_with = MAY } }
+				create_wargoal = {
+					target = MAY
+					type = take_claimed_state
+					generator = { 629 623 622 }
+				}
+			}
+			add_timed_idea = {
+				idea = SIN_the_invasion_of_malaysia_idea
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_invade_sumatra
+		icon = attack_indonesia
+
+		x = 5
+		y = 7
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+			NOT = { IND = { is_subject_of = SIN } }
+		}
+		bypass = {
+			OR = {
+				AND = {
+					owns_state = 629
+					owns_state = 623
+					owns_state = 622
+				}
+				IND = { is_subject_of = SIN }
+			}
+		}
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ANNEXATION }
+
+		prerequisite = { focus = SIN_the_archipelago }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_invade_sumatra"
+			add_state_claim = 629
+			add_state_claim = 623
+			add_state_claim = 622
+			if = { limit = { NOT = { has_war_with = IND } }
+				create_wargoal = {
+					target = IND
+					type = take_claimed_state
+					generator = { 629 623 622 }
+				}
+			}
+			add_timed_idea = {
+				idea = SIN_the_invasion_of_sumatra_idea
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_singapore_for_peace
+		icon = peace
+
+		x = -4
+		y = 8
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_prioritize_diplomacy }
+		prerequisite = { focus = SIN_condemn_aggression }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singapore_for_peace"
+			swap_ideas = {
+				remove_idea = SIN_global_diplomacy_3_idea
+				add_idea = SIN_global_diplomacy_4_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_economic_empire
+		icon = lion_economy
+
+		x = 0
+		y = 8
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+
+		prerequisite = { focus = SIN_require_unfair_treaties }
+		prerequisite = { focus = SIN_nationalistic_rise }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_economic_empire"
+			swap_ideas = {
+				remove_idea = SIN_economic_champion_3_idea
+				add_idea = SIN_economic_champion_4_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_set_our_sights
+		icon = war_in_asia
+
+		x = 4
+		y = 8
+		relative_position_id = SIN_the_alignment
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_seize_the_peninsula }
+		prerequisite = { focus = SIN_invade_sumatra }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_set_our_sights"
+			add_war_support = 0.05
+			add_ideas = SIN_setting_our_sights_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##Migration Stuff
+	focus = {
+		id = SIN_restrict_migration
+		icon = anti_immigration3
+
+		x = -8
+		y = 1
+		relative_position_id = SIN_the_alignment
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			has_idea = SIN_migrant_workers
+			60_percent_government_popularity = yes
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_the_republic }
+		mutually_exclusive = {
+			focus = SIN_encourage_migration
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_restrict_migration"
+			remove_ideas = SIN_migrant_workers
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_encourage_migration
+		icon = pro_immigration2
+
+		x = -6
+		y = 1
+		relative_position_id = SIN_the_alignment
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			is_subject = no
+			has_idea = SIN_migrant_workers
+			60_percent_government_popularity = yes
+		}
+
+		prerequisite = { focus = SIN_the_republic }
+		mutually_exclusive = {
+			focus = SIN_restrict_migration
+		}
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_encourage_migration"
+			custom_effect_tooltip = SIN_encourage_migration_tt
+			swap_ideas = {
+				remove_idea = SIN_migrant_workers
+				add_idea = SIN_migrant_workers_encouraged_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = SIN_singaporeans_first
+		icon = social_paternalism
+
+		x = -8
+		y = 2
+		relative_position_id = SIN_the_alignment
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_restrict_migration }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singaporeans_first"
+			add_stability = 0.04
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+
+	focus = {
+		id = SIN_import_cheap_labour
+		icon = Generic_Pawns
+
+		x = -6
+		y = 2
+		relative_position_id = SIN_the_alignment
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			60_percent_government_popularity = yes
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_encourage_migration }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_import_cheap_labour"
+			custom_effect_tooltip = SIN_encourage_migration_worse_tt
+			swap_ideas = {
+				remove_idea = SIN_migrant_workers_encouraged_idea
+				add_idea = SIN_migrant_workers_encouraged_two_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	##Foreign Diplomacy
+	focus = {
+		id = SIN_singapore_south_east_asia
+		icon = trade_with_singapore
+
+		x = 44
+		y = 0
+
+		cost = 4
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		select_effect = {
+			if = { limit = { NOT = { has_variable = signed_trade_agreements } }
+				set_variable = { signed_trade_agreements = 0 }
+			}
+			add_dynamic_modifier = {
+				modifier = SIN_singaporean_trade_strength
+			}
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singapore_south_east_asia"
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+			custom_effect_tooltip = SIN_strength_of_trade_agreements_mechanic_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_asean_commentary
+		icon = align_to_asean
+
+		x = -3
+		y = 1
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_singapore_south_east_asia }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_asean_commentary"
+			set_temp_variable = { tag_index = SIN.id }
+			set_temp_variable = { percent_change = 1 }
+			every_country = {
+				limit = {
+					OR = {
+						is_neighbor_of = SIN
+						has_idea = ASEAN_Member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expand_trade_with_india
+		icon = trade_with_india
+
+		x = 0
+		y = 1
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = RAJ
+				any_allied_country = {
+					has_war_with = RAJ
+				}
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					is_embargoed_by = RAJ
+				}
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = RAJ }
+				RAJ = { is_subject = yes }
+				RAJ = { is_subject_of = SIN }
+			}
+		}
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_singapore_south_east_asia }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_trade_with_india"
+			set_temp_variable = { receiver_nation = RAJ.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_south_asian_countries
+		icon = liberalization
+
+		x = 3
+		y = 1
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
+
+
+		prerequisite = { focus = SIN_singapore_south_east_asia }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_south_asian_countries"
+			set_temp_variable = { tag_index = SIN.id }
+			set_temp_variable = { percent_change = 1 }
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = MLD
+						original_tag = SEY
+						original_tag = COM
+						original_tag = BRU
+						original_tag = PAP
+						original_tag = SOL
+						original_tag = FIJ
+						original_tag = PLY
+						original_tag = MIC
+						original_tag = BAN
+					}
+					NOT = { has_idea = ASEAN_Member }
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_influence_the_members
+		icon = trade_with_asean
+
+		x = -4
+		y = 2
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+
+		prerequisite = { focus = SIN_asean_commentary }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_influence_the_members"
+			set_temp_variable = { tag_index = SIN.id }
+			set_temp_variable = { percent_change = 2.5 }
+			every_country = {
+				limit = {
+					OR = {
+						is_neighbor_of = SIN
+						has_idea = ASEAN_Member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_trade_with_sri_lanka
+		icon = trade_with_sri_lanka
+
+		x = -2
+		y = 2
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = SRI
+				any_allied_country = {
+					has_war_with = SRI
+				}
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					is_embargoed_by = SRI
+				}
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = SRI }
+				SRI = { is_subject = yes }
+				SRI = { is_subject_of = SIN }
+			}
+		}
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_expand_trade_with_india }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_trade_with_sri_lanka"
+			set_temp_variable = { receiver_nation = SRI.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_singaporean_foreign_aid
+		icon = cash_grap
+
+		x = 0
+		y = 2
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_expand_trade_with_india }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singaporean_foreign_aid"
+			custom_effect_tooltip = SIN_singaporean_aid_tooltip
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_madagascan_trade_routes
+		icon = trade_with_madagascar
+
+		x = 2
+		y = 2
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = MAD
+				any_allied_country = {
+					has_war_with = MAD
+				}
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					is_embargoed_by = MAD
+				}
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = MAD }
+				MAD = { is_subject = yes }
+				MAD = { is_subject_of = SIN }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_expand_trade_with_india }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_madagascan_trade_routes"
+			set_temp_variable = { receiver_nation = MAD.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_the_philippines
+		icon = trade_with_philippines
+
+		x = 4
+		y = 2
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = PHI
+				any_allied_country = {
+					has_war_with = PHI
+				}
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					is_embargoed_by = PHI
+				}
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = PHI }
+				PHI = { is_subject = yes }
+				PHI = { is_subject_of = SIN }
+			}
+		}
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+
+		prerequisite = { focus = SIN_south_asian_countries }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_the_philippines"
+			set_temp_variable = { receiver_nation = PHI.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_demand_asean_concessions
+		icon = armoured_fist
+
+		x = -5
+		y = 3
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_in_power_or_coalition = yes
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_influence_the_members }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_demand_asean_concessions"
+			add_timed_idea = {
+				idea = SIN_singaporean_special_treatment
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_control_the_straits
+		icon = expand_trade_fleet
+
+		x = -3
+		y = 3
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			num_of_factories > 15
+		}
+
+		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_INDUSTRY }
+
+		prerequisite = { focus = SIN_influence_the_members }
+		prerequisite =  { focus = SIN_trade_with_sri_lanka }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_address_human_rights"
+			one_random_dockyard = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_global_free_trade
+		icon = global_community
+
+		x = 0
+		y = 3
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 8.6
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_influence_the_members }
+		prerequisite =  { focus = SIN_trade_with_sri_lanka }
+		prerequisite = { focus = SIN_madagascan_trade_routes }
+		prerequisite =  { focus = SIN_the_philippines }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_global_free_trade"
+			if = { limit = { has_government = democratic }
+				every_country = {
+					limit = {
+						NOT = { has_government = fascism }
+						NOT = { has_government = nationalist }
+						NOT = { has_war_with = ROOT }
+						has_opinion = { target = ROOT value > -25 }
+						OR = {
+							is_neighbor_of = ROOT
+							has_government = democratic
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					add_opinion_modifier = { target = ROOT modifier = global_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+				}
+			}
+			else_if = { limit = { has_government = fascism }
+				every_country = {
+					limit = {
+						NOT = { has_war_with = ROOT }
+						has_opinion = { target = ROOT value > -25 }
+						OR = {
+							is_neighbor_of = ROOT
+							has_government = fascism
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					add_opinion_modifier = { target = ROOT modifier = global_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+				}
+			}
+			else_if = { limit = { has_government = neutrality }
+				every_country = {
+					limit = {
+						NOT = { has_government = fascism }
+						NOT = { has_government = nationalist }
+						NOT = { has_war_with = ROOT }
+						has_opinion = { target = ROOT value > -25 }
+						OR = {
+							is_neighbor_of = ROOT
+							has_government = neutrality
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					add_opinion_modifier = { target = ROOT modifier = global_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+				}
+			}
+			else_if = { limit = { has_government = communism }
+				every_country = {
+					limit = {
+						NOT = { has_government = fascism }
+						NOT = { has_war_with = ROOT }
+						has_opinion = { target = ROOT value > -25 }
+						OR = {
+							is_neighbor_of = ROOT
+							has_government = communism
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					add_opinion_modifier = { target = ROOT modifier = global_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+				}
+			}
+			else_if = { limit = { has_government = nationalist }
+				every_country = {
+					limit = {
+						NOT = { has_government = fascism }
+						NOT = { has_war_with = ROOT }
+						has_opinion = { target = ROOT value > -25 }
+						OR = {
+							is_neighbor_of = ROOT
+							has_government = nationalist
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					add_opinion_modifier = { target = ROOT modifier = global_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = political_outreach }
+					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+				}
+			}
+			increase_exports = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = SIN_dictate_trade_agreements
+		icon = pass_legislation
+
+		x = 3
+		y = 3
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 10
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_the_philippines }
+		prerequisite =  { focus = SIN_madagascan_trade_routes }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_dictate_trade_agreements"
+			add_ideas = SIN_singaporean_trade_influence_one_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_strong_arm_the_asean
+		icon = treaty4
+
+		x = -4
+		y = 4
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_in_power_or_coalition = yes
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_demand_asean_concessions }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_strong_arm_the_asean"
+			if = { limit = { has_idea = SIN_singaporean_special_treatment }
+				modify_timed_idea = {
+					idea = SIN_singaporean_special_treatment
+					days = 365
+				}
+			}
+			else = {
+				add_timed_idea = {
+					idea = SIN_singaporean_special_treatment
+					days = 365
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_japanese_free_trade_agreement
+		icon = trade_with_japan
+
+		x = -2
+		y = 4
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = JAP
+				any_allied_country = {
+					has_war_with = JAP
+				}
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					is_embargoed_by = JAP
+				}
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = JAP }
+				JAP = { is_subject = yes }
+				JAP = { is_subject_of = SIN }
+			}
+		}
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+
+		prerequisite = { focus = SIN_trade_with_sri_lanka }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_japanese_free_trade_agreement"
+			set_temp_variable = { receiver_nation = JAP.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_usa_singaporean_agreements
+		icon = trade_with_america
+
+		x = 0
+		y = 4
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = USA
+				any_allied_country = {
+					has_war_with = USA
+				}
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					is_embargoed_by = USA
+				}
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = USA }
+				USA = { is_subject = yes }
+				USA = { is_subject_of = SIN }
+			}
+		}
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+
+		prerequisite = { focus = SIN_global_free_trade }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_usa_singaporean_agreements"
+			set_temp_variable = { receiver_nation = USA.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_singaporean_trade_influence
+		icon = export_economy
+
+		x = 2
+		y = 4
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_global_free_trade }
+		prerequisite = { focus = SIN_dictate_trade_agreements }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_singaporean_trade_influence"
+			swap_ideas = {
+				remove_idea = SIN_singaporean_trade_influence_one_idea
+				add_idea = SIN_singaporean_trade_influence_two_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_pressure_the_japanese
+		icon = deadly_deal
+
+		x = -4
+		y = 5
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				emerging_autocracy_in_power_or_coalition = yes
+			}
+			NOT = { is_in_faction_with = JAP }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		prerequisite = { focus = SIN_japanese_free_trade_agreement }
+		prerequisite = { focus = SIN_strong_arm_the_asean }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_pressure_the_japanese"
+			set_temp_variable = { treasury_change = JAP.int_investments }
+			multiply_temp_variable = { treasury_change = 0.07 }
+			modify_treasury_effect = yes
+			capital_scope = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			JAP = {
+				add_opinion_modifier = { target = SIN modifier = nationalized_assets }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_global_investment
+		icon = focus_trade_republic
+
+		x = 0
+		y = 5
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_usa_singaporean_agreements }
+		prerequisite = { focus = SIN_japanese_free_trade_agreement }
+		prerequisite = { focus = SIN_singaporean_trade_influence }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_global_investment"
+			add_ideas = SIN_global_investment_go_brrrt_one_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_regional_investment
+		icon = money
+
+		x = -1
+		y = 6
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_global_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_regional_investment"
+			swap_ideas = {
+				remove_idea = SIN_global_investment_go_brrrt_one_idea
+				add_idea = SIN_global_investment_go_brrrt_two_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = SIN_expand_foreign_reserve
+		icon = generic_banks
+
+		x = 1
+		y = 6
+		relative_position_id = SIN_singapore_south_east_asia
+
+		cost = 7.86
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = SIN_global_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_foreign_reserve"
+			add_political_power = -75
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.05 }
+			clamp_variable = {
+				var = treasury_change
+				min = 0
+				max = 150
+			}
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
