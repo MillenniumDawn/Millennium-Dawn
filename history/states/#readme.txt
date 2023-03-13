@@ -34,6 +34,8 @@
 # please also add your changes to the list at the bottom of this file
 #
 #ledger for aprox. what state_category per number of pop a state should have
+ # state_military_base for leased military bases
+ # state_inhospitable for impassable states
  # state_00 for <300,000 inhabitants
  # state_01 for 300,000 - 800,000 inhabitants
  # state_02 for 800,000 - 1,500,000 inhabitants
