@@ -251,7 +251,7 @@
 	NDefines.NMilitary.RECON_SKILL_IMPACT = 0.05 -- 5
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.5 -- -0.35
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
-	NDefines.NMilitary.SLOWEST_SPEED = 8 -- 4
+	NDefines.NMilitary.SLOWEST_SPEED = 4 -- 4
 	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
