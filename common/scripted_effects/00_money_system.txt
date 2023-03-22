@@ -2203,15 +2203,27 @@ calculate_gdp = {
 	add_to_temp_variable = { civil_fac_lost = temp_resource_import }
 	add_to_variable = { civil_fac = civil_fac_lost }
 
-	multiply_variable = { civil_fac = 248 }
-	multiply_variable = { military_fac = 155 }
-	multiply_variable = { dockyard_fac = 155 }
-	multiply_variable = { office_fac = 388 }
+	set_temp_variable = { sum = civil_fac }
+	add_to_temp_variable = { sum = military_fac }
+	add_to_temp_variable = { sum = dockyard_fac }
+	add_to_temp_variable = { sum = office_fac }
 
-	add_to_variable = { gdp_total = civil_fac }
-	add_to_variable = { gdp_total = military_fac }
-	add_to_variable = { gdp_total = dockyard_fac }
-	add_to_variable = { gdp_total = office_fac }
+	if = {
+		# approximation: if % of buildings is more or less the same, 8500 on average will be close to overflow
+		limit = { check_variable = { sum > 8500 } }
+		set_variable = { gdp_total = 2147000 } # slightly less then INT max
+	}
+	else = {
+		multiply_variable = { civil_fac = 248 }
+		multiply_variable = { military_fac = 155 }
+		multiply_variable = { dockyard_fac = 155 }
+		multiply_variable = { office_fac = 388 }
+
+		add_to_variable = { gdp_total = civil_fac }
+		add_to_variable = { gdp_total = military_fac }
+		add_to_variable = { gdp_total = dockyard_fac }
+		add_to_variable = { gdp_total = office_fac }
+	}
 
 	#Calculate GDP Percentages
 	set_variable = { civil_fac_percent = civil_fac }
@@ -2225,7 +2237,13 @@ calculate_gdp = {
 	divide_variable = { office_fac_percent = gdp_total }
 
 	#America Cheats - this is to scale the US to real values
-	if = { limit = { original_tag = USA } multiply_variable = { gdp_total = 2 } }
+	if = {
+		limit = {
+			original_tag = USA
+			check_variable = { gdp_total < 1073500 }
+		}
+		multiply_variable = { gdp_total = 2 }
+	}
 
 	#Min GDP is 0.5*MIC to avoid 0 GDP
 	clamp_variable = { var = gdp_total min = 80 }
