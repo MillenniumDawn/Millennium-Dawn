@@ -848,11 +848,11 @@
 	-- }
 
 	-- Peace deal AI stuff
-	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.5			-- 0.5 in vanilla
-	NDefines.NAI.PEACE_BID_FOLD_AGAINST_AI_CHANCE_UNCONTROLLED = 0.40	-- 0.40 in vanilla
+	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.7			-- 0.5 in vanilla
+	NDefines.NAI.PEACE_BID_FOLD_AGAINST_AI_CHANCE_UNCONTROLLED = 0.60	-- 0.40 in vanilla
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_LIBERATE_CONTEST = 1.0			-- 1.0 in vanilla
-	NDefines.NAI.PEACE_BID_FOLD_MINOR_VS_MAJOR = 1.0					-- 1.0 in vanilla
-	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = true					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
+	NDefines.NAI.PEACE_BID_FOLD_MINOR_VS_MAJOR = 2.0					-- 1.0 in vanilla
+	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = false					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_SUBJECTS = true					-- Whether AI should include subjects when evaluating giving states to other winners (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_ALLIES = true					-- Whether AI should include allies when evaluating giving states to other winners (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_NON_ALLIES = false				-- Whether AI should include non-allies (not in same faction) when evaluating giving states to other winners (may affect performance on new conference turn)
