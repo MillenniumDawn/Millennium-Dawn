@@ -1,10 +1,12 @@
 ﻿using AirCombatSimulator.Configuration;
+using AirCombatSimulator.Models;
 
 namespace AirCombatSimulator.Data
 {
     public class DataService
     {
         private const string DefinesFilename = "defines.txt";
+        private const string PlanesFile = "planes.txt";
 
         private readonly string appPath;
 
@@ -47,6 +49,25 @@ namespace AirCombatSimulator.Data
 
                 return defines;
             }
+        }
+
+        public List<Plane> GetPlanes()
+        {
+            var path = Path.Combine(appPath, PlanesFile);
+            if (ReaderWriter.Exists(path))
+            {
+                var data = ReaderWriter.Read(path);
+                return JsonConverter.Deserialize<List<Plane>>(data);
+            }
+
+            return new List<Plane>();
+        }
+
+        public void SavePlanes(List<Plane> planes)
+        {
+            var path = Path.Combine(appPath, PlanesFile);
+            var data = JsonConverter.Serialize(planes);
+            ReaderWriter.Write(path, data);
         }
     }
 }
