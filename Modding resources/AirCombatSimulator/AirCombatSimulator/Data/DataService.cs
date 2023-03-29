@@ -26,16 +26,20 @@ namespace AirCombatSimulator.Data
                 // default defines
                 var defines = new Defines
                 {
-                    AirWingMaxSpeed = 1500,
-                    BiggestAgilityFactorDiff = 2.5,
-                    AirWingMaxStatsAgility = 100,
+                    AirWingMaxSpeed = 4000,
+                    BiggestAgilityFactorDiff = 5,
+                    AirWingMaxStatsAgility = 999,
                     DefaultCarrierFactor = 0.1,
-                    CombatDamageStatMultiplier = 0.3,
+                    CombatDamageStatMultiplier = 0.2,
+                    AgilityDamageReduction = 0.8,
+                    BetterSpeedDamageIncrease = 0.6,
                     BaseDamageMultuplier = 0.01,
-                    DetectChanceFromOccupation = 0.1,
-                    DetectChanceFromRadars = 0.5,
-                    DetectChanceFromAircrafts = 0.8,
-                    DetectChanceFromAircraftsEffectiveCount = 3000
+                    DetectChanceFromOccupation = 0.05,
+                    DetectChanceFromRadars = 0.85,
+                    DetectChanceFromAircrafts = 0.975,
+                    DetectChanceFromAircraftsEffectiveCount = 3000,
+                    SpeedFactorDiff = 2.5,
+                    SpeedDamageBonusFactor = 0.025
                 };
 
                 var serialized = JsonConverter.Serialize(defines);
