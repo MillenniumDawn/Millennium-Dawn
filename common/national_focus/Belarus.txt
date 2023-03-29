@@ -6728,10 +6728,10 @@ focus_tree = {
 	#Special Operation
 	focus = {
 		id = BLR_Special_Operation
-		icon = the_bad_guys_are_here
+		icon = the_z_apc
 
 		x = -3
-		y = 19
+		y = 22
 
 		relative_position_id = BLR_Lykashenko
 
@@ -6747,7 +6747,8 @@ focus_tree = {
 			UKR = { has_war_with = SOV }
 		}
 
-		prerequisite = {focus = BLR_war_is_war	}
+		prerequisite = {focus = BLR_war_is_war	
+		focus = BLR_Military_Exercises_Union}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Special_Operation"
@@ -6763,7 +6764,7 @@ focus_tree = {
 		icon = blr_tonk
 
 		x = -4
-		y = 20
+		y = 23
 
 		relative_position_id = BLR_Lykashenko
 
@@ -6794,7 +6795,7 @@ focus_tree = {
 		icon = align_to_iran
 
 		x = -2
-		y = 20
+		y = 23
 
 		relative_position_id = BLR_Lykashenko
 
@@ -6816,7 +6817,7 @@ focus_tree = {
 				add_ai_strategy = {
 					type = alliance
 					id = BLR
-					value = 200
+					value = 20
 				}
 			}
 			add_opinion_modifier = {
@@ -6827,6 +6828,68 @@ focus_tree = {
 				add_opinion_modifier = {
 					target = BLR
 					modifier = improve_trade
+				}
+			}
+		}
+	}
+	#Execution of officials
+	focus = {
+		id = BLR_Execution_Officials
+		icon = Lukash_bust
+
+		x = -3
+		y = 24
+
+		relative_position_id = BLR_Lykashenko
+
+		ai_will_do = { factor = 20}
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
+
+		prerequisite = { focus = BLR_Iran_friend	}
+		prerequisite = { focus = BLR_People_Militia	}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_Russia_nuclear"
+			add_political_power = 150
+		}
+	}
+	#Russia send Nuclear
+	focus = {
+		id = BLR_Russia_nuclear
+		icon = nuclear_bomb
+
+		x = -3
+		y = 25
+
+		relative_position_id = BLR_Lykashenko
+
+		ai_will_do = { factor = 20}
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
+
+		prerequisite = { focus = BLR_Execution_Officials	}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_Russia_nuclear"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = missile_silo
+					level = 1
 				}
 			}
 		}
@@ -7090,7 +7153,7 @@ focus_tree = {
 	### Revoult
 	focus = {
 		id = BLR_army_on_streets_of_cities
-		icon = rev_blr
+		icon = blr_Jeans_Revolution
 
 		x = 1
 		y = 18
@@ -7233,22 +7296,76 @@ focus_tree = {
 				ideology = democratic
 				popularity = 0.1
 			}
-			
-		}
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.04 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { modify_batka = 5 }
-			modify_batka_support = yes
+			}
 			add_ideas = BLR_country_for_life
 		}
 	}
+	#Luka Western
+	focus = {
+		id = BLR_Luka_west
+		icon = rev_blr
+
+		x = 2
+		y = 20
+
+		relative_position_id = BLR_Lykashenko
+
+		ai_will_do = { factor = 20	}
+
+		available = {
+			is_subject = no
+			NOT = { has_completed_focus = BLR_union_become_one }
+			has_country_flag = BLR_tikhanovsky_not_arrested_flag
+			emerging_reactionaries_are_in_power = yes
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		
+		cost = 5
+
+		prerequisite = { focus = BLR_Country_for_life }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_Luka_west"
+			set_temp_variable = { percent_change = -12.26}
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = BLR }
+			change_influence_percentage = yes
+			add_popularity = {
+				ideology = communism
+				popularity = -0.30
+			}
+			recalculate_party = yes
+			if = { limit = { NOT = { is_in_array = { ruling_party = 0 } } }
+				set_temp_variable = { rul_party_temp = 0 }
+				change_ruling_party_effect = yes
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			add_relative_party_popularity = yes
+			}
+			create_country_leader = {
+				name = "Alexander Lukashenko"
+				picture = "alexander_lukashenko.dds"
+				ideology = conservatism
+				traits = {
+					western_conservatism
+				}
+			}
+		}
+	
 	#Amendment to the Constitution
 	focus = {
 		id = BLR_Amendment_to_Constitution
 		icon = blr_referendum_belarus_2004
 
-		x = 1
+		x = 0
 		y = 20
 
 		relative_position_id = BLR_Lykashenko
@@ -7265,8 +7382,7 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {focus = BLR_Bye_opposition
-		focus = BLR_Country_for_life}
+		prerequisite = {focus = BLR_Bye_opposition}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Amendment_to_Constitution"
@@ -7282,7 +7398,7 @@ focus_tree = {
 		id = BLR_Military_Exercises_Union
 		icon = blr_allied_resolve
 
-		x = 1
+		x = 0
 		y = 21
 
 		relative_position_id = BLR_Lykashenko
@@ -7309,6 +7425,244 @@ focus_tree = {
 			air_experience = 35
 		}
 	}
+	focus = {
+		id = BLR_union_become_one
+		icon = align_to_union_state
+
+		x = 0
+		y = 16
+
+		ai_will_do = {
+			factor = 90
+		}
+
+		cost = 2
+
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+
+		relative_position_id = BLR_start
+
+		prerequisite = { focus = BLR_verbovka_in_rus_tv}
+		prerequisite = { focus = BLR_verbovka_in_regions}
+		prerequisite = { focus = BLR_export_arms}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = BLR_SOV_more_than_70_percent_influence_TT
+				SOV = { BLR_targeted_country_has_more_than_70_percent_influence = yes }
+			}
+			has_government = communism
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			has_country_leader = {
+				name = "Alexander Lukashenko"
+				ruling_only = yes
+			}
+
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_union_become_one"
+			custom_effect_tooltip = BLR_Union_state_create_TT
+			every_state = {
+				limit = {
+					is_core_of = SOV
+				}
+				add_core_of = BLR
+			}
+			add_stability = -0.10
+			add_war_support = -0.10
+			add_political_power = -200
+
+			hidden_effect = {
+				SOV = {
+					every_unit_leader = {
+						set_nationality = BLR
+					}
+				}
+				annex_country = { target = SOV transfer_troops = yes }
+				set_cosmetic_tag = BLR_UNS_Communism
+				clr_country_flag = dynamic_flag
+				set_temp_variable = { percent_change = 25 }
+				change_domestic_influence_percentage = yes
+			}
+		}
+	}
+
+
+	##Kolya Lykashenko
+	focus = {
+		id = BLR_Kolya
+		icon = blr_kolya
+
+		x = 0
+		y = 17
+
+		ai_will_do = { factor = 100 }
+
+		cost = 10
+
+		relative_position_id = BLR_start
+
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
+
+		prerequisite = { focus = BLR_union_become_one }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_Kolya"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.07 }
+			add_relative_party_popularity = yes
+			hidden_effect = {
+				if = {
+						limit = {
+							has_idea = BLR_batka_very_weak
+						}
+						remove_ideas = BLR_batka_very_weak
+
+					}
+					if = {
+						limit = {
+							has_idea = BLR_batka_weak
+						}
+						remove_ideas = BLR_batka_weak
+
+					}
+					if = {
+						limit = {
+							has_idea = BLR_batka_medium
+						}
+						remove_ideas = BLR_batka_medium
+
+					}
+					if = {
+						limit = {
+							has_idea = BLR_batka_very_strong
+						}
+						remove_ideas = BLR_batka_very_strong
+
+					}
+					if = {
+						limit = {
+							has_idea = BLR_batka_strong
+						}
+						remove_ideas = BLR_batka_strong
+
+					}
+				}
+			create_country_leader = {
+				name = "Nikolai Lukashenko"
+				picture = "nikolai_lukashenko.dds"
+				ideology = Autocracy
+				traits = {
+					emerging_Autocracy
+				}
+			}
+		}
+	}
+	##PR Company on TV and Media
+	focus = {
+		id = BLR_PR_company
+		icon = blr_kolya
+
+		x = 1
+		y = 18
+
+		ai_will_do = { factor = 100 }
+
+		cost = 10
+
+		relative_position_id = BLR_start
+
+		available = {
+			emerging_reactionaries_are_in_power = yes
+
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = BLR_Kolya }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_PR_company"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.08 }
+			add_relative_party_popularity = yes
+		}
+	}
+	##Anti-corruption company again
+	focus = {
+		id = BLR_Again_anti_corrupt
+		icon = BLR_Anti_Corruption
+
+		x = -1
+		y = 18
+
+		ai_will_do = { factor = 100 }
+
+		cost = 10
+
+		relative_position_id = BLR_start
+
+		available = {
+			emerging_reactionaries_are_in_power = yes
+
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = BLR_Kolya }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_Again_anti_corrupt"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			add_relative_party_popularity = yes
+			decrease_corruption = yes
+		}
+	}
+	#Operation O
+	focus = {
+		id = BLR_Operation_O
+		icon = blr_operation_o
+
+		x = 0
+		y = 19
+
+		ai_will_do = { factor = 20 }
+
+		relative_position_id = BLR_start
+
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+
+		bypass = {
+			owns_state = 110
+		}
+
+		available = {
+			NOT = { LIT = { has_idea = NATO_member } }
+			country_exists = LIT
+			emerging_reactionaries_are_in_power = yes
+		}
+
+		cost = 10
+
+		prerequisite = { focus = BLR_Again_anti_corrupt }
+		prerequisite = { focus = BLR_PR_company }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_Operation_O"
+			create_wargoal = {
+				target = LIT
+				type = annex_everything
+			}
+		}
+	}
+
 	#Expand the east tradecooperation
 	focus = {
 		id = BLR_expand_the_east_trade_cooperation
@@ -7413,6 +7767,10 @@ focus_tree = {
 			has_government = democratic
 		}
 
+		bypass = {
+			western_autocrats_are_in_power = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Andrey_sannikov"
 			if = {
@@ -7480,7 +7838,6 @@ focus_tree = {
 		prerequisite = { focus = BLR_Andrey_sannikov }
 
 		available = {
-			has_idea = BLR_privatisation_effect
 			has_government = democratic
 		}
 
@@ -7559,7 +7916,6 @@ focus_tree = {
 		ai_will_do = {	factor = 10	}
 
 		available = {
-			has_idea = BLR_privatisation_effect
 			has_government = democratic
 		}
 
@@ -7666,7 +8022,6 @@ focus_tree = {
 		prerequisite = { focus = BLR_Andrey_sannikov }
 
 		available = {
-			has_idea = BLR_privatisation_effect
 			has_government = democratic
 		}
 
@@ -8269,7 +8624,7 @@ focus_tree = {
 	#Georgia question
 	focus = {
 		id = BLR_Georgia_question
-		icon = align_to_georgia
+		icon = abandon_eu_geo
 
 		x = -4
 		y = 9
@@ -8811,12 +9166,40 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Delete_KGB2"
+			if = {
+				limit = {
+					western_liberals_are_in_power = yes
+				}
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = -15 }
+				change_intelligence_community_opinion = yes
+				add_stability = -0.04
+			}
+			if = {
+				limit = {
+					western_conservatism_are_in_power = yes
+				}
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.02 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { temp_opinion = -15 }
+				change_intelligence_community_opinion = yes
+				add_stability = -0.04
+			}
+			if = {
+				limit = {
+					western_autocrats_are_in_power = yes
+				}
+				custom_effect_tooltip = BLR_kgb_west_TT	
 			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { party_popularity_increase = -0.09 }
 			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = -15 }
-			change_intelligence_community_opinion = yes
-			add_stability = -0.04
+			add_stability = 0.04
+			set_temp_variable = { temp_opinion = 5 }
+				change_intelligence_community_opinion = yes
+			}
 		}
 	}
 	#Freedom and Meetings
@@ -9150,6 +9533,15 @@ focus_tree = {
 			if = {
 				limit = {
 					western_conservatism_are_in_power = yes
+				}
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.09 }
+			add_relative_party_popularity = yes
+			add_ideas = SPR_anti_lgbtqa_stance_idea
+			}
+			if = {
+				limit = {
+					western_autocrats_are_in_power = yes
 				}
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.09 }
@@ -9518,7 +9910,7 @@ focus_tree = {
 				producer = BLR
 			}
 			add_equipment_to_stockpile = {
-				type = APC_Equipment
+				type = apc_hull
 				amount = -50
 				producer = BLR
 			}
@@ -10385,8 +10777,8 @@ focus_tree = {
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
-					type = mbt_hull_0
-					variant_name = "Type88"
+					type = mbt_hull_1
+					variant_name = "Type-88"
 					amount = 100
 					producer = CHI
 				}
@@ -10462,13 +10854,26 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 			if = { limit = { has_dlc = "Death or Dishonor" }
-				CHI = {
+				if = {
+					limit = { has_dlc = "No Step Back" }
 					create_production_license = {
 						target = BLR
 						equipment = {
-							type = SP_R_arty_1
+							type = spart_hull_1
+							version = 0
 						}
 						cost_factor = 0
+					}
+				}
+				else = {
+					CHI = {
+						create_production_license = {
+							target = BLR
+							equipment = {
+								type = SP_R_arty_1
+							}
+							cost_factor = 0
+						}
 					}
 				}
 			}
@@ -10551,8 +10956,6 @@ focus_tree = {
 				}
 				add_opinion_modifier = { target = BLR modifier = recent_actions_positive }
 			}
-
-
 		}
 	}
 	#Western Weapons
@@ -10667,7 +11070,7 @@ focus_tree = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
 					type = mbt_hull_1
-					variant_name = "Leopard 2a6"
+					variant_name = "Leopard 2A6"
 					amount = 100
 					producer = GER
 				}
@@ -10901,8 +11304,8 @@ focus_tree = {
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
-					type = mbt_hull_1
-					variant_name = "T90"
+					type = mbt_hull_2
+					variant_name = "T-90"
 					amount = 100
 					producer = SOV
 				}
@@ -11836,7 +12239,7 @@ focus_tree = {
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
-					type = mbt_hull_1
+					type = mbt_hull_0
 					variant_name = "Ch'onma-ho"
 					amount = 100
 					producer = NKO
@@ -14297,7 +14700,7 @@ focus_tree = {
 	}
 	focus = {
 		id = BLR_verbovka_in_gosduma
-		icon = russia_gov_icon
+		icon = strengthening_the_duma
 
 		x = -3
 		y = 11
@@ -14917,243 +15320,6 @@ focus_tree = {
 			set_temp_variable = { tag_index = BLR }
 			set_temp_variable = { influence_target = SOV }
 			change_influence_percentage = yes
-		}
-	}
-	focus = {
-		id = BLR_union_become_one
-		icon = align_to_union_state
-
-		x = 0
-		y = 16
-
-		ai_will_do = {
-			factor = 90
-		}
-
-		cost = 2
-
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-
-		relative_position_id = BLR_start
-
-		prerequisite = { focus = BLR_verbovka_in_rus_tv}
-		prerequisite = { focus = BLR_verbovka_in_regions}
-		prerequisite = { focus = BLR_export_arms}
-
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = BLR_SOV_more_than_70_percent_influence_TT
-				SOV = { BLR_targeted_country_has_more_than_70_percent_influence = yes }
-			}
-			has_government = communism
-			is_subject = yes
-			has_autonomy_state = autonomy_union_state
-			has_country_leader = {
-				name = "Alexander Lukashenko"
-				ruling_only = yes
-			}
-
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BLR_union_become_one"
-			custom_effect_tooltip = BLR_Union_state_create_TT
-			every_state = {
-				limit = {
-					is_core_of = SOV
-				}
-				add_core_of = BLR
-			}
-			add_stability = -0.10
-			add_war_support = -0.10
-			add_political_power = -200
-
-			hidden_effect = {
-				SOV = {
-					every_unit_leader = {
-						set_nationality = BLR
-					}
-				}
-				annex_country = { target = SOV transfer_troops = yes }
-				set_cosmetic_tag = BLR_UNS_Communism
-				clr_country_flag = dynamic_flag
-				set_temp_variable = { percent_change = 25 }
-				change_domestic_influence_percentage = yes
-			}
-		}
-	}
-
-
-	##Kolya Lykashenko
-	focus = {
-		id = BLR_Kolya
-		icon = blr_kolya
-
-		x = 0
-		y = 17
-
-		ai_will_do = { factor = 100 }
-
-		cost = 10
-
-		relative_position_id = BLR_start
-
-		available = {
-			emerging_reactionaries_are_in_power = yes
-		}
-
-		prerequisite = { focus = BLR_union_become_one }
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BLR_Kolya"
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.07 }
-			add_relative_party_popularity = yes
-			hidden_effect = {
-				if = {
-						limit = {
-							has_idea = BLR_batka_very_weak
-						}
-						remove_ideas = BLR_batka_very_weak
-
-					}
-					if = {
-						limit = {
-							has_idea = BLR_batka_weak
-						}
-						remove_ideas = BLR_batka_weak
-
-					}
-					if = {
-						limit = {
-							has_idea = BLR_batka_medium
-						}
-						remove_ideas = BLR_batka_medium
-
-					}
-					if = {
-						limit = {
-							has_idea = BLR_batka_very_strong
-						}
-						remove_ideas = BLR_batka_very_strong
-
-					}
-					if = {
-						limit = {
-							has_idea = BLR_batka_strong
-						}
-						remove_ideas = BLR_batka_strong
-
-					}
-				}
-			create_country_leader = {
-				name = "Nikolai Lukashenko"
-				picture = "nikolai_lukashenko.dds"
-				ideology = Autocracy
-				traits = {
-					emerging_Autocracy
-				}
-			}
-		}
-	}
-	##PR Company on TV and Media
-	focus = {
-		id = BLR_PR_company
-		icon = blr_kolya
-
-		x = 1
-		y = 18
-
-		ai_will_do = { factor = 100 }
-
-		cost = 10
-
-		relative_position_id = BLR_start
-
-		available = {
-			emerging_reactionaries_are_in_power = yes
-
-		}
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = BLR_Kolya }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BLR_PR_company"
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.08 }
-			add_relative_party_popularity = yes
-		}
-	}
-	##Anti-corruption company again
-	focus = {
-		id = BLR_Again_anti_corrupt
-		icon = BLR_Anti_Corruption
-
-		x = -1
-		y = 18
-
-		ai_will_do = { factor = 100 }
-
-		cost = 10
-
-		relative_position_id = BLR_start
-
-		available = {
-			emerging_reactionaries_are_in_power = yes
-
-		}
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = BLR_Kolya }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BLR_Again_anti_corrupt"
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.06 }
-			add_relative_party_popularity = yes
-			decrease_corruption = yes
-		}
-	}
-	#Operation O
-	focus = {
-		id = BLR_Operation_O
-		icon = blr_operation_o
-
-		x = 0
-		y = 19
-
-		ai_will_do = { factor = 20 }
-
-		relative_position_id = BLR_start
-
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-
-		bypass = {
-			owns_state = 110
-		}
-
-		available = {
-			NOT = { LIT = { has_idea = NATO_member } }
-			country_exists = LIT
-			emerging_reactionaries_are_in_power = yes
-		}
-
-		cost = 10
-
-		prerequisite = { focus = BLR_Again_anti_corrupt }
-		prerequisite = { focus = BLR_PR_company }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BLR_Operation_O"
-			create_wargoal = {
-				target = LIT
-				type = annex_everything
-			}
 		}
 	}
 
