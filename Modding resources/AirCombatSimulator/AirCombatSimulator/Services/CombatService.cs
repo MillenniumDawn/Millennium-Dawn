@@ -5,8 +5,6 @@ namespace AirCombatSimulator.Services
 {
     public class CombatService
     {
-        private const double AgilityStep = 0.675 / 1.5;
-
         private readonly Defines defines;
 
         public CombatService(Defines defines)
@@ -26,14 +24,11 @@ namespace AirCombatSimulator.Services
                 int numberOfAttackersA = Convert.ToInt32(Math.Round(detectionA * b.Count));
                 int numberOfAttackersB = Convert.ToInt32(Math.Round(detectionB * a.Count));
 
-                numberOfAttackersA = Math.Clamp(numberOfAttackersA, 0, numberOfAttackersA * 3);
-                numberOfAttackersB = Math.Clamp(numberOfAttackersB, 0, numberOfAttackersB * 3);
+                numberOfAttackersA = Math.Clamp(a.Count, 0, numberOfAttackersA * 3);
+                numberOfAttackersB = Math.Clamp(b.Count, 0, numberOfAttackersB * 3);
 
-                double damageByA = defines.BaseDamageMultuplier * numberOfAttackersA * a.Plane.Attack / b.Plane.Defense
-                    * (1 + CalulateStatsMultiplier(a, b)) * defines.DefaultCarrierFactor * (1 + CalculateAgilityDisadvantage(a, b));
-
-                double damageByB = defines.BaseDamageMultuplier * numberOfAttackersB * b.Plane.Attack / a.Plane.Defense
-                    * (1 + CalulateStatsMultiplier(b, a)) * defines.DefaultCarrierFactor * (1 + CalculateAgilityDisadvantage(b, a));
+                var damageByA = CalculateDamageForWing(a, b, numberOfAttackersA);
+                var damageByB = CalculateDamageForWing(b, a, numberOfAttackersB);
 
                 var item = new CombatResult(damageByB, damageByA);
                 result.Add(item);
@@ -42,18 +37,43 @@ namespace AirCombatSimulator.Services
             return result;
         }
 
-        private static double CalculateAgilityDisadvantage(AirWing a, AirWing b)
+        private double CalculateDamageForWing(AirWing a, AirWing b, int numberOfAttackersA)
         {
-            var modifier = Math.Clamp(b.Plane.Agility / a.Plane.Agility, 1, 2.5);
-            return -(modifier - 1) * AgilityStep;
+            double newDamageByA = CalculateBaseDamage(a, numberOfAttackersA);
+            double agilityPenaltyForA = 0;
+            if (a.Plane.Agility < b.Plane.Agility)
+            {
+                agilityPenaltyForA = CalculateAgilityDisadvantageNew(a, b, newDamageByA);
+            }
+
+            double speedBonus = 0;
+            if (a.Plane.Speed > b.Plane.Speed)
+            {
+                speedBonus = CalculateRelativeSpeedBonus(a, b, newDamageByA);
+                speedBonus += CalculateAbsoluteSpeedBonus(a, newDamageByA);
+            }
+
+            return defines.BaseDamageMultuplier * (newDamageByA - agilityPenaltyForA + speedBonus) / b.Plane.Defense;
         }
 
-        private double CalulateStatsMultiplier(AirWing a, AirWing b)
+        private double CalculateAbsoluteSpeedBonus(AirWing a, double newDamageByA)
         {
-            var diff = (a.Plane.Speed - b.Plane.Speed) / defines.AirWingMaxSpeed;
-            diff += (a.Plane.Agility - b.Plane.Agility) / defines.AirWingMaxStatsAgility;
-            diff = Math.Clamp(diff, -1, 1);
-            return diff * defines.CombatDamageStatMultiplier;
+            return newDamageByA * defines.SpeedDamageBonusFactor * a.Plane.Speed / defines.AirWingMaxSpeed;
+        }
+
+        private double CalculateRelativeSpeedBonus(AirWing a, AirWing b, double newDamageByA)
+        {
+            return newDamageByA * defines.BetterSpeedDamageIncrease * Math.Min((a.Plane.Speed - b.Plane.Speed) / b.Plane.Speed, defines.SpeedFactorDiff - 1);
+        }
+
+        private double CalculateAgilityDisadvantageNew(AirWing a, AirWing b, double newDamageByA)
+        {
+            return newDamageByA * defines.AgilityDamageReduction * Math.Min((b.Plane.Agility - a.Plane.Agility) / a.Plane.Agility, defines.BiggestAgilityFactorDiff - 1);
+        }
+
+        private double CalculateBaseDamage(AirWing attacker, int numberOfPlanes)
+        {
+            return numberOfPlanes * attacker.Plane.Attack * defines.CombatDamageStatMultiplier;
         }
 
         private double CalculateDetection(AirWing a, CombatConfiguration combatConfiguration, bool useA)
