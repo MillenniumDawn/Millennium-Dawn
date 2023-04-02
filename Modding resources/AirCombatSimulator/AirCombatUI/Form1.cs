@@ -8,12 +8,22 @@ namespace AirCombatUI
     public partial class MainUIForm : Form
     {
         private readonly CombatService combatService;
+        private readonly DataService dataService;
+        private readonly List<Plane> planes;
 
         public MainUIForm()
         {
             InitializeComponent();
 
-            var dataService = new DataService();
+            dataService = new DataService();
+            planes = dataService.GetPlanes();
+
+            foreach (var plane in planes)
+            {
+                PlaneAComboBox.Items.Add(plane.Name);
+                PlaneBComboBox.Items.Add(plane.Name);
+            }
+
             var defines = dataService.GetDefines();
 
             combatService = new CombatService(defines);
@@ -85,7 +95,7 @@ namespace AirCombatUI
             var planeBSpeed = Validator.ValidateDouble(PlaneBSpeed.Text, "Plane B speed");
             var planeBAgility = Validator.ValidateDouble(PlaneBAgility.Text, "Plane B agility");
 
-            var planeB = new Plane("plane B", planeBAttack, planeBDefense, planeBAgility, planeBSpeed);
+            var planeB = new Plane(PlaneBNameTextBox.Text , planeBAttack, planeBDefense, planeBAgility, planeBSpeed);
             return planeB;
         }
 
@@ -110,7 +120,7 @@ namespace AirCombatUI
             var planeASpeed = Validator.ValidateDouble(PlaneASpeed.Text, "Plane A speed");
             var planeAAgility = Validator.ValidateDouble(PlaneAAgility.Text, "Plane A agility");
 
-            var planeA = new Plane("plane A", planeAAttack, planeADefense, planeAAgility, planeASpeed);
+            var planeA = new Plane(PlaneANameTextBox.Text, planeAAttack, planeADefense, planeAAgility, planeASpeed);
             return planeA;
         }
 
@@ -118,8 +128,116 @@ namespace AirCombatUI
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show($"Hoi4 air combat simulator\nVersion {Program.Version}\nMade by crocomoth, 2022", "About",
+            MessageBox.Show($"Hoi4 air combat simulator\nVersion {Program.Version}\nMade by crocomoth, 2023", "About",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void label17_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void PlaneAComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var plane = planes.FirstOrDefault(x => x.Name.Equals(PlaneAComboBox.Text));
+            if (plane is not null)
+            {
+                PlaneANameTextBox.Text = plane.Name;
+                PlaneAAttack.Text = plane.Attack.ToString();
+                PlaneADefense.Text = plane.Defense.ToString();
+                PlaneASpeed.Text = plane.Speed.ToString();
+                PlaneAAgility.Text = plane.Agility.ToString();
+            }
+        }
+
+        private void PlaneBComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var plane = planes.FirstOrDefault(x => x.Name.Equals(PlaneBComboBox.Text));
+            if (plane is not null)
+            {
+                PlaneBNameTextBox.Text = plane.Name;
+                PlaneBAttack.Text = plane.Attack.ToString();
+                PlaneBDefense.Text = plane.Defense.ToString();
+                PlaneBSpeed.Text = plane.Speed.ToString();
+                PlaneBAgility.Text = plane.Agility.ToString();
+            }
+        }
+
+        private void SaveButton_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(PlaneANameTextBox.Text))
+            {
+                var existing = planes.FirstOrDefault(x => x.Name.Equals(PlaneANameTextBox.Text));
+                var plane = ValidateAndCreatePlaneA();
+                if (existing is not null)
+                {
+                    existing.Attack = plane.Attack;
+                    existing.Defense = plane.Defense;
+                    existing.Speed = plane.Speed;
+                    existing.Agility = plane.Agility;
+                }
+                else
+                {
+                    planes.Add(plane);
+                    PlaneAComboBox.Items.Add(plane.Name);
+                    PlaneBComboBox.Items.Add(plane.Name);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(PlaneBNameTextBox.Text))
+            {
+                var existing = planes.FirstOrDefault(x => x.Name.Equals(PlaneBNameTextBox.Text));
+                var plane = ValidateAndCreatePlaneB();
+                if (existing is not null)
+                {
+                    existing.Attack = plane.Attack;
+                    existing.Defense = plane.Defense;
+                    existing.Speed = plane.Speed;
+                    existing.Agility = plane.Agility;
+                }
+                else
+                {
+                    planes.Add(plane);
+                    PlaneAComboBox.Items.Add(plane.Name);
+                    PlaneBComboBox.Items.Add(plane.Name);
+                }
+            }
+
+            dataService.SavePlanes(planes);
+        }
+
+        private void DeleteButton_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(PlaneANameTextBox.Text))
+            {
+                var existing = planes.FirstOrDefault(x => x.Name.Equals(PlaneANameTextBox.Text));
+                if (existing is not null)
+                {
+                    planes.Remove(existing);
+                    PlaneAComboBox.Items.Remove(existing.Name);
+                    PlaneBComboBox.Items.Remove(existing.Name);
+                    PlaneANameTextBox.Text = string.Empty;
+                    PlaneAAttack.Text = string.Empty;
+                    PlaneADefense.Text = string.Empty;
+                    PlaneASpeed.Text = string.Empty;
+                    PlaneAAgility.Text = string.Empty;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(PlaneBNameTextBox.Text))
+            {
+                var existing = planes.FirstOrDefault(x => x.Name.Equals(PlaneBNameTextBox.Text));
+                if (existing is not null)
+                {
+                    planes.Remove(existing);
+                    PlaneAComboBox.Items.Remove(existing.Name);
+                    PlaneBComboBox.Items.Remove(existing.Name);
+                    PlaneBNameTextBox.Text = string.Empty;
+                    PlaneBAttack.Text = string.Empty;
+                    PlaneBDefense.Text = string.Empty;
+                    PlaneBSpeed.Text = string.Empty;
+                    PlaneBAgility.Text = string.Empty;
+                }
+            }
         }
     }
 }
