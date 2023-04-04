@@ -13,5 +13,9 @@
         public double DetectChanceFromRadars { get; set; }
         public double DetectChanceFromAircrafts { get; set; }
         public int DetectChanceFromAircraftsEffectiveCount { get; set; }
+        public double AgilityDamageReduction { get; set; }
+        public double BetterSpeedDamageIncrease { get; set; }
+        public double SpeedFactorDiff { get; set; }
+        public double SpeedDamageBonusFactor { get; set; }
     }
 }
