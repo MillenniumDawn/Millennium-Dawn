@@ -2047,6 +2047,107 @@ country_event = {
 	}
 }
 
+news_event = {
+	id = korea.37
+	title = korea.37.t
+	desc = korea.37.d
+
+	picture = GFX_news_press_conference
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.37.a
+		log = "[GetDateText]: [This.GetName]: korea.37.a executed"
+	}
+}
+
+country_event = {
+	id = korea.38
+	title = korea.38.t
+	desc = korea.38.d
+
+	picture = GFX_american_troops
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.38.a
+		add_political_power = 25
+		if = {
+			limit = { country_exists = KOR }
+			KOR = {
+				add_opinion_modifier = {
+					target = USA
+					modifier = US_imperialism
+				}
+			}
+		}
+		if = {
+			limit = { country_exists = NKO }
+			NKO = {
+				add_opinion_modifier = {
+					target = USA
+					modifier = US_imperialism
+				}
+			}
+		}
+		ai_chance = {
+			factor = 30
+		}
+		log = "[GetDateText]: [This.GetName]: korea.38.a executed"
+	}
+
+	option = {
+		name = korea.38.b
+		if = {
+			limit = {
+            	country_exists = KOR
+			}
+			diplomatic_relation = {
+				country = KOR
+				relation = guarantee
+				active = no
+			}
+		}
+		if = {
+			limit = {
+            	country_exists = NKO
+			}
+			diplomatic_relation = {
+				country = NKO
+				relation = guarantee
+				active = no
+			}
+		}
+		diplomatic_relation = {
+			country = JAP
+			relation = guarantee
+			active = no
+		}
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 20
+				CHI = { has_completed_focus = CHI_End_US_Hegemony }
+			}
+			modifier = {
+				factor = 10
+				NKO = { has_completed_focus = NKO_Our_Pride_and_Joy }
+			}
+			modifier = {
+				factor = 10
+				KOR = { has_completed_focus = KOR_promote_sovereignty }
+			}
+			modifier = {
+				factor = 10
+				NKO = { has_completed_focus = KOR_promote_sovereignty }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: korea.38.b executed"
+	}
+}
+
 	###North Korea###
 country_event = {
 	id = korea_north.1
@@ -2113,8 +2214,8 @@ country_event = {
 
 	option = {
 		name = korea_north.3.a #25 to 1
-		add_political_power = -300
-		set_temp_variable = { treasury_change = -4 }
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -2 }
 		modify_treasury_effect = yes
 		hidden_effect = { country_event = { id = korea_north.4 days = 30 } }
 		log = "[GetDateText]: [This.GetName]: korea_north.3.a executed"
@@ -2122,7 +2223,7 @@ country_event = {
 
 	option = {
 		name = korea_north.3.b #100 to 1
-		add_political_power = -10
+		add_political_power = 50
 		set_temp_variable = { treasury_change = 4 }
 		modify_treasury_effect = yes
 		hidden_effect = { country_event = { id = korea_north.5 days = 30 } }
@@ -2141,6 +2242,7 @@ country_event = {
 
 	option = {
 		name = korea_north.4.a
+		add_political_power = 100
 		complete_national_focus = NKO_Revaluation_Success
 		set_country_flag = Revaluation_Success
 		log = "[GetDateText]: [This.GetName]: korea_north.4.a executed"
@@ -2163,7 +2265,7 @@ country_event = {
 	}
 	option = {
 		name = korea_north.5.b #Compromise
-		add_political_power = -100
+		add_political_power = -50
 		hidden_effect = {
 			random_list = {
 				20 = { country_event = { id = korea_north.4 days = 20 } }
@@ -2185,7 +2287,7 @@ country_event = {
 
 	option = {
 		name = korea_north.6.a
-		add_stability = -0.10
+		add_stability = -0.05
 		complete_national_focus = NKO_Revaluation_Failure
 		set_country_flag = Revaluation_Failure
 		log = "[GetDateText]: [This.GetName]: korea_north.6.a executed"
@@ -2257,12 +2359,12 @@ country_event = {
 
 	option = {
 		name = kim_jong_il_death.3.a
-		add_political_power = -300
+		add_political_power = 100
 		hidden_effect = {
 			80 = {
 				add_to_variable = {
 					var = Kim_Jong_un
-				   	value = 10
+				   	value = 6
 				}
 				clamp_variable = {
 					var = Kim_Jong_un
@@ -2271,7 +2373,7 @@ country_event = {
 				}
 				subtract_from_variable = {
 		    		var = Kim_Jong_Nam
-					value = 10
+					value = 6
 				}
 				clamp_variable = {
 					var = Kim_Jong_Nam
@@ -2282,7 +2384,7 @@ country_event = {
 			20 = {
 				add_to_variable = {
 					var = Kim_Jong_Nam
-				   	value = 15
+				   	value = 2
 				}
 				clamp_variable = {
 					var = Kim_Jong_Nam
@@ -2291,7 +2393,7 @@ country_event = {
 				}
 				subtract_from_variable = {
 		    		var = Kim_Jong_un
-					value = 15
+					value = 2
 				}
 				clamp_variable = {
 					var = Kim_Jong_un
@@ -2301,56 +2403,6 @@ country_event = {
 			}
 		}
 		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.3.a executed"
-	}
-	option = {
-		name = kim_jong_il_death.3.b
-			hidden_effect = {
-				random_list = {
-					80 = {
-						add_political_power = -100
-						add_to_variable = {
-							var = Kim_Jong_Nam
-						   	value = 5
-						}
-						clamp_variable = {
-							var = Kim_Jong_Nam
-							min = 0
-							max = 100
-						}
-						subtract_from_variable = {
-				    		var = Kim_Jong_un
-							value = 5
-						}
-						clamp_variable = {
-							var = Kim_Jong_un
-							min = 0
-							max = 100
-						}
-					}
-					20 = {
-						add_political_power = -50
-						add_to_variable = {
-							var = Kim_Jong_un
-						   	value = 15
-						}
-						clamp_variable = {
-							var = Kim_Jong_un
-							min = 0
-							max = 100
-						}
-						subtract_from_variable = {
-				    		var = Kim_Jong_Nam
-							value = 15
-						}
-						clamp_variable = {
-							var = Kim_Jong_Nam
-							min = 0
-							max = 100
-						}
-					}
-				}
-			}
-		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.3.b executed"
 	}
 }
 news_event = {
