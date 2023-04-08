@@ -623,9 +623,9 @@
 
 	-- NAI Defines
 	-- BAI fix test
-	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 3.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
-	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 1.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
-	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 2.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 6.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 2.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 3.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
 	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_ATTACK_FACTOR = 0.5                 -- Importance of unit's terrain adjusted attack stat when assigning to an area defense order
 	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_DEFENSE_FACTOR = 4.0               -- Importance of unit's terrain adjusted defense stat when assigning to an area defense order
 	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_MOVEMENT_FACTOR = 0.5               -- Importance of unit's terrain adjusted movement stat when assigning to an area defense order
@@ -696,7 +696,7 @@
 	NDefines.NAI.UPGRADE_DIVISION_RELUCTANCE = 30					-- 7
 	NDefines.NAI.UPGRADE_PERCENTAGE_OF_FORCES = 0.15				-- 0.1
 	NDefines.NAI.STRATEGIC_BOMBING_DEFENCE_IMPORTANCE = 500.0
-	NDefines.NAI.ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.75				-- 2.5
+	NDefines.NAI.ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.5				-- 2.5
 	NDefines.NAI.STATE_CONTROL_FOR_AREA_DEFENSE = 0.2				-- 0.4
 	NDefines.NAI.NAVAL_MISSION_INVASION_BASE = 5000					-- 1000
 	NDefines.NAI.SCARY_LEVEL_AVERAGE_DEFENSE = -0.6					-- -0.7
@@ -736,7 +736,7 @@
 	NDefines.NAI.RECON_PLANES_NAVAL = 5						-- 50
 	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
 	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
-	NDefines.NAI.MAX_CARRIER_OVERFILL = 2.25					-- 1.85
+	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.50					-- 2.25 -- Reduced to 1.5 to hopefully stop the AI from overcrowding the Carriers
 	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 3				-- 4
 	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 16				-- 12
 	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2				-- 12
@@ -966,3 +966,4 @@
 		100, -- RESERVE_FLEET
 		200, -- NAVAL INVASION SUPPORT
 	}
+	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
