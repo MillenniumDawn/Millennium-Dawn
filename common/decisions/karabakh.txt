@@ -1,0 +1,735 @@
+karabakh_decisions_category = {
+	# Main countdown to update variables for AZE and ARM
+	karabakh_main_countdown_mission = {
+		allowed = { always = no }
+		available = { always = no }
+		fire_only_once = no
+		is_good = no
+		selectable_mission = no
+		days_mission_timeout = 30
+
+		timeout_effect = {
+			AZE = { clr_country_flag = conducted_activity }
+			ARM = { clr_country_flag = conducted_activity }
+
+			custom_effect_tooltip = NKR_main_cycle_tt
+
+			if = {
+				limit = { original_tag = AZE }
+
+				# if conflict is not regulated then restart countdown
+				hidden_effect = {
+					karabakh_update_situation = yes
+
+					if = {
+						limit = {
+							NOT = {
+								AZE = {
+									OR = {
+										has_country_flag = karabakh_regulated_flag
+										is_subject_of = ARM
+										is_subject_of = NKR
+									}
+								}
+								ARM = { is_subject_of = AZE }
+							}
+							country_exists = AZE
+							country_exists = ARM
+						}
+
+						activate_mission = karabakh_main_countdown_mission
+						ARM = { activate_mission = karabakh_main_countdown_mission }
+					}
+				}
+			}
+		}
+	}
+
+	# boosts tension if it is low
+	speak_up_against_silence = {
+		#allowed = { always = no }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKR_lower_then_low_trigger_TT
+				check_variable = {
+					global.karabakh_tension < global.CONST_karabakh_tension_level_low
+				}
+			}
+		}
+
+		days_remove = 15
+		cost = 50
+
+		remove_effect = {
+			add_war_support = 0.02
+			set_temp_variable = { arg1 = global.CONST_karabakh_tension_change_medium }
+			karabakh_change_tension = yes
+			custom_effect_tooltip = AZE_increase_tension_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	propose_peace_solution = {
+		allowed = { tag = AZE }
+		available = {
+			NOT = { has_war_with = ARM }
+		}
+
+		days_remove = 15
+		cost = 50
+
+		remove_effect = {
+			add_war_support = -0.05
+			set_temp_variable = { arg1 = global.CONST_karabakh_tension_change_medium }
+			multiply_variable = { arg1 = -1 }
+			karabakh_change_tension = yes
+			set_temp_variable = { arg1 = global.CONST_karabakh_readiness_change_medium }
+			multiply_variable = { arg1 = -1 }
+			karabakh_change_readiness = yes
+			ARM = { country_event = karabakh.1 }
+
+			custom_effect_tooltip = AZE_decrease_tension_tt
+			custom_effect_tooltip = AZE_decrease_readiness_tt
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				has_western_aligned_government = yes
+				western_conservatism_are_not_in_power = yes
+			}
+		}
+	}
+
+	conduct_military_raid = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = NKR_low_tension_trigger_TT
+				check_variable = {
+					global.karabakh_tension > global.CONST_karabakh_tension_level_low
+				}
+			}
+
+			NOT = { has_country_flag = conducted_activity }
+
+			has_equipment = { Inf_equipment > 100 }
+			has_equipment = { cnc_equipment > 20 }
+			NOT = {
+				OR = {
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_recon_mission
+					has_decision = conduct_dig_in
+					has_decision = conduct_question_locals
+					has_decision = conduct_aerial_recon
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = make_local_investments
+					has_decision = bail_out
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = NKR_gamble_tt
+			add_command_power = -20
+			set_country_flag = conducted_activity
+			if = {
+				limit = { tag = AZE }
+
+				set_variable = { global.karabakh_last_mission_aze = global.CONST_karabakh_mission_raid }
+				log = "Current aze mission is: [global.karabakh_last_mission_aze]"
+			}
+			else = {
+				set_variable = { global.karabakh_last_mission_arm = global.CONST_karabakh_mission_raid }
+			}
+		}
+	}
+
+	conduct_artillery_barrage = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = NKR_low_tension_trigger_TT
+				check_variable = {
+					global.karabakh_tension > global.CONST_karabakh_tension_level_low
+				}
+			}
+
+			NOT = { has_country_flag = conducted_activity }
+
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_recon_mission
+					has_decision = conduct_dig_in
+					has_decision = conduct_question_locals
+					has_decision = conduct_aerial_recon
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = make_local_investments
+					has_decision = bail_out
+				}
+			}
+			has_equipment = { artillery_equipment > 10 }
+			has_equipment = { cnc_equipment > 5 }
+		}
+
+		days_remove = 15
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = NKR_gamble_tt
+			add_command_power = -20
+			set_country_flag = conducted_activity
+			if = {
+				limit = { tag = AZE }
+
+				set_variable = { global.karabakh_last_mission_aze = global.CONST_karabakh_mission_arty }
+			}
+			else = {
+				set_variable = { global.karabakh_last_mission_arm = global.CONST_karabakh_mission_arty }
+			}
+		}
+	}
+
+	conduct_recon_mission = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = NKR_low_tension_trigger_TT
+				check_variable = {
+					global.karabakh_tension > global.CONST_karabakh_tension_level_low
+				}
+			}
+
+			NOT = { has_country_flag = conducted_activity }
+
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_dig_in
+					has_decision = conduct_question_locals
+					has_decision = conduct_aerial_recon
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = make_local_investments
+					has_decision = bail_out
+				}
+			}
+			has_equipment = { Inf_equipment > 50 }
+			has_equipment = { cnc_equipment > 15 }
+		}
+
+		days_remove = 15
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = NKR_gamble_tt
+			add_command_power = -20
+			set_country_flag = conducted_activity
+			if = {
+				limit = { tag = AZE }
+
+				set_variable = { global.karabakh_last_mission_aze = global.CONST_karabakh_mission_recon }
+			}
+			else = {
+				set_variable = { global.karabakh_last_mission_arm = global.CONST_karabakh_mission_recon }
+			}
+		}
+	}
+
+	conduct_dig_in = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			has_equipment = { cnc_equipment > 10 }
+
+			NOT = { has_country_flag = conducted_activity }
+
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_recon_mission
+					has_decision = conduct_question_locals
+					has_decision = conduct_aerial_recon
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = make_local_investments
+					has_decision = bail_out
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = NKR_gamble_tt
+			add_command_power = -20
+			set_country_flag = conducted_activity
+			if = {
+				limit = { tag = AZE }
+
+				set_variable = { global.karabakh_last_mission_aze = global.CONST_karabakh_mission_digin }
+			}
+			else = {
+				set_variable = { global.karabakh_last_mission_arm = global.CONST_karabakh_mission_digin }
+			}
+		}
+	}
+
+	conduct_question_locals = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = NKR_lower_then_high_trigger_TT
+				check_variable = {
+					global.karabakh_tension < global.CONST_karabakh_tension_level_high
+				}
+			}
+
+			NOT = { has_country_flag = conducted_activity }
+
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_recon_mission
+					has_decision = conduct_dig_in
+					has_decision = conduct_aerial_recon
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = make_local_investments
+					has_decision = bail_out
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = NKR_gamble_tt
+			add_command_power = -20
+			set_country_flag = conducted_activity
+			if = {
+				limit = { tag = AZE }
+
+				set_variable = { global.karabakh_last_mission_aze = global.CONST_karabakh_mission_question_locals }
+			}
+			else = {
+				set_variable = { global.karabakh_last_mission_arm = global.CONST_karabakh_mission_question_locals }
+			}
+		}
+	}
+
+	conduct_aerial_recon = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = NKR_lower_then_high_trigger_TT
+				check_variable = {
+					global.karabakh_tension < global.CONST_karabakh_tension_level_high
+				}
+			}
+
+			NOT = { has_country_flag = conducted_activity }
+
+			has_equipment = {
+				MR_Fighter_equipment > 1
+			}
+
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_recon_mission
+					has_decision = conduct_dig_in
+					has_decision = conduct_question_locals
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = make_local_investments
+					has_decision = bail_out
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = NKR_gamble_tt
+			add_command_power = -20
+			set_country_flag = conducted_activity
+			if = {
+				limit = { tag = AZE }
+
+				set_variable = { global.karabakh_last_mission_aze = global.CONST_karabakh_mission_aerial_recon }
+			}
+			else = {
+				set_variable = { global.karabakh_last_mission_arm = global.CONST_karabakh_mission_aerial_recon }
+			}
+		}
+	}
+
+	conduct_unmanned_aerial_recon = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = NKR_lower_then_high_trigger_TT
+				check_variable = {
+					global.karabakh_tension < global.CONST_karabakh_tension_level_high
+				}
+			}
+
+			NOT = { has_country_flag = conducted_activity }
+
+			has_equipment = {
+				Air_UAV_equipment > 1
+			}
+
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_recon_mission
+					has_decision = conduct_dig_in
+					has_decision = conduct_question_locals
+					has_decision = conduct_aerial_recon
+					has_decision = make_local_investments
+					has_decision = bail_out
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = NKR_gamble_tt
+			add_command_power = -20
+			set_country_flag = conducted_activity
+			if = {
+				limit = { tag = AZE }
+
+				set_variable = { global.karabakh_last_mission_aze = global.CONST_karabakh_mission_unmanned_recon }
+			}
+			else = {
+				set_variable = { global.karabakh_last_mission_arm = global.CONST_karabakh_mission_unmanned_recon }
+			}
+		}
+	}
+
+	make_local_investments = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_recon_mission
+					has_decision = conduct_dig_in
+					has_decision = conduct_question_locals
+					has_decision = conduct_aerial_recon
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = bail_out
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 200
+		cost = 50
+
+		remove_effect = {
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			set_temp_variable = { arg1 = global.CONST_karabakh_tension_change_low }
+			multiply_variable = { arg1 = -1 }
+			karabakh_change_tension = yes
+			set_temp_variable = { arg1 = global.CONST_karabakh_readiness_change_low }
+			multiply_variable = { arg1 = -1 }
+			karabakh_change_readiness = yes
+
+			NKR = {
+				set_temp_variable = { treasury_change = 0.5 }
+				modify_treasury_effect = yes
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+
+			custom_effect_tooltip = AZE_decrease_readiness_tt
+			custom_effect_tooltip = AZE_decrease_tension_tt
+		}
+	}
+
+	wind_of_change = {
+		allowed = { tag = AZE }
+		available = {
+			has_war = no
+		}
+		visible = {
+			OR = {
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 200
+		cost = 10
+
+		remove_effect = {
+			add_war_support = -0.05
+			add_stability = 0.02
+			set_temp_variable = { arg1 = global.CONST_karabakh_tension_change_low }
+			multiply_variable = { arg1 = -1 }
+			karabakh_change_tension = yes
+			set_temp_variable = { arg1 = global.CONST_karabakh_readiness_change_medium }
+			multiply_variable = { arg1 = -1 }
+			karabakh_change_readiness = yes
+			custom_effect_tooltip = AZE_decrease_readiness_tt
+			custom_effect_tooltip = AZE_decrease_tension_tt
+		}
+	}
+
+	brutal_repressions = {
+		allowed = { tag = AZE }
+		available = {
+			has_war = no
+		}
+		visible = {
+			OR = {
+				nationalist_monarchists_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 200
+		cost = 10
+
+		remove_effect = {
+			add_war_support = 0.05
+			add_stability = -0.02
+			set_temp_variable = { arg1 = global.CONST_karabakh_tension_change_high }
+			karabakh_change_tension = yes
+			set_temp_variable = { arg1 = global.CONST_karabakh_readiness_change_low }
+			karabakh_change_readiness = yes
+			custom_effect_tooltip = AZE_increase_readiness_tt
+			custom_effect_tooltip = AZE_increase_tension_tt
+		}
+	}
+
+	bail_out = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = NKR_lower_then_medium_trigger_TT
+				check_variable = {
+					global.karabakh_tension < global.CONST_karabakh_tension_level_medium
+				}
+			}
+
+			NOT = {
+				OR = {
+					has_decision = conduct_military_raid
+					has_decision = conduct_artillery_barrage
+					has_decision = conduct_recon_mission
+					has_decision = conduct_dig_in
+					has_decision = conduct_question_locals
+					has_decision = conduct_aerial_recon
+					has_decision = conduct_unmanned_aerial_recon
+					has_decision = make_local_investments
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 100
+		cost = 10
+
+		remove_effect = {
+			set_temp_variable = { arg1 = global.CONST_karabakh_tension_change_low }
+			multiply_variable = { arg1 = -1 }
+			karabakh_change_tension = yes
+			custom_effect_tooltip = AZE_decrease_tension_tt
+		}
+	}
+
+	prepare_for_war = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			has_equipment = {
+				Inf_equipment > 249
+			}
+			has_equipment = {
+				cnc_equipment > 19
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 100
+		cost = 50
+
+		remove_effect = {
+			add_war_support = 0.01
+			set_temp_variable = { arg1 = global.CONST_karabakh_tension_change_low }
+			karabakh_change_tension = yes
+			set_temp_variable = { arg1 = global.CONST_karabakh_readiness_change_medium }
+			karabakh_change_readiness = yes
+			custom_effect_tooltip = AZE_increase_readiness_tt
+			custom_effect_tooltip = AZE_increase_tension_tt
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -250
+			}
+			add_equipment_to_stockpile = {
+				type = cnc_equipment
+				amount = -20
+			}
+		}
+	}
+
+	the_halt = {
+		allowed = { always = no }
+		available = { always = no }
+		fire_only_once = no
+		is_good = no
+		selectable_mission = no
+		days_mission_timeout = 180
+
+		cancel_trigger = {
+			OR = {
+				has_war = no
+				NKR = {
+					all_core_state = {
+						is_controlled_by = ROOT
+					}
+				}
+			}
+		}
+
+		timeout_effect = {
+			AZE = {
+				white_peace = ARM
+				white_peace = AZE
+			}
+		}
+	}
+
+	the_war = {
+		#allowed = { always = no }
+		available = {
+			has_war = no
+			country_exists = NKR
+			NOT = { NKR = { is_puppet_of = ROOT } }
+			custom_trigger_tooltip = {
+				tooltip = NKR_higher_then_high_TT
+				check_variable = {
+					global.karabakh_tension > global.CONST_karabakh_tension_level_high
+				}
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 500
+		cost = 100
+
+		remove_effect = {
+			if = {
+				limit = { tag = AZE }
+
+				ARM = { country_event = karabakh.7 }
+			}
+			else = {
+				AZE = { country_event = karabakh.7 }
+			}
+
+			hidden_effect = { karabakh_declare_war = yes }
+			custom_effect_tooltip = NKR_war_TT
+			activate_mission = the_halt
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_war_support < 0.8
+				factor = 0
+			}
+			modifier = {
+				check_variable = { ROOT.karabakh_readiness < global.CONST_karabakh_readiness_high }
+				factor = 0
+			}
+			modifier = {
+				ROOT = {
+					original_tag = AZE
+				}
+				strength_ratio = {
+					tag = ARM
+					ratio < 1
+				}
+
+				factor = 0
+			}
+			modifier = {
+				ROOT = {
+					original_tag = ARM
+				}
+				strength_ratio = {
+					tag = AZE
+					ratio < 1
+				}
+
+				factor = 0
+			}
+		}
+	}
+}

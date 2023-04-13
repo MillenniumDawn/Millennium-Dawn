@@ -1,50 +1,56 @@
 ﻿capital = 27
+set_research_slots = 5
 2000.1.1 = {
 	set_country_flag = dynamic_flag
 	set_country_flag = dynamic_rebel_flag
-	oob = "IRE_2000"
+	set_country_flag = country_has_mbt_0_templates
+	set_country_flag = country_has_afv_0_templates
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		set_oob = "IRE_2000_nsb"
+		else = {
+			set_oob = "IRE_2000_nonnsb"
+		}
+	}
 	set_convoys = 20
 	set_cosmetic_tag = IRE
 
 	add_ideas = {
-        #GDP
-        gdp_7
-        #Economic Cycle
-        fast_growth
-        #Corruption
-        medium_corruption
-        #Faction 1
-        international_bankers
-        #Faction 2
-        small_medium_business_owners
-        #Faction 3
-        maritime_industry
+		#Economic Cycle
+		fast_growth
+		#Corruption
+		medium_corruption
+		#Faction 1
+		international_bankers
+		#Faction 2
+		small_medium_business_owners
+		#Faction 3
+		maritime_industry
 
-        #Bureacracy
-        bureau_02
-        #Military Spending
-        defence_01
-        #Internal Security
-        police_02
-        #Education budget
-        edu_04
-        #Health budget
-        health_04
-        #Social spending
+		#Bureacracy
+		bureau_02
+		#Military Spending
+		defence_01
+		#Internal Security
+		police_02
+		#Education budget
+		edu_04
+		#Health budget
+		health_04
+		#Social spending
 
+		#Trade Law
+		mixed_economy
+		#Conscription Law
+		volunteer_army
+		#Women in the military
+		volunteer_women
+		#Foreign Intervention Law
 
-        #Trade Law
-        mixed_economy
-        #Conscription Law
-        volunteer_army
-        #Women in the military
-        volunteer_women
-        #Foreign Intervention Law
+		#Officer Training
+		officer_military_academy
 
-        #Officer Training
-        officer_military_academy
-
-        #Other
+		#Other
 		christian
 		EU_member
 		western_country
@@ -53,11 +59,12 @@
 	}
 
 	set_technology = {
+		integrated_transportation_system = 1
+		post_conventional_rail = 1
+		early_freight_locomotive = 1
+
 		legacy_doctrines = 1
-		modern_blitzkrieg = 1
-		forward_defense = 1
-		encourage_nco_iniative = 1
-		air_land_battle = 1
+		combined_arms = 1
 
 		infantry_weapons = 1
 
@@ -67,12 +74,7 @@
 
 		Rec_tank_0 = 1
 
-		#Timoney APC
-		APC_1 = 1
-
 		util_vehicle_0 = 1
-
-		artillery_0 = 1
 
 		Anti_tank_0 = 1
 		Heavy_Anti_tank_0 = 1
@@ -97,10 +99,49 @@
 		internet1 = 1 	#1G
 		internet2 = 1 	#2G
 		gprs = 1
-		fuel_silos =1
+		fuel_silos = 1
 		support_weapons = 1
 		special_forces = 1
+	}
+	if = {
+		limit = { has_dlc = "No Step Back" }
 
+		set_technology = {
+			mbt_tech = 1
+			afv_tech = 1
+			diesel_engine_tech = 1
+			diesel_engine_tech_2 = 1
+			tank_components_tech = 1
+			tank_components_tech_2 = 1
+			nsb_artillery_0 = 1
+		}
+
+		create_equipment_variant = {
+			name = "Timoney Mk 6"
+			type = apc_hull_0
+			parent_version = 0
+			modules = {
+				main_armament_slot = afv_machine_gun
+				turret_type_slot = afv_no_turret
+				suspension_type_slot = afv_tracked_suspension
+				armor_type_slot = afv_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_4 = afv_battlestation_2
+			}
+			upgrades = {
+				afv_nsb_armor_upgrade = 2
+			}
+			obsolete = yes
+			icon = "GFX_apc_hull_0_a"
+		}
+
+		else = {
+			set_technology = {
+				Early_APC = 1
+				APC_1 = 1
+				artillery_0 = 1
+			}
+		}
 	}
 
 	### IRE ###
@@ -121,12 +162,11 @@
 	add_to_array = { influence_array_val = 3 }
 	startup_influence = yes
 
-	set_variable = { var = debt value = 53 }
+	set_variable = { var = debt value = 63 }
 	set_variable = { var = treasury value = 8 }
-	set_variable = { var = tax_rate value = 26 }
-	set_variable = { var = int_investments value = 0 }
-	
-
+	set_variable = { var = corporate_tax_rate value = 19 }
+	set_variable = { var = population_tax_rate value = 32 }
+	set_variable = { var = int_investments value = 3 }
 
 	add_opinion_modifier = { target = BAH modifier = english_speaking }
 	reverse_add_opinion_modifier = { target = BAH modifier = english_speaking }
@@ -170,8 +210,8 @@
 	add_opinion_modifier = { target = FIN modifier = EU_member_opinion }
 	reverse_add_opinion_modifier = { target = FIN modifier = EU_member_opinion }
 
-	set_country_flag = positive_small_medium_business_owners
-	set_country_flag = positive_maritime_industry
+	set_variable = { small_medium_business_owners = 75 }
+	set_variable = { maritime_industry_opinion = 60 }
 
 	set_popularities = {
 		democratic = 49.7
@@ -229,144 +269,31 @@
 		}
 	}
 
-	create_field_marshal = {
-		name = "Conor O´Boyle"
-		picture = "Portrait_Conor_O_Boyle.dds"
-		traits = { old_guard thorough_planner }
-		id = 29700
-		skill = 3
-		attack_skill = 3
-		defense_skill = 3
-		planning_skill = 3
-		logistics_skill = 3
-	}
-
-	create_corps_commander = {
-		name = "Philip Brennan"
-		picture = "Portrait_Philip_Brennan.dds"
-		traits = { panzer_leader }
-		id = 29701
-		skill = 1
-		attack_skill = 1
-		defense_skill = 1
-		planning_skill = 1
-		logistics_skill = 1
-	}
-
-	create_corps_commander = {
-		name = "Michael Beary"
-		picture = "Portrait_Michael_Beary.dds"
-		traits = { ranger }
-		id = 29702
-		skill = 1
-		attack_skill = 1
-		defense_skill = 1
-		planning_skill = 1
-		logistics_skill = 1
-	}
-
-	create_corps_commander = {
-		name = "Joe Mulligan"
-		picture = "Portrait_Joe_Mulligan.dds"
-		traits = { trait_engineer }
-		id = 29703
-		skill = 1
-		attack_skill = 1
-		defense_skill = 1
-		planning_skill = 1
-		logistics_skill = 1
-	}
-
-	create_corps_commander = {
-		name = "Paul Fry"
-		picture = "Portrait_Paul_Fry.dds"
-		traits = { commando }
-		id = 29704
-		skill = 1
-		attack_skill = 1
-		defense_skill = 1
-		planning_skill = 1
-		logistics_skill = 1
-	}
-
-	create_corps_commander = {
-		name = "Kevin Cotter"
-		picture = "Portrait_Kevin_Cotter.dds"
-		traits = { trickster }
-		id = 29705
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}
-
-	create_corps_commander = {
-		name = "Kieran Brennan"
-		picture = "Portrait_Kieran_Brennan.dds"
-		traits = { fortress_buster }
-		id = 29706
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}
-
-	create_corps_commander = {
-		name = "Peter O´Hallogan"
-		picture = "Portrait_Peter_O_Hallogan.dds"
-		traits = {  }
-		id = 29707
-		skill = 1
-		attack_skill = 1
-		defense_skill = 1
-		planning_skill = 1
-		logistics_skill = 1
-	}
-
-	create_navy_leader = {
-		name = "Mark Mellett"
-		picture = "Portrait_Mark_Mellett.dds"
-		traits = { old_guard_navy superior_tactician }
-		id = 29708
-		skill = 1
-        attack_skill = 1
-        defense_skill = 1
-        coordination_skill = 1
-        maneuvering_skill = 1
-	}
-
-	create_navy_leader = {
-		name = "Hugh Tully"
-		picture = "Portrait_Hugh_Tully.dds"
-		traits = { blockade_runner }
-		id = 29709
-		skill = 1
-        attack_skill = 1
-        defense_skill = 1
-        coordination_skill = 1
-        maneuvering_skill = 1
-	}
+	recruit_character = IRE_joe_mulligan
+	recruit_character = IRE_paul_fry
+	recruit_character = IRE_philip_brennan
+	recruit_character = IRE_peter_o_hallogan
+	recruit_character = IRE_mark_mellett
 }
 
 2017.1.1 = {
 	capital = 27
-	oob = "IRE_2017"
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		set_oob = "IRE_2000_nsb"
+		else = {
+			set_oob = "IRE_2000_nonnsb"
+		}
+	}
 	set_convoys = 20
 
 	add_ideas = {
-		#pop_050
-		#small_medium_business_owners
-		#Labour_Unions
-		#Mass_Media
-		gdp_9
 		christian
 		EU_member
 		medium_corruption
-		gdp_9
-			fast_growth
-			defence_01
+
+		fast_growth
+		defence_01
 		edu_04
 		health_04
 		bureau_02
@@ -378,33 +305,19 @@
 		international_bankers
 		small_medium_business_owners
 		maritime_industry
-		#common_law
-		#tax_cost_23
-
 	}
 
 	add_opinion_modifier = { target = SOV modifier = minor_sanctions }
 	set_country_flag = sanctions_against_SOV_flag
 
-	#set_country_flag = gdp_9
-	set_country_flag = positive_small_medium_business_owners
-	set_country_flag = positive_maritime_industry
+	set_variable = { small_medium_business_owners = 75 }
+	set_variable = { maritime_industry_opinion = 60 }
 
-	set_variable = { var = debt value = 289 }
+	set_variable = { var = debt value = 184 }
 	set_variable = { var = treasury value = 4 }
 	set_variable = { var = int_investments value = 9 }
-	set_variable = { var = tax_rate value = 23 }
-
-	#set_variable = { var = size_modifier value = 0.96 } #7 CIC
-	
-
-	#Nat focus
-
-
-
-
-
-
+	set_variable = { var = corporate_tax_rate value = 19 }
+	set_variable = { var = population_tax_rate value = 32 }
 
 	set_technology = {
 		night_vision_3 = 1
@@ -508,4 +421,6 @@
 		}
 	}
 
+	retire_character = IRE_paul_fry
+	recruit_character = IRE_conor_o_boyle
 }

@@ -1,309 +1,1449 @@
 cartels_decision_category = {
-	narcos_crisis = { # Triggers a crisis when you reach level 10 corruption and you have drugs
+	# Anti Cartel Propaganda Decision
+	# Purpose: This decision is a short event that focuses on reducing the political influence of Cartels in the nation
+	anti_cartel_propaganda_decision = {
 		icon = GFX_decision_cat_cartel
 
-		visible = { #only visible to people with lv 10 corruption and if they have cartels already in the country
-			OR = {
-				has_idea = cartels_1
-				has_idea = cartels_2
-				has_idea = cartels_3
-				has_idea = cartels_4
-			}
-			has_idea = paralyzing_corruption
-			NOT = { TAG = MEX }
+		available = {
+			has_cartels_penalties = yes
 		}
 
-		activation = {
-			has_idea = paralyzing_corruption
-			NOT = { TAG = MEX }
+		modifier = {
+			political_power_factor = -0.05
+			stability_weekly = 0.002
+		}
+
+		days_remove = 60
+		days_re_enable = 30
+
+		complete_effect = {
+			set_temp_variable = { additional_expense_change = gdp_total_display }
+			multiply_temp_variable = { additional_expense_change = 0.001 }
+			custom_effect_tooltip = additional_expense_rate_percent_tt
+			hidden_effect = {
+				set_country_flag = { flag = anti_cartel_propaganda_flag value = 1 days = 60 }
+				ingame_update_setup = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision remove anti_cartel_propaganda_decision executed"
+			set_temp_variable = { cart_influence_change = -5 }
+			modify_cartel_variables_effect = yes
+			add_stability = 0.03
+		}
+
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 5
+				check_variable = { treasury_rate > 0.99 }
+			}
+		}
+	}
+
+	# Police Investments
+	# Purpose: Similar to Counter Terror Training this increases the strength of the police for the time being to make them more effective at fighting cartels. However, this is only useful when it is currently running
+	police_investments_decision = {
+		icon = GFX_decision_cat_cartel
+
+		available = {
+			has_cartels_penalties = yes
+			NOT = { has_decision = utilize_the_military_decisions }
+			command_power > 24
+			NOT = { has_idea = police_01 }
+		}
+
+		cost = 50
+
+		modifier = {
+			political_power_factor = -0.05
+			police_cost_multiplier_modifier = 0.15
+			max_command_power = -25
+		}
+
+		days_remove = 60
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision police_investments_decision"
+			add_command_power = -25
+			custom_effect_tooltip = investigating_decisions_police_tt
+			hidden_effect = {
+				ingame_update_setup = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2.5
+				check_variable = { strength_of_cartels > 49 }
+			}
+			modifier = {
+				factor = 2.5
+				check_variable = { cartel_political_influence > 49 }
+			}
+			modifier = {
+				factor = 0
+				has_political_power < 100
+			}
+		}
+	}
+
+	# Utilize the Military
+	# Purpose: Mobilizes the military and uses it in place of the police forces. People do not like this but it has a higher success rate than it's counterpart police investments
+	utilize_the_military_decisions = {
+		icon = GFX_decision_cat_cartel
+
+		available = {
+			has_cartels_penalties = yes
+			NOT = { has_decision = police_investments_decision }
+			command_power > 49
+			NOT ={ has_idea = no_military }
+		}
+
+		cost = 50
+
+		modifier = {
+			political_power_factor = -0.05
+			personnel_cost_multiplier_modifier = 0.15
+			max_command_power = -50
+		}
+
+		days_remove = 60
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision utilize_the_military_decisions"
+			add_command_power = -50
+			custom_effect_tooltip = investigating_decisions_military_tt
+			hidden_effect = {
+				ingame_update_setup = yes
+			}
+		}
+
+		# AI shouldn't use the military. It's very expensive for the AI
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	# Target Cartel Money Laundering
+	# Purpose: Strike businesses that support the Cartel's money laundering scheme. You can get some money from the seized assets and it reduces the strength if successful.
+	# If it fails then you lose some strength and it pushes the likelihood of the cartel to revolt against the government. This unlocks the below three decisions for the time this decision is available.
+	# While the decision is active you can select and choose one of the following options
+	target_cartel_money_laundering_decision = {
+		icon = GFX_decision_cat_cartel
+
+		available = {
+			has_cartels_penalties = yes
+			NOT = { has_decision = target_cartel_drug_running_decision }
+		}
+
+		cost = 50
+
+		days_remove = 180
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision target_cartel_money_laundering_decision"
+			custom_effect_tooltip = while_cartel_money_laundering_active_tt
+			unlock_decision_tooltip = investigate_the_casinos
+			unlock_decision_tooltip = investigates_the_banks
+			unlock_decision_tooltip = investigate_shell_companies
+		}
+
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 0
+				has_political_power < 100
+			}
+		}
+	}
+
+	# Investigate The Casinos
+	# Purpose: The casinos are a prime source of money laundering. Medium potential money and reduces strength of cartels if successful
+	investigate_the_casinos = {
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_decision = target_cartel_money_laundering_decision
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			has_decision = target_cartel_money_laundering_decision
+			NOT = {
+				has_decision = investigates_the_banks
+				has_decision = investigate_shell_companies
+			}
+		}
+
+		cost = 50
+		fixed_random_seed = no
+
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove investigate_the_casinos"
+			# The Small Medium Business Owners do not like investigating companies
+			set_temp_variable = { temp_opinion = -5 }
+			change_landowners_opinion = yes
+			random_list = {
+				20 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_country_flag = successful_investigation_casino
+					custom_effect_tooltip = investigate_good_results_tt
+					effect_tooltip = {
+						set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+						divide_temp_variable = { strength_modifier = 100 }
+						add_to_temp_variable = { strength_modifier = 1 }
+
+						set_temp_variable = { political_modifier = ROOT.cartel_political_influence }
+						divide_temp_variable = { political_modifier = 100 }
+						add_to_temp_variable = { political_modifier = 1 }
+
+						# Effect Ported from events/cartel_events.txt
+						set_temp_variable = { treasury_change = gdp_total_display }
+						multiply_temp_variable = { treasury_change = 0.006 }
+						multiply_temp_variable = { treasury_change = strength_modifier }
+						modify_treasury_effect = yes
+
+						set_temp_variable = { cart_strength_change = -4 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+				80 = {
+					modifier = {
+						set_temp_variable = { temp_political_modifier = cartel_political_influence }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.25
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					set_country_flag = failed_investigation_casino
+					custom_effect_tooltip = investigate_bad_results_tt
+					effect_tooltip = {
+						set_party_index_to_ruling_party = yes
+						set_temp_variable = { party_popularity_increase = -0.04 }
+						set_temp_variable = { temp_outlook_increase = -0.04 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { cart_strength_change = 2 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+			}
+			hidden_effect = {
+				country_event = { id = cartel_event.50 days = 1 random_hours = 24 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 4
+		}
+
+	}
+
+	# Investigate the Banks
+	# Purpose: high potential money seizure, medium political influence and medium strength loss
+	investigates_the_banks = {
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_decision = target_cartel_money_laundering_decision
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			has_decision = target_cartel_money_laundering_decision
+			NOT = {
+				has_decision = investigate_the_casinos
+				has_decision = investigate_shell_companies
+			}
+		}
+
+		cost = 50
+		fixed_random_seed = no
+
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove investigates_the_banks"
+			# The International Bankers do not like investigating the banks.
+			set_temp_variable = { temp_opinion = -5 }
+			change_international_bankers_opinion = yes
+			random_list = {
+				30 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_country_flag = successful_investigation_banks
+					custom_effect_tooltip = investigate_good_results_tt
+					effect_tooltip = {
+						set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+						divide_temp_variable = { strength_modifier = 100 }
+						add_to_temp_variable = { strength_modifier = 1 }
+
+						set_temp_variable = { political_modifier = ROOT.cartel_political_influence }
+						divide_temp_variable = { political_modifier = 100 }
+						add_to_temp_variable = { political_modifier = 1 }
+
+						set_temp_variable = { treasury_change = gdp_total_display }
+						multiply_temp_variable = { treasury_change = 0.012 }
+						multiply_temp_variable = { treasury_change = strength_modifier }
+						modify_treasury_effect = yes
+
+						set_temp_variable = { cart_strength_change = -7 }
+						set_temp_variable = { cart_influence_change = -6 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+				70 = {
+					modifier = {
+						set_temp_variable = { temp_political_modifier = cartel_political_influence }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.25
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					set_country_flag = failed_investigation_banks
+					custom_effect_tooltip = investigate_bad_results_tt
+					effect_tooltip = {
+						set_party_index_to_ruling_party = yes
+						set_temp_variable = { party_popularity_increase = -0.04 }
+						set_temp_variable = { temp_outlook_increase = -0.04 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { cart_strength_change = 2 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+			}
+			hidden_effect = {
+				country_event = { id = cartel_event.50 days = 1 random_hours = 24 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 8
+		}
+	}
+
+	# Investigate the Shell Companies
+	# Purpose: Smallest money seizure, highest strength reduction
+	investigate_shell_companies = {
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_decision = target_cartel_money_laundering_decision
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			has_decision = target_cartel_money_laundering_decision
+			NOT = {
+				has_decision = investigate_the_casinos
+				has_decision = investigates_the_banks
+			}
+		}
+
+		cost = 50
+		fixed_random_seed = no
+
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove investigate_shell_companies"
+			# The Small Medium Business Owners do not like investigating companies
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
+			random_list = {
+				25 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_country_flag = successful_investigation_shell_companies
+					custom_effect_tooltip = investigate_good_results_tt
+					effect_tooltip = {
+						set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+						divide_temp_variable = { strength_modifier = 100 }
+						add_to_temp_variable = { strength_modifier = 1 }
+
+						set_temp_variable = { political_modifier = ROOT.cartel_political_influence }
+						divide_temp_variable = { political_modifier = 100 }
+						add_to_temp_variable = { political_modifier = 1 }
+
+						set_temp_variable = { treasury_change = gdp_total_display }
+						multiply_temp_variable = { treasury_change = 0.003 }
+						multiply_temp_variable = { treasury_change = strength_modifier }
+						modify_treasury_effect = yes
+
+						set_temp_variable = { cart_strength_change = -12 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+				75 = {
+					modifier = {
+						set_temp_variable = { temp_political_modifier = cartel_political_influence }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.25
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					set_country_flag = failed_investigation_shell_companies
+					custom_effect_tooltip = investigate_bad_results_tt
+					effect_tooltip = {
+						set_party_index_to_ruling_party = yes
+						set_temp_variable = { party_popularity_increase = -0.04 }
+						set_temp_variable = { temp_outlook_increase = -0.04 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { cart_strength_change = 3 }
+						set_temp_variable = { cart_influence_change = 6 }
+						modify_cartel_variables_effect = yes
+						change_international_bankers_opinion = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+			}
+			hidden_effect = {
+				country_event = { id = cartel_event.50 days = 1 random_hours = 24 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+
+	}
+
+	# Target Cartel Drug Trades
+	# Purpose: Strike along the Cartel's drug supply chain. Mainly used for reducing strength but can also gain military equipment.
+	# If it fails then you lose some strength and it pushes the likelihood of the cartel to revolt against the government. This unlocks the below four decisions for the time this decision is available.
+	# While the decision is active you can select and choose one of the following options
+	target_cartel_drug_running_decision = {
+		icon = GFX_decision_cat_cartel
+
+		available = {
+			has_cartels_penalties = yes
+			NOT = { has_decision = target_cartel_money_laundering_decision }
+		}
+
+		cost = 50
+
+		days_remove = 180
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision target_cartel_money_laundering_decision"
+			custom_effect_tooltip = while_cartel_drug_attacking_active_tt
+			unlock_decision_tooltip = raid_drug_convoys_decision
+			unlock_decision_tooltip = raid_cartel_hideouts_decision
+			unlock_decision_tooltip = raid_distribution_centres_decision
+			unlock_decision_tooltip = raid_refinement_centres_decision
+		}
+
+		ai_will_do = {
+			factor = 5
+			modifier = {
+				factor = 0
+				has_political_power < 100
+			}
+		}
+	}
+
+	# Raid Drug Convoys
+	# Purpose: Low strength attack, low political influence hit, more effective against weaker cartels
+	raid_drug_convoys_decision = {
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_decision = target_cartel_drug_running_decision
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			has_decision = target_cartel_drug_running_decision
+			NOT = {
+				has_decision = raid_cartel_hideouts_decision
+				has_decision = raid_distribution_centres_decision
+				has_decision = raid_refinement_centres_decision
+			}
+		}
+
+		cost = 50
+		fixed_random_seed = no
+
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove raid_drug_convoys_decision"
+			random_list = {
+				60 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_country_flag = successful_raid_drug_convoys
+					custom_effect_tooltip = investigate_good_results_tt
+					effect_tooltip = {
+						set_temp_variable = { cart_strength_change = -2 }
+						set_temp_variable = { cart_influence_change = -3 }
+						modify_cartel_variables_effect = yes
+					}
+				}
+				40 = {
+					modifier = {
+						set_temp_variable = { temp_political_modifier = strength_of_cartels }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					modifier = {
+						check_variable = { strength_of_cartels < 20 }
+						factor = 2
+					}
+					modifier = {
+						factor = 1.75
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					set_country_flag = failed_raid_drug_convoys
+					custom_effect_tooltip = investigate_bad_results_tt
+					effect_tooltip = {
+						set_party_index_to_ruling_party = yes
+						set_temp_variable = { party_popularity_increase = -0.04 }
+						set_temp_variable = { temp_outlook_increase = -0.04 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { cart_strength_change = 2 }
+						set_temp_variable = { cart_influence_change = 4 }
+						modify_cartel_variables_effect = yes
+					}
+				}
+			}
+			hidden_effect = {
+				country_event = { id = cartel_event.51 days = 1 random_hours = 24 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	# Raid Cartel Hideouts
+	# Purpose: Highest strength attack, low political influence hit, High Potential of Seizing Military Equipment
+	raid_cartel_hideouts_decision = {
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_decision = target_cartel_drug_running_decision
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			has_decision = target_cartel_drug_running_decision
+			NOT = {
+				has_decision = raid_drug_convoys_decision
+				has_decision = raid_distribution_centres_decision
+				has_decision = raid_refinement_centres_decision
+			}
+		}
+
+		cost = 50
+		fixed_random_seed = no
+
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove raid_cartel_hideouts_decision"
+			random_list = {
+				35 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_country_flag = successful_raid_cartel_hideouts
+					custom_effect_tooltip = investigate_good_results_tt
+					effect_tooltip = {
+						set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+						divide_temp_variable = { strength_modifier = 100 }
+						add_to_temp_variable = { strength_modifier = 2 }
+
+						set_temp_variable = { cart_strength_change = -2 }
+						multiply_temp_variable = { cart_strength_change = strength_modifier }
+						set_temp_variable = { cart_influence_change = -4 }
+						modify_cartel_variables_effect = yes
+					}
+					set_temp_variable = { equipment_change = 10 }
+					multiply_temp_variable = { equipment_change = strength_modifier }
+					random_list = {
+						20 = {
+							effect_tooltip = {
+								add_equipment_to_stockpile = {
+									type = infantry_weapons
+									amount = var:equipment_change
+								}
+							}
+							set_country_flag = INF_seized
+						}
+						10 = {
+							set_temp_variable = { equipment_change = 5 }
+							multiply_temp_variable = { equipment_change = strength_modifier }
+							effect_tooltip = {
+								add_equipment_to_stockpile = {
+									type = util_vehicle_0
+									amount = var:equipment_change
+								}
+							}
+							set_country_flag = UTIL_seized
+						}
+						70 = {
+
+						}
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+				65 = {
+					modifier = {
+						set_temp_variable = { temp_political_modifier = strength_of_cartels }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					modifier = {
+						check_variable = { strength_of_cartels < 20 }
+						factor = 2
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.25
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					set_country_flag = failed_raid_cartel_hideouts
+					custom_effect_tooltip = investigate_bad_results_tt
+					effect_tooltip = {
+						set_party_index_to_ruling_party = yes
+						set_temp_variable = { party_popularity_increase = -0.04 }
+						set_temp_variable = { temp_outlook_increase = -0.04 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { cart_strength_change = 2 }
+						set_temp_variable = { cart_influence_change = 4 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+			}
+			hidden_effect = {
+				country_event = { id = cartel_event.51 days = 1 random_hours = 24 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	# Raid Distribution Centres
+	# Purpose: Highest strength attack, low political influence hit, Money Seizures
+	raid_distribution_centres_decision = {
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_decision = target_cartel_drug_running_decision
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			has_decision = target_cartel_drug_running_decision
+			NOT = {
+				has_decision = raid_drug_convoys_decision
+				has_decision = raid_cartel_hideouts_decision
+				has_decision = raid_refinement_centres_decision
+			}
+		}
+
+		cost = 50
+		fixed_random_seed = no
+
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove raid_distribution_centres_decision"
+			random_list = {
+				40 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_country_flag = successful_raid_distribution_centres
+					custom_effect_tooltip = investigate_good_results_tt
+					effect_tooltip = {
+						set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+						divide_temp_variable = { strength_modifier = 100 }
+						add_to_temp_variable = { strength_modifier = 3 }
+
+						set_temp_variable = { treasury_change = gdp_total_display }
+						multiply_temp_variable = { treasury_change = 0.009 }
+						multiply_temp_variable = { treasury_change = strength_modifier }
+						modify_treasury_effect = yes
+
+						set_temp_variable = { cart_influence_change = -4 }
+						set_temp_variable = { cart_strength_change = -12 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+				60 = {
+					modifier = {
+						set_temp_variable = { temp_political_modifier = strength_of_cartels }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.25
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					set_country_flag = failed_raid_distribution_centres
+					custom_effect_tooltip = investigate_bad_results_tt
+					effect_tooltip = {
+						set_party_index_to_ruling_party = yes
+						set_temp_variable = { party_popularity_increase = -0.04 }
+						set_temp_variable = { temp_outlook_increase = -0.04 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { cart_strength_change = 2 }
+						modify_cartel_variables_effect = yes
+					}
+					hidden_effect = {
+						# CREAMY: Set your custom shit here
+					}
+				}
+			}
+
+			hidden_effect = {
+				country_event = { id = cartel_event.51 days = 1 random_hours = 24 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	# Raid Refinement Centres
+	# Purpose: Medium strength attack, low political influence hit
+	raid_refinement_centres_decision = {
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_decision = target_cartel_drug_running_decision
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			has_decision = target_cartel_drug_running_decision
+			NOT = {
+				has_decision = raid_drug_convoys_decision
+				has_decision = raid_cartel_hideouts_decision
+				has_decision = raid_distribution_centres_decision
+			}
+		}
+
+		cost = 50
+		fixed_random_seed = no
+
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove raid_distribution_centres_decision"
+			random_list = {
+				40 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_country_flag = successful_raid_refinement_centres
+					custom_effect_tooltip = investigate_good_results_tt
+					effect_tooltip = {
+						set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+						divide_temp_variable = { strength_modifier = 100 }
+						add_to_temp_variable = { strength_modifier = 3 }
+
+						set_temp_variable = { cart_strength_change = -2 }
+						multiply_temp_variable = { cart_strength_change = strength_modifier }
+						set_temp_variable = { cart_influence_change = -4 }
+						modify_cartel_variables_effect = yes
+					}
+				}
+				60 = {
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.25
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					modifier = {
+						set_temp_variable = { temp_political_modifier = strength_of_cartels }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					set_country_flag = failed_raid_refinement_centres
+					custom_effect_tooltip = investigate_bad_results_tt
+					effect_tooltip = {
+						set_party_index_to_ruling_party = yes
+						set_temp_variable = { party_popularity_increase = -0.04 }
+						set_temp_variable = { temp_outlook_increase = -0.04 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { cart_strength_change = 2 }
+						modify_cartel_variables_effect = yes
+					}
+				}
+			}
+			hidden_effect = {
+				country_event = { id = cartel_event.51 days = 1 random_hours = 24 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	# Target Local Cartel Leaders
+	# Purpose: Medium political influence strike, Medium strength loss, stability and popularity gain here
+	target_local_cartel_leaders_decision = {
+		icon = GFX_decision_cat_cartel
+
+		available = {
+			has_cartels_penalties = yes
+		}
+
+		cost = 50
+		fixed_random_seed = no
+		days_remove = 90
+		days_re_enable = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision Remove target_local_cartel_leaders_decision"
+			random_list = {
+				30 = {
+					modifier = {
+						has_decision = utilize_the_military_decisions
+						factor = 1.25
+					}
+					modifier = {
+						has_decision = police_investments_decision
+						factor = 1.15
+					}
+					modifier = {
+						OR = {
+							has_idea = police_03
+							has_idea = police_04
+							has_idea = police_05
+						}
+						factor = 2.0
+					}
+					set_party_index_to_ruling_party = yes
+					set_temp_variable = { party_popularity_increase = 0.03 }
+					set_temp_variable = { temp_outlook_increase = 0.03 }
+					add_relative_party_popularity = yes
+
+					add_stability = 0.03
+
+					set_temp_variable = { strength_modifier = ROOT.strength_of_cartels }
+					divide_temp_variable = { strength_modifier = 100 }
+					add_to_temp_variable = { strength_modifier = 2 }
+
+					set_temp_variable = { cart_strength_change = -2 }
+					multiply_temp_variable = { cart_strength_change = strength_modifier }
+					set_temp_variable = { cart_influence_change = -4 }
+					modify_cartel_variables_effect = yes
+				}
+				70 = {
+					modifier = {
+						set_temp_variable = { temp_political_modifier = strength_of_cartels }
+						subtract_from_temp_variable = { temp_political_modifier = 50 }
+						divide_temp_variable = { temp_political_modifier = 100 }
+						add_to_temp_variable = { temp_political_modifier = 1 }
+						always = yes
+						factor = temp_political_modifier
+					}
+					modifier = {
+						factor = 1.50
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+						}
+					}
+					modifier = {
+						factor = 1.25
+						OR = {
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+					set_party_index_to_ruling_party = yes
+					set_temp_variable = { party_popularity_increase = -0.04 }
+					set_temp_variable = { temp_outlook_increase = -0.04 }
+					add_relative_party_popularity = yes
+
+					set_temp_variable = { cart_strength_change = 2 }
+					set_temp_variable = { cart_influence_change = 4 }
+					modify_cartel_variables_effect = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	# # Assist Neighbours in Combating Cartels
+	# send_neighbor_assistance_against_cartel = {
+
+	# }
+
+	# # Finance Support in Our Neighbours
+	# send_neighbor_financial_assistance_against_cartel = {
+
+	# }
+
+	# ### - Narco State Content - ###
+	# narco_skim_it_off_the_top = {
+
+	# }
+
+	# narco_steal_assets = {
+
+	# }
+
+	# narco_arm_the_men = {
+
+	# }
+
+	# narco_outreach_campaigns = {
+
+	# }
+
+	# narco_extortion_campaigns = {
+
+	# }
+
+	# Narcos Crisis
+	# Purpose: This is the start of the Narco state crisis. Essentially here is where we start to get a little itchy
+	narcos_crisis = {
+		allowed = {
+			NOT = { original_tag = MEX } # Custom Cartel Content
+		} #Disables Narco States
+
+		icon = GFX_decision_cat_cartel
+
+		visible = {
+			has_cartels_penalties = yes
 			OR = {
-				has_idea = cartels_1
-				has_idea = cartels_2
-				has_idea = cartels_3
-				has_idea = cartels_4
+				custom_trigger_tooltip = {
+					tooltip = political_influence_over_80_tt
+					check_variable = { cartel_political_influence > 79 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = strength_over_80_tt
+					check_variable = { strength_of_cartels > 79 }
+				}
+			}
+		}
+
+
+		activation = {
+			has_cartels_penalties = yes
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = political_influence_over_80_tt
+					check_variable = { cartel_political_influence > 79 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = strength_over_80_tt
+					check_variable = { strength_of_cartels > 79 }
+				}
+			}
+			NOT = {
+				has_country_flag = CARTEL_narco_wars_triggered
+			}
+		}
+
+		available = {
+			has_cartels_penalties = yes
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = political_influence_over_80_tt
+					check_variable = { cartel_political_influence > 79 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = strength_over_80_tt
+					check_variable = { strength_of_cartels > 79 }
+				}
+			}
+			NOT = {
+				has_country_flag = CARTEL_narco_wars_triggered
 			}
 		}
 
 		selectable_mission = yes
-		days_mission_timeout = 30
+		days_mission_timeout = 180
 
-		timeout_effect = { #if they chose not to press the button the narcos rebel
+		# Select the Button
+		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout_effect narcos_crisis"
+			set_temp_variable = { strength_of_cartels_strength = strength_of_cartels }
+			divide_temp_variable = { strength_of_cartels_strength = 100 }
+			clamp_variable = {
+				var = strength_of_cartels_strength
+				min = 0.2
+				max = 0.75
+			}
 			start_civil_war = {
 				ideology = neutrality
-				size = 0.4
+				size = strength_of_cartels_strength
 			}
+			random_other_country = {
+				limit = { original_tag = ROOT }
+				set_temp_variable = { rul_party_temp = 15 }
+				change_ruling_party_effect = yes
+				hidden_effect = {
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+					set_variable = { cartel_political_influence = ROOT.cartel_political_influence }
+					set_variable = { strength_of_cartels = ROOT.strength_of_cartels }
+					set_temp_variable = { party_index = 15 }
+					set_temp_variable = { party_popularity_increase = cartel_political_influence }
+					divide_temp_variable = { party_popularity_increase = 100 }
+					set_temp_variable = { temp_outlook_increase = 0.10 }
+					add_relative_party_popularity = yes
+				}
+				calculate_cartel_bonuses = yes
+
+				hidden_effect = {
+					division_template = {
+						name = "Cartel Division"
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Militia_Bat = { x = 0 y = 3 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"1st Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+							owner = PREV
+						}
+						create_unit = {
+							division = "name = \"2nd Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+							owner = PREV
+						}
+						create_unit = {
+							division = "name = \"3rd Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+							owner = PREV
+						}
+						create_unit = {
+							division = "name = \"4th Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+							owner = PREV
+						}
+						create_unit = {
+							division = "name = \"5th Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+							owner = PREV
+						}
+					}
+				}
+			}
+			# TODO: If the cartels are currently at war with each other it should spawn multiple civil wars and ensure everyone is fighting each other
+			# Chance of more than one extra cartel rising up at once should be exponentially lower
+			# It should be impossible to have more cartels rise up than you have states in your country
+
+			set_country_flag = CARTEL_narco_wars_triggered
 		}
 
 		complete_effect = { #if chosen the narcos take over
 			log = "[GetDateText]: [Root.GetName]: Decision complete_effect narcos_crisis"
-			swap_ideas = {
-				remove_idea = paralyzing_corruption
-				add_idea = negligible_corruption
-			}
-			every_neighbor_country = { #every neighbor's cartel level goes up by one
-				if = {
-					limit = { has_idea = cartels_3 }
-					swap_ideas = {
-						remove_idea = cartels_3
-						add_idea = cartels_4
-					}
+			# Peaceful Takeover if you concede to the cartels
+			if = { limit = { check_variable = { cartel_political_influence < 98 } }
+				start_civil_war = {
+					ruling_party = democratic
+					ideology = ROOT
+					size = 0.4
+
 				}
-				else_if = {
-					limit = { has_idea = cartels_2 }
-					swap_ideas = {
-						remove_idea = cartels_2
-						add_idea = cartels_3
-					}
-				}
-				else_if = {
-					limit = { has_idea = cartels_1 }
-					swap_ideas = {
-						remove_idea = cartels_1
-						add_idea = cartels_2
-					}
-				}
-				else_if = {
-					limit = {
-						 NOT = { has_idea = narcos_state } 
-						 NOT = { has_idea = cartels_4 }
-						 NOT = { has_idea = crime_syndicate_1 }
-						 NOT = { has_idea = crime_syndicate_2 }
-						 NOT = { has_idea = crime_syndicate_3 }
-						 NOT = { has_idea = crime_syndicate_4 }
-						 NOT = { has_idea = mafia_state }
-						 NOT = { has_idea = ITA_mafia }
+				hidden_effect = {
+					random_other_country = {
+						limit = { original_tag = ROOT }
+						hidden_effect = {
+							division_template = {
+								name = "Cartel Division"
+								regiments = {
+									Militia_Bat = { x = 0 y = 0 }
+									Militia_Bat = { x = 0 y = 1 }
+									Militia_Bat = { x = 0 y = 2 }
+									Militia_Bat = { x = 0 y = 3 }
+								}
+							}
+							capital_scope = {
+								create_unit = {
+									division = "name = \"1st Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+									owner = PREV
+								}
+								create_unit = {
+									division = "name = \"2nd Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+									owner = PREV
+								}
+								create_unit = {
+									division = "name = \"3rd Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+									owner = PREV
+								}
+								create_unit = {
+									division = "name = \"4th Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+									owner = PREV
+								}
+								create_unit = {
+									division = "name = \"5th Militia Brigade\" division_template = \"Cartel Division\" start_experience_factor = 1"
+									owner = PREV
+								}
+
+							}
 						}
-					add_ideas = crime_syndicate_1
+					}
 				}
 			}
-			start_civil_war = { 
-				ruling_party = neutrality
-				ideology = ROOT
-				size = 0.4
+			newline = yes
+			set_temp_variable = { rul_party_temp = 15 }
+			change_ruling_party_effect = yes
+			hidden_effect = {
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+				set_temp_variable = { party_index = 15 }
+				set_temp_variable = { party_popularity_increase = cartel_political_influence }
+				divide_temp_variable = { party_popularity_increase = 100 }
+				set_temp_variable = { temp_outlook_increase = 0.10 }
+				add_relative_party_popularity = yes
+				removed_cartel_cleanup = yes
 			}
-			set_popularities = { #sets the Oligarchs in charge
-                democratic = 0
-                communism = 0
-                fascism = 0.0
-                neutrality = 100
-                nationalist = 0
-			}
-			start_politics_input = yes
-			set_variable = { party_pop_array^0 = 0 } #Western_Autocracy
-            set_variable = { party_pop_array^1 = 0 } #conservatism
-            set_variable = { party_pop_array^2 = 0 } #liberalism
-            set_variable = { party_pop_array^3 = 0 } #socialism
-            set_variable = { party_pop_array^4 = 0 } #Communist-State
-            set_variable = { party_pop_array^5 = 0 } #anarchist_communism
-            set_variable = { party_pop_array^6 = 0 } #Conservative
-            set_variable = { party_pop_array^7 = 0 } #Autocracy
-            set_variable = { party_pop_array^8 = 0 } #Mod_Vilayat_e_Faqih
-            set_variable = { party_pop_array^9 = 0 } #Vilayat_e_Faqih
-            set_variable = { party_pop_array^10 = 0 } #Kingdom
-            set_variable = { party_pop_array^11 = 0 } #Caliphate
-            set_variable = { party_pop_array^12 = 0 } #Neutral_Muslim_Brotherhood
-            set_variable = { party_pop_array^13 = 0 } #Neutral_Autocracy
-            set_variable = { party_pop_array^14 = 0 } #Neutral_conservatism
-            set_variable = { party_pop_array^15 = 1 } #oligarchism
-            set_variable = { party_pop_array^16 = 0 } #Neutral_Libertarian
-            set_variable = { party_pop_array^17 = 0 } #Neutral_green
-            set_variable = { party_pop_array^18 = 0 } #neutral_Social
-            set_variable = { party_pop_array^19 = 0 } #Neutral_Communism
-            set_variable = { party_pop_array^20 = 0 } #Nat_Populism
-            set_variable = { party_pop_array^21 = 0 } #Nat_Fascism
-            set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy
-            set_variable = { party_pop_array^23 = 0 } #Monarchist
-            add_to_array = { ruling_party = 15 }
-			startup_politics = yes
-			set_country_leader_ideology = oligarchism
 
-			remove_ideas = { #makes them a narco state
-				cartels_1
-				cartels_2
-				cartels_3
-				cartels_4
+			calculate_cartel_bonuses = yes
+			increase_corruption = yes
+			every_neighbor_country = { #every neighbor's cartel level goes up by one
+				limit = {
+					has_cartels_penalties = yes
+					NOT = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
+				}
+				set_temp_variable = { cart_strength_change = 2 }
+				set_temp_variable = { cart_influence_change = 4 }
+				modify_cartel_variables_effect = yes
 			}
-			add_ideas = narcos_state
 
+			set_country_flag = CARTEL_narco_wars_triggered
 		}
 	}
 
-	mafia_crisis = { # triggeres when lv 10 corruption and you don't have drugs but you have crime instead
-		icon = GFX_decision_cat_cartel
-
-		visible = { #only visible to people with lv 10 corruption and if they have cartels already in the country
-			OR = {
-				has_idea = crime_syndicate_1
-				has_idea = crime_syndicate_2
-				has_idea = crime_syndicate_3
-				has_idea = crime_syndicate_4
-			}
-			has_idea = paralyzing_corruption
-			NOT = { TAG = MEX }
-			NOT = { has_idea = ITA_mafia }
-		}
-
-		activation = {
-			has_idea = paralyzing_corruption
-			NOT = { TAG = MEX }
-			NOT = { has_idea = ITA_mafia }
-			OR = {
-				has_idea = crime_syndicate_1
-				has_idea = crime_syndicate_2
-				has_idea = crime_syndicate_3
-				has_idea = crime_syndicate_4
-			}
-		}
-
-		selectable_mission = yes
-		days_mission_timeout = 30
-
-		timeout_effect = { #if they chose not to press the button the narcos rebel
-			log = "[GetDateText]: [Root.GetName]: Decision timeout_effect mafia_crisis"
-			start_civil_war = {
-				ideology = neutrality
-				size = 0.4
-			}
-		}
-
-		complete_effect = { #if chosen the narcos take over
-			log = "[GetDateText]: [Root.GetName]: Decision complete_effect mafia_crisis"
-			swap_ideas = {
-				remove_idea = paralyzing_corruption
-				add_idea = negligible_corruption
-			}
-			every_neighbor_country = { #every neighbor's cartel level goes up by one
-				if = {
-					limit = { has_idea = crime_syndicate_3 }
-					swap_ideas = {
-						remove_idea = cartels_3
-						add_idea = cartels_4
-					}
-				}
-				else_if = {
-					limit = { has_idea = crime_syndicate_2 }
-					swap_ideas = {
-						remove_idea = cartels_2
-						add_idea = cartels_3
-					}
-				}
-				else_if = {
-					limit = { has_idea = crime_syndicate_1 }
-					swap_ideas = {
-						remove_idea = cartels_1
-						add_idea = cartels_2
-					}
-				}
-				else_if = {
-					limit = {
-						 NOT = { has_idea = mafia_state } 
-						 NOT = { has_idea = crime_syndicate_4 }
-						 NOT = { has_idea = ITA_mafia }
-						}
-					add_ideas = crime_syndicate_1
-				}
-			}
-			start_civil_war = { 
-				ruling_party = neutrality
-				ideology = ROOT
-				size = 0.4
-			}
-			set_popularities = { #sets the Oligarchs in charge
-                democratic = 0
-                communism = 0
-                fascism = 0.0
-                neutrality = 100
-                nationalist = 0
-			}
-			start_politics_input = yes
-			set_variable = { party_pop_array^0 = 0 } #Western_Autocracy
-            set_variable = { party_pop_array^1 = 0 } #conservatism
-            set_variable = { party_pop_array^2 = 0 } #liberalism
-            set_variable = { party_pop_array^3 = 0 } #socialism
-            set_variable = { party_pop_array^4 = 0 } #Communist-State
-            set_variable = { party_pop_array^5 = 0 } #anarchist_communism
-            set_variable = { party_pop_array^6 = 0 } #Conservative
-            set_variable = { party_pop_array^7 = 0 } #Autocracy
-            set_variable = { party_pop_array^8 = 0 } #Mod_Vilayat_e_Faqih
-            set_variable = { party_pop_array^9 = 0 } #Vilayat_e_Faqih
-            set_variable = { party_pop_array^10 = 0 } #Kingdom
-            set_variable = { party_pop_array^11 = 0 } #Caliphate
-            set_variable = { party_pop_array^12 = 0 } #Neutral_Muslim_Brotherhood
-            set_variable = { party_pop_array^13 = 0 } #Neutral_Autocracy
-            set_variable = { party_pop_array^14 = 0 } #Neutral_conservatism
-            set_variable = { party_pop_array^15 = 1 } #oligarchism
-            set_variable = { party_pop_array^16 = 0 } #Neutral_Libertarian
-            set_variable = { party_pop_array^17 = 0 } #Neutral_green
-            set_variable = { party_pop_array^18 = 0 } #neutral_Social
-            set_variable = { party_pop_array^19 = 0 } #Neutral_Communism
-            set_variable = { party_pop_array^20 = 0 } #Nat_Populism
-            set_variable = { party_pop_array^21 = 0 } #Nat_Fascism
-            set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy
-            set_variable = { party_pop_array^23 = 0 } #Monarchist
-            add_to_array = { ruling_party = 15 }
-			startup_politics = yes
-			set_country_leader_ideology = oligarchism
-
-			remove_ideas = { #makes them a narco state
-				cartels_1
-				cartels_2
-				cartels_3
-				cartels_4
-			}
-			add_ideas = mafia_state
-		}
-	}
-
+	# Mexican Cartel War Content
 	mexican_cartel_war = { # Unique civil war for Mexico when they reach lv 10 corruption
+		allowed = { original_tag = MEX }
 		icon = GFX_decision_cat_cartel
 		visible = { #only visible to people with lv 10 corruption and if they have cartels already in the country
+			has_cartels_penalties = yes
 			OR = {
-				has_idea = cartels_1
-				has_idea = cartels_2
-				has_idea = cartels_3
-				has_idea = cartels_4
+				custom_trigger_tooltip = {
+					tooltip = political_influence_over_80_tt
+					check_variable = { cartel_political_influence > 79 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = strength_over_80_tt
+					check_variable = { strength_of_cartels > 79 }
+				}
 			}
-			OR = {
-				has_idea = modest_corruption
-				has_idea = slight_corruption
-				has_idea = negligible_corruption
-			}
-			TAG = MEX
 		}
 
 		activation = {
+			has_cartels_penalties = yes
 			OR = {
-				has_idea = modest_corruption
-				has_idea = slight_corruption
-				has_idea = negligible_corruption
+				custom_trigger_tooltip = {
+					tooltip = political_influence_over_80_tt
+					check_variable = { cartel_political_influence > 79 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = strength_over_80_tt
+					check_variable = { strength_of_cartels > 79 }
+				}
 			}
-			TAG = MEX
+			NOT = {
+				has_country_flag = CARTEL_narco_wars_triggered
+			}
+		}
+
+		available = {
+			has_cartels_penalties = yes
 			OR = {
-				has_idea = cartels_1
-				has_idea = cartels_2
-				has_idea = cartels_3
-				has_idea = cartels_4
+				custom_trigger_tooltip = {
+					tooltip = political_influence_over_80_tt
+					check_variable = { cartel_political_influence > 79 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = strength_over_80_tt
+					check_variable = { strength_of_cartels > 79 }
+				}
+			}
+			NOT = {
+				has_country_flag = CARTEL_narco_wars_triggered
 			}
 		}
 
 		selectable_mission = yes
-		days_mission_timeout = 30
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete_effect mexican_cartel_war"
-			country_event = { id = cartel_event.1 }
-		}
+		days_mission_timeout = 180
+
 		timeout_effect = { # Momento of truth
 			log = "[GetDateText]: [Root.GetName]: Decision timeout_effect mexican_cartel_war"
 			country_event = { id = cartel_event.1 }
+			set_country_flag = CARTEL_narco_wars_triggered
 		}
 
 	}
-
-	# CARTEL STATE DECISONS # CARTEL STATE DECISONS # CARTEL STATE DECISONS # CARTEL STATE DECISONS # CARTEL STATE DECISONS # CARTEL STATE DECISONS
-
 	#Baja California
 	MEX_baja_california_sinaloa_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_sinaloa_high
 			trigger = {
@@ -341,14 +1481,15 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 828 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_states_trigger = { state = 828 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
-			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 			828 = {
 				check_variable = {
@@ -366,12 +1507,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			
-			828 = {
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					828 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					828 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			828 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -392,6 +1554,7 @@ cartels_decision_category = {
 	}
 
 	MEX_baja_california_tierra_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tierra_caliente_high
 			trigger = {
@@ -429,12 +1592,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 828 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 828 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -455,11 +1620,32 @@ cartels_decision_category = {
 
 		remove_effect = {
 
-			828 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					828 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					828 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			828 = {
 				add_to_variable = {
 					var = MEX_state_control
 					value = 0.5
@@ -479,8 +1665,8 @@ cartels_decision_category = {
 	}
 
 	# Sonora
-
 	MEX_sonora_sinaloa_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_sinaloa_high
 			trigger = {
@@ -518,12 +1704,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 829 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 829 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -544,11 +1732,32 @@ cartels_decision_category = {
 
 		remove_effect = {
 
-			829 = {
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					829 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					829 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			829 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -566,10 +1775,9 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	# Chihuahua
-
 	MEX_chihuahua_sinola_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_sinaloa_high
 			trigger = {
@@ -607,12 +1815,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 830 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 830 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -633,11 +1843,32 @@ cartels_decision_category = {
 
 		remove_effect = {
 
-			830 = {
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					830 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					830 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			830 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -655,10 +1886,9 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	# Sinola-Durango
-
 	MEX_sinola_durango_sinola_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_sinaloa_high
 			trigger = {
@@ -696,12 +1926,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 831 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 831 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -722,11 +1954,32 @@ cartels_decision_category = {
 
 		remove_effect = {
 
-			831 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					831 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					831 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			831 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -744,10 +1997,9 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	# Coahuila
-
 	MEX_coahuila_tamaulpas_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tamaulpas_high
 			trigger = {
@@ -785,12 +2037,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 833 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 833 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -810,11 +2064,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			833 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					833 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					833 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			833 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -834,8 +2110,9 @@ cartels_decision_category = {
 	}
 
 	# Guanajuato
-	
+
 	MEX_guanajuato_tamaulpas_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tamaulpas_high
 			trigger = {
@@ -873,12 +2150,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 834 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 834 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -898,11 +2177,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			834 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					834 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					834 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			834 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -922,8 +2223,8 @@ cartels_decision_category = {
 	}
 
 	# Nuevo Leon
-
 	MEX_nuevo_leon_tamaulpas_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tamaulpas_high
 			trigger = {
@@ -961,12 +2262,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 832 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 832 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -986,11 +2289,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			832 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					832 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					832 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			832 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1009,9 +2334,9 @@ cartels_decision_category = {
 		}
 	}
 
-	# Jalisco 
-
+	# Jalisco
 	MEX_jalisco_tierra_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tierra_caliente_high
 			trigger = {
@@ -1049,12 +2374,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 836 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 836 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1074,11 +2401,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			836 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					836 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					836 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			836 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1098,8 +2447,8 @@ cartels_decision_category = {
 	}
 
 	#Guerrero-Oaxaco
-
 	MEX_guerrero_oaxaco_tierra_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tierra_caliente_high
 			trigger = {
@@ -1137,12 +2486,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 837 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 837 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1162,11 +2513,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			837 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					837 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					837 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			837 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1186,8 +2559,8 @@ cartels_decision_category = {
 	}
 
 	# Mexico
-
 	MEX_mexico_tierra_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tierra_caliente_high
 			trigger = {
@@ -1225,12 +2598,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 835 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 835 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1250,11 +2625,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			835 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					835 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					835 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			835 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1272,8 +2669,8 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	MEX_mexico_tamaulpas_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tamaulpas_high
 			trigger = {
@@ -1311,12 +2708,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 835 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 835 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1336,11 +2735,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			835 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					835 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					835 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			835 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1358,8 +2779,8 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	MEX_mexico_sinaloa_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_sinaloa_high
 			trigger = {
@@ -1397,12 +2818,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 835 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 835 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1422,11 +2845,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			835 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					835 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					835 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			835 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1444,10 +2889,9 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	# Veracruz
-
 	MEX_veracruz_tierra_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tierra_caliente_high
 			trigger = {
@@ -1485,12 +2929,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 838 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 838 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1510,11 +2956,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			838 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					838 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					838 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			838 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1532,8 +3000,8 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	MEX_veracruz_tamaulpas_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tamaulpas_high
 			trigger = {
@@ -1571,12 +3039,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 838 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 838 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1596,11 +3066,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			838 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					838 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					838 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			838 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1618,10 +3110,9 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	# Chiapas
-
 	MEX_chiapas_tamaulpas_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tamaulpas_high
 			trigger = {
@@ -1659,12 +3150,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 839 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 839 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1684,11 +3177,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			839 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					839 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					839 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			839 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control
@@ -1706,10 +3221,9 @@ cartels_decision_category = {
 			factor = 10
 		}
 	}
-
 	# Yucatan
-
 	MEX_yucatan_tamaulpas_cartel = {
+		allowed = { original_tag = MEX }
 		icon = {
 			key = GFX_decision_tamaulpas_high
 			trigger = {
@@ -1747,12 +3261,14 @@ cartels_decision_category = {
 			NOT = { has_global_flag = flag_mexico_cartel_war }
 		}
 
-		highlight_state_targets = {	state = 840 }
-		on_map_mode = map_only
+		highlight_states = {
+ 			highlight_state_targets = {	state = 840 }
+		}
+		on_map_mode = map_and_decisions_view
 		cost = 100
 		fire_only_once = no
 		days_remove = 14
-		
+
 		visible = {
 			TAG = MEX
 			NOT = { has_global_flag = flag_mexico_cartel_war }
@@ -1772,11 +3288,33 @@ cartels_decision_category = {
 		}
 
 		remove_effect = {
-			840 = { 
-				damage_building = {
-					type = industrial_complex
-					damage = 1
+
+			random_list = {
+				25 = {
+					# No Effect
 				}
+				25 = {
+					840 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					840 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+				}
+				25 = {
+					add_manpower = -50
+				}
+			}
+
+			840 = {
 				MEX = { country_event = { id = cartel_event.12 } }
 				add_to_variable = {
 					var = MEX_state_control

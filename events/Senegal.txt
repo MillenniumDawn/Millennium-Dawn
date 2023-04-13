@@ -1,0 +1,646 @@
+﻿add_namespace = senegal_md
+
+#2000 Election events
+country_event = {
+	id = senegal_md.1
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event senegal_md.1"
+		hidden_effect = {
+			set_variable = { opposition_strength = party_pop_array^0 }
+			add_to_variable = { opposition_strength = party_pop_array^1 }
+			add_to_variable = { opposition_strength = party_pop_array^2 }
+			add_to_variable = { opposition_strength = party_pop_array^3 }
+		}
+	}
+	title = senegal_md.1.t
+	desc = senegal_md.1.d
+	picture = GFX_senegal_elections
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = SEN
+		has_civil_war = no
+		is_in_array = { ruling_party = 18 }
+		date > 2000.2.1
+	}
+
+
+	option = { #Free elections
+		name = senegal_md.1.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.1.o1 executed"
+		add_political_power = 100
+		set_temp_variable = { rul_party_temp = 2 }
+		set_temp_variable = { col_one = 0 }
+		set_temp_variable = { col_two = 1 }
+		set_temp_variable = { col_three = 3 }
+		change_ruling_party_effect = yes
+		hidden_effect = {
+			set_politics = {
+				ruling_party = democratic
+				last_election = "2000.2.20"
+				election_frequency = 60
+				elections_allowed = yes
+			}
+		}
+		create_country_leader = {
+			name = "Abdoulaye Wade"
+			picture = "abdoulaye_wade.dds"
+			ideology = liberalism
+			traits = {
+				western_liberalism
+				lawyer
+				economist
+				career_politician
+			}
+		}
+
+		clear_variable = opposition_strength
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 1
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = { #Rig elections
+		name = senegal_md.1.o2
+		log = "[GetDateText]: [This.GetName]: senegal_md.1.o2 executed"
+		add_stability = -0.025
+		add_political_power = -50
+
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+
+		random_list = {
+			40 = {
+				country_event = {
+					id = senegal_md.2
+					days = 20
+					random_hours = 24
+					random_days = 10
+				}
+			}
+			60 = {
+				country_event = {
+					id = senegal_md.3
+					days = 20
+					random_hours = 24
+					random_days = 10
+				}
+			}
+		}
+
+		clear_variable = opposition_strength
+		ai_chance = {
+			factor = 40
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	option = { #No elections
+		name = senegal_md.1.o3
+		log = "[GetDateText]: [This.GetName]: senegal_md.1.o3 executed"
+		add_stability = -0.05
+		add_political_power = -100
+
+		hidden_effect = {
+			set_variable = { party_pop_array^13 = party_pop_array^18 }
+			set_variable = { party_pop_array^18 = 0 }
+		}
+		set_temp_variable = { rul_party_temp = 13 }
+		set_temp_variable = { change_leader_temp = 1 }
+		change_ruling_party_effect = yes
+		hidden_effect = {
+			set_country_flag = SEN_is_AUTH
+			set_politics = {
+				ruling_party = neutrality
+				last_election = "2000.2.20"
+				election_frequency = 60
+				elections_allowed = no
+			}
+		}
+		remove_country_leader_trait = neutrality_neutral_Social
+		add_country_leader_trait = neutrality_Neutral_Autocracy
+		add_country_leader_trait = dictator
+		country_event = {
+			id = senegal_md.3
+			days = 20
+			random_hours = 24
+			random_days = 10
+		}
+
+		clear_variable = opposition_strength
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+
+#Rigging Unnoticed
+country_event = {
+	id = senegal_md.2
+	title = senegal_md.2.t
+	desc = senegal_md.2.d
+	picture = GFX_ivory_coast_violence
+	is_triggered_only = yes
+
+	option = {
+		name = senegal_md.2.o1
+		log = "[GetDateText]: [Root.GetName]: event senegal_md.2.o1"
+		add_stability = 0.10
+		add_political_power = 150
+	}
+}
+
+#Protests
+country_event = {
+	id = senegal_md.3
+	title = senegal_md.3.t
+	desc = senegal_md.3.d
+	picture = GFX_ivory_coast_protests
+	is_triggered_only = yes
+
+	option = { #Suppress
+		name = senegal_md.3.o1
+		log = "[GetDateText]: [Root.GetName]: event senegal_md.3.o1"
+		add_stability = -0.05
+		random_list = {
+			70 = {
+				modifier = {
+					add = -20
+					has_country_flag = SEN_1st_protests
+				}
+				country_event = {
+					id = senegal_md.6
+					days = 50
+					random_hours = 24
+					random_days = 50
+				}
+			}
+			30 = {
+				modifier = {
+					add = 20
+					has_country_flag = SEN_1st_protests
+				}
+				country_event = {
+					id = senegal_md.4
+					days = 2
+					random_hours = 24
+					random_days = 2
+				}
+			}
+		}
+
+		set_country_flag = SEN_1st_protests
+		ai_chance = {
+			factor = 80
+		}
+	}
+	option = { #Concessions
+		name = senegal_md.3.o2
+		log = "[GetDateText]: [Root.GetName]: event senegal_md.3.o2"
+		country_event = {
+			id = senegal_md.5
+			days = 50
+			random_hours = 24
+			random_days = 10
+		}
+		ai_chance = {
+			factor = 20
+		}
+	}
+}
+
+#Protests Suppressed
+country_event = {
+	id = senegal_md.4
+	title = senegal_md.4.t
+	desc = senegal_md.4.d
+	picture = GFX_ivory_coast_protest_supressed
+	is_triggered_only = yes
+	option = {
+		name = senegal_md.4.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.8.o1 executed"
+		add_stability = 0.1
+
+		country_event = {
+			id = senegal_md.3
+			days = 50
+			random_hours = 24
+			random_days = 50
+		}
+	}
+}
+
+#Elections 2
+country_event = {
+	id = senegal_md.5
+	title = senegal_md.5.t
+	desc = senegal_md.5.d
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event senegal_md.5"
+		hidden_effect = {
+			set_variable = { opposition_strength = party_pop_array^0 }
+			add_to_variable = { opposition_strength = party_pop_array^1 }
+			add_to_variable = { opposition_strength = party_pop_array^2 }
+			add_to_variable = { opposition_strength = party_pop_array^3 }
+		}
+	}
+	picture = GFX_senegal_elections
+	is_triggered_only = yes
+
+	option = {
+		name = senegal_md.5.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.5.o1 executed"
+		add_political_power = 100
+		if = { limit = { check_variable = { government_coalition_strength < opposition_strength } }
+			set_temp_variable = { rul_party_temp = 2 }
+			set_temp_variable = { col_one = 0 }
+			set_temp_variable = { col_two = 1 }
+			set_temp_variable = { col_three = 3 }
+			change_ruling_party_effect = yes
+			hidden_effect = {
+				set_politics = {
+					ruling_party = democratic
+					last_election = "2000.2.20"
+					election_frequency = 60
+					elections_allowed = yes
+				}
+			}
+			create_country_leader = {
+				name = "Abdoulaye Wade"
+				picture = "abdoulaye_wade.dds"
+				ideology = liberalism
+				traits = {
+					western_liberalism
+					lawyer
+					economist
+					career_politician
+				}
+			}
+
+			clear_variable = opposition_strength
+		}
+		else = {
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+
+		}
+	}
+}
+
+# Civil War in Response to the Suppressing of Elections
+country_event = {
+	id = senegal_md.6
+	title = senegal_md.6.t
+	desc = senegal_md.6.d
+	picture = GFX_senegal_soldiers
+	is_triggered_only = yes
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event senegal_md.6"
+		hidden_effect = {
+			start_civil_war = {
+				ideology = democratic
+				size = 0.3
+				states = {363}
+			}
+
+			division_template = {
+				name = "Militia"
+				is_locked = yes
+				regiments = {
+					Militia_Bat = { x = 0 y = 0 }
+					Militia_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 0 y = 2 }
+					Militia_Bat = { x = 0 y = 3 }
+				}
+			}
+
+			364 = {
+				create_unit = {
+					division = "name = \"1. Loyalist Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = SEN
+				}
+				create_unit = {
+					division = "name = \"2. Loyalist Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = SEN
+				}
+				create_unit = {
+					division = "name = \"3. Loyalist Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = SEN
+				}
+			}
+			1001 = {
+				create_unit = {
+					division = "name = \"4. Loyalist Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = SEN
+				}
+				create_unit = {
+					division = "name = \"5. Loyalist Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = SEN
+				}
+				create_unit = {
+					division = "name = \"6. Loyalist Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = SEN
+				}
+				create_unit = {
+					division = "name = \"7. Loyalist Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = SEN
+				}
+			}
+
+			CSM = {
+				set_state_owner = 362
+				set_state_controller = 362
+				division_template = {
+					name = "Militia"
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+					}
+				}
+				hidden_effect = {
+					set_variable = { CSM.population_tax_rate = SEN.population_tax_rate }
+					set_variable = { CSM.corporate_tax_rate = SEN.corporate_tax_rate }
+					ingame_update_setup = yes
+					EDU_learn_your_ABCs_with_dread = yes
+					set_variable = { CSM.literacy_rate = SEN.literacy_rate }
+					if = {
+						limit = {
+							SEN = { is_agrarian_economy = yes }
+						}
+						AGRI_plant_the_seeds = yes
+						set_variable = { CSM.agri_crop_allocation^0 = SEN.agri_crop_allocation^0 }
+						set_variable = { CSM.agri_crop_allocation^1 = SEN.agri_crop_allocation^1 }
+						set_variable = { CSM.agri_crop_price^0 = SEN.agri_crop_price^0 }
+						set_variable = { CSM.agri_crop_price^1 = SEN.agri_crop_price^1 }
+						AGRI_update_math_variables = yes
+					}
+				}
+			}
+			362 = {
+				create_unit = {
+					division = "name = \"Sadio Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = CSM
+				}
+				create_unit = {
+					division = "name = \"Badiatte Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = CSM
+				}
+				create_unit = {
+					division = "name = \"Diatta Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = CSM
+				}
+				create_unit = {
+					division = "name = \"Senghor Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+					owner = CSM
+				}
+			}
+
+			declare_war_on = {
+				target = CSM
+				type = civil_war
+			}
+
+			random_other_country = {
+				limit = {
+					original_tag = SEN
+					has_government = democratic
+				}
+				set_cosmetic_tag = SEN_REB
+				country_event = senegal_md.7
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Abdoulaye Wade"
+					picture = "abdoulaye_wade.dds"
+					ideology = liberalism
+					traits = {
+						western_liberalism
+					}
+				}
+				# Makes sure they are at war with Casamance
+				declare_war_on = {
+					target = CSM
+					type = civil_war
+				}
+				division_template = {
+					name = "Militia"
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+					}
+				}
+				363 = {
+					create_unit = {
+						division = "name = \"1. Democratic Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"2. Democratic Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"3. Democratic Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"4. Democratic Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"5. Democratic Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = senegal_md.6.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.6.o1 executed"
+		set_country_flag = SEN_senegalese_civil_war
+		news_event = senegal_md.100
+	}
+}
+
+#Casamance issue
+# TODO: Complete this thoroughly at a later date
+country_event = {
+	id = senegal_md.7
+	is_triggered_only = yes
+	title = senegal_md.7.t
+	desc = senegal_md.7.d
+
+	option = {
+		name = senegal_md.7.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+
+	option = {
+		name = senegal_md.7.o2
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+}
+
+#Casamance unity choice
+country_event = {
+	id = senegal_md.8
+	is_triggered_only = yes
+	title = senegal_md.7.t
+	desc = senegal_md.7.d
+
+	option = {
+		name = senegal_md.7.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+
+	option = {
+		name = senegal_md.7.o2
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+}
+
+#Casamance post war
+country_event = {
+	id = senegal_md.9
+	is_triggered_only = yes
+	title = senegal_md.7.t
+	desc = senegal_md.7.d
+
+	option = {
+		name = senegal_md.7.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+
+	option = {
+		name = senegal_md.7.o2
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+}
+
+#Casamance independance
+country_event = {
+	id = senegal_md.10
+	is_triggered_only = yes
+	title = senegal_md.7.t
+	desc = senegal_md.7.d
+
+	option = {
+		name = senegal_md.7.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+
+	option = {
+		name = senegal_md.7.o2
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+	}
+}
+
+# End of the Senegalese Civil War
+country_event = {
+	id = senegal_md.11
+	is_triggered_only = yes
+	title = senegal_md.11.t
+	desc = senegal_md.11.d
+	picture = GFX_senegal_soldiers
+	trigger = {
+		original_tag = SEN
+		has_country_flag = SEN_senegalese_civil_war
+		owns_state = 362
+		owns_state = 1001
+		owns_state = 363
+		owns_state = 364
+	}
+
+	option = {
+		name = senegal_md.11.o1
+		log = "[GetDateText]: [This.GetName]: senegal_md.7.o2 executed"
+		add_stability = 0.05
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		news_event = senegal_md.101
+		clr_country_flag = SEN_senegalese_civil_war
+		delete_unit_template_and_units = {
+			division_template = "Militia"
+		}
+	}
+}
+
+### News ###
+
+#Civil War
+news_event = {
+	id = senegal_md.100
+	is_triggered_only = yes
+	major = yes
+
+	title = senegal_md.100.t
+	desc = senegal_md.100.d
+	picture = GFX_ivory_coast_civil_war
+
+	option = {
+		trigger = { tag = SEN }
+		name = senegal_md.100.o1
+		log = "[GetDateText]: news event senegal_md.100.o1"
+	}
+	option = {
+		trigger = { original_tag = SEN NOT = { tag = SEN } }
+		name = senegal_md.100.o2
+		log = "[GetDateText]: news event senegal_md.100.o2"
+	}
+
+	option = {
+		trigger = { NOT = { original_tag = SEN } }
+		name = senegal_md.100.o3
+		log = "[GetDateText]: news event senegal_md.100.o3"
+	}
+}
+
+# End of the Senegalese Civil War
+news_event = {
+	id = senegal_md.101
+	immediate = { log = "[GetDateText]: news event senegal_md.101" }
+	is_triggered_only = yes
+	major = yes
+
+	title = senegal_md.101.t
+	desc = senegal_md.101.d
+	picture = GFX_ivory_coast_civil_war
+
+
+	option = {
+		trigger = { original_tag = SEN }
+		name = senegal_md.101.o1
+		log = "[GetDateText]: news event senegal_md.100.o2"
+	}
+
+	option = {
+		trigger = { NOT = { original_tag = SEN } }
+		name = senegal_md.101.o2
+		log = "[GetDateText]: news event senegal_md.100.o3"
+	}
+}

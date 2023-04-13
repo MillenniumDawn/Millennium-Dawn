@@ -17,17 +17,17 @@ war_on_terror_category = {
 		}
 
 		cost = 200
-		days_remove = 180
+		days_remove = 90
 
 		modifier = {
-			political_power_gain = -2
-			democratic_drift = -0.10
+			political_power_gain = -1.5
+			democratic_drift = -0.30
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_increase_intelligence_spending"
-			custom_effect_tooltip = TT_OEF_SPENDING_MINUS_0.5
-			subtract_from_variable = { treasury = 0.5 }
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
 			custom_effect_tooltip = TT_REDUCE_RULING_COALITION_POPULARITY_10_PERCENT
 			for_each_loop = {
 				array = ruling_party
@@ -45,10 +45,8 @@ war_on_terror_category = {
 			set_country_flag = USA_increased_intelligence_efforts
 			custom_effect_tooltip = TT_OEF_INCREASED_CHANCE_OF_DETECTING_TERRORISTS
 			USA_congress_medium_opposition = yes
-			if = {
-				limit = { NOT = { has_country_flag = enthusiastic_intelligence_community } }
-				increase_intelligence_community_opinion = yes
-			}
+			set_temp_variable = { temp_opinion = 8 }
+			change_intelligence_community_opinion = yes
 		}
 
 		ai_will_do = {
@@ -86,23 +84,29 @@ war_on_terror_category = {
 
 		ai_will_do = {
 			factor = 1000
+			modifier = {
+				factor = 5
+				date > 2001.1.1
+			}
+			modifier = {
+				factor = 5
+				date > 2002.1.1
+			}
+			modifier = {
+				factor = 5
+				date > 2003.1.1
+			}
 		}
 	}
 	usa_operation_enduring_freedom = {
-
-		visible = {
-			has_country_flag = bin_Laden_stays_home
-		}
-
-		available = {
-			always = yes
-		}
+		visible = { has_country_flag = bin_Laden_stays_home }
+		available = { always = yes }
 
 		cost = 250
 
-		selectable_mission = yes
 		days_remove = 30
 		fire_only_once = yes
+		fixed_random_seed = no
 
 		war_with_on_remove = TAL
 
@@ -158,7 +162,7 @@ war_on_terror_category = {
 						has_idea = NATO_member
 					}
 				}
-				country_event = { id = wot.12 days = 2 random = 24 }
+				country_event = { id = wot.12 days = 2 random_hours = 24 }
 			}
 			#Make sure US is at Global Interventionism idea
 			if = {
@@ -178,7 +182,7 @@ war_on_terror_category = {
 				AFG = {
 					transfer_state = 411
 					transfer_state = 410
-					set_capital = 411
+					set_capital = { state = 411 }
 					declare_war_on = {
 						target = TAL
 						type = civil_war
@@ -214,7 +218,7 @@ war_on_terror_category = {
 						set_country_flag = hideout_of_bin_laden
 					}
 				}
-				##If no Salafist countries, go to a random Sunni country, with priority on Pakistan
+				##If no Salafist countries, go to a random_hours Sunni country, with priority on Pakistan
 				else_if = {
 					limit = { country_exists = PAK }
 					random_list = {
@@ -222,7 +226,7 @@ war_on_terror_category = {
 							PAK = {
 								save_global_event_target_as = hideout_of_bin_laden
 								set_country_flag = hideout_of_bin_laden
-							}						
+							}
 						}
 						30 = {
 							random_country = {
@@ -238,7 +242,7 @@ war_on_terror_category = {
 						}
 					}
 				}
-				##If Pakistan doesn't exist, just go to a random Sunni country
+				##If Pakistan doesn't exist, just go to a random_hours Sunni country
 				else_if = {
 					limit = { NOT = { country_exists = PAK } }
 					random_country = {
@@ -379,10 +383,10 @@ war_on_terror_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_petition_invasion_of_iraq"
-			ENG = { country_event = { id = wot.14 days = 5 random = 72 } }
-			CHI = { country_event = { id = wot.14 days = 5 random = 72 } }
-			SOV = { country_event = { id = wot.14 days = 5 random = 72 } }
-			FRA = { country_event = { id = wot.14 days = 5 random = 72 } }
+			ENG = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
+			CHI = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
+			SOV = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
+			FRA = { country_event = { id = wot.14 days = 5 random_hours = 72 } }
 			set_country_flag = US_UN_vote_on_iraq
 		}
 
@@ -404,8 +408,6 @@ war_on_terror_category = {
 		}
 
 		cost = 200
-
-		selectable_mission = yes
 		days_remove = 180
 
 		modifier = {
@@ -435,7 +437,6 @@ war_on_terror_category = {
 
 		cost = 150
 
-		selectable_mission = yes
 		days_remove = 90
 		fire_only_once = yes
 
@@ -450,22 +451,14 @@ war_on_terror_category = {
 			}
 			every_country = {
 				limit = { is_in_array = { global.ct_states = THIS }}
-				custom_effect_tooltip = radicalization_increase_large_tt
-				add_to_variable = { radicalization = 10 }
-				clamp_radicalization = yes
+				set_temp_variable = { rad_change = 10 }
+				modify_radicalization_effect = yes
 			}
 			hidden_effect = { news_event = { id = wotnews.11 hours = 6 } }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_operation_iraqi_freedom"
-			KUR = {
-				add_ai_strategy = {
-					type = conquer
-					id = "IRQ"
-					value = 200
-				}
-			}
 			set_country_flag = us_preparing_invasion_of_iraq
 			every_other_country = {
 				limit = {
@@ -474,7 +467,7 @@ war_on_terror_category = {
 						original_tag = AST
 					}
 				}
-				country_event = { id = wot.17 days = 5 random = 72 }
+				country_event = { id = wot.17 days = 5 random_hours = 72 }
 			}
 		}
 

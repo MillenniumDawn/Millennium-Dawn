@@ -4,8 +4,9 @@ set_research_slots = 4
 2000.1.1 = {
 	set_country_flag = dynamic_flag
 	set_country_flag = dynamic_rebel_flag
-	oob = "BRM_2000"
 	set_cosmetic_tag = BRM_AUTH
+
+	set_country_flag = country_has_afv_0_templates
 
 	if = {
 		limit = {
@@ -17,12 +18,56 @@ set_research_slots = 4
 		}
 	}
 
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		set_oob = "BRM_2000_nsb"
+		else = {
+			set_oob = "BRM_2000_nonnsb"
+		}
+	}
+
 	set_convoys = 20
 
 	add_ideas = {
-		#pop_050
-		rampant_corruption
+		# -- First Row
+		# Religion
 		buddism
+		# Economic Cycle
+		economic_boom
+		# Corruption
+		rampant_corruption
+		# Faction 1
+		the_military
+		# Faction 2
+		the_priesthood
+		# Faction 3
+		fossil_fuel_industry
+		# -- Second Row
+		# Bureaucracy
+		bureau_04
+		# Military Spending
+		defence_04
+		# Internal Security
+		police_04
+		# Education Budget
+		edu_01
+		# Health Budget
+		health_01
+		# Social Spending
+		social_01
+		# -- Third Row
+		# Trade Law
+		mixed_economy
+		# Conscription Law
+		volunteer_army
+		# Women in the Military
+		volunteer_women
+		# Foreign Intervention Law
+		intervention_local_security
+		# Officer Training
+		officer_advanced_training
+
+		# Other Ideas
 		ASEAN_Member
 		GCC_censored_nation_01
 		Rohingya_Crisis
@@ -31,30 +76,16 @@ set_research_slots = 4
 		A_Political_Military
 		Western_Sanctions
 		child_soldiers
-		gdp_1
-		economic_boom
-		defence_04
-		edu_01
-		health_01
-		social_01
-		bureau_04
-		police_04
-		#state_religion ##Even if unofficial, Buddhist influence notable##
-		#censored_press
-		#non_#secret_ballots
-		volunteer_army
-		volunteer_women
-		the_military
-		the_priesthood
-		fossil_fuel_industry
-		#hybrid
-		#tax_cost_07
-		officer_advanced_training
 	}
 
-	set_country_flag = negative_the_priesthood
-	set_country_flag = positive_the_military
-	set_country_flag = positive_fossil_fuel_industry
+	# Cartel System
+	set_variable = { cartel_political_influence = 45 }
+	set_variable = { strength_of_cartels = 55 }
+
+
+	set_variable = { the_priesthood_opinion = 40 }
+	set_variable = { the_military_opinion = 60 }
+	set_variable = { fossil_fuel_industry_opinion = 60 }
 
 	#Child Soldiers
 	set_country_flag = Conscripting_Child_Soldiers
@@ -80,11 +111,11 @@ set_research_slots = 4
 	add_to_array = { influence_array_val = 1 }
 	startup_influence = yes
 
-	set_variable = { var = debt value = 21 }
-	set_variable = { var = int_investments value = 0 }
-	set_variable = { var = treasury value = 0 }
-	set_variable = { var = tax_rate value = 3 }
-	
+	set_variable = { var = debt value = 151 }
+	set_variable = { var = int_investments value = 0.01 }
+	set_variable = { var = treasury value = 3 }
+	set_variable = { var = corporate_tax_rate value = 20 }
+	set_variable = { var = population_tax_rate value = 20 }
 
 	add_opinion_modifier = { target = PHI modifier = asean_relations }
 	reverse_add_opinion_modifier = { target = PHI modifier = asean_relations }
@@ -110,11 +141,12 @@ set_research_slots = 4
 	add_opinion_modifier = { target = SIA modifier = large_commercial_relations }
 
 	set_technology = {
+		integrated_transportation_system = 1
+		post_conventional_rail = 1
+		early_freight_locomotive = 1
+
 		legacy_doctrines = 1
-		infiltration_assault = 1
-		defence_in_depth = 1
-		early_tunnel_warfare = 1
-		guerilla_specialisation = 1
+		infantry_mass_assault = 1
 
 		#MAV-1
 		util_vehicle_0 = 1
@@ -133,26 +165,16 @@ set_research_slots = 4
 		camouflage = 1
 		camouflage2 = 1
 
-		APC_1 = 1
-		APC_2 = 1
-
 		util_vehicle_1 = 1
-
-
 
 		#For templates
 		combat_eng_equipment = 1
 		command_control_equipment = 1
 		Anti_tank_0 = 1
 		Heavy_Anti_tank_0 = 1
-		artillery_0 = 1
 		SP_arty_0 = 1
 		Anti_Air_0 = 1
 		SP_Anti_Air_0 = 1
-		Early_APC = 1
-		APC_1 = 1
-		IFV_1 = 1
-		MBT_1 = 1
 		Rec_tank_0 = 1
 
 		early_helicopter = 1
@@ -166,18 +188,70 @@ set_research_slots = 4
 		internet1 = 1 	#1G
 		fuel_silos = 1
 	}
+
 	if = {
-		limit = {
-			not = { has_dlc = "Man the Guns" }
-		}
+		limit = { has_dlc = "No Step Back" }
+
 		set_technology = {
-			landing_craft = 1
-			#Anawratha-class
-			corvette_1 = 1
-			corvette_2 = 1
-			missile_corvette_1 = 1
+			afv_tech = 1
+			mbt_tech = 1
+			diesel_engine_tech = 1
+			diesel_engine_tech_2 = 1
+			tank_components_tech = 1
+			tank_components_tech_2 = 1
+			nsb_artillery_0 = 1
+		}
+
+		create_equipment_variant = {
+			name = "Baac 83"
+			type = apc_hull_0
+			parent_version = 0
+			modules = {
+				main_armament_slot = afv_machine_gun
+				turret_type_slot = afv_no_turret
+				suspension_type_slot = afv_tracked_suspension
+				armor_type_slot = afv_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen1
+				special_type_slot_1 = afv_mine_protection
+			}
+			upgrades = {
+				afv_nsb_armor_upgrade = 1
+			}
+			obsolete = yes
+			icon = "GFX_apc_hull_0_a"
+		}
+
+		create_equipment_variant = {
+			name = "Baac 87"
+			type = apc_hull_0
+			parent_version = 1
+			modules = {
+				main_armament_slot = afv_machine_gun_2
+				turret_type_slot = afv_no_turret
+				suspension_type_slot = afv_tracked_suspension
+				armor_type_slot = afv_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = afv_mine_protection
+			}
+			upgrades = {
+				afv_nsb_armor_upgrade = 2
+			}
+			icon = "GFX_apc_hull_0_a"
+		}
+
+		else = {
+			set_technology = {
+				MBT_1 = 1
+				Early_APC = 1
+				APC_1 = 1
+				APC_2 = 1
+				IFV_1 = 1
+				artillery_0 = 1
+			}
 		}
 	}
+
+	# Naval Technology set
 	if = {
 		limit = {
 			has_dlc = "Man the Guns"
@@ -216,12 +290,22 @@ set_research_slots = 4
 
 			tech_torpedoes = 1
 
-			tech_asw_systems = 1
-			tech_mine_warfare = 1
-
 			tech_mtg_landing_craft = 1
 		}
+
+
+		# Non-MTG Variants
+		else = {
+			set_technology = {
+				landing_craft = 1
+				#Anawratha-class
+				corvette_1 = 1
+				corvette_2 = 1
+				missile_corvette_1 = 1
+			}
+		}
 	}
+
 	###BRM###
 	set_popularities = {
 		democratic = 0.0
@@ -266,89 +350,32 @@ set_research_slots = 4
 	add_to_array = { ruling_party = 22 }
 	startup_politics = yes
 
-	create_country_leader = {
-		name = "Than Shwe"
-		picture = "Than_Shwe.dds"
-		ideology = Nat_Autocracy
-		traits = {
-			nationalist_Nat_Autocracy
-			military_career
-			ruthless
-			dictator
-		}
-	}
-
-	create_field_marshal = {
-		name = "Min Aung Hlaing"
-		picture = "Portrait_Min_Aung_Hlaing.dds"
-		traits = { old_guard offensive_doctrine politically_connected }
-		id = 8800
-		skill = 3
-		attack_skill = 3
-		defense_skill = 3
-		planning_skill = 3
-		logistics_skill = 3
-	}
-
-	create_corps_commander = {
-		name = "Soe Win"
-		portrait_path = ""
-		traits = { }
-		id = 8810
-		skill = 3
-		attack_skill = 3
-		defense_skill = 3
-		planning_skill = 3
-		logistics_skill = 3
-	}
-
-	create_corps_commander = {
-		name = "Sein Win"
-		portrait_path = ""
-		traits = { }
-		id = 8811
-		skill = 2
-		attack_skill = 2
-		defense_skill = 2
-		planning_skill = 2
-		logistics_skill = 2
-	}
-
-	create_navy_leader = {
-		name = "Tin Aung San"
-		picture = ""
-		traits = { }
-		id = 8900
-		skill = 1
-        attack_skill = 1
-        defense_skill = 1
-        coordination_skill = 1
-        maneuvering_skill = 1
-	}
-
-	create_navy_leader = {
-		name = "Thura Thet Swe"
-		picture = ""
-		traits = { }
-		id = 8901
-		skill = 1
-        attack_skill = 1
-        defense_skill = 1
-        coordination_skill = 1
-        maneuvering_skill = 1
-	}
-	#############################################
-	#MTG Variants
-	##############
-	#if = {
-	#	limit = { has_dlc = "Man the Guns" }
-	#}
-	#############################################
+	recruit_character = BRM_than_shwe
+	recruit_character = BRM_maung_aye
+	recruit_character = BRM_soe_win
+	recruit_character = BRM_soe_thein
+	recruit_character = BRM_nyan_tun
+	recruit_character = BRM_myint_swe
+	recruit_character = BRM_myat_hein
+	recruit_character = BRM_khin_aung_myint
+	recruit_character = BRM_maung_maung_kyaw
+	recruit_character = BRM_min_aung_hlaing
+	recruit_character = BRM_sein_win
+	recruit_character = BRM_mya_tun_oo
+	recruit_character = BRM_kyaw_swe
+	recruit_character = BRM_kyaw_swar_lin
 }
 
 2017.1.1 = {
 	capital = 505
-	oob = "BRM_2017"
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		set_oob = "BRM_2000_nsb"
+		else = {
+			set_oob = "BRM_2017_nonnsb"
+		}
+	}
+
 	set_cosmetic_tag = BRM
 	if = {
 		limit = {
@@ -361,6 +388,7 @@ set_research_slots = 4
 	}
 	set_convoys = 20
 
+	# Sets The Democracy Path
 	complete_national_focus = BRM_address_the_democracy_question
 	complete_national_focus = BRM_pave_the_way_for_civilian_rule
 	complete_national_focus = BRM_propose_the_2008_constitution
@@ -371,30 +399,48 @@ set_research_slots = 4
 	complete_national_focus = BRM_focus_on_the_tatmadaw
 
 	add_ideas = {
-		#pop_050
-		rampant_corruption
+		# -- First Row
+		# Religion
 		buddism
+		# Economic Cycle
+		economic_boom
+		# Corruption
+		rampant_corruption
+		# Faction 1
+		the_military
+		# Faction 2
+		the_priesthood
+		# Faction 3
+		fossil_fuel_industry
+		# -- Second Row
+		# Bureaucracy
+		bureau_04
+		# Military Spending
+		defence_04
+		# Internal Security
+		police_04
+		# Education Budget
+		edu_01
+		# Health Budget
+		health_01
+		# Social Spending
+		social_01
+		# -- Third Row
+		# Trade Law
+		mixed_economy
+		# Conscription Law
+		volunteer_army
+		# Women in the Military
+		volunteer_women
+		# Foreign Intervention Law
+		intervention_local_security
+		# Officer Training
+		officer_advanced_training
+
+		# Other Ideas
 		Nationwide_Ceasefire_Agreement
 		Reduced_Western_Sanctions
 		Strategic_Capital
-		gdp_1
-		economic_boom
-		defence_04
-		edu_01
-		health_01
-		social_01
-		bureau_04
-		police_04
-		#state_religion ##Even if unofficial, Buddhist influence notable##
-		#censored_press
-		#non_#secret_ballots
-		volunteer_army
-		volunteer_women
-		the_military
-		the_priesthood
-		fossil_fuel_industry
-		#hybrid
-		#tax_cost_07
 	}
 
 	#Influence system
@@ -416,21 +462,14 @@ set_research_slots = 4
 	add_to_array = { influence_array_val = 18 }
 	startup_influence = yes
 
-	#set_country_flag = gdp_2
+	#set_country_flag =
 	set_country_flag = Major_Importer_CHI_Arms
 
-	set_variable = { var = debt value = 23 }
-	set_variable = { var = int_investments value = 0 }
+	set_variable = { var = debt value = 62 }
+	set_variable = { var = int_investments value = 0.01 }
 	set_variable = { var = treasury value = 8 }
-	set_variable = { var = tax_rate value = 7 }
-
-	#set_variable = { var = size_modifier value = 0.96 } #7 CIC
-	
-
-	#Nat focus
-
-
-
+	set_variable = { var = corporate_tax_rate value = 25 }
+	set_variable = { var = population_tax_rate value = 25 }
 
 	add_opinion_modifier = { target = PHI modifier = asean_plus_three_relations }
 	reverse_add_opinion_modifier = { target = PHI modifier = asean_plus_three_relations }
@@ -449,11 +488,9 @@ set_research_slots = 4
 
 	# Starting tech
 	set_technology = {
-
 		infantry_weapons3 = 1
 
 		body_armor_1980 = 1
-
 
 		camouflage3 = 1
 
@@ -472,26 +509,9 @@ set_research_slots = 4
 		hsupa = 1
 		internet4 = 1	#4G
 		lte = 1
-
 	}
-	if = {
-		limit = {
-			not = { has_dlc = "Man the Guns" }
-		}
-		set_technology = {
-			landing_craft = 1
-			#Anawratha-class
-			corvette_1 = 1
-			corvette_2 = 1
-			missile_corvette_1 = 1
 
-			#Kyan Sittha-Class
-			frigate_1 = 1
-			frigate_2 = 1
-			missile_frigate_1 = 1
-			missile_frigate_2 = 1
-		}
-	}
+	# Naval Technology
 	if = {
 		limit = {
 			has_dlc = "Man the Guns"
@@ -508,7 +528,6 @@ set_research_slots = 4
 
 			destroyer_hull_1 = 1
 			destroyer_hull_2 = 1
-			destroyer_hull_3 = 1
 
 			tech_submarine_engineering = 1
 
@@ -547,14 +566,65 @@ set_research_slots = 4
 			tech_torpedoes_1 = 1
 			tech_torpedoes_2 = 1
 
-			tech_asw_systems = 1
-			tech_asw_systems_1 = 1
-			tech_mine_warfare = 1
-			tech_mine_warfare_1 = 1
-
 			tech_mtg_landing_craft = 1
 		}
+
+		################
+		# MTG Variants #
+		################
+		#Anawratha Class https://en.wikipedia.org/wiki/Anawrahta-class_corvette
+		create_equipment_variant = {
+			name = "Anawratha Class"
+			type = corvette_hull_3
+			#name_group = BRM_DD_HISTORICAL
+			parent_version = 0
+			modules = {
+				fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
+				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+				fixed_ship_radar_slot = module_radar_4
+				fixed_ship_auxillary_slot = module_ciws_2
+				fixed_ship_battery_slot = module_76mm_gun_2
+				front_1_custom_slot = module_torpedoes_3
+			}
+		}
+
+		#Kyan Sittha Class https://en.wikipedia.org/wiki/Kyan_Sittha-class_frigate
+		create_equipment_variant = {
+			name = "Kyan Sittha Class"
+			type = frigate_hull_4
+			#name_group = BRM_DD_HISTORICAL
+			parent_version = 0
+			modules = {
+				fixed_ship_engine_slot = module_light_surface_diesel_power
+				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+				fixed_ship_radar_slot = module_radar_5
+				fixed_ship_auxillary_slot_2 = module_asm_2
+				fixed_ship_auxillary_slot_1 = module_aa_missiles_2
+				fixed_ship_auxillary_slot = module_chain_gun
+				fixed_ship_battery_slot = module_76mm_gun_2
+				front_1_custom_slot = module_torpedoes_3
+				rear_1_custom_slot = module_light_helipad_1
+			}
+		}
+
+		# Non-MTG Techs/Variants
+		else = {
+			set_technology = {
+				landing_craft = 1
+				#Anawratha-class
+				corvette_1 = 1
+				corvette_2 = 1
+				missile_corvette_1 = 1
+
+				#Kyan Sittha-Class
+				frigate_1 = 1
+				frigate_2 = 1
+				missile_frigate_1 = 1
+				missile_frigate_2 = 1
+			}
+		}
 	}
+
 	###BRM###
 	set_popularities = {
 		democratic = 0.0
@@ -599,59 +669,9 @@ set_research_slots = 4
 	add_to_array = { ruling_party = 16 }
 	startup_politics = yes
 
-	create_country_leader = {
-		name = "Aung San Suu Kyi"
-		picture = "Western_Aung_San_Suu_Kyi.dds"
-		ideology = Neutral_Libertarian
-		traits = {
-			neutrality_Neutral_Libertarian
-			likeable
-			capable
-			writer
-			rational
-		}
-	}
-	#############################################
-	#MTG Variants
-	##############
-	if = {
-		limit = { has_dlc = "Man the Guns" }
+	retire_character = BRM_soe_thein
+	retire_character = BRM_nyan_tun
 
-		#Anawratha Class https://en.wikipedia.org/wiki/Anawrahta-class_corvette
-		create_equipment_variant = {
-			name = "Anawratha Class"
-			type = corvette_hull_4
-			#name_group = BRM_DD_HISTORICAL
-			parent_version = 0
-			modules = {
-				fixed_ship_engine_slot = module_light_surface_jet_turbine_power
-				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
-				fixed_ship_radar_slot = module_radar_4
-				fixed_ship_auxillary_slot = module_ciws_2
-				fixed_ship_battery_slot = module_light_guns_3
-				front_1_custom_slot = module_torpedoes_3
-			}
-		}
-
-
-		#Kyan Sittha Class https://en.wikipedia.org/wiki/Kyan_Sittha-class_frigate
-		create_equipment_variant = {
-			name = "Kyan Sittha Class"
-			type = frigate_hull_4
-			#name_group = BRM_DD_HISTORICAL
-			parent_version = 0
-			modules = {
-				fixed_ship_engine_slot = module_light_surface_diesel_power
-				fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
-				fixed_ship_radar_slot = module_radar_5
-				fixed_ship_asw_slot_1 = module_asm_2
-				fixed_ship_asw_slot = module_aa_missiles_2
-				fixed_ship_auxillary_slot = module_chain_gun_3
-				fixed_ship_battery_slot = module_light_guns_3
-				front_1_custom_slot = module_torpedoes_3
-				rear_1_custom_slot = module_light_helipad_1
-			}
-		}
-	}
-	#############################################
+	recruit_character = BRM_thet_swe
+	recruit_character = BRM_tin_aung_san
 }

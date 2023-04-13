@@ -1,0 +1,2019 @@
+
+scripted_diplomatic_actions = {
+
+####################################
+### satellite diplomatic actions ###
+####################################
+
+# naming:
+# treaty = give others acces to own network
+# access = access granted to their network
+
+	############
+	### GNSS ###
+	############
+
+	### GNSS mil
+	request_mil_gnss_access = {
+		icon = 16
+
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = GNSS_mil_access_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = REQUEST_MIL_GNSS_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						PREV.var_GNSS_mil_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						PREV.var_GNSS_mil_system_idx = ROOT.var_GNSS_mil_system_idx
+					}
+					check_variable = {
+						PREV.var_GNSS_mil_system_idx > ROOT.var_GNSS_mil_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = REQUEST_MIL_GNSS_ACCESS_LOC
+		receive_description = REQUEST_MIL_GNSS_ACCESS_RECIEVER_LOC
+		accept_title = REQUEST_MIL_GNSS_ACCESS_ACCEPTED_TITLE
+		accept_description = REQUEST_MIL_GNSS_ACCESS_ACCEPTED_DESC
+		reject_title = REQUEST_MIL_GNSS_ACCESS_REJECTED_TITLE
+		reject_description = REQUEST_MIL_GNSS_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		complete_effect = {
+		# PREV = target / access TAG
+		# ROOT = sending TAG / bonus TAG
+
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_mil_gnss_access"
+			ROOT = { add_to_array = { array = PREV.GNSS_mil_treaty_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = GNSS_mil_access_array value = PREV.id } }
+			ROOT = { add_to_array = { array = GNSS_mil_access_system_idx_array value = PREV.var_GNSS_mil_system_idx } }
+			ROOT = { add_access_GNSS_mil_vars = yes }
+			ROOT = { force_update_dynamic_modifier = yes }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_mil_gnss_access"
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			base = 0
+
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 0
+			}
+			friends_condition = {
+				base = 0
+				modifier = {
+					add = 100
+					ai_acceptance_request_satellites_with_friends = yes
+				}
+			}
+			foes_condition = {
+				base = 0
+				modifier = {
+					add = -100
+					NOT_ai_acceptance_request_satellites_with_foes = yes
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	offer_mil_gnss_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = GNSS_mil_treaty_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = OFFER_MIL_GNSS_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						ROOT.var_GNSS_mil_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						ROOT.var_GNSS_mil_system_idx = PREV.var_GNSS_mil_system_idx
+					}
+					check_variable = {
+						ROOT.var_GNSS_mil_system_idx > PREV.var_GNSS_mil_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = OFFER_MIL_GNSS_ACCESS_LOC
+		receive_description = OFFER_MIL_GNSS_ACCESS_RECIEVER_LOC
+		accept_title = OFFER_MIL_GNSS_ACCESS_ACCEPTED_TITLE
+		accept_description = OFFER_MIL_GNSS_ACCESS_ACCEPTED_DESC
+		reject_title = OFFER_MIL_GNSS_ACCESS_REJECTED_TITLE
+		reject_description = OFFER_MIL_GNSS_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_mil_gnss_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_offer_mil_gnss_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_mil_gnss_access"
+			ROOT = { add_to_array = { array = ROOT.GNSS_mil_treaty_array value = PREV.id } }
+			ROOT = { add_to_array = { array = PREV.GNSS_mil_access_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = PREV.GNSS_mil_access_system_idx_array value = ROOT.var_GNSS_mil_system_idx } }
+			ROOT = { add_offer_access_GNSS_mil_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_mil_gnss_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_gnss_access"
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_mil_gnss_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = 100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = -100
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					check_variable = {
+						THIS.var_GNSS_mil_system_idx > ROOT.var_GNSS_mil_system_idx
+					}
+					check_variable = {
+						THIS.var_GNSS_mil_system_idx = ROOT.var_GNSS_mil_system_idx
+					}
+				}
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_mil_gnss_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_mil_gnss_access_@PREV }
+			}
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 50
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war = yes }
+					add = -50
+				}
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	revoke_mil_gnss_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				is_in_array = {
+					array = GNSS_mil_treaty_array
+					value = PREV.id
+				}
+			}
+		}
+		selectable = {
+			always = yes
+		}
+		cost = 0
+		requires_acceptance = no
+		show_acceptance_on_action_button = no
+		#### ACTION LOCALISATION ###
+		send_description = REVOKE_MIL_GNSS_ACCESS_LOC
+		receive_description = REVOKE_MIL_GNSS_ACCESS_RECIEVER_LOC
+		accept_title = REVOKE_MIL_GNSS_ACCESS_ACCEPTED_TITLE
+		accept_description = REVOKE_MIL_GNSS_ACCESS_ACCEPTED_DESC
+		reject_title = REVOKE_MIL_GNSS_ACCESS_REJECTED_TITLE
+		reject_description = REVOKE_MIL_GNSS_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect revoke_mil_gnss_access"
+			ROOT = { remove_from_array = { array = ROOT.GNSS_mil_treaty_array value = PREV.id } }
+			ROOT = { remove_from_array = { array = PREV.GNSS_mil_access_array value = ROOT.id } }
+			ROOT = { remove_from_array = { array = PREV.GNSS_mil_access_system_idx_array value = ROOT.var_GNSS_mil_system_idx } }
+			ROOT = { add_offer_access_GNSS_mil_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_mil_gnss_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_gnss_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_mil_gnss_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = -100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = 400
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_mil_gnss_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_mil_gnss_access_@PREV }
+			}
+		}
+	}
+	### GNSS civ
+	request_civ_gnss_access = {
+		icon = 16
+
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = GNSS_civ_access_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = REQUEST_CIV_GNSS_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						PREV.var_GNSS_civ_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						PREV.var_GNSS_civ_system_idx = ROOT.var_GNSS_civ_system_idx
+					}
+					check_variable = {
+						PREV.var_GNSS_civ_system_idx > ROOT.var_GNSS_civ_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = REQUEST_CIV_GNSS_ACCESS_LOC
+		receive_description = REQUEST_CIV_GNSS_ACCESS_RECIEVER_LOC
+		accept_title = REQUEST_CIV_GNSS_ACCESS_ACCEPTED_TITLE
+		accept_description = REQUEST_CIV_GNSS_ACCESS_ACCEPTED_DESC
+		reject_title = REQUEST_CIV_GNSS_ACCESS_REJECTED_TITLE
+		reject_description = REQUEST_CIV_GNSS_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		complete_effect = {
+		# PREV = target / access TAG
+		# ROOT = sending TAG / bonus TAG
+
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_civ_gnss_access"
+			ROOT = { add_to_array = { array = PREV.GNSS_civ_treaty_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = GNSS_civ_access_array value = PREV.id } }
+			ROOT = { add_to_array = { array = GNSS_civ_access_system_idx_array value = PREV.var_GNSS_civ_system_idx } }
+			ROOT = { add_access_GNSS_civ_vars = yes }
+			ROOT = { force_update_dynamic_modifier = yes }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_civ_gnss_access"
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			base = 0
+
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 0
+			}
+			friends_condition = {
+				base = 0
+				modifier = {
+					add = 100
+					ai_acceptance_request_satellites_with_friends = yes
+				}
+			}
+			foes_condition = {
+				base = 0
+				modifier = {
+					add = -100
+					NOT_ai_acceptance_request_satellites_with_foes = yes
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	offer_civ_gnss_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = GNSS_civ_treaty_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = OFFER_CIV_GNSS_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						ROOT.var_GNSS_civ_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						ROOT.var_GNSS_civ_system_idx = PREV.var_GNSS_civ_system_idx
+					}
+					check_variable = {
+						ROOT.var_GNSS_civ_system_idx > PREV.var_GNSS_civ_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = OFFER_CIV_GNSS_ACCESS_LOC
+		receive_description = OFFER_CIV_GNSS_ACCESS_RECIEVER_LOC
+		accept_title = OFFER_CIV_GNSS_ACCESS_ACCEPTED_TITLE
+		accept_description = OFFER_CIV_GNSS_ACCESS_ACCEPTED_DESC
+		reject_title = OFFER_CIV_GNSS_ACCESS_REJECTED_TITLE
+		reject_description = OFFER_CIV_GNSS_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_civ_gnss_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_offer_civ_gnss_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_civ_gnss_access"
+			ROOT = { add_to_array = { array = ROOT.GNSS_civ_treaty_array value = PREV.id } }
+			ROOT = { add_to_array = { array = PREV.GNSS_civ_access_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = PREV.GNSS_civ_access_system_idx_array value = ROOT.var_GNSS_civ_system_idx } }
+			ROOT = { add_offer_access_GNSS_civ_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_civ_gnss_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_gnss_access"
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_civ_gnss_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = 100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = -100
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					check_variable = {
+						THIS.var_GNSS_civ_system_idx > ROOT.var_GNSS_civ_system_idx
+					}
+					check_variable = {
+						THIS.var_GNSS_civ_system_idx = ROOT.var_GNSS_civ_system_idx
+					}
+				}
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_civ_gnss_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_civ_gnss_access_@PREV }
+			}
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 50
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war = yes }
+					add = -50
+				}
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	revoke_civ_gnss_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				is_in_array = {
+					array = GNSS_civ_treaty_array
+					value = PREV.id
+				}
+			}
+		}
+		selectable = {
+			always = yes
+		}
+		cost = 0
+		requires_acceptance = no
+		show_acceptance_on_action_button = no
+		#### ACTION LOCALISATION ###
+		send_description = REVOKE_CIV_GNSS_ACCESS_LOC
+		receive_description = REVOKE_CIV_GNSS_ACCESS_RECIEVER_LOC
+		accept_title = REVOKE_CIV_GNSS_ACCESS_ACCEPTED_TITLE
+		accept_description = REVOKE_CIV_GNSS_ACCESS_ACCEPTED_DESC
+		reject_title = REVOKE_CIV_GNSS_ACCESS_REJECTED_TITLE
+		reject_description = REVOKE_CIV_GNSS_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect revoke_civ_gnss_access"
+			ROOT = { remove_from_array = { array = ROOT.GNSS_civ_treaty_array value = PREV.id } }
+			ROOT = { remove_from_array = { array = PREV.GNSS_civ_access_array value = ROOT.id } }
+			ROOT = { remove_from_array = { array = PREV.GNSS_civ_access_system_idx_array value = ROOT.var_GNSS_civ_system_idx } }
+			ROOT = { add_offer_access_GNSS_civ_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_civ_gnss_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_gnss_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_civ_gnss_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = -100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = 400
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_civ_gnss_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_civ_gnss_access_@PREV }
+			}
+		}
+	}
+
+	############
+	### COM ###
+	############
+
+	### COM mil
+	request_mil_com_access = {
+		icon = 16
+
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = COM_mil_access_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = REQUEST_MIL_COM_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						PREV.var_COM_mil_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						PREV.var_COM_mil_system_idx = ROOT.var_COM_mil_system_idx
+					}
+					check_variable = {
+						PREV.var_COM_mil_system_idx > ROOT.var_COM_mil_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = REQUEST_MIL_COM_ACCESS_LOC
+		receive_description = REQUEST_MIL_COM_ACCESS_RECIEVER_LOC
+		accept_title = REQUEST_MIL_COM_ACCESS_ACCEPTED_TITLE
+		accept_description = REQUEST_MIL_COM_ACCESS_ACCEPTED_DESC
+		reject_title = REQUEST_MIL_COM_ACCESS_REJECTED_TITLE
+		reject_description = REQUEST_MIL_COM_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		complete_effect = {
+		# PREV = target / access TAG
+		# ROOT = sending TAG / bonus TAG
+
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_mil_com_access"
+			ROOT = { add_to_array = { array = PREV.COM_mil_treaty_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = COM_mil_access_array value = PREV.id } }
+			ROOT = { add_to_array = { array = COM_mil_access_system_idx_array value = PREV.var_COM_mil_system_idx } }
+			ROOT = { add_access_COM_mil_vars = yes }
+			ROOT = { force_update_dynamic_modifier = yes }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_mil_com_access"
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			base = 0
+
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 0
+			}
+			friends_condition = {
+				base = 0
+				modifier = {
+					add = 100
+					ai_acceptance_request_satellites_with_friends = yes
+				}
+			}
+			foes_condition = {
+				base = 0
+				modifier = {
+					add = -100
+					NOT_ai_acceptance_request_satellites_with_foes = yes
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	offer_mil_com_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = COM_mil_treaty_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = OFFER_MIL_COM_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						ROOT.var_COM_mil_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						ROOT.var_COM_mil_system_idx = PREV.var_COM_mil_system_idx
+					}
+					check_variable = {
+						ROOT.var_COM_mil_system_idx > PREV.var_COM_mil_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = OFFER_MIL_COM_ACCESS_LOC
+		receive_description = OFFER_MIL_COM_ACCESS_RECIEVER_LOC
+		accept_title = OFFER_MIL_COM_ACCESS_ACCEPTED_TITLE
+		accept_description = OFFER_MIL_COM_ACCESS_ACCEPTED_DESC
+		reject_title = OFFER_MIL_COM_ACCESS_REJECTED_TITLE
+		reject_description = OFFER_MIL_COM_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_mil_com_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_offer_mil_com_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_mil_com_access"
+			ROOT = { add_to_array = { array = ROOT.COM_mil_treaty_array value = PREV.id } }
+			ROOT = { add_to_array = { array = PREV.COM_mil_access_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = PREV.COM_mil_access_system_idx_array value = ROOT.var_COM_mil_system_idx } }
+			ROOT = { add_offer_access_COM_mil_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_mil_com_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_com_access"
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_mil_com_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = 100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = -100
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					check_variable = {
+						THIS.var_COM_mil_system_idx > ROOT.var_COM_mil_system_idx
+					}
+					check_variable = {
+						THIS.var_COM_mil_system_idx = ROOT.var_COM_mil_system_idx
+					}
+				}
+			}
+			modifier = {
+				add = -200
+				NOT_share_COM_mil_satellites_above_network_traffic_limit = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_mil_com_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_mil_com_access_@PREV }
+			}
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 50
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war = yes }
+					add = -50
+				}
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	revoke_mil_com_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				is_in_array = {
+					array = COM_mil_treaty_array
+					value = PREV.id
+				}
+			}
+		}
+		selectable = {
+			always = yes
+		}
+		cost = 0
+		requires_acceptance = no
+		show_acceptance_on_action_button = no
+		#### ACTION LOCALISATION ###
+		send_description = REVOKE_MIL_COM_ACCESS_LOC
+		receive_description = REVOKE_MIL_COM_ACCESS_RECIEVER_LOC
+		accept_title = REVOKE_MIL_COM_ACCESS_ACCEPTED_TITLE
+		accept_description = REVOKE_MIL_COM_ACCESS_ACCEPTED_DESC
+		reject_title = REVOKE_MIL_COM_ACCESS_REJECTED_TITLE
+		reject_description = REVOKE_MIL_COM_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect revoke_mil_com_access"
+			ROOT = { remove_from_array = { array = ROOT.COM_mil_treaty_array value = PREV.id } }
+			ROOT = { remove_from_array = { array = PREV.COM_mil_access_array value = ROOT.id } }
+			ROOT = { remove_from_array = { array = PREV.COM_mil_access_system_idx_array value = ROOT.var_COM_mil_system_idx } }
+			ROOT = { add_offer_access_COM_mil_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_mil_com_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_com_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_mil_com_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = -100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = 400
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = 200
+				NOT_share_COM_mil_satellites_above_network_traffic_limit = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_mil_com_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_mil_com_access_@PREV }
+			}
+		}
+	}
+	### COM civ
+	request_civ_com_access = {
+		icon = 16
+
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = COM_civ_access_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = REQUEST_CIV_COM_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						PREV.var_COM_civ_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						PREV.var_COM_civ_system_idx = ROOT.var_COM_civ_system_idx
+					}
+					check_variable = {
+						PREV.var_COM_civ_system_idx > ROOT.var_COM_civ_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = REQUEST_CIV_COM_ACCESS_LOC
+		receive_description = REQUEST_CIV_COM_ACCESS_RECIEVER_LOC
+		accept_title = REQUEST_CIV_COM_ACCESS_ACCEPTED_TITLE
+		accept_description = REQUEST_CIV_COM_ACCESS_ACCEPTED_DESC
+		reject_title = REQUEST_CIV_COM_ACCESS_REJECTED_TITLE
+		reject_description = REQUEST_CIV_COM_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		complete_effect = {
+		# PREV = target / access TAG
+		# ROOT = sending TAG / bonus TAG
+
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_civ_com_access"
+			ROOT = { add_to_array = { array = PREV.COM_civ_treaty_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = COM_civ_access_array value = PREV.id } }
+			ROOT = { add_to_array = { array = COM_civ_access_system_idx_array value = PREV.var_COM_civ_system_idx } }
+			ROOT = { add_access_COM_civ_vars = yes }
+			ROOT = { force_update_dynamic_modifier = yes }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_civ_com_access"
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			base = 0
+
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 0
+			}
+			friends_condition = {
+				base = 0
+				modifier = {
+					add = 100
+					ai_acceptance_request_satellites_with_friends = yes
+				}
+			}
+			foes_condition = {
+				base = 0
+				modifier = {
+					add = -100
+					NOT_ai_acceptance_request_satellites_with_foes = yes
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	offer_civ_com_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = COM_civ_treaty_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = OFFER_CIV_COM_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						ROOT.var_COM_civ_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						ROOT.var_COM_civ_system_idx = PREV.var_COM_civ_system_idx
+					}
+					check_variable = {
+						ROOT.var_COM_civ_system_idx > PREV.var_COM_civ_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = OFFER_CIV_COM_ACCESS_LOC
+		receive_description = OFFER_CIV_COM_ACCESS_RECIEVER_LOC
+		accept_title = OFFER_CIV_COM_ACCESS_ACCEPTED_TITLE
+		accept_description = OFFER_CIV_COM_ACCESS_ACCEPTED_DESC
+		reject_title = OFFER_CIV_COM_ACCESS_REJECTED_TITLE
+		reject_description = OFFER_CIV_COM_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_civ_com_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_offer_civ_com_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_civ_com_access"
+			ROOT = { add_to_array = { array = ROOT.COM_civ_treaty_array value = PREV.id } }
+			ROOT = { add_to_array = { array = PREV.COM_civ_access_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = PREV.COM_civ_access_system_idx_array value = ROOT.var_COM_civ_system_idx } }
+			ROOT = { add_offer_access_COM_civ_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_civ_com_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_com_access"
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_civ_com_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = 100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = -100
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					check_variable = {
+						THIS.var_COM_civ_system_idx > ROOT.var_COM_civ_system_idx
+					}
+					check_variable = {
+						THIS.var_COM_civ_system_idx = ROOT.var_COM_civ_system_idx
+					}
+				}
+			}
+			modifier = {
+				add = -200
+				NOT_share_COM_civ_satellites_above_network_traffic_limit = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_civ_com_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_civ_com_access_@PREV }
+			}
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 50
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war = yes }
+					add = -50
+				}
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	revoke_civ_com_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				is_in_array = {
+					array = COM_civ_treaty_array
+					value = PREV.id
+				}
+			}
+		}
+		selectable = {
+			always = yes
+		}
+		cost = 0
+		requires_acceptance = no
+		show_acceptance_on_action_button = no
+		#### ACTION LOCALISATION ###
+		send_description = REVOKE_CIV_COM_ACCESS_LOC
+		receive_description = REVOKE_CIV_COM_ACCESS_RECIEVER_LOC
+		accept_title = REVOKE_CIV_COM_ACCESS_ACCEPTED_TITLE
+		accept_description = REVOKE_CIV_COM_ACCESS_ACCEPTED_DESC
+		reject_title = REVOKE_CIV_COM_ACCESS_REJECTED_TITLE
+		reject_description = REVOKE_CIV_COM_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect revoke_civ_com_access"
+			ROOT = { remove_from_array = { array = ROOT.COM_civ_treaty_array value = PREV.id } }
+			ROOT = { remove_from_array = { array = PREV.COM_civ_access_array value = ROOT.id } }
+			ROOT = { remove_from_array = { array = PREV.COM_civ_access_system_idx_array value = ROOT.var_COM_civ_system_idx } }
+			ROOT = { add_offer_access_COM_civ_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_civ_com_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_com_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_civ_com_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = -100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = 400
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = 200
+				NOT_share_COM_civ_satellites_above_network_traffic_limit = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_civ_com_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_civ_com_access_@PREV }
+			}
+		}
+	}
+
+	############
+	### SPY ###
+	############
+
+	### SPY mil
+	request_mil_spy_access = {
+		icon = 16
+
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = SPY_mil_access_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = REQUEST_MIL_SPY_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						PREV.var_SPY_mil_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						PREV.var_SPY_mil_system_idx = ROOT.var_SPY_mil_system_idx
+					}
+					check_variable = {
+						PREV.var_SPY_mil_system_idx > ROOT.var_SPY_mil_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = REQUEST_MIL_SPY_ACCESS_LOC
+		receive_description = REQUEST_MIL_SPY_ACCESS_RECIEVER_LOC
+		accept_title = REQUEST_MIL_SPY_ACCESS_ACCEPTED_TITLE
+		accept_description = REQUEST_MIL_SPY_ACCESS_ACCEPTED_DESC
+		reject_title = REQUEST_MIL_SPY_ACCESS_REJECTED_TITLE
+		reject_description = REQUEST_MIL_SPY_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		complete_effect = {
+		# PREV = target / access TAG
+		# ROOT = sending TAG / bonus TAG
+
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_mil_spy_access"
+			ROOT = { add_to_array = { array = PREV.SPY_mil_treaty_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = SPY_mil_access_array value = PREV.id } }
+			ROOT = { add_to_array = { array = SPY_mil_access_system_idx_array value = PREV.var_SPY_mil_system_idx } }
+			ROOT = { add_access_SPY_mil_vars = yes }
+			ROOT = { force_update_dynamic_modifier = yes }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_mil_spy_access"
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			base = 0
+
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 0
+			}
+			friends_condition = {
+				base = 0
+				modifier = {
+					add = 100
+					ai_acceptance_request_satellites_with_friends = yes
+				}
+			}
+			foes_condition = {
+				base = 0
+				modifier = {
+					add = -100
+					NOT_ai_acceptance_request_satellites_with_foes = yes
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	offer_mil_spy_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = SPY_mil_treaty_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = OFFER_MIL_SPY_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						ROOT.var_SPY_mil_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						ROOT.var_SPY_mil_system_idx = PREV.var_SPY_mil_system_idx
+					}
+					check_variable = {
+						ROOT.var_SPY_mil_system_idx > PREV.var_SPY_mil_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = OFFER_MIL_SPY_ACCESS_LOC
+		receive_description = OFFER_MIL_SPY_ACCESS_RECIEVER_LOC
+		accept_title = OFFER_MIL_SPY_ACCESS_ACCEPTED_TITLE
+		accept_description = OFFER_MIL_SPY_ACCESS_ACCEPTED_DESC
+		reject_title = OFFER_MIL_SPY_ACCESS_REJECTED_TITLE
+		reject_description = OFFER_MIL_SPY_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_mil_spy_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_offer_mil_spy_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_mil_spy_access"
+			ROOT = { add_to_array = { array = ROOT.SPY_mil_treaty_array value = PREV.id } }
+			ROOT = { add_to_array = { array = PREV.SPY_mil_access_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = PREV.SPY_mil_access_system_idx_array value = ROOT.var_SPY_mil_system_idx } }
+			ROOT = { add_offer_access_SPY_mil_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_mil_spy_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_spy_access"
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_mil_spy_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = 100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = -100
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					check_variable = {
+						THIS.var_SPY_mil_system_idx > ROOT.var_SPY_mil_system_idx
+					}
+					check_variable = {
+						THIS.var_SPY_mil_system_idx = ROOT.var_SPY_mil_system_idx
+					}
+				}
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_mil_spy_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_mil_spy_access_@PREV }
+			}
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 50
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war = yes }
+					add = -50
+				}
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	revoke_mil_spy_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				is_in_array = {
+					array = SPY_mil_treaty_array
+					value = PREV.id
+				}
+			}
+		}
+		selectable = {
+			always = yes
+		}
+		cost = 0
+		requires_acceptance = no
+		show_acceptance_on_action_button = no
+		#### ACTION LOCALISATION ###
+		send_description = REVOKE_MIL_SPY_ACCESS_LOC
+		receive_description = REVOKE_MIL_SPY_ACCESS_RECIEVER_LOC
+		accept_title = REVOKE_MIL_SPY_ACCESS_ACCEPTED_TITLE
+		accept_description = REVOKE_MIL_SPY_ACCESS_ACCEPTED_DESC
+		reject_title = REVOKE_MIL_SPY_ACCESS_REJECTED_TITLE
+		reject_description = REVOKE_MIL_SPY_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect revoke_mil_spy_access"
+			ROOT = { remove_from_array = { array = ROOT.SPY_mil_treaty_array value = PREV.id } }
+			ROOT = { remove_from_array = { array = PREV.SPY_mil_access_array value = ROOT.id } }
+			ROOT = { remove_from_array = { array = PREV.SPY_mil_access_system_idx_array value = ROOT.var_SPY_mil_system_idx } }
+			ROOT = { add_offer_access_SPY_mil_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_mil_spy_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_spy_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_mil_spy_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = -100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = 400
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_mil_spy_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_mil_spy_access_@PREV }
+			}
+		}
+	}
+	### SPY civ
+	request_civ_spy_access = {
+		icon = 16
+
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = SPY_civ_access_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = REQUEST_CIV_SPY_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						PREV.var_SPY_civ_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						PREV.var_SPY_civ_system_idx = ROOT.var_SPY_civ_system_idx
+					}
+					check_variable = {
+						PREV.var_SPY_civ_system_idx > ROOT.var_SPY_civ_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = REQUEST_CIV_SPY_ACCESS_LOC
+		receive_description = REQUEST_CIV_SPY_ACCESS_RECIEVER_LOC
+		accept_title = REQUEST_CIV_SPY_ACCESS_ACCEPTED_TITLE
+		accept_description = REQUEST_CIV_SPY_ACCESS_ACCEPTED_DESC
+		reject_title = REQUEST_CIV_SPY_ACCESS_REJECTED_TITLE
+		reject_description = REQUEST_CIV_SPY_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		complete_effect = {
+		# PREV = target / access TAG
+		# ROOT = sending TAG / bonus TAG
+
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_civ_spy_access"
+			ROOT = { add_to_array = { array = PREV.SPY_civ_treaty_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = SPY_civ_access_array value = PREV.id } }
+			ROOT = { add_to_array = { array = SPY_civ_access_system_idx_array value = PREV.var_SPY_civ_system_idx } }
+			ROOT = { add_access_SPY_civ_vars = yes }
+			ROOT = { force_update_dynamic_modifier = yes }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_civ_spy_access"
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			base = 0
+
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 0
+			}
+			friends_condition = {
+				base = 0
+				modifier = {
+					add = 100
+					ai_acceptance_request_satellites_with_friends = yes
+				}
+			}
+			foes_condition = {
+				base = 0
+				modifier = {
+					add = -100
+					NOT_ai_acceptance_request_satellites_with_foes = yes
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	offer_civ_spy_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				NOT = {
+					is_in_array = {
+						array = SPY_civ_treaty_array
+						value = PREV.id
+					}
+				}
+			}
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = OFFER_CIV_SPY_ACCESS_SELECTABLE_TT
+				NOT = {
+					check_variable = {
+						ROOT.var_SPY_civ_system_idx = 0
+					}
+				}
+				OR = {
+					check_variable = {
+						ROOT.var_SPY_civ_system_idx = PREV.var_SPY_civ_system_idx
+					}
+					check_variable = {
+						ROOT.var_SPY_civ_system_idx > PREV.var_SPY_civ_system_idx
+					}
+				}
+			}
+		}
+		cost = 0
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		#### ACTION LOCALISATION ###
+		send_description = OFFER_CIV_SPY_ACCESS_LOC
+		receive_description = OFFER_CIV_SPY_ACCESS_RECIEVER_LOC
+		accept_title = OFFER_CIV_SPY_ACCESS_ACCEPTED_TITLE
+		accept_description = OFFER_CIV_SPY_ACCESS_ACCEPTED_DESC
+		reject_title = OFFER_CIV_SPY_ACCESS_REJECTED_TITLE
+		reject_description = OFFER_CIV_SPY_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_civ_spy_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_offer_civ_spy_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_civ_spy_access"
+			ROOT = { add_to_array = { array = ROOT.SPY_civ_treaty_array value = PREV.id } }
+			ROOT = { add_to_array = { array = PREV.SPY_civ_access_array value = ROOT.id } }
+			ROOT = { add_to_array = { array = PREV.SPY_civ_access_system_idx_array value = ROOT.var_SPY_civ_system_idx } }
+			ROOT = { add_offer_access_SPY_civ_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_civ_spy_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_spy_access"
+			# ROOT = {
+			# 	set_country_flag = {
+			# 		flag = recently_offer_civ_spy_access_@PREV
+			# 		days = 180
+			# 		value = 1
+			# 	}
+			# }
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = 100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = -100
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					check_variable = {
+						THIS.var_SPY_civ_system_idx > ROOT.var_SPY_civ_system_idx
+					}
+					check_variable = {
+						THIS.var_SPY_civ_system_idx = ROOT.var_SPY_civ_system_idx
+					}
+				}
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_civ_spy_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_civ_spy_access_@PREV }
+			}
+		}
+		ai_acceptance = {
+			base_desire = {
+				base = 50
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_war = yes }
+					add = -50
+				}
+				modifier = {
+					ROOT = { has_war_together_with = PREV }
+					add = 250
+				}
+				modifier = {
+					ROOT = { has_war_with = PREV }
+					add = -250
+				}
+			}
+			wargoal_condition = {
+				base = 0
+				modifier = {
+					ROOT = { is_justifying_wargoal_against = PREV }
+					add = -200
+				}
+				modifier = {
+					ROOT = { has_wargoal_against = PREV }
+					add = -250
+				}
+			}
+		}
+	}
+
+	revoke_civ_spy_access = {
+		icon = 16
+		allowed = {
+			always = yes
+		}
+		visible = {
+			ROOT = {
+				is_in_array = {
+					array = SPY_civ_treaty_array
+					value = PREV.id
+				}
+			}
+		}
+		selectable = {
+			always = yes
+		}
+		cost = 0
+		requires_acceptance = no
+		show_acceptance_on_action_button = no
+		#### ACTION LOCALISATION ###
+		send_description = REVOKE_CIV_SPY_ACCESS_LOC
+		receive_description = REVOKE_CIV_SPY_ACCESS_RECIEVER_LOC
+		accept_title = REVOKE_CIV_SPY_ACCESS_ACCEPTED_TITLE
+		accept_description = REVOKE_CIV_SPY_ACCESS_ACCEPTED_DESC
+		reject_title = REVOKE_CIV_SPY_ACCESS_REJECTED_TITLE
+		reject_description = REVOKE_CIV_SPY_ACCESS_REJECTED_DESC
+		#### EFFECTS ###
+		on_sent_effect = {
+
+		}
+		complete_effect = {
+		# PREV = target / bonus TAG
+		# ROOT = sending TAG / access TAG
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect revoke_civ_spy_access"
+			ROOT = { remove_from_array = { array = ROOT.SPY_civ_treaty_array value = PREV.id } }
+			ROOT = { remove_from_array = { array = PREV.SPY_civ_access_array value = ROOT.id } }
+			ROOT = { remove_from_array = { array = PREV.SPY_civ_access_system_idx_array value = ROOT.var_SPY_civ_system_idx } }
+			ROOT = { add_offer_access_SPY_civ_vars = yes }
+			THIS = { force_update_dynamic_modifier = yes }
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_civ_spy_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		reject_effect = {
+			#log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_spy_access"
+			ROOT = {
+				set_country_flag = {
+					flag = recently_revoke_civ_spy_access_@PREV
+					days = 180
+					value = 1
+				}
+			}
+		}
+		#### AI SECTION ###
+		ai_desire = {
+			modifier = {
+				add = -100
+				share_satellites_with_friends = yes
+			}
+			modifier = {
+				add = 400
+				NOT_share_satellites_with_foes = yes
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_revoke_civ_spy_access_@PREV }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_offer_civ_spy_access_@PREV }
+			}
+		}
+	}
+
+### End of scripted diplomatic actions	
+}
+

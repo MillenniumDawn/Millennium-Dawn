@@ -1,0 +1,374 @@
+on_actions = {
+	#ROOT is new controller #FROM is old controller #FROM.FROM is state ID
+	on_state_control_changed = {
+		effect = {
+		}
+	}
+	#ROOT is winner #FROM gets annexed - This will also fire on_annex
+	on_civil_war_end = {
+		effect = {
+		}
+	}
+
+	on_ruling_party_change = {
+		effect = {
+			#Nullify all guarantees
+			every_other_country = {
+				limit = { is_guaranteed_by = ROOT }
+				ROOT = {
+					diplomatic_relation = {
+						country = PREV
+						relation = guarantee
+						active = no
+					}
+				}
+			}
+			every_other_country = {
+				limit = { has_guaranteed = ROOT }
+				diplomatic_relation = {
+					country = ROOT
+					relation = guarantee
+					active = no
+				}
+			}
+		}
+	}
+
+	#FROM - Country (owner)
+	#ROOT - leader
+	#FROMFROM - original owner for exiled leaders
+	on_unit_leader_level_up = {
+		effect = {
+			if = { limit = { FROM = { has_idea = bold_attack_spirit } }
+				character = {
+					if = {
+						limit = { is_army_leader = yes }
+						random_list = {
+							50 = { add_attack = 1 }
+							50 = {}
+						}
+					}
+				}
+			}
+			else_if = { limit = { FROM = { has_idea = tenacious_defense_spirit } }
+				character = {
+					if = {
+						limit = { is_army_leader = yes }
+
+						random_list = {
+							50 = { add_defense = 1 }
+							50 = {}
+						}
+					}
+				}
+			}
+			else_if = { limit = { FROM = { has_idea = meticulous_preparation_spirit } }
+				character = {
+					if = {
+						limit = { is_army_leader = yes }
+
+						random_list = {
+							50 = {
+								add_planning = 1
+								add_logistics = 1
+							}
+							50 = {}
+						}
+					}
+				}
+			}
+			else_if = { limit = { FROM = { has_idea = instilled_aggression_spirit } }
+				character = {
+					IF = {
+						limit = { is_navy_leader = yes }
+
+						random_list = {
+							50 = {
+								add_attack = 1
+							}
+							50 = {}
+						}
+					}
+				}
+			}
+			else_if = { limit = { FROM = { has_idea = calculated_restraint_spirit } }
+				character = {
+					IF = {
+						limit = { is_navy_leader = yes }
+
+						random_list = {
+							50 = {
+								add_defense = 1
+							}
+							50 = {}
+						}
+					}
+				}
+			}
+			else_if = { limit = { FROM = { has_idea = signals_training_spirit } }
+				character = {
+					IF = {
+						limit = { is_navy_leader = yes }
+
+						random_list = {
+							50 = {
+								add_maneuver = 1
+								add_coordination = 1
+							}
+							50 = {}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	on_unit_leader_created = { # This uses the UNIT LEADER sub scope of a character, FROM == country
+		effect = {
+			character = {
+				if = {
+					limit = {
+						is_army_leader = yes
+					}
+					if = {
+						limit = {
+							FROM = { has_idea = military_science_doctorate_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						ROOT = {
+							random_list = {
+								25 = { add_skill_level = 1 }
+								75 = { }
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							FROM = { has_idea = political_loyalty_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						ROOT = {
+							random_list = {
+								50 = { add_unit_leader_trait = media_personality }
+								50 = { add_unit_leader_trait = politically_connected }
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							FROM = { has_idea = inventive_leadership_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						root = {
+							random_list = {
+								17 = { add_unit_leader_trait = naval_invader }
+								17 = { add_unit_leader_trait = commando }
+								17 = { add_unit_leader_trait = trickster }
+								50 = {}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							FROM = { has_idea = combined_arms_schools_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						root = {
+							random_list = {
+								17 = { add_unit_leader_trait = panzer_leader }
+								17 = { add_unit_leader_trait = armoured_cavalry_leader }
+								17 = { add_unit_leader_trait = air_cavalry_leader }
+								50 = {}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							FROM = { has_idea = deep_defence_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						root = {
+							random_list = {
+								17 = { add_unit_leader_trait = trait_engineer }
+								17 = { add_unit_leader_trait = artillery_leader }
+								17 = { add_unit_leader_trait = desperate_defender }
+								50 = {}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							FROM = { has_idea = extreme_weather_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						root = {
+							random_list = {
+								6 = { add_unit_leader_trait = desert_fox }
+								6 = { add_unit_leader_trait = swamp_fox }
+								6 = { add_unit_leader_trait = hill_fighter }
+								6 = { add_unit_leader_trait = trait_mountaineer }
+								6 = { add_unit_leader_trait = urban_assault_specialist }
+								6 = { add_unit_leader_trait = ranger }
+								6 = { add_unit_leader_trait = jungle_rat }
+								6 = { add_unit_leader_trait = winter_specialist }
+								50 = {}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							FROM = { has_idea = infantry_combat_schools_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						root = {
+							random_list = {
+								17 = { add_unit_leader_trait = organizer }
+								17 = { add_unit_leader_trait = infantry_leader }
+								17 = { add_unit_leader_trait = skilled_staffer }
+								50 = {}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							FROM = { has_idea = self_taught_academy_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+						}
+						root = {
+							random_list = {
+								50 = { add_unit_leader_trait = guerrilla_leader_trait }
+								50 = {}
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = { has_idea = naval_tradition_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+					}
+					ROOT = {
+						random_list = {
+							25 = { add_skill_level = 1 }
+							75 = { }
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = { has_idea = convoy_warfare_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+					}
+					root = {
+						random_list = {
+							25 = { add_unit_leader_trait = seawolf }
+							25 = { add_unit_leader_trait = blockade_runner }
+							50 = {}
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = { has_idea = littoral_combat_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+					}
+					root = {
+						random_list = {
+							17 = { add_unit_leader_trait = fleet_protector }
+							17 = { add_unit_leader_trait = fly_swatter }
+							17 = { add_unit_leader_trait = spotter }
+							50 = {}
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = { has_idea = grand_fleet_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+					}
+					root = {
+						random_list = {
+							25 = { add_unit_leader_trait = ironside }
+							25 = { add_unit_leader_trait = superior_tactician }
+							50 = {}
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						FROM = { has_idea = naval_air_arm_spirit } #done here instead of the trait file to avoid some oddness with generating assignable traits under certain circumstances, makes it easier to control probabilities
+					}
+					root = {
+						random_list = {
+							50 = { add_unit_leader_trait = air_controller }
+							50 = {}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	on_government_change = {
+		effect = {
+		}
+	}
+	on_peace = {
+		effect = {
+		}
+	}
+
+	#ROOT - country that just went to peace
+	on_peaceconference_ended = {
+		effect = {
+		}
+	}
+
+	#ROOT = attacking side
+	#FROM = defending side
+	#fired when two countries end up at war with each other (on_war is fired when a country goes to war against anyone and is not fired again when it enters war against another country unless it went to peace first)
+	on_war_relation_added = { # ---> Fires in 2nd place (1st is on_declare_war) -> This one is triggered ALWAYS
+		effect = {
+		}
+	}
+
+	#FROM is faction leader on join faction requests. THIS DOES NOT FIRE ON ADD_TO_FACTION EFFECT! USE ON_OFFER_JOIN_FACTION!
+	on_join_faction = {
+		effect = {
+		}
+	}
+
+	#FROM is country getting invited.
+	on_offer_join_faction = {
+		effect = {
+		}
+	}
+
+	on_release_as_puppet = {
+		effect = {
+		}
+	}
+
+	# called when a country send volunteers to another
+	# ROOT is sender, FROM is receiver
+	on_send_volunteers = {
+		effect = {
+		}
+	}
+
+	on_startup = {
+		effect = {
+		}
+	}
+
+	# ROOT is capitulated country, FROM is winner
+	on_capitulation = {
+		effect = {
+		}
+	}
+
+	#ROOT = attacking side
+	#FROM = defending side
+	#fired when two countries end up at war with each other (on_war is fired when a country goes to war against anyone and is not fired again when it enters war against another country unless it went to peace first)
+	on_war_relation_added = {
+		effect = {
+		}
+	}
+
+	#ROOT is new controller #FROM is old controller #FROM.FROM is state ID
+	on_state_control_changed = {
+		effect = {
+		}
+	}
+
+
+}
+
