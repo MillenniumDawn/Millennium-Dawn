@@ -36,6 +36,10 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -313,7 +317,7 @@ focus_tree = {
 	### Western Doctrine/Alignment Branch
 	focus = {
 		id = UKR_western_doctrine
-		icon = western_doctrine
+		icon = nato_nation
 		x = 5
 		y = 2
 
@@ -363,6 +367,14 @@ focus_tree = {
 			modifier = {
 				factor = 1
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = UKR_PRO_RUSSIAN_PATH
+			}
+			modifier = {
+				factor = 1
+				has_global_flag = UKR_SLAVA_UKRAINE_PATH
 			}
 		}
 	}
@@ -555,7 +567,7 @@ focus_tree = {
 	### Closer ties with Western bloc
 	focus = {
 		id = UKR_closer_ties_with_western_bloc
-		icon = closer_ties_with_western_bloc
+		icon = align_to_nato
 		x = 2
 		y = 1
 		relative_position_id = UKR_western_doctrine
@@ -860,7 +872,7 @@ focus_tree = {
 	### Eastern Doctrine/Joining the CSTO branch
 	focus = {
 		id = UKR_eastern_doctrine
-		icon = eastern_doctrine
+		icon = align_to_csto
 		x = -6
 		y = 1
 		relative_position_id = UKR_pro_russian_government_in_power
@@ -917,7 +929,7 @@ focus_tree = {
 	### Closer ties with Eastern bloc
 	focus = {
 		id = UKR_closer_ties_with_eastern_bloc
-		icon = closer_ties_with_eastern_bloc
+		icon = csto_nation
 		x = -6
 		y = 2
 		relative_position_id = UKR_pro_russian_government_in_power
@@ -1951,16 +1963,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_economic_recovery_program"
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-			}
+			two_random_industrial_complex = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
 			change_small_medium_business_owners_opinion = yes
@@ -2028,7 +2031,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_bet_on_small_business"
-			set_temp_variable = { treasury_change = -3.00 }
+			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
@@ -2259,8 +2262,6 @@ focus_tree = {
 		y = 1
 		cost = 10
 
-		ai_will_do = { factor = 1 }
-
 		available = {
 			OR = {
 				has_completed_focus = UKR_pro_ukrainian_government_in_power
@@ -2279,6 +2280,14 @@ focus_tree = {
 			add_popularity = { ideology = nationalist popularity = 0.05 }
 			recalculate_party = yes
 			add_war_support = 0.02
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				has_global_flag = UKR_NATIONAL_FRONT_PATH
+			}
 		}
 	}
 
@@ -2316,7 +2325,7 @@ focus_tree = {
 		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
 
-		ai_will_do = { factor = 1 }
+
 
 		prerequisite = { focus = UKR_enlist_the_people_support }
 
@@ -2354,6 +2363,10 @@ focus_tree = {
 				}
 			}
 			set_country_flag = no_leader_change
+		}
+
+		ai_will_do = {
+			factor = 0
 		}
 	}
 
@@ -2430,8 +2443,6 @@ focus_tree = {
 		relative_position_id = UKR_take_lead_at_national_revival
 		cost = 10
 
-		ai_will_do = { factor = 1 }
-
 		prerequisite = { focus = UKR_take_lead_at_national_revival }
 
 		mutually_exclusive = { focus = UKR_enlist_the_people_support  }
@@ -2464,6 +2475,26 @@ focus_tree = {
 			custom_effect_tooltip = UKR_raise_chance_of_revolt_by_3_TT
 			custom_effect_tooltip = UKR_stability_of_ukraine_var_lowers_by_5_TT
 		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 1
+				has_global_flag = UKR_NATIONAL_FRONT_PATH
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = UKR_SLAVA_UKRAINE_PATH
+					has_global_flag = UKR_PRO_RUSSIAN_PATH
+				}
+			}
+		}
+
 	}
 
 	### Nationalistic Pressure
@@ -3159,21 +3190,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_armor_production"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
 			add_tech_bonus = {
 				name = armor_bonus
 				bonus = 0.50
 				uses = 1
 				category = Cat_ARMOR
 			}
-			random_owned_state = {
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_arms_factory = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_defense_industry_opinion = yes
 		}
@@ -3197,15 +3220,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_defend_our_sky"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			random_owned_state = {
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_arms_factory = yes
 			add_ideas = fighter_production_bonus
 		}
 	}
@@ -3320,16 +3335,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_legacy_of_the_ukr_ind"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_industrial_complex = yes
 		}
 	}
 
@@ -3447,16 +3453,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_extend_ukrainian_refineries"
-			set_temp_variable = { treasury_change = -7 }
+			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = synthetic_refinery
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_synthetic_refinery = yes
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -3465,7 +3464,6 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
 		}
@@ -3644,7 +3642,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_own_automobile_production"
-			set_temp_variable = { treasury_change = -3.00 }
+			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
@@ -3828,8 +3826,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_samru"
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
 			if = {
 				limit = { has_idea = infrastructure_project }
 				swap_ideas = {
@@ -3839,13 +3835,7 @@ focus_tree = {
 			}
 			else_if = {
 				limit = { has_idea = infrastructure_project2 }
-				random_owned_state = {
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+				one_random_infrastructure = yes
 			}
 			else = {
 				custom_effect_tooltip = UKR_infrastructure_project_TT
@@ -3871,16 +3861,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_roads_extend_plan"
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
 			add_political_power = 100
-			random_owned_state = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_infrastructure = yes
 		}
 
 		ai_will_do = {
@@ -3902,8 +3884,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_ukrainian_railways"
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
 			if = {
 				limit = { has_idea = infrastructure_project }
 				swap_ideas = {
@@ -3913,13 +3893,7 @@ focus_tree = {
 			}
 			else_if = {
 				limit = { has_idea = infrastructure_project2 }
-				random_owned_state = {
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+				one_random_infrastructure = yes
 			}
 			else = {
 				custom_effect_tooltip = UKR_infrastructure_project_TT
@@ -3984,8 +3958,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_support_uia"
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
 			if = {
 				limit = { has_idea = infrastructure_project }
 				swap_ideas = {
@@ -3995,13 +3967,7 @@ focus_tree = {
 			}
 			else_if = {
 				limit = { has_idea = infrastructure_project2 }
-				random_owned_state = {
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+				one_random_infrastructure = yes
 			}
 			else = {
 				custom_effect_tooltip = UKR_infrastructure_project_TT
