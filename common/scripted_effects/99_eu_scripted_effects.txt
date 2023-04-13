@@ -418,11 +418,10 @@ EU_update_vars = {
 		# Euroscepticism update
 		for_each_scope_loop = {
 			array = global.EU_potential
-			if = { limit = { check_variable = { THIS.eurosceptic > 1 } }
-				set_variable = { var = THIS.eurosceptic value = 1 }
-			}
-			else_if = { limit = { check_variable = { THIS.eurosceptic < 0 } }
-				set_variable = { var = THIS.eurosceptic value = 0 }
+			clamp_variable = {
+				var = THIS.eurosceptic
+				min = 0
+				max = 1
 			}
 		}
 		###End of Euroscepticism update
@@ -452,14 +451,13 @@ EU_update_vars = {
 #######################################
 ###     Changing Euroscepticism     ###
 #######################################
-
 # set_temp_variable = { modify_eurosceptic = +- }
 # set_temp_variable = { modify_eurosceptic_target = ROOT/THIS/PREV/FROM or country TAG }
 eurosceptic_change = {
 	custom_effect_tooltip = tooltip_eurosceptic_change
 	hidden_effect = {
 		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects [?modify_eurosceptic_target] eurosceptic_change [?modify_eurosceptic]"
-		add_to_variable = { modify_eurosceptic_target.eurosceptic = modify_eurosceptic }
+		var:modify_eurosceptic_target = { add_to_variable = { eurosceptic = modify_eurosceptic } }
 		EU_update_vars = yes
 	}
 }
@@ -473,10 +471,8 @@ EU_eurosceptic_change = {
 	custom_effect_tooltip = tooltip_EU_eurosceptic_change
 	hidden_effect = {
 		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_eurosceptic_change [?modify_eurosceptic]"
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		for_each_scope_loop = {
+			array = global.EU_member
 			add_to_variable = { THIS.eurosceptic = modify_eurosceptic }
 		}
 		EU_update_vars = yes
@@ -484,7 +480,7 @@ EU_eurosceptic_change = {
 }
 
 ##########################################################################
-### Changing Euroscepticism of all current and potential member states ###
+### Changing Euroscepticism of all current AND potential member states ###
 ##########################################################################
 
 # set_temp_variable = { modify_eurosceptic = +- }
@@ -492,10 +488,8 @@ EU_potential_eurosceptic_change = {
 	custom_effect_tooltip = tooltip_EU_potential_eurosceptic_change
 	hidden_effect = {
 		log = "[GetDateText]: [FROM.GetTag]: 99_EU_scripted_effects EU_potential_eurosceptic_change [?modify_eurosceptic]"
-		every_country = {
-			limit = {
-				has_country_flag = EU_potential
-			}
+		for_each_scope_loop = {
+			array = global.EU_potential
 			add_to_variable = { THIS.eurosceptic = modify_eurosceptic }
 		}
 		EU_update_vars = yes
@@ -846,11 +840,9 @@ leaving_EU = {
 			limit = {
 				has_idea = EUU_ambassador_unsc
 				NOT = {
-					OR = {
-						tag = ENG
-						tag = FRA
-						has_country_flag = reformed_council
-					}
+					tag = ENG
+					tag = FRA
+					has_country_flag = reformed_council
 				}
 			}
 			remove_ideas = p5_member
