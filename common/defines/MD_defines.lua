@@ -243,18 +243,18 @@
 	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = -0.40 -- 0.33 (not negative)
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 36 -- 24
 	NDefines.NMilitary.LAND_SPEED_MODIFIER = 0.05 -- 0.05
-	NDefines.NMilitary.RIVER_CROSSING_PENALTY = -0.15 -- -0.3
-	NDefines.NMilitary.RIVER_CROSSING_PENALTY_LARGE = -0.3 -- -0.6
+	NDefines.NMilitary.RIVER_CROSSING_PENALTY = -0.2 -- -0.3
+	NDefines.NMilitary.RIVER_CROSSING_PENALTY_LARGE = -0.4 -- -0.6
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY = -0.25 -- -0.25
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.45 -- -0.5
 	NDefines.NMilitary.BASE_FORT_PENALTY = -0.075 -- -0.15
-	NDefines.NMilitary.RECON_SKILL_IMPACT = 0.05 -- 5
+	NDefines.NMilitary.RECON_SKILL_IMPACT = 0.5 -- 5
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.5 -- -0.35
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
-	NDefines.NMilitary.SLOWEST_SPEED = 8 -- 4
+	NDefines.NMilitary.SLOWEST_SPEED = 4 -- 4
 	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
-	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.15 -- 0.25
+	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.7 -- 1.00
 	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
 	NDefines.NMilitary.BATALION_CHANGED_EXPERIENCE_DROP = 0.25 -- 0.5
@@ -285,9 +285,9 @@
 	NDefines.NMilitary.RETREAT_SPEED_FACTOR = 1.0 -- 0.25
 	NDefines.NMilitary.WITHDRAWING_SPEED_FACTOR = 0.35 -- 0.15
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_BASE = 5.0               -- Base speed of strategic redeployment when not on railways
-    NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
-    NDefines.NMilitary.STRATEGIC_SPEED_RAIL_BASE = 20.0               -- Base speed of strategic redeployment when on railways -- vanilla is 15
-    NDefines.NMilitary.STRATEGIC_SPEED_RAIL_MAX = 40.0                -- Additional speed of strategic redeployment on max-level railways -- vanilla is 25
+	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
+	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_BASE = 20.0               -- Base speed of strategic redeployment when on railways -- vanilla is 15
+	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_MAX = 40.0                -- Additional speed of strategic redeployment on max-level railways -- vanilla is 25
 	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.5 -- 0.1
 	NDefines.NMilitary.LAND_EQUIPMENT_BASE_COST = 5 -- 10 --Used to determine Upgrade Cost
 	NDefines.NMilitary.LAND_EQUIPMENT_RAMP_COST = 3 -- 5
@@ -310,16 +310,18 @@
 	NDefines.NMilitary.ANTI_AIR_ATTACK_TO_AMOUNT = 0.005 -- 0.005
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 0.0003 -- 0.0001
 	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.25 -- 1.0
-	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.002 -- 0.0015
+	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.0025 -- 0.0015
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
-	NDefines.NMilitary.UNIT_EXP_LEVELS = {0.1, 0.3, 0.75, 0.9} -- {0.1, 0.3, 0.75, 0.9}
+	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }
+	NDefines.NMilitary.ARMY_EXP_BASE_LEVEL = 3
+	NDefines.NMilitary.TRAINING_MAX_LEVEL = 5
+	NDefines.NMilitary.DEPLOY_TRAINING_MAX_LEVEL = 2
 	NDefines.NMilitary.FIELD_EXPERIENCE_SCALE = 0.001 -- 0.0015
-	NDefines.NMilitary.TRAINING_MAX_LEVEL = 3 -- 2
 	NDefines.NMilitary.FIELD_EXPERIENCE_MAX_PER_DAY = 2 -- 1.2
 	NDefines.NMilitary.LEADER_EXPERIENCE_SCALE = 1.25 -- 1.0
 	NDefines.NMilitary.BASE_LEADER_TRAIT_GAIN_XP = 0.55 -- 0.45
 	NDefines.NMilitary.ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.175 -- 0.1
-	NDefines.NMilitary.TRAINING_ATTRITION = 0.1 -- 0.05
+	NDefines.NMilitary.TRAINING_ATTRITION = 0.05 -- 0.05
 	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased Max Experience cuz reasons
 	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
@@ -327,8 +329,8 @@
 	NDefines.NMilitary.ENGAGEMENT_WIDTH_PER_WIDTH = 3.0			-- how much enemy combat width we are allowed to engage per width of our own -- vanilla is 2.0
 
 	NDefines.NMilitary.NEW_ARMY_LEADER_LEVEL_CHANCES = {			-- chances for new army leaders to start at a given level
-        0.90, -- 90% for level one
-        0.10  -- 10% for level two
+		0.90, -- 90% for level one
+		0.10  -- 10% for level two
 			  -- 0% for level three to ten
 	}
 	NDefines.NMilitary.BATALION_NOT_CHANGED_EXPERIENCE_DROP = 0.0		-- Division experience drop if unit has same batalion
@@ -404,9 +406,10 @@
 	NDefines.NAir.NAVAL_COMBAT_EXTERNAL_PLANES_MIN_CAP = 1 -- 20
 	NDefines.NAir.EFFICIENCY_REGION_CHANGE_PENALTY_FACTOR = 0.2 -- 0.9
 	NDefines.NAir.AIR_WING_XP_MAX = 1500.0 -- 1000.0
-	NDefines.NAir.AIR_WING_XP_TRAINING_MAX = 1100 -- 300
-	NDefines.NAir.AIR_WING_XP_LEVELS = {300, 600, 1100, 1400} -- {100, 300, 700, 900}
-	NDefines.NAir.AIR_WING_XP_TRAINING_MISSION_GAIN_DAILY = 1.25 -- 3.3
+	NDefines.NAir.AIR_WING_XP_TRAINING_MAX = 700 -- 300
+	NDefines.NAir.AIR_WING_XP_LEVELS = { 100, 250, 400, 550, 700, 850, 1000, 1150, 1300 } -- {100, 300, 700, 900}
+	NDefines.NAir.AIR_WING_XP_LOSS_WHEN_KILLED = 400
+	NDefines.NAir.AIR_WING_XP_TRAINING_MISSION_GAIN_DAILY = 2.5 -- 3.3
 	NDefines.NAir.AIR_WING_XP_AIR_VS_AIR_COMBAT_GAIN = 2.0 -- 0.8
 	NDefines.NAir.AIR_WING_XP_GROUND_MISSION_COMPLETED_GAIN = 1.2 -- 0.28
 	NDefines.NAir.AIR_WING_XP_RECON_MISSION_COMPLETED_GAIN = 0.12 -- 0.05
@@ -550,10 +553,10 @@
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
 	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CARRIERS = 2.0 -- 1.0
 	NDefines.NNavy.NEW_NAVY_LEADER_LEVEL_CHANCES = {                                -- chances for new navy leaders to start at a given level
-        0.90, -- 90% for level one
-        0.10  -- 10% for level two
+		0.90, -- 90% for level one
+		0.10  -- 10% for level two
               -- 0% for level three to ten
-    }
+	}
 	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1 		-- optimum carrier count for carrier taskforces
 	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6 		-- optimum capital count for capital taskforces
 	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2			-- optimum screen count for screen taskforces
@@ -620,9 +623,9 @@
 
 	-- NAI Defines
 	-- BAI fix test
-	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 3.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
-	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 1.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
-	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 2.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 6.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 2.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
+	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 3.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
 	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_ATTACK_FACTOR = 0.5                 -- Importance of unit's terrain adjusted attack stat when assigning to an area defense order
 	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_DEFENSE_FACTOR = 4.0               -- Importance of unit's terrain adjusted defense stat when assigning to an area defense order
 	NDefines.NAI.ASSIGN_DEFENSE_TERRAIN_MOVEMENT_FACTOR = 0.5               -- Importance of unit's terrain adjusted movement stat when assigning to an area defense order
@@ -693,7 +696,7 @@
 	NDefines.NAI.UPGRADE_DIVISION_RELUCTANCE = 30					-- 7
 	NDefines.NAI.UPGRADE_PERCENTAGE_OF_FORCES = 0.15				-- 0.1
 	NDefines.NAI.STRATEGIC_BOMBING_DEFENCE_IMPORTANCE = 500.0
-	NDefines.NAI.ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.75				-- 2.5
+	NDefines.NAI.ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.5				-- 2.5
 	NDefines.NAI.STATE_CONTROL_FOR_AREA_DEFENSE = 0.2				-- 0.4
 	NDefines.NAI.NAVAL_MISSION_INVASION_BASE = 5000					-- 1000
 	NDefines.NAI.SCARY_LEVEL_AVERAGE_DEFENSE = -0.6					-- -0.7
@@ -733,7 +736,7 @@
 	NDefines.NAI.RECON_PLANES_NAVAL = 5						-- 50
 	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
 	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
-	NDefines.NAI.MAX_CARRIER_OVERFILL = 2.25					-- 1.85
+	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.50					-- 2.25 -- Reduced to 1.5 to hopefully stop the AI from overcrowding the Carriers
 	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 3				-- 4
 	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 16				-- 12
 	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2				-- 12
@@ -845,11 +848,11 @@
 	-- }
 
 	-- Peace deal AI stuff
-	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.5			-- 0.5 in vanilla
-	NDefines.NAI.PEACE_BID_FOLD_AGAINST_AI_CHANCE_UNCONTROLLED = 0.40	-- 0.40 in vanilla
+	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.7			-- 0.5 in vanilla
+	NDefines.NAI.PEACE_BID_FOLD_AGAINST_AI_CHANCE_UNCONTROLLED = 0.60	-- 0.40 in vanilla
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_LIBERATE_CONTEST = 1.0			-- 1.0 in vanilla
-	NDefines.NAI.PEACE_BID_FOLD_MINOR_VS_MAJOR = 1.0					-- 1.0 in vanilla
-	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = true					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
+	NDefines.NAI.PEACE_BID_FOLD_MINOR_VS_MAJOR = 2.0					-- 1.0 in vanilla
+	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = false					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_SUBJECTS = true					-- Whether AI should include subjects when evaluating giving states to other winners (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_ALLIES = true					-- Whether AI should include allies when evaluating giving states to other winners (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_NON_ALLIES = false				-- Whether AI should include non-allies (not in same faction) when evaluating giving states to other winners (may affect performance on new conference turn)
@@ -963,3 +966,4 @@
 		100, -- RESERVE_FLEET
 		200, -- NAVAL INVASION SUPPORT
 	}
+	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
