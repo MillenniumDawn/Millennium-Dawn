@@ -1,0 +1,273 @@
+# Author(s): AngriestBird
+SIN_government_of_singapore = {
+	# ---- Decisions ----- #
+	SIN_repeal_centralized_education_system = {
+		icon = jap_conquer_china
+		visible = {
+			has_completed_focus = SIN_centralized_education
+			has_idea = SIN_centralized_education_idea
+		}
+
+		available = {
+			has_idea = SIN_centralized_education_idea
+		}
+		cost = 100
+
+		days_re_enable = 10
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_repeal_centralized_education_system"
+			remove_ideas = SIN_centralized_education_idea
+		}
+	}
+
+	SIN_replace_centralized_education_system = {
+		icon = jap_conquer_china
+		visible = {
+			has_completed_focus = SIN_centralized_education
+			NOT = { has_idea = SIN_centralized_education_idea }
+		}
+
+		available = {
+			NOT = { has_idea = SIN_centralized_education_idea }
+		}
+		cost = 100
+
+		days_re_enable = 10
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_repeal_centralized_education_system"
+			add_ideas = SIN_centralized_education_idea
+		}
+	}
+
+	SIN_extend_finance_western_projects = {
+		icon = decision
+		visible = {
+			has_idea = SIN_finance_western_projects_idea
+		}
+
+		available = {
+			NOT = {
+				any_enemy_country = {
+					has_government = democratic
+				}
+			}
+		}
+
+		days_re_enable = 120
+		days_remove = 10
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_extend_finance_western_projects"
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			modify_timed_idea = {
+				idea = SIN_finance_western_projects_idea
+				days = 90
+			}
+		}
+	}
+
+	SIN_repeal_decentralization_protocol_decision = {
+		icon = jap_conquer_china
+		visible = {
+			has_completed_focus = SIN_decentralize_the_government
+			has_idea = SIN_decentralize_the_government_idea
+		}
+
+		available = {
+			40_percent_government_popularity = yes
+			has_idea = SIN_decentralize_the_government_idea
+		}
+		cost = 100
+
+		days_re_enable = 10
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_repeal_centralized_education_system"
+			remove_ideas = SIN_decentralize_the_government_idea
+		}
+	}
+
+	SIN_enact_decentralization_protocol_decision = {
+		icon = jap_conquer_china
+		visible = {
+			has_completed_focus = SIN_decentralize_the_government
+			NOT = { has_idea = SIN_decentralize_the_government_idea }
+		}
+
+		available = {
+			40_percent_government_popularity = yes
+			has_idea = SIN_decentralize_the_government_idea
+		}
+		cost = 100
+
+		days_re_enable = 10
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_repeal_centralized_education_system"
+			add_ideas = SIN_decentralize_the_government_idea
+		}
+	}
+
+	SIN_repeal_the_migrant_worker_policy = {
+		icon = jap_conquer_china
+		visible = {
+			OR = {
+				has_idea = SIN_migrant_workers
+				has_completed_focus = SIN_import_cheap_labour
+				has_completed_focus = SIN_encourage_migration
+			}
+		}
+
+		available = {
+			40_percent_government_popularity = yes
+		}
+
+		cost = 100
+
+		days_re_enable = 10
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_repeal_the_migrant_worker_policy"
+			if = { limit = { has_idea = SIN_migrant_workers }
+				remove_ideas = SIN_migrant_workers
+			}
+			else_if = { limit = { has_idea = SIN_migrant_workers_encouraged_idea }
+				remove_ideas = SIN_migrant_workers_encouraged_idea
+			}
+			else_if = { limit = { has_idea = SIN_migrant_workers_encouraged_two_idea }
+				remove_ideas = SIN_migrant_workers_encouraged_two_idea
+			}
+		}
+	}
+
+	# ---- Missions ----- #
+	SIN_riau_islands_crisis_mission = {
+		allowed = { original_tag = SIN }
+		activation = {
+			owns_state = 627
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 627
+			}
+		}
+
+		war_with_on_remove = IND
+		days_mission_timeout = 180
+		fire_only_once = yes
+		selectable_mission = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect SIN_riau_islands_crisis_mission"
+			add_war_support = -0.05
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SIN_riau_islands_crisis_mission"
+			create_wargoal = {
+				target = IND
+				type = take_claimed_state
+				generator = { 629 623 622 }
+			}
+			add_war_support = 0.05
+		}
+	}
+
+	# ---- Targeted Decisions ----- #
+	# Trade Agreements
+	SIN_singaporean_foreign_aid_target_decisions = {
+		icon = decision
+		visible = {
+			has_completed_focus = SIN_singaporean_foreign_aid
+		}
+		available = {
+			is_subject = no
+			FROM = {
+				has_opinion = {
+					target = SIN
+					value > 35
+				}
+			}
+		}
+		target_array = SIN_singaporean_trade_agreement
+
+		days_remove = 30
+		days_re_enable = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision SIN_singaporean_foreign_aid_target_decisions executed"
+			set_temp_variable = { treasury_change = FROM.gdp_total_display }
+			multiply_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			multiply_temp_variable = { treasury_change = -1 }
+			FROM = {
+				modify_treasury_effect = yes
+			}
+
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = FROM }
+			set_temp_variable = { percent_change = 5 }
+			change_influence_percentage = yes
+		}
+	}
+}
+
+SIN_expand_the_entreport_decision_categories = {
+	SIN_facilitate_trade_expansion = {
+		icon = jap_conquer_china
+		targets = { HKG CHI IND MAY VIE RAJ BRM LAO CBD JAP PHI BAN SIA FIJ PLY MIC }
+		targets_dynamic = yes
+
+		visible = {
+			NOT = { has_war_with = ROOT }
+			SIN = { NOT = { has_idea = SIN_expanded_freight_transport } }
+			NOT = { has_country_flag = SIN_facilitate_trade_expansion_flag }
+		}
+		available = {
+			NOT = { has_idea = SIN_expanded_freight_transport }
+		}
+
+		cost = 50
+
+		days_remove = 90
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_facilitate_trade_expansion"
+			set_country_flag = { flag = SIN_facilitate_trade_expansion_flag value = 1 days = 120 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decisions SIN_facilitate_trade_expansion"
+			SIN = {
+				add_timed_idea = {
+					idea = SIN_expanded_freight_transport
+					days = 90
+				}
+			}
+			FROM = {
+				add_timed_idea = {
+					idea = SIN_expanded_freight_transport
+					days = 90
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.25
+			modifier = {
+				factor = 5
+				has_political_power > 200
+			}
+		}
+	}
+}
