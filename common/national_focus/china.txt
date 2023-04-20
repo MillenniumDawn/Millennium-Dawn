@@ -624,7 +624,7 @@ focus_tree = {
 
 	focus = {
 		id = CHI_Develop_Chinese_Cinema
-		icon = trade_with_china
+		icon = china_dragon_licence
 
 		x = -3
 		y = 7
@@ -4189,6 +4189,8 @@ focus_tree = {
 		completion_reward = {
 			add_popularity = { ideology = communism popularity = -0.1 }
 			recalculate_party = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
 			set_temp_variable = { modify_uighur_threat = 10 }
 			CHI_modify_uighur_threat = yes
 			add_stability = -0.05
@@ -4572,7 +4574,7 @@ focus_tree = {
 		relative_position_id = CHI_One_China_Policy
 
 		prerequisite = { focus = CHI_Sign_an_Armistice focus = CHI_The_Fifth_Column focus = CHI_Resume_the_Civil_War }
-		mutually_exclusive = { focus = CHI_Establish_Special_Administrative_Region }
+		mutually_exclusive = { focus = CHI_Establish_Special_Administrative_Region focus = CHI_End_of_ROC }
 
 		search_filters = { FOCUS_FILTER_CHI_AGGRESSION }
 
@@ -4625,7 +4627,8 @@ focus_tree = {
 		cost = 7
 
 		available = {
-			NOT = { has_war_with = TAI }
+			AND = { NOT = { is_in_faction = yes }
+			        NOT = { has_war_with = TAI } }
 			if = {
 				limit = { has_government = communism }
 				TAI = { NOT = { has_government = democratic } }
@@ -4705,17 +4708,17 @@ focus_tree = {
 		y = 12
 		relative_position_id = CHI_One_China_Policy
 
-		prerequisite = { focus = CHI_A_New_United_Front focus = CHI_Establish_Joint_Control_Zones focus = CHI_End_of_ROC }
+		prerequisite = { focus = CHI_A_New_United_Front focus = CHI_Establish_Joint_Control_Zones focus = CHI_Gateway_To_Pacific }
 
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
 
 		cost = 10
 
 		available = {
-			OR = {
-				NOT = { has_war_with = TAI }
-				NOT = { country_exists = TAI}
-			}
+			OR = { NOT = { has_war_with = TAI }
+                   NOT = { country_exists = TAI}
+				  }
+		    if = { limit = { country_exists = TAI }
 			custom_trigger_tooltip = {
 				tooltip = CHI_JAP_influence_below_5_tt
 				TAI = {
@@ -4750,6 +4753,7 @@ focus_tree = {
 						}
 					}
 				}
+			}
 			}
 			custom_trigger_tooltip = {
 				tooltip = CHI_JAP_warcrimes_tt
@@ -4935,7 +4939,7 @@ focus_tree = {
 		}
 
 		prerequisite = { focus = CHI_The_Fifth_Column focus = CHI_Sign_an_Armistice focus = CHI_Resume_the_Civil_War }
-		mutually_exclusive = { focus = CHI_Recognize_an_Independent_Taiwan }
+		mutually_exclusive = { focus = CHI_Recognize_an_Independent_Taiwan focus = CHI_End_of_ROC }
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 
@@ -5267,6 +5271,8 @@ focus_tree = {
 			add_war_support = 0.05
 			add_popularity = { ideology = communism popularity = 0.05 }
 			recalculate_party = yes
+			set_temp_variable = { temp_opinion = 1 }
+			change_communist_cadres_opinion = yes
 			TAI = {
 				set_temp_variable = { party_index = 1 }
 				set_temp_variable = { party_popularity_increase = -0.05 }
@@ -5304,6 +5310,10 @@ focus_tree = {
 					modifier = threatened_measures
 				}
 			}
+			add_popularity = { ideology = communism popularity = 0.02 }
+			recalculate_party = yes
+			set_temp_variable = { temp_opinion = 1 }
+			change_communist_cadres_opinion = yes
 			set_temp_variable = { modify_chinese_aggression = 1 }
 			CHI_modify_chinese_aggression = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Fight_ROC_Recognition executed"
@@ -5394,6 +5404,10 @@ focus_tree = {
 				set_temp_variable = { party_index = 2 }
 				add_relative_party_popularity = yes
 			}
+			add_popularity = { ideology = communism popularity = 0.02 }
+			recalculate_party = yes
+			set_temp_variable = { temp_opinion = 1 }
+			change_communist_cadres_opinion = yes
 			set_temp_variable = { modify_chinese_aggression = 2 }
 			CHI_modify_chinese_aggression = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Demand_an_End_to_the_Taiwan_Relations_Act executed"
@@ -5560,23 +5574,29 @@ focus_tree = {
 		icon = taiwan
 
 		x = 3
-		y = 11
+		y = 10
 		relative_position_id = CHI_One_China_Policy
 
 		prerequisite = { focus = CHI_Resume_the_Civil_War }
+        mutually_exclusive = { focus = CHI_Establish_Special_Administrative_Region focus = CHI_Recognize_an_Independent_Taiwan }
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 
 		available = {
 			NOT = { country_exists = TAI }
-			NOT = { has_war = yes }
-
 		}
 		cost = 10
 		bypass = {
 
 		}
 		completion_reward = {
+		    add_political_power = 100
+			add_stability = 0.1
+			add_war_support = 0.1
+			add_popularity = { ideology = communism popularity = 0.1 }
+			recalculate_party = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_communist_cadres_opinion = yes
 			if = {
 				limit = {
 					has_idea = CHI_Hong_Kong_Protests_01
@@ -5602,6 +5622,50 @@ focus_tree = {
 			set_temp_variable = { modify_chinese_aggression = 2 }
 			CHI_modify_chinese_aggression = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_End_of_ROC executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = CHI_Gateway_To_Pacific
+		icon = naval_upgrade
+
+		x = 3
+		y = 11
+		relative_position_id = CHI_One_China_Policy
+
+		prerequisite = { focus = CHI_End_of_ROC }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+
+        available = {
+			NOT = { country_exists = TAI }
+			is_taiwan_area_state_owned = yes
+		}
+
+		cost = 10
+
+		completion_reward = {
+		    set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			600 = {
+			    add_extra_state_shared_building_slots = 3
+				add_building_construction = {
+					type = naval_base
+					level = 3
+					instant_build = yes
+					province = 9955
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 3
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { modify_chinese_aggression = 1 }
+			CHI_modify_chinese_aggression = yes
+			log = "[GetDateText]: [This.GetName]: focus CHI_Gateway_To_Pacific executed"
 		}
 
 		ai_will_do = { base = 1 }
@@ -9599,11 +9663,10 @@ communist_cadres_at_least_positive_opinion = yes
 		prerequisite = { focus = CHI_Chinese_Megaprojects }
 
 		available = {
-			controls_state = 556
-			controls_state = 1097
+			owns_state = 556
+			owns_state = 1097
 			OR = {
-				controls_state = 596
-				controls_state = 597
+				is_outer_mongolia_state_owned = yes
 				MON = { is_subject_of = CHI }
 			}
 		}
@@ -9640,9 +9703,12 @@ communist_cadres_at_least_positive_opinion = yes
 
 
 		available = {
-				controls_state = 596
-				controls_state = 597
+			owns_state = 556
+			owns_state = 1097
+			OR = {
+				is_outer_mongolia_state_owned = yes
 				MON = { is_subject_of = CHI }
+			}
 		}
 
 		completion_reward = {
@@ -9684,11 +9750,10 @@ communist_cadres_at_least_positive_opinion = yes
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
 
 		available = {
-			controls_state = 556
-			controls_state = 1097
+			owns_state = 556
+			owns_state = 1097
 			OR = {
-				controls_state = 596
-				controls_state = 597
+				is_outer_mongolia_state_owned = yes
 				MON = { is_subject_of = CHI }
 			}
 		}
@@ -9721,18 +9786,18 @@ communist_cadres_at_least_positive_opinion = yes
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
 		available = {
-			controls_state = 556
-			controls_state = 1097
+			owns_state = 556
+			owns_state = 1097
 			OR = {
-				controls_state = 596
-				controls_state = 597
+				is_outer_mongolia_state_owned = yes
 				MON = { is_subject_of = CHI }
 			}
 		}
 
 		completion_reward = {
-			set_temp_variable = { treasury_change = -40 }
+			set_temp_variable = { treasury_change = -45 }
 			modify_treasury_effect = yes
+			CHI_water_shortages_decrease = yes
 			556 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -11376,12 +11441,20 @@ communist_cadres_at_least_positive_opinion = yes
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			add_political_power = 25
+			add_political_power = 125
 			log = "[GetDateText]: [This.GetName]: focus CHI_Regional_Influence executed"
 		}
 
 		ai_will_do = {
-			base = 2
+			base = 0
+			modifier = {
+				add = 1
+				date > 2003.1.1
+			}
+			modifier = {
+				add = 1
+				date > 2007.1.1
+			}
 		}
 	}
 
@@ -13811,6 +13884,8 @@ communist_cadres_at_least_positive_opinion = yes
 			country_exists = BHU
 		}
 
+		bypass = { NOT = { country_exists = BHU } }
+
 		will_lead_to_war_with = BHU
 
 		completion_reward = {
@@ -13860,6 +13935,13 @@ communist_cadres_at_least_positive_opinion = yes
 
 		prerequisite = { focus = CHI_Strike_Across_the_Himalayas }
 		prerequisite = { focus = CHI_String_of_Pearls }
+
+		available = {  AND = { country_exists = NEP
+			                   NOT = { NEP = { is_subject_of = CHI } }
+				             }
+					}
+
+		bypass = { NOT = { country_exists = NEP } }
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 
@@ -14341,8 +14423,6 @@ communist_cadres_at_least_positive_opinion = yes
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		available = {
-		}
 
 		completion_reward = {
 			add_political_power = 50
@@ -14365,23 +14445,34 @@ communist_cadres_at_least_positive_opinion = yes
 		prerequisite = { focus = CHI_The_Inland_Prairie }
 		mutually_exclusive = { focus = CHI_Sino_Mongol_Friendship_Treaty }
 
+		available = {
+			country_exists = MON
+			NOT = { MON = { is_subject_of = CHI }}
+		}
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+
 		completion_reward = {
 			add_war_support = 0.05
+			add_popularity = { ideology = communism popularity = 0.02 }
+			recalculate_party = yes
 			set_temp_variable = { temp_opinion = 3 }
 			change_communist_cadres_opinion = yes
 			custom_effect_tooltip = CHI_khalkha_cores_TT
 			hidden_effect = {
-			 every_state = {  #add core for Khalkharegion
+				every_state = {  #add core for Khalkharegion
 					limit = {
-						OR = {
-							is_outer_mongolia_state = yes
-						}
+						is_outer_mongolia_state = yes
 					}
 					add_core_of = CHI
 				}
+			}
+			SOV = {
+				add_opinion_modifier = {
+					target = CHI
+					modifier = raid_of_dragon_city
 				}
-			every_other_country = {
-				limit = { OR = { original_tag = SOV original_tag = MON } }
+			}
+			MON = {
 				add_opinion_modifier = {
 					target = CHI
 					modifier = raid_of_dragon_city
@@ -14397,9 +14488,13 @@ communist_cadres_at_least_positive_opinion = yes
 			modifier = {
 				add = 1
 				OR = {
-					is_historical_focus_on = yes
+					has_idea = great_power
 					has_idea = superpower
 				}
+			}
+			modifier = {
+				add = 1
+				is_historical_focus_on = yes
 			}
 		}
 	}
@@ -14416,10 +14511,20 @@ communist_cadres_at_least_positive_opinion = yes
 
 		prerequisite = { focus = CHI_Raid_The_Dragon_City }
 
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		available = {
+		             AND = { country_exists = MON
+			                 NOT = {
+							 MON = { is_subject_of = CHI }
+				             }
+					       }
+		            }
+
+        search_filters = { FOCUS_FILTER_ANNEXATION }
 
 		completion_reward = {
 			add_ideas = ceremony_in_khentii
+			add_popularity = { ideology = communism popularity = 0.02 }
+			recalculate_party = yes
 			set_temp_variable = { modify_chinese_aggression = 1 }
 			CHI_modify_chinese_aggression = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Ceremony_in_Khentii_Mountains executed"
@@ -14440,7 +14545,15 @@ communist_cadres_at_least_positive_opinion = yes
 
 		prerequisite = { focus = CHI_Ceremony_in_Khentii_Mountains }
 
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		available = {
+		             AND = { country_exists = MON
+			                 NOT = {
+							 MON = { is_subject_of = CHI }
+				             }
+					       }
+		            }
+
+        search_filters = { FOCUS_FILTER_ANNEXATION }
 
 		available = {
 		}
@@ -14483,7 +14596,12 @@ communist_cadres_at_least_positive_opinion = yes
 
 		completion_reward = {
 			add_stability = 0.1
+			add_war_support	= 0.1
 			add_ideas = khalkha_return
+			add_popularity = { ideology = communism popularity = 0.1 }
+			recalculate_party = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_communist_cadres_opinion = yes
 			596 = {
 				add_building_construction = {
 					type = air_base
@@ -14529,8 +14647,13 @@ communist_cadres_at_least_positive_opinion = yes
 		}
 
 		completion_reward = {
-			every_other_country = {
-				limit = { OR = { original_tag = SOV original_tag = MON } }
+			SOV = {
+				add_opinion_modifier = {
+					target = CHI
+					modifier = political_outreach
+				}
+			}
+			MON = {
 				add_opinion_modifier = {
 					target = CHI
 					modifier = political_outreach
@@ -14544,12 +14667,15 @@ communist_cadres_at_least_positive_opinion = yes
 		ai_will_do = {
 			base = 0
 			modifier = {
-				add = 0
+				add = 1
 				OR = {
-					is_historical_focus_on = no
 					has_government = democratic
 					has_government = neutrality
 				}
+			}
+			modifier = {
+				add = 1
+				is_historical_focus_on = yes
 			}
 		}
 	}
@@ -14647,11 +14773,21 @@ communist_cadres_at_least_positive_opinion = yes
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			add_political_power = 25
+			add_political_power = 125
 			log = "[GetDateText]: [This.GetName]: focus CHI_Global_Influence executed"
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				date > 2003.1.1
+			}
+			modifier = {
+				add = 1
+				date > 2007.1.1
+			}
+		}
 	}
 
 	focus = {
