@@ -4,9 +4,15 @@ _Ensure the issue title has ``Bug:`` and the label Bug associated to it. The iss
 
 Bug Title: ``Replace with title``
 
-## Purpose
+Country: ``Replace with tag``
 
-_Replace me with a short description about what the purpose of this issue is. It can be short and concise._
+## Steps to Reproduce
+
+_Please detail all of the steps to reproduce the bug._
+
+### What is the current behavior?
+
+### What is the expected behavior?
 
 ## Importance
 
@@ -16,3 +22,9 @@ _1 to 10 -- 10 being the most important, 1 being the least important. Scaling re
 # Description of the Issue
 
 _This section is where you put the "meat" of the issue. Any details, images or otherwise you would like to attach to the issue place below._
+
+/milestone %"Version 1.9 Roadmap"
+
+/assign me
+
+/label ~Bug
