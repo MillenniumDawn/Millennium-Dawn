@@ -6,7 +6,7 @@ Nation: ``Replace me with the nation name``
 
 Branch: ``Replace me with the branch this is related to``
 
-## Purpose 
+## Purpose
 
 _Replace me with a short description about what the purpose of this issue is. It can be short and concise._
 
@@ -14,6 +14,12 @@ _Replace me with a short description about what the purpose of this issue is. It
 
 _1 to 10 -- 10 being the most important, 1 being the least important. Scaling revolves around the following guidelines: 1-5; Minor Mechanics, 5-8; Country Specific Content, 8-10; Global Mechanic or Changes_
 
-# Description of the Issue
+## Description of the Issue
 
 _This section is where you put the "meat" of the issue. Any details, images or otherwise you would like to attach to the issue place below._
+
+/milestone %"Version 1.9 Roadmap"
+
+/assign me
+
+/label ~"WIP Focus Trees"
