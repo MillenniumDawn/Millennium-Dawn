@@ -22,4 +22,4 @@ _This section is where you put the "meat" of the issue. Any details, images or o
 
 /assign me
 
-/label ~Bug
+/label ~Enhancement
