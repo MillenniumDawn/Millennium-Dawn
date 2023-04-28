@@ -28,6 +28,23 @@ stages:
  - codingstandards
  - styling
  - CWTools_CI
+ - correctstyling
+
+CodingStandards:
+ stage: codingstandards
+ image: python:3.11
+ only:
+  - merge_requests
+ script:
+  - pip install requests
+  - python3 tools/check_basic_style_2.py $Bot_Token
+
+ # Exposing CodingStandards Output
+ artifacts:
+  expose_as: 'CWTools Build Output'
+  paths:
+   - codingstandard.json
+  when: always
 
 Styling:
  stage: styling
@@ -36,15 +53,6 @@ Styling:
  script:
   - pip install requests
   - python3 tools/coding_standards.py $Bot_Token
-
-CodingStandards:
-  stage: codingstandards
-  image: python:3.6
-  only:
-    - merge_requests
-  script:
-    - pip install requests
-    - python3 tools/check_basic_style_2.py $Bot_Token
 
 CWTools_CI:
  stage: CWTools_CI
@@ -59,3 +67,23 @@ CWTools_CI:
   paths:
    - output.json
   when: always
+
+FixingStyling:
+  stage: correctstyling
+  image: python:3.11
+  only:
+    - merge_requests
+  script:
+    - pip install requests
+    - python3 tools/fix_styling.py $Bot_Token
+  after_script:
+    - git config --global user.email "an email adress"
+    - git config --global user.name "a user name"
+    - git config --global push.default simple
+    - git remote set-url origin https://aUserNameIRemoved:$Bot_Token@gitlab.com/Millennium_Dawn/Millennium_Dawn.git
+    - git add -A
+    - git commit -m 'Fixed Styling for you'
+    - git push -u origin HEAD:$CI_COMMIT_REF_NAME
+    - python3 tools/check_basic_style.py $Bot_Token
+    - python3 tools/check_basic_style_2.py $Bot_Token
+  when: on_failure
