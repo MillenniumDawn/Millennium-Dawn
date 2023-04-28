@@ -27,7 +27,6 @@ variables:
 stages:
  - codingstandards
  - styling
- - CWTools_CI
  - correctstyling
 
 CodingStandards:
@@ -54,20 +53,6 @@ Styling:
   - pip install requests
   - python3 tools/coding_standards.py $Bot_Token
 
-CWTools_CI:
- stage: CWTools_CI
- only: [merge_requests]
- script:
-  - echo "Pulling down the CWTools action validator"
-  - wget -O - -q https://raw.githubusercontent.com/cwtools/cwtools-action/v1.0.0/lib/gitlab_setup.sh | sh -s
-
- # Optional, expose the CWTools errors in JSON
- artifacts:
-  expose_as: 'CWTools Build Output'
-  paths:
-   - output.json
-  when: always
-
 FixingStyling:
   stage: correctstyling
   image: python:3.11
@@ -87,3 +72,17 @@ FixingStyling:
     - python3 tools/check_basic_style.py $Bot_Token
     - python3 tools/check_basic_style_2.py $Bot_Token
   when: on_failure
+
+CWTools_CI:
+ stage: codingstandards
+ only: [merge_requests]
+ script:
+  - echo "Pulling down the CWTools action validator"
+  - wget -O - -q https://raw.githubusercontent.com/cwtools/cwtools-action/v1.0.0/lib/gitlab_setup.sh | sh -s
+
+ # Optional, expose the CWTools errors in JSON
+ artifacts:
+  expose_as: 'CWTools Build Output'
+  paths:
+   - output.json
+  when: always
