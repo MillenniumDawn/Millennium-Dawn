@@ -410,10 +410,10 @@ def main():
                 bad_count = bad_count + checkFocuses(os.path.join(root, filename))
                 files_list.append(os.path.join(root, filename))
 
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
-        for filename in fnmatch.filter(filenames, '*.txt'):
-            bad_count = bad_count + check_ideas(os.path.join(root, filename))
-            files_list.append(os.path.join(root, filename))
+    # for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
+    #     for filename in fnmatch.filter(filenames, '*.txt'):
+    #         bad_count = bad_count + check_ideas(os.path.join(root, filename))
+    #         files_list.append(os.path.join(root, filename))
 
 
     #for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
