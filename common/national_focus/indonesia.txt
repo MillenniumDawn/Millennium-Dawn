@@ -1,0 +1,7052 @@
+focus_tree = {
+	id = indonesia_focus
+
+	country = {
+		factor = 0
+		modifier = { original_tag = IND add = 100 }
+	}
+	continuous_focus_position = { x = 3800 y = 2450 }
+
+	focus = {
+		id = IND_indonesias_future
+		icon = future_of_indonesia
+		# prerequisite = {} # this is if you want this focus to be after another one
+		# mutually_exclusive = {} # this is for mutually exclusive focuses, you need to remember to add the inverse of this in the corresponding focus else it will error
+		# relative_position_id = {} # this is for ease of moving the focus tree branches around, use these for every focus besides branch start focuses
+		x = 40
+		y = 0
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_POLITICAL } # here is where you put search filters
+		#available = {} # if the focus requires something besides a national focus to unlock
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_indonesias_future" # the log is important for debugging, don't forget this one
+			add_political_power = 100
+			ROOT = {
+				country_event = {
+					id = indonesia.923
+					hours = 0
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 20
+		}
+	}
+	focus = {
+		id = IND_asia_financial_crisis
+		icon = sing_on_rise
+
+		x = 40
+		y = 1
+		prerequisite = { focus = IND_indonesias_future }
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_asia_financial_crisis"
+			swap_ideas = {
+				remove_idea = IND_asian_crisis
+				add_idea = IND_fighting_crisis
+			}
+			ROOT = {
+				country_event = {
+					id = indonesia.420
+					hours = 0
+				}
+			 }
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid
+		icon = trade_with_japan
+
+		x = -10
+		y = 1
+		prerequisite = { focus = IND_asia_financial_crisis }
+		mutually_exclusive = { focus = IND_chinese_aid }
+		relative_position_id = IND_asia_financial_crisis
+		available = { always = no }
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid"
+			add_ideas = IND_japan_aid
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = JAP }
+			set_temp_variable = { influence_target = IND }
+			change_influence_percentage = yes
+			JAP = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = medium_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_ethnic_tension
+		icon = NIG_fifty_fifty
+
+		x = 8
+		y = 0
+		#prerequisite = { focus = IND_indonesias_future }
+		mutually_exclusive = { focus = IND_embrace_it }
+		cost = 10
+		search_filters = { FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_ethnic_tension"
+			add_political_power = 100
+			swap_ideas = {
+				remove_idea = IND_ethnic_tension
+				add_idea = IND_resolving_ethnic_tension
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_political_agenda
+		icon = democracy_ind
+
+		x = 17
+		y = 9
+		#prerequisite = { focus = IND_indonesias_future }
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_political_agenda"
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 5
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_jica
+		icon = JICA
+		x = -2
+		y = 1
+		prerequisite = { focus = IND_japanese_aid }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_jica"
+			set_temp_variable = { treasury_change = -12.00 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = IND_japan_jica
+				days = 700
+			}
+			640 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_metro_invest
+		icon = city_bus
+
+		x = -1
+		y = 2
+		prerequisite = { focus = IND_japanese_aid_jica }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			635 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_metro_invest"
+			add_timed_idea = {
+				idea = IND_japan_metroinvest
+				days = 500
+			}
+			635 = {
+				add_building_construction = {
+					type = rail_way
+					level = 2
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_java_airport
+		icon = rwand_airline
+
+		x = -3
+		y = 2
+		prerequisite = { focus = IND_japanese_aid_jica }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			631 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_java_airport"
+			air_experience = 20
+			631 = {
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_ev
+		icon = bmw_car
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_japanese_aid }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_ev"
+			swap_ideas = {
+				remove_idea = IND_japan_aid
+				add_idea = IND_japan_aid_b
+			}
+			set_temp_variable = { treasury_change = -3.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_mitsubishi
+		icon = IND_mitsubishi_1
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_japanese_aid_ev }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		available = {
+			640 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_mitsubishi"
+			swap_ideas = {
+				remove_idea = IND_japan_aid_b
+				add_idea = IND_japan_aid_c
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			640 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_expander_bagero
+		icon = IND_expander
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_japanese_aid_mitsubishi }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_expander_bagero"
+			swap_ideas = {
+				remove_idea = IND_japan_aid_c
+				add_idea = IND_japan_aid_d
+			}
+	}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_inf_finance
+		icon = Provincial_Funding_for_Roads
+
+		x = 2
+		y = 1
+		prerequisite = { focus = IND_japanese_aid }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+		available = {
+			623 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_inf_finance"
+			add_ideas = IND_pt_infrastructure
+			623 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -7.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_men_for_finance
+		icon = japan_railways
+
+		x = 1
+		y = 2
+		prerequisite = { focus = IND_japanese_aid_inf_finance }
+		relative_position_id = IND_japanese_aid
+		cost = 8
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_MANPOWER }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_men_for_finance"
+			swap_ideas = {
+				add_idea = IND_pt_infrastructure_two
+				remove_idea = IND_pt_infrastructure
+			}
+			set_temp_variable = { treasury_change = -6.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_aid_rubber
+		icon = rubber_production
+
+		x = 3
+		y = 2
+		prerequisite = { focus = IND_japanese_aid_inf_finance }
+		relative_position_id = IND_japanese_aid
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESOURCE }
+
+
+		available = {
+			629 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_aid_rubber"
+			add_resource = {
+				type = rubber
+				amount = 23
+				state = 629
+			}
+			629 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -15.85 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chinese_aid
+		icon = trade_with_china
+
+		x = 4
+		y = 1
+		prerequisite = { focus = IND_asia_financial_crisis }
+		mutually_exclusive = { focus = IND_japanese_aid }
+		relative_position_id = IND_asia_financial_crisis
+		available = { always = no }
+		cost = 10
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chinese_aid"
+			add_ideas = IND_chin_aid
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = IND }
+			change_influence_percentage = yes
+			CHI = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = medium_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_gas_plants
+		icon = nukes_in_production
+
+		x = -3
+		y = 1
+		prerequisite = { focus = IND_chinese_aid }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			623 = {
+				is_owned_and_controlled_by = IND
+			}
+			631 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_gas_plants"
+			add_resource = {
+				type = oil
+				amount = 18
+				state = 623
+			}
+			set_temp_variable = { treasury_change = -19.56 }
+			modify_treasury_effect = yes
+			623 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_coal
+		icon = coal_mining
+
+		x = -3
+		y = 2
+		prerequisite = { focus = IND_chin_aid_gas_plants }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			631 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_coal"
+			631 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -8.50 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_coal_surplus
+		icon = blr_chinese_investments
+
+		x = -1
+		y = 2
+		prerequisite = { focus = IND_chin_aid_gas_plants }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			640 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_coal_surplus"
+			640 = {
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 2
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 3
+			}
+			set_temp_variable = { treasury_change = -10.50 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_ev
+		icon = circular_electron_positron_collider
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_chinese_aid }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_ev"
+			add_ideas = IND_chin_ev
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = IND }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_catl
+		icon = blr_trade_agreement_china
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_chin_aid_ev }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+		available = {
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_catl"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = IND }
+			change_influence_percentage = yes
+			638 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -12.50 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_pollution
+		icon = eco_democracy
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_chin_aid_catl }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			640 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_pollution"
+			640 = {
+				add_building_construction = {
+					type = nuclear_reactor
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -9.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_inf
+		icon = infrastructure1
+
+		x = 3
+		y = 1
+		prerequisite = { focus = IND_chinese_aid }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_inf"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = IND }
+			change_influence_percentage = yes
+			add_ideas = IND_chin_infrainvest
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_high_railway
+		icon = blr_china_modernisation_railtrain
+
+		x = 1
+		y = 2
+		prerequisite = { focus = IND_chin_aid_inf }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+		available = {
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_high_railway"
+			638 = {
+				add_building_construction = {
+					type = rail_way
+					level = 2
+					instant_build = yes
+				}
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -3.55 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chin_aid_tollway
+		icon = roads_extend_plan
+
+		x = 3
+		y = 2
+		prerequisite = { focus = IND_chin_aid_inf }
+		relative_position_id = IND_chinese_aid
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+		available = {
+			631 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chin_aid_tollway"
+			631 = {
+				add_building_construction = {
+					type = supply_node
+					level = 1
+					instant_build = yes
+				}
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -6.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_new_capital
+		icon = IND_new_capital
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_japanese_aid_rubber }
+		prerequisite = { focus = IND_japanese_aid_java_airport }
+		prerequisite = { focus = IND_japanese_aid_expander_bagero }
+		prerequisite = { focus = IND_japanese_aid_men_for_finance }
+		prerequisite = { focus = IND_japanese_aid_mitsubishi }
+		prerequisite = { focus = IND_japanese_aid_metro_invest }
+		relative_position_id = IND_japanese_aid
+		cost = 10
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_new_capital"
+			add_ideas = IND_new_capital
+			IND = {
+				country_event = {
+					id = indonesia.988
+					hours = 0
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_new_silkroad
+		icon = IND_silkroad
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_chin_aid_coal_surplus }
+		prerequisite = { focus = IND_chin_aid_pollution }
+		prerequisite = { focus = IND_chin_aid_tollway }
+		prerequisite = { focus = IND_chin_aid_high_railway }
+		prerequisite = { focus = IND_chin_aid_coal }
+		relative_position_id = IND_chinese_aid
+		cost = 10
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_new_silkroad"
+			add_ideas = IND_chin_silkroad
+			IND = {
+				country_event = {
+					id = indonesia.888
+					hours = 0
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_our_policies
+		icon = ind_two_flags
+
+		x = -3
+		y = 2
+		available = {
+			always = no
+		}
+		prerequisite = { focus = IND_new_silkroad focus = IND_new_capital }
+		#prerequisite = { focus = IND_asia_financial_crisis}
+		relative_position_id = IND_asia_financial_crisis
+		cost = 1
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_our_policies"
+			swap_ideas = {
+				remove_idea = IND_fighting_crisis
+				add_idea = IND_beating_crisis
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_kemendegari
+		icon = romanian_economic_development_plan
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_our_policies }
+		relative_position_id = IND_our_policies
+		cost = 5
+		search_filters = { FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_kemendegari"
+			add_stability = 0.05
+			add_ideas = IND_kemendegari
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_shun_corruption
+		icon = BLR_Anti_Corruption
+
+		x = -2
+		y = 2
+		prerequisite = { focus = IND_kemendegari }
+		relative_position_id = IND_our_policies
+		cost = 10
+		search_filters = { FOCUS_FILTER_CORRUPTION }
+		mutually_exclusive = { focus = IND_undertable_deals }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_shun_corruption"
+			decrease_corruption = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_undertable_deals
+		icon = MEX_Political_corruption
+
+		x = 2
+		y = 2
+		prerequisite = { focus = IND_kemendegari }
+		relative_position_id = IND_our_policies
+		cost = 10
+		search_filters = { FOCUS_FILTER_CORRUPTION }
+		mutually_exclusive = { focus = IND_shun_corruption }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_undertable_deals"
+			increase_corruption = yes
+			set_temp_variable = { treasury_change = 36.45 }
+			modify_treasury_effect = yes
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_kpk
+		icon = fallen_goverment_1
+
+		x = -2
+		y = 3
+		prerequisite = { focus = IND_shun_corruption }
+		relative_position_id = IND_our_policies
+		cost = 8
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_CORRUPTION }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_kpk"
+			add_ideas = IND_kpk_e
+			set_temp_variable = { treasury_change = -8.67 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_bribe_media
+		icon = monk
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_undertable_deals }
+		relative_position_id = IND_our_policies
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_bribe_media"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+
+			set_temp_variable = { treasury_change = -8.67 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_trial_corrupt_official
+		icon = MEX_Purge_corrupt_judges
+
+		x = -2
+		y = 4
+		prerequisite = { focus = IND_kpk }
+		relative_position_id = IND_our_policies
+		cost = 8
+		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_trial_corrupt_official"
+			add_political_power = 100
+			add_stability = 0.04
+			swap_ideas = {
+			remove_idea = IND_kpk_e
+			add_idea = IND_kpk_f
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_save_corrupt_official
+		icon = MEX_Bribe_the_judiciary
+
+		x = 2
+		y = 4
+		prerequisite = { focus = IND_bribe_media }
+		relative_position_id = IND_our_policies
+		cost = 8
+		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_save_corrupt_official"
+			add_ideas = IND_corrupt_officials
+			add_stability = -0.04
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_more_jobs
+		icon = Generic_Working_Class_Family
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_kemendegari }
+		relative_position_id = IND_our_policies
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_more_jobs"
+			increase_economic_growth = yes
+			set_temp_variable = { treasury_change = -9.55 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_rural_fortification
+		icon = home_defense
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_more_jobs }
+		relative_position_id = IND_our_policies
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_rural_fortification"
+			swap_ideas = {
+				remove_idea = IND_beating_crisis
+				add_idea = IND_beating_crisis2
+			}
+			set_temp_variable = { treasury_change = -3.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fund_industries
+		icon = man_the_factories
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_rural_fortification }
+		relative_position_id = IND_our_policies
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fund_industries"
+			swap_ideas = {
+				remove_idea = IND_beating_crisis2
+				add_idea = IND_beating_crisis3
+			}
+			set_temp_variable = { treasury_change = -7.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_education_question
+		icon = university
+
+		x = -15
+		y = 2
+		prerequisite = { focus = IND_asia_financial_crisis focus = IND_combat_it }
+		relative_position_id = IND_indonesias_future
+		cost = 10
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_education_question"
+			ROOT = {
+				country_event = {
+					id = indonesia.55
+					hours = 0
+				}
+			 }
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_religious_system
+		icon = islamist_gov
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_education_question }
+		relative_position_id = IND_education_question
+		mutually_exclusive = { focus = IND_no_religious_system }
+		available = { always = no }
+		cost = 8
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_religious_system"
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_ulema_opinion = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_no_religious_system
+		icon = focus_secular
+
+		x = -3
+		y = 1
+		prerequisite = { focus = IND_education_question }
+		relative_position_id = IND_education_question
+		mutually_exclusive = { focus = IND_religious_system }
+		available = { always = no }
+		cost = 8
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_no_religious_system"
+			set_temp_variable = { temp_opinion = -3 }
+			change_the_ulema_opinion = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_quran_class
+		icon = quaran_book
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_religious_system }
+		relative_position_id = IND_education_question
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_quran_class"
+			increase_education_budget = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_no_quran_class
+		icon = end_sharia_law
+
+		x = -4
+		y = 2
+		prerequisite = { focus = IND_no_religious_system }
+		prerequisite = { focus = IND_rallies_schools }
+		relative_position_id = IND_education_question
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_no_quran_class"
+			increase_education_budget = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_seperate_school
+		icon = revolutionize_ulema
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_quran_class }
+		relative_position_id = IND_education_question
+		cost = 8
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_seperate_school"
+			set_temp_variable = { temp_opinion = -5 }
+			change_landowners_opinion = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dont_seperate_school
+		icon = islamophobia2
+
+		x = -2
+		y = 2
+		prerequisite = { focus = IND_no_religious_system }
+		prerequisite = { focus = IND_rallies_schools }
+		relative_position_id = IND_education_question
+		cost = 8
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dont_seperate_school"
+			set_temp_variable = { temp_opinion = 8 }
+			change_landowners_opinion = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_mandatory_education
+		icon = science
+
+		x = -1
+		y = 4
+		prerequisite = { focus = IND_seperate_school focus = IND_dont_seperate_school focus = IND_no_quran_class }
+		relative_position_id = IND_education_question
+		cost = 10
+		search_filters = { FOCUS_FILTER_RESEARCH }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_mandatory_education"
+			add_ideas = IND_mandatory_edu
+			set_temp_variable = { treasury_change = -3.25 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_satisfied_nation
+		icon = BRA_economic_liberalization
+
+		x = 2
+		y = 6
+		prerequisite = { focus = IND_fund_industries }
+		prerequisite = { focus = IND_trial_corrupt_official focus = IND_save_corrupt_official }
+		#prerequisite = { focus = IND_mandatory_education }
+		relative_position_id = IND_our_policies
+		cost = 10
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_satisfied_nation"
+			swap_ideas = {
+				remove_idea = IND_beating_crisis3
+				add_idea = IND_economic_power
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fix_rupiah
+		icon = indian_rupee
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_satisfied_nation }
+		relative_position_id = IND_satisfied_nation
+		cost = 10
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fix_rupiah"
+			swap_ideas = {
+				remove_idea = IND_rupiah_crisis
+				add_idea = IND_ailing_economy
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_counterfiet
+		icon = central_planned_economy2
+
+		x = -1
+		y = 3
+		prerequisite = { focus = IND_lower_interest_rates }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_CORRUPTION }
+		mutually_exclusive = { focus = IND_crackdown_counterfiet }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_counterfiet"
+			increase_corruption = yes
+			set_temp_variable = { treasury_change = 50.25 }
+			modify_treasury_effect = yes
+			add_stability = 0.02
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_crackdown_counterfiet
+		icon = lookin_for_beans
+
+		x = -3
+		y = 3
+		prerequisite = { focus = IND_lower_interest_rates }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_CORRUPTION }
+		mutually_exclusive = { focus = IND_counterfiet }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_crackdown_counterfiet"
+			decrease_corruption = yes
+			set_temp_variable = { treasury_change = -8.25 }
+			modify_treasury_effect = yes
+			add_stability = -0.03
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_cooperate_local_gov
+		icon = export_economy
+
+		x = -2
+		y = 4
+		prerequisite = { focus = IND_counterfiet focus = IND_crackdown_counterfiet }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_cooperate_local_gov"
+			add_ideas = IND_local_coop
+			set_temp_variable = { treasury_change = 10.45 }
+			modify_treasury_effect = yes
+			add_political_power = 75
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_lower_interest_rates
+		icon = money
+
+		x = -2
+		y = 2
+		prerequisite = { focus = IND_fix_rupiah }
+		relative_position_id = IND_satisfied_nation
+		cost = 10
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_lower_interest_rates"
+			swap_ideas = {
+				remove_idea = IND_ailing_economy
+				add_idea = IND_ailing_economy_two
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_farmers_in_industry
+		icon = agriculture
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_fix_rupiah }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_farmers_in_industry"
+			631 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -8.65 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_begin_projects
+		icon = infrastructure
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_farmers_in_industry }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_begin_projects"
+			add_ideas = IND_begin_projects
+			set_temp_variable = { treasury_change = -3.75 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fight_rising_prices
+		icon = generic_banks
+
+		x = 2
+		y = 2
+		prerequisite = { focus = IND_fix_rupiah }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		mutually_exclusive = { focus = IND_keep_high_prices }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fight_rising_prices"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			add_stability = 0.03
+			add_political_power = -75
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_keep_high_prices
+		icon = WHYLINEGODOWN
+
+		x = 4
+		y = 2
+		prerequisite = { focus = IND_fix_rupiah }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_CORRUPTION }
+		mutually_exclusive = { focus = IND_fight_rising_prices }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_keep_high_prices"
+			add_ideas = IND_high_prices
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.10 }
+			set_temp_variable = { temp_outlook_increase = -0.10 }
+			add_relative_party_popularity = yes
+			add_stability = -0.02
+			set_temp_variable = { temp_opinion = 10 }
+			change_landowners_opinion = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_proficient_supply
+		icon = liberalization
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_fight_rising_prices focus = IND_keep_high_prices }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_proficient_supply"
+			add_ideas = IND_supply_management
+			set_temp_variable = { treasury_change = -2.35 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_connect_docks
+		icon = navy3
+
+		x = 2
+		y = 4
+		prerequisite = { focus = IND_proficient_supply }
+		relative_position_id = IND_satisfied_nation
+		cost = 10
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_connect_docks"
+			631 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -8.50 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_a_resilient_currency
+		icon = lion_economy
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_cooperate_local_gov }
+		prerequisite = { focus = IND_begin_projects }
+		prerequisite = { focus = IND_connect_docks }
+		relative_position_id = IND_satisfied_nation
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_a_resilient_currency"
+			remove_ideas = IND_supply_management
+			remove_ideas = IND_begin_projects
+			remove_ideas = IND_fighting_rising_prices
+			remove_ideas = IND_local_coop
+			swap_ideas = {
+				remove_idea = IND_ailing_economy_two
+				add_idea = IND_resilient_currency
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_back_chrisitians
+		icon = focus_bible
+
+		x = 3
+		y = 1
+		prerequisite = { focus = IND_ethnic_tension }
+		relative_position_id = IND_ethnic_tension
+		mutually_exclusive = { focus = IND_maluku_just_fix_it }
+		mutually_exclusive = { focus = IND_maluku_back_muslims }
+		cost = 2
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_back_chrisitians"
+			custom_effect_tooltip = IND_ambon_christian
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.05
+			}
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_ulema_opinion = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_christian_businesses
+		icon = christian_trade_unions
+
+		x = 1
+		y = 1
+		prerequisite = { focus = IND_maluku_back_chrisitians }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INSURGENCY }
+		available = {
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_christian_businesses"
+			set_temp_variable = { treasury_change = -12.00 }
+			modify_treasury_effect = yes
+			636 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_train_medics
+		icon = Generic_Red_Cross
+
+		x = 1
+		y = 2
+		prerequisite = { focus = IND_maluku_christian_businesses }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 8
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_train_medics"
+			increase_healthcare_budget = yes
+			add_manpower = 3000
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_give_trucks
+		icon = smuggle_truck
+
+		x = 1
+		y = 3
+		prerequisite = { focus = IND_maluku_train_medics }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 8
+		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INSURGENCY }
+		available = {
+			has_equipment = {
+				util_vehicle_equipment > 149
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_give_trucks"
+			IND = {
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment
+					amount = -150
+				}
+			}
+			add_tech_bonus = {
+				name = IND_maluku_give_trucks
+				bonus = 0.5
+				uses = 1
+				category = Cat_ARMOR
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_mobilize_priests
+		icon = accord_with_pope
+
+		x = -1
+		y = 1
+		prerequisite = { focus = IND_maluku_back_chrisitians }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 8
+		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_mobilize_priests"
+			add_ideas = IND_back_christians_a
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_mechanize_them
+		icon = cruader_helmet
+
+		x = -1
+		y = 2
+		prerequisite = { focus = IND_maluku_mobilize_priests }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 10
+		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_mechanize_them"
+			custom_effect_tooltip = IND_soldier2
+			hidden_effect = {
+				if = {
+					limit = { has_template = "Brigade Yonif Mekanis" }
+					capital_scope = {
+						create_unit = {
+							division = "name =\"Brigade Yonif Mekanis\" division_template = \"Brigade Yonif Mekanis\" start_experience_factor = 1.0"
+							owner = ROOT
+							count = 2
+						}
+					}
+				}
+				else = {
+					division_template = {
+						name = "Brigade Yonif Mekanis"
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+						}
+						priority = 2
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name =\"Brigade Yonif Mekanis\" division_template = \"Brigade Yonif Mekanis\" start_experience_factor = 1.0"
+							owner = ROOT
+							count = 5
+						}
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -4.35 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_christian_volunteers
+		icon = crusader_army
+
+		x = -1
+		y = 3
+		prerequisite = { focus = IND_maluku_mechanize_them }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 8
+		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_christian_volunteers"
+			swap_ideas = {
+				remove_idea = IND_back_christians_a
+				add_idea = IND_back_christians_b
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_contact_dutch
+		icon = align_to_netherlands
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_maluku_christian_volunteers }
+		prerequisite = { focus = IND_maluku_give_trucks }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_TRADE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_contact_dutch"
+			HOL = {
+				country_event = {
+					id = indonesia.5
+					hours = 6
+				}
+			 }
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_ambon_for_christians
+		icon = christian_gov
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_maluku_contact_dutch }
+		relative_position_id = IND_maluku_back_chrisitians
+		cost = 10
+		search_filters = { FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_ambon_for_christians"
+			add_political_power = 75
+			IND = {
+				country_event = {
+					id = indonesia.1001
+					hours = 0
+				}
+			 }
+
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_just_fix_it
+		icon = christianislamicalli
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_ethnic_tension }
+		relative_position_id = IND_ethnic_tension
+		mutually_exclusive = { focus = IND_maluku_back_chrisitians }
+		mutually_exclusive = { focus = IND_maluku_back_muslims }
+		cost = 2
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_just_fix_it"
+			custom_effect_tooltip = IND_ambon_neutral
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+			add_stability = 0.05
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_call_army
+		icon = Generic_Colonial_Army
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_maluku_just_fix_it }
+		relative_position_id = IND_maluku_just_fix_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_call_army"
+			custom_effect_tooltip = IND_soldier3
+			hidden_effect = {
+				if = {
+					limit = { has_template = "Kelompok Kopassus" }
+					capital_scope = {
+						create_unit = {
+							division = "name =\"Kelompok Kopassus\" division_template = \"Kelompok Kopassus\" start_experience_factor = 1.0"
+							owner = ROOT
+							count = 2
+						}
+					}
+				}
+				else = {
+					division_template = {
+						name = "Kelompok Kopassus"
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+						}
+						priority = 2
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name =\"Kodam-II\" division_template = \"Kodam-II\" start_experience_factor = 1.0"
+							owner = ROOT
+							count = 1
+						}
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -4.35 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_militarize_villages
+		icon = focus_generic_military_dictatorship
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_maluku_call_army }
+		relative_position_id = IND_maluku_just_fix_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_INDUSTRY }
+		available = {
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_militarize_villages"
+			set_temp_variable = { treasury_change = -3.25 }
+			modify_treasury_effect = yes
+			636 = {
+				add_building_construction = {
+					type = bunker
+					level = 4
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_increase_policing
+		icon = BRA_funds_to_rj_police
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_maluku_militarize_villages }
+		relative_position_id = IND_maluku_just_fix_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_increase_policing"
+			increase_policing_budget = yes
+			add_tech_bonus = {
+				name = IND_maluku_increase_policing
+				bonus = 0.5
+				uses = 2
+				category = Cat_GENES
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_military_shelter
+		icon = military_deal
+
+		x = 1
+		y = 4
+		prerequisite = { focus = IND_maluku_increase_policing }
+		relative_position_id = IND_maluku_just_fix_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_INDUSTRY }
+		available = {
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		mutually_exclusive = { focus = IND_maluku_civilian_shelter }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_military_shelter"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			636 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_civilian_shelter
+		icon = industry4
+
+		x = -1
+		y = 4
+		prerequisite = { focus = IND_maluku_increase_policing }
+		relative_position_id = IND_maluku_just_fix_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INSURGENCY }
+		available = {
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		mutually_exclusive = { focus = IND_maluku_military_shelter }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_civilian_shelter"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			636 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_back_muslims
+		icon = quaran_book
+
+		x = -3
+		y = 1
+		prerequisite = { focus = IND_ethnic_tension focus = IND_embrace_it }
+		relative_position_id = IND_ethnic_tension
+		mutually_exclusive = { focus = IND_maluku_just_fix_it }
+		mutually_exclusive = { focus = IND_maluku_back_chrisitians }
+		cost = 2
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_back_muslims"
+			custom_effect_tooltip = IND_ambon_muslim
+			set_temp_variable = { temp_opinion = -5 }
+			change_landowners_opinion = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_ulema_opinion = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_back_muslims_arm_ulama
+		icon = Generic_Piety
+
+		x = -1
+		y = 1
+		prerequisite = { focus = IND_maluku_back_muslims }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_back_muslims_arm_ulama"
+			add_ideas = IND_back_muslims_a
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_back_muslims_medical_fee
+		icon = medicine2
+
+		x = -1
+		y = 2
+		prerequisite = { focus = IND_back_muslims_arm_ulama }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_back_muslims_medical_fee"
+			swap_ideas = {
+				remove_idea = IND_back_muslims_a
+				add_idea = IND_back_muslims_b
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_back_muslims_workers
+		icon = farming_sector
+
+		x = -1
+		y = 3
+		prerequisite = { focus = IND_back_muslims_medical_fee }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_back_muslims_workers"
+			swap_ideas = {
+				remove_idea = IND_back_muslims_b
+				add_idea = IND_back_muslims_c
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_back_muslims_factories
+		icon = sunni_government
+
+		x = 1
+		y = 1
+		prerequisite = { focus = IND_maluku_back_muslims }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_INDUSTRY }
+		available = {
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_back_muslims_factories"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			636 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_back_muslims_send_guns
+		icon = islamic_militia_01
+
+		x = 1
+		y = 2
+		prerequisite = { focus = IND_back_muslims_factories }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_EQUIPMENT }
+		available = {
+			has_equipment = {
+				inf_equipment > 999
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_back_muslims_send_guns"
+			IND = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -1000
+				}
+			}
+			add_tech_bonus = {
+				name = IND_back_muslims_send_guns
+				bonus = 1
+				uses = 1
+				category = Cat_INF_WEP
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_back_muslims_infantry
+		icon = sword_of_islam_05
+
+		x = 1
+		y = 3
+		prerequisite = { focus = IND_back_muslims_send_guns }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 10
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_back_muslims_infantry"
+			custom_effect_tooltip = IND_soldier
+			hidden_effect = {
+				if = {
+					limit = { has_template = "Brigade Yonif Mekanis" }
+					capital_scope = {
+						create_unit = {
+							division = "name =\"Kodam-I\" division_template = \"Kodam-I\" start_experience_factor = 1.0"
+							owner = ROOT
+							count = 3
+						}
+					}
+				}
+				else = {
+					division_template = {
+						name = "Kodam-I"
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+							Special_Forces = { x = 0 y = 1 }
+							Special_Forces = { x = 0 y = 2 }
+							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
+							Special_Forces = { x = 1 y = 1 }
+							Special_Forces = { x = 1 y = 2 }
+							Special_Forces = { x = 1 y = 3 }
+						}
+						priority = 2
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name =\"Brigade Yonif Mekanis\" division_template = \"Brigade Yonif Mekanis\" start_experience_factor = 1.0"
+							owner = ROOT
+							count = 5
+						}
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -4.35 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_call_saudis
+		icon = align_to_saudi_arabia
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_back_muslims_workers }
+		prerequisite = { focus = IND_back_muslims_infantry }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_call_saudis"
+			SAU = {
+				country_event = {
+					id = indonesia.6
+					hours = 6
+				}
+			 }
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_ambon_for_muslims
+		icon = aid_quran
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_call_saudis }
+		relative_position_id = IND_maluku_back_muslims
+		cost = 10
+		search_filters = { FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_ambon_for_muslims"
+		add_political_power = 75
+		IND = {
+			country_event = {
+				id = indonesia.1002
+				hours = 0
+			}
+		 }
+
+	}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_crush_gangs
+		icon = political_arrests
+
+		x = 2
+		y = 7
+		relative_position_id = IND_maluku_just_fix_it
+		cost = 8
+		prerequisite = { focus = IND_transfer_to_army }
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_INSURGENCY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_crush_gangs"
+			swap_ideas = {
+				remove_idea = IND_resolving_ethnic_tension
+				add_idea = IND_crushed_gang_culture
+			}
+			add_manpower = -1500
+			add_stability = 0.05
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_transfer_to_army
+		icon = focus_ETH_peacekeeping_forces
+
+		x = 0
+		y = 6
+		prerequisite = {
+			focus = IND_maluku_increase_policing
+			focus = IND_maluku_ambon_for_christians
+			focus = IND_ambon_for_muslims
+			}
+		relative_position_id = IND_maluku_just_fix_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_transfer_to_army"
+			army_experience = 50
+			add_command_power = 25
+			add_war_support = 0.15
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_equip_police
+		icon = police_funding_bonus
+
+		x = -2
+		y = 1
+		prerequisite = { focus = IND_transfer_to_army }
+		relative_position_id = IND_transfer_to_army
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_equip_police"
+			add_ideas = IND_equipped_police
+			IND = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -300
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maluku_all_quiet_for_now
+		icon = white_peace
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_transfer_to_army }
+		prerequisite = { focus = IND_maluku_crush_gangs }
+		prerequisite = { focus = IND_maluku_equip_police }
+		relative_position_id = IND_transfer_to_army
+		cost = 8
+		search_filters = { FOCUS_FILTER_INSURGENCY FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
+			available = {
+			hidden_trigger = {
+			OR = {
+			has_country_flag = MUS5
+			has_country_flag = CHR5
+			has_country_flag = NEU6
+		}
+	}
+}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maluku_all_quiet_for_now"
+				hidden_effect = { remove_ideas = IND_resolving_ethnic_tension
+				remove_ideas = IND_ethnic_tension }
+				custom_effect_tooltip = IND_q
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	##Radicalism Branch
+	#Fight it
+	focus = {
+		id = IND_combat_it
+		icon = attack_isis
+
+		x = 11
+		y = 1
+		prerequisite = { focus = IND_ethnic_tension }
+		relative_position_id = IND_ethnic_tension
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_combat_it"
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.03
+			}
+			add_command_power = 35
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_investigate_growth
+		icon = communist_spies2
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_combat_it }
+		relative_position_id = IND_combat_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_investigate_growth"
+			set_temp_variable = { treasury_change = -6.85 }
+			modify_treasury_effect = yes
+			increase_policing_budget = yes
+
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_start_media_campaign
+		icon = television
+
+		x = 2
+		y = 1
+		prerequisite = { focus = IND_combat_it }
+		relative_position_id = IND_combat_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_start_media_campaign"
+			set_temp_variable = { treasury_change = -2.35 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = IND_sal_1
+			hidden_effect = {
+				swap_ideas = {
+				remove_idea = IND_growing_radicalization
+				add_idea = IND_growing_radicalization_2
+			}
+		}
+	}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_derad_campaign
+		icon = GEO_Loyalty_or_Fear
+
+		x = -2
+		y = 1
+		prerequisite = { focus = IND_combat_it }
+		relative_position_id = IND_combat_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_derad_campaign"
+			set_temp_variable = { treasury_change = -3.45 }
+			modify_treasury_effect = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.05
+			}
+			add_political_power = -75
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_bolster_party_pop
+		icon = Generic_Political_Purge
+
+		x = -4
+		y = 1
+		prerequisite = { focus = IND_combat_it }
+		relative_position_id = IND_combat_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_bolster_party_pop"
+			set_temp_variable = { treasury_change = -6.25 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_rallies_schools
+		icon = ITA_Focus_Ius_Scholae
+
+		x = 1
+		y = 2
+		prerequisite = { focus = IND_bolster_party_pop }
+		prerequisite = { focus = IND_derad_campaign }
+		prerequisite = { focus = IND_investigate_growth }
+		prerequisite = { focus = IND_start_media_campaign }
+		relative_position_id = IND_combat_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_rallies_schools"
+			custom_effect_tooltip = IND_sal_3
+			hidden_effect = {
+				swap_ideas = {
+				remove_idea = IND_growing_radicalization_2
+				add_idea = IND_growing_radicalization_3
+			}
+		}
+	}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_bolster_nationalism
+		icon = focus_generic_fascist_propaganda
+
+		x = -1
+		y = 2
+		prerequisite = { focus = IND_bolster_party_pop }
+		prerequisite = { focus = IND_derad_campaign }
+		prerequisite = { focus = IND_investigate_growth }
+		prerequisite = { focus = IND_start_media_campaign }
+		relative_position_id = IND_combat_it
+		cost = 2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_bolster_nationalism"
+			set_temp_variable = { treasury_change = -6.25 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_filter_net
+		icon = internet_censorship
+
+		x = -3
+		y = 2
+		prerequisite = { focus = IND_bolster_party_pop }
+		prerequisite = { focus = IND_derad_campaign }
+		prerequisite = { focus = IND_investigate_growth }
+		prerequisite = { focus = IND_start_media_campaign }
+		relative_position_id = IND_combat_it
+		mutually_exclusive = { focus = IND_control_net }
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_filter_net"
+			add_political_power = 50
+			add_stability = -0.01
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.05
+			}
+
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_control_net
+		icon = press_censorship
+
+		x = -5
+		y = 2
+		prerequisite = { focus = IND_bolster_party_pop }
+		prerequisite = { focus = IND_derad_campaign }
+		prerequisite = { focus = IND_investigate_growth }
+		prerequisite = { focus = IND_start_media_campaign }
+		relative_position_id = IND_combat_it
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		mutually_exclusive = { focus = IND_filter_net }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_control_net"
+			add_political_power = 20
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.03
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_curb_fpi
+		icon = islamophobia
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_bolster_nationalism }
+		prerequisite = { focus = IND_rallies_schools }
+		prerequisite = { focus = IND_filter_net focus = IND_control_net }
+		relative_position_id = IND_combat_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_curb_fpi"
+			custom_effect_tooltip = IND_sal_4
+			hidden_effect = { swap_ideas = {
+				remove_idea = IND_growing_radicalization_3
+				add_idea = IND_growing_radicalization_4
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_arrest_members
+		icon = political_arrests
+
+		x = -2
+		y = 3
+		prerequisite = { focus = IND_bolster_nationalism }
+		prerequisite = { focus = IND_rallies_schools }
+		prerequisite = { focus = IND_filter_net focus = IND_control_net }
+		relative_position_id = IND_combat_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_arrest_members"
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.08
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_persecute
+		icon = focus_generic_national_security
+
+		x = -1
+		y = 4
+		prerequisite = { focus = IND_curb_fpi }
+		prerequisite = { focus = IND_arrest_members }
+		relative_position_id = IND_combat_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			IND = {
+				fascism < 0.1
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_persecute"
+			IND = {
+				country_event = {
+					id = indonesia.772
+					hours = 0
+				}
+			}
+			custom_effect_tooltip = IND_sal_5
+			hidden_effect = {
+				swap_ideas = {
+				remove_idea = IND_growing_radicalization_4
+				add_idea = IND_growing_radicalization_5
+			}
+		}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	#Accept it
+	focus = {
+		id = IND_embrace_it
+		icon = islamic_militarism
+
+		x = -40
+		y = 0
+		#prerequisite = { focus = IND_salafism_indonesia }
+		relative_position_id = IND_indonesias_future
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			IND = {
+				fascism > 0.7
+			}
+		}
+		mutually_exclusive = { focus = IND_ethnic_tension }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_embrace_it"
+			swap_ideas = {
+				remove_idea = IND_growing_radicalization
+				add_idea = IND_growing_radicalization_6
+			}
+
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 0
+		}
+	}
+	focus = {
+		id = IND_tell_police_backdown
+		icon = ahmadi_capture
+
+		x = -1
+		y = 1
+		prerequisite = { focus = IND_embrace_it }
+		relative_position_id = IND_embrace_it
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_tell_police_backdown"
+			decrease_policing_budget = yes
+			IND = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = 4000
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fund_their_media
+		icon = cybercaliphate
+
+		x = 1
+		y = 1
+		prerequisite = { focus = IND_embrace_it }
+		relative_position_id = IND_embrace_it
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fund_their_media"
+			set_temp_variable = { treasury_change = -5.45 }
+			modify_treasury_effect = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_beyond_our_control
+		icon = islamic_sword_03
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_fund_their_media }
+		prerequisite = { focus = IND_tell_police_backdown }
+		relative_position_id = IND_embrace_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_beyond_our_control"
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.10
+			}
+			add_stability = -0.05
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_parliement_stormed
+		icon = loosen_secularism_laws
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_beyond_our_control }
+		relative_position_id = IND_embrace_it
+		cost = 2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_parliement_stormed"
+			ROOT = {
+				country_event = {
+					id = indonesia.1000
+					hours = 0
+				}
+			 }
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fpi
+		icon = qadire_khom
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_parliement_stormed }
+		prerequisite = { focus = IND_back_muslims_workers }
+		relative_position_id = IND_embrace_it
+		cost = 0
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fpi"
+			##PUT FPI INTO POWER
+			set_temp_variable = { rul_party_temp = 11 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_sharia
+		icon = islam_laws
+
+		x = 0
+		y = 6
+		prerequisite = { focus = IND_fpi }
+		relative_position_id = IND_embrace_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ECONOMY }
+		available = {
+			has_civil_war = no
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_sharia"
+			add_ideas = IND_sharia
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_regional_purification
+		icon = war
+
+		x = 3
+		y = 6
+		prerequisite = { focus = IND_fpi }
+		relative_position_id = IND_embrace_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+		available = {
+			has_civil_war = no
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_regional_purification"
+			add_named_threat = {
+				threat = 10
+				name = indonesian_caliphate
+			}
+			add_war_support = 0.10
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_touch_on_economy
+		icon = islamic_focus_01
+
+		x = -3
+		y = 6
+		prerequisite = { focus = IND_fpi }
+		relative_position_id = IND_embrace_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY }
+		available = {
+			has_civil_war = no
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_touch_on_economy"
+			one_random_infrastructure = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dress_code
+		icon = sharia_law
+
+		x = 0
+		y = 7
+		prerequisite = { focus = IND_sharia }
+		relative_position_id = IND_embrace_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dress_code"
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_ulema_opinion = yes
+			add_stability = -0.05
+			add_war_support = 0.20
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_gender_seg
+		icon = muslim_women
+
+		x = 0
+		y = 8
+		prerequisite = { focus = IND_dress_code }
+		relative_position_id = IND_embrace_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_gender_seg"
+			swap_ideas = {
+				remove_idea = IND_sharia
+				add_idea = IND_sharia_2
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_raid_bar
+		icon = war2_green
+
+		x = 0
+		y = 9
+		prerequisite = { focus = IND_gender_seg }
+		relative_position_id = IND_embrace_it
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_raid_bar"
+			638 = {
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = 32.65 }
+			modify_treasury_effect = yes
+			add_stability = -0.05
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_oppose_invest
+		icon = better_money
+
+		x = -4
+		y = 7
+		prerequisite = { focus = IND_touch_on_economy }
+		relative_position_id = IND_embrace_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESOURCE }
+		available = {
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_oppose_invest"
+			set_temp_variable = { treasury_change = -8.50 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = steel
+				amount = 4
+				state = 636
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fund_for_holy
+		icon = tal_leader
+
+		x = -2
+		y = 7
+		prerequisite = { focus = IND_touch_on_economy }
+		relative_position_id = IND_embrace_it
+		cost = 8
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fund_for_holy"
+			one_random_industrial_complex = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_convert_tourist_destination
+		icon = muslim_arab_world
+
+		x = -2
+		y = 9
+		prerequisite = { focus = IND_fund_for_holy }
+		prerequisite = { focus = IND_oppose_invest }
+		relative_position_id = IND_embrace_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_convert_tourist_destination"
+			two_random_arms_factory = yes
+			635 = {
+				add_building_construction = {
+					type = infrastructure
+					level = -1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_purify_philipines
+		icon = attack_philippines2
+
+		x = 2
+		y = 7
+		prerequisite = { focus = IND_regional_purification }
+		relative_position_id = IND_embrace_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_purify_philipines"
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = PHI
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_purify_singapore
+		icon = SIN_total_defense
+
+		x = 4
+		y = 7
+		prerequisite = { focus = IND_regional_purification }
+		relative_position_id = IND_embrace_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_purify_singapore"
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = SIN
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_purify_asia
+		icon = jihad
+
+		x = 3
+		y = 8
+		prerequisite = { focus = IND_purify_philipines }
+		prerequisite = { focus = IND_purify_singapore }
+		relative_position_id = IND_embrace_it
+		cost = 10
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_purify_asia"
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = VIE
+			}
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = CBD
+			}
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = SIA
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_holy_indonesia
+		icon = attack_taliban
+
+		x = -1
+		y = 10
+		prerequisite = { focus = IND_convert_tourist_destination }
+		prerequisite = { focus = IND_raid_bar }
+		relative_position_id = IND_embrace_it
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_holy_indonesia"
+			swap_ideas = {
+				remove_idea = IND_growing_radicalization_6
+				add_idea = IND_growing_radicalization_7
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	##Military Branch
+	focus = {
+		id = IND_indonesian_armed_forces
+		icon = defend_ind
+
+		x = 54
+		y = 1
+		prerequisite = { focus = IND_indonesias_future }
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_indonesian_armed_forces"
+			add_command_power = 50
+			increase_military_spending = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_tni_ad
+		icon = Indonesian_Army_1
+
+		x = -3
+		y = 1
+		prerequisite = { focus = IND_indonesian_armed_forces }
+		relative_position_id = IND_indonesian_armed_forces
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_tni_ad"
+			army_experience = 50
+			add_doctrine_cost_reduction = {
+				name = IND_tni_ad
+				cost_reduction = 0.3
+				uses = 2
+				category = land_doctrine
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_chinese_model_inf
+		icon = blr_china_cooperation
+
+		x = -1
+		y = 1
+		prerequisite = { focus = IND_tni_ad }
+		relative_position_id = IND_tni_ad
+		mutually_exclusive = { focus = IND_homegrown_inf }
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE FOCUS_FILTER_EQUIPMENT }
+		available = {
+			country_exists = CHI
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_chinese_model_inf"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = IND }
+			change_influence_percentage = yes
+			CHI = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = medium_increase
+				}
+			}
+			if = {
+				limit = { has_tech = infantry_weapons2 }
+					add_equipment_to_stockpile = {
+					type = infantry_weapons2
+					amount = 5000
+					producer = CHI
+				}
+			}
+			else_if = {
+				limit = { has_tech = infantry_weapons1 }
+				add_equipment_to_stockpile = {
+					type = infantry_weapons1
+					amount = 5000
+					producer = CHI
+				}
+			}
+			set_temp_variable = { treasury_change = -12.85 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_homegrown_inf
+		icon = soldier
+
+		x = 1
+		y = 1
+		prerequisite = { focus = IND_tni_ad }
+		relative_position_id = IND_tni_ad
+		mutually_exclusive = { focus = IND_chinese_model_inf }
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_homegrown_inf"
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+			add_tech_bonus = {
+				name = IND_homegrown_inf
+				bonus = 0.5
+				uses = 2
+				category = Cat_INF_WEP
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strong_howitzers
+		icon = artillery
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_homegrown_inf focus = IND_chinese_model_inf }
+		relative_position_id = IND_tni_ad
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strong_howitzers"
+			set_temp_variable = { treasury_change = -1.00 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_strong_howitzers
+				bonus = 0.5
+				uses = 1
+				category = Cat_ARTILLERY
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_jungle_expertise
+		icon = soldier2
+
+		x = -2
+		y = 2
+		prerequisite = { focus = IND_homegrown_inf focus = IND_chinese_model_inf }
+		relative_position_id = IND_tni_ad
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_jungle_expertise"
+			add_ideas = IND_guerilla
+			add_command_power = 25
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_most_advanced_tanks
+		icon = tanks5
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_strong_howitzers }
+		relative_position_id = IND_tni_ad
+		cost = 8
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_most_advanced_tanks"
+			set_temp_variable = { treasury_change = -3.35 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_most_advanced_tanks
+				bonus = 0.5
+				uses = 1
+				category = Cat_MBT
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_tank_factories
+		icon = factory_complex
+
+		x = -1
+		y = 4
+		prerequisite = { focus = IND_most_advanced_tanks }
+		relative_position_id = IND_tni_ad
+		cost = 8
+		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INDUSTRY }
+		available = {
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_tank_factories"
+			set_temp_variable = { treasury_change = -8.25 }
+			modify_treasury_effect = yes
+			636 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_best_ifvs
+		icon = ifv
+
+		x = 1
+		y = 4
+		prerequisite = { focus = IND_most_advanced_tanks }
+		relative_position_id = IND_tni_ad
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_best_ifvs"
+			set_temp_variable = { treasury_change = -1.45 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_best_ifvs
+				bonus = 0.5
+				uses = 1
+				category = Cat_IFV
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_the_toughest_apcs
+		icon = apc
+
+		x = 1
+		y = 5
+		prerequisite = { focus = IND_most_advanced_tanks }
+		relative_position_id = IND_tni_ad
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_the_toughest_apcs"
+			set_temp_variable = { treasury_change = -1.45 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_the_toughest_apcs
+				bonus = 0.5
+				uses = 1
+				category = Cat_APC
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_tni_al
+		icon = Indonesian_Navy_1
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_indonesian_armed_forces }
+		relative_position_id = IND_indonesian_armed_forces
+		cost = 8
+		search_filters = { FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_tni_al"
+			navy_experience = 50
+			add_doctrine_cost_reduction = {
+				name = IND_tni_al
+				cost_reduction = 0.3
+				uses = 2
+				category = naval_doctrine
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fortified_seas
+		icon = amphibious_assault
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_tni_al }
+		relative_position_id = IND_tni_al
+		cost = 5
+		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_INDUSTRY }
+		mutually_exclusive = { focus = IND_industrialized_sea }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fortified_seas"
+			set_temp_variable = { treasury_change = -4.25 }
+			modify_treasury_effect = yes
+			634 = {
+				add_building_construction = {
+					type = coastal_bunker
+					level = 4
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_new_corvettes
+		icon = naval_upgrade
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_fortified_seas }
+		relative_position_id = IND_tni_al
+		cost = 5
+		search_filters = { FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_new_corvettes"
+			set_temp_variable = { treasury_change = -2.35 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_new_corvettes
+				bonus = 0.5
+				uses = 1
+				category = Cat_corvette
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_submarines
+		icon = submarines
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_new_corvettes }
+		relative_position_id = IND_tni_al
+		cost = 5
+		search_filters = { FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_submarines"
+			set_temp_variable = { treasury_change = -2.35 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_submarines
+				bonus = 0.5
+				uses = 1
+				category = Cat_ATT_SUB
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_industrialized_sea
+		icon = navy
+
+		x = 2
+		y = 1
+		prerequisite = { focus = IND_tni_al }
+		relative_position_id = IND_tni_al
+		cost = 5
+		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_INDUSTRY }
+		mutually_exclusive = { focus = IND_fortified_seas }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_industrialized_sea"
+			set_temp_variable = { treasury_change = -8.25 }
+			modify_treasury_effect = yes
+			634 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_cruisers
+		icon = cruisers
+
+		x = 2
+		y = 2
+		prerequisite = { focus = IND_industrialized_sea }
+		relative_position_id = IND_tni_al
+		cost = 5
+		search_filters = { FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_cruisers"
+			set_temp_variable = { treasury_change = -3.25 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_cruisers
+				bonus = 0.25
+				uses = 2
+				category = Cat_M_Cruiser
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_air_carrier_designs
+		icon = carriers
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_cruisers }
+		relative_position_id = IND_tni_al
+		cost = 5
+		search_filters = { FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_air_carrier_designs"
+			set_temp_variable = { treasury_change = -3.25 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_air_carrier_designs
+				bonus = 0.25
+				uses = 2
+				category = Cat_CV
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_maritime_empire
+		icon = wolfpacks
+
+		x = 1
+		y = 4
+		prerequisite = { focus = IND_air_carrier_designs focus = IND_submarines }
+		relative_position_id = IND_tni_al
+		cost = 10
+		search_filters = { FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_maritime_empire"
+			add_doctrine_cost_reduction = {
+				name = IND_maritime_empire
+				cost_reduction = 0.5
+				uses = 1
+				category = naval_doctrine
+			}
+			navy_experience = 50
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_tni_au
+		icon = Indonesian_Air_Force_2
+
+		x = 5
+		y = 1
+		prerequisite = { focus = IND_indonesian_armed_forces }
+		relative_position_id = IND_indonesian_armed_forces
+		cost = 8
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_tni_au"
+				add_tech_bonus = {
+					name = IND_tni_au
+					bonus = 1.0
+					uses = 1
+					category = Cat_AIR_EQP
+				}
+				add_doctrine_cost_reduction = {
+					name = IND_tni_au
+					cost_reduction = 0.5
+					uses = 1
+					category = air_doctrine
+				}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_refine_airbases
+		icon = sheeps_mig_figter
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_tni_au }
+		relative_position_id = IND_tni_au
+		cost = 5
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_INDUSTRY }
+		available = {
+			631 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_refine_airbases"
+			631 = {
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -7.25 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_air_drills
+		icon = Jet_Fighters
+
+		x = -1
+		y = 2
+		prerequisite = { focus = IND_refine_airbases }
+		relative_position_id = IND_tni_au
+		mutually_exclusive = { focus = IND_purchase_rafele_jets }
+		cost = 5
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_air_drills"
+			air_experience = 50
+			add_war_support = 0.10
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_expand_air_craft_designs
+		icon = production
+
+		x = -1
+		y = 3
+		prerequisite = { focus = IND_air_drills }
+		relative_position_id = IND_tni_au
+		cost = 5
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_expand_air_craft_designs"
+			add_tech_bonus = {
+				name = IND_expand_air_craft_designs
+				bonus = 0.5
+				uses = 1
+				category = Cat_H_AIR
+			}
+			add_tech_bonus = {
+				name = IND_expand_air_craft_designs
+				bonus = 0.2
+				category = CAT_as_fighter
+				uses = 2
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_purchase_rafele_jets
+		icon = blr_buy_west_weapons
+
+		x = 1
+		y = 2
+		prerequisite = { focus = IND_refine_airbases }
+		relative_position_id = IND_tni_au
+		mutually_exclusive = { focus = IND_air_drills }
+		cost = 5
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_purchase_rafele_jets"
+			add_equipment_to_stockpile = {
+				type = MR_fighter_equipment
+				amount = 12
+				producer = FRA
+			}
+			set_temp_variable = { treasury_change = -18.45 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_nato_drilling
+		icon = nato
+
+		x = 1
+		y = 3
+		prerequisite = { focus = IND_purchase_rafele_jets }
+		relative_position_id = IND_tni_au
+		cost = 5
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_nato_drilling"
+			USA = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			FRA = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			GER = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			air_experience = 25
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_funds_for_iae
+		icon = Generic_Gunslinger
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_nato_drilling focus = IND_expand_air_craft_designs }
+		relative_position_id = IND_tni_au
+		cost = 10
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_funds_for_iae"
+			set_temp_variable = { treasury_change = -9.65 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_funds_for_iae
+				bonus = 1.0
+				uses = 1
+				category = air_doctrine
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_nationa_awakening
+		icon = national_awakening_party
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_political_agenda }
+		relative_position_id = IND_political_agenda
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_nationa_awakening"
+			add_timed_idea = {
+				idea = IND_NAW_party
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_rural_folk
+		icon = quaran_book
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_nationa_awakening }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_rural_folk"
+			add_timed_idea = {
+				idea = IND_rural_aid
+				days = 360
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_reps_village
+		icon = dangerous_deal3
+
+		x = -2
+		y = 2
+		prerequisite = { focus = IND_naw_rural_folk }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		mutually_exclusive = { focus = IND_naw_aid_village }
+		mutually_exclusive = { focus = IND_naw_aid_farmer }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_reps_village"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+			add_political_power = 75
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_health_fac
+		icon = generic_healthcare
+
+		x = -2
+		y = 3
+		prerequisite = { focus = IND_naw_reps_village }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_health_fac"
+			increase_healthcare_budget = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_better_edu
+		icon = science2
+
+		x = -2
+		y = 4
+		prerequisite = { focus = IND_naw_health_fac }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_better_edu"
+			increase_education_budget = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_aid_village
+		icon = agriculture
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_naw_rural_folk }
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		mutually_exclusive = { focus = IND_naw_reps_village }
+		mutually_exclusive = { focus = IND_naw_aid_farmer }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_aid_village"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			638 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			add_stability = 0.03
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_dev_lacking_regions
+		icon = construction2
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_naw_aid_village }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_dev_lacking_regions"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			638 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_agri_dev
+		icon = mechanized_agriculture
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_naw_dev_lacking_regions }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_agri_dev"
+			set_temp_variable = { treasury_change = -2.45 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_fishermen
+		icon = stop_illegal_fishing
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_naw_rural_folk }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_fishermen"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			638 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_women
+		icon = muslim_women
+
+		x = 2
+		y = 4
+		prerequisite = { focus = IND_naw_fishermen }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_women"
+			add_tech_bonus = {
+				name = IND_naw_women
+				bonus = 0.4
+				uses = 2
+				category = computing_tech
+			}
+			add_manpower = 5000
+			add_stability = 0.02
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_aid_farmer
+		icon = farming_sector
+
+		x = 4
+		y = 2
+		prerequisite = { focus = IND_naw_rural_folk }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		mutually_exclusive = { focus = IND_naw_aid_village }
+		mutually_exclusive = { focus = IND_naw_reps_village }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_aid_farmer"
+			remove_ideas = IND_rural_aid
+			add_timed_idea = {
+				idea = IND_rural_aid_2
+				days = 360
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_aid_laborer
+		icon = BRA_labor_laws
+
+		x = 4
+		y = 3
+		prerequisite = { focus = IND_naw_aid_farmer }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_aid_laborer"
+			remove_ideas = IND_rural_aid_2
+			add_timed_idea = {
+				idea = IND_rural_aid_3
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_naw_safety_reg
+		icon = construction2
+
+		x = 4
+		y = 4
+		prerequisite = { focus = IND_naw_aid_laborer }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_naw_safety_reg"
+			remove_ideas = IND_rural_aid_3
+			add_timed_idea = {
+				idea = IND_rural_aid_4
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_way_forward_naw
+		icon = democracy2
+
+		x = 2
+		y = 5
+		prerequisite = { focus = IND_naw_agri_dev focus = IND_naw_better_edu focus = IND_naw_safety_reg }
+		prerequisite = { focus = IND_naw_women }
+		available = {
+			has_government = democratic
+			western_conservatism_are_in_power = yes
+		}
+		relative_position_id = IND_nationa_awakening
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_way_forward_naw"
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.10
+			}
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_prosper_justice
+		icon = prosperous_justice_party
+
+		x = 8
+		y = 1
+		prerequisite = { focus = IND_political_agenda }
+		relative_position_id = IND_political_agenda
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_prosper_justice"
+			add_timed_idea = {
+				idea = IND_PJP_party
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_reform_system
+		icon = fascist_liberty
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_prosper_justice }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_reform_system"
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+			add_stability = -0.02
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_improve_network
+		icon = radar2
+
+		x = -2
+		y = 2
+		prerequisite = { focus = IND_reform_system }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		mutually_exclusive = { focus = IND_address_issues }
+		mutually_exclusive = { focus = IND_equal_oppertunities }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_improve_network"
+			add_timed_idea = {
+				idea = IND_network_improvement
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_efficient_tax
+		icon = Focus_delerlict_property_tax
+
+		x = -2
+		y = 3
+		prerequisite = { focus = IND_improve_network }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_efficient_tax"
+			remove_ideas = IND_network_improvement
+			add_timed_idea = {
+				idea = IND_network_improvement_2
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_const_practices
+		icon = RUS_State_Construction
+
+		x = -2
+		y = 4
+		prerequisite = { focus = IND_efficient_tax }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_const_practices"
+			remove_ideas = IND_actwork_improvement_2
+			add_timed_idea = {
+				idea = IND_network_improvement_3
+				days = 400
+			}
+			add_stability = 0.03
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_upgrade_facilities
+		icon = invest_in_ministry_of_infrastructure
+
+		x = -2
+		y = 5
+		prerequisite = { focus = IND_const_practices }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			623 = {
+				is_owned_and_controlled_by = IND
+			}
+				has_government = nationalist
+				nationalist_right_wing_populists_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_upgrade_facilities"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			623 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_address_issues
+		icon = nationalist_constiution
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_reform_system }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		mutually_exclusive = { focus = IND_improve_network }
+		mutually_exclusive = { focus = IND_equal_oppertunities }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_address_issues"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_edu_to_disenfranchised
+		icon = BLR_High_quality_education
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_address_issues }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_edu_to_disenfranchised"
+			add_tech_bonus = {
+				name = IND_edu_to_disenfranchised
+				bonus = 1.0
+				uses = 1
+				category = Cat_GENES
+			}
+			add_stability = 0.02
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_continue_pol_fund
+		icon = police_funding_bonus
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_edu_to_disenfranchised }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_continue_pol_fund"
+			increase_policing_budget = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_continue_cor_fight
+		icon = MEX_War_on_corruption
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_continue_pol_fund }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_continue_cor_fight"
+			decrease_corruption = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_equal_oppertunities
+		icon = focus_ITA_generic_fascist_workers
+
+		x = 2
+		y = 2
+		prerequisite = { focus = IND_reform_system }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		mutually_exclusive = { focus = IND_improve_network }
+		mutually_exclusive = { focus = IND_address_issues }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+			640 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_equal_oppertunities"
+			set_temp_variable = { treasury_change = -2.25 }
+			modify_treasury_effect = yes
+			640 = {
+				add_extra_state_shared_building_slots = 2
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_more_offices
+		icon = consumer_goods
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_equal_oppertunities }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ECONOMY }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+			640 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_more_offices"
+			set_temp_variable = { treasury_change = -12.00 }
+			modify_treasury_effect = yes
+			640 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_road_improvements
+		icon = infrastructure
+
+		x = 2
+		y = 4
+		prerequisite = { focus = IND_more_offices }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+			640 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_road_improvements"
+			set_temp_variable = { treasury_change = -0.50 }
+			modify_treasury_effect = yes
+			640 = {
+				add_building_construction = {
+					type = rail_way
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_help_arm_industry
+		icon = mlw_rumphi
+
+		x = 2
+		y = 5
+		prerequisite = { focus = IND_road_improvements }
+		relative_position_id = IND_prosper_justice
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+			640 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_help_arm_industry"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			640 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_new_society
+		icon = Ultranationalism_2
+
+		x = 0
+		y = 6
+		prerequisite = { focus = IND_upgrade_facilities focus = IND_help_arm_industry focus = IND_continue_cor_fight }
+		available = {
+			has_government = nationalist
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		relative_position_id = IND_prosper_justice
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_new_society"
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.10
+			}
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_united_development
+		icon = united_development_party
+
+		x = 14
+		y = 1
+		prerequisite = { focus = IND_political_agenda }
+		relative_position_id = IND_political_agenda
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_united_development"
+			add_timed_idea = {
+				idea = IND_UDD_party
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_national_dev
+		icon = radio_pakistan_02
+
+		x = -2
+		y = 1
+		prerequisite = { focus = IND_united_development }
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		mutually_exclusive = { focus = IND_und_better_social_welfare }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_national_dev"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_clean_water
+		icon = science
+
+		x = -2
+		y = 3
+		prerequisite = { focus = IND_und_national_dev }
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_clean_water"
+			set_temp_variable = { treasury_change = -2.25 }
+			modify_treasury_effect = yes
+			638 = {
+				add_extra_state_shared_building_slots = 2
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_bridge_port
+		icon = industry3
+
+		x = -2
+		y = 4
+		prerequisite = { focus = IND_und_clean_water }
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_bridge_port"
+			set_temp_variable = { treasury_change = -2.65 }
+			modify_treasury_effect = yes
+			636 = {
+				add_building_construction = {
+					type = supply_node
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_agri_invest
+		icon = agriculture
+
+		x = -2
+		y = 5
+		prerequisite = { focus = IND_und_bridge_port }
+
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			634 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_agri_invest"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			634 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_more_science
+		icon = research3
+
+		x = -2
+		y = 6
+		prerequisite = { focus = IND_und_agri_invest }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_more_science"
+			add_tech_bonus = {
+				name = IND_und_more_science
+				bonus = 1
+				uses = 1
+				category = computing_tech
+			}
+			add_manpower = 5000
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_prot_muslims
+		icon = sharia_law
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_united_development }
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			629 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_prot_muslims"
+			set_temp_variable = { treasury_change = -3.45 }
+			modify_treasury_effect = yes
+			629 = {
+				add_building_construction = {
+					type = bunker
+					level = 4
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_islam_schools
+		icon = islamist_gov2
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_und_prot_muslims }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_islam_schools"
+				add_timed_idea = {
+				idea = IND_islamic_schools
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_islam_banking
+		icon = islamist_gov
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_und_islam_schools }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_islam_banking"
+			remove_ideas = IND_islamic_schools
+			add_timed_idea = {
+				idea = IND_islamic_schools_2
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_better_social_welfare
+		icon = welfare
+
+		x = 2
+		y = 1
+		prerequisite = { focus = IND_united_development }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		mutually_exclusive = { focus = IND_und_national_dev }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_better_social_welfare"
+			increase_social_spending = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_help_food
+		icon = agriculture2
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_und_better_social_welfare }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_help_food"
+			set_temp_variable = { treasury_change = -4.65 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_und_help_food
+				bonus = 0.3
+				uses = 3
+				category = Cat_GENES
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_housing_act
+		icon = house
+
+		x = 2
+		y = 4
+		prerequisite = { focus = IND_und_help_food }
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			637 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_housing_act"
+			set_temp_variable = { treasury_change = -4.75 }
+			modify_treasury_effect = yes
+			637 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_better_hospitals
+		icon = generic_healthcare
+
+		x = 2
+		y = 5
+		prerequisite = { focus = IND_und_housing_act }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_better_hospitals"
+			increase_healthcare_budget = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_help_unemployment
+		icon = concessions
+
+		x = 2
+		y = 6
+		prerequisite = { focus = IND_und_better_hospitals }
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			637 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_help_unemployment"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			637 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_und_united_indonesia
+		icon = nawab_01
+
+		x = 0
+		y = 7
+		prerequisite = { focus = IND_und_help_unemployment focus = IND_und_more_science }
+		prerequisite = { focus = IND_und_islam_banking }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		relative_position_id = IND_united_development
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_und_united_indonesia"
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.10
+			}
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_party_of_struggle
+		icon = IND_democratic_party
+
+		x = -8
+		y = 1
+		prerequisite = { focus = IND_political_agenda }
+		relative_position_id = IND_political_agenda
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_party_of_struggle"
+			add_timed_idea = {
+				idea = IND_dem_party
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_brace_for_change
+		icon = blr_choose_democracy
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_party_of_struggle }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_brace_for_change"
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_expand_infrastructure
+		icon = the_road_of_life
+
+		x = -2
+		y = 3
+		prerequisite = { focus = IND_strug_brace_for_change }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			635 = {
+				is_owned_and_controlled_by = IND
+				}
+				has_government = neutrality
+				neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_expand_infrastructure"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			635 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_acquire_bp
+		icon = improve_relations_blue
+
+		x = -2
+		y = 4
+		prerequisite = { focus = IND_strug_expand_infrastructure }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_acquire_bp"
+			add_tech_bonus = {
+				name = IND_strug_acquire_bp
+				bonus = 0.5
+				uses = 1
+				category = industry
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_new_airports
+		icon = focus_airline
+
+		x = -3
+		y = 5
+		prerequisite = { focus = IND_strug_acquire_bp }
+		relative_position_id = IND_party_of_struggle
+		mutually_exclusive = { focus = IND_strug_better_road }
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_new_airports"
+			636 = {
+				add_building_construction = {
+					type = air_base
+					level = 3
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -12.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_better_road
+		icon = IRGC_missile
+
+		x = -1
+		y = 5
+		prerequisite = { focus = IND_strug_acquire_bp }
+		relative_position_id = IND_party_of_struggle
+		mutually_exclusive = { focus = IND_strug_new_airports }
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+			636 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_better_road"
+			636 = {
+				add_building_construction = {
+					type = missile_silo
+					level = 2
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -6.00 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_fight_corruption
+		icon = blr_anti_corruption_law
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_strug_brace_for_change }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
+		mutually_exclusive = { focus = IND_strug_economic_growth }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_fight_corruption"
+			add_timed_idea = {
+				idea = IND_fighting_corrupt_members
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_establish_investigations
+		icon = investigation
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_strug_fight_corruption }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_establish_investigations"
+			remove_ideas = IND_fighting_corrupt_members
+			add_timed_idea = {
+				idea = IND_fighting_corrupt_members_2
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_purge_sus_members
+		icon = bloody_purge
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_strug_establish_investigations }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_purge_sus_members"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_economic_growth
+		icon = radical_tax_reform
+
+		x = 2
+		y = 2
+		prerequisite = { focus = IND_strug_brace_for_change }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		mutually_exclusive = { focus = IND_strug_fight_corruption }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_economic_growth"
+			increase_economic_growth = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_agri_funding
+		icon = central_planned_economy
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_strug_economic_growth }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			629 = {
+				is_owned_and_controlled_by = IND
+			}
+				has_government = neutrality
+				neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_agri_funding"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			629 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_seaports
+		icon = navy
+
+		x = 2
+		y = 4
+		prerequisite = { focus = IND_strug_agri_funding }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			629 = {
+				is_owned_and_controlled_by = IND
+			}
+				has_government = neutrality
+				neutrality_neutral_conservatism_are_in_power = yes
+			}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_seaports"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			629 = {
+				add_building_construction = {
+					type = coastal_bunker
+					level = 5
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_eastasian_unity
+		icon = align_to_asean
+
+		x = 4
+		y = 2
+		prerequisite = { focus = IND_strug_brace_for_change }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_DIPLOMACY }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_eastasian_unity"
+			MAL = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			PHI = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			SIN = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			PAU = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_host_regional_events
+		icon = complete_april_constitution
+
+		x = 4
+		y = 3
+		prerequisite = { focus = IND_strug_eastasian_unity }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			634 = {
+				is_owned_and_controlled_by = IND
+			}
+				has_government = neutrality
+				neutrality_neutral_conservatism_are_in_power = yes
+			}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_host_regional_events"
+			set_temp_variable = { treasury_change = -7.00 }
+			modify_treasury_effect = yes
+			634 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strug_just_indonesia
+		icon = neutrality
+
+		x = 0
+		y = 6
+		prerequisite = { focus = IND_strug_purge_sus_members focus = IND_strug_seaports }
+		prerequisite = { focus = IND_strug_host_regional_events }
+		relative_position_id = IND_party_of_struggle
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = neutrality
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strug_just_indonesia"
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.10
+			}
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_democrat_party
+		icon = struggling_party
+
+		x = -15
+		y = 1
+		prerequisite = { focus = IND_political_agenda }
+		relative_position_id = IND_political_agenda
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_democrat_party"
+			add_timed_idea = {
+				idea = IND_strug_party
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_greater_future
+		icon = democratic_communism
+
+		x = 0
+		y = 1
+		prerequisite = { focus = IND_democrat_party }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_greater_future"
+			add_popularity = {
+				ideology = communism
+				popularity = 0.05
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_enviro_prot_plan
+		icon = protect_parks
+
+		x = -2
+		y = 2
+		prerequisite = { focus = IND_dem_greater_future }
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		mutually_exclusive = { focus = IND_dem_decentralization }
+		mutually_exclusive = { focus = IND_dem_small_business_support }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+			635 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_enviro_prot_plan"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			635 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_resource_regulation
+		icon = mining_truck
+
+		x = -2
+		y = 3
+		prerequisite = { focus = IND_dem_enviro_prot_plan }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_resource_regulation"
+			add_timed_idea = {
+				idea = IND_resource_reg
+				days = 400
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_protected_areas
+		icon = protectionist_economics
+
+		x = -2
+		y = 4
+		prerequisite = { focus = IND_dem_resource_regulation }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_protected_areas"
+			remove_ideas = IND_resource_reg
+			add_timed_idea = {
+				idea = IND_resource_reg_2
+				days = 400
+			}
+			add_stability = 0.03
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_for_the_oceans
+		icon = navy
+
+		x = -2
+		y = 5
+		prerequisite = { focus = IND_dem_protected_areas }
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+			635 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_for_the_oceans"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			635 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_decentralization
+		icon = BRA_deregulation_new
+
+		x = 0
+		y = 2
+		prerequisite = { focus = IND_dem_greater_future }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		mutually_exclusive = { focus = IND_dem_enviro_prot_plan }
+		mutually_exclusive = { focus = IND_dem_small_business_support }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_decentralization"
+			decrease_centralization = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_civil_activity
+		icon = medicine2
+
+		x = 0
+		y = 3
+		prerequisite = { focus = IND_dem_decentralization }
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+			635 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_civil_activity"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			634 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_regional_econ
+		icon = united_states_dollar
+
+		x = 0
+		y = 4
+		prerequisite = { focus = IND_dem_civil_activity }
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ECONOMY }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_regional_econ"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			638 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_prot_local_cultures
+		icon = military_fort
+
+		x = 0
+		y = 5
+		prerequisite = { focus = IND_dem_regional_econ }
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_MILITARY }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_prot_local_cultures"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			638 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_small_business_support
+		icon = GEO_beria_economy
+
+		x = 2
+		y = 2
+		prerequisite = { focus = IND_dem_greater_future }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		mutually_exclusive = { focus = IND_dem_enviro_prot_plan }
+		mutually_exclusive = { focus = IND_dem_decentralization }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_small_business_support"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_entrepenuer
+		icon = computer
+
+		x = 2
+		y = 3
+		prerequisite = { focus = IND_dem_small_business_support }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_entrepenuer"
+			add_tech_bonus = {
+				name = IND_dem_entrepenuer
+				bonus = 0.3
+				uses = 1
+				category = Cat_satellite
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_promote_credit
+		icon = national_unity
+
+		x = 2
+		y = 4
+		prerequisite = { focus = IND_dem_entrepenuer }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_promote_credit"
+			increase_social_spending = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_technical_support
+		icon = radar
+
+		x = 2
+		y = 5
+		prerequisite = { focus = IND_dem_promote_credit }
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_technical_support"
+			set_temp_variable = { treasury_change = -1.25 }
+			modify_treasury_effect = yes
+			638 = {
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_dem_emergence_indonesia
+		icon = communist_propaganda
+
+		x = 0
+		y = 6
+		prerequisite = { focus = IND_dem_prot_local_cultures focus = IND_dem_technical_support focus = IND_dem_for_the_oceans }
+		available = {
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		relative_position_id = IND_democrat_party
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_dem_emergence_indonesia"
+			add_popularity = {
+				ideology = communism
+				popularity = 0.10
+			}
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_k.e.m.i.u
+		icon = kemiu_1
+
+		x = 2
+		y = 17
+		cost = 10
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = IND_holy_indonesia focus = IND_und_united_indonesia focus = IND_new_society focus = IND_way_forward_naw focus = IND_dem_emergence_indonesia focus = IND_strug_just_indonesia }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_k.e.m.i.u"
+			add_political_power = 150
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_contact_west
+		icon = nato_nation
+
+		x = -2
+		y = 1
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_k.e.m.i.u }
+		available = {
+			OR = {
+		has_government = democratic
+		has_government = neutrality
+		}
+	}
+		cost = 6
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		mutually_exclusive = { focus = IND_talks_east }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_contact_west"
+			add_ideas = IND_west
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.02
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_american_coop
+		icon = align_to_america
+
+		x = -3
+		y = 2
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_contact_west }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
+		available = {
+			country_exists = USA
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_american_coop"
+			USA = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = IND }
+			set_temp_variable = { influence_target = USA }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_american_armor
+		icon = m1a1_abrams
+
+		x = -4
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_american_coop }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_MILITARY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_american_armor"
+			set_temp_variable = { treasury_change = -1.45 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_american_armor
+				bonus = 0.5
+				uses = 2
+				category = Cat_ARMOR
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_american_companies
+		icon = invest_nasa
+
+		x = -2
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_american_coop }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_american_companies"
+			set_temp_variable = { treasury_change = -2.25 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_american_companies
+				bonus = 0.3
+				uses = 1
+				category = Cat_satellite
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_contact_netherlands
+		icon = align_to_netherlands
+
+		x = 1
+		y = 2
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_contact_west }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
+		available = {
+			country_exists = HOL
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_contact_netherlands"
+			IND = {
+				add_opinion_modifier = {
+					target = HOL
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = IND }
+			set_temp_variable = { influence_target = HOL }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_spajik_frigate
+		icon = frigates
+
+		x = 0
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_contact_netherlands }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_spajik_frigate"
+			custom_effect_tooltip = IND_ship
+			set_temp_variable = { treasury_change = -7.25 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				if = {
+					limit = {
+						has_dlc = "Man the Guns"
+					}
+					load_oob = "IND_purchase_ships_mtg"
+				}
+				else = {
+					load_oob = "IND_purchase_ships"
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_sigma_corvette
+		icon = battleships2
+
+		x = 0
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_spajik_frigate }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_NAVY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_sigma_corvette"
+			custom_effect_tooltip = IND_ship_two
+			set_temp_variable = { treasury_change = -4.65 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				if = {
+					limit = {
+						has_dlc = "Man the Guns"
+					}
+					load_oob = "IND_purchase_ships_two_mtg"
+				}
+				else = {
+					load_oob = "IND_purchase_ships_two"
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_ease_asean_trade
+		icon = align_to_asean
+
+		x = 2
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_contact_netherlands }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_ease_asean_trade"
+			HOL = {
+				add_opinion_modifier = {
+					target = MAY
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = LAO
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = SIA
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = CBD
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = PHI
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = VIE
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = BRM
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = BRU
+					modifier = large_increase
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = SIN
+					modifier = large_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_fund_dutch_churches
+		icon = preaching
+
+		x = 2
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_ease_asean_trade }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INDUSTRY }
+		available = {
+			635 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_fund_dutch_churches"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			635 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_contact_europe
+		icon = europe
+
+		x = 5
+		y = 2
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_contact_west }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_contact_europe"
+			IND = {
+				every_country = {
+					limit = {
+						is_in_europe = yes
+					}
+					add_opinion_modifier = {
+						target = IND
+						modifier = medium_increase
+					}
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_boost_econ_relations
+		icon = liberalization
+
+		x = 4
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_contact_europe }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_boost_econ_relations"
+			IND = {
+				every_country = {
+					limit = {
+						is_in_europe = yes
+					}
+					add_opinion_modifier = { target = PREV modifier = european_union_member_trade }
+					reverse_add_opinion_modifier = { target = PREV modifier = european_union_member_trade }
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_national_development_plan
+		icon = construction2
+
+		x = 6
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_contact_europe }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INDUSTRY }
+		available = {
+			638 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_national_development_plan"
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+			638 = {
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_talks_east
+		icon = csto_nation
+
+		x = 10
+		y = 1
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_k.e.m.i.u }
+		available = {
+			OR = {
+			has_government = communism
+			has_government = nationalist
+			has_government = fascism
+		}
+	}
+		cost = 6
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		mutually_exclusive = { focus = IND_contact_west }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_talks_east"
+			add_ideas = IND_east
+			add_popularity = {
+				ideology = communism
+				popularity = 0.02
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_sino_cooperation
+		icon = align_to_china
+
+		x = 9
+		y = 2
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_talks_east }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
+		available = {
+			country_exists = CHI
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_sino_cooperation"
+			IND = {
+				add_opinion_modifier = {
+					target = CHI
+					modifier = large_increase
+				}
+			}
+			CHI = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = IND }
+			set_temp_variable = { influence_target = CHI }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_principle_bandung
+		icon = Generic_Liberalism
+
+		x = 10
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_sino_cooperation }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_principle_bandung"
+			diplomatic_relation = {
+				country = CHI
+				relation = non_aggression_pact
+			}
+			add_stability = 0.05
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_sino_science_coop
+		icon = research3
+
+		x = 8
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_sino_cooperation }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_RESEARCH }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_sino_science_coop"
+			add_tech_bonus = {
+				name = IND_sino_science_coop
+				bonus = 0.5
+				uses = 1
+				category = Cat_nuclear_reactors
+			}
+			IND = {
+				add_opinion_modifier = {
+					target = CHI
+					modifier = small_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_japanese_friendship
+		icon = align_to_japan
+
+		x = 13
+		y = 2
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_talks_east }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		available = {
+			country_exists = JAP
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_japanese_friendship"
+			IND = {
+				add_opinion_modifier = {
+					target = JAP
+					modifier = large_increase
+				}
+			}
+			JAP = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			add_ideas = IND_vital_partner
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_port_exports
+		icon = trade
+
+		x = 12
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_japanese_friendship }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INDUSTRY }
+		available = {
+			639 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_port_exports"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			639 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_jap_tech_giants
+		icon = toyota
+
+		x = 12
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_port_exports }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		available = {
+			639 = {
+				is_owned_and_controlled_by = IND
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_jap_tech_giants"
+			set_temp_variable = { treasury_change = -2.25 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = IND_jap_tech_giants
+				bonus = 0.4
+				uses = 2
+				category = computing_tech
+			}
+			639 = {
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_men_for_ports
+		icon = business_man2
+
+		x = 14
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_japanese_friendship }
+		cost = 8
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_men_for_ports"
+			add_manpower = 8000
+			swap_ideas = {
+				remove_idea = IND_vital_partner
+				add_idea = IND_vital_partner_2
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_jap_const_methods
+		icon = construction2
+
+		x = 14
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_men_for_ports }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_jap_const_methods"
+			swap_ideas = {
+				remove_idea = IND_vital_partner_2
+				add_idea = IND_vital_partner_3
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_russia_coop
+		icon = align_to_russia
+
+		x = 17
+		y = 2
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_talks_east }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
+		available = {
+			country_exists = SOV
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_russia_coop"
+			IND = {
+				add_opinion_modifier = {
+					target = SOV
+					modifier = large_increase
+				}
+			}
+			SOV = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = IND }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_sukhoi_jets
+		icon = yak_fighter
+
+		x = 16
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_russia_coop }
+		cost = 10
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_EQUIPMENT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_sukhoi_jets"
+			add_equipment_to_stockpile = {
+				type = MR_fighter_equipment
+				amount = 12
+				producer = SOV
+			}
+			set_temp_variable = { treasury_change = -21.45 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_russian_tourist
+		icon = global_community
+
+		x = 18
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_russia_coop }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_russian_tourist"
+			swap_ideas = {
+				remove_idea = IND_popular_tourist_destination
+				add_idea = IND_popular_tourist_destination_2
+			}
+			IND = {
+				add_opinion_modifier = {
+					target = SOV
+					modifier = small_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_talk_with_neighbors
+		icon = IND_region
+
+		x = 23
+		y = 1
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_k.e.m.i.u }
+		cost = 5
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_talk_with_neighbors"
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_malaysia
+		icon = align_to_malaysia
+
+		x = 20
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_talk_with_neighbors }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
+		available = {
+			country_exists = MAY
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_malaysia"
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = IND }
+			set_temp_variable = { influence_target = MAY }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_demand_riau
+		icon = attack_malaysia
+
+		x = 19
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_malaysia }
+		mutually_exclusive = { focus = IND_scede_riau }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_WAR_SUPPORT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_demand_riau"
+			MAY = {
+				country_event = {
+					id = indonesia.7
+					days = 1
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_scede_riau
+		icon = judiciary
+
+		x = 21
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_malaysia }
+		mutually_exclusive = { focus = IND_demand_riau }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_scede_riau"
+			remove_state_core = 627
+			add_political_power = 100
+			add_stability = -0.03
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_strategic_partnership
+		icon = align_to_malaysia
+
+		x = 21
+		y = 5
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_scede_riau }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_strategic_partnership"
+			IND = {
+				add_opinion_modifier = {
+					target = MAY
+					modifier = large_increase
+				}
+			}
+			MAY = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_australia
+		icon = align_to_australia
+
+		x = 24
+		y = 3
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_talk_with_neighbors }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
+		available = {
+			country_exists = AST
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_australia"
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = IND }
+			set_temp_variable = { influence_target = AST }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_apologize_australia
+		icon = bread_and_peace
+
+		x = 23
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_australia }
+		mutually_exclusive = { focus = IND_confront_australia }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_apologize_australia"
+			AST = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = medium_increase
+				}
+			}
+			IND = {
+				add_opinion_modifier = {
+					target = AST
+					modifier = medium_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_reperations_give
+		icon = concessions
+
+		x = 23
+		y = 5
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_apologize_australia }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ECONOMY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_reperations_give"
+			set_temp_variable = { treasury_change = -15.45 }
+			modify_treasury_effect = yes
+			AST = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = medium_increase
+				}
+			}
+			IND = {
+				add_opinion_modifier = {
+					target = AST
+					modifier = medium_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_meet_minister_australia
+		icon = align_to_australia
+
+		x = 23
+		y = 6
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_reperations_give }
+		cost = 8
+		search_filters = { FOCUS_FILTER_DIPLOMACY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_meet_minister_australia"
+			diplomatic_relation = {
+				country = AST
+				relation = non_aggression_pact
+			}
+			add_stability = 0.05
+			add_political_power = 75
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_confront_australia
+		icon = attack_australia
+
+		x = 25
+		y = 4
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_australia }
+		mutually_exclusive = { focus = IND_apologize_australia }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_WAR_SUPPORT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_confront_australia"
+			AST = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = large_decrease
+				}
+			}
+			add_named_threat = {
+				threat = 5
+				name = indonesia_confront_australia_threat
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_demand_reperations
+		icon = democratic_stability
+
+		x = 25
+		y = 5
+		relative_position_id = IND_k.e.m.i.u
+		prerequisite = { focus = IND_confront_australia }
+		cost = 5
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_WAR_SUPPORT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_demand_reperations"
+			AST = {
+				country_event = {
+					id = indonesia.8
+					days = 1
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_help_aceh
+		icon = major_alliance
+
+		x = 55
+		y = 9
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		allow_branch = { has_country_flag = ACE1 }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_help_aceh"
+			add_political_power = 100
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_send_aid_package
+		icon = Generic_Red_Crescent
+
+		x = -2
+		y = 1
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		relative_position_id = IND_help_aceh
+		prerequisite = { focus = IND_help_aceh }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_send_aid_package"
+			custom_effect_tooltip = IND_helping_aceh
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+	focus = {
+		id = IND_bring_resistance_down_one
+		icon = self_management
+
+		x = 0
+		y = 1
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		relative_position_id = IND_help_aceh
+		prerequisite = { focus = IND_help_aceh }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_bring_resistance_down_one"
+			custom_effect_tooltip = IND_IND_Aceh_insurgency_from_level_1_to_level_2
+			hidden_effect = { 622 = { remove_dynamic_modifier = { modifier = IND_Aceh_insurgency } }
+			622 = { add_dynamic_modifier = { modifier = IND_Aceh_insurgency2 } }
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+			}
+	}
+	focus = {
+		id = IND_bring_resistance_down_two
+		icon = concessions
+
+		x = 0
+		y = 2
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		relative_position_id = IND_help_aceh
+		prerequisite = { focus = IND_bring_resistance_down_one }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_bring_resistance_down_two"
+			custom_effect_tooltip = IND_IND_Aceh_insurgency_from_level_2_to_level_3
+			hidden_effect = { 622 = { remove_dynamic_modifier = { modifier = IND_Aceh_insurgency2 } }
+			622 = { add_dynamic_modifier = { modifier = IND_Aceh_insurgency3 } }
+		}
+		ACE = {
+			add_opinion_modifier = {
+				target = IND
+				modifier = medium_increase
+			}
+		}
+		IND = {
+			add_opinion_modifier = {
+				target = ACE
+				modifier = medium_increase
+			}
+		}
+	}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+			}
+	}
+	focus = {
+		id = IND_bring_resistance_down_three
+		icon = The_Old_KGB_Ding_Dong_Ditch
+
+		x = 0
+		y = 3
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		relative_position_id = IND_help_aceh
+		prerequisite = { focus = IND_bring_resistance_down_two }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_bring_resistance_down_three"
+			custom_effect_tooltip = IND_IND_Aceh_insurgency_from_level_3_to_level_4
+			hidden_effect = {
+				622 = { remove_dynamic_modifier = { modifier = IND_Aceh_insurgency3 } }
+				622 = { add_dynamic_modifier = { modifier = IND_Aceh_insurgency4 } }
+			}
+			ACE = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = medium_increase
+				}
+			}
+			IND = {
+				add_opinion_modifier = {
+					target = ACE
+					modifier = medium_increase
+				}
+			}
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+			}
+	}
+	focus = {
+		id = IND_bring_resistance_down_four
+		icon = Focus_Parliament_Constitution
+
+		x = 0
+		y = 4
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		relative_position_id = IND_help_aceh
+		prerequisite = { focus = IND_bring_resistance_down_three }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IND_bring_resistance_down_four"
+			custom_effect_tooltip = IND_IND_Aceh_insurgency_from_level_2_to_level_3
+			hidden_effect = { 622 = { remove_dynamic_modifier = { modifier = IND_Aceh_insurgency4 } } }
+			annex_country = { target = ACE transfer_troops = no }
+		}
+		ai_will_do = { # this is imperative, don't forget this in every focus you do
+			factor = 10
+		}
+	}
+}

@@ -1,0 +1,468 @@
+ARM_GEO_rebellion_category = {
+	ARM_GEO_rebellion = {
+		priority = 100
+		icon = generic_ignite_civil_war
+		available = { hidden_trigger = { always = no } }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		activation = {
+			ARM = {
+				NOT = { has_non_aggression_pact_with = GEO }
+			}
+			GEO = {
+				NOT = { has_non_aggression_pact_with = ARM }
+			}
+		}
+
+		visible = {
+			hidden_trigger = {
+				OR = {
+					original_tag = ARM
+					original_tag = GEO
+				}
+			}
+		}
+
+		cancel_if_not_visible = yes
+
+		is_good = no
+
+		timeout_effect = {
+			if = {
+				limit = { original_tag = ARM }
+				if = {
+					limit = {
+						OR = {
+							ARM = {
+								has_country_flag = ARM_rebellion_propaganda_lev
+							}
+							check_variable = {
+								GEO.ARM_sent_weapons > 0
+							}
+						}
+					}
+					effect_tooltip = {
+						GEO = {
+							set_country_flag = djvkhq_reb
+							707 = {
+								remove_core_of = GEO
+							}
+							708 = {
+								remove_core_of = GEO
+							}
+							466 = {
+								remove_core_of = GEO
+							}
+							1033 = {
+								add_core_of = ARM
+							}
+							start_civil_war = {
+								ideology = neutrality
+								set_cosmetic_tag = ARM_djavakhq
+								size = 0.1
+								states = { 1033 }
+								add_equipment_to_stockpile = {
+									type = Inf_equipment
+									amount = GEO.ARM_sent_weapons
+									producer = ARM
+								}
+								ARM = {
+									set_country_flag = djvkhq_reb
+									puppet = PREV
+								}
+								create_country_leader = {
+									name = "Vardan Vardapetyan"
+									desc = ""
+									picture = "vardan_vardapetyan.dds"
+									expire = "2050.1.1"
+									ideology = Conservative
+									traits = {
+										emerging_Conservative
+									}
+								}
+							}
+							1033 = {
+								remove_core_of = GEO
+							}
+							707 = {
+								add_core_of = GEO
+							}
+							708 = {
+								add_core_of = GEO
+							}
+							466 = {
+								add_core_of = GEO
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					original_tag = GEO
+				}
+				if = {
+					limit = {
+						OR = {
+							ARM = {
+								has_country_flag = ARM_rebellion_propaganda_lev
+							}
+							check_variable = {
+								GEO.ARM_sent_weapons > 0
+							}
+						}
+					}
+					GEO = {
+						707 = {
+							remove_core_of = GEO
+						}
+						708 = {
+							remove_core_of = GEO
+						}
+						466 = {
+							remove_core_of = GEO
+						}
+						1033 = {
+							add_core_of = ARM
+						}
+						start_civil_war = {
+							ideology = neutrality
+							set_cosmetic_tag = ARM_djavakhq
+							size = 0.1
+							states = { 1033 }
+							add_equipment_to_stockpile = {
+								type = Inf_equipment
+								amount = GEO.ARM_sent_weapons
+								producer = ARM
+							}
+							ARM = {
+								puppet = PREV
+							}
+							create_country_leader = {
+								name = "Vardan Vardapetyan"
+								desc = ""
+								picture = "vardan_vardapetyan.dds"
+								expire = "2050.1.1"
+								ideology = Conservative
+								traits = {
+									emerging_Conservative
+								}
+							}
+						}
+						1033 = {
+							remove_core_of = GEO
+						}
+						707 = {
+							add_core_of = GEO
+						}
+						708 = {
+							add_core_of = GEO
+						}
+						466 = {
+							add_core_of = GEO
+						}
+					}
+				}
+			}
+		}
+	}
+
+	ARM_start_talking_proces = {
+
+		icon = decision_relation
+
+		fire_only_once = no
+
+		days_remove = 30
+		visible = {
+			OR = {
+				original_tag = ARM
+				original_tag = GEO
+			}
+			NOT = {
+				has_country_flag = djvkhq_reb
+			}
+		}
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 5.05
+				is_historical_focus_on = yes
+			}
+		}
+		complete_effect = {
+			add_days_mission_timeout = {
+				mission = ARM_GEO_rebellion
+				days = 10
+			}
+			if = {
+				limit = { original_tag = GEO }
+				ARM = { country_event = geo_misc.9 }
+			}
+			if = {
+				limit = { original_tag = ARM }
+				GEO = { country_event = geo_misc.9 }
+			}
+		}
+
+	}
+
+	ARM_rebellion_propaganda = {
+		icon = organize_the_blackshirts_category
+		fire_only_once = no
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = -20
+				is_historical_focus_on = yes
+			}
+		}
+		visible = {
+			original_tag = ARM
+			has_active_mission = ARM_GEO_rebellion
+			OR = {
+				NOT = { has_country_flag = ARM_rebellion_propaganda_lev }
+				has_country_flag = {
+					flag = ARM_rebellion_propaganda_lev
+					value < 5
+				}
+			}
+		}
+
+		days_remove = 10
+
+		cost = 100
+
+		remove_effect = {
+
+			add_days_mission_timeout = {
+				mission = ARM_GEO_rebellion
+				days = -15
+			}
+
+			ARM = {
+				add_war_support = 0.01
+			}
+
+			GEO = {
+				add_stability = -0.01
+				add_war_support = 0.01
+			}
+
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = ARM_rebellion_propaganda_lev
+					}
+				}
+				set_country_flag = {
+					flag = ARM_rebellion_propaganda_lev
+					value = 1
+				}
+			}
+
+			modify_country_flag = {
+				flag = ARM_rebellion_propaganda_lev
+				value = 1
+			}
+		}
+
+	}
+
+	ARM_send_weapons = {
+
+		icon = generic_research
+
+		fire_only_once = yes
+
+		available = {
+			NOT = {
+				has_equipment = {
+					Inf_equipment < 999
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = -20
+				is_historical_focus_on = yes
+			}
+		}
+		visible = {
+			original_tag = ARM
+			has_active_mission = ARM_GEO_rebellion
+		}
+
+		days_remove = 5
+
+		cost = 50
+
+		complete_effect = {
+
+			add_days_mission_timeout = {
+				mission = ARM_GEO_rebellion
+				days = -30
+			}
+
+			ARM = {
+				add_war_support = 0.05
+			}
+
+			GEO = {
+				add_stability = -0.05
+				add_war_support = 0.05
+			}
+
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -1000
+				producer = ROOT
+			}
+
+			add_to_variable = {
+				GEO.ARM_sent_weapons = 1000
+			}
+		}
+
+	}
+
+	GEO_expand_autonomy = {
+
+		icon = generic_research
+
+		fire_only_once = yes
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 20
+				is_historical_focus_on = yes
+			}
+		}
+		visible = {
+			original_tag = GEO
+			has_active_mission = ARM_GEO_rebellion
+			OR = {
+				NOT = {
+					has_country_flag = GEO_autonomy_lev
+				}
+				has_country_flag = {
+					flag = GEO_autonomy_lev
+					value < 5
+				}
+			}
+		}
+
+		days_remove = 10
+
+		cost = 100
+
+		complete_effect = {
+
+			add_days_mission_timeout = {
+				mission = ARM_GEO_rebellion
+				days = 15
+			}
+
+			GEO = {
+				add_stability = 0.01
+			}
+
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = GEO_autonomy_lev
+					}
+				}
+				set_country_flag = {
+					flag = GEO_autonomy_lev
+					value = 1
+				}
+			}
+
+			modify_country_flag = {
+				flag = GEO_autonomy_lev
+				value = 1
+			}
+
+		}
+
+	}
+
+	GEO_raids_police = {
+
+		icon = shoot_bird
+
+		fire_only_once = yes
+
+		available = {
+			NOT = {
+				has_equipment = {
+					Inf_equipment < 999
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 20
+				is_historical_focus_on = yes
+			}
+		}
+		visible = {
+			original_tag = GEO
+			has_active_mission = ARM_GEO_rebellion
+		}
+
+		days_remove = 10
+
+		cost = 150
+
+		complete_effect = {
+
+			add_days_mission_timeout = {
+				mission = ARM_GEO_rebellion
+				days = -30
+			}
+
+			ARM = {
+				add_war_support = -0.05
+			}
+
+			GEO = {
+				add_stability = 0.05
+				add_war_support = -0.05
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						GEO.ARM_sent_weapons > 0
+					}
+				}
+				set_temp_variable = {
+					t = GEO.ARM_sent_weapons
+				}
+				divide_temp_variable = {
+					t = 2
+				}
+				subtract_from_temp_variable = {
+					t = 100
+				}
+				set_temp_variable_to_random = {
+					var = random_num
+					min = 0
+					max = 200
+				}
+				add_to_temp_variable = {
+					t = random_num
+				}
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = t
+					producer = ARM
+				}
+			}
+		}
+	}
+}

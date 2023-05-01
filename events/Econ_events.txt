@@ -1660,12 +1660,12 @@ country_event = {
 			has_country_flag = stock_market_boom_accelerate
 			has_country_flag = stock_market_boom_slowed
 			has_country_flag = stock_market_boom
-			
+
 			# Communists cannot get stock market boom...
 			has_communist_government_or_in_coalition = yes
 		}
 	}
-		
+
 	mean_time_to_happen = {
 		modifier = {
 			has_idea = fast_growth
@@ -1676,7 +1676,7 @@ country_event = {
 			factor = 1.15
 		}
 	}
-	
+
 
 	option = {
 		name = econvent.10.a
@@ -1744,12 +1744,12 @@ country_event = {
 			has_communist_government_or_in_coalition = yes
 		}
 		# Socialism more regulation
-		modifier = { 
+		modifier = {
 			factor = 0.95
-			has_socialist_government_or_in_coalition = yes	
+			has_socialist_government_or_in_coalition = yes
 		}
 		modifier = {
-			factor = 1.70
+			factor = 1.50
 			has_idea = economic_boom
 		}
 		modifier = {
@@ -1791,16 +1791,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.03 }
 		add_relative_party_popularity = yes
 
-		hidden_effect = {
-			remove_ideas = {
-				economic_boom
-				fast_growth
-				stable_growth
-			}
-		}
-		set_country_flag = disable_cycle_costs
-		add_ideas = stagnation
-		clr_country_flag = disable_cycle_costs
+		# Reduce only one level
+		decrease_economic_growth = yes
 		every_country = {
 			limit = {
 				influence_higher_10 = yes
@@ -2616,6 +2608,7 @@ country_event = {
 					}
 					#Don't get new enemies
 					has_war = yes
+					has_civil_war = yes
 					#Don't attack if they are land locked non-neighbour
 					AND = {
 						NOT = { is_neighbor_of = FROM }
@@ -2626,14 +2619,18 @@ country_event = {
 						check_variable = { FROM.gdp_total_display < 10 }
 						NOT = { is_neighbor_of = FROM }
 					}
+					#Dont attack stupid AI. This is disable
+					has_global_flag = GAME_RULE_rule_disable_ai_debt_war
 				}
 			}
 			modifier = {
 				factor = 1.6
+				#is_neighbor_of = FROM
 				has_government = nationalist
 			}
 			modifier = {
 				factor = 0.3
+				#is_neighbor_of = FROM
 				has_government = neutrality
 			}
 		}
@@ -3278,22 +3275,21 @@ country_event = {
 	option = {
 		name = bankruptcy.113.a	#Agree
 		log = "[GetDateText]: [This.GetName]: bankruptcy.113.a executed"
-		if = {
-			limit = {
-				check_variable = { gdp_per_capita < 5 }
-			}
-			custom_effect_tooltip = bankruptcy.113_low_gdp_tt
-			add_to_variable = { population_tax_rate = 10 }
-			add_to_variable = { corporate_tax_rate = 10 }
+		if = { limit = { check_variable = { gdp_per_capita < 5 } }
+			set_temp_variable = { corp_change = 10 }
+			modify_corporate_tax_rate_effect = yes
+			set_temp_variable = { pop_change = 10 }
+			modify_population_tax_rate_effect = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.10 }
 			add_relative_party_popularity = yes
 		}
 		else = {
-			custom_effect_tooltip = bankruptcy.113_tt
-			add_to_variable = { population_tax_rate = 5 }
-			add_to_variable = { corporate_tax_rate = 5 }
+			set_temp_variable = { corp_change = 5 }
+			modify_corporate_tax_rate_effect = yes
+			set_temp_variable = { pop_change = 5 }
+			modify_population_tax_rate_effect = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.05 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
@@ -3363,6 +3359,9 @@ country_event = {
 	desc = bankruptcy.114.d
 	picture = GFX_stock_market
 	is_triggered_only = yes
+	trigger = {
+		check_variable = { int_investments > 0 }
+	}
 
 	option = {
 		name = bankruptcy.114.a	#Agree
@@ -3423,10 +3422,7 @@ country_event = {
 	option = {
 		name = bankruptcy.115.a	#Agree
 		log = "[GetDateText]: [This.GetName]: bankruptcy.115.a executed"
-		if = {
-			limit = {
-				check_variable = { gdp_per_capita < 5 }
-			}
+		if = { limit = { check_variable = { gdp_per_capita < 5 } }
 			random_owned_state = {
 				limit = {
 					industrial_complex > 1
