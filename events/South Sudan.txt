@@ -8,6 +8,7 @@ country_event = {
 	id = SouthSudan.0
 
 	hidden = yes
+	fire_only_once = yes
 
 	trigger = {
 		OR = {
@@ -24,7 +25,7 @@ country_event = {
 				}
 			}
 		}
-		NOT = { has_global_flag = SouthSudan_Civil_War_Over }
+		NOT = { has_global_flag = SouthSudan_Civil_War_Over  }
 	}
 
 	mean_time_to_happen = {
@@ -32,7 +33,7 @@ country_event = {
 	}
 
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: SouthSudan.0 executed"
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.0 executed"
 		#Civil war is over
 		set_global_flag = SouthSudan_Civil_War_Over
 		#Clear core status (normal states
@@ -201,13 +202,14 @@ country_event = {
 #Recreate South Sudan in case it has been annexed
 country_event = {
 	id = SouthSudan.1
-
 	hidden = yes
-
 	is_triggered_only = yes
+	trigger = {
+		NOT = { has_global_flag = SSU_peace_agreement_accepted }
+	}
 
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: SouthSudan.1 executed"
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.1 executed"
 		#Clear core status
 		225 = {
 			remove_core_of = SSU
@@ -272,7 +274,6 @@ country_event = {
 }
 
 news_event = {
-
 	id = SouthSudanNews.1
 	title = SouthSudanNews.1.t
 	desc = {
@@ -291,7 +292,291 @@ news_event = {
 
 	option = {
 		name = SouthSudanNews.1.a
-		log = "[GetDateText]: [This.GetName]: SouthSudanNews.1.a executed"
+		log = "[GetDateText]: [THIS.GetName]: SouthSudanNews.1.a executed"
 	}
 
+}
+
+# The Comprehensive Peace Agreements
+country_event = {
+	id = SouthSudan.2
+	title = SouthSudan.2.t
+	desc = SouthSudan.2.d
+	picture = GFX_political_activist
+	is_triggered_only = yes
+	trigger = {
+		original_tag = SSU
+		has_war_with = SUD
+		NOT = { has_global_flag = Sudan_Civil_War_Over }
+	}
+	immediate = {
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.2 executed"
+		hidden_effect = {
+			set_global_flag = SSU_peace_deal_event_triggered
+		}
+	}
+
+	# Offer Sudan Ceasefire
+	option = {
+		name = SouthSudan.2.a
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.2.a executed"
+
+		SUD = { country_event = { id = SouthSudan.3 days = 14 random_days = 14 } }
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 2
+				check_variable = { interest_rate > 9.99 }
+			}
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 20
+			}
+		}
+	}
+
+	# War by Jingo!
+	option = {
+		name = SouthSudan.2.b
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.2.b executed"
+
+		add_timed_idea = {
+			idea = revitalized_war_effort
+			days = 365
+		}
+		ai_chance = {
+			factor = 2
+		}
+	}
+}
+
+# Sudan's response
+country_event = {
+	id = SouthSudan.3
+	title = SouthSudan.3.t
+	desc = SouthSudan.3.d
+	picture = GFX_political_activist
+	is_triggered_only = yes
+	trigger = {
+		has_start_date < 2016.1.1
+		has_war_with = SSU
+		NOT = { has_global_flag = Sudan_Civil_War_Over }
+	}
+
+	# Accept Sudan's Offer
+	option = {
+		name = SouthSudan.3.a
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.3.a executed"
+		effect_tooltip = {
+			SSU = { white_peace = SUD }
+		}
+		hidden_effect = {
+			SSU = {
+				set_country_flag = SSU_ceasefire_accepted
+			}
+		}
+		SSU = { country_event = { id = SouthSudan.4 days = 14 random_days = 14 } }
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Deny the Ceasefire
+	option = {
+		name = SouthSudan.3.b
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.3.b executed"
+		add_timed_idea = {
+			idea = revitalized_war_effort
+			days = 365
+		}
+		effect_tooltip = {
+			SSU = {
+				add_timed_idea = {
+					idea = revitalized_war_effort
+					days = 365
+				}
+			}
+		}
+		hidden_effect = {
+			SSU = {
+				set_country_flag = SSU_ceasefire_denied
+			}
+		}
+		SSU = { country_event = { id = SouthSudan.4 days = 14 random_days = 14 } }
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+# Response event
+country_event = {
+	id = SouthSudan.4
+	title = {
+		text = SouthSudan.4.t1
+		trigger = {
+			has_country_flag = SSU_ceasefire_accepted
+		}
+	}
+	title = {
+		text = SouthSudan.4.t2
+		trigger = {
+			has_country_flag = SSU_ceasefire_denied
+		}
+	}
+	desc = {
+		text = SouthSudan.4.d1
+		trigger = {
+			has_country_flag = SSU_ceasefire_accepted
+		}
+	}
+	desc = {
+		text = SouthSudan.4.d2
+		trigger = {
+			has_country_flag = SSU_ceasefire_denied
+		}
+	}
+	picture = GFX_political_activist
+	is_triggered_only = yes
+	trigger = {
+		has_start_date < 2016.1.1
+		SUD = { has_war_with = SSU }
+		NOT = { has_global_flag = SouthSudan_Civil_War_Over }
+	}
+
+	# Ceasefire Accepted
+	option = {
+		name = SouthSudan.4.a
+		trigger = {
+			has_country_flag = SSU_ceasefire_accepted
+		}
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.4.a executed"
+		add_stability = 0.05
+		add_war_support = 0.05
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		white_peace = FROM
+		diplomatic_relation = {
+			country = FROM
+			relation = non_aggression_pact
+			active = yes
+		}
+
+		hidden_effect = {
+			SUD = {
+				add_ideas = defence_02
+				if = { limit = { is_ai = yes }
+					add_timed_idea = {
+						idea = post_war_recovery_effort
+						days = 365
+					}
+					set_temp_variable = { debt_change = SUD.debt }
+					multiply_temp_variable = { debt_change = -0.20 }
+					modify_debt_effect = yes
+				}
+			}
+			SSU = {
+				add_ideas = defence_02
+				if = { limit = { is_ai = yes }
+					add_timed_idea = {
+						idea = post_war_recovery_effort
+						days = 365
+					}
+					set_temp_variable = { debt_change = SSU.debt }
+					multiply_temp_variable = { debt_change = -0.20 }
+					modify_debt_effect = yes
+				}
+			}
+		}
+		news_event = SouthSudanNews.2
+	}
+
+	# The Ceasefire Denied
+	option = {
+		name = SouthSudan.4.b
+		trigger = {
+			has_country_flag = SSU_ceasefire_denied
+		}
+		log = "[GetDateText]: [THIS.GetName]: SouthSudan.4.b executed"
+
+		add_timed_idea = {
+			idea = revitalized_war_effort
+			days = 365
+		}
+		effect_tooltip = {
+			SUD = {
+				add_timed_idea = {
+					idea = revitalized_war_effort
+					days = 365
+				}
+			}
+		}
+
+		news_event = SouthSudanNews.2
+	}
+}
+
+# Peace in South Sudan
+news_event = {
+	id = SouthSudanNews.2
+	title = {
+		text = SouthSudanNews.2.t1
+		trigger = {
+			SSU = { has_country_flag = SSU_ceasefire_accepted }
+		}
+	}
+	title = {
+		text = SouthSudanNews.2.t2
+		trigger = {
+			SSU = { has_country_flag = SSU_ceasefire_denied }
+		}
+	}
+	desc = {
+		text = SouthSudanNews.2.d1
+		trigger = {
+			SSU = { has_country_flag = SSU_ceasefire_accepted }
+		}
+	}
+	desc = {
+		text = SouthSudanNews.2.d2
+		trigger = {
+			SSU = { has_country_flag = SSU_ceasefire_denied }
+		}
+	}
+	picture = GFX_news_press_conference
+	is_triggered_only = yes
+	major = yes
+	trigger = {
+		has_start_date < 2016.1.1
+	}
+
+	option = {
+		name = SouthSudanNews.4.a
+		log = "[GetDateText]: [THIS.GetName]: SouthSudanNews.4.a executed"
+
+		hidden_effect = {
+			if = { limit = { SSU = { has_country_flag = SSU_ceasefire_accepted } }
+				set_global_flag = Sudan_Civil_War_Over
+				set_global_flag = SSU_peace_agreement_accepted
+			}
+			else = {
+				set_global_flag = SSU_peace_agreement_denied
+			}
+			SSU = {
+				clr_country_flag = SSU_ceasefire_accepted
+				clr_country_flag = SSU_ceasefire_accepted
+			}
+
+		}
+	}
 }

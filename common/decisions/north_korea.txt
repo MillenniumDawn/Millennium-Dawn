@@ -61,9 +61,7 @@ NKO_united_front_department = {
 			clr_country_flag = closed_kaesong
 			set_temp_variable = { temp_opinion = -5 }
 			change_communist_cadres_opinion = yes
-			set_temp_variable = { temp_opinion = -5 }
 			change_the_military_opinion = yes
-
 			KOR = {
 				add_opinion_modifier = {
 					target = NKO
@@ -270,371 +268,193 @@ NKO_united_front_department = {
 }
 
 NKO_Arduous_March = {
-    #Acquiescence to the black market
-    Acquiescence_the_black_market = {
-        icon = GFX_decision_category_generic_economy
-        cost = 100
-        days_remove = 180
-        fire_only_once = yes
-        visible = {
-	    	OR = {
-            has_idea = NKO_Arduous_March_1
-	    	has_idea = NKO_Arduous_March_2
-	    	has_idea = NKO_Arduous_March_3
-	    	has_idea = NKO_Arduous_March_4
-	    	has_idea = NKO_Arduous_March_5
-	    	}
-        }
-        available = {
-            has_completed_focus = NKO_black_market
-			OR = {
-        		has_idea = NKO_Arduous_March_1
-				has_idea = NKO_Arduous_March_2
-				has_idea = NKO_Arduous_March_3
-				has_idea = NKO_Arduous_March_4
-				has_idea = NKO_Arduous_March_5
-			}
-        }
-        complete_effect = {
-            add_ideas = NKO_the_black_market
-        }
-    }
-    #Citizens go to the countryside for farming
-    Citizens_go_the_countryside = {
-        icon = GFX_decision_eng_blackshirt_march
-        cost = 100
-        days_remove = 90
-        fire_only_once = yes
-        visible = {
-	    	OR = {
-            has_idea = NKO_Arduous_March_1
-	    	has_idea = NKO_Arduous_March_2
-	    	has_idea = NKO_Arduous_March_3
-	    	has_idea = NKO_Arduous_March_4
-	    	has_idea = NKO_Arduous_March_5
-	    	}
-        }
-        available = {
-	    	OR = {
-            has_idea = NKO_Arduous_March_1
-	    	has_idea = NKO_Arduous_March_2
-	    	has_idea = NKO_Arduous_March_3
-	    	has_idea = NKO_Arduous_March_4
-	    	has_idea = NKO_Arduous_March_5
-	    	}
-        }
-        complete_effect = {
-            add_timed_idea = { idea = Talent_loss days = 180 }
-            decrease_NKO_Arduous_March = yes
-        }
-    }
 
-    A_milestone_win = {
-        allowed = { tag = NKO }
-        activation = {
-            has_completed_focus = NKO_black_market
-	    	OR = {
-            has_idea = NKO_Arduous_March_1
-	    	has_idea = NKO_Arduous_March_2
-	    	has_idea = NKO_Arduous_March_3
-	    	has_idea = NKO_Arduous_March_4
-	    	has_idea = NKO_Arduous_March_5
-	    	}
-        }
-        available = {
-            has_idea = NKO_milestone_win
-        }
-        selectable_mission = no
-        fire_only_once = yes
-        is_good = yes
-        days_mission_timeout = 90
-        timeout_effect = {
-            add_political_power = -50
-            increase_NKO_Arduous_March = yes
-        }
-        complete_effect = {
-            add_political_power = 150
-            decrease_NKO_Arduous_March = yes
-        }
-    }
-    International_assistance = {
-        icon = GFX_decision_category_generic_economy
+    #Send Citizens to Countryside
+    NKO_send_citizens = {
+        icon = GFX_decision_fist_dec
         cost = 50
-        available = {
-            NOT = { has_idea = Massive_International_Sanctions has_idea = NKO_Arduous_March_1 }
-			OR = {
-        		has_idea = NKO_Arduous_March_1
-				has_idea = NKO_Arduous_March_2
-				has_idea = NKO_Arduous_March_3
-				has_idea = NKO_Arduous_March_4
-				has_idea = NKO_Arduous_March_5
-			}
-			has_equipment = {
- 			   convoy > 19
-			}
-        }
+        days_remove = 90
+		days_re_enable = 45
         visible = {
-	    	OR = {
-            has_idea = NKO_Arduous_March_1
-	    	has_idea = NKO_Arduous_March_2
-	    	has_idea = NKO_Arduous_March_3
-	    	has_idea = NKO_Arduous_March_4
-	    	has_idea = NKO_Arduous_March_5
-	    	}
+			has_completed_focus = NKO_land_reclamation
         }
-		fixed_random_seed = no
-        days_remove = 360
+        available = {
+			has_completed_focus = NKO_prioritize_to_solve_famine
+        }
         complete_effect = {
-            add_equipment_to_stockpile = {
-                type = convoy
-                amount = -20
-                producer = NKO
-            }
+			add_manpower = -1000
         }
         remove_effect = {
-			random_list = {
-				30 = {
-		            decrease_NKO_Arduous_March = yes
+			add_manpower = 800
+        }
+		modifier = {
+			monthly_population = 0.03
+			research_speed_factor = -0.02
+			political_power_factor = 0.05
+			population_tax_income_multiplier_modifier = 0.02
+        }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				check_variable = {
+				    var = treasure
+					value = 6
+					compare =greater_than_or_equals
 				}
-				70 = {
-					add_political_power = 250
+				factor = 0
+			}
+		}
+    }
+
+    #Send KPA to Countryside
+    NKO_send_KPA = {
+        icon = GFX_decision_generic_army_support_new
+        cost = 50
+        days_remove = 90
+		days_re_enable = 45
+        visible = {
+			has_completed_focus = NKO_land_reclamation
+        }
+        available = {
+			has_completed_focus = NKO_prioritize_songun
+        }
+        complete_effect = {
+			add_manpower = -1000
+        }
+        remove_effect = {
+			add_manpower = 800
+        }
+		modifier = {
+			monthly_population = 0.05
+			command_power_gain_mult = -0.10
+			political_power_factor = 0.05
+			corporate_tax_income_multiplier_modifier = 0.02
+        }
+		ai_will_do = {
+			base = 1
+            modifier = {
+				check_variable = {
+				    var = treasure
+					value = 6
+					compare =greater_than_or_equals
+				}
+				factor = 0
+			}
+		}
+    }
+
+	#Request International Assistance
+    International_assistance = {
+        icon = GFX_decision_generic_UN
+        cost = 20
+        visible = {
+			always = yes
+        }
+        available = {
+			OR = {
+				USA = {
+					has_opinion = {
+						target = FROM
+						value > -6
+					}
+				}
+				SOV = {
+					has_opinion = {
+						target = FROM
+						value > -6
+					}
+				}
+				ENG = {
+					has_opinion = {
+						target = FROM
+						value > -6
+					}
+				}
+				FRA = {
+					has_opinion = {
+						target = FROM
+						value > -6
+					}
+				}
+				CHI = {
+					has_opinion = {
+						target = FROM
+						value > -6
+					}
+				}
+				GER = {
+					has_opinion = {
+						target = FROM
+						value > -6
+					}
+				}
+				BRA = {
+					has_opinion = {
+						target = FROM
+						value > -6
+					}
 				}
 			}
+        }
+        days_remove = 90
+		days_re_enable = 30
+		modifier = {
+			monthly_population = 0.05
+			population_tax_income_multiplier_modifier = 0.01
+        }
+		ai_will_do = {
+			factor = 1
+		}
+    }
+
+    NKO_end_of_arduous_march = {
+        icon = GFX_decision_generic_scorched_earth
+        cost = 100
+        days_remove = 180
+		fire_only_once = yes
+        visible = {
+			AND = {
+				has_completed_focus = NKO_private_markets
+				has_completed_focus = NKO_peoples_life_bonds
+				has_completed_focus = NKO_industrial_recovery
+			}
+        }
+        available = {
+			AND = {
+				has_completed_focus = NKO_construction_boom
+				has_completed_focus = NKO_nurture_software_industry
+				has_completed_focus = NKO_infrastructure_development
+				has_completed_focus = NKO_nurture_donju
+			}
+        }
+
+        remove_effect = {
+			remove_dynamic_modifier = {
+				modifier = arduous_march_modifiers
+        	}
+			if = {
+				limit = { has_completed_focus = NKO_prioritize_to_solve_famine }
+				add_timed_idea = {
+					idea = NKO_arduous_march_legacy_people
+					days = 365
+				}
+			}
+			if = {
+				limit = { has_completed_focus = NKO_prioritize_songun }
+				add_timed_idea = {
+					idea = NKO_arduous_march_legacy_songun
+					days = 365
+				}
+			}
+		}
+
+		modifier = {
+			political_power_factor = -0.05
         }
     }
 }
 
 NKO_Power_struggle = {
-    praise_China_reform_opening_up = {
-        icon = GFX_decision_generic_china
-        cost = 100
-        fire_only_once = yes
-        complete_effect = {
-            if = {
-                limit = { has_completed_focus = NKO_support_private_markets }
-                custom_effect_tooltip = NKO_Maybe_Support_Market_tt
-                add_stability = -0.10
-			    hidden_effect = {
-			    	subtract_from_variable = {
-			    		var = Kim_Jong_un
-				    	value = 10
-			    	}
-			    	clamp_variable = {
-						var = Kim_Jong_un
-						min = 0
-						max = 100
-				    }
-				    add_to_variable = {
-				    	var = Kim_Jong_Nam
-				    	value = 10
-				    }
-				    clamp_variable = {
-				    	var = Kim_Jong_Nam
-				    	min = 0
-				    	max = 100
-				    }
-			    }
-            }
-            if = {
-                limit = { has_completed_focus = NKO_Revaluation_Success }
-                custom_effect_tooltip = NKO_Support_Market_tt
-                add_stability = -0.05
-			    hidden_effect = {
-			    	subtract_from_variable = {
-			    		var = Kim_Jong_un
-				    	value = 20
-			    	}
-			    	clamp_variable = {
-						var = Kim_Jong_un
-						min = 0
-						max = 100
-				    }
-				    add_to_variable = {
-				    	var = Kim_Jong_Nam
-				    	value = 20
-				    }
-				    clamp_variable = {
-				    	var = Kim_Jong_Nam
-				    	min = 0
-				    	max = 100
-				    }
-			    }
-            }
-            else_if = {
-				limit = {
-					NOT = {
-						has_completed_focus = NKO_Revaluation_Success
-						has_completed_focus = NKO_support_private_markets
-					}
-				}
-                custom_effect_tooltip = NKO_Not_Support_Market_tt
-				set_country_flag = KimJongNam_Run_flag
-			    hidden_effect = {
-			    	add_to_variable = {
-			    		var = Kim_Jong_un
-				    	value = 40
-			    	}
-			    	clamp_variable = {
-						var = Kim_Jong_un
-						min = 0
-						max = 100
-				    }
-				    subtract_from_variable = {
-				    	var = Kim_Jong_Nam
-				    	value = 40
-				    }
-				    clamp_variable = {
-				    	var = Kim_Jong_Nam
-				    	min = 0
-				    	max = 100
-				    }
-			    }
-            }
-        }
-    }
-    Kim_Jong_un_Military_support = {
-        icon = GFX_decision_armed_forces_officers
-        visible = {
-            NOT = { has_country_flag = Kim_Jong_Nam_Military_support_tt }
-        }
-		fire_only_once = yes
-
-        available = {
-			custom_trigger_tooltip = {
-				tooltip = NKO_45_support_Kim_Jong_un_tt
-            	check_variable = {
-					var = Kim_Jong_un
-    				value = 45
-    				compare = greater_than_or_equals
-				}
-			}
-        }
-		fixed_random_seed = no
-
-		cost = 500
-		days_remove = 365
-
-		complete_effect = {
-			custom_effect_tooltip = NKO_35_increase_Kim_Jong_un_tt
-			hidden_effect = {
-				set_country_flag = Kim_Jong_un_Military_support_tt
-				random_list = {
-					70 = {
-				        add_to_variable = {
-					     	var = Kim_Jong_un
-				        	value = 35
-				        }
-				        clamp_variable = {
-				        	var = Kim_Jong_un
-				        	min = 0
-				        	max = 100
-				        }
-			 	        subtract_from_variable = {
-		    	        	var = Kim_Jong_Nam
-			    	      	value = 35
-				        }
-			    	    clamp_variable = {
-			    	        var = Kim_Jong_Nam
-			    	       	min = 0
-			    	       	max = 100
-		        	    }
-					}
-					30 = {
-				        add_to_variable = {
-					     	var = Kim_Jong_un
-				        	value = 15
-				        }
-				        clamp_variable = {
-				        	var = Kim_Jong_un
-				        	min = 0
-				        	max = 100
-				        }
-			 	        subtract_from_variable = {
-		    	        	var = Kim_Jong_Nam
-			    	      	value = 15
-				        }
-			    	    clamp_variable = {
-			    	        var = Kim_Jong_Nam
-			    	       	min = 0
-			    	       	max = 100
-		        	    }
-					}
-			    }
-			}
-		}
-    }
-
-    Kim_Jong_Nam_Military_support = {
-        icon = GFX_decision_army
-        visible = {
-            NOT = { has_country_flag = Kim_Jong_un_Military_support_tt }
-        }
-		cost = 500
-		days_remove = 365
-
-        available = {
-			custom_trigger_tooltip = {
-				tooltip = NKO_45_support_Kim_Jong_Nam_tt
-            	check_variable = {
-					var = Kim_Jong_Nam
-    				value = 45
-    				compare = greater_than_or_equals
-				}
-			}
-        }
-
-		fire_only_once = yes
-
-		complete_effect = {
-			custom_effect_tooltip = NKO_35_increase_Kim_Jong_Nam_tt
-			hidden_effect = {
-				set_country_flag = Kim_Jong_Nam_Military_support_tt
-				random_list = {
-						70 = {
-				    	    add_to_variable = {
-						     	var = Kim_Jong_Nam
-				    	    	value = 35
-				    	    }
-				    	    clamp_variable = {
-				    	    	var = Kim_Jong_Nam
-				    	    	min = 0
-				    	    	max = 100
-				    	    }
-			 	    	    subtract_from_variable = {
-		    	    	    	var = Kim_Jong_un
-			    	 	     	value = 35
-				    	    }
-			    	 	   clamp_variable = {
-			    		        var = Kim_Jong_un
-			    	  	     	min = 0
-			    	 	      	max = 100
-		        		    }
-						}
-						30 = {
-			    		    add_to_variable = {
-							   	var = Kim_Jong_Nam
-			   		     	    value = 15
-			    		    }
-			        		clamp_variable = {
-			    		    	var = Kim_Jong_Nam
-				   		    	min = 0
-			    		    	max = 100
-			    		    }
-			    		    subtract_from_variable = {
-		    	   		    	var = Kim_Jong_un
-						      	value = 15
-			    		    }
-						    clamp_variable = {
-				 		       var = Kim_Jong_un
-				 		      	min = 0
-						       	max = 100
-		    			    }
-						}
-		    	    }
-				}
-			}
-    }
-
     Kim_Jong_Nam_support = {
 
         icon = GFX_decision_category_generic_democracy
@@ -860,26 +680,26 @@ NKO_Power_struggle = {
 					}
 				    if = {
 						limit = {
-							has_decision = Kim_Jong_Nam_Military_support
+							has_completed_focus = NKO_Place_Loyalists_in_KPA
 							NOT = { has_completed_focus = NKO_People_Army }
 							has_stability < 0.70
 						}
 						random_list = {
 							60 = {
-								complete_national_focus = NKO_Kim_Jong_Nam
+								set_country_flag = Kim_Jong_Nam
 							}
 							40 = {
-								complete_national_focus = NKO_Junta
+								set_country_flag = NKO_Junta
 							}
 						}
 					}
 				else = {
 					random_list = {
-						70 = {
-							complete_national_focus = NKO_Kim_Jong_Nam
+						85 = {
+							set_country_flag = Kim_Jong_Nam
 						}
-						30 = {
-							complete_national_focus = NKO_Junta
+						15 = {
+							set_country_flag = NKO_Junta
 						}
 					}
 				}
@@ -895,337 +715,36 @@ NKO_Power_struggle = {
 					}
 				    if = {
 						limit = {
-							has_decision = Kim_Jong_un_Military_support
+							has_completed_focus = NKO_Bribe_KPA_seniors
 							NOT = { has_completed_focus = NKO_People_Army }
 							has_stability < 0.75
 						}
 						random_list = {
-							70 = {
-								complete_national_focus = NKO_Kim_Jong_un
+							85 = {
+								set_country_flag = Kim_Jong_un
 							}
-							30 = {
-								complete_national_focus = NKO_Junta
+							15 = {
+								set_country_flag = NKO_Junta
 							}
 						}
 					}
-				else = { complete_national_focus = NKO_Kim_Jong_un }
+				else = { set_country_flag = Kim_Jong_un }
         	}
 			if = {
 				limit = {
 					check_variable = {
     					var = Kim_Jong_un
-    					value = 59
+    					value = 50
     					compare = less_than_or_equals
     				}
 					check_variable = {
     					var = Kim_Jong_Nam
-    					value = 59
+    					value = 50
     					compare = less_than_or_equals
     				}
 				}
-				complete_national_focus = NKO_Junta
+				set_country_flag = NKO_Junta
 			}
     	}
 	}
-
-	matched_adversaries = {
-		icon = GFX_decision_generic_political_discourse
-		allowed = { tag = NKO }
-        days_mission_timeout = 60
-        fire_only_once = yes
-        activation = {
-			OR = {
-				check_variable = {
-    				var = Kim_Jong_Nam
-    				value = 80
-    				compare = greater_than
-    			}
-				check_variable = {
-    				var = Kim_Jong_un
-    				value = 80
-    				compare = greater_than
-    			}
-			}
-		    date < 2005.01.01
-            NOT = {
-		    	OR = {
-		    		has_completed_focus = NKO_Kim_Jong_Nam
-		    		has_completed_focus = NKO_Kim_Jong_un
-		    		has_completed_focus = NKO_Junta
-		    	}
-		    }
-		}
-
-		available = { always = no }
-
-		timeout_effect = {
-			if = {
-				limit = {
-					check_variable = {
-    					var = Kim_Jong_Nam
-    					value = 80
-    					compare = greater_than
-    				}
-					date < 2008.01.01
-				}
-				add_stability = -0.20
-				custom_effect_tooltip = NKO_35_increase_Kim_Jong_un_tt
-			    hidden_effect = {
-				    add_to_variable = {
-				    	var = Kim_Jong_un
-			        	value = 35
-				    }
-				    clamp_variable = {
-				    	var = Kim_Jong_un
-				    	min = 0
-				    	max = 100
-			        }
-			        subtract_from_variable = {
-			        	var = Kim_Jong_Nam
-			        	value = 35
-			        }
-			        clamp_variable = {
-			        var = Kim_Jong_Nam
-			        	min = 0
-			        	max = 100
-			        }
-				}
-			}
-			if = {
-				limit = {
-					check_variable = {
-    					var = Kim_Jong_un
-    					value = 80
-    					compare = greater_than
-    				}
-					date < 2008.01.01
-				}
-				add_stability = -0.20
-				custom_effect_tooltip = NKO_35_increase_Kim_Jong_Nam_tt
-			    hidden_effect = {
-				    add_to_variable = {
-				    	var = Kim_Jong_Nam
-			        	value = 35
-				    }
-				    clamp_variable = {
-				    	var = Kim_Jong_Nam
-				    	min = 0
-				    	max = 100
-			        }
-			        subtract_from_variable = {
-			        	var = Kim_Jong_un
-			        	value = 35
-			        }
-			        clamp_variable = {
-			        var = Kim_Jong_un
-			        	min = 0
-			        	max = 100
-			        }
-				}
-			}
-		}
-    }
-
-	The_gradual_loss_of_trust = {
-		icon = GFX_decision_generic_political_discourse
-		allowed = { tag = NKO }
-        days_mission_timeout = 40
-
-        activation = {
-			NOT = {
-                has_idea = NKO_Arduous_March_1
-	    	    has_idea = NKO_Arduous_March_2
-	    	    has_idea = NKO_Arduous_March_3
-	    	    has_idea = NKO_Arduous_March_4
-	    	    has_idea = NKO_Arduous_March_5
-			}
-			date > 2004.01.01
-            NOT = {
-		    	OR = {
-		    		has_completed_focus = NKO_Kim_Jong_Nam
-		    		has_completed_focus = NKO_Kim_Jong_un
-		    		has_completed_focus = NKO_Junta
-		    	}
-		    }
-			has_country_flag = Kim_Jong_un_successor
-		}
-
-		available = { always = no }
-
-		timeout_effect = {
-			custom_effect_tooltip = NKO_decrease_Kim_Jong_Nam_tt
-				add_to_variable = {
-					var = Kim_Jong_un
-			    	value = 3
-				}
-				clamp_variable = {
-					var = Kim_Jong_un
-				 	min = 0
-					max = 100
-			    }
-			    subtract_from_variable = {
-			    	var = Kim_Jong_Nam
-			    	value = 3
-			    }
-			    clamp_variable = {
-			    	var = Kim_Jong_Nam
-			    	min = 0
-			    	max = 100
-			    }
-		}
-    }
-	The_gradual_loss_of_trust2 = {
-		icon = GFX_decision_generic_political_discourse
-		allowed = { tag = NKO }
-        days_mission_timeout = 60
-
-        activation = {
-			NOT = {
-                has_idea = NKO_Arduous_March_1
-	    	    has_idea = NKO_Arduous_March_2
-	    	    has_idea = NKO_Arduous_March_3
-	    	    has_idea = NKO_Arduous_March_4
-	    	    has_idea = NKO_Arduous_March_5
-			}
-			date > 2004.01.01
-            NOT = {
-		    	OR = {
-		    		has_completed_focus = NKO_Kim_Jong_Nam
-		    		has_completed_focus = NKO_Kim_Jong_un
-		    		has_completed_focus = NKO_Junta
-		    	}
-		    }
-			has_country_flag = Kim_Jong_Nam_successor
-		}
-
-		available = { always = no }
-
-		timeout_effect = {
-			custom_effect_tooltip = NKO_decrease_Kim_Jong_un_tt
-				add_to_variable = {
-					var = Kim_Jong_Nam
-			    	value = 2
-				}
-				clamp_variable = {
-					var = Kim_Jong_Nam
-				 	min = 0
-					max = 100
-			    }
-			    subtract_from_variable = {
-			    	var = Kim_Jong_un
-			    	value = 2
-			    }
-			    clamp_variable = {
-			    	var = Kim_Jong_un
-			    	min = 0
-			    	max = 100
-			    }
-		}
-    }
-	The_gradual_loss_of_trust3 = {
-		icon = GFX_decision_generic_political_discourse
-		allowed = { tag = NKO }
-        days_mission_timeout = 60
-
-        activation = {
-            NOT = {
-		    	OR = {
-		    		has_completed_focus = NKO_Kim_Jong_Nam
-		    		has_completed_focus = NKO_Kim_Jong_un
-		    		has_completed_focus = NKO_Junta
-		    	}
-		    }
-		}
-
-		available = { always = no }
-		fixed_random_seed = no
-
-		timeout_effect = {
-			custom_effect_tooltip = NKO_ramdom_increase_tt
-			hidden_effect = {
-				random_list = {
-					25 = {
-						add_to_variable = {
-							var = Kim_Jong_un
-			    			value = 7
-						}
-						clamp_variable = {
-							var = Kim_Jong_un
-						 	min = 0
-							max = 100
-			    		}
-			    		subtract_from_variable = {
-			    			var = Kim_Jong_Nam
-			    			value = 7
-			    		}
-			    		clamp_variable = {
-			    			var = Kim_Jong_Nam
-			    			min = 0
-			   		 		max = 100
-			    		}
-					}
-					35 = {
-						add_to_variable = {
-							var = Kim_Jong_un
-			    			value = 4
-						}
-						clamp_variable = {
-							var = Kim_Jong_un
-						 	min = 0
-							max = 100
-			    		}
-			    		subtract_from_variable = {
-			    			var = Kim_Jong_Nam
-			    			value = 4
-			    		}
-			    		clamp_variable = {
-			    			var = Kim_Jong_Nam
-			    			min = 0
-			    			max = 100
-			    		}
-					}
-					25 = {
-						add_to_variable = {
-							var = Kim_Jong_Nam
-			    			value = 6
-						}
-						clamp_variable = {
-							var = Kim_Jong_Nam
-						 	min = 0
-							max = 100
-			    		}
-			    		subtract_from_variable = {
-			    			var = Kim_Jong_un
-			    			value = 6
-			    		}
-			   		 	clamp_variable = {
-			  		  		var = Kim_Jong_un
-			    			min = 0
-			    			max = 100
-				    	}
-					}
-					15 = {
-						add_to_variable = {
-							var = Kim_Jong_Nam
-				    		value = 8
-						}
-						clamp_variable = {
-							var = Kim_Jong_Nam
-						 	min = 0
-							max = 100
-				    	}
-				    	subtract_from_variable = {
-				    		var = Kim_Jong_un
-				    		value = 8
-				    	}
-				    	clamp_variable = {
-				    		var = Kim_Jong_un
-				    		min = 0
-				    		max = 100
-				    	}
-					}
-				}
-			}
-		}
-    }
 }
