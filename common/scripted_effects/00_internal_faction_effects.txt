@@ -170,6 +170,13 @@ setup_init_factions = {
 	}
 	if = {
 		limit = {
+			has_idea = tribes
+			NOT = { has_variable = tribes_opinion }
+		}
+		set_variable = { tribes_opinion = 50 }
+	}
+	if = {
+		limit = {
 			has_idea = vevak
 			NOT = { has_variable = vevak_opinion }
 		}
@@ -292,6 +299,9 @@ display_election_campaign_status = {
 	}
 	if = { limit = { has_idea = saudi_royal_family }
 		display_election_status_saudi_royal_family = yes
+	}
+	if = { limit = { has_idea = tribes }
+		display_election_status_tribes = yes
 	}
 	if = { limit = { has_idea = irgc }
 		display_election_status_IRGC = yes
@@ -683,6 +693,26 @@ display_election_status_saudi_royal_family = {
 		add_to_temp_variable = { election_funding = 1 }
 	}
 	else_if = { limit = { enthusiastic_saudi_royal_family = yes }
+		add_to_temp_variable = { election_funding = 2 }
+	}
+	add_to_variable = { campaign_funding_count = election_funding }
+	clear_variable = election_funding
+}
+display_election_status_tribes = {
+	set_temp_variable = { election_funding = 0 }
+	if = { limit = { hostile_tribes = yes }
+		add_to_temp_variable = { election_funding = -2 }
+	}
+	else_if = { limit = { negative_tribes = yes }
+		add_to_temp_variable = { election_funding = -1 }
+	}
+	else_if = { limit = { indifferent_tribes = yes }
+		add_to_temp_variable = { election_funding = 0 }
+	}
+	else_if = { limit = { positive_tribes = yes }
+		add_to_temp_variable = { election_funding = 1 }
+	}
+	else_if = { limit = { enthusiastic_tribes = yes }
 		add_to_temp_variable = { election_funding = 2 }
 	}
 	add_to_variable = { campaign_funding_count = election_funding }
@@ -1310,6 +1340,18 @@ if_no_longer_has_faction_clear_previous = {
 	}
 	if = {
 		limit = {
+			NOT = { has_idea = tribes }
+			has_variable = tribes_opinion
+		}
+		clear_variable = tribes_opinion
+		clear_variable = tribes_political_power_factor_var #20% Max
+		clear_variable = tribes_ideology_drift_defense_var #25% Max
+		clear_variable = tribes_stability_factor_var #5% max
+		clear_variable = tribes_research_speed_factor_var #-15% max
+		clear_variable = tribes_global_building_slots_factor_var #-10% max
+	}
+	if = {
+		limit = {
 			NOT = { has_idea = irgc }
 			has_variable = irgc_opinion
 		}
@@ -1470,6 +1512,10 @@ initialize_internal_faction_dynamic_modifiers = {
 	if = { limit = { has_idea = saudi_royal_family }
 		add_dynamic_modifier = { modifier = saudi_royal_family_dynamic_modifier }
 		apply_saudi_royal_family_dynamic_effect_DYNMOD = yes
+	}
+	if = { limit = { has_idea = tribes }
+		add_dynamic_modifier = { modifier = tribes_dynamic_modifier }
+		apply_tribes_dynamic_effect_DYNMOD = yes
 	}
 	if = { limit = { has_idea = irgc }
 		add_dynamic_modifier = { modifier = irgc_dynamic_modifier }
@@ -1875,6 +1921,27 @@ apply_saudi_royal_family_dynamic_effect_DYNMOD = {
 	multiply_variable = { SARF_political_power_factor_var = 0.005 }
 	multiply_variable = { SARF_ideology_drift_defense_var = 0.005 }
 	multiply_variable = { SARF_stability_factor_var = 0.003 }
+
+	# Force the Update Dynamic Modifier with new Calculated Effects
+	force_update_dynamic_modifier = yes
+}
+apply_tribes_dynamic_effect_DYNMOD = {
+	# Sets the base to current opinion then subtracts 50 from it to get the modifier value
+	set_temp_variable = { base_modifier = tribes_opinion }
+	add_to_temp_variable = { base_modifier = -50 }
+
+	set_variable = { tribes_political_power_factor_var = base_modifier }
+	set_variable = { tribes_ideology_drift_defense_var = base_modifier }
+	set_variable = { tribes_stability_factor_var = base_modifier }
+	set_variable = { tribes_research_speed_factor_var = base_modifier }
+	set_variable = { tribes_global_building_slots_factor_var = base_modifier }
+
+	# Multiplies by the scaled factor - Max values: 15%, 15%, 15%
+	multiply_variable = { tribes_political_power_factor_var = 0.005 }
+	multiply_variable = { tribes_ideology_drift_defense_var = 0.005 }
+	multiply_variable = { tribes_stability_factor_var = 0.003 }
+	multiply_variable = { tribes_research_speed_factor_var = -0.005 }
+	multiply_variable = { tribes_global_building_slots_factor_var = -0.005 }
 
 	# Force the Update Dynamic Modifier with new Calculated Effects
 	force_update_dynamic_modifier = yes
@@ -2999,6 +3066,53 @@ change_saudi_royal_family_opinion = {
 	}
 }
 
+# Tribes
+# set_temp_variable = { temp_opinion = -+ # }
+change_tribes_opinion = {
+	if = { limit = { has_idea = tribes }
+
+		#Autocrats get faction effects double
+		if = {
+			limit = {
+				OR = {
+					is_in_array = { ruling_party = 0 }	#Western Autocrats
+					is_in_array = { ruling_party = 7 }	#Emerging autocrats
+					is_in_array = { ruling_party = 8 }	#Mod_Vilayat_e_Faqih
+					is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+					is_in_array = { ruling_party = 11 }	#Caliphate
+					is_in_array = { ruling_party = 12 }	#Neutral_Muslim_Brotherhood
+					is_in_array = { ruling_party = 13 }	#Neutral autocrats
+					is_in_array = { ruling_party = 21 }	#fascists
+					is_in_array = { ruling_party = 22 }	#military junta
+				}
+				check_variable = { temp_opinion > 0 }
+			}
+			multiply_temp_variable = { temp_opinion = 2 }
+		}
+
+		add_to_variable = { tribes_opinion = temp_opinion }
+
+		set_temp_variable = { tribes_min = 0 }
+		set_temp_variable = { tribes_max = 100 }
+
+		# Custom Min/Max Opinion Instructions
+		# if = {
+		#	limit = { tag = TAG }
+		# 	set_variable = { the_military_min = x }
+		# }
+
+		clamp_variable = {
+			var = tribes_opinion
+			min = tribes_min
+			max = tribes_max
+		}
+		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
+		custom_effect_tooltip = display_tribes_opinion
+		apply_tribes_dynamic_effect_DYNMOD = yes
+		# Reset Command in Case there is Succesive Changes
+		#set_temp_variable = { temp_opinion = 0 }
+	}
+}
 
 # Foreign Jihadist
 # set_temp_variable = { temp_opinion = -+ # }
@@ -3271,6 +3385,10 @@ set_to_max_internal_faction_opinions = {
 		set_variable = { saudi_royal_family_opinion = 100 }
 		apply_saudi_royal_family_dynamic_effect_DYNMOD = yes
 	}
+	if = { limit = { has_idea = tribes }
+		set_variable = { tribes_opinion = 100 }
+		apply_tribes_dynamic_effect_DYNMOD = yes
+	}
 	if = { limit = { has_idea = wahabi_ulema }
 		set_variable = { wahabi_ulema_opinion = 100 }
 		apply_wahabi_ulema_dynamic_effect_DYNMOD = yes
@@ -3431,6 +3549,9 @@ reset_all_internal_faction_opinions = {
 	}
 	if = { limit = { has_idea = saudi_royal_family }
 		set_variable = { saudi_royal_family_opinion = 50 }
+	}
+	if = { limit = { has_idea = tribes }
+		set_variable = { tribes_opinion = 50 }
 	}
 	if = { limit = { has_idea = isi_pakistan }
 		set_variable = { isi_pakistan_opinion = 50 }
