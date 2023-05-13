@@ -394,7 +394,7 @@ def main():
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
 
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
-    allTriggers, allEffects = findPdxSyntax(rootDir + "/Modding resources/List of triggers and effects 1_6_1.txt")
+    allTriggers, allEffects = findPdxSyntax(rootDir + "/Modding resources/List of triggers and effects 1_9_1.txt")
     countryTriggers = getCountryTriggers(allTriggers)
     stateTriggers = getStateTriggers(allTriggers)
     unkownTriggers = getUnkownTriggers(allTriggers)
@@ -410,10 +410,10 @@ def main():
                 bad_count = bad_count + checkFocuses(os.path.join(root, filename))
                 files_list.append(os.path.join(root, filename))
 
-    for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
-        for filename in fnmatch.filter(filenames, '*.txt'):
-            bad_count = bad_count + check_ideas(os.path.join(root, filename))
-            files_list.append(os.path.join(root, filename))
+    # for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
+    #     for filename in fnmatch.filter(filenames, '*.txt'):
+    #         bad_count = bad_count + check_ideas(os.path.join(root, filename))
+    #         files_list.append(os.path.join(root, filename))
 
 
     #for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):

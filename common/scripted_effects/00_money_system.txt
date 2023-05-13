@@ -96,7 +96,7 @@ ingame_update_setup = {
 # Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
 	hidden_effect = {
-		if = { limit = { NOT = { has_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit } }}
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit } } }
 			add_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit }
 		}
 		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
@@ -190,6 +190,23 @@ calculate_tax_gain = {
 	multiply_variable = { military_fac_tax = corporate_tax_rate }
 	multiply_variable = { dockyard_tax = corporate_tax_rate }
 	multiply_variable = { office_tax = corporate_tax_rate }
+
+	# Modifier Section
+	set_temp_variable = { civil_modifier = 1 }
+	add_to_temp_variable = { civil_modifier = modifier@civilian_industry_tax_modifier }
+	multiply_variable = { civil_fac_tax = civil_modifier }
+
+	set_temp_variable = { military_modifier = 1 }
+	add_to_temp_variable = { military_modifier = modifier@military_industry_tax_modifier }
+	multiply_variable = { military_fac_tax = military_modifier }
+
+	set_temp_variable = { dockyard_modifier = 1 }
+	add_to_temp_variable = { dockyard_modifier = modifier@dockyard_income_tax_modifier }
+	multiply_variable = { dockyard_tax = dockyard_modifier }
+
+	set_temp_variable = { office_modifier = 1 }
+	add_to_temp_variable = { office_modifier = modifier@office_park_income_tax_modifier }
+	multiply_variable = { office_tax = office_modifier }
 
 	##POP
 	set_variable = { var = population_tax value = population_total }
@@ -1249,7 +1266,7 @@ update_military_rate = {
 	multiply_variable = { defence_breakdown_airforce = 7 }
 
 	set_variable = { defence_breakdown_industry_gdp_modifier = 8.1 }	#Maximum modifier
-	divide_variable = {defence_breakdown_industry_gdp_modifier = gdp_defence_modifier_industry }
+	divide_variable = { defence_breakdown_industry_gdp_modifier = gdp_defence_modifier_industry }
 	subtract_from_variable = { defence_breakdown_industry_gdp_modifier = 1 }	#Working with percentages
 	set_variable = { defence_breakdown_personnel_gdp_modifier = gdp_defence_modifier_personnel }
 	divide_variable = { defence_breakdown_personnel_gdp_modifier = 0.129 } #Minimum modifier
@@ -1867,15 +1884,15 @@ calculate_additional_expense_rate = {
 		}
 	}
 	if = {
-		limit = {original_tag = LIC}
+		limit = { original_tag = LIC }
 		if = {
 			limit = { has_idea = LIC_idea_foreign_workers }
-			set_variable = { additional_expense_LIC_foreign_workers= 0.01 }
+			set_variable = { additional_expense_LIC_foreign_workers = 0.01 }
 			add_to_variable = { additional_expenses_rate = additional_expense_LIC_foreign_workers }
 		}
 	}
 	if = {
-		limit = {original_tag = ITA}
+		limit = { original_tag = ITA }
 		add_to_variable = { additional_expenses_rate = ITA_additional_expenses_var }
 	}
 	if = {
