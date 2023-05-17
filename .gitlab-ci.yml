@@ -19,10 +19,13 @@ variables:
  #INPUT_RULESREF: 'master'
  #INPUT_VANILLAMODE: '0'
  #For CW226: Localisation key commands aren't supported, issue report here: https://github.com/cwtools/cwtools-hoi4-config/issues/65
- #for CW251: AND is unneededa warnings Bird Need to fix
+ #for CW251: AND is unneeded warnings Bird Need to fix
  INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
  #INPUT_SUPPRESSEDFILES: '[]'
  #INPUT_CWTOOLSCLIVERSION: ''
+
+before_script:
+ - pip install requests
 
 stages:
  - codingstandards
@@ -35,7 +38,6 @@ CodingStandards:
  only:
   - merge_requests
  script:
-  - pip install requests
   - python3 tools/check_basic_style_2.py $Bot_Token
 
 Styling:
@@ -44,7 +46,6 @@ Styling:
  only: [merge_requests]
  needs: ["CodingStandards"]
  script:
-  - pip install requests
   - python3 tools/coding_standards.py $Bot_Token
 
 FixingStyling:
@@ -54,7 +55,6 @@ FixingStyling:
     - merge_requests
   needs: ["Styling"]
   script:
-    - pip install requests
     - python3 tools/fix_styling.py $Bot_Token
   after_script:
     - git config --global user.email "millenniumdawnmod@gmail.com"
@@ -81,5 +81,5 @@ CWTools_CI:
  artifacts:
   expose_as: 'CWTools Build Output'
   paths:
-   - cwtoolsbuild.json
+   - output.json
   when: always
