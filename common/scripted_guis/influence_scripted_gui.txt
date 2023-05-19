@@ -9,7 +9,7 @@ scripted_gui = {
 		dirty = global.update_influence_ui
 
 		properties = {
-			opt_influence_action_button = { image = "[select_influence_action_button]" }
+			# opt_influence_action_button = { image = "[select_influence_action_button]" }
 			opt_aid_button = { image = "[select_aid_button]" }
 			opt_aid_military_button = { image = "[select_aid_military_button]" }
 			opt_target_other_button = { image = "[select_target_other_button]" }
@@ -21,17 +21,8 @@ scripted_gui = {
 
 		triggers = {
 			# Column 1:
+			# Auto Spread
 			opt_influence_action_button_click_enabled = {
-				ROOT = { has_political_power > 50 }
-				# Recently Sent Aid
-				custom_trigger_tooltip = {
-					tooltip = influence_spread_influence_TT
-					ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
-				}
-			}
-
-			# Alt Functionality for the Spread Influence Button
-			opt_influence_action_button_shift_click_enabled = {
 				if = { limit = { ROOT = { NOT = { is_in_array = { auto_influence_array = PREV.id } } } }
 					custom_trigger_tooltip = {
 						tooltip = influence_spread_has_slot_available_TT
@@ -43,6 +34,16 @@ scripted_gui = {
 						tooltip = influence_auto_spread_in_this_nation_TT
 						ROOT = { is_in_array = { auto_influence_array = PREV.id } }
 					}
+				}
+			}
+
+			# Manual Spread
+			opt_influence_action_button_right_click_enabled = {
+				ROOT = { has_political_power > 50 }
+				# Recently Sent Aid
+				custom_trigger_tooltip = {
+					tooltip = influence_spread_influence_TT
+					ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
 				}
 			}
 
@@ -159,6 +160,20 @@ scripted_gui = {
 			#Spread Influence Action - Generic Influence Action
 			opt_influence_action_button_click = {
 				ROOT = {
+					if = { limit = { NOT = { is_in_array = { auto_influence_array = PREV.id } } }
+						create_new_auto_influencer_request = yes
+					}
+					else = {
+						remove_auto_influencer_request = yes
+					}
+					update_auto_influence_array = yes
+					update_dirty_influence_var = yes
+				}
+			}
+
+			#Spread Influence Action - supporting auto-influence action
+			opt_influence_action_button_right_click = {
+				ROOT = {
 					add_political_power = -50
 
 					set_temp_variable = { percent_change = global.percent_change_value }
@@ -174,20 +189,6 @@ scripted_gui = {
 					else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
 						set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
 					}
-				}
-			}
-
-			#Spread Influence Action - supporting auto-influence action
-			opt_influence_action_button_shift_click = {
-				ROOT = {
-					if = { limit = { NOT = { is_in_array = { auto_influence_array = PREV.id } } }
-						create_new_auto_influencer_request = yes
-					}
-					else = {
-						remove_auto_influencer_request = yes
-					}
-					update_auto_influence_array = yes
-					update_dirty_influence_var = yes
 				}
 			}
 
