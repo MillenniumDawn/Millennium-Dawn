@@ -53,9 +53,9 @@
 	NDefines.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_STRATEGIC_REGIONS = 0.999
 	NDefines.NGraphics.STRATEGIC_AIR_COLOR_NEUTRAL = {165.0/255, 165.0/255, 165.0/255, 1} -- {140.0/255, 131.0/255, 119.0/255, 1}
 	NDefines.NGraphics.STRATEGIC_NAVY_COLOR_NEUTRAL = {41.0/255, 45.0/255, 64.0/255, 1} -- {0.3, 0.3, 0.3, 0}
- 	NDefines.NGraphics.COUNTRY_FLAG_TEX_MAX_SIZE = 2048							-- Vanilla is 256, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
-	NDefines.NGraphics.COUNTRY_FLAG_MEDIUM_TEX_MAX_SIZE = 2048							-- Vanilla is 256, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
-	NDefines.NGraphics.COUNTRY_FLAG_SMALL_TEX_MAX_SIZE = 2048					-- Vanilla is 64, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
+ 	NDefines.NGraphics.COUNTRY_FLAG_TEX_MAX_SIZE = 1024							-- Vanilla is 256, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
+	NDefines.NGraphics.COUNTRY_FLAG_MEDIUM_TEX_MAX_SIZE = 1024							-- Vanilla is 256, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
+	-- NDefines.NGraphics.COUNTRY_FLAG_SMALL_TEX_MAX_SIZE = 1024					-- Vanilla is 64, Tweak dependly on amount of countries. Must be power of 2. No more then 2048.
 	-- -- NDefines.NGraphics.COUNTRY_FLAG_STRIPE_TEX_MAX_WIDTH = 10					-- Vanilla is 10
 	-- -- NDefines.NGraphics.COUNTRY_FLAG_STRIPE_TEX_MAX_HEIGHT = 4096				-- Vanilla is 2048
 	-- -- NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_WIDTH = 41					-- Vanilla is 41
