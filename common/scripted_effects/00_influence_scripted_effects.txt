@@ -656,12 +656,23 @@ update_auto_influence_array = {
 	set_variable = { auto_influence_cap = 3 }
 	add_to_variable = { auto_influence_cap = modifier@foreign_influence_auto_influence_cap_modifier }
 
+	set_variable = { auto_influence_cost = 0 }
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
+		add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+	}
+
 	for_each_loop = {
 		array = auto_influence_array
 		if = { limit = { check_variable = { i > auto_influence_cap } }
 			set_variable = { auto_influence_array^i = 0 }
 		}
+		if = {
+			limit = { NOT = { check_variable = { v = 0 } } }
+			add_to_variable = { auto_influence_cost = 1.50 }
+		}
 	}
+
+	multiply_variable = { auto_influence_cost = -1 }
 	clamp_variable = { var = auto_influence_users min = 0 max = auto_influence_cap }
 }
 
