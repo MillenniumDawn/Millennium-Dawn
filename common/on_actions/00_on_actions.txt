@@ -483,7 +483,7 @@ on_actions = {
 									check_variable = { social_conservatism_government < 90 }
 									check_variable = { social_conservatism_society > 90 }
 								}
-								country_event = { id =  radicalization.1 random_hours = 24 }
+								country_event = { id = radicalization.1 random_hours = 24 }
 							}
 							50 = {
 
@@ -555,7 +555,7 @@ on_actions = {
 									check_variable = { social_conservatism_government > 90 }
 									check_variable = { social_conservatism_society < 90 }
 								}
-								country_event = { id =  radicalization.2 random_hours = 24 }
+								country_event = { id = radicalization.2 random_hours = 24 }
 							}
 							50 = {
 
@@ -589,9 +589,7 @@ on_actions = {
 						array = auto_influence_array
 						NOT = { check_variable = { v = 0 } }
 					}
-					has_political_power > 0
 				}
-				set_variable = { current_political_power_cost = 0 }
 				set_variable = { nations_influenced = 0 }
 
 				set_temp_variable = { percent_change = global.percent_change_value }
@@ -601,7 +599,6 @@ on_actions = {
 					if = {
 						limit = {
 							NOT = { check_variable = { v = 0 } }
-							check_variable = { current_political_power_cost < political_power }
 							var:v = {
 								ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
 								exists = yes
@@ -610,7 +607,6 @@ on_actions = {
 						set_temp_variable = { influence_target = v }
 						change_influence_percentage = yes
 						add_to_variable = { nations_influenced = 1 }
-						add_to_variable = { current_political_power_cost = -50 }
 						var:v = {
 							ROOT = {
 								if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
@@ -643,7 +639,7 @@ on_actions = {
 			if = {
 				limit = {
 					is_ai = no
-					has_political_power < -50
+					has_political_power < -100
 				}
 				clear_array = auto_influence_array
 				set_variable = { auto_influence_users = 0 }
@@ -672,11 +668,9 @@ on_actions = {
 			100 = MD4_election_campaign.0
 
 			#County specials
-			1000 = election_SOV.1
 			1000 = brazil.39
 			1000 = spain.500
 			1000 = taiwan.3
-			1000 = arme.2008
 			1000 = arme.2017
 			1000 = singapore_elections.0
 		}
@@ -1011,7 +1005,7 @@ on_actions = {
 					#influence
 					set_variable = { domestic_influence_amount = FROM.domestic_influence_amount }
 					if = {
-						limit = {check_variable = { domestic_influence_amount = 0 } }
+						limit = { check_variable = { domestic_influence_amount = 0 } }
 						add_to_variable = { domestic_influence_amount = 100 }
 					}
 					#just copy all
@@ -1911,7 +1905,7 @@ on_actions = {
 							}
 						}
 						if = {
-							limit = { FROM = { has_government = fascism }}
+							limit = { FROM = { has_government = fascism } }
 							set_cosmetic_tag = SAU_AQ
 						}
 					}
@@ -1920,7 +1914,7 @@ on_actions = {
 							limit = {
 								has_government = fascism
 								if = {
-									limit = { ROOT = { has_government = fascism }}
+									limit = { ROOT = { has_government = fascism } }
 									has_cosmetic_tag = SAU_AQ
 								}
 							}
@@ -2155,6 +2149,36 @@ on_actions = {
 								}
 							}
 						}
+						if = {
+							limit = {
+								original_tag = PER
+								OR = {
+									emerging_hardline_shiite_are_in_power = yes
+									emerging_moderate_shiite_are_in_power = yes
+								}
+							}
+							division_template = {
+								name = "IRGC Militia"
+								regiments = {
+									Mot_Militia_Bat = { x = 0 y = 0 }
+									Mot_Militia_Bat = { x = 0 y = 1 }
+									Mot_Inf_Bat = { x = 1 y = 0 }
+									L_Inf_Bat = { x = 1 y = 1 }
+								}
+								support = {
+									Mot_Recce_Comp = { x = 0 y = 0 }
+									H_Engi_Comp = { x = 0 y = 1 }
+								}
+								priority = 2
+							}
+							capital_scope = {
+								create_unit = {
+									division = "name =\"IRGC Militia\" division_template = \"IRGC Militia\" start_experience_factor = 0.3 start_equipment_factor =  1.0"
+									owner = FROM
+									count = 7
+								}
+							}
+						}
 					}
 
 					# LITERACY RATES
@@ -2193,6 +2217,17 @@ on_actions = {
 					set_temp_variable = { influence_target = THIS.id }
 					change_influence_percentage = yes
 				}
+			}
+
+			if = {
+				limit = {
+					FROM = { tag = UKR }
+					UKR = {
+						is_puppet = no
+						NOT = { has_country_flag = ukraine_spawned_vol }
+					}
+				}
+				war_declared_on_ukraine = yes
 			}
 
 			#Chinese aggression increase
@@ -2266,22 +2301,45 @@ on_actions = {
 	}
 
 	#ROOT is winner #FROM gets annexed
-	on_civil_war_end = {
+	on_civil_war_end_before_annexation = {
 		effect = {
 			if = {
 				limit = {
 					FROM = {
-						original_tag = ITA
+						tag = ITA
+					}
+				}
+				FROM = {
+					transfer_units_fraction = {
+						target = ROOT
+						size = 1
+						stockpile_ratio = 1
+						army_ratio = 1
+						navy_ratio = 1
+						air_ratio = 1
 					}
 				}
 				ROOT = {
-					load_focus_tree = italy_focus
+					for_each_loop = {
+						array = missile_inventory_array
+						value = v
+						index = i
+						add_to_variable = { missile_inventory_array^i = FROM.missile_inventory_array^i }
+					}
+					country_event = { id = italy_md.68 days = 2 }
+					change_tag_from = FROM
 				}
 			}
+		}
+	}
+
+	#ROOT is winner #FROM gets annexed
+	on_civil_war_end = {
+		effect = {
 			if = {
 				limit = {
 					ROOT = {
-						original_tag = ITA
+						tag = ITA
 					}
 				}
 				ROOT = {
@@ -2289,6 +2347,20 @@ on_actions = {
 					modify_stability_factor_effect = yes
 					set_temp_variable = { ITA_stability_weekly_change = 0.002 }
 					modify_stability_weekly_effect = yes
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						tag = PER
+						has_country_flag = PER_iranian_civilwar
+					}
+				}
+				ROOT = {
+				country_event = {
+					id = PER_revolution.300
+					days = 0
+					}
 				}
 			}
 			ROOT = {
@@ -2428,7 +2500,7 @@ on_actions = {
 				clr_country_flag = rival_government_@FROM
 				#CT
 				if = {
-					limit = { is_in_array = { global.ct_states = THIS }}
+					limit = { is_in_array = { global.ct_states = THIS } }
 					subtract_from_variable = { threat_level = 30 }
 					clamp_threat = yes
 				}
@@ -3091,8 +3163,8 @@ on_actions = {
 			#CT
 			if = {
 				limit = {
-					is_in_array =  { global.ct_states = ROOT }
-					FROM = { NOT = { has_idea = sunni }}
+					is_in_array = { global.ct_states = ROOT }
+					FROM = { NOT = { has_idea = sunni } }
 				}
 				ROOT = {
 					add_to_variable = { threat_level = 30 }
