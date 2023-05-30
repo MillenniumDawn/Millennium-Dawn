@@ -1,0 +1,2048 @@
+﻿add_namespace = mdmosjap_japan
+add_namespace = mdmosjap_japannews
+add_namespace = mdmosjap_japan_kato
+add_namespace = mdmosjap_japannews_kato
+
+#----------------------------------------------------------------
+#Prologue
+#----------------------------------------------------------------
+#The First Obuchi-Ozawa Negotiation
+country_event = {
+	id = mdmosjap_japan_kato.51
+	title = mdmosjap_japan_kato.51.t
+	desc = mdmosjap_japan_kato.51.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		set_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_count = 0 }
+	}
+	
+	#Obuchi compromised with the taxation-based system
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.51.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.51.oA"
+		add_political_power = -20
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.52 days = 21 }
+		}
+	}
+	
+	#Obuchi didn't yield from the insurance-based system
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.51.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.51.oB"
+		add_political_power = 20
+		add_to_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_count = 1 }
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.52 days = 21 }
+		}
+	}
+}
+
+#The Second Obuchi-Ozawa Negotiation
+country_event = {
+	id = mdmosjap_japan_kato.52
+	title = mdmosjap_japan_kato.52.t
+	desc = mdmosjap_japan_kato.52.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Obuchi agreed to reduce Diet seats allocated proportionally
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.52.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.52.oA"
+		add_political_power = -20
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.53 days = 21 }
+		}
+	}
+	
+	#Obuchi refused to reduce Diet seats allocated proportionally
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.52.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.52.oB"
+		add_political_power = 20
+		add_to_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_count = 1 }
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.53 days = 21 }
+		}
+	}
+}
+
+#The Third Obuchi-Ozawa Negotiation
+country_event = {
+	id = mdmosjap_japan_kato.53
+	title = mdmosjap_japan_kato.53.t
+	desc = mdmosjap_japan_kato.53.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Obuchi agreed to guarantee LP the winning by the constituency adjustment
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.53.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.53.oA"
+		add_political_power = -20
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.54 days = 20 }
+		}
+	}
+	
+	#Obuchi refused to adjust the constituency the LDP held (CONTRAINDICANT OPTION)
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.53.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.53.oB"
+		add_political_power = 20
+		add_to_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_count = 1 }
+		set_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_CONTRAINDICANT_OPTION
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.54 days = 20 }
+		}
+	}
+}
+
+#[HIDDEN] Obuchi-Ozawa Negotiation Result Check
+country_event = {
+	id = mdmosjap_japan_kato.54
+	hidden = yes
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		set_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_penalty = mdmosjap_2000_ldp_lp_negotiation_rejected_count }
+		multiply_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_penalty = -150 }
+	}
+	
+	
+	option = {
+		name = mdmosjap_japan_kato.54.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.54.oA"
+		if = {			#Collapse of Ji-Ji-Ko Coalition
+			limit = {
+				OR = {
+					check_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_count > 2 }
+					check_variable = { mdmosjap_2000_ldp_lp_negotiation_rejected_count = 2 }
+					has_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_CONTRAINDICANT_OPTION
+				}
+			}
+			country_event = mdmosjap_japan_kato.55
+		} else = {		#LP Remains in the Coalition
+			country_event = mdmosjap_japan_kato.56
+		}
+	}
+}
+
+#Collapse of Ji-Ji-Ko Coalition (Kato Rebellion Series)
+country_event = {
+	id = mdmosjap_japan_kato.55
+	title = mdmosjap_japan_kato.55.t
+	desc = mdmosjap_japan_kato.55.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = { country_event = { id = japan_classic.15 days = 2 } }	#Death of Obuchi
+	}
+	
+	option = {
+		name = mdmosjap_japan_kato.55.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.55.oA"
+		remove_from_array = { gov_coalition_array = 15 }	
+		custom_effect_tooltip = MDMOSJAP_EVENT_LP_DISSOLUTION_CALC_TT
+		add_political_power = mdmosjap_2000_ldp_lp_negotiation_rejected_penalty
+		add_stability = -0.05
+		set_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_FAILED
+		set_country_flag = MDMOSJAP_LP
+		hidden_effect = { recalculate_party = yes update_government_coalition_strength = yes update_party_name = yes set_coalition_drift = yes }
+		clear_variable = mdmosjap_2000_ldp_lp_negotiation_rejected_count
+		clear_variable = mdmosjap_2000_ldp_lp_negotiation_rejected_penalty
+	}
+}
+
+#LP Remains in the Coalition
+country_event = {
+	id = mdmosjap_japan_kato.56
+	title = mdmosjap_japan_kato.56.t
+	desc = mdmosjap_japan_kato.56.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = { country_event = { id = japan_classic.15 days = 2 } }	#Death of Obuchi
+	}
+	
+	option = {
+		name = mdmosjap_japan_kato.56.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.56.oA"
+		add_political_power = 100
+		add_stability = 0.02
+		mdmosjap_increase_party_popularity_array_6_var_3 = yes
+		mdmosjap_increase_party_popularity_array_15_var_3 = yes
+		set_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_AGREED
+	#	set_country_flag = MDMOSJAP_LP
+		hidden_effect = { recalculate_party = yes update_government_coalition_strength = yes update_party_name = yes set_coalition_drift = yes }
+		clear_variable = mdmosjap_2000_ldp_lp_negotiation_rejected_count
+		clear_variable = mdmosjap_2000_ldp_lp_negotiation_rejected_penalty
+	}
+}
+
+#----------------------------------------------------------------
+#Kato Rebellion
+#----------------------------------------------------------------
+#The Quintet (Gonin-Gumi)
+country_event = {
+	id = mdmosjap_japan_kato.1
+	title = mdmosjap_japan_kato.1.t
+	desc = mdmosjap_japan_kato.1.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.1.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.1.oA"
+	#	add_political_power = -100
+		if = {
+			limit = {
+				OR = {
+					is_in_array = { ruling_party = 0 }
+					is_in_array = { ruling_party = 1 }
+					is_in_array = { ruling_party = 7 }
+				}
+			}
+			mdmosjap_decrease_party_popularity_array_0_var_05 = yes
+			mdmosjap_decrease_party_popularity_array_1_var_05 = yes
+			mdmosjap_decrease_party_popularity_array_7_var_05 = yes
+		}
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.2 days = 10 }	#2000/10/20
+		}
+	}
+}
+
+#Introduce of Koichi Kato
+country_event = {
+	id = mdmosjap_japan_kato.2
+	title = mdmosjap_japan_kato.2.t
+	desc = mdmosjap_japan_kato.2.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.2.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.2.oA"
+		mdmosjap_increase_party_popularity_array_1_var_1 = yes
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.3 days = 10 }	#2000/10/30
+		}
+	}
+}
+
+#Kato's Revolt
+country_event = {
+	id = mdmosjap_japan_kato.3
+	title = mdmosjap_japan_kato.3.t
+	desc = mdmosjap_japan_kato.3.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Warn the expulsion to the Kato faction
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.3.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.3.oA"
+		add_political_power = -100
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.4 days = 7 }		#2000/11/6
+		}
+	}
+	
+	#Giving up the situation
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				OR = {
+					is_historical_focus_on = yes
+					has_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_FAILED
+				}
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.3.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.3.oB"
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.13 days = 18 }	#2000/11/17
+		}
+	}
+}
+
+#Estrangement of Miyazawa Faction
+country_event = {
+	id = mdmosjap_japan_kato.4
+	title = mdmosjap_japan_kato.4.t
+	desc = mdmosjap_japan_kato.4.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Warn the expulsion to the Kato faction
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.4.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.4.oA"
+		add_political_power = -100
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.6 days = 7 }		#2000/11/13
+		}
+		set_country_flag = MDMOSJAP_KATO_REBELLION_MIYAZAWA_FACTION_IS_DEAD
+	}
+	
+	#Giving up the situation
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				OR = {
+					is_historical_focus_on = yes
+					has_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_FAILED
+				}
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.4.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.4.oB"
+		add_stability = -0.02
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.13 days = 11 }	#2000/11/17
+		}
+	}
+}
+
+#The Weekend Homecoming
+country_event = {
+	id = mdmosjap_japan_kato.6
+	title = mdmosjap_japan_kato.6.t
+	desc = mdmosjap_japan_kato.6.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Warn the expulsion to the sympathisers again
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.6.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.6.oA"
+		add_political_power = -100
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.7 days = 7 }		#2000/11/20
+		}
+	}
+	
+	#Stares Silentyl
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				OR = {
+					is_historical_focus_on = yes
+					has_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_FAILED
+				}
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.6.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.6.oB"
+		add_political_power = -50
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.11 days = 7 }	#2000/11/20
+		}
+	}
+}
+
+#Failure of the Revolt
+country_event = {
+	id = mdmosjap_japan_kato.7
+	title = mdmosjap_japan_kato.7.t
+	desc = mdmosjap_japan_kato.7.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.7.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.7.oA"
+		mdmosjap_decrease_party_popularity_array_1_var_4 = yes
+		mdmosjap_increase_party_popularity_array_0_var_3 = yes
+		mdmosjap_increase_party_popularity_array_7_var_4 = yes
+		add_political_power = 100
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.8 days = 5 }
+		}
+	}
+}
+
+#The Punishment for the Kato's Faction
+country_event = {
+	id = mdmosjap_japan_kato.8
+	title = mdmosjap_japan_kato.8.t
+	desc = mdmosjap_japan_kato.8.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Pardon them. They're also patriots like us.
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.8.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.8.oA"
+		mdmosjap_increase_party_popularity_array_0_var_05 = yes
+		mdmosjap_increase_party_popularity_array_1_var_05 = yes
+		mdmosjap_increase_party_popularity_array_7_var_05 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_FAILED_SUCCESSFULLY
+	}
+	
+	#Remove Kato Simpathysers
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				OR = {
+					is_historical_focus_on = yes
+					has_country_flag = MDMOSJAP_EVENT_2000_LDP_LP_NEGOTIATION_FAILED
+				}
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.8.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.8.oB"
+		mdmosjap_increase_party_popularity_array_0_var_1 = yes
+		mdmosjap_increase_party_popularity_array_7_var_1 = yes
+		hidden_effect = {
+			country_event = { id = mdmosjap_japan_kato.10 days = 3 }
+		}
+	}
+}
+
+#Expulsion of Kato Faction
+country_event = {
+	id = mdmosjap_japan_kato.10
+	title = mdmosjap_japan_kato.10.t
+	desc = mdmosjap_japan_kato.10.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.10.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.10.oA"
+	#	mdmosjap_decrease_party_popularity_array_0_var_2 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_4 = yes
+	#	mdmosjap_decrease_party_popularity_array_7_var_2 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_LDP_REMOVED_KATO_AND_YAMASAKI
+	}
+}
+
+#Success of Kato's Revolt (Miyazawa Faction is tranquilised)
+country_event = {
+	id = mdmosjap_japan_kato.11
+	title = mdmosjap_japan_kato.11.t
+	desc = mdmosjap_japan_kato.11.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Mori quits his job
+	option = {
+		ai_chance = {
+			factor = 25
+		}
+		name = mdmosjap_japan_kato.11.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.11.oA"
+		add_political_power = -400
+		add_stability = -0.01
+		mdmosjap_increase_party_popularity_array_1_var_3 = yes
+		set_country_flag = MDMOSJAP_MORI_RESIGNED
+		
+	#	set_country_flag = MDMOSJAP_EVENT_NO_ELECTION_REGIME_CHANGE
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_summon_koichi_kato = yes			#Kato, I choose you
+	}
+	
+	#Dissolution of the Lower House
+	option = {
+		ai_chance = {
+			factor = 75
+		}
+		name = mdmosjap_japan_kato.11.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.11.oB"
+		add_political_power = -400
+		add_stability = -0.03
+		mdmosjap_increase_party_popularity_array_0_var_3 = yes
+		mdmosjap_increase_party_popularity_array_1_var_1 = yes
+		mdmosjap_increase_party_popularity_array_7_var_3 = yes
+		set_country_flag = MDMOSJAP_MORI_RESIGNED
+		
+	#	set_country_flag = MDMOSJAP_EVENT_NO_ELECTION_REGIME_CHANGE
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_summon_koichi_kato = yes			#Kato, I choose you
+		country_event = mdmosjap_japan_kato.12
+	}
+}
+
+#Start 2nd 2000 Lower House General Election (When the revolt succeeded at 2000/11/17 - > 2000/12/17)
+country_event = {
+	id = mdmosjap_japan_kato.12
+	title = mdmosjap_japan_kato.12.t
+	desc = mdmosjap_japan_kato.12.d
+	picture = GFX_eventpic_mdmosjap_jap_election
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			election_mdmosjap_JAP_update_next_election_date = yes
+			country_event = mdmosjap_japanelection.1003
+			country_event = { id = mdmosjap_japan_kato.15 days = 45 }	#Election Result Check - must be postponed for passing the year
+		}
+		set_variable = { mdmosjap_JAP_var_ElectionPeriod = 31 }		#Election's Duration
+	}
+	
+	#timeout_days = 7
+	
+	option = {
+		name = mdmosjap_japan.banzaidissolution
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.12.oA"
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		election_mdmosjap_JAP_hold_election = yes					#MUST PUT THIS SCRIPT EFFECT BELOW THE SETTING OF DURATION VARIABLE
+	}
+}
+
+#Success of Kato's Revolt (Miyazawa Faction is alive)
+country_event = {
+	id = mdmosjap_japan_kato.13
+	title = mdmosjap_japan_kato.13.t
+	desc = mdmosjap_japan_kato.13.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Mori quits his job
+	option = {
+		ai_chance = {
+			factor = 25
+		}
+		name = mdmosjap_japan_kato.13.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.13.oA"
+		add_political_power = -200
+		add_stability = -0.01
+		mdmosjap_increase_party_popularity_array_1_var_3 = yes
+		set_country_flag = MDMOSJAP_MORI_RESIGNED
+		
+	#	set_country_flag = MDMOSJAP_EVENT_NO_ELECTION_REGIME_CHANGE
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_summon_koichi_kato = yes			#Kato, I choose you
+	}
+	
+	#Dissolution of the Lower House
+	option = {
+		ai_chance = {
+			factor = 75
+		}
+		name = mdmosjap_japan_kato.13.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.13.oB"
+		add_stability = -0.03
+		mdmosjap_increase_party_popularity_array_0_var_3 = yes
+		mdmosjap_increase_party_popularity_array_1_var_1 = yes
+		mdmosjap_increase_party_popularity_array_7_var_3 = yes
+		set_country_flag = MDMOSJAP_MORI_RESIGNED
+		
+	#	set_country_flag = MDMOSJAP_EVENT_NO_ELECTION_REGIME_CHANGE
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_summon_koichi_kato = yes			#Kato, I choose you
+		country_event = { id = mdmosjap_japan_kato.14 days = 4 }
+	}
+}
+
+#Start 2nd 2000 Lower House General Election (When the revolt succeeded at 2000/11/20 - > 2000/12/17)
+country_event = {
+	id = mdmosjap_japan_kato.14
+	title = mdmosjap_japan_kato.12.t
+	desc = mdmosjap_japan_kato.12.d
+	picture = GFX_eventpic_mdmosjap_jap_election
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#timeout_days = 7
+	
+	immediate = {
+		hidden_effect = {
+			election_mdmosjap_JAP_update_next_election_date = yes
+			country_event = mdmosjap_japanelection.1003
+			country_event = { id = mdmosjap_japan_kato.15 days = 42 }	#Election Result Check - must be postponed for passing the year
+		}
+		set_variable = { mdmosjap_JAP_var_ElectionPeriod = 28 }		#Election's Duration
+	}
+	
+	option = {
+		name = mdmosjap_japan.banzaidissolution
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.14.oA"
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		election_mdmosjap_JAP_hold_election = yes					#MUST PUT THIS SCRIPT EFFECT BELOW THE SETTING OF DURATION VARIABLE
+	}
+}
+
+#[HIDDEN] Election Result Check
+country_event = {
+	id = mdmosjap_japan_kato.15
+	hidden = yes
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#LDP Lost The Election
+	option = {
+		trigger = {
+			NOT = { is_in_array = { ruling_party = 0 } }
+			NOT = { is_in_array = { ruling_party = 1 } }
+			NOT = { is_in_array = { ruling_party = 7 } }
+		}
+		name = mdmosjap_japan_kato.15.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.15.oA"
+		country_event = mdmosjap_japan_kato.16
+	}
+	
+	#LDP Won The Election
+	option = {
+		trigger = {
+			OR = {
+				is_in_array = { ruling_party = 0 }
+				is_in_array = { ruling_party = 1 }
+				is_in_array = { ruling_party = 7 }
+			}
+		}
+		name = mdmosjap_japan_kato.15.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.15.oB"
+		country_event = mdmosjap_japan_kato.17
+	}
+}
+
+#LDP Lost The Election
+country_event = {
+	id = mdmosjap_japan_kato.16
+	title = mdmosjap_japan_kato.16.t
+	desc = mdmosjap_japan_kato.16.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.16.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.16.oA"
+		mdmosjap_increase_party_popularity_array_0_var_3 = yes
+		mdmosjap_increase_party_popularity_array_1_var_3 = yes
+		mdmosjap_increase_party_popularity_array_7_var_3 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_FAILED_SUCCESSFULLY	#Yep, Kato has been rejected by the masses for its reprise of the early 90's LDP shit show then he cannot revive. Forever.
+	}
+}
+
+#Inauguration of Kato Cabinet
+country_event = {
+	id = mdmosjap_japan_kato.17
+	title = mdmosjap_japan_kato.17.t
+	desc = mdmosjap_japan_kato.17.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.17.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.17.oA"
+		mdmosjap_increase_party_popularity_array_1_var_5 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_SUCCESS
+		if = {
+			limit = {
+				NOT = { has_country_flag = MDMOSJAP_LP }
+				OR = {
+					NOT = { is_in_array = { gov_coalition_array = 6 } }
+					NOT = { is_in_array = { gov_coalition_array = 15 } }
+				}
+			}
+			country_event = { id = mdmosjap_japan_kato.18 days = 3 }
+		}
+		if = {
+			limit = {
+				has_country_flag = MDMOSJAP_LP
+				NOT = { is_in_array = { gov_coalition_array = 6 } }
+			}
+			country_event = { id = mdmosjap_japan_kato.19 days = 3 }
+		}
+	}
+}
+
+#Re-form the coalition with LP?
+country_event = {
+	id = mdmosjap_japan_kato.18
+	title = mdmosjap_japan_kato.18.t
+	desc = mdmosjap_japan_kato.18.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Invite LP
+	option = {
+		ai_chance = { factor = 100 }
+		name = mdmosjap_japan_kato.18.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.18.oA"
+		add_to_array = { gov_coalition_array = 6 }
+		add_to_array = { gov_coalition_array = 15 }
+	}
+	
+	#Exclude LP
+	option = {
+		ai_chance = { factor = 0 }
+		name = mdmosjap_japan_kato.18.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.18.oB"
+		add_political_power = -50
+		mdmosjap_increase_party_popularity_array_0_var_2 = yes
+		mdmosjap_increase_party_popularity_array_1_var_2 = yes
+		mdmosjap_increase_party_popularity_array_7_var_2 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_KATO_DECEIVED_OZAWA
+	}
+}
+
+#Invite CP to the Coalition?
+country_event = {
+	id = mdmosjap_japan_kato.19
+	title = mdmosjap_japan_kato.19.t
+	desc = mdmosjap_japan_kato.19.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Invite CP
+	option = {
+		ai_chance = { factor = 90 }
+		name = mdmosjap_japan_kato.19.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.19.oA"
+		add_to_array = { gov_coalition_array = 6 }
+	}
+	
+	#Exclude CP
+	option = {
+		ai_chance = {
+			factor = 10
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.19.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.19.oB"
+		add_political_power = -50
+		mdmosjap_increase_party_popularity_array_0_var_2 = yes
+		mdmosjap_increase_party_popularity_array_1_var_2 = yes
+		mdmosjap_increase_party_popularity_array_7_var_2 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_KATO_DECEIVED_CP
+	}
+}
+
+#----------------------------------------------------------------
+#Epilogue
+#----------------------------------------------------------------
+#Scandal of Koichi Kato (Mutually With mdmosjap_japan.140402001)
+country_event = {
+	id = mdmosjap_japan_kato.801
+	title = mdmosjap_japan_kato.801.t
+	desc = mdmosjap_japan_kato.801.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	
+	trigger = {
+		original_tag = JAP
+		date > 2002.3.0
+		has_country_flag = MDMOSJAP_KATO_REBELLION_EXECUTED
+		has_country_leader = { name = "Koichi Kato" }
+		NOT = { has_country_flag = MDMOSJAP_EVENT_KATO_ONCE_QUIT_FROM_DIET }
+	}
+	
+	immediate = {
+		set_country_flag = MDMOSJAP_EVENT_KATO_ONCE_QUIT_FROM_DIET
+	}
+	
+	#Kato must resign
+	option = {
+		ai_chance = { factor = 80 }
+		name = mdmosjap_japan_kato.801.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.801.oA"
+		mdmosjap_decrease_party_popularity_array_1_var_4 = yes
+		mdmosjap_increase_party_popularity_array_0_var_2 = yes
+		mdmosjap_increase_party_popularity_array_7_var_2 = yes
+		add_stability = -0.02
+		add_political_power = -500
+		increase_mdmosjap_conrad_left_1 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KATO_RESIGNED
+		set_country_flag = MDMOSJAP_KATO_RESIGNED
+		
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_prime_minister_election = yes		#Choose the next Prime Minister
+	}
+	
+	#There's no problem
+	option = {
+		ai_chance = { factor = 20 }
+		name = mdmosjap_japan_kato.801.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.801.oB"
+		mdmosjap_decrease_party_popularity_array_1_var_6 = yes
+		mdmosjap_decrease_party_popularity_array_0_var_3 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_3 = yes
+		add_stability = -0.04
+		increase_mdmosjap_conrad_left_2 = yes
+		increase_mdmosjap_conrad_right_2 = yes
+		
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KATO_STAYED
+		hidden_effect = { recalculate_party = yes update_government_coalition_strength = yes update_party_name = yes set_coalition_drift = yes }
+	}
+}
+
+#----------------------------------------------------------------
+#Derailed Ending: Taku Yamasaki
+#----------------------------------------------------------------
+#Taku Yamasaki Left the Diet (Executes when Yamasaki IS NOT the P.M.)
+country_event = {
+	id = mdmosjap_japan_kato.851
+	title = mdmosjap_japan_kato.851.t
+	desc = mdmosjap_japan_kato.851.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.851.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.851.oA"
+		mdmosjap_decrease_party_popularity_array_1_var_1 = yes
+		set_country_flag = { flag = MDMOSJAP_RESIGNATION_COOLDOWN_TAKU_YAMASAKI days = 1095 value = 1 }
+		custom_effect_tooltip = MDMOSJAP_YAMASAKI_DROPOUT_TT
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_YAMASAKI_ENDING
+	}
+}
+
+#Scandal of Taku Yamasaki (Executes when Yamasaki IS the P.M.)
+country_event = {
+	id = mdmosjap_japan_kato.852
+	title = mdmosjap_japan_kato.852.t
+	desc = mdmosjap_japan_kato.852.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	
+	trigger = {
+		original_tag = JAP
+		date > 2003.1.0
+		has_country_leader = { name = "Taku Yamasaki" }
+	}
+	
+	immediate = { set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_YAMASAKI_ENDING }
+	
+	#Yamasaki must resign too
+	option = {
+		ai_chance = { factor = 50 }
+		name = mdmosjap_japan_kato.852.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.852.oA"
+		mdmosjap_decrease_party_popularity_array_0_var_4 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_2 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_2 = yes
+		add_stability = -0.02
+		add_political_power = -500
+		increase_mdmosjap_conrad_left_1 = yes
+		set_country_flag = MDMOSJAP_YAMASAKI_RESIGNED
+		
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_prime_minister_election = yes		#Choose the next Prime Minister
+	}
+	
+	#We need him
+	option = {
+		ai_chance = { factor = 50 }
+		name = mdmosjap_japan_kato.852.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.852.oB"
+		mdmosjap_decrease_party_popularity_array_0_var_6 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_3 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_3 = yes
+		add_stability = -0.04
+		increase_mdmosjap_conrad_left_2 = yes
+		increase_mdmosjap_conrad_right_2 = yes
+	}
+}
+
+#New P.M. Election for the Unsuccessful of Taku Yamasaki (Executes when Yamasaki DIDN'T STEP DOWN in the above event)
+country_event = {
+	id = mdmosjap_japan_kato.853
+	title = mdmosjap_japan_kato.853.t
+	desc = mdmosjap_japan_kato.853.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.853.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.853.oA"
+		mdmosjap_decrease_party_popularity_array_0_var_3 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_3 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_3 = yes
+		add_stability = -0.02
+		add_political_power = -500
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		set_country_flag = MDMOSJAP_YAMASAKI_RESIGNED
+		
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_prime_minister_election = yes		#Choose the next Prime Minister
+	}
+}
+
+#----------------------------------------------------------------
+#Derailed Ending: Hiromu Nonaka
+#----------------------------------------------------------------
+#Nisshiren Scandal (Executes when Nonaka IS NOT the Prime Minister)
+country_event = {
+	id = mdmosjap_japan_kato.901
+	title = mdmosjap_japan_kato.901.t
+	desc = mdmosjap_japan_kato.901.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	trigger = {
+		original_tag = JAP
+		date > 2004.7.0
+		NOT = { has_country_leader = { name = "Hiromu Nonaka" } }
+		NOT = { has_country_flag = MDMOSJAP_EVENT_NONAKA_SCANDAL }
+	}
+	
+	immediate = { set_country_flag = MDMOSJAP_EVENT_NONAKA_SCANDAL }
+	
+	option = {
+		name = mdmosjap_japan_kato.901.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.901.oA"
+		mdmosjap_decrease_party_popularity_array_1_var_1 = yes
+		set_country_flag = { flag = MDMOSJAP_RESIGNATION_COOLDOWN_HIROMU_NONAKA days = 1095 value = 1 }
+		custom_effect_tooltip = MDMOSJAP_NONAKA_DROPOUT_TT
+		if = {
+			limit = {
+				OR = {
+					has_country_leader = { name = "Yohei Kono" }
+					has_country_leader = { name = "Koichi Kato" }
+				}
+			}
+			set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING
+		}
+	}
+}
+
+#Nisshiren Scandal (Executes when Nonaka IS the Prime Minister)
+country_event = {
+	id = mdmosjap_japan_kato.902
+	title = mdmosjap_japan_kato.902.t
+	desc = mdmosjap_japan_kato.902.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	trigger = {
+		original_tag = JAP
+		date > 2004.7.0
+		NOT = { has_country_leader = { name = "Hiromu Nonaka" } }
+		NOT = { has_country_flag = MDMOSJAP_EVENT_NONAKA_SCANDAL }
+	}
+	
+	immediate = { set_country_flag = MDMOSJAP_EVENT_NONAKA_SCANDAL }
+	
+	#Nonaka must resign
+	option = {
+		ai_chance = { factor = 80 }
+		name = mdmosjap_japan_kato.902.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.902.oA"
+		mdmosjap_decrease_party_popularity_array_1_var_1 = yes
+		set_country_flag = { flag = MDMOSJAP_RESIGNATION_COOLDOWN_HIROMU_NONAKA days = 1095 value = 1 }
+		custom_effect_tooltip = MDMOSJAP_NONAKA_DROPOUT_TT
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_NONAKA_ENDING
+		set_country_flag = MDMOSJAP_NONAKA_RESIGNED
+		
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_prime_minister_election = yes		#Choose the next Prime Minister
+	}
+	
+	#There's no problem
+	option = {
+		ai_chance = { factor = 20 }
+		name = mdmosjap_japan_kato.902.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.902.oB"
+		mdmosjap_decrease_party_popularity_array_1_var_6 = yes
+		mdmosjap_decrease_party_popularity_array_0_var_3 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_3 = yes
+		add_stability = -0.04
+		increase_mdmosjap_conrad_left_2 = yes
+		increase_mdmosjap_conrad_right_2 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_NONAKA_ENDING
+	}
+}
+
+#Nonaka Resigned the Cabinet
+country_event = {
+	id = mdmosjap_japan_kato.903
+	title = mdmosjap_japan_kato.903.t
+	desc = mdmosjap_japan_kato.903.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.903.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.903.oA"
+		add_stability = -0.01
+		decrease_mdmosjap_conrad_left_3 = yes
+		decrease_mdmosjap_conrad_right_3 = yes
+		mdmosjap_decrease_party_popularity_array_0_var_1 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_1 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_1 = yes
+		set_country_flag = MDMOSJAP_NONAKA_RESIGNED
+		
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_prime_minister_election = yes		#Choose the next Prime Minister
+	}
+}
+
+#Dissolving of the Lower House After Nonaka or Yamasaki Resigned
+country_event = {
+	id = mdmosjap_japan_kato.904
+	title = mdmosjap_japan_kato.904.t
+	desc = mdmosjap_japan_kato.904.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		set_variable = { mdmosjap_JAP_var_ElectionPeriod = 23 }		#Election's Duration
+	}
+	
+	option = {
+		name = mdmosjap_japan.banzaidissolution
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.904.oA"		
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		election_mdmosjap_JAP_hold_election = yes					#MUST PUT THIS SCRIPT EFFECT BELOW THE SETTING OF DURATION VARIABLE
+	}
+}
+
+#----------------------------------------------------------------
+#Derailed Ending: Yohei Kono
+#----------------------------------------------------------------
+#Conservatives' Repellence
+country_event = {
+	id = mdmosjap_japan_kato.951
+	title = mdmosjap_japan_kato.951.t
+	desc = mdmosjap_japan_kato.951.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	trigger = {
+		original_tag = JAP
+		has_country_leader = { name = "Yohei Kono" }
+	}
+	
+	option = {
+		name = mdmosjap_japan_kato.951.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.951.oA"
+		add_political_power = -100
+		add_popularity = { ideology = communism popularity = 0.02 }
+		add_popularity = { ideology = nationalist popularity = 0.02 }
+		mdmosjap_increase_party_popularity_array_7_var_2 = yes
+		increase_mdmosjap_conrad_right_2 = yes
+	}
+}
+
+#Kono Oroshi (2004/8/21)
+country_event = {
+	id = mdmosjap_japan_kato.952
+	title = mdmosjap_japan_kato.952.t
+	desc = mdmosjap_japan_kato.952.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	trigger = {
+		original_tag = JAP
+		date > 2004.8.10
+		has_country_leader = { name = "Yohei Kono" }
+		has_country_flag = MDMOSJAP_EVENT_NONAKA_SCANDAL
+		has_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING
+	}
+	
+#	immediate = { set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING }
+	
+	option = {
+		name = mdmosjap_japan_kato.952.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.952.oA"
+		country_event = { id = mdmosjap_japan_kato.954 days = 14 }
+	}
+}
+
+#Kato Oroshi (2004/8/21)
+country_event = {
+	id = mdmosjap_japan_kato.953
+	title = mdmosjap_japan_kato.953.t
+	desc = mdmosjap_japan_kato.953.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	trigger = {
+		original_tag = JAP
+		date > 2004.8.10
+		has_country_leader = { name = "Koichi Kato" }
+		has_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KATO_STAYED
+		has_country_flag = MDMOSJAP_EVENT_NONAKA_SCANDAL
+		has_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING
+	}
+	
+#	immediate = { set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING }
+	
+	option = {
+		name = mdmosjap_japan_kato.953.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.953.oA"
+		country_event = { id = mdmosjap_japan_kato.954 days = 14 }
+	}
+}
+
+#Crisis of the Autumunal Equinox (2004/9/4)
+country_event = {
+	id = mdmosjap_japan_kato.954
+	title = mdmosjap_japan_kato.954.t
+	desc = mdmosjap_japan_kato.954.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			set_variable = { mdmosjap_var_shubun_kiki_point_L = 0 }
+			set_variable = { mdmosjap_var_shubun_kiki_point_R = 0 }
+			set_variable = { mdmosjap_var_shubun_kiki_point_difference = 0 }
+			country_event = { id = mdmosjap_japan_kato.957 days = 28 }	#Stage II (2004/10/2)
+			country_event = { id = mdmosjap_japan_kato.960 days = 56 }	#Stage III (2004/10/30)
+			country_event = { id = mdmosjap_japan_kato.970 days = 84 }	#Calculation of Result (2004/11/26)
+		}
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_AT_LDP_DISASTER_NOW
+	}
+	
+	#Lean toward liberal
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.954.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.954.oA"
+		country_event = { id = mdmosjap_japan_kato.955 days = 14 }
+	}
+	
+	#Lean toward conservative
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Koichi Kato" }
+				factor = 0
+			}
+			modifier = {
+				has_country_leader = { name = "Yohei Kono" }
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.954.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.954.oB"
+		country_event = { id = mdmosjap_japan_kato.956 days = 14 }
+	}
+}
+
+#Crisis Stage I: Strengthening with Liberals
+country_event = {
+	id = mdmosjap_japan_kato.955
+	title = mdmosjap_japan_kato.955.t
+	desc = mdmosjap_japan_kato.955.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Meet with the head of DPJ
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Yohei Kono" }
+				factor = 0.1
+			}
+		}
+		name = mdmosjap_japan_kato.955.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.955.oA"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = -1 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = -2 }
+		mdmosjap_increase_party_popularity_array_2_var_2 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_COALITION_WITH_DPJ
+	}
+	
+	#Meet with the Right-Kochikai
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Koichi Kato" }
+				factor = 0.1
+			}
+		}
+		name = mdmosjap_japan_kato.955.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.955.oB"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 1 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = -1 }
+		mdmosjap_increase_party_popularity_array_1_var_2 = yes
+		#set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_GREATER_KOCHIKAI_CONDITION_I
+	}
+}
+
+#Crisis Stage I: Compromise with Conservatives
+country_event = {
+	id = mdmosjap_japan_kato.956
+	title = mdmosjap_japan_kato.956.t
+	desc = mdmosjap_japan_kato.956.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Promising the economic growth
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.956.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.956.oA"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 1 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = -1 }
+		set_temp_variable = { temp_opinion = 5 } change_international_bankers_opinion = yes
+		set_temp_variable = { temp_opinion = 5 } change_industrial_conglomerates_opinion = yes
+	}
+	
+	#Tolerate right-wingers
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.956.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.956.oB"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = -2 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = 1 }
+		increase_mdmosjap_concon_right_2 = yes
+		increase_mdmosjap_conrad_left_2 = yes
+		decrease_mdmosjap_conrad_right_2 = yes
+	}
+}
+
+#Continuance of the Crisis
+country_event = {
+	id = mdmosjap_japan_kato.957
+	title = mdmosjap_japan_kato.957.t
+	desc = mdmosjap_japan_kato.957.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Solidify the Prefectural Branch
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Koichi Kato" }
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.957.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.957.oA"
+		country_event = { id = mdmosjap_japan_kato.958 days = 14 }
+	}
+	
+	#Talk about some "beneficial" thing
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Yohei Kono" }
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.957.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.957.oB"
+		country_event = { id = mdmosjap_japan_kato.959 days = 14 }
+	}
+}
+
+#Crisis Stage II: Solidify the Prefectural Branches
+country_event = {
+	id = mdmosjap_japan_kato.958
+	title = mdmosjap_japan_kato.958.t
+	desc = mdmosjap_japan_kato.958.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Give way to the branches
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Yohei Kono" }
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.958.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.958.oA"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 1 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = 2 }
+		set_temp_variable = { temp_opinion = 5 } change_farmers_opinion = yes
+		set_temp_variable = { temp_opinion = -5 } change_international_bankers_opinion = yes
+	}
+	
+	#Press our policies from centre
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.958.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.958.oB"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 0 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = 0 }
+		set_temp_variable = { temp_opinion = -5 } change_farmers_opinion = yes
+		set_temp_variable = { temp_opinion = 5 } change_international_bankers_opinion = yes
+	}
+}
+
+#Crisis Stage II: Talk about some "beneficial" thing
+country_event = {
+	id = mdmosjap_japan_kato.959
+	title = mdmosjap_japan_kato.959.t
+	desc = mdmosjap_japan_kato.959.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#The interest groups matter
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Koichi Kato" }
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.959.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.959.oA"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = -1 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = -1 }
+		set_temp_variable = { temp_opinion = 5 } change_industrial_conglomerates_opinion = yes
+		set_temp_variable = { temp_opinion = -5 } change_small_medium_business_owners_opinion = yes
+	}
+	
+	#Give some post for Zoku-giin
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.959.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.959.oB"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 1 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = 1 }
+		if = {
+			limit = { NOT = { has_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_NO_SCHISM } }
+			set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_NO_SCHISM
+		}
+		set_temp_variable = { temp_opinion = -5 } change_industrial_conglomerates_opinion = yes
+		set_temp_variable = { temp_opinion = 5 } change_small_medium_business_owners_opinion = yes
+	}
+}
+
+#Deteriorate of the Crisis
+country_event = {
+	id = mdmosjap_japan_kato.960
+	title = mdmosjap_japan_kato.960.t
+	desc = mdmosjap_japan_kato.960.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#The factioncy talks everything
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.960.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.960.oA"
+		country_event = { id = mdmosjap_japan_kato.961 days = 14 }
+	}
+	
+	#A charismatic man do defend the party from the self destruction
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Koichi Kato" }
+				factor = 0
+			}
+			modifier = {
+				has_country_leader = { name = "Yohei Kono" }
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.960.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.960.oB"
+		country_event = { id = mdmosjap_japan_kato.962 days = 14 }
+	}
+}
+
+#Crisis Stage III: The factioncy talks everything
+country_event = {
+	id = mdmosjap_japan_kato.961
+	title = mdmosjap_japan_kato.961.t
+	desc = mdmosjap_japan_kato.961.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#A good post for Nakagawa Faction
+	option = {
+		ai_chance = {
+			factor = 50
+			modifier = {
+				has_country_leader = { name = "Yohei Kono" }
+				factor = 0
+			}
+		}
+		name = mdmosjap_japan_kato.961.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.961.oA"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 1 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = 1 }
+		calc_mdmosjap_kato_rebellion_epilogue_kono_ending_crisis_result = yes
+		if = {
+			limit = { NOT = { has_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_NO_SCHISM } }
+			set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_NO_SCHISM
+		}
+	}
+	
+	#Kochikai must occupy the whole posts!
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.961.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.961.oB"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 2 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = -1 }
+		calc_mdmosjap_kato_rebellion_epilogue_kono_ending_crisis_result = yes
+		#set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_GREATER_KOCHIKAI_CONDITION_II
+	}
+}
+
+#Crisis Stage III: For the charisma
+country_event = {
+	id = mdmosjap_japan_kato.962
+	title = mdmosjap_japan_kato.962.t
+	desc = mdmosjap_japan_kato.962.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	#Yasuo Fukuda
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.962.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.962.oA"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = 2 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = -2 }
+		calc_mdmosjap_kato_rebellion_epilogue_kono_ending_crisis_result = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_FUKUDA_WILL_BE_NEXT_PM
+		increase_mdmosjap_conrad_right_2 = yes
+	}
+	
+	#Shinzo Abe
+	option = {
+		ai_chance = {
+			factor = 50
+		}
+		name = mdmosjap_japan_kato.962.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.962.oB"
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_L = -2 }
+		add_to_variable = { mdmosjap_var_shubun_kiki_point_R = 2 }
+		calc_mdmosjap_kato_rebellion_epilogue_kono_ending_crisis_result = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_ABE_WILL_BE_NEXT_PM
+		increase_mdmosjap_conrad_left_2 = yes
+	}
+}
+
+#[HIDDEN] Result of the Crisis
+country_event = {
+	id = mdmosjap_japan_kato.970
+	title = mdmosjap_japan_kato.970.t
+	desc = mdmosjap_japan.error_hidden
+	hidden = yes
+
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.970.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.970.oA"
+		if = {
+			limit = {
+				OR = {				
+					check_variable = { mdmosjap_var_shubun_kiki_point_L < mdmosjap_var_shubun_kiki_point_R }		#Kochikai is not stronger than Nakagawa
+					check_variable = { mdmosjap_var_shubun_kiki_point_difference = 0 }								#The difference between Kochikai and Nakagawa is within 0-1
+					check_variable = { mdmosjap_var_shubun_kiki_point_difference = 1 }
+					AND = {
+						check_variable = { mdmosjap_var_shubun_kiki_point_L > mdmosjap_var_shubun_kiki_point_R }	#Kochikai is stronger than Nakagawa but has 0 or negative
+						OR = {
+							check_variable = { mdmosjap_var_shubun_kiki_point_L < 0 }
+							check_variable = { mdmosjap_var_shubun_kiki_point_L = 0 }
+						}
+					}
+				}
+			}
+			country_event = { id = mdmosjap_japan_kato.971 days = 7 }	#Nakagawa win and no-confidence has been passed
+		} else = {
+			country_event = { id = mdmosjap_japan_kato.976 days = 7 }	#Kochikai win at this moment
+		}
+	}
+}
+
+#Kochikai Failed: The No-Confidence Has Been Passed	(2004/12/3)
+country_event = {
+	id = mdmosjap_japan_kato.971
+	title = mdmosjap_japan_kato.971.t
+	desc = mdmosjap_japan_kato.971.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {	#Nakagawa Faction do not need to keep their promise any longer.
+		clr_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_AT_LDP_DISASTER_NOW
+		clr_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_ABE_WILL_BE_NEXT_PM
+		clr_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_FUKUDA_WILL_BE_NEXT_PM
+	}
+	
+	#Kono/Kato quits his job
+	option = {
+		ai_chance = {
+			factor = 25
+		}
+		name = mdmosjap_japan_kato.971.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.971.oA"
+		add_political_power = -200
+		add_stability = -0.01
+		mdmosjap_decrease_party_popularity_array_1_var_10 = yes
+		mdmosjap_increase_party_popularity_array_7_var_10 = yes
+		increase_mdmosjap_conrad_left_1 = yes
+		if = {
+			limit = { has_country_leader = { name = "Yohei Kono" } }
+			set_country_flag = MDMOSJAP_YOHEI_KONO_RESIGNED
+		}
+		if = {
+			limit = { has_country_leader = { name = "Koichi Kato" } }
+			set_country_flag = MDMOSJAP_KATO_RESIGNED
+		}
+		
+	#	set_country_flag = MDMOSJAP_EVENT_NO_ELECTION_REGIME_CHANGE
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_summon_shinzo_abe = yes			#Abe, I choose you
+		country_event = { id = mdmosjap_japan_kato.972 days = 273 }	#
+	}
+	
+	#Dissolution of the Lower House
+	option = {
+		ai_chance = {
+			factor = 75
+		}
+		name = mdmosjap_japan_kato.971.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.971.oB"
+		add_stability = -0.03
+		mdmosjap_decrease_party_popularity_array_1_var_5 = yes
+		mdmosjap_increase_party_popularity_array_7_var_5 = yes
+		increase_mdmosjap_conrad_left_1 = yes
+		set_country_flag = MDMOSJAP_MORI_RESIGNED
+		
+	#	set_country_flag = MDMOSJAP_EVENT_NO_ELECTION_REGIME_CHANGE
+		changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+		changepm_mdmosjap_JAP_summon_shinzo_abe = yes			#Abe, I choose you
+		country_event = mdmosjap_japan_kato.972
+	}
+}
+
+#Start 2005 Lower House General Election (2004/12/3 -> 2004/12/26 or 2005/9/2 -> 2005/9/25 )
+country_event = {
+	id = mdmosjap_japan_kato.972
+	title = mdmosjap_japan_kato.972.t
+	desc = mdmosjap_japan_kato.972.d
+	picture = GFX_eventpic_mdmosjap_jap_election
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			election_mdmosjap_JAP_update_next_election_date = yes
+		#	country_event = mdmosjap_japanelection.1003
+		}
+		set_variable = { mdmosjap_JAP_var_ElectionPeriod = 23 }		#Election's Duration
+	}
+	
+	option = {
+		name = mdmosjap_japan.banzaidissolution
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.972.oA"
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		election_mdmosjap_JAP_hold_election = yes					#MUST PUT THIS SCRIPT EFFECT BELOW THE SETTING OF DURATION VARIABLE
+		if = {
+			limit = { date < 2005.8.17 }	#before 10 days after the OTL Yusei Dissolution day
+			set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_EARLY_ELECTION	#Execute 2007 Election as Abe resigned
+		}
+	}
+}
+
+#Kochikai Succeeded: The No-Confidence Has Been Rejected
+country_event = {
+	id = mdmosjap_japan_kato.976
+	title = mdmosjap_japan_kato.976.t
+	desc = mdmosjap_japan_kato.976.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = mdmosjap_japan_kato.976.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.976.oA"
+		mdmosjap_increase_party_popularity_array_1_var_3 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_3 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		if = {
+			limit = {
+				OR = {
+					check_variable = { mdmosjap_var_shubun_kiki_point_R < -1 }	#Nakagawa faction has -1 or lower points
+					check_variable = { mdmosjap_var_shubun_kiki_point_R = -1 }
+				}
+				NOT = { has_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_NO_SCHISM }	#No avoidable options have been selected
+			}
+			hidden_effect = { country_event = { id = mdmosjap_japan_kato.981 days = 7 } }	#Schism
+		} else = {
+			hidden_effect = { country_event = { id = mdmosjap_japan_kato.977 days = 14 } }	#No Schism
+		}
+	}
+}
+
+#Kochikai Succeeded: Nakagawa Faction Has Been Tranquilised
+country_event = {
+	id = mdmosjap_japan_kato.977
+	title = mdmosjap_japan_kato.977.t
+	desc = mdmosjap_japan_kato.977.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		clr_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_AT_LDP_DISASTER_NOW
+	}
+	
+	option = {
+		name = mdmosjap_japan_kato.977.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.977.oA"
+		add_stability = 0.03
+		add_political_power = 100
+		increase_mdmosjap_conrad_right_1 = yes
+		set_country_flag = MDMOSJAP_KATO_REBELLION_SHINZO_ABE_HAS_BEEN_TRANQUILISED
+	}
+}
+
+#LDP Schism: Nakagawa Faction Broke Away From LDP
+country_event = {
+	id = mdmosjap_japan_kato.981
+	title = mdmosjap_japan_kato.981.t
+	desc = mdmosjap_japan_kato.981.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		set_country_flag = MDMOSJAP_LDP_COLLAPSE
+	}
+	
+	option = {
+		name = mdmosjap_japan_kato.981.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.981.oA"
+		add_stability = -0.02
+		add_political_power = -100
+		mdmosjap_decrease_party_popularity_array_0_var_2 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_2 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_5 = yes
+		increase_mdmosjap_conrad_right_2 = yes
+		clr_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_ABE_WILL_BE_NEXT_PM		#Who cares about the promise while they are in the collapse
+		clr_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_FUKUDA_WILL_BE_NEXT_PM
+		hidden_effect = { country_event = { id = mdmosjap_japan_kato.982 days = 5 } }
+	}
+}
+
+#LDP Schism: The Split of Centre-Right
+country_event = {
+	id = mdmosjap_japan_kato.982
+	title = mdmosjap_japan_kato.982.t
+	desc = mdmosjap_japan_kato.982.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	
+	option = {
+		name = mdmosjap_japan_kato.982.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.982.oA"
+		add_stability = -0.05
+		add_political_power = -400
+		mdmosjap_decrease_party_popularity_array_0_var_5 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_2 = yes
+		increase_mdmosjap_conrad_right_2 = yes
+		hidden_effect = { country_event = { id = mdmosjap_japan_kato.983 days = 3 } }
+	}
+}
+
+#LDP Schism: The Separation of Komei-to
+country_event = {
+	id = mdmosjap_japan_kato.983
+	title = mdmosjap_japan_kato.983.t
+	desc = mdmosjap_japan_kato.983.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+	}
+	
+	option = {
+		name = mdmosjap_japan_kato.983.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.983.oA"
+		add_stability = -0.02
+		add_political_power = -200
+		mdmosjap_decrease_party_popularity_array_0_var_2 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_2 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_2 = yes
+		decrease_mdmosjap_concon_left_3 = yes
+		remove_ideas = idea_mdmosjap_JAP_komeito
+		hidden_effect = { country_event = { id = mdmosjap_japan_kato.984 days = 12 } }
+	}
+}
+
+#LDP Schism: The Collapse of the Big Tent
+country_event = {
+	id = mdmosjap_japan_kato.984
+	title = mdmosjap_japan_kato.984.t
+	desc = mdmosjap_japan_kato.984.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		clr_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_AT_LDP_DISASTER_NOW
+	}
+	
+	option = {
+		name = mdmosjap_japan_kato.984.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.984.oA"
+		if = {
+			limit = { is_in_array = { gov_coalition_array = 0 } }
+			remove_from_array = { gov_coalition_array = 0 }
+		}
+		if = {
+			limit = { is_in_array = { gov_coalition_array = 1 } }
+			remove_from_array = { gov_coalition_array = 1 }
+		}
+		if = {
+			limit = { is_in_array = { gov_coalition_array = 7 } }
+			remove_from_array = { gov_coalition_array = 7 }
+		}
+		add_stability = -0.10
+		#set_political_power = -2000
+		set_political_power = 0
+		mdmosjap_decrease_party_popularity_array_0_var_5 = yes
+		mdmosjap_decrease_party_popularity_array_1_var_5 = yes
+		mdmosjap_decrease_party_popularity_array_7_var_5 = yes
+		increase_mdmosjap_conrad_right_2 = yes
+		news_event = { id = mdmosjap_japannews_kato.984 days = 1 }
+		country_event = { id = mdmosjap_japan_kato.985 days = 168 }
+		set_country_flag = MDMOSJAP_LDP_COLLAPSE_CHANGE_PARTY_NAME
+	}
+}
+
+news_event = {
+	id = mdmosjap_japannews_kato.984
+	title = mdmosjap_japannews_kato.984.t
+	desc = mdmosjap_japannews_kato.984.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+	is_triggered_only = yes
+	
+	major = yes
+	
+	option = {
+		name = mdmosjap_japannews_kato.984.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews_kato.984.oA"
+	}
+}
+
+#"Reboot Japan" Dissolution
+country_event = {
+	id = mdmosjap_japan_kato.985
+	title = mdmosjap_japan_kato.985.t
+	desc = mdmosjap_japan_kato.985.d
+	picture = GFX_eventpic_mdmosjap_jap_election
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			election_mdmosjap_JAP_update_next_election_date = yes
+		#	country_event = mdmosjap_japanelection.1003
+		}
+		set_variable = { mdmosjap_JAP_var_ElectionPeriod = 30 }		#Election's Duration
+	}
+	
+	option = {
+		name = mdmosjap_japan.banzaidissolution
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.985.oA"
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		election_mdmosjap_JAP_hold_election = yes					#MUST PUT THIS SCRIPT EFFECT BELOW THE SETTING OF DURATION VARIABLE
+		set_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_EARLY_ELECTION	#Execute 2007 Election anyway
+	}
+}
+
+#"Ask the people for" Dissolution (2007, former LDP - for adjusting the election date to 2009 IRL-based election)
+country_event = {
+	id = mdmosjap_japan_kato.986
+	title = mdmosjap_japan_kato.986.t
+	desc = mdmosjap_japan_kato.986.d
+	picture = GFX_eventpic_mdmosjap_jap_election
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			election_mdmosjap_JAP_update_next_election_date = yes
+		#	country_event = mdmosjap_japanelection.1003
+		}
+		set_variable = { mdmosjap_JAP_var_ElectionPeriod = 28 }		#Election's Duration
+	}
+	
+	option = {
+		name = mdmosjap_japan.banzaidissolution
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.986.oA"
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		election_mdmosjap_JAP_hold_election = yes					#MUST PUT THIS SCRIPT EFFECT BELOW THE SETTING OF DURATION VARIABLE
+		if = {
+			limit = { has_country_leader = { name = "Yohei Kono" } }
+			set_country_flag = MDMOSJAP_YOHEI_KONO_RESIGNED
+			changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+			changepm_mdmosjap_JAP_summon_yasuo_fukuda = yes
+		}
+		if = {
+			limit = { has_country_leader = { name = "Koichi Kato" } }
+			set_country_flag = MDMOSJAP_KATO_RESIGNED
+			changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+			changepm_mdmosjap_JAP_summon_sadakazu_tanigaki = yes
+		}
+		if = {
+			limit = { has_country_leader = { name = "Shinzo Abe" } }
+			set_country_flag = MDMOSJAP_ABE_RESIGNED_I
+			changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
+			changepm_mdmosjap_JAP_summon_yasuo_fukuda = yes
+		}
+	}
+}
+
+#"Ask the people for" Dissolution (2007, not the former LDP - for adjusting the election date to 2009 IRL-based election)
+country_event = {
+	id = mdmosjap_japan_kato.987
+	title = mdmosjap_japan_kato.987.t
+	desc = mdmosjap_japan_kato.987.d
+	picture = GFX_eventpic_mdmosjap_jap_election
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			election_mdmosjap_JAP_update_next_election_date = yes
+		#	country_event = mdmosjap_japanelection.1003
+		}
+		set_variable = { mdmosjap_JAP_var_ElectionPeriod = 28 }		#Election's Duration
+	}
+	
+	option = {
+		name = mdmosjap_japan.banzaidissolution
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.987.oA"
+		increase_mdmosjap_conrad_left_1 = yes
+		increase_mdmosjap_conrad_right_1 = yes
+		election_mdmosjap_JAP_hold_election = yes					#MUST PUT THIS SCRIPT EFFECT BELOW THE SETTING OF DURATION VARIABLE
+	}
+}
+
+#Invite DPJ into LDP Coalition
+country_event = {
+	id = mdmosjap_japan_kato.991
+	title = mdmosjap_japan_kato.991.t
+	desc = mdmosjap_japan_kato.991.d
+	#picture = GFX_news_event_hearts_of_iron_4
+	
+#	fire_only_once = yes
+	trigger = {
+		is_in_array = { ruling_party = 1 }
+		NOT = { is_in_array = { gov_coalition_array = 2 } }
+		has_country_flag = MDMOSJAP_KATO_REBELLION_EPILOGUE_KONO_ENDING_COALITION_WITH_DPJ
+		OR = {	#After the end of the crisis in any paths
+			has_country_flag = MDMOSJAP_KATO_REBELLION_SHINZO_ABE_HAS_BEEN_TRANQUILISED
+			has_country_flag = MDMOSJAP_LDP_COLLAPSE_CHANGE_PARTY_NAME		#Use this flag for the time lag
+		}
+		NOT = { has_country_flag = MDMOSJAP_EVENT_LDP_DPJ_COALITION_YES }
+		NOT = { has_country_flag = MDMOSJAP_EVENT_LDP_DPJ_COALITION_NO }	#If you choose no, then you won't get the coalition ever
+		NOT = { has_country_flag = MDMOSJAP_RIKKEN }						#If DPJ collapsed, then you won't get the coalition ever
+	}
+	
+	mean_time_to_happen = { days = 3 }
+	
+	#Yes
+	option = {
+		ai_chance = {
+			factor = 99
+		}
+		name = mdmosjap_japan_kato.991.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.991.oA"
+		add_political_power = 300
+		add_popularity = { ideology = communism popularity = 0.10 }
+		add_to_array = { gov_coalition_array = 2 }
+		mdmosjap_increase_party_popularity_array_1_var_8 = yes
+		mdmosjap_increase_party_popularity_array_2_var_4 = yes
+		hidden_effect = { remove_mission = coalition_countdown }
+		if = {
+			limit = { has_country_flag = MDMOSJAP_EVENT_LDP_DPJ_COALITION_YES }
+			set_country_flag = MDMOSJAP_EVENT_LDP_DPJ_COALITION_YES
+		}
+	}
+	
+	#No
+	option = {
+		ai_chance = {
+			factor = 1
+		}
+		name = mdmosjap_japan_kato.991.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan_kato.991.oB"
+		add_political_power = -500
+		add_popularity = { ideology = democratic popularity = 0.10 }
+		mdmosjap_decrease_party_popularity_array_1_var_5 = yes
+		mdmosjap_increase_party_popularity_array_2_var_5 = yes
+		increase_mdmosjap_conrad_left_5 = yes
+		if = {
+			limit = { has_country_flag = MDMOSJAP_EVENT_LDP_DPJ_COALITION_NO }
+			set_country_flag = MDMOSJAP_EVENT_LDP_DPJ_COALITION_NO
+		}
+	}
+}
