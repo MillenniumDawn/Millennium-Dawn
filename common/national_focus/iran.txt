@@ -16607,6 +16607,18 @@ focus_tree = {
 				clr_country_flag = party22_banned
 				clr_country_flag = party23_banned
 				clr_country_flag = party24_banned
+				HEZ = {
+					add_opinion_modifier = {
+						target = PER
+						modifier = danger_to_national_security
+					}
+				}
+				PER = {
+					add_opinion_modifier = {
+						target = HEZ
+						modifier = danger_to_national_security
+					}
+				}
 				USA = {
 					remove_opinion_modifier = {
 						target = PER
@@ -16683,7 +16695,7 @@ focus_tree = {
 				add_ideas = PER_disloyal_military
 				add_ideas = PER_iranian_disunity
 				add_ideas = PER_poor_security
-				add_ideas = PER_post_rev_fatigue
+				add_ideas = PER_post_rev_relief
 			}
 		}
 		ai_will_do = {
@@ -17345,7 +17357,11 @@ focus_tree = {
 
 		x = -1
 		y = 1
-		available = { has_government = democratic }
+		available = {
+			has_government = democratic
+			401 = { is_owned_and_controlled_by = PER }
+			978 = { is_owned_and_controlled_by = PER }
+		}
 		prerequisite = { focus = PER_defense_republic }
 		relative_position_id = PER_defense_republic
 		cost = 5.72
@@ -17382,7 +17398,11 @@ focus_tree = {
 
 		x = -1
 		y = 2
-		available = { has_government = democratic }
+		available = {
+			has_government = democratic
+			1073 = { is_owned_and_controlled_by = PER }
+			1039 = { is_owned_and_controlled_by = PER }
+		}
 		prerequisite = { focus = PER_artesh_coop }
 		prerequisite = { focus = PER_military_posts_check }
 		relative_position_id = PER_defense_republic
@@ -17837,7 +17857,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_regional_democracies"
-			TRK = { country_event = { days = 1 id = PER_political.8 } }
 			KUR = { country_event = { days = 1 id = PER_political.8 } }
 			PAK = { country_event = { days = 1 id = PER_political.8 } }
 			AFG = { country_event = { days = 1 id = PER_political.8 } }
@@ -17868,10 +17887,44 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = PER_rescind_turkmenchai
+		icon = renounce_treaty
+
+		x = -1
+		y = 5
+		available = {
+			has_government = democratic
+			country_exists = TRK
+			TRK = {
+				democratic > 0.5
+				influence_higher_60 = yes
+			}
+		}
+		prerequisite = { focus = PER_regional_strongarm }
+		relative_position_id = PER_regional_safety
+		cost = 2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PER_regional_strongarm"
+			PER = {
+				create_wargoal = {
+					target = TRK
+					type = annex_everything
+				}
+			}
+			TRK = {
+				every_core_state = { add_core_of = PER }
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
 		id = PER_prospect_of_expansion
 		icon = legislation
 
-		x = -2
+		x = -3
 		y = 5
 		available = { has_government = democratic }
 		prerequisite = { focus = PER_regional_strongarm }
@@ -17888,15 +17941,12 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_align_iraq
-		icon = align_to_iraq3
+		icon = war4
 
 		x = -1
 		y = 6
 		available = {
 			has_government = democratic
-			IRQ = {
-				democratic > 0.5
-			}
 		}
 		bypass = {
 			IRQ = {
@@ -17909,29 +17959,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_align_iraq"
-			IRQ = {
-			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = 0.45 }
-			set_temp_variable = { temp_outlook_increase = 0.45 }
-			add_relative_party_popularity = yes
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 1 }
-				update_government_coalition_strength = yes
-				set_coalition_drift = yes
-				set_ruling_leader = yes
-				set_leader = yes
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = no
-				}
-			}
-			start_civil_war = {
-				ideology = nationalist
-				keep_political_leader = yes
-				keep_political_party_members = yes
-				size = 0.5
+			PER = {
+				create_wargoal = {
+					target = IRQ
+					type = puppet_wargoal_focus
 				}
 			}
 		}
@@ -17994,7 +18025,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_deal_with_expansion
-		icon = ultimatum
+		icon = war3
 
 		x = -2
 		y = 7
@@ -18163,7 +18194,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PER_controlled_majlis
-		icon = Generic_Ripping_Papers
+		icon = forceful_treaty
 
 		x = -1
 		y = 3
@@ -20012,6 +20043,9 @@ focus_tree = {
 		available = {
 			has_government = nationalist
 			nationalist_right_wing_populists_are_in_power = yes
+			978 = {
+				is_owned_and_controlled_by = PER
+			}
 		}
 		prerequisite = { focus = PER_persian_gulf_not_arab }
 		relative_position_id = PER_uneqal_become_equal
@@ -20368,7 +20402,10 @@ focus_tree = {
 
 		prerequisite = { focus = PER_all_that_was_taken }
 		relative_position_id = PER_all_that_was_taken
-		available = { hidden_trigger = { PAK = { iran_has_more_than_40_influence_trigger = yes } } }
+		available = {
+			hidden_trigger = { PAK = { iran_has_more_than_40_influence_trigger = yes } }
+			country_exists = PAK
+		}
 		cost = 7.15
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -20376,6 +20413,11 @@ focus_tree = {
 			custom_effect_tooltip = PER_pak_attack2
 			set_temp_variable = { treasury_change = -15.50 }
 			modify_treasury_effect = yes
+			RAJ = {
+				country_event = {
+					id = PER_political.1423
+				}
+			}
 			PER = {
 				declare_war_on = {
 					target = PAK
@@ -20641,6 +20683,9 @@ focus_tree = {
 		available = {
 			has_government = nationalist
 			nationalist_right_wing_populists_are_in_power = yes
+			402 = {
+				is_owned_and_controlled_by = PER
+			}
 		}
 		prerequisite = { focus = PER_pan_iranist }
 		relative_position_id = PER_pan_iranist
@@ -20697,6 +20742,9 @@ focus_tree = {
 		available = {
 			has_government = nationalist
 			nationalist_right_wing_populists_are_in_power = yes
+			977 = {
+				is_owned_and_controlled_by = PER
+			}
 		}
 		prerequisite = { focus = PER_secure_territorial_integrity }
 		relative_position_id = PER_secure_territorial_integrity
@@ -20850,6 +20898,12 @@ focus_tree = {
 		available = {
 			has_government = nationalist
 			nationalist_right_wing_populists_are_in_power = yes
+			1073 = {
+				is_owned_and_controlled_by = PER
+			}
+			403 = {
+				is_owned_and_controlled_by = PER
+			}
 		}
 		prerequisite = { focus = PER_artesh_funds focus = PER_anjoman_funds }
 		relative_position_id = PER_secure_territorial_integrity
@@ -20897,6 +20951,9 @@ focus_tree = {
 		available = {
 			has_government = nationalist
 			nationalist_right_wing_populists_are_in_power = yes
+			407 = {
+				is_owned_and_controlled_by = PER
+			}
 		}
 		prerequisite = { focus = PER_fortification_of_caspian }
 		relative_position_id = PER_secure_territorial_integrity
@@ -21740,6 +21797,9 @@ focus_tree = {
 
 		x = -0
 		y = 3
+		available = {
+			405 = { is_owned_and_controlled_by = PER }
+		}
 		prerequisite = { focus = PER_limit_mullah_influence }
 		relative_position_id = PER_issues_close_to_home
 		cost = 7.15
@@ -21886,6 +21946,9 @@ focus_tree = {
 
 		prerequisite = { focus = PER_align_the_army }
 		relative_position_id = PER_align_the_army
+		available = {
+			400 = { is_owned_and_controlled_by = PER }
+		}
 		cost = 7.15
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -22362,7 +22425,9 @@ focus_tree = {
 
 		x = -2
 		y = 4
-
+		available = {
+			1073 = { is_owned_and_controlled_by = PER }
+		}
 		prerequisite = { focus = PER_look_into_sailors }
 		relative_position_id = PER_align_the_army
 		cost = 10
