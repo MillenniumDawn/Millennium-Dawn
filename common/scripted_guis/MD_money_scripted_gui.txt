@@ -57,7 +57,7 @@ scripted_gui = {
 					ingame_update_setup = yes
 					refresh_gui = yes
 				}
-				log = "[GetDateText]: [Root.GetName]: 1k debt taken (Total Debt: Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury], Total Treasury:[?treasury])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1070 1b debt taken (Total Debt: Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 			debt_bg_control_click = {
 				if = {
@@ -67,7 +67,7 @@ scripted_gui = {
 					ingame_update_setup = yes
 					refresh_gui = yes
 				}
-				log = "[GetDateText]: [Root.GetName]: 10k debt taken (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1071 10b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 			debt_bg_shift_click = {
 				if = {
@@ -77,66 +77,179 @@ scripted_gui = {
 					ingame_update_setup = yes
 					refresh_gui = yes
 				}
-				log = "[GetDateText]: [Root.GetName]: 100k debt taken (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1072 100b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 
-		  	#Repay debt
+		  	#Repay $1b debt
 			debt_bg_right_click = {
-				if = {
-					limit = { check_variable = { treasury > 1 } }
+				# You have enough money and debt to pay $1b T/T
+				if = { limit = {
+					check_variable = { var = treasury value = 1 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 1 compare = greater_than_or_equals } }
 					subtract_from_variable = { treasury = 1 }
 					subtract_from_variable = { debt = 1 }
-					ingame_update_setup = yes
-					refresh_gui = yes
-					log = "[GetDateText]: [Root.GetName]: 1k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+					log = "1b Repay debt Case 1"
 				}
+				# You have enough money to pay $1b but less than $1b in debt T/F
+				else_if = { limit = {
+					check_variable = { var = treasury value = 1 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 1 compare = less_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					log = "1b Repay debt Case 2"
+				}
+				# You don't have enough money to pay $1b, have enough debt to pay $1b F/T
+				else_if = { limit = {
+					check_variable = { var = treasury value = 1 compare = less_than_or_equals }
+					check_variable = { var = debt value = 1 compare = greater_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					log = "1b Repay debt Case 3"
+				}
+				# You don't have enough money to pay $1b, and don't have enough debt to pay $1b F/F
+				# Money > Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					log = "1b Repay debt Case 4"
+				}
+				# Money < Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = less_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					log = "1b Repay debt Case 5"
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1073 1b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 			debt_bg_control_right_click = {
-				if = {
-					limit = { check_variable = { treasury > 10 } }
+				# You have enough money and debt to pay $10b T/T
+				if = { limit = {
+					check_variable = { var = treasury value = 10 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 10 compare = greater_than_or_equals } }
 					subtract_from_variable = { treasury = 10 }
 					subtract_from_variable = { debt = 10 }
-					ingame_update_setup = yes
-					refresh_gui = yes
-					log = "[GetDateText]: [Root.GetName]: 10k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+					log = "10b Repay debt Case 1"
 				}
+				# You have enough money to pay $10b but less than $10b in debt T/F
+				else_if = { limit = {
+					check_variable = { var = treasury value = 10 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 10 compare = less_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					log = "10b Repay debt Case 2"
+				}
+				# You don't have enough money to pay $10b, have enough debt to pay $10b F/T
+				else_if = { limit = {
+					check_variable = { var = treasury value = 10 compare = less_than_or_equals }
+					check_variable = { var = debt value = 10 compare = greater_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					log = "10b Repay debt Case 3"
+				}
+				# You don't have enough money to pay $10b, and don't have enough debt to pay $10b F/F
+				# Money > Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					log = "10b Repay debt Case 4"
+				}
+				# Money < Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = less_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					log = "10b Repay debt Case 5"
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1074 10b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 			debt_bg_shift_right_click = {
-				if = {
-					limit = { check_variable = { treasury > 100 } }
+				# You have enough money and debt to pay $100b T/T
+				if = { limit = {
+					check_variable = { var = treasury value = 100 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 100 compare = greater_than_or_equals } }
 					subtract_from_variable = { treasury = 100 }
 					subtract_from_variable = { debt = 100 }
-					ingame_update_setup = yes
-					refresh_gui = yes
-					log = "[GetDateText]: [Root.GetName]: 100k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+					log = "100b Repay debt Case 1"
 				}
+				# You have enough money to pay $100b but less than $100b in debt T/F
+				else_if = { limit = {
+					check_variable = { var = treasury value = 100 compare = greater_than_or_equals }
+					check_variable = { var = debt value = 100 compare = less_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					log = "100b Repay debt Case 2"
+				}
+				# You don't have enough money to pay $100b, have enough debt to pay $100b F/T
+				else_if = { limit = {
+					check_variable = { var = treasury value = 100 compare = less_than_or_equals }
+					check_variable = { var = debt value = 100 compare = greater_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					log = "100b Repay debt Case 3"
+				}
+				# You don't have enough money to pay $100b, and don't have enough debt to pay $100b F/F
+				# Money > Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = debt }
+					subtract_from_variable = { debt = debt }
+					log = "100b Repay debt Case 4"
+				}
+				# Money < Debt
+				else_if = { limit = {
+					check_variable = { var = treasury value = debt compare = less_than_or_equals } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					log = "100b Repay debt Case 5"
+				}
+				ingame_update_setup = yes
+				refresh_gui = yes
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1075 100b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
-			#Pay off all debt
+			#Pay off maximum
 			debt_bg_alt_right_click = {
 				if = {
 					limit = { check_variable = { treasury > debt } }
 					subtract_from_variable = { treasury = debt }
 					subtract_from_variable = { debt = debt }
+					log = "Maximum Repay debt Case 1"
 					ingame_update_setup = yes
 					refresh_gui = yes
 				}
+				else_if = {
+					limit = { check_variable = { treasury < debt } }
+					subtract_from_variable = { debt = treasury }
+					subtract_from_variable = { treasury = treasury }
+					log = "Maximum Repay debt Case 2"
+					ingame_update_setup = yes
+					refresh_gui = yes
+				}
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1076 Max debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 		}
+
 		triggers = {
+			####
 			debt_bg_right_click_enabled = {
-				check_variable = { treasury > 1 }
-				check_variable = { debt > 1 }
+				check_variable = { treasury > 0 }
+				check_variable = { debt > 0 }
 			}
 			debt_bg_control_right_click_enabled = {
-				check_variable = { treasury > 10 }
-				check_variable = { debt > 10 }
+				check_variable = { treasury > 0 }
+				check_variable = { debt > 0 }
 			}
 			debt_bg_shift_right_click_enabled = {
-				check_variable = { treasury > 100 }
-				check_variable = { debt > 100 }
+				check_variable = { treasury > 0 }
+				check_variable = { debt > 0 }
 			}
 			debt_bg_alt_right_click_enabled = {
-				check_variable = { treasury > debt }
 				NOT = { has_idea = bankrupcy }
 			}
 
@@ -261,7 +374,7 @@ scripted_gui = {
 					factor = 100
 					modifier = {
 						factor = 2
-						check_variable = { treasury > debt}
+						check_variable = { treasury > debt }
 					}
 					modifier = {
 						factor = 0
@@ -324,6 +437,17 @@ scripted_gui = {
 			int_investments_bg_shift_right_click = {
 				subtract_from_variable = { int_investments = 100 }
 				add_to_variable = { treasury = 60 }
+				ingame_update_setup = yes
+			}
+
+			# Reinvestment Feature
+			int_investments_bg_shift_click = {
+				if = { limit = { has_country_flag = int_reinvestment_flag }
+					clr_country_flag = int_reinvestment_flag
+				}
+				else = {
+					set_country_flag = int_reinvestment_flag
+				}
 				ingame_update_setup = yes
 			}
 		}
@@ -505,7 +629,7 @@ scripted_gui = {
 				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > tax_rate_change }
 				if = { limit = { is_ai = yes }
-					NOT = { has_country_flag = temp_decrease_population_taxes}
+					NOT = { has_country_flag = temp_decrease_population_taxes }
 				}
 			}
 			increase_population_tax_shift_click_enabled = { #56-60 NO
@@ -519,7 +643,7 @@ scripted_gui = {
 				NOT = { has_country_flag = no_personal_tax_rate_change }
 				ROOT = { has_political_power > tax_rate_change }
 				if = { limit = { is_ai = yes }
-					NOT = { has_country_flag = temp_increase_population_taxes}
+					NOT = { has_country_flag = temp_increase_population_taxes }
 				}
 			}
 			decrease_population_tax_shift_click_enabled = { #0-5 NO
@@ -700,7 +824,7 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1050 Pop Tax Rate Increases: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1050 Pop Tax Rate Increases: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
 				if = { limit = { is_ai = yes }
 					set_country_flag = { flag = temp_increase_population_taxes value = 1 days = 3 }
 				}
@@ -721,7 +845,7 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1051 Pop Tax Rate +5 Increase: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1051 Pop Tax Rate +5 Increase: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
 			}
 			decrease_population_tax_click = {
 				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
@@ -739,7 +863,7 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1052 Pop Tax Rate Decrease: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1052 Pop Tax Rate Decrease: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
 				if = { limit = { is_ai = yes }
 					set_country_flag = { flag = temp_decrease_population_taxes value = 1 days = 3 }
 				}
@@ -760,7 +884,7 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1053 Pop Tax Rate -5 Decrease: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1053 Pop Tax Rate -5 Decrease: Old Pop Taxes: [?previous_tax_rate]%, New Pop Taxes:[?population_tax_rate]% (Balance:[?treasury_rate])"
 			}
 			##Corporate Tax Increase/Decrease
 			increase_corporate_tax_click = {
@@ -779,7 +903,7 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1054 Corp Tax Rate Increase: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1054 Corp Tax Rate Increase: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
 				if = { limit = { is_ai = yes }
 					set_country_flag = { flag = temp_increase_corporate_taxes value = 1 days = 3 }
 				}
@@ -800,7 +924,7 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = 1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1055 Corp Tax Rate +5 Increase: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1055 Corp Tax Rate +5 Increase: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
 			}
 			decrease_corporate_tax_click = {
 				set_temp_variable = { tax_rate_change_temp = tax_rate_change }
@@ -818,7 +942,7 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1056 Corp Tax Rate Decrease: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1056 Corp Tax Rate Decrease: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
 				if = { limit = { is_ai = yes }
 					set_country_flag = { flag = temp_decrease_corporate_taxes value = 1 days = 3 }
 				}
@@ -839,11 +963,11 @@ scripted_gui = {
 				set_variable = { law_attitude = 0 } #index for taxes in #_law_change_attitude arrays
 				set_variable = { law_change = -1 } #-1 decrease, 1 for increase
 				law_attitude_change = yes
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1057 Corp Tax Rate -5 Decrease: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1057 Corp Tax Rate -5 Decrease: Old Corp Taxes: [?previous_tax_rate]%, New Corp Taxes:[?corporate_tax_rate]% (Balance:[?treasury_rate])"
 			}
 			#
 			refresh_tax_rates_bg_click = {
-				log = "[GetDateText]: [Root.GetName]: DEBUG: 1049 Triggered Tax Rate Refresh"
+				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1049 Triggered Tax Rate Refresh"
 				ingame_update_setup = yes
 				refresh_gui = yes
 			}
@@ -853,7 +977,7 @@ scripted_gui = {
 				set_temp_variable = { var = printing value = display_income }
 				multiply_temp_variable = { var = printing value = 2 }
 				add_to_variable = { var = treasury value = printing }
-				add_to_variable =  { var = debt value = printing }
+				add_to_variable = { var = debt value = printing }
 				add_political_power = -100
 				set_country_flag = { flag = printed_money_recently value = 1 days = 45 }
 				ingame_update_setup = yes
@@ -987,7 +1111,7 @@ scripted_gui = {
 					ingame_update_setup = yes
 					refresh_gui = yes
 				}
-				log = "[GetDateText]: [Root.GetName]: 1k debt taken (Total Debt: Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury], Total Treasury:[?treasury])"
+				log = "[GetDateText]: [THIS.GetName]: 1b debt taken (Total Debt: Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 			bottom_bar_debt_bg_control_click = {
 				if = {
@@ -997,7 +1121,7 @@ scripted_gui = {
 					ingame_update_setup = yes
 					refresh_gui = yes
 				}
-				log = "[GetDateText]: [Root.GetName]: 10k debt taken (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+				log = "[GetDateText]: [THIS.GetName]: 10b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 			bottom_bar_debt_bg_shift_click = {
 				if = {
@@ -1007,7 +1131,7 @@ scripted_gui = {
 					ingame_update_setup = yes
 					refresh_gui = yes
 				}
-				log = "[GetDateText]: [Root.GetName]: 100k debt taken (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+				log = "[GetDateText]: [THIS.GetName]: 100b debt taken (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
 
 		  	#Repay debt
@@ -1018,7 +1142,7 @@ scripted_gui = {
 					subtract_from_variable = { debt = 1 }
 					ingame_update_setup = yes
 					refresh_gui = yes
-					log = "[GetDateText]: [Root.GetName]: 1k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+					log = "[GetDateText]: [THIS.GetName]: 1b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury]), Total Treasury Rate:[?treasury_rate]"
 				}
 			}
 			bottom_bar_debt_bg_control_right_click = {
@@ -1028,7 +1152,7 @@ scripted_gui = {
 					subtract_from_variable = { debt = 10 }
 					ingame_update_setup = yes
 					refresh_gui = yes
-					log = "[GetDateText]: [Root.GetName]: 10k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+					log = "[GetDateText]: [THIS.GetName]: 10b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 				}
 			}
 			bottom_bar_debt_bg_shift_right_click = {
@@ -1038,7 +1162,7 @@ scripted_gui = {
 					subtract_from_variable = { debt = 100 }
 					ingame_update_setup = yes
 					refresh_gui = yes
-					log = "[GetDateText]: [Root.GetName]: 100k debt paid (Total Debt: [?debt]k, interest: [?interest_rate]% balance:[?treasury_rate]k, Total Treasury:[?treasury])"
+					log = "[GetDateText]: [THIS.GetName]: 100b debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 				}
 			}
 			#Pay off all debt
@@ -1067,10 +1191,19 @@ scripted_gui = {
 				add_to_variable = { treasury = 60 }
 				ingame_update_setup = yes
 			}
+			bottom_bar_int_investments_bg_shift_click = {
+				if = { limit = { has_country_flag = int_reinvestment_flag }
+					clr_country_flag = int_reinvestment_flag
+				}
+				else = {
+					set_country_flag = int_reinvestment_flag
+				}
+				ingame_update_setup = yes
+			}
 		}
 
 		# AI Section
-		# Note: 5 days - 120 Hrs
+		# Note: 3 days - 72 Hrs
 		# Functional Notes:
 		# ai_enabled - triggers that engage the AI for this GUI
 		# ai_test_interval - timeframe between AI checks
@@ -1078,8 +1211,10 @@ scripted_gui = {
 		# ai_weights - modifiers to determine AI habits
 		# ai_max_weight_taken_per_test - Determines number of elements to check for the GUI
 
+		# If you wish to see the values outputted from this. enable human_ai and view ai.log in the logs
+
 		ai_enabled = { always = yes }
-		ai_test_interval = 72 # 7 Days
+		ai_test_interval = 72 # 3 Days
 		ai_max_weight_taken_per_test = 1
 		ai_check = {
 			has_political_power > 200
@@ -1114,7 +1249,7 @@ scripted_gui = {
 						date < 2006.6.1
 						check_variable = { population_tax_rate > 15 }
 					}
-					#help stupid uSA.
+					#help stupid USA
 					modifier = {
 						factor = 0
 						tag = USA
@@ -1124,10 +1259,7 @@ scripted_gui = {
 					#nonono stupid AI. No click!
 					modifier = {
 						factor = 0
-						NOT = {
-							tag = SOV
-							tag = USA
-						}
+						has_stability < 0.26
 						date < 2006.6.1
 						check_variable = { population_tax_rate > 30 }
 					}
@@ -1167,13 +1299,36 @@ scripted_gui = {
 						has_stability > 0.45
 						num_of_civilian_factories < 5
 					}
+					# Bosnia thing
+					modifier = {
+						factor = 0.01
+						original_tag = BOS
+						OR = {
+							date < 2001.1.1
+							has_stability < 0.40
+						}
+					}
 					# Killswitch
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_ai
+						NOT = {
+							has_idea = economic_boom
+						}
+					}
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_ai
+						NOT = {
+							has_idea = negligible_corruption
+						}
+					}
 					modifier = {
 						factor = 0
 						OR = {
 							has_country_flag = temp_decrease_population_taxes
 							has_country_flag = no_personal_tax_rate_change
-							has_stability < 0.25
+							has_stability < 0.15 # minimal stability for all = 15%
 							check_variable = { treasury_rate > 9.99 }
 						}
 					}
@@ -1212,14 +1367,30 @@ scripted_gui = {
 						factor = 1.15
 						has_idea = economic_boom
 					}
+
+
 					# Killswitch
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_ai
+						NOT = {
+							has_idea = economic_boom
+						}
+					}
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_ai
+						NOT = {
+							has_idea = negligible_corruption
+						}
+					}
 					modifier = {
 						factor = 0
 						OR = {
 							has_country_flag = temp_increase_population_taxes
 							has_country_flag = no_personal_tax_rate_change
 							check_variable = { treasury_rate < 0 }
-							check_variable = { corporate_tax_rate < 10 }
+							check_variable = { population_tax_rate < 10 } #minimal population tax rate for all = 9
 						}
 					}
 					modifier = {
@@ -1249,7 +1420,7 @@ scripted_gui = {
 			# Corporate Tax Rate Clicks
 			increase_corporate_tax_click = {
 				ai_will_do = {
-					factor = 25
+					factor = 35
 					modifier = {
 						factor = 0
 						date < 2006.6.1
@@ -1259,7 +1430,6 @@ scripted_gui = {
 						}
 						check_variable = { corporate_tax_rate > 20 }
 					}
-
 					modifier = {
 						factor = 0
 						date < 2006.6.1
@@ -1274,7 +1444,6 @@ scripted_gui = {
 						}
 						num_of_available_civilian_factories < 50
 					}
-
 					modifier = {
 						factor = 0
 						date < 2006.6.1
@@ -1285,18 +1454,10 @@ scripted_gui = {
 					modifier = {
 						factor = 10
 						tag = USA
-						#date < 2006.6.1
-						#check_variable = { corporate_tax_rate > 20 }
 						has_idea = draft_army
 					}
 					modifier = {
 						factor = 0.25
-						#date > 2002.1.1
-						# OR = {
-						# 	tag = USA
-						# 	tag = SOV
-						# 	tag = CHI
-						# }
 						NOT = {
 							has_idea = social_06
 							has_idea = health_06
@@ -1325,7 +1486,6 @@ scripted_gui = {
 						check_variable = { treasury_rate < 0 }
 						factor = ai_change_corporate_taxes
 					}
-
 					modifier = {
 						factor = 1.50
 						OR = {
@@ -1343,6 +1503,14 @@ scripted_gui = {
 						}
 					}
 					# Killswitch
+					modifier = {
+						factor = 0
+						has_global_flag = GAME_RULE_enabled_hard_economic_ai
+						OR = {
+							NOT = { has_idea = economic_boom }
+							NOT = { has_idea = negligible_corruption }
+						}
+					}
 					modifier = {
 						factor = 0
 						OR = {
@@ -1430,6 +1598,7 @@ scripted_gui = {
 							has_idea = economic_boom
 						}
 					}
+
 					# Killswitch
 					modifier = {
 						factor = 0
@@ -1437,6 +1606,7 @@ scripted_gui = {
 							has_country_flag = temp_increase_corporate_taxes
 							has_country_flag = no_corporate_tax_rate_change
 							check_variable = { treasury_rate < 0 }
+							check_variable = { corporate_tax_rate < 11 } #minimal tax rate for all = 11
 						}
 					}
 				}

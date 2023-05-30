@@ -1,0 +1,296 @@
+# Author(s): Yard1, Croc, AngriestBird
+
+get_same_ideology = {
+	every_country = {
+		limit = {
+			has_government = ROOT
+			NOT = {
+				is_in_array = {
+					array = FROM.country_array
+					value = THIS
+				}
+			}
+		}
+		add_to_array = { FROM.country_array = THIS }
+		remove_from_array = { FROM.array_to_sort = THIS }
+	}
+}
+
+create_sorted_array = {
+	if = {
+		limit = {
+			check_variable = { last_sort_var = sort_var }
+		}
+		set_variable = { middle = country_array^num }
+		set_temp_variable = { len = country_array^num }
+		subtract_from_temp_variable = { len = 1 }
+		divide_variable = { middle = 2 }
+		round_variable = middle
+		for_loop_effect = {
+			start = 0
+			end = middle
+
+			set_temp_variable = { reverse = len }
+			subtract_from_temp_variable = { reverse = v }
+			set_temp_variable = { swap = country_array^v }
+			set_variable = { country_array^v = country_array^reverse }
+			set_variable = { country_array^reverse = swap }
+		}
+		clear_variable = middle
+	}
+	else = {
+		set_temp_variable = { ledger_qs_compare = 0 }
+		set_variable = { high = country_array^num }
+		subtract_from_variable = { high = 1 }
+		set_variable = { low = 0 }
+		ledger_quicksort = yes
+		set_variable = { last_sort_var = sort_var }
+		clear_variable = high
+		clear_variable = low
+	}
+	update_ledger_dirty_var = yes
+}
+
+get_strategic_building_levels = {
+	set_variable = { nuclear_reactors = 0 }
+	set_variable = { rocket_sites = 0 }
+	every_owned_state = {
+		limit = { is_controlled_by = PREV }
+		add_to_variable = { PREV.nuclear_reactors = building_level@nuclear_reactor }
+		add_to_variable = { PREV.rocket_sites = building_level@rocket_site }
+	}
+	update_ledger_dirty_var = yes
+}
+
+update_misc_vars = {
+	set_variable = {
+		consumer_goods_factories = num_of_civilian_factories
+	}
+	multiply_variable = {
+		consumer_goods_factories = modifier@consumer_goods_factor
+	}
+	set_variable = {
+		effective_civilian_factories = num_of_civilian_factories
+	}
+	subtract_from_variable = {
+		effective_civilian_factories = consumer_goods_factories
+	}
+	set_temp_variable = {
+		civ_factories_multiplier = modifier@production_speed_buildings_factor
+	}
+	multiply_temp_variable = {
+		civ_factories_multiplier = effective_civilian_factories
+	}
+	add_to_variable = {
+		effective_civilian_factories = civ_factories_multiplier
+	}
+	set_variable = {
+		effective_military_factories = num_of_military_factories
+	}
+	set_temp_variable = {
+		mil_factories_multiplier = modifier@industrial_capacity_factory
+	}
+	multiply_temp_variable = {
+		mil_factories_multiplier = effective_military_factories
+	}
+	add_to_variable = {
+		effective_military_factories = mil_factories_multiplier
+	}
+	set_variable = {
+		effective_naval_factories = num_of_naval_factories
+	}
+	set_temp_variable = {
+		nav_factories_multiplier = modifier@industrial_capacity_dockyard
+	}
+	multiply_temp_variable = {
+		nav_factories_multiplier = effective_naval_factories
+	}
+	add_to_variable = {
+		effective_naval_factories = nav_factories_multiplier
+	}
+	set_variable = {
+		num_controlled_states_including_subjects = num_controlled_states
+	}
+	for_each_scope_loop = {
+		array = subjects
+		add_to_variable = {
+			PREV.num_controlled_states_including_subjects = num_controlled_states
+		}
+	}
+	if = {
+		limit = { is_faction_leader = yes }
+		set_variable = { faction_battalions = num_battalions }
+		set_variable = { faction_ships = num_ships }
+		set_variable = { faction_air = deployed_air_force_size }
+		set_variable = { faction_industry = num_of_factories }
+		set_variable = { faction_controlled_states = num_of_controlled_states }
+		for_each_scope_loop = {
+			array = allies
+			add_to_variable = { PREV.faction_battalions = num_battalions }
+			add_to_variable = { PREV.faction_ships = num_ships }
+			add_to_variable = { PREV.faction_air = deployed_air_force_size }
+			add_to_variable = { PREV.faction_industry = num_of_factories }
+			add_to_variable = { PREV.faction_controlled_states = num_of_controlled_states }
+		}
+	}
+	else = {
+		clear_variable = faction_battalions
+		clear_variable = faction_ships
+		clear_variable = faction_air
+		clear_variable = faction_industry
+		clear_variable = faction_controlled_states
+	}
+
+	update_ledger_dirty_var = yes
+}
+
+open_ledger = {
+	update_ledger_country_array = yes
+	set_variable = { ledger_open = 1 }
+}
+
+update_ledger_country_array = {
+	clear_variable = last_sort_var
+	clear_array = country_array
+	every_country = {
+		update_misc_vars = yes
+		get_strategic_building_levels = yes
+		add_to_array = {
+			PREV.country_array = THIS
+		}
+	}
+
+	update_ledger_dirty_var = yes
+}
+
+update_ledger_faction_array = {
+	clear_variable = last_sort_var
+	clear_array = country_array
+	every_country = {
+		limit = { is_faction_leader = yes }
+		update_misc_vars = yes
+		get_strategic_building_levels = yes
+		add_to_array = {
+			PREV.country_array = THIS
+		}
+	}
+	update_ledger_dirty_var = yes
+}
+
+ledger_quicksort = {
+	set_temp_variable = { stack_size = high }
+	subtract_from_temp_variable = { stack_size = low }
+	add_to_temp_variable = { stack_size = 1 }
+	resize_temp_array = {
+		array = stack
+		value = 0
+		size = stack_size
+	}
+
+	set_temp_variable = { top = 0 }
+	set_temp_variable = { stack^top = low }
+	add_to_temp_variable = { top = 1 }
+	set_temp_variable = { stack^top = high }
+	meta_effect = {
+		text = {
+			while_loop_effect = {
+				limit = {
+					check_variable = {
+						var = top
+						value = 0
+						compare = greater_than_or_equals
+					}
+				}
+				set_variable = { high = stack^top }
+				subtract_from_temp_variable = { top = 1 }
+				set_variable = { low = stack^top }
+				subtract_from_temp_variable = { top = 1 }
+
+				##### PARTITON #####
+				set_variable = { random_pivot = random }
+				multiply_variable = { random_pivot = high }
+				round_variable = random_pivot
+				add_to_variable = { random_pivot = low }
+				clamp_variable = {
+					var = random_pivot
+					min = low
+					max = high
+				}
+				set_temp_variable = { swap = country_array^high }
+				set_variable = { country_array^high = country_array^random_pivot }
+				set_variable = { country_array^random_pivot = swap }
+
+				set_temp_variable = { idx = low }
+				subtract_from_temp_variable = { idx = 1 }
+
+				var:country_array^high = {
+					set_variable = { PREV.min = [VARIABLE] }
+				}
+
+				for_loop_effect = {
+					start = low
+					end = high
+					var:country_array^v = {
+						set_variable = { PREV.tmp = [VARIABLE] }
+					}
+					if = {
+						limit = {
+							check_variable = {
+								var = tmp
+								value = min
+								compare = greater_than_or_equals
+							}
+						}
+						add_to_temp_variable = { idx = 1 }
+						set_temp_variable = { swap = country_array^idx }
+						set_variable = { country_array^idx = country_array^v }
+						set_variable = { country_array^v = swap }
+					}
+				}
+
+				add_to_temp_variable = { idx = 1 }
+				set_temp_variable = { swap = country_array^idx }
+				set_variable = { country_array^idx = country_array^high }
+				set_variable = { country_array^high = swap }
+
+				set_temp_variable = { qs_partition_return = idx }
+				#####
+
+				set_temp_variable = { qs_partition_return_plus_1 = qs_partition_return }
+				set_temp_variable = { qs_partition_return_minus_1 = qs_partition_return }
+				add_to_temp_variable = { qs_partition_return_plus_1 = 1 }
+				subtract_from_temp_variable = { qs_partition_return_minus_1 = 1 }
+
+				if = {
+					limit = { check_variable = { qs_partition_return_minus_1 > low } }
+					add_to_temp_variable = { top = 1 }
+					set_temp_variable = { stack^top = low }
+					add_to_temp_variable = { top = 1 }
+					set_temp_variable = { stack^top = qs_partition_return_minus_1 }
+				}
+
+				if = {
+					limit = { check_variable = { qs_partition_return_plus_1 < high } }
+					add_to_temp_variable = { top = 1 }
+					set_temp_variable = { stack^top = qs_partition_return_plus_1 }
+					add_to_temp_variable = { top = 1 }
+					set_temp_variable = { stack^top = high }
+				}
+			}
+		}
+		VARIABLE = "[ROOT.LedgerGetVariableToSort]"
+	}
+	clear_variable = min
+	clear_variable = tmp
+	clear_variable = random_pivot
+	update_ledger_dirty_var = yes
+}
+
+update_ledger_dirty_var = {
+	if = { limit = { check_variable = { global.ledger_ui_dirty_var = 1000 } }
+		set_variable = { global.ledger_ui_dirty_var = 0 }
+	}
+	else = {
+		add_to_variable = { global.ledger_ui_dirty_var = 1 }
+	}
+}

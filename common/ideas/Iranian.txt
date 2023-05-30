@@ -8,12 +8,13 @@ ideas = {
 			cancel = { NOT = { has_government = communism } }
 
 			modifier = {
-				political_power_factor = 0.20
-				drift_defence_factor = 0.3
-				communism_drift = 0.2
+				stability_factor = 0.10
+				political_power_factor = 0.30
+				drift_defence_factor = 0.5
+				communism_drift = 0.4
 			}
 		}
-		PER_sayyid_ali_hosseini_khamenei = { # Will add in 1.7.1
+		PER_sayyid_ali_hosseini_khamenei = { # Not in game
 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_sayyid_ali_hosseini_khamenei" }
 
 			allowed = {
@@ -58,6 +59,42 @@ ideas = {
 				stability_factor = 0.05
 			}
 		}
+		iranian_aid_custom = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea iranian_aid_custom" }
+			picture = iranian_aid
+
+			allowed = {
+				NOT = { original_tag = PER }
+			}
+
+			allowed_civil_war = {
+				OR = {
+					emerging_hardline_shiite_are_in_power = yes
+					emerging_moderate_shiite_are_in_power = yes
+				}
+			}
+
+			cancel = {
+				OR = {
+					has_war_with = PER
+					PER = { NOT = { 
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					} }
+				}
+			}
+
+			modifier = {
+				experience_gain_army = 0.05
+				industrial_capacity_factory = 0.15
+				production_speed_buildings_factor = 0.10
+				communism_drift = 0.02
+				political_power_gain = -0.20
+				custom_modifier_tooltip = iranian_aid_idea_TT
+			}
+		}
 		IMIDRO = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea IMIDRO" }
 
@@ -68,14 +105,11 @@ ideas = {
 				always = yes
 			}
 
-			cancel = {
-			}
-
 			picture = IMIDRO_idea
 
 			modifier = {
-				local_resources_factor = 0.05
-				production_speed_synthetic_refinery_factor = 0.07
+				local_resources_factor = 0.20
+				production_lack_of_resource_penalty_factor = -0.30
 			}
 		}
 		IROST = {
@@ -88,9 +122,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = yes
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -108,9 +139,6 @@ ideas = {
 				always = yes
 			}
 
-			cancel = {
-			}
-
 			picture = IROST_idea
 
 			modifier = {
@@ -126,9 +154,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = yes
-			}
-
-			cancel = {
 			}
 
 			picture = IROST_idea
@@ -174,9 +199,6 @@ ideas = {
 				always = yes
 			}
 
-			cancel = {
-			}
-
 			picture = modernized_army
 
 			equipment_bonus = {
@@ -194,9 +216,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = yes
-			}
-
-			cancel = {
 			}
 
 			picture = modernized_army
@@ -241,9 +260,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = air_payment
 
 			equipment_bonus = {
@@ -279,14 +295,11 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = air_payment
 
 			equipment_bonus = {
-				Air_UAV_equipment = {
-					build_cost_ic = -0.20
+				Kamikaze_drone_equipment = {
+					build_cost_ic = -0.30
 					instant = yes
 				}
 			}
@@ -299,9 +312,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = NPO_Idea
@@ -318,17 +328,13 @@ ideas = {
 			}
 
 			allowed_civil_war = {
-				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = corruption_10
 
 			modifier = {
 				stability_factor = -0.05
-				political_power_gain = -0.15
+				political_power_gain = -0.10
 				corruption_cost_factor = 0.25
 			}
 		}
@@ -343,7 +349,19 @@ ideas = {
 			}
 
 			cancel = {
-				NOT = { has_government = communism }
+				OR = {
+					NOT = { has_government = communism }
+					has_defensive_war = yes
+				}
+			}
+
+			on_remove = {
+				if = {
+					limit = {
+						has_defensive_war = yes
+					}
+					add_ideas = the_holy_defence_at_war
+				}
 			}
 
 			picture = helmet_iran_red
@@ -351,9 +369,50 @@ ideas = {
 			modifier = {
 				war_support_factor = 0.05
 				drift_defence_factor = 0.15
-				army_morale_factor = 0.15
-				army_core_defence_factor = 0.1
-				conscription_factor = 0.05
+				conscription = 0.04
+				custom_modifier_tooltip = [holy_defence_bonuses]
+			}
+		}
+		the_holy_defence_at_war = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea the_holy_defence_at_war" }
+			name = the_holy_defence
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			cancel = {
+				OR = {
+					has_defensive_war = no
+					NOT = {
+						has_government = communism
+					}
+				}
+			}
+			on_remove = {
+				if = {
+					limit = {
+						has_government = communism
+						has_defensive_war = no
+					}
+					add_ideas = the_holy_defence
+				}
+			}
+
+			picture = helmet_iran_red
+
+			modifier = {
+				war_support_factor = 0.05
+				drift_defence_factor = 0.15
+				custom_modifier_tooltip = [holy_defence_bonuses]
+				hidden_modifier = {
+					conscription = 0.09
+					army_core_defence_factor = 0.20
+					army_org = 5
+				}
 			}
 		}
 		natanz_nuclear_facility_idea = {
@@ -420,9 +479,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = jihad_of_education
@@ -718,9 +774,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = VAJA
 
 			modifier = {
@@ -740,9 +793,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = VAJA
 
 			modifier = {
@@ -760,9 +810,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = VAJA
@@ -785,9 +832,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = VAJA
 
 			modifier = {
@@ -804,10 +848,7 @@ ideas = {
 			}
 			allowed_civil_war = {
 				always = no
-			}
-			cancel = {
-			}
-			picture = VAJA
+			}			picture = VAJA
 
 			modifier = {
 				intelligence_agency_defense = 0.5
@@ -824,9 +865,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = VAJA
@@ -847,9 +885,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = VAJA
@@ -876,9 +911,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = VAJA
 
 			modifier = {
@@ -900,9 +932,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = VAJA
@@ -932,9 +961,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = VAJA
 
 			modifier = {
@@ -960,9 +986,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = VAJA
@@ -991,9 +1014,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = industrial_focus
 
 			modifier = {
@@ -1011,9 +1031,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = reserve_divisions
 
 			modifier = {
@@ -1029,9 +1046,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = research_bonus
@@ -1055,9 +1069,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				consumer_goods_factor = -0.05
 				industrial_capacity_factory = 0.03
@@ -1075,9 +1086,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -1099,9 +1107,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				research_speed_factor = 0.03
 				production_lack_of_resource_penalty_factor = -0.03
@@ -1116,9 +1121,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = research_minstry
@@ -1137,9 +1139,8 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
+			picture = ministry_of_communication_and_it
+			
 			modifier = {
 				encryption = 1
 				foreign_subversive_activites = -0.03
@@ -1148,10 +1149,11 @@ ideas = {
 			}
 		}
 		PER_brain_drain_5 = {
-			allowed = {
+			allowed = { always = yes
 			}
 
 			allowed_civil_war = {
+				always = yes
 			}
 
 			cancel = {
@@ -1268,10 +1270,10 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			picture = high_popular_support
+			picture = national_mobilization
 
 			modifier = {
-				research_speed_factor = 0.05
+				research_speed_factor = 0.02
 				production_factory_max_efficiency_factor = 0.05
 				production_factory_start_efficiency_factor = 0.05
 				production_factory_efficiency_gain_factor = 0.05
@@ -1283,8 +1285,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = scientists_defect
 
@@ -1299,8 +1299,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = propaganda
 
@@ -1317,8 +1315,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = air_support
 
 			modifier = {
@@ -1332,8 +1328,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = air_support
 
@@ -1350,29 +1344,168 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = air_support
 
 			modifier = {
 				research_speed_factor = 0.06
 			}
 		}
-		PER_prepare_reforms_5 = {
+		PER_jahade_keshavarzi = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_jahade_keshavarzi" }
+
 			allowed = {
 			}
 
 			allowed_civil_war = {
+				always = yes
 			}
 
-			cancel = {}
+			picture = jahad_e_keshavarzi
+			modifier = {
+				production_speed_synthetic_refinery_factor = 0.15
+				foreign_influence_defense_modifier = 0.05
+				corporate_tax_income_multiplier_modifier = 0.05
+			}
+		}
+		PER_jahade_keshavarzi_2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_jahade_keshavarzi_2" }
+			name = PER_jahade_keshavarzi
 
-			picture = idea_political_support
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = jahad_e_keshavarzi
 
 			modifier = {
-				political_power_factor = -0.05
-				research_speed_factor = -0.07
-				education_cost_multiplier_modifier = 0.05
+				production_speed_synthetic_refinery_factor = 0.20
+				political_power_gain = 0.1
+				foreign_influence_defense_modifier = 0.05
+				corporate_tax_income_multiplier_modifier = 0.05
+				population_tax_income_multiplier_modifier = -0.05
+			}
+		}
+		PER_jahade_keshavarzi_3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_jahade_keshavarzi_3" }
+			name = PER_jahade_keshavarzi
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = jahad_e_keshavarzi
+
+			modifier = {
+				production_speed_synthetic_refinery_factor = 0.20
+				political_power_gain = 0.1
+				foreign_influence_defense_modifier = 0.05
+				corporate_tax_income_multiplier_modifier = 0.05
+				population_tax_income_multiplier_modifier = -0.05
+				consumer_goods_factor = -0.03
+			}
+		}
+		PER_national_intranet = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_national_intranet" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = internet_icon
+
+			modifier = {
+				communism_drift = 0.03
+				stability_factor = 0.10
+			}
+		}
+		PER_second_firewall = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_second_firewall" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = internet_icon
+
+			modifier = {
+				communism_drift = 0.08
+				police_cost_multiplier_modifier = 0.10
+				stability_factor = 0.10
+				encryption_factor = 1.00
+				civilian_intel_to_others = -20
+				research_speed_factor = -0.1
+				emerging_outlook_campaign_cost_modifier = -0.30
+			}
+		}
+		PER_free_global_internet = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_free_global_internet" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = internet_icon
+
+			modifier = {
+				democratic_drift = 0.02
+				stability_factor = 0.10
+				production_speed_internet_station_factor = 0.15
+			}
+		}
+		PER_free_global_internet_2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_free_global_internet_2" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = internet_icon
+
+			modifier = {
+				democratic_drift = 0.07
+				stability_factor = 0.15
+				production_speed_internet_station_factor = 0.15
+				encryption_factor = -1.00
+				research_speed_factor = 0.10
+			}
+		}
+		PER_free_global_internet_3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_free_global_internet_3" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = internet_icon
+
+			modifier = {
+				democratic_drift = 0.05
+				communism_drift = 0.02
+				stability_factor = 0.10
+				production_speed_internet_station_factor = 0.10
+				emerging_outlook_campaign_cost_modifier = -0.20
+				police_cost_multiplier_modifier = -0.05
 			}
 		}
 		PER_amoozesh_parvaresh = {
@@ -1381,8 +1514,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1398,8 +1529,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1417,8 +1546,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = amoozesh_parvaresh
 
 			modifier = {
@@ -1434,8 +1561,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1455,8 +1580,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = amoozesh_parvaresh
 
 			modifier = {
@@ -1474,8 +1597,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1495,8 +1616,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = amoozesh_parvaresh
 
 			modifier = {
@@ -1512,8 +1631,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1531,8 +1648,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1552,8 +1667,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = amoozesh_parvaresh
 
 			modifier = {
@@ -1571,8 +1684,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1592,8 +1703,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = amoozesh_parvaresh
 
 			modifier = {
@@ -1611,8 +1720,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = amoozesh_parvaresh
 
 			modifier = {
@@ -1629,8 +1736,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = amoozesh_parvaresh
 
@@ -1650,8 +1755,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = amoozesh_parvaresh
 
 			modifier = {
@@ -1670,8 +1773,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = defencive_infrastucture
 
 			modifier = {
@@ -1684,8 +1785,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = self_humiliation
 
@@ -1702,8 +1801,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = self_humiliation
 
 			modifier = {
@@ -1718,8 +1815,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = self_humiliation
 
@@ -1736,8 +1831,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = self_humiliation
 
 			modifier = {
@@ -1752,8 +1845,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = self_humiliation
 
@@ -1770,8 +1861,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = self_humiliation
 
 			modifier = {
@@ -1786,8 +1875,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = self_humiliation
 
@@ -1804,8 +1891,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = self_humiliation
 
 			modifier = {
@@ -1820,8 +1905,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = self_humiliation
 
@@ -1838,8 +1921,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = self_humiliation
 
 			modifier = {
@@ -1854,8 +1935,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = national_unity
 
@@ -1873,8 +1952,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = research_bonus
 
 			modifier = {
@@ -1887,8 +1964,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = NAJA
 
@@ -1905,8 +1980,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = NAJA
 
@@ -1925,8 +1998,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = NAJA
 
 			modifier = {
@@ -1943,8 +2014,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = halal
 
 			modifier = {
@@ -1953,15 +2022,13 @@ ideas = {
 			}
 		}
 		PER_IFDA_2 = {
-			name = PER_IFDA_2
+			name = PER_IFDA_1
 
 			allowed = {
 			}
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = halal
 
@@ -1978,8 +2045,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = rahvar
 
 			modifier = {
@@ -1995,8 +2060,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = rahvar
 
@@ -2015,8 +2078,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = rahvar
 
@@ -2038,8 +2099,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = rahvar
 
 			modifier = {
@@ -2057,8 +2116,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = construction
 
 			modifier = {
@@ -2075,8 +2132,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = construction
 
 			modifier = {
@@ -2092,8 +2147,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = planning_bonus
 
 			targeted_modifier = {
@@ -2107,8 +2160,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = Rafael_ISR
 
@@ -2164,8 +2215,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = army_war_college
 
 			modifier = {
@@ -2180,13 +2229,25 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = trade
 
 			modifier = {
-				resource_export_multiplier_modifier = 0.20
-				trade_opinion_factor = 0.15
+				resource_export_multiplier_modifier = 0.30
+				trade_opinion_factor = 0.20
+				consumer_goods_factor = -0.02
+			}
+		}
+		PER_developing_our_influence_sphere = {
+			allowed = {
+			}
+
+			allowed_civil_war = {
+			}
+
+			picture = spy_coup
+
+			modifier = {
+				foreign_influence_modifier = 0.15
 			}
 		}
 		PER_imam_ali_academy_idea_1 = {
@@ -2195,8 +2256,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = general_staff
 
@@ -2213,8 +2272,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = general_staff
 
@@ -2234,8 +2291,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = general_staff
 
 			modifier = {
@@ -2253,8 +2308,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = general_staff
 
 			modifier = {
@@ -2270,8 +2323,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = general_staff
 
@@ -2289,8 +2340,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = general_staff
 
@@ -2311,8 +2360,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = general_staff
 
 			modifier = {
@@ -2332,8 +2379,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = university_of_war_idea
 
 			modifier = {
@@ -2350,8 +2395,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = GENERIC_public_works
 
 			modifier = {
@@ -2365,8 +2408,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = konkour_abolished
 
@@ -2384,8 +2425,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = research_bonus
 
 			modifier = {
@@ -2401,8 +2440,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = production_bonus
 
 			modifier = {
@@ -2417,8 +2454,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = local_self_management
 
@@ -2437,8 +2472,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = trade
 
@@ -2460,8 +2493,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = trade
 
 			modifier = {
@@ -2475,6 +2506,8 @@ ideas = {
 				corporate_tax_income_multiplier_modifier = 0.05
 				police_cost_multiplier_modifier = -0.10
 				monthly_population = 0.04
+
+				custom_modifier_tooltip = cerato_car_expense_effect_TT
 			}
 		}
 		PER_207_sd_idea = {
@@ -2483,8 +2516,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = trade
 
@@ -2499,6 +2530,8 @@ ideas = {
 				corporate_tax_income_multiplier_modifier = 0.05
 				police_cost_multiplier_modifier = -0.05
 				monthly_population = 0.02
+
+				custom_modifier_tooltip = 207_sd_car_expense_effect_TT
 			}
 		}
 		PER_runna_idea = {
@@ -2507,8 +2540,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = ikco_idea
 
@@ -2522,6 +2553,8 @@ ideas = {
 				police_cost_multiplier_modifier = -0.07
 				corporate_tax_income_multiplier_modifier = -0.04
 				monthly_population = 0.03
+
+				custom_modifier_tooltip = runna_car_expense_effect_TT
 			}
 		}
 		PER_tiba_idea = {
@@ -2530,8 +2563,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = saipa_idea
 
@@ -2545,6 +2576,8 @@ ideas = {
 				police_cost_multiplier_modifier = -0.02
 				corporate_tax_income_multiplier_modifier = 0.02
 				monthly_population = 0.01
+
+				custom_modifier_tooltip = tiba_car_expense_effect_TT
 			}
 		}
 		PER_riot_police_1 = {
@@ -2553,8 +2586,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = prisoners
 
@@ -2572,8 +2603,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = prisoners
 
 			modifier = {
@@ -2588,8 +2617,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = gentleman_officers
 
@@ -2607,8 +2634,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = gentleman_officers
 
 			modifier = {
@@ -2624,8 +2649,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = secret_police
 
 			modifier = {
@@ -2639,8 +2662,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = iranian_aid
 
@@ -2659,8 +2680,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = iranian_aid
 
 			modifier = {
@@ -2676,8 +2695,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = iranian_aid
 
 			modifier = {
@@ -2692,8 +2709,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = iranian_aid
 
@@ -2712,8 +2727,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = iranian_aid
 
@@ -2735,8 +2748,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = spy_intel
 
 			modifier = {
@@ -2751,11 +2762,9 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = army_corruption2
 
-			modifier = {}
+			modifier = { }
 
 			targeted_modifier = {
 				tag = PER
@@ -2769,8 +2778,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = army_corruption2
 
@@ -2789,8 +2796,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = army_corruption2
 
@@ -2811,8 +2816,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = army_corruption2
 
 			modifier = {
@@ -2829,12 +2832,11 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = embargo
 
 			modifier = {
-				base_fuel_gain_factor = -0.15
+				base_fuel_gain_factor = -0.30
+				production_speed_buildings_factor = -0.10
 			}
 		}
 		PER_cancellation_of_iron_ore_contracts_idea = {
@@ -2844,12 +2846,11 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = embargo
 
 			modifier = {
-				production_lack_of_resource_penalty_factor = 0.15
+				production_lack_of_resource_penalty_factor = 0.30
+				production_speed_buildings_factor = -0.10
 			}
 		}
 		PER_TUR_shia_influence = {
@@ -2886,7 +2887,7 @@ ideas = {
 			allowed = {
 			}
 
-			picture =youth_radicalization
+			picture = youth_radicalization
 
 			modifier = {
 				communism_drift = 0.01
@@ -3036,6 +3037,11 @@ ideas = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_reorganize_school_1" }
 
 			allowed = {
+				always = yes
+			}
+
+			allowed_civil_war = {
+				always = yes
 			}
 
 			picture = konkour_crisis
@@ -3095,9 +3101,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = natanz_idea
 
 			modifier = {
@@ -3112,9 +3115,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = natanz_idea
@@ -3134,9 +3134,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = resource_production
 
 			modifier = {
@@ -3154,9 +3151,6 @@ ideas = {
 
 			picture = worker_reforms
 
-			cancel = {
-			}
-
 			modifier = {
 				consumer_goods_factor = -0.05
 				tax_gain_multiplier_modifier = 0.05
@@ -3170,9 +3164,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = solar_energy
@@ -3192,9 +3183,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = embargo
 
 			modifier = {
@@ -3211,9 +3199,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = embargo
@@ -3239,9 +3224,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = embargo
 
 			modifier = {
@@ -3263,9 +3245,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = embargo
@@ -3291,9 +3270,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = embargo
 
 			modifier = {
@@ -3315,9 +3291,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = embargo
@@ -3345,9 +3318,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = embargo
 
 			modifier = {
@@ -3368,9 +3338,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = resistance_economy
@@ -3398,9 +3365,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = embargo
 
 			modifier = {
@@ -3422,9 +3386,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = resistance_economy
@@ -3450,9 +3411,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = resistance_economy
 
 			modifier = {
@@ -3474,9 +3432,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			picture = resistance_economy
@@ -3502,9 +3457,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			picture = resistance_economy
 
 			modifier = {
@@ -3525,9 +3477,6 @@ ideas = {
 
 			picture = khalij_e_fars_is_ours
 
-			cancel = {
-			}
-
 			modifier = {
 				industrial_capacity_dockyard = 0.05
 				refit_speed = 0.15
@@ -3544,9 +3493,6 @@ ideas = {
 
 			picture = IBRC
 
-			cancel = {
-			}
-
 			modifier = {
 				health_cost_multiplier_modifier = -0.03
 				stability_factor = 0.03
@@ -3556,11 +3502,9 @@ ideas = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_IBRC_2" }
 			allowed = {
 			}
+			name = PER_IBRC
 
 			picture = IBRC
-
-			cancel = {
-			}
 
 			modifier = {
 				health_cost_multiplier_modifier = -0.03
@@ -3572,11 +3516,9 @@ ideas = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_IBRC_3" }
 			allowed = {
 			}
+			name = PER_IBRC
 
 			picture = IBRC
-
-			cancel = {
-			}
 
 			modifier = {
 				health_cost_multiplier_modifier = -0.05
@@ -3589,11 +3531,9 @@ ideas = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_IBRC_4" }
 			allowed = {
 			}
+			name = PER_IBRC
 
 			picture = IBRC
-
-			cancel = {
-			}
 
 			modifier = {
 				health_cost_multiplier_modifier = -0.05
@@ -3615,12 +3555,9 @@ ideas = {
 
 			picture = GENERIC_public_works
 
-			cancel = {
-			}
-
 			modifier = {
-				production_speed_rail_way_factor = 0.05
-				production_speed_supply_node_factor = 0.10
+				production_speed_rail_way_factor = 0.10
+				production_speed_supply_node_factor = 0.20
 				supply_node_range = 0.10
 			}
 		}
@@ -3745,15 +3682,15 @@ ideas = {
 				experience_gain_navy = 0.03
 			}
 			equipment_bonus = {
-				SP_arty_equipment = {
+				spart_hull = {
 					build_cost_ic = -0.05
 					instant = yes
 				}
-				APC_Equipment = {
+				apc_hull = {
 					build_cost_ic = -0.05
 					instant = yes
 				}
-				IFV_Equipment = {
+				ifv_hull = {
 					build_cost_ic = -0.05
 					instant = yes
 				}
@@ -4112,15 +4049,15 @@ ideas = {
 				experience_gain_navy = 0.03
 			}
 			equipment_bonus = {
-				SP_arty_equipment = {
+				spart_hull = {
 					build_cost_ic = -0.05
 					instant = yes
 				}
-				APC_Equipment = {
+				apc_hull = {
 					build_cost_ic = -0.05
 					instant = yes
 				}
-				IFV_Equipment = {
+				ifv_hull = {
 					build_cost_ic = -0.05
 					instant = yes
 				}
@@ -4142,6 +4079,1389 @@ ideas = {
 				attack_bonus_against = 0.05
 			}
 		}
+		PER_ahmadinejad_idea = {
+			name = PER_ahmadinejad_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_ahmadinejad_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = ahmadinejad_president
+
+			on_remove = {
+				clr_country_flag = PER_president_ahmadinejad
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_ahmadinejad
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_ahmadinejad_modifiers
+				hidden_modifier = {
+					#Charismatic:
+					war_support_factor = 0.02
+					production_speed_buildings_factor = 0.10
+					#Hardliner:
+					democratic_acceptance = -30
+					communism_drift = 0.2
+					#Supported by Principalist parties
+					political_power_factor = 0.05
+				}
+			}
+		}
+		PER_ghalibaf_idea = {
+			name = PER_ghalibaf_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_ghalibaf_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = ghalibaf_president
+
+			on_remove = {
+				clr_country_flag = PER_president_ghalibaf
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_ghalibaf
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_ghalibaf_modifiers
+				hidden_modifier = {
+					#Military:
+					production_factory_max_efficiency_factor = 0.05
+					production_factory_efficiency_gain_factor = 0.05
+					#Approved by Pricinpalists:
+					political_power_factor = 0.05
+					#Former police chief:
+					police_cost_multiplier_modifier = -0.07
+				}
+			}
+		}
+		PER_hemmati_idea = {
+			name = PER_hemmati_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_hemmati_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = hemmati_president
+
+			on_remove = {
+				clr_country_flag = PER_president_hemmati
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_hemmati
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_hemmati_modifiers
+				hidden_modifier = {
+					#Supported by Reformists:
+					political_power_factor = 0.05
+					#Pro-Western:
+					democratic_acceptance = 20
+					democratic_drift = 0.05
+					#Economic liberal:
+					production_speed_offices_factor = 0.15
+					corporate_tax_income_multiplier_modifier = 0.05
+				}
+			}
+		}
+		PER_khatami_idea = {
+			name = PER_khatami_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_khatami_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = khatami_president
+
+			on_remove = {
+				clr_country_flag = PER_president_khatami
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_khatami
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_khatami_modifiers
+				hidden_modifier = {
+					#Cultural liberal:
+					democratic_drift = 0.1
+					stability_factor = -0.05
+					#Supported by Rafsanjani:
+					political_power_factor = 0.10
+					#Economic liberal:
+					tax_gain_multiplier_modifier = 0.10
+					econ_cycle_upg_cost_multiplier_modifier = -0.15
+				}
+			}
+		}
+		PER_mousavi_idea = {
+			name = PER_mousavi_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mousavi_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = mousavi_president
+
+			on_remove = {
+				clr_country_flag = PER_president_mousavi
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_mousavi
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_mousavi_modifiers
+				hidden_modifier = {
+					#Rafsanjani Puppet:
+					stability_factor = -0.02
+					political_power_factor = -0.05
+					#Architect:
+					production_speed_industrial_complex_factor = 0.15
+					projects_cost_modifier = -0.05
+					#Liberal:
+					democratic_drift = 0.1
+				}
+			}
+		}
+		PER_rafsanjani_idea = {
+			name = PER_rafsanjani_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_rafsanjani_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = rafsanjani_president
+
+			on_remove = {
+				clr_country_flag = PER_president_rafsanjani
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_rafsanjani
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_rafsanjani_modifiers
+				hidden_modifier = {
+					#Influential:
+					political_power_gain = 0.1
+					#The symbol of Reformists:
+					political_power_factor = 0.05
+					democratic_drift = 0.1
+					#Economic liberal:
+					production_speed_offices_factor = 0.10
+					consumer_goods_factor = -0.02
+				}
+			}
+		}
+		PER_raisi_idea = {
+			name = PER_raisi_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_raisi_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = raisi_president
+
+			on_remove = {
+				clr_country_flag = PER_president_raisi
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_raisi
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_raisi_modifiers
+				hidden_modifier = {
+					#Head of the Judiciary:
+					stability_factor = 0.02
+					bureaucracy_cost_multiplier_modifier = -0.10
+					drift_defence_factor = 0.10
+					#Supported by Principalists:
+					political_power_factor = 0.05
+					#Housing development:
+					production_speed_industrial_complex_factor = 0.15
+					production_speed_buildings_factor = -0.05
+					population_tax_income_multiplier_modifier = -0.05
+				}
+			}
+		}
+		PER_rezaee_idea = {
+			name = PER_rezaee_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_rezaee_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			on_remove = {
+				clr_country_flag = PER_president_rezaee
+			}
+
+			picture = rezaee_president
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_rezaee
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_rezaee_modifiers
+				hidden_modifier = {
+					#Connections with the IRGC:
+					production_speed_arms_factory_factor = 0.10
+					production_factory_start_efficiency_factor = -0.15
+					#Hardliner:
+					communism_drift = 0.02
+					#Opposition within the party:
+					political_power_factor = -0.10
+					#Economist:
+					production_speed_buildings_factor = 0.05
+					econ_cycle_upg_cost_multiplier_modifier = -0.05
+					tax_gain_multiplier_modifier = 0.03
+				}
+			}
+		}
+		PER_rouhani_idea = {
+			name = PER_rouhani_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_rouhani_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = rouhani_president
+
+			on_add = {
+				clamp_variable = {
+					var = irgc_opinion
+					min = 0
+					max = 30
+				}
+			}
+
+			on_remove = {
+				clr_country_flag = PER_president_rouhani
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_rouhani
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_rouhani_modifiers
+				hidden_modifier = {
+					#Pro-Western:
+					democratic_acceptance = 30
+					democratic_drift = 0.1
+					#Supported by Reformists:
+					political_power_factor = 0.10
+					#Economic Reformist:
+					stability_factor = -0.02
+					production_speed_offices_factor = 0.20
+					production_speed_industrial_complex_factor = 0.15
+					econ_cycle_upg_cost_multiplier_modifier = 0.10
+					#Opposing the IRGC:
+					war_support_factor = -0.07
+				}
+			}
+		}
+		PER_tavakoli_idea = {
+			name = PER_tavakoli_name
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_tavakoli_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = tavakoli_president
+
+			on_remove = {
+				clr_country_flag = PER_president_tavakoli
+			}
+
+			cancel = {
+				NOT = {
+					has_country_flag = PER_president_tavakoli
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+			}
+
+			modifier = {
+				custom_modifier_tooltip = PER_tavakoli_modifiers
+				hidden_modifier = {
+					#Parliament Member:
+					political_power_factor = 0.05
+					#Former Minister of Labor and Social Affairs:
+					social_cost_multiplier_modifier = -0.10
+					#Former government spokesman:
+					political_power_gain = 0.1
+					#Independent from other Principalist parties:
+					drift_defence_factor = -0.20
+				}
+			}
+		}
+		PER_learn_from_the_holy_defence_idea = {
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_tavakoli_idea" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			picture = army_war_college
+
+			modifier = {
+				experience_gain_army = 0.5
+				hidden_modifier = {
+					experience_gain_Militia_Bat_combat_factor = 0.20
+					experience_gain_Mot_Militia_Bat_combat_factor = 0.20
+				}
+				custom_modifier_tooltip = PER_learn_from_the_holy_defence_idea_tt
+			}
+		}
+		PER_harsh_protests = {
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_harsh_protests" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = Ethnic_Insurgencies
+
+			modifier = {
+				production_speed_buildings_factor = -0.3
+				consumer_goods_factor = 0.2
+				political_power_cost = 1
+				stability_weekly = -0.04
+				communism_drift = -0.1
+				foreign_subversive_activites = 0.5
+			}
+		}
+		PER_protests = {
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_protests" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = Ethnic_Insurgencies
+
+			modifier = {
+				production_speed_buildings_factor = -0.15
+				political_power_cost = 1
+				stability_weekly = -0.015
+				communism_drift = -0.05
+				foreign_subversive_activites = 0.3
+			}
+		}
+		PER_peaceful_protests = {
+
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_peaceful_protests" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = no
+			}
+
+			picture = volunteer_expedition_bonus
+
+			modifier = {
+				production_speed_buildings_factor = -0.15
+				political_power_cost = 0.2
+				stability_weekly = -0.01
+				communism_drift = -0.05
+				foreign_subversive_activites = 0.1
+			}
+		}
+		PER_divisions_in_the_army = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_divisions_in_the_army" }
+			picture = army_corruption2
+			allowed = {
+				tag = PER
+			}
+			modifier = {
+				org_loss_when_moving = 0.10
+				experience_gain_army = -20
+			}
+		}
+		PER_clerical_resistance = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_clerical_resistance" }
+			picture = ban_monarchy
+			allowed = {
+				tag = PER
+			}
+			modifier = {
+				resistance_damage_to_garrison = 0.20
+				population_tax_income_multiplier_modifier = -0.05
+				industrial_capacity_factory = -0.15
+			}
+		}
+		PER_clerical_resistance_2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_clerical_resistance_2" }
+			picture = ban_monarchy
+			allowed = {
+				tag = PER
+			}
+			modifier = {
+				resistance_damage_to_garrison = 0.15
+				population_tax_income_multiplier_modifier = -0.02
+				industrial_capacity_factory = -0.10
+			}
+		}
+		PER_clerical_resistance_3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_clerical_resistance_3" }
+			picture = ban_monarchy
+			allowed = {
+				tag = PER
+			}
+			modifier = {
+				resistance_damage_to_garrison = 0.10
+				industrial_capacity_factory = -0.05
+			}
+		}
+		PER_poor_security = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_poor_security" }
+			picture = prisoners
+			modifier = {
+				intelligence_agency_defense = -3
+				intel_from_operatives_factor = -0.35
+				operation_risk = 0.40
+			}
+		}
+		PER_poor_security2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_poor_security2" }
+			picture = prisoners
+			modifier = {
+				intelligence_agency_defense = -2
+				intel_from_operatives_factor = -0.25
+				operation_risk = 0.30
+			}
+		}
+		PER_poor_security3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_poor_security3" }
+			picture = prisoners
+			modifier = {
+				intelligence_agency_defense = -1
+				intel_from_operatives_factor = -0.15
+				operation_risk = 0.25
+			}
+		}
+		PER_poor_security4 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_poor_security4" }
+			picture = prisoners
+			modifier = {
+				intel_from_operatives_factor = -0.05
+				operation_risk = 0.10
+			}
+		}
+		PER_good_security = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_good_security" }
+			picture = spy_political
+			modifier = {
+				intelligence_agency_defense = 2
+				intel_from_operatives_factor = 0.25
+				operation_risk = -0.20
+				new_operative_slot_bonus = 1
+			}
+		}
+		PER_restrained_spy = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_restrained_spy" }
+			picture = disjointed_government
+			modifier = {
+				agency_upgrade_time = -0.25
+				civilian_intel_decryption_bonus = 30
+			}
+		}
+		PER_repercussions_engelab = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_repercussions_engelab" }
+			picture = repercussions_engelab
+			modifier = {
+				political_power_factor = -0.20
+				stability_factor = -0.10
+			}
+		}
+		PER_repercussions_engelab_2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_repercussions_engelab_2" }
+			picture = repercussions_engelab
+			modifier = {
+				political_power_factor = -0.15
+				stability_factor = -0.08
+			}
+		}
+		PER_repercussions_engelab_3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_repercussions_engelab_3" }
+			picture = repercussions_engelab
+			modifier = {
+				political_power_factor = -0.10
+				stability_factor = -0.05
+			}
+		}
+		PER_repercussions_engelab_4 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_repercussions_engelab_4" }
+			picture = repercussions_engelab
+			modifier = {
+				political_power_factor = -0.05
+				stability_factor = -0.02
+			}
+		}
+		PER_disloyal_military = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_disloyal_military" }
+			picture = disloyal_soldiers
+			modifier = {
+				army_attack_factor = -0.10
+				army_bonus_air_superiority_factor = -0.05
+				army_defence_factor = -0.15
+				navy_max_range_factor = -0.10
+			}
+		}
+		PER_disloyal_military2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_disloyal_military2" }
+			picture = disloyal_soldiers
+			modifier = {
+				army_attack_factor = -0.05
+				army_bonus_air_superiority_factor = -0.05
+				army_defence_factor = -0.05
+				navy_max_range_factor = -0.10
+			}
+		}
+		PER_disloyal_military3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_disloyal_military3" }
+			picture = disloyal_soldiers
+			modifier = {
+				army_bonus_air_superiority_factor = -0.05
+				navy_max_range_factor = -0.10
+			}
+		}
+		PER_disloyal_military4 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_disloyal_military4" }
+			picture = disloyal_soldiers
+			modifier = {
+				navy_max_range_factor = -0.10
+			}
+		}
+		PER_loyal_military = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_loyal_military" }
+			picture = roit_police_idea
+			modifier = {
+				extra_marine_supply_grace = 24
+				navy_max_range_factor = 0.15
+				land_reinforce_rate = 0.03
+			}
+		}
+		PER_loyal_pilots = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_loyal_pilots" }
+			picture = iranian_pilots
+			modifier = {
+				air_intercept_efficiency = 0.05
+				air_interception_detect_factor = 0.10
+				Aircraft_Company_cost_factor = -0.05
+				Helicopter_Company_cost_factor = -0.05
+			}
+		}
+		PER_loyal_pilots2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_loyal_pilots2" }
+			picture = iranian_pilots
+			modifier = {
+				air_intercept_efficiency = 0.05
+				air_interception_detect_factor = 0.10
+				air_mission_xp_gain_factor = 0.15
+				Aircraft_Company_cost_factor = -0.10
+				Helicopter_Company_cost_factor = -0.15
+			}
+		}
+		PER_paratroopers = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_paratroopers" }
+			picture = iranian_pilots
+			modifier = {
+				air_intercept_efficiency = 0.05
+				air_interception_detect_factor = 0.10
+				air_mission_xp_gain_factor = 0.15
+				Aircraft_Company_cost_factor = -0.10
+				Helicopter_Company_cost_factor = -0.15
+				paradrop_organization_factor = 0.10
+				extra_paratrooper_supply_grace = 15
+				air_paradrop_agility_factor = 0.05
+				air_paradrop_defence_factor = 0.05
+				paratrooper_count_per_plane = 0.03
+			}
+		}
+		PER_paratroopers2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_paratroopers2" }
+			picture = iranian_pilots
+			modifier = {
+				air_intercept_efficiency = 0.05
+				air_interception_detect_factor = 0.10
+				air_mission_xp_gain_factor = 0.15
+				Aircraft_Company_cost_factor = -0.10
+				Helicopter_Company_cost_factor = -0.15
+				paradrop_organization_factor = 0.20
+				extra_paratrooper_supply_grace = 25
+				air_paradrop_agility_factor = 0.10
+				air_paradrop_defence_factor = 0.10
+				paratrooper_count_per_plane = 0.05
+				extra_marine_supply_grace = 20
+			}
+		}
+		PER_loyal_military2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_loyal_military2" }
+			picture = roit_police_idea
+			modifier = {
+				navy_max_range_factor = 0.15
+				land_reinforce_rate = 0.03
+				army_core_attack_factor	= 0.05
+				invasion_preparation = -0.10
+				extra_marine_supply_grace = 24
+			}
+		}
+		PER_loyal_military3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_loyal_military3" }
+			picture = roit_police_idea
+			modifier = {
+				navy_max_range_factor = 0.15
+				land_reinforce_rate = 0.03
+				army_core_defence_factor = 0.10
+				dig_in_speed_factor = 0.15
+				extra_marine_supply_grace = 24
+			}
+		}
+		PER_better_generals = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_better_generals" }
+			picture = general_staff
+			modifier = {
+				training_time_factor = -0.05
+				army_leader_cost_factor = -0.10
+			}
+		}
+		PER_better_generals2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_better_generals2" }
+			picture = general_staff
+			modifier = {
+				training_time_factor = -0.10
+				army_leader_cost_factor = -0.10
+			}
+		}
+		PER_better_generals3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_better_generals3" }
+			picture = general_staff
+			modifier = {
+				training_time_factor = -0.10
+				army_leader_cost_factor = -0.10
+				navy_leader_cost_factor = -0.15
+				naval_accidents_chance = -0.10
+				naval_mine_hit_chance = -0.05
+			}
+		}
+		PER_better_generals4 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_better_generals4" }
+			picture = general_staff
+			modifier = {
+				training_time_factor = -0.10
+				army_leader_cost_factor = -0.20
+				terrain_trait_xp_gain_factor = 0.10
+				terrain_penalty_reduction = 0.02
+			}
+		}
+		PER_steadfast_art = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_steadfast_art" }
+			picture = artillery_regiments
+			equipment_bonus = {
+				AA_Equipment = {
+					build_cost_ic = -0.10
+					air_attack = 0.3
+					instant = yes
+				}
+				SP_AA_Equipment = {
+					build_cost_ic = -0.10
+					air_attack = 0.3
+					instant = yes
+				}
+				artillery_equipment = {
+					build_cost_ic = -0.15
+					reliability = 0.075
+					instant = yes
+				}
+			}
+		}
+		PER_loyal_sailors = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_loyal_sailors" }
+			picture = coastal_defense_ships
+			modifier = {
+				sortie_efficiency = 0.10
+				refit_speed = 0.10
+				naval_invasion_capacity = 1
+			}
+		}
+		PER_loyal_sailors2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_loyal_sailors2" }
+			picture = coastal_defense_ships
+			modifier = {
+				sortie_efficiency = 0.15
+				refit_speed = 0.15
+				naval_invasion_capacity = 3
+				navy_intel_factor = 0.10
+			}
+			equipment_bonus = {
+				attack_submarine = {
+					sub_visibility = -0.1
+					torpedo_attack = 0.1
+					instant = yes
+				}
+			}
+		}
+		PER_combined_army = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_combined_army" }
+			picture = reserve_divisions
+			modifier = {
+				modifier_army_sub_unit_Special_Forces_speed_factor = 0.10
+			}
+		}
+		PER_revised_draft = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_revised_draft" }
+			picture = army_war_college
+			modifier = {
+				personnel_cost_multiplier_modifier = -0.10
+			}
+		}
+		PER_new_military_industry = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_new_military_industry" }
+			picture = army_cheap
+			modifier = {
+				military_industry_tax_modifier = 0.15
+			}
+		}
+		PER_new_military_industry2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_new_military_industry2" }
+			picture = army_cheap
+			modifier = {
+				military_industry_tax_modifier = 0.25
+				production_lack_of_resource_penalty_factor = -0.15
+			}
+		}
+		PER_iranian_disunity = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_disunity" }
+			picture = self_humiliation
+			modifier = {
+			foreign_influence_defense_modifier = -0.20
+			propaganda_campaign_cost_modifier = 0.15
+			civilian_intel_to_others = 20
+			production_speed_buildings_factor = -0.15
+			}
+		}
+		PER_iranian_disunity2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_disunity2" }
+			picture = self_humiliation
+			modifier = {
+			foreign_influence_defense_modifier = -0.15
+			propaganda_campaign_cost_modifier = 0.10
+			civilian_intel_to_others = 15
+			production_speed_buildings_factor = -0.10
+			}
+		}
+		PER_iranian_disunity3 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_disunity3" }
+			picture = self_humiliation
+			modifier = {
+			foreign_influence_defense_modifier = -0.10
+			propaganda_campaign_cost_modifier = 0.05
+			civilian_intel_to_others = 10
+			production_speed_buildings_factor = -0.05
+			}
+		}
+		PER_iranian_disunity4 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_disunity4" }
+			picture = self_humiliation
+			modifier = {
+			foreign_influence_defense_modifier = -0.05
+			civilian_intel_to_others = 5
+			}
+		}
+		PER_iranian_unity = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_unity" }
+			picture = iranian_unity
+			modifier = {
+			foreign_influence_defense_modifier = 0.20
+			propaganda_campaign_cost_modifier = -0.15
+			civilian_intel_to_others = -25
+			production_speed_buildings_factor = 0.10
+			}
+		}
+		PER_united_against_enemies = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_united_against_enemies" }
+			picture = volunteer_expedition_bonus
+			modifier = {
+				personnel_cost_multiplier_modifier = -0.10
+				recruitable_population_factor = 0.02
+			}
+			targeted_modifier = {
+				tag = HEZ
+				attack_bonus_against = 0.10
+			}
+		}
+		PER_united_against_enemies2 = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_united_against_enemies2" }
+			picture = volunteer_expedition_bonus
+			modifier = {
+				personnel_cost_multiplier_modifier = -0.15
+				recruitable_population_factor = 0.05
+			}
+			targeted_modifier = {
+				tag = HEZ
+				attack_bonus_against = 0.15
+			}
+		}
+		PER_iranian_syncretism = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_syncretism" }
+			picture = victors_of_ww1
+			modifier = {
+				resistance_growth = -0.05
+				monthly_population = 0.02
+			}
+		}
+		PER_iranian_society_unshackled = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_society_unshackled" }
+			picture = BOT_BDP_stronghold
+			modifier = {
+				production_speed_infrastructure_factor = 0.20
+				police_cost_multiplier_modifier = -0.15
+			}
+		}
+		PER_saving_iran_1 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_saving_iran_1" }
+			picture = international_treaty
+			modifier = {
+				bureaucracy_cost_multiplier_modifier = -0.10
+				corruption_cost_factor = -0.15
+			}
+		}
+		PER_saving_iran_2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_saving_iran_2" }
+			picture = international_treaty
+			modifier = {
+				corruption_cost_factor = -0.20
+				bureaucracy_cost_multiplier_modifier = -0.15
+			}
+		}
+		PER_saving_iran_3 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_saving_iran_3" }
+			picture = international_treaty
+			modifier = {
+				bureaucracy_cost_multiplier_modifier = -0.20
+				corruption_cost_factor = -0.30
+			}
+		}
+		PER_bp_contracts = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_bp_contracts" }
+			picture = scientists_defect
+			modifier = {
+				production_speed_rail_way_factor = 0.15
+				resource_export_multiplier_modifier = 0.10
+			}
+		}
+		PER_american_oil_deals = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_american_oil_deals" }
+			picture = scientists_defect
+			modifier = {
+				projects_cost_modifier = -0.10
+				democratic_acceptance = 25
+			}
+		}
+		PER_atoms_for_peace = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_atoms_for_peace" }
+			picture = shared_research
+			modifier = {
+				production_speed_nuclear_reactor_factor = 0.15
+				research_speed_factor = 0.05
+			}
+		}
+		PER_mutual_tourim_tur = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mutual_tourim_tur" }
+			picture = new_deal
+			modifier = {
+				receiving_investment_cost_modifier = -0.10
+				investment_duration_modifier = -0.05
+			}
+		}
+		PER_cento_spirit = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_cento_spirit1" }
+			picture = national_defenders
+			modifier = {
+				training_time_factor = -0.15
+				max_planning_factor = 0.10
+				send_volunteer_size = 2
+			}
+		}
+		PER_cento_spirit2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_cento_spirit2" }
+			picture = national_defenders
+			modifier = {
+				training_time_factor = -0.25
+				max_planning_factor = 0.20
+				send_volunteer_size = 3
+			}
+		}
+		PER_immortals1 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_immortals1" }
+			picture = winter_mt_war
+			modifier = {
+				special_forces_training_time_factor = -0.05
+				training_time_factor = -0.05
+				army_org_factor = 0.05
+			}
+		}
+		PER_immortals2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_immortals2" }
+			picture = winter_mt_war
+			modifier = {
+				special_forces_training_time_factor = -0.05
+				training_time_factor = -0.10
+				army_org_factor = 0.10
+				land_reinforce_rate = 0.05
+			}
+		}
+		PER_immortals3 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_immortals3" }
+			picture = winter_mt_war
+			modifier = {
+				special_forces_training_time_factor = -0.05
+				training_time_factor = -0.15
+				army_org_factor = 0.15
+				land_reinforce_rate = 0.10
+				army_core_defence_factor = 0.05
+			}
+		}
+		PER_border_security1 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_border_security1" }
+			picture = fortification
+			modifier = {
+				production_speed_coastal_bunker_factor = 0.10
+			}
+		}
+		PER_border_security2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_border_security2" }
+			picture = fortification
+			modifier = {
+				production_speed_bunker_factor = 0.10
+				production_speed_coastal_bunker_factor = 0.15
+			}
+		}
+		PER_american_backing1 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_american_backing" }
+			picture = USA_gun_funding
+			modifier = {
+				police_cost_multiplier_modifier = -0.05
+				crime_fighting_cost_factor = -0.10
+				intel_network_gain_factor = -0.05
+			}
+		}
+		PER_american_backing2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_american_backing2" }
+			picture = USA_gun_funding
+			modifier = {
+				police_cost_multiplier_modifier = -0.10
+				crime_fighting_cost_factor = -0.15
+				intel_network_gain_factor = -0.10
+			}
+		}
+		PER_we_do_it = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_we_do_it" }
+			picture = democracy
+			modifier = {
+				police_cost_multiplier_modifier = 0.05
+				investment_cost_modifier = -0.03
+			}
+		}
+		PER_we_do_it2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_we_do_it2" }
+			picture = democracy
+			modifier = {
+				police_cost_multiplier_modifier = 0.05
+				investment_cost_modifier = -0.05
+				resource_export_multiplier_modifier = 0.05
+			}
+		}
+		PER_free_majlis = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_free_majlis" }
+			picture = democracy
+			modifier = {
+				tax_rate_change_multiplier_modifier = 0.10
+				econ_cycle_upg_cost_multiplier_modifier = -0.05
+				trade_laws_cost_factor = -0.15
+			}
+		}
+		PER_puppet_majlis = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_puppet_majlis" }
+			picture = democracy
+			modifier = {
+				propaganda_campaign_cost_modifier = -0.15
+				tax_rate_change_multiplier_modifier = -0.05
+				stability_factor = -0.05
+			}
+		}
+		PER_shahanshah = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_shahanshah" }
+			picture = shahanshah
+			modifier = {
+				stability_factor = 0.05
+				population_tax_income_multiplier_modifier = -0.02
+			}
+		}
+		PER_controlled_media = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_shahanshah2" }
+			picture = democracy
+			modifier = {
+				political_power_factor = 0.10
+			}
+		}
+		PER_shahanshah2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_shahanshah2" }
+			picture = shahanshah
+			modifier = {
+				conscription_factor = 0.10
+				personnel_cost_multiplier_modifier = -0.05
+			}
+		}
+		PER_chinese_rebellion = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_chinese_rebellion" }
+			picture = fire
+			modifier = {
+				resistance_growth = 0.15
+			}
+		}
+		PER_chinese_rebellion2 = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_chinese_rebellion2" }
+			picture = fire
+			modifier = {
+				return_on_investment_modifier = -0.02
+			}
+		}
+		PER_kurdish_promise = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_kurdish_promise" }
+			name = PER_kurdish_promise
+			picture = consumer_goods
+			targeted_modifier = {
+				tag = KUR
+				attack_bonus_against = -0.75
+			}
+		}
+		PER_open_eyes = { #democratic spirit
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_open_eyes" }
+			picture = navy_bonus
+			modifier = {
+				army_intel_factor = 0.30
+				enemy_operative_capture_chance_factor = 0.25
+			}
+		}
+		PER_mek_pla = { #Leftist Idea
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mek_pla" }
+			picture = soviet_advisors
+			modifier = {
+				Infantry_Weapon_Company_cost_factor = -0.05
+			}
+		}
+		PER_mek_pla2 = { #Leftist Idea
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mek_pla2" }
+			picture = soviet_advisors
+			modifier = {
+				Infantry_Weapon_Company_cost_factor = -0.10
+				Aircraft_Company_cost_factor = -0.10
+			}
+		}
+		PER_mek_pla3 = { #Leftist Idea
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mek_pla3" }
+			picture = soviet_advisors
+			modifier = {
+				Infantry_Weapon_Company_cost_factor = -0.15
+				Aircraft_Company_cost_factor = -0.15
+				Helicopter_Company_cost_factor = -0.10
+			}
+		}
+		PER_mek_liberation_front = { #Leftist Idea
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mek_liberation_front" }
+			picture = communism7
+			modifier = {
+				communism_drift = 0.04
+				global_building_slots_factor = 0.05
+				production_speed_industrial_complex_factor = 0.10
+			}
+		}
+		PER_mek_liberation_front2 = { #Leftist Idea
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mek_liberation_front2" }
+			picture = communism7
+			modifier = {
+				communism_drift = 0.04
+				global_building_slots_factor = 0.10
+				production_speed_industrial_complex_factor = 0.15
+			}
+		}
+		PER_mek_supply_strong = { #Leftist Idea
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_mek_supply_strong" }
+			picture = flexible_foreign_policy2
+			modifier = {
+				production_speed_rail_way_factor = 0.20
+				production_speed_supply_node_factor = 0.15
+				supply_node_range = 0.10
+			}
+		}
+		PER_inspire_revolutions = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_inspire_revolutions" }
+			picture = scw_intervention_rep
+
+			modifier = {
+				send_volunteer_divisions_required = -0.15
+				send_volunteer_size = 5
+				send_volunteers_tension = -0.25
+				civil_war_involvement_tension = -0.05
+				lend_lease_tension = -0.15
+			}
+		}
+		PER_iranian_glory = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_glory" }
+			picture = popular_front
+			modifier = {
+				nationalist_drift = 0.02
+				justify_war_goal_time = -0.10
+			}
+		}
+		PER_iranian_glory2 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_glory2" }
+		picture = popular_front
+		modifier = {
+				nationalist_drift = 0.04
+				justify_war_goal_time = -0.15
+			}
+		}
+		PER_iranian_glory3 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_glory3" }
+		picture = popular_front
+		modifier = {
+				nationalist_drift = 0.08
+				justify_war_goal_time = -0.15
+				base_fuel_gain = 15
+			}
+		}
+		PER_iranian_glory4 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_iranian_glory4" }
+		picture = popular_front
+		modifier = {
+				nationalist_drift = 0.12
+				justify_war_goal_time = -0.20
+				base_fuel_gain = 15
+			}
+		}
+		PER_compromise_idea = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_compromise_idea" }
+		picture = escort_effort
+		modifier = {
+			opinion_gain_monthly_factor = 0.10
+			industrial_capacity_dockyard = 0.05
+			}
+		}
+		PER_youth_wing = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_youth_wing" }
+		picture = triumphant_will
+		modifier = {
+			party_popularity_stability_factor = 0.10
+			non_core_manpower = 0.05
+			}
+		}
+		PER_balochistan_resist = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_balochistan_resist" }
+		picture = fire
+		modifier = {
+			stability_factor = -0.05
+			political_power_factor = -0.05
+			}
+		}
+		PER_condemned_party = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_condemned_party" }
+		picture = army_corruption
+		modifier = {
+			opinion_gain_monthly_factor = -0.35
+			surrender_limit = -0.45
+			offensive_war_stability_factor = -0.50
+			}
+		}
+		PER_condemned_party2 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_condemned_party2" }
+		picture = army_corruption
+		modifier = {
+			opinion_gain_monthly_factor = -0.25
+			surrender_limit = -0.35
+			offensive_war_stability_factor = -0.40
+			}
+		}
+		PER_condemned_party3 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_condemned_party3" }
+		picture = army_corruption
+		modifier = {
+			opinion_gain_monthly_factor = -0.15
+			surrender_limit = -0.25
+			offensive_war_stability_factor = -0.30
+			}
+		}
+		PER_condemned_party4 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_condemned_party4" }
+		picture = army_corruption
+		modifier = {
+			opinion_gain_monthly_factor = -0.05
+			surrender_limit = -0.15
+			offensive_war_stability_factor = -0.20
+			}
+		}
+		PER_new_mili_budget = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_new_mili_budget" }
+		picture = gentlemen_officers
+		modifier = {
+			army_fuel_consumption_factor = -0.15
+			out_of_supply_factor = -0.10
+			}
+		}
+		PER_new_mili_budget2 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_new_mili_budget2" }
+		picture = gentlemen_officers
+		modifier = {
+			army_fuel_consumption_factor = -0.15
+			out_of_supply_factor = -0.10
+			equipment_upgrade_xp_cost = -0.25
+			}
+		}
+		PER_new_mili_budget3 = { #Pan-Iranist Idea
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_new_mili_budget3" }
+		picture = gentlemen_officers
+		modifier = {
+			army_fuel_consumption_factor = -0.15
+			out_of_supply_factor = -0.10
+			unit_upkeep_attrition_factor = -0.30
+			}
+		}
 	}
 	hidden_ideas = {
 		PER_power_export = {
@@ -4151,9 +5471,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4168,8 +5485,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = army_corruption2
 
@@ -4197,8 +5512,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = consumer_goods
 
 			modifier = {
@@ -4214,8 +5527,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = consumer_goods
 
@@ -4238,9 +5549,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				research_speed_factor = 0.01
 			}
@@ -4253,9 +5561,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4272,9 +5577,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				research_speed_factor = 0.025
 			}
@@ -4287,9 +5589,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4306,9 +5605,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				research_speed_factor = 0.03
 			}
@@ -4321,9 +5617,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 			modifier = {
 				research_speed_factor = 0.04
@@ -4339,9 +5632,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				research_speed_factor = 0.05
 			}
@@ -4352,8 +5642,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			targeted_modifier = {
 				tag = SAU
@@ -4367,8 +5655,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			targeted_modifier = {
 				tag = ISR
 				intel_network_gain_factor = 0.15
@@ -4380,8 +5666,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			targeted_modifier = {
 				tag = TUR
@@ -4395,8 +5679,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			targeted_modifier = {
 				tag = AZE
 				intel_network_gain_factor = 0.15
@@ -4409,8 +5691,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			targeted_modifier = {
 				tag = AZE
 				intel_network_gain_factor = 0.20
@@ -4422,8 +5702,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			modifier = {
 				new_operative_slot_bonus = 1
@@ -4438,8 +5716,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			modifier = {
 				new_operative_slot_bonus = 1
 				commando_trait_chance_factor = 0.05
@@ -4452,8 +5728,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 
 
@@ -4471,8 +5745,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = IRGC
 
@@ -4493,8 +5765,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = IRGC
 
@@ -4519,8 +5789,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = IRGC
 
 			modifier = {
@@ -4543,8 +5811,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = IRGC
 
 			modifier = {
@@ -4561,8 +5827,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = IRGC
 
@@ -4583,8 +5847,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = IRGC
 
@@ -4609,8 +5871,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = IRGC
 
 			modifier = {
@@ -4633,8 +5893,6 @@ ideas = {
 			allowed_civil_war = {
 			}
 
-			cancel = {}
-
 			picture = IRGC
 
 			modifier = {
@@ -4651,8 +5909,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = IRGC
 
@@ -4672,8 +5928,6 @@ ideas = {
 
 			allowed_civil_war = {
 			}
-
-			cancel = {}
 
 			picture = IRGC
 
@@ -4696,9 +5950,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				industrial_capacity_factory = 0.05
 				industrial_capacity_dockyard = 0.05
@@ -4714,9 +5965,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4735,9 +5983,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				intel_network_gain_factor = 0.10
 				intel_from_combat_factor = 0.05
@@ -4754,9 +5999,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4781,9 +6023,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4814,9 +6053,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				production_speed_nuclear_reactor_factor = 0.20
 			}
@@ -4828,9 +6064,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = no
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4848,9 +6081,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				air_accidents_factor = -0.10
 				air_agility_factor = 0.03
@@ -4866,9 +6096,6 @@ ideas = {
 				always = no
 			}
 
-			cancel = {
-			}
-
 			modifier = {
 				static_anti_air_hit_chance_factor = 0.30
 				navy_anti_air_attack_factor = 0.15
@@ -4882,9 +6109,6 @@ ideas = {
 
 			allowed_civil_war = {
 				always = yes
-			}
-
-			cancel = {
 			}
 
 			modifier = {
@@ -4910,9 +6134,10 @@ ideas = {
 			picture = ummah_focus
 
 			modifier = {
-				conscription_factor = 0.02
-				communism_drift = 0.01
+				conscription = 0.02
+				communism_drift = 0.02
 				consumer_goods_factor = -0.02
+				population_tax_income_multiplier_modifier = 0.03
 			}
 		}
 		PER_irgc_black_market_exploits = {
@@ -4930,7 +6155,7 @@ ideas = {
 			}
 
 			modifier = {
-				custom_modifier_tooltip = PER_irgc_black_market_exploits_tt
+				custom_modifier_tooltip = irgc_black_market_income_tt
 			}
 		}
 		PER_capital_moved_to_isfahan = {
@@ -4948,8 +6173,52 @@ ideas = {
 					state = 405
 					remember_old_capital = no
 				}
+			}		}
+		PER_fata = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_fata" }
+
+			allowed = {
 			}
-			cancel = {
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			modifier = {
+				encryption_factor = 0.25
+				foreign_subversive_activites = -0.10
+				foreign_influence_defense_modifier = 0.20
+			}
+		}
+		PER_saudis_in_shock = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_saudis_in_shock" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			modifier = {
+				army_defence_factor = -0.15
+				army_speed_factor = -0.15
+				army_org = -3
+			}
+		}
+		PER_azeri_civilwar_defence = {
+ 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea PER_azeri_civilwar_defence" }
+
+			allowed = {
+			}
+
+			allowed_civil_war = {
+				always = yes
+			}
+
+			modifier = {
+				army_attack_factor = -3.00
+ 				army_defence_factor = 1.00
 			}
 		}
 	}

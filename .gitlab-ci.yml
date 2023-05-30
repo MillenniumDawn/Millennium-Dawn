@@ -8,29 +8,74 @@
 image: mcr.microsoft.com/dotnet/core/sdk:3.0
 
 variables:
-  DOCKER_DRIVER: overlay2
-  GIT_STRATEGY: clone # Please see https://github.com/cwtools/cwtools-action/issues/3 for details as to why this is needed
-  INPUT_GAME: "hoi4" # Change to the game used in your project
-  # Variables below are optional and set to their default values - uncomment and change them if you wish so
-  #INPUT_MODPATH: ''
-  #INPUT_CACHE: ''
-  #INPUT_LOCLANGUAGES: 'english'
-  #INPUT_RULES: ''
-  #INPUT_RULESREF: 'master'
-  #INPUT_VANILLAMODE: '0'
-  #For CW226: Localisation key commands aren't supported, issue report here: https://github.com/cwtools/cwtools-hoi4-config/issues/65
-  #for CW251: AND is unneededa warnings Bird Need to fix
-  INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
-  #INPUT_SUPPRESSEDFILES: '[]'
-  #INPUT_CWTOOLSCLIVERSION: ''
+ DOCKER_DRIVER: overlay2
+ GIT_STRATEGY: clone # Please see https://github.com/cwtools/cwtools-action/issues/3 for details as to why this is needed
+ INPUT_GAME: "hoi4" # Change to the game used in your project
+ # Variables below are optional and set to their default values - uncomment and change them if you wish so
+ #INPUT_MODPATH: ''
+ #INPUT_CACHE: ''
+ #INPUT_LOCLANGUAGES: 'english'
+ #INPUT_RULES: ''
+ #INPUT_RULESREF: 'master'
+ #INPUT_VANILLAMODE: '0'
+ #For CW226: Localisation key commands aren't supported, issue report here: https://github.com/cwtools/cwtools-hoi4-config/issues/65
+ #for CW251: AND is unneeded warnings Bird Need to fix
+ INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
+ #INPUT_SUPPRESSEDFILES: '[]'
+ #INPUT_CWTOOLSCLIVERSION: ''
 
 stages:
-  - CWTools_CI
+ - codingstandards
+ - styling
+ - correctstyling
+ - release
+
+CodingStandards:
+ stage: codingstandards
+ image: python:3.11
+ only:
+  - merge_requests
+ script:
+  - pip install requests
+  - python3 tools/check_basic_style_2.py $Bot_Token
+
+Styling:
+ stage: styling
+ image: python:3.11
+ only: [merge_requests]
+ needs: ["CodingStandards"]
+ script:
+  - pip install requests
+  - python3 tools/coding_standards.py $Bot_Token
+
+FixingStyling:
+  stage: correctstyling
+  image: python:3.11
+  only:
+    - merge_requests
+  needs: ["Styling"]
+  script:
+   - pip install requests
+   - python3 tools/fix_styling.py $Bot_Token
+  after_script:
+    - git config --global user.email "millenniumdawnmod@gmail.com"
+    - git config --global user.name "millennium_dawn_cwtools"
+    - git config --global push.default simple
+    - git remote set-url origin https://millennium_dawn_cwtools:$Bot_Token@gitlab.com/Millennium_Dawn/Millennium_Dawn.git
+    - git add -A
+    - git commit -m 'Fixed Styling for you'
+    - git push -u origin HEAD:$CI_COMMIT_REF_NAME
+    - python3 tools/check_basic_style.py $Bot_Token
+    - python3 tools/check_basic_style_2.py $Bot_Token
+  when: on_failure
 
 CWTools_CI:
- stage: CWTools_CI
+ stage: codingstandards
  only: [merge_requests]
+ tags:
+   - cwtools
  script:
+  - echo "Pulling down the CWTools action validator"
   - wget -O - -q https://raw.githubusercontent.com/cwtools/cwtools-action/v1.0.0/lib/gitlab_setup.sh | sh -s
 
  # Optional, expose the CWTools errors in JSON
@@ -39,3 +84,16 @@ CWTools_CI:
   paths:
    - output.json
   when: always
+
+# This section is purely to create a releasable off the most recent commit on this tag. This should allow me to save some time in creating releasable assets.
+create_releaseable:
+ stage: release
+ rules:
+  - if: $CI_COMMIT_TAG
+ script:
+  - echo 'Creating a Release'
+  - curl --location --output /usr/local/bin/release-cli "https://release-cli-downloads.s3.amazonaws.com/latest/release-cli-linux-amd64"
+  - chmod +x /usr/local/bin/release-cli
+ release:
+   tag_name: '$CI_COMMIT_TAG'                # The version is incremented per pipeline.
+   description: 'Release for $CI_COMMIT_TAG from $CI_COMMIT_SHA $CI_COMMIT_TIMESTAMP'
