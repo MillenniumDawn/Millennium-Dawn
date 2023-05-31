@@ -653,11 +653,11 @@ init_auto_influence_array = {
 }
 
 update_auto_influence_array = {
-	log = "[GetDateText]: [Root.GetName]: update_auto_influence_array running"
+	log = "[GetDateText]: [THIS.GetName]: update_auto_influence_array running"
 	set_variable = { auto_influence_cap = 3 }
-	add_to_variable = { auto_influence_cap = modifier@foreign_influence_auto_influence_cap_modifier }
+	add_to_variable = { auto_influence_cap = THIS.modifier@foreign_influence_auto_influence_cap_modifier }
 
-	log = "[GetDateText]: [Root.GetName]: auto_influence_cap [?auto_influence_cap]"
+	log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
 	set_variable = { auto_influence_cost = 0 }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
 		add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
@@ -665,9 +665,14 @@ update_auto_influence_array = {
 
 	for_each_loop = {
 		array = auto_influence_array
-		if = { limit = { check_variable = { i > auto_influence_cap } }
-			log = "[GetDateText]: [Root.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i] from auto influence list"
+		if = { limit = { check_variable = { i > auto_influence_cap } NOT = { check_variable = { v = 0 } } }
+			log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
 			set_variable = { auto_influence_array^i = 0 }
+			var:auto_influence_array^i = {
+				PREV = {
+					remove_auto_influencer_request = yes
+				}
+			}
 		}
 		if = {
 			limit = { NOT = { check_variable = { v = 0 } } }
@@ -677,6 +682,7 @@ update_auto_influence_array = {
 
 	multiply_variable = { auto_influence_cost = -1 }
 	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	update_dirty_influence_var = yes
 }
 
 # SCOPE: Executed in ROOT
