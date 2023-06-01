@@ -1878,6 +1878,177 @@
 		}
 	}
 
+	lsp_calculate_civil_war_volounteers = {
+		if = {
+			limit = {
+				has_leftwing_populist_government = yes
+			}
+			set_variable = { civil_war_volounteers = party_pop_array^6 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^20 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^21 }
+			multiply_variable = { civil_war_volounteers = 1.25 }
+		}
+		if = {
+			limit = {
+				has_rightwing_populist_government = yes
+			}
+			set_variable = { civil_war_volounteers = party_pop_array^4 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^5 }
+			multiply_variable = { civil_war_volounteers = 1.25 }
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_rightwing_populist_government = yes
+					has_leftwing_populist_government = yes
+				}
+			}
+			set_variable = { civil_war_volounteers = party_pop_array^4 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^5 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^6 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^20 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^21 }
+		}
+		set_variable = { civil_war_volounteers_2 = 1 }
+		subtract_from_variable = { civil_war_volounteers_2 = civil_war_volounteers }
+		multiply_variable = { civil_war_volounteers = 50 }
+		multiply_variable = { civil_war_volounteers_2 = 50 }
+		round_variable = civil_war_volounteers
+		round_variable = civil_war_volounteers_2
+		clamp_variable = {
+			var = civil_war_volounteers
+			min = 0
+			max = 50
+		}
+		clamp_variable = {
+			var = civil_war_volounteers_2
+			min = 0
+			max = 50
+		}
+	}
+
+	lsp_spawn_volounteers_effect = {
+		if = {
+			limit = {
+				check_variable = {
+					civil_war_volounteers > 0
+				}
+			}
+			add_to_variable = { civil_war_volounteers = -1 }
+			add_manpower = 2000
+			division_template = {
+				name = "Volontari"
+				regiments = {
+					Mot_Militia_Bat = { x = 0 y = 0 }
+					Mot_Militia_Bat = { x = 0 y = 1 }
+					Mot_Militia_Bat = { x = 0 y = 2 }
+					Mot_Militia_Bat = { x = 0 y = 3 }
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			lsp_spawn_volounteers_effect = yes
+		}
+	}
+
+	lsp_spawn_volounteers_effect_2 = {
+		if = {
+			limit = {
+				check_variable = {
+					civil_war_volounteers_2 > 0
+				}
+			}
+			add_to_variable = { civil_war_volounteers_2 = -1 }
+			add_manpower = 2000
+			division_template = {
+				name = "Volontari"
+				regiments = {
+					Mot_Militia_Bat = { x = 0 y = 0 }
+					Mot_Militia_Bat = { x = 0 y = 1 }
+					Mot_Militia_Bat = { x = 0 y = 2 }
+					Mot_Militia_Bat = { x = 0 y = 3 }
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = FROM
+					count = 1
+				}
+			}
+			lsp_spawn_volounteers_effect_2 = yes
+		}
+	}
+
+	lsp_popularity_effect = {
+		if = {
+			limit = {
+				has_leftwing_populist_government = yes
+			}
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+		if = {
+			limit = {
+				has_rightwing_populist_government = yes
+			}
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.015 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.015 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_rightwing_populist_government = yes
+					has_leftwing_populist_government = yes
+				}
+			}
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+	}
+
 	ITA_calculate_civil_war_size = {
 		set_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^0 }
 		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^6 }
