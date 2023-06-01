@@ -2299,23 +2299,6 @@ on_actions = {
 			}
 		}
 	}
-	on_war_relation_added = {
-		effect = {
-			FROM = {
-				if = {
-					limit = {
-						original_tag = ITA
-						ROOT = {
-							original_tag = ITA
-						}
-					}
-					lsp_spawn_volounteers_effect = yes
-					clear_variable = civil_war_volounteers
-					clear_variable = civil_war_volounteers_2
-				}
-			}
-		}
-	}
 
 	#ROOT is winner #FROM gets annexed
 	on_civil_war_end_before_annexation = {
@@ -2327,6 +2310,11 @@ on_actions = {
 					}
 				}
 				FROM = {
+					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+					delete_units = {
+						division_template = \"Volontari\"
+						disband = yes
+					}
 					transfer_units_fraction = {
 						target = ROOT
 						size = 1
@@ -2337,6 +2325,11 @@ on_actions = {
 					}
 				}
 				ROOT = {
+					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+					delete_units = {
+						division_template = \"Volontari\"
+						disband = yes
+					}
 					for_each_loop = {
 						array = missile_inventory_array
 						value = v
@@ -2353,6 +2346,12 @@ on_actions = {
 	#ROOT is winner #FROM gets annexed
 	on_civil_war_end = {
 		effect = {
+			every_state = {
+				limit = {
+					has_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+				}
+				remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+			}
 			if = {
 				limit = {
 					ROOT = {
