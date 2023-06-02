@@ -109,17 +109,14 @@ focus_tree = {
 		y = 1
 		relative_position_id = PER_IROST
 		prerequisite = { focus = PER_IROST }
-		available = {
-			hidden_trigger = { has_country_flag = PER_allow_nuclear }
-			OR = {
-				emerging_hardline_shiite_are_in_power = yes
-				emerging_moderate_shiite_are_in_power = yes
-			}
-		}
 		cost = 7.15 # 50 Days
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_IRANIAN_NUCLEAR_DEV FOCUS_FILTER_WAR_SUPPORT }
 
 		completion_reward = {
+			if = {
+				limit = { has_idea = PER_post_rev_relief }
+				remove_ideas = PER_post_rev_relief
+			}
 			add_war_support = 0.05
 			add_tech_bonus = {
 				name = nuclear_reactors_research_bonus
@@ -2381,7 +2378,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = PER_phase_one_iran
 		prerequisite = { focus = PER_phase_two_meditaraneh focus = PER_phase_two_cacauses }
-
+		bypass = { NOT = { country_exists = TUR } }
 		cost = 4.29 # 30 Days
 
 		available = {
@@ -16534,7 +16531,7 @@ focus_tree = {
 			##sets defaults for army values
 			add_to_variable = { var = army_size_jang value = 0.85 }
 			add_to_variable = { var = PER_army_size_Display_number value = 20 }
-			clamp_variable = { var = army_size_jang min = 0.25 max = 1 }
+			clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
 			clamp_variable = { var = PER_army_size_Display_number min = 20 max = 100 }
 		}
 		completion_reward = {
@@ -16544,7 +16541,7 @@ focus_tree = {
 			#Note to sheep he needs to clean this up onces droid reads and combine variables in one effect
 			custom_effect_tooltip =	PER_army_size_Plus_five_tt
 			add_to_variable = { var = army_size_jang value = -0.05 }
-			clamp_variable = { var = army_size_jang min = 0.25 max = 1 }
+			clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
 			clamp_variable = { var = PER_army_size_Display_number min = 0 max = 100 }
 			ROOT = { country_event = { id = PER_revolution.1 hours = 0 } }
 			mark_focus_tree_layout_dirty = yes
@@ -17908,7 +17905,7 @@ focus_tree = {
 		cost = 10
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PER_regional_strongarm"
+			log = "[GetDateText]: [Root.GetName]: Focus PER_rescind_turkmenchai"
 			PER = {
 				create_wargoal = {
 					target = TRK
@@ -17959,11 +17956,10 @@ focus_tree = {
 		y = 6
 		available = {
 			has_government = democratic
+			country_exists = IRQ
 		}
 		bypass = {
-			IRQ = {
-				has_government = democratic
-			}
+			NOT = { country_exists = IRQ }
 		}
 		prerequisite = { focus = PER_prospect_of_expansion }
 		relative_position_id = PER_regional_safety
@@ -17989,15 +17985,14 @@ focus_tree = {
 		x = -3
 		y = 6
 		available = {
+			country_exists = SYR
 			has_government = democratic
 			SYR = {
 				democratic > 0.5
 			}
 		}
 		bypass = {
-			SYR = {
-				has_government = democratic
-			}
+			NOT = { country_exists = SYR }
 		}
 		prerequisite = { focus = PER_prospect_of_expansion }
 		relative_position_id = PER_regional_safety
@@ -18639,7 +18634,7 @@ focus_tree = {
 			country_exists = AZE
 			has_government = communism
 			emerging_anarchist_communism_are_in_power = yes
-		 }
+		}
 		prerequisite = { focus = PER_internation_front }
 		relative_position_id = PER_internation_front
 		cost = 5.72
@@ -18655,6 +18650,34 @@ focus_tree = {
 				set_temp_variable = { party_popularity_increase = 0.10 }
 				set_temp_variable = { temp_outlook_increase = 0.10 }
 				add_relative_party_popularity = yes
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = PER_attack_armenia
+		icon = attack_armenia
+
+		x = -2
+		y = 2
+		available = {
+			country_exists = ARM
+			has_government = communism
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		prerequisite = { focus = PER_meet_azeri_com }
+		relative_position_id = PER_internation_front
+		cost = 5.72
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PER_attack_armenia"
+			PER = {
+				create_wargoal = {
+					target = ARM
+					type = puppet_wargoal_focus
+				}
 			}
 		}
 		ai_will_do = {
@@ -19693,8 +19716,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_party_of_iranians"
 			set_temp_variable = { party_index = 20 }
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.10 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
 			add_command_power = 25
 		}
@@ -19817,6 +19840,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_secure_national_unity"
+			AFG = { every_core_state = { add_core_of = PER } }
+			TAJ = { every_core_state = { add_core_of = PER } }
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
 			add_stability = -0.02
@@ -19841,7 +19866,7 @@ focus_tree = {
 		}
 		prerequisite = { focus = PER_secure_national_unity }
 		relative_position_id = PER_secure_national_unity
-		cost = 7.15
+		cost = 10
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_united_against_doshman"
@@ -19924,7 +19949,7 @@ focus_tree = {
 		}
 		prerequisite = { focus = PER_party_of_iranians }
 		relative_position_id = PER_pan_iranist
-		cost = 5.72
+		cost = 10
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_realizing_irans_glory"
@@ -20257,6 +20282,7 @@ focus_tree = {
 		available = {
 			has_government = nationalist
 			nationalist_right_wing_populists_are_in_power = yes
+			nationalist > 0.60
 		}
 		prerequisite = { focus = PER_new_youth_wing }
 		prerequisite = { focus = PER_heirs_of_sassan }
@@ -20319,7 +20345,7 @@ focus_tree = {
 		}
 		prerequisite = { focus = PER_all_that_was_taken }
 		relative_position_id = PER_all_that_was_taken
-		cost = 8
+		cost = 10
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_address_iranic_states"
@@ -20620,7 +20646,12 @@ focus_tree = {
 		cost = 7.15
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PER_agitate_anatolian_kurds"
+			log = "[GetDateText]: [Root.GetName]: Focus PER_agitate_anatolian_kurds_war"
+			TUR = {
+				country_event = {
+					id = PER_political.9898
+				}
+			}
 			162 = { transfer_state_to = KUR }
 			935 = { transfer_state_to = KUR }
 		}
@@ -20632,7 +20663,7 @@ focus_tree = {
 		id = PER_bring_them_into_fold
 		icon = Paternal_Autocrat
 
-		x = 0
+		x = 1
 		y = 3
 		available = {
 			has_government = nationalist
@@ -20691,20 +20722,25 @@ focus_tree = {
 			custom_trigger_tooltip = {
 				tooltip = PER_iranic_fed
 				hidden_trigger = {
-					OR = {
-						has_country_flag = PER_tajiks_in
-						has_country_flag = PER_afghans_in
-						AND = {
-							409 = { is_core_of = PER }
-							415 = { is_core_of = PER }
-							412 = { is_core_of = PER }
-							410 = { is_core_of = PER }
-							414 = { is_core_of = PER }
-							411 = { is_core_of = PER }
-							722 = { is_core_of = PER }
-							724 = { is_core_of = PER }
-							723 = { is_core_of = PER }
-						}
+					AND = {
+						409 = { is_core_of = PER }
+						415 = { is_core_of = PER }
+						412 = { is_core_of = PER }
+						410 = { is_core_of = PER }
+						414 = { is_core_of = PER }
+						411 = { is_core_of = PER }
+						722 = { is_core_of = PER }
+						724 = { is_core_of = PER }
+						723 = { is_core_of = PER }
+						409 = { is_owned_and_controlled_by = PER }
+						415 = { is_owned_and_controlled_by = PER }
+						412 = { is_owned_and_controlled_by = PER }
+						410 = { is_owned_and_controlled_by = PER }
+						414 = { is_owned_and_controlled_by = PER }
+						411 = { is_owned_and_controlled_by = PER }
+						722 = { is_owned_and_controlled_by = PER }
+						724 = { is_owned_and_controlled_by = PER }
+						723 = { is_owned_and_controlled_by = PER }
 					}
 				}
 			}
@@ -22827,10 +22863,14 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_fate_of_nuke_program"
-			set_country_flag = PER_allow_nuclear
-			custom_effect_tooltip = PER_nuclear_allowed
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
+			add_tech_bonus = {
+				name = Cat_nuclear_reactors
+				bonus = 0.5
+				uses = 2
+				category = Cat_nuclear_reactors
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -22948,8 +22988,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_nuclear_assistance"
-			set_country_flag = PER_allow_nuclear
-			custom_effect_tooltip = PER_nuclear_allowed
 			add_tech_bonus = {
 				name = BOT_resource_excavation_research
 				bonus = 0.5
@@ -23680,7 +23718,7 @@ focus_tree = {
 			add_political_power = 25
 			custom_effect_tooltip = PER_bribe_officers_loc
 			add_to_variable = { var = army_size_jang value = -0.05 }
-			clamp_variable = { var = army_size_jang min = 0.25 max = 1 }
+			clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
 			add_to_variable = { var = PER_army_size_Display_number value = 5 }
 			clamp_variable = { var = PER_army_size_Display_number min = 20 max = 100 }
 		}
@@ -23842,6 +23880,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_dissolve_vaja"
+				create_intelligence_agency = {
+					name = "Iranian Security Center"
+					icon = GFX_intelligence_agency_logo_generic_5
+				}
 			swap_ideas = {
 				remove_idea = vevak
 				add_idea = fossil_fuel_industry
