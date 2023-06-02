@@ -28,6 +28,7 @@ stages:
  - codingstandards
  - styling
  - correctstyling
+ - release
 
 CodingStandards:
  stage: codingstandards
@@ -83,3 +84,16 @@ CWTools_CI:
   paths:
    - output.json
   when: always
+
+# This section is purely to create a releasable off the most recent commit on this tag. This should allow me to save some time in creating releasable assets.
+create_releaseable:
+ stage: release
+ rules:
+  - if: $CI_COMMIT_TAG
+ script:
+  - echo 'Creating a Release'
+  - curl --location --output /usr/local/bin/release-cli "https://release-cli-downloads.s3.amazonaws.com/latest/release-cli-linux-amd64"
+  - chmod +x /usr/local/bin/release-cli
+ release:
+   tag_name: '$CI_COMMIT_TAG'                # The version is incremented per pipeline.
+   description: 'Release for $CI_COMMIT_TAG from $CI_COMMIT_SHA $CI_COMMIT_TIMESTAMP'
