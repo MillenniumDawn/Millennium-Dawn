@@ -604,8 +604,9 @@ on_actions = {
 						limit = {
 							NOT = { check_variable = { v = 0 } }
 							ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
-							country_exists = var:auto_influence_array^i
+							var:auto_influence_array^i = { exists = yes }
 						}
+						log = "[GetDateText]: [ROOT.GetName]: Auto influencing [?var:auto_influence_array^i.GetName]"
 						set_temp_variable = { influence_target = v }
 						change_influence_percentage = yes
 						var:auto_influence_array^i = {
@@ -626,8 +627,8 @@ on_actions = {
 
 					# Clears Auto Influencer Who No Longer Exists
 					if = {
-						limit = { NOT = { country_exists = var:auto_influence_array^i }}
-						log = "[?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer request"
+						limit = { var:auto_influence_array^i = { exists = no } }
+						log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
 						var:auto_influence_array^i = {
 							PREV = {
 								remove_auto_influencer_request = yes
@@ -644,6 +645,7 @@ on_actions = {
 					is_ai = no
 					has_political_power < -100
 				}
+				log = "[GetDateText]: [THIS.GetName]: Political Power is under -100. Clearing the auto-influence array"
 				clear_array = auto_influence_array
 				set_variable = { auto_influence_users = 0 }
 				resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
