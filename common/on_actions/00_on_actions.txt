@@ -581,6 +581,8 @@ on_actions = {
 			# Neighbor Updates
 			update_neighbors_effects = yes # Updates Neighbor Effects
 
+			update_auto_influence_array = yes
+
 			# Auto-Influence Call
 			if = {
 				limit = {
@@ -596,19 +598,20 @@ on_actions = {
 				set_temp_variable = { tag_index = THIS.id }
 				for_each_loop = {
 					array = auto_influence_array
+					index = i
+					value = v
 					if = {
 						limit = {
 							NOT = { check_variable = { v = 0 } }
-							var:v = {
-								ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
-								exists = yes
-							}
+							ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
+							var:auto_influence_array^i = { exists = yes }
 						}
+						log = "[GetDateText]: [ROOT.GetName]: Auto influencing [?var:auto_influence_array^i.GetName]"
 						set_temp_variable = { influence_target = v }
 						change_influence_percentage = yes
-						add_to_variable = { nations_influenced = 1 }
-						var:v = {
+						var:auto_influence_array^i = {
 							ROOT = {
+								add_to_variable = { nations_influenced = 1 }
 								if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
 									set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
 								}
@@ -624,9 +627,10 @@ on_actions = {
 
 					# Clears Auto Influencer Who No Longer Exists
 					if = {
-						limit = { var:v = { exists = no } }
-						var:v = {
-							ROOT = {
+						limit = { var:auto_influence_array^i = { exists = no } }
+						log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
+						var:auto_influence_array^i = {
+							PREV = {
 								remove_auto_influencer_request = yes
 								update_auto_influence_array = yes
 								update_dirty_influence_var = yes
@@ -641,12 +645,14 @@ on_actions = {
 					is_ai = no
 					has_political_power < -100
 				}
+				log = "[GetDateText]: [THIS.GetName]: Political Power is under -100. Clearing the auto-influence array"
 				clear_array = auto_influence_array
 				set_variable = { auto_influence_users = 0 }
 				resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
 				update_auto_influence_array = yes
 				update_dirty_influence_var = yes
 			}
+
 
 			roll_corruption_events = yes
 
@@ -668,7 +674,6 @@ on_actions = {
 			100 = MD4_election_campaign.0
 
 			#County specials
-			1000 = election_SOV.1
 			1000 = brazil.39
 			1000 = spain.500
 			1000 = taiwan.3
@@ -2220,7 +2225,16 @@ on_actions = {
 				}
 			}
 
-
+			if = {
+				limit = {
+					FROM = { tag = UKR }
+					UKR = {
+						is_puppet = no
+						NOT = { has_country_flag = ukraine_spawned_vol }
+					}
+				}
+				war_declared_on_ukraine = yes
+			}
 
 			#Chinese aggression increase
 			if = {
@@ -2339,6 +2353,20 @@ on_actions = {
 					modify_stability_factor_effect = yes
 					set_temp_variable = { ITA_stability_weekly_change = 0.002 }
 					modify_stability_weekly_effect = yes
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						tag = PER
+						has_country_flag = PER_iranian_civilwar
+					}
+				}
+				ROOT = {
+				country_event = {
+					id = PER_revolution.300
+					days = 0
+					}
 				}
 			}
 			ROOT = {
