@@ -4,6 +4,9 @@ add_namespace = YEM_funds
 add_namespace = YEM_pearl
 add_namespace = YEM_jeddah
 add_namespace = YEM_jeddah_news
+add_namespace = YEM_party_leaders
+add_namespace = YEM_natural_disasters
+add_namespace = YEM_socotri_crisis
 
 ### Yemeni civil war cleanup events ###
 
@@ -1637,4 +1640,412 @@ country_event = { #terrorist attack in Aden
 	
 	is_triggered_only = yes
 	
+}
+
+#Party Leaders (Deaths, exile, etc.)
+
+country_event = { #Death of Abrahim bin Ali al-Wazir (has liberals in power)
+	id = YEM_party_leaders.1
+	title = YEM_party_leaders.1.t
+	desc = YEM_party_leaders.1.d
+	picture = null
+	
+	fire_only_once = yes
+
+	trigger = {
+		tag = YEM
+		has_country_leader = {
+			character = YEM_abrahim_al_wazir
+			ruling_only = yes
+		}
+		has_country_leader_ideology = liberalism
+		date > 2014.1.2
+	}
+	
+	option = {
+		name = YEM_party_leaders.1.a
+		log = "[GetDateText]: [This.GetName]:  YEM_party_leaders.1.a executed"
+		retire_character = YEM_abrahim_al_wazir
+		set_country_flag = YEM_abrahim_al_wazir_dead
+		promote_character = YEM_abdul_rahman_alrubai
+	}
+}
+
+country_event = { #Death of Abrahim bin Ali al-Wazir (no liberals in power)
+	id = YEM_party_leaders.2
+	
+	hidden = yes
+	fire_only_once = yes
+
+	trigger = {
+		tag = YEM
+		NOT = {
+			has_country_leader = {
+				character = YEM_abrahim_al_wazir
+				ruling_only = yes
+			}
+			has_country_leader_ideology = liberalism
+		}
+		date > 2014.1.2
+	}
+	
+	option = {
+		name = YEM_party_leaders.2.a
+		log = "[GetDateText]: [This.GetName]: YEM_party_leaders.2.a executed"
+		retire_character = YEM_abrahim_al_wazir
+		set_country_flag = YEM_abrahim_al_wazir_dead
+	}
+}
+
+country_event = { #Death of Muhammad Abdul Rahman Al-Rubai (has liberals in power)
+	id = YEM_party_leaders.3
+	title = YEM_party_leaders.3.t
+	desc = YEM_party_leaders.3.d
+	picture = null
+	
+	fire_only_once = yes
+
+	trigger = {
+		tag = YEM
+		has_country_leader = {
+			character = YEM_abdul_rahman_alrubai
+			ruling_only = yes
+		}
+		has_country_leader_ideology = liberalism
+		date > 2019.6.8
+	}
+	
+	option = {
+		name = YEM_party_leaders.3.a
+		log = "[GetDateText]: [This.GetName]:  YEM_party_leaders.3.a executed"
+		retire_character = YEM_abdul_rahman_alrubai
+		set_country_flag = YEM_abdul_rahman_alrubai_dead
+		promote_character =  YEM_abdul_razaz_amin
+	}
+}
+
+country_event = { #Death of Muhammad Abdul Rahman Al-Rubai (no liberals in power)
+	id = YEM_party_leaders.4
+	
+	hidden = yes
+	fire_only_once = yes
+
+	trigger = {
+		tag = YEM
+		NOT = {
+			has_country_leader = {
+				character = YEM_abdul_rahman_alrubai
+				ruling_only = yes
+			}
+			has_country_leader_ideology = liberalism
+		}
+		date > 2019.6.8
+	}
+	
+	option = {
+		name = YEM_party_leaders.4.a
+		log = "[GetDateText]: [This.GetName]: YEM_party_leaders.4.a executed"
+		retire_character = YEM_abdul_rahman_alrubai
+		set_country_flag = YEM_abdul_rahman_alrubai_dead
+	}
+}
+
+country_event = { #December 4th 1999 Socotra Flood, relief came around february-march 2000, mostly by the UAE
+	id = YEM_natural_disasters.1
+	title = YEM_natural_disasters.1.t
+	desc = YEM_natural_disasters.1.d
+	picture = GFX_YEM_socotra_2000
+	
+	fire_only_once = yes
+
+	trigger = {
+		tag = YEM
+		200 = {
+			is_owned_and_controlled_by = YEM
+		}
+		date < 2000.1.5
+	}
+	
+	option = {
+		name = YEM_natural_disasters.1.a
+		log = "[GetDateText]: [This.GetName]: YEM_natural_disasters.1.a executed"
+		200 = {
+			set_state_flag = YEM_slow_aid
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+			damage_building = {
+				type = naval_base
+				damage = 1
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					UAE = {
+						check_variable = { treasury > 0 }
+					}
+				}
+				UAE = {
+					country_event = {
+						id = YEM_natural_disasters.2
+						days = 30
+					}
+				}
+			}
+		}
+	}
+	option = {
+		name = YEM_natural_disasters.1.b
+		log = "[GetDateText]: [This.GetName]: YEM_natural_disasters.1.b executed"
+		200 = {
+			set_state_flag = YEM_slow_aid
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+			damage_building = {
+				type = naval_base
+				damage = 1
+			}
+		}
+		set_temp_variable = { percent_change = 1 }
+		change_domestic_influence_percentage = yes
+
+	}
+}
+
+country_event = { #December 4th 1999 Socotra Flood, relief came around february-march 2000, mostly by the UAE
+	id = YEM_natural_disasters.2
+	title = YEM_natural_disasters.2.t
+	desc = YEM_natural_disasters.2.d
+	picture = GFX_YEM_socotra_2000
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = YEM_natural_disasters.2.a
+		log = "[GetDateText]: [This.GetName]: YEM_natural_disasters.2.a executed"
+		200 = {
+			clr_state_flag = YEM_slow_aid
+			set_state_flag = YEM_UAE_aid
+			add_dynamic_modifier = {
+				modifier = YEM_UAE_RCS
+				days = 365
+			}
+		}
+		set_temp_variable  = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+		YEM = {
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = UAE }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = UAE
+				modifier = gave_aid
+			}
+		}
+	}
+	option = {
+		name = YEM_natural_disasters.2.b
+		log = "[GetDateText]: [This.GetName]: YEM_natural_disasters.2.b executed"
+		YEM = {
+			add_opinion_modifier = {
+				target = UAE
+				modifier = refused_aid
+			}
+		}
+	}
+}
+
+country_event = { #December 26th Indian Ocean Tsunami (Pretty much destroyed Al Ghaydah, shredded socotra, also affected Aden
+	id = YEM_natural_disasters.3
+	title = YEM_natural_disasters.3.t
+	desc = YEM_natural_disasters.3.d
+	picture = null
+	
+	fire_only_once = yes
+
+	trigger = {
+		tag = YEM
+		date > 2004.12.26
+	}
+	
+	option = {
+		name = YEM_natural_disasters.3.a
+		log = "[GetDateText]: [This.GetName]: YEM_natural_disasters.3.a executed"
+		200 = {
+			damage_building = {
+				type = infrastructure
+				damage = 3
+			}
+			damage_building = {
+				type = naval_base
+				damage = 5
+			}
+			damage_building = {
+				type = air_base
+				damage = 1
+			}
+		}
+		if = {
+			limit = {
+				200 = {
+					num_of_military_factories > 0
+				}
+			}
+			damage_building = {
+				type = arms_factory
+				damage = 3
+			}
+		}
+		if = {
+			limit = {
+				200 = {
+					num_of_civilian_factories > 0
+				}
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 3
+			}
+		}
+		if = {
+			limit = {
+				200 = {
+					num_of_naval_factories > 0
+				}
+			}
+			damage_building = {
+				type = dockyard
+				damage = 3
+			}
+		}
+		194 = {
+			damage_building = {
+				type = infrastructure
+				damage = 2
+			}
+			damage_building = {
+				type = naval_base
+				damage = 3
+			}
+			damage_building = {
+				type = air_base
+				damage = 2
+			}
+			add_victory_points = {
+				province = 9201
+				value = -1
+			}
+		}
+		if = {
+			limit = {
+				194 = {
+					num_of_military_factories > 0
+				}
+			}
+			damage_building = {
+				type = arms_factory
+				damage = 1
+			}
+		}
+		if = {
+			limit = {
+				194 = {
+					num_of_civilian_factories > 0
+				}
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 1
+			}
+		}
+		if = {
+			limit = {
+				194 = {
+					num_of_naval_factories > 0
+				}
+			}
+			damage_building = {
+				type = dockyard
+				damage = 3
+			}
+		}
+		198 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+		if = { 
+			limit = {
+				196 = {
+					infrastructure > 0
+				}
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+		if = { 
+			limit = {
+				199 = {
+					infrastructure > 0
+				}
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+		set_temp_variable  = { treasury_change = -0.01 }
+		modify_treasury_effect = yes
+	}
+}
+
+#Socotri Crisis
+country_event = { #Event if socotra has not been repaired by 2001
+	id = YEM_socotri_crisis.1
+	title = YEM_socotri_crisis.1.t
+	desc = YEM_socotri_crisis.1.d
+	picture = null
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = YEM_socotri_crisis.1.a
+		log = "[GetDateText]: [This.GetName]: YEM_socotri_crisis.1.a executed"
+		200 = {
+			clr_state_flag = YEM_slow_aid
+			set_state_flag = YEM_UAE_aid
+			add_dynamic_modifier = {
+				modifier = YEM_UAE_RCS
+				days = 365
+			}
+		}
+		set_temp_variable  = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+		YEM = {
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = UAE }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = UAE
+				modifier = gave_aid
+			}
+		}
+	}
+	option = {
+		name = YEM_socotri_crisis.1.b
+		log = "[GetDateText]: [This.GetName]: YEM_socotri_crisis.1.b executed"
+		YEM = {
+			add_opinion_modifier = {
+				target = UAE
+				modifier = refused_aid
+			}
+		}
+	}
 }
