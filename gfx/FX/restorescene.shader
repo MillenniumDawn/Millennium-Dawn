@@ -1,5 +1,3 @@
-// Please do not take this file. - Bird 2023
-
 Includes = {
 	"constants.fxh"
 	"standardfuncsgfx.fxh"
