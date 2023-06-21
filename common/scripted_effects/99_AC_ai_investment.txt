@@ -167,8 +167,9 @@ AI_get_civilian_industry_score = {
 		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 45 } }
 			subtract_from_temp_variable = { AI_score = 10 }
 		}
-
 		add_to_temp_variable = { AI_score = v1 }
+
+		AI_not_in_home_area = yes
 		if = { limit = { check_variable = { AI_score > AI_best_score } }
 			set_temp_variable = { AI_best_score = AI_score }
 			set_temp_variable = { AI_best_target = THIS.id }
@@ -206,6 +207,7 @@ AI_get_military_industry_score = {
 
 	add_to_temp_variable = { AI_score = v1 }
 
+	AI_not_in_home_area = yes
 	if = { limit = { check_variable = { AI_score > AI_best_score } }
 		set_temp_variable = { AI_best_score = AI_score }
 		set_temp_variable = { AI_best_target = THIS.id }
@@ -242,6 +244,7 @@ AI_get_dockyard_score = {
 
 	add_to_temp_variable = { AI_score = v1 }
 
+	AI_not_in_home_area = yes
 	if = { limit = { check_variable = { AI_score > AI_best_score } }
 		set_temp_variable = { AI_best_score = AI_score }
 		set_temp_variable = { AI_best_target = THIS.id }
@@ -261,6 +264,7 @@ AI_get_infrastructure_score = {
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
+		AI_not_in_home_area = yes
 		if = { limit = { check_variable = { AI_score > AI_best_score } }
 			set_temp_variable = { AI_best_score = AI_score }
 			set_temp_variable = { AI_best_target = THIS.id }
@@ -296,9 +300,43 @@ AI_get_offices_score = {
 	subtract_from_temp_variable = { v1 = v2 }
 	add_to_temp_variable = { AI_score = v1 }
 
+	AI_not_in_home_area = yes
 	if = { limit = { check_variable = { AI_score > AI_best_score } }
 		set_temp_variable = { AI_best_score = AI_score }
 		set_temp_variable = { AI_best_target = THIS.id }
 		set_temp_variable = { AI_best_type = 5 }
+	}
+}
+
+# Building Type 10: Network Infrastructure
+AI_get_network_infrastructure_score = {
+	if = { limit = { free_building_slots = { building = internet_station size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 225 }
+		set_temp_variable = { v2 = 10 }
+
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 9.999 } } }
+			add_to_temp_variable = { v2 = 5 }
+		}
+		if = { limit = { check_variable = { building_level@infrastructure = 5 } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		multiply_temp_variable = { v2 = 10 }
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		AI_not_in_home_area = yes
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 5 }
+		}
+	}
+}
+
+AI_not_in_home_area = {
+	if = { limit = { is_in_home_area = no }
+		subtract_from_temp_variable = { AI_score = 50 }
 	}
 }

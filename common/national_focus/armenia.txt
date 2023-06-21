@@ -8,7 +8,7 @@ focus_tree = {
 			tag = ARM
 		}
 	}
-	continuous_focus_position = { x = 2150 y = 700 }
+	continuous_focus_position = { x = 2060 y = 660 }
 	default = no
 	focus = {
 		id = ARM_Kocharjan
@@ -378,16 +378,11 @@ focus_tree = {
 		y = 1
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_support_entire_opposition"
-			hidden_effect = {
-				add_popularity = { ideology = communism popularity = -0.07 }
-				subtract_from_variable = { party_pop_array^6 = -0.07 }
-				recalculate_party = yes
-			}
-			add_popularity = {
-					ideology = neutrality
-					popularity = 0.05
-				}
-			custom_effect_tooltip = ARM_kocharyan_lose_7_popul_TT
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = -0.07 }
+			set_temp_variable = { temp_outlook_increase = -0.07 }
+			add_relative_party_popularity = yes
 		}
 	}
 	focus = {
@@ -414,9 +409,6 @@ focus_tree = {
 				has_idea = ARM_neutrals_dem_coallition_2
 			}
 			date < 2004.1.1
-			NOT = {
-				has_country_flag = ARM_opposition_lost_to_kach
-			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_uniting_opposition"
@@ -552,9 +544,9 @@ focus_tree = {
 			add_popularity = {
 				ideology = nationalist
 				popularity = 0.02
-				add_to_variable = { party_pop_array^20 = 0.1 }
-				recalculate_party = yes
 			}
+			add_to_variable = { party_pop_array^20 = 0.1 }
+			recalculate_party = yes
 			add_popularity = {
 				ideology = democratic
 				popularity = 0.015
@@ -653,6 +645,77 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = ARM_peaceful_rise_of_reds
+		icon = focus_ROM_join_comintern
+		cost = 1
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
+		x = 0
+		y = 7
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ARM_peaceful_rise_of_reds"
+
+		}
+	}
+	focus = {
+		id = ARM_peaceful_rise_of_prowest
+		icon = blr_choose_democracy
+		cost = 1
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
+		x = 11
+		y = 7
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ARM_peaceful_rise_of_prowest"
+
+		}
+	}
+	focus = {
+		id = ARM_peaceful_rise_of_neutral
+		icon = focus_generic_armed_neutrality
+		cost = 1
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
+		x = 14
+		y = 7
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ARM_peaceful_rise_of_neutral"
+
+		}
+	}
+	focus = {
 		id = ARM_victory_of_reds
 		icon = the_path_of_marxism_leninism
 		cost = 10
@@ -660,21 +723,16 @@ focus_tree = {
 			factor = 1
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		mutually_exclusive = {
-			focus = ARM_democracy_of_nation
-			focus = ARM_mountain_democracy
-			focus = ARM_trade_republic
-		}
 		prerequisite = {
 			focus = ARM_political_debate
 			focus = ARM_hard_anticapital
+			focus = ARM_peaceful_rise_of_reds
 		}
 		available = {
 			OR = {
 				emerging_communist_state_are_in_power = yes
 				neutrality_neutral_communism_are_in_power = yes
 			}
-			has_war = no
 		}
 		x = 1
 		y = 8
@@ -684,15 +742,15 @@ focus_tree = {
 			add_popularity = {
 				ideology = communism
 				popularity = 0.10
-				add_to_variable = { party_pop_array^4 = 0.15 }
-				recalculate_party = yes
 			}
+			add_to_variable = { party_pop_array^4 = 0.15 }
+			recalculate_party = yes
 			add_popularity = {
 				ideology = neutrality
 				popularity = 0.10
-				add_to_variable = { party_pop_array^19 = 0.15 }
-				recalculate_party = yes
 			}
+			add_to_variable = { party_pop_array^19 = 0.15 }
+			recalculate_party = yes
 			add_stability = 0.05
 			add_political_power = 150
 		}
@@ -806,14 +864,18 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_political_debate
+			focus = ARM_peaceful_rise_of_prowest
 		}
 		ai_will_do = {
 			factor = 1
 		}
-		mutually_exclusive = {
-			focus = ARM_democracy_of_nation
-			focus = ARM_victory_of_reds
-			focus = ARM_trade_republic
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		x = 8
 		y = 8
@@ -822,9 +884,9 @@ focus_tree = {
 			add_popularity = {
 				ideology = democratic
 				popularity = 0.10
-				add_to_variable = { party_pop_array^4 = 0.15 }
-				recalculate_party = yes
 			}
+			add_to_variable = { party_pop_array^4 = 0.15 }
+			recalculate_party = yes
 			add_stability = 0.05
 			add_political_power = 150
 		}
@@ -839,6 +901,14 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_dominant_party"
@@ -911,11 +981,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_political_debate
+			focus = ARM_peaceful_rise_of_prowest
 		}
-		mutually_exclusive = {
-			focus = ARM_victory_of_reds
-			focus = ARM_mountain_democracy
-			focus = ARM_trade_republic
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
 		}
 		x = 12
 		y = 8
@@ -924,9 +993,9 @@ focus_tree = {
 			add_popularity = {
 				ideology = nationalist
 				popularity = 0.10
-				add_to_variable = { party_pop_array^4 = 0.15 }
-				recalculate_party = yes
 			}
+			add_to_variable = { party_pop_array^4 = 0.15 }
+			recalculate_party = yes
 			add_stability = 0.05
 			add_political_power = 150
 		}
@@ -940,6 +1009,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Zhirayr_Sefilyan"
@@ -986,8 +1058,8 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
-		mutually_exclusive = {
-			focus = ARM_old_friend
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_wedge_into_russian_plans"
@@ -1008,8 +1080,13 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_dominant_party
 		}
-		mutually_exclusive = {
-			focus = ARM_wedge_into_russian_plans
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_old_friend"
@@ -1066,6 +1143,15 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_betting_NATO"
 			add_ideas = Major_Non_NATO_Ally
@@ -1088,6 +1174,15 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		mutually_exclusive = {
 			focus = ARM_membership_for_another
@@ -1135,6 +1230,15 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		mutually_exclusive = {
 			focus = ARM_protectorate
 		}
@@ -1150,16 +1254,23 @@ focus_tree = {
 		icon = focus_trade_republic
 		cost = 10
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		mutually_exclusive = {
-			focus = ARM_democracy_of_nation
-			focus = ARM_victory_of_reds
-			focus = ARM_mountain_democracy
-		}
 		ai_will_do = {
 			factor = 1
 		}
 		prerequisite = {
 			focus = ARM_political_debate
+			focus = ARM_peaceful_rise_of_neutral
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		x = 14
 		y = 8
@@ -1202,6 +1313,17 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_trade_republic
@@ -1225,6 +1347,17 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_Transcaucasian_Switzerland
@@ -1246,6 +1379,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_Transcaucasian_Switzerland
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -1269,6 +1413,17 @@ focus_tree = {
 			focus = ARM_isolationism
 			focus = ARM_cooperation
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		ai_will_do = {
 			factor = 1
 		}
@@ -1286,6 +1441,23 @@ focus_tree = {
 		cost = 10
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+			NOT = { has_completed_focus = ARM_isolationism }
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -1308,9 +1480,6 @@ focus_tree = {
 		}
 		x = 14
 		y = 13
-		available = {
-			NOT = { has_completed_focus = ARM_isolationism }
-		}
 	}
 	focus = {
 		id = ARM_reforms_of_country
@@ -1319,6 +1488,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_secure_country
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -1339,6 +1519,17 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_Transcaucasian_Switzerland
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		ai_will_do = {
 			factor = 1
 		}
@@ -1347,7 +1538,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_radical_pacifism"
 			swap_ideas = {
-				remove_idea = ARM_transcaucasian_sweizland_idea_1 add_idea = ARM_transcaucasian_sweizland_idea_2
+				remove_idea = ARM_transcaucasian_sweizland_idea_1
+				add_idea = ARM_transcaucasian_sweizland_idea_2
 			}
 			add_stability = 0.05
 			set_temp_variable = { temp_opinion = 5 }
@@ -1365,6 +1557,17 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_get_UN_support"
@@ -1386,6 +1589,17 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_get_UN_support
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_foreign_contingent"
 			add_war_support = 0.05
@@ -1406,6 +1620,17 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			every_country = {
@@ -1431,6 +1656,17 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_foreign_contingent
@@ -1448,6 +1684,17 @@ focus_tree = {
 		cost = 10
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -1488,6 +1735,17 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_international_diplomacy
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		x = 20
 		y = 15
 		ai_will_do = {
@@ -1517,6 +1775,17 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			add_opinion_modifier = {
 				target = FRA
@@ -1540,6 +1809,17 @@ focus_tree = {
 		y = 17
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			add_opinion_modifier = {
@@ -1565,6 +1845,17 @@ focus_tree = {
 		y = 19
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			add_opinion_modifier = {
@@ -1740,57 +2031,9 @@ focus_tree = {
 				limit = {
 					has_idea = ARM_armenian_mafia_1
 				}
-			    remove_ideas = ARM_armenian_mafia_1
+				remove_ideas = ARM_armenian_mafia_1
 			}
-			if = {
-				limit = {
-						has_idea = ARM_high_emigration_5
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_5
-						add_idea = ARM_high_emigration_4
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_4
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_4
-						add_idea = ARM_high_emigration_3
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_3
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_3
-						add_idea = ARM_high_emigration_2
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_2
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_2
-						add_idea = ARM_high_emigration_1
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				remove_ideas = ARM_high_emigration_1
-				add_ideas = ARM_immigration
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				add_stability = 0.02
-			}
+			ARM_decrease_high_emigration = yes
 		}
 		available = {
 			has_idea = ARM_armenian_mafia_2
@@ -1822,9 +2065,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_suppress_opposition"
 			add_political_power = 200
-			add_to_variable = { party_pop_array^6 = 0.05 }
-			recalculate_party = yes
-			custom_effect_tooltip = ARM_kocharyan_pollitical_arests_TT
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
 			if = {
 				limit = {
 					NOT = {
@@ -1880,8 +2123,8 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 5 }
 			change_oligarchs_opinion = yes
 			swap_ideas = {
-					remove_idea = ARM_armenian_mafia_6
-					add_idea = ARM_deals_with_bandits_3
+				remove_idea = ARM_armenian_mafia_6
+				add_idea = ARM_deals_with_bandits_3
 			}
 		}
 	}
@@ -1987,48 +2230,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = gdp_total_display }
 			multiply_temp_variable = { treasury_change = 0.13 }
 			modify_treasury_effect = yes
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_5
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_5
-					add_idea = ARM_huge_unemployment_4
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_4
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_4
-					add_idea = ARM_huge_unemployment_3
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_3
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_3
-					add_idea = ARM_huge_unemployment_2
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_2
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_2
-					add_idea = ARM_huge_unemployment_1
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_1
-				}
-				remove_ideas = ARM_huge_unemployment_1
-			}
+			ARM_decrease_huge_unemployment = yes
 		}
 	}
 	focus = {
@@ -2279,6 +2481,12 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
 		x = 1
 		y = 10
 		completion_reward = {
@@ -2349,7 +2557,6 @@ focus_tree = {
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
-			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			remove_ideas = ARM_unistrim_idea_debuf
 		}
@@ -2369,6 +2576,12 @@ focus_tree = {
 		y = 11
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_code_of_communism"
@@ -2403,6 +2616,17 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_near_frontier
@@ -2435,6 +2659,17 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Azerbaijan"
 			add_opinion_modifier = {
@@ -2458,6 +2693,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_Azerbaijan
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		x = 16
 		y = 17
@@ -2484,6 +2730,17 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_Iran
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
+		}
 		x = 17
 		y = 19
 		completion_reward = {
@@ -2508,6 +2765,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_China
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			}
 		}
 		prerequisite = {
 			focus = ARM_Russia
@@ -2543,6 +2811,15 @@ focus_tree = {
 			focus = ARM_old_friend
 			focus = ARM_wedge_into_russian_plans
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		x = 8
 		y = 11
 		completion_reward = {
@@ -2563,6 +2840,15 @@ focus_tree = {
 			focus = ARM_protectorate
 			focus = ARM_membership_for_another
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_ambitions_of_people"
 			add_political_power = 100
@@ -2578,6 +2864,15 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_opredel_foreign_pol
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -2597,6 +2892,15 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_indoctrination
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -2632,6 +2936,15 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_secure_politicalfield"
 			swap_ideas = {
@@ -2648,6 +2961,15 @@ focus_tree = {
 		cost = 10
 		prerequisite = {
 			focus = ARM_russia_shouldgo
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		x = 6
 		y = 17
@@ -2668,6 +2990,15 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_france_guarantee
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		prerequisite = {
 			focus = ARM_ambitions_of_people
 		}
@@ -2676,7 +3007,7 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_opredel_foreign_pol"
-			add_political_power =75
+			add_political_power = 75
 			remove_ideas = ARM_unistrim_idea_debuf
 		}
 		x = 11
@@ -2692,6 +3023,15 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_question_for_iran"
@@ -2741,6 +3081,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_priznat_artsakh
 		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+		}
 		ai_will_do = {
 			factor = 1
 		}
@@ -2778,6 +3121,15 @@ focus_tree = {
 		}
 		x = 11
 		y = 18
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_podstrekat_putch"
 			unlock_decision_category_tooltip = ARM_internal_putsch_decisions_category
@@ -2789,6 +3141,9 @@ focus_tree = {
 		cost = 5
 		prerequisite = {
 			focus = ARM_no_soviet_legacy
+		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -2824,6 +3179,14 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_multivector_guns"
@@ -2868,6 +3231,9 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_western_guns
@@ -2888,6 +3254,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_mistakesofpast
+		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -2915,6 +3284,14 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_podtasovka"
 			add_political_power = 100
@@ -2934,6 +3311,14 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_podtasovka
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_levon_neutral"
 			add_stability = -0.05
@@ -2952,6 +3337,14 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_levon_neutral
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_levon_def"
@@ -2973,6 +3366,14 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_levon_russkydog"
@@ -2999,6 +3400,14 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_levon_guarantee_sos"
 			country_event = arm_prowest.1000
@@ -3019,6 +3428,14 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
+		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_levon_guarantee_sos
@@ -3037,6 +3454,14 @@ focus_tree = {
 		cost = 2
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -3090,6 +3515,14 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_agree_withrf"
@@ -3219,6 +3652,15 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_prvatiz_allprior
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_prvatiz_westprior"
 			add_stability = -0.05
@@ -3244,6 +3686,15 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_prvatiz_westprior
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_prvatiz_allprior"
 			add_political_power = -300
@@ -3264,6 +3715,15 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_prvatiz_allprior
 			focus = ARM_prvatiz_westprior
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_reformationofgovernwest"
@@ -3287,6 +3747,15 @@ focus_tree = {
 			focus = ARM_protectorate
 			focus = ARM_membership_for_another
 			focus = ARM_Georgian_democrats
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_france_guarantee"
@@ -3313,6 +3782,15 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_russia_shouldgo"
@@ -3347,6 +3825,15 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_union_ukraine"
 			add_opinion_modifier = {
@@ -3371,6 +3858,15 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_union_kurdistan"
@@ -3397,6 +3893,15 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_union_georgia"
 			add_opinion_modifier = {
@@ -3419,6 +3924,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_zhirayrdictator
 		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_take_place_Azerbaijan"
 			custom_effect_tooltip = ARM_full_west_support_TT
@@ -3436,6 +3944,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		prerequisite = {
 			focus = ARM_take_place_Azerbaijan
+		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -3457,6 +3968,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_american_legion"
@@ -3495,6 +4009,9 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_treaty_with_greece"
 			give_guarantee = GRE
@@ -3521,6 +4038,9 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_blow_to_Turkic"
 			create_wargoal = {
@@ -3538,6 +4058,22 @@ focus_tree = {
 		cost = 10
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -3567,6 +4103,22 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_arms_supplies
 		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
 		x = 14
 		y = 15
 		completion_reward = {
@@ -3585,6 +4137,22 @@ focus_tree = {
 		cost = 10
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				neutrality_neutral_social_are_in_power = yes
+				neutrality_neutral_green_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_conservatism_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		prerequisite = {
 			focus = ARM_foreign_licenses
@@ -3610,12 +4178,18 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_mobilization_of_economy"
 			add_political_power = -75
 			add_ideas = ARM_kom_mobil_econom
 			set_temp_variable = { temp_opinion = 5 }
-						change_labour_unions_opinion = yes
+			change_labour_unions_opinion = yes
 		}
 	}
 	focus = {
@@ -3630,6 +4204,12 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_prohibition_private_companies
 		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
 		x = 1
 		y = 12
 		ai_will_do = {
@@ -3639,68 +4219,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_new_NEP"
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
-			set_temp_variable = { treasury_change = -9.50 }
+			set_temp_variable = { treasury_change = -2.5 }
 			modify_treasury_effect = yes
 			add_stability = 0.025
-			random_owned_controlled_state = {
-				if = {
-					limit = {
-						free_building_slots = {
-							building = industrial_complex
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 3
-					add_building_construction = {
-						type = industrial_complex
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_5
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_5
-					add_idea = ARM_huge_unemployment_4
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_4
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_4
-					add_idea = ARM_huge_unemployment_3
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_3
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_3
-					add_idea = ARM_huge_unemployment_2
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_2
-				}
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_2
-					add_idea = ARM_huge_unemployment_1
-				}
-			}
-			if = {
-				limit = {
-					has_idea = ARM_huge_unemployment_1
-				}
-				remove_ideas = ARM_huge_unemployment_1
-			}
+			one_random_industrial_complex = yes
+			ARM_decrease_huge_unemployment = yes
 		}
 	}
 	focus = {
@@ -3715,6 +4238,12 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_new_NEP
 		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
 		x = 3
 		y = 12
 		ai_will_do = {
@@ -3723,41 +4252,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_prohibition_private_companies"
 			add_stability = -0.1
-			set_temp_variable = { treasury_change = -22.5 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				if = {
-					limit = {
-						free_building_slots = {
-							building = industrial_complex
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 2
-					add_building_construction = {
-						type = industrial_complex
-						level = 2
-						instant_build = yes
-					}
-
-				}
-				if = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
+			two_random_industrial_complex = yes
+			one_random_arms_factory = yes
 		}
 	}
 	focus = {
@@ -3767,6 +4263,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		prerequisite = {
 			focus = ARM_new_NEP
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		x = 1
 		y = 13
@@ -3789,6 +4291,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		prerequisite = {
 			focus = ARM_prohibition_private_companies
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		x = 3
 		y = 13
@@ -3814,6 +4322,12 @@ focus_tree = {
 		y = 14
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Fifth_International"
@@ -3856,6 +4370,12 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_world_dilemma
 		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
 		x = 1
 		y = 15
 		ai_will_do = {
@@ -3878,6 +4398,12 @@ focus_tree = {
 		}
 		mutually_exclusive = {
 			focus = ARM_our_problems
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		x = 3
 		y = 15
@@ -3913,6 +4439,12 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_our_problems
 		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
 		x = 1
 		y = 16
 		ai_will_do = {
@@ -3930,6 +4462,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_world_dilemma
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		x = 3
 		y = 16
@@ -3959,17 +4497,20 @@ focus_tree = {
 			focus = ARM_Caucasian_revolution
 			focus = ARM_proletarians_of_all_countries
 		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
 		x = 2
 		y = 17
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_cold_war_experience"
 			set_temp_variable = { temp_opinion = 5 }
 			change_intelligence_community_opinion = yes
-
 			custom_effect_tooltip = ARM_coldwar_TT
 			country_event = arme.1005
-
-
 		}
 	}
 	focus = {
@@ -3984,6 +4525,12 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		x = 1
 		y = 18
@@ -4004,6 +4551,12 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		x = 3
 		y = 18
@@ -4071,11 +4624,11 @@ focus_tree = {
 			factor = 1
 		}
 		available = {
-			AZE = { has_communist_government  = yes }
-			GEO = { has_communist_government  = yes }
+			AZE = { has_communist_government = yes }
+			GEO = { has_communist_government = yes }
 			OR = {
-				AZE = { has_socialist_government  = yes }
-				GEO = { has_socialist_government  = yes }
+				AZE = { has_socialist_government = yes }
+				GEO = { has_socialist_government = yes }
 			}
 		}
 		x = 3
@@ -4091,11 +4644,11 @@ focus_tree = {
 		cost = 10
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		available = {
-			AZE = { has_communist_government  = yes }
-			GEO = { has_communist_government  = yes }
+			AZE = { has_communist_government = yes }
+			GEO = { has_communist_government = yes }
 			OR = {
-				AZE = { has_socialist_government  = yes }
-				GEO = { has_socialist_government  = yes }
+				AZE = { has_socialist_government = yes }
+				GEO = { has_socialist_government = yes }
 			}
 		}
 		ai_will_do = {
@@ -4122,6 +4675,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = {
 			focus = ARM_red_rearmament
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
 		}
 		x = 1
 		y = 20
@@ -4184,15 +4743,19 @@ focus_tree = {
 		id = ARM_marxism_win
 		icon = worker_paradise
 		cost = 10
-		available = {
-			70_percent_government_popularity = yes
-		}
 		ai_will_do = {
 			factor = 1
 		}
 		prerequisite = {
 			focus = ARM_ZSFSR
 			focus = ARM_peace_and_freedom
+		}
+		available = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+			70_percent_government_popularity = yes
 		}
 		prerequisite = {
 			focus = ARM_red_expance
@@ -4216,6 +4779,15 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_western_sample"
@@ -4298,8 +4870,6 @@ focus_tree = {
 				picture = "kamo_safaryan.dds"
 				expire = "2050.1.1"
 				ideology = Caliphate
-				traits = {
-				}
 			}
 		}
 	}
@@ -4658,8 +5228,6 @@ focus_tree = {
 					picture = "erikya_ibn_al_marhosi.dds"
 					expire = "2050.1.1"
 					ideology = Caliphate
-					traits = {
-					}
 				}
 			}
 		}
@@ -4667,18 +5235,28 @@ focus_tree = {
 	focus = {
 		id = ARM_election_2008
 		icon = focus_Armenian_elections
-		cost = 1
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		x = 25
 		y = 12
 		available = {
-			always = no
+			date > 2008.2.19
 		}
 		bypass = {
 			date > 2008.2.19
 		}
+		ai_will_do = {
+			factor = 25
+			modifier = {
+				factor = 5.05
+				is_historical_focus_on = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_election_2008"
+			hidden_effect = {
+				set_country_flag = arm_respublican_party_will_kommen
+			}
 		}
 	}
 	focus = {
@@ -4724,8 +5302,6 @@ focus_tree = {
 					picture = "Bako_Sahakyan.dds"
 					expire = "2050.1.1"
 					ideology = Conservative
-					traits = {
-					}
 				}
 			}
 		}
@@ -4739,7 +5315,12 @@ focus_tree = {
 			focus = ARM_monopoly
 			focus = ARM_economyc_freedom
 		}
-		available = { }
+		available = {
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
 	}
 	focus = {
 		id = ARM_fictiv_democratia
@@ -4751,6 +5332,12 @@ focus_tree = {
 			factor = 2
 			modifier = {
 				factor = 1.05
+			}
+		}
+		available = {
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -4770,7 +5357,7 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_Serzh_power
 		}
-		available = { }
+
 	}
 	focus = {
 		id = ARM_grants_of_USA
@@ -4783,6 +5370,12 @@ focus_tree = {
 			factor = 2
 			modifier = {
 				factor = 1.05
+			}
+		}
+		available = {
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
 		}
 		completion_reward = {
@@ -4798,7 +5391,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_fictiv_democratia
 		}
-		available = { }
 	}
 	focus = {
 		id = ARM_new_orders
@@ -4813,6 +5405,12 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus  ARM_new_orders"
 			add_political_power = 25
@@ -4823,7 +5421,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_fictiv_democratia
 		}
-		available = { }
 	}
 	focus = {
 		id = ARM_arm_tur_protocols
@@ -4838,10 +5435,16 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
 		prerequisite = {
 			focus = ARM_Serzh_power
 		}
-		available = { }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus  ARM_arm_tur_protocols"
 			country_event = arme.1013
@@ -4858,6 +5461,12 @@ focus_tree = {
 			factor = 2
 			modifier = {
 				factor = 1.05
+			}
+		}
+		available = {
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -4883,8 +5492,14 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
-			completion_reward = {
-				log = "[GetDateText]: [Root.GetName]: Focus  ARM_zastoy_age"
+		available = {
+			OR = {
+				emerging_reactionaries_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus  ARM_zastoy_age"
 			add_stability = 0.10
 			add_war_support = -0.05
 		}
@@ -4973,7 +5588,7 @@ focus_tree = {
 						}
 						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 					}
-				set_leader = yes
+					set_leader = yes
 				}
 				set_politics = {
 					ruling_party = nationalist
@@ -5036,14 +5651,11 @@ focus_tree = {
 						name = "Khachik Asryan"
 						picture = "khachik_asryan.dds"
 						ideology = Nat_Autocracy
-						traits = { }
 						expire = "2099.1.1"
 					}
-				set_leader = yes
+					set_leader = yes
 				}
-				set_politics = {
-					ruling_party = nationalist
-				}
+				set_politics = { ruling_party = nationalist }
 				add_popularity = {
 					ideology = nationalist
 					popularity = 0.05
@@ -5105,7 +5717,7 @@ focus_tree = {
 						}
 						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 					}
-				set_leader = yes
+					set_leader = yes
 				}
 				set_politics = {
 					ruling_party = nationalist
@@ -5164,7 +5776,7 @@ focus_tree = {
 						}
 						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 					}
-				set_leader = yes
+					set_leader = yes
 				}
 				set_politics = {
 					ruling_party = nationalist
@@ -5282,26 +5894,47 @@ focus_tree = {
 				is_historical_focus_on = yes
 			}
 		}
-		mutually_exclusive = {
-			focus = ARM_Tsarukyan
-			focus = ARM_right_forces
-		}
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = ARM_Serzh_ruler_TT
-				has_country_flag = Serzh_ruler_flag
-			}
+			date > 2008.2.19
+			emerging_reactionaries_are_in_power = yes
+			check_variable = { ARM_sargsyan_support_elect > 3 }
+			has_completed_focus = ARM_manifestation_power
 		}
 		x = 25
 		y = 13
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Sarkisyan"
-			add_political_power = 50
-			add_popularity = {
-				ideology = communism
-				popularity = 0.025
+			recalculate_party = yes
+			hidden_effect = {
+			   clear_array = ruling_party
+			   clear_array = gov_coalition_array
+			   add_to_array = { ruling_party = 6 }
+			   update_government_coalition_strength = yes
+			   update_party_name = yes
+			   set_coalition_drift = yes
+			   update_party_name = yes
+			   set_coalition_drift = yes
+			   set_ruling_leader = yes
+			   set_leader = yes
 			}
-			country_event = { id = arm_misc.9 }
+		create_country_leader = {
+			name = "Serzh Sargsyan"
+			picture = "serzh_sargsyan.dds"
+			ideology = Conservative
+			traits = {
+				emerging_Conservative
+				military_career
+				war_criminal
+				political_dancer
+			}
+		}
+		set_country_flag = arm_respublican_party_will_kommen
+		add_political_power = 50
+		add_popularity = {
+			ideology = communism
+			popularity = 0.025
+		}
+		country_event = { id = arm_misc.9 }
 		}
 	}
 	focus = {
@@ -5317,6 +5950,9 @@ focus_tree = {
 			modifier = {
 				factor = 1.05
 			}
+		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
 		}
 		x = 22
 		y = 14
@@ -5352,6 +5988,9 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_friendship_usa2"
 			add_opinion_modifier = {
@@ -5379,6 +6018,9 @@ focus_tree = {
 			modifier = {
 				factor = 1.05
 			}
+		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_dialogue_EU"
@@ -5409,6 +6051,9 @@ focus_tree = {
 			modifier = {
 				factor = 1.05
 			}
+		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_dialogue_nato"
@@ -5480,6 +6125,9 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		x = 25
 		y = 14
 		completion_reward = {
@@ -5505,6 +6153,9 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		x = 25
 		y = 15
 		completion_reward = {
@@ -5527,6 +6178,9 @@ focus_tree = {
 		}
 		x = 25
 		y = 16
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_improving__neighbors"
 			add_opinion_modifier = {
@@ -5728,16 +6382,7 @@ focus_tree = {
 		y = 11
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_gas_pipeline_with_iran"
-			set_temp_variable = { treasury_change = -4.25 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = synthetic_refinery
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_synthetic_refinery = yes
 			add_opinion_modifier = {
 				target = PER
 				modifier = improve_trade
@@ -5770,6 +6415,9 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_east2"
 			every_country = {
@@ -5800,6 +6448,9 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Friendship_Russia"
 			add_opinion_modifier = {
@@ -5828,9 +6479,12 @@ focus_tree = {
 				factor = 1.05
 			}
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_dialog_china"
-			set_temp_variable = { debt_change = 25 }
+			set_temp_variable = { debt_change = -15 }
 			modify_debt_effect = yes
 			set_temp_variable = { treasury_change = 5 }
 			modify_treasury_effect = yes
@@ -5838,13 +6492,6 @@ focus_tree = {
 			set_temp_variable = { tag_index = CHI }
 			set_temp_variable = { influence_target = ARM }
 			change_influence_percentage = yes
-			if = {
-				limit = { NOT = { has_variable = ARM_amount_of_loans } }
-				set_variable = { ARM_amount_of_loans = 1 }
-			}
-			else = {
-				add_to_variable = { ARM_amount_of_loans = 1 }
-			}
 			add_opinion_modifier = {
 				target = CHI
 				modifier = diplomatic_support
@@ -5865,6 +6512,9 @@ focus_tree = {
 			focus = ARM_improving__neighbors
 			focus = ARM_dialogue_nato
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		mutually_exclusive = {
 			focus = ARM_friends_elite
 		}
@@ -5875,7 +6525,6 @@ focus_tree = {
 			decrease_corruption = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_oligarchs_opinion = yes
-			set_temp_variable = { temp_opinion = -5 }
 			change_fossil_fuel_industry_opinion = yes
 		}
 	}
@@ -5955,7 +6604,6 @@ focus_tree = {
 			country_exists = USA
 			NOT = { has_war_with = USA }
 			is_subject = no
-
 		}
 		x = 30
 		y = 11
@@ -5981,6 +6629,9 @@ focus_tree = {
 			modifier = {
 				factor = 1.05
 			}
+		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_deals_IRAN"
@@ -6113,21 +6764,38 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
-		mutually_exclusive = {
-			focus = ARM_Sarkisyan
-			focus = ARM_right_forces
-		}
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = ARM_Serzh_not_ruler_TT
-				tooltip = ARM_dodigago_ruler_TT
-				NOT = {
-					has_country_flag = serzh_ruler_flag
-				}
-			}
+			date > 2008.2.19
+			emerging_autocracy_are_in_power = yes
+			check_variable = { ARM_kach_support_elect > 3 }
+			has_completed_focus = ARM_manifestation_power
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Tsarukyan"
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 7 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}	
+				set_leader = yes
+				set_politics = {
+					ruling_party = communism
+				}	
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_to_variable = { party_pop_array^7 = 0.075 }
+				recalculate_party = yes
+			}
 			country_event = arme.1012
 			add_political_power = 50
 			add_popularity = {
@@ -6148,6 +6816,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 37
 		y = 14
@@ -6170,6 +6841,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 32
 		y = 15
@@ -6207,6 +6881,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_patriotism
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		ai_will_do = {
 			factor = 1
 		}
@@ -6227,102 +6904,15 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		x = 39
 		y = 14
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_deals_oppinion"
-						if = {
-								limit = {
-										has_idea = ARM_huge_unemployment_5
-									}
-								swap_ideas = {
-										remove_idea = ARM_huge_unemployment_5
-										add_idea = ARM_huge_unemployment_4
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_huge_unemployment_4
-									}
-								swap_ideas = {
-										remove_idea = ARM_huge_unemployment_4
-										add_idea = ARM_huge_unemployment_3
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_huge_unemployment_3
-									}
-								swap_ideas = {
-										remove_idea = ARM_huge_unemployment_3
-										add_idea = ARM_huge_unemployment_2
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_huge_unemployment_2
-									}
-								swap_ideas = {
-										remove_idea = ARM_huge_unemployment_2
-										add_idea = ARM_huge_unemployment_1
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_huge_unemployment_1
-									}
-								remove_ideas = ARM_huge_unemployment_1
-							}
-							if = {
-								limit = {
-										has_idea = ARM_high_emigration_5
-									}
-								swap_ideas = {
-										remove_idea = ARM_high_emigration_5
-										add_idea = ARM_high_emigration_4
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_high_emigration_4
-									}
-								swap_ideas = {
-										remove_idea = ARM_high_emigration_4
-										add_idea = ARM_high_emigration_3
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_high_emigration_3
-									}
-								swap_ideas = {
-										remove_idea = ARM_high_emigration_3
-										add_idea = ARM_high_emigration_2
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_high_emigration_2
-									}
-								swap_ideas = {
-										remove_idea = ARM_high_emigration_2
-										add_idea = ARM_high_emigration_1
-									}
-							}
-						if = {
-								limit = {
-										has_idea = ARM_high_emigration_1
-									}
-								remove_ideas = ARM_high_emigration_1
-								add_ideas = ARM_immigration
-							}
-						if = {
-								limit = {
-										has_idea = ARM_high_emigration_1
-									}
-								add_stability = 0.02
-							}
-						add_ideas = ARM_deals_opp_idea1
+			ARM_decrease_high_emigration = yes
+			add_ideas = ARM_deals_opp_idea1
 		}
 	}
 	focus = {
@@ -6336,6 +6926,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 38
 		y = 15
@@ -6355,6 +6948,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		mutually_exclusive = {
 			focus = ARM_hard_way
@@ -6384,6 +6980,9 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		mutually_exclusive = {
 			focus = ARM_privatisation_2
 		}
@@ -6412,6 +7011,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_pooling_capital
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		ai_will_do = {
 			factor = 1
 		}
@@ -6420,34 +7022,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Group"
 			custom_effect_tooltip = ARM_multi_grup_TT
-			if = {
-							limit = {
-								has_idea = ARM_monopolization_idea1
-							}
-							swap_ideas = {
-										remove_idea = ARM_monopolization_idea1
-										add_idea = ARM_monopolization_idea2
-									}
-						}
-		if = {
-							limit = {
-								NOT = {
-									has_idea = ARM_monopolization_idea1
-								}
-							}
-
-										add_ideas = ARM_monopolization_idea1
-
-						}
-		if = {
-							limit = {
-								has_idea = ARM_monopolization_idea2
-							}
-							swap_ideas = {
-										remove_idea = ARM_monopolization_idea2
-										add_idea = ARM_monopolization_idea3
-									}
-						}
+			ARM_increase_monopolization = yes
 		}
 	}
 	focus = {
@@ -6457,6 +7032,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_Group
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 42
 		y = 18
@@ -6476,6 +7054,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_sports_development
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 41
 		y = 19
@@ -6499,38 +7080,14 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		x = 41
 		y = 14
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_buy_small_business"
-			if = {
-							limit = {
-								has_idea = ARM_monopolization_idea1
-							}
-							swap_ideas = {
-										remove_idea = ARM_monopolization_idea1
-										add_idea = ARM_monopolization_idea2
-									}
-						}
-		if = {
-							limit = {
-								NOT = {
-									has_idea = ARM_monopolization_idea1
-								}
-							}
-
-										add_ideas = ARM_monopolization_idea1
-
-						}
-		if = {
-							limit = {
-								has_idea = ARM_monopolization_idea2
-							}
-							swap_ideas = {
-										remove_idea = ARM_monopolization_idea2
-										add_idea = ARM_monopolization_idea3
-									}
-						}
+			ARM_increase_monopolization = yes
 			decrease_economic_growth = yes
 			calculate_interest_rate = yes
 			custom_effect_tooltip = ARM_uvelichenie_taxes_1_TT
@@ -6549,25 +7106,12 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_ararat"
-			random_owned_controlled_state = {
-				limit = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
+			two_random_industrial_complex = yes
 			add_political_power = 50
 			add_stability = 0.005
 		}
@@ -6579,6 +7123,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_sports_development
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 43
 		y = 19
@@ -6600,6 +7147,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_Group
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 45
 		y = 18
@@ -6624,6 +7174,9 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_tsaruk_christos2"
 			ARM = { country_event = { id = ARM_armen.4 days = 1 } }
@@ -6646,25 +7199,12 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_kotayak"
-			random_owned_controlled_state = {
-				limit = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -7.50 }
-			modify_treasury_effect = yes
+			one_random_industrial_complex = yes
 			add_political_power = 50
 			add_stability = 0.005
 		}
@@ -6676,6 +7216,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		prerequisite = {
 			focus = ARM_buy_small_business
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 45
 		y = 15
@@ -6721,6 +7264,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_buy_small_business
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		x = 47
 		y = 15
 		ai_will_do = {
@@ -6729,24 +7275,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_aviaservis"
 			add_political_power = 10
-			set_temp_variable = { treasury_change = -5.00 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-					if = {
-						limit = {
-							free_building_slots = {
-								building = air_base
-								size > 0
-								include_locked = yes
-							}
-						}
-						add_building_construction = {
-							type = air_base
-							level = 1
-							instant_build = yes
-						}
-					}
-				}
+			set_temp_variable = { treasury_change = -2.5 }
+			one_air_base = yes
 			hidden_effect = {
 				add_equipment_to_stockpile = {
 					type = transport_plane1   	#su 30
@@ -6777,108 +7307,20 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		x = 44
 		y = 16
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_pooling_capital"
-			set_temp_variable = { treasury_change = -15 }
+			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 1 }
-			random_owned_controlled_state = {
-					if = {
-						limit = {
-							free_building_slots = {
-								building = industrial_complex
-								size > 0
-								include_locked = yes
-							}
-						}
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = industrial_complex
-							level = 1
-							instant_build = yes
-						}
-					}
-				}
-		if = {
-							limit = {
-								has_idea = ARM_monopolization_idea1
-							}
-							swap_ideas = {
-										remove_idea = ARM_monopolization_idea1
-										add_idea = ARM_monopolization_idea2
-									}
-						}
-		if = {
-							limit = {
-								NOT = {
-									has_idea = ARM_monopolization_idea1
-								}
-							}
-
-										add_ideas = ARM_monopolization_idea1
-
-						}
-		if = {
-							limit = {
-								has_idea = ARM_monopolization_idea2
-							}
-							swap_ideas = {
-										remove_idea = ARM_monopolization_idea2
-										add_idea = ARM_monopolization_idea3
-									}
-						}
-						if = {
-							limit = {
-									has_idea = ARM_high_emigration_5
-								}
-							swap_ideas = {
-									remove_idea = ARM_high_emigration_5
-									add_idea = ARM_high_emigration_4
-								}
-						}
-					if = {
-							limit = {
-									has_idea = ARM_high_emigration_4
-								}
-							swap_ideas = {
-									remove_idea = ARM_high_emigration_4
-									add_idea = ARM_high_emigration_3
-								}
-						}
-					if = {
-							limit = {
-									has_idea = ARM_high_emigration_3
-								}
-							swap_ideas = {
-									remove_idea = ARM_high_emigration_3
-									add_idea = ARM_high_emigration_2
-								}
-						}
-					if = {
-							limit = {
-									has_idea = ARM_high_emigration_2
-								}
-							swap_ideas = {
-									remove_idea = ARM_high_emigration_2
-									add_idea = ARM_high_emigration_1
-								}
-						}
-					if = {
-							limit = {
-									has_idea = ARM_high_emigration_1
-								}
-							remove_ideas = ARM_high_emigration_1
-							add_ideas = ARM_immigration
-						}
-					if = {
-							limit = {
-									has_idea = ARM_high_emigration_1
-								}
-							add_stability = 0.02
-						}
-	}
+			one_random_industrial_complex = yes
+			ARM_increase_monopolization = yes
+			ARM_decrease_high_emigration = yes
+		}
 	}
 	focus = {
 		id = ARM_right_forces
@@ -6887,29 +7329,27 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_election_2008
 		}
-		mutually_exclusive = {
-			focus = ARM_Sarkisyan
-			focus = ARM_Tsarukyan
-		}
 		ai_will_do = {
 			factor = 1
 		}
 		available = {
-					custom_trigger_tooltip = {
-						tooltip = ARM_Serzh_not_ruler_TT
-						NOT = {
-						has_country_flag = Serzh_ruler_flag
-						}
-					}
+			date > 2008.2.19
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+			check_variable = { ARM_rights_support_elect > 3 }
+			has_completed_focus = ARM_manifestation_power
 		}
 		x = 57
 		y = 13
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_right_forces"
 			add_popularity = {
-								ideology = nationalist
-								popularity = 0.15
-							}
+				ideology = nationalist
+				popularity = 0.15
+			}
 			add_political_power = -150
 		}
 	}
@@ -6922,7 +7362,11 @@ focus_tree = {
 			focus = ARM_right_forces
 		}
 		available = {
-			has_government = nationalist
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -6937,18 +7381,16 @@ focus_tree = {
 			}
 			add_political_power = 50
 			add_popularity = {
-								ideology = nationalist
-								popularity = 0.05
-							}
-							set_rule = {
-								can_create_factions = yes
-							}
-							add_war_support = 0.1
-							ARM = {
-								add_state_claim = 935
-								add_state_claim = 163
-							}
-							annex_country = { target = NKR transfer_troops = yes }
+				ideology = nationalist
+				popularity = 0.05
+			}
+			set_rule = { can_create_factions = yes }
+			add_war_support = 0.1
+			ARM = {
+				add_state_claim = 935
+				add_state_claim = 163
+			}
+			annex_country = { target = NKR transfer_troops = yes }
 		}
 	}
 	focus = {
@@ -6964,6 +7406,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_social_reforms"
 			set_temp_variable = { party_index = 20 }
@@ -6973,7 +7422,6 @@ focus_tree = {
 			add_war_support = 0.05
 			unlock_decision_category_tooltip = ARM_right_forces_category
 		}
-
 	}
 	focus = {
 		id = ARM_aktiv_diplo
@@ -6987,12 +7435,12 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
-				completion_reward = {
-					log = "[GetDateText]: [Root.GetName]: Focus ARM_aktiv_diplo"
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ARM_aktiv_diplo"
 			add_stability = -0.10
 			add_political_power = 150
 			add_threat = 5
-			create_faction = "Anti-Turanic Coalition"
+			create_faction = Anti_Turanic_Coalition
 		}
 	}
 	focus = {
@@ -7008,33 +7456,40 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_trening_camps_kurd"
-		custom_effect_tooltip = TT_SYR_INTELLIGENCE_TO_PKK
-		TUR = {
-			add_to_variable = { pkk_presence = 15 }
+			custom_effect_tooltip = TT_SYR_INTELLIGENCE_TO_PKK
+			TUR = {
+				add_to_variable = { pkk_presence = 15 }
+			}
+			add_manpower = 10000
+			add_opinion_modifier = {
+				modifier = hostile_status
+				target = TUR
+			}
+			reverse_add_opinion_modifier = {
+				modifier = hostile_status
+				target = TUR
+			}
+			country_event = { id = arm_misc.2 }
+			create_corps_commander = {
+				name = "Nubar Ozanyan"
+				picture = "nubar_ozanyan.dds"
+				traits = { politically_connected guerrilla_officer }
+				skill = 4
+				attack_skill = 4
+				defense_skill = 2
+				planning_skill = 4
+				logistics_skill = 3
+			}
 		}
-		add_manpower = 10000
-		add_opinion_modifier = {
-			modifier = hostile_status
-			target = TUR
-		}
-		reverse_add_opinion_modifier = {
-			modifier = hostile_status
-			target = TUR
-		}
-		country_event = { id = arm_misc.2 }
-		create_corps_commander = {
-			name = "Nubar Ozanyan"
-			picture = "nubar_ozanyan.dds"
-			traits = { politically_connected guerrilla_officer }
-			skill = 4
-			attack_skill = 4
-			defense_skill = 2
-			planning_skill = 4
-			logistics_skill = 3
-		}
-	}
 	}
 	focus = {
 		id = ARM_fidains
@@ -7043,6 +7498,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = {
 			focus = ARM_trening_camps_kurd
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		x = 52
 		y = 17
@@ -7081,6 +7543,13 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_aktiv_diplo
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		ai_will_do = {
 			factor = 1
 		}
@@ -7107,6 +7576,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = {
 			focus = ARM_help_small_nations_aze
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -7155,6 +7631,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		prerequisite = {
 			focus = ARM_support_for_volunteers
 			focus = ARM_fidains
@@ -7174,6 +7657,13 @@ focus_tree = {
 		y = 16
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_russia3"
@@ -7199,6 +7689,13 @@ focus_tree = {
 		y = 17
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_kurds2"
@@ -7235,6 +7732,13 @@ focus_tree = {
 		y = 18
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_syria2"
@@ -7285,6 +7789,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Greece2"
 			add_opinion_modifier = {
@@ -7318,6 +7829,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_France2"
 			add_opinion_modifier = {
@@ -7343,6 +7861,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
 			focus = ARM_France2
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		x = 58
 		y = 18
@@ -7378,6 +7903,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_unite_antiTurkish_clubs"
 			reserve_dynamic_country = yes
@@ -7397,6 +7929,13 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		prerequisite = {
 			focus = ARM_millitarism
@@ -7418,6 +7957,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		prerequisite = {
 			focus = ARM_make_claims
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Georgia3"
@@ -7451,9 +7997,6 @@ focus_tree = {
 				name = "Karin Tonoyan"
 				picture = "karin_tonoyan.dds"
 				ideology = Nat_Autocracy
-				traits = {
-
-				}
 				expire = "2099.1.1"
 			}
 			set_cosmetic_tag = ARM_military_5165_nationalist
@@ -7469,6 +8012,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		prerequisite = {
 			focus = ARM_make_claims
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_azerbaijan2"
@@ -8040,9 +8590,6 @@ focus_tree = {
 				name = "Seyran Ohanian"
 				picture = "seyran_ohanian.dds"
 				ideology = Nat_Autocracy
-				traits = {
-
-				}
 				expire = "2099.1.1"
 			}
 			set_cosmetic_tag = ARM_military_junta_nationalist
@@ -8299,6 +8846,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_Group
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		x = 38
 		y = 18
 		ai_will_do = {
@@ -8328,6 +8878,9 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_economyc_freedom
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		ai_will_do = {
 			factor = 1
 		}
@@ -8352,6 +8905,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_party_approval
 		}
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
 		mutually_exclusive = {
 			focus = ARM_monopoly
 		}
@@ -8366,55 +8922,7 @@ focus_tree = {
 				remove_idea = oligarchs
 				add_idea = small_medium_business_owners
 			}
-			if = {
-				limit = {
-						has_idea = ARM_high_emigration_5
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_5
-						add_idea = ARM_high_emigration_4
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_4
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_4
-						add_idea = ARM_high_emigration_3
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_3
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_3
-						add_idea = ARM_high_emigration_2
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_2
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_2
-						add_idea = ARM_high_emigration_1
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				remove_ideas = ARM_high_emigration_1
-				add_ideas = ARM_immigration
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				add_stability = 0.02
-			}
+			ARM_decrease_high_emigration = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			custom_effect_tooltip = ARM_increase_rus_oli_TT
@@ -8430,6 +8938,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 33
 		y = 16
@@ -8454,6 +8965,9 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			emerging_autocracy_are_in_power = yes
 		}
 		x = 35
 		y = 16
@@ -8539,6 +9053,9 @@ focus_tree = {
 			focus = ARM_improving__neighbors
 			focus = ARM_dialog_china
 		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
+		}
 		mutually_exclusive = {
 			focus = ARM_war_vs_corrupt2
 		}
@@ -8568,6 +9085,9 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_friends_elite
 			focus = ARM_war_vs_corrupt2
+		}
+		available = {
+			emerging_reactionaries_are_in_power = yes
 		}
 		x = 26
 		y = 19
@@ -8693,6 +9213,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_kurds_autonomy"
 			add_manpower = 5000
@@ -8720,6 +9247,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_invaite_assiria"
 			add_manpower = 5000
@@ -8741,6 +9275,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_folk_spirit"
 			add_ideas = generic_nationalist_boost_idea
@@ -8758,6 +9299,13 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		mutually_exclusive = {
 			focus = ARM_state_church
@@ -8781,6 +9329,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		mutually_exclusive = {
 			focus = ARM_religiosity
 		}
@@ -8803,6 +9358,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_ministries_of__church"
 			recalculate_party = yes
@@ -8824,6 +9386,13 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_great_influence"
@@ -8849,6 +9418,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_christian_country"
 			swap_ideas = {
@@ -8868,14 +9444,19 @@ focus_tree = {
 		icon = allow_pagans
 		cost = 10
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
-		available = {
-			has_completed_focus = ARM_religiosity
-		}
 		prerequisite = {
 			focus = ARM_christian_country
 		}
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			has_completed_focus = ARM_religiosity
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		mutually_exclusive = {
 			focus = ARM_zapret_propovedovat
@@ -8896,10 +9477,15 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 			has_completed_focus = ARM_state_church
 		}
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = {
 			focus = ARM_christian_country
 		}
@@ -8922,6 +9508,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = {
 			focus = ARM_zapret_propovedovat
@@ -8942,6 +9535,13 @@ focus_tree = {
 		cost = 10
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = {
@@ -9121,7 +9721,13 @@ focus_tree = {
 		prerequisite = {
 			focus = ARM_konwekt_esidow
 			focus = ARM_allow_esid
-
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		completion_reward = {
 			add_stability = 0.05
@@ -9147,6 +9753,13 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
 		completion_reward = {
 			add_political_power = 75
 				add_popularity = {
@@ -9165,6 +9778,13 @@ focus_tree = {
 		cost = 10
 		ai_will_do = {
 			factor = 1
+		}
+		available = {
+			OR = {
+				nationalist_fascist_are_in_power = yes
+				nationalist_military_junta_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
 		}
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = {
@@ -9207,6 +9827,7 @@ focus_tree = {
 			factor = 1
 		}
 		available = {
+			emerging_autocracy_are_in_power = yes
 			country_exists = BLR
 			NOT = { has_war_with = BLR }
 			has_opinion = { target = BLR value > 39 }
@@ -9243,6 +9864,7 @@ focus_tree = {
 		available = {
 			NKR = { exists = yes }
 			AZE = { exists = yes }
+			emerging_autocracy_are_in_power = yes
 		}
 		bypass = {
 			NKR = { exists = no }
@@ -9274,7 +9896,7 @@ focus_tree = {
 	}
 	focus = {
 		id = ARM_buy_russian_tanks
-		icon = blr_t72b3
+		icon = focus_rus_modernization
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		x = 47
@@ -9406,7 +10028,7 @@ focus_tree = {
 				name = ARM_new_uniforms
 				uses = 1
 				bonus = 1
-				technology  = camouflage2
+				technology = camouflage2
 			}
 			add_doctrine_cost_reduction = {
 				name = ARM_new_uniforms
@@ -9492,11 +10114,11 @@ focus_tree = {
 		}
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		available = {
-					custom_trigger_tooltip = {
-						tooltip = ARM_georgian_war_end_TT
-						has_global_flag = ARM_communists_meet_red_bridge_flag
-					}
-					}
+			custom_trigger_tooltip = {
+				tooltip = ARM_georgian_war_end_TT
+				has_country_flag = ARM_communists_meet_red_bridge_flag
+			}
+		}
 		prerequisite = {
 			focus = ARM_old_doctrine
 		}
@@ -9542,11 +10164,23 @@ focus_tree = {
 		y = 6
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_buy_chine_RSZO"
-			add_equipment_to_stockpile = {
-				type = SP_R_arty_1 	#
-				amount = 75
-				producer = CHI
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = {
+					type = spart_hull_1
+					variant_name = "PHZ-89"
+					amount = 75
+					producer = CHI
+				}
+				else = {
+					add_equipment_to_stockpile = {
+						type = SP_R_arty_1 	#
+						amount = 75
+						producer = CHI
+					}
+				}
 			}
+
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 		}
@@ -9570,12 +10204,24 @@ focus_tree = {
 			modify_treasury_effect = yes
 			if = { limit = { has_dlc = "Death or Dishonor" }
 				CHI = {
-					create_production_license = {
-						target = ARM
-						equipment = {
-							type = SP_R_arty_1
+					if = {
+						limit = { has_dlc = "No Step Back" }
+						create_production_license = {
+							target = ARM
+							equipment = {
+								type = spart_hull_1
+							}
+							cost_factor = 0
 						}
-						cost_factor = 0
+					}
+					else = {
+						create_production_license = {
+							target = ARM
+							equipment = {
+								type = SP_R_arty_1
+							}
+							cost_factor = 0
+						}
 					}
 				}
 			}
@@ -9788,7 +10434,7 @@ focus_tree = {
 				name = ARM_france_specials
 				uses = 1
 				bonus = 1
-				category  = Cat_battlefield_support_tree
+				category = Cat_battlefield_support_tree
 			}
 
 		}
@@ -10028,95 +10674,171 @@ focus_tree = {
 			modify_treasury_effect = yes
 			if = {
 				limit = { has_government = democratic } #Western Armenia will buy from France
-				add_equipment_to_stockpile = {
-					type = MBT_4		#Leclerc
-					amount = 10
-					producer = FRA
-				}
-				add_equipment_to_stockpile = {
-					type = IFV_3		#VIB
-					amount = 10
-					producer = FRA
-				}
-				add_equipment_to_stockpile = {
-					type = APC_2		#VAB Mk2
-					amount = 10
-					producer = FRA
-				}
-			}
-			if = {
-				limit = { has_government = communism }	#Emerging Armenia will buy from Russia
-				add_equipment_to_stockpile = {
-					type = MBT_2		#T-90
-					amount = 10
-					producer = SOV
-				}
-				add_equipment_to_stockpile = {
-					type = IFV_2		#BMP-3
-					amount = 10
-					producer = SOV
-				}
-				add_equipment_to_stockpile = {
-					type = APC_2		#BTR-80
-					amount = 10
-					producer = SOV
-				}
-			}
-			if = {
-				limit = { has_government = fascism }	#Salafist Armenia will buy from China
-				add_equipment_to_stockpile = {
-					type = MBT_3		#Type-96
-					amount = 10
-					producer = CHI
-				}
-				add_equipment_to_stockpile = {
-					type = IFV_3		#ZSL-92B
-					amount = 10
-					producer = CHI
-				}
-				add_equipment_to_stockpile = {
-					type = APC_3		#ZSL-92
-					amount = 10
-					producer = CHI
-				}
-			}
-			if = {
-				limit = { has_government = neutrality }	#Non-aligned Armenia will buy from Turkey
 				if = {
-					limit = { TUR = { has_tech = MBT_5 } }
+					limit = { has_dlc = "No Step Back" }
 					add_equipment_to_stockpile = {
-						type = MBT_3		#Altay
+						type = mbt_hull_2	#Leclerc
+						variant_name = "AMX-56 Leclerc"
+						amount = 10
+						producer = FRA
+					}
+					add_equipment_to_stockpile = {
+						type = ifv_hull_0
+						variant_name = "AMX-10"
+						amount = 10
+						producer = FRA
+					}
+					add_equipment_to_stockpile = {
+						type = ifv_hull_0
+						variant_name = "VAB"
+						amount = 10
+						producer = FRA
+					}
+				}
+				else = {
+					add_equipment_to_stockpile = {
+						type = MBT_4		#Leclerc
+						amount = 10
+						producer = FRA
+					}
+					add_equipment_to_stockpile = {
+						type = IFV_3		#VIB
+						amount = 10
+						producer = FRA
+					}
+					add_equipment_to_stockpile = {
+						type = APC_2		#VAB Mk2
+						amount = 10
+						producer = FRA
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_government = nationalist
+						has_government = communism
+					}
+				}	#Emerging Armenia will buy from Russia
+				if = {
+					limit = { has_dlc = "No Step Back" }
+					add_equipment_to_stockpile = {
+						type = mbt_hull_2
+						variant_name = "T-90"
+						amount = 10
+						producer = SOV
+					}
+					add_equipment_to_stockpile = {
+						type = ifv_hull_1
+						variant_name = "BMP-3"
+						amount = 10
+						producer = SOV
+					}
+					add_equipment_to_stockpile = {
+						type = apc_hull_1
+						variant_name = "BTR-80"
+						amount = 10
+						producer = SOV
+					}
+				}
+				else = {
+					add_equipment_to_stockpile = {
+						type = MBT_2		#T-90
+						amount = 10
+						producer = SOV
+					}
+					add_equipment_to_stockpile = {
+						type = IFV_2		#BMP-3
+						amount = 10
+						producer = SOV
+					}
+					add_equipment_to_stockpile = {
+						type = APC_2		#BTR-80
+						amount = 10
+						producer = SOV
+					}
+				}
+			}
+			else_if = {
+				limit = { has_government = fascism }	#Salafist Armenia will buy from China
+				if = {
+					limit = { has_dlc = "No Step Back" }
+					add_equipment_to_stockpile = {
+						type = mbt_hull_1	#Type-96
+						variant_name = "Type-96A"
+						amount = 10
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = ifv_hull_1
+						variant_name = "WZ-551"
+						amount = 10
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = apc_hull_1
+						variant_name = "Type-89"
+						amount = 10
+						producer = CHI
+					}
+				}
+				else = {
+					add_equipment_to_stockpile = {
+						type = MBT_3		#Type-96
+						amount = 10
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = IFV_3		#ZSL-92B
+						amount = 10
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = APC_3		#ZSL-92
+						amount = 10
+						producer = CHI
+					}
+				}
+			}
+			else = {
+				#limit = { has_government = neutrality }	#Non-aligned Armenia will buy from Turkey
+				if = {
+					limit = { has_dlc = "No Step Back" }
+					add_equipment_to_stockpile = {
+						type = mbt_hull	#Altay
+						amount = 10
+						producer = TUR
+					}
+					add_equipment_to_stockpile = {
+						type = ifv_hull		#ACV-15
+						amount = 10
+						producer = TUR
+					}
+					add_equipment_to_stockpile = {
+						type = apc_hull		#Ejder
 						amount = 10
 						producer = TUR
 					}
 				}
-				add_equipment_to_stockpile = {
-					type = IFV_2		#ACV-15
-					amount = 10
-					producer = TUR
-				}
-				add_equipment_to_stockpile = {
-					type = APC_4		#Ejder
-					amount = 10
-					producer = TUR
-				}
-			}
-			if = {
-				limit = { has_government = nationalist }	#Nationalist Armenia will buy from Russia
-				add_equipment_to_stockpile = {
-					type = MBT_2		#T-90
-					amount = 10
-					producer = SOV
-				}
-				add_equipment_to_stockpile = {
-					type = IFV_2		#BMP-3
-					amount = 10
-					producer = SOV
-				}
-				add_equipment_to_stockpile = {
-					type = APC_2		#BTR-80
-					amount = 10
-					producer = SOV
+				else = {
+					if = {
+						limit = { TUR = { has_tech = MBT_5 } }
+						add_equipment_to_stockpile = {
+							type = MBT_3		#Altay
+							amount = 10
+							producer = TUR
+						}
+					}
+					add_equipment_to_stockpile = {
+						type = IFV_2		#ACV-15
+						amount = 10
+						producer = TUR
+					}
+					add_equipment_to_stockpile = {
+						type = APC_4		#Ejder
+						amount = 10
+						producer = TUR
+					}
 				}
 			}
 		}
@@ -10163,7 +10885,7 @@ focus_tree = {
 				name = ARM_new_uniforms10
 				uses = 1
 				bonus = 1
-				technology  = camouflage3
+				technology = camouflage3
 			}
 		}
 	}
@@ -10210,7 +10932,7 @@ focus_tree = {
 				name = ARM_nato_razrab
 				uses = 2
 				bonus = 0.5
-				category  = Cat_ARMOR
+				category = Cat_ARMOR
 			}
 		}
 	}
@@ -10546,16 +11268,7 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Aspar"
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -7.50 }
-			modify_treasury_effect = yes
+			one_random_arms_factory = yes
 			custom_effect_tooltip = ARM_aspar_unlock_TT
 		}
 		x = 51
@@ -10868,7 +11581,7 @@ focus_tree = {
 	}
 	focus = {
 		id = ARM_avia_trenings
-		icon = befriend_CSTO
+		icon = align_to_csto
 		cost = 2
 		ai_will_do = {
 			factor = 1
@@ -11033,7 +11746,7 @@ focus_tree = {
 				amount = 75
 				producer = GER
 			}
-			set_temp_variable = { treasury_change = -2}
+			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 		}
 	}
@@ -11077,15 +11790,7 @@ focus_tree = {
 		y = 6
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_indian_radars"
-			random_owned_controlled_state = { #sunik
-				add_building_construction = {
-					type = radar_station
-					instant_build = yes
-					level = 1
-				}
-			}
-			set_temp_variable = { treasury_change = -4 }
-			modify_treasury_effect = yes
+			two_radar_station = yes
 		}
 	}
 	focus = {
@@ -11104,22 +11809,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_rocket_defense"
 			air_experience = 5
-			random_owned_controlled_state = {
-				add_building_construction = {
-					type = anti_air_building
-					instant_build = yes
-					level = 2
-				}
-			}
-			random_owned_controlled_state = {
-				add_building_construction = {
-					type = anti_air_building
-					instant_build = yes
-					level = 1
-				}
-			}
-			set_temp_variable = { treasury_change = -9.75 }
-			modify_treasury_effect = yes
+			one_anti_air = yes
+			two_anti_air = yes
 		}
 	}
 	focus = {
@@ -11141,7 +11832,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_pechora"
 			add_equipment_to_stockpile = {
-				type = SP_Anti_Air_0 	#
+				type = SP_Anti_Air_0
 				amount = 20
 			}
 			set_temp_variable = { treasury_change = -1 }
@@ -11237,10 +11928,21 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_WM80"
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
-			add_equipment_to_stockpile = {
-				type = SP_R_arty_1 	#
-				amount = 8
-				producer = CHI
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = {
+					type = spart_hull_1
+					variant_name = "PHZ-89"
+					amount = 8
+					producer = CHI
+				}
+				else = {
+					add_equipment_to_stockpile = {
+						type = SP_R_arty_1 	#
+						amount = 8
+						producer = CHI
+					}
+				}
 			}
 		}
 	}
@@ -11355,7 +12057,7 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_awiabase_erebuni"
-			set_temp_variable = { treasury_change = -8.50 }
+			set_temp_variable = { treasury_change = -9.75 }
 			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 1
@@ -11378,7 +12080,7 @@ focus_tree = {
 			focus = ARM_go_out_rus
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_awiabase_erebuni_west"
-			set_temp_variable = { treasury_change = -8.50 }
+			set_temp_variable = { treasury_change = -9.75 }
 			modify_treasury_effect = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 1
@@ -11557,7 +12259,7 @@ focus_tree = {
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_cyberwar"
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
-			add_ideas = { POL_inner_network_idea }
+			add_ideas = POL_inner_network_idea
 			custom_effect_tooltip = CHI_technology_inferior_tt
 		}
 		x = 57
@@ -11706,31 +12408,7 @@ focus_tree = {
 			ARM = { has_completed_focus = ARM_Tsarukyan }
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_food_industry"
-			if = {
-				limit = { num_of_factories < 26 }
-				set_temp_variable = { treasury_change = -7.5 }
-				modify_treasury_effect = yes
-				capital_scope = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = industrial_complex
-						level = 1
-						instant_build = yes
-					}
-				}
-				else = {
-					set_temp_variable = { treasury_change = -7.5 }
-					modify_treasury_effect = yes
-					random_owned_controlled_state = {
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = industrial_complex
-							level = 1
-							instant_build = yes
-						}
-					}
-				}
-			}
+			one_random_industrial_complex = yes
 		}
 		x = 71
 		y = 2
@@ -11802,7 +12480,7 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_libera_economy"
-			increase_corruption = yes
+			decrease_corruption = yes
 			add_political_power = -100
 		}
 		x = 74
@@ -11821,7 +12499,7 @@ focus_tree = {
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_stop_inflation"
 			add_political_power = -150
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = 10 }
 			modify_treasury_effect = yes
 			add_stability = 0.05
 		}
@@ -11932,7 +12610,6 @@ focus_tree = {
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
-			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_landowners_opinion = yes
@@ -11976,65 +12653,8 @@ focus_tree = {
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_mikoyan_nasledil"
 			custom_effect_tooltip = ARM_mikoyan_TT
 			increase_corruption = yes
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
-			if = {
-				limit = {
-						has_idea = ARM_high_emigration_5
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_5
-						add_idea = ARM_high_emigration_4
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_4
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_4
-						add_idea = ARM_high_emigration_3
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_3
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_3
-						add_idea = ARM_high_emigration_2
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_2
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_2
-						add_idea = ARM_high_emigration_1
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				remove_ideas = ARM_high_emigration_1
-				add_ideas = ARM_immigration
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				add_stability = 0.02
-			}
+			one_random_industrial_complex = yes
+			ARM_decrease_high_emigration = yes
 		}
 		x = 77
 		y = 6
@@ -12044,9 +12664,7 @@ focus_tree = {
 		icon = expand_finance_ministry
 		cost = 10
 		search_filters = { FOCUS_FILTER_INDUSTRY }
-		prerequisite = {
-			focus = ARM_mikoyan_nasledil
-		}
+		prerequisite = { focus = ARM_mikoyan_nasledil }
 		ai_will_do = {
 			factor = 1
 		}
@@ -12347,16 +12965,8 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_private_aviacomp"
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
+			set_temp_variable = { treasury_change = -3.75 }
+			one_random_arms_factory = yes
 			random_owned_controlled_state = {
 				add_resource = {
 					type = aluminium
@@ -12986,12 +13596,7 @@ focus_tree = {
 			set_temp_variable = { influence_target = ARM }
 			change_influence_percentage = yes
 			set_temp_variable = { treasury_change = -1 }
-			if = {
-				random_owned_controlled_state = {
-					add_resource = { type = chromium amount = 5 }
-				}
-			}
-			set_temp_variable = { temp_opinion = 5 }
+			random_owned_controlled_state = { add_resource = { type = chromium amount = 5 } }
 		}
 		x = 73
 		y = 9
@@ -13212,36 +13817,7 @@ focus_tree = {
 			focus = ARM_russian_invistition_small_b
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_energetic_autonomy"
-			if = {
-				limit = { has_idea = ARM_huge_unemployment_5 }
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_5
-					add_idea = ARM_huge_unemployment_4
-				}
-			}
-			if = {
-				limit = { has_idea = ARM_huge_unemployment_4 }
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_4
-					add_idea = ARM_huge_unemployment_3
-				}
-			}
-			if = {
-				limit = { has_idea = ARM_huge_unemployment_3 }
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_3
-					add_idea = ARM_huge_unemployment_2
-				}
-			}
-			if = { limit = { has_idea = ARM_huge_unemployment_2 }
-				swap_ideas = {
-					remove_idea = ARM_huge_unemployment_2
-					add_idea = ARM_huge_unemployment_1
-				}
-			}
-			if = { limit = { has_idea = ARM_huge_unemployment_1 }
-				remove_ideas = ARM_huge_unemployment_1
-			}
+			ARM_decrease_huge_unemployment = yes
 			custom_effect_tooltip = ARM_fighting_unemployment_TT
 		}
 		x = 79
@@ -13446,7 +14022,7 @@ focus_tree = {
 			OR = {
 			NOT = { country_exists = KUR }
 			KUR = { is_puppet_of = ROOT }
-		    }
+			}
 			OR = {
 			NOT = { country_exists = ISR }
 			ISR = { is_puppet_of = ROOT }
@@ -13596,12 +14172,9 @@ focus_tree = {
 			set_temp_variable = { influence_target = ARM }
 			change_influence_percentage = yes
 			set_temp_variable = { treasury_change = -1 }
-			if = {
-				1035 = {
-					add_resource = { type = chromium amount = 1 }
-				}
+			1035 = {
+				add_resource = { type = chromium amount = 1 }
 			}
-			set_temp_variable = { temp_opinion = 5 }
 		}
 		x = 79
 		y = 23
@@ -13720,50 +14293,9 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_IT_sphereooo"
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_5
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_5
-							add_idea = ARM_huge_unemployment_4
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_4
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_4
-							add_idea = ARM_huge_unemployment_3
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_3
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_3
-							add_idea = ARM_huge_unemployment_2
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_2
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_2
-							add_idea = ARM_huge_unemployment_1
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_1
-						}
-					remove_ideas = ARM_huge_unemployment_1
-				}
-				add_political_power = 100
-}
+			ARM_decrease_huge_unemployment = yes
+			add_political_power = 100
+		}
 		x = 86
 		y = 27
 	}
@@ -13826,55 +14358,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 			add_political_power = 100
-			if = {
-				limit = {
-						has_idea = ARM_high_emigration_5
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_5
-						add_idea = ARM_high_emigration_4
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_4
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_4
-						add_idea = ARM_high_emigration_3
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_3
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_3
-						add_idea = ARM_high_emigration_2
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_2
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_2
-						add_idea = ARM_high_emigration_1
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				remove_ideas = ARM_high_emigration_1
-				add_ideas = ARM_immigration
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				add_stability = 0.02
-			}
+			ARM_decrease_high_emigration = yes
 		}
 		x = 86
 		y = 28
@@ -14028,55 +14512,7 @@ focus_tree = {
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_save_oligars_deals"
 			add_stability = -0.05
 			custom_effect_tooltip = ARM_increase_rus_oli_TT
-			if = {
-				limit = {
-						has_idea = ARM_high_emigration_5
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_5
-						add_idea = ARM_high_emigration_4
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_4
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_4
-						add_idea = ARM_high_emigration_3
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_3
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_3
-						add_idea = ARM_high_emigration_2
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_2
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_2
-						add_idea = ARM_high_emigration_1
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				remove_ideas = ARM_high_emigration_1
-				add_ideas = ARM_immigration
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				add_stability = 0.02
-			}
+			ARM_decrease_high_emigration = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
 			change_small_medium_business_owners_opinion = yes
@@ -14159,100 +14595,11 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_korporatiwism"
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_5
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_5
-							add_idea = ARM_huge_unemployment_4
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_4
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_4
-							add_idea = ARM_huge_unemployment_3
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_3
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_3
-							add_idea = ARM_huge_unemployment_2
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_2
-						}
-					swap_ideas = {
-							remove_idea = ARM_huge_unemployment_2
-							add_idea = ARM_huge_unemployment_1
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_huge_unemployment_1
-						}
-					remove_ideas = ARM_huge_unemployment_1
-				}
-				if = {
-					limit = {
-							has_idea = ARM_high_emigration_5
-						}
-					swap_ideas = {
-							remove_idea = ARM_high_emigration_5
-							add_idea = ARM_high_emigration_4
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_high_emigration_4
-						}
-					swap_ideas = {
-							remove_idea = ARM_high_emigration_4
-							add_idea = ARM_high_emigration_3
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_high_emigration_3
-						}
-					swap_ideas = {
-							remove_idea = ARM_high_emigration_3
-							add_idea = ARM_high_emigration_2
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_high_emigration_2
-						}
-					swap_ideas = {
-							remove_idea = ARM_high_emigration_2
-							add_idea = ARM_high_emigration_1
-						}
-				}
-			if = {
-					limit = {
-							has_idea = ARM_high_emigration_1
-						}
-					remove_ideas = ARM_high_emigration_1
-					add_ideas = ARM_immigration
-				}
-			if = {
-					limit = {
-							has_idea = ARM_high_emigration_1
-						}
-					add_stability = 0.02
-				}
-				increase_corruption = yes
-				add_political_power = 100
-}
+			ARM_decrease_huge_unemployment = yes
+			ARM_decrease_high_emigration = yes
+			increase_corruption = yes
+			add_political_power = 100
+		}
 		x = 75
 		y = 27
 	}
@@ -14296,39 +14643,7 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_zhratwa"
-			if = {
-				limit = { num_of_factories < 26 }
-				set_temp_variable = { treasury_change = -7.5 }
-				modify_treasury_effect = yes
-			}
-			else_if = {
-				limit = { num_of_factories > 25 }
-				set_temp_variable = { treasury_change = -15 }
-				modify_treasury_effect = yes
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = industrial_complex
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-						type = industrial_complex
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
-			capital_scope = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_industrial_complex = yes
 			increase_corruption = yes
 		}
 		x = 75
@@ -14351,18 +14666,7 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_himka"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-			}
-			random_owned_controlled_state = {
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_industrial_complex = yes
 			decrease_economic_growth = yes
 		}
 		x = 75
@@ -14401,134 +14705,23 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_soviet_factrorys"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			capital_scope = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
 			if = {
-				limit = { num_of_factories > 0 }
-				set_temp_variable = { treasury_change = -7.5 }
-				modify_treasury_effect = yes
-				capital_scope = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
+				limit = { num_of_factories > 20 num_of_factories < 45 }
+				one_random_arms_factory = yes
 			}
 			else_if = {
-				limit = { num_of_factories > 20 }
-				set_temp_variable = { treasury_change = -15 }
-				modify_treasury_effect = yes
-				capital_scope = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 1
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-
-				}
-			}
-			else_if = {
-				limit = { num_of_factories > 35 }
-				set_temp_variable = { treasury_change = -22.5 }
-				modify_treasury_effect = yes
-				capital_scope = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 1
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 1
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
-			else_if = {
-				limit = { num_of_factories > 70 }
-				set_temp_variable = { treasury_change = -30 }
-				modify_treasury_effect = yes
-				capital_scope = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 1
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 1
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
+				limit = { num_of_factories > 44 }
+				two_random_arms_factory = yes
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_defense_industry_opinion = yes
@@ -14551,55 +14744,7 @@ focus_tree = {
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_state_kapitalism"
 			add_stability = 0.05
-			if = {
-				limit = {
-						has_idea = ARM_high_emigration_5
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_5
-						add_idea = ARM_high_emigration_4
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_4
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_4
-						add_idea = ARM_high_emigration_3
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_3
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_3
-						add_idea = ARM_high_emigration_2
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_2
-					}
-				swap_ideas = {
-						remove_idea = ARM_high_emigration_2
-						add_idea = ARM_high_emigration_1
-					}
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				remove_ideas = ARM_high_emigration_1
-				add_ideas = ARM_immigration
-			}
-		if = {
-				limit = {
-						has_idea = ARM_high_emigration_1
-					}
-				add_stability = 0.02
-			}
+			ARM_decrease_high_emigration = yes
 			one_office_construction = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
@@ -14621,16 +14766,7 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_cars_zawod"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
+			one_random_industrial_complex = yes
 			decrease_economic_growth = yes
 		}
 		x = 73
@@ -14650,47 +14786,25 @@ focus_tree = {
 		}
 		prerequisite = {
 			focus = ARM_himka
-
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_lite_promka"
-			if = {
-				limit = { num_of_factories > 9 num_of_factories < 30 }
-				set_temp_variable = { treasury_change = -7.5 }
-				modify_treasury_effect = yes
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			capital_scope = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
 				}
 			}
 			if = {
-				limit = { num_of_factories > 29 num_of_factories < 60 }
-				set_temp_variable = { treasury_change = -15 }
-				modify_treasury_effect = yes
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-				}
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-				}
+				limit = { num_of_factories > 20 num_of_factories < 45 }
+				one_random_industrial_complex = yes
 			}
-			if = {
-				limit = { num_of_factories > 59 }
-				set_temp_variable = { treasury_change = -22.5 }
-				modify_treasury_effect = yes
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-				}
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-				}
-				random_owned_controlled_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
-				}
+			else_if = {
+				limit = { num_of_factories > 44 }
+				two_random_industrial_complex = yes
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
@@ -14716,55 +14830,7 @@ focus_tree = {
 			factor = 1
 		}
 		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_biger_sez"
-		if = {
-			limit = {
-					has_idea = ARM_high_emigration_5
-				}
-			swap_ideas = {
-					remove_idea = ARM_high_emigration_5
-					add_idea = ARM_high_emigration_4
-				}
-		}
-	if = {
-			limit = {
-					has_idea = ARM_high_emigration_4
-				}
-			swap_ideas = {
-					remove_idea = ARM_high_emigration_4
-					add_idea = ARM_high_emigration_3
-				}
-		}
-	if = {
-			limit = {
-					has_idea = ARM_high_emigration_3
-				}
-			swap_ideas = {
-					remove_idea = ARM_high_emigration_3
-					add_idea = ARM_high_emigration_2
-				}
-		}
-	if = {
-			limit = {
-					has_idea = ARM_high_emigration_2
-				}
-			swap_ideas = {
-					remove_idea = ARM_high_emigration_2
-					add_idea = ARM_high_emigration_1
-				}
-		}
-	if = {
-			limit = {
-					has_idea = ARM_high_emigration_1
-				}
-			remove_ideas = ARM_high_emigration_1
-			add_ideas = ARM_immigration
-		}
-	if = {
-			limit = {
-					has_idea = ARM_high_emigration_1
-				}
-			add_stability = 0.02
-		}
+			ARM_decrease_high_emigration = yes
 			add_ideas = autarchy_focus
 			increase_corruption = yes
 		}
@@ -14816,8 +14882,6 @@ focus_tree = {
 				picture = "nikol_pahinyan.dds"
 				expire = "2050.1.1"
 				ideology = liberalism
-				traits = {
-				}
 			}
 		}
 		x = 25
@@ -14840,11 +14904,12 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_make_election
 		}
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_way_of_revol"
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ARM_way_of_revol"
 			add_political_power = 100
 			add_stability = -0.05
 			custom_effect_tooltip = ARM_nikol_ways_TT
-			}
+		}
 		x = 24
 		y = 26
 	}
@@ -14859,7 +14924,8 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = ARM_way_of_revol
 		}
-		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_make_election"
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ARM_make_election"
 			add_political_power = 50
 			hold_election = ROOT
 			custom_effect_tooltip = ARM_nikolis_president_TT
@@ -15253,8 +15319,6 @@ focus_tree = {
 					picture = "araik_harutyunian.dds"
 					expire = "2050.1.1"
 					ideology = liberalism
-					traits = {
-					}
 				}
 			}
 		}
@@ -15286,7 +15350,7 @@ focus_tree = {
 		y = 37
 	}
 	##############################
-	###    Start of EU Focus Tree ###    x = 9 y = 38
+	###	Start of EU Focus Tree ###	x = 9 y = 38
 	##############################
 
 	shared_focus = EU001

@@ -453,12 +453,15 @@ country_event = {
 		name = japan_classic.1.o1
 		log = "[GetDateText]: [This.GetName]: japan_classic.1.o1 executed"
 		set_country_flag = seek_japan_classicese_alliance
+
+		if = { limit = { is_in_faction = yes NOT = { is_in_faction_with = JAP } }
+			leave_faction = yes
+		}
 		if = {
 			limit = { JAP = { is_faction_leader = yes } }
 			JAP = { add_to_faction = ROOT }
 		}
-		if = {
-			limit = { JAP = { is_faction_leader = no } }
+		else = {
 			random_country = {
 				limit = {
 					is_in_faction_with = JAP
@@ -468,18 +471,42 @@ country_event = {
 			}
 		}
 		JAP = { country_event = diplomatic_response.1 }
+
+
 		ai_chance = {
 			factor = 10
 			modifier = {
 				add = 50
 			}
 			modifier = {
-				AND = {
-					country_exists = CHI
-					CHI = { is_in_array = { ruling_party = 19 } }
-					CHI = { is_puppet = no }
-				}
+				country_exists = CHI
+				CHI = { is_in_array = { ruling_party = 19 } }
+				CHI = { is_subject = no }
 				add = 50
+			}
+			modifier = {
+				OR = {
+					check_variable = { influence_array^0 = JAP.id }
+					check_variable = { influence_array^1 = JAP.id }
+					check_variable = { influence_array^2 = JAP.id }
+				}
+				factor = 5
+			}
+			modifier = {
+				has_opinion = { target = JAP value > 49 }
+				factor = 2
+			}
+			modifier = {
+				has_opinion = { target = JAP value > 99 }
+				factor = 2
+			}
+			modifier = {
+				has_opinion = { target = JAP value > 149 }
+				factor = 2
+			}
+			modifier = {
+				JAP = { is_same_government_PREV = yes }
+				factor = 2
 			}
 		}
 	}
@@ -499,11 +526,28 @@ country_event = {
 				add = -10
 			}
 			modifier = {
-				AND = {
-					has_government = communism
-					NOT = { tag = VIE }
-				}
-				add = 1000
+				FROM = { NOT = { has_government = communism } }
+				has_government = communism
+				factor = 2
+			}
+			modifier = {
+				FROM = { NOT = { has_government = democratic } }
+				has_government = democratic
+				factor = 2
+			}
+			modifier = {
+				FROM = { NOT = { has_government = neutrality } }
+				has_government = neutrality
+				factor = 2
+			}
+			modifier = {
+				has_government = nationalist
+				factor = 25
+			}
+			modifier = {
+				is_subject = no
+				NOT = { is_subject_of = FROM }
+				factor = 100
 			}
 		}
 	}
@@ -968,7 +1012,7 @@ news_event = {
 			NOT = { original_tag = CHI }
 			OR = {
 				is_in_faction_with = JAP
-				is_puppet_of = JAP
+				is_subject_of = JAP
 			}
 		}
 	}
@@ -990,7 +1034,7 @@ news_event = {
 			OR = {
 				is_in_faction_with = CHI
 				NOT = { is_in_faction_with = JAP }
-				is_puppet_of = CHI
+				is_subject_of = CHI
 			}
 		}
 	}
@@ -1003,8 +1047,8 @@ news_event = {
 			NOT = { original_tag = CHI }
 			NOT = { is_in_faction_with = JAP }
 			NOT = { is_in_faction_with = CHI }
-			NOT = { is_puppet_of = JAP }
-			NOT = { is_puppet_of = CHI }
+			NOT = { is_subject_of = JAP }
+			NOT = { is_subject_of = CHI }
 			NOT = { has_war_with = JAP }
 			NOT = { has_war_with = CHI }
 		}
@@ -1046,7 +1090,7 @@ news_event = {
 		trigger = {
 			OR = {
 				is_in_faction_with = JAP
-				is_puppet_of = JAP
+				is_subject_of = JAP
 			}
 		}
 	}
@@ -1058,7 +1102,7 @@ news_event = {
 			NOT = { original_tag = JAP }
 			NOT = { original_tag = USA }
 			NOT = { is_in_faction_with = JAP }
-			NOT = { is_puppet_of = JAP }
+			NOT = { is_subject_of = JAP }
 			NOT = { has_war_with = JAP }
 		}
 	}
@@ -1077,7 +1121,7 @@ news_event = {
 		trigger = {
 			original_tag = USA
 			NOT = { is_in_faction_with = JAP }
-			NOT = { is_puppet_of = JAP }
+			NOT = { is_subject_of = JAP }
 			NOT = { has_war_with = JAP }
 		}
 	}
@@ -1158,7 +1202,7 @@ news_event = {
 			NOT = { original_tag = JAP }
 			OR = {
 				is_in_faction_with = JAP
-				is_puppet_of = JAP
+				is_subject_of = JAP
 			}
 		}
 	}
@@ -1169,7 +1213,7 @@ news_event = {
 		trigger = {
 			NOT = { original_tag = JAP }
 			NOT = { is_in_faction_with = JAP }
-			NOT = { is_puppet_of = JAP }
+			NOT = { is_subject_of = JAP }
 			NOT = { has_war_with = JAP }
 		}
 	}
@@ -1207,7 +1251,7 @@ news_event = {
 		trigger = {
 			OR = {
 				is_in_faction_with = JAP
-				is_puppet_of = JAP
+				is_subject_of = JAP
 			}
 		}
 	}
@@ -1218,7 +1262,7 @@ news_event = {
 		trigger = {
 			NOT = { original_tag = JAP }
 			NOT = { is_in_faction_with = JAP }
-			NOT = { is_puppet_of = JAP }
+			NOT = { is_subject_of = JAP }
 			NOT = { has_war_with = JAP }
 			has_elections = yes
 		}
@@ -1230,7 +1274,7 @@ news_event = {
 		trigger = {
 			NOT = { original_tag = JAP }
 			NOT = { is_in_faction_with = JAP }
-			NOT = { is_puppet_of = JAP }
+			NOT = { is_subject_of = JAP }
 			NOT = { has_war_with = JAP }
 			has_elections = yes
 		}
