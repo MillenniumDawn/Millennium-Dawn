@@ -366,18 +366,27 @@
 			add_to_variable = { sacra_corona_unita_strength = -0.001 }
 		}
 		if = {
+			limit = {
+				has_completed_focus = ITA_build_waste_incinerators
+			}
+			add_to_variable = { cosa_nostra_strength = -0.001 }
+			add_to_variable = { camorra_strength = -0.002 } #camorra is the most concerned with waste trafficking
+			add_to_variable = { ndrangheta_strength = -0.001 }
+			add_to_variable = { sacra_corona_unita_strength = -0.001 }
+		}
+		if = {
 			limit = { has_idea = ITA_legalized_light_drugs }
-			add_to_variable = { cosa_nostra_strength = -0.004 }
-			add_to_variable = { camorra_strength = -0.004 }
-			add_to_variable = { ndrangheta_strength = -0.004 }
-			add_to_variable = { sacra_corona_unita_strength = -0.004 }
+			add_to_variable = { cosa_nostra_strength = -0.003 }
+			add_to_variable = { camorra_strength = -0.003 }
+			add_to_variable = { ndrangheta_strength = -0.004 } #ndrangheta is the most concerned with drug trafficking
+			add_to_variable = { sacra_corona_unita_strength = -0.003 }
 		}
 		if = {
 			limit = { has_idea = ITA_legalized_all_drugs }
-			add_to_variable = { cosa_nostra_strength = -0.006 }
-			add_to_variable = { camorra_strength = -0.006 }
-			add_to_variable = { ndrangheta_strength = -0.006 }
-			add_to_variable = { sacra_corona_unita_strength = -0.006 }
+			add_to_variable = { cosa_nostra_strength = -0.004 }
+			add_to_variable = { camorra_strength = -0.004 }
+			add_to_variable = { ndrangheta_strength = -0.006 } #ndrangheta is the most concerned with drug trafficking
+			add_to_variable = { sacra_corona_unita_strength = -0.004 }
 		}
 		if = {
 			limit = { has_completed_focus = ITA_anti_mafia_education }
@@ -659,6 +668,46 @@
 		multiply_temp_variable = { extraordinary_police_funding_cost = -0.25 }
 		set_temp_variable = { treasury_change = extraordinary_police_funding_cost }
 		modify_treasury_effect = yes
+	}
+	pizzo_decisions_effect = {
+		set_temp_variable = { pizzo_required_cp = 0 }
+		if = {
+			limit = {
+				has_country_flag = protect_from_pizzo_sicily_flag
+			}
+			multiply_variable = { cosa_nostra_strength = 0.995 }
+			set_temp_variable = { pizzo_required_cp_sicily = cosa_nostra_strength }
+			multiply_temp_variable = { pizzo_required_cp_sicily = -100 }
+			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_sicily }
+		}
+		if = {
+			limit = {
+				has_country_flag = protect_from_pizzo_campania_flag
+			}
+			multiply_variable = { camorra_strength = 0.995 }
+			set_temp_variable = { pizzo_required_cp_campania = camorra_strength }
+			multiply_temp_variable = { pizzo_required_cp_campania = -100 }
+			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_campania }
+		}
+		if = {
+			limit = {
+				has_country_flag = protect_from_pizzo_calabria_flag
+			}
+			multiply_variable = { ndrangheta_strength = 0.995 }
+			set_temp_variable = { pizzo_required_cp_calabria = ndrangheta_strength }
+			multiply_temp_variable = { pizzo_required_cp_calabria = -100 }
+			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_calabria }
+		}
+		if = {
+			limit = {
+				has_country_flag = protect_from_pizzo_puglia_flag
+			}
+			multiply_variable = { sacra_corona_unita_strength = 0.995 }
+			set_temp_variable = { pizzo_required_cp_puglia = sacra_corona_unita_strength }
+			multiply_temp_variable = { pizzo_required_cp_puglia = -100 }
+			add_to_temp_variable = { pizzo_required_cp = pizzo_required_cp_puglia }
+		}
+		set_variable = { ITA_max_command_power_var = pizzo_required_cp }
 	}
 	mafia_event_effect_cosa_nostra = {
 		random_list = {
@@ -1431,11 +1480,11 @@
 		}
 	}
 	reform_expectance_from_situation = {
-	#stability effect
+		#stability effect
 		set_temp_variable = { reform_expectance_from_stability = 0.6 }
 		subtract_from_temp_variable = { reform_expectance_from_stability = stability }
 		multiply_temp_variable = { reform_expectance_from_stability = -0.1 }
-	#interest rate effect
+		#interest rate effect
 		set_temp_variable = { reform_expectance_from_interest_rate = interest_rate }
 		subtract_from_temp_variable = { reform_expectance_from_interest_rate = 3 }
 		clamp_temp_variable = {
@@ -1444,7 +1493,7 @@
 			max = 20
 		}
 		multiply_temp_variable = { reform_expectance_from_interest_rate = -0.005 }
-	#laws effect
+		#laws effect
 		if = {
 			limit = {
 				has_idea = social_01
@@ -1549,7 +1598,7 @@
 			}
 			add_to_temp_variable = { reform_expectance_from_laws = 0.02 }
 		}
-	#war effect
+		#war effect
 		if = {
 			limit = {
 				has_war = yes
@@ -1558,7 +1607,7 @@
 			subtract_from_temp_variable = { reform_expectance_from_war = war_support }
 			multiply_temp_variable = { reform_expectance_from_war = -0.1 }
 		}
-	#taxes effect
+		#taxes effect
 		set_temp_variable = { reform_expectance_from_taxes = tax_rate }
 		multiply_temp_variable = { reform_expectance_from_taxes = -0.001 }
 
@@ -1630,7 +1679,7 @@
 			}
 			add_to_variable = { drift_switch_var_base = 0.01 }
 		}
-	#technocratic government effect
+		#technocratic government effect
 		if = {
 			limit = {
 				has_country_leader_with_trait = western_technocrat
@@ -1641,6 +1690,151 @@
 			add_to_variable = { drift_switch_var_base = 0.05 }
 		}
 	}
+
+	# weekly_stability_from_situation = {
+	# 	#interest rate effect
+	# 	set_temp_variable = { weekly_stability_from_interest_rate = interest_rate }
+	# 	subtract_from_temp_variable = { weekly_stability_from_interest_rate = 3 }
+	# 	clamp_temp_variable = {
+	# 		var = weekly_stability_from_interest_rate
+	# 		min = 0
+	# 		max = 20
+	# 	}
+	# 	multiply_temp_variable = { weekly_stability_from_interest_rate = -0.005 }
+	# 	#laws effect
+	# 	if = {
+	# 		limit = {
+	# 			has_idea = social_01
+	# 		}
+	# 		set_temp_variable = { weekly_stability_from_laws = -0.03 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = social_02
+	# 		}
+	# 		set_temp_variable = { weekly_stability_from_laws = -0.02 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = social_03
+	# 		}
+	# 		set_temp_variable = { weekly_stability_from_laws = -0.01 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = social_04
+	# 		}
+	# 		set_temp_variable = { weekly_stability_from_laws = 0 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = social_05
+	# 		}
+	# 		set_temp_variable = { weekly_stability_from_laws = 0.01 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = social_06
+	# 		}
+	# 		set_temp_variable = { weekly_stability_from_laws = 0.02 }
+	# 	}
+
+	# 	if = {
+	# 		limit = {
+	# 			has_idea = health_01
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = -0.03 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = health_02
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = -0.02 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = health_03
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = -0.01 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = health_04
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = 0 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = health_05
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = 0.01 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = health_06
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = 0.02 }
+	# 	}
+
+	# 	if = {
+	# 		limit = {
+	# 			has_idea = edu_01
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = -0.02 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = edu_02
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = -0.01 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = edu_03
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = 0 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = edu_04
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = 0.01 }
+	# 	}
+	# 	else_if = {
+	# 		limit = {
+	# 			has_idea = edu_05
+	# 		}
+	# 		add_to_temp_variable = { weekly_stability_from_laws = 0.02 }
+	# 	}
+	# 	#war effect
+	# 	if = {
+	# 		limit = {
+	# 			has_war = yes
+	# 		}
+	# 		set_temp_variable = { weekly_stability_from_war = 1 }
+	# 		subtract_from_temp_variable = { weekly_stability_from_war = war_support }
+	# 		multiply_temp_variable = { weekly_stability_from_war = -0.1 }
+	# 	}
+	# 	#taxes effect
+	# 	set_temp_variable = { weekly_stability_from_taxes = tax_rate }
+	# 	multiply_temp_variable = { weekly_stability_from_taxes = -0.001 }
+	# 	#technocratic government effect
+	# 	if = {
+	# 		limit = {
+	# 			has_country_leader_with_trait = western_technocrat
+	# 			NOT = {
+	# 				has_country_leader_with_trait = roman_senate_trait
+	# 			}
+	# 		}
+	# 		add_to_variable = { drift_switch_var_base = 0.05 }
+	# 	}
+	# 	#final sum
+	# 	add_to_temp_variable = { weekly_stability_from_interest_rate = weekly_stability_from_stability }
+	# 	add_to_temp_variable = { weekly_stability_from_interest_rate = weekly_stability_from_laws }
+	# 	add_to_temp_variable = { weekly_stability_from_interest_rate = weekly_stability_from_taxes }
+	# 	add_to_temp_variable = { weekly_stability_from_interest_rate = weekly_stability_from_war }
+	# 	set_variable = { weekly_stability_drift = weekly_stability_from_interest_rate }
+	# }
 
 	remove_gov_crisis_ai_flags = {
 		clr_country_flag = delayed_government_crisis_1
@@ -1878,6 +2072,322 @@
 		}
 	}
 
+	lsp_calculate_civil_war_volounteers = {
+		if = {
+			limit = {
+				has_leftwing_populist_government = yes
+			}
+			set_variable = { civil_war_volounteers = party_pop_array^6 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^20 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^21 }
+			multiply_variable = { civil_war_volounteers = 1.25 }
+		}
+		if = {
+			limit = {
+				has_rightwing_populist_government = yes
+			}
+			set_variable = { civil_war_volounteers = party_pop_array^4 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^5 }
+			multiply_variable = { civil_war_volounteers = 1.25 }
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_rightwing_populist_government = yes
+					has_leftwing_populist_government = yes
+				}
+			}
+			set_variable = { civil_war_volounteers = party_pop_array^4 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^5 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^6 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^20 }
+			add_to_variable = { civil_war_volounteers = party_pop_array^21 }
+		}
+		multiply_variable = { civil_war_volounteers = 50 }
+		round_variable = civil_war_volounteers
+		clamp_variable = {
+			var = civil_war_volounteers
+			min = 0
+			max = 50
+		}
+	}
+
+	lsp_spawn_volounteers_effect = {
+		division_template = {
+			name = "Volontari"
+			is_locked = yes
+			regiments = {
+				Mot_Militia_Bat = { x = 0 y = 0 }
+				Mot_Militia_Bat = { x = 0 y = 1 }
+				Mot_Militia_Bat = { x = 0 y = 2 }
+				Mot_Militia_Bat = { x = 0 y = 3 }
+			}
+			support = {
+				H_Engi_Comp = { x = 0 y = 0 }
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers > 0 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers > 10 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers > 20 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers > 30 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers > 40 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+	}
+
+	lsp_spawn_volounteers_effect_2 = {
+		division_template = {
+			name = "Volontari"
+			is_locked = yes
+			regiments = {
+				Mot_Militia_Bat = { x = 0 y = 0 }
+				Mot_Militia_Bat = { x = 0 y = 1 }
+				Mot_Militia_Bat = { x = 0 y = 2 }
+				Mot_Militia_Bat = { x = 0 y = 3 }
+			}
+			support = {
+				H_Engi_Comp = { x = 0 y = 0 }
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers < 50 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers < 40 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers < 30 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers < 20 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers < 10 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+	}
+
+	lsp_popularity_effect = {
+		if = {
+			limit = {
+				has_leftwing_populist_government = yes
+			}
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+		if = {
+			limit = {
+				has_rightwing_populist_government = yes
+			}
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.015 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.015 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_rightwing_populist_government = yes
+					has_leftwing_populist_government = yes
+				}
+			}
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.012 }
+			set_temp_variable = { temp_outlook_increase = 0.006 }
+			add_relative_party_popularity = yes
+			recalculate_party = yes
+		}
+	}
+
 	ITA_calculate_civil_war_size = {
 		set_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^0 }
 		add_to_temp_variable = { ITA_civil_war_auth_party_strength = party_pop_array^6 }
@@ -1923,6 +2433,228 @@
 		set_variable = { ITA_civil_war_auth_party_strength_ai_factor = ITA_civil_war_auth_party_strength }
 		multiply_variable = { ITA_civil_war_auth_party_strength_ai_factor = ITA_civil_war_auth_party_strength_ai_factor }
 		multiply_variable = { ITA_civil_war_auth_party_strength_ai_factor = ITA_civil_war_auth_party_strength_ai_factor }
+
+		#calculate volounteers amount
+		set_variable = { civil_war_volounteers_2 = ITA_civil_war_size_var }
+		multiply_variable = { civil_war_volounteers_2 = 50 }
+		round_variable = civil_war_volounteers_2
+		clamp_variable = {
+			var = civil_war_volounteers_2
+			min = 0
+			max = 50
+		}
+	}
+
+	seize_power_spawn_volounteers_effect_1 = {
+		division_template = {
+			name = "Volontari"
+			is_locked = yes
+			regiments = {
+				Mot_Militia_Bat = { x = 0 y = 0 }
+				Mot_Militia_Bat = { x = 0 y = 1 }
+				Mot_Militia_Bat = { x = 0 y = 2 }
+				Mot_Militia_Bat = { x = 0 y = 3 }
+			}
+			support = {
+				H_Engi_Comp = { x = 0 y = 0 }
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers_2 > 0 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers_2 > 10 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers_2 > 20 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers_2 > 30 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					tag = ITA
+				}
+				check_variable = { ITA.civil_war_volounteers_2 > 40 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = PREV
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+	}
+
+	seize_power_spawn_volounteers_effect_2 = {
+		division_template = {
+			name = "Volontari"
+			is_locked = yes
+			regiments = {
+				Mot_Militia_Bat = { x = 0 y = 0 }
+				Mot_Militia_Bat = { x = 0 y = 1 }
+				Mot_Militia_Bat = { x = 0 y = 2 }
+				Mot_Militia_Bat = { x = 0 y = 3 }
+			}
+			support = {
+				H_Engi_Comp = { x = 0 y = 0 }
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers_2 < 50 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers_2 < 40 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers_2 < 30 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers_2 < 20 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				tag = ITA
+				check_variable = { civil_war_volounteers_2 < 10 }
+			}
+			every_state = {
+				limit = {
+					is_core_of = ITA
+				}
+				create_unit = {
+					division = "name =\"Reggimento Volontari\" division_template = \"Volontari\" start_experience_factor = 0.1 start_equipment_factor =  1.0"
+					owner = ITA
+					allow_spawning_on_enemy_provs = yes
+					count = 1
+				}
+			}
+		}
 	}
 	technocrats_coalition_popularity_lose_statalist = {
 		custom_effect_tooltip = technocrats_coalition_popularity_lose_TT
@@ -2197,4 +2929,12 @@
 	modify_subjects_autonomy_gain_effect = {
 		custom_effect_tooltip = modify_subjects_autonomy_gain_TT
 		add_to_variable = { ITA_subjects_autonomy_gain_var = ITA_subjects_autonomy_gain_change }
+	}
+	modify_max_command_power_effect = {
+		custom_effect_tooltip = modify_max_command_power_TT
+		add_to_variable = { ITA_max_command_power_var = ITA_max_command_power_change }
+	}
+	modify_transport_capacity_effect = {
+		custom_effect_tooltip = modify_transport_capacity_TT
+		add_to_variable = { ITA_transport_capacity_var = ITA_transport_capacity_change }
 	}
