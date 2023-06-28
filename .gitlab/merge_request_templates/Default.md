@@ -19,4 +19,4 @@ Closes #num
 
 /assign me
 
-/reviewer @AngriestBird @WarnerDev @Kalkalash @Fire_Hair @amtoj @crocomoth @alexmarkel0v @TraianoGitHub @HMG-CaptainDread @Razmode @wellihavenoidea
+/reviewer @AngriestBird @WarnerDev @Kalkalash @Fire_Hair @amtoj @crocomoth @alexmarkel0v @TraianoGitHub @HMG-CaptainDread @Razmode @wellihavenoidea @Patrador @heastel

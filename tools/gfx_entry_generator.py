@@ -172,6 +172,7 @@ def main():
 			print("Generating MD_ideas.gfx...")
 			with open ("MD_ideas.gfx", "w") as ffile:
 				ffile.write('spriteTypes = {\n')
+				ffile.write('\n\t## DO NOT REMOVE\n\tspriteType={\n\t\tname = \"GFX_idea_traits_strip\"\n\t\ttexturefile = \"gfx/interface/ideas/idea_traits_strip.dds\"\n\t\tnoOfFrames = 18\n\t}\n')
 				for fname in ddsdict:
 					file_location = fname
 					file_location = file_location.split(modfolder)
@@ -181,9 +182,11 @@ def main():
 					file_utility = file_utility.replace("gfx\\interface\\ideas\\", "")
 					file_utility = file_utility.split("\\")
 
-					texture_name = createitemcall(file_utility, type=1)
-
-					ffile.write('\tspriteType ={\n\t\tname = \"GFX_idea_' + texture_name + '\"\n\t\ttexturefile = \"' + texture_path + '\"\n\t}\n')
+					if "traits_strip" in fname:
+						print('Utility Idea GFX... skipping')
+					else:
+						texture_name = createitemcall(file_utility, type=1)
+						ffile.write('\tspriteType ={\n\t\tname = \"GFX_idea_' + texture_name + '\"\n\t\ttexturefile = \"' + texture_path + '\"\n\t}\n')
 				ffile.write('}')
 			print("Generation of the MD_ideas.gfx...")
 			movefilestointerface('MD_ideas.gfx')

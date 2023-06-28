@@ -19,7 +19,7 @@ variables:
  #INPUT_RULESREF: 'master'
  #INPUT_VANILLAMODE: '0'
  #For CW226: Localisation key commands aren't supported, issue report here: https://github.com/cwtools/cwtools-hoi4-config/issues/65
- #for CW251: AND is unneededa warnings Bird Need to fix
+ #for CW251: AND is unneeded warnings Bird Need to fix
  INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
  #INPUT_SUPPRESSEDFILES: '[]'
  #INPUT_CWTOOLSCLIVERSION: ''
@@ -28,6 +28,7 @@ stages:
  - codingstandards
  - styling
  - correctstyling
+ - release
 
 CodingStandards:
  stage: codingstandards
@@ -54,8 +55,8 @@ FixingStyling:
     - merge_requests
   needs: ["Styling"]
   script:
-    - pip install requests
-    - python3 tools/fix_styling.py $Bot_Token
+   - pip install requests
+   - python3 tools/fix_styling.py $Bot_Token
   after_script:
     - git config --global user.email "millenniumdawnmod@gmail.com"
     - git config --global user.name "millennium_dawn_cwtools"
@@ -81,5 +82,18 @@ CWTools_CI:
  artifacts:
   expose_as: 'CWTools Build Output'
   paths:
-   - cwtoolsbuild.json
+   - output.json
   when: always
+
+# This section is purely to create a releasable off the most recent commit on this tag. This should allow me to save some time in creating releasable assets.
+create_releaseable:
+ stage: release
+ rules:
+  - if: $CI_COMMIT_TAG
+ script:
+  - echo 'Creating a Release'
+  - curl --location --output /usr/local/bin/release-cli "https://release-cli-downloads.s3.amazonaws.com/latest/release-cli-linux-amd64"
+  - chmod +x /usr/local/bin/release-cli
+ release:
+   tag_name: '$CI_COMMIT_TAG'                # The version is incremented per pipeline.
+   description: 'Release for $CI_COMMIT_TAG from $CI_COMMIT_SHA $CI_COMMIT_TIMESTAMP'

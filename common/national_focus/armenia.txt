@@ -378,16 +378,11 @@ focus_tree = {
 		y = 1
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_support_entire_opposition"
-			hidden_effect = {
-				add_popularity = { ideology = communism popularity = -0.07 }
-				subtract_from_variable = { party_pop_array^6 = -0.07 }
-				recalculate_party = yes
-			}
-			add_popularity = {
-					ideology = neutrality
-					popularity = 0.05
-				}
-			custom_effect_tooltip = ARM_kocharyan_lose_7_popul_TT
+			add_popularity = { ideology = neutrality popularity = 0.05 }
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = -0.07 }
+			set_temp_variable = { temp_outlook_increase = -0.07 }
+			add_relative_party_popularity = yes
 		}
 	}
 	focus = {
@@ -2070,9 +2065,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_suppress_opposition"
 			add_political_power = 200
-			add_to_variable = { party_pop_array^6 = 0.05 }
-			recalculate_party = yes
-			custom_effect_tooltip = ARM_kocharyan_pollitical_arests_TT
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
 			if = {
 				limit = {
 					NOT = {
@@ -5246,7 +5241,9 @@ focus_tree = {
 		y = 12
 		available = {
 			date > 2008.2.19
-			has_completed_focus = ARM_manifestation_power
+		}
+		bypass = {
+			date > 2008.2.19
 		}
 		ai_will_do = {
 			factor = 25
@@ -5257,7 +5254,6 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_election_2008"
-			country_event = arme.2008
 			hidden_effect = {
 				set_country_flag = arm_respublican_party_will_kommen
 			}
@@ -5902,17 +5898,43 @@ focus_tree = {
 			date > 2008.2.19
 			emerging_reactionaries_are_in_power = yes
 			check_variable = { ARM_sargsyan_support_elect > 3 }
+			has_completed_focus = ARM_manifestation_power
 		}
 		x = 25
 		y = 13
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Sarkisyan"
-			add_political_power = 50
-			add_popularity = {
-				ideology = communism
-				popularity = 0.025
+			recalculate_party = yes
+			hidden_effect = {
+			   clear_array = ruling_party
+			   clear_array = gov_coalition_array
+			   add_to_array = { ruling_party = 6 }
+			   update_government_coalition_strength = yes
+			   update_party_name = yes
+			   set_coalition_drift = yes
+			   update_party_name = yes
+			   set_coalition_drift = yes
+			   set_ruling_leader = yes
+			   set_leader = yes
 			}
-			country_event = { id = arm_misc.9 }
+		create_country_leader = {
+			name = "Serzh Sargsyan"
+			picture = "serzh_sargsyan.dds"
+			ideology = Conservative
+			traits = {
+				emerging_Conservative
+				military_career
+				war_criminal
+				political_dancer
+			}
+		}
+		set_country_flag = arm_respublican_party_will_kommen
+		add_political_power = 50
+		add_popularity = {
+			ideology = communism
+			popularity = 0.025
+		}
+		country_event = { id = arm_misc.9 }
 		}
 	}
 	focus = {
@@ -6746,9 +6768,34 @@ focus_tree = {
 			date > 2008.2.19
 			emerging_autocracy_are_in_power = yes
 			check_variable = { ARM_kach_support_elect > 3 }
+			has_completed_focus = ARM_manifestation_power
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Tsarukyan"
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 7 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}	
+				set_leader = yes
+				set_politics = {
+					ruling_party = communism
+				}	
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_to_variable = { party_pop_array^7 = 0.075 }
+				recalculate_party = yes
+			}
 			country_event = arme.1012
 			add_political_power = 50
 			add_popularity = {
@@ -7293,6 +7340,7 @@ focus_tree = {
 				nationalist_monarchists_are_in_power = yes
 			}
 			check_variable = { ARM_rights_support_elect > 3 }
+			has_completed_focus = ARM_manifestation_power
 		}
 		x = 57
 		y = 13
