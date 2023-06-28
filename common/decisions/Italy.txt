@@ -2130,7 +2130,6 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision bonus_to_stimulate_consumption executed"
-			add_to_variable = { bonus_to_stimulate_consumption_times_taken_var = 1 }
 			set_temp_variable = { bonus_to_stimulate_consumption_cost = bonus_to_stimulate_consumption_times_taken_var }
 			set_temp_variable = { decision_gdp_cost = gdp_total }
 			multiply_temp_variable = { decision_gdp_cost = -0.001 }
@@ -2142,6 +2141,7 @@ generic_ITA = {
 			modify_treasury_effect = yes
 			set_temp_variable = { drift_switch_change = 0.004 }
 			modify_reform_expectance_effect = yes
+			add_to_variable = { bonus_to_stimulate_consumption_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 10
@@ -2179,7 +2179,6 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision forced_withdrawal_from_bank_accounts executed"
-			add_to_variable = { forced_withdrawal_from_bank_accounts_times_taken_var = 1 }
 			set_temp_variable = { forced_withdrawal_from_bank_accounts_cost = forced_withdrawal_from_bank_accounts_times_taken_var }
 			multiply_temp_variable = { forced_withdrawal_from_bank_accounts_cost = -0.005 }
 			set_temp_variable = { ITA_stability_factor_change = forced_withdrawal_from_bank_accounts_cost }
@@ -2190,6 +2189,7 @@ generic_ITA = {
 			modify_treasury_effect = yes
 			set_temp_variable = { drift_switch_change = -0.01 }
 			modify_reform_expectance_effect = yes
+			add_to_variable = { forced_withdrawal_from_bank_accounts_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 0
@@ -2222,7 +2222,6 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision one_time_paycheck_bonus executed"
-			add_to_variable = { one_time_paycheck_bonus_times_taken_var = 1 }
 			set_temp_variable = { one_time_paycheck_bonus_cost = one_time_paycheck_bonus_times_taken_var }
 			set_temp_variable = { decision_gdp_cost = gdp_total }
 			multiply_temp_variable = { decision_gdp_cost = -0.001 }
@@ -2236,6 +2235,7 @@ generic_ITA = {
 			modify_treasury_effect = yes
 			set_temp_variable = { drift_switch_change = 0.002 }
 			modify_reform_expectance_effect = yes
+			add_to_variable = { one_time_paycheck_bonus_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 0
@@ -2285,7 +2285,6 @@ generic_ITA = {
 		days_re_enable = 90
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision economic_concessions_to_oppositions executed"
-			add_to_variable = { economic_concessions_to_oppositions_times_taken_var = 1 }
 			set_temp_variable = { economic_concessions_to_oppositions_cost = economic_concessions_to_oppositions_times_taken_var }
 			set_temp_variable = { decision_gdp_cost = gdp_total }
 			multiply_temp_variable = { decision_gdp_cost = -0.001 }
@@ -2294,6 +2293,7 @@ generic_ITA = {
 			add_political_power = 250
 			set_temp_variable = { treasury_change = economic_concessions_to_oppositions_cost }
 			modify_treasury_effect = yes
+			add_to_variable = { economic_concessions_to_oppositions_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 10
@@ -2352,7 +2352,6 @@ generic_ITA = {
 		days_re_enable = 90
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision extraordinary_church_donation executed"
-			add_to_variable = { extraordinary_church_donation_times_taken_var = 1 }
 			set_temp_variable = { extraordinary_church_donation_cost = extraordinary_church_donation_times_taken_var }
 			set_temp_variable = { decision_gdp_cost = gdp_total }
 			multiply_temp_variable = { decision_gdp_cost = -0.001 }
@@ -2362,6 +2361,7 @@ generic_ITA = {
 			change_the_clergy_opinion = yes
 			set_temp_variable = { treasury_change = extraordinary_church_donation_cost }
 			modify_treasury_effect = yes
+			add_to_variable = { extraordinary_church_donation_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 10
@@ -2388,7 +2388,6 @@ generic_ITA = {
 		days_re_enable = 180
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision levy_extra_church_tax executed"
-			add_to_variable = { levy_extra_church_tax_times_taken_var = 1 }
 			set_temp_variable = { levy_extra_church_tax_cost = levy_extra_church_tax_times_taken_var }
 			multiply_temp_variable = { levy_extra_church_tax_cost = -1 }
 			set_temp_variable = { decision_gdp_gain = gdp_total }
@@ -2397,9 +2396,155 @@ generic_ITA = {
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = levy_extra_church_tax_cost }
 			change_the_clergy_opinion = yes
+			add_to_variable = { levy_extra_church_tax_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 10
+		}
+	}
+
+	condemn_antiglobal_rhetoric = {
+		icon = generic_decision
+		available = {
+			ITA_less_than_100_international_bankers_opinion = yes
+			has_statalist_government_or_in_coalition = yes
+		}
+		visible = {
+			has_idea = international_bankers
+		}
+		days_re_enable = 180
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision condemn_antiglobal_rhetoric executed"
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+			for_each_loop = {
+				array = gov_coalition_array
+				if = {
+					limit = {
+						OR = {
+							check_variable = { v = 3 }
+							check_variable = { v = 4 }
+							check_variable = { v = 5 }
+							check_variable = { v = 6 }
+							check_variable = { v = 7 }
+							check_variable = { v = 17 }
+							check_variable = { v = 18 }
+							check_variable = { v = 19 }
+							check_variable = { v = 20 }
+							check_variable = { v = 21 }
+							check_variable = { v = 22 }
+							check_variable = { v = 23 }
+						}
+					}
+					set_temp_variable = { party_index = v }
+					set_temp_variable = { party_popularity_increase = -0.05 }
+					set_temp_variable = { temp_outlook_increase = -0.025 }
+					add_relative_party_popularity = yes
+				}
+			}
+			for_each_loop = {
+				array = ruling_party
+				if = {
+					limit = {
+						OR = {
+							check_variable = { v = 3 }
+							check_variable = { v = 4 }
+							check_variable = { v = 5 }
+							check_variable = { v = 6 }
+							check_variable = { v = 7 }
+							check_variable = { v = 17 }
+							check_variable = { v = 18 }
+							check_variable = { v = 19 }
+							check_variable = { v = 20 }
+							check_variable = { v = 21 }
+							check_variable = { v = 22 }
+							check_variable = { v = 23 }
+						}
+					}
+					set_temp_variable = { party_index = v }
+					set_temp_variable = { party_popularity_increase = -0.05 }
+					set_temp_variable = { temp_outlook_increase = -0.025 }
+					add_relative_party_popularity = yes
+				}
+			}
+			custom_effect_tooltip = condemn_antiglobal_rhetoric_TT
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				ITA_more_than_50_international_bankers_opinion = no
+			}
+		}
+	}
+
+	provide_local_party_positions_to_business_owners = {
+		icon = generic_decision
+		available = {
+			ITA_less_than_100_small_medium_business_owners_opinion = yes
+		}
+		visible = {
+			has_idea = small_medium_business_owners
+		}
+		days_re_enable = 180
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision random_financial_police_surprise_checks executed"
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { provide_local_party_positions_to_business_owners_cost = provide_local_party_positions_to_business_owners_times_taken_var }
+			multiply_temp_variable = { provide_local_party_positions_to_business_owners_cost = -25 }
+			add_political_power = provide_local_party_positions_to_business_owners_cost
+			add_to_variable = { provide_local_party_positions_to_business_owners_times_taken_var = 1 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	random_financial_police_surprise_checks = {
+		icon = generic_decision
+		available = {
+			has_completed_focus = ITA_increase_checks
+			ITA_more_than_50_small_medium_business_owners_opinion = yes
+		}
+		visible = {
+			has_idea = small_medium_business_owners
+		}
+		days_re_enable = 180
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision random_financial_police_surprise_checks executed"
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { decision_gdp_gain = gdp_total }
+			multiply_temp_variable = { decision_gdp_gain = 0.003 }
+			set_temp_variable = { treasury_change = decision_gdp_gain }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	encourage_international_investments = {
+		icon = generic_decision
+		available = {
+			ITA_more_than_50_international_bankers_opinion = yes
+		}
+		visible = {
+			has_idea = international_bankers
+		}
+		days_re_enable = 180
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: decision encourage_international_investments executed"
+			set_temp_variable = { temp_opinion = -5 }
+			change_international_bankers_opinion = yes
+			set_temp_variable = { decision_gdp_gain = gdp_total }
+			multiply_temp_variable = { decision_gdp_gain = 0.005 }
+			set_temp_variable = { int_investment_change = decision_gdp_gain }
+			modify_international_investment_effect = yes
+		}
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -2439,10 +2584,10 @@ generic_ITA = {
 			log = "[GetDateText]: [This.GetName]: decision provide_political_positions_to_union_men executed"
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
-			add_to_variable = { provide_political_positions_to_union_men_times_taken_var = 1 }
 			set_temp_variable = { provide_political_positions_to_union_men_cost = provide_political_positions_to_union_men_times_taken_var }
 			multiply_temp_variable = { provide_political_positions_to_union_men_cost = -25 }
 			add_political_power = provide_political_positions_to_union_men_cost
+			add_to_variable = { provide_political_positions_to_union_men_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 0
@@ -2466,13 +2611,13 @@ generic_ITA = {
 		days_re_enable = 30
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision discredit_political_opponents_in_talk_shows executed"
-			add_to_variable = { discredit_political_opponents_in_talk_shows_times_taken_var = 1 }
 			set_variable = { discredit_political_opponents_in_talk_shows_cost = discredit_political_opponents_in_talk_shows_times_taken_var }
 			multiply_variable = { discredit_political_opponents_in_talk_shows_cost = 10 }
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
 			add_relative_party_popularity = yes
+			add_to_variable = { discredit_political_opponents_in_talk_shows_times_taken_var = 1 }
 		}
 		ai_will_do = {
 			factor = 1
