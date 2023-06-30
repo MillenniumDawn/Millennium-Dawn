@@ -236,6 +236,10 @@ UKR_state_of_the_army_category = {
 				has_idea = UKR_military_state_2
 				has_idea = UKR_military_state_1
 			}
+			OR = {
+				has_western_aligned_government = yes
+				has_nationalist_goverment = yes
+			}
 		}
 
 		complete_effect = {
@@ -2754,9 +2758,6 @@ UKR_Donbass_war_category = {
 			LPR = {
 				check_variable = { num_of_controlled_states < 2 }
 			}
-			custom_trigger_tooltip = {
-				tooltip = russia_will_be_angry_TT
-			}
 		}
 
 		complete_effect = {
@@ -2764,11 +2765,41 @@ UKR_Donbass_war_category = {
 			add_stability = 0.03
 			add_war_support = 0.05
 			subtract_from_variable = { Donbass_war_progress = 80 }
+			custom_effect_tooltip = russia_will_be_angry_TT
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Remove finish_nov"
-			SOV = { country_event = ukraine_donbass_war.7 }
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { country_event = ukraine_donbass_war.7 }
+			}
+			else = {
+				UKR = {
+					if = {
+						limit = { country_exists = DPR }
+						annex_country = {
+							target = DPR
+							transfer_troops = no
+						}
+					}
+					if = {
+						limit = { country_exists = LPR }
+						annex_country = {
+							target = LPR
+							transfer_troops = no
+						}
+					}
+					if = {
+						limit = { country_exists = NOV }
+						annex_country = {
+							target = NOV
+							transfer_troops = no
+						}
+					}
+					country_event = { id = ukraine_revolution.3 days = 1 }
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -2782,6 +2813,22 @@ UKR_Donbass_war_category = {
 					has_idea = UKR_military_state_3
 				}
 			}
+			modifier = {
+				add = -2
+				strength_ratio = {
+					tag = SOV
+					ratio > 1.4
+				}
+			}
+			modifier = {
+				add = 5
+				OR = {
+					NOT = { country_exists = SOV }
+					SOV = {
+						has_western_aligned_government = yes
+					}
+				}
+			}
 		}
 	}
 
@@ -2790,10 +2837,6 @@ UKR_Donbass_war_category = {
 		days_remove = 50
 		days_re_enable = 200
 		fire_only_once = yes
-
-		visible = {
-			tag = UKR
-		}
 
 		available = {
 			custom_trigger_tooltip = {
@@ -2809,6 +2852,7 @@ UKR_Donbass_war_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Remove ukr_veterans"
+			subtract_from_variable = { Donbass_war_progress = 50 }
 			add_ideas = UKR_veteran_movement
 		}
 
