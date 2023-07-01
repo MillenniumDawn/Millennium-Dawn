@@ -603,26 +603,18 @@ on_actions = {
 					if = {
 						limit = {
 							NOT = { check_variable = { v = 0 } }
-							ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
+							var:auto_influence_array^i = { var:tag_index = { NOT = { has_country_flag = spread_influence@PREV } } }
 							var:auto_influence_array^i = { exists = yes }
 						}
-						log = "[GetDateText]: [ROOT.GetName]: Auto influencing [?var:auto_influence_array^i.GetName]"
+						log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:auto_influence_array^i.GetName]"
 						set_temp_variable = { influence_target = v }
 						change_influence_percentage = yes
-						var:auto_influence_array^i = {
-							ROOT = {
-								add_to_variable = { nations_influenced = 1 }
-								if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
-									set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
-								}
-								else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
-									set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
-								}
-								else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
-									set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
-								}
-							}
+						var:tag_index = {
+							add_to_variable = { nations_influenced = 1 }
 						}
+					}
+					else = {
+						log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence [?var:auto_influence_array^i.GetName]"
 					}
 
 					# Clears Auto Influencer Who No Longer Exists
