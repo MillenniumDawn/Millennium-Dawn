@@ -557,7 +557,13 @@ end_project = {
 		# Refund Remaining Cash if the project is unfinished
 		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
 			add_to_variable = { var = treasury value = project_monetary_cost^project }
-			subtract_from_variable = { var = int_investments value = project_monetary_cost^project }
+			if = { limit = { check_variable = { int_investments > project_monetary_cost^project } }
+				subtract_from_variable = { var = int_investments value = project_monetary_cost^project }
+				clamp_variable = { var = int_investments min = 0 }
+			}
+			else = {
+				subtract_from_variable = { var = treasury value = project_monetary_cost^project }
+			}
 			set_temp_variable = { return_to_sender = project_monetary_cost^project }
 			multiply_temp_variable = { return_to_sender = 0.10 }
 			var:project_array^project = {
