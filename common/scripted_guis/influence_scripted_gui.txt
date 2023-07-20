@@ -111,7 +111,12 @@ scripted_gui = {
 			}
 
 			opt_manipulate_politics_button_click_enabled = {
-				is_top3_twenty_influencer = yes
+				is_top3_thirty_influencer = yes
+				ROOT = { has_political_power > 99 }
+				custom_trigger_tooltip = {
+					tooltip = influence_manipulate_politics_TT
+					ROOT = { NOT = { has_country_flag = recently_manipulated_politics@PREV } }
+				}
 			}
 
 			opt_coup_button_click_enabled = {
@@ -120,7 +125,7 @@ scripted_gui = {
 					NOT = { is_puppet_of = ROOT }
 				}
 				ROOT = { has_political_power > 200 }
-				is_top3_thirty_influencer = yes
+				# is_top_fifty_influencer = yes
 			}
 
 			opt_economic_exploitation_button_click_enabled = {
@@ -192,7 +197,7 @@ scripted_gui = {
 						set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
 					}
 					else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
-						set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+						set_country_flag = { flag = spread_influence@PREV value = 1 days = 27 }
 					}
 				}
 			}
@@ -240,60 +245,53 @@ scripted_gui = {
 					set_temp_variable = { var_pop = 0.01 }
 				}
 				else_if = { limit = { has_idea = slight_corruption }
-					set_temp_variable = { var_pop = 0.02 }
+					set_temp_variable = { var_pop = 0.015 }
 				}
 				else_if = { limit = { has_idea = modest_corruption }
-					set_temp_variable = { var_pop = 0.03 }
+					set_temp_variable = { var_pop = 0.017 }
 				}
 				else_if = { limit = { has_idea = medium_corruption }
-					set_temp_variable = { var_pop = 0.04 }
+					set_temp_variable = { var_pop = 0.02 }
 				}
 				else_if = { limit = { has_idea = widespread_corruption }
-					set_temp_variable = { var_pop = 0.05 }
+					set_temp_variable = { var_pop = 0.03 }
 				}
 				else_if = { limit = { has_idea = systematic_corruption }
-					set_temp_variable = { var_pop = 0.06 }
+					set_temp_variable = { var_pop = 0.04 }
 				}
 				else_if = { limit = { has_idea = unrestrained_corruption }
-					set_temp_variable = { var_pop = 0.07 }
+					set_temp_variable = { var_pop = 0.05 }
 				}
 				else_if = { limit = { has_idea = rampant_corruption }
-					set_temp_variable = { var_pop = 0.08 }
+					set_temp_variable = { var_pop = 0.06 }
 				}
 				else_if = { limit = { has_idea = crippling_corruption }
-					set_temp_variable = { var_pop = 0.09 }
+					set_temp_variable = { var_pop = 0.07 }
 				}
 				else = {
-					set_temp_variable = { var_pop = 0.10 }
+					set_temp_variable = { var_pop = 0.08 }
 				}
 
-				if = { limit = { ROOT = { has_government = fascism } }
-					add_popularity = { ideology = fascism popularity = var_pop }
-				}
-				else_if = { limit = { ROOT = { has_government = neutrality } }
-					add_popularity = { ideology = neutrality popularity = var_pop }
-				}
-				else_if = { limit = { ROOT = { has_government = communism } }
-					add_popularity = { ideology = communism popularity = var_pop }
-				}
-				else_if = { limit = { ROOT = { has_government = nationalist } }
-					add_popularity = { ideology = nationalist popularity = var_pop }
-				}
-				else_if = { limit = { ROOT = { has_government = democratic } }
-					add_popularity = { ideology = democratic popularity = var_pop }
+				set_temp_variable = { modifier = 1 }
+				add_to_temp_variable = { modifier = ROOT.modifier@foreign_influence_modifier }
+				set_temp_variable = { influence_defense_change = modifier@foreign_influence_defense_modifier }
+				subtract_from_temp_variable = { modifier = influence_defense_change }
+
+				multiply_temp_variable = { var_pop = modifier }
+
+				clamp_temp_variable = {
+					var = var_pop
+					min = 0.01
+					max = 0.15
 				}
 
-				# Add Popularity to Our Party
-				ROOT = {
-					for_each_loop = {
-						array = ruling_party
-						value = v
-						add_to_variable = { PREV.party_pop_array^v = var_pop }
-					}
-				}
+				set_temp_variable = { party_index = ROOT.ruling_party^0 }
+				set_temp_variable = { party_popularity_increase = var_pop }
+				set_temp_variable = { temp_outlook_increase = var_pop }
+				add_relative_party_popularity = yes
 
 				# Reduce by -10%
-				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { percent_change = -10 }
 				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = PREV.id }
 				change_influence_percentage = yes
@@ -301,8 +299,11 @@ scripted_gui = {
 				if = { limit = { NOT = { is_same_government = yes } }
 					add_opinion_modifier = { target = ROOT modifier = supported_opposition }
 				}
-				# Recalculate Party for Targeted Nation
-				recalculate_party = yes
+
+				ROOT = {
+					set_country_flag = { flag = recently_manipulated_politics@PREV days = 28 value = 1 }
+					add_political_power = -100
+				}
 			}
 			opt_coup_button_click = {
 				ROOT = {
