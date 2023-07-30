@@ -776,6 +776,7 @@ modify_election_threshold = {
 		min = 0
 		max = 0.10
 	}
+	update_dirty_subideology = yes
 }
 
 set_party_index_to_ruling_party = {
@@ -1604,6 +1605,7 @@ start_politics_input = {
 	resize_array = { array = party_pop_array size = 24 }
 	resize_array = { array = party_pop_elect_array size = 24 value = -1 }
 	resize_array = { array = pos_array size = 24 }
+	update_dirty_subideology = yes
 }
 
 recalculate_party = {
@@ -1611,6 +1613,7 @@ recalculate_party = {
 		add_up_party_totals = yes
 		set_party_positions = yes
 		update_government_coalition_strength = yes
+		update_dirty_subideology = yes
 	}
 }
 
@@ -1624,6 +1627,7 @@ hold_elections = {
 	}
 	add_up_party_totals = yes
 	set_party_positions = yes
+	#calculate_banned_parties = yes
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = v
@@ -1638,6 +1642,7 @@ hold_elections = {
 			set_variable = { party_pop_elect_array^v = 0 }
 		}
 	}
+	calculate_banned_parties = yes
 	update_majority_threshold = yes
 	find_two_highest_parties = yes
 	update_government_coalition_strength = yes
@@ -7979,5 +7984,246 @@ change_ruling_party_effect = {
 	}
 	if = { limit = { check_variable = { change_leader_temp = 1 } }
 		clr_country_flag = do_not_retire
+	}
+}
+
+# update_dirty_subideology
+# Purpose: updates the subideology dirty variable to ensure the UI is up-to-date
+update_dirty_subideology = {
+	if = { limit = { check_variable = { global.subideologies_view_main < 100000 } }
+		add_to_variable = { global.subideologies_view_main = 1 }
+	}
+	else = {
+		set_variable = { global.subideologies_view_main = 0 }
+	}
+}
+
+# ban_party_scripted_call
+# Parameters: party_index - 1-24
+# Purpose: Bans the provided party index from elections
+ban_party_scripted_call = {
+	meta_effect = {
+		text = {
+			set_country_flag = party[v]_banned
+		}
+		v = "[?party_index|.0]"
+	}
+	add_to_temp_variable = { party_index = -1 }
+	custom_effect_tooltip = ban_party_effect_tt
+	update_dirty_subideology = yes
+}
+
+# unban_party_scripted_call
+# Parameters: party_index - 1-24
+# Purpose: Allows the provided party index for elections
+unban_party_scripted_call = {
+	meta_effect = {
+		text = {
+			clr_country_flag = party[v]_banned
+		}
+		v = "[?party_index|.0]"
+	}
+	add_to_temp_variable = { party_index = -1 }
+	custom_effect_tooltip = unban_party_effect_tt
+	update_dirty_subideology = yes
+}
+
+set_partyall_banned = {
+	set_country_flag = partyall_banned
+	if = { limit = { NOT = { is_in_array = { ruling_party = 0 } } }
+		add_political_power = -10
+		set_country_flag = party1_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 1 } } }
+		add_political_power = -10
+		set_country_flag = party2_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 2 } } }
+		add_political_power = -10
+		set_country_flag = party3_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 3 } } }
+		add_political_power = -10
+		set_country_flag = party4_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+		add_political_power = -10
+		set_country_flag = party5_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 5 } } }
+		add_political_power = -10
+		set_country_flag = party6_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 6 } } }
+		add_political_power = -10
+		set_country_flag = party7_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 7 } } }
+		add_political_power = -10
+		set_country_flag = party8_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 8 } } }
+		add_political_power = -10
+		set_country_flag = party9_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 9 } } }
+		add_political_power = -10
+		set_country_flag = party10_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 10 } } }
+		add_political_power = -10
+		set_country_flag = party11_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 11 } } }
+		add_political_power = -10
+		set_country_flag = party12_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 12 } } }
+		add_political_power = -10
+		set_country_flag = party13_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 13 } } }
+		add_political_power = -10
+		set_country_flag = party14_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 14 } } }
+		add_political_power = -10
+		set_country_flag = party15_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 15 } } }
+		add_political_power = -10
+		set_country_flag = party16_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 16 } } }
+		add_political_power = -10
+		set_country_flag = party17_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 17 } } }
+		add_political_power = -10
+		set_country_flag = party18_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 18 } } }
+		add_political_power = -10
+		set_country_flag = party19_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 19 } } }
+		add_political_power = -10
+		set_country_flag = party20_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 20 } } }
+		add_political_power = -10
+		set_country_flag = party21_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 21 } } }
+		add_political_power = -10
+		set_country_flag = party22_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 22 } } }
+		add_political_power = -10
+		set_country_flag = party23_banned
+	}
+	if = { limit = { NOT = { is_in_array = { ruling_party = 23 } } }
+		add_political_power = -10
+		set_country_flag = party24_banned
+	}
+}
+
+set_partyall_allowed = {
+	clr_country_flag = partyall_banned
+	if = { limit = { has_country_flag = party1_banned }
+		add_political_power = -10
+		clr_country_flag = party1_banned
+	}
+	if = { limit = { has_country_flag = party2_banned }
+		add_political_power = -10
+		clr_country_flag = party2_banned
+	}
+	if = { limit = { has_country_flag = party3_banned }
+		add_political_power = -10
+		clr_country_flag = party3_banned
+	}
+	if = { limit = { has_country_flag = party4_banned }
+		add_political_power = -10
+		clr_country_flag = party4_banned
+	}
+	if = { limit = { has_country_flag = party5_banned }
+		add_political_power = -10
+		clr_country_flag = party5_banned
+	}
+	if = { limit = { has_country_flag = party6_banned }
+		add_political_power = -10
+		clr_country_flag = party6_banned
+	}
+	if = { limit = { has_country_flag = party7_banned }
+		add_political_power = -10
+		clr_country_flag = party7_banned
+	}
+	if = { limit = { has_country_flag = party8_banned }
+		add_political_power = -10
+		clr_country_flag = party8_banned
+	}
+	if = { limit = { has_country_flag = party9_banned }
+		add_political_power = -10
+		clr_country_flag = party9_banned
+	}
+	if = { limit = { has_country_flag = party10_banned }
+		add_political_power = -10
+		clr_country_flag = party10_banned
+	}
+	if = { limit = { has_country_flag = party11_banned }
+		add_political_power = -10
+		clr_country_flag = party11_banned
+	}
+	if = { limit = { has_country_flag = party12_banned }
+		add_political_power = -10
+		clr_country_flag = party12_banned
+	}
+	if = { limit = { has_country_flag = party13_banned }
+		add_political_power = -10
+		clr_country_flag = party13_banned
+	}
+	if = { limit = { has_country_flag = party14_banned }
+		add_political_power = -10
+		clr_country_flag = party14_banned
+	}
+	if = { limit = { has_country_flag = party15_banned }
+		add_political_power = -10
+		clr_country_flag = party15_banned
+	}
+	if = { limit = { has_country_flag = party16_banned }
+		add_political_power = -10
+		clr_country_flag = party16_banned
+	}
+	if = { limit = { has_country_flag = party17_banned }
+		add_political_power = -10
+		clr_country_flag = party17_banned
+	}
+	if = { limit = { has_country_flag = party18_banned }
+		add_political_power = -10
+		clr_country_flag = party18_banned
+	}
+	if = { limit = { has_country_flag = party19_banned }
+		add_political_power = -10
+		clr_country_flag = party19_banned
+	}
+	if = { limit = { has_country_flag = party20_banned }
+		add_political_power = -10
+		clr_country_flag = party20_banned
+	}
+	if = { limit = { has_country_flag = party21_banned }
+		add_political_power = -10
+		clr_country_flag = party21_banned
+	}
+	if = { limit = { has_country_flag = party22_banned }
+		add_political_power = -10
+		clr_country_flag = party22_banned
+	}
+	if = { limit = { has_country_flag = party23_banned }
+		add_political_power = -10
+		clr_country_flag = party23_banned
+	}
+	if = { limit = { has_country_flag = party24_banned }
+		add_political_power = -10
+		clr_country_flag = party24_banned
 	}
 }
