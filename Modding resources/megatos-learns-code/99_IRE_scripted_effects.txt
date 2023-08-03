@@ -1,0 +1,209 @@
+# Need to make on_actions for every month for these effects, aside from IRE_startup
+
+IRE_startup = {
+    set_variable = { IRE_republicanism = 25 }
+    clamp_variable = { 
+        var = IRE_republicanism                
+        min = 0 
+        max = 100
+    }
+    # dynamic modifier triggered if IRE_republicanism < 20 || > 80 
+    set_variable = { pop_pool_ENG = 869093 } # 0 ENG
+    set_variable = { pop_pool_ARG = 500000 } # 1 ARG
+    set_variable = { pop_pool_BRA = 2500 } # 2 BRA
+    set_variable = { pop_pool_CAN = 4354155 } # 3 CAN
+    set_variable = { pop_pool_COL = 3000 } # 4 COL
+    set_variable = { pop_pool_USA = 41000000 } # 5 USA
+    set_variable = { pop_pool_AST = 190000 } # 6 AST
+    set_variable = { pop_pool_SAF = 15000 } # 7 SAF
+    set_variable = { pop_pool_MEX = 10000 } # 8 MEX
+    set_variable = { pop_pool_CHI = 120000 } # 9 CHI
+    set_variable = { pop_pool_URG = 120000 } # 10 URG
+    set_variable = { draft_influence_req = 19 }
+    set_variable = { pop_pool_draft_multiplier = 1 }
+    # We dont require the countries to exist, we are only thinking about foreign descent
+    # look discord for more variables
+    # array with influence on selected countries from pop pool
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = ENG
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = ARG
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = BRA
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = CAN
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = COL
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = USA
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = AST
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = SAF
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = MEX
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = CHI
+    }
+    add_to_array = {
+        array = pop_pool_target_countries
+        value = URG
+    }
+}
+# Did the setup vars, made array: pop_pool_target_countries, value: Country Tag
+
+IRE_check_unlock_decision_tab = {
+    if = { limit = { check_variable = { IRE_republicanism > 85 } } 
+        # create flag to make decission possible for Irish homecoming diaspora ...
+    }
+}
+# creates flag that unlocks decision category for the diaspora mechanics
+
+IRE_check_for_countries_to_add = {
+    # this needs to be divided up into multiple effects:
+
+    any_of_scopes = {
+        array = pop_pool_target_countries # loops through the scope of the countries in this array ( value = country.id)
+        index = i
+        any_of = { array = influence_array # loops through the influence array for the specificed pop_pool_target_countries^i | example: influence_array^i ENG
+            index = j
+            if = { limit = { check_variable = { influence_array^j = IRE } check_variable = { influence_array_val^j > draft_influence_req } } # if influenceArray contains IRE and the influence is above draft_influence_req:
+                add_to_array = { # then add the specified country to the array of countries meeting influence requirement
+                    array = target_countries_meeting_influence_req
+                    value = i # pop_pool_target_countries^i
+                }
+                # what to do:
+                # Unlock decision to emigrate foreign citizens with irish ancestors
+                # Whatever this decision does and which nation it targets is a pool of countries having the draft_influence_req in them
+                # Triggers event to be sent to target nation where they are asked to handle the Irish Emigration
+            }
+        }
+    }
+# Added the countries meeting the influence requirement to an array: target_countries_meeting_influence_req
+    # With this scope we want to trigger effect from the countries inside the array: add their 
+    # Actually adding the countries to the array:actual_total_pop_pool from target_countries_meeting_influence_req array should be its own effect, as it needs to used again when checks for removal. 
+    for_each_loop = {
+        array = target_countries_meeting_influence_req
+        value = v
+        index = i # check if this part is necessary
+
+        if = { limit = { check_variable = { v = 0 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_ENG
+                index = 0 # check if this part is necessary
+            }
+        }
+        else_if = { limit = { check_variable = { v = 1 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_ARG
+                index = 1
+            }
+        }
+        else_if = { limit = { check_variable = { v = 2 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_BRA
+                index = 2
+            }
+        }
+        else_if = { limit = { check_variable = { v = 3 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_CAN
+                index = 3
+            }
+        }
+        else_if = { limit = { check_variable = { v = 4 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_COL
+                index = 4
+            }
+        }
+        else_if = { limit = { check_variable = { v = 5 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_USA
+                index = 5
+            }
+        }
+        else_if = { limit = { check_variable = { v = 6 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_AST
+                index = 6
+            }
+        }
+        else_if = { limit = { check_variable = { v = 7 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_SAF
+                index = 7
+            }
+        }
+        else_if = { limit = { check_variable = { v = 8 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_MEX
+                index = 8
+            }
+        }
+        else_if = { limit = { check_variable = { v = 9 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_CHI
+                index = 9
+            }
+        }
+        else_if = { limit = { check_variable = { v = 10 } }
+            add_to_array = {
+                array = actual_total_pop_pool
+                value = var:pop_pool_URG
+                index = 10
+            }
+        }
+        # add every nation.id's pop pool to a pop_pool_array | we dont need that, we can just use the array: pop_pool_target_countries. Index and value will be the same anyway
+    }
+}
+
+# Nested loop to check for countries who needs to be removed from the array and substract countries not fulfilling the requirements from 2 arrays: target_countries_meeting_influence_req AND actual_total_pop_pool
+IRE_cleanup_countries_meeting_req = {
+    any_of_scopes = {
+        array = target_countries_meeting_influence_req # the value in this array represents a specified country. 
+        index = i
+        any_of = { array = influence_array # look in the influence array and check if countries with the given index value have enough influence from IRE to remain inside target_countries_meeting_influence_req
+            index = j
+            if = { limit = { check_variable =  { influence_array^j = IRE }  check_variable = { influence_array_val^j < draft_influence_req } } # need to find IRE in influence_arr, if IRE.influence on target country is below the requirement (var:draft_influence_req). Remove target country from array. 
+                remove_from_array = {
+                    array = target_countries_meeting_influence_req
+                    value = i
+                }
+                remove_from_array = {
+                    array = actual_total_pop_pool
+                    index = i
+                }
+            }
+        }
+    }
+}
