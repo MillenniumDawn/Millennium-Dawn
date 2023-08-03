@@ -7,7 +7,9 @@ Further, it offers a new and unique economic system, a new political system, nat
 ## Important Links
 
 [Link to MD's Discord](http://discord.gg/millenniumdawn)
+
 [Bugreporting Form](https://forms.gle/2zAWhggnYbTcmG1b6)
+
 [MD's Git Instructions](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs)
 
 ## Access Rules
