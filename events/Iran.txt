@@ -28,6 +28,7 @@ add_namespace = PER_revolution
 add_namespace = PER_sway
 add_namespace = PER_rev_flavor
 add_namespace = PER_political
+add_namespace = PER_march_city
 
 country_event = {
 	id = divide_turkey.2 # Iran Wants Us To Embargo Turkey (for russia)
@@ -7844,6 +7845,62 @@ country_event = { #Revolution Begins
 		name = PER_revolution.2.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.2.a executed"
 		custom_effect_tooltip = PER_iranian_revolution_time
+		IF = {
+			limit = {
+				has_country_flag = PER_american_weapons
+			}
+			country_event = {
+				id = PER_revolution.4
+				days = 7
+			}
+		}
+		hidden_effect = { #Removes IRGC Generals and replaces them with Artesh (Army) Generals
+			# Ground Force
+			retire_character = PER_mostafa_izadi
+			retire_character = PER_mohammad_hejazi
+			retire_character = PER_mohammad_jafari
+			retire_character = PER_ali_najafi
+			create_field_marshal = {
+				name = "Ahmadreza Pourdastan"
+				portrait_path = "gfx/leaders/PER/Field_Marshall_Army_Ahmadreza_Pourdastan.dds"
+				traits = { old_guard defensive_doctrine }
+				skill = 5
+				attack_skill = 3
+				defense_skill = 6
+				planning_skill = 3
+				logistics_skill = 4
+			}
+			create_corps_commander = {
+				name = "Farzad Esmaili"
+				portrait_path = "gfx/leaders/PER/Portrait_Farzad_Esmaili.dds"
+				traits = { commando }
+				skill = 4
+				attack_skill = 3
+				defense_skill = 5
+				planning_skill = 2
+				logistics_skill = 3
+			}
+			create_corps_commander = {
+				name = "Manouchehr Kazemi"
+				portrait_path = "gfx/leaders/PER/Army_Gen_Manoucher_Kazemi.dds"
+				traits = { trait_engineer }
+				skill = 4
+				attack_skill = 4
+				defense_skill = 3
+				planning_skill = 3
+				logistics_skill = 3
+			}
+			create_corps_commander = {
+				name = "Ali Hajilo"
+				portrait_path = "gfx/leaders/PER/Army_Gen_Ali_Hajilo.dds"
+				traits = { desert_fox }
+				skill = 4
+				attack_skill = 4
+				defense_skill = 3
+				planning_skill = 2
+				logistics_skill = 4
+			}
+		}
 		hidden_effect = {
 			news_event = {
 				id = PER_rev_flavor.7
@@ -7879,6 +7936,8 @@ country_event = { #Revolution Begins
 				}
 				leave_faction = yes
 				start_civil_war = {
+					clr_country_flag = dynamic_flag
+					set_cosmetic_tag = PER_mullahs_government
 					ideology = communism
 					keep_political_leader = yes
 					keep_political_party_members = yes
@@ -7893,6 +7952,7 @@ country_event = { #Revolution Begins
 				set_state_flag = PER_locals_not_swayed
 			}
 			start_civil_war = {
+				set_cosmetic_tag = PER_mullahs_government
 				ideology = communism
 				size = army_size_jang
 				capital = 402
@@ -7907,6 +7967,164 @@ country_event = { #Revolution Begins
 		}
 	}
 }
+#
+country_event = { #American weapons arrive
+	id = PER_revolution.4
+	title = PER_revolution.4.t
+	desc = PER_revolution.4.d
+	picture = GFX_USA_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = PER_revolution.4.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.4.a executed"
+		PER = {
+			add_equipment_to_stockpile = {
+				type = infantry_weapons2
+				amount = 1500
+				producer = USA
+			}
+			add_equipment_to_stockpile = {
+				type = command_control_equipment1
+				amount = 1000
+				producer = USA
+			}
+			add_equipment_to_stockpile = {
+				type = artillery_1
+				amount = 700
+				producer = USA
+			}
+			add_equipment_to_stockpile = {
+				type = util_vehicle_equipment
+				amount = 600
+				producer = USA
+			}
+			add_equipment_to_stockpile = {
+				type = apc_hull
+				amount = 350
+				producer = USA
+			}
+			add_equipment_to_stockpile = {
+				type = AS_Fighter3
+				amount = 20
+				producer = USA
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { #Iran weakened following Civil War (Ba'athis Iraq)
+	id = PER_revolution.5
+	title = PER_revolution.5.t
+	desc = PER_revolution.5.d
+	picture = GFX_aban_protests_iran
+	trigger = {
+		IRQ = {
+			nationalist_military_junta_are_in_power = yes
+		}
+	}
+	is_triggered_only = yes
+
+	option = { #Demand Khuzestan
+		name = PER_revolution.5.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.5.a executed"
+		PER = {
+			country_event = {
+				id = PER_revolution.6
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = { #Let's not start any trouble
+		name = PER_revolution.5.b
+		log = "[GetDateText]: [This.GetName]:PER_revolution.5.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+#
+country_event = { #Iraq demands that we hand over Khuzestan
+	id = PER_revolution.6
+	title = PER_revolution.6.t
+	desc = PER_revolution.6.d
+	picture = GFX_aban_protests_iran
+
+	is_triggered_only = yes
+
+	option = { #Never
+		name = PER_revolution.6.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.6.a executed"
+		IRQ = {
+			country_event = {
+				id = PER_revolution.7
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = { #Let's not start any trouble
+		name = PER_revolution.6.b
+		log = "[GetDateText]: [This.GetName]:PER_revolution.6.b executed"
+		399 = { transfer_state_to = IRQ }
+		IRQ = {
+			country_event = {
+				id = PER_revolution.8
+			}
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+#
+country_event = { #Iran refuses to hand over Khuzestan
+	id = PER_revolution.7
+	title = PER_revolution.7.t
+	desc = PER_revolution.7.d
+	picture = GFX_aban_protests_iran
+
+	is_triggered_only = yes
+
+	option = { #This is it for them!
+		name = PER_revolution.7.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.7.a executed"
+		IRQ = {
+			create_wargoal = {
+				type = annex_everything
+				target = PER
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { #Iran hands over Khuzestan
+	id = PER_revolution.8
+	title = PER_revolution.8.t
+	desc = PER_revolution.8.d
+	picture = GFX_aban_protests_iran
+
+	is_triggered_only = yes
+
+	option = { #This is it for them!
+		name = PER_revolution.8.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.8.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
 ########################################################################################################################################
 
 #
@@ -10064,6 +10282,20 @@ country_event = { #Civil War Ends
 			id = PER_rev_flavor.8
 			days = 1
 		}
+		hidden_effect = {
+			random_list = { #Iran Iraq War
+			40 = {
+			}
+			60 = {
+				IRQ = {
+					country_event = {
+						id = PER_revolution.5
+						days = 50
+					}
+				}
+			}
+		}
+		}
 		complete_national_focus = PER_iran_reborn
 		clr_country_flag = PER_iranian_civilwar
 	}
@@ -10086,22 +10318,22 @@ country_event = { #Referendum
 		}
 		complete_national_focus = PER_democracy
 		set_temp_variable = { party_index = 0 }
-				set_temp_variable = { party_popularity_increase = 0.45 }
-				set_temp_variable = { temp_outlook_increase = 0.45 }
-				add_relative_party_popularity = yes
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 0 }
-					update_government_coalition_strength = yes
-					set_coalition_drift = yes
-					set_ruling_leader = yes
-					set_leader = yes
-					set_politics = {
-						ruling_party = democratic
-						elections_allowed = no
-					}
-				}
+		set_temp_variable = { party_popularity_increase = 0.35 }
+		set_temp_variable = { temp_outlook_increase = 0.35 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 0 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+		}
 		ai_chance = {
 			factor = 3
 			modifier = {
@@ -10117,10 +10349,10 @@ country_event = { #Referendum
 				id = PER_rev_flavor.10
 				days = 1
 			}
-			complete_national_focus = PER_mek
+			complete_national_focus = PER_leftists_victory
 			set_temp_variable = { party_index = 5 }
-			set_temp_variable = { party_popularity_increase = 0.45 }
-			set_temp_variable = { temp_outlook_increase = 0.45 }
+			set_temp_variable = { party_popularity_increase = 0.35 }
+			set_temp_variable = { temp_outlook_increase = 0.35 }
 			add_relative_party_popularity = yes
 			hidden_effect = {
 				clear_array = ruling_party
@@ -10152,8 +10384,8 @@ country_event = { #Referendum
 		}
 		complete_national_focus = PER_pan_iranist
 		set_temp_variable = { party_index = 20 }
-		set_temp_variable = { party_popularity_increase = 0.45 }
-		set_temp_variable = { temp_outlook_increase = 0.45 }
+		set_temp_variable = { party_popularity_increase = 0.35 }
+		set_temp_variable = { temp_outlook_increase = 0.35 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
 			clear_array = ruling_party
@@ -10219,7 +10451,7 @@ country_event = { #What type of democracy
 	option = {
 		name = PER_revolution.3012.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.3012.a executed"
-		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.50 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
@@ -10310,12 +10542,8 @@ country_event = { #Decide Radicals Fates
 	option = {
 		name = PER_political.2.b
 		log = "[GetDateText]: [This.GetName]:PER_political.2.b executed"
-		set_temp_variable = { treasury_change = 12 }
+		set_temp_variable = { treasury_change = 25 }
 		modify_treasury_effect = yes
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.05 }
-		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
 		ai_chance = {
 			factor = 3
 		}
@@ -10345,12 +10573,13 @@ country_event = { #Ask Turkey to sign CENTO
 			}
 			TUR = { add_to_faction = PER }
 		ai_chance = {
-			factor = 10
+			factor = 0
 		}
 	}
 	option = { #Deny
 		name = PER_political.5.b
 		log = "[GetDateText]: [This.GetName]:PER_political.5.b executed"
+		set_country_flag = PER_turkey_said_nah
 		PER = {
 			country_event = {
 				id = PER_political.55
@@ -10358,7 +10587,7 @@ country_event = { #Ask Turkey to sign CENTO
 			}
 		}
 		ai_chance = {
-		factor = 0
+		factor = 100
 		}
 	}
 }
@@ -10387,7 +10616,7 @@ country_event = { #Turkey Accept
 
 	option = {
 		name = PER_political.555.a
-		complete_national_focus = PER_cento
+		complete_national_focus = PER_return_of_cento
 		log = "[GetDateText]: [This.GetName]:PER_political.555.a executed"
 		PER = {
 			add_to_faction = TUR
@@ -10512,7 +10741,7 @@ country_event = { #What to do with Majlis
 	option = { #Peoples Representatives
 		name = PER_political.9.a
 		log = "[GetDateText]: [This.GetName]:PER_political.9.a executed"
-		add_stability = 0.05
+		add_stability = 0.02
 		complete_national_focus = PER_independent_majlis
 		ai_chance = {
 			factor = 6
@@ -10522,7 +10751,6 @@ country_event = { #What to do with Majlis
 		name = PER_political.9.b
 		log = "[GetDateText]: [This.GetName]:PER_political.9.b executed"
 		complete_national_focus = PER_controlled_majlis
-		add_stability = -0.05
 		ai_chance = {
 			factor = 4
 		}
@@ -10574,12 +10802,13 @@ country_event = { #Saudis choice
 			}
 		}
 		ai_chance = {
-			factor = 7
+			factor = 10
 		}
 	}
 	option = { #Whatever
 		name = PER_political.11.b
 		log = "[GetDateText]: [This.GetName]:PER_political.11.a executed"
+		add_stability = -0.20
 		PER = { clr_country_flag = PER_cold_war }
 		PER = {
 			country_event = {
@@ -10587,7 +10816,7 @@ country_event = { #Saudis choice
 			}
 		}
 		ai_chance = {
-			factor = 3
+			factor = 0
 		}
 	}
 }
@@ -12207,7 +12436,87 @@ country_event = { #Cuba Rejects
 		}
 	}
 }
+country_event = { #Second Red Scare
+	id = PER_political.2112
+	title = PER_political.2112.t
+	desc = PER_political.2112.d
+	is_triggered_only = yes
+
+	option = { #Ok
+		name = PER_political.2112.a
+		log = "[GetDateText]: [This.GetName]:PER_political.2112.a executed"
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = PER }
+		set_temp_variable = { influence_target = VEN }
+		change_influence_percentage = yes
+		PER = {
+			country_event = {
+				id = PER_political.21121
+				days = 1
+			}
+		}
+		ai_chance = {
+			factor = 10
+		}
+	}
+	option = { #No
+		name = PER_political.2112.b
+		log = "[GetDateText]: [This.GetName]:PER_political.2112.b executed"
+		PER = {
+			country_event = {
+				id = PER_political.211211
+				days = 1
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+##
+country_event = { #Venezuela Accepts
+	id = PER_political.21121
+	title = PER_political.21121.t
+	desc = PER_political.21121.d
+	is_triggered_only = yes
+
+	option = { #Okay
+		name = PER_political.21121.a
+		log = "[GetDateText]: [This.GetName]:PER_political.21121.a executed"
+		VEN = {
+			add_opinion_modifier = {
+				target = PER
+				modifier = military_cooperation
+			}
+			give_military_access = PER
+		}
+		PER = {
+			add_opinion_modifier = {
+				target = VEN
+				modifier = military_cooperation
+			}
+		}
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
 #
+country_event = { #Venezuela Rejects
+	id = PER_political.211211
+	title = PER_political.211211.t
+	desc = PER_political.211211.d
+	is_triggered_only = yes
+
+	option = { #Okay
+		name = PER_political.211211.a
+		log = "[GetDateText]: [This.GetName]:PER_political.211211211211.a executed"
+		ai_chance = {
+			factor = 10
+		}
+	}
+}
+#########
 country_event = { #The Persian Gulf
 	id = PER_political.22
 	title = PER_political.22.t
@@ -12218,6 +12527,7 @@ country_event = { #The Persian Gulf
 	option = { #No One!
 		name = PER_political.22.a
 		log = "[GetDateText]: [This.GetName]:PER_political.22.a executed"
+		complete_national_focus = PER_aggressive_policy
 		set_temp_variable = { treasury_change = gdp_total_display }
 		multiply_temp_variable = { treasury_change = 0.05 }
 		modify_treasury_effect = yes
@@ -12233,6 +12543,7 @@ country_event = { #The Persian Gulf
 	option = { #Okay
 		name = PER_political.22.b
 		log = "[GetDateText]: [This.GetName]:PER_political.22.b executed"
+		complete_national_focus = PER_open_policy
 		add_political_power = 75
 		add_timed_idea = {
 			idea = PER_compromise_idea
@@ -12809,7 +13120,7 @@ country_event = { ##The Unification
 			every_core_state = { add_core_of = PER }
 		}
 		ai_chance = {
-			factor = 5
+			factor = 10
 		}
 	}
 	option = { #Ok
@@ -12825,8 +13136,11 @@ country_event = { ##The Unification
 				transfer_state_to = PER
 			}
 		}
+		KUR = {
+			every_core_state = { add_core_of = PER }
+		}
 		ai_chance = {
-			factor = 5
+			factor = 0
 		}
 	}
 }
@@ -13330,7 +13644,125 @@ country_event = {
 	}
 }
 ######
-#
+country_event = { ##Iran wants us to join the Iranic Union
+	id = PER_political.2150
+	title = PER_political.2150.t
+	desc = PER_political.2150.d
+	is_triggered_only = yes
+
+	option = { #Sure
+		name = PER_political.2150.a
+		log = "[GetDateText]: [This.GetName]:PER_political.2150.a executed"
+		set_country_flag = PER_afghans_in
+		AFG = {
+			every_core_state = {
+				transfer_state_to = PER
+			}
+		}
+		AFG = { every_core_state = { add_core_of = PER } }
+		hidden_effect = {
+			PER = {
+				country_event = {
+					id = PER_political.87878
+					days = 0
+				}
+			}
+			414 = {
+				transfer_state_to = TAL
+			}
+			412 = {
+				transfer_state_to = TAL
+			}
+			415 = {
+				transfer_state_to = TAL
+			}
+			TAL = {
+				declare_war_on = {
+					target = PER
+					type = puppet_wargoal_focus
+				}
+			}
+			TAL = {
+				division_template = {
+					name = "Taliban Rebels"
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+						Special_Forces = { x = 1 y = 2 }
+						Special_Forces = { x = 1 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
+						Special_Forces = { x = 2 y = 1 }
+					}
+					priority = 2
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Taliban Rebels\" division_template = \"Taliban Rebels\" start_experience_factor =  1.0"
+						owner = TAL
+						count = 15
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 6
+		}
+	}
+	option = { #No
+		name = PER_political.2150.b
+		log = "[GetDateText]: [This.GetName]:PER_political.2150.b executed"
+		AFG = { every_core_state = { add_core_of = PER } }
+		PER = {
+			create_wargoal = {
+				type = annex_everything
+				target = AFG
+			}
+		}
+		ai_chance = {
+			factor = 4
+		}
+	}
+}
+######
+country_event = { ##Iran asks us to join the Iranic Union (Tajikistan)
+	id = PER_political.2151
+	title = PER_political.2151.t
+	desc = PER_political.2151.d
+	is_triggered_only = yes
+	option = { #Sign me up
+		name = PER_political.2151.a
+		log = "[GetDateText]: [This.GetName]:PER_political.2151.a executed"
+		set_country_flag = PER_tajiks_in
+		TAJ = {
+			every_core_state = {
+				transfer_state_to = PER
+			}
+		}
+		TAJ = { every_core_state = { add_core_of = PER } }
+		ai_chance = {
+			factor = 6
+		}
+	}
+	option = { #Nah
+		name = PER_political.2151.b
+		log = "[GetDateText]: [This.GetName]:PER_political.2151.b executed"
+		TAJ = { every_core_state = { add_core_of = PER } }
+		PER = {
+			create_wargoal = {
+				type = annex_everything
+				target = TAJ
+			}
+		}
+		ai_chance = {
+			factor = 4
+		}
+	}
+}
+######
 country_event = { ##Iran asks us to fight Pakistan & China
 	id = PER_political.1423
 	title = PER_political.1423.t
@@ -13393,6 +13825,236 @@ country_event = { ##India Joins
 		option = { #Good
 		name = PER_political.1425.a
 		log = "[GetDateText]: [This.GetName]:PER_political.1425.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#####################
+country_event = { ##Iran Requests Bases KUW
+	id = PER_political.1910
+	title = PER_political.1910.t
+	desc = PER_political.1910.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.1910.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1910.a executed"
+		PER = {
+			country_event = {
+				id = PER_political.19101
+				days = 1
+			}
+		}
+		KUW = {
+			give_military_access = PER
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	option = { #No
+	name = PER_political.1910.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1910.a executed"
+		PER = {
+			country_event = {
+				id = PER_political.19102
+				days = 1
+			}
+		}
+		PER = {
+			add_opinion_modifier = {
+				target = KUW
+				modifier = large_decrease
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+country_event = { ##Kuwait Says Yes To Iranian Bases
+	id = PER_political.19101
+	title = PER_political.19101.t
+	desc = PER_political.19101.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.19101.a
+		log = "[GetDateText]: [This.GetName]:PER_political.19101.a executed"
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = PER }
+		set_temp_variable = { influence_target = KUW }
+		change_influence_percentage = yes
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Kuwait Says No To Iranian Bases
+	id = PER_political.19102
+	title = PER_political.19102.t
+	desc = PER_political.19102.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.19102.a
+		log = "[GetDateText]: [This.GetName]:PER_political.19102.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+###
+country_event = { ##Iran Requests Bases BHR
+	id = PER_political.1911
+	title = PER_political.1911.t
+	desc = PER_political.1911.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.1911.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1911.a executed"
+		PER = {
+			country_event = {
+				id = PER_political.19111
+				days = 1
+			}
+		}
+		BHR = {
+			give_military_access = PER
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	option = { #No
+	name = PER_political.1911.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1911.a executed"
+		PER = {
+			country_event = {
+				id = PER_political.19112
+				days = 1
+			}
+		}
+		PER = {
+			add_opinion_modifier = {
+				target = BHR
+				modifier = large_decrease
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Bahrain Says Yes To Iranian Bases
+	id = PER_political.19111
+	title = PER_political.19111.t
+	desc = PER_political.19111.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.19111.a
+		log = "[GetDateText]: [This.GetName]:PER_political.19111.a executed"
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = PER }
+		set_temp_variable = { influence_target = BHR }
+		change_influence_percentage = yes
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Bahrain Says No To Iranian Bases
+	id = PER_political.19112
+	title = PER_political.19112.t
+	desc = PER_political.19112.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.19112.a
+		log = "[GetDateText]: [This.GetName]:PER_political.19112.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+####
+country_event = { ##Iran Requests Bases Qatar
+	id = PER_political.1912
+	title = PER_political.1912.t
+	desc = PER_political.1912.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.1912.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1912.a executed"
+		PER = {
+			country_event = {
+				id = PER_political.19121
+				days = 1
+			}
+		}
+		QAT = {
+			give_military_access = PER
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	option = { #No
+	name = PER_political.1912.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1912.a executed"
+		PER = {
+			country_event = {
+				id = PER_political.191212
+				days = 1
+			}
+		}
+		PER = {
+			add_opinion_modifier = {
+				target = QAT
+				modifier = large_decrease
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Qatar Says Yes To Iranian Bases
+	id = PER_political.19121
+	title = PER_political.19121.t
+	desc = PER_political.19121.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.19121.a
+		log = "[GetDateText]: [This.GetName]:PER_political.19121.a executed"
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = PER }
+		set_temp_variable = { influence_target = QAT }
+		change_influence_percentage = yes
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Qatar Says No To Iranian Bases
+	id = PER_political.191212
+	title = PER_political.191212.t
+	desc = PER_political.191212.d
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = PER_political.191212.a
+		log = "[GetDateText]: [This.GetName]:PER_political.191212.a executed"
 		ai_chance = {
 			factor = 3
 		}
@@ -13514,6 +14176,195 @@ country_event = { ##Taliban Declares Jihad
 		option = { #WHAT
 		name = PER_political.87878.a
 		log = "[GetDateText]: [This.GetName]:PER_political.87878.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+####################
+country_event = { ##Achaemenid Revival
+	id = PER_political.9742
+	title = PER_political.9742.t
+	desc = PER_political.9742.d
+	is_triggered_only = yes
+	picture = GFX_achamndsuf_1
+	option = { #Godrat!
+		name = PER_political.9742.a
+		log = "[GetDateText]: [This.GetName]:PER_political.9742.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Tudeh Coup
+	id = PER_political.5754
+	title = PER_political.5754.t
+	desc = PER_political.5754.d
+	is_triggered_only = yes
+	picture = GFX_fathers_of_communism
+	option = { #Interesting
+		name = PER_political.5754.a
+		log = "[GetDateText]: [This.GetName]:PER_political.5754.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Nationalist Flavor
+	id = PER_political.2723
+	title = PER_political.2723.t
+	desc = PER_political.2723.d
+	is_triggered_only = yes
+	picture = GFX_iran_nationalist_country
+	option = { #Interesting
+		name = PER_political.2723.a
+		log = "[GetDateText]: [This.GetName]:PER_political.2723.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Communism Flavor
+	id = PER_political.7864
+	title = PER_political.7864.t
+	desc = PER_political.7864.d
+	is_triggered_only = yes
+	picture = GFX_communism
+	option = { #Interesting
+		name = PER_political.7864.a
+		log = "[GetDateText]: [This.GetName]:PER_political.7864.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Democratic Flavor
+	id = PER_political.23512
+	title = PER_political.23512.t
+	desc = PER_political.23512.d
+	is_triggered_only = yes
+	picture = GFX_pahlavi_country
+
+	option = { #Interesting
+		name = PER_political.23512.a
+		log = "[GetDateText]: [This.GetName]:PER_political.23512.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+########
+country_event = { ##Tehran March
+	id = PER_march_city.1
+	title = PER_march_city.1.t
+	desc = PER_march_city.1.d
+	picture = GFX_guns
+	is_triggered_only = yes
+
+		option = { #Kheyli Khoob
+		name = PER_march_city.1.a
+		log = "[GetDateText]: [This.GetName]:PER_march_city.1.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Shiraz March
+	id = PER_march_city.2
+	title = PER_march_city.2.t
+	desc = PER_march_city.2.d
+	picture = GFX_guns
+	is_triggered_only = yes
+
+		option = { #Kheyli Khoob
+		name = PER_march_city.2.a
+		log = "[GetDateText]: [This.GetName]:PER_march_city.2.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Isfahan March
+	id = PER_march_city.3
+	title = PER_march_city.3.t
+	desc = PER_march_city.3.d
+	picture = GFX_guns
+	is_triggered_only = yes
+
+		option = { #Kheyli Khoob
+		name = PER_march_city.3.a
+		log = "[GetDateText]: [This.GetName]:PER_march_city.3.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Abadan March
+	id = PER_march_city.4
+	title = PER_march_city.4.t
+	desc = PER_march_city.4.d
+	picture = GFX_guns
+	is_triggered_only = yes
+
+		option = { #Kheyli Khoob
+		name = PER_march_city.4.a
+		log = "[GetDateText]: [This.GetName]:PER_march_city.4.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##qom March
+	id = PER_march_city.5
+	title = PER_march_city.5.t
+	desc = PER_march_city.5.d
+	picture = GFX_guns
+	is_triggered_only = yes
+
+		option = { #Kheyli Khoob
+		name = PER_march_city.5.a
+		log = "[GetDateText]: [This.GetName]:PER_march_city.5.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Tabriz March
+	id = PER_march_city.69
+	title = PER_march_city.69.t
+	desc = PER_march_city.69.d
+	picture = GFX_guns
+	is_triggered_only = yes
+
+		option = { #Kheyli Khoob
+		name = PER_march_city.69.a
+		log = "[GetDateText]: [This.GetName]:PER_march_city.69.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { ##Mashad March
+	id = PER_march_city.7
+	title = PER_march_city.7.t
+	desc = PER_march_city.7.d
+	picture = GFX_guns
+	is_triggered_only = yes
+
+		option = { #Kheyli Khoob
+		name = PER_march_city.7.a
+		log = "[GetDateText]: [This.GetName]:PER_march_city.7.a executed"
+		set_country_flag = PER_has_completed_all_operations
 		ai_chance = {
 			factor = 3
 		}
