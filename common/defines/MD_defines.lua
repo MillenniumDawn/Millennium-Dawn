@@ -266,7 +266,7 @@
 	NDefines.NMilitary.NON_CORE_SUPPLY_AIR_SPEED = -0.10 -- -0.25
 	NDefines.NMilitary.OUT_OF_SUPPLY_MORALE = -0.15 -- -0.30
 	NDefines.NMilitary.AIR_SUPPORT_BASE = 0.5 -- 0.25
-	NDefines.NMilitary.REINFORCE_CHANCE = 0.1 -- 0.02
+	NDefines.NMilitary.REINFORCE_CHANCE = 0.05 -- 0.02
 	NDefines.NMilitary.PARACHUTE_DISRUPTED_AA_PENALTY = 0.75 -- 1
 	NDefines.NMilitary.PARACHUTE_COMPLETE_ORG = 0.3 -- 0.1
 	NDefines.NMilitary.PARACHUTE_ORG_REGAIN_PENALTY_DURATION = 80 -- 120
