@@ -710,28 +710,28 @@ scripted_gui = {
 			}
 
 			# - Lease Military Factories
-			# This action leases three military arms industry while this button is clicked
+			# This action increases the number of leased military factories
 			lease_military_factories_click_enabled = {
-				NOT = {
-					has_country_flag = lease_civilian_factories_flag
-					has_country_flag = lease_naval_dockyards_flag
-				}
+				#check_variable = { leased_military_factories < 20 } #use this as an hard cap on amount of mils leasable
+			}
+			lease_military_factories_right_click_enabled = {
+				check_variable = { leased_military_factories > 0 }
 			}
 			# - Lease Civilian Industry
-			# This action leases three civilian military industry while this button is clicked
+			# This action increases the number of leased civilian factories
 			lease_civilian_factories_click_enabled = {
-				NOT = {
-					has_country_flag = lease_military_factories_flag
-					has_country_flag = lease_naval_dockyards_flag
-				}
+				#check_variable = { leased_civilian_factories < 20 } #use this as an hard cap on amount of civs leasable
+			}
+			lease_civilian_factories_right_click_enabled = {
+				check_variable = { leased_civilian_factories > 0 }
 			}
 			# - Lease Naval Dockyards
-			# This action leases three naval dockyards while this button is clicked
+			# This action increases the number of leased dockyards
 			lease_naval_dockyards_click_enabled = {
-				NOT = {
-					has_country_flag = lease_civilian_factories_flag
-					has_country_flag = lease_military_factories_flag
-				}
+				#check_variable = { leased_dockyards < 20 } #use this as an hard cap on amount of dockyards leasable
+			}
+			lease_naval_dockyards_right_click_enabled = {
+				check_variable = { leased_dockyards > 0 }
 			}
 			# - Industrial Projects
 			# This action triggers a hidden idea to increase industrial complex construction speed
@@ -782,6 +782,48 @@ scripted_gui = {
 					has_country_flag = service_constructions_flag
 					has_country_flag = arms_industry_stipends_flag
 				}
+			}
+
+			# - Military Factories Employent
+			# This action increases employment in this building type
+			military_factory_employment_button_right_click_enabled = {
+				has_political_power > 50
+			}
+			# - Civilian Factories Employent
+			# This action increases employment in this building type
+			civilian_factory_employment_button_right_click_enabled = {
+				has_political_power > 50
+			}
+			# - Naval Factories Employent
+			# This action increases employment in this building type
+			naval_factory_employment_button_right_click_enabled = {
+				has_political_power > 50
+			}
+			# - Offices Employent
+			# This action increases employment in this building type
+			office_employment_button_click_right_enabled = {
+				has_political_power > 50
+			}
+
+			# - Military Factories Employent
+			# This action reduces employment in this building type
+			military_factory_employment_button_click_enabled = {
+				has_political_power > 50
+			}
+			# - Civilian Factories Employent
+			# This action reduces employment in this building type
+			civilian_factory_employment_button_click_enabled = {
+				has_political_power > 50
+			}
+			# - Naval Factories Employent
+			# This action reduces employment in this building type
+			naval_factory_employment_button_click_enabled = {
+				has_political_power > 50
+			}
+			# - Offices Employent
+			# This action reduces employment in this building type
+			office_employment_button_click_enabled = {
+				has_political_power > 50
 			}
 
 			### BOTTOM BAR
@@ -1005,46 +1047,91 @@ scripted_gui = {
 			}
 
 			# - Lease Military Factories
-			# This action leases three military arms industry while this button is clicked
+			# This action increases the amount of leased military factories by 1
 			lease_military_factories_click = {
-				if = { limit = { NOT = { has_country_flag = lease_military_factories_flag } }
-					set_country_flag = lease_military_factories_flag
-					add_offsite_building = { level = 3 type = arms_factory }
+				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
+					if = { limit = { NOT = { has_country_flag = lease_military_factories_flag } }
+						set_country_flag = lease_military_factories_flag
+					}
+					add_offsite_building = { level = 1 type = arms_factory }
+					add_to_variable = { leased_military_factories = 1 }
+					add_to_variable = { leased_factories = 1 }
+					add_to_variable = { lease_factories_cumulative_cost = leased_factories }
+					ingame_update_setup = yes
+					refresh_gui = yes
 				}
-				else = {
-					clr_country_flag = lease_military_factories_flag
-					add_offsite_building = { level = -3 type = arms_factory }
+			}
+			# This action decreases the amount of leased military factories by 1
+			lease_military_factories_right_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
+					if = { limit = { check_variable = { leased_military_factories = 1 } }
+						clr_country_flag = lease_military_factories_flag
+					}
+					add_offsite_building = { level = -1 type = arms_factory }
+					subtract_from_variable = { lease_factories_cumulative_cost = leased_factories }
+					add_to_variable = { leased_military_factories = -1 }
+					add_to_variable = { leased_factories = -1 }
+					ingame_update_setup = yes
+					refresh_gui = yes
 				}
-				ingame_update_setup = yes
-				refresh_gui = yes
 			}
 			# - Lease Civilian Industry
-			# This action leases three civilian military industry while this button is clicked
+			# This action increases the amount of leased civilian factories by 1
 			lease_civilian_factories_click = {
-				if = { limit = { NOT = { has_country_flag = lease_civilian_factories_flag } }
-					set_country_flag = lease_civilian_factories_flag
-					add_offsite_building = { level = 3 type = industrial_complex }
+				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
+					if = { limit = { NOT = { has_country_flag = lease_civilian_factories_flag } }
+						set_country_flag = lease_civilian_factories_flag
+					}
+					add_offsite_building = { level = 1 type = industrial_complex }
+					add_to_variable = { leased_civilian_factories = 1 }
+					add_to_variable = { leased_factories = 1 }
+					add_to_variable = { lease_factories_cumulative_cost = leased_factories }
+					ingame_update_setup = yes
+					refresh_gui = yes
 				}
-				else = {
-					clr_country_flag = lease_civilian_factories_flag
-					add_offsite_building = { level = -3 type = industrial_complex }
 				}
-				ingame_update_setup = yes
-				refresh_gui = yes
+			# This action decreases the amount of leased civilian factories by 1
+			lease_civilian_factories_right_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
+					if = { limit = { check_variable = { leased_civilian_factories = 1 } }
+						clr_country_flag = lease_civilian_factories_flag
+					}
+					add_offsite_building = { level = -1 type = industrial_complex }
+					subtract_from_variable = { lease_factories_cumulative_cost = leased_factories }
+					add_to_variable = { leased_civilian_factories = -1 }
+					add_to_variable = { leased_factories = -1 }
+					ingame_update_setup = yes
+					refresh_gui = yes
+				}
 			}
 			# - Lease Naval Dockyards
-			# This action leases three naval dockyards while this button is clicked
+			# This action increases the amount of leased dockyards by 1
 			lease_naval_dockyards_click = {
-				if = { limit = { NOT = { has_country_flag = lease_naval_dockyards_flag } }
-					set_country_flag = lease_naval_dockyards_flag
-					add_offsite_building = { level = 3 type = dockyard }
+				if = { limit = { NOT = { check_variable = { leased_factories = 20 } } }
+					if = { limit = { NOT = { has_country_flag = lease_naval_dockyards_flag } }
+						set_country_flag = lease_naval_dockyards_flag
+					}
+					add_offsite_building = { level = 1 type = dockyard }
+					add_to_variable = { leased_dockyards = 1 }
+					add_to_variable = { leased_factories = 1 }
+					add_to_variable = { lease_factories_cumulative_cost = leased_factories }
+					ingame_update_setup = yes
+					refresh_gui = yes
 				}
-				else = {
-					clr_country_flag = lease_naval_dockyards_flag
-					add_offsite_building = { level = -3 type = dockyard }
+			}
+			# This action decreases the amount of leased dockyards by 1
+			lease_naval_dockyards_right_click = {
+				if = { limit = { NOT = { check_variable = { leased_factories = 0 } } }
+					if = { limit = { check_variable = { leased_dockyards = 1 } }
+						clr_country_flag = lease_naval_dockyards_flag
+					}
+					add_offsite_building = { level = -1 type = dockyard }
+					subtract_from_variable = { lease_factories_cumulative_cost = leased_factories }
+					add_to_variable = { leased_dockyards = -1 }
+					add_to_variable = { leased_factories = -1 }
+					ingame_update_setup = yes
+					refresh_gui = yes
 				}
-				ingame_update_setup = yes
-				refresh_gui = yes
 			}
 			# - Industrial Projects
 			# This action triggers a hidden idea to increase industrial complex construction speed
@@ -1120,6 +1207,115 @@ scripted_gui = {
 				}
 				ingame_update_setup = yes
 				refresh_gui = yes
+			}
+
+			# - Military Factories Employent
+			# This action reduces employment in this building type
+			military_factory_employment_button_click = {
+				if = {
+					limit = {
+						check_variable = { military_factory_employment_var = 0 }
+					}
+				}
+				else = {
+					add_to_variable = { military_factory_employment_var = -0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			military_factory_employment_button_right_click = {
+				if = {
+					limit = {
+						check_variable = { military_factory_employment_var = 1 }
+					}
+				}
+				else = {
+					add_to_variable = { military_factory_employment_var = 0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
+			}
+			# - Civilian Factories Employent
+			# This action reduces employment in this building type
+			civilian_factory_employment_button_click = {
+				if = {
+					limit = {
+						check_variable = { civilian_factory_employment_var = 0 }
+					}
+				}
+				else = {
+					add_to_variable = { civilian_factory_employment_var = -0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			civilian_factory_employment_button_right_click = {
+				if = {
+					limit = {
+						check_variable = { civilian_factory_employment_var = 1 }
+					}
+				}
+				else = {
+					add_to_variable = { civilian_factory_employment_var = 0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
+			}
+			# - Naval Factories Employent
+			# This action reduces employment in this building type
+			naval_factory_employment_button_click = {
+				if = {
+					limit = {
+						check_variable = { naval_factory_employment_var = 0 }
+					}
+				}
+				else = {
+					add_to_variable = { naval_factory_employment_var = -0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			naval_factory_employment_button_right_click = {
+				if = {
+					limit = {
+						check_variable = { naval_factory_employment_var = 1 }
+					}
+				}
+				else = {
+					add_to_variable = { naval_factory_employment_var = 0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
+			}
+			# - Offices Employent
+			# This action reduces employment in this building type
+			office_employment_button_click = {
+				if = {
+					limit = {
+						check_variable = { office_employment_var = 0 }
+					}
+				}
+				else = {
+					add_to_variable = { office_employment_var = -0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
+			}
+			# This action increases employment in this building type
+			office_employment_button_right_click = {
+				if = {
+					limit = {
+						check_variable = { office_employment_var = 1 }
+					}
+				}
+				else = {
+					add_to_variable = { office_employment_var = 0.05 }
+					add_political_power = -50
+				}
+				ingame_update_setup = yes
 			}
 
 			## BOTTOM BAR
