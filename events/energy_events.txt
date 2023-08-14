@@ -1,0 +1,332 @@
+add_namespace = energy
+
+# Purchase Event Chains
+country_event = {
+	id = energy.1
+	title = energy.1.t
+	desc = energy.1.d
+	is_triggered_only = yes
+
+	option = { #accept to sell
+		name = energy.1.a
+		log = "[GetDateText]: [This.GetName]: energy.1.a executed"
+		set_temp_variable = { change_resource = -500 }
+		change_reactor_grade_material_effect = yes
+		set_temp_variable = { treasury_change = 5 }
+		modify_treasury_effect = yes
+		var:purchaser_tag_reactor = {
+			set_temp_variable = { change_resource = 500 }
+			change_reactor_grade_material_effect = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			country_event = energy.2
+		}
+
+
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 2
+				check_variable = { var_nuke_nuclear_reactor_prod > nuclear_fuel_consumption }
+			}
+			modifier = {
+				factor = 2
+				var:purchase_tag_reactor = {
+					has_opinion = {
+						target = PREV
+						value > 100
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				var:purchase_tag_reactor = {
+					has_opinion = {
+						target = PREV
+						value > 150
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				var:purchase_tag_reactor = {
+					has_opinion = {
+						target = PREV
+						value > 200
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				var:purchaser_tag_reactor = {
+					has_war_with = PREV
+				}
+			}
+		}
+	}
+	option = { #refuse to sell
+		name = energy.1.b
+		log = "[GetDateText]: [This.GetName]: energy.1.b executed"
+		var:purchaser_tag_reactor = {
+			country_event = energy.3
+		}
+
+		ai_chance = {
+			factor = 0
+			modifier = {
+				add = 10
+				var:purchaser_tag_reactor = {
+					has_war_with = PREV
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = energy.2
+	title = energy.2.t
+	desc = energy.2.d
+	is_triggered_only = yes
+
+	option = {
+		name = energy.2.a
+		log = "[GetDateText]: [This.GetName]: energy.2.a executed"
+		effect_tooltip = {
+			FROM = {
+				set_temp_variable = { change_resource = -500 }
+				change_reactor_grade_material_effect = yes
+				set_temp_variable = { treasury_change = 5 }
+				modify_treasury_effect = yes
+			}
+			set_temp_variable = { change_resource = 500 }
+			change_reactor_grade_material_effect = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = {
+			FROM = {
+				clear_variable = purchaser_tag_reactor
+				clr_country_flag = currently_considering_an_offer
+			}
+		}
+	}
+}
+
+country_event = {
+	id = energy.3
+	title = energy.3.t
+	desc = energy.3.d
+	is_triggered_only = yes
+
+	option = {
+		name = energy.3.a
+		log = "[GetDateText]: [This.GetName]: energy.3.a executed"
+
+	}
+}
+
+# Cease Construction Demand
+country_event = {
+	id = energy.4
+	title = energy.4.t
+	desc = energy.4.d
+	is_triggered_only = yes
+
+	# Demand they cease
+	option = {
+		name = energy.4.a
+		log = "[GetDateText]: [This.GetName]: energy.4.a executed"
+		var:new_enrichment_country = {
+			country_event = { id = energy.5 days = 20 }
+		}
+
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 10
+				original_tag = USA
+				check_variable = { new_enrichment_country = PER.id }
+			}
+		}
+	}
+
+	# Allow the Construction
+	option = {
+		name = energy.4.b
+		log = "[GetDateText]: [This.GetName]: energy.4.b executed"
+		var:new_enrichment_country = {
+			country_event = { id = energy.9 days = 10 }
+		}
+
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				original_tag = USA
+				check_variable = { new_enrichment_country = PER.id }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value < -40
+				}
+			}
+		}
+	}
+}
+
+# Cease & Desist
+country_event = {
+	id = energy.5
+	title = energy.5.t
+	desc = energy.5.d
+	is_triggered_only = yes
+
+	# Cease Construction
+	option = {
+		name = energy.5.a
+		log = "[GetDateText]: [This.GetName]: energy.5.a executed"
+		remove_mission = energy_building_enrichment_facilities
+		add_opinion_modifier = { target = FROM modifier = canceled_our_enrichment_facility_construction }
+		FROM = {
+			country_event = { id = energy.6 days = 3 }
+		}
+
+		ai_chance = {
+			factor = 10
+		}
+	}
+
+	# Limit to LEU
+	option = {
+		name = energy.5.b
+		log = "[GetDateText]: [This.GetName]: energy.5.b executed"
+		custom_effect_tooltip = limits_to_heu_production_only_tt
+		set_country_flag = { flag = only_leu_materials days = 730 value = 1 }
+		FROM = {
+			add_opinion_modifier = { target = PREV modifier = limited_to_heu_materials_only }
+			country_event = { id = energy.7 days = 3 }
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	# Ignore the Demands
+	option = {
+		name = energy.5.c
+		log = "[GetDateText]: [This.GetName]: energy.5.c executed"
+		add_opinion_modifier = { target = FROM modifier = ignored_our_request_to_cease }
+		reverse_add_opinion_modifier = { target = FROM modifier = ignored_our_request_to_cease }
+
+		effect_tooltip = {
+			FROM = {
+				create_wargoal = {
+					type = topple_government
+					target = PREV
+				}
+			}
+		}
+		FROM = {
+			country_event = { id = energy.8 days = 3 }
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# Ceased Construction
+country_event = {
+	id = energy.6
+	title = energy.6.t
+	desc = energy.6.d
+	is_triggered_only = yes
+
+	option = {
+		name = energy.6.a
+		log = "[GetDateText]: [This.GetName]: energy.6.a executed"
+		effect_tooltip = {
+			FROM = {
+				remove_mission = energy_building_enrichment_facilities
+			}
+		}
+		hidden_effect = {
+			FROM = {
+				clear_variable = new_enrichment_country
+			}
+		}
+	}
+}
+
+# Agreed to LEU Only for Two Years
+country_event = {
+	id = energy.7
+	title = energy.7.t
+	desc = energy.7.d
+	is_triggered_only = yes
+
+	option = {
+		name = energy.7.a
+		log = "[GetDateText]: [This.GetName]: energy.7.a executed"
+
+		hidden_effect = {
+			FROM = {
+				clear_variable = new_enrichment_country
+			}
+		}
+	}
+}
+
+# IIgnored the Request
+country_event = {
+	id = energy.8
+	title = energy.8.t
+	desc = energy.8.d
+	is_triggered_only = yes
+
+	option = {
+		name = energy.8.a
+		log = "[GetDateText]: [This.GetName]: energy.8.a executed"
+		effect_tooltip = {
+			add_opinion_modifier = { target = FROM modifier = ignored_our_request_to_cease }
+			reverse_add_opinion_modifier = { target = FROM modifier = ignored_our_request_to_cease }
+		}
+		create_wargoal = {
+			type = topple_government
+			target = FROM
+		}
+
+		hidden_effect = {
+			FROM = {
+				clear_variable = new_enrichment_country
+			}
+		}
+	}
+}
+
+# Allowed the Construction
+country_event = {
+	id = energy.9
+	title = energy.9.t
+	desc = energy.9.d
+	is_triggered_only = yes
+
+	option = {
+		name = energy.9.a
+		log = "[GetDateText]: [This.GetName]: energy.9.a executed"
+		hidden_effect = {
+			FROM = {
+				clear_variable = new_enrichment_country
+			}
+		}
+	}
+}
