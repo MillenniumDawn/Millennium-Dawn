@@ -1,5 +1,5 @@
-version="1.8.0"
-name="Millennium_Dawn DEV"
+version="1.8.8"
+name="Millennium Dawn Patch"
 tags={
 	"Alternative History"
 	"Gameplay"
@@ -9,7 +9,7 @@ tags={
 supported_version="1.12.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
-path="mod/Millennium_Dawn"
+path="mod/millennium-dawn-patch"
 
 replace_path = "events"
 replace_path = "common/abilities"
