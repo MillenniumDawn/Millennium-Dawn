@@ -1,0 +1,97 @@
+decision_category_energy = {
+	energy_building_enrichment_facilities = {
+		icon = ger_mefo_bills
+		allowed = { always = no }
+		available = { always = yes }
+
+		days_mission_timeout = 180
+		fire_only_once = no
+		selectable_mission = yes
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel energy_building_enrichment_facilities"
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
+			set_temp_variable = { temp_change = 1 }
+			build_enrichment_facilities_effect = yes
+			set_country_flag = { flag = recently_built_enrichment_facility value = 1 days = 90 }
+		}
+	}
+
+	energy_buy_reactor_grade_material = {
+		icon = ger_mefo_bills
+		allowed = { always = yes }
+		visible = {
+			FROM = {
+				NOT = { has_war_with = ROOT }
+				NOT = {
+					any_allied_country = {
+						has_war_with = ROOT
+					}
+				}
+			}
+		}
+		available = {
+			ROOT = {
+				has_nuclear_reactors = yes
+			}
+			FROM = {
+				has_enrichment_facilities = yes
+				has_reactor_material_stockpile = yes
+				NOT = { has_country_flag = currently_considering_an_offer }
+			}
+		}
+		days_remove = 90
+		days_re_enable = 90
+		fire_only_once = no
+		target_array = global.enrichment_countries
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision energy_buy_reactor_grade_material"
+			FROM = {
+				set_country_flag = currently_considering_an_offer
+				set_variable = { purchaser_tag_reactor = PREV.id }
+				country_event = energy.1
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 4
+				ROOT = {
+					check_variable = { var_reactor_material_stockpile < 2500 }
+				}
+			}
+			modifier = {
+				factor = 2
+				FROM = { is_in_faction_with = ROOT }
+			}
+			modifier = {
+				factor = 2
+				ROOT = { has_idea = NATO_member }
+				FROM = { has_idea = NATO_member }
+			}
+			modifier = {
+				factor = 1.5
+				ROOT = {
+					has_opinion = {
+						value > 100
+						target = FROM
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				FROM = {
+					has_opinion = {
+						target = ROOT
+						value < 50
+					}
+				}
+			}
+		}
+	}
+}
