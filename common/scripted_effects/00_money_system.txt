@@ -2465,6 +2465,7 @@ calculate_gdp = {
 
 	set_temp_variable = { mil_facs_worker_requirement_multiplier = 1 }
 	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@mil_facs_worker_requirement_modifier }
+	clamp_temp_variable = { var = mil_facs_worker_requirement_multiplier min = 0.10 }
 
 	set_temp_variable = { max_workers_in_mil_facs = military_fac }
 	multiply_temp_variable = { max_workers_in_mil_facs = workers_per_mil_fac }
@@ -2500,6 +2501,7 @@ calculate_gdp = {
 
 	set_temp_variable = { civ_facs_worker_requirement_multiplier = 1 }
 	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
+	clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 }
 	set_temp_variable = { max_workers_in_civ_facs = industrial_complex_total }
 	multiply_temp_variable = { max_workers_in_civ_facs = workers_per_civ_fac }
 	multiply_temp_variable = { max_workers_in_civ_facs = civ_facs_worker_requirement_multiplier }
@@ -2515,6 +2517,7 @@ calculate_gdp = {
 
 	set_temp_variable = { offices_worker_requirement_multiplier = 1 }
 	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@offices_worker_requirement_modifier }
+	clamp_temp_variable = { var = offices_worker_requirement_multiplier min = 0.10 }
 	set_temp_variable = { max_workers_in_offices = office_park_total }
 	multiply_temp_variable = { max_workers_in_offices = workers_per_office }
 	multiply_temp_variable = { max_workers_in_offices = offices_worker_requirement_multiplier }
@@ -2921,6 +2924,10 @@ productivity_growth_effect = {
 	#scales productivity growth based on comparison with global average and adds it to state productivity
 	every_controlled_state = {
 		add_to_variable = { productivity_state_var = state_productivity_growth_scaled }
+		clamp_variable = {
+			var = productivity_state_var
+			min = 0.1
+		}
 	}
 	#variable for the productivity dynamic modifier
 	set_variable = { overall_productivity_modifier_var = overall_productivity }
@@ -2951,6 +2958,12 @@ setup_starting_world_productivity = {
 			set_variable = { overall_productivity = 0.55 }
 		}
 		if = { limit = { is_in_asia = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 0.65 }
+			}
+			set_variable = { overall_productivity = 0.65 }
+		}
+		if = { limit = { is_in_oceania = yes }
 			every_controlled_state = {
 				set_variable = { productivity_state_var = 0.65 }
 			}
