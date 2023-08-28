@@ -41,9 +41,6 @@
 # This is used only ONCE as it sets global variables.
 # Please do not trigger this more than once.
 init_investment_system = {
-	# NOTE: Increased cost for construction AND monetary by a flat 25% (excluding Offices which are now 50% more expensive monetarily.)
-	# NOTE: Fuck Fire_Hair for you abusing my shit you filthy Malmo looking Swede.
-	# NOTE: Love, Birdy <3
 	### BUILDING CONSTRUCTION COST
 	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 45000 }
 	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 50000 }
@@ -55,7 +52,8 @@ init_investment_system = {
 	set_variable = { global.BUILD_CONST_COST_AIRBASE = 3000 }
 	set_variable = { global.BUILD_CONST_COST_FUEL_SILO = 15000 }
 	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 7500 }
-	set_variable = { global.BUILD_CONST_COST_REFINERY = 27500 }
+	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
+	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 6250 }
 	# set_variable = { global.BUILD_CONST_COST_TEL_BASE }
 	# set_variable = { global.BUILD_CONST_COST_MISSILE_DEFENSE_STATION }
 	# set_variable = { global.BUILD_CONST_COST_MISSILE_SILO }
@@ -72,7 +70,8 @@ init_investment_system = {
 	set_variable = { global.BUILD_COST_AIRBASE = 5.25 }
 	set_variable = { global.BUILD_COST_FUEL_SILO = 5.25 }
 	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
-	set_variable = { global.BUILD_COST_REFINERY = 7.25 }
+	set_variable = { global.BUILD_COST_REFINERY = 13.60 }
+	set_variable = { global.BUILD_COST_FOSSIL_POWERPLANT = 5.2 }
 	# set_variable = { global.BUILD_COST_TEL_BASE }
 	# set_variable = { global.BUILD_COST_MISSILE_DEFENSE_STATION }
 	# set_variable = { global.BUILD_COST_MISSILE_SILO }
@@ -153,6 +152,9 @@ project_monetary_cost_calculation = { #Replaces AC_calc_pp_cost in the section
 	else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
 		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_REFINERY }
 	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 12 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FOSSIL_POWERPLANT }
+	}
 
 	# AC Build Cost Modifiers
 	set_temp_variable = { AC_cost_modifier = 1 }
@@ -230,6 +232,10 @@ get_building_construction_values = {
 		set_temp_variable = { building_cost = global.BUILD_CONST_COST_REFINERY }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
 	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 12 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FOSSIL_POWERPLANT }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
+	}
 
 	add_to_temp_variable = { var = construction_speed value = modifier@production_speed_buildings_factor }
 }
@@ -300,6 +306,10 @@ add_finished_buildings = {
 	}
 	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 11 } }
 		add_building_construction = { type = synthetic_refinery level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 12 } }
+		add_building_construction = { type = fossil_powerplant level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 }
