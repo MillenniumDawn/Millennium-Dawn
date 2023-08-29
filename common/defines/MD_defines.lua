@@ -215,6 +215,7 @@
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 1.0 -- was 4.0 --Fucked with this to see
 
 	NDefines.NMilitary.MAX_DIVISION_BRIGADE_WIDTH = 4 -- 5
+	NDefines.NMilitary.MIN_DIVISION_BRIGADE_HEIGHT = 5
 	NDefines.NMilitary.HOURLY_ORG_MOVEMENT_IMPACT = -0.1 -- -0.2
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
