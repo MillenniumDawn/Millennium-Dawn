@@ -865,9 +865,9 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
 
 	-- NOperatives Defines
-	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
+	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 25.0 -- (We do not need factories aside from establishment)
 	NDefines.NOperatives.AGENCY_AI_PER_UPGRADE_FACTORIES = 10.0 -- 6 in Vanilla
-	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 75 -- 20 in Vanilla
+	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 100 -- 20 in Vanilla
 	NDefines.NResistance.GARRISON_MANPOWER_LOST_BY_ATTACK = 0.02 	-- Ratio of manpower lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.04 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
