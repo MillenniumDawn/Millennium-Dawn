@@ -137,6 +137,7 @@
 
 
 	-- NCountry Releated Defines
+	NDefines.NCountry.FUEL_LEASE_CONVOY_RATIO = 0.00005 -- 0.0005
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
