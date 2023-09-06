@@ -27,8 +27,8 @@
 	NDefines.NDiplomacy.TRADE_OPINION_FACTOR_FACTOR = 0.5
 	NDefines.NDiplomacy.DIPLOMACY_HOURS_BETWEEN_REQUESTS = 72 -- 24 exp
 	NDefines.NDiplomacy.IC_TO_EQUIPMENT_COUP_RATIO = 0.3
-	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 0.80
-	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 12
+	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 1
+	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 7
 	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
 	NDefines.NDiplomacy.TENSION_STATE_VALUE = 4
 	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
@@ -137,6 +137,7 @@
 
 
 	-- NCountry Releated Defines
+	NDefines.NCountry.FUEL_LEASE_CONVOY_RATIO = 0.00005 -- 0.0005
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
@@ -517,7 +518,7 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
 	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
-	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.04
+	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.035
 	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.015
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
 	NDefines.NNavy.MIN_HIT_PROFILE_MULT = 0.1 -- largest hit profile penalty to hitting (higher value of the define makes ships easier to hit, i assume by reducing the penalty caused by small hit profile of target ship)
@@ -553,7 +554,9 @@
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT = 0.25 -- 0.1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT_FROM_AIR = 0.2 -- 0.1
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
-	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CARRIERS = 2.0 -- 1.0
+	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
+	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.25 -- 0.5
+	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.1 -- 0.25
 	NDefines.NNavy.NEW_NAVY_LEADER_LEVEL_CHANCES = {                                -- chances for new navy leaders to start at a given level
 		0.90, -- 90% for level one
 		0.10  -- 10% for level two
@@ -863,9 +866,9 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
 
 	-- NOperatives Defines
-	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 20.0 --25 in Vanilla
+	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 25.0 -- (We do not need factories aside from establishment)
 	NDefines.NOperatives.AGENCY_AI_PER_UPGRADE_FACTORIES = 10.0 -- 6 in Vanilla
-	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 75 -- 20 in Vanilla
+	NDefines.NOperatives.AGENCY_UPGRADE_DAYS = 100 -- 20 in Vanilla
 	NDefines.NResistance.GARRISON_MANPOWER_LOST_BY_ATTACK = 0.02 	-- Ratio of manpower lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.GARRISON_EQUIPMENT_LOST_BY_ATTACK = 0.04 	-- Ratio of equipment lost by garrison at each attack on garrison (this number will be reduced by the hardness of garrison template)
 	NDefines.NResistance.RESISTANCE_GROWTH_BASE = 0.1 --base resistance growth
