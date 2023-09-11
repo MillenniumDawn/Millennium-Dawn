@@ -1,394 +1,3835 @@
-##### Syrian Civil War
-TUR_SYR = {
+TUR_domestic_politics_category = {
 
-	tur_intervene_SYR = {
-		allowed = { original_tag = TUR }
+	TUR_hire_gulenist_economic_advisors = {
 
-		available = {
-			OR = {
-				SYR = { has_volunteers_amount_from = { tag = TUR count > 0 } }
-				FSA = { has_volunteers_amount_from = { tag = TUR count > 0 } }
-				NUS = { has_volunteers_amount_from = { tag = TUR count > 0 } }
-				ISI = { has_volunteers_amount_from = { tag = TUR count > 0 } }
-			}
+		cost = 100
 
+		visible = {
+			NOT = { has_idea = TUR_gulenist_economic_advisors }
+			has_completed_focus = TUR_gulenist_economists
 		}
 
-		activation = {
-			SYR = {
-				OR = {
-					has_war_with = ISI
-					has_war_with = FSA
-					has_war_with = NUS
-					has_war_with = ROJ
+		available = {
+			western_autocrats_are_in_power = yes
+		}
+		fire_only_once = yes
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_hire_gulenist_economic_advisors"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_hire_gulenist_economic_advisors"
+			add_ideas = TUR_gulenist_economic_advisors
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_unban_erdogan = {
+
+		cost = 100
+
+		visible = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+
+		available = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		fire_only_once = yes
+		days_remove = 30
+
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_unban_erdogan"
+			retire_country_leader = yes
+			create_country_leader = {
+				name = "Recep Tayyip Erdoğan"
+				picture = "Recep_Tayyip_Erdogan.dds"
+				ideology = Neutral_Muslim_Brotherhood
+				traits = {
+					neutrality_Neutral_Muslim_Brotherhood
+					doesnt_understand_economy
 				}
 			}
 		}
 
-		Is_good = yes
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
 
-		selectable_mission = yes
-		days_mission_timeout = 60
-		days_remove = 5
+	TUR_employ_gulenist_informants = {
 
+		cost = 100
+
+		visible = {
+			NOT = { has_idea = TUR_gulenist_intelligence_network }
+			has_completed_focus = TUR_gulenist_information
+		}
+
+		available = {
+			western_autocrats_are_in_power = yes
+		}
+
+		days_remove = 30
 		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout tur_intervene_SYR"
-
-			add_political_power = -25
-
-		}
-
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision tur_intervene_SYR"
-
-			add_political_power = 25
-
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_employ_gulenist_informants"
+			set_temp_variable = { treasury_change = security_gain }
+			multiply_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
 		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_employ_gulenist_informants"
+			add_ideas = TUR_gulenist_intelligence_network
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+		}
+
 		ai_will_do = {
 			factor = 1
 		}
 	}
 
-	##################################### CANCEROUS BORDER WAR SETUP #########################################
-	##################################### CANCEROUS BORDER WAR SETUP #########################################
-	##################################### CANCEROUS BORDER WAR SETUP #########################################
-	@border_incident_escalation_countdown = 30
-	@border_conflict_incident_forgotten_timer = 30
-	@border_conflict_escalate_to_war_countdown = 45
-	@border_conflict_time_until_cancelled = 360
-
-	#Operation Olive Branch
-	TUR_afrin = {
-		icon = border_war
-
-		available = {
-			575 = {
-				is_owned_and_controlled_by = ROJ
-				any_neighbor_state = {
-					is_fully_controlled_by = TUR
-					set_temp_variable = { var:attacker_state_temp = id }
-					has_ROOT_at_least_1_div_in_current_state_scope = yes
-					hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
-				}
-				NOT = { has_state_flag = border_incident_active }
-			}
-		}
-
-		visible = {
-			NOT = { has_war_with = ROJ }
-			ROJ = {
-			exists = yes
-			has_not_initiated_border_incident_with_ROOT = yes
-			NOT = {
-					is_subject_of = TUR
-					is_in_faction_with = TUR
-				}
-			}
-
-			575 = {
-				is_owned_and_controlled_by = ROJ
-				OR = {
-					AND = {
-						TUR = { is_ai = yes }
-						ROJ = { is_ai = yes }
-						OR = {
-							is_core_of = TUR
-							is_claimed_by = TUR
-						}
-
-						TUR = { has_opinion = { target = ROJ value < 50 } }
-						TUR = { is_major = no }
-					}
-
-					TUR = { is_ai = no }
-				}
-
-				any_neighbor_state = {
-					is_fully_controlled_by = TUR
-				}
-			}
-
-			NOT = {
-				is_subject_of = ROJ
-			}
-
-			OR = {
-				NOT = { has_border_war_with = ROJ }
-				any_state = {
-					is_owned_and_controlled_by = ROJ
-					hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
-					any_neighbor_state = {
-						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
-						is_fully_controlled_by = TUR
-					}
-				}
-			}
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 575
-			}
-		}
-		ai_will_do = {
-			base = 0.2
-			modifier = {
-				OR = {
-					NOT = {
-						ROJ = {
-							any_owned_state = {
-								OR = {
-									is_core_of = TUR
-									is_claimed_by = TUR
-								}
-							}
-						}
-					}
-
-					TUR = { has_government = democratic }
-				}
-				factor = 0
-			}
-
-			modifier = {
-				ROJ = {
-					any_owned_state = {
-						is_core_of = TUR
-					}
-				}
-
-				factor = 0.5
-			}
-
-			modifier = {
-				NOT = { TUR = { has_government = fascism } }
-
-				factor = 0.1
-			}
-
-			modifier = {
-				TUR = { strength_ratio = { tag = ROJ ratio > 0.8 } }
-
-				factor = 0
-			}
-		}
+	TUR_hire_gulenist_educators = {
 
 		cost = 100
 
-		fire_only_once = yes
+		visible = {
+			NOT = { has_idea = TUR_gulenist_educators }
+			has_completed_focus = TUR_gulenist_education
+		}
 
-		days_remove = @border_incident_escalation_countdown
-		days_re_enable = 180
+		available = {
+			western_autocrats_are_in_power = yes
+		}
 
-		war_with_target_on_remove = yes
+		days_remove = 30
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_afrin"
-			ROJ = {
-			add_opinion_modifier = {
-				target = TUR
-				modifier = border_conflict_started
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_hire_gulenist_educators"
+			set_temp_variable = { treasury_change = education_gain }
+			multiply_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+		}
+		fire_only_once = yes
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_hire_gulenist_educators"
+			add_ideas = TUR_gulenist_educators
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_recall_gulenists = {
+
+		cost = 100
+
+		visible = {
+			NOT = { has_idea = TUR_mobilise_the_faithful_soldiers }
+			has_completed_focus = TUR_mobilise_the_faithful
+		}
+
+		available = {
+			OR = {
+				western_autocrats_are_in_power = yes
+				neutrality_neutral_autocracy_are_in_power = yes
 			}
-			country_event = { id = TUR_ob_warn.1 hours = 1 }
-			activate_targeted_decision = { target = TUR decision = TUR_afrin_d }
+		}
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_recall_gulenists"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_recall_gulenists"
+			add_ideas = TUR_mobilise_the_faithful_soldiers
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_no_prime_minister = {
+
+		cost = 100
+
+		visible = {
+			has_completed_focus = TUR_imams_in_office
+		}
+
+		available = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_no_prime_minister"
+			add_stability = -0.02
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_no_prime_minister"
+			add_ideas = TUR_no_prime_minister
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_religious_directorate = {
+
+		cost = 100
+
+		visible = {
+			has_completed_focus = TUR_expand_diyanet_role
+		}
+
+		available = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_religious_directorate"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_religious_directorate"
+			add_ideas = TUR_religious_directorate
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_reestablish_village_institutes = {
+
+		cost = 100
+
+		visible = {
+			NOT = { has_idea = TUR_village_institutes }
+			has_completed_focus = TUR_reform_village_institutes
+		}
+
+		available = {
+			western_conservatism_are_in_power = yes
+		}
+		fire_only_once = yes
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_reestablish_village_institutes"
+			set_temp_variable = { treasury_change = education_gain }
+			multiply_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_reestablish_village_institutes"
+			add_ideas = TUR_village_institutes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_incentivise_modern_farming = {
+
+		cost = 100
+
+		visible = {
+			NOT = { has_idea = TUR_incentivised_farming }
+			OR = {
+				has_completed_focus = TUR_agricultural_reform
+				has_completed_focus = TUR_subsidise_farming
 			}
-			custom_effect_tooltip = WTT_border_incident_delay_until_new_incident_180
-			hidden_effect = {
-			random_state = {
-					limit = {
-						is_fully_controlled_by = TUR
-						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
-						has_ROOT_at_least_1_div_in_current_state_scope = yes
-						any_neighbor_state = {
-							state = 575
+		}
+
+		available = {
+			OR = {
+				AND = {
+					western_liberals_are_in_power = yes
+					has_completed_focus = TUR_agricultural_reform
+				}
+				AND = {
+					emerging_reactionaries_are_in_power = yes
+					has_completed_focus = TUR_subsidise_farming
+				}
+			}
+		}
+		fire_only_once = yes
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_incentivise_modern_farming"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_incentivise_modern_farming"
+			add_ideas = TUR_incentivised_farming
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_heavily_subsidise_agriculture = {
+
+		cost = 100
+
+		visible = {
+			NOT = { has_idea = TUR_heavily_subsidised_agriculture }
+			has_completed_focus = TUR_heavy_agricultural_subsidies
+		}
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+		fire_only_once = yes
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_heavily_subsidise_agriculture"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_heavily_subsidise_agriculture"
+			add_ideas = TUR_heavily_subsidised_agriculture
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_encourage_communal_farming = {
+
+		cost = 100
+
+		visible = {
+			NOT = { has_idea = TUR_communal_farms }
+			has_completed_focus = TUR_communal_farming
+		}
+
+		available = {
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		fire_only_once = yes
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_encourage_communal_farming"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_encourage_communal_farming"
+			add_ideas = TUR_communal_farms
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_implement_revolutionary_education = {
+
+		cost = 100
+
+		visible = {
+			NOT = { has_idea = TUR_educating_revolutionaries }
+			has_completed_focus = TUR_revolutionary_education
+		}
+
+		available = {
+			emerging_anarchist_communism_are_in_power = yes
+		}
+		fire_only_once = yes
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_implement_revolutionary_education"
+			set_temp_variable = { treasury_change = education_gain }
+			multiply_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_implement_revolutionary_education"
+			add_ideas = TUR_educating_revolutionaries
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_call_out_ozkan = {
+
+		cost = 100
+
+		visible = {
+			has_idea = TUR_party_rumours
+			has_country_leader = {
+				character = TUR_bulent_ecevit
+				ruling_only = yes
+			}
+		}
+
+		available = {
+			has_country_leader = {
+				character = TUR_bulent_ecevit
+				ruling_only = yes
+			}
+		}
+		fire_only_once = yes
+		fixed_random_seed = no
+
+		days_remove = 7
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_call_out_ozkan"
+			set_country_flag = Turkey_Ozkan_purged
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_call_out_ozkan"
+			remove_ideas = TUR_party_rumours
+			random_list = {
+				75 = {
+					country_event = Turkey.1
+				}
+				25 = {
+					country_event = Turkey.2
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1000
+		}
+
+	}
+
+	TUR_ban_fazilet_partisi = {
+
+		cost = 100
+
+		visible = {
+			OR = {
+				NOT = { has_country_flag = Turkey_FP_banned }
+			}
+		}
+
+		available = {
+			TUR_is_kemalist = yes
+		}
+		fire_only_once = yes
+		days_remove = 7
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_ban_fazilet_partisi"
+			set_country_flag = Turkey_FP_banned
+			remove_ideas = TUR_rise_of_fp
+			#Reduce FP's popularity by 90%
+			set_temp_variable = { FP_pop_drop = party_pop_array^6 }
+			set_temp_variable = { Hizmet_pop_gain = party_pop_array^6 }
+			set_temp_variable = { AKP_pop_gain = party_pop_array^6 }
+			multiply_temp_variable = { FP_pop_drop = 0.9 }
+			set_temp_variable = { FP_pop_drop_neg = FP_pop_drop }
+			multiply_temp_variable = { FP_pop_drop_neg = -1 }
+			multiply_temp_variable = { Hizmet_pop_gain = 0.10 }
+			multiply_temp_variable = { AKP_pop_gain = 0.80 }
+			subtract_from_variable = { party_pop_array^6 = FP_pop_drop }
+			custom_effect_tooltip = TUR_FP_POP_DROP
+			add_popularity = { ideology = communism popularity = FP_pop_drop_neg }
+			custom_effect_tooltip = TUR_FP_NEW_NAME
+			add_to_variable = { party_pop_array^0 = Hizmet_pop_gain }
+			custom_effect_tooltip = TUR_HIZMET_POP_GAIN
+			add_popularity = { ideology = democratic popularity = Hizmet_pop_gain }
+			add_to_variable = { party_pop_array^12 = AKP_pop_gain }
+			custom_effect_tooltip = TUR_AKP_POP_GAIN
+			add_popularity = { ideology = neutrality popularity = AKP_pop_gain }
+			custom_effect_tooltip = TUR_AKP_EMERGES
+			recalculate_party = yes
+		}
+
+	}
+	TUR_homeland_defence = {#FP/Islamist Decision
+
+		cost = 150
+
+		visible = {
+			has_completed_focus = TUR_islamist_victory
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_homeland_defence"
+			add_ideas = TUR_homeland_defence
+		}
+	}
+	TUR_highways = {#FP/Islamist Decision
+
+		cost = 150
+
+		visible = {
+			has_completed_focus = TUR_turkish_highways
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_highways"
+			add_ideas = TUR_highways
+		}
+	}
+	TUR_land_reforms = { #Communist/Socialist Decision
+
+		cost = 150
+
+		visible = {
+			has_completed_focus = TUR_land_reform
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_land_reforms"
+			set_temp_variable = { treasury_change = -8.00 }
+			modify_treasury_effect = yes
+			159 = {
+				add_extra_state_shared_building_slots = 2
+			}
+			934 = {
+				add_extra_state_shared_building_slots = 2
+			}
+			160 = {
+				add_extra_state_shared_building_slots = 2
+			}
+			157 = {
+				add_extra_state_shared_building_slots = 2
+			}
+		}
+	}
+
+	TUR_mit_decision = {
+
+		cost = 150
+
+		visible = {
+			always = yes
+		}
+		available = {
+			has_completed_focus = TUR_our_society
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_mit_decision"
+			complete_national_focus = TUR_mit
+		}
+	}
+	TUR_disaster_decision = {
+
+		cost = 150
+
+		visible = {
+			has_country_flag = TUR_natural_disaster
+		}
+		available = {
+			has_completed_focus = TUR_our_society
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_disaster_decision"
+			complete_national_focus = TUR_disaster_relief
+		}
+	}
+	TUR_migrants = {
+
+		cost = 150
+
+		visible = {
+			has_country_flag = TUR_migration_flood
+		}
+		available = {
+			has_completed_focus = TUR_our_society
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_migrants"
+			complete_national_focus = TUR_migration_problems
+		}
+	}
+	TUR_drug_problems_decision = {
+
+		cost = 150
+
+		visible = {
+			always = yes
+			has_country_flag = TUR_drugs
+		}
+		available = {
+			has_completed_focus = TUR_our_society
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_drug_problems_decision"
+			complete_national_focus = TUR_drug_problem
+		}
+	}
+	TUR_nationalist_rise = {
+
+		cost = 150
+
+		visible = {
+			always = yes
+		}
+		available = {
+			has_completed_focus = TUR_our_society
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_nationalist_rise"
+			complete_national_focus = TUR_rising_nationalism
+		}
+	}
+
+	TUR_redesign_bosphorus = {
+
+		cost = 100
+
+		visible = {
+			controls_state = 155
+			controls_state = 934
+		}
+
+		available = {
+			155 = {
+				free_building_slots = {
+					building = infrastructure
+					size > 0
+					include_locked = no
+				}
+			}
+			934 = {
+				free_building_slots = {
+					building = infrastructure
+					size > 0
+					include_locked = no
+				}
+			}
+		}
+
+		days_remove = 180
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_redesign_bosphorus"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_redesign_bosphorus"
+			155 = {
+				add_extra_state_shared_building_slots = -1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			934 = {
+				add_extra_state_shared_building_slots = -1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+	}
+
+	TUR_new_capital_mhp = {
+
+		cost = 100
+
+		visible = {
+			nationalist_monarchists_are_in_power = yes
+		}
+
+		available = {
+			controls_state = 934
+		}
+		fire_only_once = yes
+		days_remove = 180
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_new_capital_mhp"
+			set_capital = { state = 934 }
+			set_province_name = { id = 9833 name = "Konstantiniyye" }
+		}
+
+	}
+
+	TUR_empower_sultan = {
+
+		cost = 50
+
+		visible = {
+			has_completed_focus = TUR_osman_alliance
+		}
+
+		fire_only_once = yes
+		days_remove = 90
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_empower_sultan"
+			set_country_flag = TUR_rise_of_osman
+			random_list = {
+				60 = {
+					custom_effect_tooltip = TUR_turkish_civilwar_TT
+					hidden_effect = {
+						TUR = { set_cosmetic_tag = TUR_NEW_TURKIC_STATE }
+						start_civil_war = {
+							ruling_party = nationalist
+							ideology = ROOT
+							size = 0.35
+							keep_political_leader = yes
+							keep_political_party_members = yes
+						}
+						#
+						set_temp_variable = { party_index = 23 }
+						set_temp_variable = { party_popularity_increase = 0.45 }
+						set_temp_variable = { temp_outlook_increase = 0.45 }
+						add_relative_party_popularity = yes
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 23 }
+						update_government_coalition_strength = yes
+						set_coalition_drift = yes
+						set_ruling_leader = yes
+						set_leader = yes
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = no
 						}
 					}
-					save_event_target_as = attacker_state
-					set_variable = { FROM.attacker_state_vs_@ROOT = id }
-					set_temp_variable = { attacker_state_temp = id }
-					set_state_flag = border_incident_active
 				}
+				40 = {
+					custom_effect_tooltip = TUR_osman_becomes_empowered
+					hidden_effect = {
+						TUR = { set_cosmetic_tag = TUR_NEW_TURKIC_STATE }
+						set_temp_variable = { party_index = 23 }
+						set_temp_variable = { party_popularity_increase = 0.45 }
+						set_temp_variable = { temp_outlook_increase = 0.45 }
+						add_relative_party_popularity = yes
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 23 }
+						update_government_coalition_strength = yes
+						set_coalition_drift = yes
+						set_ruling_leader = yes
+						set_leader = yes
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = no
+						}
+					}
+				}
+			}
+		}
+	}
+
+	TUR_establish_shia_dominance = {
+
+		cost = 100
+
+		visible = {
+			OR = {
+				is_in_array = { ruling_party = 8 }
+				is_in_array = { ruling_party = 9 }
+			}
+		}
+		fire_only_once = yes
+		available = {
+			OR = {
+				emerging_moderate_shiite_are_in_power = yes
+				emerging_hardline_shiite_are_in_power = yes
+			}
+		}
+
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_establish_shia_dominance"
+			add_stability = -0.10
+			add_opinion_modifier = {
+				target = PER
+				modifier = recent_actions_very_positive
+			}
+			reverse_add_opinion_modifier = {
+				target = PER
+				modifier = recent_actions_very_positive
 			}
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_afrin"
-		hidden_effect = {
-		var:FROM.attacker_state_vs_@ROOT = {
-					save_event_target_as = attacker_state
-				}
+			add_ideas = unrepresentative_government_shia
+			swap_ideas = {
+				add_idea = shia
+				remove_idea = sunni
 			}
-		random_state = {
-					limit = {
-						is_fully_controlled_by = TUR
-						hidden_trigger = { NOT = { has_state_flag = border_incident_active } }
-						has_ROOT_at_least_1_div_in_current_state_scope = yes
-						any_neighbor_state = {
-							state = 575
-						}
-					}
-					set_temp_variable = { attacker_state_temp = id }
-				}
-			activate_targeted_decision = { target = ROJ decision = TUR_afrin2 }
 		}
+
 	}
 
-	#Mission for defender warning that a conflict with Turkey is coming
-	TUR_afrin_d = {
-		icon = border_war
+}
 
-		allowed = { always = no } #Activated from effect
+TUR_pkk_insurgency_category = {
+	TUR_conduct_operation = {
+		custom_cost_trigger = {
+			has_equipment = {
+				Inf_equipment > 30
+			}
+		}
+		custom_cost_text = TUR_assualt_on_pkk
 
 		available = {
-			hidden_trigger = { always = no }
-		}
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 575
+			has_equipment = {
+				Inf_equipment > 29
 			}
-		}
-
-		war_with_target_on_timeout = yes
-		ai_will_do = {
-			base = 1
-
-		}
-
-		days_mission_timeout = @border_incident_escalation_countdown
-
-		fire_only_once = yes
-
-		is_good = no
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout TUR_afrin_d"
-			custom_effect_tooltip = escalation_possible_tooltip_for_defender
-			custom_effect_tooltip = effects_if_border_conflict_is_lost
-			effect_tooltip = {
-				add_political_power = -100
-				TUR = {
-				transfer_state = 575
+			has_idea = TUR_PKK_insurgency_active
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = TUR_pkk_allowed
 				}
 			}
-			hidden_effect = {
-				remove_targeted_decision = { target = ROJ decision = TUR_afrin_d }
-				activate_targeted_decision = { target = ROJ decision = TUR_afrin_d2 }
+		}
+
+		days_remove = 7
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_conduct_operation"
+			country_event = {
+				id = TUR_pkk.1
 			}
 		}
 	}
-
-	#Mission for defender warning Turkey can escalate to war at any point is coming
-	TUR_afrin_d2 = {
-		icon = border_war
-
-		allowed = { always = no } #Activated from effect
-
+	TUR_strike_pkk_bases = {
 		available = {
-			hidden_trigger = { always = no }
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 575
+			has_idea = TUR_PKK_insurgency_ceasefire
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = TUR_pkk_allowed
+				}
 			}
 		}
+		custom_cost_trigger = {
+			has_army_experience > 19
+		}
+		custom_cost_text = army_xp_20
 
-		war_with_target_on_timeout = yes
-		ai_will_do = {
-			base = 0
+		days_remove = 20
+		days_re_enable = 10
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_strike_pkk_bases"
+			custom_effect_tooltip = PKK_war
+			set_variable = { TUR_PKK_aggro = 60 }
 		}
 
-		days_mission_timeout = @border_conflict_incident_forgotten_timer
-
-		fire_only_once = yes
-
-		is_good = no
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout TUR_afrin_d2"
-			custom_effect_tooltip = from_cannot_escalate
-			custom_effect_tooltip = effects_if_border_conflict_is_lost
-			TUR = {
-				transfer_state = 575
-			}
-		}
-	}
-
-	#Mission for attacker to escalate or incident is forgotten
-	#Decision to escalate incident on border with Turkey to border conflict
-	TUR_afrin2 = {
-		icon = border_war
-
-		allowed = { always = no } #Activated from effect
-
-		available = {
-			var:FROM.attacker_state_vs_@ROOT = {
-				is_fully_controlled_by = TUR
-			}
-			divisions_in_border_state = {
-				state = var:FROM.attacker_state_vs_@ROOT
-				border_state = 575
-				size > 0
-			}
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 575
-			}
-		}
-
-		ai_will_do = {
-			base = 200
-		}
-
-		cancel_trigger = {
-			is_in_faction_with = ROJ
-		}
-
-		selectable_mission = yes
-
-		fire_only_once = yes #Reactivation handled in effect
-
-		days_mission_timeout = @border_conflict_incident_forgotten_timer
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout TUR_afrin2"
-			custom_effect_tooltip = WTT_border_incident_delay_until_new_incident_120
-			hidden_effect = {
-				ROJ = { remove_targeted_decision = { target = TUR decision = TUR_afrin_d2 } }
-			}
+		modifier = {
+			weekly_manpower = -1250
+			stability_weekly = -0.01
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision TUR_afrin2"
-			start_border_war = {
-				change_state_after_war = no
-				attacker = {
-					state = var:FROM.attacker_state_vs_@ROOT
-					num_provinces = 4
-					#on_win = wtt_border_conflict_won_attacker.1
-					#on_lose = wtt_border_conflict_lost_attacker.1
-					#on_cancel = wtt_border_conflict_canceled_attacker.1
-				}
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_strike_pkk_bases"
+			hidden_effect = {
+				army_experience = -20
+			}
+		}
+	}
+}
+#
+TUR_hizmet_gulen_struggle = {
+	TUR_random_rally_akp_gulen = { #Random Rally!
+	fire_only_once = no
+	days_re_enable = 5
+	activation = { hidden_trigger = { has_completed_focus = TUR_return_to_tradition } }
+	allowed = { original_tag = TUR }
+	available = { hidden_trigger = { has_country_flag = heeeeeeeeeeeelll_nah } }
 
-				defender = {
-					state = 575
-					num_provinces = 1
-					#on_win = wtt_border_conflict_won_defender.1
-					#on_lose = wtt_border_conflict_lost_defender.1
-					#on_cancel = wtt_border_conflict_canceled_defender.1
+	days_mission_timeout = 35
+	is_good = yes
+	complete_effect = {
+		log = "[GetDateText]: [Root.GetName]: Decision TUR_random_rally_akp_gulen"
+	}
+	timeout_effect = {
+		log = "[GetDateText]: [Root.GetName]: Decision TUR_random_rally_akp_gulen"
+		hidden_effect = {
+			random_list = {
+				50 = {
+					country_event = {
+						id = TurkeyFocusEvents.22
+					}
+				}
+				50 = {
+					country_event = {
+						id = TurkeyFocusEvents.23
+					}
 				}
 			}
-			ROJ = {
-				#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_escalate_conflict }
-				#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_time_until_cancelled }
+		}
+	}
+}
+
+	TUR_expose_akp_scandal = {
+
+		cost = 50
+
+		visible = {
+			has_country_flag = TUR_hizmet_gulen_struggle_bob
+		}
+
+		available = {
+			western_autocrats_are_in_power = yes
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_expose_akp_scandal"
+			custom_effect_tooltip = TUR_increases_gulenist_support_5
+			custom_effect_tooltip = TUR_decreases_akp_support_5
+			add_to_variable = { var = hizmet_power value = 0.05 }
+			clamp_variable = { var = hizmet_power min = 0 max = 1 }
+			add_to_variable = { var = akp_power value = -0.05 }
+			clamp_variable = { var = akp_power min = 0 max = 1 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_expose_akp_scandal"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_expose_gulenist_institution = {
+
+		cost = 50
+
+		visible = {
+			has_country_flag = TUR_hizmet_gulen_struggle_bob
+		}
+
+		available = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_expose_gulenist_institution"
+			custom_effect_tooltip = TUR_increases_akp_support_5
+			custom_effect_tooltip = TUR_decreases_gulenist_support_5
+			add_to_variable = { var = hizmet_power value = -0.05 }
+			clamp_variable = { var = hizmet_power min = 0 max = 1 }
+			add_to_variable = { var = akp_power value =  0.05 }
+			clamp_variable = { var = akp_power min = 0 max = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+#####################################################
+TUR_pan_turkic_dream = {
+	TUR_invite_azerbaijan = {
+
+		cost = 50
+
+		visible = {
+			has_country_flag = TUR_pan_turkey
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = AZE_joins
+				}
 			}
-			#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_escalate_conflict }
-			#activate_targeted_decision = { target = TUR decision = WTT_border_conflict_time_until_cancelled }
+		}
+
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+			AZE = {
+				nationalist > 0.30
+				has_opinion = { target = TUR value > 59 }
+				influence_higher_50 = yes
+			}
+		}
+
+		days_remove = 100
+		days_re_enable = 365
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invite_azerbaijan"
+			custom_effect_tooltip = TUR_more_relation_better
+			AZE = {
+				country_event = {
+					id = TurkicConfederation.1
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
+	TUR_invite_kazakhstan = {
+
+		cost = 50
+
+		visible = {
+			has_country_flag = TUR_pan_turkey
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = KAZ_joins
+				}
+			}
+		}
+
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+			KAZ = {
+				nationalist > 0.30
+				has_opinion = { target = TUR value > 59 }
+				influence_higher_50 = yes
+			}
+		}
+
+		days_remove = 100
+		days_re_enable = 365
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invite_kazakhstan"
+			custom_effect_tooltip = TUR_more_relation_better
+			KAZ = {
+				country_event = {
+					id = TurkicConfederation.2
+				}
+			}
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_invite_uzbekistan = {
+
+		cost = 50
+
+		visible = {
+			has_country_flag = TUR_pan_turkey
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = UZB_joins
+				}
+			}
+		}
+
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+			UZB = { has_opinion = { target = TUR value > 59 } }
+			UZB = {
+				nationalist > 0.30
+			}
+			UZB = {
+				influence_higher_50 = yes
+			}
+		}
+
+		days_remove = 100
+		days_re_enable = 365
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invite_uzbekistan"
+			custom_effect_tooltip = TUR_more_relation_better
+			UZB = {
+				country_event = {
+					id = TurkicConfederation.3
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_invite_turkmenistan = {
+
+		cost = 50
+
+		visible = {
+			has_country_flag = TUR_pan_turkey
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = TRK_joins
+				}
+			}
+		}
+
+		available = {
+			nationalist_right_wing_populists_are_in_power = yes
+			TRK = { has_opinion = { target = TUR value > 59 } }
+			TRK = {
+				nationalist > 0.30
+			}
+			TRK = {
+				influence_higher_50 = yes
+			}
+		}
+
+		days_remove = 100
+		days_re_enable = 365
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invite_turkmenistan"
+			custom_effect_tooltip = TUR_more_relation_better
+			TRK = {
+				country_event = {
+					id = TurkicConfederation.4
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+#
+TUR_mafia_category = {
+	TUR_mafia_fighting_back = {#Random mafia event where they attack
+		fire_only_once = no
+		days_re_enable = 5
+		activation = { hidden_trigger = { has_country_flag = TUR_mafia_war_start } }
+		allowed = { original_tag = TUR }
+		available = { hidden_trigger = { has_country_flag = heeeeeeeeeeeelll_nah } }
+
+		days_mission_timeout = 70
+		is_good = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_mafia_fighting_back"
+			custom_effect_tooltip = TUR_mafia_warning2
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_mafia_fighting_back"
+			hidden_effect = {
+				random_list = {
+					25 = { # Assasination
+						country_event = {
+							id = Turkish_mafia.5
+						}
+					}
+					25 = { # Heist
+						country_event = {
+							id = Turkish_mafia.6
+						}
+					}
+					25 = { #Explosion at commercial center
+						country_event = {
+							id = Turkish_mafia.7
+						}
+					}
+					25 = { #Firefight with Police
+						country_event = {
+							id = Turkish_mafia.8
+						}
+					}
+				}
+			}
+		}
+	}
+	TUR_conduct_anti_mafia_raid = {
+
+		custom_cost_trigger = {
+			command_power > 34
+		}
+		custom_cost_text = command_power_more_than_35
+
+		available = {
+			has_idea = police_05
+		}
+		modifier = {
+			police_cost_multiplier_modifier = 0.50
+		}
+
+		days_remove = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_conduct_anti_mafia_raid"
+			add_to_variable = { TUR_mafia_influence = -2 }
+			custom_effect_tooltip = TUR_mafia_decrease_2
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_conduct_anti_mafia_raid"
+			hidden_effect = {
+				add_command_power = -35
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_arrest_mafia_west = {
+
+		cost = 50
+
+		available = {
+			has_idea = police_05
+			hidden_trigger = {
+				has_country_flag = TUR_eliminate_mafia
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = TUR_arrest_mafia_central
+					has_decision = TUR_arrest_mafia_south
+					has_decision = TUR_arrest_mafia_east
+				}
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			has_idea = police_05
+			has_country_flag = TUR_eliminate_mafia
+		}
+
+		modifier = {
+			police_cost_multiplier_modifier = 0.75
+		}
+
+		days_remove = 50
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_arrest_mafia_west"
+			set_country_flag = TUR_mafia_west_arrest
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_arrest_mafia_central = {
+
+		cost = 50
+
+		available = {
+			has_idea = police_05
+			hidden_trigger = {
+				has_country_flag = TUR_eliminate_mafia
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = TUR_arrest_mafia_west
+					has_decision = TUR_arrest_mafia_south
+					has_decision = TUR_arrest_mafia_east
+				}
+			}
+		}
+
+		visible = {
+			has_idea = police_05
+			has_country_flag = TUR_eliminate_mafia
+		}
+		fire_only_once = yes
+		modifier = {
+			police_cost_multiplier_modifier = 0.75
+		}
+
+		days_remove = 50
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_arrest_mafia_central"
+			set_country_flag = TUR_mafia_central_arrest
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_arrest_mafia_south = {
+
+		cost = 50
+
+		available = {
+			has_idea = police_05
+			hidden_trigger = {
+				has_country_flag = TUR_eliminate_mafia
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = TUR_arrest_mafia_west
+					has_decision = TUR_arrest_mafia_central
+					has_decision = TUR_arrest_mafia_east
+				}
+			}
+		}
+
+		visible = {
+			has_idea = police_05
+			has_country_flag = TUR_eliminate_mafia
+		}
+		fire_only_once = yes
+		modifier = {
+			police_cost_multiplier_modifier = 0.75
+		}
+
+		days_remove = 50
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_arrest_mafia_south"
+			set_country_flag = TUR_mafia_south_arrest
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_arrest_mafia_east = {
+
+		cost = 50
+
+		available = {
+			has_idea = police_05
+			hidden_trigger = {
+				has_country_flag = TUR_eliminate_mafia
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = TUR_arrest_mafia_west
+					has_decision = TUR_arrest_mafia_central
+					has_decision = TUR_arrest_mafia_south
+				}
+			}
+		}
+
+		visible = {
+			has_idea = police_05
+			has_country_flag = TUR_eliminate_mafia
+		}
+		fire_only_once = yes
+		modifier = {
+			police_cost_multiplier_modifier = 0.75
+		}
+
+		days_remove = 50
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_arrest_mafia_east"
+			set_country_flag = TUR_mafia_east_arrest
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_victory_over_mafia = {
+
+		available = {
+			has_idea = police_05
+			has_idea = TUR_mafia_weak
+			hidden_trigger = {
+				has_country_flag = TUR_mafia_south_arrest
+				has_country_flag = TUR_mafia_west_arrest
+				has_country_flag = TUR_mafia_central_arrest
+				has_country_flag = TUR_mafia_east_arrest
+			}
+		}
+
+		visible = {
+			has_idea = police_05
+			has_idea = TUR_mafia_weak
+			has_country_flag = TUR_mafia_south_arrest
+			has_country_flag = TUR_mafia_west_arrest
+			has_country_flag = TUR_mafia_central_arrest
+			has_country_flag = TUR_mafia_east_arrest
+		}
+		fire_only_once = yes
+		modifier = {
+			police_cost_multiplier_modifier = 1
+		}
+
+		days_remove = 100
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_victory_over_mafia"
+			clr_country_flag = TUR_turkishMafia
+			set_country_flag = TUR_mafia_gone
+			clear_variable = TUR_mafia_influence_min
+			clear_variable = TUR_mafia_influence_max
+			clear_variable = TUR_mafia_influence
+			clear_variable = TUR_mafia_influence_gain
+			clear_variable = TUR_event_counter_1_mafia
+			remove_ideas = TUR_mafia_weak
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+###
+TUR_ottoman_revival = {
+	TUR_open_mid_east = { #Winning over people in Iraq, Syria, Kuwait
+
+		visible = {
+			has_country_flag = TUR_osmani
+			NOT = { has_country_flag = TUR_open_mideast }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_open_mid_east"
+			set_country_flag = TUR_open_mideast
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_mid_east = { #Winning over people in Iraq, Syria, Kuwait
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_open_mideast
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_mid_east"
+			clr_country_flag = TUR_open_mideast
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_iraq = { #Winning over people in Iraq
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_open_mideast
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_syria
+				has_decision = TUR_support_in_kuwait
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_iraq"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_iraq value = 0.02 }
+			clamp_variable = { var = osman_iraq min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_syria = { #Winning over people in Syria
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_open_mideast
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_kuwait
+				has_decision = TUR_support_in_iraq
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_syria"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_syria value = 0.02 }
+			clamp_variable = { var = osman_syria min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_kuwait = { #Winning over people in Kuwait
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_open_mideast
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_syria
+				has_decision = TUR_support_in_iraq
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_kuwait"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_kuwait value = 0.02 }
+			clamp_variable = { var = osman_kuwait min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	######
+	TUR_open_levant = { #Winning over people in Israel, Palestine, Jordan, and Lebanon
+
+		visible = {
+			has_country_flag = TUR_osmani
+			NOT = { has_country_flag = TUR_levant_close }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_open_levant"
+			set_country_flag = TUR_levant_close
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_levant = { #Winning over people in Iraq, Syria, Kuwait
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_levant_close
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_levant"
+			clr_country_flag = TUR_levant_close
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_support_in_israel = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_levant_close
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_jordan
+				has_decision = TUR_support_in_lebanon
+				has_decision = TUR_support_in_saudi
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_israel"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_isr value = 0.02 }
+			clamp_variable = { var = osman_isr min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_lebanon = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_levant_close
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_jordan
+				has_decision = TUR_support_in_israel
+				has_decision = TUR_support_in_saudi
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_lebanon"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_leb value = 0.02 }
+			clamp_variable = { var = osman_leb min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_jordan = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_levant_close
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_saudi
+				has_decision = TUR_support_in_israel
+				has_decision = TUR_support_in_lebanon
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_jordan"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_jor value = 0.02 }
+			clamp_variable = { var = osman_jor min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_saudi = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_levant_close
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_jordan
+				has_decision = TUR_support_in_israel
+				has_decision = TUR_support_in_lebanon
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_saudi"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_sau value = 0.02 }
+			clamp_variable = { var = osman_sau min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	###
+	TUR_open_balkans = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			NOT = { has_country_flag = TUR_balkans_close }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_open_balkans"
+			set_country_flag = TUR_balkans_close
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_balkans = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_balkans_close
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_balkans"
+			clr_country_flag = TUR_balkans_close
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_support_in_bulgaria = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_balkans_close
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_macedonia
+				has_decision = TUR_support_in_greece
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_bulgaria"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_bul value = 0.02 }
+			clamp_variable = { var = osman_bul min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_greece = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_balkans_close
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_macedonia
+				has_decision = TUR_support_in_bulgaria
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_greece"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_gre value = 0.02 }
+			clamp_variable = { var = osman_gre min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_support_in_macedonia = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_balkans_close
+		}
+		cost = 25
+		available = {
+			hidden_trigger = {
+				has_country_flag = TUR_osmani
+			}
+			NOT = {
+				has_decision = TUR_support_in_greece
+				has_decision = TUR_support_in_bulgaria
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_support_in_macedonia"
+			custom_effect_tooltip = TUR_boost_support_2
+			add_to_variable = { var = osman_fyr value = 0.02 }
+			clamp_variable = { var = osman_fyr min = 0 max = 1 }
+		}
+
+		days_remove = 12
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	####
+	TUR_open_assimulate = { # Getting Cores on countries with 100% Support
+
+		visible = {
+			has_country_flag = TUR_osmani
+			NOT = { has_country_flag = TUR_assimulate }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_open_assimulate"
+			set_country_flag = TUR_assimulate
+			custom_effect_tooltip = TUR_assimulated_country
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_assimulate = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_assimulate"
+			custom_effect_tooltip = TUR_assimulated_country
+			clr_country_flag = TUR_assimulate
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_assimulate_iraq = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_iraq > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_iraq"
+			IRQ = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_syria = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_syria > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_syria"
+			SYR = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_kuwait = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_kuwait > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_kuwait"
+			KUW = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_israel = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_isr > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_israel"
+			ISR = { every_core_state = { add_core_of = TUR } }
+			PAL = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_jordan = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_jor > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_jordan"
+			JOR = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_lebanon = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_leb > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_lebanon"
+			LEB = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_hejaz = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_sau > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_hejaz"
+			HEJ = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_bulgaria = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_bul > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_bulgaria"
+			BUL = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_greece = { #Reid be like: "Noooooooooooooooooooooooooo"
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_gre > 0.99 }
+		}
+		cost = 100
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_greece"
+			GRE = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_assimulate_macedonia = {
+
+		visible = {
+			has_country_flag = TUR_osmani
+			has_country_flag = TUR_assimulate
+			check_variable = { from.osman_fyr > 0.99 }
+		}
+		cost = 100
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_assimulate_macedonia"
+			FYR = { every_core_state = { add_core_of = TUR } }
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+################### PLAYING AS THE MAFIA MECHANIC ##################################
+TUR_mafia_influence_mechanic = {
+
+	TUR_start_eng_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			NOT = { has_country_flag = TUR_opening_england }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_start_eng_operations"
+			set_country_flag = TUR_opening_england
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_eng_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_england
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_eng_operations"
+			clr_country_flag = TUR_opening_england
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_boost_british_firms = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_england
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_fund_ira
+				has_decision = TUR_sow_division
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_boost_british_firms"
+			custom_effect_tooltip = TUR_boost_mafia
+			add_to_variable = { var = mafia_uk value = 0.02 }
+			clamp_variable = { var = mafia_uk min = 0 max = 1 }
+		}
+
+		days_remove = 20
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_fund_ira = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_england
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_boost_british_firms
+				has_decision = TUR_sow_division
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_fund_ira"
+			ENG = {
+				add_stability = -0.01
+			}
+		}
+
+		modifier = {
+			tax_gain_multiplier_modifier = -0.10
+		}
+
+		days_remove = 31
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_sow_division = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_england
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_boost_british_firms
+				has_decision = TUR_fund_ira
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_sow_division"
+			ENG = {
+				set_temp_variable = { party_index = 15 }
+				set_temp_variable = { party_popularity_increase = 0.03 }
+				set_temp_variable = { temp_outlook_increase = 0.03 }
+				add_relative_party_popularity = yes
+				random_list = {
+					10 = {
+						modifier = {
+							check_variable = { party_pop_array^3 < 0.05 }
+							factor = 0
+						}
+						set_temp_variable = { party_index = 0 }
+						set_temp_variable = { party_popularity_increase = -0.05 }
+						set_temp_variable = { temp_outlook_increase = -0.05 }
+						add_relative_party_popularity = yes
+					}
+					10 = {
+						modifier = {
+							check_variable = { party_pop_array^4 < 0.05 }
+							factor = 0
+						}
+						set_temp_variable = { party_index = 1 }
+						set_temp_variable = { party_popularity_increase = -0.05 }
+						set_temp_variable = { temp_outlook_increase = -0.05 }
+						add_relative_party_popularity = yes
+					}
+					10 = {
+						modifier = {
+							check_variable = { party_pop_array^5 < 0.05 }
+							factor = 0
+						}
+						set_temp_variable = { party_index = 2 }
+						set_temp_variable = { party_popularity_increase = -0.05 }
+						set_temp_variable = { temp_outlook_increase = -0.05 }
+						add_relative_party_popularity = yes
+					}
+					10 = {
+						modifier = {
+							check_variable = { party_pop_array^7 < 0.05 }
+							factor = 0
+						}
+						set_temp_variable = { party_index = 3 }
+						set_temp_variable = { party_popularity_increase = -0.05 }
+						set_temp_variable = { temp_outlook_increase = -0.05 }
+						add_relative_party_popularity = yes
+					}
+					10 = {
+						modifier = {
+							check_variable = { party_pop_array^17 < 0.05 }
+							factor = 0
+						}
+						set_temp_variable = { party_index = 17 }
+						set_temp_variable = { party_popularity_increase = -0.05 }
+						set_temp_variable = { temp_outlook_increase = -0.05 }
+						add_relative_party_popularity = yes
+					}
+					10 = {
+						modifier = {
+							check_variable = { party_pop_array^18 < 0.05 }
+							factor = 0
+						}
+						set_temp_variable = { party_index = 18 }
+						set_temp_variable = { party_popularity_increase = -0.05 }
+						set_temp_variable = { temp_outlook_increase = -0.05 }
+						add_relative_party_popularity = yes
+					}
+					10 = {
+						modifier = {
+							check_variable = { party_pop_array^19 < 0.05 }
+							factor = 0
+						}
+						set_temp_variable = { party_index = 19 }
+						set_temp_variable = { party_popularity_increase = -0.05 }
+						set_temp_variable = { temp_outlook_increase = -0.05 }
+						add_relative_party_popularity = yes
+					}
+				}
+				recalculate_party = yes
+			}
+		}
+
+		modifier = {
+			political_power_factor = -0.10
+		}
+
+		days_remove = 31
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_shatter_the_kingdom = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_england
+		}
+		fire_only_once = yes
+		available = {
+			NOT = {
+				has_decision = TUR_boost_british_firms
+				has_decision = TUR_fund_ira
+				has_decision = TUR_sow_division
+			}
+			ENG = {
+				has_stability < 0.3
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_99
+				check_variable = { from.mafia_uk > 0.99 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_shatter_the_kingdom"
+			437 = {
+				transfer_state_to = SCO
+			}
+			9 = {
+				transfer_state_to = SCO
+			}
+			16 = {
+				transfer_state_to = WAS
+			}
+			17 = {
+				transfer_state_to = IRE
+			}
+			SCO = {
+				division_template = {
+					name = "Scottish Freedom Fighters"
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+						Special_Forces = { x = 1 y = 2 }
+						Special_Forces = { x = 1 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
+						Special_Forces = { x = 2 y = 1 }
+					}
+					priority = 2
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Scottish Rebels\" division_template = \"Scottish Freedom Fighters\" start_experience_factor =  1.0"
+						owner = SCO
+						count = 8
+					}
+				}
+			}
+			#
+			WAS = {
+				division_template = {
+					name = "Welsh Freedom Fighters"
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+						Special_Forces = { x = 1 y = 2 }
+						Special_Forces = { x = 1 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
+						Special_Forces = { x = 2 y = 1 }
+					}
+					priority = 2
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Welsh Rebels\" division_template = \"Welsh Freedom Fighters\" start_experience_factor =  1.0"
+						owner = WAS
+						count = 5
+					}
+				}
+			}
+			ENG = {
+				country_event = {
+					id = TurkeyFocusEvents.36
+					days = 1
+				}
+			}
+			puppet = WAS
+			puppet = SCO
+			hidden_effect = {
+				SCO = { set_cosmetic_tag = TUR_SCOTTISH_SYNDICATE }
+				WAS = { set_cosmetic_tag = TUR_WELSH_SYNDICATE }
+				WAS = { set_country_flag = is_VANGUARD }
+				SCO = { set_country_flag = is_VANGUARD }
+			}
+		}
+
+		modifier = {
+			tax_gain_multiplier_modifier = -0.10
+		}
+
+		days_remove = 180
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_start_ger_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			NOT = { has_country_flag = TUR_opening_germany }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_start_ger_operations"
+			set_country_flag = TUR_opening_germany
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_ger_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_germany
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_ger_operations"
+			clr_country_flag = TUR_opening_germany
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_gray_wolves_networks = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_germany
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_commit_vehicle_rob
+				has_decision = TUR_attack_german_politics
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_gray_wolves_networks"
+			custom_effect_tooltip = TUR_boost_mafia
+			add_to_variable = { var = mafia_germany value = 0.02 }
+			clamp_variable = { var = mafia_germany min = 0 max = 1 }
+		}
+		modifier = {
+			political_power_gain = -0.80
+		}
+
+		days_remove = 31
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_commit_vehicle_rob = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_germany
+		}
+		custom_cost_trigger = {
+			has_equipment = {
+				convoy > 30
+			}
+		}
+		custom_cost_text = TUR_assualt_on_pkk
+		available = {
+			has_equipment = {
+				convoy > 29
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_gray_wolves_networks
+				has_decision = TUR_attack_german_politics
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_commit_vehicle_rob"
+			hidden_effect = {
+				TUR = {
+					add_equipment_to_stockpile = {
+						type = convoy
+						amount = -30
+						producer = TUR
+					}
+				}
+			}
+			GER = {
+				add_stability = -0.01
+			}
+			GER = {
+				add_equipment_to_stockpile = {
+					type = util_vehicle_2
+					amount = -30
+					producer = GER
+				}
+			}
+			TUR = {
+				add_equipment_to_stockpile = {
+					type = util_vehicle_2
+					amount = 30
+					producer = GER
+				}
+			}
+		}
+
+		days_remove = 31
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_attack_german_politics = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_germany
+			NOT = {
+				GER = {
+					has_idea = paralyzing_corruption
+				}
+			}
+		}
+		cost = 400
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_60_mafia
+				check_variable = { from.mafia_germany > 0.59 }
+			}
+			NOT = {
+				has_decision = TUR_gray_wolves_networks
+				has_decision = TUR_commit_vehicle_rob
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_attack_german_politics"
+			GER = {
+				increase_corruption = yes
+			}
+		}
+
+		days_remove = 70
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_take_german_industries = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_germany
+			NOT = {
+				GER = {
+					has_idea = paralyzing_corruption
+				}
+			}
+		}
+		fire_only_once = yes
+		available = {
+			GER = {
+				has_idea = paralyzing_corruption
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_99
+				check_variable = { from.mafia_germany > 0.99 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_take_german_industries"
+			add_offsite_building = { type = industrial_complex level = 10 }
+			43 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = -5
+					instant_build = yes
+				}
+			}
+			#
+			42 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = -5
+					instant_build = yes
+				}
+			}
+		}
+
+		days_remove = 180
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	##########
+	TUR_start_hol_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			NOT = { has_country_flag = TUR_opening_holland }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_start_hol_operations"
+			set_country_flag = TUR_opening_holland
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_hol_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_holland
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_hol_operations"
+			clr_country_flag = TUR_opening_holland
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_establish_drug_networks_rotterdam = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_holland
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_decrease_policing_holland
+				has_decision = TUR_sieze_goods_from_ports
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_establish_drug_networks_rotterdam"
+			custom_effect_tooltip = TUR_boost_mafia
+			add_to_variable = { var = mafia_holland value = 0.02 }
+			clamp_variable = { var = mafia_holland min = 0 max = 1 }
+		}
+
+		days_remove = 31
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_sieze_goods_from_ports = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_holland
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_60_mafia
+				check_variable = { from.mafia_germany > 0.59 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_decrease_policing_holland
+				has_decision = TUR_establish_drug_networks_rotterdam
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_sieze_goods_from_ports"
+			random_list = {
+				33 = {
+					TUR = {
+						add_equipment_to_stockpile = {
+							type = convoy
+							amount = 30
+							producer = HOL
+						}
+					}
+					HOL = {
+						add_equipment_to_stockpile = {
+							type = convoy
+							amount = -30
+							producer = HOL
+						}
+					}
+				}
+				33 = {
+					TUR = {
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 400
+							producer = HOL
+						}
+					}
+					HOL = {
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = -400
+							producer = HOL
+						}
+					}
+				}
+				33 = {
+					set_temp_variable = { treasury_change = 12 }
+					modify_treasury_effect = yes
+				}
+			}
+		}
+
+		days_remove = 60
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_decrease_policing_holland = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_holland
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_60_mafia
+				check_variable = { from.mafia_holland > 0.59 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_sieze_goods_from_ports
+				has_decision = TUR_establish_drug_networks_rotterdam
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_decrease_policing_holland"
+			HOL = {
+				decrease_policing_budget = yes
+			}
+		}
+
+		days_remove = 60
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_largest_drug_network = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_holland
+		}
+
+		available = {
+			HOL = {
+				has_idea = police_01
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_99
+				check_variable = { from.mafia_holland > 0.99 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_largest_drug_network"
+			hidden_effect = { add_ideas = TUR_taxing_bosphor }
+			set_temp_variable = { additional_income_change = gdp_total }
+			multiply_temp_variable = { additional_income_change = 0.10 }	#10% of GDP yearly
+			multiply_temp_variable = { additional_income_change = 0.02 }	#weekly
+			custom_effect_tooltip = additional_income_rate_percent_tt
+		}
+
+		days_remove = 60
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_start_aus_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			NOT = { has_country_flag = TUR_opening_australia }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_start_aus_operations"
+			set_country_flag = TUR_opening_australia
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_aus_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_australia
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_aus_operations"
+			add_to_variable = { var = mafia_germany value = 0.60 }
+			clamp_variable = { var = mafia_germany min = 0 max = 1 }
+			add_to_variable = { var = mafia_uk value = 0.60 }
+			clamp_variable = { var = mafia_uk min = 0 max = 1 }
+			add_to_variable = { var = mafia_holland value = 0.60 }
+			clamp_variable = { var = mafia_holland min = 0 max = 1 }
+			add_to_variable = { var = mafia_belgium value = 0.60 }
+			clamp_variable = { var = mafia_belgium min = 0 max = 1 }
+			add_to_variable = { var = mafia_australia value = 0.60 }
+			clamp_variable = { var = mafia_australia min = 0 max = 1 }
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_boost_honoured_society = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_australia
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_target_aussie_welfare
+				has_decision = TUR_spread_hatred_indonesia
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_boost_honoured_society"
+			custom_effect_tooltip = TUR_boost_mafia
+			add_to_variable = { var = mafia_australia value = 0.02 }
+			clamp_variable = { var = mafia_australia min = 0 max = 1 }
+		}
+
+		days_remove = 31
+		modifier = {
+			political_power_cost = 0.5
+			experience_gain_army = -0.5
+			experience_gain_air = -0.5
+			experience_gain_navy = -0.5
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_target_aussie_welfare = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_australia
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_60_mafia
+				check_variable = { from.mafia_australia > 0.59 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_boost_honoured_society
+				has_decision = TUR_spread_hatred_indonesia
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_target_aussie_welfare"
+			random_list = {
+				25 = {
+					AST = {
+						decrease_healthcare_budget = yes
+					}
+				}
+				25 = {
+					AST = {
+						decrease_social_spending = yes
+					}
+				}
+				50 = {
+				}
+			}
+		}
+		modifier = {
+			social_cost_multiplier_modifier = 0.30
+			health_cost_multiplier_modifier = 0.30
+		}
+		days_remove = 90
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_spread_hatred_indonesia = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_australia
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_boost_honoured_society
+				has_decision = TUR_target_aussie_welfare
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_spread_hatred_indonesia"
+			IND = {
+				add_opinion_modifier = {
+					target = AST
+					modifier = small_decrease
+				}
+			}
+			AST = {
+				add_opinion_modifier = {
+					target = IND
+					modifier = small_decrease
+				}
+			}
+		}
+
+		days_remove = 31
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_watch_the_conflict = {
+		cost = 1000
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_australia
+		}
+
+		available = {
+			AST = {
+				OR = {
+					has_idea = social_01
+					has_idea = health_01
+				}
+			}
+			IND = { has_opinion = { target = AST value < -49 } }
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_99
+				check_variable = { from.mafia_australia > 0.99 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_watch_the_conflict"
+			random_owned_state = {
+				add_resource = {
+					type = tungsten
+					amount = 97
+				}
+			}
+			AST = {
+				741 ={
+					add_resource = {
+						type = tungsten
+						amount = -97
+					}
+				}
+			}
+			IND = {
+				country_event = {
+					id = TurkeyFocusEvents.37
+					days = 1
+				}
+			}
+		}
+
+		days_remove = 100
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	####
+	TUR_start_bel_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			NOT = { has_country_flag = TUR_opening_belgium }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_start_bel_operations"
+			set_country_flag = TUR_opening_belgium
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_close_bel_operations = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_belgium
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_close_bel_operations"
+			clr_country_flag = TUR_opening_belgium
+		}
+
+		days_remove = 0
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_fund_bel_mafia = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_belgium
+		}
+
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_strings_in_belgian_govt
+				has_decision = TUR_steal_crucial_info
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_fund_bel_mafia"
+			custom_effect_tooltip = TUR_boost_mafia
+			add_to_variable = { var = mafia_belgium value = 0.02 }
+			clamp_variable = { var = mafia_belgium min = 0 max = 1 }
+		}
+
+		modifier = {
+			corruption_cost_factor = 0.40
+			propaganda_campaign_cost_modifier = 0.20
+		}
+
+		days_remove = 31
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_strings_in_belgian_govt = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_belgium
+		}
+		cost = 50
+		available = {
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_fund_bel_mafia
+				has_decision = TUR_steal_crucial_info
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_strings_in_belgian_govt"
+			BEL = {
+				add_popularity = { ideology = neutrality popularity = 0.02 }
+			}
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_steal_crucial_info = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_belgium
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_60_mafia
+				check_variable = { from.mafia_belgium > 0.59 }
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+			NOT = {
+				has_decision = TUR_fund_bel_mafia
+				has_decision = TUR_strings_in_belgian_govt
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_steal_crucial_info"
+			random_list = {
+				10 = {
+					add_tech_bonus = {
+						name = ALB_taken_research
+						bonus = 0.10
+						uses = 1
+						category = industry
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = ALB_taken_research
+						bonus = 0.10
+						uses = 1
+						category = computing_tech
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = construction_tech
+						bonus = 0.10
+						uses = 1
+						category = construction_tech
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = Cat_3D
+						bonus = 0.10
+						uses = 1
+						category = Cat_3D
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = Cat_UTIL
+						bonus = 0.10
+						uses = 1
+						category = Cat_UTIL
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = Cat_ARTILLERY
+						bonus = 0.10
+						uses = 1
+						category = Cat_ARTILLERY
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = Cat_FUEL_OIL
+						bonus = 0.10
+						uses = 1
+						category = Cat_FUEL_OIL
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = Cat_TANKS
+						bonus = 0.10
+						uses = 1
+						category = Cat_TANKS
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = Cat_IFV
+						bonus = 0.10
+						uses = 1
+						category = Cat_IFV
+					}
+				}
+				10 = {
+					add_tech_bonus = {
+						name = Cat_APC
+						bonus = 0.10
+						uses = 1
+						category = Cat_APC
+					}
+				}
+			}
+		}
+		modifier = { research_speed_factor = -0.30 }
+		days_remove = 60
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_our_puppets = {
+
+		visible = {
+			has_country_flag = playing_mafia
+			has_country_flag = TUR_opening_belgium
+		}
+		cost = 100
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_99
+				check_variable = { from.mafia_belgium > 0.99 }
+			}
+			BEL = {
+				influence_higher_60 = yes
+			}
+			BEL = {
+				neutrality > 0.40
+			}
+			hidden_trigger = {
+				has_country_flag = playing_mafia
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_our_puppets"
+			add_ideas = TUR_belgian_workers
+			puppet = BEL
+		}
+
+		days_remove = 40
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+###############################
+TUR_ciw_decisions = {
+	TUR_invest_in_infrastructure = {
+		visible = {
+			original_tag = TUR
+		}
+		available = {
+			NOT = {
+				has_decision = TUR_invest_in_industry
+				has_decision = TUR_invest_in_health
+				has_decision = TUR_invest_in_education
+				has_decision = TUR_invest_in_disasters
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invest_in_infrastructure"
+			every_country = {
+				limit = {
+					has_idea = CIW_member
+					NOT = {
+						has_country_flag = CIW_leader
+					}
+				}
+				country_event = {
+					id = TurkeyFocusEvents.44
+				}
+			}
+		}
+		modifier = {
+			production_speed_infrastructure_factor = 0.10
+		}
+
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_invest_in_disasters = {
+
+		visible = {
+			original_tag = TUR
+		}
+
+		available = {
+			NOT = {
+				has_decision = TUR_invest_in_industry
+				has_decision = TUR_invest_in_health
+				has_decision = TUR_invest_in_education
+				has_decision = TUR_invest_in_infrastructure
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invest_in_disasters"
+			every_country = {
+				limit = {
+					has_idea = CIW_member
+					NOT = {
+						has_country_flag = CIW_leader
+					}
+				}
+				country_event = {
+					id = TurkeyFocusEvents.45
+				}
+			}
+		}
+		modifier = {
+			political_power_cost = -0.30
+		}
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_invest_in_education = {
+
+		visible = {
+			original_tag = TUR
+		}
+
+		available = {
+			NOT = {
+				has_decision = TUR_invest_in_industry
+				has_decision = TUR_invest_in_health
+				has_decision = TUR_invest_in_disasters
+				has_decision = TUR_invest_in_infrastructure
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invest_in_education"
+			every_country = {
+				limit = {
+					has_idea = CIW_member
+					NOT = {
+						has_country_flag = CIW_leader
+					}
+				}
+				country_event = {
+					id = TurkeyFocusEvents.46
+				}
+			}
+		}
+		modifier = {
+			education_cost_multiplier_modifier = -0.10
+		}
+
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_invest_in_health = {
+
+		visible = {
+			original_tag = TUR
+		}
+
+		available = {
+			NOT = {
+				has_decision = TUR_invest_in_industry
+				has_decision = TUR_invest_in_education
+				has_decision = TUR_invest_in_disasters
+				has_decision = TUR_invest_in_infrastructure
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invest_in_health"
+			every_country = {
+				limit = {
+					has_idea = CIW_member
+					NOT = {
+						has_country_flag = CIW_leader
+					}
+				}
+				country_event = {
+					id = TurkeyFocusEvents.47
+				}
+			}
+		}
+		modifier = {
+			health_cost_multiplier_modifier = -0.15
+		}
+
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_invest_in_industry = {
+
+		visible = {
+			original_tag = TUR
+		}
+
+		available = {
+			NOT = {
+				has_decision = TUR_invest_in_health
+				has_decision = TUR_invest_in_education
+				has_decision = TUR_invest_in_disasters
+				has_decision = TUR_invest_in_infrastructure
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_invest_in_industry"
+			every_country = {
+				limit = {
+					has_idea = CIW_member
+					NOT = {
+						has_country_flag = CIW_leader
+					}
+				}
+				country_event = {
+					id = TurkeyFocusEvents.48
+				}
+			}
+		}
+		modifier = {
+			production_factory_efficiency_gain_factor = 0.10
+			line_change_production_efficiency_factor = 0.10
+		}
+
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#### FOR CIW MEMBERS ONLY, NOT TURKEY ####
+	TUR_ask_for_infrastructure = {
+
+		visible = {
+			has_idea = CIW_member
+			NOT = {
+				has_country_flag = CIW_leader
+			}
+		}
+		cost = 100
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_5
+				check_variable = { treasury > 4.99 }
+			}
+			NOT = {
+				has_decision = TUR_ask_for_network
+				has_decision = TUR_ask_for_supply
+				has_decision = TUR_ask_for_radars
+				has_decision = TUR_ask_for_airbase
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_ask_for_infrastructure"
+			TUR = {
+				set_temp_variable = { int_investment_change = 1.5 }
+				modify_international_investment_effect = yes
+			}
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		days_remove = 240
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_ask_for_network = {
+
+		visible = {
+			has_idea = CIW_member
+			NOT = {
+				has_country_flag = CIW_leader
+			}
+		}
+		cost = 100
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_5
+				check_variable = { treasury > 4.99 }
+			}
+			NOT = {
+				has_decision = TUR_ask_for_infrastructure
+				has_decision = TUR_ask_for_supply
+				has_decision = TUR_ask_for_radars
+				has_decision = TUR_ask_for_airbase
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_ask_for_network"
+			TUR = {
+				set_temp_variable = { int_investment_change = 2.50 }
+				modify_international_investment_effect = yes
+			}
+			set_temp_variable = { treasury_change = -6.00 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_ask_for_supply = {
+
+		visible = {
+			has_idea = CIW_member
+			NOT = {
+				has_country_flag = CIW_leader
+			}
+		}
+		cost = 100
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_5
+				check_variable = { treasury > 4.99 }
+			}
+			NOT = {
+				has_decision = TUR_ask_for_infrastructure
+				has_decision = TUR_ask_for_network
+				has_decision = TUR_ask_for_radars
+				has_decision = TUR_ask_for_airbase
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_ask_for_supply"
+			TUR = {
+				set_temp_variable = { int_investment_change = 1.00 }
+				modify_international_investment_effect = yes
+			}
+			set_temp_variable = { treasury_change = -2.50 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = supply_node
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		days_remove = 240
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	TUR_ask_for_radars = {
+
+		visible = {
+			has_idea = CIW_member
+			NOT = {
+				has_country_flag = CIW_leader
+			}
+		}
+		cost = 100
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_5
+				check_variable = { treasury > 4.99 }
+			}
+			NOT = {
+				has_decision = TUR_ask_for_infrastructure
+				has_decision = TUR_ask_for_network
+				has_decision = TUR_ask_for_supply
+				has_decision = TUR_ask_for_airbase
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_ask_for_radars"
+			TUR = {
+				set_temp_variable = { int_investment_change = 0.50 }
+				modify_international_investment_effect = yes
+			}
+			set_temp_variable = { treasury_change = -1.75 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = radar_station
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	TUR_ask_for_airbase = {
+
+		visible = {
+			has_idea = CIW_member
+			NOT = {
+				has_country_flag = CIW_leader
+			}
+		}
+		cost = 100
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_we_need_5
+				check_variable = { treasury > 4.99 }
+			}
+			NOT = {
+				has_decision = TUR_ask_for_infrastructure
+				has_decision = TUR_ask_for_network
+				has_decision = TUR_ask_for_supply
+				has_decision = TUR_ask_for_radars
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_ask_for_airbase"
+			TUR = {
+				set_temp_variable = { int_investment_change = 1.00 }
+				modify_international_investment_effect = yes
+			}
+			set_temp_variable = { treasury_change = -2.50 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		days_remove = 200
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	####
+	TUR_leave_ciw = {
+
+		visible = {
+			has_idea = CIW_member
+			NOT = {
+				has_country_flag = CIW_leader
+			}
+		}
+		available = {
+			has_idea = CIW_member
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_ask_for_airbase"
+			remove_ideas = CIW_member
+			TUR = {
+				country_event = {
+					id = TurkeyFocusEvents.49
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}
+###########
+TUR_disaster_income = {
+	TUR_incoming_collapse = {
+		fire_only_once = yes
+		activation = { hidden_trigger = { has_country_flag = TUR_econ_disaster } }
+		visible = { has_country_flag = TUR_econ_disaster }
+		allowed = { original_tag = TUR }
+		available = {
+			has_completed_focus = TUR_economic_crisis_over
+			OR = {
+				has_idea = stable_growth
+				has_idea = fast_growth
+				has_idea = economic_boom
+			}
+		}
+		days_mission_timeout = 175
+		is_good = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_incoming_collapse"
+			add_stability = 0.10
+			increase_economic_growth = yes
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_incoming_collapse"
+			IF = {
+				limit = {
+					has_country_flag =Turkey_FP_banned
+				}
+				decrease_economic_growth = yes
+				add_stability = -0.10
+			}
+			IF = {
+				limit = {
+					NOT = { has_country_flag =Turkey_FP_banned }
+				}
+				custom_effect_tooltip = TUR_akp_formed
+				hidden_effect = {
+					set_country_flag = Turkey_FP_banned
+					remove_ideas = TUR_rise_of_fp
+					#Reduce FP's popularity by 90%
+					set_temp_variable = { FP_pop_drop = party_pop_array^6 }
+					set_temp_variable = { Hizmet_pop_gain = party_pop_array^6 }
+					set_temp_variable = { AKP_pop_gain = party_pop_array^6 }
+					multiply_temp_variable = { FP_pop_drop = 0.9 }
+					set_temp_variable = { FP_pop_drop_neg = FP_pop_drop }
+					multiply_temp_variable = { FP_pop_drop_neg = -1 }
+					multiply_temp_variable = { Hizmet_pop_gain = 0.10 }
+					multiply_temp_variable = { AKP_pop_gain = 0.80 }
+					subtract_from_variable = { party_pop_array^6 = FP_pop_drop }
+					custom_effect_tooltip = TUR_FP_POP_DROP
+					add_popularity = { ideology = communism popularity = FP_pop_drop_neg }
+					custom_effect_tooltip = TUR_FP_NEW_NAME
+					add_to_variable = { party_pop_array^0 = Hizmet_pop_gain }
+					custom_effect_tooltip = TUR_HIZMET_POP_GAIN
+					add_popularity = { ideology = democratic popularity = Hizmet_pop_gain }
+					add_to_variable = { party_pop_array^12 = AKP_pop_gain }
+					custom_effect_tooltip = TUR_AKP_POP_GAIN
+					add_popularity = { ideology = neutrality popularity = AKP_pop_gain }
+					custom_effect_tooltip = TUR_AKP_EMERGES
+					recalculate_party = yes
+				}
+			}
+		}
+	}
 }
