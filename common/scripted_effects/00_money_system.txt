@@ -265,6 +265,12 @@ calculate_tax_gain = {
 	multiply_variable = { dockyard_tax = dockyard_tax_gain_multiplier }
 	multiply_variable = { office_tax = office_tax_gain_multiplier }
 
+	#scale buildings tax based on employment level
+	multiply_variable = { civil_fac_tax = civilian_factories_manpower_fulfillment }
+	multiply_variable = { military_fac_tax = military_factories_manpower_fulfillment }
+	multiply_variable = { dockyard_tax = naval_factories_manpower_fulfillment }
+	multiply_variable = { office_tax = offices_manpower_fulfillment }
+
 	# Corporate Tax Modifier
 	set_temp_variable = { corporate_tax_gain_multiplier = 1 }
 	add_to_temp_variable = { corporate_tax_gain_multiplier = modifier@corporate_tax_income_multiplier_modifier }
@@ -2598,30 +2604,44 @@ calculate_gdp = {
 	multiply_temp_variable = { gdp_from_dockyards = naval_factories_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_offices = offices_manpower_fulfillment }
 
-	add_to_variable = { military_factories_manpower_fulfillment = -1 } #to be used as malus in the dynamic modifier
+	set_variable = { military_factories_manpower_fulfillment_dyn_mod_var = 0 }
+	set_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = 0 }
+	set_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = 0 }
+	force_update_dynamic_modifier = yes
+
+	set_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
+	add_to_variable = { military_factories_manpower_fulfillment_dyn_mod_var = -1 } #to be used as malus in the dynamic modifier
 	clamp_variable = {
-		var = military_factories_manpower_fulfillment
+		var = military_factories_manpower_fulfillment_dyn_mod_var
 		max = 0
 		min = -1
 	}
-	add_to_variable = { civilian_factories_manpower_fulfillment = -1 } #to be used as malus in the dynamic modifier
+	set_temp_variable = { sum_of_military_output_modifiers = modifier@industrial_capacity_factory }
+	add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
+	multiply_variable = { military_factories_manpower_fulfillment_dyn_mod_var = sum_of_military_output_modifiers }
+
+	set_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
+	add_to_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = -1 } #to be used as malus in the dynamic modifier
 	clamp_variable = {
-		var = civilian_factories_manpower_fulfillment
+		var = civilian_factories_manpower_fulfillment_dyn_mod_var
 		max = 0
 		min = -1
 	}
-	add_to_variable = { naval_factories_manpower_fulfillment = -1 } #to be used as malus in the dynamic modifier
+	set_temp_variable = { sum_of_construction_speed_modifiers = modifier@production_speed_buildings_factor }
+	add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
+	multiply_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = sum_of_construction_speed_modifiers }
+
+	set_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
+	add_to_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = -1 } #to be used as malus in the dynamic modifier
 	clamp_variable = {
-		var = naval_factories_manpower_fulfillment
+		var = naval_factories_manpower_fulfillment_dyn_mod_var
 		max = 0
 		min = -1
 	}
-	add_to_variable = { offices_manpower_fulfillment = -1 } #to be used as malus in the dynamic modifier
-	clamp_variable = {
-		var = offices_manpower_fulfillment
-		max = 0
-		min = -1
-	}
+	set_temp_variable = { sum_of_dockyard_output_modifiers = modifier@industrial_capacity_dockyard }
+	add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
+	multiply_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = sum_of_dockyard_output_modifiers }
+
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = factories_manpower_fulfillment_modifier } } }
 		add_dynamic_modifier = { modifier = factories_manpower_fulfillment_modifier }
 	}
@@ -2923,9 +2943,32 @@ productivity_growth_display_effect = {
 		}
 	}
 
-	#separate stuff for the dynamic modifier
-	set_variable = { overall_productivity_modifier_var = overall_productivity }
-	add_to_variable = { overall_productivity_modifier_var = -1 }
+	update_overall_productivity_dynamic_modifier = yes
+}
+
+update_overall_productivity_dynamic_modifier = {
+	set_variable = { construction_speed_productivity_var = 0 }
+	set_variable = { military_output_productivity_var = 0 }
+	set_variable = { dockyard_output_productivity_var = 0 }
+	force_update_dynamic_modifier = yes
+
+	set_variable = { construction_speed_productivity_var = overall_productivity }
+	add_to_variable = { construction_speed_productivity_var = -1 } #to be used as malus in the dynamic modifier
+	set_temp_variable = { sum_of_construction_speed_modifiers = modifier@production_speed_buildings_factor }
+	add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
+	multiply_variable = { construction_speed_productivity_var = sum_of_construction_speed_modifiers }
+
+	set_variable = { military_output_productivity_var = overall_productivity }
+	add_to_variable = { military_output_productivity_var = -1 } #to be used as malus in the dynamic modifier
+	set_temp_variable = { sum_of_military_output_modifiers = modifier@industrial_capacity_factory }
+	add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
+	multiply_variable = { military_output_productivity_var = sum_of_military_output_modifiers }
+
+	set_variable = { dockyard_output_productivity_var = overall_productivity }
+	add_to_variable = { dockyard_output_productivity_var = -1 } #to be used as malus in the dynamic modifier
+	set_temp_variable = { sum_of_dockyard_output_modifiers = modifier@industrial_capacity_dockyard }
+	add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
+	multiply_variable = { dockyard_output_productivity_var = sum_of_dockyard_output_modifiers }
 }
 
 productivity_growth_effect = {
@@ -2939,9 +2982,7 @@ productivity_growth_effect = {
 			min = 0.1
 		}
 	}
-	#variable for the productivity dynamic modifier
-	set_variable = { overall_productivity_modifier_var = overall_productivity }
-	add_to_variable = { overall_productivity_modifier_var = -1 }
+	update_overall_productivity_dynamic_modifier = yes
 
 	#updates variables for average world productivity
 	set_temp_variable = { cumulative_productivity = population_total_m }
