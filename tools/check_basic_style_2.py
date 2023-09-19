@@ -31,7 +31,7 @@ def check_basic_style(filepath, bad_count, message):
 						if closingBraces > 0:
 							hasNoSpace = re.search(r'([^\s]+){|{([^\s]+)', line, re.M | re.I)  # If no space before or after brace
 							if hasNoSpace: #If regex finds open braces not styled correctly
-								print("ERROR: Missing a space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
+								print("WARNING: Missing a space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
 								fixedErrors += 1
 
 				if "}" in line: #if there is an close brace in this line
@@ -45,13 +45,13 @@ def check_basic_style(filepath, bad_count, message):
 						if openingingBraces > 0:
 							hasNoSpace = re.search(r'([^\s]+)}|}([^\s]+)', line,re.M | re.I)   # If no space before or after brace
 							if hasNoSpace: #If regex finds open braces not styled correctly
-								print("ERROR: Missing a space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
+								print("WARNING: Missing a space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
 								fixedErrors += 1
 				if "\"" in line: #if the line has a qoute
 					if (line.count('\"') % 2) !=0: #if there are an odd number of qoutes on this line
 						hasComment = re.search(r'#.*[\"]+', line, re.M | re.I)  # If comment at the start or before "
 						if not hasComment: #if there is no comment before the qoute
-							print("ERROR: Missing a quotation sign at {0} Line number: {1}".format(filepath,lineNum))
+							print("WARNING: Missing a quotation sign at {0} Line number: {1}".format(filepath,lineNum))
 							fixedErrors += 1
 
 				if "=" in line: #if the line has an equal sign
@@ -60,17 +60,17 @@ def check_basic_style(filepath, bad_count, message):
 					equalSign = line.count('=') - line.count(' = ') - line.count(' =\n')
 
 					if (line.count('  =') > 0) or (line.count('=  ') > 0) :
-						print("ERROR: Two spaces before or after an equal sign at {0} Line number: {1}".format(filepath, lineNum))
+						print("WARNING: Two spaces before or after an equal sign at {0} Line number: {1}".format(filepath, lineNum))
 						equalSign = equalSign - line.count('  =') - line.count('=  ')
 						fixedErrors += 1
 					if equalSign != 0: #if there are equal signs that aren't used correctly
-						print("ERROR: Missing a space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
+						print("WARNING: Missing a space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
 						fixedErrors += 1
 				if "    " in line: #if 4 spaces in the line
-					print("ERROR: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNum))
+					print("WARNING: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNum))
 					fixedErrors += 1
 				if openBraces[0] <= -1:
-					print("ERROR: A possible missing curly brace {{ in file {} {{line {}}}".format(filepath, lineNum))
+					print("ERROR: A possible missing curly brace {{ in file {} {{line {1}}}".format(filepath, lineNum))
 					openBraces[0] = 0
 					fixedErrors +=1
 		else:
@@ -79,8 +79,8 @@ def check_basic_style(filepath, bad_count, message):
 				message += "ERROR: A possible missing curly brace }} in file {} {{line {}}}\n".format(filepath, lineNum)
 				bad_count += 1
 			elif openBraces[0] > 0:
-				print("ERROR: A possible missing curly brace {{ in file {} has no matching closing bracket".format(filepath, lineNum))
-				message += "ERROR: A possible missing curly brace {{ in file {} has no matching closing bracket\n".format(filepath, lineNum)
+				print("ERROR: A possible missing curly brace {{ in file {0} has no matching closing bracket.\n Approximate Line Number: {1}".format(filepath, lineNum))
+				message += "ERROR: A possible missing curly brace {{ in file {0} has no matching closing bracket\n Approximate Line Number: {1}".format(filepath, lineNum)
 				bad_count += 1
 	file.close()
 
@@ -144,8 +144,6 @@ def main():
 				"https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
 				data=payload, headers=headers)
 			print("Posted results to commit")
-
-
 	except:
 		print("Couldn't post results to gitlab")
 
