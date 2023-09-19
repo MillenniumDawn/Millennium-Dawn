@@ -982,7 +982,7 @@
 	NDefines.NIndustrialOrganisation.MAX_FUNDS_FROM_MANUFACTURER_PER_DAY = 100		-- 100
 	NDefines.NIndustrialOrganisation.DESIGN_TEAM_RESEARCH_BONUS = 0.05				-- 0.05
 	NDefines.NIndustrialOrganisation.ENABLE_TASK_CAPACITY = true					-- false
-	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_TASK_CAPACITY = 20				-- 0
+	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_TASK_CAPACITY = 5				-- 0
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_POLICY_ATTACH_COST = 25		-- 25
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
