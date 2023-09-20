@@ -1,34 +1,24 @@
-############################################################################################################
-#	AC mod - scripted effects
-############################################################################################################
-# Written by Hiddengearz and Chondrite originally.
-# Updated by Angriest Bird
+# Author(s): AngriestBird, Hiddengearz, Chondrite
+
 # Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
-#This reworked system allows you to have 5 of each project active per country.
-#So you can have 5 CIC projects, 5 INF projects, 5 MIC projects etc in every country in the game
-#There are 8 project types * 5 of each allowed per country = 40 investments possible in one country * 210 countries the player can invest in = 8400 possibile investments for the player
-#Now if the AI also does the same that's 210 * 8400 = 1,764,000 possible investments possible
 
 # Country:
-#
-# var: AC_active_projects - number of active projects
-# array: AC_project)array : fixed array that contains projects
+# var: active_projects - number of active projects
+# array: project_array : fixed array that contains projects
 # index: project id
 # value: 0 = available, <0 = reserved (target state id), 1 = to be reset
 #
 # variables saved for each project id (not in arrays) : 0 - 14 = project ids, -1 = gui
 #
-# AC_project_target_country^id
-# AC_project_assigned_factories^id
-# AC_project_build_amount^id
+# project_target_country^id
+# project_assigned_factories^id
+# project_build_amount^id
 # project_building_type^id
-# AC_project_construction_duration^id
-# AC_project_political_power_cost^id
-# AC_project_construction_speed_display^id
-# AC_project_total_construction_duration_display^id
+# project_construction_duration^id
+# project_construction_speed_display^id
+# project_total_construction_duration_display^id
 
 # State:
-#
 # array: AC_projects_in_state : every country id that owns a project in this state
 # var: AC_project_target_state_TAG : project id of TAG in this state
 
@@ -54,9 +44,6 @@ init_investment_system = {
 	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 7500 }
 	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
 	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 6250 }
-	# set_variable = { global.BUILD_CONST_COST_TEL_BASE }
-	# set_variable = { global.BUILD_CONST_COST_MISSILE_DEFENSE_STATION }
-	# set_variable = { global.BUILD_CONST_COST_MISSILE_SILO }
 
 	### BUILDING MONETARY COST
 	# Balance Change: Cost increased by 60% from standardization
@@ -72,16 +59,11 @@ init_investment_system = {
 	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
 	set_variable = { global.BUILD_COST_REFINERY = 13.60 }
 	set_variable = { global.BUILD_COST_FOSSIL_POWERPLANT = 5.2 }
-	# set_variable = { global.BUILD_COST_TEL_BASE }
-	# set_variable = { global.BUILD_COST_MISSILE_DEFENSE_STATION }
-	# set_variable = { global.BUILD_COST_MISSILE_SILO }
 
 	every_country = {
-		if = { limit = { is_ai = no }
-			set_variable = { project_build_amount^-1 = 1 }
-			set_variable = { constructable_buildings = 1 }
-			set_country_flag = AC_hide_investment_window
-		}
+		set_variable = { project_build_amount^-1 = 1 }
+		set_variable = { constructable_buildings = 1 }
+		set_country_flag = AC_hide_investment_window
 
 		resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
 	}
@@ -92,12 +74,15 @@ init_investment_system = {
 ingame_init_investment_system = {
 	set_variable = { project_build_amount^-1 = 1 }
 	set_variable = { constructable_buildings = 1 }
+	set_country_flag = AC_hide_investment_window
 
 	resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
 }
 
+# Function: refresh_gui
+# Purpose: Refreshes the investment GUI
 refresh_gui = {
-	if = { limit = { check_variable = { global.refresh_gui = 500 } }
+	if = { limit = { check_variable = { global.refresh_gui = 5000 } }
 		set_variable = { global.refresh_gui = 1 }
 	}
 	else = {
@@ -105,8 +90,8 @@ refresh_gui = {
 	}
 }
 
-# update_gui:
-# fired in the context of a state selection
+# Function: updates_gui
+# Purpose: fires within the state scope and is used to "update" the display variables in the GUI for investments
 update_gui = {
 	project_monetary_cost_calculation = yes
 
@@ -118,7 +103,10 @@ update_gui = {
 	clear_variable = project
 }
 
-project_monetary_cost_calculation = { #Replaces AC_calc_pp_cost in the section
+
+# Function: project_monetary_cost_calculation
+# Purpose: Calculates the treasury cost for the investment project
+project_monetary_cost_calculation = {
 	if = { limit = { check_variable = { project_building_type^-1 = 1 } }
 		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_CIVILIAN_FACTORY }
 	}
@@ -240,10 +228,8 @@ get_building_construction_values = {
 	add_to_temp_variable = { var = construction_speed value = modifier@production_speed_buildings_factor }
 }
 
-# get_available_project
-# project_array is the total number of projects that are available
-# v is the float number that indexes whether a project exists
-# new_project sets itself to the index
+# Function: get_available_project
+# Purpose: get_available_project searches through the project_array (group of projects) to determine whether a project exists or is available
 get_available_project = {
 	for_each_loop = {
 		array = project_array
@@ -256,8 +242,8 @@ get_available_project = {
 	}
 }
 
-# add_finished_buildings
-# I think this is fairly obvious what this does.
+# Function: add_finished_buildings
+# Purpose: The function here adds the completed buildings from a project
 add_finished_buildings = {
 	set_temp_variable = { var_cost = ROOT.project_monetary_cost^ROOT.project }
 	multiply_temp_variable = { var_cost = -1 }
@@ -314,7 +300,61 @@ add_finished_buildings = {
 	}
 }
 
-# init_project:
+# Function: calculate_ai_construction_speed
+# Purpose: calculate the AI construction speed for display purposes within the event
+calculate_ai_construction_speed = {
+	set_temp_variable = { construction_speed = 1 }
+
+	get_building_construction_values = yes
+
+	var:AI_best_target = {
+		set_temp_variable = { local_state_modifier = 1 }
+		# Infrastructure
+		set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
+		multiply_temp_variable = { target_state_infra_speed = 0.15 }
+		add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
+
+		# Internet Station
+		set_temp_variable = { target_state_internet_station_speed = building_level@internet_station }
+		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
+	}
+	multiply_temp_variable = { construction_speed = local_state_modifier }
+
+	log = "AI Construction Speed: [?construction_speed]"
+
+	# Reduce Construction speed by 25%
+	multiply_temp_variable = { construction_speed = 0.75 }
+
+	set_variable = { project_construction_speed_display^-2 = 1 }
+	multiply_variable = { project_construction_speed_display^proj-2 = 100 }
+	round_variable = project_construction_speed_display^-2
+
+	# Total Factory Output
+	multiply_temp_variable = { construction_speed = 100 }
+
+	# Days to build
+	divide_temp_variable = { building_cost = construction_speed }
+
+	# Sets and round build cost
+	set_variable = { project_construction_duration^-2 = building_cost }
+	set_temp_variable = { receiving_investment_duration_temp = 1 }
+	var:AI_best_target = {
+		CONTROLLER = {
+			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+		}
+	}
+
+	add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@investment_duration_modifier }
+	multiply_variable = { project_construction_duration^-2 = receiving_investment_duration_temp }
+	round_variable = project_construction_duration^-2
+	set_variable = { displayable_construction_modifier = receiving_investment_duration_temp }
+
+	set_variable = { project_display_offer_duration^-1 = project_construction_duration^-2 }
+}
+
+# Function: init_project
+# Purpose: The following function initializes the project variables that are used in properly calculating the investments
 init_project = {
 	ROOT = {
 		# Get Construction Speed Modifiers and Set Building Cost
@@ -322,19 +362,18 @@ init_project = {
 
 		get_building_construction_values = yes
 
-		if = { limit = { NOT = { check_variable = { project_building_type^project_type = 4 } } }
-			# Infrastructure
-			set_temp_variable = { target_state_infra_speed = PREV.infrastructure_level }
-			multiply_temp_variable = { target_state_infra_speed = 0.10 }
+		set_temp_variable = { local_state_modifier = 1 }
+		# Infrastructure
+		set_temp_variable = { target_state_infra_speed = PREV.building_level@infrastructure }
+		multiply_temp_variable = { target_state_infra_speed = 0.15 }
+		add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
 
-			# Internet Station
-			set_temp_variable = { target_state_internet_station_speed = PREV.building_level@internet_station }
-			multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+		# Internet Station
+		set_temp_variable = { target_state_internet_station_speed = PREV.building_level@internet_station }
+		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
 
-			add_to_temp_variable = { target_state_infra_speed = target_state_internet_station_speed }
-			add_to_temp_variable = { target_state_infra_speed = 1 }
-			multiply_temp_variable = { construction_speed = target_state_infra_speed }
-		}
+		multiply_temp_variable = { construction_speed = local_state_modifier }
 
 		# Reduce Construction speed by 25%
 		multiply_temp_variable = { construction_speed = 0.75 }
@@ -366,22 +405,33 @@ init_project = {
 		# Decision tooltip for total time to build
 		set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
 		multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
+
+		# For Offer
+		set_variable = { project_display_offer_duration^-1 = project_construction_duration^project }
 	}
 }
 
+# Function: init_project_two
+# Purpose: same purpose as init_project
 init_project_two = {
 	# Get Construction Speed Modifiers and Set Building Cost
 	set_temp_variable = { construction_speed = 1 }
 
 	get_building_construction_values = yes
 
-	if = { limit = { NOT = { check_variable = { project_building_type^project_type = 4 } } }
+	var:AC_state_target = {
+		set_temp_variable = { local_state_modifier = 1 }
 		# Infrastructure
-		set_temp_variable = { target_state_infra_speed = PREV.infrastructure_level }
-		multiply_temp_variable = { target_state_infra_speed = 0.10 }
-		add_to_temp_variable = { target_state_infra_speed = 1 }
-		multiply_temp_variable = { construction_speed = target_state_infra_speed }
+		set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
+		multiply_temp_variable = { target_state_infra_speed = 0.15 }
+		add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
+
+		# Internet Station
+		set_temp_variable = { target_state_internet_station_speed = building_level@internet_station }
+		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
 	}
+	multiply_temp_variable = { construction_speed = local_state_modifier }
 
 	# Reduce Construction speed by 25%
 	multiply_temp_variable = { construction_speed = 0.75 }

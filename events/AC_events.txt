@@ -50,6 +50,12 @@ country_event = {
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
+	immediate = {
+		hidden_effect = {
+			set_variable = { investor_cost = FROM.project_monetary_cost_effect }
+			multiply_variable = { investor_cost = 0.1 }
+		}
+	}
 	option = {
 		name = AC_event.1.o1
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o1 executed"
@@ -95,6 +101,7 @@ country_event = {
 			set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
 			multiply_temp_variable = { treasury_change = 0.1 }
 			modify_treasury_effect = yes
+			clear_variable = investor_cost
 		}
 
 		# AI Chance of taking the Investment Project
@@ -176,10 +183,12 @@ country_event = {
 		}
 	}
 
-	option = { name = AC_event.1.o2 # refuse
+	option = {
+		name = AC_event.1.o2 # refuse
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o2 executed"
 		# FROM is the original investor nation
 		# THIS is the target nation
+		clear_variable = investor_cost
 		FROM = {
 			country_event = AC_event.11
 		}
@@ -490,13 +499,13 @@ country_event = {
 	}
 
 	immediate = {
-		log = "AI Investment initiation - [ROOT.GetName]"
+		log = "[GetDateText]: [This.GetName]: AI Investment initiation - [ROOT.GetName]"
 
 		############################################################
 		# 	find the state with the best score for a project	   #
 		############################################################
 
-		# Temp Scores
+		# Minimum Score for a Valid Project
 		set_temp_variable = { AI_MIN_STATE_SCORE_FOR_PROJECT = 100 }
 
 		# Find state with the BEST score possible
@@ -556,23 +565,21 @@ country_event = {
 		}
 
 		if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE_FOR_PROJECT } }
-
-			set_variable = { AC_project_type = -1 }
-
 			# Project building type
 			set_variable = { project_building_type^-1 = AI_best_type }
-
-			# Sets build amount
-			get_building_construction_values = yes
-
-			# -- Regardless it will always be one for sake of AI balance
+			# Regardless it will always be one for sake of AI balance
 			set_variable = { project_build_amount^-1 = 1 }
 
 			project_monetary_cost_calculation = yes
 
+			# Init Project Variables
+			# AI_best_target is the best state to invest in
+
+			calculate_ai_construction_speed = yes
+
 			if = {
 				limit = {
-					check_variable = { project_construction_duration^project < 680 }
+					check_variable = { project_display_offer_duration^-1 < 700 }
 					var:AI_best_target = {
 						investment_building_slot_available = yes
 					}
@@ -585,14 +592,14 @@ country_event = {
 					}
 					ROOT = { country_event = { id = AC_event.3 } }
 				}
-				log = "AI Investment Succeeded [GetDate] [ROOT.GetName]: project type [?project_building_type^-1] (x [?project_build_amount^-1]) in [?AI_best_target.GetName], Nation [?ROOT.AC_nation_target.GetName], score = [?AC_AI_best_score]"
+				log = "[GetDateText]: [This.GetName]: AI Investment Succeeded [ROOT.GetName]: project type [?project_building_type^-1] (x [?project_build_amount^-1]) in [?AI_best_target.GetName], Project Duration: [?project_display_offer_duration^-1], Nation [?ROOT.AC_nation_target.GetName], score = [?AI_best_score]"
 				else = {
-					log = "AI Investment Failed [ROOT.GetName]: No valid state target found. [?AI_best_target.GetName] scored a [?AC_AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
+					log = "[GetDateText]: [This.GetName]: AI Investment Failed [ROOT.GetName]: No valid state target found. Project Duration: [?project_display_offer_duration^-1], [?AI_best_target.GetName] scored a [?AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
 				}
 			}
 		}
 		else = {
-			log = "AI Investment Failed [ROOT.GetName]: No valid state target found. [?AI_best_target.GetName] scored a [?AC_AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
+			log = "[GetDateText]: [This.GetName]: AI Investment Failed [ROOT.GetName]: No valid state target found. Project Duration: [?project_display_offer_duration^-1], [?AI_best_target.GetName] scored a [?AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
 		}
 	}
 }
