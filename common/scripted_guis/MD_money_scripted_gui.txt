@@ -715,8 +715,19 @@ scripted_gui = {
 			}
 			# Extra Features
 			print_money_button_click_enabled = {
-				NOT = { has_country_flag = printed_money_recently }
-				has_political_power > 99
+				if = { limit = { has_country_flag = printed_money_recently }
+					custom_trigger_tooltip = {
+						tooltip = printed_money_recently_one_tt
+						NOT = { has_country_flag = printed_money_recently }
+					}
+				}
+				else = {
+					custom_trigger_tooltip = {
+						tooltip = printed_money_recently_two_tt
+						NOT = { has_country_flag = printed_money_recently }
+					}
+				}
+				has_political_power > 49
 			}
 
 			# - Lease Military Factories
@@ -1048,10 +1059,21 @@ scripted_gui = {
 			print_money_button_click = {
 				set_temp_variable = { var = printing value = display_income }
 				multiply_temp_variable = { var = printing value = 2 }
-				add_to_variable = { var = treasury value = printing }
-				add_to_variable = { var = debt value = printing }
-				add_political_power = -100
-				set_country_flag = { flag = printed_money_recently value = 1 days = 45 }
+				set_temp_variable = { treasury_change = printing }
+				modify_treasury_effect = yes
+				add_political_power = -50
+
+				# Calculate the productivity change
+				set_temp_variable = { temp_multiplier = 0.25 }
+				multiply_temp_variable = { temp_multiplier = printing_money_var }
+				add_to_temp_variable = { temp_multiplier = 1 }
+				set_temp_variable = { temp_productivity_change = -0.005 }
+				multiply_temp_variable = { temp_productivity_change = temp_multiplier }
+				flat_productivity_change_effect = yes
+
+				add_to_variable = { printing_money_var = 1 }
+
+				set_country_flag = { flag = printed_money_recently value = 1 days = 30 }
 				ingame_update_setup = yes
 				refresh_gui = yes
 			}
