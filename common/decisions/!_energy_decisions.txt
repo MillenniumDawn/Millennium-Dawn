@@ -8,10 +8,6 @@ decision_category_energy = {
 		fire_only_once = no
 		selectable_mission = yes
 
-		cancel_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision cancel energy_building_enrichment_facilities"
-		}
-
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
 			set_temp_variable = { temp_change = 1 }
@@ -45,7 +41,6 @@ decision_category_energy = {
 		}
 		days_remove = 90
 		days_re_enable = 90
-		fire_only_once = no
 		target_array = global.enrichment_countries
 
 		complete_effect = {
@@ -59,8 +54,9 @@ decision_category_energy = {
 
 		ai_will_do = {
 			factor = 1
+			# Buy Fuel if you're short
 			modifier = {
-				factor = 4
+				factor = 10
 				ROOT = {
 					check_variable = { var_reactor_material_stockpile < 2500 }
 				}
@@ -83,13 +79,18 @@ decision_category_energy = {
 					}
 				}
 			}
+			# Don't rely on people you hate or doomsday stockpile nuclear fuel
 			modifier = {
 				factor = 0
-				FROM = {
-					has_opinion = {
-						target = ROOT
-						value < 50
+				OR = {
+					FROM = {
+						has_opinion = {
+							target = ROOT
+							value < 75
+						}
 					}
+					# Fail if I have more than 15000 nuclear stockpile
+					ROOT = { check_variable = { var_reactor_material_stockpile > 15000 } }
 				}
 			}
 		}

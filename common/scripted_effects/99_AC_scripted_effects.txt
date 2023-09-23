@@ -15,7 +15,6 @@
 # project_build_amount^id
 # project_building_type^id
 # project_construction_duration^id
-# project_construction_speed_display^id
 # project_total_construction_duration_display^id
 
 # State:
@@ -32,8 +31,9 @@
 # Please do not trigger this more than once.
 init_investment_system = {
 	### BUILDING CONSTRUCTION COST
-	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 45000 }
-	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 50000 }
+	# Balance Change: Building construction cost speed 25%
+	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 47500 }
+	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 52500 }
 	set_variable = { global.BUILD_CONST_COST_DOCKYARD = 47500 }
 	set_variable = { global.BUILD_CONST_COST_INFRASTRUCTURE = 12500 }
 	set_variable = { global.BUILD_CONST_COST_OFFICES = 50000 }
@@ -175,7 +175,7 @@ project_monetary_cost_calculation = {
 # get_building_construction_values
 # method for handling the cost and construction_speed of any given project.
 get_building_construction_values = {
-	set_temp_variable = { construction_speed = 0 }
+	set_temp_variable = { construction_speed = 1 }
 	if = { limit = { check_variable = { project_building_type^project_type = 1 } }
 		set_temp_variable = { building_cost = global.BUILD_CONST_COST_CIVILIAN_FACTORY }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_industrial_complex_factor }
@@ -225,6 +225,7 @@ get_building_construction_values = {
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
 	}
 
+	add_to_temp_variable = { var = construction_speed value = -0.25 }
 	add_to_temp_variable = { var = construction_speed value = modifier@production_speed_buildings_factor }
 }
 
@@ -303,12 +304,11 @@ add_finished_buildings = {
 # Function: calculate_ai_construction_speed
 # Purpose: calculate the AI construction speed for display purposes within the event
 calculate_ai_construction_speed = {
-	set_temp_variable = { construction_speed = 1 }
-
+	# Retrieve the Construction Values here and then calculate whether they're valid
 	get_building_construction_values = yes
 
+	set_temp_variable = { local_state_modifier = 0 }
 	var:AI_best_target = {
-		set_temp_variable = { local_state_modifier = 1 }
 		# Infrastructure
 		set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
 		multiply_temp_variable = { target_state_infra_speed = 0.15 }
@@ -319,108 +319,102 @@ calculate_ai_construction_speed = {
 		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
 		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
 	}
-	multiply_temp_variable = { construction_speed = local_state_modifier }
+	add_to_temp_variable = { construction_speed = local_state_modifier }
 
-	log = "AI Construction Speed: [?construction_speed]"
-
-	# Reduce Construction speed by 25%
-	multiply_temp_variable = { construction_speed = 0.75 }
-
-	set_variable = { project_construction_speed_display^-2 = 1 }
-	multiply_variable = { project_construction_speed_display^proj-2 = 100 }
-	round_variable = project_construction_speed_display^-2
-
-	# Total Factory Output
-	multiply_temp_variable = { construction_speed = 100 }
-
-	# Days to build
-	divide_temp_variable = { building_cost = construction_speed }
-
-	# Sets and round build cost
-	set_variable = { project_construction_duration^-2 = building_cost }
-	set_temp_variable = { receiving_investment_duration_temp = 1 }
+	# Calculate the net modifier from investment duration modifier and receiving_duration_investment_modifier
+	set_temp_variable = { receiving_investment_duration_temp = 0 }
 	var:AI_best_target = {
 		CONTROLLER = {
 			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 		}
 	}
+	add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
+	add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
 
-	add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@investment_duration_modifier }
-	multiply_variable = { project_construction_duration^-2 = receiving_investment_duration_temp }
-	round_variable = project_construction_duration^-2
-	set_variable = { displayable_construction_modifier = receiving_investment_duration_temp }
+	# Total Factory Output
+	# Assume the maximum of
+	# 5 x 15 Civilian Industry Devoted to a single construction
+	multiply_temp_variable = { construction_speed = 75 }
 
-	set_variable = { project_display_offer_duration^-1 = project_construction_duration^-2 }
+	# Days to build
+	# total building_cost which can be found in common/buildings/00_building.txt
+	divide_temp_variable = { building_cost = construction_speed }
+
+	# Sets and round build cost to whole number increments
+	set_variable = { project_construction_duration^-1 = building_cost }
+	round_variable = project_construction_duration^-1
+
+	# For Offer
+	set_variable = { project_construction_duration^-2 = project_construction_duration^-1 }
 }
 
 # Function: init_project
 # Purpose: The following function initializes the project variables that are used in properly calculating the investments
+# Sample Day Equation for Civilian Industry:
+# building_cost / ( modifier@production_speed_industrial_complex_factor + -0.25 + modifier@production_speed_buildings_factor + local_state_modifier + receiving_investment_duration_temp)
 init_project = {
 	ROOT = {
-		# Get Construction Speed Modifiers and Set Building Cost
-		set_temp_variable = { construction_speed = 1 }
-
+		# Retrieve the Construction Values here and then calculate whether they're valid
 		get_building_construction_values = yes
 
-		set_temp_variable = { local_state_modifier = 1 }
-		# Infrastructure
-		set_temp_variable = { target_state_infra_speed = PREV.building_level@infrastructure }
-		multiply_temp_variable = { target_state_infra_speed = 0.15 }
-		add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
+		set_temp_variable = { local_state_modifier = 0 }
+		PREV = {
+			# Infrastructure
+			set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
+			multiply_temp_variable = { target_state_infra_speed = 0.15 }
+			add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
 
-		# Internet Station
-		set_temp_variable = { target_state_internet_station_speed = PREV.building_level@internet_station }
-		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
-		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
+			# Internet Station
+			set_temp_variable = { target_state_internet_station_speed = building_level@internet_station }
+			multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+			add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
+		}
+		add_to_temp_variable = { construction_speed = local_state_modifier }
 
-		multiply_temp_variable = { construction_speed = local_state_modifier }
-
-		# Reduce Construction speed by 25%
-		multiply_temp_variable = { construction_speed = 0.75 }
-
-		set_variable = { project_construction_speed_display^project = 1 }
-		multiply_variable = { project_construction_speed_display^project = 100 }
-		round_variable = project_construction_speed_display^project
-
-		# Total Factory Output
-		multiply_temp_variable = { construction_speed = 100 }
-
-		# Days to build
-		divide_temp_variable = { building_cost = construction_speed }
-
-		# Sets and round build cost
-		set_variable = { project_construction_duration^project = building_cost }
-		set_temp_variable = { receiving_investment_duration_temp = 1 }
+		# Calculate the net modifier from investment duration modifier and receiving_duration_investment_modifier
+		set_temp_variable = { receiving_investment_duration_temp = 0 }
 		PREV = {
 			CONTROLLER = {
 				add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 			}
 		}
+		add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
+		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
 
-		add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@investment_duration_modifier }
-		multiply_variable = { project_construction_duration^project = receiving_investment_duration_temp }
+		# Displayed Construction Modifier
+		# 200% means you produce the building at 2x the speed in this case
+		set_variable = { displayable_construction_modifier = construction_speed }
+
+		# Total Factory Output
+		# Assume the maximum of industry assigned
+		# 5 x 15 Civilian Industry Devoted to a single construction
+		multiply_temp_variable = { construction_speed = 75 }
+
+		# Days to build
+		# total building_cost which can be found in common/buildings/00_building.txt
+		divide_temp_variable = { building_cost = construction_speed }
+
+		# Sets and round build cost to whole number increments
+		set_variable = { project_construction_duration^project = building_cost }
 		round_variable = project_construction_duration^project
-		set_variable = { displayable_construction_modifier = receiving_investment_duration_temp }
 
 		# Decision tooltip for total time to build
 		set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
 		multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
 
 		# For Offer
-		set_variable = { project_display_offer_duration^-1 = project_construction_duration^project }
+		set_variable = { project_construction_duration^-2 = project_construction_duration^project }
 	}
 }
 
 # Function: init_project_two
 # Purpose: same purpose as init_project
 init_project_two = {
-	# Get Construction Speed Modifiers and Set Building Cost
-	set_temp_variable = { construction_speed = 1 }
-
+	# Retrieve the Construction Values here and then calculate whether they're valid
 	get_building_construction_values = yes
 
+	set_temp_variable = { local_state_modifier = 0 }
 	var:AC_state_target = {
-		set_temp_variable = { local_state_modifier = 1 }
 		# Infrastructure
 		set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
 		multiply_temp_variable = { target_state_infra_speed = 0.15 }
@@ -431,38 +425,36 @@ init_project_two = {
 		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
 		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
 	}
-	multiply_temp_variable = { construction_speed = local_state_modifier }
-
-	# Reduce Construction speed by 25%
-	multiply_temp_variable = { construction_speed = 0.75 }
-
-	set_variable = { project_construction_speed_display^project = 1 }
-	multiply_variable = { project_construction_speed_display^project = 100 }
-	round_variable = project_construction_speed_display^project
+	add_to_temp_variable = { construction_speed = local_state_modifier }
 
 	# Duration Multiplier
-	set_temp_variable = { receiving_investment_duration_temp = 1 }
+	set_temp_variable = { receiving_investment_duration_temp = 0 }
 	PREV = {
 		CONTROLLER = {
 			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 		}
 	}
 	add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
-	multiply_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
 
 	# Total Factory Output
-	multiply_temp_variable = { construction_speed = 100 }
+	# Assume the maximum of
+	# 5 x 15 Civilian Industry Devoted to a single construction
+	multiply_temp_variable = { construction_speed = 75 }
 
 	# Days to build
 	divide_temp_variable = { building_cost = construction_speed }
 
-	# Sets and round build cost
+	# Sets and round build cost to whole number increments
 	set_variable = { project_construction_duration^project = building_cost }
 	round_variable = project_construction_duration^project
 
 	# Decision tooltip for total time to build
 	set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
 	multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
+
+	# For Offer
+	set_variable = { project_construction_duration^-2 = project_construction_duration^project }
 }
 
 start_project_two = {
@@ -637,7 +629,6 @@ end_project = {
 		clear_variable = project_build_amount^project
 		clear_variable = project_building_type^project
 		clear_variable = project_construction_duration^project
-		clear_variable = project_construction_speed_display^project
 		clear_variable = project_total_construction_duration_display^project
 		clear_variable = project_target_country^project
 		clear_variable = project_monetary_cost^project
@@ -678,6 +669,8 @@ initialize_start_project_decisions = {
 
 		var:project_target_country^project = {
 			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			log = "[?PREV.project]"
+			log = "[?PREV.project_construction_duration^PREV.project]"
 			activate_targeted_decision = { target = PREV decision = AC_project_3_target_decision }
 		}
 	}
