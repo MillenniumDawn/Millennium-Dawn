@@ -461,22 +461,20 @@ country_event = {
 		else_if = { limit = { has_government = fascism }
 			add_to_temp_variable = { fail_influence_multiplier = influence_fascism }
 		}
-		multiply_variable = { fail_factor_biggest = fail_influence_multiplier }
+		divide_temp_variable = { fail_influence_multiplier = 100 } # Corrects this value to < 1
+		add_to_temp_variable = { fail_influence_multiplier = stability}
 
-		# Multiply by stability
-		# Lower stability makes coup more likely
-		multiply_variable = { fail_factor_biggest = stability }
+		multiply_variable = { fail_factor_biggest = fail_influence_multiplier }
 
 		## Coup success rate ##
 		# Base success rate is popularity of the attacking Outlook
 		# This is multiplied by how much foreign influence there is in support for the attacking Outlook
-		if = {
-			limit = { event_target:influence_sender = { has_government = democratic } }
+		if = { limit = { event_target:influence_sender = { has_government = democratic } }
 			set_variable = { success_factor_biggest = party_popularity@democratic }
-			multiply_variable = { success_factor_biggest = influence_democratic }
 
-			#This is used later
-			set_temp_variable = { attacking_outlook = party_popularity@democratic }
+			set_temp_variable = { success_influence_multiplier = influence_democratic }
+			divide_temp_variable = { success_influence_multiplier = 100 }
+			multiply_variable = { success_factor_biggest = success_influence_multiplier }
 
 			# Storing the biggest party
 			set_temp_variable = { prevmax_temp = 0 }
@@ -523,13 +521,12 @@ country_event = {
 				set_country_flag = set_Western_Autocracy
 			}
 		}
-		else_if = {
-			limit = { event_target:influence_sender = { has_government = neutrality } }
+		else_if = { limit = { event_target:influence_sender = { has_government = neutrality } }
 			set_variable = { success_factor_biggest = party_popularity@neutrality }
-			multiply_variable = { success_factor_biggest = influence_neutrality }
 
-			#This is used later
-			set_temp_variable = { attacking_outlook = party_popularity@neutrality }
+			set_temp_variable = { success_influence_multiplier = influence_neutrality }
+			divide_temp_variable = { success_influence_multiplier = 100 }
+			multiply_variable = { success_factor_biggest = success_influence_multiplier }
 
 			#storing biggest party
 			set_temp_variable = { prevmax_temp = 0 }
@@ -618,10 +615,10 @@ country_event = {
 		}
 		else_if = { limit = { event_target:influence_sender = { has_government = communism } }
 			set_variable = { success_factor_biggest = party_popularity@communism }
-			multiply_variable = { success_factor_biggest = influence_communism }
 
-			#This is used later
-			set_temp_variable = { attacking_outlook = party_popularity@communism }
+			set_temp_variable = { success_influence_multiplier = influence_communism }
+			divide_temp_variable = { success_influence_multiplier = 100 }
+			multiply_variable = { success_factor_biggest = success_influence_multiplier }
 
 			#storing biggest party
 			set_temp_variable = { prevmax_temp = 0 }
@@ -688,13 +685,12 @@ country_event = {
 				set_country_flag = set_anarchist_communism
 			}
 		}
-		else_if = {
-			limit = { event_target:influence_sender = { has_government = nationalist } }
+		else_if = { limit = { event_target:influence_sender = { has_government = nationalist } }
 			set_variable = { success_factor_biggest = party_popularity@nationalist }
-			multiply_variable = { success_factor_biggest = influence_nationalist }
 
-			#This is used later
-			set_temp_variable = { attacking_outlook = party_popularity@nationalist }
+			set_temp_variable = { success_influence_multiplier = influence_nationalist }
+			divide_temp_variable = { success_influence_multiplier = 100 }
+			multiply_variable = { success_factor_biggest = success_influence_multiplier }
 
 			#storing biggest party
 			set_temp_variable = { prevmax_temp = 0 }
@@ -740,13 +736,12 @@ country_event = {
 				set_country_flag = set_Monarchist
 			}
 		}
-		else_if = {
-			limit = { event_target:influence_sender = { has_government = fascism } }
+		else_if = { limit = { event_target:influence_sender = { has_government = fascism } }
 			set_variable = { success_factor_biggest = party_popularity@fascism }
-			multiply_variable = { success_factor_biggest = influence_fascism }
 
-			#This is used later
-			set_temp_variable = { attacking_outlook = party_popularity@fascism }
+			set_temp_variable = { success_influence_multiplier = influence_nationalist }
+			divide_temp_variable = { success_influence_multiplier = 100 }
+			multiply_variable = { success_factor_biggest = success_influence_multiplier }
 
 			#storing biggest party
 			set_temp_variable = { prevmax_temp = 0 }
@@ -773,15 +768,20 @@ country_event = {
 			}
 		}
 
+		set_temp_variable = { influence_defense_modifier = 1 }
+		add_to_temp_variable = { influence_defense_modifier = modifier@foreign_influence_defense_modifier }
+		event_target:influence_sender = { add_to_temp_variable = { influence_defense_modifier = modifier@foreign_influence_modifier } }
+		multiply_variable = { success_factor_biggest = influence_defense_modifier }
+
 		### Chance of civil war ###
 		#Base chance is from the popularity of all other Outlooks except defending and attacking
 		#More pluralistic -> higher chance of civil war
-		set_variable = { civil_war_factor = 1 }
-		subtract_from_variable = { civil_war_factor = attacking_outlook }
-		subtract_from_variable = { civil_war_factor = party_popularity@ruling_party }
+		set_variable = { civil_war_factor = stability }
+		multiply_temp_variable = { civil_war_factor = -1 }
+		add_to_temp_variable = { civil_war_factor = 1 }
 
 		#Modify civil war chance based on the influence of "neutral" Outlooks
-		set_temp_variable = { civil_war_influence_multiplier = 0 }
+		set_temp_variable = { civil_war_influence_multiplier = 100 }
 		if = {
 			limit = {
 				NOT = { has_government = democratic }
@@ -817,13 +817,14 @@ country_event = {
 			}
 			add_to_temp_variable = { civil_war_influence_multiplier = influence_fascism }
 		}
+		divide_temp_variable = { civil_war_influence_multiplier = 100 }
 		multiply_variable = { civil_war_factor = civil_war_influence_multiplier }
 
 		event_target:influence_sender = { country_event = { id = influence.5 } }
 	}
 }
 
-#root
+# The Actual Coup Event
 country_event = {
 	id = influence.5
 	title = influence.5.t
@@ -841,8 +842,7 @@ country_event = {
 
 		random_list = {
 			#success
-			33.33 = {
-				modifier = { factor = var:FROM.success_factor_biggest }
+			var:FROM.success_factor_biggest = {
 				custom_effect_tooltip = influence_coup_largest_success_TT
 				#add tooltip
 
@@ -978,19 +978,13 @@ country_event = {
 				}
 			}
 			#discovered
-			33.33 = {
-				modifier = { factor = var:FROM.fail_factor_biggest }
-
+			var:FROM.fail_factor_biggest = {
 				custom_effect_tooltip = influence_coup_largest_discovered_TT
 
 				FROM = {
-					hidden_effect = {
-						add_opinion_modifier = {
-							target = ROOT
-							modifier = failed_coup
-						}
-					}
+					add_opinion_modifier = { target = ROOT modifier = failed_coup }
 				}
+
 				#remove a LOT of influence
 				set_temp_variable = { percent_change = -15 }
 				set_temp_variable = { tag_index = ROOT.id }
@@ -1005,8 +999,7 @@ country_event = {
 				}
 			}
 			#civil_war
-			33.33 = {
-				modifier = { factor = var:FROM.civil_war_factor }
+			var:FROM.civil_war_factor = {
 
 				FROM = {
 					#kill player influence
