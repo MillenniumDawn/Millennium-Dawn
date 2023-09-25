@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 import os, sys, fnmatch
 import time
 
@@ -96,7 +95,7 @@ def main():
 
     files_list = []
     bad_count = 0
-  
+
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(scriptDir))
@@ -125,6 +124,6 @@ def main():
     #print ('The script took {0} second!'.format(time.time() - startTime))
 
     return bad_count
-    
+
 if __name__ == "__main__":
     sys.exit(main())
