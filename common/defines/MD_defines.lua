@@ -972,7 +972,7 @@
 	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
 	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.1					-- 0.1
 	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.0		-- 0
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 1000					-- 1000
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 100					-- 1000
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 1 			-- 0.6
 	NDefines.NIndustrialOrganisation.UNLOCKED_TRAITS_PER_SIZE_UP = 1			-- 1
 	NDefines.NIndustrialOrganisation.DESIGN_TEAM_CHANGE_XP_COST = 5				-- 5
@@ -981,7 +981,7 @@
 	NDefines.NIndustrialOrganisation.FUNDS_FROM_MANUFACTURER_PER_IC_PER_DAY = 0.1		-- 0.1
 	NDefines.NIndustrialOrganisation.MAX_FUNDS_FROM_MANUFACTURER_PER_DAY = 100		-- 100
 	NDefines.NIndustrialOrganisation.DESIGN_TEAM_RESEARCH_BONUS = 0.05				-- 0.05
-	NDefines.NIndustrialOrganisation.ENABLE_TASK_CAPACITY = true					-- false
+	NDefines.NIndustrialOrganisation.ENABLE_TASK_CAPACITY = false					-- false
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_TASK_CAPACITY = 5				-- 0
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_POLICY_ATTACH_COST = 25		-- 25
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
