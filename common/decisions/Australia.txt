@@ -144,6 +144,8 @@ AST_diplo_tug_of_war_CHI_cat = {
 		cost = 150
 
 		visible = {
+			NOT = {has_idea = CHI_mining_boom}
+
 			ROOT = {
 				is_ai = no
 			}
@@ -153,7 +155,7 @@ AST_diplo_tug_of_war_CHI_cat = {
 			set_temp_variable = { treasury_change = -20.00 }
 			modify_treasury_effect = yes
 			add_timed_idea = { idea = CHI_trade_dividends  days = 120 }
-			add_to_variable = { CHI.CHI_mining_investment_level = 1 }
+			add_to_variable = { CHI.CHI_mining_investment_level = 5 }
 		}
 
 		ai_will_do = {
@@ -179,6 +181,8 @@ AST_diplo_tug_of_war_CHI_cat = {
 
 
 		visible = {
+			NOT = { has_idea = CHI_mining_boom }
+
 			ROOT = {
 				is_ai = no
 			}
@@ -187,11 +191,37 @@ AST_diplo_tug_of_war_CHI_cat = {
 		complete_effect = {
 			set_temp_variable = { treasury_change = -20.00 }
 			modify_treasury_effect = yes
-			swap_ideas = { 
-				remove_idea = CHI_iron_coal_shortage
-				add_idea = CHI_iron_coal_shortage1
-			  }
-			add_to_variable = { CHI.CHI_mining_investment_level = -5 }
+			if = {
+				limit = {
+					CHI = {has_idea = CHI_iron_coal_shortage}
+				}
+				swap_ideas = {
+					remove_idea = CHI_iron_coal_shortage
+					add_idea = CHI_iron_coal_shortage1
+				}
+				add_to_variable = { CHI.CHI_mining_investment_level = -5 }
+
+				else_if = {
+					limit = {
+						CHI = {has_idea = CHI_iron_coal_shortage1}
+					}
+					swap_ideas = {
+						remove_idea = CHI_iron_coal_shortage1
+						add_idea = CHI_iron_coal_shortage2
+					}
+					add_to_variable = { CHI.CHI_mining_investment_level = -5 }
+				}
+				else_if = {
+					limit = {
+						CHI = {has_idea = CHI_iron_coal_shortage2}
+					}
+					swap_ideas = {
+						remove_idea = CHI_iron_coal_shortage2
+						add_idea = CHI_mining_boom
+					}
+					add_to_variable = { CHI.CHI_mining_investment_level = -5 }
+				}
+			}
 		}
 
 	}
