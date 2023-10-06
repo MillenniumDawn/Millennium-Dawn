@@ -196,6 +196,8 @@
 	NDefines.NProduction.CONVOY_MAX_NAV_FACTORIES_PER_LINE = 15
 	NDefines.NProduction.CAPITAL_SHIP_MAX_NAV_FACTORIES_PER_LINE = 5
 
+	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- Make the max number of factories 0 for purchase -- CLAMPED AT 0
+
 	NDefines.NTechnology.MAX_SUBTECHS = 5
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
 	NDefines.NTechnology.BASE_TECH_COST = 250 -- 100 is vanilla --300 was the old MD cost
