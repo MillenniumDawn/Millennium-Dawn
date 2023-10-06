@@ -2276,8 +2276,8 @@ update_cyber_cost = {
 	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
-#Monthly tick actions
-automated_debt_taker = {
+#Weekly tick action
+automated_debt_taker = { # Checks to see if treasury is negative at the same time as weekly balance adds or removes from treasury, borrowing debt automatically if treasury is negative (to make it positive).
 	if = { limit = { check_variable = { treasury < 0 } }
 		set_temp_variable = { treasury_temp = treasury }
 		multiply_temp_variable = { treasury_temp = -1 }
@@ -2285,9 +2285,11 @@ automated_debt_taker = {
 		set_temp_variable = { gdp_adder = gdp_total }
 		multiply_temp_variable = { gdp_adder = 0.01 } # 0.1% of GDP
 		add_to_temp_variable = { treasury_temp = gdp_adder }
+		set_temp_variable = { debt_temp = treasury_temp }
+		multiply_temp_variable = { debt_temp = 1.01} # adding 1% fee to debt autmoatically taken out (manual borrowing also has this)
 
 		add_to_variable = { treasury = treasury_temp }
-		add_to_variable = { debt = treasury_temp }
+		add_to_variable = { debt = debt_temp }
 		calculate_interest_rate = yes
 	}
 }
