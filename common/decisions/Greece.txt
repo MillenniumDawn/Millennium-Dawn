@@ -163,20 +163,43 @@ GRE_CYP_category = {
 	GRE_guarantee_turkish_property = {
 
 		icon = GFX_decision_turkey
-		cost = 25
+		cost = 300
+		days_remove = 50
 
 		visible = {
 			tag = GRE
 			has_country_flag = GRE_Enosis_In_Progress
 		}
+		available = {
+			has_equipment = {
+				infantry_weapons > 99
+			}
+			check_variable = { 145.GRE_SUPPORT > 50 }
+			custom_trigger_tooltip = {
+				tooltip = GRE_NCY_incite_riot_TT
+				check_variable = { 145.GRE_SUPPORT > 49 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GRE_please_north
+					has_decision = GRE_attack_turkish_strength
+				}
+			}
+		}
 
 		complete_effect = {
-			custom_effect_tooltip = GRE_north_20_TT
-			custom_effect_tooltip = GRE_south_-30_TT
+			custom_effect_tooltip = GRE_lose_20_gain_20
+			custom_effect_tooltip = GRE_gain_20_strength
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = -100
+				producer = GRE
+			}
 			hidden_effect = {
 				log = "[GetDateText]: [Root.GetName]: Decision GRE_guarantee_turkish_property"
-				add_to_variable = { 146.GRE_SUPPORT = 20 }
-				add_to_variable = { 145.GRE_SUPPORT = -30 }
+				add_to_variable = { 145.GRE_SUPPORT = 20 }
+				add_to_variable = { 146.GRE_SUPPORT = -20 }
 				clamp_variable = {
 					var = 146.GRE_SUPPORT
 					min = 0
@@ -203,52 +226,6 @@ GRE_CYP_category = {
 			}
 		}
 	}
-	GRE_please_south = {
-
-		icon = GFX_decision_eng_propaganda_campaigns
-		#requested GFX
-		cost = 30
-
-		visible = {
-			has_country_flag = GRE_Enosis_In_Progress
-			tag = GRE
-		}
-
-		days_remove = 30
-		days_re_enable = 0
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GRE_please_south"
-			custom_effect_tooltip = GRE_south_10_TT
-			add_to_variable = { 145.GRE_SUPPORT = 10 }
-			clamp_variable = {
-				var = 145.GRE_SUPPORT
-				min = 0
-				max = 100
-			}
-		}
-		ai_will_do = {
-			factor = 3
-
-			modifier = {
-				if = {
-					limit = {
-						check_variable = { 145.GRE_SUPPORT > 50 }
-					}
-				}
-				factor = 2
-			}
-			modifier = {
-				if = {
-					limit = {
-						check_variable = { 145.GRE_SUPPORT > 80 }
-					}
-				}
-				factor = 1
-			}
-		}
-	}
 	GRE_please_north = {
 
 		icon = GFX_decision_turkey
@@ -258,15 +235,31 @@ GRE_CYP_category = {
 			has_country_flag = GRE_Enosis_In_Progress
 			tag = GRE
 		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GRE_guarantee_turkish_property
+					has_decision = GRE_attack_turkish_strength
+				}
+			}
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = GRE_cant_gain_strength
+				}
+			}
+		}
 
 		days_remove = 30
 		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GRE_test_gui"
-			custom_effect_tooltip = GRE_north_10_TT
-			add_to_variable = { 146.GRE_SUPPORT = 10 }
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_please_north"
+			custom_effect_tooltip = GRE_gain_5_strength
+			custom_effect_tooltip = GRE_turks_lose_5_strength
+			add_to_variable = { 145.GRE_SUPPORT = 5 }
+			add_to_variable = { 146.GRE_SUPPORT = -5 }
 			clamp_variable = {
 				var = 146.GRE_SUPPORT
 				min = 0
@@ -294,30 +287,39 @@ GRE_CYP_category = {
 			}
 		}
 	}
-	GRE_lobby_brit = {
+	GRE_attack_turkish_strength = {
 
-		icon = GFX_decision_uk
+		icon = GFX_decision_turkey
 		cost = 30
+		days_remove = 60
 
 		visible = {
 			has_country_flag = GRE_Enosis_In_Progress
 			tag = GRE
 		}
-
-		days_remove = 30
-		days_re_enable = 0
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GRE_guarantee_turkish_property
+					has_decision = GRE_please_north
+				}
+			}
+		}
+		days_re_enable = 10
 		fire_only_once = no
 
 		complete_effect = {
-			custom_effect_tooltip = GRE_brit_5_TT
-			hidden_effect = {
-				log = "[GetDateText]: [Root.GetName]: Decision GRE_lobby_brit"
-				add_to_variable = { 812.GRE_SUPPORT = 5 }
-				clamp_variable = {
-					var = 812.GRE_SUPPORT
-					min = 0
-					max = 100
-				}
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_attack_turkish_strength"
+			custom_effect_tooltip = TUR_unable_to_gain_strength
+			TUR = {
+				set_country_flag = TUR_greece_blocked_us
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_attack_turkish_strength"
+			TUR = {
+				clr_country_flag = TUR_greece_blocked_us
 			}
 		}
 		ai_will_do = {
@@ -341,12 +343,24 @@ GRE_CYP_category = {
 			}
 		}
 	}
+	#############################################################################
 	TUR_CYP_incite_riot = {
 
 		icon = revolt
 		cost = 30
 
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = TUR_CYP_propaganda_south
+					has_decision = TUR_CYP_propaganda_north
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = GRE_enemy_blocked_us
+				NOT = { has_country_flag = TUR_greece_blocked_us }
+			}
 			has_equipment = {
 				infantry_weapons > 99
 			}
@@ -366,14 +380,21 @@ GRE_CYP_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TUR_incite_riot"
-			custom_effect_tooltip = GRE_north_-20_TT
+			custom_effect_tooltip = GRE_south_-20_TT
+			custom_effect_tooltip = TUR_gain_20_strength
 			add_equipment_to_stockpile = {
 				type = infantry_weapons
 				amount = -100
 				producer = TUR
 			}
 			hidden_effect = {
-				add_to_variable = { 146.GRE_SUPPORT = -20 }
+				add_to_variable = { 145.GRE_SUPPORT = -20 }
+				clamp_variable = {
+					var = 145.GRE_SUPPORT
+					min = 0
+					max = 100
+				}
+				add_to_variable = { 146.GRE_SUPPORT = 20 }
 				clamp_variable = {
 					var = 146.GRE_SUPPORT
 					min = 0
@@ -425,8 +446,19 @@ GRE_CYP_category = {
 
 		available = {
 			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = TUR_CYP_propaganda_south
+					has_decision = TUR_CYP_incite_riot
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = GRE_enemy_blocked_us
+				NOT = { has_country_flag = TUR_greece_blocked_us }
+			}
+			custom_trigger_tooltip = {
 				tooltip = TUR_GRE_support
-				check_variable = { 146.GRE_SUPPORT > 5 }
+				check_variable = { 145.GRE_SUPPORT > 5 }
 			}
 		}
 
@@ -434,20 +466,20 @@ GRE_CYP_category = {
 			tag = TUR
 		}
 
-		days_remove = 30
-		days_re_enable = 0
+		days_remove = 60
+		days_re_enable = 10
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TUR_incite_riot"
-			custom_effect_tooltip = GRE_north_-5_TT
-			hidden_effect = {
-				add_to_variable = { 146.GRE_SUPPORT = -5 }
-				clamp_variable = {
-					var = 146.GRE_SUPPORT
-					min = 0
-					max = 100
-				}
+			custom_effect_tooltip = GRE_unable_to_gain_strength
+			GRE = {
+				set_country_flag = GRE_cant_gain_strength
+			}
+		}
+		remove_effect = {
+			GRE = {
+				clr_country_flag = GRE_cant_gain_strength
 			}
 		}
 		ai_will_do = {
@@ -478,8 +510,19 @@ GRE_CYP_category = {
 
 		available = {
 			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = TUR_CYP_propaganda_north
+					has_decision = TUR_CYP_incite_riot
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = GRE_enemy_blocked_us
+				NOT = { has_country_flag = TUR_greece_blocked_us }
+			}
+			custom_trigger_tooltip = {
 				tooltip = TUR_GRE_support
-				check_variable = { 145.GRE_SUPPORT > 5 }
+				check_variable = { 145.GRE_SUPPORT > 1 }
 			}
 		}
 
@@ -492,12 +535,14 @@ GRE_CYP_category = {
 		fire_only_once = no
 
 		complete_effect = {
+			custom_effect_tooltip = GRE_north_5_TT
 			custom_effect_tooltip = GRE_south_-5_TT
 			hidden_effect = {
 				log = "[GetDateText]: [Root.GetName]: Decision TUR_incite_riot"
+				add_to_variable = { 146.GRE_SUPPORT = 5 }
 				add_to_variable = { 145.GRE_SUPPORT = -5 }
 				clamp_variable = {
-					var = 145.GRE_SUPPORT
+					var = 146.GRE_SUPPORT
 					min = 0
 					max = 100
 				}
@@ -509,7 +554,7 @@ GRE_CYP_category = {
 			modifier = {
 				if = {
 					limit = {
-						check_variable = { 145.GRE_SUPPORT > 50 }
+						check_variable = { 146.GRE_SUPPORT > 50 }
 					}
 				}
 				factor = 4
@@ -517,132 +562,86 @@ GRE_CYP_category = {
 			modifier = {
 				if = {
 					limit = {
-						check_variable = { 145.GRE_SUPPORT > 80 }
+						check_variable = { 146.GRE_SUPPORT > 80 }
 					}
 				}
 				factor = 5
 			}
 		}
 	}
-	GRE_unification_talks = {
+	##############
+	TUR_unify_cyprus = {
 
-		icon = decision_generic_decision
-		visible = { has_country_flag = GRE_Enosis_In_Progress }
-
-		activation = {
-			AND = {
-				NOT = {
-					GRE = {
-						has_completed_focus = GRE_unification_at_last
-					}
-				}
-				GRE = {
-					has_country_flag = GRE_Enosis_In_Progress
-					has_completed_focus = GRE_tale
-				}
-			}
-		}
+		icon = eng_propaganda_campaigns
+		cost = 30
 
 		available = {
-			has_country_flag = GRE_Enosis_In_Progress
 			custom_trigger_tooltip = {
-				tooltip = GRE_unification_TT
-				check_variable = { CYP_unification = 100 }
+				tooltip = TUR_has_100_strength
+				check_variable = { 146.GRE_SUPPORT > 99 }
 			}
-		}
-
-		days_mission_timeout = 30
-
-		is_good = yes
-		fire_only_once = no
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_unificiation_talks"
-			activate_mission = GRE_unification_talks
-
-			set_temp_variable = { a = 812.GRE_SUPPORT }
-			set_temp_variable = { b = 145.GRE_SUPPORT }
-			set_temp_variable = { c = 146.GRE_SUPPORT }
-			subtract_from_temp_variable = { a = 50 }
-			multiply_temp_variable = { a = 0.1 }
-			subtract_from_temp_variable = { b = 50 }
-			multiply_temp_variable = { b = 0.1 }
-			subtract_from_temp_variable = { c = 50 }
-			multiply_temp_variable = { c = 0.1 }
-
-			add_to_temp_variable = { a = b }
-			add_to_temp_variable = { a = c }
-
-			add_to_variable = {
-				var = CYP_unification
-				value = a
-			}
-			clamp_variable = {
-				var = CYP_unification
-				min = 0
-				max = 100
-			}
-		}
-	}
-	GRE_enosis = {
-
-		icon = decision_hol_exchange_intelligence_data
-
-		available = {
-			has_country_flag = GRE_Enosis_In_Progress
-			check_variable = { 145.GRE_SUPPORT > 50 }
-			check_variable = { 146.GRE_SUPPORT > 50 }
 		}
 
 		visible = {
-			has_country_flag = GRE_Enosis_In_Progress
+			tag = TUR
+		}
+
+		days_remove = 100
+		days_re_enable = 0
+		fire_only_once = yes
+
+		complete_effect = {
+			custom_effect_tooltip = TUR_unify_cyp
+			clr_country_flag = GRE_TUR_CYP
+			hidden_effect = {
+				news_event = {
+					id = Turkey.77
+				}
+				NCY = { set_cosmetic_tag = CYP_TURK_UNIFIED }
+				145 = { transfer_state_to = NCY }
+				NCY = {
+					set_country_flag = is_VANGUARD
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 5
+		}
+	}
+	#######
+	GRE_unify_cyprus = {
+
+		icon = eng_propaganda_campaigns
+		cost = 30
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GRE_has_100_strength
+				check_variable = { 145.GRE_SUPPORT > 99 }
+			}
+		}
+
+		visible = {
 			tag = GRE
-			check_variable = { CYP_unification = 100 }
 		}
 
+		days_remove = 100
+		days_re_enable = 0
+		fire_only_once = yes
+
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GRE_enosis"
-			annex_country = { target = CYP transfer_troops = yes }
-			145 = {
-				add_core_of = GRE
-			}
-			146 = {
-				add_core_of = GRE
-			}
-			GRE = {
-				transfer_state = 146
-			}
-			GRE = {
-				country_event = { id = greece.23 }
+			custom_effect_tooltip = GRE_unify_cyp
+			clr_country_flag = GRE_TUR_CYP
+			hidden_effect = {
+				news_event = {
+					id = Turkey.88
+				}
+				146 = { transfer_state_to = GRE }
+				145 = { transfer_state_to = GRE }
 			}
 		}
 		ai_will_do = {
-			factor = 25
-		}
-	}
-	GRE_return_akrotiri = {
-
-		icon = decision_hol_exchange_intelligence_data
-
-		available = {
-			has_country_flag = GRE_British_Akrotiri
-		}
-		visible = {
-			has_country_flag = GRE_British_Akrotiri
-		}
-
-		days_re_enable = 365
-
-		fixed_random_seed = no
-
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GRE_return_akrotiri"
-			ENG = { country_event = { id = greece.24 } }
-		}
-		ai_will_do = {
-			factor = 10
+			factor = 5
 		}
 	}
 }
