@@ -42,15 +42,6 @@ set_landbased_missile_defense_cap = {
 					set_temp_variable = { temp1 = 0 }
 					add_to_temp_variable = { temp1 = non_damaged_building_level@anti_air_building }
 					multiply_temp_variable = { temp1 = PREV.var_SAM_launcher_tech }
-					# already coded in defense effects
-					# if = {
-					# 	limit = {
-					# 		check_variable = { PREV.var_deployed_SAM_MD_land < temp1 }
-					# 	}
-					# 	set_temp_variable = { temp1 = PREV.var_deployed_SAM_MD_land }
-					# }
-					# set_temp_variable = { temp_deployed_SAM_MD_land = PREV.var_deployed_SAM_MD_land }
-					# subtract_from_temp_variable = { temp_deployed_SAM_MD_land = temp1 }
 					add_to_variable = { ROOT.var_intercept_capacity_boost_land = temp1 }
 					log = "[GetDateText]: [ROOT.GetName]: ### boost phase defense ### in meta"
 					log = "[THIS.GetName]"
@@ -1452,484 +1443,370 @@ clear_prod_display_arrays = {
 }
 
 ### ICBM
+# function: calculate_production_vars_1
+# purpose: This function correlates to the production of ICBMs so it is slot 1
+# parameters/variables:
+# - var_gui_prod_1_amount = the total number of missile to be built
+# - var_gui_prod_1_CIC_use = the total number of civilian industry to be used for building the missile
+# - var_gui_prod_1_price_total = the total unit cost of the missile
+# - var_gui_prod_1_CIC_total = Total assigned CIC
+# - var_gui_prod_1_CIC_days = The total days for the production mission
+# - var_gui_prod_1_days_unit = The default number of days for this type of ICBM (Basic: 60)
+# --------
+# How to convert to money fully:
+# 1. Take the price and amplify that. You can find this in common/scripted_effects/00_missiles_models.txt under set_all_prod_arrays
+# 2. Remove all of the references to the CIC variable for the current production type
+# - look up the variable name 1_CIC and you should be able to find all references
+# 3. Change increase_CIC_1_button_click to allow you to change the amount of money you're throwing at the missile production
+# 4. Localization needs to be updated to show the display change (UI as well but Bird can help with this) refer to line 33 in MD_missiles_gui_l_english
+#
+# ----
+
+# TODO: If you have the gumption the arrays need to be culled because there's about three dozen or so of them that aren't needed
+
 calculate_production_vars_1 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_1_amount < 1 }
-		}
-		set_variable = { var_gui_prod_1_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_1_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_1_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_1_multiplier min = 1 max = var_gui_prod_1_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_1_price_total = var_gui_prod_1_price_unit }
 	multiply_variable = { var_gui_prod_1_price_total = var_gui_prod_1_amount }
-	#days
-	set_variable = { var_gui_prod_1_CIC_total = var_gui_prod_1_CIC_unit }
-	multiply_variable = { var_gui_prod_1_CIC_total = var_gui_prod_1_amount }
-	set_variable = { var_gui_prod_1_CIC_days = var_gui_prod_1_CIC_total }
-	multiply_variable = { var_gui_prod_1_CIC_days = var_gui_prod_1_days_unit }
-	divide_variable = { var_gui_prod_1_CIC_days = var_gui_prod_1_CIC_use }
-	round_variable = var_gui_prod_1_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_1_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_1_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_1_price_total_multiplier = prod_1_multiplier }
+	multiply_temp_variable = { var_gui_prod_1_price_total_multiplier = var_gui_prod_1_price_unit }
+	add_to_variable = { var_gui_prod_1_price_total = var_gui_prod_1_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_1_days = var_gui_prod_1_amount }
+	multiply_variable = { var_gui_prod_1_days = var_gui_prod_1_days_unit }
+	divide_variable = { var_gui_prod_1_days = prod_1_multiplier }
+
+	set_temp_variable = { modifier_1_prod = 1 }
+	subtract_from_temp_variable = { modifier_1_prod = modifier@icbm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_1_days = modifier_1_prod }
+	round_variable = var_gui_prod_1_days
+
+	clamp_variable = { var = var_gui_prod_1_price_total min = var_gui_prod_1_price_unit }
+	clamp_variable = { var = var_gui_prod_1_amount min = 1 }
 }
 ### IRBM
 calculate_production_vars_2 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_2_amount < 1 }
-		}
-		set_variable = { var_gui_prod_2_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_2_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_2_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_2_multiplier min = 1 max = var_gui_prod_2_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_2_price_total = var_gui_prod_2_price_unit }
 	multiply_variable = { var_gui_prod_2_price_total = var_gui_prod_2_amount }
-	#days
-	set_variable = { var_gui_prod_2_CIC_total = var_gui_prod_2_CIC_unit }
-	multiply_variable = { var_gui_prod_2_CIC_total = var_gui_prod_2_amount }
-	set_variable = { var_gui_prod_2_CIC_days = var_gui_prod_2_CIC_total }
-	multiply_variable = { var_gui_prod_2_CIC_days = var_gui_prod_2_days_unit }
-	divide_variable = { var_gui_prod_2_CIC_days = var_gui_prod_2_CIC_use }
-	round_variable = var_gui_prod_2_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_2_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_2_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_2_price_total_multiplier = prod_2_multiplier }
+	multiply_temp_variable = { var_gui_prod_2_price_total_multiplier = var_gui_prod_2_price_unit }
+	add_to_variable = { var_gui_prod_2_price_total = var_gui_prod_2_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_2_days = var_gui_prod_2_amount }
+	multiply_variable = { var_gui_prod_2_days = var_gui_prod_2_days_unit }
+	divide_variable = { var_gui_prod_2_days = prod_2_multiplier }
+
+	set_temp_variable = { modifier_2_prod = 1 }
+	subtract_from_temp_variable = { modifier_2_prod = modifier@irbm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_2_days = modifier_2_prod }
+	round_variable = var_gui_prod_2_days
+
+	clamp_variable = { var = var_gui_prod_2_price_total min = var_gui_prod_2_price_unit }
+	clamp_variable = { var = var_gui_prod_2_amount min = 1 }
 }
 ### SLBM
 calculate_production_vars_3 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_3_amount < 1 }
-		}
-		set_variable = { var_gui_prod_3_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_3_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_3_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_3_multiplier min = 1 max = var_gui_prod_3_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_3_price_total = var_gui_prod_3_price_unit }
 	multiply_variable = { var_gui_prod_3_price_total = var_gui_prod_3_amount }
-	#days
-	set_variable = { var_gui_prod_3_CIC_total = var_gui_prod_3_CIC_unit }
-	multiply_variable = { var_gui_prod_3_CIC_total = var_gui_prod_3_amount }
-	set_variable = { var_gui_prod_3_CIC_days = var_gui_prod_3_CIC_total }
-	multiply_variable = { var_gui_prod_3_CIC_days = var_gui_prod_3_days_unit }
-	divide_variable = { var_gui_prod_3_CIC_days = var_gui_prod_3_CIC_use }
-	round_variable = var_gui_prod_3_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_3_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_3_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_3_price_total_multiplier = prod_3_multiplier }
+	multiply_temp_variable = { var_gui_prod_3_price_total_multiplier = var_gui_prod_3_price_unit }
+	add_to_variable = { var_gui_prod_3_price_total = var_gui_prod_3_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_3_days = var_gui_prod_3_amount }
+	multiply_variable = { var_gui_prod_3_days = var_gui_prod_3_days_unit }
+	divide_variable = { var_gui_prod_3_days = prod_3_multiplier }
+
+	set_temp_variable = { modifier_3_prod = 1 }
+	subtract_from_temp_variable = { modifier_3_prod = modifier@slbm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_3_days = modifier_3_prod }
+	round_variable = var_gui_prod_3_days
+
+	clamp_variable = { var = var_gui_prod_3_price_total min = var_gui_prod_3_price_unit }
+	clamp_variable = { var = var_gui_prod_3_amount min = 1 }
 }
 ### ALCM
 calculate_production_vars_4 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_4_amount < 1 }
-		}
-		set_variable = { var_gui_prod_4_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_4_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_4_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_4_multiplier min = 1 max = var_gui_prod_4_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_4_price_total = var_gui_prod_4_price_unit }
 	multiply_variable = { var_gui_prod_4_price_total = var_gui_prod_4_amount }
-	#days
-	set_variable = { var_gui_prod_4_CIC_total = var_gui_prod_4_CIC_unit }
-	multiply_variable = { var_gui_prod_4_CIC_total = var_gui_prod_4_amount }
-	set_variable = { var_gui_prod_4_CIC_days = var_gui_prod_4_CIC_total }
-	multiply_variable = { var_gui_prod_4_CIC_days = var_gui_prod_4_days_unit }
-	divide_variable = { var_gui_prod_4_CIC_days = var_gui_prod_4_CIC_use }
-	round_variable = var_gui_prod_4_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_4_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_4_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_4_price_total_multiplier = prod_4_multiplier }
+	multiply_temp_variable = { var_gui_prod_4_price_total_multiplier = var_gui_prod_4_price_unit }
+	add_to_variable = { var_gui_prod_4_price_total = var_gui_prod_4_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_4_days = var_gui_prod_4_amount }
+	multiply_variable = { var_gui_prod_4_days = var_gui_prod_4_days_unit }
+	divide_variable = { var_gui_prod_4_days = prod_4_multiplier }
+
+	set_temp_variable = { modifier_4_prod = 1 }
+	subtract_from_temp_variable = { modifier_4_prod = modifier@alcm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_4_days = modifier_4_prod }
+	round_variable = var_gui_prod_4_days
+
+	clamp_variable = { var = var_gui_prod_4_price_total min = var_gui_prod_4_price_unit }
+	clamp_variable = { var = var_gui_prod_4_amount min = 1 }
 }
 ### GLCM
 calculate_production_vars_5 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_5_amount < 1 }
-		}
-		set_variable = { var_gui_prod_5_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_5_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_5_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_5_multiplier min = 1 max = var_gui_prod_5_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_5_price_total = var_gui_prod_5_price_unit }
 	multiply_variable = { var_gui_prod_5_price_total = var_gui_prod_5_amount }
-	#days
-	set_variable = { var_gui_prod_5_CIC_total = var_gui_prod_5_CIC_unit }
-	multiply_variable = { var_gui_prod_5_CIC_total = var_gui_prod_5_amount }
-	set_variable = { var_gui_prod_5_CIC_days = var_gui_prod_5_CIC_total }
-	multiply_variable = { var_gui_prod_5_CIC_days = var_gui_prod_5_days_unit }
-	divide_variable = { var_gui_prod_5_CIC_days = var_gui_prod_5_CIC_use }
-	round_variable = var_gui_prod_5_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_5_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_5_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_5_price_total_multiplier = prod_5_multiplier }
+	multiply_temp_variable = { var_gui_prod_5_price_total_multiplier = var_gui_prod_5_price_unit }
+	add_to_variable = { var_gui_prod_5_price_total = var_gui_prod_5_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_5_days = var_gui_prod_5_amount }
+	multiply_variable = { var_gui_prod_5_days = var_gui_prod_5_days_unit }
+	divide_variable = { var_gui_prod_5_days = prod_5_multiplier }
+
+	set_temp_variable = { modifier_5_prod = 1 }
+	subtract_from_temp_variable = { modifier_5_prod = modifier@glcm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_5_days = modifier_5_prod }
+	round_variable = var_gui_prod_5_days
+
+	clamp_variable = { var = var_gui_prod_5_price_total min = var_gui_prod_5_price_unit }
+	clamp_variable = { var = var_gui_prod_5_amount min = 1 }
 }
 ### SLCM
 calculate_production_vars_6 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_6_amount < 1 }
-		}
-		set_variable = { var_gui_prod_6_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_6_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_6_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_6_multiplier min = 1 max = var_gui_prod_6_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_6_price_total = var_gui_prod_6_price_unit }
 	multiply_variable = { var_gui_prod_6_price_total = var_gui_prod_6_amount }
-	#days
-	set_variable = { var_gui_prod_6_CIC_total = var_gui_prod_6_CIC_unit }
-	multiply_variable = { var_gui_prod_6_CIC_total = var_gui_prod_6_amount }
-	set_variable = { var_gui_prod_6_CIC_days = var_gui_prod_6_CIC_total }
-	multiply_variable = { var_gui_prod_6_CIC_days = var_gui_prod_6_days_unit }
-	divide_variable = { var_gui_prod_6_CIC_days = var_gui_prod_6_CIC_use }
-	round_variable = var_gui_prod_6_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_6_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_6_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_6_price_total_multiplier = prod_6_multiplier }
+	multiply_temp_variable = { var_gui_prod_6_price_total_multiplier = var_gui_prod_6_price_unit }
+	add_to_variable = { var_gui_prod_6_price_total = var_gui_prod_6_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_6_days = var_gui_prod_6_amount }
+	multiply_variable = { var_gui_prod_6_days = var_gui_prod_6_days_unit }
+	divide_variable = { var_gui_prod_6_days = prod_6_multiplier }
+
+	set_temp_variable = { modifier_6_prod = 1 }
+	subtract_from_temp_variable = { modifier_6_prod = modifier@slcm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_6_days = modifier_6_prod }
+	round_variable = var_gui_prod_6_days
+
+	clamp_variable = { var = var_gui_prod_6_price_total min = var_gui_prod_6_price_unit }
+	clamp_variable = { var = var_gui_prod_6_amount min = 1 }
 }
 ### HSCM
 calculate_production_vars_7 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_7_amount < 1 }
-		}
-		set_variable = { var_gui_prod_7_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_7_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_7_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_7_multiplier min = 1 max = var_gui_prod_7_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_7_price_total = var_gui_prod_7_price_unit }
 	multiply_variable = { var_gui_prod_7_price_total = var_gui_prod_7_amount }
-	#days
-	set_variable = { var_gui_prod_7_CIC_total = var_gui_prod_7_CIC_unit }
-	multiply_variable = { var_gui_prod_7_CIC_total = var_gui_prod_7_amount }
-	set_variable = { var_gui_prod_7_CIC_days = var_gui_prod_7_CIC_total }
-	multiply_variable = { var_gui_prod_7_CIC_days = var_gui_prod_7_days_unit }
-	divide_variable = { var_gui_prod_7_CIC_days = var_gui_prod_7_CIC_use }
-	round_variable = var_gui_prod_7_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_7_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_7_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_7_price_total_multiplier = prod_7_multiplier }
+	multiply_temp_variable = { var_gui_prod_7_price_total_multiplier = var_gui_prod_7_price_unit }
+	add_to_variable = { var_gui_prod_7_price_total = var_gui_prod_7_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_7_days = var_gui_prod_7_amount }
+	multiply_variable = { var_gui_prod_7_days = var_gui_prod_7_days_unit }
+	divide_variable = { var_gui_prod_7_days = prod_7_multiplier }
+
+	set_temp_variable = { modifier_7_prod = 1 }
+	subtract_from_temp_variable = { modifier_7_prod = modifier@hscm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_7_days = modifier_7_prod }
+	round_variable = var_gui_prod_7_days
+
+	clamp_variable = { var = var_gui_prod_7_price_total min = var_gui_prod_7_price_unit }
+	clamp_variable = { var = var_gui_prod_7_amount min = 1 }
 }
 ### SAM
 calculate_production_vars_8 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_8_amount < 1 }
-		}
-		set_variable = { var_gui_prod_8_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_8_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_8_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_8_multiplier min = 1 max = var_gui_prod_8_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_8_price_total = var_gui_prod_8_price_unit }
 	multiply_variable = { var_gui_prod_8_price_total = var_gui_prod_8_amount }
-	#days
-	set_variable = { var_gui_prod_8_CIC_total = var_gui_prod_8_CIC_unit }
-	multiply_variable = { var_gui_prod_8_CIC_total = var_gui_prod_8_amount }
-	set_variable = { var_gui_prod_8_CIC_days = var_gui_prod_8_CIC_total }
-	multiply_variable = { var_gui_prod_8_CIC_days = var_gui_prod_8_days_unit }
-	divide_variable = { var_gui_prod_8_CIC_days = var_gui_prod_8_CIC_use }
-	round_variable = var_gui_prod_8_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_8_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_8_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_8_price_total_multiplier = prod_8_multiplier }
+	multiply_temp_variable = { var_gui_prod_8_price_total_multiplier = var_gui_prod_8_price_unit }
+	add_to_variable = { var_gui_prod_8_price_total = var_gui_prod_8_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_8_days = var_gui_prod_8_amount }
+	multiply_variable = { var_gui_prod_8_days = var_gui_prod_8_days_unit }
+	divide_variable = { var_gui_prod_8_days = prod_8_multiplier }
+
+	set_temp_variable = { modifier_8_prod = 1 }
+	subtract_from_temp_variable = { modifier_8_prod = modifier@sam_production_speed_modifier }
+	multiply_variable = { var_gui_prod_8_days = modifier_8_prod }
+	round_variable = var_gui_prod_8_days
+
+	clamp_variable = { var = var_gui_prod_8_price_total min = var_gui_prod_8_price_unit }
+	clamp_variable = { var = var_gui_prod_8_amount min = 1 }
 }
 ### ABM
 calculate_production_vars_9 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_9_amount < 1 }
-		}
-		set_variable = { var_gui_prod_9_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_9_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_9_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_9_multiplier min = 1 max = var_gui_prod_9_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_9_price_total = var_gui_prod_9_price_unit }
 	multiply_variable = { var_gui_prod_9_price_total = var_gui_prod_9_amount }
-	#days
-	set_variable = { var_gui_prod_9_CIC_total = var_gui_prod_9_CIC_unit }
-	multiply_variable = { var_gui_prod_9_CIC_total = var_gui_prod_9_amount }
-	set_variable = { var_gui_prod_9_CIC_days = var_gui_prod_9_CIC_total }
-	multiply_variable = { var_gui_prod_9_CIC_days = var_gui_prod_9_days_unit }
-	divide_variable = { var_gui_prod_9_CIC_days = var_gui_prod_9_CIC_use }
-	round_variable = var_gui_prod_9_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_9_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_9_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_9_price_total_multiplier = prod_9_multiplier }
+	multiply_temp_variable = { var_gui_prod_9_price_total_multiplier = var_gui_prod_9_price_unit }
+	add_to_variable = { var_gui_prod_9_price_total = var_gui_prod_9_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_9_days = var_gui_prod_9_amount }
+	multiply_variable = { var_gui_prod_9_days = var_gui_prod_9_days_unit }
+	divide_variable = { var_gui_prod_9_days = prod_9_multiplier }
+
+	set_temp_variable = { modifier_9_prod = 1 }
+	subtract_from_temp_variable = { modifier_9_prod = modifier@abm_production_speed_modifier }
+	multiply_variable = { var_gui_prod_9_days = modifier_9_prod }
+	round_variable = var_gui_prod_9_days
+
+	clamp_variable = { var = var_gui_prod_9_price_total min = var_gui_prod_9_price_unit }
+	clamp_variable = { var = var_gui_prod_9_amount min = 1 }
 }
 ### OLV
 calculate_production_vars_10 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_10_amount < 1 }
-		}
-		set_variable = { var_gui_prod_10_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_10_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_10_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_10_multiplier min = 1 max = var_gui_prod_10_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_10_price_total = var_gui_prod_10_price_unit }
 	multiply_variable = { var_gui_prod_10_price_total = var_gui_prod_10_amount }
-	#days
-	set_variable = { var_gui_prod_10_CIC_total = var_gui_prod_10_CIC_unit }
-	multiply_variable = { var_gui_prod_10_CIC_total = var_gui_prod_10_amount }
-	set_variable = { var_gui_prod_10_CIC_days = var_gui_prod_10_CIC_total }
-	multiply_variable = { var_gui_prod_10_CIC_days = var_gui_prod_10_days_unit }
-	divide_variable = { var_gui_prod_10_CIC_days = var_gui_prod_10_CIC_use }
-	round_variable = var_gui_prod_10_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_10_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_10_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_10_price_total_multiplier = prod_10_multiplier }
+	multiply_temp_variable = { var_gui_prod_10_price_total_multiplier = var_gui_prod_10_price_unit }
+	add_to_variable = { var_gui_prod_10_price_total = var_gui_prod_10_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_10_days = var_gui_prod_10_amount }
+	multiply_variable = { var_gui_prod_10_days = var_gui_prod_10_days_unit }
+	divide_variable = { var_gui_prod_10_days = prod_10_multiplier }
+
+	set_temp_variable = { modifier_10_prod = 1 }
+	subtract_from_temp_variable = { modifier_10_prod = modifier@olv_production_speed_modifier }
+	multiply_variable = { var_gui_prod_10_days = modifier_10_prod }
+	round_variable = var_gui_prod_10_days
+
+	clamp_variable = { var = var_gui_prod_10_price_total min = var_gui_prod_10_price_unit }
+	clamp_variable = { var = var_gui_prod_10_amount min = 1 }
 }
 ### GNSS
 calculate_production_vars_11 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_11_amount < 1 }
-		}
-		set_variable = { var_gui_prod_11_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_11_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_11_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_11_multiplier min = 1 max = var_gui_prod_11_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_11_price_total = var_gui_prod_11_price_unit }
 	multiply_variable = { var_gui_prod_11_price_total = var_gui_prod_11_amount }
-	#days
-	set_variable = { var_gui_prod_11_CIC_total = var_gui_prod_11_CIC_unit }
-	multiply_variable = { var_gui_prod_11_CIC_total = var_gui_prod_11_amount }
-	set_variable = { var_gui_prod_11_CIC_days = var_gui_prod_11_CIC_total }
-	multiply_variable = { var_gui_prod_11_CIC_days = var_gui_prod_11_days_unit }
-	divide_variable = { var_gui_prod_11_CIC_days = var_gui_prod_11_CIC_use }
-	round_variable = var_gui_prod_11_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_11_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_11_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_11_price_total_multiplier = prod_11_multiplier }
+	multiply_temp_variable = { var_gui_prod_11_price_total_multiplier = var_gui_prod_11_price_unit }
+	add_to_variable = { var_gui_prod_11_price_total = var_gui_prod_11_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_11_days = var_gui_prod_11_amount }
+	multiply_variable = { var_gui_prod_11_days = var_gui_prod_11_days_unit }
+	divide_variable = { var_gui_prod_11_days = prod_11_multiplier }
+
+	set_temp_variable = { modifier_11_prod = 1 }
+	subtract_from_temp_variable = { modifier_11_prod = modifier@gnss_production_speed_modifier }
+	multiply_variable = { var_gui_prod_11_days = modifier_11_prod }
+	round_variable = var_gui_prod_11_days
+
+	clamp_variable = { var = var_gui_prod_11_price_total min = var_gui_prod_11_price_unit }
+	clamp_variable = { var = var_gui_prod_11_amount min = 1 }
 }
 ### COMSAT
 calculate_production_vars_12 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_12_amount < 1 }
-		}
-		set_variable = { var_gui_prod_12_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_12_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_12_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_12_multiplier min = 1 max = var_gui_prod_12_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_12_price_total = var_gui_prod_12_price_unit }
 	multiply_variable = { var_gui_prod_12_price_total = var_gui_prod_12_amount }
-	#days
-	set_variable = { var_gui_prod_12_CIC_total = var_gui_prod_12_CIC_unit }
-	multiply_variable = { var_gui_prod_12_CIC_total = var_gui_prod_12_amount }
-	set_variable = { var_gui_prod_12_CIC_days = var_gui_prod_12_CIC_total }
-	multiply_variable = { var_gui_prod_12_CIC_days = var_gui_prod_12_days_unit }
-	divide_variable = { var_gui_prod_12_CIC_days = var_gui_prod_12_CIC_use }
-	round_variable = var_gui_prod_12_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_12_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_12_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_12_price_total_multiplier = prod_12_multiplier }
+	multiply_temp_variable = { var_gui_prod_12_price_total_multiplier = var_gui_prod_12_price_unit }
+	add_to_variable = { var_gui_prod_12_price_total = var_gui_prod_12_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_12_days = var_gui_prod_12_amount }
+	multiply_variable = { var_gui_prod_12_days = var_gui_prod_12_days_unit }
+	divide_variable = { var_gui_prod_12_days = prod_12_multiplier }
+
+	set_temp_variable = { modifier_12_prod = 1 }
+	subtract_from_temp_variable = { modifier_12_prod = modifier@comsat_production_speed_modifier }
+	multiply_variable = { var_gui_prod_12_days = modifier_12_prod }
+	round_variable = var_gui_prod_12_days
+
+	clamp_variable = { var = var_gui_prod_12_price_total min = var_gui_prod_12_price_unit }
+	clamp_variable = { var = var_gui_prod_12_amount min = 1 }
 }
 ### SPYSAT
 calculate_production_vars_13 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_13_amount < 1 }
-		}
-		set_variable = { var_gui_prod_13_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_13_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_13_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_13_multiplier min = 1 max = var_gui_prod_13_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_13_price_total = var_gui_prod_13_price_unit }
 	multiply_variable = { var_gui_prod_13_price_total = var_gui_prod_13_amount }
-	#days
-	set_variable = { var_gui_prod_13_CIC_total = var_gui_prod_13_CIC_unit }
-	multiply_variable = { var_gui_prod_13_CIC_total = var_gui_prod_13_amount }
-	set_variable = { var_gui_prod_13_CIC_days = var_gui_prod_13_CIC_total }
-	multiply_variable = { var_gui_prod_13_CIC_days = var_gui_prod_13_days_unit }
-	divide_variable = { var_gui_prod_13_CIC_days = var_gui_prod_13_CIC_use }
-	round_variable = var_gui_prod_13_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_13_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_13_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_13_price_total_multiplier = prod_13_multiplier }
+	multiply_temp_variable = { var_gui_prod_13_price_total_multiplier = var_gui_prod_13_price_unit }
+	add_to_variable = { var_gui_prod_13_price_total = var_gui_prod_13_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_13_days = var_gui_prod_13_amount }
+	multiply_variable = { var_gui_prod_13_days = var_gui_prod_13_days_unit }
+	divide_variable = { var_gui_prod_13_days = prod_13_multiplier }
+
+	set_temp_variable = { modifier_13_prod = 1 }
+	subtract_from_temp_variable = { modifier_13_prod = modifier@spysat_production_speed_modifier }
+	multiply_variable = { var_gui_prod_13_days = modifier_13_prod }
+	round_variable = var_gui_prod_13_days
+
+	clamp_variable = { var = var_gui_prod_13_price_total min = var_gui_prod_13_price_unit }
+	clamp_variable = { var = var_gui_prod_13_amount min = 1 }
 }
 ### KILLSAT
 calculate_production_vars_14 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_14_amount < 1 }
-		}
-		set_variable = { var_gui_prod_14_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_14_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_14_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_14_multiplier min = 1 max = var_gui_prod_14_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_14_price_total = var_gui_prod_14_price_unit }
 	multiply_variable = { var_gui_prod_14_price_total = var_gui_prod_14_amount }
-	#days
-	set_variable = { var_gui_prod_14_CIC_total = var_gui_prod_14_CIC_unit }
-	multiply_variable = { var_gui_prod_14_CIC_total = var_gui_prod_14_amount }
-	set_variable = { var_gui_prod_14_CIC_days = var_gui_prod_14_CIC_total }
-	multiply_variable = { var_gui_prod_14_CIC_days = var_gui_prod_14_days_unit }
-	divide_variable = { var_gui_prod_14_CIC_days = var_gui_prod_14_CIC_use }
-	round_variable = var_gui_prod_14_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_14_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_14_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_14_price_total_multiplier = prod_14_multiplier }
+	multiply_temp_variable = { var_gui_prod_14_price_total_multiplier = var_gui_prod_14_price_unit }
+	add_to_variable = { var_gui_prod_14_price_total = var_gui_prod_14_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_14_days = var_gui_prod_14_amount }
+	multiply_variable = { var_gui_prod_14_days = var_gui_prod_14_days_unit }
+	divide_variable = { var_gui_prod_14_days = prod_14_multiplier }
+
+	set_temp_variable = { modifier_14_prod = 1 }
+	subtract_from_temp_variable = { modifier_14_prod = modifier@killsat_production_speed_modifier }
+	multiply_variable = { var_gui_prod_14_days = modifier_14_prod }
+	round_variable = var_gui_prod_14_days
+
+	clamp_variable = { var = var_gui_prod_14_price_total min = var_gui_prod_14_price_unit }
+	clamp_variable = { var = var_gui_prod_14_amount min = 1 }
 }
 ### Rods
 calculate_production_vars_15 = {
-	# amount & CIC use not negative
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_15_amount < 1 }
-		}
-		set_variable = { var_gui_prod_15_amount = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_15_CIC_use < 1 }
-		}
-		set_variable = { var_gui_prod_15_CIC_use = 1 }
-	}
-	#price
+	clamp_variable = { var = prod_15_multiplier min = 1 max = var_gui_prod_15_amount }
+	# Initial Price of Production
 	set_variable = { var_gui_prod_15_price_total = var_gui_prod_15_price_unit }
 	multiply_variable = { var_gui_prod_15_price_total = var_gui_prod_15_amount }
-	#days
-	set_variable = { var_gui_prod_15_CIC_total = var_gui_prod_15_CIC_unit }
-	multiply_variable = { var_gui_prod_15_CIC_total = var_gui_prod_15_amount }
-	set_variable = { var_gui_prod_15_CIC_days = var_gui_prod_15_CIC_total }
-	multiply_variable = { var_gui_prod_15_CIC_days = var_gui_prod_15_days_unit }
-	divide_variable = { var_gui_prod_15_CIC_days = var_gui_prod_15_CIC_use }
-	round_variable = var_gui_prod_15_CIC_days
-	if = {
-		limit = {
-			check_variable = { var_gui_prod_15_CIC_days < 1 }
-		}
-		set_variable = { var_gui_prod_15_CIC_days = 1 }
-	}
+	set_temp_variable = { var_gui_prod_15_price_total_multiplier = prod_15_multiplier }
+	multiply_temp_variable = { var_gui_prod_15_price_total_multiplier = var_gui_prod_15_price_unit }
+	add_to_variable = { var_gui_prod_15_price_total = var_gui_prod_15_price_total_multiplier }
+
+	# Days
+	set_variable = { var_gui_prod_15_days = var_gui_prod_15_amount }
+	multiply_variable = { var_gui_prod_15_days = var_gui_prod_15_days_unit }
+	divide_variable = { var_gui_prod_15_days = prod_15_multiplier }
+
+	set_temp_variable = { modifier_15_prod = 1 }
+	subtract_from_temp_variable = { modifier_15_prod = modifier@rods_production_speed_modifier }
+	multiply_variable = { var_gui_prod_15_days = modifier_15_prod }
+	round_variable = var_gui_prod_15_days
+
+	clamp_variable = { var = var_gui_prod_15_price_total min = var_gui_prod_15_price_unit }
+	clamp_variable = { var = var_gui_prod_15_amount min = 1 }
 }
 
 
@@ -2232,12 +2109,6 @@ set_missile_launch_arrays_selected_TAG = {
 			}
 		}
 		###
-		# clear_launch_trigger_num_gui_arrays = yes
-		# for_each_loop = {
-		# 	array = missile_target_point_array
-		# 	#array = ROOT.selected_TAG_missile_target_point_array
-		# 	set_launch_trigger_num_gui = yes
-		# }
 		for_each_loop = {
 			array = THIS.silo_launcher_array
 			if = {
@@ -2294,9 +2165,6 @@ set_missile_launch_arrays_selected_TAG = {
 		}
 	}
 }
-
-
-
 
 set_ballistic_missile_display_array = {
 	resize_array = { ballistic_missile_display_array = 0 }
@@ -3071,6 +2939,8 @@ set_building_display_array = {
 	add_to_array = { building_display_array = 18 }
 	add_to_array = { building_display_array = 19 }
 	add_to_array = { building_display_array = 20 }
+	add_to_array = { building_display_array = 21 }
+	add_to_array = { building_display_array = 22 }
 }
 
 clear_conventional_warhead_targets_gui = {
@@ -3090,43 +2960,6 @@ clear_conventional_warhead_targets_gui = {
 	clear_variable = var_target_selected_14
 	clear_variable = var_target_selected_15
 }
-
-log_conventional_warhead_targets_gui = {
-	log = " var_target_selected_1 [?var_target_selected_1]"
-	log = " var_target_selected_2 [?var_target_selected_2]"
-	log = " var_target_selected_3 [?var_target_selected_3]"
-	log = " var_target_selected_4 [?var_target_selected_4]"
-	log = " var_target_selected_5 [?var_target_selected_5]"
-	log = " var_target_selected_6 [?var_target_selected_6]"
-	log = " var_target_selected_7 [?var_target_selected_7]"
-	log = " var_target_selected_8 [?var_target_selected_8]"
-	log = " var_target_selected_9 [?var_target_selected_9]"
-	log = " var_target_selected_10 [?var_target_selected_10]"
-	log = " var_target_selected_11 [?var_target_selected_11]"
-	log = " var_target_selected_12 [?var_target_selected_12]"
-	log = " var_target_selected_13 [?var_target_selected_13]"
-	log = " var_target_selected_14 [?var_target_selected_14]"
-	log = " var_target_selected_15 [?var_target_selected_15]"
-
-	log = " target_selected_1_array^var_missile_trajectory_ID [?target_selected_1_array^var_missile_trajectory_ID]"
-	log = " target_selected_2_array^var_missile_trajectory_ID [?target_selected_2_array^var_missile_trajectory_ID]"
-	log = " target_selected_3_array^var_missile_trajectory_ID [?target_selected_3_array^var_missile_trajectory_ID]"
-	log = " target_selected_4_array^var_missile_trajectory_ID [?target_selected_4_array^var_missile_trajectory_ID]"
-	log = " target_selected_5_array^var_missile_trajectory_ID [?target_selected_5_array^var_missile_trajectory_ID]"
-	log = " target_selected_6_array^var_missile_trajectory_ID [?target_selected_6_array^var_missile_trajectory_ID]"
-	log = " target_selected_7_array^var_missile_trajectory_ID [?target_selected_7_array^var_missile_trajectory_ID]"
-	log = " target_selected_8_array^var_missile_trajectory_ID [?target_selected_8_array^var_missile_trajectory_ID]"
-	log = " target_selected_9_array^var_missile_trajectory_ID [?target_selected_9_array^var_missile_trajectory_ID]"
-	log = " target_selected_10_array^var_missile_trajectory_ID [?target_selected_10_array^var_missile_trajectory_ID]"
-	log = " target_selected_11_array^var_missile_trajectory_ID [?target_selected_11_array^var_missile_trajectory_ID]"
-	log = " target_selected_12_array^var_missile_trajectory_ID [?target_selected_12_array^var_missile_trajectory_ID]"
-	log = " target_selected_13_array^var_missile_trajectory_ID [?target_selected_13_array^var_missile_trajectory_ID]"
-	log = " target_selected_14_array^var_missile_trajectory_ID [?target_selected_14_array^var_missile_trajectory_ID]"
-	log = " target_selected_15_array^var_missile_trajectory_ID [?target_selected_15_array^var_missile_trajectory_ID]"
-
-}
-
-
 
 set_conventional_warhead_targets_gui = {
 #conventional warheads
@@ -3303,16 +3136,24 @@ set_conventional_warhead_targets_gui = {
 	else = {
 		set_variable = { var_target_selected_19 = 0 }
 	}
-	if = {
-		limit = {
-			check_variable = { global.conventional_warhead_rail_way_target_array^i = 1 }
-		}
+	if = { limit = { check_variable = { global.conventional_warhead_rail_way_target_array^i = 1 } }
 		set_variable = { var_target_selected_20 = 1 }
 	}
 	else = {
 		set_variable = { var_target_selected_20 = 0 }
 	}
-	#log_conventional_warhead_targets_gui = yes
+	if = { limit = { check_variable = { global.conventional_warhead_fossil_powerplant_target_array^i = 1 } }
+		set_variable = { var_target_selected_21 = 1 }
+	}
+	else = {
+		set_variable = { var_target_selected_21 = 0 }
+	}
+	if = { limit = { check_variable = { global.conventional_warhead_renewable_energy_target_array^i = 1 } }
+		set_variable = { var_target_selected_22 = 1 }
+	}
+	else = {
+		set_variable = { var_target_selected_22 = 0 }
+	}
 }
 
 set_conventional_warhead_targets = {
@@ -3336,13 +3177,13 @@ set_conventional_warhead_targets = {
 	add_to_array = { array = target_selected_18_array value = var_target_selected_18 index = var_missile_trajectory_ID }
 	add_to_array = { array = target_selected_19_array value = var_target_selected_19 index = var_missile_trajectory_ID }
 	add_to_array = { array = target_selected_20_array value = var_target_selected_20 index = var_missile_trajectory_ID }
-	#log_conventional_warhead_targets_gui = yes
+	add_to_array = { array = target_selected_21_array value = var_target_selected_21 index = var_missile_trajectory_ID }
+	add_to_array = { array = target_selected_22_array value = var_target_selected_22 index = var_missile_trajectory_ID }
 	clear_conventional_warhead_targets_gui = yes
 }
 
 
-### missiles_stat_entry ###
-
+### missiles_stat_entry ###\
 set_building_damage_stat_display_array = {
 	resize_array = { building_damage_stat_display_array = 0 }
 	clear_array = building_damage_stat_display_array
@@ -3367,6 +3208,8 @@ set_building_damage_stat_display_array = {
 	add_to_array = { building_damage_stat_display_array = 18 }
 	add_to_array = { building_damage_stat_display_array = 19 }
 	add_to_array = { building_damage_stat_display_array = 20 }
+	add_to_array = { building_damage_stat_display_array = 21 }
+	add_to_array = { building_damage_stat_display_array = 22 }
 }
 
 
@@ -3392,28 +3235,8 @@ set_missile_damage_stats = {
 	add_to_array = { array = damage_building_18_stat_array value = var_damage_building_18 index = i }
 	add_to_array = { array = damage_building_19_stat_array value = var_damage_building_19 index = i }
 	add_to_array = { array = damage_building_20_stat_array value = var_damage_building_20 index = i }
-
-	### for bugfixing???
-	log = "[?damage_building_1_stat_array^i] value = [?var_damage_building_1] index = [?i]"
-	log = "[?damage_building_2_stat_array^i] value = [?var_damage_building_2] index = [?i]"
-	log = "[?damage_building_3_stat_array^i] value = [?var_damage_building_3] index = [?i]"
-	log = "[?damage_building_4_stat_array^i] value = [?var_damage_building_4] index = [?i]"
-	log = "[?damage_building_5_stat_array^i] value = [?var_damage_building_5] index = [?i]"
-	log = "[?damage_building_6_stat_array^i] value = [?var_damage_building_6] index = [?i]"
-	log = "[?damage_building_7_stat_array^i] value = [?var_damage_building_7] index = [?i]"
-	log = "[?damage_building_8_stat_array^i] value = [?var_damage_building_8] index = [?i]"
-	log = "[?damage_building_9_stat_array^i] value = [?var_damage_building_9] index = [?i]"
-	log = "[?damage_building_10_stat_array^i] value = [?var_damage_building_10] index = [?i]"
-	log = "[?damage_building_11_stat_array^i] value = [?var_damage_building_11] index = [?i]"
-	log = "[?damage_building_12_stat_array^i] value = [?var_damage_building_12] index = [?i]"
-	log = "[?damage_building_13_stat_array^i] value = [?var_damage_building_13] index = [?i]"
-	log = "[?damage_building_14_stat_array^i] value = [?var_damage_building_14] index = [?i]"
-	log = "[?damage_building_15_stat_array^i] value = [?var_damage_building_15] index = [?i]"
-	log = "[?damage_building_16_stat_array^i] value = [?var_damage_building_16] index = [?i]"
-	log = "[?damage_building_17_stat_array^i] value = [?var_damage_building_17] index = [?i]"
-	log = "[?damage_building_18_stat_array^i] value = [?var_damage_building_18] index = [?i]"
-	log = "[?damage_building_19_stat_array^i] value = [?var_damage_building_19] index = [?i]"
-	log = "[?damage_building_20_stat_array^i] value = [?var_damage_building_20] index = [?i]"
+	add_to_array = { array = damage_building_21_stat_array value = var_damage_building_21 index = i }
+	add_to_array = { array = damage_building_22_stat_array value = var_damage_building_22 index = i }
 
 	add_to_array = { array = total_org_damage_stat_array value = var_total_org_damage index = i }
 	add_to_array = { array = total_str_damage_stat_array value = var_total_str_damage index = i }
@@ -3443,6 +3266,8 @@ set_missile_nuke_damage_stats = {
 	add_to_array = { array = ROOT.damage_building_18_stat_array value = nuke_temp17_d index = i }
 	add_to_array = { array = ROOT.damage_building_19_stat_array value = nuke_temp18_d index = i }
 	add_to_array = { array = ROOT.damage_building_20_stat_array value = nuke_temp19_d index = i }
+	add_to_array = { array = ROOT.damage_building_21_stat_array value = nuke_temp20_d index = i }
+	add_to_array = { array = ROOT.damage_building_22_stat_array value = nuke_temp21_d index = i }
 }
 
 
@@ -3452,18 +3277,13 @@ set_missile_warhead_effects = {
 		limit = {
 			check_variable = { missile_nuke_array^i = 2 }
 		}
-		### first try, didn't work
-		# if = {
-		# 	limit = {
-		# 		check_variable = { ROOT.missile_strike_type_array^i = 4 } # 4 = strategic
-		# 	}
 
-			set_variable = { var_nuke_warhead_ID = missile_nuclear_warhead_array^i }
-			set_variable = { var_nuke_damage = global.nuclear_warhead_building_damage_array^var_nuke_warhead_ID }
-			log = "[GetDateText]: [Root.GetName]: var_nuke_damage [?ROOT.var_nuke_damage]"
-			multiply_variable = { var_nuke_damage = temp1 }
-			log = "[GetDateText]: [Root.GetName]: multiply var_nuke_damage [?ROOT.var_nuke_damage]"
-		#}
+		set_variable = { var_nuke_warhead_ID = missile_nuclear_warhead_array^i }
+		set_variable = { var_nuke_damage = global.nuclear_warhead_building_damage_array^var_nuke_warhead_ID }
+		log = "[GetDateText]: [Root.GetName]: var_nuke_damage [?ROOT.var_nuke_damage]"
+		multiply_variable = { var_nuke_damage = temp1 }
+		log = "[GetDateText]: [Root.GetName]: multiply var_nuke_damage [?ROOT.var_nuke_damage]"
+
 		launch_nuclear_warhead = yes
 		var:ROOT.missile_target_controller_array^i = {
 			ROOT = {
@@ -3490,14 +3310,6 @@ set_missile_warhead_effects = {
 		}
 	}
 	else = {
-		### bugfixing? already coded in set_conventional_warhead_damage
-		# while_loop_effect = {
-		# 	limit = {
-		# 		check_variable = { temp1 > 0 }
-		# 	}
-		# 	subtract_from_temp_variable = { temp1 = 1 }
-		#	set_conventional_warhead_damage = yes
-		#}
 		if = {
 			limit = {
 				check_variable = { ROOT.missile_strike_type_array^i = 4 } # 4 = strategic
@@ -4012,48 +3824,6 @@ set_nuke_damage = {
 	log = "[GetDateText]: [ROOT.GetName]: global.damage_building_15_array^idx [?global.damage_building_15_array^idx] idx [?idx]"
 }
 
-
-### did not work
-# set_no_nuke_building_damage = {
-# 	add_to_array = { global.damage_building_1_array = 0 }
-# 	add_to_array = { global.damage_building_2_array = 0 }
-# 	add_to_array = { global.damage_building_3_array = 0 }
-# 	add_to_array = { global.damage_building_4_array = 0 }
-# 	add_to_array = { global.damage_building_5_array = 0 }
-# 	add_to_array = { global.damage_building_6_array = 0 }
-# 	add_to_array = { global.damage_building_7_array = 0 }
-# 	add_to_array = { global.damage_building_8_array = 0 }
-# 	add_to_array = { global.damage_building_9_array = 0 }
-# 	add_to_array = { global.damage_building_10_array = 0 }
-# 	add_to_array = { global.damage_building_11_array = 0 }
-# 	add_to_array = { global.damage_building_12_array = 0 }
-# 	add_to_array = { global.damage_building_13_array = 0 }
-# 	add_to_array = { global.damage_building_14_array = 0 }
-# 	add_to_array = { global.damage_building_15_array = 0 }
-
-# 	add_to_array = { array = ROOT.damage_building_1_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_2_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_3_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_4_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_5_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_6_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_7_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_8_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_9_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_10_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_11_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_12_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_13_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_14_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_15_stat_array value = 0 index = i }
-# 	###to test
-# 	add_to_array = { array = ROOT.damage_building_16_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_17_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_18_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_19_stat_array value = 0 index = i }
-# 	add_to_array = { array = ROOT.damage_building_20_stat_array value = 0 index = i }
-# }
-
 clear_nuke_vars = {
 	clear_variable = global.nuke_drop_salvo_idx
 	THIS = {
@@ -4103,24 +3873,6 @@ clear_nuke_vars = {
 		clear_array = global.damage_building_13_array
 		clear_array = global.damage_building_14_array
 		clear_array = global.damage_building_15_array
-
-		#clear_variable = temp_missile_strike_type
-
-		# clear_variable = var_damage_building_1
-		# clear_variable = var_damage_building_2
-		# clear_variable = var_damage_building_3
-		# clear_variable = var_damage_building_4
-		# clear_variable = var_damage_building_5
-		# clear_variable = var_damage_building_6
-		# clear_variable = var_damage_building_7
-		# clear_variable = var_damage_building_8
-		# clear_variable = var_damage_building_9
-		# clear_variable = var_damage_building_10
-		# clear_variable = var_damage_building_11
-		# clear_variable = var_damage_building_12
-		# clear_variable = var_damage_building_13
-		# clear_variable = var_damage_building_14
-		# clear_variable = var_damage_building_15
 	}
 }
 
@@ -4891,6 +4643,82 @@ set_conventional_warhead_damage = {
 				}
 			}
 			#
+			1 = {
+				while_loop_effect = {
+					limit = {
+						check_variable = { temp2 > 0 }
+					}
+					subtract_from_temp_variable = { temp2 = 1 }
+					meta_effect = {
+						text = {
+							if = {
+								limit = {
+									check_variable = { [target_point_ID].non_damaged_building_level@fossil_powerplant > 0 }
+								}
+								[target_point_ID] = {
+									damage_building = {
+										type = fossil_powerplant
+										damage = 1
+									}
+								}
+								add_to_variable = { var_damage_building_21 = 1 }
+							}
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
+				modifier = {
+					factor = 0
+					NOT = { check_variable = { target_selected_21_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@fossil_powerplant < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
+			}
+			1 = {
+				while_loop_effect = {
+					limit = {
+						check_variable = { temp2 > 0 }
+					}
+					subtract_from_temp_variable = { temp2 = 1 }
+					meta_effect = {
+						text = {
+							if = {
+								limit = {
+									check_variable = { [target_point_ID].non_damaged_building_level@synthetic_refinery > 0 }
+								}
+								[target_point_ID] = {
+									damage_building = {
+										type = synthetic_refinery
+										damage = 1
+									}
+								}
+								add_to_variable = { var_damage_building_22 = 1 }
+							}
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
+				modifier = {
+					factor = 0
+					NOT = { check_variable = { target_selected_22_array^i = 1 } }
+				}
+				modifier = {
+					factor = 0
+					meta_trigger = {
+						text = {
+							check_variable = { [target_point_ID].non_damaged_building_level@synthetic_refinery < 1 }
+						}
+						target_point_ID = "[?missile_target_point_array^i.GetID]"
+					}
+				}
+			}
 		}
 	}
 	set_missile_damage_stats = yes
@@ -4915,6 +4743,8 @@ set_conventional_warhead_damage = {
 	clear_variable = var_damage_building_18
 	clear_variable = var_damage_building_19
 	clear_variable = var_damage_building_20
+	clear_variable = var_damage_building_21
+	clear_variable = var_damage_building_22
 
 	clear_variable = var_total_org_damage
 	clear_variable = var_total_str_damage
@@ -5313,6 +5143,9 @@ set_conventional_warhead_unit_damage = {
 	clear_variable = var_damage_building_18
 	clear_variable = var_damage_building_19
 	clear_variable = var_damage_building_20
+	clear_variable = var_damage_building_21
+	clear_variable = var_damage_building_22
+
 
 	clear_variable = var_total_org_damage
 	clear_variable = var_total_str_damage
@@ -7718,285 +7551,251 @@ update_SPY_mission_plus_minus_button = {
 }
 
 calculate_GNSS_mil_gui_vars = {
-	# meta_effect = {
-	# 	text = {
-			### GNSS mil
-			#army_speed_factor
-			set_variable = { var_GNSS_mil_army_speed_factor_base = global.GNSS_mil_army_speed_factor_max_array^var_GNSS_mil_system_idx }
-			set_variable = { var_GNSS_mil_army_speed_factor_min = global.GNSS_mil_army_speed_factor_min_array^var_GNSS_mil_system_idx }
-			multiply_variable = { var_GNSS_mil_army_speed_factor_base = var_GNSS_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_mil_army_speed_factor_base < var_GNSS_mil_army_speed_factor_min
-					}
-				}
-				set_variable = { var_GNSS_mil_army_speed_factor_base = var_GNSS_mil_army_speed_factor_min }
-			}
-			#air_cas_efficiency
-			set_variable = { var_GNSS_mil_air_cas_efficiency_base = global.GNSS_mil_air_cas_efficiency_max_array^var_GNSS_mil_system_idx }
-			set_variable = { var_GNSS_mil_air_cas_efficiency_min = global.GNSS_mil_air_cas_efficiency_min_array^var_GNSS_mil_system_idx }
-			multiply_variable = { var_GNSS_mil_air_cas_efficiency_base = var_GNSS_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_mil_air_cas_efficiency_base < var_GNSS_mil_air_cas_efficiency_min
-					}
-				}
-				set_variable = { var_GNSS_mil_air_cas_efficiency_base = var_GNSS_mil_air_cas_efficiency_min }
-			}
-			#air_nav_efficiency
-			set_variable = { var_GNSS_mil_air_nav_efficiency_base = global.GNSS_mil_air_nav_efficiency_max_array^var_GNSS_mil_system_idx }
-			set_variable = { var_GNSS_mil_air_nav_efficiency_min = global.GNSS_mil_air_nav_efficiency_min_array^var_GNSS_mil_system_idx }
-			multiply_variable = { var_GNSS_mil_air_nav_efficiency_base = var_GNSS_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_mil_air_nav_efficiency_base  < var_GNSS_mil_air_nav_efficiency_min
-					}
-				}
-				set_variable = { var_GNSS_mil_air_nav_efficiency_base = var_GNSS_mil_air_nav_efficiency_min }
-			}
-			#air_strategic_bomber_bombing_factor
-			set_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_base = global.GNSS_mil_air_strategic_bomber_bombing_factor_max_array^var_GNSS_mil_system_idx }
-			set_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_min = global.GNSS_mil_air_strategic_bomber_bombing_factor_min_array^var_GNSS_mil_system_idx }
-			multiply_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_base = var_GNSS_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_mil_air_strategic_bomber_bombing_factor_base < var_GNSS_mil_air_strategic_bomber_bombing_factor_min
-					}
-				}
-				set_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_base = var_GNSS_mil_air_strategic_bomber_bombing_factor_min }
-			}
-			#positioning
-			set_variable = { var_GNSS_mil_positioning_base = global.GNSS_mil_positioning_max_array^var_GNSS_mil_system_idx }
-			set_variable = { var_GNSS_mil_positioning_min = global.GNSS_mil_positioning_min_array^var_GNSS_mil_system_idx }
-			multiply_variable = { var_GNSS_mil_positioning_base = var_GNSS_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_mil_positioning_base < var_GNSS_mil_positioning_min
-					}
-				}
-				set_variable = { var_GNSS_mil_positioning_base = var_GNSS_mil_positioning_min }
-			}
-			#naval_hit_chance
-			set_variable = { var_GNSS_mil_naval_hit_chance_base = global.GNSS_mil_naval_hit_chance_max_array^var_GNSS_mil_system_idx }
-			set_variable = { var_GNSS_mil_naval_hit_chance_min = global.GNSS_mil_naval_hit_chance_min_array^var_GNSS_mil_system_idx }
-			multiply_variable = { var_GNSS_mil_naval_hit_chance_base = var_GNSS_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_mil_naval_hit_chance_base < var_GNSS_mil_naval_hit_chance_min
-					}
-				}
-				set_variable = { var_GNSS_mil_naval_hit_chance_base = var_GNSS_mil_naval_hit_chance_min }
-			}
 
-			###
-			#force_update_dynamic_modifier = yes
-		# }
-	# 	GNSS_mil_system_ID = "[?var_GNSS_mil_system_idx]"
-	# }
+	set_variable = { var_GNSS_mil_army_speed_factor_base = global.GNSS_mil_army_speed_factor_max_array^var_GNSS_mil_system_idx }
+	set_variable = { var_GNSS_mil_army_speed_factor_min = global.GNSS_mil_army_speed_factor_min_array^var_GNSS_mil_system_idx }
+	multiply_variable = { var_GNSS_mil_army_speed_factor_base = var_GNSS_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_mil_army_speed_factor_base < var_GNSS_mil_army_speed_factor_min
+			}
+		}
+		set_variable = { var_GNSS_mil_army_speed_factor_base = var_GNSS_mil_army_speed_factor_min }
+	}
+	#air_cas_efficiency
+	set_variable = { var_GNSS_mil_air_cas_efficiency_base = global.GNSS_mil_air_cas_efficiency_max_array^var_GNSS_mil_system_idx }
+	set_variable = { var_GNSS_mil_air_cas_efficiency_min = global.GNSS_mil_air_cas_efficiency_min_array^var_GNSS_mil_system_idx }
+	multiply_variable = { var_GNSS_mil_air_cas_efficiency_base = var_GNSS_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_mil_air_cas_efficiency_base < var_GNSS_mil_air_cas_efficiency_min
+			}
+		}
+		set_variable = { var_GNSS_mil_air_cas_efficiency_base = var_GNSS_mil_air_cas_efficiency_min }
+	}
+	#air_nav_efficiency
+	set_variable = { var_GNSS_mil_air_nav_efficiency_base = global.GNSS_mil_air_nav_efficiency_max_array^var_GNSS_mil_system_idx }
+	set_variable = { var_GNSS_mil_air_nav_efficiency_min = global.GNSS_mil_air_nav_efficiency_min_array^var_GNSS_mil_system_idx }
+	multiply_variable = { var_GNSS_mil_air_nav_efficiency_base = var_GNSS_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_mil_air_nav_efficiency_base  < var_GNSS_mil_air_nav_efficiency_min
+			}
+		}
+		set_variable = { var_GNSS_mil_air_nav_efficiency_base = var_GNSS_mil_air_nav_efficiency_min }
+	}
+	#air_strategic_bomber_bombing_factor
+	set_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_base = global.GNSS_mil_air_strategic_bomber_bombing_factor_max_array^var_GNSS_mil_system_idx }
+	set_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_min = global.GNSS_mil_air_strategic_bomber_bombing_factor_min_array^var_GNSS_mil_system_idx }
+	multiply_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_base = var_GNSS_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_mil_air_strategic_bomber_bombing_factor_base < var_GNSS_mil_air_strategic_bomber_bombing_factor_min
+			}
+		}
+		set_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor_base = var_GNSS_mil_air_strategic_bomber_bombing_factor_min }
+	}
+	#positioning
+	set_variable = { var_GNSS_mil_positioning_base = global.GNSS_mil_positioning_max_array^var_GNSS_mil_system_idx }
+	set_variable = { var_GNSS_mil_positioning_min = global.GNSS_mil_positioning_min_array^var_GNSS_mil_system_idx }
+	multiply_variable = { var_GNSS_mil_positioning_base = var_GNSS_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_mil_positioning_base < var_GNSS_mil_positioning_min
+			}
+		}
+		set_variable = { var_GNSS_mil_positioning_base = var_GNSS_mil_positioning_min }
+	}
+	#naval_hit_chance
+	set_variable = { var_GNSS_mil_naval_hit_chance_base = global.GNSS_mil_naval_hit_chance_max_array^var_GNSS_mil_system_idx }
+	set_variable = { var_GNSS_mil_naval_hit_chance_min = global.GNSS_mil_naval_hit_chance_min_array^var_GNSS_mil_system_idx }
+	multiply_variable = { var_GNSS_mil_naval_hit_chance_base = var_GNSS_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_mil_naval_hit_chance_base < var_GNSS_mil_naval_hit_chance_min
+			}
+		}
+		set_variable = { var_GNSS_mil_naval_hit_chance_base = var_GNSS_mil_naval_hit_chance_min }
+	}
 }
 calculate_GNSS_civ_gui_vars = {
-	# meta_effect = {
-	# 	text = {
-			### GNSS civ
-			#production_speed_buildings_factor
-			set_variable = { var_GNSS_civ_production_speed_buildings_factor_base = global.GNSS_civ_production_speed_buildings_factor_max_array^var_GNSS_civ_system_idx }
-			set_variable = { var_GNSS_civ_production_speed_buildings_factor_min = global.GNSS_civ_production_speed_buildings_factor_min_array^var_GNSS_civ_system_idx }
-			multiply_variable = { var_GNSS_civ_production_speed_buildings_factor_base = var_GNSS_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_civ_production_speed_buildings_factor_base < var_GNSS_civ_production_speed_buildings_factor_min
-					}
-				}
-				set_variable = { var_GNSS_civ_production_speed_buildings_factor_base = var_GNSS_civ_production_speed_buildings_factor_min }
+	set_variable = { var_GNSS_civ_production_speed_buildings_factor_base = global.GNSS_civ_production_speed_buildings_factor_max_array^var_GNSS_civ_system_idx }
+	set_variable = { var_GNSS_civ_production_speed_buildings_factor_min = global.GNSS_civ_production_speed_buildings_factor_min_array^var_GNSS_civ_system_idx }
+	multiply_variable = { var_GNSS_civ_production_speed_buildings_factor_base = var_GNSS_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_civ_production_speed_buildings_factor_base < var_GNSS_civ_production_speed_buildings_factor_min
 			}
-			#production_speed_infrastructure_factor
-			set_variable = { var_GNSS_civ_production_speed_infrastructure_factor_base = global.GNSS_civ_production_speed_infrastructure_factor_max_array^var_GNSS_civ_system_idx }
-			set_variable = { var_GNSS_civ_production_speed_infrastructure_factor_min = global.GNSS_civ_production_speed_infrastructure_factor_min_array^var_GNSS_civ_system_idx }
-			multiply_variable = { var_GNSS_civ_production_speed_infrastructure_factor_base = var_GNSS_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_civ_production_speed_infrastructure_factor_base < var_GNSS_civ_production_speed_infrastructure_factor_min
-					}
-				}
-				set_variable = { var_GNSS_civ_production_speed_infrastructure_factor_base = var_GNSS_civ_production_speed_infrastructure_factor_min }
+		}
+		set_variable = { var_GNSS_civ_production_speed_buildings_factor_base = var_GNSS_civ_production_speed_buildings_factor_min }
+	}
+	#production_speed_infrastructure_factor
+	set_variable = { var_GNSS_civ_production_speed_infrastructure_factor_base = global.GNSS_civ_production_speed_infrastructure_factor_max_array^var_GNSS_civ_system_idx }
+	set_variable = { var_GNSS_civ_production_speed_infrastructure_factor_min = global.GNSS_civ_production_speed_infrastructure_factor_min_array^var_GNSS_civ_system_idx }
+	multiply_variable = { var_GNSS_civ_production_speed_infrastructure_factor_base = var_GNSS_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_civ_production_speed_infrastructure_factor_base < var_GNSS_civ_production_speed_infrastructure_factor_min
 			}
-			#local_resources_factor
-			set_variable = { var_GNSS_civ_local_resources_factor_base = global.GNSS_civ_local_resources_factor_max_array^var_GNSS_civ_system_idx }
-			set_variable = { var_GNSS_civ_local_resources_factor_min = global.GNSS_civ_local_resources_factor_min_array^var_GNSS_civ_system_idx }
-			multiply_variable = { var_GNSS_civ_local_resources_factor_base = var_GNSS_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_GNSS_civ_local_resources_factor_base < var_GNSS_civ_local_resources_factor_min
-					}
-				}
-				set_variable = { var_GNSS_civ_local_resources_factor_base = var_GNSS_civ_local_resources_factor_min }
+		}
+		set_variable = { var_GNSS_civ_production_speed_infrastructure_factor_base = var_GNSS_civ_production_speed_infrastructure_factor_min }
+	}
+	#local_resources_factor
+	set_variable = { var_GNSS_civ_local_resources_factor_base = global.GNSS_civ_local_resources_factor_max_array^var_GNSS_civ_system_idx }
+	set_variable = { var_GNSS_civ_local_resources_factor_min = global.GNSS_civ_local_resources_factor_min_array^var_GNSS_civ_system_idx }
+	multiply_variable = { var_GNSS_civ_local_resources_factor_base = var_GNSS_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_GNSS_civ_local_resources_factor_base < var_GNSS_civ_local_resources_factor_min
 			}
-			###
-			#force_update_dynamic_modifier = yes
-	# 	}
-	# 	GNSS_civ_system_ID = "[?var_GNSS_civ_system_idx]"
-	# }
+		}
+		set_variable = { var_GNSS_civ_local_resources_factor_base = var_GNSS_civ_local_resources_factor_min }
+	}
 }
 calculate_COM_mil_gui_vars = {
-	# meta_effect = {
-	# 	text = {
-			### COM mil
-			#max_command_power
-			set_variable = { var_COM_mil_max_command_power_base = global.COM_mil_max_command_power_max_array^var_COM_mil_system_idx }
-			set_variable = { var_COM_mil_max_command_power_min = global.COM_mil_max_command_power_min_array^var_COM_mil_system_idx }
-			multiply_variable = { var_COM_mil_max_command_power_base = var_COM_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_mil_max_command_power_base < var_COM_mil_max_command_power_min
-					}
-				}
-				set_variable = { var_COM_mil_max_command_power_base = var_COM_mil_max_command_power_min }
+	# Command Power
+	set_variable = { var_COM_mil_max_command_power_base = global.COM_mil_max_command_power_max_array^var_COM_mil_system_idx }
+	set_variable = { var_COM_mil_max_command_power_min = global.COM_mil_max_command_power_min_array^var_COM_mil_system_idx }
+	multiply_variable = { var_COM_mil_max_command_power_base = var_COM_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_mil_max_command_power_base < var_COM_mil_max_command_power_min
 			}
-			#army_org_factor
-			set_variable = { var_COM_mil_army_org_factor_base = global.COM_mil_army_org_factor_max_array^var_COM_mil_system_idx }
-			set_variable = { var_COM_mil_army_org_factor_min = global.COM_mil_army_org_factor_min_array^var_COM_mil_system_idx }
-			multiply_variable = { var_COM_mil_army_org_factor_base = var_COM_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_mil_army_org_factor_base < var_COM_mil_army_org_factor_min
-					}
-				}
-				set_variable = { var_COM_mil_army_org_factor_base = var_COM_mil_army_org_factor_min }
+		}
+		set_variable = { var_COM_mil_max_command_power_base = var_COM_mil_max_command_power_min }
+	}
+	#army_org_factor
+	set_variable = { var_COM_mil_army_org_factor_base = global.COM_mil_army_org_factor_max_array^var_COM_mil_system_idx }
+	set_variable = { var_COM_mil_army_org_factor_min = global.COM_mil_army_org_factor_min_array^var_COM_mil_system_idx }
+	multiply_variable = { var_COM_mil_army_org_factor_base = var_COM_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_mil_army_org_factor_base < var_COM_mil_army_org_factor_min
 			}
-			#planning_speed
-			set_variable = { var_COM_mil_planning_speed_base = global.COM_mil_planning_speed_max_array^var_COM_mil_system_idx }
-			set_variable = { var_COM_mil_planning_speed_min = global.COM_mil_planning_speed_min_array^var_COM_mil_system_idx }
-			multiply_variable = { var_COM_mil_planning_speed_base = var_COM_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_mil_planning_speed_base < var_COM_mil_planning_speed_min
-					}
-				}
-				set_variable = { var_COM_mil_planning_speed_base = var_COM_mil_planning_speed_min }
+		}
+		set_variable = { var_COM_mil_army_org_factor_base = var_COM_mil_army_org_factor_min }
+	}
+	#planning_speed
+	set_variable = { var_COM_mil_planning_speed_base = global.COM_mil_planning_speed_max_array^var_COM_mil_system_idx }
+	set_variable = { var_COM_mil_planning_speed_min = global.COM_mil_planning_speed_min_array^var_COM_mil_system_idx }
+	multiply_variable = { var_COM_mil_planning_speed_base = var_COM_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_mil_planning_speed_base < var_COM_mil_planning_speed_min
 			}
-			#air_escort_efficiency
-			set_variable = { var_COM_mil_air_escort_efficiency_base = global.COM_mil_air_escort_efficiency_max_array^var_COM_mil_system_idx }
-			set_variable = { var_COM_mil_air_escort_efficiency_min = global.COM_mil_air_escort_efficiency_min_array^var_COM_mil_system_idx }
-			multiply_variable = { var_COM_mil_air_escort_efficiency_base = var_COM_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_mil_air_escort_efficiency_base < var_COM_mil_air_escort_efficiency_min
-					}
-				}
-				set_variable = { var_COM_mil_air_escort_efficiency_base = var_COM_mil_air_escort_efficiency_min }
+		}
+		set_variable = { var_COM_mil_planning_speed_base = var_COM_mil_planning_speed_min }
+	}
+	#air_escort_efficiency
+	set_variable = { var_COM_mil_air_escort_efficiency_base = global.COM_mil_air_escort_efficiency_max_array^var_COM_mil_system_idx }
+	set_variable = { var_COM_mil_air_escort_efficiency_min = global.COM_mil_air_escort_efficiency_min_array^var_COM_mil_system_idx }
+	multiply_variable = { var_COM_mil_air_escort_efficiency_base = var_COM_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_mil_air_escort_efficiency_base < var_COM_mil_air_escort_efficiency_min
 			}
-			#air_intercept_efficiency
-			set_variable = { var_COM_mil_air_intercept_efficiency_base = global.COM_mil_air_intercept_efficiency_max_array^var_COM_mil_system_idx }
-			set_variable = { var_COM_mil_air_intercept_efficiency_min = global.COM_mil_air_intercept_efficiency_min_array^var_COM_mil_system_idx }
-			multiply_variable = { var_COM_mil_air_intercept_efficiency_base = var_COM_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_mil_air_intercept_efficiency_base < var_COM_mil_air_intercept_efficiency_min
-					}
-				}
-				set_variable = { var_COM_mil_air_intercept_efficiency_base = var_COM_mil_air_intercept_efficiency_min }
+		}
+		set_variable = { var_COM_mil_air_escort_efficiency_base = var_COM_mil_air_escort_efficiency_min }
+	}
+	#air_intercept_efficiency
+	set_variable = { var_COM_mil_air_intercept_efficiency_base = global.COM_mil_air_intercept_efficiency_max_array^var_COM_mil_system_idx }
+	set_variable = { var_COM_mil_air_intercept_efficiency_min = global.COM_mil_air_intercept_efficiency_min_array^var_COM_mil_system_idx }
+	multiply_variable = { var_COM_mil_air_intercept_efficiency_base = var_COM_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_mil_air_intercept_efficiency_base < var_COM_mil_air_intercept_efficiency_min
 			}
-			#naval_coordination
-			set_variable = { var_COM_mil_naval_coordination_base = global.COM_mil_naval_coordination_max_array^var_COM_mil_system_idx }
-			set_variable = { var_COM_mil_naval_coordination_min = global.COM_mil_naval_coordination_min_array^var_COM_mil_system_idx }
-			multiply_variable = { var_COM_mil_naval_coordination_base = var_COM_mil_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_mil_naval_coordination_base < var_COM_mil_naval_coordination_min
-					}
-				}
-				set_variable = { var_COM_mil_naval_coordination_base = var_COM_mil_naval_coordination_min }
+		}
+		set_variable = { var_COM_mil_air_intercept_efficiency_base = var_COM_mil_air_intercept_efficiency_min }
+	}
+	#naval_coordination
+	set_variable = { var_COM_mil_naval_coordination_base = global.COM_mil_naval_coordination_max_array^var_COM_mil_system_idx }
+	set_variable = { var_COM_mil_naval_coordination_min = global.COM_mil_naval_coordination_min_array^var_COM_mil_system_idx }
+	multiply_variable = { var_COM_mil_naval_coordination_base = var_COM_mil_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_mil_naval_coordination_base < var_COM_mil_naval_coordination_min
 			}
-			###
-			#force_update_dynamic_modifier = yes
-	# 	}
-	# 	COM_mil_system_ID = "[?var_COM_mil_system_idx]"
-	# }
+		}
+		set_variable = { var_COM_mil_naval_coordination_base = var_COM_mil_naval_coordination_min }
+	}
 }
 calculate_COM_civ_gui_vars = {
-	# meta_effect = {
-	# 	text = {
-			### COM civ
-			#political_power_factor
-			set_variable = { var_COM_civ_political_power_factor_base = global.COM_civ_political_power_factor_max_array^var_COM_civ_system_idx }
-			set_variable = { var_COM_civ_political_power_factor_min = global.COM_civ_political_power_factor_min_array^var_COM_civ_system_idx }
-			multiply_variable = { var_COM_civ_political_power_factor_base = var_COM_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_civ_political_power_factor_base < var_COM_civ_political_power_factor_min
-					}
-				}
-				set_variable = { var_COM_civ_political_power_factor_base = var_COM_civ_political_power_factor_min }
+	#political_power_factor
+	set_variable = { var_COM_civ_political_power_factor_base = global.COM_civ_political_power_factor_max_array^var_COM_civ_system_idx }
+	set_variable = { var_COM_civ_political_power_factor_min = global.COM_civ_political_power_factor_min_array^var_COM_civ_system_idx }
+	multiply_variable = { var_COM_civ_political_power_factor_base = var_COM_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_civ_political_power_factor_base < var_COM_civ_political_power_factor_min
 			}
-			#decryption_factor
-			set_variable = { var_COM_civ_decryption_factor_base = global.COM_civ_decryption_factor_max_array^var_COM_civ_system_idx }
-			set_variable = { var_COM_civ_decryption_factor_min = global.COM_civ_decryption_factor_min_array^var_COM_civ_system_idx }
-			multiply_variable = { var_COM_civ_decryption_factor_base = var_COM_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_civ_decryption_factor_base< var_COM_civ_decryption_factor_min
-					}
-				}
-				set_variable = { var_COM_civ_decryption_factor_base = var_COM_civ_decryption_factor_min }
+		}
+		set_variable = { var_COM_civ_political_power_factor_base = var_COM_civ_political_power_factor_min }
+	}
+	#decryption_factor
+	set_variable = { var_COM_civ_decryption_factor_base = global.COM_civ_decryption_factor_max_array^var_COM_civ_system_idx }
+	set_variable = { var_COM_civ_decryption_factor_min = global.COM_civ_decryption_factor_min_array^var_COM_civ_system_idx }
+	multiply_variable = { var_COM_civ_decryption_factor_base = var_COM_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_civ_decryption_factor_base< var_COM_civ_decryption_factor_min
 			}
-			#encryption_factor
-			set_variable = { var_COM_civ_encryption_factor_base = global.COM_civ_encryption_factor_max_array^var_COM_civ_system_idx }
-			set_variable = { var_COM_civ_encryption_factor_min = global.COM_civ_encryption_factor_min_array^var_COM_civ_system_idx }
-			multiply_variable = { var_COM_civ_encryption_factor_base = var_COM_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_civ_encryption_factor_base < var_COM_civ_encryption_factor_min
-					}
-				}
-				set_variable = { var_COM_civ_encryption_factor_base = var_COM_civ_encryption_factor_min }
+		}
+		set_variable = { var_COM_civ_decryption_factor_base = var_COM_civ_decryption_factor_min }
+	}
+	#encryption_factor
+	set_variable = { var_COM_civ_encryption_factor_base = global.COM_civ_encryption_factor_max_array^var_COM_civ_system_idx }
+	set_variable = { var_COM_civ_encryption_factor_min = global.COM_civ_encryption_factor_min_array^var_COM_civ_system_idx }
+	multiply_variable = { var_COM_civ_encryption_factor_base = var_COM_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_civ_encryption_factor_base < var_COM_civ_encryption_factor_min
 			}
-			#intel_network_gain_factor
-			set_variable = { var_COM_civ_intel_network_gain_factor_base = global.COM_civ_intel_network_gain_factor_max_array^var_COM_civ_system_idx }
-			set_variable = { var_COM_civ_intel_network_gain_factor_min = global.COM_civ_intel_network_gain_factor_min_array^var_COM_civ_system_idx }
-			multiply_variable = { var_COM_civ_intel_network_gain_factor_base = var_COM_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_civ_intel_network_gain_factor_base < var_COM_civ_intel_network_gain_factor_min
-					}
-				}
-				set_variable = { var_COM_civ_intel_network_gain_factor_base = var_COM_civ_intel_network_gain_factor_min }
+		}
+		set_variable = { var_COM_civ_encryption_factor_base = var_COM_civ_encryption_factor_min }
+	}
+	#intel_network_gain_factor
+	set_variable = { var_COM_civ_intel_network_gain_factor_base = global.COM_civ_intel_network_gain_factor_max_array^var_COM_civ_system_idx }
+	set_variable = { var_COM_civ_intel_network_gain_factor_min = global.COM_civ_intel_network_gain_factor_min_array^var_COM_civ_system_idx }
+	multiply_variable = { var_COM_civ_intel_network_gain_factor_base = var_COM_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_civ_intel_network_gain_factor_base < var_COM_civ_intel_network_gain_factor_min
 			}
-			#operation_outcome
-			set_variable = { var_COM_civ_operation_outcome_base = global.COM_civ_operation_outcome_max_array^var_COM_civ_system_idx }
-			set_variable = { var_COM_civ_operation_outcome_min = global.COM_civ_operation_outcome_min_array^var_COM_civ_system_idx }
-			multiply_variable = { var_COM_civ_operation_outcome_base = var_COM_civ_sat_system_bonus }
-			if = {
-				limit = {
-					check_variable = {
-						var_COM_civ_operation_outcome_base < var_COM_civ_operation_outcome_min
-					}
-				}
-				set_variable = { var_COM_civ_operation_outcome_base = var_COM_civ_operation_outcome_min }
+		}
+		set_variable = { var_COM_civ_intel_network_gain_factor_base = var_COM_civ_intel_network_gain_factor_min }
+	}
+	#operation_outcome
+	set_variable = { var_COM_civ_operation_outcome_base = global.COM_civ_operation_outcome_max_array^var_COM_civ_system_idx }
+	set_variable = { var_COM_civ_operation_outcome_min = global.COM_civ_operation_outcome_min_array^var_COM_civ_system_idx }
+	multiply_variable = { var_COM_civ_operation_outcome_base = var_COM_civ_sat_system_bonus }
+	if = {
+		limit = {
+			check_variable = {
+				var_COM_civ_operation_outcome_base < var_COM_civ_operation_outcome_min
 			}
-			###
-			#force_update_dynamic_modifier = yes
-	# 	}
-	# 	COM_civ_system_ID = "[?var_COM_civ_system_idx]"
-	# }
+		}
+		set_variable = { var_COM_civ_operation_outcome_base = var_COM_civ_operation_outcome_min }
+	}
 }
 calculate_SPY_mil_gui_vars = {
 	# meta_effect = {
@@ -10861,6 +10660,14 @@ set_sat_access_arrays_selected_TAG = {
 ### MD_countrymissilesview_nukes_gui ###
 ########################################
 
+# Documentation on how the Nuclear Production System works
+# Notable Variables:
+# var_enrichment_grade_factor: This is used to control how many civilian industry is required per enrichment level
+# var_enrichment_nuclear_energy_prod_factor: This is used to determine how much Reactor-grade produced per tick
+# var_enrichment_nuclear_material_prod_factor: This is used to determine how much Weapons-grade produced per tick
+
+# Function: set_nuke_arrays_selected_TAG
+# Purpose: This set sa set of variables for display purposes.
 set_nuke_arrays_selected_TAG = {
 	clear_array = ROOT.selected_TAG_nuclear_status_array
 	clear_array = ROOT.selected_TAG_nuclear_doctrine_array
@@ -10873,83 +10680,105 @@ set_nuke_arrays_selected_TAG = {
 			array = THIS.nuclear_doctrine_array
 			add_to_array = { ROOT.selected_TAG_nuclear_doctrine_array = v }
 		}
-	}
-	set_selected_TAG_LEU_HEU = yes
-}
-
-set_selected_TAG_LEU_HEU = {
-	var:nukes_selected_TAG = {
 		set_variable = { ROOT.var_selected_TAG_LEU_selected = var_LEU_selected }
-	}
-	var:nukes_selected_TAG = {
 		set_variable = { ROOT.var_selected_TAG_HEU_selected = var_HEU_selected }
 	}
 }
 
+# Function: set_enrichment_efficiency_LEU
+# Purpose: Sets the initial variables for calculating the effienecy rates for LEU
 set_enrichment_efficiency_LEU = {
-	set_variable = { var_num_nuclear_reactor = 0 }
 	set_variable = { var_enrichment_grade_factor = 1 }
-	set_variable = { var_enrichment_nuclear_energy_prod_factor = 1 }
-	set_variable = { var_enrichment_nuclear_material_prod_factor = 0.1 }
-	every_controlled_state = {
-		add_to_variable = { ROOT.var_num_nuclear_reactor = non_damaged_building_level@nuclear_reactor }
-	}
-	update_enrichment_efficiency = yes
+	set_variable = { var_enrichment_nuclear_energy_prod_factor = 175 } # CHANGE ME IF YOU WANT ME TO BE MORE PRODUCTIVE, weekly production value
+	set_variable = { var_enrichment_nuclear_material_prod_factor = 0 }
+
+	set_temp_variable = { modify_leu = 1 }
+	add_to_temp_variable = { modify_leu = modifier@leu_fuel_production_modifier }
+
+	multiply_variable = { var_enrichment_nuclear_material_prod_factor = modify_leu }
 }
 
+# Function: set_enrichment_efficiency_HEU
+# Purpose: Sets the initial variables for calculating the effienecy rates for HEU
+set_enrichment_efficiency_HEU = {
+	set_variable = { var_enrichment_grade_factor = 1 }
+	set_variable = { var_enrichment_nuclear_energy_prod_factor = 0 }
+	set_variable = { var_enrichment_nuclear_material_prod_factor = 105 } # CHANGE ME IF YOU WANT ME TO BE MORE PRODUCTIVE, weekly production value
+
+	set_temp_variable = { modify_heu = 1 }
+	add_to_temp_variable = { modify_heu = modifier@heu_fuel_production_modifier }
+
+	multiply_variable = { var_enrichment_nuclear_material_prod_factor = modify_heu }
+}
+
+# Function: update_enrichment_efficiency
+# Purpose: This updates the enrichment efficiency for the production of the nuclear production
 update_enrichment_efficiency = {
 	if = {
 		limit = {
 			check_variable = { var_LEU_selected = 2 }
-			check_variable = { var_num_nuclear_reactor < var_CIC_use_enrichment }
+			check_variable = { enrichment_facilities < var_CIC_use_enrichment }
 		}
-		set_variable = { var_CIC_use_enrichment = var_num_nuclear_reactor }
+		set_variable = { var_CIC_use_enrichment = enrichment_facilities }
 	}
+
 	set_variable = { var_enrichment_efficiency = var_CIC_use_enrichment }
 	set_temp_variable = { temp1 = var_enrichment_grade_factor }
-	multiply_temp_variable = { temp1 = var_num_nuclear_reactor }
+	multiply_temp_variable = { temp1 = enrichment_facilities }
 	divide_variable = { var_enrichment_efficiency = temp1 }
 	force_update_dynamic_modifier = yes
 }
 
-set_enrichment_efficiency_HEU = {
-	set_variable = { var_num_nuclear_reactor = 0 }
-	set_variable = { var_enrichment_grade_factor = 2 }
-	set_variable = { var_enrichment_nuclear_energy_prod_factor = 2 }
-	set_variable = { var_enrichment_nuclear_material_prod_factor = 4 }
-	every_controlled_state = {
-		add_to_variable = { ROOT.var_num_nuclear_reactor = non_damaged_building_level@nuclear_reactor }
-	}
-	update_enrichment_efficiency = yes
-}
-
-update_nuclear_production = {
+# Function: update_nuclear_production
+# Purpose: This calculates the actual production of the resources
+update_nuclear_production = { # TODO: Calculate how to increase production and CIC requirement for enrichment facilities at scale
 	set_temp_variable = { temp1 = var_enrichment_nuclear_energy_prod_factor }
-	multiply_temp_variable = { temp1 = var_enrichment_efficiency }
-	multiply_temp_variable = { temp1 = var_nuke_energy_ratio }
-	set_temp_variable = { temp_num_nuclear_reactor = 0 }
-	every_controlled_state = {
-		add_to_temp_variable = { temp_num_nuclear_reactor = non_damaged_building_level@nuclear_reactor }
-	}
-	multiply_temp_variable = { temp1 = temp_num_nuclear_reactor }
-	multiply_temp_variable = { temp1 = 6 } #### fuel production nuke reactor
-	set_variable = { var_nuke_energy_prod_hour = temp1 } ### per hour
-	set_variable = { var_nuke_energy_prod_day = temp1 }
-	multiply_variable = { var_nuke_energy_prod_day = 24 } ### per day
-
+	multiply_temp_variable = { temp1 = enrichment_facilities }
+	set_variable = { var_nuke_nuclear_reactor_prod = temp1 }
 
 	set_temp_variable = { temp2 = var_enrichment_nuclear_material_prod_factor }
-	multiply_temp_variable = { temp2 = var_enrichment_efficiency }
-	multiply_temp_variable = { temp2 = var_nuke_nuclear_material_ratio }
-	multiply_temp_variable = { temp2 = temp_num_nuclear_reactor }
+	multiply_temp_variable = { temp2 = enrichment_facilities }
 	set_variable = { var_nuke_nuclear_material_prod = temp2 }
 
-	#force_update_dynamic_modifier = yes
+	set_variable = { var_enrichment_efficiency = 1.0 }
 	missile_ui_update = yes
 }
 
-add_nuclear_material_stockpile = {
-	add_to_variable = { var_nuclear_material_stockpile = var_nuke_nuclear_material_prod }
+# Function: nuclear_reactor_fuel_consumption
+# Purpose: This subtracts reactor grade material from the stockpile based on number of reactors
+nuclear_reactor_fuel_consumption = {
+	subtract_from_variable = { var_reactor_material_stockpile = nuclear_fuel_consumption } #consumption calculated in energy effects
+	clamp_variable = { var = var_reactor_material_stockpile min = 0 }
+}
+
+# Function: setup_starting_reactor_stockpile
+# Purpose: Setups the current nuclear reactor and enrichment facilities setup
+setup_starting_reactor_stockpile = {
+	set_variable = { nuclear_reactors = 0 }
+	every_controlled_state = {
+		add_to_variable = { PREV.nuclear_reactors = building_level@nuclear_reactor }
+	}
+	set_temp_variable = { starting_reactor_grade_stockpile = nuclear_reactors }
+	multiply_temp_variable = { starting_reactor_grade_stockpile = 1000 }
+	set_variable = { var_reactor_material_stockpile = starting_reactor_grade_stockpile }
+
+	# Init the LEU production for all enrichment facilities
+	if = { limit = { check_variable = { enrichment_facilities > 0 } }
+		if = {
+			limit = {
+				check_variable = { var_LEU_selected = 2 }
+			}
+			set_variable = { var_LEU_selected = 1 }
+		}
+		else = {
+			set_variable = { var_LEU_selected = 2 }
+			set_variable = { var_HEU_selected = 1 }
+		}
+		set_enrichment_efficiency_LEU = yes
+		update_nuclear_production = yes
+		var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
+		update_nuclear_production = yes
+	}
 }
 
 check_enrichment = {
@@ -10959,11 +10788,8 @@ check_enrichment = {
 			NOT = {
 				can_enrich_HEU = yes
 			}
-		}
-		subtract_from_variable = { var_CIC_use_nuclear = var_CIC_use_enrichment }
-		set_variable = { var_HEU_selected = 1 }
+		}		set_variable = { var_HEU_selected = 1 }
 		set_variable = { var_enrichment_efficiency = 0 }
-		set_variable = { var_CIC_use_enrichment = 0 }
 		set_variable = {  var_enrichment_grade_factor = 0 }
 		set_variable = { var_enrichment_grade_factor = 0 }
 		set_variable = { var_enrichment_nuclear_energy_prod_factor = 0 }
@@ -10976,11 +10802,9 @@ check_enrichment = {
 				can_enrich_LEU = yes
 			}
 		}
-		subtract_from_variable = { var_CIC_use_nuclear = var_CIC_use_enrichment }
 		set_variable = { var_LEU_selected = 1 }
 		set_variable = { var_HEU_selected = 1 }
 		set_variable = { var_enrichment_efficiency = 0 }
-		set_variable = { var_CIC_use_enrichment = 0 }
 		set_variable = {  var_enrichment_grade_factor = 0 }
 		set_variable = { var_enrichment_grade_factor = 0 }
 		set_variable = { var_enrichment_nuclear_energy_prod_factor = 0 }
@@ -11093,33 +10917,11 @@ update_nuclear_deterrence = {
 }
 
 update_nuclear_stability_factor = {
-	set_variable = { var_nuclear_stability_factor = 0 }
-	if = {
-		limit = {
-			is_in_array = {
-				array = nuclear_status_array
-				value = 0
-			}
-		}
-		add_to_variable = { var_nuclear_stability_factor = 0.15 }
+	if = { limit = { is_in_array = { array = nuclear_status_array value = 5 } }
+		set_variable = { var_nuclear_stability_factor = 0.05 }
 	}
-	if = {
-		limit = {
-			is_in_array = {
-				array = nuclear_status_array
-				value = 3
-			}
-		}
-		add_to_variable = { var_nuclear_stability_factor = -0.15 }
-	}
-	if = {
-		limit = {
-			is_in_array = {
-				array = nuclear_status_array
-				value = 5
-			}
-		}
-		add_to_variable = { var_nuclear_stability_factor = 0.20 }
+	else = {
+		clear_variable = var_nuclear_stability_factor
 	}
 }
 
@@ -11133,34 +10935,18 @@ set_nuclear_status_special_effect = {
 				check_variable = { nuclear_status_display_array^i = 7 }
 			}
 		}
-		if = {
-			limit = {
-				NOT = {
-					has_dynamic_modifier = {
-						modifier = nuclear_state_modifier
-					}
-				}
-			}
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = nuclear_state_modifier } } }
 			add_dynamic_modifier = { modifier = nuclear_state_modifier }
 		}
 	}
-	if = {
-		limit = {
-			check_variable = { nuclear_status_display_array^i = 9 }
-		}
+	else_if = { limit = { check_variable = { nuclear_status_display_array^i = 9 } }
 		set_variable = { var_nuclear_status_aircraft_cost_factor = 0.25 }
 		set_variable = { var_nuclear_status_ship_cost_factor = 0.25 }
 	}
-	if = {
-		limit = {
-			check_variable = { nuclear_status_display_array^i = 10 }
-		}
+	else_if = { limit = { check_variable = { nuclear_status_display_array^i = 10 } }
 		set_variable = { var_nuclear_status_aircraft_cost_factor = 0.3 }
 	}
-	if = {
-		limit = {
-			check_variable = { nuclear_status_display_array^i = 12 }
-		}
+	else_if = { limit = { check_variable = { nuclear_status_display_array^i = 12 } }
 		set_variable = { var_nuclear_status_ship_cost_factor = 0.3 }
 	}
 	if = { limit = { has_NPOWER_OR_SPOWER = yes }
@@ -11169,23 +10955,14 @@ set_nuclear_status_special_effect = {
 }
 
 remove_nuclear_status_special_effect = {
-	if = {
-		limit = {
-			check_variable = { nuclear_status_array^i = 9 }
-		}
+	if = { limit = { check_variable = { nuclear_status_array^i = 9 } }
 		set_variable = { var_nuclear_status_aircraft_cost_factor = 0 }
 		set_variable = { var_nuclear_status_ship_cost_factor = 0 }
 	}
-	if = {
-		limit = {
-			check_variable = { nuclear_status_array^i = 10 }
-		}
+	else_if = { limit = { check_variable = { nuclear_status_array^i = 10 } }
 		set_variable = { var_nuclear_status_aircraft_cost_factor = 0 }
 	}
-	if = {
-		limit = {
-			check_variable = { nuclear_status_array^i = 12 }
-		}
+	else_if = { limit = { check_variable = { nuclear_status_array^i = 12 } }
 		set_variable = { var_nuclear_status_ship_cost_factor = 0 }
 	}
 }
@@ -12775,4 +12552,16 @@ missile_on_weekly = {
 		### for launch gui entry ###
 		set_launch_trigger_num_gui = yes
 	}
+}
+
+# Utilities
+
+# Function: modify_missile_inventory_count
+# Purpose: Allows you to modify the current amount of a missile's inventory
+# Parameters: missile_index (temp_var), missile_type, missile_count
+# 1;ICBM 2;IRBM 3;SLBM 4;ALCM 5;GLCM 6;SLCM 7;HSCM 8;SAM 9;ABM
+# 10;OLV 11;GNSS 12;COMSAT 13;SPYSAT 14;KILLSAT 15;Rods from God
+modify_missile_inventory_count = {
+	custom_effect_tooltip = modify_missile_inventory_count_tt
+	add_to_variable = { missile_inventory_array^missile_index = missile_count }
 }

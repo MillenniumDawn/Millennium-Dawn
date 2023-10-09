@@ -1,0 +1,963 @@
+#energy calculation system.
+
+calculate_energy_use = {
+	#if the country doesn't have the dynamic modifier through which we take and give energy, give it the dynamic modifier!
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = no_fuel_penalties_modifier } } } add_dynamic_modifier = { modifier = no_fuel_penalties_modifier } }
+
+	#set temp vars for each multiplier and add 1 to the multipliers (which are percentages).
+	#IE: if energy_use_multiplier is modified to 40% (.4) it will be treated as a 140% (1.4) multiplication on its correlating modifier
+	set_temp_variable = { temp_pop_use_m = 1 }
+	add_to_temp_variable = { temp_pop_use_m = modifier@pop_energy_use_multiplier }
+	set_temp_variable = { temp_energy_use_m = 1 }
+	add_to_temp_variable = { temp_energy_use_m = modifier@energy_use_multiplier }
+	set_temp_variable = { temp_energy_gain_m = 1 }
+	add_to_temp_variable = { temp_energy_gain_m = modifier@energy_gain_multiplier }
+
+	#checks the game rule difficulty for player and AI, and adjusts accordingly
+	if = { limit = { is_ai = yes }
+		add_to_temp_variable = { temp_energy_gain_m = global.ai_energy_gain_modifier }
+		add_to_temp_variable = { temp_energy_use_m = global.ai_energy_use_modifier }
+	}
+	else = {
+		add_to_temp_variable = { temp_energy_gain_m = global.player_energy_gain_modifier }
+		add_to_temp_variable = { temp_energy_use_m = global.player_energy_use_modifier }
+	}
+
+	#overall energy use calculations
+	#add pop energy use, and factor it by its multiplier
+	#multiply the energy use per person by the population to model the amount the population is using as a whole.
+	set_temp_variable = { temp_total_energy_use = population_total }
+	multiply_temp_variable = { temp_total_energy_use = 0.001 }
+	multiply_temp_variable = { temp_total_energy_use = temp_pop_use_m }
+
+	set_temp_variable = { temp_gdp_per_capita = gdp_per_capita }
+	clamp_temp_variable = {
+		var = temp_gdp_per_capita
+		min = 1
+	}
+	#this value is the turning point of gdp/c anything below reduces energy use, above increases as a result of living expectations.
+	divide_temp_variable = { temp_gdp_per_capita = 40 }
+	######multiply_temp_variable = { temp_gdp_per_capita = temp_gdp_per_capita } #id like to increase the effect of gdp/c but ^2 seems too drastic, i'd like to find a way to use a smaller exponential
+	multiply_temp_variable = { temp_total_energy_use = temp_gdp_per_capita }
+	multiply_temp_variable = { temp_total_energy_use = 35 } #tweak this number to change population consumption relative to other sources of consumption
+
+	#add energy_use (static use from special decisions/events)
+	add_to_temp_variable = { temp_total_energy_use = modifier@energy_use }
+
+	#energy use from buildings
+	set_temp_variable = { energy_use_base_civs = 0.5 }
+	set_temp_variable = { energy_use_base_offices = 0.25 }
+	set_temp_variable = { energy_use_base_mils = 0.5 }
+	set_temp_variable = { energy_use_multiplier_civs = 1 }
+	set_temp_variable = { energy_use_multiplier_offices = 1 }
+	set_temp_variable = { energy_use_multiplier_mils = 1 }
+
+	set_temp_variable = { energy_use_civs = industrial_complex_total }
+	multiply_temp_variable = { energy_use_civs = energy_use_base_civs }
+	add_to_temp_variable = { energy_use_multiplier_civs = modifier@energy_use_modifier_civs }
+	multiply_temp_variable = { energy_use_civs = energy_use_multiplier_civs }
+
+	set_temp_variable = { energy_use_offices = office_park_total }
+	multiply_temp_variable = { energy_use_offices = energy_use_base_offices }
+	add_to_temp_variable = { energy_use_multiplier_offices = modifier@energy_use_modifier_offices }
+	multiply_temp_variable = { energy_use_offices = energy_use_multiplier_offices }
+
+	set_temp_variable = { energy_use_mils = num_of_military_factories }
+	add_to_temp_variable = { energy_use_mils = num_of_naval_factories }
+	multiply_temp_variable = { energy_use_mils = energy_use_base_mils }
+	add_to_temp_variable = { energy_use_multiplier_mils = modifier@energy_use_modifier_mils }
+	multiply_temp_variable = { energy_use_mils = energy_use_multiplier_mils }
+
+	set_temp_variable = { energy_use_buildings = energy_use_civs }
+	add_to_temp_variable = { energy_use_buildings = energy_use_offices }
+	add_to_temp_variable = { energy_use_buildings = energy_use_mils }
+	add_to_temp_variable = { temp_total_energy_use = energy_use_buildings }
+
+	#factor the entire thing by its multiplier to get final energy use
+	multiply_temp_variable = { temp_total_energy_use = temp_energy_use_m }
+
+	#balance multiplier, modify this if you want to tweak overall energy consumption without touching the ratio of its sources
+	multiply_temp_variable = { temp_total_energy_use = 1.25 }
+	clamp_temp_variable = {
+		var = temp_total_energy_use
+		min = 0.001
+	}
+
+	#net energy balance calculations
+	#add energy gain to sum, then factor it by corresponding multiplier to get final energy gain (through modifiers)
+	set_variable = { energy_sum = renewable_energy_display_var }
+	set_temp_variable = { temp_renewable_energy_gain_m = 1 }
+	add_to_temp_variable = { temp_renewable_energy_gain_m = modifier@renewable_energy_gain_multiplier }
+	multiply_variable = { energy_sum = temp_renewable_energy_gain_m }
+
+	set_temp_variable = { battery_stored_energy = number_of_battery_parks }
+	multiply_temp_variable = { battery_stored_energy = 100 } #base amount of gwh one battery park can store
+	add_to_variable = { max_stored_energy = battery_stored_energy }
+	add_to_variable = { energy_sum = hydroelectric_energy_generation }
+	add_to_variable = { energy_sum = geothermal_energy_generation }
+
+	#calculate fuel consumption and energy generation of fossil power plants
+	set_variable = { fossil_pp_energy_generation = modifier@fossil_energy_gain }
+	set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
+	add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
+	multiply_variable = { fossil_pp_energy_generation = fossil_pp_energy_generation_multiplier }
+
+	set_variable = { fossil_pp_fuel_consumption = modifier@fossil_fuel_consumption }
+	set_temp_variable = { fossil_pp_fuel_consumption_multiplier = 1 }
+	add_to_temp_variable = { fossil_pp_fuel_consumption_multiplier = modifier@fossil_pp_fuel_consumption_modifier }
+	multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
+	multiply_variable = { fossil_pp_fuel_consumption = -1 }
+	# if = { #can't access those variables, will comment out until someone finds a way
+	# 	limit = {
+	# 		check_variable = { fuel_k = 0 }
+	# 	}
+	# 	set_temp_variable = { fuel_fulfillment = modifier@fuel_gain }
+	# 	divide_temp_variable = { fuel_fulfillment = modifier@fuel_cost }
+	# 	clamp_temp_variable = { var = fuel_fulfillment min = 0 max = 1 }
+	# 	multiply_variable = { fossil_pp_energy_generation = fuel_fulfillment }
+	# }
+	set_temp_variable = { no_fuel_killswitch_var = 1 }
+	if = { #temporary solution
+		limit = {
+			check_variable = { fuel_k = 0 }
+		}
+		set_variable = { fossil_pp_energy_generation = 0 }
+		set_variable = { fossil_pp_fuel_consumption = 0 }
+		set_temp_variable = { no_fuel_killswitch_var = 0 }
+	}
+	add_to_variable = { energy_sum = fossil_pp_energy_generation }
+
+	set_variable = { nuclear_fuel_consumption = modifier@nuclear_fuel_consumption }
+	set_temp_variable = { nuclear_fuel_consumption_multiplier = 1 }
+	add_to_temp_variable = { nuclear_fuel_consumption_multiplier = modifier@nuclear_fuel_consumption_modifier }
+	multiply_variable = { nuclear_fuel_consumption = nuclear_fuel_consumption_multiplier }
+
+	set_variable = { nuclear_energy_generation = modifier@nuclear_energy_gain }
+	set_temp_variable = { nuclear_energy_generation_multiplier = 1 }
+	add_to_temp_variable = { nuclear_energy_generation_multiplier = modifier@nuclear_energy_generation_modifier }
+	multiply_variable = { nuclear_energy_generation = nuclear_energy_generation_multiplier }
+	if = {
+		limit = {
+			check_variable = { var_reactor_material_stockpile = 0 }
+		}
+		set_temp_variable = { nuclear_fuel_fulfillment = var_nuke_nuclear_reactor_prod }
+		divide_temp_variable = { nuclear_fuel_fulfillment = nuclear_fuel_consumption }
+		clamp_temp_variable = { var = nuclear_fuel_fulfillment min = 0 max = 1 }
+		multiply_variable = { nuclear_energy_generation = nuclear_fuel_fulfillment }
+	}
+	add_to_variable = { energy_sum = nuclear_energy_generation }
+	set_variable = { other_energy_generation = modifier@energy_gain } #flat miscellaneous gain from content
+	add_to_variable = { energy_sum = other_energy_generation }
+	multiply_variable = { energy_sum = temp_energy_gain_m }
+
+	set_variable = { energy_consumption = temp_total_energy_use }
+	set_variable = { energy_balance = energy_sum }
+	subtract_from_variable = { energy_balance = energy_consumption }
+
+	set_temp_variable = { energy_fulfillment = energy_sum }
+	set_variable = { energy_withdrawal_from_storage = 0 }
+	set_variable = { free_fossil_powerplants_power = 0 }
+	if = {
+		limit = {
+			check_variable = { stored_energy > 0 }
+			check_variable = { energy_balance < 0 }
+		}
+		set_variable = { energy_withdrawal_from_storage = energy_balance }
+		multiply_variable = { energy_withdrawal_from_storage = -1 }
+		add_to_temp_variable = { energy_fulfillment = energy_withdrawal_from_storage }
+	}
+	if = {
+		limit = {
+			check_variable = { stored_energy = max_stored_energy }
+			check_variable = { energy_balance > 0 }
+			check_variable = { fossil_pp_fuel_consumption < 0 }
+		}
+		set_temp_variable = { saved_fuel = energy_balance }
+		clamp_temp_variable = {
+			var = saved_fuel
+			max = fossil_pp_energy_generation
+			min = 0
+		}
+		set_variable = { free_fossil_powerplants_power = saved_fuel }
+		multiply_temp_variable = { saved_fuel = 20 } #base fossil powerplant fuel consumption, found in buildings.txt, positive sicne its saved fuel instead of consumed
+		multiply_temp_variable = { saved_fuel = fossil_pp_fuel_consumption_multiplier }
+		divide_temp_variable = { saved_fuel = fossil_pp_energy_generation_multiplier }
+		add_to_variable = { fossil_pp_fuel_consumption = saved_fuel }
+	}
+	divide_temp_variable = { energy_fulfillment = energy_consumption }
+	clamp_temp_variable = { var = energy_fulfillment min = 0 max = 1 }
+	set_variable = { unfulfilled_energy_demand_var = -1 }
+	add_to_variable = { unfulfilled_energy_demand_var = energy_fulfillment }
+	add_to_variable = { energy_sum = energy_withdrawal_from_storage } #for display purposes
+
+	# Caps penalty for unfulfilled at 50%, and multiples 100 to get a whole number to reduce to penalty scale
+	set_variable = { unfulfilled_energy_demand_dynmod_var = unfulfilled_energy_demand_var }
+	multiply_variable = { unfulfilled_energy_demand_dynmod_var = 100 }
+	multiply_variable = { unfulfilled_energy_demand_dynmod_var = 0.005 }
+	clamp_variable = { var = unfulfilled_energy_demand_dynmod_var min = -0.50 max = 0 }
+	set_variable = { unfulfilled_energy_demand_dynmod_var_2 = unfulfilled_energy_demand_dynmod_var }
+	multiply_variable = { unfulfilled_energy_demand_dynmod_var_2 = gdp_per_capita }
+	multiply_variable = { unfulfilled_energy_demand_dynmod_var_2 = 0.025 } #penalties decrease below 40k gdp/c, increase above it
+
+	set_variable = { non_electric_fuel_consumption = population_total_m }
+	multiply_variable = { non_electric_fuel_consumption = -20 }
+	set_temp_variable = { gdpc_scaling_multiplier = gdp_per_capita }
+	multiply_temp_variable = { gdpc_scaling_multiplier = 0.02 } #division by 50, random number but feels right
+	add_to_temp_variable = { gdpc_scaling_multiplier = 0.1 } #could be another number, maybe one, just sets the base cost for superlow gdpc countries
+	multiply_variable = { non_electric_fuel_consumption = gdpc_scaling_multiplier }
+	set_temp_variable = { non_electric_fuel_consumption_multiplier = 1 }
+	add_to_temp_variable = { non_electric_fuel_consumption_multiplier = modifier@non_electric_fuel_consumption_modifier }
+	clamp_temp_variable = {
+		var = non_electric_fuel_consumption_multiplier
+		min = 0
+	}
+	multiply_variable = { non_electric_fuel_consumption = non_electric_fuel_consumption_multiplier }
+	multiply_variable = { non_electric_fuel_consumption = no_fuel_killswitch_var }
+	set_variable = { powerplants_and_pop_fuel_consumption = non_electric_fuel_consumption }
+	add_to_variable = { powerplants_and_pop_fuel_consumption = fossil_pp_fuel_consumption }
+
+	# Display Vars
+	set_variable = { fossil_pp_fuel_display = fossil_pp_fuel_consumption }
+	multiply_variable = { fossil_pp_fuel_display = 24 }
+
+	set_variable = { non_electric_fuel_display = non_electric_fuel_consumption }
+	multiply_variable = { non_electric_fuel_display = 24 }
+
+	force_update_dynamic_modifier = yes
+}
+
+energy_on_daily = {
+	set_variable = { no_fuel_penalties_var = 0 }
+	if = {
+		limit = {
+			check_variable = { fuel_k = 0 }
+		}
+		set_variable = { no_fuel_penalties_var = -0.5 }
+		ingame_update_setup = yes
+	}
+	set_temp_variable = { daily_energy_balance = energy_balance }
+	multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
+	add_to_variable = { stored_energy = daily_energy_balance }
+	clamp_variable = {
+		var = stored_energy
+		min = 0
+		max = max_stored_energy
+	}
+}
+
+random_renewable_variable_calculation = {
+	every_controlled_state = {
+		set_variable_to_random = {
+			var = renewable_energy_random_var
+			min = 0
+			max = 1
+		}
+		set_variable_to_random = {
+			var = renewable_energy_random_var2
+			min = 0
+			max = 1
+		}
+		multiply_variable = { renewable_energy_random_var = renewable_energy_random_var2 }
+		add_to_variable = { renewable_energy_random_var = modifier@state_renewable_capacity_factor_modifier }
+		clamp_variable = {
+			var = renewable_energy_random_var
+			max = 1
+		}
+		clear_variable = renewable_energy_random_var2
+	}
+}
+
+setup_starting_world_hydropower = {
+	#also sets up world geothermal
+	#storage will be utilized for future battery mechanics
+	#italy
+	80 = { #id number of the state, in this case lombardy state in northern italy
+		set_variable = { hydroelectric_energy_production_var = 5.636 } #average power output in gw of all hydropower infrastructure in the state (you can convert it from annual twh if you have that data)
+		set_variable = { hydroelectric_energy_storage_var = 300 } #this is the storage capacity of the dam in gwh				   #divide the number of annual twh produced by 8.760 to obtain the average power in gw
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	77 = {
+		set_variable = { hydroelectric_energy_production_var = 3.205 }
+		set_variable = { hydroelectric_energy_storage_var = 200 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	285 = {
+		set_variable = { hydroelectric_energy_production_var = 3.009 }
+		set_variable = { hydroelectric_energy_storage_var = 200 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	82 = {
+		set_variable = { hydroelectric_energy_production_var = 1.411 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	78 = {
+		set_variable = { hydroelectric_energy_production_var = 1.077 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	960 = {
+		set_variable = { hydroelectric_energy_production_var = 1.725 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	1059 = {
+		set_variable = { hydroelectric_energy_production_var = 0.832 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	83 = {
+		set_variable = { hydroelectric_energy_production_var = 0.729 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	956 = {
+		set_variable = { hydroelectric_energy_production_var = 0.844 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	265 = {
+		set_variable = { hydroelectric_energy_production_var = 0.609 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	1061 = {
+		set_variable = { hydroelectric_energy_production_var = 0.458 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	84 = {
+		set_variable = { hydroelectric_energy_production_var = 0.437 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	81 = {
+		set_variable = { hydroelectric_energy_production_var = 0.397 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	79 = {
+		set_variable = { hydroelectric_energy_production_var = 0.297 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.627 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+	#france and uk
+	9 = {
+		set_variable = { hydroelectric_energy_production_var = 1.459 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	437 = {
+		set_variable = { hydroelectric_energy_production_var = 0.730 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	16 = {
+		set_variable = { hydroelectric_energy_production_var = 0.125 } #excluding the massive storage!
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	305 = {
+		set_variable = { hydroelectric_energy_production_var = 0.800 } #bit sus as it might be storage
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	57 = {
+		set_variable = { hydroelectric_energy_production_var = 0.140 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	62 = {
+		set_variable = { hydroelectric_energy_production_var = 3.819 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	962 = {
+		set_variable = { hydroelectric_energy_production_var = 0.928 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	63 = {
+		set_variable = { hydroelectric_energy_production_var = 0.536 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	958 = {
+		set_variable = { hydroelectric_energy_production_var = 0.072 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	961 = {
+		set_variable = { hydroelectric_energy_production_var = 0.600 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	857 = {
+		set_variable = { hydroelectric_energy_production_var = 1.163 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	963 = {
+		set_variable = { hydroelectric_energy_production_var = 0.262 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#austria
+	286 = {
+		set_variable = { hydroelectric_energy_production_var = 4.754 } #Might include storage
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	75 = {
+		set_variable = { hydroelectric_energy_production_var = 2.666 } #Might include storage
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	76 = {
+		set_variable = { hydroelectric_energy_production_var = 3.139 } #Might include storage
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#sweden
+	34 = {
+		set_variable = { hydroelectric_energy_production_var = 0.095 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	439 = {
+		set_variable = { hydroelectric_energy_production_var = 0.116 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	550 = {
+		set_variable = { hydroelectric_energy_production_var = 0.149 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	35 = {
+		set_variable = { hydroelectric_energy_production_var = 1.680 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	881 = {
+		set_variable = { hydroelectric_energy_production_var = 0.900 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	33 = {
+		set_variable = { hydroelectric_energy_production_var = 3.697 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	442 = {
+		set_variable = { hydroelectric_energy_production_var = 3.697 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#australia
+	741 = {
+		set_variable = { hydroelectric_energy_production_var = 0.172 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	742 = {
+		set_variable = { hydroelectric_energy_production_var = 0.707 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	743 = {
+		set_variable = { hydroelectric_energy_production_var = 0.536 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	744 = {
+		set_variable = { hydroelectric_energy_production_var = 0.512 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#finland
+	100 = {
+		set_variable = { hydroelectric_energy_production_var = 1.614 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	103 = {
+		set_variable = { hydroelectric_energy_production_var = 0.752 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	102 = {
+		set_variable = { hydroelectric_energy_production_var = 0.075 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	101 = {
+		set_variable = { hydroelectric_energy_production_var = 0.597 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#denmark
+	6 = {
+		set_variable = { hydroelectric_energy_production_var = 0.003 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	1 = {
+		set_variable = { hydroelectric_energy_production_var = 0.045 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	2 = {
+		set_variable = { hydroelectric_energy_production_var = 0.025 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#iceland
+	7 = {
+		set_variable = { hydroelectric_energy_production_var = 1.000 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Norway
+	31 = {
+		set_variable = { hydroelectric_energy_production_var = 1.747 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	30 = {
+		set_variable = { hydroelectric_energy_production_var = 5.978 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	542 = {
+		set_variable = { hydroelectric_energy_production_var = 0.475 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	32 = {
+		set_variable = { hydroelectric_energy_production_var = 1.000 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Netherlands
+	48 = {
+		set_variable = { hydroelectric_energy_production_var = 0.0141 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	46 = {
+		set_variable = { hydroelectric_energy_production_var = 0.0118 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	47 = {
+		set_variable = { hydroelectric_energy_production_var = 0.011 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Belgium
+	52 = {
+		set_variable = { hydroelectric_energy_production_var = 0.0862 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	965 = {
+		set_variable = { hydroelectric_energy_production_var = 0.0018 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	50 = {
+		set_variable = { hydroelectric_energy_production_var = 0.006 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Slovenia
+	125 = {
+		set_variable = { hydroelectric_energy_production_var = 0.575 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	124 = {
+		set_variable = { hydroelectric_energy_production_var = 0.111 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Bosnia
+	1054 = {
+		set_variable = { hydroelectric_energy_production_var = 0.110 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	1052 = {
+		set_variable = { hydroelectric_energy_production_var = 0.176 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	129 = {
+		set_variable = { hydroelectric_energy_production_var = 0.315 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	128 = {
+		set_variable = { hydroelectric_energy_production_var = 0.639 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Croatia
+	126 = {
+		set_variable = { hydroelectric_energy_production_var = 0.252 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	127 = {
+		set_variable = { hydroelectric_energy_production_var = 1.381 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Serbia
+	131 = {
+		set_variable = { hydroelectric_energy_production_var = 0.7736 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	132 = {
+		set_variable = { hydroelectric_energy_production_var = 1.559 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Montengro
+	134 = {
+		set_variable = { hydroelectric_energy_production_var = 0.667 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Kosovo
+	133 = {
+		set_variable = { hydroelectric_energy_production_var = 0.106 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Albania
+	137 = {
+		set_variable = { hydroelectric_energy_production_var = 1.742 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	138 = {
+		set_variable = { hydroelectric_energy_production_var = 0.340 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Macedonia
+	136 = {
+		set_variable = { hydroelectric_energy_production_var = 0.116 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	135 = {
+		set_variable = { hydroelectric_energy_production_var = 0.383 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	every_state = {
+		limit = {
+			has_dynamic_modifier = {
+				modifier = hydroelectric_infrastructure_in_state
+			}
+		}
+		force_update_dynamic_modifier = yes
+	}
+}
+
+setup_starting_fossil_powerplants = {
+	ingame_update_setup = yes
+	set_variable = { startup_energy_needed = energy_consumption } #startup_energy_needed will be the number of needed fossil power plants
+	subtract_from_variable = { startup_energy_needed = energy_sum }
+	divide_variable = { startup_energy_needed = 1 } #energy produced by a single fossil fuel plant
+	round_variable = startup_energy_needed
+	clamp_variable = { var = startup_energy_needed min = 1 } #so every country, even the smallest ones, start with 1 fossil fuel power plant
+	while_loop_effect = {
+		limit = {
+			check_variable = { startup_energy_needed > 0 }
+		}
+		random_owned_controlled_state = {
+			add_building_construction = {
+				type = fossil_powerplant
+				level = 1
+				instant_build = yes
+			}
+		}
+		add_to_variable = { startup_energy_needed = -1 }
+	}
+	clear_variable = startup_energy_needed
+	ingame_update_setup = yes
+}
+
+build_fossil_fuel_power_plant_effect = {
+	custom_effect_tooltip = energy_build_fossil_powerplant_TT
+	if = {
+		limit = {
+			check_variable = { temp_change > 0 }
+		}
+		set_temp_variable = { treasury_change = temp_change }
+		if = { limit = { is_ai = no }
+			multiply_temp_variable = { treasury_change = -5 }
+		}
+		else = {
+			multiply_temp_variable = { treasury_change = -2 }
+		}
+		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			limit = {
+				NOT = {
+					has_state_flag = building_fossil_fuel_powerplant
+				}
+			}
+			custom_effect_tooltip = building_fossil_fuel_powerplant_tt
+			set_state_flag = {
+				flag = building_fossil_fuel_powerplant
+				days = 100
+				value = 1
+			}
+		}
+	}
+	else = {
+		random_owned_controlled_state = {
+			limit = {
+				check_variable = { number_of_fossil_pps_state_var > 0 }
+			}
+			add_to_variable = { number_of_fossil_pps_state_var = temp_change }
+		}
+	}
+	ingame_update_setup = yes
+}
+
+build_battery_park_effect = {
+	custom_effect_tooltip = build_battery_park_effect_TT
+	set_temp_variable = { battery_cost_multiplier = modifier@battery_park_construction_cost }
+	add_to_temp_variable = { battery_cost_multiplier = 1 }
+	set_temp_variable = { treasury_change = temp_change }
+	multiply_temp_variable = { treasury_change = -100 } #starts at 1000$/kwh in 2000, goes down to 100$/kwh with techs
+	multiply_temp_variable = { treasury_change = battery_cost_multiplier }
+	modify_treasury_effect = yes
+	hidden_effect = {
+		random_owned_controlled_state = {
+			add_to_variable = { number_of_battery_parks_state_var = temp_change }
+		}
+	}
+	ingame_update_setup = yes
+}
+
+build_enrichment_facilities_effect = {
+	custom_effect_tooltip = build_enrichment_facilities_effect_tt
+	add_to_variable = { enrichment_facilities = temp_change }
+	ingame_update_setup = yes
+
+	if = { limit = { check_variable = { temp_change > 0 } }
+		set_temp_variable = { treasury_change = temp_change }
+		multiply_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+	}
+
+	if = {
+		limit = {
+			NOT = {
+				is_in_array = { global.enrichment_countries = THIS.id }
+			}
+		}
+		add_to_array = { global.enrichment_countries = THIS.id }
+	}
+	if = { limit = { is_ai = yes }
+		if = {
+			limit = {
+				check_variable = { var_LEU_selected = 2 }
+			}
+			set_variable = { var_LEU_selected = 1 }
+		}
+		else = {
+			set_variable = { var_LEU_selected = 2 }
+			set_variable = { var_HEU_selected = 1 }
+		}
+		set_enrichment_efficiency_LEU = yes
+		update_nuclear_production = yes
+		var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
+
+		if = { limit = { check_variable = { var_CIC_use_enrichment = 0 } }
+			set_variable = { var_CIC_use_nuclear = 0 }
+		}
+
+		add_to_variable = { var_CIC_use_enrichment = enrichment_facilities }
+		add_to_variable = { var_CIC_use_nuclear = enrichment_facilities }
+		update_enrichment_efficiency = yes
+		update_nuclear_production = yes
+	}
+}
+
+change_reactor_grade_material_effect = {
+	custom_effect_tooltip = change_reactor_grade_material_effect_tt
+	add_to_variable = { var_reactor_material_stockpile = change_resource }
+}
+
+change_weapons_grade_material_effect = {
+	custom_effect_tooltip = change_weapons_grade_material_effect_tt
+	add_to_variable = { var_nuclear_material_stockpile = change_resource }
+}
+
+buy_fuel_from_the_market_effect = {
+	add_fuel = 50000
+	set_temp_variable = { treasury_change = -0.1 }
+	modify_treasury_effect = yes
+}

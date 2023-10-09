@@ -1,109 +1,177 @@
 on_actions = {
-	on_daily_PER = {
+	on_startup = {
 		effect = {
-			if = {
-				limit = { check_variable = { from.saudi_anger > 0.74 } }
-				PER = {
-					country_event = {
-					id = PER_political.10
-					days = 0
+			PER = {
+				if = {
+					limit = {
+						NOT = {
+							has_completed_focus = PER_the_revolution
+						}
+					}
+					PER = {
+						country_event = {
+							id = PER_majlis.29
+							days = 48
+						}
 					}
 				}
-			}
-			if = {
-				limit = { check_variable = { from.saudi_anger > 0.94 } }
-				SAU = {
-					country_event = {
-					id = PER_political.11
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = { check_variable = { from.saudi_anger > 0.24 } }
-				PER = {
-					country_event = {
-					id = PER_political.79
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = { check_variable = { from.saudi_anger > 0.34 } }
-				PER = {
-					country_event = {
-					id = PER_political.799
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = { check_variable = { from.saudi_anger > 0.44 } }
-				PER = {
-					country_event = {
-					id = PER_political.7991
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = { check_variable = { from.saudi_anger > 0.54 } }
-				PER = {
-					country_event = {
-					id = PER_political.7992
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = { check_variable = { from.saudi_anger > 0.64 } }
-				PER = {
-					country_event = {
-					id = PER_political.7993
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = { check_variable = { from.turk_kurds > 0.49 } }
-				PER = {
-					country_event = {
-					id = PER_political.27
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = { check_variable = { from.turk_kurds > 0.99 } }
-				PER = {
-					country_event = {
-					id = PER_political.271
-					days = 0
-					}
-				}
-			}
-			if = {
-				limit = {
-					check_variable = { from.iranian_unify > 0.99 }
-					has_country_flag = PER_has_completed_all_operations
-				}
-				add_ideas = PER_iranian_unity
-				set_country_flag = PER_happy_iranians
 			}
 		}
 	}
-### On Weekly
 	on_weekly_PER = {
 		effect = {
 			if = {
-				limit = { check_variable = { from.khamseh_opinion > 0.49 } has_country_flag = PER_khamseh_formed }
-				add_ideas = PER_khamseh_happy
-				remove_ideas = PER_khamseh_angry
+				limit = { country_exists = PER }
+				PER_random_events_majlis = yes
 			}
 			if = {
-				limit = { check_variable = { from.khamseh_opinion < 0.49 } has_country_flag = PER_khamseh_formed }
-				add_ideas = PER_khamseh_angry
-				remove_ideas = PER_khamseh_happy
+				limit = {
+					country_exists = PER
+					has_completed_focus = PER_great_referendum
+					NOT = {
+						has_country_flag = PER_irgc_destroyed
+					}
+				}
+				PER_random_events_insurgents = yes
+			}
+			if = {	#Capping maximum majlis support at 290
+				limit = { check_variable = { PER_majlis_support > 290 } }
+				set_variable = { PER_majlis_support = 290 }
+			}
+			if = {	#Capping minimum majlis support to 0
+				limit = { check_variable = { PER_majlis_support < 0 } }
+				set_variable = { PER_majlis_support = 0 }
+			}
+			#
+			if = {	#Capping maximum IRGC strength at 100
+				limit = { check_variable = { PER_insurgent_strength > 100 } }
+				set_variable = { PER_insurgent_strength = 100 }
+			}
+			if = {	#Capping maximum IRGC strength at 0
+				limit = { check_variable = { PER_insurgent_strength < 0 } }
+				set_variable = { PER_insurgent_strength = 0 }
+			}
+			##
+			if = { #IRGC insurgency
+				limit = {
+					check_variable = { PER_insurgent_strength > 99 }
+				}
+				PER = {
+					country_event = {
+						id = iran_md.9
+					}
+				}
+			}
+		}
+	}
+	on_monthly_PER = {
+		effect = {
+			if = {
+				limit = {
+					check_variable = { from.PER_pjak_strength_var > 99 }
+				}
+				country_event = {
+					id = iran_md.28
+				}
+			}
+			#
+			if = {
+				limit = {
+					has_country_flag = PER_pjak_active
+					NOT = {
+						has_country_flag = PER_pjak_blocked
+					}
+				}
+				random_list = {
+					60 = {
+					}
+					40 = {
+						add_to_variable = { var = PER_pjak_strength_var value = 1 }
+						clamp_variable = { var = PER_pjak_strength_var min = 0 max = 100 }
+					}
+				}
+				random_list = {
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 20 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 6 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 9 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 12 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 14 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 2 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 1 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 4 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 5 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					10 = {
+						add_to_variable = { var = PER_pjak_army_size value = 17 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					has_country_flag = PER_pjak_active
+					has_country_flag = PER_pjak_blocked
+				}
+				random_list = {
+					25 = {
+						add_to_variable = { var = PER_pjak_army_size value = 1 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					25 = {
+						add_to_variable = { var = PER_pjak_army_size value = 2 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					25 = {
+						add_to_variable = { var = PER_pjak_army_size value = 3 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+					25 = {
+						add_to_variable = { var = PER_pjak_army_size value = 7 }
+						clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
+					}
+				}
+			}
+		}
+	}
+	on_yearly_PER = {
+		effect = {
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = PER_highway_commander1
+					}
+					320 = {
+						is_controlled_by = PER
+					}
+				}
+				set_country_flag = PER_highway_commander1
 			}
 		}
 	}
