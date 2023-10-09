@@ -147,26 +147,85 @@ continuous_focus_palette = {
 	focus = {
 		id = continuous_boost_freedom
 		icon = continuous_boost_freedom
+		# This works similar to allowed in traditional sense
 		available = {
 			hidden_trigger = { has_dlc = "Together for Victory" }
+		}
+		# enabled works like available in traditional sense
+		enabled = {
 			is_subject = yes
 		}
+
+		# Active modifiers
 		modifier = {
 			autonomy_gain = 5
 		}
+
+		# AI decision as to whether they should select the focus
 		ai_will_do = {
 			factor = 0
 			modifier = {
-				add = 5
+				add = 10
 				is_subject = yes
+			}
+			modifier = {
+				factor = 2.0
+				OVERLORD = {
+					ROOT = {
+						has_opinion = {
+							target = PREV
+							value < 100
+						}
+					}
+				}
+			}
+			modifier = {
+				factor = 0.80
+				OVERLORD = {
+					has_country_flag = trade_agreement@ROOT
+					ROOT = {
+						has_country_flag = trade_agreement@PREV
+					}
+				}
+			}
+			modifier = {
+				factor = 0.50
+				OVERLORD = {
+					is_same_government_THIS_ROOT = yes
+				}
+			}
+			modifier = {
+				factor = 0.10
+				OVERLORD = {
+					ROOT = {
+						has_opinion = {
+							target = PREV
+							value > 199
+						}
+					}
+				}
 			}
 			modifier = {
 				set_temp_variable = { domestic_influence_amount_tmp = domestic_influence_amount }
 				divide_temp_variable = { domestic_influence_amount_tmp = 10 }
 				factor = domestic_influence_amount_tmp
 			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = GAME_RULE_rule_disable_using_freedom_cont_focus
+					OVERLORD = {
+						ROOT = {
+							has_opinion = {
+								target = PREV
+								value > 239
+							}
+						}
+					}
+				}
+			}
 		}
-		supports_ai_strategy = ai_focus_military_advancements
+		supports_ai_strategy = ai_focus_defense
 		daily_cost = 2
 		available_if_capitulated = yes
 	}
@@ -186,12 +245,22 @@ continuous_focus_palette = {
 		ai_will_do = {
 			factor = 0
 			modifier = {
-				add = 5
+				add = 10
 				num_subjects > 0
 			}
 			modifier = {
-				factor = 2
+				factor = 4
 				num_subjects > 3
+			}
+			modifier = {
+				factor = 1.25
+				any_subject_country = {
+					check_variable = { office_park_total > 5 }
+				}
+			}
+			modifier = {
+				factor = 4
+				difficulty > 2
 			}
 		}
 		supports_ai_strategy = ai_focus_military_advancements

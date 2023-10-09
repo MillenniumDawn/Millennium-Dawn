@@ -33,7 +33,7 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "[GetDateText]: [ROOT.GetName]: AC_event.4 executed"
+		log = "[GetDateText]: [ROOT.GetName]: AC_event.3 executed"
 		var:ROOT.AC_nation_target = {
 			country_event = { id = AC_event.10 }
 		}
@@ -50,6 +50,12 @@ country_event = {
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
+	immediate = {
+		hidden_effect = {
+			set_variable = { investor_cost = FROM.project_monetary_cost_effect }
+			multiply_variable = { investor_cost = 0.1 }
+		}
+	}
 	option = {
 		name = AC_event.1.o1
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o1 executed"
@@ -95,6 +101,7 @@ country_event = {
 			set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
 			multiply_temp_variable = { treasury_change = 0.1 }
 			modify_treasury_effect = yes
+			clear_variable = investor_cost
 		}
 
 		# AI Chance of taking the Investment Project
@@ -176,10 +183,12 @@ country_event = {
 		}
 	}
 
-	option = { name = AC_event.1.o2 # refuse
+	option = {
+		name = AC_event.1.o2 # refuse
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o2 executed"
 		# FROM is the original investor nation
 		# THIS is the target nation
+		clear_variable = investor_cost
 		FROM = {
 			country_event = AC_event.11
 		}
@@ -477,7 +486,8 @@ country_event = { #Clears project array index 14
 	}
 }
 
-# AI Event
+# AI Investment Initialization
+# Purpose: The following event triggers the AI nation's upcoming investment offer
 country_event = {
 	id = AC_event.500
 	hidden = yes
@@ -487,17 +497,14 @@ country_event = {
 		is_ai = yes
 		check_variable = { active_projects < 15 }
 		check_variable = { debt_ratio < 2.50 }
+		check_variable = { interest_rate < 8.000 }
 	}
 
 	immediate = {
-		log = "AI Investment initiation - [ROOT.GetName]"
+		log = "[GetDateText]: [This.GetName]: AI Investment initiation Current Treasury: [?treasury], Current Interest Rate: [?interest_rate], Current Debt Ratio: [?debt_ratio]"
 
-		############################################################
-		# 	find the state with the best score for a project	   #
-		############################################################
-
-		# Temp Scores
-		set_temp_variable = { AI_MIN_STATE_SCORE_FOR_PROJECT = 100 }
+		# Minimum Score for a Valid Project
+		set_temp_variable = { AI_MIN_STATE_SCORE = 100 }
 
 		# Find state with the BEST score possible
 		set_temp_variable = { AI_best_score = -1 }
@@ -507,17 +514,26 @@ country_event = {
 
 		random_scope_in_array = {
 			array = investment_targets
+			limit = { NOT = { has_country_flag = int_auto_reject_investment_flag } }
+
+			set_temp_variable = { target_nation = THIS.id }
 			for_each_scope_loop = {
 				array = controlled_states
 
 				if = {
 					limit = {
+						# Check if the Investable State
+						is_in_home_area = yes
+						# Check whether the AI can invest in these states
 						AI_no_investment_in_these_states = yes
-						free_building_slots = { building = infrastructure size < 5 include_locked = no } # not impassable state
 						NOT = {
 							is_in_array = { array = projects_in_state value = ROOT.id }
+							# Do not invest in this country if its at war with ROOT
 							PREV = { has_war_with = ROOT }
+							# Do not Invest if any allies of this nation has war with ROOT
+							PREV = { any_allied_country = { has_war_with = ROOT } }
 						}
+						# TODO: Add a check here at some point to make sure they're not a subject, if they are only invest if they are an allies subject or if they're your subject
 					}
 
 					# Free Building Slot Buildings
@@ -537,7 +553,6 @@ country_event = {
 						# Offices - Building Type - 5
 						AI_get_offices_score = yes
 					}
-
 					# Infrastructure - Building Type - 4
 					AI_get_infrastructure_score = yes
 					# Fuel Silos - Building Type - 9
@@ -551,22 +566,37 @@ country_event = {
 			}
 		}
 
-		if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE_FOR_PROJECT } }
-
-			set_variable = { AC_project_type = -1 }
-
+		if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE } }
 			# Project building type
-			set_variable = { project_building_type^-1 = AI_best_type }
-
-			# Sets build amount
-			get_building_construction_values = yes
-
-			# -- Regardless it will always be one for sake of AI balance
+			set_variable = { project_building_type = 0 }
+			set_variable = { project_type = -1 }
+			set_variable = { project_building_type^project_type = AI_best_type }
+			# Regardless it will always be one for sake of AI balance
 			set_variable = { project_build_amount^-1 = 1 }
 
 			project_monetary_cost_calculation = yes
 
-			if = { limit = { check_variable = { project_construction_duration^project < 730 } }
+			# Init Project Variables
+			# AI_best_target is the best state to invest in
+
+			calculate_ai_construction_speed = yes
+
+			# Log Values
+			set_temp_variable = { pd = project_construction_duration^-2 }
+			set_temp_variable = { pbt = project_building_type^-1 }
+			set_temp_variable = { pba = project_build_amount^-1 }
+			set_temp_variable = { abt = AI_best_target }
+			set_temp_variable = { abs = AI_best_score }
+
+			if = {
+				limit = {
+					# Only allow projects between 0 and 700. If construction speed goes negative you'll get instant failing projects
+					check_variable = { project_construction_duration^-2 < 700 }
+					check_variable = { project_construction_duration^-2 > 0 }
+
+					# Check whether it's available
+					var:AI_best_target = { investment_building_slot_available = yes }
+				}
 				var:AI_best_target = {
 					THIS = {
 						set_variable = { ROOT.AC_state_target = THIS.id }
@@ -575,14 +605,15 @@ country_event = {
 					}
 					ROOT = { country_event = { id = AC_event.3 } }
 				}
-				log = "AI Investment Succeeded [GetDate] [ROOT.GetName]: project type [?project_building_type^-1] (x [?project_build_amount^-1]) in [?AI_best_target.GetName], Nation [?ROOT.AC_nation_target.GetName], score = [?AC_AI_best_score]"
-				else = {
-					log = "AI Investment Failed [ROOT.GetName]: No valid state target found. [?AI_best_target.GetName] scored a [?AC_AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
-				}
+
+				log = "[GetDateText]: [This.GetName]: Investment Succeeded [ROOT.GetName]: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.AC_nation_target.GetName], score = [?abs]"
+			}
+			else = {
+				log = "[GetDateText]: [This.GetName]: Investment Failed [ROOT.GetName]: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
 			}
 		}
 		else = {
-			log = "AI Investment Failed [ROOT.GetName]: No valid state target found. [?AI_best_target.GetName] scored a [?AC_AI_best_score] which falls below [?AI_MIN_STATE_SCORE_FOR_PROJECT]. Skipping this investment pulse."
+			log = "[GetDateText]: [This.GetName]: Investment Failed [ROOT.GetName]: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
 		}
 	}
 }
