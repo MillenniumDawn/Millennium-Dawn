@@ -199,6 +199,8 @@
 	NDefines.NProduction.CONVOY_MAX_NAV_FACTORIES_PER_LINE = 15
 	NDefines.NProduction.CAPITAL_SHIP_MAX_NAV_FACTORIES_PER_LINE = 5
 
+	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- Make the max number of factories 0 for purchase -- CLAMPED AT 0
+
 	NDefines.NTechnology.MAX_SUBTECHS = 5
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
 	NDefines.NTechnology.BASE_TECH_COST = 250 -- 100 is vanilla --300 was the old MD cost
@@ -218,6 +220,7 @@
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 1.0 -- was 4.0 --Fucked with this to see
 
 	NDefines.NMilitary.MAX_DIVISION_BRIGADE_WIDTH = 4 -- 5
+	NDefines.NMilitary.MIN_DIVISION_BRIGADE_HEIGHT = 5
 	NDefines.NMilitary.HOURLY_ORG_MOVEMENT_IMPACT = -0.1 -- -0.2
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
@@ -960,6 +963,13 @@
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 1.0             -- try merge task force if main ship ratio is lower than this.
 	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 1.002           -- if resulting main ship ratio would be at most this, allow merging into this task force.
 	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 3.6                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
+	NDefines.NAI.INDUSTRIAL_ORG_TRAIT_UNLOCK_RANDOMNESS = 3		-- AI will pick a random from N top traits when choosing a trait to unlock
+	NDefines.NAI.INDUSTRIAL_ORG_POLICY_CHANGE_RANDOMNESS = 3	-- AI will pick a random from N top policies when choosing a policy to attach to an MIO
+	NDefines.NAI.INDUSTRIAL_ORG_RESEARCH_ASSIGN_RANDOMNESS = 3	-- AI will pick a random from N top MIOs when choosing an MIO to assign to a research
+	NDefines.NAI.INDUSTRIAL_ORG_PRODUCTION_ASSIGN_RANDOMNESS = 3-- AI will pick a random from N top MIOs when choosing an MIO to assign to a production line
+	NDefines.NAI.INDUSTRIAL_ORG_POLICY_CHANGE_SCALE = 1.0		-- Policy change weight will be scaled by this value
+	NDefines.NAI.INDUSTRIAL_ORG_TRAIT_RANK_FACTOR = 0.90		-- When precomputing weights, traits will affect the final score less the further down the tree they are, by this factor -- 0.8
+	NDefines.NAI.INDUSTRIAL_ORG_RESEARCH_BONUS_FACTOR = 1.0		-- Research bonus will be multiplied by this factor when evaluating design teams
 
 	NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
@@ -974,3 +984,19 @@
 		200, -- NAVAL INVASION SUPPORT
 	}
 	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
+	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.1					-- 0.1
+	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.0		-- 0
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 500					-- 1000
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 1 			-- 0.6
+	NDefines.NIndustrialOrganisation.UNLOCKED_TRAITS_PER_SIZE_UP = 1			-- 1
+	NDefines.NIndustrialOrganisation.DESIGN_TEAM_CHANGE_XP_COST = 5				-- 5
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_RESEARCH_COMPLETION = 500			-- 1000
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_CREATING_EQUIPMENT_VARIANT = 0		-- 0
+	NDefines.NIndustrialOrganisation.FUNDS_FROM_MANUFACTURER_PER_IC_PER_DAY = 0.1		-- 0.1
+	NDefines.NIndustrialOrganisation.MAX_FUNDS_FROM_MANUFACTURER_PER_DAY = 100		-- 100
+	NDefines.NIndustrialOrganisation.DESIGN_TEAM_RESEARCH_BONUS = 0.05				-- 0.05
+	NDefines.NIndustrialOrganisation.ENABLE_TASK_CAPACITY = true					-- false
+	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_TASK_CAPACITY = 5				-- 0
+	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_POLICY_ATTACH_COST = 25		-- 25
+	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
+	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
