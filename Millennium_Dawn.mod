@@ -9,7 +9,7 @@ tags={
 supported_version="1.12.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
-path="mod/millennium-dawn-patch"
+path="mod/Millennium_Dawn"
 
 replace_path = "events"
 replace_path = "common/abilities"
