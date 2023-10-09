@@ -40,7 +40,8 @@ calculate_energy_use = {
 	divide_temp_variable = { temp_gdp_per_capita = 40 }
 	######multiply_temp_variable = { temp_gdp_per_capita = temp_gdp_per_capita } #id like to increase the effect of gdp/c but ^2 seems too drastic, i'd like to find a way to use a smaller exponential
 	multiply_temp_variable = { temp_total_energy_use = temp_gdp_per_capita }
-	multiply_temp_variable = { temp_total_energy_use = 35 } #tweak this number to change population consumption relative to other sources of consumption
+	# ?: Bird - I reduced this from 35 to 31 which should result in a 12% reduction in consumption
+	multiply_temp_variable = { temp_total_energy_use = 31 } #tweak this number to change population consumption relative to other sources of consumption
 
 	#add energy_use (static use from special decisions/events)
 	add_to_temp_variable = { temp_total_energy_use = modifier@energy_use }
@@ -86,12 +87,11 @@ calculate_energy_use = {
 
 	#net energy balance calculations
 	#add energy gain to sum, then factor it by corresponding multiplier to get final energy gain (through modifiers)
-	set_variable = { energy_sum = modifier@renewable_energy_gain }
+	set_variable = { energy_sum = renewable_energy_display_var }
 	set_temp_variable = { temp_renewable_energy_gain_m = 1 }
 	add_to_temp_variable = { temp_renewable_energy_gain_m = modifier@renewable_energy_gain_multiplier }
 	multiply_variable = { energy_sum = temp_renewable_energy_gain_m }
-	multiply_variable = { energy_sum = renewable_energy_random_var } #set in on_weekly
-	set_variable = { renewable_energy_display_var = energy_sum }
+
 	set_temp_variable = { battery_stored_energy = number_of_battery_parks }
 	multiply_temp_variable = { battery_stored_energy = 100 } #base amount of gwh one battery park can store
 	add_to_variable = { max_stored_energy = battery_stored_energy }
@@ -148,7 +148,8 @@ calculate_energy_use = {
 		multiply_variable = { nuclear_energy_generation = nuclear_fuel_fulfillment }
 	}
 	add_to_variable = { energy_sum = nuclear_energy_generation }
-	add_to_variable = { energy_sum = modifier@energy_gain } #flat gain from content
+	set_variable = { other_energy_generation = modifier@energy_gain } #flat miscellaneous gain from content
+	add_to_variable = { energy_sum = other_energy_generation }
 	multiply_variable = { energy_sum = temp_energy_gain_m }
 
 	set_variable = { energy_consumption = temp_total_energy_use }
@@ -201,7 +202,7 @@ calculate_energy_use = {
 	multiply_variable = { unfulfilled_energy_demand_dynmod_var_2 = 0.025 } #penalties decrease below 40k gdp/c, increase above it
 
 	set_variable = { non_electric_fuel_consumption = population_total_m }
-	multiply_variable = { non_electric_fuel_consumption = -20 }
+	multiply_variable = { non_electric_fuel_consumption = -19 }
 	set_temp_variable = { gdpc_scaling_multiplier = gdp_per_capita }
 	multiply_temp_variable = { gdpc_scaling_multiplier = 0.02 } #division by 50, random number but feels right
 	add_to_temp_variable = { gdpc_scaling_multiplier = 0.1 } #could be another number, maybe one, just sets the base cost for superlow gdpc countries
@@ -216,6 +217,13 @@ calculate_energy_use = {
 	multiply_variable = { non_electric_fuel_consumption = no_fuel_killswitch_var }
 	set_variable = { powerplants_and_pop_fuel_consumption = non_electric_fuel_consumption }
 	add_to_variable = { powerplants_and_pop_fuel_consumption = fossil_pp_fuel_consumption }
+
+	# Display Vars
+	set_variable = { fossil_pp_fuel_display = fossil_pp_fuel_consumption }
+	multiply_variable = { fossil_pp_fuel_display = 24 }
+
+	set_variable = { non_electric_fuel_display = non_electric_fuel_consumption }
+	multiply_variable = { non_electric_fuel_display = 24 }
 
 	force_update_dynamic_modifier = yes
 }
@@ -240,18 +248,25 @@ energy_on_daily = {
 }
 
 random_renewable_variable_calculation = {
-	set_variable_to_random = {
-		var = renewable_energy_random_var
-		min = 0
-		max = 1
+	every_controlled_state = {
+		set_variable_to_random = {
+			var = renewable_energy_random_var
+			min = 0
+			max = 1
+		}
+		set_variable_to_random = {
+			var = renewable_energy_random_var2
+			min = 0
+			max = 1
+		}
+		multiply_variable = { renewable_energy_random_var = renewable_energy_random_var2 }
+		add_to_variable = { renewable_energy_random_var = modifier@state_renewable_capacity_factor_modifier }
+		clamp_variable = {
+			var = renewable_energy_random_var
+			max = 1
+		}
+		clear_variable = renewable_energy_random_var2
 	}
-	set_variable_to_random = {
-		var = renewable_energy_random_var2
-		min = 0
-		max = 1
-	}
-	multiply_variable = { renewable_energy_random_var = renewable_energy_random_var2 }
-	clear_variable = renewable_energy_random_var2
 }
 
 setup_starting_world_hydropower = {
@@ -943,7 +958,7 @@ change_weapons_grade_material_effect = {
 }
 
 buy_fuel_from_the_market_effect = {
-	add_fuel = 25000
-	set_temp_variable = { treasury_change = -0.05 }
+	add_fuel = 50000
+	set_temp_variable = { treasury_change = -0.1 }
 	modify_treasury_effect = yes
 }
