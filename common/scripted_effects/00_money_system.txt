@@ -280,10 +280,13 @@ calculate_tax_gain = {
 	multiply_variable = { dockyard_tax = corporate_tax_gain_multiplier }
 	multiply_variable = { office_tax = corporate_tax_gain_multiplier }
 
-	multiply_variable = { civil_fac_tax = overall_productivity }
-	multiply_variable = { military_fac_tax = overall_productivity }
-	multiply_variable = { dockyard_tax = overall_productivity }
-	multiply_variable = { office_tax = overall_productivity }
+	set_temp_variable = { productivity_calculations_var = overall_productivity }
+	multiply_temp_variable = { productivity_calculations_var = 0.001 }
+
+	multiply_variable = { civil_fac_tax = productivity_calculations_var }
+	multiply_variable = { military_fac_tax = productivity_calculations_var }
+	multiply_variable = { dockyard_tax = productivity_calculations_var }
+	multiply_variable = { office_tax = productivity_calculations_var }
 
 	# Add Corporate Tax Rates Together
 	add_to_variable = { corporate_tax = agriculture_tax_gain }
@@ -659,6 +662,13 @@ calculate_additional_income_rate = {
 		set_variable = { additional_income_gulf_exploitation = gdp_total }
 		multiply_variable = { additional_income_gulf_exploitation = 0.012 }
 		multiply_variable = { additional_income_gulf_exploitation = 0.025 }
+		add_to_variable = { additional_income_rate = additional_income_gulf_exploitation }
+	}
+	# Denmark
+	if = {
+		limit = { has_dynamic_modifier = { modifier = DEN_colonial_holding_modifier } }
+		set_variable = { additional_income_gulf_exploitation = gdp_total }
+
 		add_to_variable = { additional_income_rate = additional_income_gulf_exploitation }
 	}
 }
@@ -2655,8 +2665,9 @@ calculate_gdp = {
 	divide_variable = { agriculture_percent = gdp_total }
 	divide_variable = { resources_percent = gdp_total }
 
-	clamp_variable = { var = overall_productivity min = 0.1 }
-	multiply_variable = { gdp_total = overall_productivity } #overall productivity grows over time (on_monthly) and with techs and its the main source of economic growth for developed countries
+	set_temp_variable = { productivity_calculations_var = overall_productivity }
+	multiply_temp_variable = { productivity_calculations_var = 0.001 }
+	multiply_variable = { gdp_total = productivity_calculations_var } #overall productivity grows over time (on_monthly) and with techs and its the main source of economic growth for developed countries
 
 	#sets a minimum gdp
 	clamp_variable = { var = gdp_total min = 0.1 }
@@ -2907,9 +2918,7 @@ productivity_growth_display_effect = {
 		add_dynamic_modifier = { modifier = productivity_and_employment_modifier }
 	}
 	set_variable = { productivity_growth_scaled = modifier@productivity_growth_modifier }
-	multiply_variable = { productivity_growth_scaled = 1 } #control factor, use this to scale worldwide productivity growth
-	multiply_variable = { productivity_growth_scaled = 0.01 } #multiplied the modifier by 100 for display purposes, so its scaled back down here
-
+	multiply_variable = { productivity_growth_scaled = 0.75 } #control factor, use this to scale worldwide productivity growth
 	every_controlled_state = {
 		set_variable = { state_productivity_growth_scaled = PREV.productivity_growth_scaled }
 		if = {
@@ -2954,6 +2963,8 @@ update_employment_productivity_output_dynamic_modifier = {
 	set_temp_variable = { preexisting_construction_speed_output_var = construction_speed_output_var }
 	set_temp_variable = { preexisting_military_factories_output_var = military_factories_output_var }
 	set_temp_variable = { preexisting_dockyards_output_var = dockyards_output_var }
+	set_temp_variable = { productivity_calculations_var = overall_productivity }
+	multiply_temp_variable = { productivity_calculations_var = 0.001 }
 
 	set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
 	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
@@ -2963,7 +2974,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	add_to_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = factories_from_other_sources }
 	divide_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = num_of_civilian_factories }
 
-	set_variable = { construction_speed_output_var = overall_productivity }
+	set_variable = { construction_speed_output_var = productivity_calculations_var }
 	multiply_variable = { construction_speed_output_var = civilian_factories_manpower_fulfillment_dyn_mod_var }
 	add_to_variable = { construction_speed_output_var = -1 } #to be used as malus in the dynamic modifier
 	set_temp_variable = { sum_of_construction_speed_modifiers = modifier@production_speed_buildings_factor }
@@ -2979,7 +2990,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	add_to_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = mil_factories_from_other_sources }
 	divide_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = num_of_military_factories }
 
-	set_variable = { military_factories_output_var = overall_productivity }
+	set_variable = { military_factories_output_var = productivity_calculations_var }
 	multiply_variable = { military_factories_output_var = military_factories_manpower_fulfillment_dyn_mod_var }
 	add_to_variable = { military_factories_output_var = -1 } #to be used as malus in the dynamic modifier
 	set_temp_variable = { sum_of_military_output_modifiers = modifier@industrial_capacity_factory }
@@ -2995,7 +3006,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	add_to_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = nav_factories_from_other_sources }
 	divide_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = num_of_naval_factories }
 
-	set_variable = { dockyards_output_var = overall_productivity }
+	set_variable = { dockyards_output_var = productivity_calculations_var }
 	multiply_variable = { dockyards_output_var = naval_factories_manpower_fulfillment_dyn_mod_var }
 	add_to_variable = { dockyards_output_var = -1 } #to be used as malus in the dynamic modifier
 	set_temp_variable = { sum_of_dockyard_output_modifiers = modifier@industrial_capacity_dockyard }
@@ -3003,7 +3014,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
 	multiply_variable = { dockyards_output_var = sum_of_dockyard_output_modifiers }
 
-	set_variable = { productivity_tax_effect_display = overall_productivity }
+	set_variable = { productivity_tax_effect_display = productivity_calculations_var }
 	add_to_variable = { productivity_tax_effect_display = -1 }
 }
 
@@ -3015,7 +3026,7 @@ productivity_growth_effect = {
 		add_to_variable = { productivity_state_var = state_productivity_growth_scaled }
 		clamp_variable = {
 			var = productivity_state_var
-			min = 0.1
+			min = 100
 		}
 	}
 	update_employment_productivity_output_dynamic_modifier = yes
@@ -3032,7 +3043,7 @@ flat_productivity_change_effect = {
 		add_to_variable = { productivity_state_var = temp_productivity_change }
 		clamp_variable = {
 			var = productivity_state_var
-			min = 0.1
+			min = 100
 		}
 		custom_effect_tooltip = flat_productivity_change_effect_TT
 	}
@@ -3052,45 +3063,45 @@ setup_starting_world_productivity = {
 		limit = { NOT = { has_variable = overall_productivity } }
 		if = { limit = { is_in_africa = yes }
 			every_controlled_state = {
-				set_variable = { productivity_state_var = 0.55 }
+				set_variable = { productivity_state_var = 550 }
 			}
-			set_variable = { overall_productivity = 0.55 }
+			set_variable = { overall_productivity = 550 }
 		}
 		if = { limit = { is_in_asia = yes }
 			every_controlled_state = {
-				set_variable = { productivity_state_var = 0.65 }
+				set_variable = { productivity_state_var = 650 }
 			}
-			set_variable = { overall_productivity = 0.65 }
+			set_variable = { overall_productivity = 650 }
 		}
 		if = { limit = { is_in_oceania = yes }
 			every_controlled_state = {
-				set_variable = { productivity_state_var = 0.65 }
+				set_variable = { productivity_state_var = 650 }
 			}
-			set_variable = { overall_productivity = 0.65 }
+			set_variable = { overall_productivity = 650 }
 		}
 		if = { limit = { is_in_europe = yes }
 			every_controlled_state = {
-				set_variable = { productivity_state_var = 1 }
+				set_variable = { productivity_state_var = 1000 }
 			}
-			set_variable = { overall_productivity = 1 }
+			set_variable = { overall_productivity = 1000 }
 		}
 		if = { limit = { is_in_the_middle_east = yes }
 			every_controlled_state = {
-				set_variable = { productivity_state_var = 0.75 }
+				set_variable = { productivity_state_var = 750 }
 			}
-			set_variable = { overall_productivity = 0.75 }
+			set_variable = { overall_productivity = 750 }
 		}
 		if = { limit = { is_in_south_america = yes }
 			every_controlled_state = {
-				set_variable = { productivity_state_var = 0.75 }
+				set_variable = { productivity_state_var = 750 }
 			}
-			set_variable = { overall_productivity = 0.75 }
+			set_variable = { overall_productivity = 750 }
 		}
 		if = { limit = { is_in_north_america = yes }
 			every_controlled_state = {
-				set_variable = { productivity_state_var = 0.75 }
+				set_variable = { productivity_state_var = 750 }
 			}
-			set_variable = { overall_productivity = 0.75 }
+			set_variable = { overall_productivity = 750 }
 		}
 	}
 	update_employment_productivity_output_dynamic_modifier = yes
