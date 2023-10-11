@@ -48946,43 +48946,52 @@ country_event = {
 	is_triggered_only = yes
 
 	#Add any flags that should be set for bonus reforms so the player gets accurate info
-	immediate = {}
+	immediate = {
+		if = {
+			limit = {
+				has_idea = social_05
+			}
+			set_variable = { jap_demographics_welfare_reform_bonus = 1 }
+		}
+		else_if = {
+			limit = {
+				has_idea = social_06
+			}
+			set_variable = { jap_demographics_welfare_reform_bonus = 2 }
+		}
+		else = {
+			set_variable = { jap_demographics_welfare_reform_bonus = 0 }
+		}
+		set_variable = { jap_demographics_effective_depopulation_reform = 0 }
+		add_to_variable = { jap_demographics_effective_depopulation_reform = jap_demographics_depopulation_reform }
+		add_to_variable = { jap_demographics_effective_depopulation_reform = jap_demographics_welfare_reform_bonus }
+	}
 
 	option = {
 		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100002001.oA"
 		if = { #Fix both! Don't need to be more specific here
 			limit = {
-				JAP= {
-					OR = {
-						has_country_flag = JAP_DEMOGRAPHICS_CENTRALIZATION_REFORM_0
-						has_country_flag = JAP_DEMOGRAPHICS_CENTRALIZATION_REFORM_1
-					}
-					OR = {
-						has_country_flag = JAP_DEMOGRAPHICS_DEPOPULATION_REFORM_0
-						has_country_flag = JAP_DEMOGRAPHICS_DEPOPULATION_REFORM_1
-					}
+				AND = {
+					check_variable = { jap_demographics_centralization_reform < 2 }
+					check_variable = { jap_demographics_effective_depopulation_reform < 2 }
 				}
 			}
 			JAP = { country_event = Japan_Demographic.100002002 }
 		} else_if = { #Centralization OK, fix depop!
 			limit = {
-				JAP= {
-					OR = {
-						has_country_flag = JAP_DEMOGRAPHICS_DEPOPULATION_REFORM_0
-						has_country_flag = JAP_DEMOGRAPHICS_DEPOPULATION_REFORM_1
-					}
+				AND = {
+					check_variable = { jap_demographics_centralization_reform > 1 }
+					check_variable = { jap_demographics_effective_depopulation_reform < 2 }
 				}
 			}
 			JAP = { country_event = Japan_Demographic.100002003 }
 		} else_if = { #Depopulation OK, fix centralization!
-			limit = {
-				JAP= {
-					OR = {
-						has_country_flag = JAP_DEMOGRAPHICS_CENTRALIZATION_REFORM_0
-						has_country_flag = JAP_DEMOGRAPHICS_CENTRALIZATION_REFORM_1
-					}
-				}
+		limit = {
+			AND = {
+				check_variable = { jap_demographics_centralization_reform < 2 }
+				check_variable = { jap_demographics_effective_depopulation_reform > 1 }
 			}
+		}
 			JAP = { country_event = Japan_Demographic.100002004 }
 		} else = { #Doing great!
 			JAP = { country_event = Japan_Demographic.100002005 }
@@ -49149,7 +49158,26 @@ country_event = {
 	is_triggered_only = yes
 
 	#Add any flags that should be set for bonus reforms before the player can react and cheat
-	immediate = {}
+	immediate = {
+		if = {
+			limit = {
+				has_idea = social_05
+			}
+			set_variable = { jap_demographics_welfare_reform_bonus = 1 }
+		}
+		else_if = {
+			limit = {
+				has_idea = social_06
+			}
+			set_variable = { jap_demographics_welfare_reform_bonus = 2 }
+		}
+		else = {
+			set_variable = { jap_demographics_welfare_reform_bonus = 0 }
+		}
+		set_variable = { jap_demographics_effective_depopulation_reform = 0 }
+		add_to_variable = { jap_demographics_effective_depopulation_reform = jap_demographics_depopulation_reform }
+		add_to_variable = { jap_demographics_effective_depopulation_reform = jap_demographics_welfare_reform_bonus }
+	}
 
 	# Let's hope we did our best...
 	option = {
@@ -49173,16 +49201,12 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100003100.oA"
 		if = { #You blew it!!
 			limit = {
-				JAP= {
-					has_country_flag = JAP_DEMOGRAPHICS_CENTRALIZATION_REFORM_0
-				}
+				check_variable = { jap_demographics_centralization_reform < 1 }
 			}
 			JAP = { country_event = Japan_Demographic.100003101 }
 		} else_if = { #Problems ahead!
 			limit = {
-				JAP= {
-					has_country_flag = JAP_DEMOGRAPHICS_CENTRALIZATION_REFORM_1
-				}
+				check_variable = { jap_demographics_centralization_reform < 2 }
 			}
 			JAP = { country_event = Japan_Demographic.100003102 }
 		} else = { #Doing great!
@@ -49346,16 +49370,12 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100003200.oA"
 		if = { #You blew it!!
 			limit = {
-				JAP= {
-					has_country_flag = JAP_DEMOGRAPHICS_DEPOPULATION_REFORM_0
-				}
+				check_variable = { jap_demographics_effective_depopulation_reform < 1 }
 			}
 			JAP = { country_event = Japan_Demographic.100003201 }
 		} else_if = { #Problems ahead!
 			limit = {
-				JAP= {
-					has_country_flag = JAP_DEMOGRAPHICS_DEPOPULATION_REFORM_1
-				}
+				check_variable = { jap_demographics_effective_depopulation_reform < 2 }
 			}
 			JAP = { country_event = Japan_Demographic.100003202 }
 		} else = { #Doing great!
