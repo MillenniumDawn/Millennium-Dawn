@@ -1,12 +1,12 @@
-version="1.8.8"
-name="Millennium Dawn Patch"
+version="1.9.0"
+name="Millennium Dawn DEV"
 tags={
 	"Alternative History"
 	"Gameplay"
 	"Events"
 	"Graphics"
 }
-supported_version="1.12.*"
+supported_version="1.13.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
 path="mod/Millennium_Dawn"
