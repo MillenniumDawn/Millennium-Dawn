@@ -1,5 +1,5 @@
 version="1.8.8"
-name="Millennium Dawn Patch"
+name="Millennium Dawn Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"
