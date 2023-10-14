@@ -296,6 +296,55 @@ ethnic_insurgency_category = {
 			factor = 1
 		}
 	}
+	
+	BRM_ceasefire_NHN = {
+
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = { tag = BRM }
+
+		visible = {
+			NOT = {
+				NHN = { has_country_flag = ceasefire }
+				has_completed_focus = BRM_proclaim_a_permanent_end_to_ceasefire_initiatives
+			}
+			country_exists = NHN
+		}
+
+		available = {
+			NOT = {
+				has_decision = BRM_operation_NHN
+			}
+		}
+
+		fire_only_once = no
+
+		days_re_enable = 30
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 930
+			}
+		}
+		cost = 200
+
+		days_remove = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRM_ceasefire_NHN"
+			NHN = {
+				country_event = {
+					id = Insurgency.11
+					days = 1
+				}
+				set_country_flag = ceasefire_offer
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
 	BRM_operation_KAC = {
 
@@ -531,7 +580,7 @@ ethnic_insurgency_category = {
 			start_border_war = {
 				change_state_after_war = no
 				attacker = {
-					state = 930
+					state = 505
 					num_provinces = 3
 					on_win = Insurgency.5
 					on_lose = Insurgency.6
@@ -542,6 +591,84 @@ ethnic_insurgency_category = {
 					num_provinces = 3
 					on_win = Insurgency.6
 					on_lose = Insurgency.5
+					on_cancel = Insurgency.7
+				}
+			}
+		}
+
+	}
+	
+	BRM_operation_NHN = {
+
+		icon = GFX_decision_generic_tank
+
+		allowed = { tag = BRM }
+
+		visible = {
+			NOT = {
+				NHN = { has_country_flag = ceasefire }
+				NHN = { has_country_flag = ceasefire_offer }
+			}
+			country_exists = NHN
+		}
+
+		available = {
+			has_equipment = {
+				Inf_equipment > 1499
+			}
+			divisions_in_border_state = {
+				size > 2
+				state = 930
+				border_state = 498
+			}
+			NOT = {
+				OR = {
+					has_decision = BRM_operation_KAC
+					has_decision = BRM_operation_KAR
+				}
+			}
+		}
+
+		custom_cost_trigger = {
+			command_power > 40
+		}
+
+		custom_cost_text = command_power_more_than_40
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRM_operation_NHN"
+			add_command_power = -40
+			NHN = { country_event = { id = Insurgency.4 } }
+		}
+
+		days_remove = 30
+
+		days_re_enable = 90
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 930
+			}
+		}
+		modifier = {
+			experience_gain_army = 0.3
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRM_operation_NHN"
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 930
+					num_provinces = 3
+					on_win = Insurgency.5
+					on_lose = Insurgency.6
 					on_cancel = Insurgency.7
 				}
 			}
@@ -769,6 +896,75 @@ ethnic_insurgency_category = {
 		}
 
 	}
+	
+	BRM_provoke_NHN = {
+
+		icon = GFX_decision_generic_ignite_civil_war
+
+		allowed = { tag = BRM }
+
+		visible = {
+			NHN = { has_country_flag = ceasefire }
+			country_exists = NHN
+			NOT = {
+				NHN = { has_country_flag = ceasefire_offer }
+			}
+		}
+
+		available = {
+			has_equipment = { Inf_equipment > 499 }
+				divisions_in_border_state = {
+					size > 0
+					state = 505
+					border_state = 496
+				}
+			
+			NOT = {
+				has_completed_focus = BRM_pursue_rapprochement_with_rebel_groups
+			}
+			if = {
+				limit = {
+					NHN = {
+						has_idea = Nationwide_Ceasefire_Agreement
+					}
+				}
+				NOT = {
+					has_idea = Nationwide_Ceasefire_Agreement
+				}
+			}
+		}
+
+		fire_only_once = yes
+
+		cost = 50
+
+		days_remove = 7
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 930
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRM_provoke_NHN"
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -500
+			}
+			NHN = {
+				clr_country_flag = ceasefire
+				add_opinion_modifier = {
+					target = BRM
+					modifier = broke_ceasefire
+				}
+			}
+		}
+
+	}
 
 	BRM_annex_KAC = {
 
@@ -869,6 +1065,41 @@ ethnic_insurgency_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRM_annex_SHN"
 			annex_country = {
 				target = SHN
+				transfer_troops = yes
+			}
+		}
+
+	}
+	
+	BRM_annex_NHN = {
+
+		icon = GFX_decision_oppression
+
+		allowed = { tag = BRM }
+
+		visible = {
+			country_exists = NHN
+		}
+
+		available = {
+			NHN = { influence_higher_50 = yes }
+		}
+
+		cost = 300
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 930
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRM_annex_NHN"
+			annex_country = {
+				target = NHN
 				transfer_troops = yes
 			}
 		}
@@ -1231,6 +1462,7 @@ ethnic_insurgency_category = {
 				tag = KAC
 				tag = KAR
 				tag = SHN
+				tag = NHN
 			}
 		}
 
@@ -1266,6 +1498,14 @@ ethnic_insurgency_category = {
 					border_state = 930
 				}
 			}
+			if = {
+				limit = { tag = NHN }
+				divisions_in_border_state = {
+					size > 0
+					state = 498
+					border_state = 930
+				}
+			}
 		}
 
 		custom_cost_trigger = {
@@ -1295,6 +1535,10 @@ ethnic_insurgency_category = {
 			else_if = {
 				limit = { original_tag = SHN }
 				BRM = { country_event = { id = Insurgency.3 } }
+			}
+			else_if = {
+				limit = { original_tag = NHN }
+				BRM = { country_event = { id = Insurgency.28 } }
 			}
 		}
 
@@ -1364,7 +1608,27 @@ ethnic_insurgency_category = {
 						on_cancel = Insurgency.7
 					}
 					defender = {
+						state = 505
+						num_provinces = 1
+						on_win = Insurgency.5
+						on_lose = Insurgency.6
+						on_cancel = Insurgency.7
+					}
+				}
+			}
+			else_if = {
+				limit = { original_tag = NHN }
+				start_border_war = {
+					change_state_after_war = no
+					attacker = {
 						state = 930
+						num_provinces = 1
+						on_win = Insurgency.6
+						on_lose = Insurgency.5
+						on_cancel = Insurgency.7
+					}
+					defender = {
+						state = 505
 						num_provinces = 1
 						on_win = Insurgency.5
 						on_lose = Insurgency.6
@@ -1414,6 +1678,7 @@ ethnic_insurgency_category = {
 				tag = KAC
 				tag = KAR
 				tag = SHN
+				tag = NHN
 				tag = WAA
 			}
 		}
@@ -1448,6 +1713,11 @@ ethnic_insurgency_category = {
 			else_if = {
 				limit = { original_tag = SHN }
 				set_cosmetic_tag = SHN_independent
+				clr_country_flag = dynamic_flag
+			}
+			else_if = {
+				limit = { original_tag = NHN }
+				set_cosmetic_tag = NHN_independent
 				clr_country_flag = dynamic_flag
 			}
 			else = {

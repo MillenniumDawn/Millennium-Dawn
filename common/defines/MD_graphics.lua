@@ -60,7 +60,7 @@
 	-- -- NDefines.NGraphics.COUNTRY_FLAG_STRIPE_TEX_MAX_HEIGHT = 4096				-- Vanilla is 2048
 	-- -- NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_WIDTH = 41					-- Vanilla is 41
 	-- -- NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 8192				-- Vanilla is 8192
-	NDefines.NGraphics.VICTORY_POINT_MAP_ICON_AFTER = {0, 4}
+	NDefines.NGraphics.VICTORY_POINT_MAP_ICON_AFTER = {0, 4, 9} -- 1-4 - small icon (square), 5-9 - medium icon (pentagon figure), 10 and above - big icon (circle)
 	NDefines.NGraphics.VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 420, 1000}
 	NDefines.NGraphics.VICTORY_POINTS_DISTANCE_CUTOFF = {180, 420, 1000}
 	NDefines.NGraphics.NAVALBASE_ICON_DISTANCE_CUTOFF = 900
