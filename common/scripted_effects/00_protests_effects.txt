@@ -1,0 +1,244 @@
+apply_protest_effects = {
+	# monthly cooldown of tensions
+	apply_passive_protest_drift = yes
+	apply_passive_radicalisation_drift = yes
+
+	set_temp_variable = { protest_drift = 0 }
+	calculate_protest_drift = yes
+
+	add_to_variable = { protest_strength = protest_drift }
+	if = {
+		limit = {
+			check_variable = { THIS.protest_strength > 35 }
+			NOT = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
+		}
+
+		roll_protest_chance = yes
+	}
+}
+
+apply_passive_protest_drift = {
+	random = {
+		chance = 50
+		subtract_from_variable = { protest_strength = 2 }
+	}
+
+	clamp_variable = {
+		var = THIS.protest_strength
+		min = 0
+		max = 100
+	}
+}
+
+apply_passive_radicalisation_drift = {
+	random = {
+		chance = 5
+		subtract_from_variable = { protest_radicalisation = 1 }
+	}
+
+	clamp_variable = {
+		var = THIS.protest_radicalisation
+		min = 0
+		max = 10
+	}
+}
+
+calculate_protest_drift = {
+	if = {
+		limit = {
+			has_fuel < 1
+		}
+
+		add_to_temp_variable = { protest_drift = 3 }
+	}
+	if = {
+		limit = {
+			check_variable = { THIS.expected_welfare_spending > THIS.social_budget }
+		}
+
+		set_temp_variable = { buf = THIS.expected_welfare_spending }
+		subtract_from_temp_variable = { buf = THIS.social_budget }
+		add_to_temp_variable = { protest_drift = buf }
+	}
+	if = {
+		limit = {
+			check_variable = { THIS.expected_health_spending > THIS.health_budget }
+		}
+
+		set_temp_variable = { buf = THIS.expected_health_spending }
+		subtract_from_temp_variable = { buf = THIS.health_budget }
+		add_to_temp_variable = { protest_drift = buf }
+	}
+	if = {
+		limit = {
+			check_variable = { THIS.expected_edu_spending > THIS.education_budget }
+		}
+
+		set_temp_variable = { buf = THIS.expected_edu_spending }
+		subtract_from_temp_variable = { buf = THIS.education_budget }
+		add_to_temp_variable = { protest_drift = buf }
+	}
+	if = {
+		limit = {
+			check_variable = { THIS.expected_police_spending > THIS.crime_fighting }
+		}
+
+		set_temp_variable = { buf = THIS.expected_police_spending }
+		subtract_from_temp_variable = { buf = THIS.crime_fighting }
+		add_to_temp_variable = { protest_drift = buf }
+	}
+	if = {
+		limit = {
+			check_variable = { THIS.expected_adm_spending > THIS.bureaucracy }
+		}
+
+		set_temp_variable = { buf = THIS.expected_adm_spending }
+		subtract_from_temp_variable = { buf = THIS.bureaucracy }
+		add_to_temp_variable = { protest_drift = buf }
+	}
+	if = {
+		limit = {
+			check_variable = { THIS.expected_military_sp > THIS.Military_Spending }
+		}
+
+		set_temp_variable = { buf = THIS.expected_military_sp }
+		subtract_from_temp_variable = { buf = THIS.Military_Spending }
+		add_to_temp_variable = { protest_drift = buf }
+	}
+}
+
+roll_protest_chance = {
+	random_list = {
+		300 = {
+			# nothing
+		}
+		var:protest_strength = {
+			if = {
+				limit = { check_variable = { THIS.protest_radicalisation < 3 } }
+				random_list = {
+					10 = {
+						country_event = { id = protests.1 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.2 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.3 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.4 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.5 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.6 random_days = 27 }
+					}
+				}
+			}
+			else_if = {
+				limit = { check_variable = { THIS.protest_radicalisation < 7 } }
+				random_list = {
+					10 = {
+						country_event = { id = protests.10 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.11 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.12 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.13 random_days = 27 }
+					}
+					10 = {
+						country_event = { id = protests.14 random_days = 27 }
+					}
+				}
+			}
+			else = {
+				random_list = {
+					90 = {
+						random_list = {
+							10 = {
+								country_event = { id = protests.10 random_days = 27 }
+							}
+							10 = {
+								country_event = { id = protests.11 random_days = 27 }
+							}
+							10 = {
+								country_event = { id = protests.12 random_days = 27 }
+							}
+							10 = {
+								country_event = { id = protests.13 random_days = 27 }
+							}
+							10 = {
+								country_event = { id = protests.14 random_days = 27 }
+							}
+						}
+					}
+					10 = {
+						country_event = { id = protests.20 random_days = 27 }
+					}
+				}
+			}
+		}
+	}
+}
+
+# arg1ument - buf, used as return value of relative protest chance
+calculate_basic_chance_for_protest = {
+	if = {
+		limit = { has_idea = police_01 }
+		subtract_from_temp_variable = { buf = 35 }
+	}
+	else_if = {
+		limit = { has_idea = police_02 }
+		subtract_from_temp_variable = { buf = 20 }
+	}
+	else_if = {
+		limit = { has_idea = police_04 }
+		add_to_temp_variable = { buf = 20 }
+	}
+	else_if = {
+		limit = { has_idea = police_05 }
+		add_to_temp_variable = { buf = 35 }
+	}
+}
+
+# argument - arg1
+increase_radicalisation = {
+	log = "[GetDateText]: [This.GetName]: radicalisation increased by: [?arg1]"
+	add_to_variable = { THIS.protest_radicalisation = arg1 }
+
+	clamp_variable = {
+		var = THIS.protest_radicalisation
+		min = 0
+		max = 10
+	}
+}
+
+# argument - arg1
+increase_protest_strength = {
+	log = "[GetDateText]: [This.GetName]: protest strength increased by: [?arg1]"
+	add_to_variable = { THIS.protest_strength = arg1 }
+
+	clamp_variable = {
+		var = THIS.protest_strength
+		min = 0
+		max = 100
+	}
+}
+
+randomly_increase_radicalisation = {
+	random = {
+		chance = 50
+		add_to_variable = { THIS.protest_radicalisation = 1 }
+	}
+
+	clamp_variable = {
+		var = THIS.protest_radicalisation
+		min = 0
+		max = 10
+	}
+}
