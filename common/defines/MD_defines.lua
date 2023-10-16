@@ -635,6 +635,7 @@
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
 	NDefines.NTrade.ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.5 -- 0.5
+	NDefines.NAI.SEA_PATH_LENGTH_SCORE_BASE = -10 -- Reduced from -30 to -10
 
 	-- NAI Defines
 	-- BAI fix test
