@@ -997,6 +997,7 @@ update_military_rate = {
 	set_temp_variable = { SP_arty_equipment_deployed_count = num_equipment_in_armies@spart_hull }
 	set_temp_variable = { mbt_hull_deployed_count = num_equipment_in_armies@mbt_hull }
 	set_temp_variable = { transport_helicopter_equipment_deployed_count = num_equipment_in_armies@transport_helicopter_equipment }
+	set_temp_variable = { attack_helicopter_hull_deployed_count = num_equipment_in_armies@attack_helicopter_hull }
 	set_temp_variable = { util_vehicle_equipment_deployed_count = num_equipment_in_armies@util_vehicle_equipment }
 
 	#stockpiled equipment
@@ -1014,6 +1015,7 @@ update_military_rate = {
 	set_temp_variable = { SP_arty_equipment_stockpile_count = num_equipment@spart_hull }
 	set_temp_variable = { mbt_hull_stockpile_count = num_equipment@mbt_hull }
 	set_temp_variable = { transport_helicopter_stockpile_equipment_count = num_equipment@transport_helicopter_equipment }
+	set_temp_variable = { attack_helicopter_stockpile_equipment_count = num_equipment@attack_helicopter_hull }
 	set_temp_variable = { util_vehicle_equipment_stockpile_count = num_equipment@util_vehicle_equipment }
 
 	#stockpiled equipment cost a quarter of deployed equipment
@@ -1030,6 +1032,7 @@ update_military_rate = {
 	multiply_temp_variable = { SP_arty_equipment_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { mbt_hull_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { transport_helicopter_stockpile_equipment_count = stockpile_cost_multiplier }
+	multiply_temp_variable = { attack_helicopter_stockpile_equipment_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { util_vehicle_equipment_stockpile_count = stockpile_cost_multiplier }
 
 	add_to_temp_variable = { Inf_equipment_deployed_count = Inf_equipment_stockpile_count }
@@ -1044,6 +1047,7 @@ update_military_rate = {
 	add_to_temp_variable = { SP_arty_equipment_deployed_count = SP_arty_equipment_stockpile_count }
 	add_to_temp_variable = { mbt_hull_deployed_count = mbt_hull_stockpile_count }
 	add_to_temp_variable = { transport_helicopter_equipment_deployed_count = transport_helicopter_stockpile_equipment_count }
+	add_to_temp_variable = { attack_helicopter_hull_deployed_count = attack_helicopter_stockpile_equipment_count }
 	add_to_temp_variable = { util_vehicle_equipment_deployed_count = util_vehicle_equipment_stockpile_count }
 
 	#equipment cost, tweak these multipliers to change how much equipment costs compared to other types
@@ -1061,6 +1065,7 @@ update_military_rate = {
 	multiply_temp_variable = { SP_arty_equipment_deployed_count = 0.5 }
 	multiply_temp_variable = { mbt_hull_deployed_count = 0.7 }
 	multiply_temp_variable = { transport_helicopter_equipment_deployed_count = 7.5 }
+	multiply_temp_variable = { attack_helicopter_hull_deployed_count = 10 }
 	multiply_temp_variable = { util_vehicle_equipment_deployed_count = 0.022 }
 
 	set_variable = { equipment_operative_cost = Inf_equipment_deployed_count }
@@ -1075,6 +1080,7 @@ update_military_rate = {
 	add_to_variable = { equipment_operative_cost = SP_arty_equipment_deployed_count }
 	add_to_variable = { equipment_operative_cost = mbt_hull_deployed_count }
 	add_to_variable = { equipment_operative_cost = transport_helicopter_equipment_deployed_count }
+	add_to_variable = { equipment_operative_cost = attack_helicopter_hull_deployed_count }
 	add_to_variable = { equipment_operative_cost = util_vehicle_equipment_deployed_count }
 
 	set_temp_variable = { equipment_operative_cost_multiplier = 5 } #tweak this to modify the operative cost of all equipment
@@ -1173,21 +1179,45 @@ update_military_rate = {
 
 	#Calculate deployed and stockpiled planes, stockpiled planes cost a quarter of deployed planes
 	#Count number of strategic airforce
-	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
+	set_temp_variable = { strategic_airforce = num_equipment@large_plane_airframe }
+	add_to_temp_variable = { strategic_airforce = num_equipment@large_plane_cas_airframe }
+	add_to_temp_variable = { strategic_airforce = num_equipment@large_plane_awacs_airframe }
+	add_to_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
 	multiply_temp_variable = { strategic_airforce = 0.667 }
 
-	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@strategic_bomber_equipment }
+	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@large_plane_airframe }
+	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@large_plane_cas_airframe }
+	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@large_plane_awacs_airframe }
 
 	#Count number of expensive planes
-	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
+	set_temp_variable = { expensive_airforce = num_equipment@large_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@large_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@cv_medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@cv_medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@cv_medium_plane_scout_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
 	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
 	multiply_temp_variable = { expensive_airforce = 0.667 }
 
-	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@transport_plane_equipment }
-	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@nav_plane_equipment }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@large_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@large_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@cv_medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@cv_medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@cv_medium_plane_scout_airframe }
 
 	#Count number or regular airforce
-	set_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
+	set_temp_variable = { regular_airforce = num_equipment@medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@cv_medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@cv_medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@small_plane_suicide_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@medium_plane_cas_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@cv_medium_plane_cas_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@CV_MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@AS_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@Strike_fighter_equipment }
@@ -1195,33 +1225,43 @@ update_military_rate = {
 	add_to_temp_variable = { regular_airforce = num_equipment@CAS_equipment }
 	multiply_temp_variable = { regular_airforce = 0.667 }
 
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@MR_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@AS_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@Strike_fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@Air_UAV_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@CAS_equipment }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@cv_medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@cv_medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@small_plane_suicide_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@medium_plane_cas_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@cv_medium_plane_cas_airframe }
 
 	#Count number of cheap airforce
-	set_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_equipment }
+	set_temp_variable = { cheap_airforce = num_equipment@small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@small_plane_naval_bomber_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_naval_bomber_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_hull }
 	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
 	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
 	multiply_temp_variable = { cheap_airforce = 0.667 }
 
-	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@attack_helicopter_equipment }
-	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@L_Strike_fighter_equipment }
-	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@CV_L_Strike_fighter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@small_plane_naval_bomber_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@cv_small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@cv_small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@cv_small_plane_naval_bomber_airframe }
 
 	#Add higher costs for nuclear weapons capability - Papinian7
 	# nuclear status 'Nuclear Air Force' +30% planes costs or 'Nuclear Triad' +25% planes costs
 	### strategic_airforce
 	## strategic_bomber
 	# equipment
-	set_temp_variable = { temp_strategic_airforce_equipment = num_equipment@strategic_bomber_equipment }
+	set_temp_variable = { temp_strategic_airforce_equipment = num_equipment@large_plane_airframe }
 	multiply_temp_variable = { var = temp_strategic_airforce_equipment value = var_nuclear_status_planes_cost_factor }
 	multiply_temp_variable = { temp_strategic_airforce_equipment = 0.667 }
 	# deployed
-	set_temp_variable = { temp_strategic_airforce_deployed = num_deployed_planes_with_type@strategic_bomber_equipment }
+	set_temp_variable = { temp_strategic_airforce_deployed = num_deployed_planes_with_type@large_plane_airframe }
 	multiply_temp_variable = { var = temp_strategic_airforce_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_equipment }
@@ -1230,22 +1270,22 @@ update_military_rate = {
 	set_temp_variable = { temp_regular_airforce = 0 }
 	## MR_Fighter_equipment
 	# equipment
-	set_temp_variable = { temp_MR_Fighter_equipment = num_equipment@MR_Fighter_equipment }
+	set_temp_variable = { temp_MR_Fighter_equipment = num_equipment@medium_plane_airframe }
 	multiply_temp_variable = { var = temp_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	multiply_temp_variable = { temp_MR_Fighter_equipment = 0.667 }
 	# deployed
-	set_temp_variable = { temp_MR_Fighter_deployed = num_deployed_planes_with_type@MR_Fighter_equipment }
+	set_temp_variable = { temp_MR_Fighter_deployed = num_deployed_planes_with_type@medium_plane_airframe }
 	multiply_temp_variable = { var = temp_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_deployed }
 	## CV_MR_Fighter_equipment
 	# equipment
-	set_temp_variable = { temp_CV_MR_Fighter_equipment = num_equipment@CV_MR_Fighter_equipment }
+	set_temp_variable = { temp_CV_MR_Fighter_equipment = num_equipment@cv_medium_plane_airframe }
 	multiply_temp_variable = { var = temp_CV_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	multiply_temp_variable = { temp_CV_MR_Fighter_equipment = 0.667 }
 	# deployed
-	set_temp_variable = { temp_CV_MR_Fighter_deployed = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
+	set_temp_variable = { temp_CV_MR_Fighter_deployed = num_deployed_planes_with_type@cv_medium_plane_airframe }
 	multiply_temp_variable = { var = temp_CV_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
