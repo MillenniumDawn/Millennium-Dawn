@@ -1,5 +1,5 @@
 version="1.9.0"
-name="Millennium Dawn DEV"
+name="Millennium Dawn Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"
