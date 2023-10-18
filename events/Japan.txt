@@ -1862,7 +1862,6 @@ country_event = {
 			}
 			add_stability = 0.05
 		}
-		#swap_ideas = { remove_idea = JAP_large_boned add_idea = JAP_14th_cycle }		#OBSOLETED
 	}
 }
 
@@ -48932,6 +48931,7 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = -0.10 }
 		set_temp_variable = { temp_outlook_increase = -0.10 }
 		add_relative_party_popularity = yes
+		set_country_flag = JAP_DEMOGRAPHICS_CHAIN_REFUSED_PROGRESSIVES
 	}
 
 	#Accept union interests
@@ -50168,6 +50168,154 @@ country_event = {
 
 
 
+#----------------------------------------------------------------
+#Focus Fired Events - Labor
+#----------------------------------------------------------------
+
+#Replace Industrial Conglomerates with Labor Union?
+country_event = {
+	id = Japan.100001001
+	title = Japan.100001001.t
+	desc = Japan.100001001.d
+	picture = GFX_JAP_labor_protest
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		tag = JAP
+		has_idea = industrial_conglomerates
+		NOT = {
+			has_idea = labour_unions
+		}
+	}
+
+	#Better not
+	option = {
+		name = Japan.100001001.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100001001.oA"
+		add_political_power = 100
+	}
+
+	#Accept union interests
+	option = {
+		name = Japan.100001001.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100001001.oB"
+		if = {
+			limit = {
+				has_idea = industrial_conglomerates
+			}
+			swap_ideas = {
+				remove_idea = industrial_conglomerates
+				add_idea = labour_unions
+			}
+		}
+		add_political_power = -200
+		set_temp_variable = { temp_opinion = 10 }
+		change_labour_unions_opinion = yes
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 7 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 15 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+	}
+}
+
+
+# Samurai Bonds Chain
+country_event = {
+	id = Japan.100002000
+	title = Japan.100002000.t
+	desc = Japan.100002000.d
+	is_triggered_only = yes
+
+	option = { #accept deal
+		name = Japan.100002000.a
+		log = "[GetDateText]: [This.GetName]: Japan.100002000.a executed"
+		set_temp_variable = { treasury_change = 30 }
+		modify_treasury_effect = yes
+		FROM = {
+			country_event = Japan.100002001
+		}
+		set_temp_variable = { percent_change = 0.5 }
+		set_temp_variable = { tag_index = FROM.id }
+		set_temp_variable = { influence_target = ROOT.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			factor = 1000
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+		}
+	}
+	option = { #refuse deal
+		name = Japan.100002000.b
+		log = "[GetDateText]: [This.GetName]: Japan.100002000.b executed"
+		FROM = {
+			country_event = Japan.100002002
+		}
+
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value > 30
+				}
+			}
+		}
+	}
+}
+
+# Target Accepted Samurai Bonds
+country_event = {
+	id = Japan.100002001
+	title = Japan.100002001.t
+	desc = Japan.100002001.d
+	is_triggered_only = yes
+
+	option = {
+		name = Japan.100002001.a
+		log = "[GetDateText]: [This.GetName]: Japan.100002001.a executed"
+		set_temp_variable = { int_investment_change = 30 }
+		modify_international_investment_effect = yes
+	}
+}
+
+# Target Declined Samurai Bonds
+country_event = {
+	id = Japan.100002002
+	title = Japan.100002002.t
+	desc = Japan.100002002.d
+	is_triggered_only = yes
+
+	option = {
+		name = Japan.100002002.a
+		log = "[GetDateText]: [This.GetName]: Japan.100002002.a executed"
+	}
+}
+
+
 
 #----------------------------------------------------------------
 #Events Triggered by Date
@@ -50332,7 +50480,7 @@ country_event = {
 }
 
 
-#The Lost Decades 
+#The Lost Decades
 country_event = {
 	id = Japan.9
 	immediate = { log = "[GetDateText]: [Root.GetName]: event Japan.9" }

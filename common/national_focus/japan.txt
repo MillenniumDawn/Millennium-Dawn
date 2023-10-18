@@ -1215,13 +1215,20 @@ focus_tree = {
 
 		prerequisite = { focus = JAP_trinity_reform }
 
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = not_has_conservatism_government_TT
+				NOT = {
+					is_in_array = { ruling_party = 1 }
+				}
+			}
+
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_large_boned_policy executed"
 			increase_economic_growth = yes
-			swap_ideas = {
-				remove_idea = JAP_bubble_burst
-				add_idea = JAP_large_boned
-			}
+			add_political_power = 50
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1235,24 +1242,19 @@ focus_tree = {
 		y = 1
 		cost = 10
 		relative_position_id = JAP_large_boned_policy
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_JAP_DEMOGRAPHIC FOCUS_FILTER_JAP_DEMOGRAPHIC }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
 
 		prerequisite = { focus = JAP_large_boned_policy }
 		mutually_exclusive = { focus = JAP_japalib }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_japasoc executed"
-			swap_ideas = {
-				remove_idea = JAP_large_boned
-				add_idea = JAP_ecosoc1
-			}
+			add_ideas = JAP_ecosoc1
 			set_country_flag = MDMOSJAP_NF_JAPASOC
 			set_temp_variable = { corp_change = 2 }
 			modify_corporate_tax_rate_effect = yes # upper clamp at 50, so no check needed here
-			set_temp_variable = { temp_opinion = -20 }
+			set_temp_variable = { temp_opinion = -10 }
 			change_industrial_conglomerates_opinion = yes
-			custom_effect_tooltip = JAP_depopulation_reform_TT
-			JAP_demographics_depopulation_reform_increase_1 = yes
 		}
 
 		ai_will_do = {
@@ -1272,7 +1274,7 @@ focus_tree = {
 					is_in_array = { ruling_party = 22 }
 					is_in_array = { ruling_party = 23 }
 				}
-				factor = 0
+				factor = 2
 			}
 		}
 	}
@@ -1292,19 +1294,38 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_protect_worker_rights executed"
 			increase_mdmosjap_conrad_right_1 = yes
-			swap_ideas = {
-				remove_idea = JAP_ecosoc1
-				add_idea = JAP_ecosoc2
-			}
 			set_temp_variable = { corp_change = 2 }
 			modify_corporate_tax_rate_effect = yes
 			set_temp_variable = { temp_opinion = -10 }
 			change_industrial_conglomerates_opinion = yes
 			set_temp_variable = { temp_opinion = -10 }
 			change_small_medium_business_owners_opinion = yes
-			#might want to replace one faction with labor unions later in tree since PP is so scarce for JP to do it manually
-			set_temp_variable = { temp_opinion = 20 }
-			change_labour_unions_opinion = yes
+			if = { #If player was compelled to accept unions by progressives event, give them opinion here
+				limit = {
+					has_idea = labour_unions
+				}
+				set_temp_variable = { temp_opinion = 5 }
+				change_labour_unions_opinion = yes
+			}
+			else_if = { #If they haven't been compelled yet but appealed to them, let them know they can satisfy them!
+				limit = {
+					has_country_flag = JAP_DEMOGRAPHICS_CHAIN_APPEALED_PROGRESSIVES
+					NOT = {
+						has_country_flag = JAP_DEMOGRAPHICS_CHAIN_REFUSED_PROGRESSIVES
+					}
+					set_temp_variable = { temp_opinion = 5 }
+				change_labour_unions_opinion = yes
+				}
+				custom_effect_tooltip = JAP_union_interest_TT
+			}
+			else_if = { #If they backtracked, don't give them anything!
+				limit = {
+					has_country_flag = JAP_DEMOGRAPHICS_CHAIN_APPEALED_PROGRESSIVES
+					has_country_flag = JAP_DEMOGRAPHICS_CHAIN_REFUSED_PROGRESSIVES
+				}
+				custom_effect_tooltip = JAP_union_interest_TT
+			}
+			#Otherwise, they can get a bigger bonus later in the Union Seats Diet event
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1318,7 +1339,7 @@ focus_tree = {
 		y = 3
 		cost = 10
 		relative_position_id = JAP_large_boned_policy
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH FOCUS_FILTER_STABILITY FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_JAP_DEMOGRAPHIC }
 
 		prerequisite = { focus = JAP_protect_worker_rights }
 
@@ -1326,12 +1347,10 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_save_ice_age executed"
 			decrease_mdmosjap_conrad_left_2 = yes
 			decrease_mdmosjap_conrad_right_2 = yes
-			swap_ideas = {
-				remove_idea = JAP_ecosoc2
-				add_idea = JAP_ecosoc3
-			}
 			set_temp_variable = { corp_change = 2 }
 			modify_corporate_tax_rate_effect = yes
+			custom_effect_tooltip = JAP_depopulation_reform_TT
+			JAP_demographics_depopulation_reform_increase_1 = yes
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1345,22 +1364,20 @@ focus_tree = {
 		y = 1
 		cost = 10
 		relative_position_id = JAP_large_boned_policy
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_JAP_DEMOGRAPHIC }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
 		prerequisite = { focus = JAP_large_boned_policy }
 		mutually_exclusive = { focus = JAP_japasoc }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_japalib executed"
-			increase_economic_growth = yes
-			swap_ideas = {
-				remove_idea = JAP_large_boned
-				add_idea = JAP_ecocap1
-			}
+			add_ideas = JAP_keidanren_influence
+			set_temp_variable = { temp_opinion = 5 }
+			change_industrial_conglomerates_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
-			custom_effect_tooltip = JAP_depopulation_reform_TT
-			JAP_demographics_depopulation_reform_increase_1 = yes
 		}
 
 		ai_will_do = {
@@ -1394,14 +1411,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_deregulate_temporary_staffing executed"
 			increase_mdmosjap_conrad_left_1 = yes
-			swap_ideas = {
-				remove_idea = JAP_ecocap1
-				add_idea = JAP_ecocap2
-			}
+
 			set_temp_variable = { temp_opinion = -5 }
 			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_industrial_conglomerates_opinion = yes
+			add_timed_idea = {
+				idea = JAP_temp_staff
+				days = 730
+			}
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1422,10 +1442,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_reflation_policy executed"
 			increase_economic_growth = yes
-			swap_ideas = {
-				remove_idea = JAP_ecocap2
-				add_idea = JAP_ecocap3
-			}
+			set_temp_variable = { int_investment_change = -50 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+			IND = { country_event = Japan.100002000 }
+			SIA = { country_event = Japan.100002000 }
+			PHI = { country_event = Japan.100002000 }
+			MAY = { country_event = Japan.100002000 }
+			VIE = { country_event = Japan.100002000 }
+			TAI = { country_event = Japan.100002000 }
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1450,7 +1476,6 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_intern_training executed"
 			increase_mdmosjap_conrad_left_1 = yes
 			increase_mdmosjap_conrad_right_1 = yes
-			add_ideas = JAP_intern_training
 			set_temp_variable = { temp_opinion = 10 }
 			change_industrial_conglomerates_opinion = yes
 			set_temp_variable = { temp_opinion = 10 }
@@ -1476,12 +1501,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_liberal_syndicalism executed"
 			increase_mdmosjap_conrad_right_3 = yes
-			swap_ideas = {
-				remove_idea = JAP_ecosoc3
-				add_idea = JAP_ecolibsyn1
+			if = {
+				limit = {
+					NOT = { #Not if they backed out of being imposed on
+						has_country_flag = JAP_DEMOGRAPHICS_CHAIN_REFUSED_PROGRESSIVES
+					}
+				}
+				JAP = { country_event = Japan.100001001 }
+				set_temp_variable = { temp_opinion = 10 }
+				change_labour_unions_opinion = yes
 			}
-			set_temp_variable = { temp_opinion = 10 }
-			change_labour_unions_opinion = yes
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1502,10 +1531,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_labour_management executed"
 			increase_mdmosjap_conrad_right_3 = yes
-			swap_ideas = {
-				remove_idea = JAP_ecolibsyn1
-				add_idea = JAP_ecolibsyn2
-			}
 			set_temp_variable = { temp_opinion = 10 }
 			change_labour_unions_opinion = yes
 			set_temp_variable = { temp_opinion = -10 }
@@ -1531,10 +1556,6 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_industrial_union executed"
 			decrease_mdmosjap_conrad_left_2 = yes
 			decrease_mdmosjap_conrad_right_2 = yes
-			swap_ideas = {
-				remove_idea = JAP_ecolibsyn2
-				add_idea = JAP_ecolibsyn3
-			}
 			set_temp_variable = { temp_opinion = 20 }
 			change_labour_unions_opinion = yes
 			set_temp_variable = { temp_opinion = -10 }
@@ -1560,10 +1581,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_destroy_conventionality executed"
-			swap_ideas = {
-				remove_idea = JAP_ecolibsyn3
-				add_idea = JAP_ecolibsyn4
-			}
+			add_ideas = JAP_ecolibsyn4
 			set_temp_variable = { temp_opinion = 10 }
 			change_small_medium_business_owners_opinion = yes
 			set_temp_variable = { temp_opinion = -10 }
@@ -1736,7 +1754,6 @@ focus_tree = {
 					add_idea = social_06
 				}
 			}
-			add_ideas = JAP_ecosoclib1
 			set_temp_variable = { corp_change = 1 }
 			modify_corporate_tax_rate_effect = yes
 			set_temp_variable = { pop_change = 1 }
@@ -1763,10 +1780,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_ban_zangyo executed"
 			add_stability = 0.02
-			swap_ideas = {
-				remove_idea = JAP_ecosoclib1
-				add_idea = JAP_ecosoclib2
-			}
 			custom_effect_tooltip = JAP_depopulation_reform_TT
 			JAP_demographics_depopulation_reform_increase_1 = yes
 		}
@@ -1789,10 +1802,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_nenko_wage executed"
 			add_stability = 0.02
-			swap_ideas = {
-				remove_idea = JAP_ecosoclib2
-				add_idea = JAP_ecosoclib3
-			}
+			add_ideas = JAP_ecosoclib4
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1852,7 +1862,7 @@ focus_tree = {
 		y = 6
 		cost = 10
 		relative_position_id = JAP_large_boned_policy
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_JAP_DEMOGRAPHIC }
 
 		prerequisite = { focus = JAP_quasi_price_control }
 
@@ -1863,6 +1873,8 @@ focus_tree = {
 				remove_idea = JAP_econazsoc2
 				add_idea = JAP_econazsoc3
 			}
+			custom_effect_tooltip = JAP_depopulation_reform_TT
+			JAP_demographics_depopulation_reform_increase_1 = yes
 		}
 
 		ai_will_do = { factor = 10 }
@@ -1930,10 +1942,6 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_protect_foreign_trainees executed"
 			decrease_mdmosjap_conrad_left_1 = yes
 			increase_mdmosjap_conrad_right_1 = yes
-			swap_ideas = {
-				remove_idea = JAP_intern_training
-				add_idea = JAP_migration1
-			}
 		}
 
 		ai_will_do = {
@@ -1974,10 +1982,7 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_migrant_affair_agency executed"
 			decrease_mdmosjap_conrad_left_3 = yes
 			increase_mdmosjap_conrad_right_3 = yes
-			swap_ideas = {
-				remove_idea = JAP_migration1
-				add_idea = JAP_migration2
-			}
+			add_ideas = JAP_migration2
 			custom_effect_tooltip = JAP_depopulation_reform_TT
 			JAP_demographics_depopulation_reform_increase_1 = yes
 		}
@@ -2006,10 +2011,6 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_accept_labour_immigrants executed"
 			increase_mdmosjap_conrad_left_1 = yes
 			decrease_mdmosjap_conrad_right_1 = yes
-			swap_ideas = {
-				remove_idea = JAP_intern_training
-				add_idea = JAP_neoslave1
-			}
 		}
 
 		ai_will_do = {
@@ -2044,12 +2045,7 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_control_labour_immigrants executed"
 			increase_mdmosjap_conrad_left_3 = yes
 			decrease_mdmosjap_conrad_right_3 = yes
-			swap_ideas = {
-				remove_idea = JAP_neoslave1
-				add_idea = JAP_neoslave2
-			}
-			custom_effect_tooltip = JAP_depopulation_reform_TT
-			JAP_demographics_depopulation_reform_increase_1 = yes
+			add_ideas = JAP_neoslave2
 		}
 
 		ai_will_do = { factor = 10 }
@@ -2072,11 +2068,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_maternity_tax_reduction executed"
-
 			set_temp_variable = { pop_change = -2 }
 			modify_population_tax_rate_effect = yes
 			add_stability = 0.01
-			add_ideas = JAP_babyboom1
 			custom_effect_tooltip = JAP_depopulation_reform_TT
 			JAP_demographics_depopulation_reform_increase_1 = yes
 		}
@@ -2103,10 +2097,6 @@ focus_tree = {
 			set_temp_variable = { pop_change = -2 }
 			modify_population_tax_rate_effect = yes
 			add_stability = 0.01
-			swap_ideas = {
-				remove_idea = JAP_babyboom1
-				add_idea = JAP_babyboom2
-			}
 		}
 
 		ai_will_do = { factor = 10 }
@@ -2178,8 +2168,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		prerequisite = { focus = JAP_trinity_reform }
-
-		available = { date > 2000.6.25 }
 
 		bypass = { ROOT = { has_idea = bureau_01 } }
 
