@@ -361,19 +361,24 @@
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
+	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.5 -- 0.1
+	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 2 -- 2
+	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 2 -- 1
+	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.05 -- 0.01
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
 	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
-	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 50 -- Eyeballed average amount of airplanes in the airwings
+	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 100 -- Eyeballed average amount of airplanes in the airwings
 	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 20 -- 2
-	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 5 -- 2.5
+	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 6 -- 2.5
 	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.80 -- 0.3
 	NDefines.NAir.COMBAT_BETTER_SPEED_DAMAGE_INCREASE = 0.45 -- 0.6
-	NDefines.NAir.COMBAT_MULTIPLANE_CAP = 2.0 -- 3.0
-	NDefines.NAir.COMBAT_DAMAGE_SCALE = 0.5 -- 0.25
-	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 1 -- 6
+	NDefines.NAir.COMBAT_MULTIPLANE_CAP = 3.0 -- 3.0
+	NDefines.NAir.COMBAT_DAMAGE_STATS_MULTILPIER = 0.3 -- 0.2
+	NDefines.NAir.COMBAT_DAMAGE_SCALE = 1.1 -- 0.25
+	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 6 -- 6
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 10000 -- 10000 --Upped the count to ensure more airusages and coverage
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 6000 -- 10000
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 5000 -- 10000
@@ -399,9 +404,9 @@
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_SHIP_DAMAGE_FACTOR = 80 -- 50
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_PLANE_CHANCE = 0.75 -- 0.5
 	NDefines.NAir.BASE_STRATEGIC_BOMBING_HIT_PLANE_DAMAGE_FACTOR = 0.5 -- 0.2
-	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_SCALE = 0.010 -- 0.015
-	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_PLANES = 25 -- 50
-	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_PLANES_FACTOR = 0.04 -- 0.1
+	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_SCALE = 0.25 -- 0.015 was 0.01 in MD
+	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_PLANES = 50 -- 50
+	NDefines.NAir.AIR_COMBAT_FINAL_DAMAGE_PLANES_FACTOR = 0.1 -- 0.1 was 0.04 in MD
 	NDefines.NAir.AA_INDUSTRY_AIR_DAMAGE_FACTOR = -0.06 -- -0.12
 	NDefines.NAir.ANTI_AIR_PLANE_DAMAGE_FACTOR = 0.01 -- 0.8
 	NDefines.NAir.ANTI_AIR_PLANE_DAMAGE_CHANCE = 0.04 -- 0.1
@@ -430,7 +435,7 @@
 	NDefines.NAir.RECON_LAND_SPOT_CHANCE = 0.07 -- 0.02
 	NDefines.NAir.CAPACITY_PENALTY = 4 -- 2
 	NDefines.NAir.DISRUPTION_FACTOR = 6.0 -- 4.0
-	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 6.0 -- 8.0
+	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
 	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 20 -- 50 is vanilla
 
@@ -630,6 +635,7 @@
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
 	NDefines.NTrade.ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.5 -- 0.5
+	NDefines.NAI.SEA_PATH_LENGTH_SCORE_BASE = -10 -- Reduced from -30 to -10
 
 	-- NAI Defines
 	-- BAI fix test
@@ -736,8 +742,8 @@
 	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10				-- 150
 	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5				-- 100
 
-	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.1				-- 1.1
-	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 10				-- 20
+	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.2				-- 1.1
+	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- 20
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50					-- 150
 
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
@@ -832,10 +838,13 @@
 	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
 	NDefines.NAI.NUM_AI_MESSAGES = 250
 	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
-	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.5
+	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.8
 	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.7
-	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.2
+	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.8
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
+	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
+	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
+	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
 		'fossil_powerplant', 'industrial_complex','internet_station', 'fuel_silo', 'offices', 'infrastructure', 'arms_factory', 'synthetic_refinery', 'nuclear_reactor'
 	}
