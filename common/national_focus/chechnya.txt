@@ -1,5 +1,4 @@
-﻿#Lord Bogdanoff
-
+﻿##Made by Lord Bogdanoff
 focus_tree = {
 
 	id = chechnya
@@ -12,11 +11,11 @@ focus_tree = {
 		}
 	}
 
-	continuous_focus_position = { x = 2500 y = 940 }
+	continuous_focus_position = { x = 1900 y = 2640 }
 
 	focus = {
 		id = CHE_establish_loyal_government
-		icon = chechnya
+		icon = che_kadyrov
 		x = 10
 		y = 1
 
@@ -31,11 +30,20 @@ focus_tree = {
 			add_stability = 0.09
 			add_war_support = 0.05
 			increase_economic_growth = yes
+			country_event = { id = chechnya.4 days = 2 }
 			hidden_effect = {
+				add_manpower = -20000
+				add_ideas = CHE_experience_chechen_wars_idea
 				set_temp_variable = { percent_change = 24.11 }
 				set_temp_variable = { tag_index = SOV }
 				set_temp_variable = { influence_target = CHE }
 				change_influence_percentage = yes
+				SOV = {
+					set_autonomy = {
+						target = CHE
+						autonomy_state = autonomy_republic_rf
+					}
+				}
 				if = {
 					limit = {
 						SOV = { has_government = communism }
@@ -46,7 +54,7 @@ focus_tree = {
 					limit = {
 						SOV = { has_government = nationalist }
 					}
-					SOV_chechen_puppet_nationalist = yes
+					SOV_chechen_puppet_nationalist =  yes
 				}
 			}
 		}
@@ -57,22 +65,475 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_suppress_political_opposition
-		icon = anti_establishment2
-		x = 0
+		id = CHE_ros_gvardia
+		icon = sov_rosgvardia
+		x = -9
 		y = 2
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 3
+		available = {
+			SOV = { has_completed_focus = SOV_rosgvardia }
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_establish_loyal_government }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ros_gvardia"
+			add_stability = 0.2
+			add_command_power = 20
+			add_equipment_to_stockpile = {
+				type = util_vehicle_equipment
+				amount = -300
+				producer = CHE
+			}
+			add_equipment_to_stockpile = {
+				type = apc_hull
+				amount = -150
+				producer = CHE
+			}
+			add_equipment_to_stockpile = {
+				type = transport_helicopter1
+				amount = -20
+				producer = CHE
+			}
+
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			increase_policing_budget = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ros_gvardia_build
+		icon = sov_rosgvardia
+		x = 0
+		y = 2
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 6
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ros_gvardia }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ros_gvardia_build"
+			add_ideas = CHE_ros_gvard_idea
+			country_event = { id = chechnya.5 days = 2 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ros_gvardia_armor
+		icon = sov_rosgvardia_armor
+		x = -2
+		y = 3
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_Grozneftegaz }
+		prerequisite = { focus = CHE_ros_gvardia_build }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ros_gvardia_build"
+			swap_ideas = {
+				remove_idea = CHE_ros_gvard_idea
+				add_idea = CHE_ros_gvard2_idea
+			}
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_special_motorized_regiment
+		icon = che_kadyrovci
+		x = 2
+		y = 3
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 7
+
+		available = {
+			CHE = { is_subject_of = SOV }
+			has_manpower > 1999
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ros_gvardia_build }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_special_motorized_regiment"
+			custom_effect_tooltip = CHE_battalion_tt
+			country_event = { id = chechnya.6 days = 1 }
+			hidden_effect = {
+			add_manpower = -2000
+			division_template = {
+				name = "Special Motorized Regiment"
+				regiments = {
+					Mot_Inf_Bat = { x = 0 y = 0 }
+					Special_Forces = { x = 0 y = 1 }
+					Special_Forces = { x = 1 y = 0 }
+
+				}
+				priority = 2
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"141st Special Motorized Regiment named A. Kadyrov\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+		  	}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ros_gvardia_mil_train
+		icon = sov_rosgvardia
+		x = 0
+		y = 4
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ros_gvardia_armor }
+		prerequisite = { focus = CHE_special_motorized_regiment }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ros_gvardia_mil_train"
+			swap_ideas = {
+				remove_idea = CHE_ros_gvard2_idea
+				add_idea = CHE_ros_gvard3_idea
+			}
+			decrease_corruption = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_sever
+		icon = che_kadyrovci
+		x = -1
+		y = 5
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 5
+
+		available = {
+			CHE = { is_subject_of = SOV }
+			has_manpower > 1999
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ros_gvardia_mil_train }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_sever"
+			custom_effect_tooltip = CHE_battalion_sever_tt
+			hidden_effect = {
+			add_manpower = -2000
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Sever\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_yug
+		icon = che_kadyrovci
+		x = 1
+		y = 5
+
+		relative_position_id =  CHE_ros_gvardia
+
+		cost = 5
+
+		available = {
+			CHE = { is_subject_of = SOV }
+			has_manpower > 1999
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ros_gvardia_mil_train }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_yug"
+			custom_effect_tooltip = CHE_battalion_yug_tt
+			hidden_effect = {
+			add_manpower = -2000
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Yug\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ros_gvardia_occup
+		icon = sov_rosgvardia_police
+		x = 0
+		y = 6
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 5
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_sever }
+		prerequisite = { focus = CHE_yug }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ros_gvardia_mil_train"
+			swap_ideas = {
+				remove_idea = CHE_ros_gvard3_idea
+				add_idea = CHE_ros_gvard4_idea
+			}
+			decrease_corruption = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ahmat_sever
+		icon =  che_kadyrovci
+		x = 1
+		y = 7
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 5
+
+		available = {
+			has_country_leader = {
+				name = "Ramzan Kadyrov"
+				ruling_only = yes
+			}
+			CHE = { is_subject_of = SOV }
+			has_war = yes
+			has_manpower > 1999
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ros_gvardia_occup}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ahmat_sever"
+			custom_effect_tooltip =  CHE_battalion_ahmat_sever_tt
+			hidden_effect = {
+			add_manpower = -2000
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Ahmat-Sever\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ahmat_other
+		icon =  che_kadyrovci
+		x = -1
+		y = 7
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 7
+
+		available = {
+			has_country_leader = {
+				name = "Ramzan Kadyrov"
+				ruling_only = yes
+			}
+			CHE = { is_subject_of = SOV }
+			has_war = yes
+			has_manpower > 1999
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ros_gvardia_occup}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ahmat_sever"
+			custom_effect_tooltip = CHE_battalions_ahmat_tt
+			hidden_effect = {
+			add_manpower = -2000
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Ahmat-Yug\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 46 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Ahmat-Zapad\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 46 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Ahmat-Vostok\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ahmat_other2
+		icon = che_kadyrovci
+		x = 0
+		y = 8
+
+		relative_position_id = CHE_ros_gvardia
+
+		cost = 7
+
+		available = {
+			has_country_leader = {
+				name = "Ramzan Kadyrov"
+				ruling_only = yes
+			}
+			CHE = { is_subject_of = SOV }
+			has_war = yes
+			has_manpower > 1999
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ahmat_other}
+		prerequisite = { focus = CHE_ahmat_sever}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ahmat_sever"
+			custom_effect_tooltip = CHE_battalions_ahmat_other_tt
+	 		hidden_effect = {
+			add_manpower = -2000
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Ahmat-Chechnya\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 46 }
+				create_unit = {
+					division = "name = \"Motorized rifle battalion Ahmat-Russia\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+
+			 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_suppress_political_opposition
+		icon = anti_establishment2
+		x = -1
+		y = 2
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_solve_religious_issue }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_suppress_political_opposition"
@@ -96,7 +557,7 @@ focus_tree = {
 	focus = {
 		id = CHE_loyal_people_agency
 		icon = focus_generic_secret_service_agency
-		x = 1
+		x = -2
 		y = 3
 
 		relative_position_id = CHE_establish_loyal_government
@@ -124,9 +585,9 @@ focus_tree = {
 
 	focus = {
 		id = CHE_police_regiment
-		icon = police_kadyrovci
-		x = 3
-		y = 5
+		icon = che_police_kadyrovci
+		x = 0
+		y = 3
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -137,14 +598,13 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_export_energy_regions }
-		prerequisite = { focus = CHE_solve_religious_issue }
-		prerequisite = { focus = CHE_electro_pult }
+		prerequisite = { focus = CHE_suppress_political_opposition }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_police_regiment"
-			custom_effect_tooltip = CHE_battalion_tt
+			custom_effect_tooltip = CHE_battalions_police_tt
 			hidden_effect = {
+			add_manpower = -1000
 			division_template = {
 				name = "Special Purpose Police Regiment"
 				regiments = {
@@ -154,142 +614,13 @@ focus_tree = {
 			}
 			random_owned_controlled_state = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
+				prioritize = { 672 }
 				create_unit = {
 					division = "name = \"Special Purpose Police Regiment named A.Kadyrov\" division_template = \"Special Purpose Police Regiment\" start_experience_factor = 0.1"
 					owner = CHE
 				}
 			}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = CHE_special_motorized_regiment
-		icon = kadirovci
-		x = 2
-		y = 6
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 10
-		available = {
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_police_regiment }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_special_motorized_regiment"
-			custom_effect_tooltip = CHE_battalion_tt
-			hidden_effect = {
-			division_template = {
-				name = "Special Motorized Regiment"
-				regiments = {
-					Mot_Inf_Bat = { x = 0 y = 0 }
-
-				}
-				priority = 2
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"141st Special Motorized Regiment named A. Kadyrov\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
-					owner = CHE
-				}
-			}
-		 	}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = CHE_battalion_vostok
-		icon = kadirovci
-		x = 4
-		y = 6
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 10
-		available = {
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_police_regiment }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_battalion_vostok"
-			custom_effect_tooltip = CHE_battalion_tt
-			hidden_effect = {
-			division_template = {
-				name = "Chechen Battalion"
-				regiments = {
-					Special_Forces = { x = 0 y = 0 }
-
-				}
-				priority = 2
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"The Vostok Battalion\" division_template = \"Chechen Battalion\" start_experience_factor = 0.1"
-					owner = CHE
-				}
-			}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = CHE_mac
-		icon = Arm_car_che
-		x = 3
-		y = 7
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 10
-		available = {
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_special_motorized_regiment }
-		prerequisite = { focus = CHE_battalion_vostok }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_mac"
-			set_temp_variable = { treasury_change = -3.00 }
-			modify_treasury_effect = yes
-			one_random_arms_factory = yes
-			add_tech_bonus = {
-				name = CHE_MAC
-				bonus = 0.15
-				uses = 1
-				category = Cat_UTIL
-			}
+			 }
 		}
 
 		ai_will_do = {
@@ -298,9 +629,9 @@ focus_tree = {
 	}
 	focus = {
 		id = CHE_russian_university_spetsnaz
-		icon = white_officer
-		x = 3
-		y = 8
+		icon = che_gudermes
+		x = 1
+		y = 7
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -311,19 +642,65 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_mac }
+		prerequisite = { focus = CHE_revive_chgu }
+		prerequisite = { focus = CHE_chechen_neftehim }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_russian_university_spetsnaz"
-			add_tech_bonus = {
-				name = CHE_univer_spetsnaz
-				uses = 2
-				bonus = 0.5
-				category = Cat_SPECIAL_FORCES
-			}
-			army_experience = 25
-			set_temp_variable = { treasury_change = -1.00 }
+			add_ideas = CHE_gudermes_idea
+			 set_temp_variable = { treasury_change = -2.00 }
 			modify_treasury_effect = yes
+			country_event = { id = chechnya.7 days = 1 }
+			SOV = {
+			country_event = { id = chechnya.7 days = 1 }
+			}
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_battalion_vostok
+		icon = che_kadyrovci
+		x = 0
+		y = 4
+
+		relative_position_id = CHE_russian_university_spetsnaz
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_warfrare }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_battalion_vostok"
+			custom_effect_tooltip = CHE_battalions_vostok_tt
+			hidden_effect = {
+			add_manpower = -2000
+			division_template = {
+				name = "Chechen Battalion"
+				regiments = {
+					Special_Forces = { x = 0 y = 0 }
+
+				}
+				priority = 2
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"The Vostok Battalion\" division_template = \"Chechen Battalion\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			 }
 		}
 
 		ai_will_do = {
@@ -332,12 +709,40 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_prof_army
-		icon = coalition_army
-		x = 3
-		y = 9
+		id = CHE_arms_rebuild
+		icon = Arm_car_che
+		x = 5
+		y = 7
 
 		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_export_energy_regions }
+		prerequisite = { focus = CHE_electro_pult }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_arms_rebuild"
+			one_random_arms_factory = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_terek
+		icon = che_police_kadyrovci
+		x = 1
+		y = 1
+
+		relative_position_id = CHE_russian_university_spetsnaz
 
 		cost = 7
 		available = {
@@ -349,22 +754,32 @@ focus_tree = {
 		prerequisite = { focus = CHE_russian_university_spetsnaz }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_prof_army"
-			add_ideas = BLR_reforming_army
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_terek"
+			custom_effect_tooltip = CHE_battalions_terek_tt
+			hidden_effect = {
+			add_manpower = -1000
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 672 }
+				create_unit = {
+					division = "name = \"SOBR Terek\" division_template = \"Special Purpose Police Regiment\" start_experience_factor = 0.1"
+					owner = CHE
+				}
+			}
+			 }
 		}
 
 		ai_will_do = {
 			factor = 1
 		}
 	}
-	
 	focus = {
-		id = CHE_contract
-		icon = military_women
-		x = 2
-		y = 10
+		id = CHE_geo_training
+		icon = a_land_of_mountains
+		x = -1
+		y = 1
 
-		relative_position_id = CHE_establish_loyal_government
+		relative_position_id = CHE_russian_university_spetsnaz
 
 		cost = 7
 		available = {
@@ -373,80 +788,13 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_prof_army }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_prof_army"
-			swap_ideas = {
-				remove_idea = BLR_reforming_army
-				add_idea = BLR_reforming_army_prof
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CHE_uniform_army
-		icon = winter_warfare
-		x = 2
-		y = 11
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 7
-		available = {
-			CHE = { is_subject_of = SOV }
-		}
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_contract }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_prof_army"
-			swap_ideas = {
-				remove_idea = BLR_reforming_army
-				add_idea = BLR_reforming_army_prof
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = CHE_terek
-		icon = terek
-		x = 3
-		y = 13
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 8
-		available = {
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_anti_lgbt }
-
+		prerequisite = { focus = CHE_russian_university_spetsnaz }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_terek"
-			custom_effect_tooltip = CHE_battalion_tt
-			hidden_effect = {
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"SOBR Terek\" division_template = \"Chechen Battalion\" start_experience_factor = 0.1"
-					owner = CHE
-				}
-			}
+			swap_ideas = {
+				remove_idea = CHE_gudermes_idea
+				add_idea = CHE_gudermes2_idea
 			}
 		}
 
@@ -456,34 +804,30 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_sever
-		icon = kadirovcy2
-		x = 2
-		y = 14
+		id = CHE_doctrine_land
+		icon = army_doctrine
+		x = 0
+		y = 2
 
-		relative_position_id = CHE_establish_loyal_government
+		relative_position_id = CHE_russian_university_spetsnaz
 
-		cost = 8
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
+		prerequisite = { focus = CHE_geo_training }
 		prerequisite = { focus = CHE_terek }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_sever"
-			custom_effect_tooltip = CHE_battalion_tt
-			hidden_effect = {
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"Motorized rifle battalion Sever\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
-					owner = CHE
-				}
-			}
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_doctrine_land"
+			add_doctrine_cost_reduction = {
+				name = GENERIC_land_doctrine_innovations
+				cost_reduction = 0.5
+				uses = 2
+				category = land_doctrine
 			}
 		}
 
@@ -493,36 +837,27 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_yug
-		icon = kadirovcy2
-		x = 4
-		y = 14
+		id = CHE_warfrare
+		icon = soldiers2
+		x = 0
+		y = 3
 
-		relative_position_id = CHE_establish_loyal_government
+		relative_position_id = CHE_russian_university_spetsnaz
 
-		cost = 8
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_terek }
-
+		prerequisite = { focus = CHE_doctrine_land }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_yug"
-			custom_effect_tooltip = CHE_battalion_tt
-			hidden_effect = {
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"Motorized rifle battalion Yug\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
-					owner = CHE
-				}
-			}
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_doctrine_land"
+			swap_ideas = {
+				remove_idea = CHE_gudermes2_idea
+				add_idea = CHE_gudermes3_idea
 			}
 		}
 
@@ -533,38 +868,37 @@ focus_tree = {
 
 	focus = {
 		id = CHE_oil_polk
-		icon = police_kadyrovci
-		x = 5
-		y = 15
+		icon = che_police_kadyrovci
+		x = 2
+		y = 4
 
 		relative_position_id = CHE_establish_loyal_government
 
 		cost = 7
+
 		available = {
-			has_war = yes
 			CHE = { is_subject_of = SOV }
+			has_completed_focus = CHE_police_regiment
 		}
 
+		prerequisite = { focus = CHE_Grozneftegaz }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_sever }
-		prerequisite = { focus = CHE_yug }
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_oil_polk"
-			custom_effect_tooltip = CHE_battalion_tt
+			custom_effect_tooltip = CHE_battalions_oil_tt
 			hidden_effect = {
+			add_manpower = -1000
 			random_owned_controlled_state = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
+				prioritize = { 672 }
 				create_unit = {
-					division = "name = \"Oil Regiment \" division_template = \"Chechen Battalion\" start_experience_factor = 0.2"
+					division = "name = \"Oil Regiment\" division_template = \"Special Purpose Police Regiment\" start_experience_factor = 0.2"
 					owner = CHE
 				}
 			}
-			}
+			 }
 
 		}
 
@@ -576,22 +910,18 @@ focus_tree = {
 		id = CHE_intervence
 		icon = Generic_Crouched_Soldier
 		x = 3
-		y = 15
+		y = 12
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 8
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_sever }
-		prerequisite = { focus = CHE_yug }
-
-
+		prerequisite = { focus = CHE_battalion_vostok }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_intervence"
@@ -621,31 +951,24 @@ focus_tree = {
 	focus = {
 		id = CHE_diplomacy
 		icon = global_community
-		x = -4
-		y = 12
+		x = -6
+		y = 14
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 3
 		available = {
 			CHE = { is_subject_of = SOV }
+			has_completed_focus = CHE_invite_international_students
 		}
 
+		prerequisite = { focus = CHE_cult_ramzan }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_continue_investing_medicine }
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_diplomacy"
-			every_country = {
-				limit = {
-					has_government = fascism
-					NOT = { has_war_with = ROOT }
-					}
-				add_opinion_modifier = { target = ROOT modifier = recent_actions_positive }
-			}
+			add_political_power = 150
 
 		}
 
@@ -657,12 +980,12 @@ focus_tree = {
 	focus = {
 		id = CHE_saudi
 		icon = align_to_saudi_arabia
-		x = -3
-		y = 13
+		x = -7
+		y = 15
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 5
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
@@ -677,7 +1000,28 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_saudi"
 			add_opinion_modifier = { target = SAU modifier = diplomatic_support }
 			reverse_add_opinion_modifier = { target = CHE modifier = diplomatic_support }
-
+			add_ai_strategy = {
+				type = befriend
+				id = "SAU"
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = "SAU"
+				value = 100
+			}
+			SAU = {
+				add_ai_strategy = {
+					type = befriend
+					id = ROOT
+					value = 100
+				}
+				add_ai_strategy = {
+					type = support
+					id = ROOT
+					value = 100
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -688,12 +1032,12 @@ focus_tree = {
 	focus = {
 		id = CHE_saudi_invest
 		icon = saudi_royalty
-		x = -2
-		y = 14
+		x = -8
+		y = 16
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 8
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
@@ -706,7 +1050,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_saudi"
 			one_office_construction = yes
-			set_temp_variable = { percent_change = 5.11 }
+			set_temp_variable = { percent_change = 5.11}
 			set_temp_variable = { tag_index = SAU }
 			set_temp_variable = { influence_target = CHE }
 			change_influence_percentage = yes
@@ -722,7 +1066,7 @@ focus_tree = {
 		id = CHE_palestine
 		icon = align_to_palestine
 		x = -5
-		y = 13
+		y = 15
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -735,7 +1079,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		prerequisite = { focus = CHE_diplomacy }
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_palestine"
@@ -755,14 +1098,152 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_syria
-		icon = assad_day
+		id = CHE_abkhazia
+		icon = align_to_abkhazia
 		x = -4
-		y = 14
+		y = 16
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_diplomacy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_palestine"
+			add_opinion_modifier = { target = ABK modifier = diplomatic_support }
+			reverse_add_opinion_modifier = { target = CHE modifier = diplomatic_support }
+			add_ai_strategy = {
+				type = befriend
+				id = "ABK"
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = "ABK"
+				value = 100
+			}
+			ABK = {
+				add_ai_strategy = {
+					type = befriend
+					id = ROOT
+					value = 100
+				}
+				add_ai_strategy = {
+					type = support
+					id = ROOT
+					value = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_china
+		icon = blr_belchina_friend
+		x = -3
+		y = 17
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_diplomacy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_palestine"
+			add_opinion_modifier = { target = CHI modifier = diplomatic_support }
+			reverse_add_opinion_modifier = { target = CHE modifier = diplomatic_support }
+			add_ai_strategy = {
+				type = befriend
+				id = "CHI"
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = "CHI"
+				value = 100
+			}
+			CHI = {
+				add_ai_strategy = {
+					type = befriend
+					id = ROOT
+					value = 100
+				}
+				add_ai_strategy = {
+					type = support
+					id = ROOT
+					value = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_china_buy
+		icon = align_to_china
+		x = -3
+		y = 18
 
 		relative_position_id = CHE_establish_loyal_government
 
 		cost = 5
+		available = {
+			CHI = { has_tech = util_vehicle_5 }
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_china }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_palestine"
+			set_temp_variable = { percent_change = 1.11}
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+			add_equipment_to_stockpile = {
+				type = util_vehicle_5
+				amount = 100
+				producer = CHI
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_syria
+		icon = assad_day
+		x = -6
+		y = 17
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
@@ -771,13 +1252,126 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		prerequisite = { focus = CHE_palestine }
-		prerequisite = { focus = CHE_saudi }
+		prerequisite = { focus = CHE_saudi}
 
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_syria"
 			add_opinion_modifier = { target = SYR modifier = diplomatic_support }
 			reverse_add_opinion_modifier = { target = CHE modifier = diplomatic_support }
+			add_ai_strategy = {
+				type = befriend
+				id = "SYR"
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = "SYR"
+				value = 100
+			}
+			SYR = {
+				add_ai_strategy = {
+					type = befriend
+					id = ROOT
+					value = 100
+				}
+				add_ai_strategy = {
+					type = support
+					id = ROOT
+					value = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_iran
+		icon = align_to_iran
+		x = -7
+		y = 18
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_saudi}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_syria"
+			add_opinion_modifier = { target = PER modifier = diplomatic_support }
+			reverse_add_opinion_modifier = { target = CHE modifier = diplomatic_support }
+			add_ai_strategy = {
+				type = befriend
+				id = "PER"
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = "PER"
+				value = 100
+			}
+			PER = {
+				add_ai_strategy = {
+					type = befriend
+					id = ROOT
+					value = 100
+				}
+				add_ai_strategy = {
+					type = support
+					id = ROOT
+					value = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_iran_shaheed
+		icon = shahed
+		x = -7
+		y = 19
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			SOV = {has_completed_focus = SOV_acquire_drones}
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_iran}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_syria"
+			PER = {
+				add_opinion_modifier = { target = ROOT modifier = military_aid }
+				reverse_add_opinion_modifier = { target = ROOT modifier = military_aid }
+				set_temp_variable = { treasury_change = 2 }
+				modify_treasury_effect = yes
+			}
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_equipment_to_stockpile = {
+				type = Air_UAV1
+				amount = 100
+			}
 
 		}
 
@@ -789,7 +1383,69 @@ focus_tree = {
 	focus = {
 		id = CHE_continue_investing_medicine
 		icon = generic_hospital
-		x = 0
+		x = -5
+		y = 9
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_grozni_city }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_continue_investing_medicine"
+			increase_healthcare_budget = yes
+			add_manpower = 1500
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_fight_with_narco
+		icon = greater_padania
+		x = -6
+		y = 10
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_continue_investing_medicine }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_fight_with_narco"
+			add_political_power = -100
+			swap_ideas = {
+				remove_idea = CHE_narcos_idea
+				add_idea = CHE_narcos2_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_fight_with_narco2
+		icon = greater_padania
+		x = -6
 		y = 11
 
 		relative_position_id = CHE_establish_loyal_government
@@ -800,18 +1456,14 @@ focus_tree = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_grozni_city }
-		prerequisite = { focus = CHE_russian_university_spetsnaz }
+		prerequisite = { focus = CHE_fight_with_narco }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_start_investing_medicine"
-			increase_healthcare_budget = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			add_relative_party_popularity = yes
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_fight_with_narco"
+			add_political_power = -50
+			remove_ideas = CHE_narcos2_idea
 		}
 
 		ai_will_do = {
@@ -822,8 +1474,8 @@ focus_tree = {
 	focus = {
 		id = CHE_anti_lgbt
 		icon = anti_lgbt
-		x = 0
-		y = 12
+		x = -3
+		y = 9
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -835,8 +1487,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_continue_investing_medicine }
-		prerequisite = { focus = CHE_uniform_army }
+		prerequisite = { focus = CHE_grozni_city }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_anti_lgbt"
@@ -854,8 +1505,8 @@ focus_tree = {
 	focus = {
 		id = CHE_continue_fight_terrorists
 		icon = terror_che
-		x = 0
-		y = 14
+		x = -1
+		y = 12
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -868,7 +1519,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_anti_lgbt }
+		prerequisite = { focus = CHE_battalion_vostok }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_continue_fight_terrorists"
@@ -887,28 +1538,26 @@ focus_tree = {
 	focus = {
 		id = CHE_ingushetia
 		icon = ingushetia_conflict
-		x = 0
-		y = 16
+		x = -4
+		y = 10
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 5
+		cost = 6
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_continue_fight_terrorists }
-		prerequisite = { focus = CHE_syria }
-		prerequisite = { focus = CHE_intervence }
+		prerequisite = { focus = CHE_continue_investing_medicine }
+		prerequisite = { focus = CHE_anti_lgbt}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_ingushetia"
 			add_opinion_modifier = { target = SOV modifier = recent_actions_positive }
 			reverse_add_opinion_modifier = { target = SOV modifier = recent_actions_positive }
-	 		add_stability = 0.09
+	  		add_stability = 0.09
 			 set_party_index_to_ruling_party = yes
 			 set_temp_variable = { party_popularity_increase = 0.01 }
 			 add_relative_party_popularity = yes
@@ -921,49 +1570,154 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_novorossia
-		icon = align_to_novorossiya
-		x = -1
-		y = 17
+		id = CHE_belarus
+		icon = align_to_belarus
+		x = 3
+		y = 16
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
-			country_exists = DPR
 		}
 
+		mutually_exclusive = {focus = CHE_belarus_spec_op}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_ingushetia }
+		prerequisite = { focus = CHE_end_fight_terrorists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_belarus"
+			add_opinion_modifier = { target = BLR modifier = diplomatic_support }
+			reverse_add_opinion_modifier = { target = CHE modifier = diplomatic_support }
+			add_ai_strategy = {
+				type = befriend
+				id = "BLR"
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = "BLR"
+				value = 100
+			}
+			BLR = {
+				add_ai_strategy = {
+					type = befriend
+					id = ROOT
+					value = 100
+				}
+				add_ai_strategy = {
+					type = support
+					id = ROOT
+					value = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_belarus_spec_op
+		icon = wagner_lukash
+		x = 5
+		y = 16
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			BLR = {
+				OR = {
+				has_government = democratic
+				nationalist_right_wing_populists_are_in_power = yes
+				}
+			}
+			CHE = { is_subject_of = SOV }
+			NOT = {BLR = { is_subject_of = SOV }}
+		}
+		  mutually_exclusive = {focus = CHE_belarus}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_end_fight_terrorists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_belarus_spec_op"
+			add_opinion_modifier = { target = BLR modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = CHE modifier = recent_actions_negative }
+			SOV = {
+				country_event = { id = chechnya.3 days = 1 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_poland_spec_op
+		icon = attack_poland
+		x = -2
+		y = 16
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 6
+		available = {
+			country_exists = POL
+			CHE = { is_subject_of = SOV }
+			NOT = {POL = { is_subject_of = SOV }}
+			POL = { NOT = { is_in_faction_with = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_silesia_help }
 
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_novorossia"
-			custom_effect_tooltip = CHE_battalion_smert_tt
-			add_opinion_modifier = { target = NOV modifier = diplomatic_support }
-			reverse_add_opinion_modifier = { target = CHE modifier = diplomatic_support }
-			hidden_effect = {
-			DPR = {
-			division_template = {
-				name = "Chechen Battalion"
-				regiments = {
-					Special_Forces = { x = 0 y = 0 }
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_poland_spec_op"
+			add_opinion_modifier = { target = POL modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = CHE modifier = recent_actions_negative }
+			SOV = {
+				country_event = { id = chechnya.1 days = 1 }
+			}
+		}
 
-				}
-				priority = 2
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"Battalion Smert\" division_template = \"Chechen Battalion\" start_experience_factor = 0.1"
-					owner = DPR
-				}
-			}
-			}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_geo_spec_op
+		icon = attack_geo
+		x = 6
+		y = 15
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			country_exists = GEO
+			CHE = { is_subject_of = SOV }
+			NOT = {GEO = { is_subject_of = SOV }}
+			GEO = { NOT = { is_in_faction_with = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_end_fight_terrorists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_geo_spec_op"
+			add_opinion_modifier = { target = GEO modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = CHE modifier = recent_actions_negative }
+			SOV = {
+				country_event = { id = chechnya.2 days = 1 }
 			}
 
 		}
@@ -972,12 +1726,11 @@ focus_tree = {
 			factor = 1
 		}
 	}
-
 	focus = {
 		id = CHE_echo_maci
-		icon = echo_maci
-		x = 1
-		y = 17
+		icon = BLR_Democratic_clean
+		x = -4
+		y = 12
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -989,10 +1742,16 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		prerequisite = { focus = CHE_ingushetia }
-
+		prerequisite = { focus = CHE_fight_with_narco2 }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_echo_maci"
 			add_war_support = 0.07
+			SOV = {
+				add_popularity = {
+				ideology = democratic
+				popularity = -0.06
+			}
+			 }
 			add_popularity = {
 				ideology = democratic
 				popularity = -0.1
@@ -1016,10 +1775,101 @@ focus_tree = {
 	}
 
 	focus = {
+		id = CHE_min_selhoz
+		icon = industry_civilian
+		x = -5
+		y = 2
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 10
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_establish_loyal_government}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_development_agriculture"
+			add_ideas = CHE_selhoz_idea
+			one_random_industrial_complex = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_farm_support
+		icon = farming_sector
+		x = -4
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 10
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_min_selhoz }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_farm_support"
+			swap_ideas = {
+				remove_idea = CHE_selhoz_idea
+				add_idea = CHE_selhoz2_idea
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_modernize_agriculture
+		icon = wheat_field
+		x = -6
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 10
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_min_selhoz  }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_development_agriculture"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			add_ideas = BRA_idea_pro_farmers
+			set_temp_variable = { temp_opinion = 10 }
+			change_farmers_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
 		id = CHE_solve_religious_issue
 		icon = islam_hijab
-		x = 1
-		y = 4
+		x = -1
+		y = 1
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -1028,10 +1878,9 @@ focus_tree = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_loyal_people_agency }
+		prerequisite = { focus = CHE_establish_loyal_government }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_solve_religious_issue"
@@ -1049,7 +1898,7 @@ focus_tree = {
 	focus = {
 		id = CHE_strengthen_ties_moscow
 		icon = RUS_flag
-		x = -4
+		x = 4
 		y = 2
 
 		relative_position_id = CHE_establish_loyal_government
@@ -1079,28 +1928,24 @@ focus_tree = {
 	focus = {
 		id = CHE_Grozneftegaz
 		icon = Rosneft
-		x = -1
-		y = 1
+		x = 2
+		y = 3
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 8
 		available = {
 			CHE = { is_subject_of = SOV }
-			has_country_leader = {
-				name = "Ramzan Kadyrov"
-				ruling_only = yes
-			}
-		}
 
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_establish_loyal_government }
+		prerequisite = { focus = CHE_strengthen_ties_moscow }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_Grozneftegaz"
-			set_temp_variable = { percent_change = 5.11 }
+			set_temp_variable = { percent_change = 5.11}
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = CHE }
 			change_influence_percentage = yes
@@ -1120,10 +1965,38 @@ focus_tree = {
 	}
 
 	focus = {
+		id = CHE_sport
+		icon = ethiopia_maraton_motors
+		x = -6
+		y = 12
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_fight_with_narco2 }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_sport"
+			add_ideas = ARM_sports_develop1
+			add_stability = 0.015
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
 		id = CHE_infrastructure
 		icon = construct_infrastructure
-		x = -2
-		y = 2
+		x = -4
+		y = 4
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -1132,11 +2005,10 @@ focus_tree = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_Grozneftegaz }
-
+		prerequisite = { focus = CHE_modernize_agriculture }
+		prerequisite = { focus = CHE_farm_support }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_infrastructure"
@@ -1150,16 +2022,15 @@ focus_tree = {
 			factor = 1
 		}
 	}
-
 	focus = {
-		id = CHE_development_agriculture
-		icon = industry_civilian
-		x = -2
-		y = 3
+		id = CHE_airport
+		icon = build_new_airports
+		x = -4
+		y = 5
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
@@ -1167,89 +2038,20 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_strengthen_ties_moscow }
-		prerequisite = { focus = CHE_suppress_political_opposition }
 		prerequisite = { focus = CHE_infrastructure }
 
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_development_agriculture"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				add_extra_state_shared_building_slots = 1
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_airport"
+			46 = {
 				add_building_construction = {
-					type = industrial_complex
-					level = 1
+					type = air_base
+					level = 2
 					instant_build = yes
 				}
 			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = CHE_modernize_agriculture
-		icon = wheat_field
-		x = -3
-		y = 5
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 10
-		available = {
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_development_agriculture }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_development_agriculture"
-			set_temp_variable = { treasury_change = -3.5 }
+			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			add_ideas = BRA_idea_pro_farmers
-			set_temp_variable = { temp_opinion = 10 }
-			change_farmers_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = CHE_start_investing_medicine
-		icon = generic_hospital2
-		x = -1
-		y = 5
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 10
-		available = {
-			has_country_leader = {
-				name = "Ramzan Kadyrov"
-				ruling_only = yes
-			}
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_development_agriculture }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_start_investing_medicine"
-			increase_healthcare_budget = yes
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.04 }
-			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -1257,9 +2059,9 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = CHE_revive_education
-		icon = free_higher_education
-		x = -2
+		id = CHE_revive_tourism
+		icon = chechnya_tourism
+		x = -5
 		y = 6
 
 		relative_position_id = CHE_establish_loyal_government
@@ -1272,7 +2074,66 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_modernize_agriculture }
+		prerequisite = { focus = CHE_infrastructure }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_airport"
+			add_ideas = CHE_tourism_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_start_investing_medicine
+		icon = generic_hospital2
+		x = -1
+		y = 4
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 10
+		available = {
+			CHE = { is_subject_of = SOV }
+		 }
+
+		prerequisite = { focus = CHE_police_regiment }
+		prerequisite = { focus = CHE_loyal_people_agency }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_start_investing_medicine"
+			increase_healthcare_budget = yes
+			add_manpower = 1000
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_revive_education
+		icon = free_higher_education
+		x = -1
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 10
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
 		prerequisite = { focus = CHE_start_investing_medicine }
 
 		completion_reward = {
@@ -1287,12 +2148,11 @@ focus_tree = {
 			factor = 1
 		}
 	}
-
 	focus = {
-		id = CHE_allah_money
-		icon = russian_investments
-		x = -2
-		y = 7
+		id = CHE_revive_chgu
+		icon = university
+		x = -1
+		y = 6
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -1301,22 +2161,46 @@ focus_tree = {
 			CHE = { is_subject_of = SOV }
 		}
 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_revive_education }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_revive_education"
+			add_ideas = CHE_chgu_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_allah_money
+		icon = russian_investments
+		x = 6
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_revive_education }
-
+		prerequisite = { focus = CHE_strengthen_ties_moscow }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_revive_tourism"
-			set_temp_variable = { percent_change = 5.11 }
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_allah_money"
+			set_temp_variable = { percent_change = 5.11}
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = CHE }
 			change_influence_percentage = yes
 			SOV = {
 			set_temp_variable = { treasury_change = -7.60 }
 			modify_treasury_effect = yes
-			}
+			 }
 			set_temp_variable = { treasury_change = 7.60 }
 			modify_treasury_effect = yes
 		}
@@ -1327,42 +2211,10 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_revive_tourism
-		icon = chechnya_tourism
-		x = 0
-		y = 7
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 10
-		available = {
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_revive_education }
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_revive_tourism"
-			add_timed_idea = {
-				idea = ARM_develop_turism
-				days = 365
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
 		id = CHE_grozni_city
 		icon = grozni_city
-		x = -3
-		y = 9
+		x = -4
+		y = 8
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -1371,15 +2223,12 @@ focus_tree = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_chechen_neftehim }
-		prerequisite = { focus = CHE_allah_money }
-		prerequisite = { focus = CHE_invite_international_students }
+		prerequisite = { focus = CHE_airport }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_establish_islamic_university"
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_grozni_city"
 			one_office_construction = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
@@ -1394,12 +2243,12 @@ focus_tree = {
 	focus = {
 		id = CHE_chechen_neftehim
 		icon = seize_oil
-		x = 0
-		y = 8
+		x = 2
+		y = 6
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
@@ -1407,7 +2256,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-			prerequisite = { focus = CHE_revive_tourism }
+		prerequisite = { focus = CHE_oil_polk }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_chechen_neftehim"
@@ -1429,7 +2278,7 @@ focus_tree = {
 	focus = {
 		id = CHE_establish_islamic_university
 		icon = rus_islam_univer
-		x = -5
+		x = -2
 		y = 7
 
 		relative_position_id = CHE_establish_loyal_government
@@ -1443,7 +2292,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_revive_education }
+		prerequisite = { focus = CHE_revive_chgu }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_establish_islamic_university"
@@ -1451,7 +2300,7 @@ focus_tree = {
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.02 }
 			add_relative_party_popularity = yes
-			
+
 		}
 
 		ai_will_do = {
@@ -1462,12 +2311,12 @@ focus_tree = {
 	focus = {
 		id = CHE_invite_international_students
 		icon = BLR_High_quality_education
-		x = -5
+		x = -2
 		y = 8
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
@@ -1500,7 +2349,7 @@ focus_tree = {
 		id = CHE_create_economic_partnerships
 		icon = russian_cooperation
 		x = 4
-		y = 2
+		y = 3
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -1512,7 +2361,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_establish_loyal_government }
+		prerequisite = { focus = CHE_strengthen_ties_moscow }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_create_economic_partnerships"
@@ -1530,15 +2379,14 @@ focus_tree = {
 		id = CHE_export_energy_regions
 		icon = hydroelectric2
 		x = 4
-		y = 3
+		y = 6
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
-
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1546,14 +2394,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_export_energy_regions"
-			set_temp_variable = { percent_change = 11.11 }
+			custom_effect_tooltip = CHE_energy_1_TT
+			 hidden_effect = {
+			672 = {
+				set_variable = {hydroelectric_energy_production_var = 0.017}
+				set_variable = {hydroelectric_energy_storage_var = 0}
+				add_dynamic_modifier = {
+					modifier = hydroelectric_infrastructure_in_state
+				}
+			}
+			 }
+			set_temp_variable = { percent_change = 1 }
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = CHE }
 			change_influence_percentage = yes
-			swap_ideas = {
-				remove_idea = CHE_energy_problem
-				add_idea = CHE_energy_problem2
-			}
+
 		}
 
 		ai_will_do = {
@@ -1565,11 +2420,11 @@ focus_tree = {
 		id = CHE_electro_pult
 		icon = industry
 		x = 6
-		y = 4
+		y = 6
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 7
 		available = {
 			CHE = { is_subject_of = SOV }
 		}
@@ -1581,7 +2436,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_electro_pult"
-			set_temp_variable = { percent_change = 3.11 }
+			set_temp_variable = { percent_change = 3.11}
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = CHE }
 			change_influence_percentage = yes
@@ -1595,43 +2450,9 @@ focus_tree = {
 
 	focus = {
 		id = CHE_cult_ramzan
-		icon = ramzan_kadyrov
-		x = 0
-		y = 18
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 10
-		available = {
-			has_country_leader = {
-				name = "Ramzan Kadyrov"
-				ruling_only = yes
-			}
-			CHE = { is_subject_of = SOV }
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_novorossia
-		focus = CHE_echo_maci }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_establish_loyal_government"
-			add_political_power = 50
-			add_ideas = CHE_kult_kadyrov
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = CHE_silesia_help
-		icon = blr_silesia_freedom
-		x = 0
-		y = 19
+		icon = che_kadyrov
+		x = -1
+		y = 13
 
 		relative_position_id = CHE_establish_loyal_government
 
@@ -1644,10 +2465,155 @@ focus_tree = {
 			CHE = { is_subject_of = SOV }
 		}
 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_echo_maci}
+		prerequisite = { focus = CHE_continue_fight_terrorists}
+		prerequisite = { focus = CHE_intervence}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_cult_ramzan"
+			add_ideas = CHE_kult_kadyrov
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_media_control
+		icon = investigation
+		x = 0
+		y = 15
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_country_leader = {
+				name = "Ramzan Kadyrov"
+				ruling_only = yes
+			}
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_cult_ramzan}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_cult_ramzan"
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+			increase_corruption = yes
+			swap_ideas = {
+				remove_idea = CHE_kult_kadyrov
+				add_idea = CHE_kult_kadyrov2
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#Grozny TPP
+	focus = {
+		id = CHE_export_energy_regions2
+		icon = hydroelectric2
+		x = 2
+		y = 15
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_cult_ramzan}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_export_energy_regions"
+			custom_effect_tooltip = CHE_energy_2_TT
+			 hidden_effect = {
+			672 = {
+				set_variable = {hydroelectric_energy_production_var = 0.360}
+				set_variable = {hydroelectric_energy_storage_var = 0}
+				add_dynamic_modifier = {
+					modifier = hydroelectric_infrastructure_in_state
+				}
+			}
+			 }
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ukraine_spec_op
+		icon = attack_ukraine
+		x = -2
+		y = 14
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			country_exists = UKR
+			CHE = { is_subject_of = SOV }
+			NOT = {UKR = { is_subject_of = SOV }}
+			UKR = { NOT = { is_in_faction_with = SOV }}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		prerequisite = { focus = CHE_cult_ramzan }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ukraine_spec_op"
+			add_opinion_modifier = { target = UKR modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = CHE modifier = recent_actions_negative }
+			SOV = {
+				country_event = { id = chechnya.12 days = 1 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_silesia_help
+		icon = blr_silesia_freedom
+		x = -2
+		y = 15
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 6
+		available = {
+			country_exists = POL
+			has_country_leader = {
+				name = "Ramzan Kadyrov"
+				ruling_only = yes
+			}
+			CHE = { is_subject_of = SOV }
+		}
+
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ukraine_spec_op }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_silesia_help"
@@ -1665,37 +2631,58 @@ focus_tree = {
 
 	focus = {
 		id = CHE_chaborz
-		icon = chaborz
-		x = -2
-		y = 19
+		icon = che_chaborz_M3
+		x = 0
+		y = 1
 
-		relative_position_id = CHE_establish_loyal_government
+		relative_position_id = CHE_arms_rebuild
 
-		cost = 5
+		cost = 7
 		available = {
-			has_country_leader = {
-				name = "Ramzan Kadyrov"
-				ruling_only = yes
-			}
 			CHE = { is_subject_of = SOV }
+			has_completed_focus = CHE_russian_university_spetsnaz
 		}
-
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_cult_ramzan }
+		prerequisite = { focus = CHE_arms_rebuild}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_chaborz"
 			set_temp_variable = { treasury_change = -1.00 }
 			modify_treasury_effect = yes
-
-			add_tech_bonus = {
-				name = CHE_Chabor
-				bonus = 0.10
-				uses = 1
-				category = Cat_UTIL
+			country_event = { id = chechnya.9 days = 1 }
+			SOV = {
+			country_event = { id = chechnya.9 days = 1 }
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_ratnik
+		icon = sov_ratnik
+		x = 0
+		y = 2
+
+		relative_position_id = CHE_arms_rebuild
+
+		cost = 7
+		available = {
+			SOV = {has_completed_focus = SOV_ratnik_program}
+			CHE = { is_subject_of = SOV }
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_chaborz}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ratnik"
+			add_ideas = full_ratnik_conversion
 		}
 
 		ai_will_do = {
@@ -1706,13 +2693,14 @@ focus_tree = {
 	focus = {
 		id = CHE_ahmat_ifv
 		icon = ahmat_ifv
-		x = 2
-		y = 19
+		x = 1
+		y = 16
 
 		relative_position_id = CHE_establish_loyal_government
 
 		cost = 5
 		available = {
+			SOV = { has_tech = util_vehicle_5 }
 			has_country_leader = {
 				name = "Ramzan Kadyrov"
 				ruling_only = yes
@@ -1722,23 +2710,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_cult_ramzan }
-
+		prerequisite = { focus = CHE_media_control}
+		prerequisite = { focus = CHE_export_energy_regions2}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_ahmat_ifv"
 			set_temp_variable = { treasury_change = -3.00 }
 			modify_treasury_effect = yes
-			add_equipment_to_stockpile = {
-				type = util_vehicle_7
-				amount = 100
-				producer = SOV
-			}
-			add_tech_bonus = {
-				name = CHE_Ahmat
-				bonus = 0.20
-				uses = 1
-				category = Cat_UTIL
-			}
+			SOV ={country_event = { id = chechnya.8 days = 1 }}
+
 		}
 
 		ai_will_do = {
@@ -1749,12 +2728,12 @@ focus_tree = {
 	focus = {
 		id = CHE_end_fight_terrorists
 		icon = terror_che
-		x = 0
-		y = 20
+		x = 4
+		y = 14
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
+		cost = 7
 		available = {
 			has_country_leader = {
 				name = "Ramzan Kadyrov"
@@ -1763,51 +2742,13 @@ focus_tree = {
 			CHE = { is_subject_of = SOV }
 		}
 
-
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_chaborz }
-		prerequisite = { focus = CHE_ahmat_ifv }
+		prerequisite = { focus = CHE_cult_ramzan}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_end_fight_terrorists"
 			remove_ideas = CHE_kto2
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = CHE_war_againts_west
-		icon = rus_attack_eu
-		x = 0
-		y = 22
-
-		relative_position_id = CHE_establish_loyal_government
-
-		cost = 5
-
-		available = {
-			has_country_leader = {
-				name = "Ramzan Kadyrov"
-				ruling_only = yes
-			}
-			CHE = { is_subject_of = SOV }
-			has_war = yes
-		}
-
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		prerequisite = { focus = CHE_ahmat_other }
-		prerequisite = { focus = CHE_ahmat_sever }
-
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_war_againts_west"
-			add_war_support = 0.13
 			add_ideas = CHE_ahmat_sila_idea
 		}
 
@@ -1815,45 +2756,45 @@ focus_tree = {
 			factor = 1
 		}
 	}
-
 	focus = {
-		id = CHE_ahmat_sever
-		icon = ahmat_sever
-		x = 2
-		y = 21
+		id = CHE_new_gover
+		icon = blr_form_chechen_government
+		x = 27
+		y = 0
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
-
+		cost = 5
 		available = {
-			has_country_leader = {
-				name = "Ramzan Kadyrov"
-				ruling_only = yes
-			}
-			CHE = { is_subject_of = SOV }
-			has_war = yes
+			has_war = no
+			NOT = {CHE = { is_subject_of = SOV }}
 		}
-
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_end_fight_terrorists }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_ahmat_sever"
-			custom_effect_tooltip = CHE_battalion_tt
-			hidden_effect = {
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"Motorized rifle battalion Ahmat-Sever\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
-					owner = CHE
-				}
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_new_gover"
+			add_political_power = 100
+			set_temp_variable = { percent_change = 15 }
+			change_domestic_influence_percentage = yes
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.2
 			}
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.2
 			}
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.2
 			}
+			add_popularity = {
+				ideology = communism
+				popularity = -0.3
+			}
+		}
 
 		ai_will_do = {
 			factor = 1
@@ -1861,57 +2802,2134 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHE_ahmat_other
-		icon = kadirovcy2
-		x = -2
-		y = 21
+		id = CHE_caucas_unite
+		icon = gorsk_confederation
+		x = 20
+		y = 11
 
 		relative_position_id = CHE_establish_loyal_government
 
-		cost = 10
-
+		cost = 6
 		available = {
-			has_country_leader = {
-				name = "Ramzan Kadyrov"
-				ruling_only = yes
-			}
-			CHE = { is_subject_of = SOV }
-			has_war = yes
-		}
+			owns_state = 708
+			owns_state = 705
+			owns_state = 707
+			owns_state = 1033
+			owns_state = 466
+			owns_state = 706
+			owns_state = 707
+			owns_state = 1034
+			owns_state = 1035
+			owns_state = 711
+			owns_state = 1037
+			owns_state = 710
+			owns_state = 1036
+			owns_state = 713
+			owns_state = 712
+			owns_state = 1038
 
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = CHE_end_fight_terrorists }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CHE_ahmat_sever"
-			custom_effect_tooltip = CHE_battalion_tt
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_unite"
+			set_cosmetic_tag = CHE_caucas
+
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_policy_inter
+		icon = Eastern_Europe
+		x = 15
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_nationalist }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_policy_inter"
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ukr_friend
+		icon = align_to_ukraine
+		x = 16
+		y = 4
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			UKR = {
+				has_government = nationalist
+			}
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_policy_inter }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ukr_friend"
+			add_opinion_modifier = {
+				target = UKR
+				modifier = diplomatic_support
+			}
+			reverse_add_opinion_modifier = {
+				target = UKR
+				modifier = diplomatic_support
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ukr_trade
+		icon = UKR_flag
+		x = 16
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			UKR = {
+				has_government = nationalist
+			}
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_ukr_friend }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ukr_trade"
+			add_opinion_modifier = {
+				target = UKR
+				modifier = improve_trade
+			}
+			reverse_add_opinion_modifier = {
+				target = UKR
+				modifier = improve_trade
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_ukr_unso
+		icon = ukr_nationalist_merc
+		x = 16
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			UKR = {
+				has_government = nationalist
+			}
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		mutually_exclusive = { focus = CHE_blr_white_legion_help }
+
+		prerequisite = { focus = CHE_ukr_trade}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_ukr_unso"
+			set_temp_variable = {
+				percent_change = 3
+			}
+			set_temp_variable = {
+				tag_index = UKR
+			}
+			set_temp_variable = {
+				influence_target = CHE
+			}
+			change_influence_percentage = yes
+			division_template = {
+				name = "UNA-UNSO Volunteers"
+				regiments = {
+					Militia_Bat = {
+						x = 0
+						y = 0
+					}
+					Militia_Bat = {
+						x = 0
+						y = 1
+					}
+					Militia_Bat = {
+						x = 1
+						y = 0
+					}
+					Militia_Bat = {
+						x = 1
+						y = 1
+					}
+				}
+				priority = 2
+			}
+			random_owned_controlled_state = {
+				limit = {
+					ROOT = {
+						has_full_control_of_state = PREV
+					}
+				}
+				prioritize = {
+					46
+				}
+				create_unit = {
+					division = "name = \"UNA-UNSO Volunteers\" division_template = \"UNA-UNSO Volunteers\" start_experience_factor = 0.4"
+					owner = CHE
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_blr_friend
+		icon = blr_glory_belarus
+		x = 14
+		y = 4
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = nationalist
+			BLR = {
+			nationalist_right_wing_populists_are_in_power = yes
+			}
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_policy_inter }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_blr_friend"
+			add_opinion_modifier = {
+				target = BLR
+				modifier = diplomatic_support
+			}
+			reverse_add_opinion_modifier = {
+				target = BLR
+				modifier = diplomatic_support
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_blr_trade
+		icon = BLR_Taler_ruble
+		x = 14
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = nationalist
+			BLR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				}
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_blr_friend }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_blr_trade"
+			add_opinion_modifier = {
+				target = BLR
+				modifier = improve_trade
+			}
+			reverse_add_opinion_modifier = {
+				target = BLR
+				modifier = improve_trade
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_blr_white_legion_help
+		icon = blr_white_legion
+		x = 14
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = nationalist
+			BLR = {
+				has_completed_focus = BLR_white_legion
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		mutually_exclusive = { focus = CHE_ukr_unso }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_blr_trade }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_blr_alliance"
+			custom_effect_tooltip = BLR_white_legion_TT
+			set_temp_variable = { percent_change = 6.11}
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
 			hidden_effect = {
+				division_template = {
+					name = "White Legion"
+					is_locked = yes
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+					}
+					support = { L_Recce_Comp = { x = 0 y = 0 } }
+					priority = 2
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 46 }
+					create_unit = {
+						division = "name = \"White Legion Battalion\" division_template = \"White Legion\" start_experience_factor = 0.3"
+						owner = CHE
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_return_ichkerian_geo
+		icon = invite_chechens
+		x = 27
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_return_nac_gvard }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_return_ichkerian_geo"
 			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
+				limit = {
+					ROOT = {
+						has_full_control_of_state = PREV
+					}
+				}
+				prioritize = {
+					46
+				}
 				create_unit = {
-					division = "name = \"Motorized rifle battalion Ahmat-Yug\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
+					division = "name = \"Free Ichkeria Volunteers\" division_template = \"Brigada Natsionalnoi Gvardiy\" start_experience_factor = 0.4"
 					owner = CHE
 				}
 			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"Motorized rifle battalion Ahmat-Zapad\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
-					owner = CHE
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_return_ichkerian
+		icon = chechnya_tank
+		x = 29
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_return_nac_gvard }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_return_ichkerian"
+			custom_effect_tooltip = CHE_chechen_battalion_TT
+			hidden_effect = {
+				division_template = {
+					name = "Special Battalion"
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+					}
+					support = { L_Recce_Comp = { x = 0 y = 0 } }
+					priority = 2
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 46 }
+					create_unit = {
+						division = "name = \"Separate Special Purpose Battalion\" division_template = \"Special Battalion\" start_experience_factor = 0.6"
+						owner = CHE
+					}
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 46 }
+					create_unit = {
+						division = "name = \"Sheikh Mansour Battalion\" division_template = \"Special Battalion\" start_experience_factor = 0.6"
+						owner = CHE
+					}
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 46 }
+					create_unit = {
+						division = "name = \"Dzhokhar Dudayev Battalion\" division_template = \"Special Battalion\" start_experience_factor = 0.6"
+						owner = CHE
+					}
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 46 }
+					create_unit = {
+						division = "name = \"Khamzat Gelayev Battalion\" division_template = \"Special Battalion\" start_experience_factor = 0.6"
+						owner = CHE
+					}
 				}
 			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"Motorized rifle battalion Ahmat-Vostok\" division_template = \"Special Motorized Regiment\" start_experience_factor = 0.1"
-					owner = CHE
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_shariat_guard
+		icon = invite_chechens
+		x = 27
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_return_ichkerian_geo }
+		prerequisite = { focus = CHE_return_ichkerian }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_shariat_guard"
+			add_ideas = CHE_shariat_guard_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_ulema_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_snb_return
+		icon = political_arrests
+		x = 29
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_return_ichkerian_geo }
+		prerequisite = { focus = CHE_return_ichkerian }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_snb_return"
+			set_temp_variable = { temp_opinion = 15 }
+			change_intelligence_community_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_return_vs
+		icon = blr_ichkeria_vs
+		x = 28
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_nationalist focus = CHE_democracy}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_return_vs"
+			increase_military_spending = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_return_nac_gvard
+		icon = chechnya_national_army
+		x = 28
+		y = 4
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_return_vs }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_return_nac_gvard"
+			add_ideas = CHE_nat_guard_idea
+			division_template = {
+				name = "Brigada Natsionalnoi Gvardiy"
+
+				regiments = {
+					Militia_Bat = { x = 0 y = 0 }
+					Militia_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 0 y = 2 }
+				}
+
+				support = {
+					L_Recce_Comp = { x = 0 y = 0 }
+					Arty_Battery = { x = 0 y = 1 }
+					L_Engi_Comp = { x = 0 y = 2 }
 				}
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_caucas_form_new_nation
+		icon = gorsk_confederation
+		x = 0
+		y = 1
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 5
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_unite }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_form_new_nation"
+			set_temp_variable = { percent_change = 15 }
+			change_domestic_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_caucas_abk_jemchujina
+		icon = align_to_abkhazia
+		x = -1
+		y = 2
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 7
+		available = {
+			owns_state = 706
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_form_new_nation }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_abk_jemchujina"
+			set_temp_variable = { treasury_change = -13 }
+			modify_treasury_effect = yes
+			706 = {
+				add_building_construction = {
+					type = offices
+					instant_build = yes
+					level = 1
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_caucas_rail_road
+		icon = Generic_Railroads
+		x = -3
+		y = 3
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_abk_jemchujina }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_abk_jemchujina"
+			three_random_infrastructure = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_caucas_conflicts_resolv
+		icon = BLR_Karabah_question
+		x = 1
+		y = 2
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_form_new_nation }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_conflicts_resolv"
+			add_stability = 0.1
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_caucas_united_army
+		icon = infantry_allies
+		x = 3
+		y = 3
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 5
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_conflicts_resolv }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_united_army"
+			add_manpower = 5000
+			add_war_support = 0.06
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_caucas_defence
+		icon = city_fort
+		x = -1
+		y = 3
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 6
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_abk_jemchujina }
+		prerequisite = { focus = CHE_caucas_conflicts_resolv }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_defence"
+			705 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			707 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			706 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			713 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_caucas_defence2
+		icon = city_fort
+		x = 1
+		y = 3
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 6
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_abk_jemchujina }
+		prerequisite = { focus = CHE_caucas_conflicts_resolv }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_defence2"
+			1033 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			466 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			709 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			711 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			1038 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_religion_autonomy
+		icon = religious_partnership_catholic_sunni
+		x = 0
+		y = 4
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 5
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_caucas_rail_road }
+		prerequisite = { focus = CHE_caucas_united_army }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_religion_autonomy"
+			add_stability = 0.09
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_caucas_integration
+		icon = gorsk_confederation
+		x = 0
+		y = 6
+
+		relative_position_id = CHE_caucas_unite
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_religion_autonomy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucas_integration"
+			custom_effect_tooltip =  CHE_nationalise_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_nationalist
+		icon = chechnya_tank
+		x = 20
+		y = 2
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		mutually_exclusive = { focus = CHE_democracy }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_new_gover}
+		completion_reward = {
+			remove_ideas = Non_State_Actor
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_democracy"
+			add_war_support = 0.08
+			add_ideas = generic_nationalist_boost_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_millitarism
+		icon = military_mission
+		x = 21
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_nationalist }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_millitarism"
+			increase_intervention_law_effect = yes
+			increase_military_spending = yes
+			add_ideas = militarism
+			set_temp_variable = { temp_opinion = 15 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_paramilitary_organization
+		icon = military_sphere
+		x = 23
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_nationalist }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_millitarism"
+			add_stability = -0.03
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			add_ideas = POL_paramilitary_organization_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_capture_the_news
+		icon = anti_establishment2
+		x = 22
+		y = 4
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_millitarism }
+		prerequisite = { focus = CHE_paramilitary_organization }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_capture_the_news"
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_Influence_nationalists
+		icon = GEO_Caucasian_Strength
+		x = 22
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_capture_the_news }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_Influence_nationalists"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			add_relative_party_popularity = yes
+			AZE = {
+				add_timed_idea = {
+					idea = BLR_support_nationalism
+					days = 200
+				}
+			}
+			ARM = {
+				add_timed_idea = {
+					idea = BLR_support_nationalism
+					days = 200
+				}
+			}
+			GEO = {
+				add_timed_idea = {
+					idea = BLR_support_nationalism
+					days = 200
+				}
+			}
+			ABK = {
+				add_timed_idea = {
+					idea = BLR_support_nationalism
+					days = 200
+				}
+			}
+			SOO = {
+				add_timed_idea = {
+					idea = BLR_support_nationalism
+					days = 200
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_turkey_friend
+		icon = align_to_turkey
+		x = 24
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			country_exists = TUR
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_capture_the_news }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_talib_friend"
+			set_temp_variable = { treasury_change = 10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = TUR }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_turkey_invest
+		icon = turk_skulls_guns_fire
+		x = 24
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			country_exists = TUR
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_capture_the_news }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_talib_friend"
+			add_manpower = 1000
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = 2500
+			}
+			add_equipment_to_stockpile = {
+				type = command_control_equipment1
+				amount = 400
+			}
+			add_equipment_to_stockpile = {
+				type = artillery_0
+				amount = 150
+			}
+			add_equipment_to_stockpile = {
+				type = Anti_tank_0
+				amount = 400
+			}
+			set_temp_variable = { percent_change = 6 }
+			set_temp_variable = { tag_index = TUR }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_talib_friend
+		icon = align_to_taliban
+		x = 20
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			country_exists = TAL
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_capture_the_news }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_talib_friend"
+			set_temp_variable = { treasury_change = 7 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = TAL }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_talib_invest
+		icon = taliban_forces
+		x = 20
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			country_exists = TAL
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_talib_friend }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_talib_invest"
+
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_more_arabic
+		icon = muslim_arab_world
+		x = 22
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_Influence_nationalists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_more_arabic"
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_sau_invest
+		icon = align_to_saudi_arabia
+		x = 20
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			country_exists = SAU
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_more_arabic }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_sau_invest"
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = SAU }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_sau_weapon
+		icon = arab_focus_saud
+		x = 20
+		y = 8
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			country_exists = SAU
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_sau_invest }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_sau_invest"
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = 1500
+			}
+			add_equipment_to_stockpile = {
+				type = command_control_equipment1
+				amount = 200
+			}
+			add_equipment_to_stockpile = {
+				type = artillery_0
+				amount = 100
+			}
+			add_equipment_to_stockpile = {
+				type = Anti_tank_0
+				amount = 300
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = SAU }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+
+					}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_katar_invest
+		icon = quatar_allied
+		x = 22
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			country_exists = QAT
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_more_arabic }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_sau_invest"
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = QAT }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_iordan_weapon
+		icon = Jordan_allied
+		x = 23
+		y = 8
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			country_exists = JOR
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_katar_invest  focus = CHE_bahrein_invest }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_iordan_weapon"
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = 2000
+			}
+			add_equipment_to_stockpile = {
+				type = command_control_equipment1
+				amount = 350
+			}
+			add_equipment_to_stockpile = {
+				type = artillery_0
+				amount = 150
+			}
+			add_equipment_to_stockpile = {
+				type = Anti_tank_0
+				amount = 200
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = JOR }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_iordan_soldier
+		icon = Jordan_allied
+		x = 23
+		y = 9
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			country_exists = JOR
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_iordan_weapon }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_iordan_soldier"
+			add_manpower = 2000
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = JOR }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_bahrein_invest
+		icon = bahrein_allied
+		x = 24
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 4
+		available = {
+			country_exists = BHR
+			has_government = nationalist
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_more_arabic }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_bahrein_invest"
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = BHR }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_democracy
+		icon = blr_choose_democracy
+		x = 35
+		y = 2
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 7
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_new_gover }
+
+		mutually_exclusive = { focus = CHE_nationalist }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_democracy"
+			add_political_power = 150
+			remove_ideas = Non_State_Actor
+			if = {
+				limit = {
+				has_idea = CHE_conservative_society_idea
+				}
+				remove_ideas = CHE_conservative_society_idea
+
+			}
+			if = {
+				limit = {
+				has_idea = farmers
+				}
+				swap_ideas = {
+				remove_idea = farmers
+				add_idea = small_medium_business_owners
+				}
+			}
+			if = {
+				limit = {
+				has_idea = intelligence_community
+				}
+				swap_ideas = {
+				remove_idea = intelligence_community
+				add_idea = international_bankers
+				}
+			}
+			if = {
+				limit = {
+				has_idea = BRA_idea_pro_farmers
+				}
+				remove_ideas = BRA_idea_pro_farmers
+				set_temp_variable = { temp_opinion = -20 }
+				 change_farmers_opinion = yes
+			}
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_constituon
+		icon = treaty4
+		x = 35
+		y = 3
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 3
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_democracy }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_democracy"
+			every_other_country = {
+				limit = { has_government = democratic }
+				add_opinion_modifier = { target = ROOT modifier = AZE_chi_connection }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_calm_neir
+		icon = white_peace
+		x = 34
+		y = 4
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_constituon }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_calm_neir"
+			every_neighbor_country = {
+				add_opinion_modifier = { target = ROOT modifier = AZE_calm }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_people_rights
+		icon = national_unity
+		x = 36
+		y = 4
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = CHE_constituon }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_calm_neir"
+			add_ideas = CHE_people_rights_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_freedom_speech
+		icon = democratic_stability
+		x = 35
+		y = 5
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_calm_neir }
+		prerequisite = { focus = CHE_people_rights }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_freedom_speech"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_islam_question
+		icon = focus_secular
+		x = 35
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_calm_neir }
+		prerequisite = { focus = CHE_people_rights }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_islam_question"
+			add_stability = -0.10
+			swap_ideas = {
+				remove_idea = shia
+				add_idea = pluralist
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_tolerance
+		icon = religious_unity
+		x = 34
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_islam_question }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_islam_question"
+			add_stability = 0.10
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_prohibition_religion
+		icon = islamophobia2
+		x = 36
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_islam_question}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_islam_question"
+			add_stability = -0.15
+			if = {
+				limit = {
+					has_idea = pluralist
+				}
+				swap_ideas = {
+					remove_idea = pluralist
+					add_idea = ARM_state_ateism
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_International_bank_loans
+		icon = imf
+		x = 32
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_freedom_speech }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_International_bank_loans"
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.03 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_liberal_economy
+		icon = BRA_economic_liberalization
+		x = 30
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_International_bank_loans }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_liberal_economy"
+			decrease_corruption = yes
+			add_political_power = -75
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_friend_USA
+		icon = align_to_america2
+		x = 32
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_International_bank_loans }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_friend_USA"
+			add_opinion_modifier = {
+				target = USA
+				modifier = diplomatic_support
+			}
+			reverse_add_opinion_modifier = {
+				target = USA
+				modifier = diplomatic_support
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_American_Protection
+		icon = american_shield
+		x = 32
+		y = 8
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_friend_USA }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_American_Protection"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			add_relative_party_popularity = yes
+			give_military_access = USA
+			add_stability = -0.04
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_USAD_request
+		icon = focus_usaid
+		x = 32
+		y = 9
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_International_bank_loans }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_American_Protection"
+			USA = { country_event = { id = chechnya.14 days = 1 } }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_USA_give_bablo
+		icon = union_representation_act
+		x = 31
+		y = 11
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_USAD_request }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_American_Protection"
+			set_temp_variable = { percent_change = 0.5 }
+			set_temp_variable = { tag_index = USA }
+			change_influence_percentage = yes
+			set_temp_variable = { influence_target = CHE }
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.005  }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_NATO_ally
+		icon = nato_nation
+		x = 33
+		y = 10
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 8
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_USAD_request }
+		prerequisite = { focus = CHE_European_affairs }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_American_Protection"
+			add_ideas = Major_Non_NATO_Ally
+			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
+			set_country_flag = Major_Non_NATO_Ally
+			every_country = {
+				limit = { has_idea = NATO_member }
+				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_European_affairs
+		icon = EU_policies
+		x = 35
+		y = 8
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_tolerance  focus = CHE_prohibition_religion}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_European_affairs"
+			add_ideas = CHE_trade_deal_with_eu_idea
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.07
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_Attract_European_investments
+		icon = ECB_intervention
+		x = 35
+		y = 9
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_European_affairs }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_Attract_European_investments"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.015 }
+			add_relative_party_popularity = yes
+			one_office_construction = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_EU_loans
+		icon = market_economy
+		x = 35
+		y = 10
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_Attract_European_investments }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_EU_loans"
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.02  }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_Azer_deal
+		icon = align_to_azerbaijan
+		x = 38
+		y = 7
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_release_political_prisoners }
+		prerequisite = { focus = CHE_islam_question }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_freedom_speech"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = AZE }
+			set_temp_variable = { influence_target = CHE }
+			change_influence_percentage = yes
+			AZE = {
+				add_opinion_modifier = { target = ROOT modifier = AZE_tur_deal }
+				reverse_add_opinion_modifier = { target = ROOT modifier = AZE_tur_deal }
+			}
+
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = CHE_release_political_prisoners
+		icon = break_free2
+		x = 38
+		y = 6
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_freedom_speech }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_freedom_speech"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			add_relative_party_popularity = yes
+			add_political_power = 100
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CHE_azer_oil
+		icon = oil_red
+		x = 38
+		y = 8
+
+		relative_position_id = CHE_establish_loyal_government
+
+		cost = 5
+		available = {
+			has_government = democratic
+			NOT = {CHE = { is_subject_of = SOV }}
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		prerequisite = { focus = CHE_Azer_deal }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CHE_freedom_speech"
+			set_temp_variable = { treasury_change = gdp_total_display }
+			multiply_temp_variable = { treasury_change = 0.04 }
+			modify_treasury_effect = yes
+			CHE = {
+				random_owned_controlled_state = {
+					add_resource = {
+						type = oil
+						amount = 2
+					}
+				}
 			}
 		}
 
