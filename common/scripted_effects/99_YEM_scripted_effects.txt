@@ -87,12 +87,11 @@
 		}
 		
 #Yemeni Crisis Influence
-#Total Variable
-# init_influence:
+
 # The init influence acts as a reset to get an influence array prepared for additions
-init_influence = {
-	clear_array = influence_array_val
-	clear_array = influence_array
+init_sadah_influence = {
+	clear_array = sadah_influence_val
+	clear_array = sadah_influence
 }
 
 # Startup Influence:
@@ -105,16 +104,61 @@ startup_influence = {
 Sadah_math_variables = {
 	log = "[GetDateText]: [ROOT.GetName]: Running Effect: Sadah_math_variables"
 	
-	#Sadah Variable
-	set_variable = { var = sadah_influence_total max = 100 }
-	set_variable = { var = sadah_influence_total min = 0 }
-
-	set_variable = { yem_sadah_influence = sadah_influence_total }
+	set_variable = { yem_sadah_influence = sadah_influence_val^0 }
 	divide_variable = { yem_sadah_influence = 4 }
-	set_variable = { sau_sadah_influence = sadah_influence_total }
+	set_variable = { sau_sadah_influence = sadah_influence_val^1 }
 	divide_variable = { sau_sadah_influence = 4 }
-	set_variable = { uae_sadah_influence = sadah_influence_total }
+	set_variable = { uae_sadah_influence = sadah_influence_val^2 }
 	divide_variable = { uae_sadah_influence = 4 }
-	set_variable = { per_sadah_influence = sadah_influence_total }
+	set_variable = { per_sadah_influence = sadah_influence_val^3 }
 	divide_variable = { per_sadah_influence = 4 }
+}
+init_state_variables = {    
+    951 = {
+        set_variable = { yem_sadah_influence = 79 }
+        set_variable = { sau_sadah_influence = 14 }
+        set_variable = { uae_sadah_influence = 11 }
+        set_variable = { per_sadah_influence = 0 }
+    }
+    195 = {
+        set_variable = { yem_sadah_influence = 80 }
+        set_variable = { sau_sadah_influence = 10 }
+        set_variable = { uae_sadah_influence = 5 }
+        set_variable = { per_sadah_influence = 5 }
+    }
+    #...
+}
+
+update_state_values_yemen = {
+    custom_effect_tooltip = change_me_yemen_values
+    add_to_variable = { sadah_influence^index = value }
+
+    resize_temp_array = { array = sadah_influence_temp size = sadah_influence^num }
+
+    set_temp_variable = { sadah_influence_total = 0 }
+    for_each_loop = {
+        array = sadah_influence_temp
+        add_to_temp_variable = { sadah_influence_total = v }
+    }
+
+    set_temp_variable = { sadah_influence_scalar = 100 }
+    divide_temp_variable = { sadah_influence_scalar = sadah_influence_total }
+    for_each_loop = {
+        array = sadah_influence
+        value = v
+        index = i
+        multiply_variable = { sadah_influence^i = sadah_influence_scalar }
+        clamp_variable = { var = sadah_influence^i max = 100 min = 0 }
+    }
+
+    if = { limit = { NOT = { check_variable = { sadah_influence_total = 100 } } }
+        set_temp_variable = { difference = 100 }
+        subtract_from_temp_variable = { difference = sadah_influence_total }
+        find_highest_in_array = {
+            array = sadah_influence
+            value = max
+            index = max_index
+        }
+        add_to_variable = { sadah_influence^max_index = difference }
+    }
 }

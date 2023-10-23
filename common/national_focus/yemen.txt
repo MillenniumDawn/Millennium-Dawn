@@ -22,7 +22,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Dancing_on_the_Heads_of_Snakes"
-			unlock_decision_category_tooltip = YEM_dancing_on_the_heads_of_snakes_category
+			unlock_decision_category_tooltip = YEM_dothos_category
 		}
 
 		ai_will_do = { factor = 1 }
@@ -135,20 +135,26 @@ focus_tree = {
 		prerequisite = { focus = YEM_Dancing_on_the_Heads_of_Snakes }
 		
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = has_stagnation_or_below_TT
-				OR = {
-					has_idea = depression
-					has_idea = recession
-					has_idea = stagnation
-				}
-			}
+			#custom_trigger_tooltip = {
+			#	tooltip = has_stagnation_or_below_TT
+			#	OR = {
+			#		has_idea = depression
+			#		has_idea = recession
+			#		has_idea = stagnation
+			#	}
+			#}
 		}
 		cost = 10
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_IMF_economic_reconstruction"
-			add_ideas = YEM_IMF_debt_relief_received
+			add_timed_idea = {
+				idea = YEM_five_year_2
+				days = 1825
+			}
+			set_temp_variable = { treasury_change = gdp_total } 
+			multiply_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = { factor = 1 }
@@ -166,14 +172,28 @@ focus_tree = {
 		available = {
 			has_completed_focus = YEM_Al-Qaeda
 		}
-		cost = 10
-
+		cost = 5
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Pass_Local_Authorities_Law"
-			add_to_variable = {
-				var = YEM_federalists_base
-				value = 5
+			add_stability = 0.05
+			unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_2
+			if = {
+				limit = {
+					YEM = {
+						has_active_mission = YEM_dancing_on_the_heads_of_snakes_1
+						}
+					}					
+				add_days_mission_timeout = {
+					mission = YEM_dancing_on_the_heads_of_snakes_1
+					days = -90
+				}
 			}
+			add_to_variable = {
+				var = YEM_federal_anger_level
+				value = 1
+			}
+			custom_effect_tooltip = YEM_federal_anger_level_1_tt
 			hidden_effect = {	
 				if = {
 					limit = {
@@ -206,10 +226,28 @@ focus_tree = {
 		available = {
 			has_completed_focus = YEM_Al-Qaeda
 		}
-		cost = 10
+		cost = 5
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Postpone_Local_Authorities_Law"
+			add_stability = -0.05
+			unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_2
+			if = {
+				limit = {
+					YEM = {
+						has_active_mission = YEM_dancing_on_the_heads_of_snakes_1
+						}
+					}					
+				add_days_mission_timeout = {
+					mission = YEM_dancing_on_the_heads_of_snakes_1
+					days = 90
+				}
+			}
+			add_to_variable = {
+				var = YEM_central_anger_level
+				value = 1
+			}
+			custom_effect_tooltip = YEM_central_anger_level_1_tt
 			hidden_effect = {
 				if = {
 					limit = {
@@ -254,6 +292,19 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Treaty_of_Jeddah"
+			if = {
+				limit = {
+					YEM = {
+						NOT = {
+							OR = {
+								has_country_flag = YEM_jeddah_01
+								has_country_flag = YEM_jeddah_02
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = YEM_Treaty_of_Jeddah_tt
+			}
 			if = {
 				limit = {
 					YEM = {
@@ -309,6 +360,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Cult_of_Saleh"
+			unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_4
+			
+			if = {
+				limit = {
+					ROOT = {
+						has_completed_focus = YEM_Address_Religious_Tension
+					}
+				}
+				unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_3_4
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -327,6 +388,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Address_Religious_Tension"
+			unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_3
+			
+			set_temp_variable = { temp_opinion = 2.5 }
+			change_the_ulema_opinion = yes
+
+			if = {
+				limit = {
+					ROOT = {
+						has_completed_focus = YEM_Cult_of_Saleh
+					}
+				}
+				unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_3_4
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -904,6 +978,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Tribal_System"
+			unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_5
+			set_temp_variable = { temp_opinion = 2.5 }
+			change_landowners_opinion = yes
+			swap_ideas = {
+				remove_idea = YEM_tribal_primacy
+				add_idea = YEM_tribal_authority
+			}
+			custom_effect_tooltip = yem_tribal_authority_tt
 		}
 
 		ai_will_do = { factor = 1 }
@@ -925,6 +1007,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_defund_the_authority"
+			swap_ideas = {
+				remove_idea = YEM_tribal_authority
+				add_idea = YEM_tribal_authority_1
+			}
+			custom_effect_tooltip = yem_tribal_authority_1_tt
 		}
 
 		ai_will_do = { factor = 1 }
@@ -1057,6 +1144,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_fund_the_authority"
+			swap_ideas = {
+				remove_idea = YEM_tribal_authority
+				add_idea = YEM_tribal_authority_2
+			}
+			custom_effect_tooltip = yem_tribal_authority_2_tt
 		}
 
 		ai_will_do = { factor = 1 }
@@ -2003,6 +2095,9 @@ focus_tree = {
 		relative_position_id = YEM_northern_developments
 		prerequisite = { focus = YEM_northern_developments }
 
+		available = { 
+			has_tech = post_conventional_rail
+		}
 		cost = 10
 
 		completion_reward = {
@@ -2237,16 +2332,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_north_south_connection"
-			build_railway = {
-				level = 1
-				path = { 10840 9147 14475 9138}
-				start_state = 195
-				target_state = 198
-				start_province = 10840
-				target_province = 9138
-			}
-			set_temp_variable = { treasury_change = -0.04 }
-			modify_treasury_effect = yes
+			country_event = YEM_funds.04
 		}
 
 		ai_will_do = { factor = 1 }
@@ -2966,6 +3052,10 @@ focus_tree = {
 		relative_position_id = YEM_eastern_developments
 		prerequisite = { focus = YEM_eastern_developments }
 
+		available = { 
+			has_tech = post_conventional_rail
+		}
+		
 		cost = 10
 
 		completion_reward = {
@@ -3201,6 +3291,10 @@ focus_tree = {
 		prerequisite = { focus = YEM_eastern_mines focus = YEM_eastern_agri  focus = YEM_eastern_petrol }
 		prerequisite = { focus = YEM_southern_docks focus = YEM_southern_civs focus = YEM_southern_mils }
 
+		available = { 
+			has_tech = post_conventional_rail
+		}
+		
 		cost = 10
 
 		completion_reward = {
@@ -4555,7 +4649,7 @@ focus_tree = {
 					}
 				}
 			}
-			if =
+			if = {
 				limit = {
 					country_exists = HOU
 				}
@@ -4566,7 +4660,7 @@ focus_tree = {
 			}
 			ai_will_do = { factor = 1 }
 		}
-
+	}
 
 	focus = {
 		id = YEM_Spread_out_funds
