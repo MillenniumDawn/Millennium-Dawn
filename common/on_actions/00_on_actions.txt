@@ -657,6 +657,8 @@ on_actions = {
 
 
 			roll_corruption_events = yes
+			calculate_expected_spending = yes
+			apply_protest_effects = yes
 
 			# Egyptian Thing
 			country_event = egypt.100
@@ -672,6 +674,8 @@ on_actions = {
 	on_peace_proposal = { }
 
 	on_new_term_election = {
+		effect = {
+		}
 		random_events = {
 			100 = MD4_election_campaign.0
 
@@ -740,34 +744,17 @@ on_actions = {
 	on_wargoal_expire = { }
 
 	#FROM is state #ROOT is broken as hell
-	on_nuke_drop = {
-		effect = {
-		}
-	}
+	on_nuke_drop = { }
 
-	on_border_war_lost = {
-		effect = {
+	on_border_war_lost = { }
 
-		}
-	}
-
-	on_leave_faction = {
-		effect = {
-
-		}
-	}
+	on_leave_faction = { }
 
 	#FROM is the one that joins the faction
-	on_create_faction = {
-
-	}
+	on_create_faction = { }
 
 	#FROM is country getting invited.
-	on_offer_join_faction = {
-		effect = {
-
-		}
-	}
+	on_offer_join_faction = { }
 
 	#FROM is faction leader on join faction requests.
 	on_join_faction = {
@@ -1041,6 +1028,7 @@ on_actions = {
 
 					#LAWS
 					set_variable = { gdp_per_capita = FROM.gdp_per_capita }
+					set_variable = { gdpc_converging_var = FROM.gdpc_converging_var }
 					update_budget_laws_for_FROM_nation = yes
 
 					set_variable = { economic_cycles = FROM.economic_cycles }
@@ -2323,7 +2311,7 @@ on_actions = {
 			if = {
 				limit = {
 					FROM = {
-						original_tag = ITA
+						tag = ITA
 					}
 				}
 				FROM = {
@@ -2357,9 +2345,43 @@ on_actions = {
 					change_tag_from = FROM
 				}
 			}
+			if = {
+				limit = {
+					ROOT = {
+						tag = ITA
+					}
+				}
+				FROM = {
+					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+					delete_units = {
+						division_template = "Volontari"
+						disband = yes
+					}
+					transfer_units_fraction = {
+						target = ROOT
+						size = 1
+						stockpile_ratio = 1
+						army_ratio = 1
+						navy_ratio = 1
+						air_ratio = 1
+					}
+				}
+				ROOT = {
+					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+					delete_units = {
+						division_template = "Volontari"
+						disband = yes
+					}
+					for_each_loop = {
+						array = missile_inventory_array
+						value = v
+						index = i
+						add_to_variable = { missile_inventory_array^i = FROM.missile_inventory_array^i }
+					}
+				}
+			}
 		}
 	}
-
 	#ROOT is winner #FROM gets annexed
 	on_civil_war_end = {
 		effect = {
@@ -2384,8 +2406,22 @@ on_actions = {
 			}
 			if = {
 				limit = {
+					original_tag = TUR
+					check_variable = { TUR_PKK_aggro < 59 }
+				}
+				add_ideas = TUR_PKK_insurgency_ceasefire
+			}
+			if = {
+				limit = {
+					original_tag = TUR
+					check_variable = { TUR_PKK_aggro > 59 }
+				}
+				add_ideas = TUR_PKK_insurgency_active
+			}
+			if = {
+				limit = {
 					ROOT = {
-						tag = ITA
+						original_tag = ITA
 					}
 				}
 				ROOT = {
@@ -2403,12 +2439,28 @@ on_actions = {
 					}
 				}
 				ROOT = {
-				country_event = {
-					id = PER_revolution.300
-					days = 0
+					country_event = {
+						id = PER_revolution.300
+						days = 0
 					}
 				}
 			}
+			#
+			if = {
+				limit = {
+					ROOT = {
+						tag = PER
+						has_country_flag = PER_mojahed_civil_war
+					}
+				}
+				ROOT = {
+					country_event = {
+						id = PER_revolution.15
+						days = 0
+					}
+				}
+			}
+			#
 			ROOT = {
 
 				if = {
@@ -2565,6 +2617,8 @@ on_actions = {
 			log = "[GetDateText]: [This.GetName]: on_startup init begun"
 			ENG = {
 				setup_starting_world_hydropower = yes
+				# Expected spending levels
+				setup_initial_expected_spending_by_party = yes
 			}
 
 			# Potential ASEAN Nations -- Also includes Members
@@ -2723,7 +2777,7 @@ on_actions = {
 			}
 
 			# Initialize On Startup
-			set_variable = { global.average_world_productivity = 0.65 }
+			set_variable = { global.average_world_productivity = 650 }
 
 			every_country = {
 				set_variable = { civilian_factory_employment_var = 1 }
@@ -2742,6 +2796,7 @@ on_actions = {
 				set_law_vars = yes 	#vars for change laws secondary effects
 				update_neighbors_effects = yes # Updates Neighbor Effects
 				economic_cycle_drift_popularity = yes #drift from neighbor
+				calculate_expected_spending = yes
 				if = {
 					limit = {
 						check_variable = { gdp_total < 8 }
@@ -2794,6 +2849,9 @@ on_actions = {
 						add_ideas = MICROSTATE_fix
 					}
 				}
+
+				# DO NOT TOUCH THIS AT ALL I WILL HURT YOU
+				set_rule = { can_access_market = no  }
 				if = { limit = { is_ai = no }
 					set_country_flag = open_energy_screen
 				}
@@ -3172,6 +3230,7 @@ on_actions = {
 				}
 
 			}
+
 			log = "[GetDateText]: [This.GetName]: on_startup init completed"
 		}
 	}
@@ -3258,6 +3317,8 @@ on_actions = {
 			}
 			# Clearing Economic Drifts
 			economic_cycle_drift_popularity = yes
+			# Check for Iranian thing
+			PER_government_change = yes
 		}
 	}
 

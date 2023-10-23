@@ -1584,9 +1584,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_integrate_mountain_territories"
-			set_temp_variable = { ITA_global_building_slots_factor_change = 0.2 }
+			set_temp_variable = { temp_productivity_change = 0.025 }
+			flat_productivity_change_effect = yes
+			set_temp_variable = { ITA_global_building_slots_factor_change = 0.1 }
 			modify_global_building_slots_factor_effect = yes
-			set_temp_variable = { ITA_tax_gain_multiplier_modifier_change = -0.02 }
+			set_temp_variable = { ITA_tax_gain_multiplier_modifier_change = -0.01 }
 			modify_tax_gain_multiplier_modifier_effect = yes
 		}
 
@@ -3020,9 +3022,14 @@ focus_tree = {
 				size = ITA_civil_war_size_var
 				seize_power_spawn_volounteers_effect_1 = yes
 				add_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+				set_variable = { debt = PREV.debt }
+				multiply_variable = { debt = ITA_civil_war_size_var }
 				PREV = {
 					seize_power_spawn_volounteers_effect_2 = yes
 					add_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+					set_temp_variable = { cw_debt_mult = 1 }
+					subtract_from_temp_variable = { cw_debt_mult = ITA_civil_war_size_var }
+					multiply_variable = { debt = cw_debt_mult }
 				}
 				every_state = {
 					limit = {
@@ -5234,6 +5241,8 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+
+		will_lead_to_war_with = TUN
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_claim_tunisia"
@@ -11773,11 +11782,16 @@ focus_tree = {
 		icon = italian_armed_forces
 		x = 92
 		y = 15
-		cost = 0.1
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_post_cold_war_reforms"
+			army_experience = 20
+			navy_experience = 20
+			air_experience = 20
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -11823,58 +11837,37 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = ITA_restart_otomatic_development
-		icon = ITA_Focus_Ariete
-		relative_position_id = ITA_advanced_technology
-		x = 2
-		y = 1
-		cost = 4
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+	# focus = {
+	# 	id = ITA_restart_otomatic_development
+	# 	icon = ITA_Focus_Ariete
+	# 	relative_position_id = ITA_advanced_technology
+	# 	x = 2
+	# 	y = 1
+	# 	cost = 4
+	# 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
-		prerequisite = {
-			focus = ITA_advanced_technology
-		}
+	# 	prerequisite = {
+	# 		focus = ITA_advanced_technology
+	# 	}
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_restart_otomatic_development"
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
-			set_technology = { otomatic_tech = 1 }
-			create_equipment_variant = {
-				name = "OTOMATIC"
-				type = mbt_hull_1
-				parent_version = 1
-				modules = {
-					main_armament_slot = otomatic_gun
-					turret_type_slot = otomatic_turret
-					suspension_type_slot = tank_torsion_bar_suspension
-					armor_type_slot = tank_steel_armor_gen1
-					engine_type_slot = tank_diesel_engine_gen2
-					reload_type_slot = revolver_magazine
-					special_type_slot_2 = smoke_launchers
-					special_type_slot_4 = tank_battlestation_2
-				}
-				upgrades = {
-					tank_nsb_armor_upgrade = 1
-				}
-				obsolete = no
-				icon = "GFX_ITA_MBT_3"
-			}
-		}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus ITA_restart_otomatic_development"
+	# 		set_temp_variable = { treasury_change = -5 }
+	# 		modify_treasury_effect = yes
+	# 	}
 
-		ai_will_do = {
-			factor = 80
-			modifier = {
-				factor = 2
-				has_war = yes
-			}
-			modifier = {
-				factor = global.threat
-				always = yes
-			}
-		}
-	}
+	# 	ai_will_do = {
+	# 		factor = 80
+	# 		modifier = {
+	# 			factor = 2
+	# 			has_war = yes
+	# 		}
+	# 		modifier = {
+	# 			factor = global.threat
+	# 			always = yes
+	# 		}
+	# 	}
+	# }
 
 	focus = {
 		id = ITA_military_nuclear_program
@@ -14345,7 +14338,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = 0
 		y = 1
-		cost = 0.1
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14362,6 +14355,9 @@ focus_tree = {
 				}
 				add_ideas = ITA_land_equipment_localisation_spirit
 			}
+			army_experience = 50
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -14383,7 +14379,7 @@ focus_tree = {
 		relative_position_id = ITA_future_army
 		x = 3
 		y = 1
-		cost = 0.1
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14395,6 +14391,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_professional_army"
+			add_doctrine_cost_reduction = {
+			   name = ITA_professional_army
+			   uses = 4
+			   cost_reduction = 0.5
+			   category = land_doctrine
+		   }
+		   set_temp_variable = { treasury_change = -10 }
+		   modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -14582,7 +14586,7 @@ focus_tree = {
 		relative_position_id = ITA_future_army
 		x = -3
 		y = 1
-		cost = 0.1
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14598,7 +14602,15 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_professional_army"
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_massive_army"
+			add_doctrine_cost_reduction = {
+			   name = ITA_massive_army
+			   uses = 4
+			   cost_reduction = 0.5
+			   category = land_doctrine
+		   }
+		   set_temp_variable = { treasury_change = -10 }
+		   modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -15175,9 +15187,9 @@ focus_tree = {
 		id = ITA_future_airforce
 		icon = Italian_Air_Force
 		relative_position_id = ITA_post_cold_war_reforms
-		x = -15
+		x = -14
 		y = 1
-		cost = 0.1
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -15187,6 +15199,91 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_future_airforce"
 			add_ideas = ITA_airforce_equipment_localisation_spirit
+			air_experience = 50
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 80
+			modifier = {
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				factor = global.threat
+				always = yes
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_achieve_superiority
+		icon = Generic_Pilots
+		relative_position_id = ITA_future_airforce
+		x = -1
+		y = 1
+		cost = 4
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		prerequisite = {
+			focus = ITA_future_airforce
+		}
+		mutually_exclusive = {
+			focus = ITA_exploit_superiority
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_achieve_superiority"
+			set_temp_variable = { ITA_air_air_superiority_attack_factor_change = 0.1 }
+			modify_air_air_superiority_attack_factor_effect = yes
+			set_temp_variable = { ITA_air_air_superiority_agility_factor_change = 0.1 }
+			modify_air_air_superiority_agility_factor_effect = yes
+			set_temp_variable = { ITA_air_close_air_support_org_damage_factor_change = -0.1 }
+			modify_air_close_air_support_org_damage_factor_effect = yes
+			set_temp_variable = { ITA_air_cas_efficiency_change = -0.1 }
+			modify_air_cas_efficiency_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 80
+			modifier = {
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				factor = global.threat
+				always = yes
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_exploit_superiority
+		icon = drone2
+		relative_position_id = ITA_future_airforce
+		x = -3
+		y = 1
+		cost = 4
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		prerequisite = {
+			focus = ITA_future_airforce
+		}
+		mutually_exclusive = {
+			focus = ITA_achieve_superiority
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_exploit_superiority"
+			set_temp_variable = { ITA_air_air_superiority_attack_factor_change = -0.1 }
+			modify_air_air_superiority_attack_factor_effect = yes
+			set_temp_variable = { ITA_air_air_superiority_agility_factor_change = -0.1 }
+			modify_air_air_superiority_agility_factor_effect = yes
+			set_temp_variable = { ITA_air_close_air_support_org_damage_factor_change = 0.1 }
+			modify_air_close_air_support_org_damage_factor_effect = yes
+			set_temp_variable = { ITA_air_cas_efficiency_change = 0.1 }
+			modify_air_cas_efficiency_effect = yes
 		}
 
 		ai_will_do = {
@@ -15205,14 +15302,15 @@ focus_tree = {
 	focus = {
 		id = ITA_air_dominance
 		icon = bombs3
-		relative_position_id = ITA_future_airforce
-		x = -1
+		relative_position_id = ITA_exploit_superiority
+		x = 0
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
-			focus = ITA_future_airforce
+			focus = ITA_exploit_superiority
+			focus = ITA_achieve_superiority
 		}
 		mutually_exclusive = {
 			focus = ITA_hostile_sky
@@ -15242,14 +15340,15 @@ focus_tree = {
 	focus = {
 		id = ITA_hostile_sky
 		icon = air_defense
-		relative_position_id = ITA_future_airforce
-		x = -3
+		relative_position_id = ITA_achieve_superiority
+		x = 0
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
-			focus = ITA_future_airforce
+			focus = ITA_exploit_superiority
+			focus = ITA_achieve_superiority
 		}
 		mutually_exclusive = {
 			focus = ITA_air_dominance
@@ -15356,7 +15455,7 @@ focus_tree = {
 		id = ITA_air_superiority_fighter
 		icon = advan_fighters
 		relative_position_id = ITA_future_airforce
-		x = 6
+		x = 4
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15365,7 +15464,6 @@ focus_tree = {
 			focus = ITA_future_airforce
 		}
 		mutually_exclusive = {
-			focus = ITA_multirole_fighters
 			focus = ITA_light_fighters
 		}
 
@@ -15391,44 +15489,44 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = ITA_multirole_fighters
-		icon = Generic_Pilots
-		relative_position_id = ITA_future_airforce
-		x = 4
-		y = 1
-		cost = 4
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+	# focus = {
+	# 	id = ITA_multirole_fighters
+	# 	icon = Generic_Pilots
+	# 	relative_position_id = ITA_future_airforce
+	# 	x = 4
+	# 	y = 1
+	# 	cost = 4
+	# 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
-		prerequisite = {
-			focus = ITA_future_airforce
-		}
-		mutually_exclusive = {
-			focus = ITA_air_superiority_fighter
-			focus = ITA_light_fighters
-		}
+	# 	prerequisite = {
+	# 		focus = ITA_future_airforce
+	# 	}
+	# 	mutually_exclusive = {
+	# 		focus = ITA_air_superiority_fighter
+	# 		focus = ITA_light_fighters
+	# 	}
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_multirole_fighters"
-			country_event = ita_military.13
-			set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
-			modify_airforce_personnel_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus ITA_multirole_fighters"
+	# 		country_event = ita_military.13
+	# 		set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
+	# 		modify_airforce_personnel_cost_multiplier_modifier_effect = yes
+	# 		set_temp_variable = { treasury_change = -10 }
+	# 		modify_treasury_effect = yes
+	# 	}
 
-		ai_will_do = {
-			factor = 80
-			modifier = {
-				factor = 2
-				has_war = yes
-			}
-			modifier = {
-				factor = global.threat
-				always = yes
-			}
-		}
-	}
+	# 	ai_will_do = {
+	# 		factor = 80
+	# 		modifier = {
+	# 			factor = 2
+	# 			has_war = yes
+	# 		}
+	# 		modifier = {
+	# 			factor = global.threat
+	# 			always = yes
+	# 		}
+	# 	}
+	# }
 
 	focus = {
 		id = ITA_light_fighters
@@ -15444,7 +15542,6 @@ focus_tree = {
 		}
 		mutually_exclusive = {
 			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
 		}
 
 		completion_reward = {
@@ -15472,7 +15569,7 @@ focus_tree = {
 	focus = {
 		id = ITA_close_air_support
 		icon = close_air_support
-		relative_position_id = ITA_air_superiority_fighter
+		relative_position_id = ITA_light_fighters
 		x = 0
 		y = 1
 		cost = 4
@@ -15480,12 +15577,10 @@ focus_tree = {
 
 		prerequisite = {
 			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
 			focus = ITA_light_fighters
 		}
 		mutually_exclusive = {
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 
 		completion_reward = {
@@ -15513,7 +15608,7 @@ focus_tree = {
 	focus = {
 		id = ITA_strike_fighters
 		icon = fighter_plane
-		relative_position_id = ITA_multirole_fighters
+		relative_position_id = ITA_air_superiority_fighter
 		x = 0
 		y = 1
 		cost = 4
@@ -15521,12 +15616,10 @@ focus_tree = {
 
 		prerequisite = {
 			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
 			focus = ITA_light_fighters
 		}
 		mutually_exclusive = {
 			focus = ITA_close_air_support
-			focus = ITA_ground_attack_drones
 		}
 
 		completion_reward = {
@@ -15551,52 +15644,52 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = ITA_ground_attack_drones
-		icon = drone2
-		relative_position_id = ITA_light_fighters
-		x = 0
-		y = 1
-		cost = 4
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+	# focus = {
+	# 	id = ITA_ground_attack_drones
+	# 	icon = drone2
+	# 	relative_position_id = ITA_light_fighters
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 4
+	# 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
-		prerequisite = {
-			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
-			focus = ITA_light_fighters
-		}
-		mutually_exclusive = {
-			focus = ITA_close_air_support
-			focus = ITA_strike_fighters
-		}
+	# 	prerequisite = {
+	# 		focus = ITA_air_superiority_fighter
+	# 		focus = ITA_multirole_fighters
+	# 		focus = ITA_light_fighters
+	# 	}
+	# 	mutually_exclusive = {
+	# 		focus = ITA_close_air_support
+	# 		focus = ITA_strike_fighters
+	# 	}
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_ground_attack_drones"
-			country_event = ita_military.17
-			set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
-			modify_airforce_personnel_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus ITA_ground_attack_drones"
+	# 		country_event = ita_military.17
+	# 		set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
+	# 		modify_airforce_personnel_cost_multiplier_modifier_effect = yes
+	# 		set_temp_variable = { treasury_change = -10 }
+	# 		modify_treasury_effect = yes
+	# 	}
 
-		ai_will_do = {
-			factor = 80
-			modifier = {
-				factor = 2
-				has_war = yes
-			}
-			modifier = {
-				factor = global.threat
-				always = yes
-			}
-		}
-	}
+	# 	ai_will_do = {
+	# 		factor = 80
+	# 		modifier = {
+	# 			factor = 2
+	# 			has_war = yes
+	# 		}
+	# 		modifier = {
+	# 			factor = global.threat
+	# 			always = yes
+	# 		}
+	# 	}
+	# }
 
 	focus = {
 		id = ITA_naval_bomber
 		icon = naval_bombers
 		relative_position_id = ITA_close_air_support
-		x = 0
+		x = 1
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15604,7 +15697,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_close_air_support
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 		mutually_exclusive = {
 			focus = ITA_naval_multirole
@@ -15637,7 +15729,7 @@ focus_tree = {
 		id = ITA_naval_multirole
 		icon = fighters2
 		relative_position_id = ITA_strike_fighters
-		x = 0
+		x = 1
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15645,7 +15737,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_close_air_support
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 		mutually_exclusive = {
 			focus = ITA_naval_bomber
@@ -15677,8 +15768,8 @@ focus_tree = {
 	focus = {
 		id = ITA_naval_light_multirole
 		icon = Jet_Fighters
-		relative_position_id = ITA_ground_attack_drones
-		x = 0
+		relative_position_id = ITA_close_air_support
+		x = -1
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15686,7 +15777,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_close_air_support
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 		mutually_exclusive = {
 			focus = ITA_naval_bomber
@@ -15718,7 +15808,7 @@ focus_tree = {
 	focus = {
 		id = ITA_strategic_bomber
 		icon = modern_bomber
-		relative_position_id = ITA_naval_multirole
+		relative_position_id = ITA_naval_bomber
 		x = 0
 		y = 1
 		cost = 4
@@ -15758,7 +15848,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = 15
 		y = 1
-		cost = 0.1
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -15768,6 +15858,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_future_navy"
 			add_ideas = ITA_navy_equipment_localisation_spirit
+			navy_experience = 50
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -15813,10 +15906,10 @@ focus_tree = {
 				character = ITA_rinaldo_veri
 				trait = green_water_expert
 		 	}
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = ITA_mediterranean_navy
 				uses = 2
-				bonus = 0.5
+				cost_reduction = 0.5
 				category = Cat_green_water_navy
 			}
 		}
@@ -16044,10 +16137,10 @@ focus_tree = {
 				character = ITA_rinaldo_veri
 				trait = blue_water_expert
 		 	}
-			add_tech_bonus = {
+			 add_doctrine_cost_reduction = {
 				name = ITA_oceanic_navy
 				uses = 2
-				bonus = 0.5
+				cost_reduction = 0.5
 				category = Cat_blue_water_navy
 			}
 		}
@@ -16376,24 +16469,36 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_focus_fincantieri_surface"
-			custom_effect_tooltip = ITA_focus_fincantieri_surface_TT
-			hidden_effect = {
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_ship_company
-					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_ship_company
-						add_idea = ITA_fincantieri_ship_company_improved
-					}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			if = {
+				limit = {
+					has_dlc = "Arms Against Tyranny"
 				}
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_submarine_company
+				mio:ITA_fincantieri = {
+					add_mio_funds = 10000
+				}
+			}
+			else = {
+				custom_effect_tooltip = ITA_focus_fincantieri_surface_TT
+				hidden_effect = {
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_improved
+						}
 					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_submarine_company
-						add_idea = ITA_fincantieri_submarine_company_unfocused
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_unfocused
+						}
 					}
 				}
 			}
@@ -16470,24 +16575,36 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_focus_fincantieri_submarines"
-			custom_effect_tooltip = ITA_focus_fincantieri_submarines_TT
-			hidden_effect = {
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_ship_company
-					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_ship_company
-						add_idea = ITA_fincantieri_ship_company_unfocused
-					}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			if = {
+				limit = {
+					has_dlc = "Arms Against Tyranny"
 				}
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_submarine_company
+				mio:ITA_sottomarini_fincantieri = {
+					add_mio_funds = 10000
+				}
+			}
+			else = {
+				custom_effect_tooltip = ITA_focus_fincantieri_submarines_TT
+				hidden_effect = {
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_unfocused
+						}
 					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_submarine_company
-						add_idea = ITA_fincantieri_submarine_company_improved
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_improved
+						}
 					}
 				}
 			}
@@ -17322,6 +17439,11 @@ focus_tree = {
 				set_variable = { var = population_tax_rate value = ITA.population_tax_rate }
 				set_variable = { var = corporate_tax_rate value = ITA.corporate_tax_rate }
 				set_variable = { var = int_investments value = temp_int_investments }
+				set_variable = { gdpc_converging_var = ITA.gdpc_converging_var }
+				set_variable = { military_factory_employment_var = 1 }
+				set_variable = { civilian_factory_employment_var = 1 }
+				set_variable = { naval_factory_employment_var = 1 }
+				set_variable = { office_employment_var = 1 }
 			}
 			transfer_units_fraction = {
 				target = SCL
@@ -17524,6 +17646,12 @@ focus_tree = {
 				set_variable = { var = population_tax_rate value = ITA.population_tax_rate }
 				set_variable = { var = corporate_tax_rate value = ITA.corporate_tax_rate }
 				set_variable = { var = int_investments value = temp_int_investments }
+				set_variable = { gdpc_converging_var = ITA.gdpc_converging_var }
+				set_variable = { military_factory_employment_var = 1 }
+				set_variable = { civilian_factory_employment_var = 1 }
+				set_variable = { naval_factory_employment_var = 1 }
+				set_variable = { office_employment_var = 1 }
+				ingame_update_setup = yes
 			}
 			transfer_units_fraction = {
 				target = SCL
@@ -17559,6 +17687,7 @@ focus_tree = {
 				}
 				complete_national_focus = ITA_roberto_calderoli
 			}
+			ingame_update_setup = yes
 		}
 
 		ai_will_do = {

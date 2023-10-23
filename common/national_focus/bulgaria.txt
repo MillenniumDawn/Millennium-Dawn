@@ -29,8 +29,50 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { interest_rate > 6.0 }
+			}
 		}
 	}
+
+	focus = {
+		id = BUL_bulgarian_debt_refactoring
+		icon = balance_buget
+		prerequisite = { focus = BUL_industrial_effort }
+		x = 0
+		y = 1
+		relative_position_id = BUL_industrial_effort
+
+		cost = 10
+
+		available = {
+			gdp_debt_ratio_higher_50 = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BUL_generic_factory_1"
+			add_timed_idea = { idea = BUL_debt_refactoring_idea days = 730 }
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = 0.04 }
+			clamp_temp_variable = { var = debt_change min = 0 max = 25 }
+			multiply_temp_variable = { debt_change = -1 }
+			modify_debt_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 6.0 }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { interest_rate > 8.0 }
+			}
+		}
+	}
+
 	focus = {
 		id = BUL_generic_factory_1
 		icon = business_man
@@ -2986,6 +3028,7 @@ focus_tree = {
 				neutrality_neutral_green_are_in_power = yes
 			}
 			has_completed_focus = BUL_align_to_nato
+			is_subject = no
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_nato_joining"
@@ -3399,6 +3442,7 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		will_lead_to_war_with = ALB
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_albania_never_heard"
 			create_wargoal = {
@@ -3465,6 +3509,7 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		will_lead_to_war_with = SER
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_bully_our_orthodox_bros"
 			create_wargoal = {
@@ -3490,6 +3535,7 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		will_lead_to_war_with = BOS
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_bosnian"
 			create_wargoal = {
@@ -3509,6 +3555,7 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		will_lead_to_war_with = CRO
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_croatian_question"
 			create_wargoal = {
@@ -3528,6 +3575,7 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		will_lead_to_war_with = SLV
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_demand_slovenia"
 			create_wargoal = {
@@ -3574,6 +3622,7 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		will_lead_to_war_with = ROM
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_crush_romania"
 			create_wargoal = {
@@ -3595,6 +3644,7 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 		}
+		will_lead_to_war_with = TUR
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BUL_crush_turkey"
 			create_wargoal = {
@@ -5362,10 +5412,20 @@ focus_tree = {
 				uses = 1
 				category = Cat_S_FIGHTER
 			}
-			add_equipment_to_stockpile = {
-				type = transport_plane3
-				amount = 5
-				producer = USA
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = large_plane_air_transport_airframe_1
+					variant_name = "C-130 Hercules"
+					amount = 5
+					producer = USA
+				}
+			} else = {
+				add_equipment_to_stockpile = {
+					type = transport_plane3
+					amount = 5
+					producer = USA
+				}
 			}
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
@@ -5388,10 +5448,20 @@ focus_tree = {
 			}
 		}
 		completion_reward = {
-			add_equipment_to_stockpile = {
-				type = transport_plane3
-				amount = 10
-				producer = ITA
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = large_plane_air_transport_airframe_2
+					variant_name = "Alenia C-27J"
+					amount = 10
+					producer = ITA
+				}
+			} else = {
+				add_equipment_to_stockpile = {
+					type = transport_plane3
+					amount = 10
+					producer = ITA
+				}
 			}
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
@@ -5789,6 +5859,7 @@ focus_tree = {
 				has_government = neutrality
 				has_government = nationalist
 			}
+			is_subject = no
 		}
 		cost = 5
 		prerequisite = {
@@ -6034,8 +6105,11 @@ focus_tree = {
 		y = 3
 		relative_position_id = BUL_global_diplomacy
 		available = {
-			has_government = neutrality
-			has_government = nationalist
+			OR = {
+				has_government = neutrality
+				has_government = nationalist
+			}
+			is_subject = no
 		}
 		cost = 5
 		prerequisite = {
@@ -6067,6 +6141,7 @@ focus_tree = {
 		relative_position_id = BUL_global_diplomacy
 		available = {
 			has_government = democratic
+			is_subject = no
 		}
 		cost = 5
 		prerequisite = {
