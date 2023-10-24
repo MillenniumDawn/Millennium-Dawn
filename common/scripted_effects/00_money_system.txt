@@ -39,6 +39,7 @@
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ###
+@spending_laws_gdp_scaling = 0.01
 
 # ingame_update_setup
 # This function is used to update the economic setup mid game
@@ -1527,6 +1528,11 @@ update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
 
+	#gdp scaling
+	set_temp_variable = { gdp_bureaucracy_cost_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_bureaucracy_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_bureaucracy_cost_modifier = 1 }
+
 	#Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
 	add_to_temp_variable = { bureaucracy_cost_multiplier = modifier@bureaucracy_cost_multiplier_modifier }
@@ -1546,6 +1552,7 @@ update_bureaucracy_rate = {
 		value = v
 		add_to_variable = { var = array_bureaucracy_spend^i value = population_total }	#Unit 100 000
 		multiply_variable = { array_bureaucracy_spend^i = bureaucracy_cost_multiplier }
+		multiply_variable = { array_bureaucracy_spend^i = gdp_bureaucracy_cost_modifier }
 		multiply_variable = { array_bureaucracy_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { var = array_bureaucracy_spend^i value = bureaucracy_base_cost }
 	}
@@ -1585,6 +1592,11 @@ update_police_rate = {
 	#Set the base cost of policing (billion $ per 10 000 000 people)
 	set_temp_variable = { police_base_cost = 0.014 }
 
+	#gdp scaling
+	set_temp_variable = { gdp_police_cost_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_police_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_police_cost_modifier = 1 }
+
 	#Additional additive modifiers
 	set_temp_variable = { police_cost_multiplier = 1 }
 	add_to_temp_variable = { police_cost_multiplier = modifier@police_cost_multiplier_modifier }
@@ -1601,6 +1613,7 @@ update_police_rate = {
 		value = v
 		add_to_variable = { array_security_spend^i = population_total }	#Unit 100 000
 		multiply_variable = { array_security_spend^i = police_cost_multiplier }
+		multiply_variable = { array_security_spend^i = gdp_police_cost_modifier }
 		multiply_variable = { array_security_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { array_security_spend^i = police_base_cost }
 	}
@@ -1647,12 +1660,13 @@ update_education_rate = {
 	add_to_temp_variable = { research_slot_mod = research_slot_initial }
 	set_variable = { research_slot_modifier = research_slot_mod }
 
-	#Education spending is more expensive for poor countries - linear approximation with -0.086 * GDP/C + 2.182
+	#Education spending was more expensive for poor countries - linear approximation with -0.086 * GDP/C + 2.182
 	#helps balance large countries (china/india/ecc) and represents poor countries setting up infrastructure that western countries already have
+	#but this was scrapped because poor countries were struggling with high tax rates despite very low spending levels
+	#now spending cost increases with gdpc
 	set_temp_variable = { gdp_education_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_education_cost_modifier = -0.05 }
-	add_to_temp_variable = { gdp_education_cost_modifier = 2 }
-	clamp_temp_variable = { var = gdp_education_cost_modifier min = 1 }
+	multiply_temp_variable = { gdp_education_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_education_cost_modifier = 1 }
 	set_variable = { education_cost_gdp_multiplier_display = gdp_education_cost_modifier }
 	subtract_from_variable = { education_cost_gdp_multiplier_display = 1 }
 
@@ -1715,9 +1729,8 @@ update_health_rate = {
 
 	# # Bird Note: Ported Education Spending Logic 07-14
 	set_temp_variable = { gdp_health_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_health_cost_modifier = -0.05 }
-	add_to_temp_variable = { gdp_health_cost_modifier = 2 }
-	clamp_temp_variable = { var = gdp_health_cost_modifier min = 1 }
+	multiply_temp_variable = { gdp_health_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_health_cost_modifier = 1 }
 
 	#Additional additive modifiers
 	set_temp_variable = { health_cost_multiplier = 1 }
@@ -1781,9 +1794,8 @@ update_social_rate = {
 
 	# # Bird Note: Ported Education Spending Logic 07-14
 	set_temp_variable = { gdp_social_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_social_cost_modifier = -0.05 }
-	add_to_temp_variable = { gdp_social_cost_modifier = 2 }
-	clamp_temp_variable = { var = gdp_social_cost_modifier min = 1 }
+	multiply_temp_variable = { gdp_social_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_social_cost_modifier = 1 }
 
 	#Additional additive modifiers
 	set_temp_variable = { social_cost_multiplier = 1 }
