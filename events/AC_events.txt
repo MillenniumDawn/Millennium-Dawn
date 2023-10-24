@@ -512,108 +512,141 @@ country_event = {
 		set_temp_variable = { AI_best_target = -1 }
 		set_temp_variable = { AI_best_type = -1 }
 
-		random_scope_in_array = {
-			array = investment_targets
-			limit = { NOT = { has_country_flag = int_auto_reject_investment_flag } }
+		set_temp_variable = { AI_best_country = 0 }
+		set_temp_variable = { AI_best_country_score = -1 }
 
-			set_temp_variable = { target_nation = THIS.id }
-			for_each_scope_loop = {
-				array = controlled_states
+		for_each_scope_loop = {
+			array = investment_targets
+			set_temp_variable = { AI_selected_country = THIS.id }
+			set_temp_variable = { AI_country_score = 0 }
+
+			if = { limit = { NOT = { has_country_flag = int_auto_reject_investment_flag } }
+				AI_country_selection_calculation = yes
+			}
+
+			# Sets the new best country
+			if = { limit = { check_variable = { AI_country_score > AI_best_country_score } }
+				set_temp_variable = { AI_best_country_score = AI_country_score }
+				set_temp_variable = { AI_best_country = AI_selected_country }
+			}
+		}
+
+		# Check Investing Country
+		if = { limit = { check_variable = { AI_best_country_score = -1 } }
+			log = "[GetDateText]: [This.GetName]: Investment Failed. No valid investing country. Skipping this investment pulse."
+		}
+		else = {
+			# Log the value
+			log = "[GetDateText]: [This.GetName]: Investment Country Succeeded. [?var:AI_best_country.GetName] scored a [?AI_best_country_score]"
+			var:AI_best_country = {
+				set_temp_variable = { target_nation = THIS.id }
+				for_each_scope_loop = {
+					array = controlled_states
+
+					if = {
+						limit = {
+							# Check if the Investable State
+							is_in_home_area = yes
+							# Check whether the AI can invest in these states
+							AI_no_investment_in_these_states = yes
+							NOT = {
+								is_in_array = { array = projects_in_state value = ROOT.id }
+								# Do not invest in this country if its at war with ROOT
+								PREV = { has_war_with = ROOT }
+								# Do not Invest if any allies of this nation has war with ROOT
+								PREV = { any_allied_country = { has_war_with = ROOT } }
+							}
+							# TODO: Add a check here at some point to make sure they're not a subject, if they are only invest if they are an allies subject or if they're your subject
+						}
+
+						# Free Building Slot Buildings
+						if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
+							# Get Industrial Complex Score - Building Type - 1
+							AI_get_civilian_industry_score = yes
+							# Get Military Industry Score if you have defense industry
+							# - Building Type - 2
+							if = { limit = { ROOT = { has_idea = defense_industry } }
+								AI_get_military_industry_score = yes
+							}
+							# Get Naval Dockyard Score if you have maritime industry
+							# - Building Type - 3
+							if = { limit = { ROOT = { has_idea = maritime_industry } is_coastal = yes }
+								AI_get_dockyard_score = yes
+							}
+							# Offices - Building Type - 5
+							AI_get_offices_score = yes
+						}
+						# Infrastructure - Building Type - 4
+						AI_get_infrastructure_score = yes
+						# Fuel Silos - Building Type - 9
+						AI_get_fuel_silo_score = yes
+						# Network Infrastructure - Building Type - 10
+						AI_get_network_infrastructure_score = yes
+
+						# Outside of Calculation
+						AI_edge_case_calculations = yes
+					}
+				}
+			}
+			if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE } }
+				# Project building type
+				set_variable = { project_building_type = 0 }
+				set_variable = { project_type = -1 }
+				set_variable = { project_building_type^project_type = AI_best_type }
+				# Regardless it will always be one for sake of AI balance
+				set_variable = { project_build_amount^-1 = 1 }
+
+				project_monetary_cost_calculation = yes
+
+				# Init Project Variables
+				# AI_best_target is the best state to invest in
+
+				calculate_ai_construction_speed = yes
+
+				# Log Values
+				set_temp_variable = { pd = project_construction_duration^-2 }
+				set_temp_variable = { pbt = project_building_type^-1 }
+				set_temp_variable = { pba = project_build_amount^-1 }
+				set_temp_variable = { abt = AI_best_target }
+				set_temp_variable = { abs = AI_best_score }
 
 				if = {
 					limit = {
-						# Check if the Investable State
-						is_in_home_area = yes
-						# Check whether the AI can invest in these states
-						AI_no_investment_in_these_states = yes
-						NOT = {
-							is_in_array = { array = projects_in_state value = ROOT.id }
-							# Do not invest in this country if its at war with ROOT
-							PREV = { has_war_with = ROOT }
-							# Do not Invest if any allies of this nation has war with ROOT
-							PREV = { any_allied_country = { has_war_with = ROOT } }
+						# Only allow projects between 0 and 700. If construction speed goes negative you'll get instant failing projects
+						check_variable = { project_construction_duration^-2 < 700 }
+						check_variable = { project_construction_duration^-2 > 0 }
+
+						# Check whether it's available
+						var:AI_best_target = { investment_building_slot_available = yes }
+					}
+					var:AI_best_target = {
+						THIS = {
+							set_variable = { ROOT.AC_state_target = THIS.id }
+							# CONTROLLER is pretty obvious
+							CONTROLLER = { set_variable = { ROOT.AC_nation_target = THIS.id } }
 						}
-						# TODO: Add a check here at some point to make sure they're not a subject, if they are only invest if they are an allies subject or if they're your subject
+						ROOT = { country_event = { id = AC_event.3 } }
+					}
+					# Temporarily pulls this tag from investment targets for the sake of spreading investments around
+					var:AI_best_country = {
+						set_country_flag = { flag = recently_accepted_an_investment value = 1 days = 21 }
 					}
 
-					# Free Building Slot Buildings
-					if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
-						# Get Industrial Complex Score - Building Type - 1
-						AI_get_civilian_industry_score = yes
-						# Get Military Industry Score if you have defense industry
-						# - Building Type - 2
-						if = { limit = { ROOT = { has_idea = defense_industry } }
-							AI_get_military_industry_score = yes
-						}
-						# Get Naval Dockyard Score if you have maritime industry
-						# - Building Type - 3
-						if = { limit = { ROOT = { has_idea = maritime_industry } is_coastal = yes }
-							AI_get_dockyard_score = yes
-						}
-						# Offices - Building Type - 5
-						AI_get_offices_score = yes
+					log = "[GetDateText]: [This.GetName]: Investment Succeeded: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.AC_nation_target.GetName], score = [?abs]"
+				}
+				else = {
+					var:AI_best_country = {
+						set_country_flag = { flag = recently_failed_to_invest value = 1 days = 60 }
 					}
-					# Infrastructure - Building Type - 4
-					AI_get_infrastructure_score = yes
-					# Fuel Silos - Building Type - 9
-					AI_get_fuel_silo_score = yes
-					# Network Infrastructure - Building Type - 10
-					AI_get_network_infrastructure_score = yes
-
-					# Outside of Calculation
-					AI_edge_case_calculations = yes
+					log = "[GetDateText]: [This.GetName]: Investment Failed: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
 				}
-			}
-		}
-
-		if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE } }
-			# Project building type
-			set_variable = { project_building_type = 0 }
-			set_variable = { project_type = -1 }
-			set_variable = { project_building_type^project_type = AI_best_type }
-			# Regardless it will always be one for sake of AI balance
-			set_variable = { project_build_amount^-1 = 1 }
-
-			project_monetary_cost_calculation = yes
-
-			# Init Project Variables
-			# AI_best_target is the best state to invest in
-
-			calculate_ai_construction_speed = yes
-
-			# Log Values
-			set_temp_variable = { pd = project_construction_duration^-2 }
-			set_temp_variable = { pbt = project_building_type^-1 }
-			set_temp_variable = { pba = project_build_amount^-1 }
-			set_temp_variable = { abt = AI_best_target }
-			set_temp_variable = { abs = AI_best_score }
-
-			if = {
-				limit = {
-					# Only allow projects between 0 and 700. If construction speed goes negative you'll get instant failing projects
-					check_variable = { project_construction_duration^-2 < 700 }
-					check_variable = { project_construction_duration^-2 > 0 }
-
-					# Check whether it's available
-					var:AI_best_target = { investment_building_slot_available = yes }
-				}
-				var:AI_best_target = {
-					THIS = {
-						set_variable = { ROOT.AC_state_target = THIS.id }
-						# CONTROLLER is pretty obvious
-						CONTROLLER = { set_variable = { ROOT.AC_nation_target = THIS.id } }
-					}
-					ROOT = { country_event = { id = AC_event.3 } }
-				}
-
-				log = "[GetDateText]: [This.GetName]: Investment Succeeded [ROOT.GetName]: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.AC_nation_target.GetName], score = [?abs]"
 			}
 			else = {
-				log = "[GetDateText]: [This.GetName]: Investment Failed [ROOT.GetName]: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
+				var:AI_best_country = {
+					set_country_flag = { flag = recently_failed_to_invest value = 1 days = 60 }
+				}
+				log = "[GetDateText]: [This.GetName]: Investment Failed: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
 			}
-		}
-		else = {
-			log = "[GetDateText]: [This.GetName]: Investment Failed [ROOT.GetName]: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
 		}
 	}
 }
