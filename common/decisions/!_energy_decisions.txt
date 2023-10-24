@@ -111,15 +111,20 @@ decision_category_energy = {
 			# Don't rely on people you hate or doomsday stockpile nuclear fuel
 			modifier = {
 				factor = 0
-				OR = {
-					FROM = {
-						has_opinion = {
-							target = ROOT
-							value < 75
-						}
+				FROM = {
+					has_opinion = {
+						target = ROOT
+						value < 75
 					}
-					# Fail if I have more than 15000 nuclear stockpile
-					ROOT = { check_variable = { var_reactor_material_stockpile > 15000 } }
+				}
+			}
+			# Do not buy more reactor grade if you can sustain more than 10 weeks of nuclear fuel consumption
+			modifier = {
+				factor = 0
+				ROOT = {
+					set_temp_variable = { nuclear_fuel_consumption_tmp = nuclear_fuel_consumption }
+					multiply_temp_variable = { nuclear_fuel_consumption_tmp = 10 }
+					check_variable = { var_reactor_material_stockpile > nuclear_fuel_consumption_tmp }
 				}
 			}
 		}
