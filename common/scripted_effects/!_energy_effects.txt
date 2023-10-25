@@ -2057,37 +2057,21 @@ build_enrichment_facilities_effect = {
 		modify_treasury_effect = yes
 	}
 
-	if = {
-		limit = {
-			NOT = {
-				is_in_array = { global.enrichment_countries = THIS.id }
-			}
-		}
+	if = { limit = { NOT = { is_in_array = { global.enrichment_countries = THIS.id } } }
 		add_to_array = { global.enrichment_countries = THIS.id }
-	}
-	if = { limit = { is_ai = yes }
-		if = {
-			limit = {
-				check_variable = { var_LEU_selected = 2 }
+		if = { limit = { is_ai = yes }
+			if = { limit = { check_variable = { var_LEU_selected = 2 } }
+				set_variable = { var_LEU_selected = 1 }
 			}
-			set_variable = { var_LEU_selected = 1 }
+			else = {
+				set_variable = { var_LEU_selected = 2 }
+				set_variable = { var_HEU_selected = 1 }
+			}
+			set_enrichment_efficiency_LEU = yes
+			update_nuclear_production = yes
+			var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
+			update_nuclear_production = yes
 		}
-		else = {
-			set_variable = { var_LEU_selected = 2 }
-			set_variable = { var_HEU_selected = 1 }
-		}
-		set_enrichment_efficiency_LEU = yes
-		update_nuclear_production = yes
-		var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
-
-		if = { limit = { check_variable = { var_CIC_use_enrichment = 0 } }
-			set_variable = { var_CIC_use_nuclear = 0 }
-		}
-
-		add_to_variable = { var_CIC_use_enrichment = enrichment_facilities }
-		add_to_variable = { var_CIC_use_nuclear = enrichment_facilities }
-		update_enrichment_efficiency = yes
-		update_nuclear_production = yes
 	}
 }
 

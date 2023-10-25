@@ -4,7 +4,7 @@ decision_category_energy = {
 		allowed = { always = no }
 		available = { always = yes }
 
-		days_mission_timeout = 180
+		days_mission_timeout = 120
 		fire_only_once = no
 		selectable_mission = yes
 
@@ -13,6 +13,36 @@ decision_category_energy = {
 			set_temp_variable = { temp_change = 1 }
 			build_enrichment_facilities_effect = yes
 			set_country_flag = { flag = recently_built_enrichment_facility value = 1 days = 90 }
+		}
+	}
+
+	block_all_reactor_grade_purchases = {
+		icon = ger_mefo_bills
+		allowed = { always = yes }
+
+		visible = {
+			NOT = { has_country_flag = not_accepting_new_energy_offers }
+			has_enrichment_facilities = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision block_all_reactor_grade_purchases"
+			set_country_flag = not_accepting_new_energy_offers
+		}
+	}
+
+	unblock_all_reactor_grade_purchases = {
+		icon = ger_mefo_bills
+		allowed = { always = yes }
+
+		visible = {
+			has_country_flag = not_accepting_new_energy_offers
+			has_enrichment_facilities = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision unblock_all_reactor_grade_purchases"
+			clr_country_flag = not_accepting_new_energy_offers
 		}
 	}
 
@@ -27,6 +57,7 @@ decision_category_energy = {
 						has_war_with = ROOT
 					}
 				}
+				NOT = { has_country_flag = not_accepting_new_energy_offers }
 			}
 		}
 		available = {
@@ -56,10 +87,8 @@ decision_category_energy = {
 			factor = 1
 			# Buy Fuel if you're short
 			modifier = {
-				factor = 10
-				ROOT = {
-					check_variable = { var_reactor_material_stockpile < 2500 }
-				}
+				factor = 5
+				ROOT = { check_variable = { var_reactor_material_stockpile < 2500 } }
 			}
 			modifier = {
 				factor = 2
@@ -82,15 +111,20 @@ decision_category_energy = {
 			# Don't rely on people you hate or doomsday stockpile nuclear fuel
 			modifier = {
 				factor = 0
-				OR = {
-					FROM = {
-						has_opinion = {
-							target = ROOT
-							value < 75
-						}
+				FROM = {
+					has_opinion = {
+						target = ROOT
+						value < 75
 					}
-					# Fail if I have more than 15000 nuclear stockpile
-					ROOT = { check_variable = { var_reactor_material_stockpile > 15000 } }
+				}
+			}
+			# Do not buy more reactor grade if you can sustain more than 10 weeks of nuclear fuel consumption
+			modifier = {
+				factor = 0
+				ROOT = {
+					set_temp_variable = { nuclear_fuel_consumption_tmp = nuclear_fuel_consumption }
+					multiply_temp_variable = { nuclear_fuel_consumption_tmp = 10 }
+					check_variable = { var_reactor_material_stockpile > nuclear_fuel_consumption_tmp }
 				}
 			}
 		}

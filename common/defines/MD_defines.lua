@@ -198,6 +198,8 @@
 	NDefines.NProduction.DEFAULT_MAX_NAV_FACTORIES_PER_LINE = 5
 	NDefines.NProduction.CONVOY_MAX_NAV_FACTORIES_PER_LINE = 15
 	NDefines.NProduction.CAPITAL_SHIP_MAX_NAV_FACTORIES_PER_LINE = 5
+	NDefines.NProduction.MINIMUM_NUMBER_OF_FACTORIES_TAKEN_BY_CONSUMER_GOODS_VALUE = 0		-- The minimum number of factories we have to put on consumer goods, by value.
+	NDefines.NProduction.MINIMUM_NUMBER_OF_FACTORIES_TAKEN_BY_CONSUMER_GOODS_PERCENT = 0	-- The minimum number of factories we have to put on consumer goods, in percent.
 
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- Make the max number of factories 0 for purchase -- CLAMPED AT 0
 
@@ -361,9 +363,9 @@
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
-	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.5 -- 0.1
-	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 2 -- 2
-	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 2 -- 1
+	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.15 -- 0.1
+	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1 -- 2
+	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.01 -- 1
 	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.05 -- 0.01
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
