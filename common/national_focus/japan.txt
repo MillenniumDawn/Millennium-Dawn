@@ -2231,7 +2231,7 @@ focus_tree = {
 		icon = democratic_stability
 		x = -3
 		y = 3
-		cost = 10
+		cost = 5
 		relative_position_id = JAP_central_government_reform
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -2265,7 +2265,7 @@ focus_tree = {
 		icon = intelligence_exchange
 		x = -5
 		y = 3
-		cost = 10
+		cost = 5
 		relative_position_id = JAP_central_government_reform
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -2315,7 +2315,7 @@ focus_tree = {
 		ai_will_do = { factor = 10 }
 	}
 
-	#Smash All Sanctuaries
+	#Continue Privatisation Efforts
 	focus = {
 		id = JAP_without_sanctuaries
 		icon = goal_JAP_postal2
@@ -2330,7 +2330,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_without_sanctuaries executed"
-
+			set_temp_variable = { temp_opinion = 15 }
+			change_small_medium_business_owners_opinion = yes
+			change_industrial_conglomerates_opinion = yes
+			change_international_bankers_opinion = yes
+			if = {
+				limit = {
+					is_in_array = { ruling_party = 1 }
+				}
+				JAP = { country_event = Japan.100003200 } #split LDP to join DPJ party event
+				add_political_power = 100
+			}
+			custom_effect_tooltip = JAP_without_sanctuaries_TT
 		}
 
 		ai_will_do = {
@@ -2342,7 +2353,7 @@ focus_tree = {
 		}
 	}
 
-	#Marketising Test
+	#Civil Service Corporatisation
 	focus = {
 		id = JAP_marketising_test
 		icon = liberalization_policies
@@ -2356,31 +2367,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_marketising_test executed"
-			if = {
-				limit = { has_idea = bureau_04 }
-				swap_ideas = {
-					remove_idea = bureau_04
-					add_idea = bureau_03
-				}
-			}
-			if = {
-				limit = { has_idea = social_05 }
-				swap_ideas = {
-					remove_idea = social_05
-					add_idea = social_04
-				}
-			}
-			add_stability = 0.02
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.03
+			set_temp_variable = { treasury_change = 50 }
+			modify_treasury_effect = yes
+			decrease_centralization = yes
+			add_timed_idea = {
+				idea = JAP_service_shocks
+				days = 730
 			}
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Government Revitalization Unit
+	#Corporatisation Goal
 	focus = {
 		id = JAP_gru
 		icon = neutrality
@@ -2393,67 +2392,19 @@ focus_tree = {
 		prerequisite = { focus = JAP_marketising_test }
 		mutually_exclusive = { focus = JAP_national_policy_office }
 
-		available = {
-			OR = {
-				has_country_flag = MDMOSJAP_JAP_LEHMAN_SHOCK_ELECTION
-				date > 2009.08.31
-			}
-			OR = {
-				hidden_trigger = { is_in_array = { ruling_party = 2 } }
-				hidden_trigger = { is_in_array = { ruling_party = 3 } }
-				hidden_trigger = { is_in_array = { ruling_party = 4 } }
-				hidden_trigger = { is_in_array = { ruling_party = 5 } }
-				hidden_trigger = { is_in_array = { ruling_party = 17 } }
-				hidden_trigger = { is_in_array = { ruling_party = 18 } }
-				hidden_trigger = { is_in_array = { ruling_party = 19 } }
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_2_TT
-					is_in_array = { ruling_party = 2 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_3_TT
-					is_in_array = { ruling_party = 3 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_4_TT
-					is_in_array = { ruling_party = 4 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_5_TT
-					is_in_array = { ruling_party = 5 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_17_TT
-					is_in_array = { ruling_party = 17 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_18_TT
-					is_in_array = { ruling_party = 18 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_19_TT
-					is_in_array = { ruling_party = 19 }
-				}
-			}
-		}
-
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_gru executed"
-			decrease_mdmosjap_conrad_left_2 = yes
-			increase_mdmosjap_conrad_right_1 = yes
-			add_stability = 0.05
-			set_temp_variable = { treasury_change = 150 }
-			modify_treasury_effect = yes
-			if = { limit = { has_idea = bureau_02 } swap_ideas = { remove_idea = bureau_04 add_idea = bureau_01 } }
-			if = { limit = { has_idea = bureau_03 } swap_ideas = { remove_idea = bureau_04 add_idea = bureau_02 } }
-			if = { limit = { has_idea = bureau_04 } swap_ideas = { remove_idea = bureau_04 add_idea = bureau_03 } }
-			if = { limit = { has_idea = bureau_05 } swap_ideas = { remove_idea = bureau_04 add_idea = bureau_04 } }
+			add_political_power = 200
+			add_timed_idea = {
+				idea = JAP_privatization_corp
+				days = 1460
+			}
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#National Policy Office
+	#Privatisation Goal
 	focus = {
 		id = JAP_national_policy_office
 		icon = construction3
@@ -2467,75 +2418,37 @@ focus_tree = {
 		mutually_exclusive = { focus = JAP_gru }
 
 		available = {
-			OR = {
-				has_country_flag = MDMOSJAP_JAP_LEHMAN_SHOCK_ELECTION
-				date > 2009.08.31
+			hidden_trigger = {
+				OR = {
+					NOT = {
+						has_country_flag = JAP_ldp_fracture_corp_only
+					}
+					NOT = {
+						is_in_array = { ruling_party = 1 }
+					}
+				}
 			}
-			OR = {
-				hidden_trigger = { is_in_array = { ruling_party = 0 } }
-				hidden_trigger = { is_in_array = { ruling_party = 1 } }
-				hidden_trigger = { is_in_array = { ruling_party = 6 } }
-				hidden_trigger = { is_in_array = { ruling_party = 7 } }
-				hidden_trigger = { is_in_array = { ruling_party = 13 } }
-				hidden_trigger = { is_in_array = { ruling_party = 14 } }
-				hidden_trigger = { is_in_array = { ruling_party = 15 } }
-				hidden_trigger = { is_in_array = { ruling_party = 20 } }
-				hidden_trigger = { is_in_array = { ruling_party = 21 } }
-				hidden_trigger = { is_in_array = { ruling_party = 22 } }
-				hidden_trigger = { is_in_array = { ruling_party = 23 } }
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_0_TT
-					is_in_array = { ruling_party = 0 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_1_TT
-					is_in_array = { ruling_party = 1 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_6_TT
-					is_in_array = { ruling_party = 6 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_7_TT
-					is_in_array = { ruling_party = 7 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_13_TT
-					is_in_array = { ruling_party = 13 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_14_TT
-					is_in_array = { ruling_party = 14 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_15_TT
-					is_in_array = { ruling_party = 15 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_20_TT
-					is_in_array = { ruling_party = 20 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_21_TT
-					is_in_array = { ruling_party = 21 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_22_TT
-					is_in_array = { ruling_party = 22 }
-				}
-				custom_trigger_tooltip = {
-					tooltip = MDMOSJAP_IS_IN_ARRAY_RULING_PARTY_23_TT
-					is_in_array = { ruling_party = 23 }
+			custom_trigger_tooltip = {
+				tooltip = JAP_ldp_fracture_corp_only_TT
+				OR = {
+					NOT = {
+						has_country_flag = JAP_ldp_fracture_corp_only
+					}
+					NOT = {
+						is_in_array = { ruling_party = 1 }
+					}
 				}
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_national_policy_office executed"
-			decrease_mdmosjap_conrad_right_2 = yes
-			increase_mdmosjap_conrad_left_1 = yes
-			add_war_support = -0.05
-			add_political_power = 300
+			set_temp_variable = { treasury_change = 250 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = JAP_privatization_full
+				days = 1460
+			}
 		}
 
 		ai_will_do = { factor = 10 }
@@ -2564,7 +2477,7 @@ focus_tree = {
 		ai_will_do = { factor = 10 }
 	}
 
-	#Public Servant Affairs Agency
+	#Accountable Fiscal Reform
 	focus = {
 		id = JAP_path_of_separate
 		icon = goal_JAP_separation
@@ -2582,38 +2495,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_path_of_separate executed"
-			decrease_mdmosjap_conrad_left_1 = yes
-			increase_mdmosjap_conrad_right_1 = yes
-			hidden_effect = {
-				if = {
-					limit = { has_idea = JAP_austerity_soc1 }
-					swap_ideas = {
-						remove_idea = JAP_austerity_soc1
-						add_idea = JAP_democracy_soc1dem1
-					}
-				}
-				if = {
-					limit = { has_idea = JAP_austerity_biz1 }
-					swap_ideas = {
-						remove_idea = JAP_austerity_biz1
-						add_idea = JAP_democracy_biz1dem1
-					}
-				}
-			}
-
-			custom_effect_tooltip = JAP_path_of_separate_TT
+			set_variable = { jap_anticorruption_pp_gain = 0.0 }
+			set_variable = { jap_anticorruption_tax_gain = 0.0 }
+			set_variable = { jap_anticorruption_police_cost = 0.0 }
+			add_dynamic_modifier = { modifier = DYNAMIC_MODIFIER_JAP_ANTICORRUPTION }
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Well-Managed Safekeeping of Archives
+	#Digital Personnel Management
 	focus = {
 		id = JAP_safekeeping_of_archives
-		icon = treaty2
+		icon = computer
 		x = -1
 		y = 3
-		cost = 10
+		cost = 5
 		relative_position_id = JAP_central_government_reform
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION }
 
@@ -2621,33 +2518,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_safekeeping_of_archives executed"
-			decrease_mdmosjap_conrad_left_1 = yes
-			decrease_mdmosjap_conrad_right_1 = yes
-			hidden_effect = {
-				if = {
-					limit = { has_idea = JAP_democracy_soc1dem1 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_soc1dem1
-						add_idea = JAP_democracy_soc1dem2
-					}
-				}
-				if = {
-					limit = { has_idea = JAP_democracy_biz1dem1 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_biz1dem1
-						add_idea = JAP_democracy_biz1dem2
-					}
-				}
-			}
 			decrease_corruption = yes
-			set_country_flag = MDMOSJAP_NF_SAFEKEEPING_OF_ARCHIVES
-			custom_effect_tooltip = JAP_safekeeping_of_archives_TT
+			add_tech_bonus = {
+				name = computing_tech_bonus
+				bonus = 0.25
+				uses = 1
+				category = computing_tech
+			}
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Political Freedom of Public Servant
+	#Oversight Reduction Policy
 	focus = {
 		id = JAP_political_freedom_of_servant
 		icon = democracy
@@ -2661,33 +2544,26 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_political_freedom_of_servant executed"
-			increase_mdmosjap_concon_left_5 = yes
-			decrease_mdmosjap_conrad_left_1 = yes
-			increase_mdmosjap_conrad_right_1 = yes
-			hidden_effect = {
-				if = {
-					limit = { has_idea = JAP_democracy_soc1dem2 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_soc1dem2
-						add_idea = JAP_democracy_soc1dem3
-					}
+			if = {
+				limit = {
+					has_idea = negligible_corruption
 				}
-				if = {
-					limit = { has_idea = JAP_democracy_biz1dem2 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_biz1dem2
-						add_idea = JAP_democracy_biz1dem3
-					}
-				}
+				set_variable = { jap_anticorruption_pp_gain = 0.25 }
+				set_variable = { jap_anticorruption_tax_gain = 0.05 }
+				set_variable = { jap_anticorruption_police_cost = -0.30 }
 			}
-
-			custom_effect_tooltip = JAP_political_freedom_of_servant_TT
+			else = {
+				set_variable = { jap_anticorruption_pp_gain = 0.0 }
+				set_variable = { jap_anticorruption_tax_gain = 0.0 }
+				set_variable = { jap_anticorruption_police_cost = 0.0 }
+			}
+			custom_effect_tooltip = JAP_anticorruption_TT
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Cabinet Bureau of Personnel Affairs
+	#Counter-Corruption Law
 	focus = {
 		id = JAP_path_of_centralise
 		icon = goal_JAP_centralisation
@@ -2705,26 +2581,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_path_of_centralise executed"
-			decrease_mdmosjap_conrad_right_1 = yes
-			increase_mdmosjap_conrad_left_1 = yes
-			hidden_effect = {
-				if = {
-					limit = { has_idea = JAP_austerity_soc1 }
-					swap_ideas = {
-						remove_idea = JAP_austerity_soc1
-						add_idea = JAP_democracy_soc1tot1
-					}
-				}
-				if = {
-					limit = { has_idea = JAP_austerity_biz1 }
-					swap_ideas = {
-						remove_idea = JAP_austerity_biz1
-						add_idea = JAP_democracy_biz1tot1
-					}
-				}
-			}
-
-			custom_effect_tooltip = JAP_path_of_centralise_TT
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			add_ideas = JAP_accountability_flexible1
 		}
 
 		ai_will_do = {
@@ -2732,10 +2593,10 @@ focus_tree = {
 		}
 	}
 
-	#Rationalise the Legal Interpretation
+	#Expanded Diet Investigative Powers
 	focus = {
 		id = JAP_rationalise_legal_interpretation
-		icon = authoritarian_democracy
+		icon = snitch
 		x = 1
 		y = 3
 		cost = 10
@@ -2746,35 +2607,23 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_rationalise_legal_interpretation executed"
-			increase_mdmosjap_conrad_left_1 = yes
-			increase_mdmosjap_conrad_right_1 = yes
-			hidden_effect = {
-				if = {
-					limit = { has_idea = JAP_democracy_soc1tot1 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_soc1tot1
-						add_idea = JAP_democracy_soc1tot2
-					}
-				}
-				if = {
-					limit = { has_idea = JAP_democracy_biz1tot1 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_biz1tot1
-						add_idea = JAP_democracy_biz1tot2
-					}
-				}
-			}
-			increase_corruption = yes
-			custom_effect_tooltip = JAP_rationalise_legal_interpretation_TT
+			increase_mdmosjap_concon_right_2 = yes
+			set_party_index_to_ruling_party = yes
+			add_stability = 0.03
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_industrial_conglomerates_opinion = yes
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Indoctrinate Kanryo
+	#Crush the Iron Triangle
 	focus = {
 		id = JAP_indoctrinate_officialdom
-		icon = snitch
+		icon = democracy2
 		x = 1
 		y = 4
 		cost = 10
@@ -2785,27 +2634,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_indoctrinate_officialdom executed"
-			increase_mdmosjap_concon_right_5 = yes
-			decrease_mdmosjap_conrad_right_1 = yes
-			increase_mdmosjap_conrad_left_1 = yes
-			hidden_effect = {
-				if = {
-					limit = { has_idea = JAP_democracy_soc1tot2 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_soc1tot2
-						add_idea = JAP_democracy_soc1tot3
-					}
-				}
-				if = {
-					limit = { has_idea = JAP_democracy_biz1tot2 }
-					swap_ideas = {
-						remove_idea = JAP_democracy_biz1tot2
-						add_idea = JAP_democracy_biz1tot3
-					}
-				}
+			decrease_mdmosjap_conrad_left_2 = yes
+			decrease_mdmosjap_conrad_right_2 = yes
+			swap_ideas = {
+				remove_idea = JAP_accountability_flexible1
+				add_idea = JAP_accountability_flexible2
 			}
-			increase_corruption = yes
-			custom_effect_tooltip = JAP_indoctrinate_officialdom_TT
 		}
 
 		ai_will_do = { factor = 10 }
@@ -2831,36 +2665,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_indoctrinate_officialdom executed"
+			add_political_power = 100
 			if = {
-				limit = { has_idea = JAP_democracy_soc1dem3 }
+				limit = { has_idea = JAP_authorities_changing }
 				swap_ideas = {
-					remove_idea = JAP_democracy_soc1dem3
-					add_idea = JAP_democracy_soc1dem4
+					remove_idea = JAP_authorities_changing
+					add_idea = JAP_authorities_good
 				}
 			}
-			if = {
-				limit = { has_idea = JAP_democracy_biz1dem3 }
-				swap_ideas = {
-					remove_idea = JAP_democracy_biz1dem3
-					add_idea = JAP_democracy_biz1dem4
-				}
-			}
-			if = {
-				limit = { has_idea = JAP_democracy_soc1tot3 }
-				swap_ideas = {
-					remove_idea = JAP_democracy_soc1tot3
-					add_idea = JAP_democracy_soc1tot4
-				}
-			}
-			if = {
-				limit = { has_idea = JAP_democracy_biz1tot3 }
-				swap_ideas = {
-					remove_idea = JAP_democracy_biz1tot3
-					add_idea = JAP_democracy_biz1tot4
-				}
-			}
-
-			custom_effect_tooltip = JAP_2nd_government_reform_TT
 		}
 
 		ai_will_do = { factor = 10 }
