@@ -615,12 +615,14 @@ AI_edge_case_calculations = {
 }
 
 AI_country_selection_calculation = {
+	#investee gets this flag for 75 days when a country (investor) chooses them as best country to invest in but can't find any projects worth investing in them (which the project scoring is the same for all investors to that investee so no point in investors choosing them as the best country for some time). Flag added in AC_events file.
 	if = { limit = { has_country_flag = recently_failed_to_invest }
-		add_to_temp_variable = { AI_country_score = -50 }
+		add_to_temp_variable = { AI_country_score = -200 }
 	}
 	if = { limit = { has_idea = Non_State_Actor }
-		add_to_temp_variable = { AI_country_score = -50 }
+		add_to_temp_variable = { AI_country_score = -60 }
 	}
+	#investee gets this flag for 21 days when a country (investor) invests a valid project in that country, so a country can't be spammed by investments in a short period of time (or less liekly). Flag added in AC_events file.
 	if = {
 		limit = { has_country_flag = recently_accepted_an_investment }
 		add_to_temp_variable = { AI_country_score = -50 }
@@ -646,14 +648,14 @@ AI_country_selection_calculation = {
 	for_each_scope_loop = {
 		array = influence_array
 		if = { limit = { check_variable = { THIS.id = PREV.id } }
-			add_to_temp_variable = { AI_country_score = 25 }
+			add_to_temp_variable = { AI_country_score = 40 }
 		}
 	}
 	PREV = {
 		for_each_scope_loop = {
 			array = influence_array
 			if = { limit = { check_variable = { THIS.id = PREV.id } }
-				add_to_temp_variable = { AI_country_score = 25 }
+				add_to_temp_variable = { AI_country_score = 40 }
 			}
 		}
 	}
@@ -696,7 +698,7 @@ AI_country_selection_calculation = {
 	# Corporate Tax Evaluation
 	if = { limit = { check_variable = { corporate_tax_rate > 30 } }
 		set_temp_variable = { corp_temp = corporate_tax_rate }
-		multiply_temp_variable = { corp_temp = -1.15 }
+		multiply_temp_variable = { corp_temp = -0.50 }
 		add_to_temp_variable = { AI_country_score = corp_temp }
 	}
 
@@ -750,32 +752,39 @@ AI_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = 15 }
 	}
 
+	# Countries under 30k gdpc will receive a bonus to score of 1.5 per gdcp under 30k and ones above will receive a score reduction for the same amount.
+	set_temp_variable = { gdpc_scaler = gdp_per_capita }
+	multiply_temp_variable = { gdpc_scaler = -2 }
+	add_to_temp_variable = { gdpc_scaler = 60 }
+	add_to_temp_variable = { AI_country_score = gdpc_scaler }
+	# Countries with big economies slightly less likely to get investments, mostly to slightly reduce the mass amount of investments going into developed European countries
 	set_temp_variable = { gdp_scaler = gdp_total }
-	multiply_temp_variable = { gdp_scaler = -0.01 }
+	multiply_temp_variable = { gdp_scaler = -0.002 }
+	clamp_temp_variable = { var = gdp_scaler min = -20 }
 	add_to_temp_variable = { AI_country_score = gdp_scaler }
-	if = {
-		limit = { check_variable = { gdp_per_capita > 35 } }
-		set_temp_variable = { gdp_scaler = gdp_per_capita }
-		subtract_from_temp_variable = { gdp_scaler = 35 }
-		multiply_temp_variable = { gdp_scaler = -2 }
-		add_to_temp_variable = { AI_country_score = gdp_scaler }
-	}
-	else = {
-		set_temp_variable = { gdp_scaler = 35 }
-		add_to_temp_variable = { gdp_scaler = gdp_per_capita }
-		multiply_temp_variable = { gdp_scaler = 2 }
-		add_to_temp_variable = { AI_country_score = gdp_scaler }
-	}
+	# if = {
+	# 	limit = { check_variable = { gdp_per_capita > 35 } }
+	# 	set_temp_variable = { gdp_scaler = gdp_per_capita }
+	# 	subtract_from_temp_variable = { gdp_scaler = 35 }
+	# 	multiply_temp_variable = { gdp_scaler = -2 }
+	# 	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# }
+	# else = {
+	# 	set_temp_variable = { gdp_scaler = 35 }
+	# 	add_to_temp_variable = { gdp_scaler = gdp_per_capita }
+	# 	multiply_temp_variable = { gdp_scaler = 2 }
+	# 	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# }
 
 	# AI Support the other AI
 	if = {
 		limit = {
 			OR = {
 				num_of_available_civilian_factories < 15
-				check_variable = { treasury_rate < 2.00 }
+				check_variable = { treasury_rate < 1.00 }
 			}
 		}
-		add_to_temp_variable = { AI_country_score = 15 }
+		add_to_temp_variable = { AI_country_score = 30 }
 	}
 
 	# Invest in Enemy of my Enemy
@@ -790,7 +799,7 @@ AI_country_selection_calculation = {
 				}
 			}
 		}
-		add_to_temp_variable = { AI_country_score = 15 }
+		add_to_temp_variable = { AI_country_score = 20 }
 	}
 
 	# Multipliers
