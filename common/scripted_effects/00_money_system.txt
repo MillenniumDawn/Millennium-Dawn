@@ -39,7 +39,7 @@
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ###
-@spending_laws_gdp_scaling = 0.01
+@spending_laws_gdp_scaling = 0.008
 
 # ingame_update_setup
 # This function is used to update the economic setup mid game
@@ -738,6 +738,13 @@ calculate_additional_income_rate = {
 			set_variable = { SIN_tariff_income = signed_trade_agreements }
 			multiply_variable = { SIN_tariff_income = 0.075 }
 			add_to_variable = { additional_income_rate = SIN_tariff_income }
+		}
+	}
+	if = { limit = { original_tag = SYR }
+		if = {
+			limit = { has_idea = syria_bakdash }
+			set_variable = { syria_bakdash_income = 0.08 }
+			add_to_variable = { additional_income_rate = syria_bakdash_income }
 		}
 	}
 	# Gulf
@@ -2178,6 +2185,8 @@ calculate_int_investments_rate = {
 	set_variable = { int_investments_rate = int_investments }
 	multiply_variable = { int_investments_rate = roi_rate }
 	multiply_variable = { int_investments_rate = 0.019 }	#yearly to weekly
+
+	clamp_variable = { var = int_investments_rate min = 0 }
 }
 
 #Calculates income from resources
@@ -2239,12 +2248,25 @@ calculate_resource_sale_rate = {
 	set_temp_variable = { resource_export_multiplier = 1 }
 	add_to_temp_variable = { resource_export_multiplier = modifier@resource_export_multiplier_modifier }
 
-	multiply_variable = { oil_exports = resource_export_multiplier }
-	multiply_variable = { steel_exports = resource_export_multiplier }
-	multiply_variable = { aluminium_exports = resource_export_multiplier }
-	multiply_variable = { tungsten_exports = resource_export_multiplier }
-	multiply_variable = { chromium_exports = resource_export_multiplier }
-	multiply_variable = { rubber_exports = resource_export_multiplier }
+	set_temp_variable = { oil_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { oil_export_multiplier = modifier@oil_export_multiplier_modifier }
+	set_temp_variable = { steel_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { steel_export_multiplier = modifier@steel_export_multiplier_modifier }
+	set_temp_variable = { aluminium_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { aluminium_export_multiplier = modifier@aluminium_export_multiplier_modifier }
+	set_temp_variable = { tungsten_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { tungsten_export_multiplier = modifier@tungsten_export_multiplier_modifier }
+	set_temp_variable = { chromium_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { chromium_export_multiplier = modifier@chromium_export_multiplier_modifier }
+	set_temp_variable = { rubber_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { rubber_export_multiplier = modifier@rubber_export_multiplier_modifier }
+
+	multiply_variable = { oil_exports = oil_export_multiplier }
+	multiply_variable = { steel_exports = steel_export_multiplier }
+	multiply_variable = { aluminium_exports = aluminium_export_multiplier }
+	multiply_variable = { tungsten_exports = tungsten_export_multiplier }
+	multiply_variable = { chromium_exports = chromium_export_multiplier }
+	multiply_variable = { rubber_exports = rubber_export_multiplier }
 
 	set_variable = { resource_export_multiplier_display = resource_export_multiplier }
 	subtract_from_variable = { resource_export_multiplier_display = 1 }
@@ -2264,6 +2286,14 @@ calculate_resource_sale_rate = {
 	multiply_variable = { tungsten_exports = 0.526 }
 	multiply_variable = { chromium_exports = 0.526 }
 	multiply_variable = { rubber_exports = 0.526 }
+
+	# Clamp Export Values at 0 so Luigi's massive negatives don't break my shit
+	clamp_variable = { var = oil_exports min = 0 }
+	clamp_variable = { var = steel_exports min = 0 }
+	clamp_variable = { var = aluminium_exports min = 0 }
+	clamp_variable = { var = tungsten_exports min = 0 }
+	clamp_variable = { var = chromium_exports min = 0 }
+	clamp_variable = { var = rubber_exports min = 0 }
 
 	#Add total cost
 	set_variable = { resource_sale_rate = oil_exports }
@@ -2629,8 +2659,14 @@ calculate_gdp = {
 		divide_temp_variable = { agriculture_workers_percentage_multiplier = temp_gdp_per_capita }
 		add_to_temp_variable = { agriculture_workers_percentage_multiplier = 2 }
 		multiply_temp_variable = { agriculture_workers_percentage = agriculture_workers_percentage_multiplier }
+
+		# Modifier
+		set_temp_variable = { agriculture_workers_perc_modifier = modifier@agriculture_workers_modifier }
+		add_to_temp_variable = { agriculture_workers_perc_modifier = 1 }
+		multiply_temp_variable = { agriculture_workers_percentage = agriculture_workers_perc_modifier }
 		clamp_temp_variable = { #just in case there are very very low gdp/c
 			var = agriculture_workers_percentage
+			min = 0.0
 			max = 0.9
 		}
 	}
@@ -2752,6 +2788,7 @@ calculate_gdp = {
 	# Calculate Threshold
 	set_temp_variable = { unemployment_threshold = modifier@high_unemployment_threshold_modifier }
 	add_to_temp_variable = { unemployment_threshold = 0.06 }
+	clamp_temp_variable = { var = unemployment_threshold min = 0 }
 
 	set_variable = { unemployment_threshold_display_var = unemployment_threshold }
 

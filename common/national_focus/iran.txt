@@ -19610,12 +19610,34 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_our_majlis"
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.05 }
-			modify_treasury_effect = yes
-			set_temp_variable = { int_investment_change = treasury_change }
-			multiply_temp_variable = { int_investment_change = -1.25 }
-			modify_international_investment_effect = yes
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = PER_controlled_majlis
+						has_country_flag = PER_influence_majlis
+					}
+				}
+				increase_centralization = yes
+				block_bureau_decrease = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = PER_controlled_majlis
+					}
+				}
+				custom_effect_tooltip = PER_we_influence_majlis_tt
+				set_country_flag = PER_influence_majlis
+				clr_country_flag = PER_freed_majlis
+				clr_country_flag = PER_dissolved_majlis
+				clr_country_flag = PER_controlled_majlis
+				hidden_effect = {
+					country_event = {
+						id = PER_majlis.49
+						days = 3
+					}
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 1
