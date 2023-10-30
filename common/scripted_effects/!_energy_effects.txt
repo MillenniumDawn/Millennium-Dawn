@@ -27,24 +27,22 @@ calculate_energy_use = {
 	#overall energy use calculations
 	#add pop energy use, and factor it by its multiplier
 	#multiply the energy use per person by the population to model the amount the population is using as a whole.
-	set_temp_variable = { temp_total_energy_use = population_total }
-	multiply_temp_variable = { temp_total_energy_use = 0.001 }
-	multiply_temp_variable = { temp_total_energy_use = temp_pop_use_m }
+	set_temp_variable = { population_energy_use = population_total }
+	multiply_temp_variable = { population_energy_use = 0.001 }
+	multiply_temp_variable = { population_energy_use = temp_pop_use_m }
 
 	set_temp_variable = { temp_gdp_per_capita = gdp_per_capita }
-	clamp_temp_variable = {
-		var = temp_gdp_per_capita
-		min = 1
-	}
+	clamp_temp_variable = { var = temp_gdp_per_capita min = 1 }
 	#this value is the turning point of gdp/c anything below reduces energy use, above increases as a result of living expectations.
 	divide_temp_variable = { temp_gdp_per_capita = 40 }
 	######multiply_temp_variable = { temp_gdp_per_capita = temp_gdp_per_capita } #id like to increase the effect of gdp/c but ^2 seems too drastic, i'd like to find a way to use a smaller exponential
-	multiply_temp_variable = { temp_total_energy_use = temp_gdp_per_capita }
-	# ?: Bird - I reduced this from 35 to 31 which should result in a 12% reduction in consumption
-	multiply_temp_variable = { temp_total_energy_use = 31 } #tweak this number to change population consumption relative to other sources of consumption
+	multiply_temp_variable = { population_energy_use = temp_gdp_per_capita }
+
+	# Tweak this number to change population consumption relative to other sources of consumption
+	multiply_temp_variable = { population_energy_use = 31 }
 
 	#add energy_use (static use from special decisions/events)
-	add_to_temp_variable = { temp_total_energy_use = modifier@energy_use }
+	set_temp_variable = { other_energy_use = modifier@energy_use }
 
 	#energy use from buildings
 	set_temp_variable = { energy_use_base_civs = 0.5 }
@@ -73,17 +71,40 @@ calculate_energy_use = {
 	set_temp_variable = { energy_use_buildings = energy_use_civs }
 	add_to_temp_variable = { energy_use_buildings = energy_use_offices }
 	add_to_temp_variable = { energy_use_buildings = energy_use_mils }
+
+	# Additive Section of All Internal
+	set_temp_variable = { temp_total_energy_use = population_energy_use }
 	add_to_temp_variable = { temp_total_energy_use = energy_use_buildings }
+	add_to_temp_variable = { temp_total_energy_use = other_energy_use }
 
 	#factor the entire thing by its multiplier to get final energy use
 	multiply_temp_variable = { temp_total_energy_use = temp_energy_use_m }
 
 	#balance multiplier, modify this if you want to tweak overall energy consumption without touching the ratio of its sources
 	multiply_temp_variable = { temp_total_energy_use = 1.25 }
-	clamp_temp_variable = {
-		var = temp_total_energy_use
-		min = 0.001
-	}
+	clamp_temp_variable = { var = temp_total_energy_use min = 0.001 }
+
+	# Modify Display vars
+	multiply_temp_variable = { population_energy_use = temp_energy_use_m }
+	multiply_temp_variable = { energy_use_buildings = temp_energy_use_m }
+	multiply_temp_variable = { other_energy_use = temp_energy_use_m }
+	multiply_temp_variable = { energy_use_civs = temp_energy_use_m }
+	multiply_temp_variable = { energy_use_offices = temp_energy_use_m }
+	multiply_temp_variable = { energy_use_mils = temp_energy_use_m }
+
+	multiply_temp_variable = { population_energy_use = 1.25 }
+	multiply_temp_variable = { energy_use_buildings = 1.25 }
+	multiply_temp_variable = { other_energy_use = 1.25 }
+	multiply_temp_variable = { energy_use_civs = 1.25 }
+	multiply_temp_variable = { energy_use_offices = 1.25 }
+	multiply_temp_variable = { energy_use_mils = 1.25 }
+
+	set_variable = { population_energy_use_display_var = population_energy_use }
+	set_variable = { energy_use_buildings_total_display_var = energy_use_buildings }
+	set_variable = { other_energy_use_display_var = other_energy_use }
+	set_variable = { energy_use_civs_total_display_var = energy_use_civs }
+	set_variable = { energy_use_offices_total_display_var = energy_use_offices }
+	set_variable = { energy_use_mils_total_display_var = energy_use_mils }
 
 	#net energy balance calculations
 	#add energy gain to sum, then factor it by corresponding multiplier to get final energy gain (through modifiers)
@@ -194,12 +215,15 @@ calculate_energy_use = {
 
 	# Caps penalty for unfulfilled at 50%, and multiples 100 to get a whole number to reduce to penalty scale
 	set_variable = { unfulfilled_energy_demand_dynmod_var = unfulfilled_energy_demand_var }
-	multiply_variable = { unfulfilled_energy_demand_dynmod_var = 100 }
-	multiply_variable = { unfulfilled_energy_demand_dynmod_var = 0.005 }
+	multiply_variable = { unfulfilled_energy_demand_dynmod_var = 0.5 }
 	clamp_variable = { var = unfulfilled_energy_demand_dynmod_var min = -0.50 max = 0 }
 	set_variable = { unfulfilled_energy_demand_dynmod_var_2 = unfulfilled_energy_demand_dynmod_var }
 	multiply_variable = { unfulfilled_energy_demand_dynmod_var_2 = gdp_per_capita }
 	multiply_variable = { unfulfilled_energy_demand_dynmod_var_2 = 0.025 } #penalties decrease below 40k gdp/c, increase above it
+	clamp_variable = { var = unfulfilled_energy_demand_dynmod_var_2 min = -0.50 max = 0 }
+	set_variable = { unfulfilled_energy_demand_dynmod_var_3 = unfulfilled_energy_demand_var }
+	multiply_variable = { unfulfilled_energy_demand_dynmod_var_3 = 0.3 }
+	clamp_variable = { var = unfulfilled_energy_demand_dynmod_var_3 min = -0.30 max = 0 }
 
 	set_variable = { non_electric_fuel_consumption = population_total_m }
 	multiply_variable = { non_electric_fuel_consumption = -19 }
