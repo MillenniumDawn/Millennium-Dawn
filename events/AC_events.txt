@@ -61,8 +61,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: AC_event.1.o1 executed"
 		hidden_effect = {
 			# Activates the Investment Project
-			# FROM is the investor nation
-			# ROOT is the target country or if you just don't scope it
+			# ROOT is the target country or if you just don't scope it / FROM is the investor nation
 			# Investor Nation Begins Project
 			FROM = {
 				start_project_two = yes
@@ -168,17 +167,29 @@ country_event = {
 				}
 			}
 			modifier = {
-				factor = 0
+				factor = 5
+				set_temp_variable = { tmp = gdp_total }
+				multiply_temp_variable = { tmp = 0.03 }
+				divide_temp_variable = { tmp = 56 }
+
+				# Check if weekly treasury leads to spending at 3% of GDP or greater. Be more likely to accept if this is the case.
+				check_variable = { treasury_rate > tmp }
 				OR = {
-					check_variable = { interest_rate > 9.999 }
-					has_country_flag = recently_refused@FROM
+					check_variable = { FROM.project_building_type^-1 = 1 }
+					check_variable = { FROM.project_building_type^-1 = 5 }
 				}
 			}
 			modifier = {
 				factor = 0
-				original_tag = BOS
-				has_stability < 0.40
-				date < 2000.6.01
+				OR = {
+					check_variable = { interest_rate > 9.999 }
+					has_country_flag = recently_refused_investment@FROM
+					AND = {
+						original_tag = BOS
+						has_stability < 0.40
+						date < 2000.6.01
+					}
+				}
 			}
 		}
 	}
@@ -192,7 +203,7 @@ country_event = {
 		FROM = {
 			country_event = AC_event.11
 		}
-		set_country_flag = { flag = recently_refused@FROM days = 30 value = 1 }
+		set_country_flag = { flag = recently_refused_investment@FROM days = 30 value = 1 }
 
 		# AI chance for rejecting
 		ai_chance = {
@@ -266,10 +277,33 @@ country_event = {
 					}
 				}
 			}
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount < 60.00 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { domestic_influence_amount < 50.00 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { domestic_influence_amount < 35.00 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { domestic_influence_amount < 20.00 }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { domestic_influence_amount < 10.00 }
+			}
+			modifier = {
+				factor = 0.5
+			}
 			# Reject ALL investments if I recently rejected an offer
 			modifier = {
 				factor = 1000
-				has_country_flag = recently_refused@FROM
+				has_country_flag = recently_refused_investment@FROM
 			}
 		}
 	}
