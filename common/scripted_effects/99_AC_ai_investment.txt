@@ -614,9 +614,210 @@ AI_edge_case_calculations = {
 	}
 }
 
-# is_not_home_area trigger doesn't work as of 10/5/23. Temporarily increasing the AI score in the edge_case_calculations above to avoid AI from investing in tiny island states away from main part of the investee's country.
-# AI_not_in_home_area = {
-# 	if = { limit = { is_in_home_area = no }
-# 		subtract_from_temp_variable = { AI_score = 75 }
-# 	}
-# }
+AI_country_selection_calculation = {
+	# Investee gets this flag for 75 days when a country (investor) chooses them as best country to invest in but can't find any projects worth investing in them (which the project scoring is the same for all investors to that investee so no point in investors choosing them as the best country for some time). Flag added in AC_events file.
+	if = { limit = { has_country_flag = recently_failed_to_invest }
+		add_to_temp_variable = { AI_country_score = -200 }
+	}
+	if = { limit = { has_idea = Non_State_Actor }
+		add_to_temp_variable = { AI_country_score = -60 }
+	}
+	# Investee recently rejected an investment from us
+	if = { limit = { has_country_flag = recently_refused_investment@PREV }
+		add_to_temp_variable = { AI_country_score = -100 }
+	}
+	#investee gets this flag for 21 days when a country (investor) invests a valid project in that country, so a country can't be spammed by investments in a short period of time (or less liekly). Flag added in AC_events file.
+	if = {
+		limit = { has_country_flag = recently_accepted_an_investment }
+		add_to_temp_variable = { AI_country_score = -50 }
+	}
+
+	if = { limit = { is_in_faction_with = PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	if = { limit = { has_country_flag = trade_agreement@PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	# Check if one of the projects in the other one is there
+	if = { limit = { NOT = { check_variable = { PREV.project_array^0 = 0 } } }
+		for_each_scope_loop = {
+			array = PREV.project_array
+			if = { limit = { is_owned_and_controlled_by = PREV }
+				add_to_temp_variable = { AI_country_score = -35 }
+			}
+		}
+	}
+
+	# Check whether someone is an influencer
+	for_each_scope_loop = {
+		array = influence_array
+		if = { limit = { check_variable = { THIS.id = PREV.id } }
+			add_to_temp_variable = { AI_country_score = 40 }
+		}
+	}
+	PREV = {
+		for_each_scope_loop = {
+			array = influence_array
+			if = { limit = { check_variable = { THIS.id = PREV.id } }
+				add_to_temp_variable = { AI_country_score = 40 }
+			}
+		}
+	}
+
+	# Opinion Calculator
+	set_temp_variable = { opinion_value = opinion@PREV }
+	multiply_temp_variable = { opinion_value = 0.30 }
+	clamp_temp_variable = { var = opinion_value min = -75 max = 75 }
+	add_to_temp_variable = { AI_country_score = opinion_value }
+
+	# Corruption Level Check
+	if = { limit = { has_idea = paralyzing_corruption }
+		add_to_temp_variable = { AI_country_score = -25 }
+	}
+	else_if = { limit = { has_idea = crippling_corruption }
+		add_to_temp_variable = { AI_country_score = -20 }
+	}
+	else_if = { limit = { has_idea = rampant_corruption }
+		add_to_temp_variable = { AI_country_score = -17.5 }
+	}
+	else_if = { limit = { has_idea = unrestrained_corruption }
+		add_to_temp_variable = { AI_country_score = -15 }
+	}
+	else_if = { limit = { has_idea = systematic_corruption }
+		add_to_temp_variable = { AI_country_score = -12.5 }
+	}
+	else_if = { limit = { has_idea = widespread_corruption }
+		add_to_temp_variable = { AI_country_score = -10 }
+	}
+	else_if = { limit = { has_idea = medium_corruption }
+		add_to_temp_variable = { AI_country_score = -7.5 }
+	}
+	else_if = { limit = { has_idea = modest_corruption }
+		add_to_temp_variable = { AI_country_score = -5 }
+	}
+	else_if = { limit = { has_idea = slight_corruption }
+		add_to_temp_variable = { AI_country_score = -2 }
+	}
+
+	# Corporate Tax Evaluation
+	if = { limit = { check_variable = { corporate_tax_rate > 30 } }
+		set_temp_variable = { corp_temp = corporate_tax_rate }
+		multiply_temp_variable = { corp_temp = -0.50 }
+		add_to_temp_variable = { AI_country_score = corp_temp }
+	}
+
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					capital_scope = { is_on_continent = europe }
+					PREV = {
+						capital_scope = { is_on_continent = europe }
+					}
+				}
+				AND = {
+					capital_scope = { is_on_continent = north_america }
+					PREV = {
+						capital_scope = { is_on_continent = north_america }
+					}
+				}
+				AND = {
+					capital_scope = { is_on_continent = south_america }
+					PREV = {
+						capital_scope = { is_on_continent = south_america }
+					}
+				}
+				AND = {
+					capital_scope = { is_on_continent = africa }
+					PREV = {
+						capital_scope = { is_on_continent = africa }
+					}
+				}
+				AND = {
+					capital_scope = { is_on_continent = asia }
+					PREV = {
+						capital_scope = { is_on_continent = asia }
+					}
+				}
+				AND = {
+					capital_scope = { is_on_continent = australia }
+					PREV = {
+						capital_scope = { is_on_continent = australia }
+					}
+				}
+				AND = {
+					capital_scope = { is_on_continent = middle_east }
+					PREV = {
+						capital_scope = { is_on_continent = middle_east }
+					}
+				}
+			}
+		}
+		add_to_temp_variable = { AI_country_score = 15 }
+	}
+
+	# Countries under 30k gdpc will receive a bonus to score of 1.5 per gdcp under 30k and ones above will receive a score reduction for the same amount.
+	set_temp_variable = { gdpc_scaler = gdp_per_capita }
+	multiply_temp_variable = { gdpc_scaler = -2 }
+	add_to_temp_variable = { gdpc_scaler = 60 }
+	add_to_temp_variable = { AI_country_score = gdpc_scaler }
+	# Countries with big economies slightly less likely to get investments, mostly to slightly reduce the mass amount of investments going into developed European countries
+	set_temp_variable = { gdp_scaler = gdp_total }
+	multiply_temp_variable = { gdp_scaler = -0.002 }
+	clamp_temp_variable = { var = gdp_scaler min = -20 }
+	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# if = {
+	# 	limit = { check_variable = { gdp_per_capita > 35 } }
+	# 	set_temp_variable = { gdp_scaler = gdp_per_capita }
+	# 	subtract_from_temp_variable = { gdp_scaler = 35 }
+	# 	multiply_temp_variable = { gdp_scaler = -2 }
+	# 	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# }
+	# else = {
+	# 	set_temp_variable = { gdp_scaler = 35 }
+	# 	add_to_temp_variable = { gdp_scaler = gdp_per_capita }
+	# 	multiply_temp_variable = { gdp_scaler = 2 }
+	# 	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# }
+
+	# AI Support the other AI
+	if = {
+		limit = {
+			OR = {
+				num_of_available_civilian_factories < 15
+				check_variable = { treasury_rate < 1.00 }
+			}
+		}
+		add_to_temp_variable = { AI_country_score = 30 }
+	}
+
+	# Invest in Enemy of my Enemy
+	if = {
+		limit = {
+			OR = {
+				any_enemy_country = {
+					has_war_with = ROOT
+				}
+				any_enemy_country = {
+					has_opinion = { target = ROOT value < -50 }
+				}
+			}
+		}
+		add_to_temp_variable = { AI_country_score = 20 }
+	}
+
+	# Multipliers
+	set_temp_variable = { AC_score_modifier = 1 }
+	subtract_from_temp_variable = { AC_score_modifier = THIS.modifier@receiving_investment_cost_modifier }
+	add_to_temp_variable = { AC_score_modifier = PREV.modifier@investment_cost_modifier }
+	clamp_temp_variable = { var = AC_score_modifier min = 0.50 max = 1.50 }
+
+	multiply_temp_variable = { AI_country_score = AC_score_modifier }
+
+	set_temp_variable = { AC_duration_modifier = 1 }
+	add_to_temp_variable = { AC_duration_modifier = THIS.modifier@receiving_investment_duration_modifier }
+	add_to_temp_variable = { AC_duration_modifier = PREV.modifier@investment_duration_modifier }
+	clamp_temp_variable = { var = AC_duration_modifier min = 0.50 max = 1.50 }
+
+	multiply_temp_variable = { AI_country_score = AC_duration_modifier }
+}
