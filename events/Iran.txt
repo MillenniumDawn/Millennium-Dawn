@@ -7852,6 +7852,17 @@ country_event = { #Pre-Revolution Build Up
 		name = PER_revolution.1.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.1.a executed"
 		custom_effect_tooltip = PER_time_for_engelab
+		if = {
+			limit = {
+				has_country_flag = PER_organized_revolutionaries
+			}
+			add_to_variable = { var = iran_army_size_jang value = 5 }
+			clamp_variable = { var = iran_army_size_jang min = 20 max = 100 }
+			add_to_variable = { var = army_size_jang value = -0.05 }
+			clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
+			add_to_variable = { var = PER_army_size_Display_number value = 5 }
+			clamp_variable = { var = PER_army_size_Display_number min = 20 max = 100 }
+		}
 		hidden_effect = {
 			news_event = {
 				id = PER_rev_flavor.6
@@ -7911,6 +7922,15 @@ country_event = { #Revolution Begins
 		set_country_flag = PER_controlled_majlis
 		set_country_flag = PER_dissolved_majlis
 		hidden_effect = {
+			if = {
+				limit = {
+					has_country_flag = PER_revolutionaries_organized2
+				}
+				country_event = {
+					id = iran_md.42
+					days = 2
+				}
+			}
 			swap_ideas = {
 				remove_idea = irgc
 				add_idea = the_military
@@ -7934,13 +7954,49 @@ country_event = { #Revolution Begins
 			}
 		}
 		hidden_effect = { #Removes IRGC Generals and replaces them with Artesh (Army) Generals
+			set_country_flag = PER_artesh_rises
+			delete_unit_template_and_units = {
+				division_template = "IRGC Marine Brigade"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Quds Unit"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Infantry Brigade"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Armored Division"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Mechanized Division"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Commando Division"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Airborne Brigade"
+				disband = yes
+			}
+			#### ADDING DIVISIONS BASED ON ARTESH SUPPORT (JUMP)
+			country_event = {
+				id = PER_revolution.3
+				days = 2
+			}
+			####
 			# Ground Force
 			retire_character = PER_mostafa_izadi
 			retire_character = PER_mohammad_hejazi
 			retire_character = PER_mohammad_jafari
 			retire_character = PER_ali_najafi
 			retire_character = PER_ahmadreza_pourdastan
-			create_corps_commander = {
+			retire_character = PER_ali_fadavi
+			create_field_marshal = {
 				name = "Ahmadreza Pourdastan"
 				portrait_path = "gfx/leaders/PER/Field_Marshall_Army_Ahmadreza_Pourdastan.dds"
 				traits = { old_guard defensive_doctrine }
@@ -7979,6 +8035,16 @@ country_event = { #Revolution Begins
 				defense_skill = 3
 				planning_skill = 2
 				logistics_skill = 4
+			}
+			create_navy_leader = {
+				name = "Hossein Khanzadi"
+				portrait_path = "gfx/leaders/PER/Portrait_Hossein_Khanzadi.jpg"
+				traits = { bold }
+				skill = 4
+				attack_skill = 3
+				defense_skill = 5
+				maneuvering_skill = 2
+				coordination_skill = 3
 			}
 		}
 		hidden_effect = {
@@ -8081,6 +8147,966 @@ country_event = { #Revolution Begins
 	}
 }
 #
+country_event = { ##JUMP
+	id = PER_revolution.3
+	title = PER_revolution.3.t
+	desc = PER_revolution.3.d
+	is_triggered_only = yes
+
+	option = {
+		name = PER_revolution.3.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.3.a executed"
+		custom_effect_tooltip = PER_artesh_arrives_TT
+		hidden_effect = {
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 30 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 40 }
+					check_variable = { from.iran_army_size_jang > 29 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 50 }
+					check_variable = { from.iran_army_size_jang > 39 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 60 }
+					check_variable = { from.iran_army_size_jang > 49 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 70 }
+					check_variable = { from.iran_army_size_jang > 59 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 80 }
+					check_variable = { from.iran_army_size_jang > 69 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Sahba'\" division_template = \"Tofangdarane Daryayee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Navid'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Davoud'\" division_template = \"Tip-e Zereh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"86th Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 90 }
+					check_variable = { from.iran_army_size_jang > 79 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Sahba'\" division_template = \"Tofangdarane Daryayee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Navid'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Davoud'\" division_template = \"Tip-e Zereh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"86th Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Abbas'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Babak'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"33rd Tip-e Motorizeh\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					check_variable = { from.iran_army_size_jang < 100 }
+					check_variable = { from.iran_army_size_jang > 89 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Sahba'\" division_template = \"Tofangdarane Daryayee\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Navid'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Tip-e 'Davoud'\" division_template = \"Tip-e Zereh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"86th Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Abbas'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"Lashkar-e 'Babak'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"33rd Tip-e Motorizeh\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"18th Lashkar-e Zerehi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name =\"14th Lashkar-e Zerehi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
 country_event = { #American weapons arrive
 	id = PER_revolution.4
 	title = PER_revolution.4.t
@@ -8119,7 +9145,7 @@ country_event = { #American weapons arrive
 				producer = USA
 			}
 			add_equipment_to_stockpile = {
-				type = AS_Fighter3
+				type = MR_Fighter3
 				amount = 20
 				producer = USA
 			}
@@ -8437,6 +9463,86 @@ country_event = { #MEK Rebellion
 				elections_allowed = no
 			}
 		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	#
+	option = { #Down with Dictator, be it the Mullah or Mojahed
+		name = PER_revolution.12.c
+		log = "[GetDateText]: [This.GetName]:PER_revolution.12.a executed"
+		set_country_flag = PER_mojahed_civil_war
+		set_country_flag = PER_artesh_coup
+		hidden_effect = {
+			#
+			add_ideas = PER_IRG_issue
+			#
+			remove_ideas = civil_war_disorganised_military_1
+			remove_ideas = civil_war_disorganised_military_1_military
+			remove_ideas = civil_war_disorganised_military_1_production
+			remove_ideas = civil_war_disorganised_military_1_experience
+			#
+			remove_ideas = civil_war_disorganised_military_2
+			remove_ideas = civil_war_disorganised_military_2_military
+			remove_ideas = civil_war_disorganised_military_2_production
+			remove_ideas = civil_war_disorganised_military_2_experience
+			#
+			remove_ideas = civil_war_disorganised_military_2
+			remove_ideas = civil_war_disorganised_military_2_military
+			remove_ideas = civil_war_disorganised_military_2_production
+			remove_ideas = civil_war_disorganised_military_2_experience
+			#
+			remove_ideas = civil_war_disorganised_military_3
+			remove_ideas = civil_war_disorganised_military_3_military
+			remove_ideas = civil_war_disorganised_military_3_production
+			remove_ideas = civil_war_disorganised_military_3_experience
+			#
+			remove_ideas = civil_war_disorganised_military_4
+			remove_ideas = civil_war_disorganised_military_4_military
+			remove_ideas = civil_war_disorganised_military_4_production
+			remove_ideas = civil_war_disorganised_military_4_experience
+			#
+			remove_ideas = civil_war_disorganised_military_5
+			remove_ideas = civil_war_disorganised_military_5_military
+			remove_ideas = civil_war_disorganised_military_5_production
+			remove_ideas = civil_war_disorganised_military_5_experience
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.35 }
+			set_temp_variable = { temp_outlook_increase = 0.35 }
+			add_relative_party_popularity = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 22 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+			country_event = {
+				id = PER_revolution.16
+				days = 12
+			}
+			# # # #
+			start_civil_war = {
+				country_event = {
+					id = PER_revolution.14
+				}
+				capital = 408
+				ideology = communism
+				size = 0.01
+				states = {
+					1039 979 408 406 399 404
+				}
+			}
+		}
+		custom_effect_tooltip = PER_mek_rebellion_start
+		clr_country_flag = manual_civil_war_debuff_removal
+		#
 		ai_chance = {
 			factor = 3
 		}
@@ -10835,6 +11941,8 @@ country_event = { #Civil War Ends
 		log = "[GetDateText]: [This.GetName]:PER_sway.300.a executed"
 		#
 		hidden_effect = {
+			increase_economic_growth = yes
+			decrease_corruption = yes
 			# Iran loses influence
 			set_temp_variable = { percent_change = -20 }
 			set_temp_variable = { tag_index = PER }
@@ -15227,6 +16335,96 @@ country_event = { # The Peacock Throne
 	}
 }
 #
+country_event = { # Defence pact
+	id = PER_political.54234
+	title = PER_political.54234.t
+	desc = PER_political.54234.d
+	is_triggered_only = yes
+	option = { #
+		name = PER_political.54234.a
+		log = "[GetDateText]: [This.GetName]:PER_political.54234.a executed"
+		PER = {
+			country_event = {
+				id = PER_political.542341
+				days = 1
+			}
+		}
+		ROOT = {
+			diplomatic_relation = {
+				country = PER
+				relation = guarantee
+				active = yes
+			}
+		}
+		ROOT = {
+			diplomatic_relation = {
+				country = PER
+				relation = non_aggression_pact
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_opinion = { target = PER value > 49 }
+				add = 20
+			}
+		}
+	}
+	#
+	option = { #
+		name = PER_political.54234.b
+		log = "[GetDateText]: [This.GetName]:PER_political.54234.b executed"
+		PER = {
+			country_event = {
+				id = PER_political.542342
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_opinion = { target = PER value < 0 }
+				add = -20
+			}
+		}
+	}
+}
+#
+country_event = { # They agreed!
+	id = PER_political.542341
+	title = PER_political.542341.t
+	desc = PER_political.542341.d
+	is_triggered_only = yes
+	option = { #
+		name = PER_political.542341.a
+		log = "[GetDateText]: [This.GetName]:PER_political.542341.a executed"
+		diplomatic_relation = {
+			country = FROM
+			relation = guarantee
+			active = yes
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	#
+}
+#
+country_event = { # They rejected!
+	id = PER_political.542342
+	title = PER_political.542342.t
+	desc = PER_political.542342.d
+	is_triggered_only = yes
+	option = { #
+		name = PER_political.542342.a
+		log = "[GetDateText]: [This.GetName]:PER_political.542342.a executed"
+		ai_chance = {
+			factor = 3
+		}
+	}
+	#
+}
+#
 ########
 country_event = { ##Tehran March
 	id = PER_march_city.1
@@ -15524,6 +16722,20 @@ news_event = { #Iranian Republic
 	option = {
 		log = "[GetDateText]: [This.GetName]:PER_rev_flavor.14.a executed"
 		name = PER_rev_flavor.14.a
+	}
+}
+#
+news_event = { #Iranian Republic
+	id = PER_rev_flavor.15
+	title = PER_rev_flavor.15.t
+	desc = PER_rev_flavor.15.d
+	picture = GFX_iranian_republic_world
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]:PER_rev_flavor.15.a executed"
+		name = PER_rev_flavor.15.a
 	}
 }
 #########################################################################################################################################
@@ -16189,44 +17401,127 @@ country_event = { #Reformist Majority elected
 		name = PER_majlis.27.a
 		log = "[GetDateText]: [This.GetName]:PER_majlis.27.a executed"
 		if = {
-			limit = { #If reformists are elected, and you are reformist, and have more than 150, you get +15 more seats
-				emerging_moderate_shiite_are_in_power = yes
-				check_variable = {
-					PER_majlis_support > 150
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 15 }
-		}
-		if = {
-			limit = { #If reformists are elected, and you are reformist, but have less than 150 seats, you get +40 seats
-				emerging_moderate_shiite_are_in_power = yes
-				check_variable = {
-					PER_majlis_support < 150
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 40 }
-		}
-		if = {
-			limit = { #If reformists are elected, and you are principalists, but have less than 150 seats, you lose -15 seats
+			limit = {
 				emerging_hardline_shiite_are_in_power = yes
 				check_variable = {
-					PER_majlis_support < 150
+					PER_majlis_support < 50
 				}
 			}
-			custom_effect_tooltip = PER_lose_some_election
+			custom_effect_tooltip = PER_lose_elections
 			add_to_variable = { PER_majlis_support = -30 }
+			#
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 100
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -50 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 150
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -90 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 200
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -110 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 250
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -130 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support > 250
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -150 }
+			}
 		}
+		#
 		if = {
-			limit = { #If reformists are elected, and you are principalists, but have more than 150 seats, you lose -50 seats
-				emerging_hardline_shiite_are_in_power = yes
+			limit = {
+				emerging_moderate_shiite_are_in_power = yes
 				check_variable = {
-					PER_majlis_support > 150
+					PER_majlis_support < 50
 				}
 			}
-			custom_effect_tooltip = PER_lose_some_election
-			add_to_variable = { PER_majlis_support = -50 }
+			custom_effect_tooltip = PER_gain_some_election
+			add_to_variable = { PER_majlis_support = 130 }
+			#
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 100
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 70 }
+			}
+			else_if = {
+				limit = {
+				emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 150
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 50 }
+			}
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 200
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 40 }
+			}
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 250
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 30 }
+			}
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support > 250
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 15 }
+			}
 		}
 		set_country_flag = PER_reformist_majlis
 		clr_country_flag = PER_principalist_majlis
@@ -16252,45 +17547,129 @@ country_event = { #Principalists Majority elected
 	option = {
 		name = PER_majlis.28.a
 		log = "[GetDateText]: [This.GetName]:PER_majlis.28.a executed"
+		#LOSING
 		if = {
-			limit = { #If princapalists are elected, and you are princapalist, and have more than 150, you get +15 more seats
-				emerging_hardline_shiite_are_in_power = yes
-				check_variable = {
-					PER_majlis_support > 150
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 15 }
-		}
-		if = {
-			limit = { #If princapalists are elected, and you are princapalist, but have less than 150 seats, you get +40 seats
-				emerging_hardline_shiite_are_in_power = yes
-				check_variable = {
-					PER_majlis_support < 150
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 40 }
-		}
-		if = {
-			limit = { #If princapalists are elected, and you are reformists, but have more than 150 seats, you lose -15 seats
+			limit = {
 				emerging_moderate_shiite_are_in_power = yes
 				check_variable = {
-					PER_majlis_support > 150
+					PER_majlis_support < 50
 				}
 			}
-			custom_effect_tooltip = PER_lose_some_election
-			add_to_variable = { PER_majlis_support = -50 }
-		}
-		if = {
-			limit = { #If princapalists are elected, and you are reformists, but have less than 150 seats, you lose -15 seats
-				emerging_moderate_shiite_are_in_power = yes
-				check_variable = {
-					PER_majlis_support < 150
-				}
-			}
-			custom_effect_tooltip = PER_lose_some_election
+			custom_effect_tooltip = PER_lose_elections
 			add_to_variable = { PER_majlis_support = -30 }
+			#
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 100
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -50 }
+			}
+			else_if = {
+				limit = {
+				emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 150
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -90 }
+			}
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 200
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -110 }
+			}
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 250
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -130 }
+			}
+			else_if = {
+				limit = {
+					emerging_moderate_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support > 250
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -150 }
+			}
+		}
+		#
+		if = {
+			limit = {
+				emerging_hardline_shiite_are_in_power = yes
+				check_variable = {
+					PER_majlis_support < 50
+				}
+			}
+			custom_effect_tooltip = PER_gain_some_election
+			add_to_variable = { PER_majlis_support = 130 }
+			#
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 100
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 70 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 150
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 50 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 200
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 40 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support < 250
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 30 }
+			}
+			else_if = {
+				limit = {
+					emerging_hardline_shiite_are_in_power = yes
+					check_variable = {
+						PER_majlis_support > 250
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 15 }
+			}
 		}
 		set_country_flag = PER_principalist_majlis
 		clr_country_flag = PER_reformist_majlis
@@ -17139,9 +18518,14 @@ country_event = { # Conservative Victory (Recurring)
 		clr_country_flag = PER_leftist_majlis
 		clr_country_flag = PER_nationalist_majlis
 		clr_country_flag = PER_liberal_majlis
-		if = { #Conservatives fucking hate the liberals and leftists
+		#
+		if = {
 			limit = {
+				check_variable = {
+					PER_majlis_support < 20
+				}
 				OR = {
+					western_autocrats_are_in_power = yes
 					western_liberals_are_in_power = yes
 					western_social_democrats_are_in_power = yes
 					neutrality_neutral_libertarians_are_in_power = yes
@@ -17150,7 +18534,202 @@ country_event = { # Conservative Victory (Recurring)
 				}
 			}
 			custom_effect_tooltip = PER_lose_elections
-			add_to_variable = { PER_majlis_support = -30 }
+			add_to_variable = { PER_majlis_support = -15 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 50
+					}
+					OR = {
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -40 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -80 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -100 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -130 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -150 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support > 250
+					}
+					OR = {
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -190 }
+			}
+		}
+		#
+		##### VICTORY SEATS
+		if = {
+			limit = {
+				check_variable = {
+					PER_majlis_support < 50
+				}
+				OR = {
+					neutrality_neutral_conservatism_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+			custom_effect_tooltip = PER_gain_some_election
+			add_to_variable = { PER_majlis_support = 125 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						neutrality_neutral_conservatism_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 90 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						neutrality_neutral_conservatism_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 70 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						neutrality_neutral_conservatism_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 50 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						neutrality_neutral_conservatism_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 30 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 290
+					}
+					OR = {
+						neutrality_neutral_conservatism_are_in_power = yes
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 15 }
+			}
 		}
 		#
 		if = { #Conservatives don't give a shit about everything in between
@@ -17164,7 +18743,6 @@ country_event = { # Conservative Victory (Recurring)
 					salafist_caliphate_are_in_power = yes
 					salafist_kingdom_are_in_power = yes
 					neutrality_neutral_green_are_in_power = yes
-					nationalist_monarchists_are_in_power = yes
 					nationalist_military_junta_are_in_power = yes
 					nationalist_fascist_are_in_power = yes
 					nationalist_right_wing_populists_are_in_power = yes
@@ -17172,17 +18750,6 @@ country_event = { # Conservative Victory (Recurring)
 			}
 			custom_effect_tooltip = PER_meh_some_election
 			add_to_variable = { PER_majlis_support = 20 }
-		}
-		if = { #Conservatives fucking love other conservatives and Nationalists
-			limit = {
-				OR = {
-					neutrality_neutral_conservatism_are_in_power = yes
-					western_conservatism_are_in_power = yes
-					western_autocrats_are_in_power = yes
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 40 }
 		}
 		ai_chance = {
 			factor = 3
@@ -17210,22 +18777,240 @@ country_event = { # Liberal Victory (Recurring)
 		clr_country_flag = PER_leftist_majlis
 		clr_country_flag = PER_nationalist_majlis
 		clr_country_flag = PER_conservative_majlis
-		if = { #Liberals fucking hate the right and hardline leftists
+		#
+		if = {
 			limit = {
+				check_variable = {
+					PER_majlis_support < 20
+				}
 				OR = {
 					western_conservatism_are_in_power = yes
-					western_autocrats_are_in_power = yes
 					nationalist_monarchists_are_in_power = yes
 					nationalist_military_junta_are_in_power = yes
 					nationalist_fascist_are_in_power = yes
 					nationalist_right_wing_populists_are_in_power = yes
-					emerging_communist_state_are_in_power = yes #
-					emerging_anarchist_communism_are_in_power = yes #
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
 				}
 			}
 			custom_effect_tooltip = PER_lose_elections
-			add_to_variable = { PER_majlis_support = -30 }
+			add_to_variable = { PER_majlis_support = -15 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 50
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -40 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -80 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -100 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -130 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -150 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support > 250
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -190 }
+			}
 		}
+		#
+		##### VICTORY SEATS
+		if = {
+			limit = {
+				check_variable = {
+					PER_majlis_support < 50
+				}
+				OR = {
+					neutrality_neutral_green_are_in_power = yes
+					western_autocrats_are_in_power = yes
+					western_liberals_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+					neutrality_neutral_libertarians_are_in_power = yes
+				}
+			}
+			custom_effect_tooltip = PER_gain_some_election
+			add_to_variable = { PER_majlis_support = 125 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						neutrality_neutral_green_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 90 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						neutrality_neutral_green_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 70 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						neutrality_neutral_green_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 50 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						neutrality_neutral_green_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 30 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 290
+					}
+					OR = {
+						neutrality_neutral_green_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 15 }
+			}
+		}
+		#####
 		if = { #Liberals don't give a shit about everything in between
 			limit = {
 				OR = {
@@ -17237,24 +19022,12 @@ country_event = { # Liberal Victory (Recurring)
 					emerging_reactionaries_are_in_power = yes
 					salafist_caliphate_are_in_power = yes
 					salafist_kingdom_are_in_power = yes
-					neutrality_neutral_green_are_in_power = yes
 					neutrality_neutral_social_are_in_power = yes
 					neutrality_neutral_communism_are_in_power = yes
 				}
 			}
 			custom_effect_tooltip = PER_meh_some_election
 			add_to_variable = { PER_majlis_support = 20 }
-		}
-		if = { #Liberals fucking love other liberals
-			limit = {
-				OR = {
-					western_liberals_are_in_power = yes
-					western_social_democrats_are_in_power = yes
-					neutrality_neutral_libertarians_are_in_power = yes
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 40 }
 		}
 		ai_chance = {
 			factor = 3
@@ -17282,8 +19055,12 @@ country_event = { # Left-Wing victory (Recurring)
 		clr_country_flag = PER_nationalist_majlis
 		clr_country_flag = PER_liberal_majlis
 		clr_country_flag = PER_conservative_majlis
-		if = { #Leftists fucking hate the Nationalist
+		#
+		if = {
 			limit = {
+				check_variable = {
+					PER_majlis_support < 20
+				}
 				OR = {
 					western_conservatism_are_in_power = yes
 					western_autocrats_are_in_power = yes
@@ -17294,12 +19071,225 @@ country_event = { # Left-Wing victory (Recurring)
 				}
 			}
 			custom_effect_tooltip = PER_lose_elections
-			add_to_variable = { PER_majlis_support = -30 }
+			add_to_variable = { PER_majlis_support = -15 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 50
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -40 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -80 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -100 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -130 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -150 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support > 250
+					}
+					OR = {
+						western_conservatism_are_in_power = yes
+						western_autocrats_are_in_power = yes
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -190 }
+			}
+		}
+		#
+		##### VICTORY SEATS
+		if = {
+			limit = {
+				check_variable = {
+					PER_majlis_support < 50
+				}
+				OR = {
+					western_social_democrats_are_in_power = yes
+					neutrality_neutral_conservatism_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+					neutrality_neutral_social_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+			custom_effect_tooltip = PER_gain_some_election
+			add_to_variable = { PER_majlis_support = 125 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_conservatism_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 90 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_conservatism_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 70 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_conservatism_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 50 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_conservatism_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 30 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 290
+					}
+					OR = {
+						western_social_democrats_are_in_power = yes
+						neutrality_neutral_conservatism_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 15 }
+			}
 		}
 		if = { #Leftists don't give a shit about everything in between
 			limit = {
 				OR = {
-					neutrality_neutral_conservatism_are_in_power = yes
 					neutrality_neutral_muslim_brotherhood_are_in_power = yes
 					neutrality_neutral_autocracy_are_in_power = yes
 					neutrality_neutral_oligarch_are_in_power = yes
@@ -17309,24 +19299,11 @@ country_event = { # Left-Wing victory (Recurring)
 					salafist_kingdom_are_in_power = yes
 					neutrality_neutral_green_are_in_power = yes
 					western_liberals_are_in_power = yes
-					western_social_democrats_are_in_power = yes
 					neutrality_neutral_libertarians_are_in_power = yes
 				}
 			}
 			custom_effect_tooltip = PER_meh_some_election
 			add_to_variable = { PER_majlis_support = 20 }
-		}
-		if = { #Left fucking love the left and liberals
-			limit = {
-				OR = {
-					emerging_communist_state_are_in_power = yes
-					emerging_anarchist_communism_are_in_power = yes
-					neutrality_neutral_social_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 40 }
 		}
 		ai_chance = {
 			factor = 3
@@ -17354,8 +19331,12 @@ country_event = { # Right-Wing victory (Recurring)
 		clr_country_flag = PER_leftist_majlis
 		clr_country_flag = PER_liberal_majlis
 		clr_country_flag = PER_conservative_majlis
-		if = { #Nationalists fucking hate the left and libtards. Except national front they love them
+		#
+		if = {
 			limit = {
+				check_variable = {
+					PER_majlis_support < 20
+				}
 				OR = {
 					western_liberals_are_in_power = yes
 					western_social_democrats_are_in_power = yes
@@ -17367,8 +19348,218 @@ country_event = { # Right-Wing victory (Recurring)
 				}
 			}
 			custom_effect_tooltip = PER_lose_elections
-			add_to_variable = { PER_majlis_support = -30 }
+			add_to_variable = { PER_majlis_support = -15 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 50
+					}
+					OR = {
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -40 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -80 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -100 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -130 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -150 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support > 250
+					}
+					OR = {
+						western_liberals_are_in_power = yes
+						western_social_democrats_are_in_power = yes
+						emerging_communist_state_are_in_power = yes
+						emerging_anarchist_communism_are_in_power = yes
+						neutrality_neutral_libertarians_are_in_power = yes
+						neutrality_neutral_social_are_in_power = yes
+						neutrality_neutral_communism_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_lose_elections
+				add_to_variable = { PER_majlis_support = -190 }
+			}
 		}
+		#
+		##### VICTORY SEATS
+		if = {
+			limit = {
+				check_variable = {
+					PER_majlis_support < 50
+				}
+				OR = {
+					nationalist_monarchists_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+				}
+			}
+			custom_effect_tooltip = PER_gain_some_election
+			add_to_variable = { PER_majlis_support = 125 }
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 100
+					}
+					OR = {
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 90 }
+			}
+			#
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 150
+					}
+					OR = {
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 70 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 200
+					}
+					OR = {
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 50 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 250
+					}
+					OR = {
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 30 }
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						PER_majlis_support < 290
+					}
+					OR = {
+						nationalist_monarchists_are_in_power = yes
+						nationalist_military_junta_are_in_power = yes
+						nationalist_fascist_are_in_power = yes
+						nationalist_right_wing_populists_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_gain_some_election
+				add_to_variable = { PER_majlis_support = 15 }
+			}
+		}
+		#
+		##### DON'T GIVE A SHIT SEATS
 		if = { #Nationalists don't give a shit about everything in between
 			limit = {
 				OR = {
@@ -17387,19 +19578,6 @@ country_event = { # Right-Wing victory (Recurring)
 			}
 			custom_effect_tooltip = PER_meh_some_election
 			add_to_variable = { PER_majlis_support = 20 }
-		}
-		#
-		if = { #Nationalists fucking love the Shah and other nationalists
-			limit = {
-				OR = {
-					nationalist_monarchists_are_in_power = yes
-					nationalist_military_junta_are_in_power = yes
-					nationalist_fascist_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power = yes
-				}
-			}
-			custom_effect_tooltip = PER_gain_some_election
-			add_to_variable = { PER_majlis_support = 40 }
 		}
 		ai_chance = {
 			factor = 3
@@ -17884,6 +20062,7 @@ country_event = { #The Majlis shifts. For I.R.
 		}
 	}
 }
+#
 ######################################################################################################################
 country_event = {
 	id = iran_md.3 # Insurgents attack military base
@@ -18877,6 +21056,7 @@ country_event = {
 	trigger = {
 		NOT = {
 			OR = {
+				emerging_anarchist_communism_are_in_power = yes
 				emerging_hardline_shiite_are_in_power = yes
 				emerging_moderate_shiite_are_in_power = yes
 			}
@@ -20050,6 +22230,220 @@ country_event = {
 			}
 		}
 		add_stability = -0.05
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.29 # State visit to the USA (Pahlavi)
+	title = iran_md.29.t
+	desc = iran_md.29.d
+	picture = GFX_iranian_american_flag
+	is_triggered_only = yes
+	option = { # Absolutely!
+		name = iran_md.29.a
+		log = "[GetDateText]: [This.GetName]:iran_md.29.a executed"
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
+		PER = {
+			country_event = {
+				id = iran_md.291
+				days = 1
+			}
+		}
+		diplomatic_relation = {
+			country = PER
+			relation = non_aggression_pact
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # No
+		name = iran_md.29.b
+		log = "[GetDateText]: [This.GetName]:iran_md.29.a executed"
+		PER = {
+			country_event = {
+				id = iran_md.292
+				days = 1
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.291 # State visit to the USA (Pahlavi)
+	title = iran_md.291.t
+	desc = iran_md.291.d
+	picture = GFX_iranian_american_flag
+	is_triggered_only = yes
+	option = { # Request investments
+		name = iran_md.291.a
+		log = "[GetDateText]: [This.GetName]:iran_md.291.a executed"
+		random_core_state = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}
+		}
+		USA = {
+			set_temp_variable = { treasury_change = 15.00 }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = { # Purchase new aircraft
+		name = iran_md.291.b
+		log = "[GetDateText]: [This.GetName]:iran_md.291.b executed"
+		add_equipment_to_stockpile = {
+			type = MR_Fighter3
+			amount = 20
+			producer = USA
+		}
+		set_temp_variable = { treasury_change = -37.50 }
+		modify_treasury_effect = yes
+		USA = {
+			set_temp_variable = { treasury_change = 37.50 }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = { # Request political support
+		name = iran_md.291.c
+		log = "[GetDateText]: [This.GetName]:iran_md.291.c executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.292 # State visit to the USA was rejected (Pahlavi)
+	title = iran_md.292.t
+	desc = iran_md.292.d
+	picture = GFX_iranian_american_flag
+	is_triggered_only = yes
+	#
+	option = { # Damn
+		name = iran_md.292.a
+		log = "[GetDateText]: [This.GetName]:iran_md.292.a executed"
+		PER = {
+			add_opinion_modifier = {
+				target = USA
+				modifier = diplomatic_distance
+			}
+		}
+		USA = {
+			add_opinion_modifier = {
+				target = PER
+				modifier = diplomatic_distance
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+### Events to fire once the player takes revolutionary focus
+# Organizing the revolutionaries
+country_event = {
+	id = iran_md.40
+	title = iran_md.40.t
+	desc = iran_md.40.d
+	is_triggered_only = yes
+	#
+	option = { # Damn
+		name = iran_md.40.a
+		log = "[GetDateText]: [This.GetName]:iran_md.40.a executed"
+		add_political_power = 20
+		hidden_effect = {
+			country_event = {
+				id = iran_md.41
+				days = 5
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Damn
+		name = iran_md.40.b
+		log = "[GetDateText]: [This.GetName]:iran_md.40.b executed"
+		add_stability = -0.02
+		add_political_power = -25
+		hidden_effect = {
+			country_event = {
+				id = iran_md.41
+				days = 5
+			}
+		}
+		custom_effect_tooltip = PER_artesh_5_TT
+		set_country_flag = PER_organized_revolutionaries #gives +5% Artesh support on Rev Start
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.41
+	title = iran_md.41.t
+	desc = iran_md.41.d
+	is_triggered_only = yes
+	picture = GFX_protest_generic_iran_country
+	option = { # Damn
+		name = iran_md.41.a
+		log = "[GetDateText]: [This.GetName]:iran_md.41.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#Organize the Revolutionary Council, and pull support from the army!
+	option = { # Damn
+		name = iran_md.41.b
+		log = "[GetDateText]: [This.GetName]:iran_md.41.b executed"
+		add_political_power = -75
+		add_stability = -0.04
+		custom_effect_tooltip = PER_additional_troops_TT
+		set_country_flag = PER_revolutionaries_organized2 #Will give 4 Extra divisions during Civil War
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.42
+	title = iran_md.42.t
+	desc = iran_md.42.d
+	is_triggered_only = yes
+	option = { # Damn
+		name = iran_md.42.a
+		log = "[GetDateText]: [This.GetName]:iran_md.42.a executed"
+		add_equipment_to_stockpile = {
+			type = infantry_weapons2
+			amount = 2500
+			producer = PER
+		}
 		ai_chance = {
 			factor = 5
 		}

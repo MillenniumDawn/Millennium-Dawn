@@ -39,6 +39,7 @@
 #Your new debt_rate is $4B. So you need to "reset the treasury" you give the treasury_rate back the $2B
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 ###
+@spending_laws_gdp_scaling = 0.008
 
 # ingame_update_setup
 # This function is used to update the economic setup mid game
@@ -151,10 +152,10 @@ calculate_tax_gain = {
 	set_temp_variable = { agriculture_tax_gain_multiplier = 1 }
 	add_to_temp_variable = { agriculture_tax_gain_multiplier = modifier@agricolture_productivity_modifier }
 	multiply_variable = { agriculture_tax_gain = agriculture_tax_gain_multiplier }
-	clamp_variable = {
-		var = agriculture_tax_gain
-		min = 0.001
-	}
+	set_temp_variable = { ag_tax_gain = 1 }
+	add_to_temp_variable = { ag_tax_gain = modifier@agriculture_tax_modifier }
+	multiply_variable = { agriculture_tax_gain = ag_tax_gain }
+	clamp_variable = { var = agriculture_tax_gain min = 0.001 }
 
 	#Base tax from various buildings
 	set_variable = { civil_fac_tax = industrial_complex_total }
@@ -287,6 +288,13 @@ calculate_tax_gain = {
 	multiply_variable = { military_fac_tax = productivity_calculations_var }
 	multiply_variable = { dockyard_tax = productivity_calculations_var }
 	multiply_variable = { office_tax = productivity_calculations_var }
+
+	# Clamp the component values to 0 so we don't have our government gifting back tax money to the people
+	clamp_variable = { var = agriculture_tax_gain min = 0 }
+	clamp_variable = { var = civil_fac_tax min = 0 }
+	clamp_variable = { var = military_fac_tax min = 0 }
+	clamp_variable = { var = dockyard_tax min = 0 }
+	clamp_variable = { var = office_tax min = 0 }
 
 	# Add Corporate Tax Rates Together
 	add_to_variable = { corporate_tax = agriculture_tax_gain }
@@ -456,6 +464,31 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_ABK_tourism2 }
 		}
 	}
+		##DPR
+	if = {
+		limit = { original_tag = DPR  }
+		if = {
+			limit = { has_idea = DPR_chugun }
+			set_variable = { additional_income_DPR_chugun = 0.15 }
+			add_to_variable = { additional_income_rate = additional_income_DPR_chugun  }
+		}
+				if = {
+			limit = { has_idea = DPR_rf_money }
+			set_variable = { additional_income_DPR_rf_money = 0.05 }
+			add_to_variable = { additional_income_rate = additional_income_DPR_rf_money  }
+		}
+
+	}
+		##Checnya
+	if = {
+		limit = { original_tag = CHE  }
+		if = {
+			limit = { has_idea = CHE_tourism_idea }
+			set_variable = { additional_income_CHE_tourism = 0.15 }
+			add_to_variable = { additional_income_rate = additional_income_CHE_tourism  }
+		}
+
+	}
 	##Wa State
 	if = {
 		limit = { has_idea = WAA_Narcotics_Producer }
@@ -546,15 +579,24 @@ calculate_additional_income_rate = {
 		limit = { original_tag = BLR }
 		if = {
 			limit = { has_idea = BLR_tourism }
-			set_variable = { BLR_tourism_invest_gain = 0.15 }
-			add_to_variable = { additional_income_rate = BLR_tourism_invest_gain }
+			set_variable = { additional_income_BLR_tourism = 0.15 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_tourism }
 		}
-		if = {
-			limit = { has_idea = BLR_tourism2 }
-			set_variable = { BLR_tourism_invest2_gain = 0.35 }
-			add_to_variable = { additional_income_rate = BLR_tourism_invest2_gain }
+				if = {
+			limit = { has_idea = BLR_tourism3 }
+			set_variable = { additional_income_BLR_tourism3 = 0.25 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_tourism3 }
 		}
-
+				if = {
+			limit = { has_idea = BLR_tourism4 }
+			set_variable = { additional_income_BLR_tourism4 = 0.40 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_tourism4 }
+		}
+				if = {
+			limit = { has_idea = BLR_tourism5 }
+			set_variable = { additional_income_BLR_tourism5 = 0.55 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_tourism5 }
+		}
 		if = {
 			limit = { has_idea = BLR_Kommunarka_invest }
 			set_variable = { BLR_Kommunarka_invest_gain = 0.02 }
@@ -565,12 +607,47 @@ calculate_additional_income_rate = {
 			set_variable = { BLR_Kommunarka_invest_cis_gain = 0.12 }
 			add_to_variable = { additional_income_rate = BLR_Kommunarka_invest_cis_gain }
 		}
+				if = {
+			limit = { has_idea = BLR_minotor_servise_blr }
+			set_variable = { additional_income_BLR_minotor_servise_blr = 0.300 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_minotor_servise_blr }
+		}
+				 if = {
+			limit = { has_idea = BLR_mzkt_contract_blr }
+			set_variable = { additional_income_BLR_mzkt_contract_blr = 0.100 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_mzkt_contract_blr }
+		}
 		if = {
 			limit = { check_variable = { BLR.current_azot_capacity > 0 } }
 			set_variable = { additional_income_azot = BLR.current_azot_capacity }
 			multiply_variable = { additional_income_azot = 0.1 }
 			add_to_variable = { additional_income_rate = additional_income_azot }
 		}
+	}
+		# Russia
+	if = {
+		limit = { original_tag = SOV }
+		if = {
+			limit = { has_idea = BLR_minotor_servise_sov }
+			set_variable = { BLR_minotor_servise_sov_gain = -0.300 }
+			add_to_variable = { additional_income_rate = BLR_minotor_servise_sov_gain }
+		}
+				if = {
+			limit = { has_idea = BLR_mzkt_contract }
+			set_variable = { BLR_mzkt_contract_gain = -0.100 }
+			add_to_variable = { additional_income_rate = BLR_mzkt_contract_gain }
+		}
+
+	}
+		# DPR
+	if = {
+		limit = { original_tag = DPR }
+		if = {
+			limit = { has_idea = DPR_rf_money }
+			set_variable = { additional_incomeDPR_rf_money = 0.100 }
+			add_to_variable = { additional_income_rate = additional_income_DPR_rf_money }
+		}
+
 	}
 	#Liechtenstein
 	if = {
@@ -603,6 +680,13 @@ calculate_additional_income_rate = {
 			limit = { has_idea = PER_irgc_black_market_exploits }
 			set_variable = { additional_income_irgc_black_market = gdp_total }
 			multiply_variable = { additional_income_irgc_black_market = 0.10 }	#10% of GDP yearly
+			multiply_variable = { additional_income_irgc_black_market = 0.02 }	#weekly
+			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
+		}
+		if = {
+			limit = { has_idea = PER_redirecting_money_from_proxies }
+			set_variable = { additional_income_irgc_black_market = gdp_total }
+			multiply_variable = { additional_income_irgc_black_market = 0.15 }	#15% of GDP yearly
 			multiply_variable = { additional_income_irgc_black_market = 0.02 }	#weekly
 			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
 		}
@@ -654,6 +738,13 @@ calculate_additional_income_rate = {
 			set_variable = { SIN_tariff_income = signed_trade_agreements }
 			multiply_variable = { SIN_tariff_income = 0.075 }
 			add_to_variable = { additional_income_rate = SIN_tariff_income }
+		}
+	}
+	if = { limit = { original_tag = SYR }
+		if = {
+			limit = { has_idea = syria_bakdash }
+			set_variable = { syria_bakdash_income = 0.08 }
+			add_to_variable = { additional_income_rate = syria_bakdash_income }
 		}
 	}
 	# Gulf
@@ -981,7 +1072,7 @@ update_military_rate = {
 	set_temp_variable = { Inf_equipment_deployed_count = num_equipment_in_armies_k@Inf_equipment }
 	set_temp_variable = { cnc_equipment_deployed_count = num_equipment_in_armies_k@cnc_equipment }
 	set_temp_variable = { AA_Equipment_deployed_count = num_equipment_in_armies@AA_Equipment }
-	set_temp_variable = { SP_AA_Equipment_deployed_count = num_equipment_in_armies@SP_AA_Equipment }
+	set_temp_variable = { spaa_hull_deployed_count = num_equipment_in_armies@spaa_hull }
 	set_temp_variable = { L_AT_Equipment_deployed_count = num_equipment_in_armies@L_AT_Equipment }
 	set_temp_variable = { H_AT_Equipment_deployed_count = num_equipment_in_armies@H_AT_Equipment }
 	set_temp_variable = { apc_hull_deployed_count = num_equipment_in_armies@apc_hull }
@@ -989,7 +1080,9 @@ update_military_rate = {
 	set_temp_variable = { artillery_equipment_deployed_count = num_equipment_in_armies@artillery_equipment }
 	set_temp_variable = { SP_arty_equipment_deployed_count = num_equipment_in_armies@spart_hull }
 	set_temp_variable = { mbt_hull_deployed_count = num_equipment_in_armies@mbt_hull }
+	set_temp_variable = { light_tank_hull_deployed_count = num_equipment_in_armies@light_tank_hull }
 	set_temp_variable = { transport_helicopter_equipment_deployed_count = num_equipment_in_armies@transport_helicopter_equipment }
+	set_temp_variable = { attack_helicopter_hull_deployed_count = num_equipment_in_armies@attack_helicopter_hull }
 	set_temp_variable = { util_vehicle_equipment_deployed_count = num_equipment_in_armies@util_vehicle_equipment }
 
 	#stockpiled equipment
@@ -998,7 +1091,7 @@ update_military_rate = {
 	multiply_temp_variable = { Inf_equipment_stockpile_count = 0.001 } #to convert it to thousands
 	multiply_temp_variable = { cnc_equipment_stockpile_count = 0.001 } #to convert it to thousands
 	set_temp_variable = { AA_Equipment_stockpile_count = num_equipment@AA_Equipment }
-	set_temp_variable = { SP_AA_Equipment_stockpile_count = num_equipment@SP_AA_Equipment }
+	set_temp_variable = { spaa_hull_stockpile_count = num_equipment@spaa_hull }
 	set_temp_variable = { L_AT_Equipment_stockpile_count = num_equipment@L_AT_Equipment }
 	set_temp_variable = { H_AT_Equipment_stockpile_count = num_equipment@H_AT_Equipment }
 	set_temp_variable = { apc_hull_stockpile_count = num_equipment@apc_hull }
@@ -1006,7 +1099,9 @@ update_military_rate = {
 	set_temp_variable = { artillery_equipment_stockpile_count = num_equipment@artillery_equipment }
 	set_temp_variable = { SP_arty_equipment_stockpile_count = num_equipment@spart_hull }
 	set_temp_variable = { mbt_hull_stockpile_count = num_equipment@mbt_hull }
+	set_temp_variable = { light_tank_hull_stockpile_count = num_equipment@light_tank_hull }
 	set_temp_variable = { transport_helicopter_stockpile_equipment_count = num_equipment@transport_helicopter_equipment }
+	set_temp_variable = { attack_helicopter_stockpile_equipment_count = num_equipment@attack_helicopter_hull }
 	set_temp_variable = { util_vehicle_equipment_stockpile_count = num_equipment@util_vehicle_equipment }
 
 	#stockpiled equipment cost a quarter of deployed equipment
@@ -1014,7 +1109,7 @@ update_military_rate = {
 	multiply_temp_variable = { Inf_equipment_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { cnc_equipment_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { AA_Equipment_stockpile_count = stockpile_cost_multiplier }
-	multiply_temp_variable = { SP_AA_Equipment_stockpile_count = stockpile_cost_multiplier }
+	multiply_temp_variable = { spaa_hull_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { L_AT_Equipment_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { H_AT_Equipment_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { apc_hull_stockpile_count = stockpile_cost_multiplier }
@@ -1022,13 +1117,15 @@ update_military_rate = {
 	multiply_temp_variable = { artillery_equipment_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { SP_arty_equipment_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { mbt_hull_stockpile_count = stockpile_cost_multiplier }
+	multiply_temp_variable = { light_tank_hull_stockpile_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { transport_helicopter_stockpile_equipment_count = stockpile_cost_multiplier }
+	multiply_temp_variable = { attack_helicopter_stockpile_equipment_count = stockpile_cost_multiplier }
 	multiply_temp_variable = { util_vehicle_equipment_stockpile_count = stockpile_cost_multiplier }
 
 	add_to_temp_variable = { Inf_equipment_deployed_count = Inf_equipment_stockpile_count }
 	add_to_temp_variable = { cnc_equipment_deployed_count = cnc_equipment_stockpile_count }
 	add_to_temp_variable = { AA_Equipment_deployed_count = AA_Equipment_stockpile_count }
-	add_to_temp_variable = { SP_AA_Equipment_deployed_count = SP_AA_Equipment_stockpile_count }
+	add_to_temp_variable = { spaa_hull_deployed_count = spaa_hull_stockpile_count }
 	add_to_temp_variable = { L_AT_Equipment_deployed_count = L_AT_Equipment_stockpile_count }
 	add_to_temp_variable = { H_AT_Equipment_deployed_count = H_AT_Equipment_stockpile_count }
 	add_to_temp_variable = { apc_hull_deployed_count = apc_hull_stockpile_count }
@@ -1036,7 +1133,9 @@ update_military_rate = {
 	add_to_temp_variable = { artillery_equipment_deployed_count = artillery_equipment_stockpile_count }
 	add_to_temp_variable = { SP_arty_equipment_deployed_count = SP_arty_equipment_stockpile_count }
 	add_to_temp_variable = { mbt_hull_deployed_count = mbt_hull_stockpile_count }
+	add_to_temp_variable = { light_tank_hull_deployed_count = light_tank_hull_stockpile_count }
 	add_to_temp_variable = { transport_helicopter_equipment_deployed_count = transport_helicopter_stockpile_equipment_count }
+	add_to_temp_variable = { attack_helicopter_hull_deployed_count = attack_helicopter_stockpile_equipment_count }
 	add_to_temp_variable = { util_vehicle_equipment_deployed_count = util_vehicle_equipment_stockpile_count }
 
 	#equipment cost, tweak these multipliers to change how much equipment costs compared to other types
@@ -1045,7 +1144,7 @@ update_military_rate = {
 	multiply_temp_variable = { Inf_equipment_deployed_count = 0.3 } #millions yearly for 1000 guns
 	multiply_temp_variable = { cnc_equipment_deployed_count = 0.4 } #millions yearly for 1000 cnc equipment
 	multiply_temp_variable = { AA_Equipment_deployed_count = 0.012 } #millions yearly for 1 of the rest of the list
-	multiply_temp_variable = { SP_AA_Equipment_deployed_count = 0.231 }
+	multiply_temp_variable = { spaa_hull_deployed_count = 0.231 }
 	multiply_temp_variable = { L_AT_Equipment_deployed_count = 0.011 }
 	multiply_temp_variable = { H_AT_Equipment_deployed_count = 0.5 }
 	multiply_temp_variable = { apc_hull_deployed_count = 0.16 }
@@ -1053,13 +1152,15 @@ update_military_rate = {
 	multiply_temp_variable = { artillery_equipment_deployed_count = 0.07 }
 	multiply_temp_variable = { SP_arty_equipment_deployed_count = 0.5 }
 	multiply_temp_variable = { mbt_hull_deployed_count = 0.7 }
+	multiply_temp_variable = { light_tank_hull_deployed_count = 0.35 }
 	multiply_temp_variable = { transport_helicopter_equipment_deployed_count = 7.5 }
+	multiply_temp_variable = { attack_helicopter_hull_deployed_count = 10 }
 	multiply_temp_variable = { util_vehicle_equipment_deployed_count = 0.022 }
 
 	set_variable = { equipment_operative_cost = Inf_equipment_deployed_count }
 	add_to_variable = { equipment_operative_cost = cnc_equipment_deployed_count }
 	add_to_variable = { equipment_operative_cost = AA_Equipment_deployed_count }
-	add_to_variable = { equipment_operative_cost = SP_AA_Equipment_deployed_count }
+	add_to_variable = { equipment_operative_cost = spaa_hull_deployed_count }
 	add_to_variable = { equipment_operative_cost = L_AT_Equipment_deployed_count }
 	add_to_variable = { equipment_operative_cost = H_AT_Equipment_deployed_count }
 	add_to_variable = { equipment_operative_cost = apc_hull_deployed_count }
@@ -1067,7 +1168,9 @@ update_military_rate = {
 	add_to_variable = { equipment_operative_cost = artillery_equipment_deployed_count }
 	add_to_variable = { equipment_operative_cost = SP_arty_equipment_deployed_count }
 	add_to_variable = { equipment_operative_cost = mbt_hull_deployed_count }
+	add_to_variable = { equipment_operative_cost = light_tank_hull_deployed_count }
 	add_to_variable = { equipment_operative_cost = transport_helicopter_equipment_deployed_count }
+	add_to_variable = { equipment_operative_cost = attack_helicopter_hull_deployed_count }
 	add_to_variable = { equipment_operative_cost = util_vehicle_equipment_deployed_count }
 
 	set_temp_variable = { equipment_operative_cost_multiplier = 5 } #tweak this to modify the operative cost of all equipment
@@ -1166,21 +1269,45 @@ update_military_rate = {
 
 	#Calculate deployed and stockpiled planes, stockpiled planes cost a quarter of deployed planes
 	#Count number of strategic airforce
-	set_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
+	set_temp_variable = { strategic_airforce = num_equipment@large_plane_airframe }
+	add_to_temp_variable = { strategic_airforce = num_equipment@large_plane_cas_airframe }
+	add_to_temp_variable = { strategic_airforce = num_equipment@large_plane_awacs_airframe }
+	add_to_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
 	multiply_temp_variable = { strategic_airforce = 0.667 }
 
-	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@strategic_bomber_equipment }
+	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@large_plane_airframe }
+	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@large_plane_cas_airframe }
+	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@large_plane_awacs_airframe }
 
 	#Count number of expensive planes
-	set_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
+	set_temp_variable = { expensive_airforce = num_equipment@large_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@large_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@cv_medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@cv_medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@cv_medium_plane_scout_airframe }
+	add_to_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
 	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
 	multiply_temp_variable = { expensive_airforce = 0.667 }
 
-	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@transport_plane_equipment }
-	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@nav_plane_equipment }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@large_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@large_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@cv_medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@cv_medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@medium_plane_air_transport_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@medium_plane_maritime_patrol_airframe }
+	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@cv_medium_plane_scout_airframe }
 
 	#Count number or regular airforce
-	set_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
+	set_temp_variable = { regular_airforce = num_equipment@medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@cv_medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@cv_medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@small_plane_suicide_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@medium_plane_cas_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@cv_medium_plane_cas_airframe }
+	add_to_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@CV_MR_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@AS_Fighter_equipment }
 	add_to_temp_variable = { regular_airforce = num_equipment@Strike_fighter_equipment }
@@ -1188,33 +1315,43 @@ update_military_rate = {
 	add_to_temp_variable = { regular_airforce = num_equipment@CAS_equipment }
 	multiply_temp_variable = { regular_airforce = 0.667 }
 
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@MR_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@AS_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@Strike_fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@Air_UAV_equipment }
-	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@CAS_equipment }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@cv_medium_plane_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@cv_medium_plane_fighter_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@small_plane_suicide_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@medium_plane_cas_airframe }
+	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@cv_medium_plane_cas_airframe }
 
 	#Count number of cheap airforce
-	set_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_equipment }
+	set_temp_variable = { cheap_airforce = num_equipment@small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@small_plane_naval_bomber_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_naval_bomber_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@attack_helicopter_hull }
 	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
 	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
 	multiply_temp_variable = { cheap_airforce = 0.667 }
 
-	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@attack_helicopter_equipment }
-	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@L_Strike_fighter_equipment }
-	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@CV_L_Strike_fighter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@small_plane_naval_bomber_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@cv_small_plane_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@cv_small_plane_cas_airframe }
+	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@cv_small_plane_naval_bomber_airframe }
 
 	#Add higher costs for nuclear weapons capability - Papinian7
 	# nuclear status 'Nuclear Air Force' +30% planes costs or 'Nuclear Triad' +25% planes costs
 	### strategic_airforce
 	## strategic_bomber
 	# equipment
-	set_temp_variable = { temp_strategic_airforce_equipment = num_equipment@strategic_bomber_equipment }
+	set_temp_variable = { temp_strategic_airforce_equipment = num_equipment@large_plane_airframe }
 	multiply_temp_variable = { var = temp_strategic_airforce_equipment value = var_nuclear_status_planes_cost_factor }
 	multiply_temp_variable = { temp_strategic_airforce_equipment = 0.667 }
 	# deployed
-	set_temp_variable = { temp_strategic_airforce_deployed = num_deployed_planes_with_type@strategic_bomber_equipment }
+	set_temp_variable = { temp_strategic_airforce_deployed = num_deployed_planes_with_type@large_plane_airframe }
 	multiply_temp_variable = { var = temp_strategic_airforce_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { strategic_airforce = temp_strategic_airforce_equipment }
@@ -1223,22 +1360,22 @@ update_military_rate = {
 	set_temp_variable = { temp_regular_airforce = 0 }
 	## MR_Fighter_equipment
 	# equipment
-	set_temp_variable = { temp_MR_Fighter_equipment = num_equipment@MR_Fighter_equipment }
+	set_temp_variable = { temp_MR_Fighter_equipment = num_equipment@medium_plane_airframe }
 	multiply_temp_variable = { var = temp_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	multiply_temp_variable = { temp_MR_Fighter_equipment = 0.667 }
 	# deployed
-	set_temp_variable = { temp_MR_Fighter_deployed = num_deployed_planes_with_type@MR_Fighter_equipment }
+	set_temp_variable = { temp_MR_Fighter_deployed = num_deployed_planes_with_type@medium_plane_airframe }
 	multiply_temp_variable = { var = temp_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_equipment }
 	add_to_temp_variable = { temp_regular_airforce = temp_MR_Fighter_deployed }
 	## CV_MR_Fighter_equipment
 	# equipment
-	set_temp_variable = { temp_CV_MR_Fighter_equipment = num_equipment@CV_MR_Fighter_equipment }
+	set_temp_variable = { temp_CV_MR_Fighter_equipment = num_equipment@cv_medium_plane_airframe }
 	multiply_temp_variable = { var = temp_CV_MR_Fighter_equipment value = var_nuclear_status_planes_cost_factor }
 	multiply_temp_variable = { temp_CV_MR_Fighter_equipment = 0.667 }
 	# deployed
-	set_temp_variable = { temp_CV_MR_Fighter_deployed = num_deployed_planes_with_type@CV_MR_Fighter_equipment }
+	set_temp_variable = { temp_CV_MR_Fighter_deployed = num_deployed_planes_with_type@cv_medium_plane_airframe }
 	multiply_temp_variable = { var = temp_CV_MR_Fighter_deployed value = var_nuclear_status_planes_cost_factor }
 	# add
 	add_to_temp_variable = { temp_regular_airforce = temp_CV_MR_Fighter_equipment }
@@ -1398,6 +1535,11 @@ update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
 
+	#gdp scaling
+	set_temp_variable = { gdp_bureaucracy_cost_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_bureaucracy_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_bureaucracy_cost_modifier = 1 }
+
 	#Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
 	add_to_temp_variable = { bureaucracy_cost_multiplier = modifier@bureaucracy_cost_multiplier_modifier }
@@ -1417,6 +1559,7 @@ update_bureaucracy_rate = {
 		value = v
 		add_to_variable = { var = array_bureaucracy_spend^i value = population_total }	#Unit 100 000
 		multiply_variable = { array_bureaucracy_spend^i = bureaucracy_cost_multiplier }
+		multiply_variable = { array_bureaucracy_spend^i = gdp_bureaucracy_cost_modifier }
 		multiply_variable = { array_bureaucracy_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { var = array_bureaucracy_spend^i value = bureaucracy_base_cost }
 	}
@@ -1456,6 +1599,11 @@ update_police_rate = {
 	#Set the base cost of policing (billion $ per 10 000 000 people)
 	set_temp_variable = { police_base_cost = 0.014 }
 
+	#gdp scaling
+	set_temp_variable = { gdp_police_cost_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_police_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_police_cost_modifier = 1 }
+
 	#Additional additive modifiers
 	set_temp_variable = { police_cost_multiplier = 1 }
 	add_to_temp_variable = { police_cost_multiplier = modifier@police_cost_multiplier_modifier }
@@ -1472,6 +1620,7 @@ update_police_rate = {
 		value = v
 		add_to_variable = { array_security_spend^i = population_total }	#Unit 100 000
 		multiply_variable = { array_security_spend^i = police_cost_multiplier }
+		multiply_variable = { array_security_spend^i = gdp_police_cost_modifier }
 		multiply_variable = { array_security_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { array_security_spend^i = police_base_cost }
 	}
@@ -1518,12 +1667,13 @@ update_education_rate = {
 	add_to_temp_variable = { research_slot_mod = research_slot_initial }
 	set_variable = { research_slot_modifier = research_slot_mod }
 
-	#Education spending is more expensive for poor countries - linear approximation with -0.086 * GDP/C + 2.182
+	#Education spending was more expensive for poor countries - linear approximation with -0.086 * GDP/C + 2.182
 	#helps balance large countries (china/india/ecc) and represents poor countries setting up infrastructure that western countries already have
+	#but this was scrapped because poor countries were struggling with high tax rates despite very low spending levels
+	#now spending cost increases with gdpc
 	set_temp_variable = { gdp_education_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_education_cost_modifier = -0.05 }
-	add_to_temp_variable = { gdp_education_cost_modifier = 2 }
-	clamp_temp_variable = { var = gdp_education_cost_modifier min = 1 }
+	multiply_temp_variable = { gdp_education_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_education_cost_modifier = 1 }
 	set_variable = { education_cost_gdp_multiplier_display = gdp_education_cost_modifier }
 	subtract_from_variable = { education_cost_gdp_multiplier_display = 1 }
 
@@ -1586,9 +1736,8 @@ update_health_rate = {
 
 	# # Bird Note: Ported Education Spending Logic 07-14
 	set_temp_variable = { gdp_health_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_health_cost_modifier = -0.05 }
-	add_to_temp_variable = { gdp_health_cost_modifier = 2 }
-	clamp_temp_variable = { var = gdp_health_cost_modifier min = 1 }
+	multiply_temp_variable = { gdp_health_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_health_cost_modifier = 1 }
 
 	#Additional additive modifiers
 	set_temp_variable = { health_cost_multiplier = 1 }
@@ -1652,9 +1801,8 @@ update_social_rate = {
 
 	# # Bird Note: Ported Education Spending Logic 07-14
 	set_temp_variable = { gdp_social_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_social_cost_modifier = -0.05 }
-	add_to_temp_variable = { gdp_social_cost_modifier = 2 }
-	clamp_temp_variable = { var = gdp_social_cost_modifier min = 1 }
+	multiply_temp_variable = { gdp_social_cost_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_social_cost_modifier = 1 }
 
 	#Additional additive modifiers
 	set_temp_variable = { social_cost_multiplier = 1 }
@@ -2023,6 +2171,8 @@ calculate_int_investments_rate = {
 	set_variable = { int_investments_rate = int_investments }
 	multiply_variable = { int_investments_rate = roi_rate }
 	multiply_variable = { int_investments_rate = 0.019 }	#yearly to weekly
+
+	clamp_variable = { var = int_investments_rate min = 0 }
 }
 
 #Calculates income from resources
@@ -2084,12 +2234,25 @@ calculate_resource_sale_rate = {
 	set_temp_variable = { resource_export_multiplier = 1 }
 	add_to_temp_variable = { resource_export_multiplier = modifier@resource_export_multiplier_modifier }
 
-	multiply_variable = { oil_exports = resource_export_multiplier }
-	multiply_variable = { steel_exports = resource_export_multiplier }
-	multiply_variable = { aluminium_exports = resource_export_multiplier }
-	multiply_variable = { tungsten_exports = resource_export_multiplier }
-	multiply_variable = { chromium_exports = resource_export_multiplier }
-	multiply_variable = { rubber_exports = resource_export_multiplier }
+	set_temp_variable = { oil_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { oil_export_multiplier = modifier@oil_export_multiplier_modifier }
+	set_temp_variable = { steel_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { steel_export_multiplier = modifier@steel_export_multiplier_modifier }
+	set_temp_variable = { aluminium_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { aluminium_export_multiplier = modifier@aluminium_export_multiplier_modifier }
+	set_temp_variable = { tungsten_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { tungsten_export_multiplier = modifier@tungsten_export_multiplier_modifier }
+	set_temp_variable = { chromium_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { chromium_export_multiplier = modifier@chromium_export_multiplier_modifier }
+	set_temp_variable = { rubber_export_multiplier = resource_export_multiplier }
+	add_to_temp_variable = { rubber_export_multiplier = modifier@rubber_export_multiplier_modifier }
+
+	multiply_variable = { oil_exports = oil_export_multiplier }
+	multiply_variable = { steel_exports = steel_export_multiplier }
+	multiply_variable = { aluminium_exports = aluminium_export_multiplier }
+	multiply_variable = { tungsten_exports = tungsten_export_multiplier }
+	multiply_variable = { chromium_exports = chromium_export_multiplier }
+	multiply_variable = { rubber_exports = rubber_export_multiplier }
 
 	set_variable = { resource_export_multiplier_display = resource_export_multiplier }
 	subtract_from_variable = { resource_export_multiplier_display = 1 }
@@ -2109,6 +2272,14 @@ calculate_resource_sale_rate = {
 	multiply_variable = { tungsten_exports = 0.526 }
 	multiply_variable = { chromium_exports = 0.526 }
 	multiply_variable = { rubber_exports = 0.526 }
+
+	# Clamp Export Values at 0 so Luigi's massive negatives don't break my shit
+	clamp_variable = { var = oil_exports min = 0 }
+	clamp_variable = { var = steel_exports min = 0 }
+	clamp_variable = { var = aluminium_exports min = 0 }
+	clamp_variable = { var = tungsten_exports min = 0 }
+	clamp_variable = { var = chromium_exports min = 0 }
+	clamp_variable = { var = rubber_exports min = 0 }
 
 	#Add total cost
 	set_variable = { resource_sale_rate = oil_exports }
@@ -2313,7 +2484,7 @@ update_state_variables = {
 	set_variable = { var = rocket_sites value = 0 }
 	set_variable = { var = military_fac value = 0 }
 	set_variable = { var = dockyard_fac value = 0 }
-	set_variable = { renewable_energy_display_var = 0 }
+	set_variable = { state_renewable_energy_var = 0 }
 
 	# missile_silo
 	set_temp_variable = { num_missile_silo = 0 }
@@ -2360,7 +2531,7 @@ update_state_variables = {
 			set_temp_variable = { state_renewable_generation = building_level@synthetic_refinery }
 			multiply_temp_variable = { state_renewable_generation = 0.5 } #base power of a renewable building
 			multiply_temp_variable = { state_renewable_generation = renewable_energy_random_var } #set in on_weekly
-			add_to_variable = { PREV.renewable_energy_display_var = state_renewable_generation }
+			add_to_variable = { PREV.state_renewable_energy_var = state_renewable_generation }
 
 			add_to_variable = { PREV.total_resource_amount = resource@oil }
 			add_to_variable = { PREV.total_resource_amount = resource@steel }
@@ -2474,8 +2645,14 @@ calculate_gdp = {
 		divide_temp_variable = { agriculture_workers_percentage_multiplier = temp_gdp_per_capita }
 		add_to_temp_variable = { agriculture_workers_percentage_multiplier = 2 }
 		multiply_temp_variable = { agriculture_workers_percentage = agriculture_workers_percentage_multiplier }
+
+		# Modifier
+		set_temp_variable = { agriculture_workers_perc_modifier = modifier@agriculture_workers_modifier }
+		add_to_temp_variable = { agriculture_workers_perc_modifier = 1 }
+		multiply_temp_variable = { agriculture_workers_percentage = agriculture_workers_perc_modifier }
 		clamp_temp_variable = { #just in case there are very very low gdp/c
 			var = agriculture_workers_percentage
+			min = 0.0
 			max = 0.9
 		}
 	}
@@ -2597,6 +2774,7 @@ calculate_gdp = {
 	# Calculate Threshold
 	set_temp_variable = { unemployment_threshold = modifier@high_unemployment_threshold_modifier }
 	add_to_temp_variable = { unemployment_threshold = 0.06 }
+	clamp_temp_variable = { var = unemployment_threshold min = 0 }
 
 	set_variable = { unemployment_threshold_display_var = unemployment_threshold }
 
@@ -2814,7 +2992,9 @@ calculate_ai_population_taxes_desire = {
 		}
 
 		set_variable = { ai_change_population_taxes = mather }
-		log = "[GetDateText]: [THIS.GetName]: AI Population Raise Desire [?ai_change_population_taxes] Current Population Tax: [?population_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: AI Population Raise Desire [?ai_change_population_taxes] Current Population Tax: [?population_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		}
 	}
 	else = { # Lower Taxes
 		set_temp_variable = { mather = treasury_rate } # 5
@@ -2833,7 +3013,9 @@ calculate_ai_population_taxes_desire = {
 		}
 
 		set_variable = { ai_change_population_taxes = mather }
-		log = "[GetDateText]: [THIS.GetName]: AI Population Lower Desire [?ai_change_population_taxes] Current Population Tax: [?population_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: AI Population Lower Desire [?ai_change_population_taxes] Current Population Tax: [?population_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		}
 	}
 }
 
@@ -2874,7 +3056,9 @@ calculate_ai_corporate_taxes_desire = {
 		}
 
 		set_variable = { ai_change_corporate_taxes = mather }
-		log = "[GetDateText]: [THIS.GetName]: AI Corporate Raise Desire: [?ai_change_corporate_taxes] Current Corporate Tax: [?corporate_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: AI Corporate Raise Desire: [?ai_change_corporate_taxes] Current Corporate Tax: [?corporate_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		}
 	}
 	else = {
 		set_temp_variable = { mather = treasury_rate } # 5
@@ -2890,7 +3074,9 @@ calculate_ai_corporate_taxes_desire = {
 		}
 
 		set_variable = { ai_change_corporate_taxes = mather }
-		log = "[GetDateText]: [THIS.GetName]: AI Corporate Lower Desire: [?ai_change_corporate_taxes] Current Corporate Tax: [?corporate_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: AI Corporate Lower Desire: [?ai_change_corporate_taxes] Current Corporate Tax: [?corporate_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		}
 	}
 }
 

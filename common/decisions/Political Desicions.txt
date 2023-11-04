@@ -425,6 +425,64 @@ generic_coalition_politics_desicions = {
 		}
 	}
 
+	# Demobilization
+	demobilize_after_warfare_mission = {
+		activation = {
+			has_war = no
+			OR = {
+				has_idea = defence_09
+				has_idea = defence_08
+				has_idea = defence_07
+			}
+		}
+		days_mission_timeout = 180
+
+		selectable_mission = yes
+
+		cancel_trigger = {
+			has_war = yes
+			NOT = {
+				OR = {
+					has_idea = defence_09
+					has_idea = defence_08
+					has_idea = defence_07
+				}
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision demobilize_after_warfare_mission"
+			if = { limit = { has_idea = defence_09 }
+				swap_ideas = {
+					remove_idea = defence_09
+					add_idea = defence_06
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = defence_08
+				}
+				swap_ideas = {
+					remove_idea = defence_08
+					add_idea = defence_06
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = defence_07
+				}
+				swap_ideas = {
+					remove_idea = defence_07
+					add_idea = defence_06
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+
 	### Extremist Civil Wars
 
 	fascism_extremist_civil_war = {
@@ -5711,6 +5769,27 @@ generic_coalition_politics_desicions = {
 				remove_idea = al_jazeera_banned
 				add_idea = al_jazeera_allowed
 			}
+		}
+	}
+
+	# Protests mechanic
+	give_in_to_protestors = {
+		icon = generic_civil_support
+
+		visible = {
+			check_variable = { protest_strength > 35 }
+			check_variable = { protest_radicalisation > 5 }
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision give_in_to_protestors"
+			give_in_to_protestors_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 50
 		}
 	}
 }
