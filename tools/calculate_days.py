@@ -1,5 +1,5 @@
 days_per_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-start_year = 2017
+start_year = 2000
 
 while True:
 	provided_date = [int(x) for x in input("Enter day you want the event to fire (YYYY.MM.DD):").split(".")]
