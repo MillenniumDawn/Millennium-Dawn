@@ -3298,3 +3298,67 @@ initialize_state_provincial_images = {
 		}
 	}
 }
+
+# This scripted effect calculates starting utility equipment for nations to help support the new upcoming changes.
+calculate_starting_utility_stockpile = {
+	# Calculate Starting Convoys
+	set_temp_variable = { base = 100 }
+	set_temp_variable = { dockyard_increase = 25 } # Alter this if you wish to change the value of the starting convoy distribution
+	multiply_temp_variable = { dockyard_increase = num_of_naval_factories }
+	add_to_temp_variable = { dockyard_increase = base }
+
+	add_equipment_to_stockpile = {
+		type = convoy
+		amount = dockyard_increase
+	}
+
+	# Calcualte Starting Trains
+	if = { limit = { has_tech = early_freight_locomotive }
+		set_temp_variable = { base = 50 }
+		set_temp_variable = { factory = num_of_factories }
+		# multiply_temp_variable = { factory = 3 } # Alter this if you wish to change the value of the starting factory distrubtion
+		add_to_temp_variable = { factory = base }
+
+		add_equipment_to_stockpile = {
+			type = train_equipment
+			amount = factory
+		}
+	}
+}
+
+calculate_starting_mio_size = {
+	# Calculate Starting MIO Size
+	set_temp_variable = { tmp_lvl = 0 }
+
+	if = { limit = { has_idea = defense_industry }
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+	if = { limit = { has_idea = NATO_member }
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+	if = { limit = { has_idea = superpower }
+		add_to_temp_variable = { tmp_lvl = 2 }
+	}
+	if = { limit = { has_idea = large_power }
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+	if = { limit = { has_idea = great_power }
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+	if = {
+		limit = {
+			OR = {
+				original_tag = SOV
+				original_tag = CHI
+			}
+		}
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+
+	set_variable = { free_trait_picks = tmp_lvl }
+	multiply_variable = { free_trait_picks = 10 }
+
+	every_military_industrial_organization = {
+		add_mio_size = tmp_lvl
+	}
+}
