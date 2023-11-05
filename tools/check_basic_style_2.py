@@ -120,8 +120,10 @@ def main():
 	if (bad_count == 0):
 		print("File validation PASSED")
 		message +="File validation PASSED\n"
+		postResults = False
 	else:
 		message +="File validation FAILED\n"
+		postResults = True
 
 	print ('The script took {0} second!'.format(time.time() - startTime))
 
@@ -131,19 +133,22 @@ def main():
 		headers = {'PRIVATE-TOKEN': privateToken}
 		payload = {'body': message}
 
-		if "CI_MERGE_REQUEST_IID" in os.environ:
-			mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
-			r = requests.post(
-				"https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions",
-				data=payload, headers=headers)
-			print("Posted results to merge request")
+		if postResults == True:
+			if "CI_MERGE_REQUEST_IID" in os.environ:
+				mergeRequestId = os.environ['CI_MERGE_REQUEST_IID'];
+				r = requests.post(
+					"https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions",
+					data=payload, headers=headers)
+				print("Posted results to merge request")
 
+			else:
+				commitID = os.environ['CI_COMMIT_SHA'];
+				r = requests.post(
+					"https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
+					data=payload, headers=headers)
+				print("Posted results to commit")
 		else:
-			commitID = os.environ['CI_COMMIT_SHA'];
-			r = requests.post(
-				"https://gitlab.com/api/v4/projects/" + projectId + "/commits/" + commitID + "/discussions",
-				data=payload, headers=headers)
-			print("Posted results to commit")
+			print("File validation passed Coding Standards: SUCCESS")
 	except:
 		print("Couldn't post results to gitlab")
 
