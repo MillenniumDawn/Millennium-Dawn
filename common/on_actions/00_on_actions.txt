@@ -2283,6 +2283,90 @@ on_actions = {
 					# AGRICULTURE
 					AGRI_civil_war = yes
 				}
+
+				hidden_effect = {
+					# spawn some units in case there are too few
+					if = {
+						limit = {
+							FROM = {
+								check_variable = { num_divisions < 6 }
+							}
+						}
+
+						FROM = {
+							set_country_flag = civil_war_units_spawned_flag
+
+							division_template = {
+								name = "National Militia"
+								is_locked = yes
+								priority = 0
+								regiments = {
+									L_Inf_Bat = { x = 0 y = 0 }
+									L_Inf_Bat = { x = 0 y = 1 }
+									L_Inf_Bat = { x = 0 y = 2 }
+									L_Inf_Bat = { x = 0 y = 3 }
+									Arty_Bat = { x = 1 y = 0 }
+								}
+								support = {
+									L_Recce_Comp = { x = 0 y = 0 }
+									L_Engi_Comp = { x = 0 y = 1 }
+								}
+							}
+
+							set_temp_variable = { div_count = 5 }
+							subtract_from_temp_variable = { div_count = num_divisions }
+
+							capital_scope = {
+								create_unit = {
+									division = "name =\"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
+									owner = FROM
+									count = div_count
+								}
+							}
+						}
+					}
+
+					# same for ROOT
+					if = {
+						limit = {
+							ROOT = {
+								check_variable = { num_divisions < 6 }
+							}
+						}
+
+						ROOT = {
+							set_country_flag = civil_war_units_spawned_flag
+
+							division_template = {
+								name = "National Militia"
+								is_locked = yes
+								priority = 0
+								regiments = {
+									L_Inf_Bat = { x = 0 y = 0 }
+									L_Inf_Bat = { x = 0 y = 1 }
+									L_Inf_Bat = { x = 0 y = 2 }
+									L_Inf_Bat = { x = 0 y = 3 }
+									Arty_Bat = { x = 0 y = 1 }
+								}
+								support = {
+									L_Recce_Comp = { x = 0 y = 0 }
+									L_Engi_Comp = { x = 0 y = 1 }
+								}
+							}
+
+							set_temp_variable = { div_count = 5 }
+							subtract_from_temp_variable = { div_count = num_divisions }
+
+							capital_scope = {
+								create_unit = {
+									division = "name =\"National Militia\" division_template = \"National Militia\" start_experience_factor = 0.4"
+									owner = ROOT
+									count = div_count
+								}
+							}
+						}
+					}
+				}
 			}
 			hidden_effect = {
 				FROM = {
@@ -2695,6 +2779,15 @@ on_actions = {
 					limit = { is_in_array = { global.ct_states = THIS } }
 					subtract_from_variable = { threat_level = 30 }
 					clamp_threat = yes
+				}
+			}
+
+			if = {
+				limit = { has_country_flag = civil_war_units_spawned_flag }
+
+				delete_units = {
+					division_template = "National Militia"
+					disband = yes
 				}
 			}
 		}
