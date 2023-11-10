@@ -362,8 +362,8 @@ calculate_additional_income_rate = {
 				limit = { HEZ = { LEB = { is_influencer = yes } } }
 				set_variable = { HEZ_iranian_support_money = 0.250 }
 			}
-			
-			
+
+
 			add_to_variable = { additional_income_rate = HEZ_iranian_support_money }
 		}
 		if = {
@@ -548,11 +548,6 @@ calculate_additional_income_rate = {
 	if = {
 		limit = { original_tag = DPR  }
 		if = {
-			limit = { has_idea = DPR_chugun }
-			set_variable = { additional_income_DPR_chugun = 0.15 }
-			add_to_variable = { additional_income_rate = additional_income_DPR_chugun  }
-		}
-				if = {
 			limit = { has_idea = DPR_rf_money }
 			set_variable = { additional_income_DPR_rf_money = 0.05 }
 			add_to_variable = { additional_income_rate = additional_income_DPR_rf_money  }
@@ -1303,8 +1298,9 @@ update_military_rate = {
 	add_to_temp_variable = { capital_count = num_ships_with_type@battleship }
 	add_to_temp_variable = { capital_count = num_ships_with_type@battle_cruiser }
 
-	#Count number of destroyers
+	#Count number of destroyers and heavy frigates
 	set_temp_variable = { destroyer_count = num_ships_with_type@destroyer }
+	add_to_temp_variable = { destroyer_count = num_ships_with_type@heavy_frigate }
 	if = { limit = { has_dlc = "Man the Guns" }
 		add_to_temp_variable = { destroyer_count = num_ships_with_type@stealth_destroyer }
 	}
@@ -1312,6 +1308,7 @@ update_military_rate = {
 	#Count number of screens/small ships
 	set_temp_variable = { frigate_count = num_ships_with_type@frigate }
 	set_temp_variable = { corvette_count = num_ships_with_type@corvette }
+	set_temp_variable = { patrol_boat_count = num_ships_with_type@patrol_boat }
 
 	#Add higher costs for nuclear weapons capability - Papinian7
 	# nuclear status 'Nuclear Navy' +30% ship costs
@@ -1359,12 +1356,14 @@ update_military_rate = {
 	multiply_temp_variable = { destroyer_count = 3 }
 	multiply_temp_variable = { frigate_count = 2 }
 	multiply_temp_variable = { corvette_count = 1 }
+	multiply_temp_variable = { patrol_boat_count = 0.25 }
 	set_temp_variable = { navy_count = 0 }
 	set_temp_variable = { navy_count = carrier_count }
 	add_to_temp_variable = { navy_count = capital_count }
 	add_to_temp_variable = { navy_count = destroyer_count }
 	add_to_temp_variable = { navy_count = frigate_count }
 	add_to_temp_variable = { navy_count = corvette_count }
+	add_to_temp_variable = { navy_count = patrol_boat_count }
 
 	### Airforce ###
 	#Below sets the cost for ships based on the number of ships (divided into cheap, regular, expensinve and strategic airforce) Use these if you want to control costs of different aircraft to each other - Kal's note: changed math to match land/navy stuff.
@@ -3218,6 +3217,11 @@ productivity_growth_display_effect = {
 	}
 	set_variable = { productivity_growth_scaled = modifier@productivity_growth_modifier }
 	multiply_variable = { productivity_growth_scaled = 0.75 } #control factor, use this to scale worldwide productivity growth
+
+	set_temp_variable = { productivity_country_modifier = modifier@country_productivity_growth_modifier }
+	add_to_temp_variable = { productivity_country_modifier = 1 }
+	multiply_variable = { productivity_growth_scaled = productivity_country_modifier }
+
 	every_controlled_state = {
 		set_variable = { state_productivity_growth_scaled = PREV.productivity_growth_scaled }
 		if = {
