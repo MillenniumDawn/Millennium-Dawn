@@ -52226,6 +52226,324 @@ country_event = {
 	}
 }
 
+# Supercomputing Cooperation Start
+country_event = {
+	id = Japan.100004140
+	title = Japan.100004140.t
+	desc = Japan.100004140.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# Send Invitations
+	option = {
+		name = Japan.100004140.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004140.oA executed"
+		add_to_array = { jap_ihpco_members = ROOT }
+		set_variable = { jap_ihcpo_funding_amt = 1 }
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		hidden_effect = {
+			country_event = { id = Japan.100004144 days = 30 random_days = 15 }
+		}
+		country_event = { id = Japan.100004148 }
+		#Is there a nicer way of doing this?
+		USA = { country_event = { id = Japan.100004141 days = 1 random_days = 2 random_hours = 18 } }
+		ENG = { country_event = { id = Japan.100004141 days = 1 random_days = 2 random_hours = 18 } }
+		GER = { country_event = { id = Japan.100004141 days = 1 random_days = 2 random_hours = 18 } }
+		FRA = { country_event = { id = Japan.100004141 days = 1 random_days = 2 random_hours = 18 } }
+		FIN = { country_event = { id = Japan.100004141 days = 1 random_days = 2 random_hours = 18 } }
+		SWE = { country_event = { id = Japan.100004141 days = 1 random_days = 2 random_hours = 18 } }
+
+		ai_chance = {
+			base = 100
+		}
+	}
+	# Remain Domestic
+	option = {
+		name = Japan.100004140.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100004140.oB executed"
+		add_political_power = 50
+		add_tech_bonus = {
+			name = Japan.100004140.t
+			bonus = 1
+			uses = 1
+			category = computing_tech
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Contribution to IHPCO
+country_event = {
+	id = Japan.100004141
+	title = Japan.100004141.t
+	desc = Japan.100004141.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# Accept
+	option = {
+		name = Japan.100004141.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004141.oA executed"
+		add_to_variable = {
+			var = JAP.jap_ihcpo_funding_amt
+			value = 1
+		}
+		FROM = { country_event = Japan.100004142 }
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		add_to_array = { FROM.jap_ihpco_members = ROOT.id }
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0.1
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+		}
+	}
+	# Refuse
+	option = {
+		name = Japan.100004141.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100004141.oB executed"
+		add_political_power = 25
+		FROM = { country_event = Japan.100004143 }
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value > 30
+				}
+			}
+		}
+	}
+	# More Funding
+	option = {
+		name = Japan.100004141.oC
+		log = "[GetDateText]: [This.GetName]: Japan.100004141.oC executed"
+		add_to_variable = {
+			var = JAP.jap_ihcpo_funding_amt
+			value = 2
+		}
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -30 }
+		modify_treasury_effect = yes
+		add_to_array = { FROM.jap_ihpco_members = ROOT.id }
+		FROM = { country_event = Japan.100004142 }
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 3
+				has_opinion = {
+					target = FROM
+					value > 30
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+		}
+	}
+}
+
+# Invitee Accepted
+country_event = {
+	id = Japan.100004142
+	title = Japan.100004142.t
+	desc = Japan.100004142.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# Great
+	option = {
+		name = Japan.100004142.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004142.oA executed"
+	}
+}
+
+# Invitee Refused
+country_event = {
+	id = Japan.100004143
+	title = Japan.100004143.t
+	desc = Japan.100004143.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# Sad
+	option = {
+		name = Japan.100004143.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004143.oA executed"
+	}
+}
+
+# Supercomputing Results Gate
+country_event = {
+	id = Japan.100004144
+	hidden = yes
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [Root.GetName]: Japan.100004144.oA"
+		if = {
+			limit = {
+				check_variable = { jap_ihcpo_funding_amt < 5 }
+			}
+			for_each_scope_loop = {
+				array = JAP.jap_ihpco_members
+				country_event = { id = Japan.100004145 } # Supercomputing Bad Outcome
+			}
+		} else_if = {
+			limit = {
+				check_variable = { jap_ihcpo_funding_amt < 8 }
+			}
+			for_each_scope_loop = {
+				array = JAP.jap_ihpco_members
+				country_event = { id = Japan.100004146 } # Supercomputing Good Outcome
+			}
+		} else = {
+			for_each_scope_loop = {
+				array = JAP.jap_ihpco_members
+				country_event = { id = Japan.100004147 } # Supercomputing Amazing Outcome
+			}
+		}
+	}
+}
+
+# Supercomputing Bad Outcome
+country_event = {
+	id = Japan.100004145
+	title = Japan.100004145.t
+	desc = Japan.100004145.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# What a waste!
+	option = {
+		name = Japan.100004145.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004145.oA executed"
+		add_political_power = -50
+		add_tech_bonus = {
+			name = Japan.100004140.t
+			bonus = 0.25
+			uses = 1
+			category = computing_tech
+		}
+	}
+}
+
+# Supercomputing Good Outcome
+country_event = {
+	id = Japan.100004146
+	title = Japan.100004146.t
+	desc = Japan.100004146.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# Great!
+	option = {
+		name = Japan.100004146.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004146.oA executed"
+		add_tech_bonus = {
+			name = Japan.100004140.t
+			bonus = 1
+			uses = 1
+			category = computing_tech
+		}
+	}
+}
+
+# Supercomputing Amazing Outcome
+country_event = {
+	id = Japan.100004147
+	title = Japan.100004147.t
+	desc = Japan.100004147.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# Great!
+	option = {
+		name = Japan.100004147.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004147.oA executed"
+		add_tech_bonus = {
+			name = Japan.100004140.t
+			bonus = 2
+			uses = 1
+			category = computing_tech
+		}
+		add_tech_bonus = {
+			name = Japan.100004140.t
+			ahead_reduction = 2
+			uses = 1
+			category = computing_tech
+		}
+	}
+}
+
+# Supercomputing: Invite China?
+country_event = {
+	id = Japan.100004148
+	title = Japan.100004148.t
+	desc = Japan.100004148.d
+	picture = GFX_JAP_anchor_generic
+
+	is_triggered_only = yes
+
+	# Invite
+	option = {
+		name = Japan.100004148.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100004148.oA executed"
+		CHI = { country_event = { id = Japan.100004141 hours = 6 random_hours = 18 } }
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0.1
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+		}
+	}
+	# Don't
+	option = {
+		name = Japan.100004148.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100004148.oB executed"
+		add_political_power = 50
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value > 30
+				}
+			}
+		}
+}
 
 #----------------------------------------------------------------
 #Events Triggered by Date
