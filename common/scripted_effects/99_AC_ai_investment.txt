@@ -381,6 +381,11 @@ AI_get_dockyard_score = {
 	}
 }
 
+temp_test = {
+	44 = {
+		AI_get_infrastructure_score = yes
+	}
+}
 # Building Type 4: Infrastructure
 AI_get_infrastructure_score = {
 	if = { limit = { free_building_slots = { building = infrastructure size > 0  include_locked = no } }
@@ -430,6 +435,24 @@ AI_get_infrastructure_score = {
 		if = {
 			limit = { free_building_slots = { building = industrial_complex size < 10  include_locked = no } } # although this checks civs specifically in a state available to build, this works for mils, docks, and offices too since they all share the slots.
 			add_to_temp_variable = { v2 = 15 }
+		}
+
+		# Do not invest infrastructure if you have more then your current value
+		set_temp_variable = { remaining_level = 5 }
+		set_temp_variable = { differential_infra = 0 }
+		subtract_from_temp_variable = { remaining_level = building_level@infrastructure }
+		for_each_loop = {
+			array = project_type_in_state
+			value = v
+			index = i
+
+			if = { limit = { check_variable = { project_type_in_state^i = 4 } }
+				add_to_temp_variable = { differential_infra = 1 }
+			}
+		}
+		add_to_temp_variable = { differential_infra = remaining_level }
+		if = { limit = { check_variable = { differential_infra > 4 } }
+			add_to_temp_variable = { v2 = 75 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
