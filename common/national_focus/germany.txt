@@ -10,6 +10,10 @@
 		}
 	}
 
+	initial_show_position = {
+		x = 100
+		y = 0
+	}
 	continuous_focus_position = { x = 5300 y = 3040 }
 
 
@@ -672,15 +676,17 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			NOT = {
-				has_government = communism
-			}
 			45 = {
 				is_owned_and_controlled_by = GER
 			}
-			has_opinion = {
-				target = USA
-				value > 59
+			NOT = {
+				has_government = communism
+			}
+			USA = {
+				has_opinion = {
+					target = GER
+					value > 59
+				}
 			}
 		}
 
@@ -739,12 +745,12 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_ECONOMY }
 
 		available = {
+			539 = {
+				is_owned_and_controlled_by = GER
+			}
 			country_exists = SOV
 			NOT = {
 				has_completed_focus = GER_cancel_russian_deals
-			}
-			539 = {
-				is_owned_and_controlled_by = GER
 			}
 			SOV = {
 				has_opinion = {
@@ -824,9 +830,11 @@
 			NOT = {
 				has_government = communism
 			}
-			has_opinion = {
-				target = ENG
-				value > 59
+			ENG = {
+				has_opinion = {
+					target = GER
+					value > 59
+				}
 			}
 		}
 
@@ -844,7 +852,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_shell_ops"
-			add_offsite_building = { level = 1 type = offices }
+			add_offsite_building = { level = 1 type = industrial_complex }
 			add_resource = {
 				type = oil
 				amount = 3
@@ -889,9 +897,11 @@
 			42 = {
 				is_owned_and_controlled_by = GER
 			}
-			has_opinion = {
-				target = USA
-				value > 99
+			USA = {
+				has_opinion = {
+					target = GER
+					value > 79
+				}
 			}
 		 }
 
@@ -946,12 +956,14 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			has_opinion = {
-				target = USA
-				value > 99
-			}
 			966 = {
 				is_owned_and_controlled_by = GER
+			}
+			USA = {
+				has_opinion = {
+					target = GER
+					value > 79
+				}
 			}
 		}
 
@@ -1118,8 +1130,8 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_northsea_steel_oilrigs"
-			add_offsite_building = { level = 1 type = offices }
-			add_offsite_building = { level = 1 type = offices }
+			add_offsite_building = { level = 1 type = industrial_complex }
+			add_offsite_building = { level = 1 type = industrial_complex }
 			add_resource = {
 				type = oil
 				amount = 9
@@ -3512,10 +3524,10 @@
 		available = {
 			if = { limit = { has_idea = industrial_conglomerates }
 			custom_trigger_tooltip = {
-					tooltip = GER_industrial_conglomerates_very_positive_TT
-					check_variable = { industrial_conglomerates_opinion > 79 }
-				}
+				tooltip = GER_industrial_conglomerates_slightly_positive_TT
+				check_variable = { industrial_conglomerates_opinion > 49 }
 			}
+		}
 			has_political_power > 500
 		}
 
@@ -3846,7 +3858,16 @@
 		prerequisite = { focus = GER_rule_out_article_twenty }
 		cost = 7.15
 		search_filters = { FOCUS_FILTER_POLITICAL }
-
+		available = {
+			OR = {
+				964 = {
+					is_owned_and_controlled_by = GER
+				}
+				43 = {
+					is_owned_and_controlled_by = GER
+				}
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_decentralized_republic"
 			custom_effect_tooltip = GER_release_bavaria_decisions_TT
@@ -3869,6 +3890,16 @@
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		mutually_exclusive = {
 			focus = GER_expand_article_twenty
+		}
+		available = {
+			OR = {
+				964 = {
+					is_owned_and_controlled_by = GER
+				}
+				43 = {
+					is_owned_and_controlled_by = GER
+				}
+			}
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_rule_out_article_twenty"
@@ -4541,13 +4572,15 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_foreign_investment_opportunities"
-			set_temp_variable = { int_investment_change = treasury_change }
-			multiply_temp_variable = { int_investment_change = -1.25 }
-			modify_international_investment_effect = yes
-			newline = yes
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = -0.05 }
 			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = treasury_change }
+			multiply_temp_variable = { int_investment_change = -1.25 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.02 }
+			modify_debt_effect = yes
 		}
 
 		ai_will_do = {
@@ -5207,8 +5240,9 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_Neuausrichtung_des_Heeres"
 			swap_ideas = {
 				remove_idea = GER_idea_Heer_2010
-				add_idea = GER_idea_Neuausrichtung_des_Heeres
+				add_idea = GER_idea_Heer_2010_2
 			}
+			remove_ideas = GER_idea_Cold_War_Army
 		}
 		ai_will_do = {
 			factor = 1
@@ -12259,15 +12293,22 @@
 		}
 		available = {
 			emerging_anarchist_communism_are_in_power = yes
-			FRA = {
-				influence_higher_40 = yes
-			}
 		}
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GER_the_alternative"
-			set_temp_variable = { percent_change = 2 }
+			log = "[GetDateText]: [Root.GetName]: Focus GER_stage_the_union"
+			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { tag_index = GER }
 			set_temp_variable = { influence_target = FRA }
+			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = GER }
+			set_temp_variable = { influence_target = POL }
+			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = GER }
+			set_temp_variable = { influence_target = SWE }
 			change_influence_percentage = yes
 		}
 
@@ -12374,6 +12415,71 @@
 			newline = yes
 			set_cosmetic_tag = GER_franco_german_union
 			set_country_flag = is_GERMAN
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	focus = {
+		id = GER_invite_poland
+		icon = align_to_poland2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		x = 1
+		y = 8
+		cost = 10
+		relative_position_id = GER_the_left
+		prerequisite = {
+			focus = GER_german_franco_union
+		}
+		available = {
+			emerging_anarchist_communism_are_in_power = yes
+			POL = {
+				influence_higher_40 = yes
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GER_invite_poland"
+			POL = {
+				country_event = {
+					id = Germany.223
+					days = 1
+				}
+			}
+			custom_effect_tooltip = GER_more_likely_to_accept
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = GER_invite_sweden
+		icon = align_to_sweden2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		x = -1
+		y = 8
+		cost = 10
+		relative_position_id = GER_the_left
+		prerequisite = {
+			focus = GER_german_franco_union
+		}
+		available = {
+			emerging_anarchist_communism_are_in_power = yes
+			SWE = {
+				influence_higher_40 = yes
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GER_invite_sweden"
+			SWE = {
+				country_event = {
+					id = Germany.223
+					days = 1
+				}
+			}
+			custom_effect_tooltip = GER_more_likely_to_accept
 		}
 
 		ai_will_do = {
@@ -13242,6 +13348,9 @@
 				name = "Germany Proclaims The 'Reich'"
 			}
 			set_cosmetic_tag = GER_fourth_reich
+			country_event = {
+				id = Germany.419
+			}
 			add_war_support = 0.15
 		}
 
@@ -14727,8 +14836,13 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_Fujian_Benz_Automotive"
-			add_offsite_building = { type = offices level = 1 }
 			42 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
 				add_resource = {
 					type = rubber
 					amount = 7
@@ -16608,6 +16722,9 @@
 				UKR = {
 					is_subject_of = GER
 				}
+				UKR = {
+					is_subject_of = SOV
+				}
 				NOT = {
 					country_exists = UKR
 				}
@@ -16819,6 +16936,9 @@
 		relative_position_id = GER_german_irredentism
 		bypass = {
 			OR = {
+				MEX = {
+					is_subject_of = USA
+				}
 				has_war_with = USA
 				USA = {
 					is_subject_of = GER
