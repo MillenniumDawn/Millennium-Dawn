@@ -1315,9 +1315,9 @@ focus_tree = {
 					NOT = {
 						has_country_flag = JAP_DEMOGRAPHICS_CHAIN_REFUSED_PROGRESSIVES
 					}
-					set_temp_variable = { temp_opinion = 5 }
-				change_labour_unions_opinion = yes
 				}
+				set_temp_variable = { temp_opinion = 5 }
+				change_labour_unions_opinion = yes
 				custom_effect_tooltip = JAP_union_interest_TT
 			}
 			else_if = { #If they backtracked, don't give them anything!
@@ -3783,7 +3783,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_interdiscipline_science executed"
-
+			add_timed_idea = {
+				idea = JAP_science_objective_broad
+				days = 365
+			}
 		}
 
 		ai_will_do = { factor = 10 }
@@ -3804,7 +3807,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_commercialism_science executed"
-
+			add_timed_idea = {
+				idea = JAP_science_objective_money
+				days = 365
+			}
 		}
 
 		ai_will_do = { factor = 10 }
@@ -3833,7 +3839,7 @@ focus_tree = {
 		ai_will_do = { factor = 10 }
 	}
 
-	#Humanities and Natural Science
+	#Natural Science
 	focus = {
 		id = JAP_humanities
 		icon = goal_JAP_quake_research
@@ -3844,20 +3850,73 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_POLITICAL }
 
 		prerequisite = { focus = JAP_selection_and_concentration }
-		mutually_exclusive = { focus = JAP_nation_of_science }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_humanities executed"
-
+			custom_effect_tooltip = JAP_humanities_TT
+			if = {
+				limit = {
+					has_idea = JAP_research_emphasis_lean
+				}
+				add_tech_bonus = {
+					name = JAP_humanities
+					bonus = 0.5
+					uses = 1
+					category = construction_tech
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = JAP_research_emphasis_optimal
+				}
+				add_tech_bonus = {
+					name = JAP_humanities
+					bonus = 1
+					uses = 1
+					category = construction_tech
+				}
+				add_tech_bonus = {
+					name = JAP_humanities
+					ahead_reduction = 1
+					uses = 1
+					category = construction_tech
+				}
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_idea = JAP_research_emphasis_heavy
+						has_idea = JAP_research_emphasis_heavy_civ
+						has_idea = JAP_research_emphasis_heavy_mil
+						has_idea = JAP_research_emphasis_super
+					}
+				}
+				add_tech_bonus = {
+					name = JAP_humanities
+					bonus = 1
+					uses = 1
+					category = construction_tech
+				}
+				add_tech_bonus = {
+					name = JAP_humanities
+					ahead_reduction = 1
+					uses = 1
+					category = construction_tech
+				}
+				set_temp_variable = { treasury_change = -20 }
+				modify_treasury_effect = yes
+			}
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Protect the Faculty
+	#Technical Universities
 	focus = {
 		id = JAP_protect_faculty
-		icon = goal_JAP_protect_science
+		icon = goal_JAP_tech_university
 		x = -1
 		y = 5
 		cost = 10
@@ -3868,12 +3927,39 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_protect_faculty executed"
+			JAP = { country_event = Japan.100004110 } # Technical Research Grants
+			custom_effect_tooltip = JAP_protect_faculty_TT
+			if = {
+				limit = {
+					has_idea = JAP_research_emphasis_lean
+				}
+				add_political_power = 25
+			}
+			else_if = {
+				limit = {
+					has_idea = JAP_research_emphasis_optimal
+				}
+				set_temp_variable = { treasury_change = -10 }
+				modify_treasury_effect = yes
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_idea = JAP_research_emphasis_heavy
+						has_idea = JAP_research_emphasis_heavy_civ
+						has_idea = JAP_research_emphasis_heavy_mil
+						has_idea = JAP_research_emphasis_super
+					}
+				}
+				set_temp_variable = { treasury_change = -30 }
+				modify_treasury_effect = yes
+			}
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Political Freedom of the University
+	#Social Sciences
 	focus = {
 		id = JAP_protect_academism
 		icon = democracy
@@ -3887,15 +3973,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_protect_academism executed"
+			JAP = { country_event = Japan.100004111 } # Ryukyu Survey Event
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Nation of Science and Technology
+	#Genetic Science
 	focus = {
 		id = JAP_nation_of_science
-		icon = goal_JAP_tech_university
+		icon = goal_JAP_protect_science
 		x = 1
 		y = 4
 		cost = 10
@@ -3903,19 +3990,73 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 
 		prerequisite = { focus = JAP_selection_and_concentration }
-		mutually_exclusive = { focus = JAP_humanities }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_nation_of_science executed"
+			custom_effect_tooltip = JAP_nation_of_science_TT
+			if = {
+				limit = {
+					has_idea = JAP_research_emphasis_lean
+				}
+				add_tech_bonus = {
+					name = JAP_nation_of_science
+					bonus = 1
+					uses = 2
+					category = Cat_GENES
+				}
+			}
+			if = {
+				limit = {
+					has_idea = JAP_research_emphasis_optimal
+				}
+				add_tech_bonus = {
+					name = JAP_nation_of_science
+					bonus = 1
+					uses = 2
+					category = Cat_GENES
+				}
+				add_tech_bonus = {
+					name = JAP_nation_of_science
+					ahead_reduction = 1
+					uses = 1
+					category = Cat_GENES
+				}
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+			}
+			if = {
+				limit = {
+					OR = {
+						has_idea = JAP_research_emphasis_heavy
+						has_idea = JAP_research_emphasis_heavy_civ
+						has_idea = JAP_research_emphasis_heavy_mil
+						has_idea = JAP_research_emphasis_super
+					}
+				}
+				add_tech_bonus = {
+					name = JAP_nation_of_science
+					bonus = 1
+					uses = 2
+					category = Cat_GENES
+				}
+				add_tech_bonus = {
+					name = JAP_nation_of_science
+					ahead_reduction = 1
+					uses = 1
+					category = Cat_GENES
+				}
+				set_temp_variable = { treasury_change = -20 }
+				modify_treasury_effect = yes
+			}
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#Reorganise Universities on Efficency
+	#Industrial Research Interests
 	focus = {
 		id = JAP_reorganise_universities
-		icon = goal_JAP_hierarchy
+		icon = zaibatsu
 		x = 1
 		y = 5
 		cost = 10
@@ -3926,16 +4067,42 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_reorganise_universities executed"
-
+			JAP = { country_event = Japan.100004112 } # Heavy Engineering Event
+			custom_effect_tooltip = JAP_reorganise_universities_TT
+			if = {
+				limit = {
+					has_idea = JAP_research_emphasis_lean
+				}
+				add_political_power = 25
+			}
+			else_if = {
+				limit = {
+					has_idea = JAP_research_emphasis_optimal
+				}
+				set_temp_variable = { treasury_change = -10 }
+				modify_treasury_effect = yes
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_idea = JAP_research_emphasis_heavy
+						has_idea = JAP_research_emphasis_heavy_civ
+						has_idea = JAP_research_emphasis_heavy_mil
+						has_idea = JAP_research_emphasis_super
+					}
+				}
+				set_temp_variable = { treasury_change = -30 }
+				modify_treasury_effect = yes
+			}
 		}
 
 		ai_will_do = { factor = 10 }
 	}
 
-	#San-Gaku-Kan
+	#Space Tech
 	focus = {
 		id = JAP_san_gaku_kan
-		icon = national_unity
+		icon = generic_space
 		x = 1
 		y = 6
 		cost = 10
@@ -3948,6 +4115,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_san_gaku_kan executed"
+			JAP = { country_event = Japan.100004113 } #
 
 		}
 
@@ -3971,7 +4139,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus JAP_reboot_sigma executed"
-
+			add_ideas = JAP_software
 		}
 
 		ai_will_do = { factor = 10 }
