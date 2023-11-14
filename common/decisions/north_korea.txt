@@ -409,23 +409,18 @@ NKO_Arduous_March = {
 
 	NKO_end_of_arduous_march = {
 		icon = GFX_decision_generic_scorched_earth
-		cost = 100
 		days_remove = 180
 		fire_only_once = yes
 		visible = {
-			AND = {
-				has_completed_focus = NKO_private_markets
-				has_completed_focus = NKO_peoples_life_bonds
-				has_completed_focus = NKO_industrial_recovery
-			}
+			has_completed_focus = NKO_private_markets
+			has_completed_focus = NKO_peoples_life_bonds
+			has_completed_focus = NKO_industrial_recovery
 		}
 		available = {
-			AND = {
-				has_completed_focus = NKO_construction_boom
-				has_completed_focus = NKO_nurture_software_industry
-				has_completed_focus = NKO_infrastructure_development
-				has_completed_focus = NKO_nurture_donju
-			}
+			has_completed_focus = NKO_construction_boom
+			has_completed_focus = NKO_nurture_software_industry
+			has_completed_focus = NKO_infrastructure_development
+			has_completed_focus = NKO_nurture_donju
 		}
 
 		remove_effect = {
@@ -439,7 +434,7 @@ NKO_Arduous_March = {
 					days = 365
 				}
 			}
-			if = {
+			else_if = {
 				limit = { has_completed_focus = NKO_prioritize_songun }
 				add_timed_idea = {
 					idea = NKO_arduous_march_legacy_songun
@@ -448,8 +443,8 @@ NKO_Arduous_March = {
 			}
 		}
 
-		modifier = {
-			political_power_factor = -0.05
+		ai_will_do = {
+			base = 100
 		}
 	}
 }
@@ -676,30 +671,34 @@ NKO_Power_struggle = {
 						var = Kim_Jong_Nam
 						value = 75
 						compare = greater_than_or_equals
+					}
+				}
+				if = {
+					limit = {
+						has_completed_focus = NKO_Place_Loyalists_in_KPA
+						NOT = { has_completed_focus = NKO_People_Army }
+						has_stability < 0.70
+					}
+					random_list = {
+						60 = {
+							set_country_flag = Kim_Jong_Nam
+							news_event = kim_jong_il_death.4
+						}
+						40 = {
+							set_country_flag = NKO_Junta
+							news_event = kim_jong_il_death.6
 						}
 					}
-					if = {
-						limit = {
-							has_completed_focus = NKO_Place_Loyalists_in_KPA
-							NOT = { has_completed_focus = NKO_People_Army }
-							has_stability < 0.70
-						}
-						random_list = {
-							60 = {
-								set_country_flag = Kim_Jong_Nam
-							}
-							40 = {
-								set_country_flag = NKO_Junta
-							}
-						}
-					}
+				}
 				else = {
 					random_list = {
 						85 = {
 							set_country_flag = Kim_Jong_Nam
+							news_event = kim_jong_il_death.4
 						}
 						15 = {
 							set_country_flag = NKO_Junta
+							news_event = kim_jong_il_death.6
 						}
 					}
 				}
@@ -709,41 +708,54 @@ NKO_Power_struggle = {
 					has_stability > 0.45
 					check_variable = {
 						var = Kim_Jong_un
-						value = 80
+						value = 65
 						compare = greater_than_or_equals
+					}
+				}
+				if = {
+					limit = {
+						has_completed_focus = NKO_Bribe_KPA_seniors
+						NOT = { has_completed_focus = NKO_People_Army }
+						has_stability < 0.75
+					}
+					random_list = {
+						85 = {
+							set_country_flag = Kim_Jong_un
+							news_event = kim_jong_il_death.5
+						}
+						15 = {
+							set_country_flag = NKO_Junta
+							news_event = kim_jong_il_death.6
 						}
 					}
-					if = {
-						limit = {
-							has_completed_focus = NKO_Bribe_KPA_seniors
-							NOT = { has_completed_focus = NKO_People_Army }
-							has_stability < 0.75
-						}
-						random_list = {
-							85 = {
-								set_country_flag = Kim_Jong_un
-							}
-							15 = {
-								set_country_flag = NKO_Junta
-							}
-						}
-					}
+				}
 				else = { set_country_flag = Kim_Jong_un }
 			}
-			if = {
+			else_if = {
 				limit = {
-					check_variable = {
-						var = Kim_Jong_un
-						value = 50
-						compare = less_than_or_equals
-					}
-					check_variable = {
-						var = Kim_Jong_Nam
-						value = 50
-						compare = less_than_or_equals
+					OR = {
+						AND = {
+							check_variable = {
+								var = Kim_Jong_un
+								value = 50
+								compare = less_than_or_equals
+							}
+						}
+						AND = {
+							check_variable = {
+								var = Kim_Jong_Nam
+								value = 50
+								compare = less_than_or_equals
+							}
+						}
 					}
 				}
 				set_country_flag = NKO_Junta
+				news_event = kim_jong_il_death.6
+			}
+			else = {
+				set_country_flag = NKO_Junta
+				news_event = kim_jong_il_death.6
 			}
 		}
 	}

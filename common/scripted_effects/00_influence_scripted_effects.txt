@@ -458,7 +458,13 @@ change_current_influencer_index_percentage = {
 # set_temp_variable = { influence_target = SCOPE }
 # Supported Scope: FROM, ROOT, PREV, TAG
 change_influence_percentage = {
-	log = "[GetDateText]: [ROOT.GetName]: Change Influence Percentage [?var:tag_index.GetName] influence action in [?var:influence_target.GetName]"
+	set_temp_variable = { tg = tag_index }
+	set_temp_variable = { it = influence_target }
+	set_temp_variable = { itd = 0 }
+	var:influence_target = {
+		set_temp_variable = { itd = THIS.domestic_influence_amount }
+	}
+	log = "[GetDateText]: [ROOT.GetName]: Influence Change, Influencer: [?var:tg.GetName], Influencee: [?var:it.GetName], Influence Domestic Independence: [?itd]"
 
 	set_temp_variable = { percent_change_temp = percent_change }
 	var:influence_target = {
@@ -653,16 +659,35 @@ init_auto_influence_array = {
 }
 
 update_auto_influence_array = {
+	log = "[GetDateText]: [THIS.GetName]: update_auto_influence_array running"
 	set_variable = { auto_influence_cap = 3 }
-	add_to_variable = { auto_influence_cap = modifier@foreign_influence_auto_influence_cap_modifier }
+	add_to_variable = { auto_influence_cap = THIS.modifier@foreign_influence_auto_influence_cap_modifier }
+
+	log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
+	set_variable = { auto_influence_cost = 0 }
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
+		add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+	}
 
 	for_each_loop = {
 		array = auto_influence_array
-		if = { limit = { check_variable = { i > auto_influence_cap } }
+		if = { limit = { check_variable = { i > auto_influence_cap } NOT = { check_variable = { v = 0 } } }
+			log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
 			set_variable = { auto_influence_array^i = 0 }
+			var:auto_influence_array^i = {
+				PREV = {
+					remove_auto_influencer_request = yes
+				}
+			}
+		}
+		if = {
+			limit = { NOT = { check_variable = { v = 0 } } }
+			add_to_variable = { auto_influence_cost = 1.50 }
 		}
 	}
-	clamp_variable = { var = auto_influence_users min = 0 max = auto_influence_cap }
+
+	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	update_dirty_influence_var = yes
 }
 
 # SCOPE: Executed in ROOT
@@ -685,7 +710,7 @@ create_new_auto_influencer_request = {
 	if = { limit = { has_variable = new_auto_influencer }
 		set_variable = { auto_influence_array^new_auto_influencer = PREV.id }
 		add_to_variable = { auto_influence_users = 1 }
-		clamp_variable = { var = auto_influence_users min = 0 max = auto_influence_cap }
+		clamp_variable = { var = auto_influence_users min = 0 max = 10 }
 		clear_variable = new_auto_influencer
 	}
 	custom_effect_tooltip = influence_create_new_auto_request_TT
@@ -703,6 +728,6 @@ remove_auto_influencer_request = {
 
 	set_variable = { auto_influence_array^index = 0 }
 	subtract_from_variable = { auto_influence_users = 1 }
-	clamp_variable = { var = auto_influence_users min = 0 max = auto_influence_cap }
+	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
 	custom_effect_tooltip = influence_remove_auto_request_TT
 }

@@ -1,0 +1,247 @@
+TUR_update_military_standing = {
+	set_variable = { TUR_military_standing_value = 0 }
+
+	#Social conservatism - government counts as double negative
+	set_variable = { TUR_military_standing_conservatism = ROOT.social_conservatism_government }
+	multiply_variable = { TUR_military_standing_conservatism = -2 }
+	add_to_variable = { TUR_military_standing_value = TUR_military_standing_conservatism }
+
+	#Military internal faction opinion counts as positive
+	set_variable = { TUR_military_standing_opinion = ROOT.the_military_opinion }
+	add_to_variable = { TUR_military_standing_value = TUR_military_standing_opinion }
+
+	#Corruption above level 5 is -20 points per level
+	set_variable = { TUR_military_standing_corruption = 0 }
+	if = {
+		limit = { has_idea = systematic_corruption }
+		add_to_variable = { TUR_military_standing_corruption = -20 }
+	}
+	else_if = {
+		limit = { has_idea = unrestrained_corruption }
+		add_to_variable = { TUR_military_standing_corruption = -40 }
+	}
+	else_if = {
+		limit = { has_idea = rampant_corruption }
+		add_to_variable = { TUR_military_standing_corruption = -60 }
+	}
+	else_if = {
+		limit = { has_idea = crippling_corruption }
+		add_to_variable = { TUR_military_standing_corruption = -80 }
+	}
+	else_if = {
+		limit = { has_idea = paralyzing_corruption }
+		add_to_variable = { TUR_military_standing_corruption = -100 }
+	}
+	add_to_variable = { TUR_military_standing_value = TUR_military_standing_corruption }
+
+	#Bad economic cycle is -25 points per level below stable growth
+	set_variable = { TUR_military_standing_economy = 0 }
+	if = {
+		limit = { has_idea = stagnation }
+		add_to_variable = { TUR_military_standing_economy = -25 }
+	}
+	else_if = {
+		limit = { has_idea = recession }
+		add_to_variable = { TUR_military_standing_economy = -50 }
+	}
+	else_if = {
+		limit = { has_idea = depression }
+		add_to_variable = { TUR_military_standing_economy = -75 }
+	}
+	add_to_variable = { TUR_military_standing_value = TUR_military_standing_economy }
+
+	#Interest rate multiplied by -5
+	set_variable = { TUR_military_standing_interest_rate = ROOT.interest_rate }
+	round_variable = TUR_military_standing_interest_rate
+	multiply_variable = { TUR_military_standing_interest_rate = -5 }
+	add_to_variable = { TUR_military_standing_value = TUR_military_standing_interest_rate }
+
+	#Different parties have different base opinions
+	set_variable = { TUR_military_standing_party = 0 }
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 10 }
+				is_in_array = { ruling_party = 11 }
+				is_in_array = { ruling_party = 19 }
+			}
+		}
+		set_variable = { TUR_military_standing_party = -250 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				AND = {
+					NOT = { has_country_flag = TUR_beacon_of_islam }
+					is_in_array = { ruling_party = 0 }
+				}
+				is_in_array = { ruling_party = 6 }
+				is_in_array = { ruling_party = 8 }
+				is_in_array = { ruling_party = 9 }
+				is_in_array = { ruling_party = 12 }
+				AND = {
+					has_country_flag = TUR_beacon_of_islam
+					is_in_array = { ruling_party = 13 }
+				}
+				is_in_array = { ruling_party = 20 }
+				is_in_array = { ruling_party = 21 }
+				is_in_array = { ruling_party = 23 }
+			}
+		}
+		set_variable = { TUR_military_standing_party = -50 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 5 }
+				is_in_array = { ruling_party = 7 }
+				is_in_array = { ruling_party = 14 }
+				is_in_array = { ruling_party = 17 }
+			}
+		}
+		set_variable = { TUR_military_standing_party = -50 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 15 }
+			}
+		}
+		set_variable = { TUR_military_standing_party = -25 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				AND = {
+					has_country_flag = TUR_beacon_of_islam
+					is_in_array = { ruling_party = 1 }
+				}
+				is_in_array = { ruling_party = 2 }
+				AND = {
+					NOT = { has_country_flag = TUR_beacon_of_islam }
+					is_in_array = { ruling_party = 13 }
+				}
+				is_in_array = { ruling_party = 16 }
+			}
+		}
+		set_variable = { TUR_military_standing_party = 50 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }
+				is_in_array = { ruling_party = 3 }
+				is_in_array = { ruling_party = 18 }
+			}
+		}
+		set_variable = { TUR_military_standing_party = 100 }
+	}
+	else_if = {
+		limit = {
+			is_in_array = { ruling_party = 22 }
+		}
+		set_variable = { TUR_military_standing_party = 200 }
+	}
+	add_to_variable = { TUR_military_standing_value = TUR_military_standing_party }
+}
+TUR_mafia_events_random = {
+	random_list = {
+		50 = {
+			add_to_variable = { TUR_event_counter_1_mafia = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { TUR_event_counter_1_mafia > 5 } }
+			set_variable = { TUR_event_counter_1_mafia = 0 }
+			random_list = {
+				25 = {
+					country_event = Turkish_mafia.1
+				}
+				25 = {
+					country_event = Turkish_mafia.2
+				}
+				25 = {
+					country_event = Turkish_mafia.3
+				}
+				25 = {
+					country_event = Turkish_mafia.4
+				}
+			}
+	}
+}
+#
+TUR_pkk_low_event = {
+	random_list = {
+		30 = {
+			add_to_variable = { TUR_event_counter_1_pkk = 1 }
+		}
+		70 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { TUR_event_counter_1_pkk > 5 } }
+		set_variable = { TUR_event_counter_1_pkk = 0 }
+		country_event = TUR_pkk.5
+	}
+}
+#
+TUR_pkk_medium_event = {
+	random_list = {
+		50 = {
+			add_to_variable = { TUR_event_counter_2_pkk = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { TUR_event_counter_2_pkk > 5 } }
+		set_variable = { TUR_event_counter_2_pkk = 0 }
+		country_event = TUR_pkk.5
+	}
+}
+#
+TUR_pkk_high_event = {
+	random_list = {
+		70 = {
+			add_to_variable = { TUR_event_counter_3_pkk = 1 }
+		}
+		30 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { TUR_event_counter_3_pkk > 5 } }
+		set_variable = { TUR_event_counter_3_pkk = 0 }
+		country_event = TUR_pkk.5
+	}
+}
+#
+TUR_parties_random = {
+	random_list = {
+		50 = {
+			add_to_variable = { TUR_event_counter_1_party = 1 }
+		}
+		50 = {
+		}
+	}
+	if = {
+		limit = { check_variable = { TUR_event_counter_1_party > 5 } }
+			set_variable = { TUR_event_counter_1_party = 0 }
+			random_list = {
+				25 = {
+					country_event = Turkish_parties.1
+				}
+				25 = {
+					country_event = Turkish_parties.2
+				}
+				25 = {
+					country_event = Turkish_parties.3
+				}
+				25 = {
+					country_event = Turkish_parties.4
+				}
+			}
+	}
+}
