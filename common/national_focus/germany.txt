@@ -10,6 +10,10 @@
 		}
 	}
 
+	initial_show_position = {
+		x = 100
+		y = 0
+	}
 	continuous_focus_position = { x = 5300 y = 3040 }
 
 
@@ -331,8 +335,8 @@
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = 50_percent_government_coalition_strength_tt
-				check_variable = { government_coalition_strength > 0.499 }
+				tooltip = 40_percent_government_coalition_strength_tt
+				check_variable = { government_coalition_strength > 0.399 }
 			}
 			neutrality_neutral_green_not_in_power_or_coalition = yes
 			has_stability > 0.65
@@ -672,15 +676,17 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			NOT = {
-				has_government = communism
-			}
 			45 = {
 				is_owned_and_controlled_by = GER
 			}
-			has_opinion = {
-				target = USA
-				value > 59
+			NOT = {
+				has_government = communism
+			}
+			USA = {
+				has_opinion = {
+					target = GER
+					value > 59
+				}
 			}
 		}
 
@@ -739,12 +745,12 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_ECONOMY }
 
 		available = {
+			539 = {
+				is_owned_and_controlled_by = GER
+			}
 			country_exists = SOV
 			NOT = {
 				has_completed_focus = GER_cancel_russian_deals
-			}
-			539 = {
-				is_owned_and_controlled_by = GER
 			}
 			SOV = {
 				has_opinion = {
@@ -824,9 +830,11 @@
 			NOT = {
 				has_government = communism
 			}
-			has_opinion = {
-				target = ENG
-				value > 59
+			ENG = {
+				has_opinion = {
+					target = GER
+					value > 59
+				}
 			}
 		}
 
@@ -844,7 +852,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_shell_ops"
-			add_offsite_building = { level = 1 type = offices }
+			add_offsite_building = { level = 2 type = industrial_complex }
 			add_resource = {
 				type = oil
 				amount = 3
@@ -865,7 +873,7 @@
 				}
 			}
 			newline = yes
-			set_temp_variable = { treasury_change = -5.00 }
+			set_temp_variable = { treasury_change = -20.00 }
 			modify_treasury_effect = yes
 		}
 
@@ -889,9 +897,11 @@
 			42 = {
 				is_owned_and_controlled_by = GER
 			}
-			has_opinion = {
-				target = USA
-				value > 99
+			USA = {
+				has_opinion = {
+					target = GER
+					value > 79
+				}
 			}
 		 }
 
@@ -946,12 +956,14 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			has_opinion = {
-				target = USA
-				value > 99
-			}
 			966 = {
 				is_owned_and_controlled_by = GER
+			}
+			USA = {
+				has_opinion = {
+					target = GER
+					value > 79
+				}
 			}
 		}
 
@@ -1118,8 +1130,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_northsea_steel_oilrigs"
-			add_offsite_building = { level = 1 type = offices }
-			add_offsite_building = { level = 1 type = offices }
+			add_offsite_building = { level = 2 type = industrial_complex }
 			add_resource = {
 				type = oil
 				amount = 9
@@ -1598,8 +1609,9 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_expand_west"
-			custom_effect_tooltip = GER_east_decrease_opinion
-			add_to_variable = { GER_east_opinion = -1 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
 			add_stability = 0.02
 		}
 
@@ -1824,7 +1836,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_expand_east"
 			custom_effect_tooltip = GER_east_increase_opinion2
 			add_to_variable = { GER_east_opinion = 2 }
-			set_temp_variable = { GER_police_cost_change = 0.03 }
+			set_temp_variable = { GER_police_cost_change = -0.03 }
 			update_GER_police_cost = yes
 		}
 
@@ -2098,7 +2110,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_shaking_up_the_system"
 			add_stability = 0.05
-			add_political_power = 100
+			set_temp_variable = { GER_health_cost_change = -0.05 }
+			update_GER_healthcare_cost = yes
 		}
 
 		ai_will_do = {
@@ -2193,7 +2206,7 @@
 				}
 			}
 			newline = yes
-			set_temp_variable = { GER_health_cost_change = -0.005 }
+			set_temp_variable = { GER_health_cost_change = -0.05 }
 			update_GER_healthcare_cost = yes
 		}
 
@@ -3025,6 +3038,14 @@
 				remove_idea = GER_idea_nuclear_expansion1
 				add_idea = GER_idea_nuclear_expansion2
 			}
+			random_core_state = {
+				add_resource = {
+					type = chromium
+					amount = 4
+				}
+			}
+			set_temp_variable = { treasury_change = -5.50 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -3512,10 +3533,10 @@
 		available = {
 			if = { limit = { has_idea = industrial_conglomerates }
 			custom_trigger_tooltip = {
-					tooltip = GER_industrial_conglomerates_very_positive_TT
-					check_variable = { industrial_conglomerates_opinion > 79 }
-				}
+				tooltip = GER_industrial_conglomerates_slightly_positive_TT
+				check_variable = { industrial_conglomerates_opinion > 49 }
 			}
+		}
 			has_political_power > 500
 		}
 
@@ -3803,6 +3824,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_expand_article_twenty"
 			increase_centralization = yes
 			block_bureau_decrease = yes
+			if = {
+				limit = {
+					has_idea = bureau_04
+				}
+				set_temp_variable = { GER_centralization_cost_change = -0.03 }
+				update_GER_centralization_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -3846,7 +3874,16 @@
 		prerequisite = { focus = GER_rule_out_article_twenty }
 		cost = 7.15
 		search_filters = { FOCUS_FILTER_POLITICAL }
-
+		available = {
+			OR = {
+				964 = {
+					is_owned_and_controlled_by = GER
+				}
+				43 = {
+					is_owned_and_controlled_by = GER
+				}
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_decentralized_republic"
 			custom_effect_tooltip = GER_release_bavaria_decisions_TT
@@ -3870,10 +3907,27 @@
 		mutually_exclusive = {
 			focus = GER_expand_article_twenty
 		}
+		available = {
+			OR = {
+				964 = {
+					is_owned_and_controlled_by = GER
+				}
+				43 = {
+					is_owned_and_controlled_by = GER
+				}
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_rule_out_article_twenty"
 			decrease_centralization = yes
 			block_bureau_increase = yes
+			if = {
+				limit = {
+					has_idea = bureau_01
+				}
+				set_temp_variable = { GER_centralization_cost_change = -0.03 }
+				update_GER_centralization_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4263,6 +4317,13 @@
 			increase_centralization = yes
 			set_temp_variable = { GER_interest_cost_change = 0.001 }
 			update_GER_interest_cost = yes
+			if = {
+				limit = {
+					has_idea = bureau_04
+				}
+				set_temp_variable = { GER_centralization_cost_change = -0.03 }
+				update_GER_centralization_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4306,6 +4367,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_increase_government_jobs"
 			increase_policing_budget = yes
 			block_police_decrease = yes
+			if = {
+				limit = {
+					has_idea = police_05
+				}
+				set_temp_variable = { GER_police_cost_change = -0.03 }
+				update_GER_police_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4541,13 +4609,15 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_foreign_investment_opportunities"
-			set_temp_variable = { int_investment_change = treasury_change }
-			multiply_temp_variable = { int_investment_change = -1.25 }
-			modify_international_investment_effect = yes
-			newline = yes
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = -0.05 }
 			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = treasury_change }
+			multiply_temp_variable = { int_investment_change = -1.25 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.02 }
+			modify_debt_effect = yes
 		}
 
 		ai_will_do = {
@@ -4769,6 +4839,13 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_Establish_Streitkraftebasis"
 			increase_military_spending = yes
+			if = {
+				limit = {
+					has_idea = defence_09
+				}
+				set_temp_variable = { GER_military_cost_change = -0.04 }
+				update_GER_military_cost = yes
+			}
 		}
 
 
@@ -5186,6 +5263,13 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_abolish_conscription"
 			increase_military_spending = yes
+			if = {
+				limit = {
+					has_idea = defence_09
+				}
+				set_temp_variable = { GER_military_cost_change = -0.04 }
+				update_GER_military_cost = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -5207,8 +5291,9 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_Neuausrichtung_des_Heeres"
 			swap_ideas = {
 				remove_idea = GER_idea_Heer_2010
-				add_idea = GER_idea_Neuausrichtung_des_Heeres
+				add_idea = GER_idea_Heer_2010_2
 			}
+			remove_ideas = GER_idea_Cold_War_Army
 		}
 		ai_will_do = {
 			factor = 1
@@ -8768,6 +8853,15 @@
 				}
 			}
 		}
+		if = {
+			limit = {
+				NOT = {
+					has_dynamic_modifier = { modifier = GER_generic_spending_laws }
+				}
+			}
+			add_dynamic_modifier = { modifier = GER_generic_spending_laws }
+		}
+		force_update_dynamic_modifier = yes
 	}
 
 	ai_will_do = {
@@ -9022,6 +9116,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_hartz_ii"
 			increase_centralization = yes
 			block_bureau_decrease = yes
+			if = {
+				limit = {
+					has_idea = bureau_04
+				}
+				set_temp_variable = { GER_centralization_cost_change = -0.03 }
+				update_GER_centralization_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -9195,6 +9296,12 @@
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
 			set_country_flag = GER_condemned_aggro
+			USA = {
+				add_opinion_modifier = {
+					target = GER
+					modifier = medium_decrease
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -9784,7 +9891,7 @@
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_family_values"
-			set_temp_variable = { GER_welfare_cost_change = -0.01 }
+			set_temp_variable = { GER_welfare_cost_change = -0.05 }
 			update_GER_welfare_cost = yes
 			set_temp_variable = { party_index = 1 }
 			set_temp_variable = { party_popularity_increase = -0.025 }
@@ -10066,6 +10173,13 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_a_stronger_military"
 			increase_military_spending = yes
+			if = {
+				limit = {
+					has_idea = defence_09
+				}
+				set_temp_variable = { GER_military_cost_change = -0.04 }
+				update_GER_military_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -10419,6 +10533,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_digital_democracy"
 			increase_centralization = yes
 			block_bureau_decrease = yes
+			if = {
+				limit = {
+					has_idea = bureau_04
+				}
+				set_temp_variable = { GER_centralization_cost_change = -0.03 }
+				update_GER_centralization_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11210,6 +11331,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_law_and_order"
 			increase_policing_budget = yes
 			block_police_decrease = yes
+			if = {
+				limit = {
+					has_idea = police_05
+				}
+				set_temp_variable = { GER_police_cost_change = -0.03 }
+				update_GER_police_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11721,6 +11849,13 @@
 			hidden_effect = {
 				increase_conscription_effect = yes
 			}
+			if = {
+				limit = {
+					has_idea = draft_army
+				}
+				set_temp_variable = { GER_military_cost_change = -0.05 }
+				update_GER_military_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -11875,6 +12010,13 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_against_militarism"
 			decrease_military_spending = yes
+			if = {
+				limit = {
+					has_idea = defence_00
+				}
+				set_temp_variable = { GER_military_cost_change = -0.05 }
+				update_GER_military_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -12133,6 +12275,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_decentralization"
 			decrease_centralization = yes
 			block_bureau_increase = yes
+			if = {
+				limit = {
+					has_idea = bureau_01
+				}
+				set_temp_variable = { GER_centralization_cost_change = -0.05 }
+				update_GER_centralization_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -12259,15 +12408,22 @@
 		}
 		available = {
 			emerging_anarchist_communism_are_in_power = yes
-			FRA = {
-				influence_higher_40 = yes
-			}
 		}
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GER_the_alternative"
-			set_temp_variable = { percent_change = 2 }
+			log = "[GetDateText]: [Root.GetName]: Focus GER_stage_the_union"
+			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { tag_index = GER }
 			set_temp_variable = { influence_target = FRA }
+			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = GER }
+			set_temp_variable = { influence_target = POL }
+			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = GER }
+			set_temp_variable = { influence_target = SWE }
 			change_influence_percentage = yes
 		}
 
@@ -12374,6 +12530,71 @@
 			newline = yes
 			set_cosmetic_tag = GER_franco_german_union
 			set_country_flag = is_GERMAN
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	focus = {
+		id = GER_invite_poland
+		icon = align_to_poland2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		x = 1
+		y = 8
+		cost = 10
+		relative_position_id = GER_the_left
+		prerequisite = {
+			focus = GER_german_franco_union
+		}
+		available = {
+			emerging_anarchist_communism_are_in_power = yes
+			POL = {
+				influence_higher_40 = yes
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GER_invite_poland"
+			POL = {
+				country_event = {
+					id = Germany.223
+					days = 1
+				}
+			}
+			custom_effect_tooltip = GER_more_likely_to_accept
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = GER_invite_sweden
+		icon = align_to_sweden2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		x = -1
+		y = 8
+		cost = 10
+		relative_position_id = GER_the_left
+		prerequisite = {
+			focus = GER_german_franco_union
+		}
+		available = {
+			emerging_anarchist_communism_are_in_power = yes
+			SWE = {
+				influence_higher_40 = yes
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GER_invite_sweden"
+			SWE = {
+				country_event = {
+					id = Germany.223
+					days = 1
+				}
+			}
+			custom_effect_tooltip = GER_more_likely_to_accept
 		}
 
 		ai_will_do = {
@@ -12580,6 +12801,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_police_state"
 			increase_policing_budget = yes
 			block_police_decrease = yes
+			if = {
+				limit = {
+					has_idea = police_05
+				}
+				set_temp_variable = { GER_police_cost_change = -0.03 }
+				update_GER_police_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -13064,6 +13292,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_return_of_militarism"
 			increase_military_spending = yes
 			block_defence_decrease = yes
+			if = {
+				limit = {
+					has_idea = defence_09
+				}
+				set_temp_variable = { GER_military_cost_change = -0.04 }
+				update_GER_military_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -13242,6 +13477,9 @@
 				name = "Germany Proclaims The 'Reich'"
 			}
 			set_cosmetic_tag = GER_fourth_reich
+			country_event = {
+				id = Germany.419
+			}
 			add_war_support = 0.15
 		}
 
@@ -13399,6 +13637,13 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_bundeswehr_reforms"
 			increase_military_spending = yes
+			if = {
+				limit = {
+					has_idea = defence_09
+				}
+				set_temp_variable = { GER_military_cost_change = -0.04 }
+				update_GER_military_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -13445,6 +13690,13 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_all_will_serve"
 			increase_conscription_effect = yes
+			if = {
+				limit = {
+					has_idea = draft_army
+				}
+				set_temp_variable = { GER_military_cost_change = -0.05 }
+				update_GER_military_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -13470,71 +13722,74 @@
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_gardekorp"
-			division_template = {
-				name = "Gardekorps Division"
-				regiments = {
-					Special_Forces = { x = 0 y = 0 }
-					Special_Forces = { x = 0 y = 1 }
-					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
-					Special_Forces = { x = 1 y = 0 }
-					Special_Forces = { x = 1 y = 1 }
-					Special_Forces = { x = 1 y = 2 }
-					Special_Forces = { x = 1 y = 3 }
-					Special_Forces = { x = 2 y = 0 }
-					Special_Forces = { x = 2 y = 1 }
-					Special_Forces = { x = 2 y = 2 }
-					Special_Forces = { x = 2 y = 3 }
+			custom_effect_tooltip = GER_Gardekorp_TT
+			hidden_effect = {
+				division_template = {
+					name = "Gardekorps Division"
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+						Special_Forces = { x = 1 y = 2 }
+						Special_Forces = { x = 1 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
+						Special_Forces = { x = 2 y = 1 }
+						Special_Forces = { x = 2 y = 2 }
+						Special_Forces = { x = 2 y = 3 }
+					}
+					priority = 2
 				}
-				priority = 2
-			}
-			capital_scope = {
-				create_unit = {
-					division = "name =\"1st. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
-					owner = ROOT
-					count = 1
+				capital_scope = {
+					create_unit = {
+						division = "name =\"1st. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
 				}
-			}
-			capital_scope = {
-				create_unit = {
-					division = "name =\"2nd. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
-					owner = ROOT
-					count = 1
+				capital_scope = {
+					create_unit = {
+						division = "name =\"2nd. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
 				}
-			}
-			capital_scope = {
-				create_unit = {
-					division = "name =\"3rd. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
-					owner = ROOT
-					count = 1
+				capital_scope = {
+					create_unit = {
+						division = "name =\"3rd. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
 				}
-			}
-			capital_scope = {
-				create_unit = {
-					division = "name =\"4th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
-					owner = ROOT
-					count = 1
+				capital_scope = {
+					create_unit = {
+						division = "name =\"4th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
 				}
-			}
-			capital_scope = {
-				create_unit = {
-					division = "name =\"5th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
-					owner = ROOT
-					count = 1
+				capital_scope = {
+					create_unit = {
+						division = "name =\"5th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
 				}
-			}
-			capital_scope = {
-				create_unit = {
-					division = "name =\"6th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
-					owner = ROOT
-					count = 1
+				capital_scope = {
+					create_unit = {
+						division = "name =\"6th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
 				}
-			}
-			capital_scope = {
-				create_unit = {
-					division = "name =\"7th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
-					owner = ROOT
-					count = 1
+				capital_scope = {
+					create_unit = {
+						division = "name =\"7th. Gardekorps Division\" division_template = \"Gardekorps Division\" start_experience_factor =  1.0"
+						owner = ROOT
+						count = 1
+					}
 				}
 			}
 		}
@@ -13816,7 +14071,7 @@
 		available = {
 			nationalist_monarchists_are_in_power = yes
 			SWI = {
-				influence_higher_40 = yes
+				influence_higher_30 = yes
 			}
 			country_exists = SWI
 			NOT = {
@@ -13893,7 +14148,7 @@
 		available = {
 			nationalist_monarchists_are_in_power = yes
 			AUS = {
-				influence_higher_40 = yes
+				influence_higher_30 = yes
 			}
 			country_exists = AUS
 			NOT = {
@@ -14020,7 +14275,7 @@
 		available = {
 			nationalist_monarchists_are_in_power = yes
 			BEL = {
-				influence_higher_40 = yes
+				influence_higher_30 = yes
 			}
 			country_exists = BEL
 			NOT = {
@@ -14154,6 +14409,9 @@
 		}
 		bypass = {
 			OR = {
+				TUR = {
+					is_in_faction_with = GER
+				}
 				has_war_with = TUR
 				TUR = {
 					nationalist_monarchists_are_in_power = yes
@@ -14325,6 +14583,9 @@
 		}
 		bypass = {
 			OR = {
+				ITA = {
+					is_in_faction_with = GER
+				}
 				has_war_with = ITA
 				ITA = {
 					nationalist_monarchists_are_in_power = yes
@@ -14385,10 +14646,7 @@
 			focus = GER_anti_nato
 		}
 		prerequisite = {
-			focus = GER_restore_italian_crown
-		}
-		prerequisite = {
-			focus = GER_restore_ottoman_sultan
+			focus = GER_restore_italian_crown focus = GER_restore_ottoman_sultan
 		}
 		available = {
 			nationalist_monarchists_are_in_power = yes
@@ -14407,61 +14665,8 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_the_imperial_bloc"
 			add_ideas = faction_imperial_bloc_alliance
 			create_faction = imperial_bloc_alliance
-			if = {
-				limit = {
-					TUR = {
-						nationalist_monarchists_are_in_power = yes
-					}
-				}
-				TUR = {
-					country_event = {
-						id = Germany.240
-						days = 1
-					}
-				}
-			}
-			if = {
-				limit = {
-					ITA = {
-						nationalist_monarchists_are_in_power = yes
-					}
-				}
-				ITA = {
-					country_event = {
-						id = Germany.240
-						days = 1
-					}
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						ITA = {
-							nationalist_monarchists_are_in_power = yes
-						}
-						TUR = {
-							nationalist_monarchists_are_in_power = yes
-						}
-					}
-				}
-				custom_effect_tooltip = GER_more_likely_to_accept
-			}
-			newline = yes
-			if = {
-				limit = {
-					NOT = {
-						OR = {
-							ITA = {
-								nationalist_monarchists_are_in_power = yes
-							}
-							TUR = {
-								nationalist_monarchists_are_in_power = yes
-							}
-						}
-					}
-				}
-				custom_effect_tooltip = GER_make_imperial_for_invite
-			}
+			newline	= yes
+			custom_effect_tooltip = GER_make_imperial_for_invite
 		}
 
 		ai_will_do = {
@@ -14727,8 +14932,13 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_Fujian_Benz_Automotive"
-			add_offsite_building = { type = offices level = 1 }
 			42 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
 				add_resource = {
 					type = rubber
 					amount = 7
@@ -15825,6 +16035,13 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GER_german_war_machine"
 			increase_military_spending = yes
 			block_defence_decrease = yes
+			if = {
+				limit = {
+					has_idea = defence_09
+				}
+				set_temp_variable = { GER_military_cost_change = -0.04 }
+				update_GER_military_cost = yes
+			}
 		}
 
 		ai_will_do = {
@@ -16555,6 +16772,9 @@
 				NOT = {
 					country_exists = FRA
 				}
+				FRA = {
+					is_in_faction_with = GER
+				}
 			}
 		}
 		available = {
@@ -16566,6 +16786,9 @@
 			country_exists = FRA
 			NOT = {
 				OR = {
+					FRA = {
+						is_in_faction_with = GER
+					}
 					has_war_with = FRA
 					FRA = {
 						is_subject_of = GER
@@ -16607,6 +16830,9 @@
 				has_war_with = UKR
 				UKR = {
 					is_subject_of = GER
+				}
+				UKR = {
+					is_subject_of = SOV
 				}
 				NOT = {
 					country_exists = UKR
@@ -16770,6 +16996,9 @@
 		relative_position_id = GER_german_irredentism
 		bypass = {
 			OR = {
+				ENG = {
+					is_in_faction_with = GER
+				}
 				has_war_with = ENG
 				ENG = {
 					is_subject_of = GER
@@ -16788,6 +17017,9 @@
 			country_exists = ENG
 			NOT = {
 				OR = {
+					ENG = {
+						is_in_faction_with = GER
+					}
 					has_war_with = ENG
 					ENG = {
 						is_subject_of = GER
@@ -16819,6 +17051,9 @@
 		relative_position_id = GER_german_irredentism
 		bypass = {
 			OR = {
+				MEX = {
+					is_subject_of = USA
+				}
 				has_war_with = USA
 				USA = {
 					is_subject_of = GER
