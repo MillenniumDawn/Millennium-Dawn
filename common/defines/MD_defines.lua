@@ -363,6 +363,7 @@
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
+	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
 	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.15 -- 0.1
 	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1 -- 2
 	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.01 -- 1

@@ -480,6 +480,8 @@ start_project_two = {
 		# Should scope to the actual project
 		var:AC_state_target = {
 			add_to_array = { projects_in_state = PREV.id } #Should be FROM
+			# Create a new array for this
+			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
 			set_variable = { project_target_state_@PREV = PREV.project }
 			# Sets the starting nation
 			set_variable = { PREV.project_array^PREV.project = THIS.id }
@@ -530,6 +532,8 @@ start_project = {
 		# Should scope to the actual project
 		var:ROOT.AC_state_target = {
 			add_to_array = { projects_in_state = ROOT.id } #Should be FROM
+			# Create a new array for this
+			add_to_array = { project_type_in_state = ROOT.project_building_type^-1 }
 			set_variable = { project_target_state_@ROOT = ROOT.project }
 			# Sets the starting nation
 			set_variable = { ROOT.project_array^ROOT.project = THIS.id }
@@ -609,7 +613,18 @@ end_project = {
 
 		var:project_array^project = {
 			clear_variable = project_target_state_@PREV
+			for_each_loop = {
+				value = v
+				index = i
+				array = projects_in_state
+				if = { limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = projects_in_state value = PREV.id }
+					# Should clear the array
+					remove_from_array = { array = project_type_in_state index = i }
+				}
+			}
 			remove_from_array = { array = projects_in_state value = PREV.id }
+
 			set_temp_variable = { tag_index = THIS.id }
 		}
 
