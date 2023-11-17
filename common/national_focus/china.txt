@@ -3414,8 +3414,8 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHI_devolve_power_to_the_Xinjiang
-		icon = islamist_gov2
+		id = CHI_Xinjiang_SAR
+		icon = xinjiang_sar
 
 		x = 5
 		y = 4
@@ -3431,6 +3431,7 @@ focus_tree = {
 
 		completion_reward = {
 			add_stability = -0.1
+			custom_effect_tooltip = CHI_ETK_RAJ_tt
 			hidden_effect = {
 				set_variable = {
 					var = uighur_threat
@@ -3681,7 +3682,7 @@ focus_tree = {
 					id = china.69
 				}
 			}
-			log = "[GetDateText]: [This.GetName]: focus CHI_devolve_power_to_the_Xinjiang executed"
+			log = "[GetDateText]: [This.GetName]: focus CHI_Xinjiang_SAR executed"
 		}
 
 		ai_will_do = {
@@ -3884,8 +3885,8 @@ focus_tree = {
 	}
 
 	focus = {
-		id = CHI_A_Tibetan_SAR
-		icon = tibet
+		id = CHI_Tibet_SAR
+		icon = tibet_sar
 
 		x = -5
 		y = 4
@@ -4142,7 +4143,7 @@ focus_tree = {
 					id = china.19
 				}
 			}
-			log = "[GetDateText]: [This.GetName]: focus CHI_A_Tibetan_SAR executed"
+			log = "[GetDateText]: [This.GetName]: focus CHI_Tibet_SAR executed"
 		}
 
 		ai_will_do = { base = 1 }
@@ -5392,38 +5393,41 @@ focus_tree = {
 		cost = 7
 
 		available = {
-			AND = { HKG = {
-					is_subject_of = CHI
-					}
-					MAC = {
-					is_subject_of = CHI
-					}
+			OR = {
+				HKG = { is_subject_of = CHI }
+				MAC = { is_subject_of = CHI }
 			}
 		}
 
 		completion_reward = {
-			HKG = {
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
+			if = {
+				limit = { HKG = { is_subject_of = CHI } }
+				HKG = {
+					add_popularity = {
+						ideology = democratic
+						popularity = 0.05
+					}
+					recalculate_party = yes
 				}
-				recalculate_party = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = HKG }
+				change_influence_percentage = yes
 			}
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = CHI }
-			set_temp_variable = { influence_target = HKG }
-			change_influence_percentage = yes
-			MAC = {
-				add_popularity = {
-					ideology = communism
-					popularity = 0.1
+			if = {
+				limit = { MAC = { is_subject_of = CHI } }
+				MAC = {
+					add_popularity = {
+						ideology = democratic
+						popularity = 0.05
+					}
+					recalculate_party = yes
 				}
-				recalculate_party = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = MAC }
+				change_influence_percentage = yes
 			}
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = CHI }
-			set_temp_variable = { influence_target = MAC }
-			change_influence_percentage = yes
 			set_temp_variable = { modify_chinese_aggression = 1 }
 			CHI_modify_chinese_aggression = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Pressure_the_SARs executed"
@@ -6583,24 +6587,9 @@ communist_cadres_at_least_positive_opinion = yes
 		cost = 5
 
 		prerequisite = { focus = CHI_American_Joint_Ventures focus = CHI_German_Joint_Ventures focus = CHI_Japanese_Joint_Ventures focus = CHI_Korean_Joint_Ventures }
+		bypass = { has_idea = globalized_trade_economy }
 		completion_reward = {
-			if = {
-				limit = { has_idea = consumption_economy }
-				swap_ideas = {
-					remove_idea = consumption_economy
-					add_idea = export_economy
-				}
-			}
-			else_if = {
-				limit = { has_idea = mixed_economy }
-				swap_ideas = {
-					remove_idea = mixed_economy
-					add_idea = export_economy
-				}
-			}
-			else = {
-				add_political_power = 50
-			}
+			increase_exports = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Export_Driven_Economy executed"
 		}
 
@@ -6653,11 +6642,11 @@ communist_cadres_at_least_positive_opinion = yes
 				has_idea = three_represents
 				has_idea = zeng_qinghong_thought
 			}
-if = {
+			if = {
 				limit = { has_idea = the_military has_idea = communist_cadres }
 				OR = {
 					military_at_least_positive_opinion = yes
-communist_cadres_at_least_positive_opinion = yes
+					communist_cadres_at_least_positive_opinion = yes
 				}
 			}
 			else_if = {
@@ -6666,12 +6655,12 @@ communist_cadres_at_least_positive_opinion = yes
 			}
 			else_if = {
 				limit = { NOT = { has_idea = the_military } has_idea = communist_cadres }
-communist_cadres_at_least_positive_opinion = yes
+				communist_cadres_at_least_positive_opinion = yes
 			}
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			add_political_power = 150
 			log = "[GetDateText]: [This.GetName]: focus CHI_Socialism_with_Maoist_Characteristics executed"
 		}
 
@@ -6761,41 +6750,16 @@ communist_cadres_at_least_positive_opinion = yes
 	}
 
 	focus = {
-		id = CHI_State_Owned_Business_Supremacy
-		icon = communism4
-
-		x = 5
-		y = 2
-		relative_position_id = CHI_The_Untapped_Market
-
-		cost = 6.8
-
-		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		available = { has_government = communism }
-
-		completion_reward = {
-			add_stability = 0.05
-			add_political_power = 150
-			log = "[GetDateText]: [This.GetName]: focus CHI_State_Owned_Business_Supremacy executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
 		id = CHI_Collectivize_Agriculture
 		icon = agriculture
 
 		x = 4
-		y = 4
+		y = 3
 		relative_position_id = CHI_The_Untapped_Market
 
 		cost = 10
 
-		prerequisite = { focus = CHI_State_Owned_Business_Supremacy }
+		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
 		mutually_exclusive = { focus = CHI_Privatize_Agricultural_Products }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INDUSTRY }
@@ -7079,12 +7043,12 @@ communist_cadres_at_least_positive_opinion = yes
 		icon = agriculture2
 
 		x = 6
-		y = 4
+		y = 3
 		relative_position_id = CHI_The_Untapped_Market
 
 		cost = 6.8
 
-		prerequisite = { focus = CHI_State_Owned_Business_Supremacy }
+		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
 		mutually_exclusive = { focus = CHI_Collectivize_Agriculture }
 
 		search_filters = { FOCUS_FILTER_STABILITY }
@@ -7097,47 +7061,22 @@ communist_cadres_at_least_positive_opinion = yes
 	}
 
 	focus = {
-		id = CHI_Allow_Small_Private_Ventures
-		icon = concessions
+		id = CHI_State_Run_Corporatism
+		icon = business_man
 
 		x = 6
 		y = 5
 		relative_position_id = CHI_The_Untapped_Market
 
-		cost = 6.8
+		cost = 7.2
 
 		prerequisite = { focus = CHI_Privatize_Agricultural_Products }
 
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_STABILITY }
-		completion_reward = {
-			add_stability = 0.02
-			set_temp_variable = { temp_opinion = 5 }
-			change_communist_cadres_opinion = yes
-			change_industrial_conglomerates_opinion = yes
-			change_international_bankers_opinion = yes
-			change_small_medium_business_owners_opinion = yes
-			log = "[GetDateText]: [This.GetName]: focus CHI_Allow_Small_Private_Ventures executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = CHI_State_Run_Corporatism
-		icon = business_man
-
-		x = 6
-		y = 6
-		relative_position_id = CHI_The_Untapped_Market
-
-		cost = 6.8
-
-		prerequisite = { focus = CHI_Allow_Small_Private_Ventures }
-
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
-			add_political_power = 50
-			set_temp_variable = { temp_opinion = 5 }
+			add_political_power = 75
+			add_stability = 0.05
+			set_temp_variable = { temp_opinion = 10 }
 			change_communist_cadres_opinion = yes
 			change_industrial_conglomerates_opinion = yes
 			change_international_bankers_opinion = yes
@@ -7256,7 +7195,7 @@ communist_cadres_at_least_positive_opinion = yes
 		y = 1
 		relative_position_id = CHI_Chinese_Megaprojects
 
-		cost = 10
+		cost = 4.4
 
 		prerequisite = { focus = CHI_Chinese_Megaprojects }
 
@@ -10904,8 +10843,9 @@ communist_cadres_at_least_positive_opinion = yes
 		}
 
 		completion_reward = {
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
+			add_ideas = CHI_electric_car_project_idea
 			add_stability = 0.02
 			log = "[GetDateText]: [This.GetName]: focus CHI_Electric_Car_Project executed"
 		}
@@ -11147,19 +11087,8 @@ communist_cadres_at_least_positive_opinion = yes
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		available = { controls_state = 558 }
-
 		completion_reward = {
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			558 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-			}
+			two_random_dockyards = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Shanxi_Ship_Engine_Factory executed"
 		}
 
@@ -11563,18 +11492,30 @@ communist_cadres_at_least_positive_opinion = yes
 		completion_reward = {
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				name = CHI_Develop_Stealth_Fighters
-				bonus = 0.5
-				uses = 1
-				technology = MR_Fighter4
-				technology = MR_Fighter5
-				technology = MR_Fighter6
-				technology = MR_Fighter7
-				technology = AS_Fighter4
-				technology = AS_Fighter5
-				technology = AS_Fighter6
-				technology = AS_Fighter7
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_tech_bonus = {
+					name = CHI_Develop_Stealth_Fighters
+					bonus = 0.25
+					uses = 2
+					technology = stealth_tech_1
+					technology = stealth_tech_2
+				}
+			}
+			else = {
+				add_tech_bonus = {
+					name = CHI_Develop_Stealth_Fighters
+					bonus = 0.25
+					uses = 2
+					technology = MR_Fighter4
+					technology = MR_Fighter5
+					technology = MR_Fighter6
+					technology = MR_Fighter7
+					technology = AS_Fighter4
+					technology = AS_Fighter5
+					technology = AS_Fighter6
+					technology = AS_Fighter7
+				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Develop_Stealth_Fighters executed"
 		}
@@ -14231,26 +14172,10 @@ communist_cadres_at_least_positive_opinion = yes
 
 		completion_reward = {
 			RAJ = { add_opinion_modifier = { target = CHI modifier = expansionist_agenda } }
-			start_border_war = {
-				change_state_after_war = no
-				attacker = {
-					state = 589
-					num_provinces = 4
-					on_win = sino_indian.9
-					on_lose = sino_indian.10
-					on_cancel = sino_indian.10
-				}
-				defender = {
-					state = 475
-					num_provinces = 4
-					on_win = sino_indian.10
-					on_lose = sino_indian.9
-					on_cancel = sino_indian.10
-				}
-			}
+			custom_effect_tooltip = CHI_arunachal_border_conflict_TT
 			set_temp_variable = { modify_chinese_aggression = 5 }
 			CHI_modify_chinese_aggression = yes
-			log = "[GetDateText]: [This.GetName]: focus CHI_Strategic_Realignment executed"
+			log = "[GetDateText]: [This.GetName]: focus CHI_Strike_Across_the_Himalayas executed"
 		}
 
 		ai_will_do = {
@@ -14344,8 +14269,9 @@ communist_cadres_at_least_positive_opinion = yes
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 
-		available = { country_exists = BHU }
-
+		available = { country_exists = BHU
+                      475 = { is_controlled_by = CHI }
+                    }
 		bypass = { NOT = { country_exists = BHU } }
 
 		will_lead_to_war_with = BHU
@@ -17313,6 +17239,7 @@ communist_cadres_at_least_positive_opinion = yes
 		y = 6
 		relative_position_id = CHI_Strategic_Industries
 		cost = 10
+		available = {  }
 
 		ai_will_do = { factor = 1 }
 
@@ -17321,6 +17248,8 @@ communist_cadres_at_least_positive_opinion = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_lunar_outpost executed"
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
+			custom_effect_tooltip = CHI_moonbase_chain_start_tt
+            hidden_effect = { country_event = chi_moon.1 }			
 		}
 	}
 	focus = {
@@ -17331,7 +17260,8 @@ communist_cadres_at_least_positive_opinion = yes
 		y = 7
 		relative_position_id = CHI_Strategic_Industries
 		cost = 10
-		available = { date > 2016.1.1 }
+		available = { date > 2016.1.1
+                      has_country_flag = chi_moonbase_beta_completed }
 		ai_will_do = { factor = 1 }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
@@ -17343,7 +17273,8 @@ communist_cadres_at_least_positive_opinion = yes
 			}
 			set_temp_variable = { treasury_change = -70 }
 			modify_treasury_effect = yes
-			#hidden effect = { country_event = chi_mars.1 }
+			custom_effect_tooltip = CHI_mars_city_building_chain_start_tt
+			hidden_effect = { country_event = chi_mars.1 }
 		}
 	}
 	focus = {
@@ -17358,7 +17289,7 @@ communist_cadres_at_least_positive_opinion = yes
 			has_tech = modern_satelite_internet
 			has_tech = computing5
 			has_tech = large_scale_3D_printing
-			has_country_flag = mars_city_building_completed
+			has_country_flag = chi_mars_city_building_completed
 		}
 
 		ai_will_do = { factor = 1 }
@@ -17433,7 +17364,7 @@ communist_cadres_at_least_positive_opinion = yes
 		x = -2
 		y = 1
 		relative_position_id = CHI_Chinese_Megaprojects
-		cost = 15
+		cost = 8.58
 		prerequisite = { focus = CHI_Chinese_Megaprojects }
 		available = { date > 2012.1.1 }
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -17456,7 +17387,8 @@ communist_cadres_at_least_positive_opinion = yes
 		x = -15
 		y = 5
 		relative_position_id = CHI_Chinese_Megaprojects
-		cost = 20
+		cost = 10
+
 		available = {
 			date > 2010.1.1
 			controls_state = 538
