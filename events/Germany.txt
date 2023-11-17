@@ -592,19 +592,18 @@ country_event = {
 		country_event = { id = germany.11 days = 20 }
 		add_political_power = -100
 		newline = yes
-		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = -0.02 }
-		add_relative_party_popularity = yes
-		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.075 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.055 }
+		set_temp_variable = { temp_outlook_increase = 0.055 }
 		add_relative_party_popularity = yes
 	}
 	option = { #maybe we didn´t need to dig deep
 		name = germany.10.b
 		log = "[GetDateText]: [This.GetName]: germany.10.a executed"
 		country_event = { id = germany.11 days = 20 }
-		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.025 }
+		set_temp_variable = { temp_outlook_increase = 0.025 }
 		add_relative_party_popularity = yes
 	}
 }
@@ -673,8 +672,9 @@ country_event = {
 	option = {
 		name = germany.12.a
 		log = "[GetDateText]: [This.GetName]: germany.12.a executed"
-		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = 0.025 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.035 }
+		set_temp_variable = { temp_outlook_increase = 0.035 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
 			country_event = {
@@ -758,8 +758,9 @@ country_event = {
 	option = {
 		name = germany.15.b
 		log = "[GetDateText]: [This.GetName]: germany.15.b executed"
-		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = 0.057 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
 		add_relative_party_popularity = yes
 	}
 }
@@ -1129,6 +1130,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event germany.30" }
 	title = germany.30.t
 	desc = germany.30.d
+	picture = GFX_train_accident_bruehl
 
 	fire_only_once = yes
 
@@ -2188,11 +2190,13 @@ country_event = {
 	id = germany_divide.20
 	title = germany_divide.20.t
 	desc = germany_divide.20.d
+	picture = GFX_gen_construction
 	is_triggered_only = yes
 
 	option = { #
 		name = germany_divide.20.a
 		log = "[GetDateText]: [This.GetName]:germany_divide.20.a executed"
+		newline = yes
 		random_list = {
 			25 = {
 				539 = {
@@ -2372,9 +2376,12 @@ country_event = { #Germany demands war reparations! (SOV)
 				days = 1
 			}
 		}
-		set_temp_variable = { treasury_change = gdp_total }
-		multiply_temp_variable = { treasury_change = -0.015 }
-		modify_treasury_effect = yes
+		newline = yes
+		FROM = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.015 }
+			modify_treasury_effect = yes
+		}
 		GER = {
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = 0.015 }
@@ -2405,6 +2412,16 @@ country_event = { #X Country has accepted our request
 	option = {	#Okay, we'll remember that..
 		name = Germany.201.a
 		log = "[GetDateText]: [This.GetName]: Germany.201.a executed"
+		custom_effect_tooltip = GER_pay_us_TT
+		newline = yes
+		FROM = {
+			set_temp_variable = { treasury_change = -40.00 }
+			modify_treasury_effect = yes
+		}
+		GER = {
+				set_temp_variable = { treasury_change = 40.00 }
+				modify_treasury_effect = yes
+		}
 	}
 }
 #
@@ -2419,6 +2436,7 @@ country_event = { #X Country has rejected our request
 	option = {	#Okay, we'll remember that..
 		name = Germany.202.a
 		log = "[GetDateText]: [This.GetName]: Germany.202.a executed"
+		custom_effect_tooltip = GER_not_pay_us_TT
 	}
 }
 #CDU EVENTS
@@ -2485,6 +2503,10 @@ country_event = { # The drug question
 		newline = yes
 		set_temp_variable = { GER_health_cost_change = 0.01 }
 		update_GER_healthcare_cost = yes
+		newline = yes
+		hidden_effect = {
+			add_ideas = GER_idea_crackheads
+		}
 	}
 	option = {	# No! Hard ban on all drugs!
 		name = Germany.204.b
@@ -2701,10 +2723,17 @@ country_event = { #Germany asks us to leave NATO
 				id = Germany.2111
 			}
 		}
-		remove_ideas = NATO_member
-		remove_from_tech_sharing_group = NATO_Tech_Share
 		hidden_effect = {
-			news_event = { id = NATO.6 hours = 6 }
+			remove_ideas = NATO_member
+			remove_from_tech_sharing_group = NATO_Tech_Share
+			leave_faction = yes
+			every_other_country = {
+				limit = { has_idea = NATO_member }
+				add_opinion_modifier = { target = ROOT modifier = left_alliance }
+			}
+			hidden_effect = {
+				news_event = { id = NATO.6 hours = 6 }
+			}
 		}
 		set_temp_variable = { percent_change = 15 }
 		change_domestic_influence_percentage = yes
