@@ -1527,6 +1527,7 @@ focus_tree = {
 		cost = 10
 		available = { emerging_reactionaries_are_in_power = yes }
 		prerequisite = { focus = SOV_commercialize_glonass }
+		prerequisite = { focus = SOV_develop_it_industry }
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_increase_roscosmos_funding"
@@ -1593,6 +1594,7 @@ focus_tree = {
 		cost = 10
 		available = { emerging_reactionaries_are_in_power = yes }
 		prerequisite = { focus = SOV_develop_it_industry }
+		prerequisite = { focus = SOV_commercialize_glonass }
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_renewable_energy_investments"
@@ -1634,6 +1636,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rokirovka"
 			retire_country_leader = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			}
 			country_event = sov_vybory.1
 		}
 		ai_will_do = {
@@ -3208,6 +3224,27 @@ focus_tree = {
 			change_influence_percentage = yes
 			hidden_effect = {
 			DPR = {
+				division_template = {
+					name = "Wagner Light Unit"
+					is_locked = yes
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						L_Inf_Bat = { x = 0 y = 2 }
+						L_Inf_Bat = { x = 0 y = 3 }
+						Arty_Bat = { x = 0 y = 4 }
+						L_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+						L_Inf_Bat = { x = 1 y = 2 }
+						L_Inf_Bat = { x = 1 y = 3 }
+						Arty_Bat = { x = 1 y = 4 }
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+						L_Engi_Comp = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
 				add_ideas = SOV_wagner_military_advisors
 				spawn_light_infantry_wagner = yes
 			}
@@ -4260,6 +4297,25 @@ focus_tree = {
 	}
 
 	focus = {
+		id = SOV_svetov
+		icon = svetov_lgbt
+		x = -17
+		y = 1
+		cost = 2
+		available = {
+			neutrality_neutral_libertarians_are_in_power = yes
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_svetov"
+			add_political_power = 100
+		}
+		ai_will_do = {
+			factor = 155
+		}
+	}
+
+	focus = {
 		id = SOV_police_reforms
 		icon = UKR_contact_diaspora
 		x = 1
@@ -4687,7 +4743,6 @@ focus_tree = {
 			country_exists = NKO
 			has_country_flag = korea_agree
 		}
-		prerequisite = { focus = SOV_reunite_with_belarus }
 		prerequisite = { focus = SOV_unite_with_nkpr }
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		completion_reward = {
@@ -6868,6 +6923,7 @@ focus_tree = {
 				popularity = 0.05
 			}
 			recalculate_party = yes
+			country_event = sov_communists.8
 		}
 		ai_will_do = {
 			factor = 155
@@ -8219,7 +8275,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_approach_iran"
 			add_political_power = 25
-			BUL = {
+			PER = {
 				country_event = { id = sov_nationalists.8 days = 1 }
 			}
 		}
@@ -12749,7 +12805,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reignite_revolutionary_spirit"
 			increase_military_spending = yes
-			increase_intervention_law_effect = yes
+			custom_effect_tooltip = SOV_territorial_demands_tt
+			add_to_variable = { SOV_revived_politburo_justify_time = -0.15 }
 		}
 		ai_will_do = {
 			factor = 155
@@ -12810,6 +12867,7 @@ focus_tree = {
 		}
 		prerequisite = { focus = SOV_foster_multi_party_democracy }
 		search_filters = { FOCUS_FILTER_POLITICAL }
+		mutually_exclusive = { focus = SOV_nemtsov }
 		relative_position_id = SOV_path_of_western
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_navalny"
@@ -12868,8 +12926,9 @@ focus_tree = {
 		prerequisite = { focus = SOV_reconcile_the_cprf_2 }
 		prerequisite = { focus = SOV_foster_multi_party_democracy }
 		relative_position_id = SOV_path_of_western
+		mutually_exclusive = { focus = SOV_navalny }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ARM_dominant_party"
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_nemtsov"
 			hidden_effect = {
 				clear_array = ruling_party
 				clear_array = gov_coalition_array
@@ -15342,20 +15401,25 @@ focus_tree = {
 		x = 2
 		y = 3
 		relative_position_id = SOV_reorganize_airforce
-		cost = 3
+		cost = 10
+		available = {
+			num_of_military_factories > 42
+		}
+		bypass = { has_tech = gen_5_light }
 		prerequisite = { focus = SOV_form_the_uac }
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fighter_production"
 			air_experience = 20
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -25 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				bonus = 0.5
-				name = SOV_fighter_product
-				uses = 2
-				technology = AS_Fighter3
-				technology = Strike_fighter3
+			if = {
+				limit = {
+					NOT = {
+					has_tech = gen_5_light
+					}
+				}
+				set_technology = { gen_5_light = 1 }
 			}
 		}
 		ai_will_do = { factor = 1 }
@@ -15366,21 +15430,33 @@ focus_tree = {
 		x = 4
 		y = 3
 		relative_position_id = SOV_reorganize_airforce
-		cost = 3
+		cost = 10
+		available = {
+			num_of_military_factories > 42
+		}
 		prerequisite = { focus = SOV_form_the_uac }
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_cas_production"
 			air_experience = 20
-			set_temp_variable = { treasury_change = -3 }
+			set_temp_variable = { treasury_change = -13 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				bonus = 0.5
-				name = SOV_uav_product
-				uses = 2
-				technology = Air_UAV1
-				technology = Air_UAV2
+			if = {
+				limit = {
+					NOT = {
+					has_tech = drone_2
+					}
+				}
+				set_technology = { drone_2 = 1 }
 			}
+			if = {
+				limit = {
+					has_tech = drone_2
+					
+				}
+				set_technology = { drone_3 = 1 }
+			}
+			
 		}
 		ai_will_do = { factor = 1 }
 	}
@@ -15390,19 +15466,25 @@ focus_tree = {
 		x = 6
 		y = 3
 		relative_position_id = SOV_reorganize_airforce
-		cost = 3
+		cost = 10
+		available = {
+			num_of_military_factories > 42
+		}
+		bypass = { has_tech = gen_5_large }
 		prerequisite = { focus = SOV_form_the_uac }
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_bombers_production"
 			air_experience = 20
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -25 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				bonus = 0.5
-				name = SOV_hypersonic_flight
-				uses = 1
-				technology = strategic_bomber4
+			if = {
+				limit = {
+					NOT = {
+					has_tech = gen_5_large
+					}
+				}
+				set_technology = { gen_5_large = 1 }
 			}
 		}
 		ai_will_do = { factor = 1 }
@@ -16285,7 +16367,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_missile_defense_investments"
-			set_temp_variable = { treasury_change = -20.5 }
+			set_temp_variable = { treasury_change = -10.5 }
 			modify_treasury_effect = yes
 			652 = { # Moscow
 				add_extra_state_shared_building_slots = 2
@@ -16293,14 +16375,6 @@ focus_tree = {
 						type = anti_air_building
 						level = 2
 						instant_build = yes
-				}
-			}
-			652 = { # Moscow
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
 				}
 			}
 			644 = { # St Petersburg
@@ -16401,22 +16475,27 @@ focus_tree = {
 		x = 3
 		y = 4
 		relative_position_id = SOV_reorganize_airforce
-		cost = 5
+		cost = 10
+		available = {
+			num_of_military_factories > 42
+		}
 		prerequisite = {
 			focus = SOV_uav_production
 			focus = SOV_fighter_production
 		}
+		bypass = { has_tech = gen_5_medium }
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pakfa"
-			set_temp_variable = { treasury_change = -7 }
+			set_temp_variable = { treasury_change = -27 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				bonus = 0.5
-				name = SOV_pakfa
-				uses = 1
-				technology = AS_Fighter4
-				technology = MR_Fighter4
+			if = {
+				limit = {
+					NOT = {
+					has_tech = gen_5_medium
+					}
+				}
+				set_technology = { gen_5_medium = 1 }
 			}
 		}
 		ai_will_do = { factor = 1 }
@@ -16427,21 +16506,27 @@ focus_tree = {
 		x = 5
 		y = 4
 		relative_position_id = SOV_reorganize_airforce
-		cost = 5
+		cost = 10
+		available = {
+			num_of_military_factories > 42
+		}
 		prerequisite = {
 			focus = SOV_uav_production
 			focus = SOV_bombers_production
 		}
+		bypass = { has_tech = gen_5_large }
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pakda"
-			set_temp_variable = { treasury_change = -3 }
+			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				bonus = 0.5
-				name = SOV_hypersonic_flight
-				uses = 1
-				technology = strategic_bomber5
+			if = {
+				limit = {
+					NOT = {
+					has_tech = gen_5_large
+					}
+				}
+				set_technology = { gen_5_large = 1 }
 			}
 		}
 		ai_will_do = { factor = 1 }
