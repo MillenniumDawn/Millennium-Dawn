@@ -5212,7 +5212,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = YEM_The_Airforce
+		id = YEM_The_Airforce # The Yemeni Airforce
 		icon = null
 
 		x = 0
@@ -5250,8 +5250,9 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
+
 	focus = {
-		id = YEM_look_to_russia_a
+		id = YEM_look_to_russia_a # Russian SU57s
 		icon = null
 
 		x = -3
@@ -5262,14 +5263,34 @@ focus_tree = {
 		mutually_exclusive = { focus = YEM_independant_air focus = YEM_look_to_usa_a }
 
 		cost = 10
+						available = {
+			SOV = {
+				has_opinion = {
+					target = ROOT
+					value > -1
+				}
+			}
+						}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_look_to_russia_a"
 			add_opinion_modifier = { target = SOV modifier = large_commercial_relations }
 			reverse_add_opinion_modifier = { target = SOV modifier = large_commercial_relations }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = YEM }
+			change_influence_percentage = yes
+
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			add_equipment_to_stockpile = {
+				type = AS_Fighter4
+				amount = 35
+				producer = SOV
 		}
 
 		ai_will_do = { factor = 1 }
+    	}
 	}
 
 	focus = {
@@ -5287,8 +5308,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Develop_Al-Dailami_Air_Base"
-		}
-
+						air_experience = 25
+			add_political_power = 50
+			add_tech_bonus = {
+				name = Cat_AS_FIGHTER
+				bonus = 1
+				uses = 1
+				category = Cat_AS_FIGHTER
+			}
+						set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
+			}
 		ai_will_do = { factor = 1 }
 	}
 
@@ -5305,12 +5335,60 @@ focus_tree = {
 
 		cost = 10
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_look_to_usa_a"
+				available = {
+			USA = {
+				has_opinion = {
+					target = ROOT
+					value > -1
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				USA = { has_tech = gen_4_medium }
+			} else = {
+				USA = { has_tech = MR_Fighter4 }
+			}
 		}
 
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_look_to_usa_a"
+						set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+						set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = YEM }
+			change_influence_percentage = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = medium_plane_airframe_3
+					variant_name = "F-35"
+					amount = 35
+					producer = USA
+				}
+			} else = {
+				add_equipment_to_stockpile = {
+					type = MR_Fighter4
+					amount = 50
+					producer = USA
+				}
+			}
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = large_commercial_relations
+				}
+			}
+			ROOT = {
+				add_opinion_modifier = {
+					target = USA
+					modifier = large_commercial_relations
+				}
+			}
+		}
 		ai_will_do = { factor = 1 }
 	}
+
 	focus = {
 		id = YEM_MIG-29_Purchases
 		icon = null
@@ -5368,8 +5446,9 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
+
 	focus = {
-		id = YEM_invite_russian_air
+		id = Invite_Lukoil
 		icon = null
 
 		x = -1
@@ -5381,14 +5460,30 @@ focus_tree = {
 		cost = 10
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_invite_russian_air"
-			show_ideas_tooltip = YEM_mil_helicopters_helicopter_company
-			show_ideas_tooltip = SOV_mil_helicopters_helicopter_company
-			set_temp_variable = { treasury_change = -5 }
+			log = "[GetDateText]: [Root.GetName]: Focus Invite_Lukoil"
+			random_core_state = {
+				limit = {
+					is_owned_and_controlled_by = YE<
+				}
+				add_building_construction = {
+					type = fossil_powerplant
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = YEM }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -7.25 }
 			modify_treasury_effect = yes
 		}
-
-		ai_will_do = { factor = 1 }
+			ai_will_do = { factor = 1 }
 	}
 
 	focus = {
@@ -5430,6 +5525,7 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
+
 	focus = {
 		id = YEM_focus_on_fighter
 		icon = null
@@ -5449,6 +5545,7 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
+
 	focus = {
 		id = YEM_focus_on_bomber
 		icon = null
@@ -5468,6 +5565,7 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
+	
 	focus = {
 		id = YEM_Merge_Air_Defense_and_Airforce
 		icon = null
@@ -5486,6 +5584,7 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
+
 	focus = {
 		id = YEM_The_Army
 		icon = null
