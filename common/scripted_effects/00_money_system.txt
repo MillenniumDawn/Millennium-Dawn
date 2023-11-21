@@ -84,6 +84,7 @@ ingame_update_setup = {
 	if = { limit = { is_ai = no }
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
+		force_update_map_mode = { mapmode = productivity_map_mode }
 	}
 
 	# Dirty UI
@@ -333,7 +334,11 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = HEZ_iranian_business_income }
 		}
 		if = {
-			limit = { has_completed_focus = HEZ_Lebanese_Support }
+			limit = {
+				has_completed_focus = HEZ_Lebanese_Support
+				country_exists = LEB
+				NOT = { has_war_with = LEB }
+			}
 			if = {
 				limit = { HEZ = { LEB = { influence_higher_50 = yes } } }
 				set_variable = { HEZ_lebanese_support_money = 1.000 }
@@ -349,7 +354,12 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = HEZ_lebanese_support_money }
 		}
 		if = {
-			limit = { has_completed_focus = HEZ_Increased_Iranian_Support }
+			limit = {
+				has_completed_focus = HEZ_Increased_Iranian_Support
+				country_exists = PER
+				has_government = communism
+				NOT = { has_war_with = PER }
+			}
 			if = {
 				limit = { HEZ = { LEB = { influence_higher_50 = yes } } }
 				set_variable = { HEZ_iranian_support_money = 2.000 }
@@ -421,14 +431,14 @@ calculate_additional_income_rate = {
 	}
 	if = { limit = { has_idea = iranian_aid }
 		set_variable = { additional_income_iranian_aid = gdp_total }
-		multiply_variable = { additional_income_iranian_aid = 0.10 }	#10% of GDP yearly
+		multiply_variable = { additional_income_iranian_aid = 0.20 }	#20% of GDP yearly
 		multiply_variable = { additional_income_iranian_aid = 0.02 }	#weekly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid }
 	}
 	if = {
 		limit = { has_idea = iranian_aid_custom }
 		set_variable = { additional_income_iranian_aid = gdp_total }
-		multiply_variable = { additional_income_iranian_aid_custom = 0.10 }	#10% of GDP yearly
+		multiply_variable = { additional_income_iranian_aid_custom = 0.20 }	#20% of GDP yearly
 		multiply_variable = { additional_income_iranian_aid_custom = 0.02 }	#weekly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid_custom }
 	}
@@ -1290,10 +1300,10 @@ update_military_rate = {
 	multiply_variable = { equipment_operative_cost = 0.001 } #from millions weekly to bilions weekly
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
-			multiply_variable = { equipment_operative_cost = 3 }
+			multiply_variable = { equipment_operative_cost = 2.5 }
 		}
 		else = {
-			multiply_variable = { equipment_operative_cost = 2 }
+			multiply_variable = { equipment_operative_cost = 1.75 }
 		}
 	}
 
@@ -1589,14 +1599,14 @@ update_military_rate = {
 
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
-			multiply_temp_variable = { land_count = 1.5 }
-			multiply_temp_variable = { navy_count = 2.5 }
-			multiply_temp_variable = { airforce_count = 2.5 }
+			multiply_temp_variable = { land_count = 1.45 }
+			multiply_temp_variable = { navy_count = 2.40 }
+			multiply_temp_variable = { airforce_count = 2.40 }
 		}
 		else = {
-			multiply_temp_variable = { land_count = 1.25 }
-			multiply_temp_variable = { navy_count = 1.75 }
-			multiply_temp_variable = { airforce_count = 1.75 }
+			multiply_temp_variable = { land_count = 1.15 }
+			multiply_temp_variable = { navy_count = 1.6 }
+			multiply_temp_variable = { airforce_count = 1.60 }
 		}
 	}
 
@@ -2654,6 +2664,12 @@ update_state_variables = {
 			set_temp_variable = { state_renewable_generation = building_level@synthetic_refinery }
 			multiply_temp_variable = { state_renewable_generation = 0.5 } #base power of a renewable building
 			multiply_temp_variable = { state_renewable_generation = renewable_energy_random_var } #set in on_weekly
+
+			# Renewable Energy Modifier
+			set_temp_variable = { state_renewable_generation_modifier = 1 }
+			add_to_temp_variable = { state_renewable_generation_modifier = THIS.modifier@state_renewable_energy_generation_modifier }
+			multiply_temp_variable = { state_renewable_generation = state_renewable_generation_modifier }
+
 			add_to_variable = { PREV.state_renewable_energy_var = state_renewable_generation }
 
 			add_to_variable = { PREV.total_resource_amount = resource@oil }
@@ -3037,12 +3053,12 @@ calculate_gdp_modifiers = {
 	clamp_variable = { var = production_speed_buildings_factor_gdp_modifier min = 0 }
 
 	#Population growth rate
-	#-0.389 * GDP/C + 2.989
-	#Cap at -0.60
+	#-0.05 * GDP/C + 1
+	#Cap at -100%
 	set_variable = { monthly_population_gdp_modifier = gdp_per_capita }
-	multiply_variable = { monthly_population_gdp_modifier = -0.389 }
-	add_to_variable = { monthly_population_gdp_modifier = 2.989 }
-	clamp_variable = { var = monthly_population_gdp_modifier min = -0.75 }
+	multiply_variable = { monthly_population_gdp_modifier = -0.05 }
+	add_to_variable = { monthly_population_gdp_modifier = 1 }
+	clamp_variable = { var = monthly_population_gdp_modifier min = -1 }
 
 	#Research speed factor
 	#0.003 * GDP/C - 0.153
