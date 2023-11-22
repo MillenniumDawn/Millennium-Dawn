@@ -44,6 +44,7 @@ init_investment_system = {
 	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 7500 }
 	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
 	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 12500 }
+	set_variable = { global.BUILD_CONST_COST_NUCLEAR_REACTOR = 62500 }
 
 	### BUILDING MONETARY COST
 	# Balance Change: Cost increased by 60% from standardization
@@ -59,6 +60,7 @@ init_investment_system = {
 	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
 	set_variable = { global.BUILD_COST_REFINERY = 13.60 }
 	set_variable = { global.BUILD_COST_FOSSIL_POWERPLANT = 5.2 }
+	set_variable = { global.BUILD_COST_NUCLEAR_REACTOR  = 14.4 }
 
 	every_country = {
 		set_variable = { project_build_amount^-1 = 1 }
@@ -143,6 +145,9 @@ project_monetary_cost_calculation = {
 	else_if = { limit = { check_variable = { project_building_type^-1 = 12 } }
 		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FOSSIL_POWERPLANT }
 	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 13 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_NUCLEAR_REACTOR }
+	}
 
 	# AC Build Cost Modifiers
 	set_temp_variable = { AC_cost_modifier = 1 }
@@ -224,6 +229,10 @@ get_building_construction_values = {
 		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FOSSIL_POWERPLANT }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
 	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 13 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_NUCLEAR_REACTOR }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_nuclear_reactor_factor }
+	}
 
 	add_to_temp_variable = { var = construction_speed value = -0.25 }
 	add_to_temp_variable = { var = construction_speed value = modifier@production_speed_buildings_factor }
@@ -298,6 +307,10 @@ add_finished_buildings = {
 	}
 	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 12 } }
 		add_building_construction = { type = fossil_powerplant level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 13 } }
+		add_building_construction = { type = nuclear_reactor level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
 }
