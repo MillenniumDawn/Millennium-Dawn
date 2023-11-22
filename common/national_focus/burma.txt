@@ -28,6 +28,73 @@ focus_tree = {
 	}
 
 	focus = {
+		id = BRM_the_new_economic_boom
+		icon = economic_prosperity2
+		x = 0
+		y = 2
+		relative_position_id = BRM_address_the_democracy_question
+		cost = 6.8
+
+		prerequisite = {
+			focus = BRM_reject_the_way_for_civilian_rule
+			focus = BRM_pave_the_way_for_civilian_rule
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
+			increase_economic_growth = yes
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.05 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { interest_rate > 8 }
+			}
+		}
+	}
+
+	focus = {
+		id = BRM_loan_refactoring
+		icon = economic_prosperity2
+		x = 0
+		y = 3
+		relative_position_id = BRM_address_the_democracy_question
+		cost = 6.8
+
+		prerequisite = { focus = BRM_the_new_economic_boom }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			gdp_debt_ratio_higher_80 = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.10 }
+			clamp_temp_variable = { var = debt_change max = 0 min = -100 }
+			modify_debt_effect = yes
+			add_timed_idea = {
+				idea = BRM_loan_refactoring_idea
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 5
+				check_variable = { interest_rate > 8 }
+			}
+		}
+	}
+
+	focus = {
 		id = BRM_pave_the_way_for_civilian_rule
 		icon = support_democracy
 		x = -5
@@ -109,10 +176,7 @@ focus_tree = {
 
 			}
 
-			add_popularity = {
-				ideology = neutrality
-				popularity = 0.05
-			}
+			add_popularity = { ideology = neutrality popularity = 0.05 }
 			recalculate_party = yes
 
 			set_temp_variable = { temp_opinion = 5 }
@@ -1169,7 +1233,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_accept_the_role_of_the_tatmadaw"
 			add_stability = 0.1
 
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_the_military_opinion = yes
 		}
 
@@ -1257,8 +1321,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_begin_calls_for_constitutional_revision"
-			add_political_power = -100
-			add_stability = -0.05
+			add_political_power = 100
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
