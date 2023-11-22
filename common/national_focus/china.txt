@@ -5393,38 +5393,41 @@ focus_tree = {
 		cost = 7
 
 		available = {
-			AND = { HKG = {
-					is_subject_of = CHI
-					}
-					MAC = {
-					is_subject_of = CHI
-					}
+			OR = {
+				HKG = { is_subject_of = CHI }
+				MAC = { is_subject_of = CHI }
 			}
 		}
 
 		completion_reward = {
-			HKG = {
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
+			if = {
+				limit = { HKG = { is_subject_of = CHI } }
+				HKG = {
+					add_popularity = {
+						ideology = democratic
+						popularity = 0.05
+					}
+					recalculate_party = yes
 				}
-				recalculate_party = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = HKG }
+				change_influence_percentage = yes
 			}
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = CHI }
-			set_temp_variable = { influence_target = HKG }
-			change_influence_percentage = yes
-			MAC = {
-				add_popularity = {
-					ideology = communism
-					popularity = 0.1
+			if = {
+				limit = { MAC = { is_subject_of = CHI } }
+				MAC = {
+					add_popularity = {
+						ideology = democratic
+						popularity = 0.05
+					}
+					recalculate_party = yes
 				}
-				recalculate_party = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = MAC }
+				change_influence_percentage = yes
 			}
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = CHI }
-			set_temp_variable = { influence_target = MAC }
-			change_influence_percentage = yes
 			set_temp_variable = { modify_chinese_aggression = 1 }
 			CHI_modify_chinese_aggression = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Pressure_the_SARs executed"
@@ -5858,7 +5861,7 @@ focus_tree = {
 				limit = { has_idea = CHI_Hong_Kong_Protests_03 }
 				remove_ideas = CHI_Hong_Kong_Protests_03
 			}
-			custom_effect_tooltip = TAI_loses_cores_tt
+			custom_effect_tooltip = TAI_loses_all_cores_tt
 				hidden_effect = {
 				every_state = { #remove core for former Mainland states
 				limit = {
@@ -6584,24 +6587,9 @@ communist_cadres_at_least_positive_opinion = yes
 		cost = 5
 
 		prerequisite = { focus = CHI_American_Joint_Ventures focus = CHI_German_Joint_Ventures focus = CHI_Japanese_Joint_Ventures focus = CHI_Korean_Joint_Ventures }
+		bypass = { has_idea = globalized_trade_economy }
 		completion_reward = {
-			if = {
-				limit = { has_idea = consumption_economy }
-				swap_ideas = {
-					remove_idea = consumption_economy
-					add_idea = export_economy
-				}
-			}
-			else_if = {
-				limit = { has_idea = mixed_economy }
-				swap_ideas = {
-					remove_idea = mixed_economy
-					add_idea = export_economy
-				}
-			}
-			else = {
-				add_political_power = 50
-			}
+			increase_exports = yes
 			log = "[GetDateText]: [This.GetName]: focus CHI_Export_Driven_Economy executed"
 		}
 
@@ -6654,11 +6642,11 @@ communist_cadres_at_least_positive_opinion = yes
 				has_idea = three_represents
 				has_idea = zeng_qinghong_thought
 			}
-if = {
+			if = {
 				limit = { has_idea = the_military has_idea = communist_cadres }
 				OR = {
 					military_at_least_positive_opinion = yes
-communist_cadres_at_least_positive_opinion = yes
+					communist_cadres_at_least_positive_opinion = yes
 				}
 			}
 			else_if = {
@@ -6667,12 +6655,12 @@ communist_cadres_at_least_positive_opinion = yes
 			}
 			else_if = {
 				limit = { NOT = { has_idea = the_military } has_idea = communist_cadres }
-communist_cadres_at_least_positive_opinion = yes
+				communist_cadres_at_least_positive_opinion = yes
 			}
 		}
 
 		completion_reward = {
-			add_political_power = 25
+			add_political_power = 150
 			log = "[GetDateText]: [This.GetName]: focus CHI_Socialism_with_Maoist_Characteristics executed"
 		}
 
@@ -6762,41 +6750,16 @@ communist_cadres_at_least_positive_opinion = yes
 	}
 
 	focus = {
-		id = CHI_State_Owned_Business_Supremacy
-		icon = communism4
-
-		x = 5
-		y = 2
-		relative_position_id = CHI_The_Untapped_Market
-
-		cost = 6.8
-
-		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		available = { has_government = communism }
-
-		completion_reward = {
-			add_stability = 0.05
-			add_political_power = 150
-			log = "[GetDateText]: [This.GetName]: focus CHI_State_Owned_Business_Supremacy executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
 		id = CHI_Collectivize_Agriculture
 		icon = agriculture
 
 		x = 4
-		y = 4
+		y = 3
 		relative_position_id = CHI_The_Untapped_Market
 
 		cost = 10
 
-		prerequisite = { focus = CHI_State_Owned_Business_Supremacy }
+		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
 		mutually_exclusive = { focus = CHI_Privatize_Agricultural_Products }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INDUSTRY }
@@ -7080,12 +7043,12 @@ communist_cadres_at_least_positive_opinion = yes
 		icon = agriculture2
 
 		x = 6
-		y = 4
+		y = 3
 		relative_position_id = CHI_The_Untapped_Market
 
 		cost = 6.8
 
-		prerequisite = { focus = CHI_State_Owned_Business_Supremacy }
+		prerequisite = { focus = CHI_Socialism_with_Chinese_Characteristics }
 		mutually_exclusive = { focus = CHI_Collectivize_Agriculture }
 
 		search_filters = { FOCUS_FILTER_STABILITY }
@@ -7098,47 +7061,22 @@ communist_cadres_at_least_positive_opinion = yes
 	}
 
 	focus = {
-		id = CHI_Allow_Small_Private_Ventures
-		icon = concessions
+		id = CHI_State_Run_Corporatism
+		icon = business_man
 
 		x = 6
 		y = 5
 		relative_position_id = CHI_The_Untapped_Market
 
-		cost = 6.8
+		cost = 7.2
 
 		prerequisite = { focus = CHI_Privatize_Agricultural_Products }
 
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_STABILITY }
-		completion_reward = {
-			add_stability = 0.02
-			set_temp_variable = { temp_opinion = 5 }
-			change_communist_cadres_opinion = yes
-			change_industrial_conglomerates_opinion = yes
-			change_international_bankers_opinion = yes
-			change_small_medium_business_owners_opinion = yes
-			log = "[GetDateText]: [This.GetName]: focus CHI_Allow_Small_Private_Ventures executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = CHI_State_Run_Corporatism
-		icon = business_man
-
-		x = 6
-		y = 6
-		relative_position_id = CHI_The_Untapped_Market
-
-		cost = 6.8
-
-		prerequisite = { focus = CHI_Allow_Small_Private_Ventures }
-
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
-			add_political_power = 50
-			set_temp_variable = { temp_opinion = 5 }
+			add_political_power = 75
+			add_stability = 0.05
+			set_temp_variable = { temp_opinion = 10 }
 			change_communist_cadres_opinion = yes
 			change_industrial_conglomerates_opinion = yes
 			change_international_bankers_opinion = yes
@@ -7257,7 +7195,7 @@ communist_cadres_at_least_positive_opinion = yes
 		y = 1
 		relative_position_id = CHI_Chinese_Megaprojects
 
-		cost = 10
+		cost = 4.4
 
 		prerequisite = { focus = CHI_Chinese_Megaprojects }
 
@@ -10905,8 +10843,9 @@ communist_cadres_at_least_positive_opinion = yes
 		}
 
 		completion_reward = {
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
+			add_ideas = CHI_electric_car_project_idea
 			add_stability = 0.02
 			log = "[GetDateText]: [This.GetName]: focus CHI_Electric_Car_Project executed"
 		}
@@ -11134,7 +11073,7 @@ communist_cadres_at_least_positive_opinion = yes
 	}
 
 	focus = {
-		id = CHI_Shanxi_Ship_Engine_Factory
+		id = CHI_Jiangnan_Shipbuilding
 		icon = cruisers
 
 		x = 14
@@ -11148,20 +11087,18 @@ communist_cadres_at_least_positive_opinion = yes
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		available = { controls_state = 558 }
-
 		completion_reward = {
-			set_temp_variable = { treasury_change = -15 }
+			set_temp_variable = { treasury_change = -20 }
 			modify_treasury_effect = yes
-			558 = {
-				add_extra_state_shared_building_slots = 2
+			540 = {
+				add_extra_state_shared_building_slots = 3
 				add_building_construction = {
-					type = industrial_complex
-					level = 2
+					type = dockyard
+					level = 3
 					instant_build = yes
 				}
 			}
-			log = "[GetDateText]: [This.GetName]: focus CHI_Shanxi_Ship_Engine_Factory executed"
+			log = "[GetDateText]: [This.GetName]: focus CHI_Jiangnan_Shipbuilding executed"
 		}
 
 		ai_will_do = { base = 1 }
@@ -11178,7 +11115,7 @@ communist_cadres_at_least_positive_opinion = yes
 		cost = 10
 
 		prerequisite = { focus = CHI_Dalian_Shipbuilding }
-		prerequisite = { focus = CHI_Shanxi_Ship_Engine_Factory }
+		prerequisite = { focus = CHI_Jiangnan_Shipbuilding }
 		prerequisite = { focus = CHI_Qingdao_Dockyards }
 
 		search_filters = { FOCUS_FILTER_INFLUENCE }
@@ -11564,18 +11501,30 @@ communist_cadres_at_least_positive_opinion = yes
 		completion_reward = {
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
-				name = CHI_Develop_Stealth_Fighters
-				bonus = 0.5
-				uses = 1
-				technology = MR_Fighter4
-				technology = MR_Fighter5
-				technology = MR_Fighter6
-				technology = MR_Fighter7
-				technology = AS_Fighter4
-				technology = AS_Fighter5
-				technology = AS_Fighter6
-				technology = AS_Fighter7
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_tech_bonus = {
+					name = CHI_Develop_Stealth_Fighters
+					bonus = 0.25
+					uses = 2
+					technology = stealth_tech_1
+					technology = stealth_tech_2
+				}
+			}
+			else = {
+				add_tech_bonus = {
+					name = CHI_Develop_Stealth_Fighters
+					bonus = 0.25
+					uses = 2
+					technology = MR_Fighter4
+					technology = MR_Fighter5
+					technology = MR_Fighter6
+					technology = MR_Fighter7
+					technology = AS_Fighter4
+					technology = AS_Fighter5
+					technology = AS_Fighter6
+					technology = AS_Fighter7
+				}
 			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Develop_Stealth_Fighters executed"
 		}
@@ -11871,7 +11820,7 @@ communist_cadres_at_least_positive_opinion = yes
 		id = CHI_The_South_China_Sea
 		icon = coastal_fort
 
-		x = -15
+		x = -11
 		y = 1
 		relative_position_id = CHI_Regional_Influence
 
@@ -12397,7 +12346,7 @@ communist_cadres_at_least_positive_opinion = yes
 		id = CHI_The_Korean_Peninsula
 		icon = korean_peninsula
 
-		x = -8
+		x = -4
 		y = 1
 		relative_position_id = CHI_Regional_Influence
 
@@ -13372,7 +13321,7 @@ communist_cadres_at_least_positive_opinion = yes
 		id = CHI_The_Indian_Subcontinent
 		icon = india
 
-		x = 0
+		x = 4
 		y = 1
 		relative_position_id = CHI_Regional_Influence
 
@@ -14467,7 +14416,7 @@ communist_cadres_at_least_positive_opinion = yes
 		id = CHI_The_Land_of_the_Rising_Sun
 		icon = japanese_pacific_guardian
 
-		x = 10
+		x = 14
 		y = 1
 		relative_position_id = CHI_Regional_Influence
 
@@ -14854,7 +14803,7 @@ communist_cadres_at_least_positive_opinion = yes
 		id = CHI_The_Inland_Prairie
 		icon = focus_generic_horse_studs
 
-		x = 16
+		x = -16
 		y = 1
 		relative_position_id = CHI_Regional_Influence
 
@@ -17424,7 +17373,7 @@ communist_cadres_at_least_positive_opinion = yes
 		x = -2
 		y = 1
 		relative_position_id = CHI_Chinese_Megaprojects
-		cost = 15
+		cost = 8.58
 		prerequisite = { focus = CHI_Chinese_Megaprojects }
 		available = { date > 2012.1.1 }
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -17447,7 +17396,8 @@ communist_cadres_at_least_positive_opinion = yes
 		x = -15
 		y = 5
 		relative_position_id = CHI_Chinese_Megaprojects
-		cost = 20
+		cost = 10
+
 		available = {
 			date > 2010.1.1
 			controls_state = 538
