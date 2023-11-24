@@ -18,13 +18,12 @@ focus_tree = {
 		x = 11
 		y = 0
 
-		cost = 4
+		cost = 6.4
 
 		completion_reward = {
  			log = "[GetDateText]: [Root.GetName]: Focus TNZ_greater_perspective executed"
-			add_political_power = 20
+			add_political_power = 100
 		}
-
 
 		ai_will_do = {
 			factor = 1
@@ -2618,8 +2617,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_global_fund_tax_reliefs executed"
-			custom_effect_tooltip = JAP_int_investment_5_bil_tt
-			add_to_variable = { int_investments = 5.0 }
+			set_temp_variable = { int_investment_change = gdp_total }
+			multiply_temp_variable = { int_investment_change = 0.04 }
+			modify_international_investment_effect = yes
 		}
 
 		prerequisite = { focus = TNZ_economic_sustainability }
@@ -2629,21 +2629,22 @@ focus_tree = {
 		}
 	}
 
+	# REGIONAL DIPLOMACY
 	focus = {
 		id = TNZ_beacon_of_diplomacy
 		icon = flag_tanzania
 
-
 		x = 29
 		y = 0
 
-		cost = 4
+		cost = 5.8
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
  			log = "[GetDateText]: [Root.GetName]: Focus TNZ_beacon_of_diplomacy executed"
-			set_variable = { influence_total = political_power }
+			add_political_power = 75
+			add_stability = 0.05
 		}
 
 		ai_will_do = {
@@ -2655,22 +2656,18 @@ focus_tree = {
 		id = TNZ_diplomatic_talks
 		icon = volunteer_alliance
 
-		x = 27
+		x = -2
 		y = 1
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 5
+		cost = 5.8
 
-
-
-		prerequisite = {
-			focus = TNZ_beacon_of_diplomacy
-		}
-
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		prerequisite = { focus = TNZ_beacon_of_diplomacy }
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_diplomatic_talks executed"
-			add_political_power = 25
+			add_political_power = 75
 		}
 
 		ai_will_do = {
@@ -2682,28 +2679,18 @@ focus_tree = {
 		id = TNZ_friendship_with_kenya
 		icon = align_to_kenya
 
-		x = 28
+		x = -1
 		y = 2
-
+		relative_position_id = TNZ_beacon_of_diplomacy
 		cost = 10
 
-
-
-		prerequisite = {
-			focus = TNZ_diplomatic_talks
-		}
-
-		prerequisite = {
-			focus = TNZ_arusha_accords
-		}
-
-		mutually_exclusive = { }
+		prerequisite = { focus = TNZ_diplomatic_talks }
+		prerequisite = { focus = TNZ_arusha_accords }
 
 		available = {
+			country_exists = KEN
 			NOT = { has_war_with = KEN }
 		}
-
-		bypass = { }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -2733,28 +2720,18 @@ focus_tree = {
 		id = TNZ_friendship_with_uganda
 		icon = align_to_uganda
 
-		x = 30
+		x = 1
 		y = 2
-
+		relative_position_id = TNZ_beacon_of_diplomacy
 		cost = 10
 
-
-
-		prerequisite = {
-			focus = TNZ_diplomatic_talks
-		}
-
-		prerequisite = {
-			focus = TNZ_arusha_accords
-		}
-
-		mutually_exclusive = { }
+		prerequisite = { focus = TNZ_diplomatic_talks }
+		prerequisite = { focus = TNZ_arusha_accords }
 
 		available = {
+			country_exists = UGA
 			NOT = { has_war_with = UGA }
 		}
-
-		bypass = { }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -2767,12 +2744,8 @@ focus_tree = {
 				custom_effect_tooltip = EAC_community_influence_1_tt
 				add_to_variable = { var = EAC_influence value = 1 }
 			}
-			UGA = {
-				add_opinion_modifier = {
-					target = TNZ
-					modifier = declaration_of_friendship
-				}
-			}
+			add_opinion_modifier = { target = UGA modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = UGA modifier = declaration_of_friendship }
 		}
 
 		ai_will_do = {
@@ -3027,17 +3000,13 @@ focus_tree = {
 		id = TNZ_envoys_to_leaders
 		icon = align_to_africa
 
-		x = 27
+		x = -2
 		y = 3
+		relative_position_id = TNZ_beacon_of_diplomacy
 
 		cost = 10
 
-		prerequisite = {
-			focus = TNZ_diplomatic_talks }
-
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
+		prerequisite = { focus = TNZ_diplomatic_talks }
 
 		available = {
 			has_idea = AU_member
@@ -3082,35 +3051,27 @@ focus_tree = {
 		id = TNZ_fighting_neocolonialism
 		icon = colonialism
 
-		x = 26
+		x = -3
 		y = 2
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
+		cost = 7.9
 
-		prerequisite = {
-			focus = TNZ_diplomatic_talks
-		}
+		prerequisite = { focus = TNZ_diplomatic_talks }
 
 		available = {
 			has_idea = AU_member
-			has_political_power > 50
 		}
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_fighting_neocolonialism executed"
-			custom_effect_tooltip = TNZ_fighting_neocolonialism_2_tt
-			hidden_effect = {
-				every_country = {
-					if = {
-						limit = { is_african_nation = yes }
-						add_to_variable = { domestic_influence_amount = 2 }
-						recalculate_influence = yes
-					}
-				}
+			every_country = {
+				limit = { is_african_nation = yes }
+				set_temp_variable = { percent_change = 3.5 }
+				change_domestic_influence_percentage = yes
 			}
-			add_political_power = -50
 		}
 
 
@@ -3123,41 +3084,25 @@ focus_tree = {
 		id = TNZ_african_standby_force
 		icon = military_mission2
 
-		x = 27
+		x = -2
 		y = 4
+		relative_position_id = TNZ_beacon_of_diplomacy
 
 		cost = 10
 
 		prerequisite = { focus = TNZ_envoys_to_leaders }
 
-		cancel_if_invalid = no
-		continue_if_invalid = yes
-		available_if_capitulated = no
-
 		available = {
 			has_idea = AU_member
-			NOT = {
-				has_idea = defence_00
-			}
-			has_political_power > 150
-			has_manpower > 1000
+			NOT = { has_idea = defence_00 }
+			NOT = { has_idea = no_military }
 		}
 
-		search_filters = {FOCUS_FILTER_POLITICAL}
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_african_standby_force executed"
-			if = {
-				limit = {
-					OR = {
-						has_idea = intervention_isolation
-						has_idea = intervention_local_security
-					}
-				}
-				increase_intervention_law_effect = yes
-				add_political_power = -150
-			}
-			add_manpower = -1000
+			increase_intervention_law_effect = yes
 		}
 
 		ai_will_do = {
@@ -3170,10 +3115,11 @@ focus_tree = {
 		icon = align_to_madagascar
 
 
-		x = 24
+		x = -5
 		y = 2
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 5
+		cost = 7.9
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3211,10 +3157,11 @@ focus_tree = {
 		icon = border_war
 
 
-		x = 25
+		x = -4
 		y = 3
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
+		cost = 7.9
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3234,96 +3181,37 @@ focus_tree = {
 		id = TNZ_action_on_indian_ocean
 		icon = demand_territory3
 
-
-		x = 24
+		x = -5
 		y = 4
+		relative_position_id = TNZ_beacon_of_diplomacy
 
 		cost = 10
 
 		available = {
 			NOT = {
+				has_idea = no_military
 				has_idea = defence_00
 				has_idea = intervention_isolation
 				has_idea = intervention_local_security
 			}
-			has_navy_size = {
-    				size > 3
-			}
+			has_navy_size = { size > 3 }
 		}
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_action_on_indian_ocean executed"
-			hidden_effect = {
-				COM = {
-					set_temp_variable = { influence_gain = 5 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = TNZ }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
-						}
-					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = TNZ.id }
-							add_to_array = { influence_array_val = influence_gain }
-					}
-					clr_country_flag = found
-					recalculate_influence = yes
-				}
-				SEY = {
-					set_temp_variable = { influence_gain = 5 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = TNZ }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
-						}
-					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = TNZ.id }
-							add_to_array = { influence_array_val = influence_gain }
-					}
-					clr_country_flag = found
-					recalculate_influence = yes
-				}
-				SOM = {
-					set_temp_variable = { influence_gain = 5 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = TNZ }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
-						}
-					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = TNZ.id }
-							add_to_array = { influence_array_val = influence_gain }
-					}
-					clr_country_flag = found
-					recalculate_influence = yes
-				}
-			}
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = TNZ }
+			set_temp_variable = { influence_target = COM.id }
+			change_influence_percentage = yes
+			set_temp_variable = { influence_target = SEY.id }
+			change_influence_percentage = yes
+			set_temp_variable = { influence_target = SOM.id }
+			change_influence_percentage = yes
+			set_temp_variable = { influence_target = MRT.id }
+			change_influence_percentage = yes
 			unlock_decision_category_tooltip = TNZ_action_on_indian_ocean_category
-			custom_effect_tooltip = TNZ_com_5_influence_tt
-			custom_effect_tooltip = TNZ_sey_5_influence_tt
-			custom_effect_tooltip = TNZ_som_5_influence_tt
 		}
 
 		prerequisite = {  focus = TNZ_southern_neighbours  }
@@ -3338,10 +3226,11 @@ focus_tree = {
 		icon = military_sphere
 
 
-		x = 23
+		x = -6
 		y = 5
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
+		cost = 7.9
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3366,11 +3255,10 @@ focus_tree = {
 		id = TNZ_third_wheel
 		icon = national_unity
 
-
-		x = 24
+		x = -5
 		y = 6
-
-		cost = 15
+		relative_position_id = TNZ_beacon_of_diplomacy
+		cost = 7.9
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3392,10 +3280,10 @@ focus_tree = {
 		icon = somali_pirates
 
 
-		x = 25
+		x = -4
 		y = 5
-
-		cost = 10
+		relative_position_id = TNZ_beacon_of_diplomacy
+		cost = 7.9
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3417,16 +3305,17 @@ focus_tree = {
 		icon = treaty
 
 
-		x = 31
+		x = 2
 		y = 1
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 5
+		cost = 5.8
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_arusha_accords executed"
-			add_political_power = 25
+			add_political_power = 75
 		}
 
 		prerequisite = {  focus = TNZ_beacon_of_diplomacy  }
@@ -3440,20 +3329,16 @@ focus_tree = {
 		id = TNZ_finding_peace_in_congo
 		icon = improve_relations_blue
 
-
-		x = 32
+		x = 3
 		y = 2
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
+		cost = 5.8
 
 		available = {
 			OR = {
-				RWA = {
-					has_war_with = DRC
-				}
-				UGA = {
-					has_war_with = DRC
-				}
+				RWA = { has_war_with = DRC }
+				UGA = { has_war_with = DRC }
 			}
 			date < 2005.01.01
 		}
@@ -3476,11 +3361,11 @@ focus_tree = {
 		id = TNZ_enforced_peace
 		icon = demand_territory2
 
-
-		x = 31
+		x = 2
 		y = 3
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
+		cost = 5.8
 
 		available = {
 			OR = {
@@ -3513,10 +3398,12 @@ focus_tree = {
 		icon = african_conflict
 
 
-		x = 31
+		x = 2
 		y = 4
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 5
+
+		cost = 5.8
 
 		available = {
 			OR = {
@@ -3546,12 +3433,14 @@ focus_tree = {
 		icon = democracy5
 
 
-		x = 34
+		x = 5
 		y = 2
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
+		cost = 5.8
 
 		available = {
+			country_exists = BUR
 			NOT = { has_war_with = BUR }
 		}
 
@@ -3569,30 +3458,10 @@ focus_tree = {
 					remove_ideas = great_lakes_aftermath
 				}
 			}
-			custom_effect_tooltip = TNZ_bur_30_influence_tt
-			hidden_effect = {
-				BUR = {
-					set_temp_variable = { influence_gain = 30 }
-					for_loop_effect = {
-						end = influence_array^num
-						value = v
-						if = {
-							limit = {
-								check_variable = { influence_array^v = TNZ }
-							}
-							add_to_variable = { influence_array_val^v = influence_gain }
-							set_country_flag = found
-						}
-					}
-					if = {
-						limit = { NOT = { has_country_flag = found } }
-							add_to_array = { influence_array = TNZ.id }
-							add_to_array = { influence_array_val = influence_gain }
-					}
-					clr_country_flag = found
-					recalculate_influence = yes
-				}
-			}
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = TNZ }
+			set_temp_variable = { influence_target = BUR.id }
+			change_influence_percentage = yes
 		}
 
 		prerequisite = {  focus = TNZ_arusha_accords  }
@@ -3606,35 +3475,31 @@ focus_tree = {
 		id = TNZ_friendship_with_burundi
 		icon = align_to_burundi
 
-		x = 35
+		x = 6
 		y = 3
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
-
-
+		cost = 5.8
 
 		prerequisite = {
 			focus = TNZ_rebuilding_burundi
 		}
 
-		mutually_exclusive = { }
-
 		available = {
+			country_exists = BUR
 			NOT = { has_war_with = KEN }
 		}
-
-		bypass = { }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_friendship_with_burundi executed"
-			BUR = {
-				add_opinion_modifier = {
-					target = TNZ
-					modifier = declaration_of_friendship
-				}
-			}
+			add_opinion_modifier = { target = BUR modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = BUR modifier = declaration_of_friendship }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = TNZ }
+			set_temp_variable = { influence_target = BUR.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -3646,35 +3511,28 @@ focus_tree = {
 		id = TNZ_friendship_with_rwanda
 		icon = align_to_rwanda
 
-		x = 33
+		x = 4
 		y = 4
+		relative_position_id = TNZ_beacon_of_diplomacy
+		cost = 5.8
 
-		cost = 10
-
-
-
-		prerequisite = {
-			focus = TNZ_refugee_camps
-		}
-
-		mutually_exclusive = { }
+		prerequisite = { focus = TNZ_refugee_camps }
 
 		available = {
+			country_exists = RWA
 			NOT = { has_war_with = RWA }
 		}
-
-		bypass = { }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_friendship_with_rwanda executed"
-			RWA = {
-				add_opinion_modifier = {
-					target = TNZ
-					modifier = declaration_of_friendship
-				}
-			}
+			add_opinion_modifier = { target = RWA modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = RWA modifier = declaration_of_friendship }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = TNZ }
+			set_temp_variable = { influence_target = RWA.id }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -3687,20 +3545,23 @@ focus_tree = {
 		icon = treaty
 
 
-		x = 33
+		x = 4
 		y = 3
+		relative_position_id = TNZ_beacon_of_diplomacy
 
-		cost = 10
+		prerequisite = {
+			focus = TNZ_rebuilding_burundi
+			focus = TNZ_finding_peace_in_congo
+		}
+
+		cost = 5.8
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_refugee_camps executed"
 			country_event = tnz.29
-
 		}
-
-		prerequisite = {  focus = TNZ_rebuilding_burundi focus = TNZ_finding_peace_in_congo  }
 
 		ai_will_do = {
 			base = 10
@@ -3722,9 +3583,7 @@ focus_tree = {
 			neutrality_neutral_social_are_in_power = yes
 		}
 
-		mutually_exclusive = {
-			focus = TNZ_open_discourse
-		}
+		mutually_exclusive = { focus = TNZ_open_discourse }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3742,9 +3601,9 @@ focus_tree = {
 		id = TNZ_divided_opposition
 		icon = anti_establishment2
 
-
-		x = 40
+		x = 0
 		y = 1
+		relative_position_id = TNZ_tighter_grip
 
 		cost = 5
 
@@ -3772,9 +3631,9 @@ focus_tree = {
 		id = TNZ_leader_election
 		icon = new_leader
 
-
-		x = 39
+		x = -1
 		y = 2
+		relative_position_id = TNZ_tighter_grip
 
 		cost = 5
 
@@ -3809,9 +3668,9 @@ focus_tree = {
 		id = TNZ_mkapa
 		icon = mkapa
 
-
-		x = 41
+		x = 1
 		y = 2
+		relative_position_id = TNZ_tighter_grip
 
 		cost = 2
 
@@ -3855,9 +3714,7 @@ focus_tree = {
 
 		cost = 5
 
-		mutually_exclusive = {
-			focus = TNZ_tighter_grip
-		}
+		mutually_exclusive = { focus = TNZ_tighter_grip }
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
 
@@ -3878,8 +3735,9 @@ focus_tree = {
 		id = TNZ_grand_coalition
 		icon = dangerous_deal
 
-		x = 48
+		x = -1
 		y = 1
+		relative_position_id = TNZ_open_discourse
 
 		cost = 5
 
@@ -3903,9 +3761,9 @@ focus_tree = {
 		icon = propaganda
 
 
-		x = 50
+		x = 1
 		y = 1
-
+		relative_position_id = TNZ_open_discourse
 		cost = 10
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
@@ -3916,6 +3774,7 @@ focus_tree = {
 			add_popularity = { ideology = democratic popularity = 0.02 }
 			add_popularity = { ideology = communism popularity = 0.02 }
 			add_popularity = { ideology = nationalist popularity = 0.01 }
+			recalculate_party = yes
 		}
 
 		prerequisite = {  focus = TNZ_open_discourse  }
@@ -3930,9 +3789,9 @@ focus_tree = {
 		icon = mrema
 
 
-		x = 45
+		x = -4
 		y = 2
-
+		relative_position_id = TNZ_open_discourse
 		cost = 0.8
 
 		mutually_exclusive = {
@@ -3966,8 +3825,9 @@ focus_tree = {
 		icon = cheyo
 
 
-		x = 47
+		x = -2
 		y = 2
+		relative_position_id = TNZ_open_discourse
 
 		cost = 0.8
 
@@ -4001,8 +3861,9 @@ focus_tree = {
 		icon = mbowe
 
 
-		x = 49
+		x = 0
 		y = 2
+		relative_position_id = TNZ_open_discourse
 
 		cost = 0.8
 
@@ -4036,9 +3897,9 @@ focus_tree = {
 		id = TNZ_lipumba
 		icon = lipumba
 
-
-		x = 51
+		x = 2
 		y = 2
+		relative_position_id = TNZ_open_discourse
 
 		cost = 0.8
 
@@ -4775,9 +4636,9 @@ focus_tree = {
 		icon = democracy5
 
 
-		x = 48
+		x = -1
 		y = 3
-
+		relative_position_id = TNZ_open_discourse
 		cost = 10
 
 		available = {
@@ -4880,11 +4741,12 @@ focus_tree = {
 
 	focus = {
 		id = TNZ_emerging_path
-		icon = emerging_path_tnz
+		icon = emerg
 
 
-		x = 47
+		x = -2
 		y = 4
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -4911,9 +4773,9 @@ focus_tree = {
 		id = TNZ_preserving_nyerere_revolution
 		icon = emerging_path_TNZ
 
-
-		x = 46
+		x = -3
 		y = 5
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -4943,8 +4805,9 @@ focus_tree = {
 		icon = generic_controlled_press
 
 
-		x = 46
+		x = -3
 		y = 6
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -4980,8 +4843,9 @@ focus_tree = {
 		icon = welfare
 
 
-		x = 45
+		x = -4
 		y = 7
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5011,8 +4875,9 @@ focus_tree = {
 		icon = propaganda
 
 
-		x = 47
+		x = -2
 		y = 7
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5042,8 +4907,9 @@ focus_tree = {
 		icon = Election
 
 
-		x = 49
+		x = 0
 		y = 4
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5065,9 +4931,9 @@ focus_tree = {
 		icon = become_puppet
 
 
-		x = 49
+		x = 0
 		y = 5
-
+		relative_position_id = TNZ_open_discourse
 		cost = 10
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
@@ -5089,8 +4955,9 @@ focus_tree = {
 		icon = ccm_recruitment
 
 
-		x = 48
+		x = -1
 		y = 6
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5123,8 +4990,9 @@ focus_tree = {
 		icon = anti_immigration2
 
 
-		x = 50
+		x = 1
 		y = 6
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5155,15 +5023,16 @@ focus_tree = {
 		icon = emerging_path_TNZ
 
 
-		x = 49
+		x = 0
 		y = 7
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
 		available = {
 			OR = {
-			has_government  = communism
-			custom_trigger_tooltip = {
+				has_government  = communism
+				custom_trigger_tooltip = {
     				is_in_array = { ruling_party = 2 }
     					tooltip = TNZ_communist_in_power_tt
 				}
@@ -5188,9 +5057,9 @@ focus_tree = {
 		id = TNZ_undermine_the_democratic_process
 		icon = emerging_path_TNZ
 
-
-		x = 47
+		x = -1
 		y = 8
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5219,8 +5088,9 @@ focus_tree = {
 		icon = emerging_path_TNZ
 
 
-		x = 51
+		x = 1
 		y = 8
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5247,9 +5117,9 @@ focus_tree = {
 		icon = democracy
 
 
-		x = 51
+		x = 2
 		y = 4
-
+		relative_position_id = TNZ_open_discourse
 		cost = 10
 
 		search_filters = {FOCUS_FILTER_POLITICAL}
@@ -5271,8 +5141,9 @@ focus_tree = {
 		icon = unknown
 
 
-		x = 52
+		x = 3
 		y = 5
+		relative_position_id = TNZ_open_discourse
 
 		cost = 10
 
@@ -5362,8 +5233,9 @@ focus_tree = {
 		icon = concessions2
 
 
-		x = 35
-		y = 10
+		x = -2
+		y = 1
+		relative_position_id = TNZ_party_country
 
 		cost = 8
 
@@ -5398,8 +5270,9 @@ focus_tree = {
 		icon = colonial_crackdown
 
 
-		x = 35
-		y = 11
+		x = -2
+		y = 2
+		relative_position_id = TNZ_party_country
 
 		cost = 10
 
@@ -5429,8 +5302,9 @@ focus_tree = {
 		icon = champagne_green
 
 
-		x = 37
-		y = 10
+		x = 0
+		y = 1
+		relative_position_id = TNZ_party_country
 
 		cost = 10
 
@@ -5468,9 +5342,9 @@ focus_tree = {
 		icon = ccm_factionalism
 
 
-		x = 37
-		y = 11
-
+		x = 0
+		y = 2
+		relative_position_id = TNZ_party_country
 		cost = 10
 
 		available = {
@@ -5773,8 +5647,9 @@ focus_tree = {
 		icon = support_democracy
 
 
-		x = 39
-		y = 11
+		x = 2
+		y = 2
+		relative_position_id = TNZ_party_country
 
 		cost = 10
 
@@ -5804,8 +5679,9 @@ focus_tree = {
 		icon = improve_relations_purple
 
 
-		x = 40
-		y = 10
+		x = 3
+		y = 1
+		relative_position_id = TNZ_party_country
 
 		cost = 10
 
@@ -7805,6 +7681,10 @@ focus_tree = {
 
 		x = 71
 		y = 3
+		prerequisite = {
+			focus = TNZ_the_central_bank
+			focus = TNZ_more_farms
+		}
 
 		cost = 10
 
@@ -7812,24 +7692,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_rural_fund executed"
-			if = {
-				limit = {
-					has_idea = farmers
-				}
-				visually_display_opinion_rise_farmers = yes
-				set_country_flag = current_farmers
-				increase_internal_faction_opinion = yes
-				custom_effect_tooltip = 5_billion_expense_tt
-				subtract_from_variable = { treasury = 5.0 }
-			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_farmers_opinion = yes
 			increase_social_spending = yes
 		}
-
-
-
-		prerequisite = { focus = TNZ_the_central_bank }
-
-		prerequisite = { focus = TNZ_more_farms }
 
 		ai_will_do = {
 			base = 10
@@ -7930,18 +7796,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_expose_ag executed"
 			add_political_power = 200
-			if = {
-				limit = { has_idea = industrial_conglomerates }
-				visually_display_opinion_rise_industrial_conglomerates = yes
-				set_country_flag = current_industrial_conglomerates
-				increase_internal_faction_opinion = yes
-			}
-			if = {
-				limit = { has_idea = farmers }
-				visually_display_opinion_fall_farmers = yes
-				set_country_flag = current_farmers
-				decrease_internal_faction_opinion = yes
-			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_farmers_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_industrial_conglomerates_opinion = yes
 			add_stability = -0.05
 		}
 
@@ -7958,10 +7816,9 @@ focus_tree = {
 		id = TNZ_farmer_militia
 		icon = restrictive_gun_laws
 
-
-		x = 72
-		y = 5
-
+		x = -6
+		y = 3
+		relative_position_id = TNZ_armed_forces
 		cost = 10
 
 		search_filters = {FOCUS_FILTER_INDUSTRY }
@@ -7969,14 +7826,34 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_farmer_militia executed"
 			add_war_support = 0.03
-			if = {
-				limit = { has_idea = industrial_conglomerates }
-			}
+
 		}
 
 		prerequisite = { focus = TNZ_more_farms focus = TNZ_expose_ag }
 
 		prerequisite = { focus = TNZ_small_arms }
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = TNZ_formalize_the_guard
+		icon = restrictive_gun_laws
+
+		x = -7
+		y = 4
+		relative_position_id = TNZ_armed_forces
+		cost = 10
+
+		prerequisite = { focus = TNZ_farmer_militia }
+		search_filters = {FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus TNZ_farmer_militia executed"
+			add_war_support = 0.03
+		}
 
 		ai_will_do = {
 			base = 10
@@ -8418,7 +8295,7 @@ z
 
 		x = 63
 		y = 8
-
+		prerequisite = { focus = TNZ_steel_production }
 		cost = 10
 
 
@@ -8426,25 +8303,12 @@ z
 			num_of_factories > 7
 		}
 
-		search_filters = {FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_heavy_factories executed"
-			255 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = arms_factory
-					level = 1
-					instant_build = yes
-				}
-			}
-			custom_effect_tooltip = 8_billion_expense_tt
-			add_to_variable = { treasury = -8.0 }
+			one_random_arms_factory = yes
 		}
-
-
-
-		prerequisite = { focus = TNZ_steel_production }
 
 		ai_will_do = {
 			base = 10
@@ -8458,7 +8322,8 @@ z
 
 		x = 65
 		y = 8
-
+		prerequisite = { focus = TNZ_civilian_production }
+		prerequisite = { focus = TNZ_dar_infrastructure }
 		cost = 10
 
 		search_filters = {FOCUS_FILTER_INDUSTRY }
@@ -8467,10 +8332,6 @@ z
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_navalyards executed"
 			one_random_dockyard = yes
 		}
-
-		prerequisite = { focus = TNZ_civilian_production }
-
-		prerequisite = { focus = TNZ_dar_infrastructure }
 
 		ai_will_do = {
 			base = 10
@@ -8514,6 +8375,7 @@ z
 
 		x = 66
 		y = 7
+		prerequisite = {  focus = TNZ_tanzanian_energy  }
 
 		cost = 10
 
@@ -8524,7 +8386,7 @@ z
 		search_filters = {FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus TNZ_land_clearing executed"
+			log = "[GetDateText]: [This.GetName]: focus TNZ_land_clearing executed"
 			252 = {
 					if = {
 						limit = { is_controlled_by = ROOT }
@@ -8550,11 +8412,6 @@ z
 			add_to_variable = { treasury = -1.0 }
 			add_stability = -0.03
 		}
-
-
-
-		prerequisite = {  focus = TNZ_tanzanian_energy  }
-
 
 		ai_will_do = {
 			base = 10
@@ -8631,15 +8488,7 @@ z
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_national_fibre_backbone executed"
-			every_owned_state = {
-				add_building_construction = {
-					type = internet_station
-					level = 1
-					instant_build = yes
-				}
-			}
-			custom_effect_tooltip = 1_billion_expense_tt
-			add_to_variable = { treasury = -1.0 }
+			two_random_network_infrastructure = yes
 		}
 
 		prerequisite = { focus = TNZ_the_bottomless_growth }
@@ -8850,11 +8699,12 @@ z
 
 	focus = {
 		id = TNZ_west_tech
-		icon = unknown
+		icon = align_to_nato
 
 
-		x = 71
+		x = -7
 		y = 8
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -8915,12 +8765,12 @@ z
 
 	focus = {
 		id = TNZ_african_tech
-		icon = unknown
+		icon = align_to_african_union
 
 
-		x = 73
+		x = -5
 		y = 8
-
+		relative_position_id = TNZ_armed_forces
 		cost = 10
 
 
@@ -8983,11 +8833,12 @@ z
 
 	focus = {
 		id = TNZ_east_tech
-		icon = unknown
+		icon = align_to_csto
 
 
-		x = 75
+		x = -3
 		y = 8
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9040,22 +8891,20 @@ z
 		icon = tnz_forces
 
 
-		x = 77
+		x = 79
 		y = 0
 
 		cost = 5
 
-		available = {
-
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = {FOCUS_FILTER_WAR_SUPPORT }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_armed_Forces executed"
-			add_war_support = 0.03
+			army_experience = 50
+			navy_experience = 50
+			air_experience = 50
+			add_war_support = 0.05
 		}
-
 
 		ai_will_do = {
 			base = 10
@@ -9066,23 +8915,27 @@ z
 		id = TNZ_the_army
 		icon = infantry_allies
 
-
-		x = 74
+		x = -2
 		y = 1
+		relative_position_id = TNZ_armed_forces
 
 		cost = 2.9
 
 		available = {
-			NOT = {
-				has_idea = defence_00
-			}
+			NOT = { has_idea = defence_00 }
 		}
 
 		search_filters = {FOCUS_FILTER_RESEARCH}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_the_army executed"
-			army_experience = 10
+			army_experience = 75
+			add_doctrine_cost_reduction = {
+				cost_reduction = 0.05
+				category = air_doctrine
+				name = TNZ_the_army
+				uses = 1
+			}
 		}
 
 		prerequisite = { focus = TNZ_armed_forces }
@@ -9097,9 +8950,9 @@ z
 		icon = small_arms_east
 
 
-		x = 74
+		x = -4
 		y = 2
-
+		relative_position_id = TNZ_armed_forces
 		cost = 10
 
 		available = {
@@ -9132,8 +8985,9 @@ z
 		icon = artillery
 
 
-		x = 74
+		x = -4
 		y = 3
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9167,9 +9021,9 @@ z
 		icon = tanks
 
 
-		x = 73
+		x = -5
 		y = 4
-
+		relative_position_id = TNZ_armed_forces
 		cost = 10
 
 		available = {
@@ -9202,8 +9056,9 @@ z
 		icon = tanks
 
 
-		x = 75
+		x = -3
 		y = 4
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9233,13 +9088,42 @@ z
 	}
 
 	focus = {
+		id = TNZ_armored_production
+		icon = general_staff
+
+		x = -6
+		y = 5
+		relative_position_id = TNZ_armed_forces
+		prerequisite = { focus = TNZ_tanks }
+		cost = 5
+
+		available = {
+			NOT = {
+				has_idea = defence_00
+				has_idea = officer_baptism_by_fire
+			}
+		}
+
+		search_filters = {FOCUS_FILTER_RESEARCH}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus TNZ_staff_reorganization executed"
+			army_experience = 20
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
 		id = TNZ_staff_reorganization
 		icon = general_staff
 
 
-		x = 74
+		x = -4
 		y = 5
-
+		relative_position_id = TNZ_armed_forces
 		cost = 5
 
 		available = {
@@ -9269,8 +9153,9 @@ z
 		icon = tanks
 
 
-		x = 77
+		x = -1
 		y = 6
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9303,8 +9188,9 @@ z
 		icon = tanks
 
 
-		x = 76
+		x = -1
 		y = 7
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9356,8 +9242,9 @@ z
 		icon = air_force
 
 
-		x = 77
+		x = 0
 		y = 1
+		relative_position_id = TNZ_armed_forces
 
 		cost = 2.9
 
@@ -9371,7 +9258,13 @@ z
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_an_airforce executed"
-			air_experience = 10
+			air_experience = 75
+			add_doctrine_cost_reduction = {
+				cost_reduction = 0.05
+				category = air_doctrine
+				name = TNZ_an_airforce
+				uses = 1
+			}
 		}
 
 		prerequisite = {  focus = TNZ_armed_forces  }
@@ -9386,8 +9279,9 @@ z
 		icon = fighters
 
 
-		x = 78
+		x = 0
 		y = 2
+		relative_position_id = TNZ_armed_forces
 
 		cost = 15
 
@@ -9427,8 +9321,9 @@ z
 		icon = fighters2
 
 
-		x = 76
+		x = -2
 		y = 2
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9468,8 +9363,9 @@ z
 		icon = bombers
 
 
-		x = 76
+		x = -2
 		y = 3
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9505,8 +9401,9 @@ z
 		icon = military_mission
 
 
-		x = 78
+		x = 0
 		y = 3
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9542,8 +9439,9 @@ z
 		icon = military_mission
 
 
-		x = 77
+		x = -1
 		y = 4
+		relative_position_id = TNZ_armed_forces
 
 		cost = 5
 
@@ -9575,8 +9473,9 @@ z
 		icon = navy
 
 
-		x = 80
+		x = 2
 		y = 1
+		relative_position_id = TNZ_armed_forces
 
 		cost = 2.9
 
@@ -9595,6 +9494,7 @@ z
 				cost_reduction = 0.05
 				category = Cat_naval_doctrine
 				name = TNZ_a_navy
+				uses = 1
 			}
 		}
 
@@ -9610,8 +9510,9 @@ z
 		icon = destroyers
 
 
-		x = 80
+		x = 2
 		y = 2
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9639,8 +9540,9 @@ z
 		icon = submarines
 
 
-		x = 80
+		x = 2
 		y = 3
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9671,11 +9573,12 @@ z
 
 	focus = {
 		id = TNZ_cruisers
-		icon = carriers
+		icon = battle_ship_purple
 
 
-		x = 80
+		x = 2
 		y = 4
+		relative_position_id = TNZ_armed_forces
 
 		cost = 10
 
@@ -9707,11 +9610,12 @@ z
 
 	focus = {
 		id = TNZ_naval_bases
-		icon = unknown
+		icon = naval_industry
 
 
-		x = 79
+		x = 1
 		y = 5
+		relative_position_id = TNZ_armed_forces
 
 		cost = 15
 
@@ -9752,13 +9656,15 @@ z
 		icon = military_mission
 
 
-		x = 81
+		x = 3
 		y = 5
+		relative_position_id = TNZ_armed_forces
 
 		cost = 5
 
 		available = {
 			NOT = {
+				has_idea = no_military
 				has_idea = defence_00
 				has_idea = officer_baptism_by_fire
 			}
