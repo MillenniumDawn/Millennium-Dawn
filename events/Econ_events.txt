@@ -1680,6 +1680,21 @@ country_event = {
 
 	mean_time_to_happen = {
 		modifier = {
+			factor = 2
+			has_idea = international_bankers
+			check_variable = { international_bankers_opinion > 75 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = wall_street
+			check_variable = { wall_street_opinion > 75 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = small_medium_business_owners
+			check_variable = { small_medium_business_owners_opinion > 75 }
+		}
+		modifier = {
 			has_idea = stagnation
 			factor = 1.15
 		}
@@ -1944,7 +1959,7 @@ country_event = {
 
 		decrease_economic_growth = yes
 		ai_chance = {
-			factor = 1
+			base = 1
 		}
 	}
 
@@ -1973,11 +1988,216 @@ country_event = {
 
 		decrease_economic_growth = yes
 		ai_chance = {
-			factor = 0
+			base = 0
 		}
 	}
 }
 
+# High Debt Causes Companies to Leave
+country_event = {
+	id = econvent.13
+	title = econvent.13.t
+	desc = econvent.13.d
+	picture = GFX_banking_crisis
+	is_triggered_only = yes
+	immediate = {
+		set_country_flag = { flag = high_debt_company_closure value = 1 days = 180 }
+	}
+
+	trigger = {
+		check_variable = { industrial_complex_total > 0  }
+		gdp_debt_ratio_higher_125 = yes
+		NOT = { has_country_flag = high_debt_company_closure }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			gdp_debt_ratio_higher_135 = yes
+		}
+		modifier = {
+			factor = 2
+			gdp_debt_ratio_higher_145 = yes
+		}
+		modifier = {
+			factor = 2
+			gdp_debt_ratio_higher_155 = yes
+		}
+		modifier = {
+			factor = 2
+			gdp_debt_ratio_higher_165 = yes
+		}
+		modifier = {
+			factor = 2
+			gdp_debt_ratio_higher_175 = yes
+		}
+		modifier = {
+			factor = 2
+			gdp_debt_ratio_higher_185 = yes
+		}
+		modifier = {
+			factor = 2
+			gdp_debt_ratio_higher_200 = yes
+		}
+	}
+
+
+	# Allow the Loss
+	option = {
+		name = econvent.13.a
+		log = "[GetDateText]: [This.GetName]: econvent.13.a executed"
+
+		random_owned_controlled_state = {
+			remove_building = {
+				type = industrial_complex
+				level = -1
+			}
+		}
+
+		set_temp_variable = { temp_opinion = -5 }
+		change_international_bankers_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_chaebols_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_fossil_fuel_industry_opinion = yes
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+		change_oligarchs_opinion = yes
+		change_defense_industry_opinion = yes
+		change_maritime_industry_opinion = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				check_variable = { interest_rate > 10 }
+			}
+		}
+	}
+
+	# Purchase the Company
+	option = {
+		name = econvent.13.b
+		log = "[GetDateText]: [This.GetName]: econvent.13.b executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.025 }
+		modify_treasury_effect = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_international_bankers_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_chaebols_opinion = yes
+		change_the_bazaar_opinion = yes
+		change_fossil_fuel_industry_opinion = yes
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+		change_oligarchs_opinion = yes
+		change_defense_industry_opinion = yes
+		change_maritime_industry_opinion = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				check_variable = { interest_rate < 10 }
+			}
+		}
+	}
+}
+
+# Private Investors Invest Civilian Industry
+country_event = {
+	id = econvent.14
+	title = econvent.14.t
+	desc = econvent.14.d
+	picture = GFX_banking_crisis
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = private_investor_civilian_industry }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = international_bankers
+			check_variable = { international_bankers_opinion > 75 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = wall_street
+			check_variable = { wall_street_opinion > 75 }
+		}
+		modifier = {
+			factor = 3
+			has_idea = economic_boom
+		}
+		modifier = {
+			factor = 2.25
+			has_idea = fast_growth
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 0.5
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 0.25
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.10
+			has_idea = depression
+		}
+	}
+
+	option = {
+		name = econvent.14.a
+		log = "[GetDateText]: [This.GetName]: econvent.14.a executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+
+		# Free Industrial Complex
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = industrial_complex
+					size > 0
+					include_locked = yes
+				}
+				OR = {
+					is_in_home_area = yes
+					NOT = {
+						owner = {
+							any_owned_state = {
+								free_building_slots = {
+									building = industrial_complex
+									size > 0
+									include_locked = yes
+								}
+								is_in_home_area = yes
+							}
+						}
+					}
+				}
+			}
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		set_country_flag = { flag = private_investor_civilian_industry value = 1 days = 365 }
+	}
+}
 
 # Generic Loss of Industry
 country_event = {
