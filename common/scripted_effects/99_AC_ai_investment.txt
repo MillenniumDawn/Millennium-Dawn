@@ -621,6 +621,50 @@ AI_get_network_infrastructure_score = {
 	}
 }
 
+# Building Type 12: Fossil Fuel Powerplant
+AI_get_fossil_powerplant_score = {
+	if = { limit = { free_building_slots = { building = fossil_powerplant size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 95 }
+
+		# Increase Section
+
+		# Increases score the more the target country is energy deficient in terms of percentage of produciton to consumption
+		CONTROLLER = {
+			set_temp_variable = { energy_balance_ratio = energy_sum }
+			divide_temp_variable = { energy_balance_ratio = energy_consumption }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 12 }
+		}
+	}
+}
+
 
 AI_edge_case_calculations = {
 	if = { limit = { check_variable = { THIS.state_population_k < 100 } }
