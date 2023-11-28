@@ -4,15 +4,24 @@ decision_category_energy = {
 		allowed = { always = no }
 		available = { always = yes }
 
-		days_mission_timeout = 120
+		days_mission_timeout = ROOT.enrichment_facility_time
 		fire_only_once = no
 		selectable_mission = yes
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
-			set_temp_variable = { temp_change = 1 }
-			build_enrichment_facilities_effect = yes
-			set_country_flag = { flag = recently_built_enrichment_facility value = 1 days = 90 }
+			if = { limit = { has_country_flag = single_enrichment_facility }
+				set_temp_variable = { temp_change = 1 }
+				build_enrichment_facilities_effect = yes
+			}
+			else = {
+				set_temp_variable = { temp_change = 3 }
+				build_enrichment_facilities_effect = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
+			clear_variable = ROOT.enrichment_facility_time
 		}
 	}
 
