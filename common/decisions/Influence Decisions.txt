@@ -8,7 +8,7 @@ influence_desicions = {
 		available = { check_variable = { influence_array^0 > 0 } }
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision hidden_ai_influence_decision"
-			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
 		}
 
@@ -40,6 +40,31 @@ influence_desicions = {
 			}
 		}
 	}
+	disable_auto_influence_notification_decision = {
+		icon = generic_independence
+		visible = {
+			is_ai = no
+			NOT = { has_country_flag = disable_auto_influence_notification }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision disable_auto_influence_notification_decision"
+			set_country_flag = disable_auto_influence_notification
+		}
+	}
+	enable_auto_influence_notification_decision = {
+		icon = generic_independence
+		visible = {
+			is_ai = no
+			has_country_flag = disable_auto_influence_notification
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision disable_auto_influence_notification_decision"
+			clr_country_flag = disable_auto_influence_notification
+		}
+	}
+
 	combat_foreign_influence = {
 		icon = generic_independence
 		cost = 100
@@ -54,7 +79,7 @@ influence_desicions = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_foreign_influence"
-			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { percent_change = 4 }
 			change_domestic_influence_percentage = yes
 		}
 	}
@@ -151,11 +176,25 @@ influence_desicions = {
 				has_decision = combat_third_influencer_decision
 			}
 		}
+		complete_effect = {
+			set_variable = { combat_big_influencer = influence_array^0 }
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
-			set_temp_variable = { percent_change = -5 }
-			set_temp_variable = { influencer_index = 0 }
-			change_current_influencer_index_percentage = yes
+			if = { limit = { check_variable = { combat_big_influencer = 0 } }
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = influence_array^0 }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			else = {
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = var:combat_big_influencer }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+
+			clear_variable = combat_big_influencer
 		}
 
 		ai_will_do = {
@@ -258,12 +297,27 @@ influence_desicions = {
 				has_decision = combat_third_influencer_decision
 			}
 		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
-			set_temp_variable = { percent_change = -5 }
-			set_temp_variable = { influencer_index = 1 }
-			change_current_influencer_index_percentage = yes
+		complete_effect = {
+			set_variable = { combat_second_big_influencer = influence_array^1 }
 		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision combat_second_influencer_decision"
+			if = { limit = { check_variable = { combat_second_big_influencer = 0 } }
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = influence_array^1 }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			else = {
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = var:combat_second_big_influencer }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+
+			clear_variable = combat_second_big_influencer
+		}
+
 
 		ai_will_do = {
 			factor = 1
@@ -365,11 +419,25 @@ influence_desicions = {
 				has_decision = combat_second_influencer_decision
 			}
 		}
+		complete_effect = {
+			set_variable = { combat_third_big_influencer = influence_array^2 }
+		}
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision combat_biggest_influencer_decision"
-			set_temp_variable = { percent_change = -5 }
-			set_temp_variable = { influencer_index = 2 }
-			change_current_influencer_index_percentage = yes
+			log = "[GetDateText]: [Root.GetName]: Decision combat_third_influencer_decision"
+			if = { limit = { check_variable = { combat_third_big_influencer = 0 } }
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = influence_array^2 }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			else = {
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = var:combat_third_big_influencer }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+
+			clear_variable = combat_third_big_influencer
 		}
 
 		ai_will_do = {
@@ -433,7 +501,12 @@ influence_desicions = {
 		visible = {
 			FROM = {
 				is_subject_of = ROOT
-				NOT = { has_autonomy_state = autonomy_special_administrative_region }
+				NOT = { has_autonomy_state = autonomy_special_administrative_region_HKG
+						has_autonomy_state = autonomy_special_administrative_region_MAC
+						has_autonomy_state = autonomy_special_administrative_region_TAI
+						has_autonomy_state = autonomy_special_administrative_region_TIB
+						has_autonomy_state = autonomy_special_administrative_region_ETK
+						has_autonomy_state = autonomy_special_administrative_region_MON	}
 			}
 		}
 
@@ -453,7 +526,7 @@ influence_desicions = {
 			change_influence_percentage = yes
 			FROM = {
 				add_autonomy_ratio = {
-					value = -0.05
+					value = -0.08
 					localization = influence_for_autonomy_decision_autonomy
 				}
 			}

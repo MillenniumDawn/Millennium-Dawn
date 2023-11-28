@@ -6,6 +6,14 @@ RAJ_china_is_a_threat = {
 		original_tag = RAJ
 		country_exists = CHI
 		CHI = { check_variable = { chinese_aggression > 2 } }
+		CHI = { is_subject = no }
+		CHI = {
+			OR = {
+				has_government = nationalist
+				has_government = communism
+				has_government = fascism
+			}
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -21,6 +29,7 @@ RAJ_china_is_a_threat = {
 			984
 			987
 			982
+			993
 		}
 		ratio = 0.60
 		subtract_fronts_from_need = no
@@ -60,14 +69,10 @@ RAJ_contain_pakistan = {
 	enable = {
 		original_tag = RAJ
 		country_exists = PAK
+
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = {
-		type = front_unit_request
-		tag = PAK
-		value = 20
-	}
 	ai_strategy = { type = conquer id = "PAK" value = 200 }
 	ai_strategy = { type = antagonize id = "PAK" value = 200 }
 	ai_strategy = { type = alliance id = "PAK" value = -200 }
@@ -75,44 +80,62 @@ RAJ_contain_pakistan = {
 	ai_strategy = { type = contain id = "PAK" value = 200 }
 }
 
-RAJ_no_garrison_ban_bhu_nep = {
+RAJ_no_garrison_ban = {
 	allowed = { original_tag = RAJ }
 	enable = {
-		original_tag = RAJ
-		OR = {
-			country_exists = BAN
-			country_exists = BHU
-			country_exists = NEP
+		country_exists = BAN
+		NOT = {
+			BAN = {
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = front_unit_request tag = BAN value = -100 }
+	ai_strategy = { type = befriend id = "BAN" value = 100 }
+	ai_strategy = { type = alliance id = "BAN" value = 100 }
+}
+
+RAJ_no_garrison_bhu = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		country_exists = BHU
+		NOT = {
+			BHU = {
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = front_unit_request tag = BHU value = -100 }
+	ai_strategy = { type = befriend id = "BHU" value = 100 }
+	ai_strategy = { type = alliance id = "BHU" value = 100 }
+}
+
+RAJ_no_garrison_nep = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		country_exists = NEP
+		NOT = {
+			NEP = {
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
 		}
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = {
-		type = front_unit_request
-		tag = SRI
-		value = -100
-	}
-	ai_strategy = {
-		type = front_unit_request
-		tag = BHU
-		value = -100
-	}
-	ai_strategy = {
-		type = front_unit_request
-		tag = BAN
-		value = -100
-	}
-	ai_strategy = {
-		type = front_unit_request
-		tag = NEP
-		value = -50
-	}
+	ai_strategy = { type = front_unit_request tag = NEP value = -100 }
 	ai_strategy = { type = befriend id = "NEP" value = 100 }
 	ai_strategy = { type = alliance id = "NEP" value = 100 }
-	ai_strategy = { type = befriend id = "BHU" value = 100 }
-	ai_strategy = { type = alliance id = "BHU" value = 100 }
-	ai_strategy = { type = befriend id = "BAN" value = 100 }
-	ai_strategy = { type = alliance id = "BAN" value = 100 }
 }
 
 RAJ_increase_army_against_china = {
@@ -287,12 +310,15 @@ RAJ_default_naval_breakdown = {
 
 generic_india_industrial_construction = {
 	allowed = { tag = RAJ }
-	enable = { always = yes }
+	enable = {
+		check_variable = { unfulfilled_energy_demand_var > -0.05 }
+	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = {
 		type = building_target
 		id = industrial_complex
-		value = 150
+		value = 100
 	}
 }
 
@@ -311,4 +337,17 @@ RAJ_army_focus = {
 	ai_strategy = { type = build_army id = marines value = 1000 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = 200 }
 	ai_strategy = { type = build_army id = Special_Forces value = 1000 }
+}
+#
+RAJ_accepted_to_join_brics = {
+	allowed = { NOT = { original_tag = RAJ } }
+	enable = {
+		RAJ = {
+			has_idea = faction_brics_alliance
+		}
+		has_idea = faction_brics_alliance
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = alliance id = "RAJ" value = 200 }
 }

@@ -187,65 +187,36 @@ UKR_idea_pro_russia_government_reforms = {
 	}
 }
 
-war_declared_on_ukraine = {
-	UKR = {
-		division_template = {
-			name = "Foreign Volunteer Unit"
-			division_names_group = UKR_VOL_01
-			is_locked = yes
-			regiments = {
-				L_Inf_Bat = { x = 0 y = 0 }
-				L_Inf_Bat = { x = 0 y = 1 }
-				L_Inf_Bat = { x = 0 y = 2 }
-				Arty_Bat = { x = 0 y = 3 }
-			}
-			support = {
-				L_Engi_Comp = { x = 0 y = 0 }
-			}
-		}
-
-		set_country_flag = ukraine_spawned_vol
-
-		load_oob = "UKR_chechen_vol"
-
-		if = {
-			limit = {
-				country_exists = USA
-				USA = { has_western_aligned_government = yes }
-			}
-			load_oob = "UKR_western_vol"
-		}
-		if = {
-			limit = {
-				country_exists = GEO
-				GEO = { has_emerging_aligned_goverment = no }
-			}
-			load_oob = "UKR_georgian_vol"
-		}
-		if = {
-			limit = { country_exists = BLR }
-			if = {
-				limit = {
-					BLR = { has_western_aligned_government = yes }
-				}
-				if = {
-					limit = { has_dlc = "No Step Back" }
-					load_oob = "UKR_belarusian_big_nsb"
-				}
-				else = {
-					load_oob = "UKR_belarusian_big_nonnsb"
-				}
-			}
-			else = {
-				load_oob = "UKR_belarusian_small"
-			}
-		}
-		if = {
-			limit = {
-				country_exists = SOV
-				SOV = { has_war_with = UKR }
-			}
-			load_oob = "UKR_russian_legion"
-		}
+modify_donetskie_support = {
+	add_to_variable = { donetskie = modify_donetskie }
+	custom_effect_tooltip = UKR_donetskie_tt
+	clamp_variable = {
+		var = donetskie
+		min = 0
+		max = 30
 	}
 }
+
+donetskie_bunt_check = {
+	if = {
+		limit = {
+			DPR = {
+			NOT = { 
+				has_country_flag = NOV_civil_war_in_the_donbass_flag
+			}
+			}
+			OR = {
+			has_government = democratic
+			has_government = neutrality
+			has_government = nationalist
+			}
+			check_variable = { UKR.donetskie > 25 }
+		}
+	country_event = {
+		id = ukraine_revolution.1
+		days = 5
+	}
+}
+}
+
+

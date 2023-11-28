@@ -9,6 +9,7 @@ phases = { # phase = no is the standard phase - now recon combat phase, and stan
 	tactical_withdrawal
 	seize_bridge
 	hold_bridge
+	city_combat
 }
 
 ### Recon tactics ###
@@ -386,6 +387,10 @@ tactic_assault = { #starts close_combat phase
 			is_fighting_in_terrain = urban
 		}
 		modifier = {
+			add = 2
+			is_fighting_in_terrain = supercity
+		}
+		modifier = {
 			add = 1
 			is_fighting_in_terrain = forest
 		}
@@ -560,6 +565,34 @@ tactic_tactical_withdrawal = { #counters encirclement - starts tactical_withdraw
 
 	combat_width = -0.25
 	attacker = -0.25
+	defender = -0.05
+}
+
+city_attack_movement = { #counters encirclement - starts tactical_withdrawal phase
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = main
+	}
+
+	active = yes
+
+	base = {
+		factor = 0
+		modifier = {
+			add = 5
+			is_fighting_in_terrain = urban
+		}
+		modifier = {
+			add = 10
+			is_fighting_in_terrain = supercity
+		}
+	}
+	picture = shock
+
+	phase = city_combat
+
+	attacker = -0.05
 	defender = -0.05
 }
 
@@ -1139,6 +1172,10 @@ tactic_danger_close_combat = {
 			add = 4
 			is_fighting_in_terrain = urban
 		}
+		modifier = {
+			add = 4
+			is_fighting_in_terrain = supercity
+		}
 	}
 	picture = tactic_guerrilla_tactics
 
@@ -1169,6 +1206,10 @@ tactic_tunnel_warfare = {
 			add = 4
 			is_fighting_in_terrain = urban
 		}
+		modifier = {
+			add = 4
+			is_fighting_in_terrain = supercity
+		}
 	}
 	picture = tactic_guerrilla_tactics
 
@@ -1198,6 +1239,10 @@ tactic_guerrilla_tactics = {
 			add = 4
 			is_fighting_in_terrain = urban
 		}
+		modifier = {
+			add = 4
+			is_fighting_in_terrain = supercity
+		}
 	}
 	picture = tactic_guerrilla_tactics
 	combat_width = -0.5
@@ -1224,6 +1269,10 @@ tactic_insurgent_assault = {
 		modifier = {
 			add = 4
 			is_fighting_in_terrain = urban
+		}
+		modifier = {
+			add = 4
+			is_fighting_in_terrain = supercity
 		}
 	}
 	picture = tactic_guerrilla_tactics
@@ -1514,4 +1563,201 @@ tactic_mobile_defense = {
 	attacker = -0.15
 	defender = 0.1
 	attacker_movement_speed = -0.1
+}
+
+# city combat tactics
+tactic_city_attack = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = city_combat
+	}
+
+	active = yes
+
+	base = { factor = 4 }
+	picture = attack
+	display_phase = city_combat
+
+	attacker = 0.05
+}
+
+tactic_city_fixing_attack = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = city_combat
+	}
+
+	active = yes
+
+	base = {
+		factor = 4
+		modifier = {
+			add = 2
+			has_trait = trickster
+		}
+	}
+	picture = tactic_unexpected_thrust
+	display_phase = city_combat
+
+	countered_by = tactic_city_all_round_defense
+
+	attacker = 0.05
+	defender = -0.05
+}
+
+tactic_city_frontal_attack = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = city_combat
+	}
+
+	active = yes
+
+	base = {
+		factor = 4
+		modifier = {
+			add = 2
+			has_trait = aggressive_assaulter
+		}
+		modifier = {
+			add = 1
+			has_trait = harsh_leader
+		}
+	}
+	picture = shock
+	display_phase = city_combat
+
+	attacker = 0.1
+	defender = 0.1
+}
+
+tactic_city_infiltration_attack = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = city_combat
+	}
+
+	active = no
+
+	base = { factor = 4 }
+	picture = tactic_infantry_charge
+	display_phase = city_combat
+
+	countered_by = tactic_city_layered_defense
+
+	attacker = 0.15
+	defender = 0.05
+}
+
+tactic_city_node_attack = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = city_combat
+	}
+
+	active = no
+
+	base = { factor = 4 }
+	picture = breakthrough
+	display_phase = city_combat
+
+	attacker = 0.1
+}
+
+tactic_city_defense = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = city_combat
+	}
+
+	active = yes
+
+	base = { factor = 4 }
+	picture = defend
+	display_phase = city_combat
+
+	defender = 0.05
+}
+
+tactic_city_layered_defense = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = city_combat
+	}
+
+	active = yes
+
+	base = {
+		factor = 4
+		modifier = {
+			add = 2
+			has_trait = defensive_doctrine
+		}
+	}
+	picture = elastic_defence
+	display_phase = city_combat
+
+	defender = -0.05
+	attacker = -0.1
+}
+
+tactic_city_static_defense = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = city_combat
+	}
+
+	active = yes
+
+	base = { factor = 4 }
+	picture = ambush
+	display_phase = city_combat
+
+	countered_by = tactic_city_node_attack
+
+	defender = 0.1
+	attacker = 0.05
+}
+
+tactic_city_all_round_defense = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = city_combat
+	}
+
+	active = no
+
+	base = { factor = 4 }
+	picture = encircle
+	display_phase = city_combat
+
+	defender = 0.1
+	attacker = 0.05
+}
+
+tactic_city_crossfire_defense = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = city_combat
+	}
+
+	active = no
+
+	base = { factor = 4 }
+	picture = counterattack
+	display_phase = city_combat
+
+	countered_by = tactic_city_fixing_attack
+
+	defender = 0.1
 }

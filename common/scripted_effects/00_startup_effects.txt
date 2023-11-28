@@ -2,6 +2,7 @@
 # for better performance.
 # Author(s): AngriestBird
 
+
 initialize_state_provincial_images = {
 	778 = { ##Chicago, Illinois
 		add_province_modifier = {
@@ -683,10 +684,6 @@ initialize_state_provincial_images = {
 			static_modifiers = { terrain_xian }
 			province = { id = 7301 }
 		}
-		add_province_modifier = {
-			static_modifiers = { terrain_ordos }
-			province = { id = 14121 }
-		}
 	}
 	536 = {
 		add_province_modifier = {
@@ -868,6 +865,10 @@ initialize_state_provincial_images = {
 		add_province_modifier = {
 			static_modifiers = { terrain_hohhot }
 			province = { id = 10424 }
+		}
+		add_province_modifier = {
+			static_modifiers = { terrain_ordos }
+			province = { id = 3427 }
 		}
 	}
 	554 = {
@@ -3295,5 +3296,73 @@ initialize_state_provincial_images = {
 			static_modifiers = { anjouan_rebellion }
 			province = { id = 13284 }
 		}
+	}
+}
+
+# This scripted effect calculates starting utility equipment for nations to help support the new upcoming changes.
+calculate_starting_utility_stockpile = {
+	# Calculate Starting Convoys
+	set_temp_variable = { base = 100 }
+	set_temp_variable = { dockyard_increase = 25 } # Alter this if you wish to change the value of the starting convoy distribution
+	multiply_temp_variable = { dockyard_increase = num_of_naval_factories }
+	add_to_temp_variable = { dockyard_increase = base }
+
+	add_equipment_to_stockpile = {
+		type = convoy
+		amount = dockyard_increase
+	}
+
+	# Calcualte Starting Trains
+	if = { limit = { has_tech = early_freight_locomotive }
+		set_temp_variable = { base = 50 }
+		set_temp_variable = { factory = num_of_factories }
+		# multiply_temp_variable = { factory = 3 } # Alter this if you wish to change the value of the starting factory distrubtion
+		add_to_temp_variable = { factory = base }
+
+		add_equipment_to_stockpile = {
+			type = train_equipment
+			amount = factory
+		}
+	}
+}
+
+calculate_starting_mio_size = {
+	# Calculate Starting MIO Size
+	set_temp_variable = { tmp_lvl = 0 }
+
+	if = { limit = { has_idea = defense_industry }
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+	if = { limit = { has_idea = NATO_member }
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+	if = { limit = { has_idea = superpower }
+		add_to_temp_variable = { tmp_lvl = 4 }
+	}
+	if = { limit = { has_idea = great_power }
+		add_to_temp_variable = { tmp_lvl = 3 }
+	}
+	if = { limit = { has_idea = large_power }
+		add_to_temp_variable = { tmp_lvl = 2 }
+	}
+	if = { limit = { has_idea = regional_power }
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+	if = {
+		limit = {
+			OR = {
+				original_tag = SOV
+				original_tag = CHI
+				original_tag = ISR
+				original_tag = SWE
+				original_tag = KOR
+			}
+		}
+		add_to_temp_variable = { tmp_lvl = 1 }
+	}
+
+	every_military_industrial_organization = {
+		set_variable = { free_trait_picks = tmp_lvl }
+		add_mio_size = tmp_lvl
 	}
 }

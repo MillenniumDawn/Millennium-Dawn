@@ -28,6 +28,73 @@ focus_tree = {
 	}
 
 	focus = {
+		id = BRM_the_new_economic_boom
+		icon = economic_prosperity2
+		x = 0
+		y = 2
+		relative_position_id = BRM_address_the_democracy_question
+		cost = 6.8
+
+		prerequisite = {
+			focus = BRM_reject_the_way_for_civilian_rule
+			focus = BRM_pave_the_way_for_civilian_rule
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
+			increase_economic_growth = yes
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.05 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { interest_rate > 8 }
+			}
+		}
+	}
+
+	focus = {
+		id = BRM_loan_refactoring
+		icon = economic_prosperity2
+		x = 0
+		y = 3
+		relative_position_id = BRM_address_the_democracy_question
+		cost = 6.8
+
+		prerequisite = { focus = BRM_the_new_economic_boom }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			gdp_debt_ratio_higher_80 = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.10 }
+			clamp_temp_variable = { var = debt_change max = 0 min = -100 }
+			modify_debt_effect = yes
+			add_timed_idea = {
+				idea = BRM_loan_refactoring_idea
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 5
+				check_variable = { interest_rate > 8 }
+			}
+		}
+	}
+
+	focus = {
 		id = BRM_pave_the_way_for_civilian_rule
 		icon = support_democracy
 		x = -5
@@ -109,10 +176,7 @@ focus_tree = {
 
 			}
 
-			add_popularity = {
-				ideology = neutrality
-				popularity = 0.05
-			}
+			add_popularity = { ideology = neutrality popularity = 0.05 }
 			recalculate_party = yes
 
 			set_temp_variable = { temp_opinion = 5 }
@@ -716,7 +780,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_request_western_development_aid"
-			set_temp_variable = { treasury_change = 15 }
+			set_temp_variable = { treasury_change = 30 }
 			modify_treasury_effect = yes
 		}
 
@@ -743,10 +807,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_encourage_investment_from_western_firms"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
 			504 = {
 				add_resource = {
 					type = oil
-					amount = 4
+					amount = 8
 				}
 			}
 		}
@@ -1167,7 +1233,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_accept_the_role_of_the_tatmadaw"
 			add_stability = 0.1
 
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_the_military_opinion = yes
 		}
 
@@ -1255,8 +1321,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_begin_calls_for_constitutional_revision"
-			add_political_power = -100
-			add_stability = -0.05
+			add_political_power = 100
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1583,6 +1650,9 @@ focus_tree = {
 			set_temp_variable = { influence_target = SHN }
 			change_influence_percentage = yes
 			set_temp_variable = { tag_index = BRM.id }
+			set_temp_variable = { influence_target = NHN }
+			change_influence_percentage = yes
+			set_temp_variable = { tag_index = BRM.id }
 			set_temp_variable = { influence_target = WAA }
 			change_influence_percentage = yes
 		}
@@ -1616,6 +1686,9 @@ focus_tree = {
 			SHN = {
 				influence_higher_25 = yes
 			}
+			NHN = {
+				influence_higher_25 = yes
+			}
 			WAA = {
 				influence_higher_25 = yes
 			}
@@ -1633,6 +1706,10 @@ focus_tree = {
 				if = {
 					limit = { country_exists = SHN }
 					SHN = { has_idea = Nationwide_Ceasefire_Agreement }
+				}
+				if = {
+					limit = { country_exists = NHN }
+					NHN = { has_idea = Nationwide_Ceasefire_Agreement }
 				}
 				if = {
 					limit = { country_exists = WAA }
@@ -1673,6 +1750,10 @@ focus_tree = {
 					autonomy_state = autonomy_autonomous_state
 				}
 				set_autonomy = {
+					target = NHN
+					autonomy_state = autonomy_autonomous_state
+				}
+				set_autonomy = {
 					target = WAA
 					autonomy_state = autonomy_autonomous_state
 				}
@@ -1688,6 +1769,10 @@ focus_tree = {
 				}
 				SHN = {
 					set_cosmetic_tag = SHN_federation
+					clr_country_flag = dynamic_flag
+				}
+				NHN = {
+					set_cosmetic_tag = NHN_federation
 					clr_country_flag = dynamic_flag
 				}
 				WAA = {
@@ -1724,6 +1809,7 @@ focus_tree = {
 				country_exists = KAC
 				country_exists = KAR
 				country_exists = SHN
+				country_exists = NHN
 				country_exists = WAA
 			}
 		}
@@ -2029,6 +2115,7 @@ focus_tree = {
 				country_exists = KAC
 				country_exists = KAR
 				country_exists = SHN
+				country_exists = NHN
 				country_exists = WAA
 			}
 		}
@@ -2135,18 +2222,22 @@ focus_tree = {
 		}
 
 		bypass = {
-			NOT = {
-				country_exists = SHN
+			NOT = { OR = {
+					country_exists = SHN
+					country_exists = NHN
+					}
 			}
 		}
 		will_lead_to_war_with = SHN
-
+		will_lead_to_war_with = NHN
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_shan"
 			create_wargoal = { type = annex_everything target = SHN }
+			create_wargoal = { type = annex_everything target = NHN }
 			add_timed_idea = { idea = The_Anti_Shan_Offensive days = 365 }
 			hidden_effect = {
 				SIA = { give_military_access = SHN }
+				SIA = { give_military_access = NHN }
 			}
 		}
 
@@ -2270,7 +2361,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_proclaim_an_end_to_the_insurgency"
 			every_country = {
 				limit = {
-					OR = { original_tag = BRM original_tag = KAC original_tag = KAR original_tag = SHN original_tag = WAA }
+					OR = { original_tag = BRM original_tag = KAC original_tag = KAR original_tag = SHN original_tag = NHN original_tag = WAA }
 				}
 				remove_ideas = Ethnic_Insurgencies
 			}
@@ -3618,10 +3709,20 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_chinese_air_power"
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
-			add_equipment_to_stockpile = {
-				type = AS_Fighter2
-				amount = 10
-				producer = CHI
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = medium_plane_fighter_airframe_2
+					variant_name = "J-11"
+					amount = 10
+					producer = CHI
+				}
+			} else = {
+				add_equipment_to_stockpile = {
+					type = AS_Fighter2
+					amount = 10
+					producer = CHI
+				}
 			}
 		}
 

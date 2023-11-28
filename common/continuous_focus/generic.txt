@@ -147,26 +147,85 @@ continuous_focus_palette = {
 	focus = {
 		id = continuous_boost_freedom
 		icon = continuous_boost_freedom
+		# This works similarly to allowed in the traditional sense
 		available = {
 			hidden_trigger = { has_dlc = "Together for Victory" }
+		}
+		# enabled works like available in the traditional sense
+		enabled = {
 			is_subject = yes
 		}
+
+		# Active modifiers
 		modifier = {
 			autonomy_gain = 5
 		}
+
+		# AI decision as to whether they should select the focus
 		ai_will_do = {
 			factor = 0
 			modifier = {
-				add = 5
+				add = 10
 				is_subject = yes
+			}
+			modifier = {
+				factor = 2.0
+				OVERLORD = {
+					ROOT = {
+						has_opinion = {
+							target = PREV
+							value < 100
+						}
+					}
+				}
+			}
+			modifier = {
+				factor = 0.80
+				OVERLORD = {
+					has_country_flag = trade_agreement@ROOT
+					ROOT = {
+						has_country_flag = trade_agreement@PREV
+					}
+				}
+			}
+			modifier = {
+				factor = 0.50
+				OVERLORD = {
+					is_same_government_THIS_ROOT = yes
+				}
+			}
+			modifier = {
+				factor = 0.10
+				OVERLORD = {
+					ROOT = {
+						has_opinion = {
+							target = PREV
+							value > 199
+						}
+					}
+				}
 			}
 			modifier = {
 				set_temp_variable = { domestic_influence_amount_tmp = domestic_influence_amount }
 				divide_temp_variable = { domestic_influence_amount_tmp = 10 }
 				factor = domestic_influence_amount_tmp
 			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = GAME_RULE_rule_disable_using_freedom_cont_focus
+					OVERLORD = {
+						ROOT = {
+							has_opinion = {
+								target = PREV
+								value > 239
+							}
+						}
+					}
+				}
+			}
 		}
-		supports_ai_strategy = ai_focus_military_advancements
+		supports_ai_strategy = ai_focus_defense
 		daily_cost = 2
 		available_if_capitulated = yes
 	}
@@ -186,12 +245,22 @@ continuous_focus_palette = {
 		ai_will_do = {
 			factor = 0
 			modifier = {
-				add = 5
+				add = 10
 				num_subjects > 0
 			}
 			modifier = {
-				factor = 2
+				factor = 4
 				num_subjects > 3
+			}
+			modifier = {
+				factor = 1.25
+				any_subject_country = {
+					check_variable = { office_park_total > 5 }
+				}
+			}
+			modifier = {
+				factor = 4
+				difficulty > 2
 			}
 		}
 		supports_ai_strategy = ai_focus_military_advancements
@@ -202,11 +271,11 @@ continuous_focus_palette = {
 	focus = {
 		id = continuous_debt_consolidation
 		icon = continuous_non_factory_construct
-		daily_cost = 1.5
+		daily_cost = 1.0
 		supports_ai_strategy = ai_focus_military_advancements
 		modifier = {
-			interest_rate_multiplier_modifier = -2.5
-			foreign_influence_defense_modifier = -0.10
+			interest_rate_multiplier_modifier = -3.0
+			foreign_influence_defense_modifier = -0.20
 		}
 
 		available_if_capitulated = yes
@@ -230,10 +299,10 @@ continuous_focus_palette = {
 	focus = {
 		id = continuous_increased_taxation_levies
 		icon = continuous_naval_production
-		daily_cost = 1.5
+		daily_cost = 1.0
 		supports_ai_strategy = ai_focus_military_advancements
 		modifier = {
-			tax_gain_multiplier_modifier = 0.10
+			tax_gain_multiplier_modifier = 0.15
 			stability_weekly = -0.001
 		}
 
@@ -257,6 +326,60 @@ continuous_focus_palette = {
 			modifier = {
 				add = 7
 				check_variable = { treasury_rate < -9.99 }
+			}
+		}
+	}
+
+	focus = {
+		id = continuous_bread_and_circuses
+		icon = continuous_repairments
+		daily_cost = 1.0
+		supports_ai_strategy = ai_focus_peaceful
+		modifier = {
+			productivity_growth_modifier = 1.25
+			tax_gain_multiplier_modifier = -0.15
+		}
+
+		available_if_capitulated = yes
+		ai_will_do = {
+			factor = 0
+			# Keeps GDP growing while stagnant in people
+			modifier = {
+				add = 10
+				check_variable = { total_unemployed_percentage_display = 0 }
+			}
+			modifier = {
+				add = 10
+				check_variable = { total_unemployed_percentage_display < 0.01 }
+			}
+			# GDP will give you a cheaper interest rate immediately so try to boost that instead
+			modifier = {
+				add = 10
+				check_variable = { interest_rate > 7 }
+			}
+		}
+	}
+
+	focus = {
+		id = continuous_family_planning
+		icon = continuous_repairments
+		daily_cost = 1.00
+		supports_ai_strategy = ai_focus_peaceful
+		modifier = {
+			monthly_population = 0.30
+			social_cost_multiplier_modifier = 0.15
+		}
+
+		available_if_capitulated = yes
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 10
+				check_variable = { total_unemployed_percentage_display = 0 }
+			}
+			modifier = {
+				add = 10
+				check_variable = { total_unemployed_percentage_display < 0.01 }
 			}
 		}
 	}

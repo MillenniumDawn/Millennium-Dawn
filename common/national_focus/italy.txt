@@ -20,7 +20,7 @@ focus_tree = {
 		icon = The_sick_man_of_Europe
 		x = 15
 		y = 0
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -40,7 +40,7 @@ focus_tree = {
 		icon = improve_relations
 		x = 108
 		y = 0
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_NATO }
 
@@ -1369,7 +1369,7 @@ focus_tree = {
 		id = ITA_industrial_focus
 		icon = focus_ETH_invite_italian_settlers
 		relative_position_id = ITA_divided_nation
-		x = 32
+		x = 33
 		y = 0
 		cost = 2
 
@@ -1391,10 +1391,161 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_encourage_micro_hydropower
+		icon = water_dam
+		relative_position_id = ITA_industrial_focus
+		x = 0
+		y = 1
+		cost = 4
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = ITA_industrial_focus
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_encourage_micro_hydropower"
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			every_owned_state = {
+				multiply_variable = { hydroelectric_energy_production_var = 1.25 }
+			}
+			custom_effect_tooltip = ITA_encourage_micro_hydropower_TT
+		}
+
+		ai_will_do = {
+			factor = 60
+		}
+	}
+
+	focus = {
+		id = ITA_develop_pumped_hydro
+		icon = water_dam
+		relative_position_id = ITA_encourage_micro_hydropower
+		x = 0
+		y = 1
+		cost = 4
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = ITA_encourage_micro_hydropower
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_develop_pumped_hydro"
+			set_temp_variable = { treasury_change = -50 }
+			modify_treasury_effect = yes
+			every_owned_state = {
+				set_temp_variable = { added_storage_capacity = hydroelectric_energy_production_var }
+				multiply_temp_variable = { added_storage_capacity = 100 }
+				add_to_variable = { hydroelectric_energy_storage_var = added_storage_capacity }
+			}
+			custom_effect_tooltip = ITA_develop_pumped_hydro_TT
+		}
+
+		ai_will_do = {
+			factor = 60
+		}
+	}
+
+	focus = {
+		id = ITA_subsidize_rooftop_solar
+		icon = generic_solar
+		relative_position_id = ITA_develop_pumped_hydro
+		x = 0
+		y = 1
+		cost = 4
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = ITA_develop_pumped_hydro
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_subsidize_rooftop_solar"
+			every_core_state = {
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+				PREV = {
+					set_temp_variable = { mafia_industrial_focus_base_cost = -5 }
+					mafia_industrial_focus_north_effect = yes
+				}
+			}
+			custom_effect_tooltip = ITA_subsidize_rooftop_solar_TT
+		}
+
+		ai_will_do = {
+			factor = 60
+		}
+	}
+
+	focus = {
+		id = ITA_southern_wind_power
+		icon = generic_solar
+		relative_position_id = ITA_subsidize_rooftop_solar
+		x = 0
+		y = 1
+		cost = 3
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = ITA_subsidize_rooftop_solar
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_southern_wind_power"
+			set_temp_variable = { mafia_industrial_focus_base_cost = -25 }
+			mafia_industrial_focus_south_effect = yes
+			82 = {
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+			957 = {
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+			956 = {
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+			83 = {
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+			84 = {
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 60
+		}
+	}
+
+	focus = {
 		id = ITA_protect_local_food_products
 		icon = focus_ITA_grande_rivolta_rurale
 		relative_position_id = ITA_industrial_focus
-		x = 3
+		x = 4
 		y = 1
 		cost = 4
 
@@ -1405,12 +1556,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_protect_local_food_products"
-			set_temp_variable = { ITA_bureaucracy_cost_multiplier_modifier_change = 0.04 }
+			set_temp_variable = { ITA_bureaucracy_cost_multiplier_modifier_change = 0.05 }
 			modify_bureaucracy_cost_multiplier_modifier_effect = yes
 			set_temp_variable = { ITA_health_cost_multiplier_modifier_change = -0.05 }
 			modify_health_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { ITA_tax_gain_multiplier_modifier_change = 0.02 }
-			modify_tax_gain_multiplier_modifier_effect = yes
+			set_temp_variable = { ITA_agricolture_productivity_modifier_change = 0.25 }
+			modify_agricolture_productivity_modifier_effect = yes
 		}
 
 		ai_will_do = {
@@ -1433,9 +1584,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_integrate_mountain_territories"
-			set_temp_variable = { ITA_global_building_slots_factor_change = 0.2 }
+			set_temp_variable = { temp_productivity_change = 25 }
+			flat_productivity_change_effect = yes
+			set_temp_variable = { ITA_global_building_slots_factor_change = 0.1 }
 			modify_global_building_slots_factor_effect = yes
-			set_temp_variable = { ITA_tax_gain_multiplier_modifier_change = -0.02 }
+			set_temp_variable = { ITA_tax_gain_multiplier_modifier_change = -0.01 }
 			modify_tax_gain_multiplier_modifier_effect = yes
 		}
 
@@ -1448,7 +1601,7 @@ focus_tree = {
 		id = ITA_tourism_is_our_oil
 		icon = Tourism_is_our_oil
 		relative_position_id = ITA_industrial_focus
-		x = -3
+		x = -4
 		y = 1
 		cost = 4
 
@@ -1504,7 +1657,7 @@ focus_tree = {
 		id = ITA_south_infrastructure
 		icon = infrastructure
 		relative_position_id = ITA_industrial_focus
-		x = 1
+		x = 2
 		y = 1
 		cost = 3
 		available = {
@@ -1572,7 +1725,7 @@ focus_tree = {
 		id = ITA_central_infrastructure
 		icon = infrastructure
 		relative_position_id = ITA_industrial_focus
-		x = -1
+		x = -2
 		y = 1
 		cost = 3
 		available = {
@@ -1640,7 +1793,7 @@ focus_tree = {
 		id = ITA_north_infrastructure
 		icon = infrastructure
 		relative_position_id = ITA_industrial_focus
-		x = -5
+		x = -6
 		y = 1
 		cost = 4
 		available = {
@@ -1720,7 +1873,7 @@ focus_tree = {
 		id = ITA_islands_infrastructure
 		icon = infrastructure
 		relative_position_id = ITA_industrial_focus
-		x = 5
+		x = 6
 		y = 1
 		cost = 2
 		available = {
@@ -2353,17 +2506,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_invest_south"
-			set_temp_variable = { mafia_industrial_focus_base_cost = -20 }
-			mafia_industrial_focus_south_effect = yes
-			random_owned_state = {
-				prioritize = { 81 82 83 }
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
+			set_temp_variable = { ITA_mil_facs_worker_requirement_modifier_change = -0.1 }
+			modify_mil_facs_worker_requirement_modifier_effect = yes
+			set_temp_variable = { ITA_civ_facs_worker_requirement_modifier_change = -0.1 }
+			modify_civ_facs_worker_requirement_modifier_effect = yes
 		}
 
 		ai_will_do = {
@@ -2392,29 +2538,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_invest_north"
-			set_temp_variable = { mafia_industrial_focus_base_cost = -20 }
-			mafia_industrial_focus_north_effect = yes
-			random_owned_state = {
-				limit = {
-					region = 23
-					free_building_slots = {
-						building = offices
-						size > 1
-						include_locked = yes
-					}
-				}
-				prioritize = { 80 265 79 77 }
-				add_building_construction = {
-					type = offices
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
+			set_temp_variable = { ITA_offices_worker_requirement_modifier_change = -0.1 }
+			modify_offices_worker_requirement_modifier_effect = yes
+			set_temp_variable = { ITA_civ_facs_worker_requirement_modifier_change = -0.1 }
+			modify_civ_facs_worker_requirement_modifier_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 50
+			factor = 160
 			modifier = {
 				factor = mafia_strength_ai_factor_var
 				has_idea = ITA_mafia
@@ -2428,7 +2559,7 @@ focus_tree = {
 		relative_position_id = ITA_invest_north
 		x = 1
 		y = 1
-		cost = 3
+		cost = 4
 
 		prerequisite = {
 			focus = ITA_invest_north
@@ -2438,17 +2569,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_north_miracle"
-			add_ideas = ITA_north_miracle_industry
-			add_tech_bonus = {
-				name = ITA_north_miracle
-				bonus = 0.50
-				uses = 1
-				category = industry
-			}
+			set_temp_variable = { ITA_civilian_factories_productivity_change = 0.1 }
+			modify_civilian_factories_productivity_effect = yes
+			set_temp_variable = { ITA_military_factories_productivity_change = 0.1 }
+			modify_military_factories_productivity_effect = yes
+			set_temp_variable = { ITA_dockyard_productivity_change = 0.1 }
+			modify_dockyard_productivity_effect = yes
+			set_temp_variable = { ITA_offices_productivity_change = 0.1 }
+			modify_offices_productivity_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 160
 		}
 	}
 
@@ -2698,7 +2830,7 @@ focus_tree = {
 		icon = home_defense
 		x = 62
 		y = 0
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_ideology_focus"
@@ -2715,7 +2847,7 @@ focus_tree = {
 		relative_position_id = ITA_ideology_focus
 		x = -14
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		prerequisite = {
 			focus = ITA_ideology_focus
@@ -2766,7 +2898,7 @@ focus_tree = {
 		relative_position_id = ITA_ideology_focus
 		x = 10
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		prerequisite = {
 			focus = ITA_ideology_focus
@@ -2890,9 +3022,14 @@ focus_tree = {
 				size = ITA_civil_war_size_var
 				seize_power_spawn_volounteers_effect_1 = yes
 				add_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+				set_variable = { debt = PREV.debt }
+				multiply_variable = { debt = ITA_civil_war_size_var }
 				PREV = {
 					seize_power_spawn_volounteers_effect_2 = yes
 					add_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
+					set_temp_variable = { cw_debt_mult = 1 }
+					subtract_from_temp_variable = { cw_debt_mult = ITA_civil_war_size_var }
+					multiply_variable = { debt = cw_debt_mult }
 				}
 				every_state = {
 					limit = {
@@ -3137,7 +3274,7 @@ focus_tree = {
 		relative_position_id = ITA_reestablish_rome
 		x = -1
 		y = 3
-		cost = 0.3
+		cost = 0.1
 
 		prerequisite = {
 			focus = ITA_reestablish_rome
@@ -3280,7 +3417,7 @@ focus_tree = {
 		relative_position_id = ITA_reestablish_rome
 		x = 1
 		y = 3
-		cost = 0.3
+		cost = 0.1
 		prerequisite = {
 			focus = ITA_reestablish_rome
 		}
@@ -3770,7 +3907,7 @@ focus_tree = {
 		relative_position_id = ITA_reestablish_rome
 		x = 0
 		y = 5
-		cost = 0.3
+		cost = 0.1
 
 		prerequisite = {
 			focus = ITA_empower_the_emperor
@@ -4438,7 +4575,7 @@ focus_tree = {
 		icon = focus_generic_spread_fascism
 		x = 45
 		y = 11
-		cost = 0.3
+		cost = 0.1
 
 		available = {
 			has_expansionist_government = yes
@@ -4863,7 +5000,7 @@ focus_tree = {
 		relative_position_id = ITA_territorial_claims
 		x = 5
 		y = 3
-		cost = 0.3
+		cost = 0.1
 
 		prerequisite = {
 			focus = ITA_territorial_claims
@@ -5104,7 +5241,7 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-
+		will_lead_to_war_with = TUN
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_claim_tunisia"
 			add_state_claim = 388
@@ -5163,7 +5300,7 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-
+		will_lead_to_war_with = LBA
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_claim_lybia"
 			every_state = {
@@ -5266,7 +5403,7 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-
+		will_lead_to_war_with = ERI
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_claim_eritrea"
 			add_state_claim = 228
@@ -5323,7 +5460,11 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-
+		will_lead_to_war_with = SOM
+		will_lead_to_war_with = JUB
+		will_lead_to_war_with = SWS
+		will_lead_to_war_with = SNA
+		will_lead_to_war_with = PUN
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_claim_somalia"
 			add_state_claim = 937
@@ -5397,7 +5538,7 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-
+		will_lead_to_war_with = ETH
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_claim_ethiopia"
 			add_state_claim = 236
@@ -5450,7 +5591,7 @@ focus_tree = {
 		relative_position_id = ITA_territorial_claims
 		x = -5
 		y = 3
-		cost = 0.3
+		cost = 0.1
 
 		prerequisite = {
 			focus = ITA_territorial_claims
@@ -5502,7 +5643,11 @@ focus_tree = {
 
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-
+		will_lead_to_war_with = TUN
+		will_lead_to_war_with = EGY
+		will_lead_to_war_with = LBA
+		will_lead_to_war_with = ALG
+		will_lead_to_war_with = MOR
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_retake_african_coast"
 			add_state_claim = 379
@@ -5606,7 +5751,15 @@ focus_tree = {
 
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
-
+		will_lead_to_war_with = ISR
+		will_lead_to_war_with = HEZ
+		will_lead_to_war_with = PAL
+		will_lead_to_war_with = SYR
+		will_lead_to_war_with = LEB
+		will_lead_to_war_with = JOR
+		will_lead_to_war_with = IRQ
+		will_lead_to_war_with = KUR
+		will_lead_to_war_with = KUW
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_retake_levant"
 			add_state_claim = 172
@@ -5742,6 +5895,18 @@ focus_tree = {
 			}
 		}
 
+		will_lead_to_war_with = SLV
+		will_lead_to_war_with = CRO
+		will_lead_to_war_with = BOS
+		will_lead_to_war_with = SER
+		will_lead_to_war_with = MNT
+		will_lead_to_war_with = ALB
+		will_lead_to_war_with = BUL
+		will_lead_to_war_with = FYR
+		will_lead_to_war_with = GRE
+		will_lead_to_war_with = HUN
+		will_lead_to_war_with = ROM
+		will_lead_to_war_with = KOS
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_balkans"
@@ -5958,6 +6123,14 @@ focus_tree = {
 			}
 		}
 
+		will_lead_to_war_with = TUR
+		will_lead_to_war_with = CYP
+		will_lead_to_war_with = NCY
+		will_lead_to_war_with = ARM
+		will_lead_to_war_with = AZE
+		will_lead_to_war_with = GEO
+		will_lead_to_war_with = ABK
+		will_lead_to_war_with = SOO
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_anatolia"
@@ -6116,6 +6289,10 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 
+		will_lead_to_war_with = FRA
+		will_lead_to_war_with = BEL
+		will_lead_to_war_with = LUX
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_strike_gaul"
 			add_state_claim = 65
@@ -6200,6 +6377,9 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = SPR
+		will_lead_to_war_with = POR
+		will_lead_to_war_with = CAT
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_iberia"
@@ -6282,6 +6462,8 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = ENG
+		will_lead_to_war_with = WAS
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_britannia"
@@ -6351,6 +6533,8 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = SWI
+		will_lead_to_war_with = AUS
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_alps"
@@ -6426,6 +6610,7 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = GER
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_strike_germans_before_they_can"
@@ -6485,6 +6670,7 @@ focus_tree = {
 
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = GER
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_attack_germany"
@@ -6542,6 +6728,7 @@ focus_tree = {
 
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = SOV
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_crush_third_rome"
@@ -6596,6 +6783,7 @@ focus_tree = {
 
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = CHI
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_attack_china"
@@ -6645,6 +6833,7 @@ focus_tree = {
 
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		will_lead_to_war_with = USA
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_attack_on_america"
@@ -8905,7 +9094,7 @@ focus_tree = {
 		icon = italy_trade
 		x = 87
 		y = 7
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
@@ -8921,7 +9110,7 @@ focus_tree = {
 		relative_position_id = ITA_economic_policies
 		x = 9
 		y = 3
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
@@ -8937,7 +9126,7 @@ focus_tree = {
 		relative_position_id = ITA_economic_policies
 		x = -10
 		y = 3
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
@@ -10653,6 +10842,8 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			custom_effect_tooltip = reduce_mafia_strength_tt
+			set_temp_variable = { ITA_energy_gain_change = 2 }
+			modify_energy_gain_effect = yes
 		}
 
 		ai_will_do = {
@@ -10955,7 +11146,7 @@ focus_tree = {
 		relative_position_id = ITA_diplomatic_focus
 		x = 0
 		y = 6
-		cost = 0.3
+		cost = 0.1
 
 		prerequisite = {
 			focus = ITA_diplomatic_focus
@@ -11641,11 +11832,16 @@ focus_tree = {
 		icon = italian_armed_forces
 		x = 92
 		y = 15
-		cost = 0.3
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_post_cold_war_reforms"
+			army_experience = 20
+			navy_experience = 20
+			air_experience = 20
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -11667,7 +11863,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = 23
 		y = 6
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -11692,8 +11888,8 @@ focus_tree = {
 	}
 
 	focus = {
-		id = ITA_restart_otomatic_development
-		icon = ITA_Focus_Ariete
+		id = ITA_alenia_aermacchi_merger
+		icon = ITA_Focus_Simone_Waifu
 		relative_position_id = ITA_advanced_technology
 		x = 2
 		y = 1
@@ -11705,29 +11901,62 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_restart_otomatic_development"
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
-			set_technology = { otomatic_tech = 1 }
-			create_equipment_variant = {
-				name = "OTOMATIC"
-				type = mbt_hull_1
-				parent_version = 1
-				modules = {
-					main_armament_slot = otomatic_gun
-					turret_type_slot = otomatic_turret
-					suspension_type_slot = tank_torsion_bar_suspension
-					armor_type_slot = tank_steel_armor_gen1
-					engine_type_slot = tank_diesel_engine_gen2
-					reload_type_slot = revolver_magazine
-					special_type_slot_2 = smoke_launchers
-					special_type_slot_4 = tank_battlestation_2
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_alenia_aermacchi_merger"
+			custom_effect_tooltip = ITA_alenia_aermacchi_merger_TT
+			hidden_effect = {
+				set_temp_variable = { sum_of_mio_sizes = ITA_alenia_aeronautica_size }
+				add_to_temp_variable = { sum_of_mio_sizes = ITA_aermacchi_size }
+				mio:ITA_alenia_aermacchi = {
+					add_mio_size = ITA.sum_of_mio_sizes
+					add_to_variable = { free_trait_picks = sum_of_mio_sizes }
 				}
-				upgrades = {
-					tank_nsb_armor_upgrade = 1
+				clear_variable = ITA_alenia_aeronautica_size
+				clear_variable = ITA_aermacchi_size
+			}
+		}
+
+		ai_will_do = {
+			factor = 80
+			modifier = {
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				factor = global.threat
+				always = yes
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_finmeccanica_restructuring
+		icon = ITA_Focus_Simone_Waifu
+		relative_position_id = ITA_alenia_aermacchi_merger
+		x = 0
+		y = 1
+		cost = 4
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		prerequisite = {
+			focus = ITA_alenia_aermacchi_merger
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_finmeccanica_restructuring"
+			custom_effect_tooltip = ITA_finmeccanica_restructuring_TT
+			hidden_effect = {
+				set_temp_variable = { sum_of_mio_sizes = ITA_alenia_aermacchi_size }
+				add_to_temp_variable = { sum_of_mio_sizes = ITA_selenia_size }
+				add_to_temp_variable = { sum_of_mio_sizes = ITA_finmeccanica_size }
+				add_to_temp_variable = { sum_of_mio_sizes = ITA_agusta_westland_size }
+				mio:ITA_leonardo = {
+					add_mio_size = ITA.sum_of_mio_sizes
+					add_to_variable = { free_trait_picks = sum_of_mio_sizes }
 				}
-				obsolete = no
-				icon = "GFX_ITA_MBT_3"
+				clear_variable = ITA_alenia_aermacchi_size
+				clear_variable = ITA_selenia_size
+				clear_variable = ITA_finmeccanica_size
+				clear_variable = ITA_agusta_westland_size
 			}
 		}
 
@@ -11764,19 +11993,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_military_nuclear_program"
-			if = {
-				limit = { controls_state = 81 }
-				set_temp_variable = { mafia_industrial_focus_base_cost = -10 }
-				mafia_industrial_focus_south_effect = yes
-				81 = {
-					add_building_construction = {
-						type = nuclear_reactor
-						level = 1
-						instant_build = yes
-					}
-					add_extra_state_shared_building_slots = 1
-				}
-			}
+			set_temp_variable = { temp_change = 1 }
+			build_enrichment_facilities_effect = yes
 		}
 
 		ai_will_do = {
@@ -11816,7 +12034,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 			add_tech_bonus = {
 				name = ITA_naval_reactors
-				bonus = 1
+				ahead_reduction = 10
 				uses = 1
 				category = Cat_NAVAL_reactors
 			}
@@ -11935,8 +12153,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 			add_tech_bonus = {
 				name = ITA_vega_rocket
+				ahead_reduction = 5
 				bonus = 0.5
-				uses = 4
+				uses = 2
 				category = Cat_space
 			}
 		}
@@ -11973,8 +12192,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 			add_tech_bonus = {
 				name = ITA_galileo_satellites
+				ahead_reduction = 5
 				bonus = 0.5
-				uses = 4
+				uses = 2
 				category = Cat_GNSS
 			}
 		}
@@ -12270,7 +12490,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = -7
 		y = 6
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -13447,7 +13667,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = -19
 		y = 6
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -13985,7 +14205,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = 7
 		y = 6
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14148,8 +14368,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_independent_procurement"
-			set_temp_variable = { ITA_research_speed_factor_change = 0.1 }
-			modify_research_speed_factor_effect = yes
+			every_military_industrial_organization = {
+				add_mio_size_up_requirement_factor = -0.2
+				add_mio_research_bonus = 0.1
+			}
 			set_temp_variable = { ITA_equipment_cost_multiplier_modifier_change = 0.1 }
 			modify_equipment_cost_multiplier_modifier_effect = yes
 		}
@@ -14173,7 +14395,7 @@ focus_tree = {
 		relative_position_id = ITA_procurement_choice
 		x = 0
 		y = 2
-		cost = 0.3
+		cost = 0.1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14213,7 +14435,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = 0
 		y = 1
-		cost = 0.3
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14230,6 +14452,9 @@ focus_tree = {
 				}
 				add_ideas = ITA_land_equipment_localisation_spirit
 			}
+			army_experience = 50
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -14251,7 +14476,7 @@ focus_tree = {
 		relative_position_id = ITA_future_army
 		x = 3
 		y = 1
-		cost = 0.3
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14263,6 +14488,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_professional_army"
+			add_doctrine_cost_reduction = {
+			   name = ITA_professional_army
+			   uses = 4
+			   cost_reduction = 0.5
+			   category = land_doctrine
+		   }
+		   set_temp_variable = { treasury_change = -10 }
+		   modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -14450,7 +14683,7 @@ focus_tree = {
 		relative_position_id = ITA_future_army
 		x = -3
 		y = 1
-		cost = 0.3
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -14466,7 +14699,15 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_professional_army"
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_massive_army"
+			add_doctrine_cost_reduction = {
+			   name = ITA_massive_army
+			   uses = 4
+			   cost_reduction = 0.5
+			   category = land_doctrine
+		   }
+		   set_temp_variable = { treasury_change = -10 }
+		   modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -14704,7 +14945,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_specialize_freccia"
-			country_event = ita_military.2
+			country_event = ita_military.3
 			set_temp_variable = { ITA_equipment_cost_multiplier_modifier_change = 0.025 }
 			modify_equipment_cost_multiplier_modifier_effect = yes
 			set_temp_variable = { treasury_change = -10 }
@@ -14739,7 +14980,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_specialize_dardo"
-			country_event = ita_military.3
+			country_event = ita_military.2
 			set_temp_variable = { ITA_equipment_cost_multiplier_modifier_change = 0.025 }
 			modify_equipment_cost_multiplier_modifier_effect = yes
 			set_temp_variable = { treasury_change = -10 }
@@ -14900,6 +15141,41 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_specialize_mangusta
+		icon = ITA_Focus_Mangusta
+		relative_position_id = ITA_equipment_specialization
+		x = 6
+		y = 1
+		cost = 3
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		prerequisite = {
+			focus = ITA_equipment_specialization
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_specialize_mangusta"
+			country_event = ita_military.22
+			set_temp_variable = { ITA_equipment_cost_multiplier_modifier_change = 0.025 }
+			modify_equipment_cost_multiplier_modifier_effect = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 80
+			modifier = {
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				factor = global.threat
+				always = yes
+			}
+		}
+	}
+
+	focus = {
 		id = ITA_specialize_spike
 		icon = ITA_Focus_Spike
 		relative_position_id = ITA_equipment_specialization
@@ -14915,6 +15191,41 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_specialize_spike"
 			country_event = ita_military.8
+			set_temp_variable = { ITA_equipment_cost_multiplier_modifier_change = 0.025 }
+			modify_equipment_cost_multiplier_modifier_effect = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 80
+			modifier = {
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				factor = global.threat
+				always = yes
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_specialize_otomatic
+		icon = ITA_Focus_Otomatic
+		relative_position_id = ITA_equipment_specialization
+		x = -6
+		y = 1
+		cost = 3
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		prerequisite = {
+			focus = ITA_equipment_specialization
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_specialize_otomatic"
+			country_event = ita_military.23
 			set_temp_variable = { ITA_equipment_cost_multiplier_modifier_change = 0.025 }
 			modify_equipment_cost_multiplier_modifier_effect = yes
 			set_temp_variable = { treasury_change = -10 }
@@ -15043,9 +15354,9 @@ focus_tree = {
 		id = ITA_future_airforce
 		icon = Italian_Air_Force
 		relative_position_id = ITA_post_cold_war_reforms
-		x = -15
+		x = -14
 		y = 1
-		cost = 0.3
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -15055,6 +15366,91 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_future_airforce"
 			add_ideas = ITA_airforce_equipment_localisation_spirit
+			air_experience = 50
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 80
+			modifier = {
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				factor = global.threat
+				always = yes
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_achieve_superiority
+		icon = Generic_Pilots
+		relative_position_id = ITA_future_airforce
+		x = -1
+		y = 1
+		cost = 4
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		prerequisite = {
+			focus = ITA_future_airforce
+		}
+		mutually_exclusive = {
+			focus = ITA_exploit_superiority
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_achieve_superiority"
+			set_temp_variable = { ITA_air_air_superiority_attack_factor_change = 0.1 }
+			modify_air_air_superiority_attack_factor_effect = yes
+			set_temp_variable = { ITA_air_air_superiority_agility_factor_change = 0.1 }
+			modify_air_air_superiority_agility_factor_effect = yes
+			set_temp_variable = { ITA_air_close_air_support_org_damage_factor_change = -0.1 }
+			modify_air_close_air_support_org_damage_factor_effect = yes
+			set_temp_variable = { ITA_air_cas_efficiency_change = -0.1 }
+			modify_air_cas_efficiency_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 80
+			modifier = {
+				factor = 2
+				has_war = yes
+			}
+			modifier = {
+				factor = global.threat
+				always = yes
+			}
+		}
+	}
+
+	focus = {
+		id = ITA_exploit_superiority
+		icon = drone2
+		relative_position_id = ITA_future_airforce
+		x = -3
+		y = 1
+		cost = 4
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		prerequisite = {
+			focus = ITA_future_airforce
+		}
+		mutually_exclusive = {
+			focus = ITA_achieve_superiority
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_exploit_superiority"
+			set_temp_variable = { ITA_air_air_superiority_attack_factor_change = -0.1 }
+			modify_air_air_superiority_attack_factor_effect = yes
+			set_temp_variable = { ITA_air_air_superiority_agility_factor_change = -0.1 }
+			modify_air_air_superiority_agility_factor_effect = yes
+			set_temp_variable = { ITA_air_close_air_support_org_damage_factor_change = 0.1 }
+			modify_air_close_air_support_org_damage_factor_effect = yes
+			set_temp_variable = { ITA_air_cas_efficiency_change = 0.1 }
+			modify_air_cas_efficiency_effect = yes
 		}
 
 		ai_will_do = {
@@ -15073,14 +15469,15 @@ focus_tree = {
 	focus = {
 		id = ITA_air_dominance
 		icon = bombs3
-		relative_position_id = ITA_future_airforce
-		x = -1
+		relative_position_id = ITA_exploit_superiority
+		x = 0
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
-			focus = ITA_future_airforce
+			focus = ITA_exploit_superiority
+			focus = ITA_achieve_superiority
 		}
 		mutually_exclusive = {
 			focus = ITA_hostile_sky
@@ -15110,14 +15507,15 @@ focus_tree = {
 	focus = {
 		id = ITA_hostile_sky
 		icon = air_defense
-		relative_position_id = ITA_future_airforce
-		x = -3
+		relative_position_id = ITA_achieve_superiority
+		x = 0
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
-			focus = ITA_future_airforce
+			focus = ITA_exploit_superiority
+			focus = ITA_achieve_superiority
 		}
 		mutually_exclusive = {
 			focus = ITA_air_dominance
@@ -15224,7 +15622,7 @@ focus_tree = {
 		id = ITA_air_superiority_fighter
 		icon = advan_fighters
 		relative_position_id = ITA_future_airforce
-		x = 6
+		x = 4
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15233,7 +15631,6 @@ focus_tree = {
 			focus = ITA_future_airforce
 		}
 		mutually_exclusive = {
-			focus = ITA_multirole_fighters
 			focus = ITA_light_fighters
 		}
 
@@ -15259,44 +15656,44 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = ITA_multirole_fighters
-		icon = Generic_Pilots
-		relative_position_id = ITA_future_airforce
-		x = 4
-		y = 1
-		cost = 4
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+	# focus = {
+	# 	id = ITA_multirole_fighters
+	# 	icon = Generic_Pilots
+	# 	relative_position_id = ITA_future_airforce
+	# 	x = 4
+	# 	y = 1
+	# 	cost = 4
+	# 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
-		prerequisite = {
-			focus = ITA_future_airforce
-		}
-		mutually_exclusive = {
-			focus = ITA_air_superiority_fighter
-			focus = ITA_light_fighters
-		}
+	# 	prerequisite = {
+	# 		focus = ITA_future_airforce
+	# 	}
+	# 	mutually_exclusive = {
+	# 		focus = ITA_air_superiority_fighter
+	# 		focus = ITA_light_fighters
+	# 	}
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_multirole_fighters"
-			country_event = ita_military.13
-			set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
-			modify_airforce_personnel_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus ITA_multirole_fighters"
+	# 		country_event = ita_military.13
+	# 		set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
+	# 		modify_airforce_personnel_cost_multiplier_modifier_effect = yes
+	# 		set_temp_variable = { treasury_change = -10 }
+	# 		modify_treasury_effect = yes
+	# 	}
 
-		ai_will_do = {
-			factor = 80
-			modifier = {
-				factor = 2
-				has_war = yes
-			}
-			modifier = {
-				factor = global.threat
-				always = yes
-			}
-		}
-	}
+	# 	ai_will_do = {
+	# 		factor = 80
+	# 		modifier = {
+	# 			factor = 2
+	# 			has_war = yes
+	# 		}
+	# 		modifier = {
+	# 			factor = global.threat
+	# 			always = yes
+	# 		}
+	# 	}
+	# }
 
 	focus = {
 		id = ITA_light_fighters
@@ -15312,7 +15709,6 @@ focus_tree = {
 		}
 		mutually_exclusive = {
 			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
 		}
 
 		completion_reward = {
@@ -15340,7 +15736,7 @@ focus_tree = {
 	focus = {
 		id = ITA_close_air_support
 		icon = close_air_support
-		relative_position_id = ITA_air_superiority_fighter
+		relative_position_id = ITA_light_fighters
 		x = 0
 		y = 1
 		cost = 4
@@ -15348,12 +15744,10 @@ focus_tree = {
 
 		prerequisite = {
 			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
 			focus = ITA_light_fighters
 		}
 		mutually_exclusive = {
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 
 		completion_reward = {
@@ -15381,7 +15775,7 @@ focus_tree = {
 	focus = {
 		id = ITA_strike_fighters
 		icon = fighter_plane
-		relative_position_id = ITA_multirole_fighters
+		relative_position_id = ITA_air_superiority_fighter
 		x = 0
 		y = 1
 		cost = 4
@@ -15389,12 +15783,10 @@ focus_tree = {
 
 		prerequisite = {
 			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
 			focus = ITA_light_fighters
 		}
 		mutually_exclusive = {
 			focus = ITA_close_air_support
-			focus = ITA_ground_attack_drones
 		}
 
 		completion_reward = {
@@ -15419,52 +15811,52 @@ focus_tree = {
 		}
 	}
 
-	focus = {
-		id = ITA_ground_attack_drones
-		icon = drone2
-		relative_position_id = ITA_light_fighters
-		x = 0
-		y = 1
-		cost = 4
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+	# focus = {
+	# 	id = ITA_ground_attack_drones
+	# 	icon = drone2
+	# 	relative_position_id = ITA_light_fighters
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 4
+	# 	search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
-		prerequisite = {
-			focus = ITA_air_superiority_fighter
-			focus = ITA_multirole_fighters
-			focus = ITA_light_fighters
-		}
-		mutually_exclusive = {
-			focus = ITA_close_air_support
-			focus = ITA_strike_fighters
-		}
+	# 	prerequisite = {
+	# 		focus = ITA_air_superiority_fighter
+	# 		focus = ITA_multirole_fighters
+	# 		focus = ITA_light_fighters
+	# 	}
+	# 	mutually_exclusive = {
+	# 		focus = ITA_close_air_support
+	# 		focus = ITA_strike_fighters
+	# 	}
 
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ITA_ground_attack_drones"
-			country_event = ita_military.17
-			set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
-			modify_airforce_personnel_cost_multiplier_modifier_effect = yes
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [Root.GetName]: Focus ITA_ground_attack_drones"
+	# 		country_event = ita_military.17
+	# 		set_temp_variable = { ITA_airforce_personnel_cost_multiplier_modifier_change = 0.05 }
+	# 		modify_airforce_personnel_cost_multiplier_modifier_effect = yes
+	# 		set_temp_variable = { treasury_change = -10 }
+	# 		modify_treasury_effect = yes
+	# 	}
 
-		ai_will_do = {
-			factor = 80
-			modifier = {
-				factor = 2
-				has_war = yes
-			}
-			modifier = {
-				factor = global.threat
-				always = yes
-			}
-		}
-	}
+	# 	ai_will_do = {
+	# 		factor = 80
+	# 		modifier = {
+	# 			factor = 2
+	# 			has_war = yes
+	# 		}
+	# 		modifier = {
+	# 			factor = global.threat
+	# 			always = yes
+	# 		}
+	# 	}
+	# }
 
 	focus = {
 		id = ITA_naval_bomber
 		icon = naval_bombers
 		relative_position_id = ITA_close_air_support
-		x = 0
+		x = 1
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15472,7 +15864,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_close_air_support
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 		mutually_exclusive = {
 			focus = ITA_naval_multirole
@@ -15505,7 +15896,7 @@ focus_tree = {
 		id = ITA_naval_multirole
 		icon = fighters2
 		relative_position_id = ITA_strike_fighters
-		x = 0
+		x = 1
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15513,7 +15904,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_close_air_support
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 		mutually_exclusive = {
 			focus = ITA_naval_bomber
@@ -15545,8 +15935,8 @@ focus_tree = {
 	focus = {
 		id = ITA_naval_light_multirole
 		icon = Jet_Fighters
-		relative_position_id = ITA_ground_attack_drones
-		x = 0
+		relative_position_id = ITA_close_air_support
+		x = -1
 		y = 1
 		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
@@ -15554,7 +15944,6 @@ focus_tree = {
 		prerequisite = {
 			focus = ITA_close_air_support
 			focus = ITA_strike_fighters
-			focus = ITA_ground_attack_drones
 		}
 		mutually_exclusive = {
 			focus = ITA_naval_bomber
@@ -15586,7 +15975,7 @@ focus_tree = {
 	focus = {
 		id = ITA_strategic_bomber
 		icon = modern_bomber
-		relative_position_id = ITA_naval_multirole
+		relative_position_id = ITA_naval_bomber
 		x = 0
 		y = 1
 		cost = 4
@@ -15626,7 +16015,7 @@ focus_tree = {
 		relative_position_id = ITA_post_cold_war_reforms
 		x = 15
 		y = 1
-		cost = 0.3
+		cost = 4
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = {
@@ -15636,6 +16025,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_future_navy"
 			add_ideas = ITA_navy_equipment_localisation_spirit
+			navy_experience = 50
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -15681,10 +16073,10 @@ focus_tree = {
 				character = ITA_rinaldo_veri
 				trait = green_water_expert
 		 	}
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = ITA_mediterranean_navy
 				uses = 2
-				bonus = 0.5
+				cost_reduction = 0.5
 				category = Cat_green_water_navy
 			}
 		}
@@ -15912,10 +16304,10 @@ focus_tree = {
 				character = ITA_rinaldo_veri
 				trait = blue_water_expert
 		 	}
-			add_tech_bonus = {
+			 add_doctrine_cost_reduction = {
 				name = ITA_oceanic_navy
 				uses = 2
-				bonus = 0.5
+				cost_reduction = 0.5
 				category = Cat_blue_water_navy
 			}
 		}
@@ -16244,24 +16636,37 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_focus_fincantieri_surface"
-			custom_effect_tooltip = ITA_focus_fincantieri_surface_TT
-			hidden_effect = {
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_ship_company
-					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_ship_company
-						add_idea = ITA_fincantieri_ship_company_improved
-					}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			if = {
+				limit = {
+					has_dlc = "Arms Against Tyranny"
 				}
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_submarine_company
+				mio:ITA_fincantieri = {
+					add_mio_funds = 10000
+					complete_mio_trait = fincantieri_ship_focus
+				}
+			}
+			else = {
+				custom_effect_tooltip = ITA_focus_fincantieri_surface_TT
+				hidden_effect = {
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_improved
+						}
 					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_submarine_company
-						add_idea = ITA_fincantieri_submarine_company_unfocused
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_unfocused
+						}
 					}
 				}
 			}
@@ -16338,24 +16743,37 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_focus_fincantieri_submarines"
-			custom_effect_tooltip = ITA_focus_fincantieri_submarines_TT
-			hidden_effect = {
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_ship_company
-					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_ship_company
-						add_idea = ITA_fincantieri_ship_company_unfocused
-					}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			if = {
+				limit = {
+					has_dlc = "Arms Against Tyranny"
 				}
-				if = {
-					limit = {
-						has_idea = ITA_fincantieri_submarine_company
+				mio:ITA_fincantieri = {
+					add_mio_funds = 10000
+					complete_mio_trait = fincantieri_sub_focus
+				}
+			}
+			else = {
+				custom_effect_tooltip = ITA_focus_fincantieri_submarines_TT
+				hidden_effect = {
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_unfocused
+						}
 					}
-					swap_ideas = {
-						remove_idea = ITA_fincantieri_submarine_company
-						add_idea = ITA_fincantieri_submarine_company_improved
+					if = {
+						limit = {
+							has_idea = ITA_fincantieri_naval_manufacturer
+						}
+						swap_ideas = {
+							remove_idea = ITA_fincantieri_naval_manufacturer
+							add_idea = ITA_fincantieri_naval_manufacturer_improved
+						}
 					}
 				}
 			}
@@ -16421,7 +16839,7 @@ focus_tree = {
 		relative_position_id = ITA_divided_nation
 		x = -8
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -16442,7 +16860,7 @@ focus_tree = {
 		relative_position_id = ITA_North_South_divide
 		x = 3
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -16479,7 +16897,7 @@ focus_tree = {
 		relative_position_id = ITA_North_South_divide
 		x = 1
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -16512,7 +16930,7 @@ focus_tree = {
 		relative_position_id = ITA_North_South_divide
 		x = -3
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_ITA_MAFIA }
 		prerequisite = {
@@ -17010,7 +17428,7 @@ focus_tree = {
 		relative_position_id = ITA_dissatisfaction_in_the_north
 		x = 1
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 		mutually_exclusive = {
@@ -17190,6 +17608,11 @@ focus_tree = {
 				set_variable = { var = population_tax_rate value = ITA.population_tax_rate }
 				set_variable = { var = corporate_tax_rate value = ITA.corporate_tax_rate }
 				set_variable = { var = int_investments value = temp_int_investments }
+				set_variable = { gdpc_converging_var = ITA.gdpc_converging_var }
+				set_variable = { military_factory_employment_var = 1 }
+				set_variable = { civilian_factory_employment_var = 1 }
+				set_variable = { naval_factory_employment_var = 1 }
+				set_variable = { office_employment_var = 1 }
 			}
 			transfer_units_fraction = {
 				target = SCL
@@ -17392,6 +17815,12 @@ focus_tree = {
 				set_variable = { var = population_tax_rate value = ITA.population_tax_rate }
 				set_variable = { var = corporate_tax_rate value = ITA.corporate_tax_rate }
 				set_variable = { var = int_investments value = temp_int_investments }
+				set_variable = { gdpc_converging_var = ITA.gdpc_converging_var }
+				set_variable = { military_factory_employment_var = 1 }
+				set_variable = { civilian_factory_employment_var = 1 }
+				set_variable = { naval_factory_employment_var = 1 }
+				set_variable = { office_employment_var = 1 }
+				ingame_update_setup = yes
 			}
 			transfer_units_fraction = {
 				target = SCL
@@ -17427,6 +17856,7 @@ focus_tree = {
 				}
 				complete_national_focus = ITA_roberto_calderoli
 			}
+			ingame_update_setup = yes
 		}
 
 		ai_will_do = {
@@ -17654,7 +18084,7 @@ focus_tree = {
 		relative_position_id = ITA_divided_nation
 		x = 17
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -17675,7 +18105,7 @@ focus_tree = {
 		relative_position_id = ITA_generational_divide
 		x = -6
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -17946,7 +18376,7 @@ focus_tree = {
 		relative_position_id = ITA_generational_divide
 		x = 0
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -18702,7 +19132,7 @@ focus_tree = {
 		relative_position_id = ITA_generational_divide
 		x = 6
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19030,14 +19460,13 @@ focus_tree = {
 	}
 
 #INEFFICIENT ADMINISTRATION
-
 	focus = {
 		id = ITA_inefficient_administration
 		icon = focus_generic_improve_the_administration
 		relative_position_id = ITA_divided_nation
 		x = 0
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19048,7 +19477,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 640
+			factor = 1280
 		}
 	}
 
@@ -19058,7 +19487,7 @@ focus_tree = {
 		relative_position_id = ITA_inefficient_administration
 		x = -1
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 		prerequisite = {
@@ -19069,7 +19498,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 480
 		}
 	}
 
@@ -19094,7 +19523,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 480
 		}
 	}
 
@@ -19119,7 +19548,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 480
 		}
 	}
 
@@ -19171,7 +19600,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 480
 		}
 	}
 
@@ -19196,7 +19625,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 480
 		}
 	}
 
@@ -19221,7 +19650,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 480
 		}
 	}
 
@@ -19245,7 +19674,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 480
 		}
 	}
 
@@ -19255,7 +19684,7 @@ focus_tree = {
 		relative_position_id = ITA_inefficient_administration
 		x = 5
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		prerequisite = {
@@ -19267,7 +19696,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_reform_the_judiciary"
 		}
 		ai_will_do = {
-			factor = 640
+			factor = 1280
 		}
 	}
 
@@ -19312,7 +19741,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			factor = 640
+			factor = 1280
 		}
 	}
 
@@ -19442,7 +19871,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 320
+			factor = 160
 		}
 	}
 
@@ -19485,7 +19914,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 320
+			factor = 160
 		}
 	}
 
@@ -19525,7 +19954,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 320
+			factor = 160
 		}
 	}
 
@@ -19551,7 +19980,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 80
 		}
 	}
 
@@ -19580,7 +20009,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 80
 		}
 	}
 
@@ -19607,19 +20036,19 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 160
+			factor = 80
 		}
 	}
 
-#ITALIAN MEDIA
 
+#POLITICAL INSTABILITY
 	focus = {
 		id = ITA_political_instability
 		icon = focus_ITA_democratic_leadership
 		relative_position_id = ITA_divided_nation
 		x = 8
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19655,14 +20084,14 @@ focus_tree = {
 			factor = 320
 		}
 	}
-
+#ITALIAN MEDIA
 	focus = {
 		id = ITA_italian_media
 		icon = focus_generic_italy_propaganda
 		relative_position_id = ITA_divided_nation
 		x = -17
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19683,7 +20112,7 @@ focus_tree = {
 		relative_position_id = ITA_italian_media
 		x = -4
 		y = 1
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19777,7 +20206,7 @@ focus_tree = {
 		relative_position_id = ITA_italian_media
 		x = 1
 		y = 1
-		cost = 5
+		cost = 4
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19809,7 +20238,7 @@ focus_tree = {
 		relative_position_id = ITA_italian_media
 		x = -1
 		y = 1
-		cost = 5
+		cost = 4
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19838,7 +20267,7 @@ focus_tree = {
 		relative_position_id = ITA_media_control
 		x = 0
 		y = 1
-		cost = 5
+		cost = 4
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19860,7 +20289,7 @@ focus_tree = {
 		relative_position_id = ITA_liberalise_television
 		x = 0
 		y = 1
-		cost = 5
+		cost = 4
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19885,7 +20314,7 @@ focus_tree = {
 		relative_position_id = ITA_crack_down_on_talk_shows
 		x = -1
 		y = 1
-		cost = 5
+		cost = 4
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -19916,14 +20345,13 @@ focus_tree = {
 	}
 
 #CHURCH RELATIONS
-
 	focus = {
 		id = ITA_relations_with_the_church
 		icon = focus_generic_vatican_state
 		relative_position_id = ITA_divided_nation
 		x = -11
 		y = 7
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -19942,7 +20370,7 @@ focus_tree = {
 		relative_position_id = ITA_relations_with_the_church
 		x = -1
 		y = 1
-		cost = 4
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = {
@@ -20216,7 +20644,7 @@ focus_tree = {
 		relative_position_id = ITA_relations_with_the_church
 		x = 1
 		y = 1
-		cost = 4
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = {
@@ -20477,7 +20905,7 @@ focus_tree = {
 		relative_position_id = ITA_divided_nation
 		x = -18
 		y = 6
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -20496,7 +20924,7 @@ focus_tree = {
 		relative_position_id = ITA_roma_capitale
 		x = -1
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20531,7 +20959,7 @@ focus_tree = {
 		relative_position_id = ITA_municipalities_corruption_rome
 		x = 0
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20566,7 +20994,7 @@ focus_tree = {
 		relative_position_id = ITA_roma_capitale
 		x = -3
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20598,7 +21026,7 @@ focus_tree = {
 		relative_position_id = ITA_disastrous_transports_rome
 		x = 0
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20632,7 +21060,7 @@ focus_tree = {
 		relative_position_id = ITA_roma_capitale
 		x = 1
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20655,7 +21083,7 @@ focus_tree = {
 		relative_position_id = ITA_urban_waste_management_rome
 		x = 0
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20689,7 +21117,7 @@ focus_tree = {
 		relative_position_id = ITA_roma_capitale
 		x = 3
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20724,7 +21152,7 @@ focus_tree = {
 		relative_position_id = ITA_widespread_absenteeism
 		x = 0
 		y = 1
-		cost = 3
+		cost = 2
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = {
@@ -20879,14 +21307,13 @@ focus_tree = {
 	}
 
 #GREAT PROJECTS
-
 	focus = {
 		id = ITA_great_projects
 		icon = focus_ITA_fiat_ansaldo_duopoly
 		relative_position_id = ITA_industrial_focus
 		x = 0
 		y = 6
-		cost = 0.3
+		cost = 0.1
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		prerequisite = {
@@ -20938,14 +21365,12 @@ focus_tree = {
 				has_completed_focus = ITA_limit_rebound_of_responsibilities
 			}
 		}
-
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_bypass_the_1987_referendum"
 			remove_ideas = ITA_nuclear_power_banned
 			if = {
 				limit = { controls_state = 77 }
-				set_temp_variable = { mafia_industrial_focus_base_cost = -10 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -15 }
 				mafia_industrial_focus_north_effect = yes
 				77 = {
 					add_building_construction = {
@@ -20955,10 +21380,11 @@ focus_tree = {
 					}
 					add_extra_state_shared_building_slots = 1
 				}
+				add_to_variable = { var_reactor_material_stockpile = 500 }
 			}
 			if = {
 				limit = { controls_state = 81 }
-				set_temp_variable = { mafia_industrial_focus_base_cost = -10 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -15 }
 				mafia_industrial_focus_south_effect = yes
 				81 = {
 					add_building_construction = {
@@ -20968,10 +21394,11 @@ focus_tree = {
 					}
 					add_extra_state_shared_building_slots = 1
 				}
+				add_to_variable = { var_reactor_material_stockpile = 500 }
 			}
 			if = {
 				limit = { controls_state = 82 }
-				set_temp_variable = { mafia_industrial_focus_base_cost = -10 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -15 }
 				mafia_industrial_focus_south_effect = yes
 				82 = {
 					add_building_construction = {
@@ -20981,10 +21408,11 @@ focus_tree = {
 					}
 					add_extra_state_shared_building_slots = 1
 				}
+				add_to_variable = { var_reactor_material_stockpile = 500 }
 			}
 			if = {
 				limit = { controls_state = 265 }
-				set_temp_variable = { mafia_industrial_focus_base_cost = -10 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -15 }
 				mafia_industrial_focus_north_effect = yes
 				265 = {
 					add_building_construction = {
@@ -20994,6 +21422,7 @@ focus_tree = {
 					}
 					add_extra_state_shared_building_slots = 1
 				}
+				add_to_variable = { var_reactor_material_stockpile = 500 }
 			}
 		}
 

@@ -1,17 +1,10 @@
-############################################################################################################
-#	AC mod - scripted gui
-############################################################################################################
-#Written by hiddengearz
-#Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
-#This reworked system allows you to have 5 of each project active per country.
-#So you can have 5 CIC projects, 5 INF projects, 5 MIC projects etc in every country in the game
-#There are 8 project types * 5 of each allowed per country = 40 investments possible in one country * 210 countries the player can invest in = 8400 possibile investments for the player
-#Now if the AI also does the same that's 210 * 8400 = 1,764,000 possible investments possible
-
-
-# ROOT is investor
+#################################################
+#	Investment System - Written by AngriestBird #
+#################################################
+# Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
+# ROOT is the investor nation
 # PREV is state
-# PREV = { CONTROLLER = { is country being invested in
+# PREV = { CONTROLLER = { is country being invested in } }
 
 # AC_build_amount determines how many buildings to build
 # Indexes for WHAT type of building
@@ -25,7 +18,9 @@
 # AC_building_type_selected = 8 = Air Bases
 # AC_building_type_selected = 9 = Fuel Silo
 # AC_building_type_selected = 10 = Internet Station
-# AC_building_type_selected = 11 = Biofuel Refineries
+# AC_building_type_selected = 11 = Renewable Energy Infrastructure
+# AC_building_type_selected = 12 = Fossil Fuel Powerplant
+# AC_building_type_selected = 13 = Nuclear Reactor
 scripted_gui = {
 	AC_show_Investment_window = {
 		context_type = selected_state_context
@@ -80,6 +75,8 @@ scripted_gui = {
 			AC_building_fuel_silos_button = { image = "[AC_GetFuelSiloButtonTexture]" }
 			AC_building_internet_station_button = { image = "[AC_InternetStationButtonTexture]" }
 			AC_building_ref_button = { image = "[AC_GetRefButtonTexture]" }
+			AC_building_power_plant_button = { image = "[AC_GetPowerPlantButtonTexture]" }
+			AC_building_nuclear_reactor_button = { image = "[AC_GetNuclearReactorButtonTexture]" }
 			AC_influence_icon = { image = "[AC_GainInfluence]" }
 		}
 
@@ -90,7 +87,7 @@ scripted_gui = {
 				ROOT = { set_country_flag = AC_hide_investment_window }
 				refresh_gui = yes
 			}
-			# Begins project or it cancels the project if you have one active in given state
+			# Begins project or cancels the project if you have one active in a given state
 			AC_build_button_click = {
 				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } }
 					# PREV is the state target
@@ -136,7 +133,7 @@ scripted_gui = {
 			# Increase/Decrease the number of buildings
 			AC_building_amount_increase_button_click = { #increases AC_build_amount & update build time/cost
 				ROOT = {
-					# Max amount of depends on the select building
+					# Max amount depends on the selected building type
 					# Antiair Building
 					if = { limit = { check_variable = { project_building_type^-1 = 6 } }
 						add_to_variable = { project_build_amount^-1 = 1 }
@@ -146,11 +143,6 @@ scripted_gui = {
 					else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
 						add_to_variable = { project_build_amount^-1 = 1 }
 						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
-					}
-					# Synthetic Refineries
-					else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 2 }
 					}
 					# Fuel Silos
 					else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
@@ -183,7 +175,7 @@ scripted_gui = {
 			}
 			AC_building_amount_decrease_button_click = { ##decreases AC_build_amount & update build time/cost
 				ROOT = {
-					# Max amount of depends on the select building
+					# Max amount depends on the selected building type
 					# Antiair Building
 					if = { limit = { check_variable = { project_building_type^-1 = 6 } }
 						subtract_from_variable = { project_build_amount^-1 = 1 }
@@ -193,11 +185,6 @@ scripted_gui = {
 					else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
 						subtract_from_variable = { project_build_amount^-1 = 1 }
 						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
-					}
-					# Synthetic Refineries
-					else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 2 }
 					}
 					# Fuel Silos
 					else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
@@ -234,10 +221,10 @@ scripted_gui = {
 			# Line Two - Infrastructure - 4, Offices - 5, SAM - 6, Radar - 7
 			# Page 2
 			# Line One - Air Bases - 8, Fuel Silo - 9, Internet Station - 10
-			# Line Two - Biofuel Refineries - 11
+			# Line Two - Biofuel Refineries - 11, Nuclear Reactor - 12
 			# Positions of Line One: { 8, 45, 82, 119 }, 45
 			# Positions of Line Two: { 8, 45, 82, 119 }, 76
-			# AC_buiding_xxxx_button_click sets variables for specific building and updated build time/cost
+			# AC_buiding_xxxx_button_click sets variables for specific buildings and updates build time/cost
 
 			# Shows the Current Set Page of Buildings
 			AC_increase_page_click = {
@@ -356,11 +343,31 @@ scripted_gui = {
 
 				refresh_gui = yes
 			}
-			#Index 11: Biofuel Refineries
+			#Index 11: Renewable Energy Infrastructure
 			AC_building_ref_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 11 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			#Index 12: Biofuel Refineries
+			AC_building_power_plant_button_click = {
+				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
+					set_variable = { project_building_type^-1 = 12 }
+					update_gui = yes
+				}
+
+				refresh_gui = yes
+			}
+			#Index 13: Nuclear Reactor
+			AC_building_nuclear_reactor_button_click = {
+				ROOT = {
+					set_variable = { project_build_amount^-1 = 1 }
+					set_variable = { project_building_type^-1 = 13 }
 					update_gui = yes
 				}
 
@@ -423,6 +430,12 @@ scripted_gui = {
 					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 11 } }
 						AC_building_ref_available = yes
 					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 12 } }
+						AC_building_foss_fuel_powerplant_available = yes
+					}
+					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 13 } }
+						AC_building_reactor_available = yes
+					}
 				}
 				else_if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } currently_is_considering_a_project = yes } }
 					currently_is_considering_a_project = yes
@@ -433,6 +446,10 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = disabled_foreign_investment_flag_tt
 					ROOT = { NOT = { has_country_flag = disabled_foreign_investment } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = int_auto_reject_investment_flag_tt
+					PREV = { CONTROLLER = { NOT = { has_country_flag = int_auto_reject_investment_flag } } }
 				}
 			}
 
@@ -524,6 +541,22 @@ scripted_gui = {
 				currently_is_considering_a_project = yes
 			}
 			AC_building_ref_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 2 } }
+			}
+			# Index Eleven: Refineries
+			AC_building_power_plant_button_click_enabled = {
+				AC_building_foss_fuel_powerplant_available = yes
+				currently_is_considering_a_project = yes
+			}
+			AC_building_power_plant_button_visible = {
+				ROOT = { check_variable = { constructable_buildings = 2 } }
+			}
+			# Index Twelve: Nuclear Reactor
+			AC_building_nuclear_reactor_button_click_enabled = {
+				AC_building_reactor_available = yes
+				currently_is_considering_a_project = yes
+			}
+			AC_building_nuclear_reactor_button_visible = {
 				ROOT = { check_variable = { constructable_buildings = 2 } }
 			}
 		}
