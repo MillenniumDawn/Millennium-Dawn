@@ -135,7 +135,17 @@
 
 	NDefines.NDiplomacy.PEACE_TRIGGER_AI_MAX_INFLUENCE_VALUE = 0.89	-- Max influence value for pc_is_state_outside_influence_for trigger
 
-
+	-- NMarket Related Defines
+	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
+	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 60 -- 30
+	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
+	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 1 -- 0.75
+	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1 -- 1.25
+	-- Market AI
+	NDefines.NAI.MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
+	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
+	NDefines.NAI.EQUIPMENT_MARKET_NR_DELIVERIES_SOFT_MAX = 400 -- 10 -- this should get AI to never add more than one factory
 	-- NCountry Releated Defines
 	NDefines.NCountry.AIR_SUPPLY_CONVERSION_SCALE = 0.1 -- 0.01
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
