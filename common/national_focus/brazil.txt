@@ -26,7 +26,6 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_americas_unity"
-		# FIXME: Aranha these need to be wrapped in a if country_exists thing. You don't wanna give things to nations that don't exist.
 		if = { limit = { country_exists = ARG }
 			add_opinion_modifier = { target = ARG modifier = medium_increase }
 			reverse_add_opinion_modifier = { target = ARG modifier = medium_increase }
@@ -124,6 +123,8 @@ shared_focus = {
 	relative_position_id = BRA_americas_unity
 	cost = 5
 	prerequisite = { focus = BRA_americas_unity }
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_DIPLOMACY }
 
 	completion_reward = {
 		add_political_power = 100
@@ -1499,18 +1500,15 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_pay_back_the_imf"
-		if = {
-			limit = { has_idea = BRA_idea_crippled_currency }
+		if = { limit = { has_idea = BRA_idea_crippled_currency }
 			remove_ideas = BRA_idea_crippled_currency
 		}
 		remove_ideas = BRA_idea_imf_debts
-		set_temp_variable = { treasury_change = -100.00 }
-		modify_treasury_effect = yes
-		set_temp_variable = { debt_change = -100.00 }
+		set_temp_variable = { debt_change = debt }
+		multiply_temp_variable = { debt_change = -0.10 }
+		clamp_temp_variable = { var = debt_change max = -200 min = 0 }
 		modify_debt_effect = yes
-		add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
 
-		custom_effect_tooltip = BRA_pay_back_the_imf_tt
 	}
 
 	ai_will_do = {
@@ -1528,9 +1526,7 @@ shared_focus = {
 
 	cost = 5
 
-	prerequisite = {
-		focus = BRA_pay_back_the_imf
-	}
+	prerequisite = { focus = BRA_pay_back_the_imf }
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_brazilian_exports"
@@ -1562,7 +1558,10 @@ shared_focus = {
 		set_temp_variable = { temp_opinion = 5 }
 		change_industrial_conglomerates_opinion = yes
 		change_international_bankers_opinion = yes
-		set_temp_variable = { treasury_change = 30 }
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.05 }
 		modify_treasury_effect = yes
 	}
 
@@ -1789,15 +1788,14 @@ shared_focus = {
 
 	prerequisite = { focus = BRA_crush_corruption }
 
-	available = {
-		NOT = {
-			has_idea = farmers
-		}
-	}
-
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_push_for_an_agrarian_reform"
 		add_ideas = BRA_idea_agrarian_reform
+		set_temp_variable = { temp_opinion = -5 }
+		change_farmers_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
 	}
 
 	ai_will_do = {
@@ -2054,11 +2052,8 @@ shared_focus = {
 		set_temp_variable = { temp_opinion = -5 }
 		change_small_medium_business_owners_opinion = yes
 		change_international_bankers_opinion = yes
-		hidden_effect = {
-			add_to_variable = { population_tax_rate = 5 }
-			calculate_tax_rate = yes
-		}
-		custom_effect_tooltip = BRA_increase_population_tax_rate_by_5_tt
+		set_temp_variable = { pop_change = 5 }
+		modify_population_tax_rate_effect = yes
 	}
 
 	ai_will_do = {
@@ -2243,8 +2238,7 @@ shared_focus = {
 		set_temp_variable = { temp_opinion = 5 }
 		change_small_medium_business_owners_opinion = yes
 		increase_economic_growth = yes
-		if = {
-			limit = { has_idea = BRA_idea_crippled_currency }
+		if = { limit = { has_idea = BRA_idea_crippled_currency }
 			remove_ideas = BRA_idea_crippled_currency
 		}
 	}
@@ -2259,7 +2253,7 @@ shared_focus = {
 	icon = construction2
 
 	x = 1
-	y = 2
+	y = 1
 	relative_position_id = BRA_economic_interventionism
 	cost = 6.4
 
@@ -3480,7 +3474,7 @@ shared_focus = {
 	icon = BRA_economic_liberalization
 
 	x = 0
-	y = 2
+	y = 1
 	relative_position_id = BRA_nossa_economia
 
 	cost = 5
@@ -3502,10 +3496,10 @@ shared_focus = {
 	icon = research
 
 	x = -2
-	y = 3
+	y = 2
 	relative_position_id = BRA_nossa_economia
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_growth_through_freedom }
 
@@ -3997,16 +3991,15 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_growth_through_freedom
 
-	cost = 5
+	cost = 6.8
 
 	prerequisite = { focus = BRA_growth_through_freedom }
 
 	search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_help_business_owners"
-		add_stability = 0.03
-		add_political_power = -50
-		set_temp_variable = { temp_opinion = 5 }
+		add_stability = 0.04
+		set_temp_variable = { temp_opinion = 10 }
 		change_small_medium_business_owners_opinion = yes
 		change_industrial_conglomerates_opinion = yes
 	}
@@ -4023,14 +4016,14 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_help_business_owners
 
-	cost = 5
+	cost = 6.8
 
 	prerequisite = { focus = BRA_help_business_owners }
 	search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_help_business_owners"
-		add_stability = -0.03
-		add_political_power = 100
+		set_temp_variable = { int_investment_change = gdp_total }
+		multiply_temp_variable = { int_investment_change = 0.10 }
 		set_temp_variable = { temp_opinion = 5 }
 		change_international_bankers_opinion = yes
 		set_temp_variable = { treasury_change = -7.5 }
@@ -4050,15 +4043,17 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_brazilian_research_and_development
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_brazilian_research_and_development }
 
 	search_filters = { FOCUS_FILTER_RESEARCH }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_foreign_research_methods"
-		remove_ideas = BRA_idea_brazilian_research_and_development
-		add_ideas = BRA_idea_foreign_research_and_development
+		swap_ideas = {
+			remove_idea = BRA_idea_brazilian_research_and_development
+			add_idea = BRA_idea_foreign_research_and_development
+		}
 	}
 	ai_will_do = {
 		factor = 1
@@ -4080,7 +4075,7 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_energy_mining_ministry"
-		add_political_power = 75
+		add_political_power = 100
 	}
 	ai_will_do = {
 		factor = 1
@@ -4103,7 +4098,9 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_santos_oilfields"
-		add_resource = { type = oil amount = 8 state = 882 }
+		add_resource = { type = oil amount = 16 state = 882 }
+		set_temp_variable = { treasury_change = -15 }
+		modify_treasury_effect = yes
 	}
 	ai_will_do = {
 		factor = 1
@@ -4125,15 +4122,9 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_clean_energy_path"
-		set_temp_variable = { treasury_change = -4.25 }
+		add_resource = { type = oil amount = 16 state = 882 }
+		set_temp_variable = { treasury_change = -15 }
 		modify_treasury_effect = yes
-		883 = {
-			add_building_construction = {
-				type = synthetic_refinery
-				level = 1
-				instant_build = yes
-			}
-		}
 	}
 	ai_will_do = {
 		factor = 1
@@ -4149,7 +4140,7 @@ shared_focus = {
 
 	relative_position_id = BRA_petrobras_tech
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_petrobras_tech }
 	mutually_exclusive = { focus = BRA_clean_energy_path }
@@ -4157,7 +4148,7 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_fossil_fuel_industry"
 		add_ideas = BRA_idea_fossil_fuel_industry
-		set_temp_variable = { temp_opinion = 5 }
+		set_temp_variable = { temp_opinion = 10 }
 		change_fossil_fuel_industry_opinion = yes
 	}
 	ai_will_do = {
@@ -4174,14 +4165,13 @@ shared_focus = {
 
 	relative_position_id = BRA_petrobras_tech
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_petrobras_tech }
 	mutually_exclusive = { focus = BRA_fossil_fuel_industry }
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_clean_energy_path"
-		#add_ideas = BRA_idea_clean_energy1
 		if = {
 			limit = {
 				NOT = {
@@ -4221,22 +4211,16 @@ shared_focus = {
 
 	relative_position_id = BRA_fossil_fuel_industry
 
-	cost = 5
+	cost = 6.8
 
 	prerequisite = { focus = BRA_fossil_fuel_industry }
 
 	search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
 	completion_reward = {
-		set_temp_variable = { treasury_change = -4.25 }
+		log = "[GetDateText]: [Root.GetName]: Focus BRA_comperj"
+		set_temp_variable = { treasury_change = -15 }
 		modify_treasury_effect = yes
-		add_resource = { type = oil amount = 7 state = 883 }
-		883 = {
-			add_building_construction = {
-				type = synthetic_refinery
-				level = 1
-				instant_build = yes
-			}
-		}
+		add_resource = { type = oil amount = 16 state = 883 }
 	}
 	ai_will_do = {
 		factor = 1
@@ -4251,113 +4235,13 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_clean_energy_path
 
-	cost = 5
+	cost = 6.8
 
 	prerequisite = { focus = BRA_clean_energy_path }
 
 	search_filters = { FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_develop_angra3"
-		#swap_ideas = {
-		#	remove_idea = BRA_idea_clean_energy1
-		#	add_idea = BRA_idea_clean_energy2
-		#}
-			if = {
-			limit = {
-				NOT = {
-					has_idea = BRA_brazil_energy1
-					has_idea = BRA_brazil_energy2
-					has_idea = BRA_brazil_energy3
-				}
-			}
-			add_ideas = BRA_brazil_energy3
-		}
-		else_if = {
-			limit = { has_idea = BRA_brazil_energy1 }
-			swap_ideas = {
-				remove_idea = BRA_brazil_energy1
-				add_idea = BRA_brazil_energy2
-			}
-		}
-		else_if = {
-			limit = { has_idea = BRA_brazil_energy2 }
-			swap_ideas = {
-				remove_idea = BRA_brazil_energy2
-				add_idea = BRA_brazil_energy3
-			}
-		}
-		883 = {
-			add_extra_state_shared_building_slots = 1
-			add_building_construction = {
-				type = industrial_complex
-				level = 1
-				instant_build = yes
-			}
-		}
-	}
-	ai_will_do = {
-		factor = 1
-	}
-}
-
-shared_focus = {
-	id = BRA_presal_dev
-	icon = oil_companies
-
-	x = 0
-	y = 1
-	relative_position_id = BRA_comperj
-
-	cost = 5
-
-	prerequisite = { focus = BRA_comperj }
-
-	search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
-	completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus BRA_presal_dev"
-		add_ideas = BRA_idea_presal_dev
-		add_resource = { type = oil amount = 6 state = 883 }
-		set_temp_variable = { treasury_change = -12.75 }
-		modify_treasury_effect = yes
-		883 = {
-			add_building_construction = {
-				type = synthetic_refinery
-				level = 3
-				instant_build = yes
-			}
-		}
-	}
-	ai_will_do = {
-		factor = 1
-	}
-}
-
-shared_focus = {
-	id = BRA_solar_power_sertao
-	icon = generic_solar
-
-	x = 0
-	y = 1
-	relative_position_id = BRA_develop_angra3
-
-	cost = 5
-
-	prerequisite = { focus = BRA_develop_angra3 }
-
-	search_filters = { FOCUS_FILTER_INDUSTRY }
-	completion_reward = {
-		887 = {
-			add_extra_state_shared_building_slots = 1
-		}
-		888 = {
-			add_extra_state_shared_building_slots = 1
-		}
-		889 = {
-			add_extra_state_shared_building_slots = 1
-		}
-		890 = {
-			add_extra_state_shared_building_slots = 1
-		}
 		if = {
 			limit = {
 				NOT = {
@@ -4382,7 +4266,82 @@ shared_focus = {
 				add_idea = BRA_brazil_energy3
 			}
 		}
-		add_ideas = ITA_green_subsidies
+		two_random_nuclear_reactor = yes
+	}
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+shared_focus = {
+	id = BRA_presal_dev
+	icon = oil_companies
+
+	x = 0
+	y = 1
+	relative_position_id = BRA_comperj
+
+	cost = 6.8
+
+	prerequisite = { focus = BRA_comperj }
+
+	search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus BRA_presal_dev"
+		swap_ideas = {
+			remove_idea = BRA_idea_fossil_fuel_industry
+			add_idea = BRA_idea_fossil_fuel_industry_2
+		}
+		add_ideas = BRA_idea_presal_dev
+		add_resource = { type = oil amount = 16 state = 883 }
+		set_temp_variable = { treasury_change = -7.50 }
+		modify_treasury_effect = yes
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+shared_focus = {
+	id = BRA_solar_power_sertao
+	icon = generic_solar
+
+	x = 0
+	y = 1
+	relative_position_id = BRA_develop_angra3
+
+	cost = 6.8
+
+	prerequisite = { focus = BRA_develop_angra3 }
+
+	search_filters = { FOCUS_FILTER_INDUSTRY }
+	completion_reward = {
+		if = {
+			limit = {
+				NOT = {
+					has_idea = BRA_brazil_energy1
+					has_idea = BRA_brazil_energy2
+					has_idea = BRA_brazil_energy3
+				}
+			}
+			add_ideas = BRA_brazil_energy3
+		}
+		else_if = {
+			limit = { has_idea = BRA_brazil_energy1 }
+			swap_ideas = {
+				remove_idea = BRA_brazil_energy1
+				add_idea = BRA_brazil_energy2
+			}
+		}
+		else_if = {
+			limit = { has_idea = BRA_brazil_energy2 }
+			swap_ideas = {
+				remove_idea = BRA_brazil_energy2
+				add_idea = BRA_brazil_energy3
+			}
+		}
+		three_random_synthetic_refinery = yes
 	}
 	ai_will_do = {
 		factor = 1
@@ -4399,11 +4358,10 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_foreign_research_methods
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_support_international_bankers }
 	prerequisite = { focus = BRA_foreign_research_methods }
-	mutually_exclusive = { focus = BRA_support_industries }
 	search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_help_the_farmers"
@@ -4427,30 +4385,21 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_support_international_bankers
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_support_international_bankers }
 	prerequisite = { focus = BRA_foreign_research_methods }
-	mutually_exclusive = { focus = BRA_help_the_farmers }
 	search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_support_industries"
 		swap_ideas = {
-			remove_idea = farmers
+			remove_idea = labour_unions
 			add_idea = industrial_conglomerates
 		}
 		set_temp_variable = { temp_opinion = 5 }
 		change_industrial_conglomerates_opinion = yes
-		set_temp_variable = { treasury_change = -7.5 }
-		modify_treasury_effect = yes
-		random_owned_controlled_state = {
-			add_extra_state_shared_building_slots = 1
-			add_building_construction = {
-				type = industrial_complex
-				level = 1
-				instant_build = yes
-			}
-		}
+		change_labour_unions_opinion = yes
+		two_random_industrial_complex = yes
 	}
 
 	ai_will_do = {
@@ -4467,7 +4416,7 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_support_industries
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_support_industries }
 	search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
@@ -4476,16 +4425,7 @@ shared_focus = {
 		add_ideas = BRA_idea_pro_industries
 		set_temp_variable = { temp_opinion = 5 }
 		change_industrial_conglomerates_opinion = yes
-		set_temp_variable = { treasury_change = -15 }
-		modify_treasury_effect = yes
-		random_owned_controlled_state = {
-			add_extra_state_shared_building_slots = 2
-			add_building_construction = {
-				type = industrial_complex
-				level = 2
-				instant_build = yes
-			}
-		}
+		two_random_industrial_complex = yes
 	}
 
 	ai_will_do = {
@@ -4502,7 +4442,7 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_help_the_farmers
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_help_the_farmers }
 
@@ -4526,14 +4466,17 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_agrarian_economy
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_agrarian_economy }
 
 	search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus BRA_agrotech"
-		add_ideas = BRA_idea_agrotech
+		swap_ideas = {
+			remove_idea = BRA_idea_pro_farmers
+			add_idea = BRA_idea_pro_farmers_2
+		}
 		set_temp_variable = { temp_opinion = 5 }
 		change_farmers_opinion = yes
 	}
@@ -4550,7 +4493,7 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_agrotech
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_agrotech }
 	mutually_exclusive = { focus = BRA_free_trade_agro_producs }
@@ -4577,7 +4520,7 @@ shared_focus = {
 	y = 1
 	relative_position_id = BRA_agrotech
 
-	cost = 10
+	cost = 6.8
 
 	prerequisite = { focus = BRA_agrotech }
 	mutually_exclusive = { focus = BRA_agricultural_protectionism }

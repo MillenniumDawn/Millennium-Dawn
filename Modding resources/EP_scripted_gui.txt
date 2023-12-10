@@ -1,0 +1,1783 @@
+# Author(s): Razmode
+scripted_gui = {
+	weapons_market_gui_window = {
+		window_name = "weapons_market_gui_window"
+		context_type = player_context
+
+		visible = { has_country_flag = weapons_market_open }
+
+		# TODO: Investigate for performance purposes.
+		# TODO: I recommend global.date to update the GUI hourly vs every tick
+		# dirty = something_var
+
+		properties = {
+			# Macro Buttons for the country selection
+			flag_usa_button = { image = [USA.GetFlag] }
+			flag_ger_button = { image = [GER.GetFlag] }
+			flag_chi_button = { image = [CHI.GetFlag] }
+			flag_fra_button = { image = [FRA.GetFlag] }
+			flag_eng_button = { image = [ENG.GetFlag] }
+			flag_sov_button = { image = [SOV.GetFlag] }
+			# Slot Images
+			slot_0_picture = { image = "[slot_0_background_image]" }
+			slot_1_picture = { image = "[slot_1_background_image]" }
+			slot_2_picture = { image = "[slot_2_background_image]" }
+			slot_3_picture = { image = "[slot_3_background_image]" }
+			slot_4_picture = { image = "[slot_4_background_image]" }
+			slot_5_picture = { image = "[slot_5_background_image]" }
+			slot_6_picture = { image = "[slot_6_background_image]" }
+			slot_7_picture = { image = "[slot_7_background_image]" }
+			slot_8_picture = { image = "[slot_8_background_image]" }
+			slot_9_picture = { image = "[slot_9_background_image]" }
+			slot_10_picture = { image = "[slot_10_background_image]" }
+			slot_11_picture = { image = "[slot_11_background_image]" }
+			slot_12_picture = { image = "[slot_12_background_image]" }
+			slot_13_picture = { image = "[slot_13_background_image]" }
+			slot_14_picture = { image = "[slot_14_background_image]" }
+			slot_15_picture = { image = "[slot_15_background_image]" }
+		}
+
+		effects = {
+			close_button_click = { clr_country_flag = weapons_market_open }
+
+			open_menu_usa_button_click = { set_variable = { wm_country_select = USA } }
+			open_menu_sov_button_click = { set_variable = { wm_country_select = SOV } }
+			open_menu_fra_button_click = { set_variable = { wm_country_select = FRA } }
+			open_menu_ger_button_click = { set_variable = { wm_country_select = GER } }
+			open_menu_chi_button_click = { set_variable = { wm_country_select = CHI } }
+			open_menu_eng_button_click = { set_variable = { wm_country_select = ENG } }
+
+			army_button_click = { #this section is for when you switch between the army and air tabs at the top of the foreign arms market or click on another country which defaults you to the first equipment tab. So make sure this matches the section below called guns_button_click).
+				set_variable = { weapons_market_upper_tab = 1 }
+				set_variable = { weapons_market_lower_tab = 1 }
+
+				set_variable = { slot_0_number = 300 }
+				set_variable = { slot_1_number = 300 }
+				set_variable = { slot_2_number = 300 }
+				set_variable = { slot_3_number = 300 }
+				set_variable = { slot_4_number = 300 }
+				set_variable = { slot_5_number = 300 }
+				set_variable = { slot_6_number = 300 }
+				set_variable = { slot_7_number = 300 }
+
+				set_variable = { slot_0_price = 0.5 }
+				set_variable = { slot_1_price = 0.75 }
+				set_variable = { slot_2_price = 1 }
+				set_variable = { slot_3_price = 1.25 }
+				set_variable = { slot_4_price = 1.5 }
+				set_variable = { slot_5_price = 1.75 }
+				set_variable = { slot_6_price = 2.25 }
+				set_variable = { slot_7_price = 2.75 }
+
+				set_variable = { slot_8_number = 110 }
+				set_variable = { slot_9_number = 110 }
+				set_variable = { slot_10_number = 110 }
+				set_variable = { slot_11_number = 110 }
+				set_variable = { slot_12_number = 110 }
+				set_variable = { slot_13_number = 110 }
+				set_variable = { slot_14_number = 110 }
+
+				set_variable = { slot_8_price = 1 }
+				set_variable = { slot_9_price = 1.5 }
+				set_variable = { slot_10_price = 1.75 }
+				set_variable = { slot_11_price = 2 }
+				set_variable = { slot_12_price = 2.25 }
+				set_variable = { slot_13_price = 2.5 }
+				set_variable = { slot_14_price = 3.75 }
+
+				# Debug Clear
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons } #0
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons1 } #1
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons2 } #2
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons3 } #3
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons4 } #4
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons5 } #5
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons6 } #6
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons7 } #7
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment } #8
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment1 } #9
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment2 } #10
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment3 } #11
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment4 } #12
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment5 } #13
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment6 } #14
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 30 size = 15 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+				add_to_array = { equipment_purchasing_price_array = slot_6_price }
+				add_to_array = { equipment_purchasing_price_array = slot_7_price }
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+				add_to_array = { equipment_purchasing_price_array = slot_13_price }
+				add_to_array = { equipment_purchasing_price_array = slot_14_price }
+			}
+
+			airforce_button_click = { #this section is for when you switch between the army and air tabs at the top of the foreign arms market which defaults you to the first equipment tab. So make sure this matches the section below called heli_button_click).
+				set_variable = { weapons_market_upper_tab = 2 }
+				set_variable = { weapons_market_lower_tab = 1 }
+
+				set_variable = { slot_0_number = 40 }
+				set_variable = { slot_1_number = 40 }
+				set_variable = { slot_2_number = 40 }
+				set_variable = { slot_3_number = 40 }
+				set_variable = { slot_4_number = 40 }
+
+				set_variable = { slot_0_price = 4.75 }
+				set_variable = { slot_1_price = 6.5 }
+				set_variable = { slot_2_price = 8.25 }
+				set_variable = { slot_3_price = 10.75 }
+				set_variable = { slot_4_price = 12.5 }
+
+				set_variable = { slot_8_number = 5 }
+				set_variable = { slot_9_number = 5 }
+				set_variable = { slot_10_number = 5 }
+				set_variable = { slot_11_number = 5 }
+				set_variable = { slot_12_number = 5 }
+
+				set_variable = { slot_8_price = 5.25 }
+				set_variable = { slot_9_price = 7.25 }
+				set_variable = { slot_10_price = 8.5 }
+				set_variable = { slot_11_price = 9.75 }
+				set_variable = { slot_12_price = 11 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter1 } #0
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter2 } #1
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter3 } #2
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter4 } #3
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter5 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_0 } #8
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_1 } #9
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_2 } #10
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_3 } #11
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_4 } #12
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 120 size = 13 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #5
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+
+			}
+			guns_button_click = {
+				set_variable = { weapons_market_lower_tab = 1 }
+
+				set_variable = { slot_0_number = 300 }
+				set_variable = { slot_1_number = 300 }
+				set_variable = { slot_2_number = 300 }
+				set_variable = { slot_3_number = 300 }
+				set_variable = { slot_4_number = 300 }
+				set_variable = { slot_5_number = 300 }
+				set_variable = { slot_6_number = 300 }
+				set_variable = { slot_7_number = 300 }
+
+				set_variable = { slot_0_price = 0.5 }
+				set_variable = { slot_1_price = 0.75 }
+				set_variable = { slot_2_price = 1 }
+				set_variable = { slot_3_price = 1.25 }
+				set_variable = { slot_4_price = 1.5 }
+				set_variable = { slot_5_price = 1.75 }
+				set_variable = { slot_6_price = 2.25 }
+				set_variable = { slot_7_price = 2.75 }
+
+				set_variable = { slot_8_number = 110 }
+				set_variable = { slot_9_number = 110 }
+				set_variable = { slot_10_number = 110 }
+				set_variable = { slot_11_number = 110 }
+				set_variable = { slot_12_number = 110 }
+				set_variable = { slot_13_number = 110 }
+				set_variable = { slot_14_number = 110 }
+
+				set_variable = { slot_8_price = 1 }
+				set_variable = { slot_9_price = 1.5 }
+				set_variable = { slot_10_price = 1.75 }
+				set_variable = { slot_11_price = 2 }
+				set_variable = { slot_12_price = 2.25 }
+				set_variable = { slot_13_price = 2.5 }
+				set_variable = { slot_14_price = 3.75 }
+
+				# Debug Clear
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons } #0
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons1 } #1
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons2 } #2
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons3 } #3
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons4 } #4
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons5 } #5
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons6 } #6
+				add_to_array = { equipment_purchasing_array = token:infantry_weapons7 } #7
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment } #8
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment1 } #9
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment2 } #10
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment3 } #11
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment4 } #12
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment5 } #13
+				add_to_array = { equipment_purchasing_array = token:command_control_equipment6 } #14
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 30 size = 15 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+				add_to_array = { equipment_purchasing_price_array = slot_6_price }
+				add_to_array = { equipment_purchasing_price_array = slot_7_price }
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+				add_to_array = { equipment_purchasing_price_array = slot_13_price }
+				add_to_array = { equipment_purchasing_price_array = slot_14_price }
+
+			}
+			at_button_click = {
+				set_variable = { weapons_market_lower_tab = 2 }
+
+				set_variable = { slot_0_number = 150 }
+				set_variable = { slot_1_number = 150 }
+				set_variable = { slot_2_number = 150 }
+				set_variable = { slot_3_number = 150 }
+				set_variable = { slot_4_number = 150 }
+
+				set_variable = { slot_0_price = 0.5 }
+				set_variable = { slot_1_price = 1.25 }
+				set_variable = { slot_2_price = 2 }
+				set_variable = { slot_3_price = 2.5 }
+				set_variable = { slot_4_price = 3.25 }
+
+				set_variable = { slot_8_number = 30 }
+				set_variable = { slot_9_number = 30 }
+				set_variable = { slot_10_number = 30 }
+				set_variable = { slot_11_number = 30 }
+				set_variable = { slot_12_number = 30 }
+
+				set_variable = { slot_8_price = 1.25 }
+				set_variable = { slot_9_price = 1.5 }
+				set_variable = { slot_10_price = 2 }
+				set_variable = { slot_11_price = 2.25 }
+				set_variable = { slot_12_price = 2.5 }
+
+				clear_array = equipment_purchasing_array
+
+				add_to_array = { equipment_purchasing_array = token:Anti_tank_0 } #0
+				add_to_array = { equipment_purchasing_array = token:Anti_tank_1 } #1
+				add_to_array = { equipment_purchasing_array = token:Anti_tank_2 } #2
+				add_to_array = { equipment_purchasing_array = token:Anti_tank_3 } #3
+				add_to_array = { equipment_purchasing_array = token:Anti_tank_4 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:Heavy_Anti_tank_0 } #8
+				add_to_array = { equipment_purchasing_array = token:Heavy_Anti_tank_1 } #9
+				add_to_array = { equipment_purchasing_array = token:Heavy_Anti_tank_2 } #10
+				add_to_array = { equipment_purchasing_array = token:Heavy_Anti_tank_3 } #11
+				add_to_array = { equipment_purchasing_array = token:Heavy_Anti_tank_4 } #12
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 30 size = 13 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #5
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+			}
+			aa_button_click = {
+				set_variable = { weapons_market_lower_tab = 3 }
+
+				set_variable = { slot_0_number = 100 }
+				set_variable = { slot_1_number = 100 }
+				set_variable = { slot_2_number = 100 }
+				set_variable = { slot_3_number = 100 }
+				set_variable = { slot_4_number = 100 }
+
+				set_variable = { slot_0_price = 1 }
+				set_variable = { slot_1_price = 1.25 }
+				set_variable = { slot_2_price = 1.75 }
+				set_variable = { slot_3_price = 2.5 }
+				set_variable = { slot_4_price = 3.25 }
+
+				set_variable = { slot_8_number = 9 }
+				set_variable = { slot_9_number = 9 }
+				set_variable = { slot_10_number = 9 }
+				set_variable = { slot_11_number = 9 }
+				set_variable = { slot_12_number = 9 }
+
+				set_variable = { slot_8_price = 1 }
+				set_variable = { slot_9_price = 1.25 }
+				set_variable = { slot_10_price = 2 }
+				set_variable = { slot_11_price = 2.75 }
+				set_variable = { slot_12_price = 3.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:Anti_Air_0 } #0
+				add_to_array = { equipment_purchasing_array = token:Anti_Air_1 } #1
+				add_to_array = { equipment_purchasing_array = token:Anti_Air_2 } #2
+				add_to_array = { equipment_purchasing_array = token:Anti_Air_3 } #3
+				add_to_array = { equipment_purchasing_array = token:Anti_Air_4 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:spaa_hull_0 } #8
+				add_to_array = { equipment_purchasing_array = token:spaa_hull_1 } #9
+				add_to_array = { equipment_purchasing_array = token:spaa_hull_2 } #10
+				add_to_array = { equipment_purchasing_array = token:spaa_hull_3 } #11
+				add_to_array = { equipment_purchasing_array = token:spaa_hull_4 } #12
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 30 size = 13 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #5
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+			}
+			tanks_button_click = {
+				set_variable = { weapons_market_lower_tab = 4 }
+
+				set_variable = { slot_0_number = 84 }
+				set_variable = { slot_1_number = 84 }
+				set_variable = { slot_2_number = 84 }
+				set_variable = { slot_3_number = 84 }
+				set_variable = { slot_4_number = 84 }
+				set_variable = { slot_5_number = 84 }
+				set_variable = { slot_6_number = 84 }
+
+				set_variable = { slot_0_price = 3 }
+				set_variable = { slot_1_price = 7.75 }
+				set_variable = { slot_2_price = 9.25 }
+				set_variable = { slot_3_price = 13.5 }
+				set_variable = { slot_4_price = 17.5 }
+				set_variable = { slot_5_price = 21 }
+				set_variable = { slot_6_price = 24 }
+
+				set_variable = { slot_8_number = 150 }
+				set_variable = { slot_9_number = 150 }
+				set_variable = { slot_10_number = 150 }
+				set_variable = { slot_11_number = 150 }
+				set_variable = { slot_12_number = 150 }
+				set_variable = { slot_12_number = 150 }
+				set_variable = { slot_13_number = 150 }
+
+				set_variable = { slot_8_price = 5.25 }
+				set_variable = { slot_9_price = 6 }
+				set_variable = { slot_10_price = 7 }
+				set_variable = { slot_11_price = 8.75 }
+				set_variable = { slot_12_price = 10.25 }
+				set_variable = { slot_13_price = 11.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:mbt_hull_0 } #0
+				add_to_array = { equipment_purchasing_array = token:mbt_hull_1 } #1
+				add_to_array = { equipment_purchasing_array = token:mbt_hull_2 } #2
+				add_to_array = { equipment_purchasing_array = token:mbt_hull_3 } #3
+				add_to_array = { equipment_purchasing_array = token:mbt_hull_4 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:light_tank_hull_0 } #8
+				add_to_array = { equipment_purchasing_array = token:light_tank_hull_1 } #9
+				add_to_array = { equipment_purchasing_array = token:light_tank_hull_2 } #10
+				add_to_array = { equipment_purchasing_array = token:light_tank_hull_3 } #11
+				add_to_array = { equipment_purchasing_array = token:light_tank_hull_4 } #12
+				add_to_array = { equipment_purchasing_array = token:Rec_tank_5 } #13
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 180 size = 14 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #5
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+				add_to_array = { equipment_purchasing_price_array = slot_13_price }
+			}
+			ifv_button_click = {
+				set_variable = { weapons_market_lower_tab = 5 }
+
+				set_variable = { slot_0_number = 100 }
+				set_variable = { slot_1_number = 100 }
+				set_variable = { slot_2_number = 100 }
+				set_variable = { slot_3_number = 100 }
+				set_variable = { slot_4_number = 100 }
+				set_variable = { slot_5_number = 100 }
+				set_variable = { slot_6_number = 100 }
+				set_variable = { slot_7_number = 100 }
+
+				set_variable = { slot_0_price = 3 }
+				set_variable = { slot_1_price = 5 }
+				set_variable = { slot_2_price = 9 }
+				set_variable = { slot_3_price = 11 }
+				set_variable = { slot_4_price = 14 }
+				set_variable = { slot_5_price = 16.5 }
+				set_variable = { slot_6_price = 19 }
+				set_variable = { slot_7_price = 22 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:ifv_hull_0 } #0
+				add_to_array = { equipment_purchasing_array = token:ifv_hull_1 } #1
+				add_to_array = { equipment_purchasing_array = token:ifv_hull_2 } #2
+				add_to_array = { equipment_purchasing_array = token:ifv_hull_3 } #3
+				add_to_array = { equipment_purchasing_array = token:ifv_hull_4 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 150 size = 8 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+				add_to_array = { equipment_purchasing_price_array = slot_6_price }
+				add_to_array = { equipment_purchasing_price_array = slot_7_price }
+			}
+			apc_button_click = {
+				set_variable = { weapons_market_lower_tab = 6 }
+
+				set_variable = { slot_0_number = 120 }
+				set_variable = { slot_1_number = 120 }
+				set_variable = { slot_2_number = 120 }
+				set_variable = { slot_3_number = 120 }
+				set_variable = { slot_4_number = 120 }
+				set_variable = { slot_5_number = 120 }
+				set_variable = { slot_6_number = 120 }
+				set_variable = { slot_7_number = 120 }
+
+				set_variable = { slot_0_price = 2.75 }
+				set_variable = { slot_1_price = 4.5 }
+				set_variable = { slot_2_price = 8.5 }
+				set_variable = { slot_3_price = 12 }
+				set_variable = { slot_4_price = 14.5 }
+				set_variable = { slot_5_price = 17.5 }
+				set_variable = { slot_6_price = 20 }
+				set_variable = { slot_7_price = 23 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:apc_hull_0 } #0
+				add_to_array = { equipment_purchasing_array = token:apc_hull_1 } #1
+				add_to_array = { equipment_purchasing_array = token:apc_hull_2 } #2
+				add_to_array = { equipment_purchasing_array = token:apc_hull_3 } #3
+				add_to_array = { equipment_purchasing_array = token:apc_hull_4 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 150 size = 8 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+				add_to_array = { equipment_purchasing_price_array = slot_6_price }
+				add_to_array = { equipment_purchasing_price_array = slot_7_price }
+			}
+			utility_button_click = {
+				set_variable = { weapons_market_lower_tab = 7 }
+
+				set_variable = { slot_0_number = 110 }
+				set_variable = { slot_1_number = 110 }
+				set_variable = { slot_2_number = 110 }
+				set_variable = { slot_3_number = 110 }
+				set_variable = { slot_4_number = 110 }
+				set_variable = { slot_5_number = 110 }
+				set_variable = { slot_6_number = 110 }
+				set_variable = { slot_7_number = 110 }
+
+				set_variable = { slot_0_price = 1.5 }
+				set_variable = { slot_1_price = 1.75 }
+				set_variable = { slot_2_price = 2.25 }
+				set_variable = { slot_3_price = 2.75 }
+				set_variable = { slot_4_price = 3.5 }
+				set_variable = { slot_5_price = 4 }
+				set_variable = { slot_6_price = 4.5 }
+				set_variable = { slot_7_price = 5 }
+
+				set_variable = { slot_8_number = 20 }
+				set_variable = { slot_9_number = 20 }
+				set_variable = { slot_10_number = 20 }
+				set_variable = { slot_11_number = 20 }
+				set_variable = { slot_12_number = 20 }
+
+				set_variable = { slot_8_price = 1.75 }
+				set_variable = { slot_9_price = 2.5 }
+				set_variable = { slot_10_price = 3.5 }
+				set_variable = { slot_11_price = 4.5 }
+				set_variable = { slot_12_price = 5.5 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_0 } #0
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_1 } #1
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_2 } #2
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_3 } #3
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_4 } #4
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_5 } #5
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_6 } #6
+				add_to_array = { equipment_purchasing_array = token:util_vehicle_7 } #7
+
+				add_to_array = { equipment_purchasing_array = token:SP_R_arty_0 } #8
+				add_to_array = { equipment_purchasing_array = token:SP_R_arty_1 } #9
+				add_to_array = { equipment_purchasing_array = token:SP_R_arty_2 } #10
+				add_to_array = { equipment_purchasing_array = token:SP_R_arty_3 } #11
+				add_to_array = { equipment_purchasing_array = token:SP_R_arty_4 } #12
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 60 size = 13 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+				add_to_array = { equipment_purchasing_price_array = slot_6_price }
+				add_to_array = { equipment_purchasing_price_array = slot_7_price }
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+			}
+			artillery_button_click = {
+				set_variable = { weapons_market_lower_tab = 8 }
+
+				set_variable = { slot_0_number = 72 }
+				set_variable = { slot_1_number = 72 }
+				set_variable = { slot_2_number = 72 }
+				set_variable = { slot_3_number = 72 }
+				set_variable = { slot_4_number = 72 }
+
+				set_variable = { slot_0_price = 1.5 }
+				set_variable = { slot_1_price = 2.25 }
+				set_variable = { slot_2_price = 3 }
+				set_variable = { slot_3_price = 4.75 }
+				set_variable = { slot_4_price = 6.25 }
+
+				set_variable = { slot_8_number = 42 }
+				set_variable = { slot_9_number = 42 }
+				set_variable = { slot_10_number = 42 }
+				set_variable = { slot_11_number = 42 }
+				set_variable = { slot_12_number = 42 }
+
+				set_variable = { slot_8_price = 3 }
+				set_variable = { slot_9_price = 3.5 }
+				set_variable = { slot_10_price = 4.25 }
+				set_variable = { slot_11_price = 5.5 }
+				set_variable = { slot_12_price = 6.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:artillery_0 } #0
+				add_to_array = { equipment_purchasing_array = token:artillery_1 } #1
+				add_to_array = { equipment_purchasing_array = token:artillery_2 } #2
+				add_to_array = { equipment_purchasing_array = token:artillery_3 } #3
+				add_to_array = { equipment_purchasing_array = token:artillery_4 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:spart_hull_0 } #8
+				add_to_array = { equipment_purchasing_array = token:spart_hull_1 } #9
+				add_to_array = { equipment_purchasing_array = token:spart_hull_2 } #10
+				add_to_array = { equipment_purchasing_array = token:spart_hull_3 } #11
+				add_to_array = { equipment_purchasing_array = token:spart_hull_4 } #12
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 90 size = 13 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #5
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+			}
+			heli_button_click = {
+				set_variable = { weapons_market_lower_tab = 1 }
+
+				set_variable = { slot_0_number = 40 }
+				set_variable = { slot_1_number = 40 }
+				set_variable = { slot_2_number = 40 }
+				set_variable = { slot_3_number = 40 }
+				set_variable = { slot_4_number = 40 }
+
+				set_variable = { slot_0_price = 4.75 }
+				set_variable = { slot_1_price = 6.5 }
+				set_variable = { slot_2_price = 8.25 }
+				set_variable = { slot_3_price = 10.75 }
+				set_variable = { slot_4_price = 12.5 }
+
+				set_variable = { slot_8_number = 5 }
+				set_variable = { slot_9_number = 5 }
+				set_variable = { slot_10_number = 5 }
+				set_variable = { slot_11_number = 5 }
+				set_variable = { slot_12_number = 5 }
+
+				set_variable = { slot_8_price = 5.25 }
+				set_variable = { slot_9_price = 7.25 }
+				set_variable = { slot_10_price = 8.5 }
+				set_variable = { slot_11_price = 9.75 }
+				set_variable = { slot_12_price = 11 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter1 } #0
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter2 } #1
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter3 } #2
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter4 } #3
+				add_to_array = { equipment_purchasing_array = token:transport_helicopter5 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_0 } #8
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_1 } #9
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_2 } #10
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_3 } #11
+				add_to_array = { equipment_purchasing_array = token:attack_helicopter_hull_4 } #12
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 120 size = 13 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #5
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+			}
+			as_button_click = {
+				set_variable = { weapons_market_lower_tab = 2 }
+
+				set_variable = { slot_0_number = 5 }
+				set_variable = { slot_1_number = 5 }
+				set_variable = { slot_2_number = 5 }
+				set_variable = { slot_3_number = 5 }
+				set_variable = { slot_4_number = 5 }
+				set_variable = { slot_5_number = 5 }
+				set_variable = { slot_6_number = 5 }
+
+				set_variable = { slot_0_price = 8.75 }
+				set_variable = { slot_1_price = 9.5 }
+				set_variable = { slot_2_price = 10.25 }
+				set_variable = { slot_3_price = 13.5 }
+				set_variable = { slot_4_price = 14.75 }
+				set_variable = { slot_5_price = 16.25 }
+				set_variable = { slot_6_price = 17.5 }
+
+				set_variable = { slot_8_number = 5 }
+				set_variable = { slot_9_number = 5 }
+				set_variable = { slot_10_number = 5 }
+				set_variable = { slot_11_number = 5 }
+				set_variable = { slot_12_number = 5 }
+				set_variable = { slot_13_number = 5 }
+				set_variable = { slot_14_number = 5 }
+
+				set_variable = { slot_8_price = 9.5 }
+				set_variable = { slot_9_price = 10.25 }
+				set_variable = { slot_10_price = 11 }
+				set_variable = { slot_11_price = 13.25 }
+				set_variable = { slot_12_price = 14.5 }
+				set_variable = { slot_13_price = 15.75 }
+				set_variable = { slot_14_price = 16.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:medium_plane_fighter_airframe_0 } #0
+				add_to_array = { equipment_purchasing_array = token:medium_plane_fighter_airframe_1 } #1
+				add_to_array = { equipment_purchasing_array = token:medium_plane_fighter_airframe_2 } #2
+				add_to_array = { equipment_purchasing_array = token:medium_plane_fighter_airframe_3 } #3
+				add_to_array = { equipment_purchasing_array = token:medium_plane_fighter_airframe_4 } #4
+				add_to_array = { equipment_purchasing_array = token:AS_Fighter6 } #5
+				add_to_array = { equipment_purchasing_array = token:AS_Fighter7 } #6
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_fighter_airframe_0 } #8
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_fighter_airframe_1 } #9
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_fighter_airframe_2 } #10
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_fighter_airframe_3 } #11
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_fighter_airframe_4 } #12
+				add_to_array = { equipment_purchasing_array = token:Strike_fighter6 } #13
+				add_to_array = { equipment_purchasing_array = token:Strike_fighter7 } #14
+
+				clear_array = equipment_purchasing_time_array
+				#normal value 180
+				resize_array = { array = equipment_purchasing_time_array value = 150 size = 15 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+				add_to_array = { equipment_purchasing_price_array = slot_6_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+				add_to_array = { equipment_purchasing_price_array = slot_13_price }
+				add_to_array = { equipment_purchasing_price_array = slot_14_price }
+			}
+			mr_button_click = {
+				set_variable = { weapons_market_lower_tab = 3 }
+
+				set_variable = { slot_0_number = 5 }
+				set_variable = { slot_1_number = 5 }
+				set_variable = { slot_2_number = 5 }
+				set_variable = { slot_3_number = 5 }
+				set_variable = { slot_4_number = 5 }
+				set_variable = { slot_5_number = 5 }
+				set_variable = { slot_6_number = 5 }
+
+				set_variable = { slot_0_price = 8 }
+				set_variable = { slot_1_price = 8.75 }
+				set_variable = { slot_2_price = 9.25 }
+				set_variable = { slot_3_price = 12.25 }
+				set_variable = { slot_4_price = 13.25 }
+				set_variable = { slot_5_price = 14.5 }
+				set_variable = { slot_6_price = 15.75 }
+
+				set_variable = { slot_8_number = 5 }
+				set_variable = { slot_9_number = 5 }
+				set_variable = { slot_10_number = 5 }
+				set_variable = { slot_11_number = 5 }
+				set_variable = { slot_12_number = 5 }
+				set_variable = { slot_13_number = 5 }
+				set_variable = { slot_14_number = 5 }
+
+				set_variable = { slot_8_price = 8.75 }
+				set_variable = { slot_9_price = 9.5 }
+				set_variable = { slot_10_price = 10.75 }
+				set_variable = { slot_11_price = 13 }
+				set_variable = { slot_12_price = 14 }
+				set_variable = { slot_13_price = 15.5 }
+				set_variable = { slot_14_price = 16.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:medium_plane_airframe_0 } #0
+				add_to_array = { equipment_purchasing_array = token:medium_plane_airframe_1 } #1
+				add_to_array = { equipment_purchasing_array = token:medium_plane_airframe_2 } #2
+				add_to_array = { equipment_purchasing_array = token:medium_plane_airframe_3 } #3
+				add_to_array = { equipment_purchasing_array = token:medium_plane_airframe_4 } #4
+				add_to_array = { equipment_purchasing_array = token:MR_Fighter6 } #5
+				add_to_array = { equipment_purchasing_array = token:MR_Fighter7 } #6
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_airframe_0 } #8
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_airframe_1 } #9
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_airframe_2 } #10
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_airframe_3 } #11
+				add_to_array = { equipment_purchasing_array = token:cv_medium_plane_airframe_4 } #12
+				add_to_array = { equipment_purchasing_array = token:CV_MR_Fighter6 } #13
+				add_to_array = { equipment_purchasing_array = token:CV_MR_Fighter7 } #14
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 150 size = 15 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+				add_to_array = { equipment_purchasing_price_array = slot_6_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+				add_to_array = { equipment_purchasing_price_array = slot_13_price }
+				add_to_array = { equipment_purchasing_price_array = slot_14_price }
+			}
+			light_strike_button_click = {
+				set_variable = { weapons_market_lower_tab = 4 }
+
+				set_variable = { slot_0_number = 5 }
+				set_variable = { slot_1_number = 5 }
+				set_variable = { slot_2_number = 5 }
+				set_variable = { slot_3_number = 5 }
+				set_variable = { slot_4_number = 5 }
+
+				set_variable = { slot_0_price = 6.75 }
+				set_variable = { slot_1_price = 7.5 }
+				set_variable = { slot_2_price = 8.75 }
+				set_variable = { slot_3_price = 10 }
+				set_variable = { slot_4_price = 11.25 }
+
+				set_variable = { slot_8_number = 5 }
+				set_variable = { slot_9_number = 5 }
+				set_variable = { slot_10_number = 5 }
+				set_variable = { slot_11_number = 5 }
+				set_variable = { slot_12_number = 5 }
+
+				set_variable = { slot_8_price = 7.5 }
+				set_variable = { slot_9_price = 8.25 }
+				set_variable = { slot_10_price = 9.25 }
+				set_variable = { slot_11_price = 10.5 }
+				set_variable = { slot_12_price = 11.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:small_plane_airframe_0 } #0
+				add_to_array = { equipment_purchasing_array = token:small_plane_airframe_1 } #1
+				add_to_array = { equipment_purchasing_array = token:small_plane_airframe_2 } #2
+				add_to_array = { equipment_purchasing_array = token:small_plane_airframe_3 } #3
+				add_to_array = { equipment_purchasing_array = token:small_plane_airframe_4 } #4
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #5
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:cv_small_plane_airframe_0 } #8
+				add_to_array = { equipment_purchasing_array = token:cv_small_plane_airframe_1 } #9
+				add_to_array = { equipment_purchasing_array = token:cv_small_plane_airframe_2 } #10
+				add_to_array = { equipment_purchasing_array = token:cv_small_plane_airframe_3 } #11
+				add_to_array = { equipment_purchasing_array = token:cv_small_plane_airframe_4 } #12
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 150 size = 13 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #5
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+			}
+			drone_button_click = {
+				set_variable = { weapons_market_lower_tab = 5 }
+
+				set_variable = { slot_0_number = 5 }
+				set_variable = { slot_1_number = 5 }
+				set_variable = { slot_2_number = 5 }
+				set_variable = { slot_3_number = 5 }
+
+				set_variable = { slot_0_price = 5.75 }
+				set_variable = { slot_1_price = 7 }
+				set_variable = { slot_2_price = 8 }
+				set_variable = { slot_3_price = 8.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:small_plane_suicide_airframe_1 } #0
+				add_to_array = { equipment_purchasing_array = token:small_plane_suicide_airframe_2 } #1
+				add_to_array = { equipment_purchasing_array = token:small_plane_suicide_airframe_3 } #2
+				add_to_array = { equipment_purchasing_array = token:small_plane_suicide_airframe_4 } #3
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 120 size = 4 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+			}
+			bomber_button_click = {
+				set_variable = { weapons_market_lower_tab = 6 }
+
+				set_variable = { slot_0_number = 3 }
+				set_variable = { slot_1_number = 3 }
+				set_variable = { slot_2_number = 3 }
+				set_variable = { slot_3_number = 3 }
+				set_variable = { slot_4_number = 3 }
+				set_variable = { slot_5_number = 3 }
+
+				set_variable = { slot_0_price = 10.5 }
+				set_variable = { slot_1_price = 11 }
+				set_variable = { slot_2_price = 12.75 }
+				set_variable = { slot_3_price = 16.5 }
+				set_variable = { slot_4_price = 18.25 }
+				set_variable = { slot_5_price = 20 }
+
+				set_variable = { slot_8_number = 5 }
+				set_variable = { slot_9_number = 5 }
+				set_variable = { slot_10_number = 5 }
+				set_variable = { slot_11_number = 5 }
+				set_variable = { slot_12_number = 5 }
+				set_variable = { slot_13_number = 5 }
+
+				set_variable = { slot_8_price = 10.5 }
+				set_variable = { slot_9_price = 11 }
+				set_variable = { slot_10_price = 11.75 }
+				set_variable = { slot_11_price = 13 }
+				set_variable = { slot_12_price = 15 }
+				set_variable = { slot_13_price = 16.5 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:large_plane_airframe_0 } #0
+				add_to_array = { equipment_purchasing_array = token:large_plane_airframe_1 } #1
+				add_to_array = { equipment_purchasing_array = token:large_plane_airframe_2 } #2
+				add_to_array = { equipment_purchasing_array = token:large_plane_airframe_3 } #3
+				add_to_array = { equipment_purchasing_array = token:large_plane_airframe_4 } #4
+				add_to_array = { equipment_purchasing_array = token:strategic_bomber6 } #5
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_array = 0 } #6
+				add_to_array = { equipment_purchasing_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_array = token:large_plane_maritime_patrol_airframe_0 } #8
+				add_to_array = { equipment_purchasing_array = token:large_plane_maritime_patrol_airframe_1 } #9
+				add_to_array = { equipment_purchasing_array = token:large_plane_maritime_patrol_airframe_2 } #10
+				add_to_array = { equipment_purchasing_array = token:large_plane_maritime_patrol_airframe_3 } #11
+				add_to_array = { equipment_purchasing_array = token:large_plane_maritime_patrol_airframe_4 } #12
+				add_to_array = { equipment_purchasing_array = token:naval_plane6 } #13
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 210 size = 14 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+
+				#Skipping unused slots
+				add_to_array = { equipment_purchasing_price_array = 0 } #6
+				add_to_array = { equipment_purchasing_price_array = 0 } #7
+
+				add_to_array = { equipment_purchasing_price_array = slot_8_price }
+				add_to_array = { equipment_purchasing_price_array = slot_9_price }
+				add_to_array = { equipment_purchasing_price_array = slot_10_price }
+				add_to_array = { equipment_purchasing_price_array = slot_11_price }
+				add_to_array = { equipment_purchasing_price_array = slot_12_price }
+				add_to_array = { equipment_purchasing_price_array = slot_13_price }
+			}
+			transport_button_click = {
+				set_variable = { weapons_market_lower_tab = 7 }
+
+				set_variable = { slot_0_number = 5 }
+				set_variable = { slot_1_number = 5 }
+				set_variable = { slot_2_number = 5 }
+				set_variable = { slot_3_number = 5 }
+				set_variable = { slot_4_number = 5 }
+				set_variable = { slot_5_number = 5 }
+
+				set_variable = { slot_0_price = 10.75 }
+				set_variable = { slot_1_price = 11.25 }
+				set_variable = { slot_2_price = 12 }
+				set_variable = { slot_3_price = 12.75 }
+				set_variable = { slot_4_price = 14.5 }
+				set_variable = { slot_5_price = 16.75 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:large_plane_air_transport_airframe_0 } #0
+				add_to_array = { equipment_purchasing_array = token:large_plane_air_transport_airframe_1 } #1
+				add_to_array = { equipment_purchasing_array = token:large_plane_air_transport_airframe_2 } #2
+				add_to_array = { equipment_purchasing_array = token:large_plane_air_transport_airframe_3 } #3
+				add_to_array = { equipment_purchasing_array = token:large_plane_air_transport_airframe_4 } #4
+				add_to_array = { equipment_purchasing_array = token:transport_plane6 } #5
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 210 size = 6 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+				add_to_array = { equipment_purchasing_price_array = slot_5_price }
+			}
+			cas_button_click = {
+				set_variable = { weapons_market_lower_tab = 8 }
+
+				set_variable = { slot_0_number = 5 }
+				set_variable = { slot_1_number = 5 }
+				set_variable = { slot_2_number = 5 }
+				set_variable = { slot_3_number = 5 }
+				set_variable = { slot_4_number = 5 }
+
+				set_variable = { slot_0_price = 8.75 }
+				set_variable = { slot_1_price = 9.25 }
+				set_variable = { slot_2_price = 10.5 }
+				set_variable = { slot_3_price = 12.25 }
+				set_variable = { slot_4_price = 13.25 }
+
+				clear_array = equipment_purchasing_array
+				add_to_array = { equipment_purchasing_array = token:medium_plane_cas_airframe_0 } #0
+				add_to_array = { equipment_purchasing_array = token:medium_plane_cas_airframe_1 } #1
+				add_to_array = { equipment_purchasing_array = token:medium_plane_cas_airframe_2 } #2
+				add_to_array = { equipment_purchasing_array = token:medium_plane_cas_airframe_3 } #3
+				add_to_array = { equipment_purchasing_array = token:medium_plane_cas_airframe_4 } #4
+
+				clear_array = equipment_purchasing_time_array
+				resize_array = { array = equipment_purchasing_time_array value = 150 size = 5 }
+
+				clear_array = equipment_purchasing_price_array
+				add_to_array = { equipment_purchasing_price_array = slot_0_price }
+				add_to_array = { equipment_purchasing_price_array = slot_1_price }
+				add_to_array = { equipment_purchasing_price_array = slot_2_price }
+				add_to_array = { equipment_purchasing_price_array = slot_3_price }
+				add_to_array = { equipment_purchasing_price_array = slot_4_price }
+			}
+
+			#slot_0_decrease_button_click = { set_variable = { slot_0_number = 300 } }
+			#slot_0_increase_button_click = { set_variable = { slot_0_number = 300 }}
+
+			slot_0_buy_button_click = {
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^0 }
+				set_temp_variable = { amount_selected = slot_0_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^0 }
+				set_temp_variable = { price = equipment_purchasing_price_array^0 }
+				check_embargo = yes
+
+				#set_temp_variable = { treasury_change = 0 }
+				#subtract_from_temp_variable = { treasury_change = slot_1_price }
+				#modify_treasury_effect = yes
+			}
+
+			slot_1_buy_button_click = {
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^1 }
+				set_temp_variable = { amount_selected = slot_1_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^1 }
+				set_temp_variable = { price = equipment_purchasing_price_array^1 }
+				check_embargo = yes
+			}
+
+			slot_2_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^2 }
+				set_temp_variable = { amount_selected = slot_2_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^2 }
+				set_temp_variable = { price = equipment_purchasing_price_array^2 }
+				check_embargo = yes
+			}
+
+			slot_3_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^3 }
+				set_temp_variable = { amount_selected = slot_3_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^3 }
+				set_temp_variable = { price = equipment_purchasing_price_array^3 }
+				check_embargo = yes
+			}
+
+			slot_4_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^4 }
+				set_temp_variable = { amount_selected = slot_4_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^4 }
+				set_temp_variable = { price = equipment_purchasing_price_array^4 }
+				check_embargo = yes
+			}
+
+			slot_5_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^5 }
+				set_temp_variable = { amount_selected = slot_5_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^5 }
+				set_temp_variable = { price = equipment_purchasing_price_array^5 }
+				check_embargo = yes
+			}
+
+			slot_6_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^6 }
+				set_temp_variable = { amount_selected = slot_6_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^6 }
+				set_temp_variable = { price = equipment_purchasing_price_array^6 }
+				check_embargo = yes
+			}
+
+			slot_7_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^7 }
+				set_temp_variable = { amount_selected = slot_7_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^7 }
+				set_temp_variable = { price = equipment_purchasing_price_array^7 }
+				check_embargo = yes
+			}
+
+			slot_8_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^8 }
+				set_temp_variable = { amount_selected = slot_8_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^8 }
+				set_temp_variable = { price = equipment_purchasing_price_array^8 }
+				check_embargo = yes
+			}
+
+			slot_9_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^9 }
+				set_temp_variable = { amount_selected = slot_9_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^9 }
+				set_temp_variable = { price = equipment_purchasing_price_array^9 }
+				check_embargo = yes
+			}
+
+			slot_10_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^10 }
+				set_temp_variable = { amount_selected = slot_10_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^10 }
+				set_temp_variable = { price = equipment_purchasing_price_array^10 }
+				check_embargo = yes
+			}
+
+			slot_11_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^11 }
+				set_temp_variable = { amount_selected = slot_11_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^11 }
+				set_temp_variable = { price = equipment_purchasing_price_array^11 }
+				check_embargo = yes
+			}
+
+			slot_12_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^12 }
+				set_temp_variable = { amount_selected = slot_12_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^12 }
+				set_temp_variable = { price = equipment_purchasing_price_array^12 }
+				check_embargo = yes
+			}
+
+			slot_13_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^13 }
+				set_temp_variable = { amount_selected = slot_13_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^13 }
+				set_temp_variable = { price = equipment_purchasing_price_array^13 }
+				check_embargo = yes
+			}
+
+			slot_14_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^14 }
+				set_temp_variable = { amount_selected = slot_14_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^14 }
+				set_temp_variable = { price = equipment_purchasing_price_array^14 }
+				check_embargo = yes
+			}
+
+			slot_15_buy_button_click = {
+
+				set_temp_variable = { equipment_selected_index = equipment_purchasing_array^15 }
+				set_temp_variable = { amount_selected = slot_15_number }
+				set_temp_variable = { order_purchaser_tag = wm_country_select }
+				set_temp_variable = { timeset = equipment_purchasing_time_array^15 }
+				set_temp_variable = { price = equipment_purchasing_price_array^15 }
+				check_embargo = yes
+			}
+		}
+
+		triggers = {
+			#open_menu_usa_button_click_enabled = {
+			#	AND = { ROOT = { NOT = { tag = USA has_country_flag = embargoUSA has_war_with = USA } } } USA = { has_opinion = { target = ROOT value > 50 } } #ROOT = { has_country_flag = trade_agreementUSA }
+			#}
+			#flag_usa_button_click_enabled = {
+			#	AND = { ROOT = { NOT = { tag = USA has_country_flag = embargoUSA has_war_with = USA } } } USA = { has_opinion = { target = ROOT value > 50 } } #ROOT = { has_country_flag = trade_agreementUSA }
+			#}
+			open_menu_usa_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = USA is_embargoed_by = USA has_war_with = USA } } country_exists = USA USA = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			flag_usa_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = USA is_embargoed_by = USA has_war_with = USA } } country_exists = USA USA = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			open_menu_sov_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = SOV is_embargoed_by = SOV has_war_with = SOV } } country_exists = SOV SOV = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			flag_sov_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = SOV is_embargoed_by = SOV has_war_with = SOV } } country_exists = SOV SOV = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			open_menu_fra_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = FRA is_embargoed_by = FRA has_war_with = FRA } } country_exists = FRA FRA = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			flag_fra_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = FRA is_embargoed_by = FRA has_war_with = FRA } } country_exists = FRA FRA = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			open_menu_ger_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = GER is_embargoed_by = GER has_war_with = GER } } country_exists = GER GER = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			flag_ger_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = GER is_embargoed_by = GER has_war_with = GER } } country_exists = GER GER = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			open_menu_chi_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = CHI is_embargoed_by = CHI has_war_with = CHI } } country_exists = CHI CHI = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			flag_chi_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = CHI is_embargoed_by = CHI has_war_with = CHI } } country_exists = CHI CHI = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			open_menu_eng_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = ENG is_embargoed_by = ENG has_war_with = ENG } } country_exists = ENG ENG = { has_opinion = { target = ROOT value > 49 } } }
+			}
+			flag_eng_button_click_enabled = {
+				AND = { ROOT = { NOT = { tag = ENG is_embargoed_by = ENG has_war_with = ENG } } country_exists = ENG ENG = { has_opinion = { target = ROOT value > 49 } } }
+			}
+
+			selected_menu_usa_button_visible = { check_variable = { wm_country_select = USA } }
+			selected_menu_sov_button_visible = { check_variable = { wm_country_select = SOV } }
+			selected_menu_fra_button_visible = { check_variable = { wm_country_select = FRA } }
+			selected_menu_ger_button_visible = { check_variable = { wm_country_select = GER } }
+			selected_menu_chi_button_visible = { check_variable = { wm_country_select = CHI } }
+			selected_menu_eng_button_visible = { check_variable = { wm_country_select = ENG } }
+
+			selected_army_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			selected_airforce_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+
+			selected_guns_button_visible = { check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+			selected_at_button_visible = { check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+			selected_aa_button_visible = { check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+			selected_tanks_button_visible = { check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+			selected_ifv_button_visible = { check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 1 } }
+			selected_apc_button_visible = { check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 1 } }
+			selected_utility_button_visible = { check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+			selected_artillery_button_visible = { check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+
+			selected_heli_button_visible = { check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+			selected_as_button_visible = { check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+			selected_mr_button_visible = { check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+			selected_light_strike_button_visible = { check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+			selected_drone_button_visible = { check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 2 } }
+			selected_bomber_button_visible = { check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+			selected_transport_button_visible = { check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 2 } }
+			selected_cas_button_visible = { check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 2 } }
+
+			guns_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			at_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			aa_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			tanks_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			ifv_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			apc_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			utility_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+			artillery_button_visible = { check_variable = { weapons_market_upper_tab = 1 } }
+
+			heli_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+			as_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+			mr_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+			light_strike_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+			drone_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+			bomber_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+			transport_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+			cas_button_visible = { check_variable = { weapons_market_upper_tab = 2 } }
+
+			army_button_click_enabled = { NOT = { check_variable = { wm_country_select = 0 } } }
+			airforce_button_click_enabled = { NOT = { check_variable = { wm_country_select = 0 } } }
+
+			guns_button_click_enabled = { }
+			at_button_click_enabled = { }
+			aa_button_click_enabled = { }
+			tanks_button_click_enabled = { }
+			ifv_button_click_enabled = { }
+			apc_button_click_enabled = { }
+			utility_button_click_enabled = { }
+			artillery_button_click_enabled = { }
+
+			heli_button_click_enabled = { }
+			as_button_click_enabled = { }
+			mr_button_click_enabled = { }
+			light_strike_click_enabled = { }
+			drone_button_click_enabled = { }
+			bomber_button_click_enabled = { }
+			transport_button_click_enabled = { }
+			cas_button_click_enabled = { }
+
+			slot_0_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_1_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_2_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_3_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_4_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_5_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_6_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_7_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_8_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_9_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_10_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_11_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_12_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_13_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_14_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+			slot_15_buy_button_click_enabled = { EP_is_able_to_take_on_new_orders = yes }
+
+			slot_0_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Anti_tank_0 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_Anti_Air_0 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = mbt_tech } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech } check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_0 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_artillery_0 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = transport_helicopter1 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = AS_Fighter1 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = MR_Fighter1 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = L_Strike_fighter1 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = Air_UAV1 } check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = strategic_bomber1 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = transport_plane1 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = cas1 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_1_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons1 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Anti_tank_1 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_Anti_Air_1 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = mbt_tech_1 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_1 } check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_1 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_1 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_artillery_1 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = transport_helicopter2 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_medium has_design_based_on = medium_plane_fighter_airframe has_equipment = { medium_plane_fighter_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_medium has_design_based_on = medium_plane_airframe has_equipment = { medium_plane_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_light has_design_based_on = small_plane_airframe has_equipment = { small_plane_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_light has_design_based_on = small_plane_suicide_airframe has_equipment = { small_plane_suicide_airframe_1 > 0}} check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_large has_design_based_on = large_plane_airframe has_equipment = { large_plane_airframe_1 > 0}} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_large has_design_based_on = large_plane_air_transport_airframe has_equipment = { large_plane_air_transport_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_medium has_design_based_on = medium_plane_cas_airframe has_equipment = { medium_plane_cas_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_2_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons2 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Anti_tank_2 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_Anti_Air_2 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = mbt_tech_2 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_2 } check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_2 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_2 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_artillery_2 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = transport_helicopter3 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_medium has_design_based_on = medium_plane_fighter_airframe has_equipment = { medium_plane_fighter_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_medium has_design_based_on = medium_plane_airframe has_equipment = { medium_plane_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_light has_design_based_on = small_plane_airframe has_equipment = { small_plane_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_light has_design_based_on = small_plane_suicide_airframe has_equipment = { small_plane_suicide_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_large has_design_based_on = large_plane_airframe has_equipment = { large_plane_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_large has_design_based_on = large_plane_air_transport_airframe has_equipment = { large_plane_air_transport_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_medium has_design_based_on = medium_plane_cas_airframe has_equipment = { medium_plane_cas_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_3_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons3 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Anti_tank_3 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_Anti_Air_3 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = mbt_tech_3 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_3 } check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_3 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_3 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_artillery_3 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = transport_helicopter4 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_medium has_design_based_on = medium_plane_fighter_airframe has_equipment = { medium_plane_fighter_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_medium has_design_based_on = medium_plane_airframe has_equipment = { medium_plane_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_light has_design_based_on = small_plane_airframe has_equipment = { small_plane_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_light has_design_based_on = small_plane_suicide_airframe has_equipment = { small_plane_suicide_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_large has_design_based_on = large_plane_airframe has_equipment = { large_plane_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_large has_design_based_on = large_plane_air_transport_airframe has_equipment = { large_plane_air_transport_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_medium has_design_based_on = medium_plane_cas_airframe has_equipment = { medium_plane_cas_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_4_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons4 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Anti_tank_4 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_Anti_Air_4 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = mbt_tech_4 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_4 } check_variable = { weapons_market_lower_tab = 5 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = afv_tech_4 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_4 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_medium has_design_based_on = medium_plane_fighter_airframe has_equipment = { medium_plane_fighter_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_medium has_design_based_on = medium_plane_airframe has_equipment = { medium_plane_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_large has_design_based_on = large_plane_airframe has_equipment = { large_plane_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_large has_design_based_on = large_plane_air_transport_airframe has_equipment = { large_plane_air_transport_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_light has_design_based_on = small_plane_airframe has_equipment = { small_plane_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_medium has_design_based_on = medium_plane_cas_airframe has_equipment = { medium_plane_cas_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 2 } }
+
+						AND = { var:wm_country_select = { has_tech = nsb_artillery_4 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = transport_helicopter5 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_5_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons5 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = MBT_7 } check_variable = {weapons_market_lower_tab = 4 } check_variable = {weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = IFV_6 } check_variable = {weapons_market_lower_tab = 5 } check_variable = {weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = APC_6 } check_variable = {weapons_market_lower_tab = 6 } check_variable = {weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_5 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = AS_Fighter6 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = MR_Fighter6 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = strategic_bomber6 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = transport_plane6 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_6_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons6 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = MBT_8 } check_variable = {weapons_market_lower_tab = 4 } check_variable = {weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = IFV_7 } check_variable = {weapons_market_lower_tab = 5 } check_variable = {weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = APC_7 } check_variable = {weapons_market_lower_tab = 6 } check_variable = {weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_6 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = AS_Fighter7 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = MR_Fighter7 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_7_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = infantry_weapons7 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = IFV_8 } check_variable = {weapons_market_lower_tab = 5 } check_variable = {weapons_market_upper_tab = 1 } }
+						#AND = { var:wm_country_select = { has_tech = APC_8 } check_variable = {weapons_market_lower_tab = 6 } check_variable = {weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = util_vehicle_7 } check_variable = { weapons_market_lower_tab = 7 } check_variable = { weapons_market_upper_tab = 1 } }
+					}
+				}
+			}
+
+			slot_8_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = command_control_equipment } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Heavy_Anti_tank_0 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_Anti_Air_0 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = light_tank_tech } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_artillery_0 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = attack_helicopter1 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = Strike_fighter1 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = CV_MR_Fighter1 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = CV_L_Strike_fighter1 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = naval_plane1 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_9_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = command_control_equipment1 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Heavy_Anti_tank_1 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_Anti_Air_1 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = light_tank_tech_1 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_arty_1 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_attack_helicopter_tech_2 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_medium has_design_based_on = cv_medium_plane_fighter_airframe has_equipment = { cv_medium_plane_fighter_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_medium has_design_based_on = cv_medium_plane_airframe has_equipment = { cv_medium_plane_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_light has_design_based_on = cv_small_plane_strike_airframe has_equipment = { cv_small_plane_strike_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_3_large has_design_based_on = large_plane_maritime_patrol_airframe has_equipment = { large_plane_maritime_patrol_airframe_1 > 0 }} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_10_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = command_control_equipment2 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Heavy_Anti_tank_2 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_Anti_Air_2 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = light_tank_tech_2 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_arty_2 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_attack_helicopter_tech_3 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_medium has_design_based_on = cv_medium_plane_fighter_airframe has_equipment = { cv_medium_plane_fighter_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_medium has_design_based_on = cv_medium_plane_airframe has_equipment = { cv_medium_plane_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_light has_design_based_on = cv_small_plane_strike_airframe has_equipment = { cv_small_plane_strike_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_4_large has_design_based_on = large_plane_maritime_patrol_airframe has_equipment = { large_plane_maritime_patrol_airframe_2 > 0 }} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_11_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = command_control_equipment3 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Heavy_Anti_tank_3 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_Anti_Air_3 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = light_tank_tech_3 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_arty_3 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_attack_helicopter_tech_4 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_medium has_design_based_on = cv_medium_plane_fighter_airframe has_equipment = { cv_medium_plane_fighter_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_medium has_design_based_on = cv_medium_plane_airframe has_equipment = { cv_medium_plane_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_light has_design_based_on = cv_small_plane_strike_airframe has_equipment = { cv_small_plane_strike_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_5_large has_design_based_on = large_plane_maritime_patrol_airframe has_equipment = { large_plane_maritime_patrol_airframe_3 > 0 }} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_12_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = command_control_equipment4 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Heavy_Anti_tank_4 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_arty_4 } check_variable = { weapons_market_lower_tab = 8 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = nsb_SP_Anti_Air_4 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = light_tank_tech_4 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Strike_fighter5 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = CV_MR_Fighter5 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = naval_plane5 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = attack_helicopter5 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = CV_L_Strike_fighter5 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = SP_Anti_Air_4 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Rec_tank_4 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_medium has_design_based_on = cv_medium_plane_fighter_airframe has_equipment = { cv_medium_plane_fighter_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_medium has_design_based_on = cv_medium_plane_airframe has_equipment = { cv_medium_plane_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_large has_design_based_on = large_plane_maritime_patrol_airframe has_equipment = { large_plane_maritime_patrol_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = nsb_attack_helicopter_tech_5 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = gen_6_light has_design_based_on = cv_small_plane_strike_airframe has_equipment = { cv_small_plane_strike_airframe_4 > 0 }} check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_13_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = command_control_equipment5 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Strike_fighter6 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = CV_MR_Fighter6 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = Rec_tank_5 } check_variable = { weapons_market_lower_tab = 4 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = naval_plane6 } check_variable = { weapons_market_lower_tab = 6 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+
+			slot_14_cover_visible = {
+				OR = {
+					NOT = {
+						AND = { var:wm_country_select = { has_tech = command_control_equipment6 } check_variable = { weapons_market_lower_tab = 1 } check_variable = { weapons_market_upper_tab = 1 } }
+						AND = { var:wm_country_select = { has_tech = Strike_fighter7 } check_variable = { weapons_market_lower_tab = 2 } check_variable = { weapons_market_upper_tab = 2 } }
+						AND = { var:wm_country_select = { has_tech = CV_MR_Fighter7 } check_variable = { weapons_market_lower_tab = 3 } check_variable = { weapons_market_upper_tab = 2 } }
+					}
+				}
+			}
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	# Buttons to open weapon market
+	open_equipment_purchasing_gui = {
+		context_type = player_context
+		window_name = "politics_open_equipment_purchasing_gui"
+		parent_window_token = politics_tab
+
+		visible = { always = yes }
+		triggers = { open_equipment_purchasing_gui_click_enabled = { has_dlc = "No Step Back" } }
+		effects = {
+			open_equipment_purchasing_gui_click = {
+				if = {
+					limit = { NOT = { has_country_flag = weapons_market_open } }
+					set_country_flag = weapons_market_open
+				}
+				else = { clr_country_flag = weapons_market_open }
+			}
+		}
+	}
+	open_equipment_purchasing_logistics_gui = {
+		context_type = player_context
+		window_name = "logistics_open_equipment_purchasing_gui"
+		parent_window_token = logistics_tab
+
+		visible = { always = yes }
+		triggers = { open_equipment_purchasing_logistics_gui_click_enabled = { has_dlc = "No Step Back" } }
+		effects = {
+			open_equipment_purchasing_logistics_gui_click = {
+				if = {
+					limit = { NOT = { has_country_flag = weapons_market_open } }
+					set_country_flag = weapons_market_open
+				}
+				else = { clr_country_flag = weapons_market_open }
+			}
+		}
+	}
+	open_equipment_purchasing_deployment_gui = {
+		context_type = player_context
+		window_name = "deployment_open_equipment_purchasing_gui"
+		parent_window_token = deployment_tab
+
+		visible = { always = yes }
+		triggers = { open_equipment_purchasing_deployment_gui_click_enabled = { has_dlc = "No Step Back" } }
+		effects = {
+			open_equipment_purchasing_deployment_gui_click = {
+				if = {
+					limit = { NOT = { has_country_flag = weapons_market_open } }
+					set_country_flag = weapons_market_open
+				}
+				else = { clr_country_flag = weapons_market_open }
+			}
+		}
+	}
+}
