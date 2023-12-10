@@ -1,5 +1,4 @@
 #energy calculation system.
-
 calculate_energy_use = {
 	#if the country doesn't have the dynamic modifier through which we take and give energy, give it the dynamic modifier!
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
@@ -117,7 +116,11 @@ calculate_energy_use = {
 
 	set_temp_variable = { battery_stored_energy = number_of_battery_parks }
 	multiply_temp_variable = { battery_stored_energy = 100 } #base amount of gwh one battery park can store
+	set_temp_variable = { battery_stored_energy_modifier = 1 }
+	add_to_temp_variable = { battery_stored_energy_modifier = modifier@battery_park_storage_size_modifier }
+	multiply_temp_variable = { battery_stored_energy = battery_stored_energy_modifier }
 	add_to_variable = { max_stored_energy = battery_stored_energy }
+
 	add_to_variable = { energy_sum = hydroelectric_energy_generation }
 	add_to_variable = { energy_sum = geothermal_energy_generation }
 
@@ -304,6 +307,7 @@ random_renewable_variable_calculation = {
 		add_to_variable = { renewable_energy_random_var = modifier@state_renewable_capacity_factor_modifier }
 		clamp_variable = {
 			var = renewable_energy_random_var
+			min = 0
 			max = 1
 		}
 		clear_variable = renewable_energy_random_var2
