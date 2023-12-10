@@ -1,4 +1,4 @@
-version="1.8.8"
+version="1.9.1"
 name="Millennium Dawn Developer Version"
 tags={
 	"Alternative History"
@@ -6,7 +6,7 @@ tags={
 	"Events"
 	"Graphics"
 }
-supported_version="1.12.*"
+supported_version="1.13.*"
 picture = "thumbnail.png"
 remote_file_id="719416488"
 

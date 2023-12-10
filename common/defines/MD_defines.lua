@@ -135,7 +135,17 @@
 
 	NDefines.NDiplomacy.PEACE_TRIGGER_AI_MAX_INFLUENCE_VALUE = 0.89	-- Max influence value for pc_is_state_outside_influence_for trigger
 
-
+	-- NMarket Related Defines
+	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
+	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 60 -- 30
+	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
+	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 1 -- 0.75
+	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1 -- 1.25
+	-- Market AI
+	NDefines.NAI.MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
+	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
+	NDefines.NAI.EQUIPMENT_MARKET_NR_DELIVERIES_SOFT_MAX = 400 -- 10 -- this should get AI to never add more than one factory
 	-- NCountry Releated Defines
 	NDefines.NCountry.AIR_SUPPLY_CONVERSION_SCALE = 0.1 -- 0.01
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
@@ -363,6 +373,7 @@
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
+	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
 	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.15 -- 0.1
 	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1 -- 2
 	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.01 -- 1
@@ -997,11 +1008,12 @@
 	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
 	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.1					-- 0.1
 	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.0		-- 0
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 500					-- 1000
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 1 			-- 0.6
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 500					-- 700
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 50 			-- 100
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_POW = 1.8			-- 1.8
 	NDefines.NIndustrialOrganisation.UNLOCKED_TRAITS_PER_SIZE_UP = 1			-- 1
 	NDefines.NIndustrialOrganisation.DESIGN_TEAM_CHANGE_XP_COST = 5				-- 5
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_RESEARCH_COMPLETION = 500			-- 1000
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_RESEARCH_COMPLETION_PER_RESEARCH_COST = 500			-- 500
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_CREATING_EQUIPMENT_VARIANT = 0		-- 0
 	NDefines.NIndustrialOrganisation.FUNDS_FROM_MANUFACTURER_PER_IC_PER_DAY = 0.1		-- 0.1
 	NDefines.NIndustrialOrganisation.MAX_FUNDS_FROM_MANUFACTURER_PER_DAY = 100		-- 100
