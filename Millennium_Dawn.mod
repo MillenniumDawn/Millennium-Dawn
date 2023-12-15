@@ -8,7 +8,7 @@ tags={
 }
 supported_version="1.13.*"
 picture = "thumbnail.png"
-remote_file_id="719416488"
+remote_file_id="2777392649"
 path="mod/Millennium_Dawn"
 
 replace_path = "events"
