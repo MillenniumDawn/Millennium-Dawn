@@ -2,7 +2,7 @@
 
 	-- NGame ssection
 	NDefines.NGame.START_DATE = "2000.1.1.12"
-	NDefines.NGame.END_DATE = "2070.1.1.1"
+	NDefines.NGame.END_DATE = "2100.1.1.1"
 	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
 	NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
 	NDefines.NGame.MAX_SCRIPTED_LOC_RECURSION = 40
