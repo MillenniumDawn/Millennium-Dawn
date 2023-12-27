@@ -71,8 +71,7 @@ ingame_update_setup = {
 	## AI Section
 	# This is for calculating the AIs desired economic tax law
 	if = { limit = { is_ai = yes }
-		calculate_ai_corporate_taxes_desire = yes
-		calculate_ai_population_taxes_desire = yes
+		calculate_ai_taxes_desire = yes
 	}
 
 	#Visuals
@@ -597,6 +596,65 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = BOS_cards_programs }
 		}
 	}
+	#South Ossetia
+	if = {
+        limit = { original_tag = SOO }
+        if = {
+		limit = { has_idea = SOO_help_ossetia }
+		set_variable = { additional_income_SOO_help_ossetia = 0.120 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_help_ossetia }
+		}
+	}
+        if = {
+		limit = { has_idea = SOO_develop_turism }
+		set_variable = { additional_income_SOO_develop_turism = 0.100}
+		add_to_variable = { additional_income_rate = additional_income_SOO_develop_turism }
+	}
+	if = {
+		limit = { has_idea = SOO_Idea_Forestry_Development }
+		set_variable = { additional_income_SOO_Forestry_Development = 0.012 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_Forestry_Development }
+	}
+	if = {
+		limit = { has_idea = SOO_Raise_Import_Tariffs_idea }
+		set_variable = { additional_income_SOO_Raise_Import_Tariffs = 0.012 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_Raise_Import_Tariffs }
+	}
+	if = {
+		limit = { has_idea = SOO_Roki_tunnel_toll }
+		set_variable = { additional_income_SOO_Roki_tunnel_toll = 0.014 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_Roki_tunnel_toll }
+	}
+	if = {
+		limit = { has_completed_focus = SOO_increase_tolls_on_Roki_Tunnel }
+		set_variable = { additional_income_SOO_Roki_tunnel_toll = 0.024 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_Roki_tunnel_toll }
+	}
+	if = {
+		limit = { has_completed_focus = SOO_the_Russian_bankroll }
+		set_variable = { additional_income_SOO_russian_bank = 0.010 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_russian_bank }
+	}
+	if = {
+		limit = { has_completed_focus = SOO_subsidise_the_Farmers }
+		set_variable = { additional_income_SOO_farming_income_idea = 0.005 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_farming_income_idea }
+	}
+	if = {
+		limit = { has_completed_focus = SOO_Move_towards_cash_crop_growth }
+		set_variable = { additional_income_SOO_farming_income_idea = 0.012 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_farming_income_idea }
+	}
+		if = {
+		limit = { has_completed_focus = SOO_Boost_the_local_flour_production }
+		set_variable = { additional_income_SOO_farming_income_idea = 0.008 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_farming_income_idea }
+	}
+		if = {
+		limit = { has_completed_focus = SOO_Geared_for_hardship }
+		set_variable = { additional_income_SOO_farming_income_idea = 0.008 }
+		add_to_variable = { additional_income_rate = additional_income_SOO_farming_income_idea }
+	}
 	##north korea
 	if = {
 		limit = { original_tag = NKO }
@@ -854,6 +912,22 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = syria_bakdash_income }
 		}
 	}
+	#INDIA
+	if = { limit = { original_tag = RAJ }
+	if = {
+		limit = { has_idea = RAJ_Local_markets }
+		set_variable = { RAJ_Local_markets_income = 0.08 }
+		add_to_variable = { additional_income_rate = RAJ_Local_markets_income }
+	}
+}
+	#Comoros
+	if = { limit = { original_tag = COM }
+	if = {
+		limit = { has_idea = COM_export_vanil }
+		set_variable = { COM_export_vanil_income = 0.08 }
+		add_to_variable = { additional_income_rate = COM_export_vanil_income }
+	}
+}
 	# Gulf
 	if = {
 		limit = { has_idea = gulf_exploitation }
@@ -1372,8 +1446,8 @@ update_military_rate = {
 	multiply_temp_variable = { SP_arty_equipment_deployed_count = 0.5 }
 	multiply_temp_variable = { mbt_hull_deployed_count = 0.7 }
 	multiply_temp_variable = { light_tank_hull_deployed_count = 0.35 }
-	multiply_temp_variable = { transport_helicopter_equipment_deployed_count = 7.5 }
-	multiply_temp_variable = { attack_helicopter_hull_deployed_count = 10 }
+	multiply_temp_variable = { transport_helicopter_equipment_deployed_count = 0.75 }
+	multiply_temp_variable = { attack_helicopter_hull_deployed_count = 1 }
 	multiply_temp_variable = { util_vehicle_equipment_deployed_count = 0.022 }
 
 	set_variable = { equipment_operative_cost = Inf_equipment_deployed_count }
@@ -2542,7 +2616,7 @@ calculate_resource_sale_rate = {
 	add_to_temp_variable = { resource_exports = rubber_exports }
 
 	#Don't give money for resources that are bought, as they already give CIC
-	set_temp_variable = { CIC_from_trade = num_of_owned_factories }
+	set_temp_variable = { CIC_from_trade = num_of_civilian_factories }
 	# Prevents
 	if = { limit = { has_country_flag = lease_civilian_factories_flag }
 		subtract_from_temp_variable = { CIC_from_trade = leased_civilian_factories }
@@ -3109,6 +3183,13 @@ calculate_gdp = {
 		set_variable = { offices_manpower_fulfillment = 1 }
 	}
 
+	# Average Worker Fulfillment
+	set_variable = { average_worker_fulfillment = civilian_factories_manpower_fulfillment }
+	add_to_variable = { average_worker_fulfillment = military_factories_manpower_fulfillment }
+	add_to_variable = { average_worker_fulfillment = naval_factories_manpower_fulfillment }
+	add_to_variable = { average_worker_fulfillment = offices_manpower_fulfillment }
+	divide_variable = { average_worker_fulfillment = 4 } # x number of buildings
+
 	set_variable = { total_unemployed = workforce_total }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = high_unemployment_modifier } } }
 		add_dynamic_modifier = { modifier = high_unemployment_modifier }
@@ -3298,7 +3379,7 @@ calculate_gdp_modifiers = {
 	calculate_energy_use = yes
 }
 
-calculate_ai_population_taxes_desire = {
+calculate_ai_taxes_desire = {
 	# Raise Taxes
 	if = { limit = { check_variable = { treasury_rate < 0 } }
 		set_temp_variable = { mather = treasury_rate } # -10.00
@@ -3363,9 +3444,7 @@ calculate_ai_population_taxes_desire = {
 			log = "[GetDateText]: [THIS.GetName]: AI Population Lower Desire [?ai_change_population_taxes] Current Population Tax: [?population_tax_rate] Current Treasury Rate: [?treasury_rate]"
 		}
 	}
-}
 
-calculate_ai_corporate_taxes_desire = {
 	if = { limit = { check_variable = { treasury_rate < 0 } }
 		set_temp_variable = { mather = treasury_rate } # -2.0
 		multiply_temp_variable = { mather = -2.5 } # -2.0 * -5 = 10
