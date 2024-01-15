@@ -30,6 +30,87 @@
 #on_increase_autonomy
 
 on_actions = {
+	on_naval_invasion = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						divisions_in_state = {
+							unit = L_Marine_Bat
+							size > 0
+							state = PREV
+						}
+						has_tech = marine_raider_beach_prepration
+					}
+					NOT = { has_state_flag = marines_commando_effect }
+					OWNER = { NOT = { tag = ROOT } }
+				}
+				SF_marine_modern_demoliton_effect = yes # Note that the state flag condition is not preventing it from doing 1 damage per division
+			}
+			if = {
+				limit = {
+					ROOT = {
+						divisions_in_state = {
+							unit = L_Marine_Cdo_Bat
+							size > 0
+							state = PREV
+						}
+						has_tech = lightweight_landing_groups
+					}
+					NOT = { has_state_flag = marines_commando_effect }
+					OWNER = { NOT = { tag = ROOT } }
+				}
+				SF_marine_logistics_raiding_effect = yes
+			}
+		}
+	}
+	on_units_paradropped_in_state = {
+		effect = {
+			if = {
+				limit = {
+					FROM = {
+						has_tech = dedicated_saboteurs
+						divisions_in_state = {
+							unit = L_Air_Inf_Bat
+							size > 0
+							state = PREV
+						}
+					}
+					NOT = { has_state_flag = para_drop_effect }
+					CONTROLLER = { NOT = { tag = FROM } }
+				}
+				SF_PARA_sabotage_effect = yes
+			}
+			if = {
+				limit = {
+					FROM = {
+						has_tech = combat_drops
+						divisions_in_state = {
+							unit = Mech_Air_Inf_Bat
+							size > 0
+							state = PREV
+						}
+					}
+					NOT = { has_state_flag = para_drop_effect }
+				}
+				SF_PARA_combat_effect = yes
+			}
+			if = {
+				limit = {
+					FROM = {
+						has_tech = combat_drops
+						divisions_in_state = {
+							unit = Arm_Air_Inf_Bat
+							size > 0
+							state = PREV
+						}
+					}
+					NOT = { has_state_flag = para_drop_effect }
+				}
+				SF_PARA_combat_effect = yes
+			}
+		}
+	}
 
 	#Timed pulses, four year and thri yearly pulses copied from EUIV, weekly and monthly from the top of my head, doesn't given an error at least?
 	on_daily = {
@@ -46,6 +127,7 @@ on_actions = {
 	on_monthly = {
 		effect = {
 			# Generic
+			cic_contract_wipe = yes
 			ai_update_build_units = yes
 			if = {
 				limit = {
@@ -628,8 +710,7 @@ on_actions = {
 					}
 
 					# Clears Auto Influencer Who No Longer Exists
-					if = {
-						limit = { var:auto_influence_array^i = { exists = no } }
+					if = { limit = { var:auto_influence_array^i = { exists = no } }
 						log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
 						var:auto_influence_array^i = {
 							PREV = {
@@ -640,7 +721,10 @@ on_actions = {
 						}
 					}
 				}
-				country_event = influence.54
+
+				if = { limit = { NOT = { has_country_flag = disable_auto_influence_notification } }
+					country_event = influence.54
+				}
 			}
 			if = {
 				limit = {
@@ -655,20 +739,9 @@ on_actions = {
 				update_dirty_influence_var = yes
 			}
 
-
 			roll_corruption_events = yes
 			calculate_expected_spending = yes
 			apply_protest_effects = yes
-
-			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					has_dlc = "By Blood Alone"
-					is_ai = yes
-				}
-
-				run_eq_purchasing_ai = yes
-			}
 
 			# Egyptian Thing
 			country_event = egypt.100
@@ -813,7 +886,7 @@ on_actions = {
 
 				if = {
 					limit = {
-						NKR = { is_puppet_of = AZE }
+						NKR = { is_subject_of = AZE }
 					}
 
 					AZE = {
@@ -831,7 +904,7 @@ on_actions = {
 
 				if = {
 					limit = {
-						NKR = { is_puppet_of = ARM }
+						NKR = { is_subject_of = ARM }
 					}
 
 					ARM = { end_puppet = NKR }
@@ -2201,6 +2274,90 @@ on_actions = {
 					# AGRICULTURE
 					AGRI_civil_war = yes
 				}
+
+				hidden_effect = {
+					# spawn some units in case there are too few
+					if = {
+						limit = {
+							FROM = {
+								check_variable = { num_divisions < 6 }
+							}
+						}
+
+						FROM = {
+							set_country_flag = civil_war_units_spawned_flag
+
+							division_template = {
+								name = "National Militia"
+								is_locked = yes
+								priority = 0
+								regiments = {
+									L_Inf_Bat = { x = 0 y = 0 }
+									L_Inf_Bat = { x = 0 y = 1 }
+									L_Inf_Bat = { x = 0 y = 2 }
+									L_Inf_Bat = { x = 0 y = 3 }
+									Arty_Bat = { x = 1 y = 0 }
+								}
+								support = {
+									L_Recce_Comp = { x = 0 y = 0 }
+									L_Engi_Comp = { x = 0 y = 1 }
+								}
+							}
+
+							set_temp_variable = { div_count = 5 }
+							subtract_from_temp_variable = { div_count = num_divisions }
+
+							capital_scope = {
+								create_unit = {
+									division = "name =\"National Militia\" division_template = \"National Militia\" start_experience_factor =  0.4"
+									owner = FROM
+									count = div_count
+								}
+							}
+						}
+					}
+
+					# same for ROOT
+					if = {
+						limit = {
+							ROOT = {
+								check_variable = { num_divisions < 6 }
+							}
+						}
+
+						ROOT = {
+							set_country_flag = civil_war_units_spawned_flag
+
+							division_template = {
+								name = "National Militia"
+								is_locked = yes
+								priority = 0
+								regiments = {
+									L_Inf_Bat = { x = 0 y = 0 }
+									L_Inf_Bat = { x = 0 y = 1 }
+									L_Inf_Bat = { x = 0 y = 2 }
+									L_Inf_Bat = { x = 0 y = 3 }
+									Arty_Bat = { x = 0 y = 1 }
+								}
+								support = {
+									L_Recce_Comp = { x = 0 y = 0 }
+									L_Engi_Comp = { x = 0 y = 1 }
+								}
+							}
+
+							set_temp_variable = { div_count = 5 }
+							subtract_from_temp_variable = { div_count = num_divisions }
+
+							capital_scope = {
+								create_unit = {
+									division = "name =\"National Militia\" division_template = \"National Militia\" start_experience_factor =  0.4"
+									owner = ROOT
+									count = div_count
+								}
+							}
+						}
+					}
+				}
 			}
 			hidden_effect = {
 				FROM = {
@@ -2223,7 +2380,7 @@ on_actions = {
 				every_neighbor_country = {
 					limit = {
 						NOT = { tag = ROOT }
-						NOT = { is_puppet_of = ROOT }
+						NOT = { is_subject_of = ROOT }
 						NOT = { has_opinion = { target = ROOT value > 50 } }
 						NOT = { is_in_faction_with = ROOT }
 					}
@@ -2402,7 +2559,7 @@ on_actions = {
 					}
 				}
 				load_focus_tree = { tree = iran_focus keep_completed = no }
-				unlock_national_focus = PER_the_tird_development_plan
+				unlock_national_focus = PER_the_third_development_plan
 			}
 			if = {
 				limit = {
@@ -2454,6 +2611,7 @@ on_actions = {
 					}
 				}
 				ROOT = {
+					complete_national_focus = GER_the_constitution_of_germany
 					complete_national_focus = GER_rule_out_article_twenty_one
 				}
 			}
@@ -2615,6 +2773,15 @@ on_actions = {
 					clamp_threat = yes
 				}
 			}
+
+			if = {
+				limit = { has_country_flag = civil_war_units_spawned_flag }
+
+				delete_units = {
+					division_template = "National Militia"
+					disband = yes
+				}
+			}
 		}
 	}
 
@@ -2629,6 +2796,7 @@ on_actions = {
 			log = "[GetDateText]: [This.GetName]: on_startup init begun"
 			ENG = {
 				setup_starting_world_hydropower = yes
+				market_set_starting_values = yes
 				# Expected spending levels
 				setup_initial_expected_spending_by_party = yes
 				# Using Simone's Shit as a Utility to config this
@@ -2773,7 +2941,7 @@ on_actions = {
 				if = {
 					limit = {
 						is_ai = yes
-						date < 2000.2.1
+						date > 2000.2.1
 					}
 					delete_units = {
 						division_template = "Jidong Bubing Shi"
@@ -2830,8 +2998,6 @@ on_actions = {
 
 				# Sets Global vars for investment then resizes array
 				init_investment_system = yes
-
-				init_equipment_purchasing_order_system = yes
 				init_auto_influence_array = yes
 
 				# AGRICULTURE INIT
@@ -2855,7 +3021,7 @@ on_actions = {
 				}
 
 				# Implemented Cartel Nations
-				if = { limit = { cartel_nations = yes }
+				if = { limit = { is_cartel_nation = yes }
 					calculate_cartel_penalty = yes
 				}
 
@@ -2871,7 +3037,7 @@ on_actions = {
 				}
 
 				# DO NOT TOUCH THIS AT ALL I WILL HURT YOU
-				set_rule = { can_access_market = no  }
+				#set_rule = { can_access_market = no  }
 				if = { limit = { is_ai = no }
 					set_country_flag = open_energy_screen
 				}
@@ -3345,8 +3511,9 @@ on_actions = {
 			}
 			# Clearing Economic Drifts
 			economic_cycle_drift_popularity = yes
-			# Check for Iranian thing
+			# Updates for Cosmetic Tags
 			PER_government_change = yes
+			TUR_government_change = yes
 			GER_government_change = yes
 		}
 	}
@@ -3385,8 +3552,12 @@ on_actions = {
 	on_annex = {
 		effect = {
 			EDU_learn_to_annex_your_neighbours = yes # LITERACY RATE STUFF
+
+			# Grab your Nuclear Reactor Enrichment Facilities
+			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
 		}
 	}
+
 	# on_peaceconference_ended = {
 	# 	effect = {
 	# 		if = {

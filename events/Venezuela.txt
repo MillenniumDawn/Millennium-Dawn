@@ -156,7 +156,7 @@ country_event = {
 	title = venezuela.8.t
 	desc = venezuela.8.d
 	is_triggered_only = yes
-	picture = GFX_
+	picture = GFX_venez_carac
 	# Will give the state option
 	option = {
 		name = venezuela.8.a
@@ -240,7 +240,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event venezuela.11" }
 	title = venezuela.11.t
 	desc = venezuela.11.d
-	picture = GFX_
+	picture = GFX_venez_capt
 	is_triggered_only = yes
 	fire_only_once = yes
 
@@ -280,7 +280,7 @@ country_event = {
 		name = venezuela.12.o1
 		log = "[GetDateText]: [This.GetName]: venezuela.12.o1 executed"
 		if = {
-			limit = { PRU = { NOT = { is_puppet_of = VEN } } }
+			limit = { PRU = { NOT = { is_subject_of = VEN } } }
 			VEN = { puppet = PRU }
 		}
 		ai_chance = {
@@ -300,7 +300,7 @@ country_event = {
 			name = venezuela.13.o1
 			log = "[GetDateText]: [This.GetName]: venezuela.13.o1 executed"
 			if = {
-				limit = { PRU = { NOT = { is_puppet_of = VEN } } }
+				limit = { PRU = { NOT = { is_subject_of = VEN } } }
 				VEN = {
 					create_wargoal = {
 						target = PRU
@@ -322,7 +322,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event venezuela.16" }
 	title = venezuela.16.t
 	desc = venezuela.16.d
-	picture = GFX_
+	picture = GFX_venez_canal
 	is_triggered_only = yes
 	fire_only_once = yes
 
@@ -361,7 +361,7 @@ country_event = {
 		name = venezuela.17.o1
 		log = "[GetDateText]: [This.GetName]: venezuela.17.o1 executed"
 		if = {
-			limit = { PAN = { NOT = { is_puppet_of = VEN } } }
+			limit = { PAN = { NOT = { is_subject_of = VEN } } }
 			effect_tooltip = {
 				VEN = { puppet = PAN }
 			}
@@ -383,7 +383,7 @@ country_event = {
 		name = venezuela.18.o1
 		log = "[GetDateText]: [This.GetName]: venezuela.18.o1 executed"
 		if = {
-			limit = { PAN = { NOT = { is_puppet_of = VEN } } }
+			limit = { PAN = { NOT = { is_subject_of = VEN } } }
 			VEN = {
 				create_wargoal = {
 					target = PAN
@@ -613,5 +613,207 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.03 }
 		add_relative_party_popularity = yes
 		set_country_flag = VEN_2004_recall_referendum_engaged
+	}
+}
+
+
+# Trade Deal with China
+country_event = {
+	id = venezuela.200
+	title = venezuela.200.t
+	desc = venezuela.200.d
+	is_triggered_only = yes
+	picture = GFX_stock_market
+
+	option = {
+		name = venezuela.200.a
+		log = "[GetDateText]: [This.GetName]: venezuela.200.a executed"
+
+		if = { limit = { original_tag = SOV }
+			SOV = {
+				add_opinion_modifier = { target = ROOT modifier = economic_mission }
+				add_ideas = russian_trade_deal
+				set_temp_variable = { int_investment_change = 35 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = -35 }
+				modify_treasury_effect = yes
+			}
+			VEN = {
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = SOV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				add_ideas = russian_trade_deal
+				875 = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			set_temp_variable = { receiver_nation = SOV.id }
+			set_temp_variable = { sender_nation = VEN.id }
+			set_improved_trade_agreement = yes
+		}
+		else_if = { limit = { original_tag = CHI }
+			CHI = {
+				add_ideas = china_trade_deal
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = economic_mission
+				}
+				create_import = {
+					resource = oil
+					amount = 10
+					exporter = VEN
+				}
+			}
+			VEN = {
+				add_ideas = china_trade_deal
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CHI.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				create_import = {
+					resource = steel
+					amount = 10
+					exporter = CHI
+				}
+			}
+			set_temp_variable = { receiver_nation = CHI.id }
+			set_temp_variable = { sender_nation = VEN.id }
+			set_improved_trade_agreement = yes
+		}
+
+		set_country_flag = VEN_accepted_deal
+		VEN = { country_event = venezuela.201 }
+	}
+
+	option = {
+		name = venezuela.200.b
+		log = "[GetDateText]: [This.GetName]: venezuela.200.b executed"
+
+		set_country_flag = VEN_refused_deal
+		VEN = { country_event = venezuela.201 }
+	}
+}
+
+country_event = {
+	id = venezuela.201
+	title = {
+		trigger = {
+			FROM = { has_country_flag = VEN_accepted_deal }
+		}
+		text = venezuela.201.t1
+	}
+	title = {
+		trigger = {
+			FROM = { has_country_flag = VEN_refused_deal }
+		}
+		text = venezuela.201.t2
+	}
+	desc = {
+		trigger = {
+			FROM = { has_country_flag = VEN_accepted_deal }
+		}
+		text = venezuela.201.d1
+	}
+	desc = {
+		trigger = {
+			FROM = { has_country_flag = VEN_refused_deal }
+		}
+		text = venezuela.201.d2
+	}
+	is_triggered_only = yes
+	picture = GFX_stock_market
+
+	option = {
+		name = venezuela.201.a
+		log = "[GetDateText]: [This.GetName]: venezuela.201.a executed"
+		trigger = {
+			FROM = { has_country_flag = VEN_accepted_deal }
+		}
+
+		effect_tooltip = {
+			if = { limit = { FROM = { original_tag = SOV } }
+				SOV = {
+					add_opinion_modifier = { target = ROOT modifier = economic_mission }
+					add_ideas = russian_trade_deal
+					set_temp_variable = { int_investment_change = 35 }
+					modify_international_investment_effect = yes
+				}
+				VEN = {
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = SOV.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+					add_ideas = russian_trade_deal
+					875 = {
+						add_extra_state_shared_building_slots = 2
+						add_building_construction = {
+							type = industrial_complex
+							level = 2
+							instant_build = yes
+						}
+					}
+				}
+				set_temp_variable = { receiver_nation = SOV.id }
+				set_temp_variable = { sender_nation = VEN.id }
+				set_improved_trade_agreement = yes
+			}
+			else_if = { limit = { FROM = { original_tag = CHI } }
+				CHI = {
+					add_ideas = china_trade_deal
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = economic_mission
+					}
+					create_import = {
+						resource = oil
+						amount = 10
+						exporter = VEN
+					}
+				}
+				VEN = {
+					add_ideas = china_trade_deal
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CHI.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+					create_import = {
+						resource = steel
+						amount = 10
+						exporter = CHI
+					}
+				}
+				set_temp_variable = { receiver_nation = CHI.id }
+				set_temp_variable = { sender_nation = VEN.id }
+				set_improved_trade_agreement = yes
+			}
+		}
+
+		hidden_effect = {
+			FROM = {
+				clr_country_flag = VEN_accepted_deal
+				clr_country_flag = VEN_refused_deal
+			}
+		}
+	}
+
+	option = {
+		name = venezuela.201.b
+		log = "[GetDateText]: [This.GetName]: venezuela.201.b executed"
+		trigger = {
+			FROM = { has_country_flag = VEN_refused_deal }
+		}
+
+		hidden_effect = {
+			FROM = {
+				clr_country_flag = VEN_accepted_deal
+				clr_country_flag = VEN_refused_deal
+			}
+		}
 	}
 }

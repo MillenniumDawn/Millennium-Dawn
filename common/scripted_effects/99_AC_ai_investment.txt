@@ -381,6 +381,11 @@ AI_get_dockyard_score = {
 	}
 }
 
+temp_test = {
+	754 = {
+		AI_get_infrastructure_score = yes
+	}
+}
 # Building Type 4: Infrastructure
 AI_get_infrastructure_score = {
 	if = { limit = { free_building_slots = { building = infrastructure size > 0  include_locked = no } }
@@ -432,6 +437,21 @@ AI_get_infrastructure_score = {
 			add_to_temp_variable = { v2 = 15 }
 		}
 
+		# Do not invest infrastructure if you have more then your current value
+		set_temp_variable = { differential_infra = building_level@infrastructure }
+		for_each_loop = {
+			array = project_type_in_state
+			value = v
+			index = i
+
+			if = { limit = { check_variable = { project_type_in_state^i = 4 } }
+				add_to_temp_variable = { differential_infra = 1 }
+			}
+		}
+		add_to_temp_variable = { differential_infra = remaining_level }
+		if = { limit = { check_variable = { differential_infra > 4 } }
+			add_to_temp_variable = { v2 = 100 }
+		}
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
@@ -601,6 +621,117 @@ AI_get_network_infrastructure_score = {
 	}
 }
 
+# Building Type 11: Renewable Energy Infrastructure
+AI_get_renewable_energy_score = {
+	if = { limit = { free_building_slots = { building = synthetic_refinery size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 95 }
+
+		# Increase Section
+
+		# Increases score the more the target country is energy deficient in terms of percentage of produciton to consumption. The "steps" give less score than fossil plants so that fossil plants are prefered to be invested over renewable, with renewables chosen when the other increase sections are active.
+		CONTROLLER = {
+			set_temp_variable = { energy_balance_ratio = energy_sum }
+			divide_temp_variable = { energy_balance_ratio = energy_consumption }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+
+		# Increases score if there is a renewable energy capacity factor in the state, increasing it more the higher it is.
+		set_temp_variable = { state_renewable_capacity_factor_score = modifier@state_renewable_capacity_factor_modifier }
+		multiply_temp_variable = { state_renewable_capacity_factor_score = 150 }
+		add_to_temp_variable = { v1 = state_renewable_capacity_factor_score }
+
+		# Increases score the more renewable energy gainmultiplier they have (primarily obtained from techs). Note, this section is useless when modifier is below 1.50 due to the reduction section below.
+		CONTROLLER = { set_temp_variable = { renewable_energy_gain_multiplier_score = modifier@renewable_energy_gain_multiplier } }
+		multiply_temp_variable = { renewable_energy_gain_multiplier_score = 20 }
+		add_to_temp_variable = { v1 = renewable_energy_gain_multiplier_score }
+
+		# Reduction Section
+		set_temp_variable = { v2 = 0 }
+
+		# AI won't invest renewable plants if the target country doesn't have at least the 2010 renewable tech that gives a combined 1.50 energy gain multiplier (will earlier if the target country has other bonuses from focuses/spirits)
+		if = { limit = { CONTROLLER = { check_variable = { modifier@renewable_energy_gain_multiplier < 1.50 } } }
+			add_to_temp_variable = { v2 = 1000 }
+		}
+
+		# AI won't invest if target country is positive on energy
+		if = { limit = { check_variable = { energy_balance_ratio > 1.00 } }
+			add_to_temp_variable = { v2 = 1000 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 11 }
+		}
+	}
+}
+
+# Building Type 12: Fossil Fuel Powerplant
+AI_get_fossil_powerplant_score = {
+	if = { limit = { free_building_slots = { building = fossil_powerplant size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 95 }
+
+		# Increase Section
+
+		# Increases score the more the target country is energy deficient in terms of percentage of produciton to consumption
+		CONTROLLER = {
+			set_temp_variable = { energy_balance_ratio = energy_sum }
+			divide_temp_variable = { energy_balance_ratio = energy_consumption }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 12 }
+		}
+	}
+}
 
 AI_edge_case_calculations = {
 	if = { limit = { check_variable = { THIS.state_population_k < 100 } }

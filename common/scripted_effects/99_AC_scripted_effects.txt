@@ -44,6 +44,7 @@ init_investment_system = {
 	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 7500 }
 	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
 	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 12500 }
+	set_variable = { global.BUILD_CONST_COST_NUCLEAR_REACTOR = 62500 }
 
 	### BUILDING MONETARY COST
 	# Balance Change: Cost increased by 60% from standardization
@@ -59,6 +60,7 @@ init_investment_system = {
 	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
 	set_variable = { global.BUILD_COST_REFINERY = 13.60 }
 	set_variable = { global.BUILD_COST_FOSSIL_POWERPLANT = 5.2 }
+	set_variable = { global.BUILD_COST_NUCLEAR_REACTOR = 14.4 }
 
 	every_country = {
 		set_variable = { project_build_amount^-1 = 1 }
@@ -143,6 +145,9 @@ project_monetary_cost_calculation = {
 	else_if = { limit = { check_variable = { project_building_type^-1 = 12 } }
 		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FOSSIL_POWERPLANT }
 	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 13 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_NUCLEAR_REACTOR }
+	}
 
 	# AC Build Cost Modifiers
 	set_temp_variable = { AC_cost_modifier = 1 }
@@ -224,9 +229,14 @@ get_building_construction_values = {
 		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FOSSIL_POWERPLANT }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
 	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 13 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_NUCLEAR_REACTOR }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_nuclear_reactor_factor }
+	}
 
 	add_to_temp_variable = { var = construction_speed value = -0.25 }
 	add_to_temp_variable = { var = construction_speed value = modifier@production_speed_buildings_factor }
+	clamp_temp_variable = { var = construction_speed min = 0 }
 }
 
 # Function: get_available_project
@@ -299,6 +309,10 @@ add_finished_buildings = {
 		add_building_construction = { type = fossil_powerplant level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 13 } }
+		add_building_construction = { type = nuclear_reactor level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
 }
 
 # Function: calculate_ai_construction_speed
@@ -338,7 +352,9 @@ calculate_ai_construction_speed = {
 
 	# Days to build
 	# total building_cost which can be found in common/buildings/00_building.txt
-	divide_temp_variable = { building_cost = construction_speed }
+	if = { limit = { check_variable = { construction_speed > 0 } }
+		divide_temp_variable = { building_cost = construction_speed }
+	}
 
 	# Sets and round build cost to whole number increments
 	set_variable = { project_construction_duration^-1 = building_cost }
@@ -392,7 +408,9 @@ init_project = {
 
 		# Days to build
 		# total building_cost which can be found in common/buildings/00_building.txt
-		divide_temp_variable = { building_cost = construction_speed }
+		if = { limit = { check_variable = { construction_speed > 0 } }
+			divide_temp_variable = { building_cost = construction_speed }
+		}
 
 		# Sets and round build cost to whole number increments
 		set_variable = { project_construction_duration^project = building_cost }
@@ -443,7 +461,9 @@ init_project_two = {
 	multiply_temp_variable = { construction_speed = 75 }
 
 	# Days to build
-	divide_temp_variable = { building_cost = construction_speed }
+	if = { limit = { check_variable = { construction_speed > 0 } }
+		divide_temp_variable = { building_cost = construction_speed }
+	}
 
 	# Sets and round build cost to whole number increments
 	set_variable = { project_construction_duration^project = building_cost }
@@ -473,6 +493,8 @@ start_project_two = {
 		# Should scope to the actual project
 		var:AC_state_target = {
 			add_to_array = { projects_in_state = PREV.id } #Should be FROM
+			# Create a new array for this
+			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
 			set_variable = { project_target_state_@PREV = PREV.project }
 			# Sets the starting nation
 			set_variable = { PREV.project_array^PREV.project = THIS.id }
@@ -523,6 +545,8 @@ start_project = {
 		# Should scope to the actual project
 		var:ROOT.AC_state_target = {
 			add_to_array = { projects_in_state = ROOT.id } #Should be FROM
+			# Create a new array for this
+			add_to_array = { project_type_in_state = ROOT.project_building_type^-1 }
 			set_variable = { project_target_state_@ROOT = ROOT.project }
 			# Sets the starting nation
 			set_variable = { ROOT.project_array^ROOT.project = THIS.id }
@@ -602,7 +626,17 @@ end_project = {
 
 		var:project_array^project = {
 			clear_variable = project_target_state_@PREV
-			remove_from_array = { array = projects_in_state value = PREV.id }
+			for_each_loop = {
+				value = v
+				index = i
+				array = projects_in_state
+				if = { limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = projects_in_state value = PREV.id }
+					# Should clear the array
+					remove_from_array = { array = project_type_in_state index = i }
+				}
+			}
+
 			set_temp_variable = { tag_index = THIS.id }
 		}
 

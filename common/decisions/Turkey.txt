@@ -64,7 +64,7 @@ TUR_domestic_politics_category = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 50
 		}
 	}
 	#
@@ -488,6 +488,9 @@ TUR_domestic_politics_category = {
 			recalculate_party = yes
 		}
 
+		ai_will_do = {
+			factor = 1000
+		}
 	}
 	TUR_homeland_defence = { #FP/Islamist Decision
 
@@ -725,67 +728,63 @@ TUR_domestic_politics_category = {
 
 	TUR_empower_sultan = {
 
-		cost = 50
+		cost = 100
 
 		visible = {
 			has_completed_focus = TUR_osman_alliance
 		}
 
 		fire_only_once = yes
-		days_remove = 90
+		days_remove = 1
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TUR_empower_sultan"
 			set_country_flag = TUR_rise_of_osman
-			random_list = {
-				60 = {
-					custom_effect_tooltip = TUR_turkish_civilwar_TT
-					hidden_effect = {
-						TUR = { set_cosmetic_tag = TUR_NEW_TURKIC_STATE }
-						start_civil_war = {
-							ruling_party = nationalist
-							ideology = ROOT
-							size = 0.35
-							keep_political_leader = yes
-							keep_political_party_members = yes
-						}
-						#
-						set_temp_variable = { party_index = 23 }
-						set_temp_variable = { party_popularity_increase = 0.45 }
-						set_temp_variable = { temp_outlook_increase = 0.45 }
-						add_relative_party_popularity = yes
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 23 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = nationalist
-							elections_allowed = no
+			hidden_effect = {
+				if = {
+					limit = {
+						NOT = {
+							nationalist_monarchists_are_in_power = yes
 						}
 					}
+					TUR = { set_cosmetic_tag = TUR_NEW_TURKIC_STATE }
+					set_temp_variable = { party_index = 23 }
+					set_temp_variable = { party_popularity_increase = 0.45 }
+					set_temp_variable = { temp_outlook_increase = 0.45 }
+					add_relative_party_popularity = yes
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 23 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = no
+					}
 				}
-				40 = {
-					custom_effect_tooltip = TUR_osman_becomes_empowered
-					hidden_effect = {
-						TUR = { set_cosmetic_tag = TUR_NEW_TURKIC_STATE }
-						set_temp_variable = { party_index = 23 }
-						set_temp_variable = { party_popularity_increase = 0.45 }
-						set_temp_variable = { temp_outlook_increase = 0.45 }
-						add_relative_party_popularity = yes
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 23 }
-						update_government_coalition_strength = yes
-						set_coalition_drift = yes
-						set_ruling_leader = yes
-						set_leader = yes
-						set_politics = {
-							ruling_party = nationalist
-							elections_allowed = no
-						}
+				#
+				start_civil_war = {
+					ideology = democratic
+					size = 0.35
+					keep_political_leader = yes
+					keep_political_party_members = yes
+					#
+					set_temp_variable = { party_index = 1 }
+					set_temp_variable = { party_popularity_increase = 0.45 }
+					set_temp_variable = { temp_outlook_increase = 0.45 }
+					add_relative_party_popularity = yes
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 1 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = democratic
+						elections_allowed = no
 					}
 				}
 			}
@@ -867,6 +866,28 @@ TUR_pkk_insurgency_category = {
 			}
 		}
 	}
+	TUR_appease_PKK = {
+
+		available = {
+			check_variable = { TUR_PKK_aggro > 0 }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 14.99 }
+		}
+		custom_cost_text = cost_15_0
+		days_remove = 25
+		complete_effect = {
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -15.0 }
+				modify_treasury_effect = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_conduct_operation"
+			add_to_variable = { TUR_PKK_aggro = -10 }
+			custom_effect_tooltip = TUR_DECREASE_PKK_AGGRO_10
+		}
+	}
 	TUR_strike_pkk_bases = {
 		available = {
 			has_idea = TUR_PKK_insurgency_ceasefire
@@ -887,7 +908,7 @@ TUR_pkk_insurgency_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TUR_strike_pkk_bases"
 			custom_effect_tooltip = PKK_war
-			set_variable = { TUR_PKK_aggro = 60 }
+			set_variable = { TUR_PKK_aggro = 100 }
 		}
 
 		modifier = {
