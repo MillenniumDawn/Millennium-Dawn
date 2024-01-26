@@ -30,6 +30,9 @@ add_namespace = PER_rev_flavor
 add_namespace = PER_political
 add_namespace = PER_march_city
 add_namespace = PER_majlis
+add_namespace = PER_civilwar
+add_namespace = PER_prime_minister
+
 
 
 country_event = {
@@ -7010,6 +7013,7 @@ country_event = { # 2001 Election Notification (Between Khatami and Tavakkoli)
 	title = PER_election_events.2.t
 	desc = PER_election_events.2.d
 	picture = GFX_election
+	fire_only_once = yes
 	trigger = {
 		has_government = communism
 		OR = {
@@ -7055,6 +7059,7 @@ country_event = { # 2005 Election Notification (Between Ahmadinejad and Rafsanja
 	title = PER_election_events.3.t
 	desc = PER_election_events.3.d
 	picture = GFX_election
+	fire_only_once = yes
 	trigger = {
 		has_government = communism
 		OR = {
@@ -7100,6 +7105,7 @@ country_event = { # 2009 Election Notification (Between Ahmadinejad and Mousavi)
 	title = PER_election_events.4.t
 	desc = PER_election_events.4.d
 	picture = GFX_election
+	fire_only_once = yes
 	trigger = {
 		has_government = communism
 		OR = {
@@ -7145,6 +7151,7 @@ country_event = { # 2013 Election Notification (Between Ghalibaf and Rouhani)
 	title = PER_election_events.5.t
 	desc = PER_election_events.5.d
 	picture = GFX_election
+	fire_only_once = yes
 	trigger = {
 		has_government = communism
 		OR = {
@@ -7229,6 +7236,7 @@ country_event = { # 2017 Election Notification (Between Raisi and Rouhani)
 	title = PER_election_events.6.t
 	desc = PER_election_events.6.d
 	picture = GFX_election
+	fire_only_once = yes
 	trigger = {
 		tag = PER
 		date > 2017.2.1
@@ -7274,6 +7282,7 @@ country_event = { # 2021 Election Notification (Between Raisi and Hemmati)
 	title = PER_election_events.7.t
 	desc = PER_election_events.7.d
 	picture = GFX_election
+	fire_only_once = yes
 	trigger = {
 		has_government = communism
 		OR = {
@@ -7890,18 +7899,16 @@ country_event = { #Pre-Revolution Build Up
 	option = {
 		name = PER_revolution.1.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.1.a executed"
-		custom_effect_tooltip = PER_time_for_engelab
-		if = {
-			limit = {
-				has_country_flag = PER_organized_revolutionaries
-			}
-			add_to_variable = { var = iran_army_size_jang value = 5 }
-			clamp_variable = { var = iran_army_size_jang min = 20 max = 100 }
-			add_to_variable = { var = army_size_jang value = -0.05 }
-			clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
-			add_to_variable = { var = PER_army_size_Display_number value = 5 }
-			clamp_variable = { var = PER_army_size_Display_number min = 20 max = 100 }
-		}
+		# custom_effect_tooltip = PER_time_for_engelab
+		# hidden_effect = {
+		# 	407 = { set_demilitarized_zone = yes }
+		# 	401 = { set_demilitarized_zone = yes }
+		# 	399 = { set_demilitarized_zone = yes }
+		# 	1039 = { set_demilitarized_zone = yes }
+		# 	979 = { set_demilitarized_zone = yes }
+		# 	408 = { set_demilitarized_zone = yes }
+		# 	406 = { set_demilitarized_zone = yes }
+		# }
 		hidden_effect = {
 			news_event = {
 				id = PER_rev_flavor.6
@@ -7924,23 +7931,108 @@ country_event = { #Revolutionary Tension
 	option = {
 		name = PER_revolution.10.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.10.a executed"
+		#
 		set_country_flag = PER_civil_war
+		set_country_flag = PER_iranian_civilwar
 		hidden_effect = {
 			retire_character = PER_qasem_soleimani
+			if = {
+				limit = { has_idea = faction_resistance_axis_member }
+				leave_faction = yes
+			}
+			country_event = {
+				id = PER_civilwar.4
+				days = 4
+			}
 		}
-		if = {
-			limit = { has_idea = faction_resistance_axis_member }
-			leave_faction = yes
+		#
+		#
+		hidden_effect = {
+			BLC = {
+				set_cosmetic_tag = BLC_jandullah
+				set_country_flag = is_IRAN
+			}
+			407 = { set_demilitarized_zone = no }
+			401 = { set_demilitarized_zone = no }
+			399 = { set_demilitarized_zone = no }
+			399 = { transfer_state_to = ARA }
+			401 = { transfer_state_to = BLC }
+			407 = { transfer_state_to = SAZ }
+			1039 = { transfer_state_to = SAZ }
+			1039 = { add_core_of = SAZ }
+			407 = { add_core_of = SAZ }
+			408 = { transfer_state_to = IKR }
+			979 = { transfer_state_to = IKR }
+			408 = { add_core_of = IKR }
+			979 = { add_core_of = IKR }
+			#
+			SAZ = {
+				set_cosmetic_tag = south_azeri_liberation_movement
+			}
+			IKR = {
+				set_cosmetic_tag = PER_komola
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	# Oh really?
+	option = {
+		name = PER_revolution.10.b
+		log = "[GetDateText]: [This.GetName]:PER_revolution.10.b executed"
+		#
+		custom_effect_tooltip = PER_consequences_TT
+		set_country_flag = PER_civil_war
+		set_country_flag = PER_iranian_civilwar
+		country_event = {
+			id = PER_civilwar.3
+		}
+		hidden_effect = {
+			retire_character = PER_qasem_soleimani
+			if = {
+				limit = { has_idea = faction_resistance_axis_member }
+				leave_faction = yes
+			}
 		}
 		country_event = {
 			id = PER_revolution.2
 			days = 5
+		}
+		#
+		#
+		hidden_effect = {
+			BLC = {
+				set_cosmetic_tag = BLC_jandullah
+				set_country_flag = is_IRAN
+			}
+			407 = { set_demilitarized_zone = no }
+			401 = { set_demilitarized_zone = no }
+			399 = { set_demilitarized_zone = no }
+			399 = { transfer_state_to = ARA }
+			401 = { transfer_state_to = BLC }
+			407 = { transfer_state_to = SAZ }
+			1039 = { transfer_state_to = SAZ }
+			1039 = { add_core_of = SAZ }
+			407 = { add_core_of = SAZ }
+			408 = { transfer_state_to = IKR }
+			979 = { transfer_state_to = IKR }
+			408 = { add_core_of = IKR }
+			979 = { add_core_of = IKR }
+			#
+			SAZ = {
+				set_cosmetic_tag = south_azeri_liberation_movement
+			}
+			IKR = {
+				set_cosmetic_tag = PER_komola
+			}
 		}
 		ai_chance = {
 			factor = 3
 		}
 	}
 }
+#
 country_event = { #Revolution Begins
 	id = PER_revolution.2
 	title = PER_revolution.2.t
@@ -7952,6 +8044,7 @@ country_event = { #Revolution Begins
 	option = {
 		name = PER_revolution.2.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.2.a executed"
+		#
 		custom_effect_tooltip = PER_iranian_revolution_time
 		set_country_flag = PER_majlis_dissolved
 		clr_country_flag = PER_reformist_majlis
@@ -7961,6 +8054,87 @@ country_event = { #Revolution Begins
 		set_country_flag = PER_controlled_majlis
 		set_country_flag = PER_dissolved_majlis
 		hidden_effect = {
+			#
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_mojahded_is_here
+				copy_tag = PER
+				set_cosmetic_tag = PER_mek_flag
+				set_country_flag = is_IRAN
+				set_popularities = {
+					communism = 100
+				}
+				set_politics = {
+					ruling_party = communism
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = yes
+				}
+				start_politics_input = yes
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 1 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.00 } #Conservative
+				set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+				### Ruling Party
+				add_to_array = { ruling_party = 5 }
+				startup_politics = yes
+
+				# Leader
+				create_country_leader = {
+					name = "Massoud Rajavi"
+					picture = "massoudi.dds"
+					ideology = anarchist_communism
+					traits = {
+						emerging_anarchist_communism
+					}
+				}
+
+				add_ideas = shia
+				add_ideas = PER_brain_drain_5
+				add_ideas = PER_reorganize_school_1
+				load_focus_tree = { tree = iran_focus keep_completed = yes }
+				set_country_flag = PER_majlis_dissolved
+				clr_country_flag = PER_reformist_majlis
+				clr_country_flag = PER_principalist_majlis
+				clr_country_flag = PER_influence_majlis
+				clr_country_flag = PER_freed_majlis
+				set_country_flag = PER_controlled_majlis
+				set_country_flag = PER_dissolved_majlis
+			}
+			#
+			408 = { transfer_state_to = MOJ }
+			1039 = { transfer_state_to = MOJ }
+			979 = { transfer_state_to = MOJ }
+			1039 = { set_demilitarized_zone = no }
+			979 = { set_demilitarized_zone = no }
+			408 = { set_demilitarized_zone = no }
+			406 = { set_demilitarized_zone = no }
+			#
+			country_event = {
+				id = PER_revolution.12
+			}
+			#
 			if = {
 				limit = {
 					has_country_flag = PER_revolutionaries_organized2
@@ -8021,11 +8195,6 @@ country_event = { #Revolution Begins
 			delete_unit_template_and_units = {
 				division_template = "IRGC Airborne Brigade"
 				disband = yes
-			}
-			#### ADDING DIVISIONS BASED ON ARTESH SUPPORT (JUMP)
-			country_event = {
-				id = PER_revolution.3
-				days = 2
 			}
 			####
 			# Ground Force
@@ -8134,7 +8303,7 @@ country_event = { #Revolution Begins
 					ideology = communism
 					keep_political_leader = yes
 					keep_political_party_members = yes
-					size = 0.35
+					size = 0.45
 				}
 			}
 			every_state = {
@@ -8155,6 +8324,9 @@ country_event = { #Revolution Begins
 				country_event = {
 					id = PER_revolution.9
 					days = 40
+				}
+				country_event = {
+					id = PER_revolution.123
 				}
 				add_ideas = the_holy_defence_at_war
 				create_country_leader = {
@@ -8180,6 +8352,74 @@ country_event = { #Revolution Begins
 				}
 			}
 		}
+		hidden_effect = {
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e Mechaniz-e Engelabi\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e Zerehi-ye Engelabi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e Motorize-ye Engelabi\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e Mechaniz-e Engelabi\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			#
+			MOJ = {
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+				declare_war_on = {
+					target = ARA
+					type = annex_everything
+				}
+				declare_war_on = {
+					target = BLC
+					type = annex_everything
+				}
+				declare_war_on = {
+					target = SAZ
+					type = annex_everything
+				}
+			}
+			#
+			PER = {
+				declare_war_on = {
+					target = MOJ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = ARA
+					type = annex_everything
+				}
+				declare_war_on = {
+					target = BLC
+					type = annex_everything
+				}
+				declare_war_on = {
+					target = SAZ
+					type = annex_everything
+				}
+			}
+		}
 		ai_chance = {
 			factor = 3
 		}
@@ -8197,947 +8437,265 @@ country_event = { ##JUMP
 		log = "[GetDateText]: [This.GetName]:PER_revolution.3.a executed"
 		custom_effect_tooltip = PER_artesh_arrives_TT
 		hidden_effect = {
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 30 }
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
 				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
 				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"412th. Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
 				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"99th. Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
 				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"19th. Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
 				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"17th. Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
 				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"93rd. Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"43rd. Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Jorat'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Faravahr'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Sahba'\" division_template = \"Tofangdarane Daryayee\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Tip-e 'Navid'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"22nd. Tip-e 'Davoud'\" division_template = \"Tip-e Zereh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"86th Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Abbas'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"Lashkar-e 'Babak'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"33rd. Tip-e Motorizeh\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"18th. Lashkar-e Zerehi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name =\"14th. Lashkar-e Zerehi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+					owner = ROOT
+					count = 1
 				}
 			}
 			#
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 40 }
-					check_variable = { from.iran_army_size_jang > 29 }
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
+			create_field_marshal = {
+				name = "Ahmadreza Pourdastan"
+				portrait_path = "gfx/leaders/PER/Field_Marshall_Army_Ahmadreza_Pourdastan.dds"
+				traits = { old_guard defensive_doctrine }
+				skill = 5
+				attack_skill = 3
+				defense_skill = 6
+				planning_skill = 3
+				logistics_skill = 4
 			}
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 50 }
-					check_variable = { from.iran_army_size_jang > 39 }
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
+			create_corps_commander = {
+				name = "Farzad Esmaili"
+				portrait_path = "gfx/leaders/PER/Portrait_Farzad_Esmaili.dds"
+				traits = { commando }
+				skill = 4
+				attack_skill = 3
+				defense_skill = 5
+				planning_skill = 2
+				logistics_skill = 3
 			}
-			#
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 60 }
-					check_variable = { from.iran_army_size_jang > 49 }
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
+			create_corps_commander = {
+				name = "Manouchehr Kazemi"
+				portrait_path = "gfx/leaders/PER/Army_Gen_Manoucher_Kazemi.dds"
+				traits = { trait_engineer }
+				skill = 4
+				attack_skill = 4
+				defense_skill = 3
+				planning_skill = 3
+				logistics_skill = 3
 			}
-			#
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 70 }
-					check_variable = { from.iran_army_size_jang > 59 }
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
+			create_corps_commander = {
+				name = "Ali Hajilo"
+				portrait_path = "gfx/leaders/PER/Army_Gen_Ali_Hajilo.dds"
+				traits = { desert_fox }
+				skill = 4
+				attack_skill = 4
+				defense_skill = 3
+				planning_skill = 2
+				logistics_skill = 4
 			}
-			#
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 80 }
-					check_variable = { from.iran_army_size_jang > 69 }
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Sahba'\" division_template = \"Tofangdarane Daryayee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Navid'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Davoud'\" division_template = \"Tip-e Zereh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"86th Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
+			create_corps_commander = {
+				name = "Nader Najafi"
+				portrait_path = "gfx/leaders/PER/Army_Gen_Nader_Najafi.dds"
+				traits = { panzer_leader }
+				skill = 5
+				attack_skill = 4
+				defense_skill = 5
+				planning_skill = 4
+				logistics_skill = 3
 			}
-			#
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 90 }
-					check_variable = { from.iran_army_size_jang > 79 }
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Sahba'\" division_template = \"Tofangdarane Daryayee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Navid'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Davoud'\" division_template = \"Tip-e Zereh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"86th Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Abbas'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Babak'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"33rd Tip-e Motorizeh\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
+			create_navy_leader = {
+				name = "Hossein Khanzadi"
+				portrait_path = "gfx/leaders/PER/Portrait_Hossein_Khanzadi.jpg"
+				traits = { bold }
+				skill = 4
+				attack_skill = 3
+				defense_skill = 5
+				maneuvering_skill = 2
+				coordination_skill = 3
 			}
-			#
-			if = {
-				limit = {
-					check_variable = { from.iran_army_size_jang < 100 }
-					check_variable = { from.iran_army_size_jang > 89 }
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Marmolak'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Ferdowsi'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"412th Tip-e Piade Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"99th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"19th Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"17th Lashkar-e Mechanize\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Parsa'\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"93rd Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"43rd Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Jorat'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Hafez'\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Elia'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Arman'\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Farahmand'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hooman'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Kiamours'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Hamayoun'\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Sahba'\" division_template = \"Tofangdarane Daryayee\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Navid'\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Tip-e 'Davoud'\" division_template = \"Tip-e Zereh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"86th Tip-e Mechanize\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Abbas'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Babak'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"33rd Tip-e Motorizeh\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"18th Lashkar-e Zerehi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"14th Lashkar-e Zerehi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
+			create_navy_leader = {
+				name = "Habibollah Sayyari"
+				portrait_path = "gfx/leaders/PER/Portrait_Habibollah_Sayyari.dds"
+				traits = { navy_media_personality bold }
+				skill = 5
+				attack_skill = 3
+				defense_skill = 6
+				maneuvering_skill = 3
+				coordination_skill = 4
 			}
 		}
 		ai_chance = {
@@ -9373,7 +8931,7 @@ country_event = { #Meant for AI
 			capital_scope = {
 				create_unit = {
 					division = "name = \"Basij Militia\" division_template = \"Basij Militia\""
-					count = 20
+					count = 25
 					owner = ROOT
 				}
 			}
@@ -9401,7 +8959,7 @@ country_event = { #Meant for AI
 			capital_scope = {
 				create_unit = {
 					division = "name = \"Basij Militia\" division_template = \"Basij Militia\""
-					count = 10
+					count = 18
 					owner = ROOT
 				}
 			}
@@ -9422,84 +8980,284 @@ country_event = { #MEK Rebellion
 	option = { #Down with Dictator, be it the Mullah or Mojahed
 		name = PER_revolution.12.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.12.a executed"
-		set_country_flag = PER_mojahed_civil_war
 		hidden_effect = {
-			remove_ideas = civil_war_disorganised_military_1
-			remove_ideas = civil_war_disorganised_military_1_military
-			remove_ideas = civil_war_disorganised_military_1_production
-			remove_ideas = civil_war_disorganised_military_1_experience
-			#
-			remove_ideas = civil_war_disorganised_military_2
-			remove_ideas = civil_war_disorganised_military_2_military
-			remove_ideas = civil_war_disorganised_military_2_production
-			remove_ideas = civil_war_disorganised_military_2_experience
-			#
-			remove_ideas = civil_war_disorganised_military_2
-			remove_ideas = civil_war_disorganised_military_2_military
-			remove_ideas = civil_war_disorganised_military_2_production
-			remove_ideas = civil_war_disorganised_military_2_experience
-			#
-			remove_ideas = civil_war_disorganised_military_3
-			remove_ideas = civil_war_disorganised_military_3_military
-			remove_ideas = civil_war_disorganised_military_3_production
-			remove_ideas = civil_war_disorganised_military_3_experience
-			#
-			remove_ideas = civil_war_disorganised_military_4
-			remove_ideas = civil_war_disorganised_military_4_military
-			remove_ideas = civil_war_disorganised_military_4_production
-			remove_ideas = civil_war_disorganised_military_4_experience
-			#
-			remove_ideas = civil_war_disorganised_military_5
-			remove_ideas = civil_war_disorganised_military_5_military
-			remove_ideas = civil_war_disorganised_military_5_production
-			remove_ideas = civil_war_disorganised_military_5_experience
-			country_event = {
-				id = PER_revolution.16
-				days = 12
-			}
-			# # # #
-			start_civil_war = {
-				country_event = {
-					id = PER_revolution.14
+			ARA = {
+				division_template = {
+					name = "Arabistani Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
 				}
-				capital = 408
-				ideology = communism
-				size = 0.01
-				states = {
-					1039 979 408 406 399 404
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"5. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+				}
+			}
+			MOJ = {
+				division_template = {
+					name = "NLA Tip-e Piade Nezam"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\""
+						count = 16
+						owner = MOJ
+					}
 				}
 			}
 		}
-		custom_effect_tooltip = PER_mek_rebellion_start
-		clr_country_flag = manual_civil_war_debuff_removal
-		#
 		ai_chance = {
 			factor = 3
 		}
 	}
 	#
-	option = { #Long live Rajavi
+	option = {
 		name = PER_revolution.12.b
 		log = "[GetDateText]: [This.GetName]:PER_revolution.12.b executed"
-		news_event = {
-			id = PER_rev_flavor.10
-			days = 1
-		}
-		set_temp_variable = { party_index = 5 }
-		set_temp_variable = { party_popularity_increase = 0.35 }
-		set_temp_variable = { temp_outlook_increase = 0.35 }
-		add_relative_party_popularity = yes
+		custom_effect_tooltip = PER_play_as_MEK
 		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 5 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = no
+			MOJ = {
+				change_tag_from = PER
+			}
+			ARA = {
+				division_template = {
+					name = "Arabistani Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"5. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+				}
+			}
+			# Balochistan
+			BLC = {
+				division_template = {
+					name = "Balochi Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1. Balochi Militia\" division_template = \"Balochi Militia\""
+						count = 1
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Balochi Militia\" division_template = \"Balochi Militia\""
+						count = 1
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Balochi Militia\" division_template = \"Balochi Militia\""
+						count = 1
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Balochi Militia\" division_template = \"Balochi Militia\""
+						count = 1
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"5. Balochi Militia\" division_template = \"Balochi Militia\""
+						count = 1
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"6. Balochi Militia\" division_template = \"Balochi Militia\""
+						count = 1
+						owner = BLC
+					}
+				}
+			}
+			# South Azerbaijan
+			SAZ = {
+				division_template = {
+					name = "Azeri Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"5. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"6. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"7. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+					create_unit = {
+						division = "name = \"8. Azeri Militia\" division_template = \"Azeri Militia\""
+						count = 1
+						owner = SAZ
+					}
+				}
+			}
+			MOJ = {
+				division_template = {
+					name = "NLA Tip-e Piade Nezam"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\""
+						count = 16
+						owner = MOJ
+					}
+				}
 			}
 		}
 		ai_chance = {
@@ -9507,151 +9265,62 @@ country_event = { #MEK Rebellion
 		}
 	}
 	#
-	option = { #Down with Dictator, be it the Mullah or Mojahed
-		name = PER_revolution.12.c
-		log = "[GetDateText]: [This.GetName]:PER_revolution.12.a executed"
-		set_country_flag = PER_mojahed_civil_war
-		set_country_flag = PER_artesh_coup
-		hidden_effect = {
-			#
-			add_ideas = PER_IRG_issue
-			#
-			remove_ideas = civil_war_disorganised_military_1
-			remove_ideas = civil_war_disorganised_military_1_military
-			remove_ideas = civil_war_disorganised_military_1_production
-			remove_ideas = civil_war_disorganised_military_1_experience
-			#
-			remove_ideas = civil_war_disorganised_military_2
-			remove_ideas = civil_war_disorganised_military_2_military
-			remove_ideas = civil_war_disorganised_military_2_production
-			remove_ideas = civil_war_disorganised_military_2_experience
-			#
-			remove_ideas = civil_war_disorganised_military_2
-			remove_ideas = civil_war_disorganised_military_2_military
-			remove_ideas = civil_war_disorganised_military_2_production
-			remove_ideas = civil_war_disorganised_military_2_experience
-			#
-			remove_ideas = civil_war_disorganised_military_3
-			remove_ideas = civil_war_disorganised_military_3_military
-			remove_ideas = civil_war_disorganised_military_3_production
-			remove_ideas = civil_war_disorganised_military_3_experience
-			#
-			remove_ideas = civil_war_disorganised_military_4
-			remove_ideas = civil_war_disorganised_military_4_military
-			remove_ideas = civil_war_disorganised_military_4_production
-			remove_ideas = civil_war_disorganised_military_4_experience
-			#
-			remove_ideas = civil_war_disorganised_military_5
-			remove_ideas = civil_war_disorganised_military_5_military
-			remove_ideas = civil_war_disorganised_military_5_production
-			remove_ideas = civil_war_disorganised_military_5_experience
-			set_temp_variable = { party_index = 22 }
-			set_temp_variable = { party_popularity_increase = 0.35 }
-			set_temp_variable = { temp_outlook_increase = 0.35 }
-			add_relative_party_popularity = yes
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 22 }
-				update_government_coalition_strength = yes
-				set_coalition_drift = yes
-				set_ruling_leader = yes
-				set_leader = yes
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = no
-				}
-			}
-			country_event = {
-				id = PER_revolution.16
-				days = 12
-			}
-			# # # #
-			start_civil_war = {
-				country_event = {
-					id = PER_revolution.14
-				}
-				capital = 408
-				ideology = communism
-				size = 0.01
-				states = {
-					1039 979 408 406 399 404
-				}
-			}
-		}
-		custom_effect_tooltip = PER_mek_rebellion_start
-		clr_country_flag = manual_civil_war_debuff_removal
-		#
-		ai_chance = {
-			factor = 3
-		}
-	}
 }
 #
-country_event = { #Meant for AI
-	id = PER_revolution.14
-	title = PER_revolution.14.t
-	desc = PER_revolution.14.d
-
+country_event = { #I.R. Event
+	id = PER_revolution.123
+	title = PER_revolution.123.t
+	desc = PER_revolution.123.d
 	is_triggered_only = yes
 
-	option = { #This is it for them!
-		name = PER_revolution.14.a
-		log = "[GetDateText]: [This.GetName]:PER_revolution.14.a executed"
-		#
-		set_cosmetic_tag = PER_mek_flag
-		set_country_flag = is_IRAN
-		set_temp_variable = { party_index = 5 }
-		set_temp_variable = { party_popularity_increase = 0.99 }
-		set_temp_variable = { temp_outlook_increase = 0.99 }
-		add_relative_party_popularity = yes
-		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 5 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = no
+	option = { #Down with Dictator, be it the Mullah or Mojahed
+		name = PER_revolution.123.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.123.a executed"
+		ARA = {
+			country_event = {
+				id = PER_revolution.1234
 			}
 		}
-		#
-		set_temp_variable = { percent_change = 20 }
-		set_temp_variable = { tag_index = IRQ }
-		set_temp_variable = { influence_target = ROOT }
-		change_influence_percentage = yes
-		#
-		set_temp_variable = { army_size_jang_temp = iran_army_size_jang }
-		multiply_temp_variable = { army_size_jang_temp = 0.2 }
-		division_template = {
-			name = "NLA Militia"
-			priority = 0
-			template_counter = 0
-			regiments = {
-				Militia_Bat = { x = 0 y = 0 }
-				Militia_Bat = { x = 0 y = 1 }
-				Militia_Bat = { x = 0 y = 2 }
-				Militia_Bat = { x = 0 y = 3 }
-				Militia_Bat = { x = 0 y = 4 }
-			}
-			support = {
-				L_Recce_Comp = { x = 0 y = 0 }
+		SAZ = {
+			country_event = {
+				id = PER_revolution.1234
 			}
 		}
-		capital_scope = {
-			create_unit = {
-				division = "name = \"NLA Militia\" division_template = \"NLA Militia\""
-				count = 16
-				owner = ROOT
+		BLC = {
+			country_event = {
+				id = PER_revolution.1234
+			}
+		}
+		MOJ = {
+			country_event = {
+				id = PER_revolution.1234
 			}
 		}
 		ai_chance = {
 			factor = 3
 		}
 	}
+	#
+}
+#
+country_event = { #Rest Event
+	id = PER_revolution.1234
+	title = PER_revolution.1234.t
+	desc = PER_revolution.1234.d
+	is_triggered_only = yes
+
+	option = { #Down with Dictator, be it the Mullah or Mojahed
+		name = PER_revolution.1234.a
+		log = "[GetDateText]: [This.GetName]:PER_revolution.1234.a executed"
+		declare_war_on = {
+			target = FROM
+			type = annex_everything
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	#
 }
 #
 country_event = { #Meant for player
@@ -11978,8 +11647,21 @@ country_event = { #Civil War Ends
 	option = {
 		name = PER_revolution.300.a
 		log = "[GetDateText]: [This.GetName]:PER_sway.300.a executed"
+		set_power_balance = {
+			id = PER_clergy_balance_of_power_category
+			set_default = yes
+		}
 		#
 		hidden_effect = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+				}
+				create_intelligence_agency = {
+					name = "Sazman-e Etela'at"
+					icon = GFX_intelligence_agency_logo_generic_5
+				}
+			}
 			increase_economic_growth = yes
 			decrease_corruption = yes
 			# Iran loses influence
@@ -12007,6 +11689,11 @@ country_event = { #Civil War Ends
 			set_temp_variable = { tag_index = PER }
 			set_temp_variable = { influence_target = SUD }
 			change_influence_percentage = yes
+			#
+			country_event = {
+				id = PER_revolution.3
+				days = 2
+			}
 			#
 			set_country_flag = do_not_retire
 
@@ -12083,24 +11770,17 @@ country_event = { #Civil War Ends
 		clr_country_flag = PER_civil_war
 		clr_country_flag = PER_controlled_majlis
 		set_country_flag = PER_freed_majlis
-		clr_country_flag = PER_majlis_dissolved
 		news_event = {
 			id = PER_rev_flavor.8
 			days = 2
 		}
 		hidden_effect = {
-			random_list = { #Iran Iraq War
-			40 = {
-			}
-			60 = {
-				IRQ = {
-					country_event = {
-						id = PER_revolution.5
-						days = 1200
-					}
+			IRQ = {
+				country_event = {
+					id = PER_revolution.5
+					days = 720
 				}
 			}
-		}
 		}
 		complete_national_focus = PER_iran_reborn
 		clr_country_flag = PER_iranian_civilwar
@@ -12118,112 +11798,9 @@ country_event = { #Referendum
 	option = { #Democracy
 		name = PER_revolution.301.a
 		log = "[GetDateText]: [This.GetName]:PER_sway.301.a executed"
-		set_country_flag = manual_civil_war_debuff_removal
 		news_event = {
 			id = PER_rev_flavor.9
 			days = 1
-		}
-		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = 0.35 }
-		set_temp_variable = { temp_outlook_increase = 0.35 }
-		add_relative_party_popularity = yes
-		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 0 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = no
-			}
-		}
-		hidden_effect = {
-			country_event = {
-				id = PER_revolution.12
-				days = 20
-			}
-		}
-		ai_chance = {
-			factor = 3
-			modifier = {
-				factor = 100
-				has_global_flag = PER_PAN_PERSIA
-			}
-		}
-	}
-	option = { #Pan Iranist
-		name = PER_revolution.301.b
-		log = "[GetDateText]: [This.GetName]:PER_sway.301.b executed"
-		set_country_flag = manual_civil_war_debuff_removal
-		news_event = {
-			id = PER_rev_flavor.11
-			days = 1
-		}
-		set_temp_variable = { party_index = 20 }
-		set_temp_variable = { party_popularity_increase = 0.35 }
-		set_temp_variable = { temp_outlook_increase = 0.35 }
-		add_relative_party_popularity = yes
-		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 20 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = no
-			}
-		}
-		hidden_effect = {
-			country_event = {
-				id = PER_revolution.12
-				days = 20
-			}
-		}
-		ai_chance = {
-			factor = 3
-			modifier = {
-				factor = 100
-				has_global_flag = PER_PAN_PERSIA
-			}
-		}
-	}
-	#
-	option = { #National Front Democracy
-		name = PER_revolution.301.c
-		log = "[GetDateText]: [This.GetName]:PER_sway.301.c executed"
-		set_country_flag = manual_civil_war_debuff_removal
-		news_event = {
-			id = PER_rev_flavor.14
-			days = 1
-		}
-		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = 0.35 }
-		set_temp_variable = { temp_outlook_increase = 0.35 }
-		add_relative_party_popularity = yes
-		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 14 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
-		}
-		hidden_effect = {
-			country_event = {
-				id = PER_revolution.12
-				days = 20
-			}
 		}
 		ai_chance = {
 			factor = 3
@@ -12668,13 +12245,49 @@ country_event = { #Saudis choice
 				type = puppet_wargoal_focus
 			}
 		}
+		if = {
+			limit = {
+				TUR = {
+					NOT = {
+						OR = {
+							is_subject_of = PER
+							is_in_faction_with = PER
+						}
+					}
+				}
+			}
+			TUR = {
+				country_event = {
+					id = PER_political.1269420
+					days = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				PAK = {
+					NOT = {
+						OR = {
+							is_subject_of = PER
+							is_in_faction_with = PER
+						}
+					}
+				}
+			}
+			PAK = {
+				country_event = {
+					id = PER_political.1269420
+					days = 1
+				}
+			}
+		}
 		ai_chance = {
 			factor = 10
 		}
 	}
 	option = { #Whatever
 		name = PER_political.11.b
-		log = "[GetDateText]: [This.GetName]:PER_political.11.a executed"
+		log = "[GetDateText]: [This.GetName]:PER_political.11.b executed"
 		add_stability = -0.20
 		PER = { clr_country_flag = PER_cold_war }
 		PER = {
@@ -12684,6 +12297,55 @@ country_event = { #Saudis choice
 		}
 		ai_chance = {
 			factor = 0
+		}
+	}
+}
+#
+country_event = { #Turkeys Choice
+	id = PER_political.1269420
+	title = PER_political.1269420.t
+	desc = PER_political.1269420.d
+	picture = GFX_pahlavi_country
+	is_triggered_only = yes
+
+	option = { #War!
+		name = PER_political.1269420.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1269420.a executed"
+		declare_war_on = {
+			target = PER
+			type = puppet_wargoal_focus
+		}
+		PER = {
+			country_event = {
+				id = PER_political.1269421
+				days = 1
+			}
+		}
+		ai_chance = {
+			factor = 10
+		}
+	}
+	option = { #Whatever
+		name = PER_political.1269420.b
+		log = "[GetDateText]: [This.GetName]:PER_political.1269420.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+#
+country_event = { #Turkey joins conflict
+	id = PER_political.1269421
+	title = PER_political.1269421.t
+	desc = PER_political.1269421.d
+	picture = GFX_submarine
+	is_triggered_only = yes
+
+	option = { #War!
+		name = PER_political.1269421.a
+		log = "[GetDateText]: [This.GetName]:PER_political.1269421.a executed"
+		ai_chance = {
+			factor = 10
 		}
 	}
 }
@@ -12735,7 +12397,7 @@ country_event = { #Arabia in dismay
 	id = PER_political.1144
 	title = PER_political.1144.t
 	desc = PER_political.1144.d
-	fire_only_once = no
+	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = { # We must strike while we can!
@@ -14963,7 +14625,6 @@ country_event = { ##Kurds in Turkey Revolt
 	option = { #Good.. Good...
 		name = PER_political.271.a
 		log = "[GetDateText]: [This.GetName]:PER_political.271.a executed"
-		clr_country_flag = PER_turkish_kurdish
 		162 = { set_demilitarized_zone = no }
 		935 = { set_demilitarized_zone = no }
 		162 = { transfer_state_to = KUR }
@@ -16166,6 +15827,10 @@ country_event = { # Article 368
 		name = PER_political.9912.a
 		log = "[GetDateText]: [This.GetName]:PER_political.9912.a executed"
 		add_ideas = PER_freedom_of_choice
+		add_power_balance_value = {
+			id = PER_clergy_balance_of_power_category
+			value = -0.03
+		}
 		ai_chance = {
 			factor = 3
 		}
@@ -16177,6 +15842,10 @@ country_event = { # Article 368
 		add_stability = 0.02
 		set_temp_variable = { temp_opinion = 5 }
 		change_the_bazaar_opinion = yes
+		add_power_balance_value = {
+			id = PER_clergy_balance_of_power_category
+			value = 0.03
+		}
 		ai_chance = {
 			factor = 3
 		}
@@ -16355,8 +16024,9 @@ country_event = { # The Peacock Throne
 	option = { #Reza Pahlavi will be the next Shahanshah
 		name = PER_political.99915.a
 		log = "[GetDateText]: [This.GetName]:PER_political.99915.a executed"
+		retire_country_leader = yes
 		create_country_leader = {
-			name = "Reza Pahlavi II"
+			name = "Reza Shah Pahlavi II"
 			picture = "reza_pahlavi_shah.dds"
 			ideology = Monarchist
 			traits = {
@@ -16383,6 +16053,75 @@ country_event = { # The Peacock Throne
 				likeable
 				humble
 				educator
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+#
+country_event = { # The Peacock Throne (Absolute or Not)
+	id = PER_political.999151
+	title = PER_political.999151.t
+	desc = PER_political.999151.d
+	picture = GFX_crown_throne
+	fire_only_once = yes
+	is_triggered_only = yes
+	option = { #It will be constitutional!
+		name = PER_political.999151.a
+		log = "[GetDateText]: [This.GetName]:PER_political.99915.a executed"
+		create_country_leader = {
+			name = "Reza Pahlavi II"
+			picture = "Western_King_Reza_Pahlavi.dds"
+			ideology = Western_Autocracy
+			traits = {
+				western_Western_Autocracy
+				pro_american
+				likeable
+			}
+		}
+		ai_chance = {
+			factor = 3
+		}
+	}
+	#
+	option = {
+		name = PER_political.999151.b
+		log = "[GetDateText]: [This.GetName]:PER_political.99915.b executed"
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.50 }
+		set_temp_variable = { temp_outlook_increase = 0.50 }
+		add_relative_party_popularity = yes
+		newline = yes
+		custom_effect_tooltip = PER_resistance_chance
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 23 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			country_event = {
+				id = PER_political.99915
+				days = 1
+			}
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+				}
+				50 = {
+					add_timed_idea = {
+						idea = PER_absolutist_resistance
+						days = 720
+					}
+				}
 			}
 		}
 		ai_chance = {
@@ -16486,7 +16225,7 @@ country_event = { ##Tehran March
 	id = PER_march_city.1
 	title = PER_march_city.1.t
 	desc = PER_march_city.1.d
-	picture = GFX_guns
+	picture = GFX_protest_generic_iran_country
 	is_triggered_only = yes
 
 		option = { #Kheyli Khoob
@@ -16504,7 +16243,7 @@ country_event = { ##Shiraz March
 	id = PER_march_city.2
 	title = PER_march_city.2.t
 	desc = PER_march_city.2.d
-	picture = GFX_guns
+	picture = GFX_protest_generic_iran_country
 	is_triggered_only = yes
 
 		option = { #Kheyli Khoob
@@ -16522,7 +16261,7 @@ country_event = { ##Isfahan March
 	id = PER_march_city.3
 	title = PER_march_city.3.t
 	desc = PER_march_city.3.d
-	picture = GFX_guns
+	picture = GFX_protest_generic_iran_country
 	is_triggered_only = yes
 
 		option = { #Kheyli Khoob
@@ -16540,7 +16279,7 @@ country_event = { ##Abadan March
 	id = PER_march_city.4
 	title = PER_march_city.4.t
 	desc = PER_march_city.4.d
-	picture = GFX_guns
+	picture = GFX_protest_generic_iran_country
 	is_triggered_only = yes
 
 		option = { #Kheyli Khoob
@@ -16558,7 +16297,7 @@ country_event = { ##qom March
 	id = PER_march_city.5
 	title = PER_march_city.5.t
 	desc = PER_march_city.5.d
-	picture = GFX_guns
+	picture = GFX_protest_generic_iran_country
 	is_triggered_only = yes
 
 		option = { #Kheyli Khoob
@@ -16576,7 +16315,7 @@ country_event = { ##Tabriz March
 	id = PER_march_city.69
 	title = PER_march_city.69.t
 	desc = PER_march_city.69.d
-	picture = GFX_guns
+	picture = GFX_protest_generic_iran_country
 	is_triggered_only = yes
 
 		option = { #Kheyli Khoob
@@ -16594,7 +16333,7 @@ country_event = { ##Mashad March
 	id = PER_march_city.7
 	title = PER_march_city.7.t
 	desc = PER_march_city.7.d
-	picture = GFX_guns
+	picture = GFX_protest_generic_iran_country
 	is_triggered_only = yes
 
 		option = { #Kheyli Khoob
@@ -18207,32 +17946,35 @@ country_event = { # First Free Majlis elections (Player can't do shit about it)
 	option = {
 		name = PER_majlis.39.a
 		log = "[GetDateText]: [This.GetName]:PER_majlis.39.a executed"
-		random_list = {
-			25 = {
-				country_event = { #Ring Wingers
-					id = PER_majlis.40
-					days = 10
+		clr_country_flag = PER_majlis_dissolved
+		hidden_effect = {
+			random_list = {
+				25 = {
+					country_event = { #Ring Wingers
+						id = PER_majlis.40
+						days = 10
+					}
 				}
-			}
-			####
-			25 = {
-				country_event = { #Left Wingers
-					id = PER_majlis.41
-					days = 10
+				####
+				25 = {
+					country_event = { #Left Wingers
+						id = PER_majlis.41
+						days = 10
+					}
 				}
-			}
-			#####
-			25 = {
-				country_event = {
-					id = PER_majlis.42
-					days = 10
+				#####
+				25 = {
+					country_event = {
+						id = PER_majlis.42
+						days = 10
+					}
 				}
-			}
-			####
-			25 = {
-				country_event = {
-					id = PER_majlis.43
-					days = 10
+				####
+				25 = {
+					country_event = {
+						id = PER_majlis.43
+						days = 10
+					}
 				}
 			}
 		}
@@ -20945,6 +20687,10 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
 		add_relative_party_popularity = yes
+		add_power_balance_value = {
+			id = PER_clergy_balance_of_power_category
+			value = 0.10
+		}
 	}
 }
 #
@@ -20966,6 +20712,10 @@ country_event = {
 			1039 = { set_demilitarized_zone = no }
 			404 = { set_demilitarized_zone = no }
 			978 = { set_demilitarized_zone = no }
+		}
+		add_power_balance_value = {
+			id = PER_clergy_balance_of_power_category
+			value = -0.03
 		}
 	}
 }
@@ -22505,3 +22255,2261 @@ country_event = {
 		}
 	}
 }
+#
+country_event = {
+	id = iran_md.43
+	title = iran_md.43.t
+	desc = iran_md.43.d
+	is_triggered_only = yes
+	option = { # its time..
+		name = iran_md.43.a
+		log = "[GetDateText]: [This.GetName]:iran_md.43.a executed"
+		KUR = {
+			declare_war_on = {
+				target = IRQ
+				type = puppet_wargoal_focus
+			}
+		}
+		newline = yes
+		capital_scope = {
+			create_unit = {
+				division = "name =\"Lîwaya Militan KDP\" division_template = \"Lîwaya Militan KDP\" start_experience_factor =  1.0"
+				owner = ROOT
+				count = 8
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = { # No
+		name = iran_md.43.b
+		log = "[GetDateText]: [This.GetName]:iran_md.43.a executed"
+		PER = {
+			country_event = {
+				id = iran_md.44
+				days = 1
+			}
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.44
+	title = iran_md.44.t
+	desc = iran_md.44.d
+	is_triggered_only = yes
+	option = { # Those bastards
+		name = iran_md.44.a
+		log = "[GetDateText]: [This.GetName]:iran_md.44.a executed"
+		PER = {
+			create_wargoal = {
+				type = annex_everything
+				target = KUR
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = { # No
+		name = iran_md.44.b
+		log = "[GetDateText]: [This.GetName]:iran_md.44.a executed"
+		KUR = { set_province_controller = 4943 }
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.234
+	title = iran_md.234.t
+	desc = iran_md.234.d
+	is_triggered_only = yes
+	option = { # Those bastards
+		name = iran_md.234.a
+		log = "[GetDateText]: [This.GetName]:iran_md.234.a executed"
+				# Pan Iranists
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+country_event = {
+	id = iran_md.235
+	title = iran_md.235.t
+	desc = iran_md.235.d
+	is_triggered_only = yes
+	option = { # Those bastards
+		name = iran_md.235.a
+		log = "[GetDateText]: [This.GetName]:iran_md.235.a executed"
+			# Pan Iranists
+			create_country_leader = {
+				name = "Zahra Gholamipour"
+				picture = "gholamipour.dds"
+				ideology = Nat_Populism
+				traits = {
+					nationalist_Nat_Populism
+				}
+			}
+			add_ideas = shia
+			add_ideas = PER_brain_drain_5
+			add_ideas = PER_reorganize_school_1
+			add_ideas = the_military
+			add_ideas = intelligence_community
+			add_ideas = the_bazaar
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Artesh Declares Neutrality, 1
+country_event = {
+	id = PER_civilwar.1
+	title = PER_civilwar.1.t
+	desc = PER_civilwar.1.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = { # Those bastards
+		name = PER_civilwar.1.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.3.a executed"
+		clr_country_flag = PER_starting_the_revolution
+		clr_country_flag = PER_starting_the_revolution_2
+		hidden_effect = {
+			1039 = { transfer_state_to = HRM }
+			transfer_units_fraction = {
+				target = HRM
+				size = 1.0
+				stockpile_ratio = 0
+				army_ratio = 1.0
+				navy_ratio = 0
+				air_ratio = 0
+			}
+			1039 = { transfer_state_to = PER }
+			country_event = {
+				id = PER_revolution.10
+				days = 4
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Marine Brigade"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Quds Unit"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Infantry Brigade"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Armored Division"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Mechanized Division"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Commando Division"
+				disband = yes
+			}
+			delete_unit_template_and_units = {
+				division_template = "IRGC Airborne Brigade"
+				disband = yes
+			}
+			# Generals go
+			retire_character = PER_mostafa_izadi
+			retire_character = PER_mohammad_hejazi
+			retire_character = PER_mohammad_jafari
+			retire_character = PER_ali_najafi
+			retire_character = PER_ahmadreza_pourdastan
+			retire_character = PER_ali_hajilo
+			retire_character = PER_hassan_saadi
+			retire_character = PER_nader_najafi
+			retire_character = PER_ahmadreza_pourdastan
+			retire_character = PER_qasem_soleimani
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# The Civil War, 3
+country_event = {
+	id = PER_civilwar.2
+	title = PER_civilwar.2.t
+	desc = PER_civilwar.2.d
+	is_triggered_only = yes
+	picture = GFX_iranian_civ_war_country
+	option = {
+		name = PER_civilwar.2.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.4.a executed"
+		hidden_effect = {
+			clr_country_flag = PER_persian_revolution
+			add_victory_points = {
+				province = 10385
+				value = 3
+				}
+			PER = {
+				set_cosmetic_tag = PER_imperial_restoration_movement
+				set_country_flag = is_IRAN
+				set_country_flag = in_civil_war_iran
+			}
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.35 }
+			set_temp_variable = { temp_outlook_increase = 0.35 }
+			add_relative_party_popularity = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 0 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = no
+				}
+			}
+			create_country_leader = {
+				name = "Imperial Committee"
+				picture = "iranian_protesters.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+				}
+			}
+			#
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_mojahded_is_here
+				copy_tag = PER
+				set_cosmetic_tag = PER_mek_flag
+				set_country_flag = is_IRAN
+				set_popularities = {
+					communism = 100
+				}
+				set_politics = {
+					ruling_party = communism
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+				start_politics_input = yes
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 1 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.00 } #Conservative
+				set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+				### Ruling Party
+				add_to_array = { ruling_party = 5 }
+				startup_politics = yes
+
+				# Leader
+				create_country_leader = {
+					name = "Massoud Rajavi"
+					picture = "massoudi.dds"
+					ideology = anarchist_communism
+					traits = {
+						emerging_anarchist_communism
+					}
+				}
+
+				load_focus_tree = { tree = iran_focus keep_completed = yes }
+				set_country_flag = PER_majlis_dissolved
+				clr_country_flag = PER_reformist_majlis
+				clr_country_flag = PER_principalist_majlis
+				clr_country_flag = PER_influence_majlis
+				clr_country_flag = PER_freed_majlis
+				set_country_flag = PER_controlled_majlis
+				set_country_flag = PER_dissolved_majlis
+			}
+			406 = { transfer_state_to = MOJ }
+			MOJ = { set_province_controller = 829 }
+			MOJ = { set_province_controller = 3988 }
+			MOJ = { set_province_controller = 9816 }
+			MOJ = { set_province_controller = 8040 }
+			MOJ = { set_province_controller = 10523 }
+			MOJ = { set_province_controller = 9074 }
+			MOJ = { set_province_controller = 10774 }
+			#
+			MOJ = {
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRI
+					type = civil_war
+				}
+				declare_war_on = {
+					target = PIF
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRN
+					type = civil_war
+				}
+				declare_war_on = {
+					target = SAZ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = BLC
+					type = civil_war
+				}
+				declare_war_on = {
+					target = ARA
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IKR
+					type = civil_war
+				}
+			}
+			#
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_pan_iran_is_here
+				copy_tag = PER
+				set_cosmetic_tag = PER_pan_iranist_front
+				set_country_flag = is_IRAN
+				retire_country_leader = yes
+				set_popularities = {
+					nationalist = 100
+				}
+				set_politics = {
+					ruling_party = nationalist
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+				start_politics_input = yes
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.00 } #Conservative
+				set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 1 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+				### Ruling Party
+				add_to_array = { ruling_party = 20 }
+				startup_politics = yes
+				load_focus_tree = { tree = iran_focus keep_completed = yes }
+				set_country_flag = PER_majlis_dissolved
+				clr_country_flag = PER_reformist_majlis
+				clr_country_flag = PER_principalist_majlis
+				clr_country_flag = PER_influence_majlis
+				clr_country_flag = PER_freed_majlis
+				set_country_flag = PER_controlled_majlis
+				set_country_flag = PER_dissolved_majlis
+				403 = { transfer_state_to = PIF }
+				PIF = { set_province_controller = 4553 }
+				PIF = { set_province_controller = 4488 }
+				PIF = { set_province_controller = 10828 }
+				create_country_leader = {
+					name = "Pendar Pezeshkpour"
+					picture = "pezeshpour.dds"
+					ideology = Nat_Populism
+					traits = {
+						capable
+						stubborn
+						nationalist_Nat_Populism
+					}
+				}
+			}
+			PIF = {
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRI
+					type = civil_war
+				}
+				declare_war_on = {
+					target = MOJ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRN
+					type = civil_war
+				}
+				declare_war_on = {
+					target = SAZ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = BLC
+					type = civil_war
+				}
+				declare_war_on = {
+					target = ARA
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IKR
+					type = civil_war
+				}
+			}
+			#
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_republican_iran
+				copy_tag = PER
+				set_cosmetic_tag = PER_free_republic
+				set_country_flag = is_IRAN
+				retire_country_leader = yes
+				set_popularities = {
+					neutrality = 100
+				}
+				set_politics = {
+					ruling_party = neutrality
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = yes
+				}
+				start_politics_input = yes
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.00 } #Conservative
+				set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 1 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+				### Ruling Party
+				add_to_array = { ruling_party = 14 }
+				startup_politics = yes
+				load_focus_tree = { tree = iran_focus keep_completed = yes }
+				set_country_flag = PER_majlis_dissolved
+				clr_country_flag = PER_reformist_majlis
+				clr_country_flag = PER_principalist_majlis
+				clr_country_flag = PER_influence_majlis
+				clr_country_flag = PER_freed_majlis
+				set_country_flag = PER_controlled_majlis
+				set_country_flag = PER_dissolved_majlis
+				405 = { transfer_state_to = IRN }
+				976 = { transfer_state_to = IRN }
+				IRN = { set_province_controller = 7982 }
+				IRN = { set_province_controller = 4959 }
+				IRN = { set_province_controller = 14267 }
+				IRN = { set_province_controller = 14622 }
+				IRN = { set_province_controller = 14618 }
+				IRN = { set_province_controller = 7602 }
+				IRN = { set_province_controller = 14614 }
+				create_country_leader = {
+					name = "Adib Boroumand"
+					picture = "adib_boroumand_new.dds"
+					ideology = Neutral_conservatism
+					traits = {
+						writer
+						neutrality_Neutral_conservatism
+						capable
+						honest
+					}
+				}
+			}
+			IRN = {
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRI
+					type = civil_war
+				}
+				declare_war_on = {
+					target = PIF
+					type = civil_war
+				}
+				declare_war_on = {
+					target = MOJ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = SAZ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = BLC
+					type = civil_war
+				}
+				declare_war_on = {
+					target = ARA
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IKR
+					type = civil_war
+				}
+			}
+			#
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_akhoond_flag
+				copy_tag = PER
+				set_cosmetic_tag = PER_mullahs_government
+				set_country_flag = is_IRAN
+				retire_country_leader = yes
+				set_popularities = {
+					communism = 94
+					democratic = 6
+				}
+				set_politics = {
+					ruling_party = communism
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+
+				start_politics_input = yes
+
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.06 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0 } #Conservative
+				set_variable = { party_pop_array^7 = 0 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.47 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.47 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+
+				### Ruling Party
+				add_to_array = { ruling_party = 8 }
+
+				startup_politics = yes
+				load_focus_tree = { tree = iran_focus keep_completed = yes }
+				set_country_flag = PER_majlis_dissolved
+				clr_country_flag = PER_reformist_majlis
+				clr_country_flag = PER_principalist_majlis
+				clr_country_flag = PER_influence_majlis
+				clr_country_flag = PER_freed_majlis
+				set_country_flag = PER_controlled_majlis
+				set_country_flag = PER_dissolved_majlis
+				create_country_leader = {
+					name = "Sayyid Ali Hosseini Khamenei"
+					picture = "sayyid_ali_hosseini_khamenei.dds"
+					ideology = Vilayat_e_Faqih
+					traits = {
+						emerging_Vilayat_e_Faqih
+						cleric
+						emerging_Vilayat_e_Faqih
+						geopolitical_thinker
+						political_dancer
+						stubborn
+						anti_zionist
+					}
+				}
+				402 = { transfer_state_to = IRI }
+				977 = { transfer_state_to = IRI }
+				IRI = { set_province_controller = 10922 }
+				IRI = { set_province_controller = 1982 }
+				IRI = { set_province_controller = 4891 }
+				IRI = { set_province_controller = 10454 }
+				IRI = { set_province_controller = 4637 }
+				#
+				IRI = { set_province_controller = 4356 }
+				IRI = { set_province_controller = 12748 }
+				IRI = { set_province_controller = 11671 }
+				IRI = { set_province_controller = 4983 }
+				IRI = { set_province_controller = 7604 }
+			}
+			IRI = {
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+				declare_war_on = {
+					target = MOJ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = PIF
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRN
+					type = annex_everything
+				}
+				declare_war_on = {
+					target = SAZ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = BLC
+					type = civil_war
+				}
+				declare_war_on = {
+					target = ARA
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IKR
+					type = civil_war
+				}
+			}
+			#
+			PER = {
+				declare_war_on = {
+					target = MOJ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRI
+					type = civil_war
+				}
+				declare_war_on = {
+					target = PIF
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IRN
+					type = civil_war
+				}
+				declare_war_on = {
+					target = SAZ
+					type = civil_war
+				}
+				declare_war_on = {
+					target = BLC
+					type = civil_war
+				}
+				declare_war_on = {
+					target = ARA
+					type = civil_war
+				}
+				declare_war_on = {
+					target = IKR
+					type = civil_war
+				}
+			}
+			BLC = { set_province_controller = 1986 }
+			BLC = { set_province_controller = 12809 }
+			BLC = { set_province_controller = 12739 }
+			ARA = { set_province_controller = 5089 }
+			ARA = {
+				set_cosmetic_tag = PER_ASMLA
+			}
+		}
+		#
+		hidden_effect = {
+			ARA = {
+				division_template = {
+					name = "Arabistani Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+					#
+					create_unit = {
+						division = "name = \"5. Arabistani Militia\" division_template = \"Arabistani Militia\""
+						count = 1
+						owner = ARA
+					}
+				}
+			}
+			BLC = {
+				division_template = {
+					name = "Balochi Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				401 = {
+					create_unit = {
+						division = "name = \"1. Saravan Jandullah Militia \" division_template = \"Balochi Militia\""
+						prioritize_location = 13082
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Jandullah Militia\" division_template = \"Balochi Militia\""
+						prioritize_location = 10782
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Jandullah Militia\" division_template = \"Balochi Militia\""
+						prioritize_location = 12895
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Jandullah Militia\" division_template = \"Balochi Militia\""
+						prioritize_location = 2070
+						owner = BLC
+					}
+					#
+					create_unit = {
+						division = "name = \"5. Zahedan Jandullah Militia\" division_template = \"Balochi Militia\""
+						prioritize_location = 14262
+						owner = BLC
+					}
+				}
+				977 = {
+					create_unit = {
+						division = "name = \"6. Jandullah 'Rigi' Militia\" division_template = \"Balochi Militia\""
+						prioritize_location = 12809
+						owner = BLC
+					}
+				}
+			}
+			# South Azerbaijan
+			SAZ = {
+				division_template = {
+					name = "Azeri Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				407 = {
+					create_unit = {
+						division = "name = \"1. Azeri Militia\" division_template = \"Azeri Militia\""
+						prioritize_location = 12861
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Azeri Militia\" division_template = \"Azeri Militia\""
+						prioritize_location = 4755
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Azeri Militia\" division_template = \"Azeri Militia\""
+						prioritize_location = 4901
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Azeri Militia\" division_template = \"Azeri Militia\""
+						prioritize_location = 2071
+						owner = SAZ
+					}
+					#
+					create_unit = {
+						division = "name = \"5. Azeri Militia\" division_template = \"Azeri Militia\""
+						prioritize_location = 1896
+						owner = SAZ
+					}
+				}
+				1039 = {
+					create_unit = {
+						division = "name = \"6. Azeri Militia\" division_template = \"Azeri Militia\""
+						prioritize_location = 1636
+						owner = SAZ
+					}
+				}
+			}
+			#
+			IKR = {
+				division_template = {
+					name = "Komala Militia"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				408 = {
+					create_unit = {
+						division = "name = \"1. Komala Brigade\" division_template = \"Komala Militia\""
+						prioritize_location = 4943
+						owner = IKR
+					}
+					#
+					create_unit = {
+						division = "name = \"2. Komala Brigade\" division_template = \"Komala Militia\""
+						prioritize_location = 5098
+						owner = IKR
+					}
+					#
+					create_unit = {
+						division = "name = \"3. Komala Brigade\" division_template = \"Komala Militia\""
+						prioritize_location = 5098
+						owner = IKR
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Komala Brigade\" division_template = \"Komala Militia\""
+						prioritize_location = 2071
+						owner = IKR
+					}
+					#
+					create_unit = {
+						division = "name = \"4. Komala Brigade\" division_template = \"Komala Militia\""
+						prioritize_location = 12773
+						owner = IKR
+					}
+				}
+				979 = {
+					create_unit = {
+						division = "name = \"5. Komala Brigade\" division_template = \"Komala Militia\""
+						prioritize_location = 1822
+						owner = IKR
+					}
+				}
+			}
+			#
+			MOJ = {
+				delete_units = { division_template = "National Militia 2" disband = yes }
+				delete_units = { division_template = "National Militia" disband = yes }
+				division_template = {
+					name = "NLA Tip-e Piade Nezam"
+					priority = 0
+					template_counter = 0
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+				division_template = {
+					name = "NLA Tip-e Zerehi"
+					regiments = {
+						armor_Bat = { x = 0 y = 0 }
+						armor_Bat = { x = 0 y = 1 }
+						armor_Bat = { x = 0 y = 2 }
+						armor_Bat = { x = 0 y = 3 }
+						armor_Bat = { x = 0 y = 4 }
+					}
+					support = {
+						Mot_Recce_Comp = { x = 0 y = 0 }
+					}
+				}
+			}
+			404 = {
+				create_unit = {
+					division = "name = \"1. NLA Tip-e Zerehi\" division_template = \"NLA Tip-e Zerehi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 9074
+				}
+				#
+				create_unit = {
+					division = "name = \"2. NLA Tip-e Zerehi 'Sardar Soosan'\" division_template = \"NLA Tip-e Zerehi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 8040
+				}
+			}
+			#
+			408 = {
+				create_unit = {
+					division = "name = \"1. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 829
+				}
+				create_unit = {
+					division = "name = \"4. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 829
+				}
+				#
+			}
+			#
+			399 = {
+				create_unit = {
+					division = "name = \"2. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 10774
+				}
+				create_unit = {
+					division = "name = \"5. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 10774
+				}
+				create_unit = {
+					division = "name = \"7. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 10774
+				}
+				create_unit = {
+					division = "name = \"8. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 10774
+				}
+				#
+			}
+			#
+			407 = {
+				create_unit = {
+					division = "name = \"4. NLA Tip-e Zerehi\" division_template = \"NLA Tip-e Zerehi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 10523
+				}
+				create_unit = {
+					division = "name = \"7. NLA Tip-e Zerehi\" division_template = \"NLA Tip-e Zerehi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 10523
+				}
+				#
+			}
+			#
+			406 = {
+				create_unit = {
+					division = "name = \"5. NLA Tip-e Zerehi\" division_template = \"NLA Tip-e Zerehi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 2065
+				}
+				create_unit = {
+					division = "name = \"6. NLA Tip-e Zerehi\" division_template = \"NLA Tip-e Zerehi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 3908
+				}
+				create_unit = {
+					division = "name = \"6. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 5050
+				}
+				create_unit = {
+					division = "name = \"3. NLA Tip-e Piade Nezam\" division_template = \"NLA Tip-e Piade Nezam\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = MOJ
+					prioritize_location = 5050
+				}
+				#
+			}
+			# Free Army
+			976 = {
+				create_unit = {
+					division = "name =\"1. Tip-e Zerehi-ye Azad\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 8074
+				}
+				create_unit = {
+					division = "name =\"1. Tip-e Piade-e Nezam-e Azad\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 12756
+				}
+				create_unit = {
+					division = "name =\"1. Tip-e Mechaniz-e Azad\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 2026
+				}
+				create_unit = {
+					division = "name =\"2. Tip-e Piade-e Nezam-e Azad\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 5067
+				}
+			}
+			# Tehran
+			405 = {
+				create_unit = {
+					division = "name =\"2. Tip-e Zerehi-ye Azad\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 10837
+				}
+				create_unit = {
+					division = "name =\"2. Tip-e Piade-e Nezam-e Azad\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 10837
+				}
+				create_unit = {
+					division = "name =\"2. Tip-e Mechaniz-e Azad\" division_template = \"Tip-e Mechanize\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 7969
+				}
+				create_unit = {
+					division = "name =\"3. Tip-e Piade-e Nezam-e Azad\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 12704
+				}
+			}
+			# Rasht
+			1073 = {
+				create_unit = {
+					division = "name =\"3. Tip-e Zerehi-ye Azad\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 14622
+				}
+			}
+			# Hormuz
+			978 = {
+				create_unit = {
+					division = "name =\"4. Tip-e Piade-e Nezam-e Azad\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 7982
+				}
+			}
+			# Gorgan
+			403 = {
+				create_unit = {
+					division = "name =\"4. Tip-e Zerehi-ye Azad\" division_template = \"Tip-e Zerehi\" start_experience_factor =  1.0"
+					owner = IRN
+					prioritize_location = 7602
+				}
+			}
+			IRN = {
+				delete_units = { division_template = "National Militia 2" disband = yes }
+				delete_units = { division_template = "National Militia 3" disband = yes }
+				delete_units = { division_template = "National Militia 4" disband = yes }
+				delete_units = { division_template = "National Militia" disband = yes }
+			}
+			PIF = {
+				delete_units = { division_template = "National Militia 2" disband = yes }
+				delete_units = { division_template = "National Militia 3" disband = yes }
+				delete_units = { division_template = "National Militia 4" disband = yes }
+				delete_units = { division_template = "National Militia" disband = yes }
+			}
+			IRI = {
+				delete_units = { division_template = "National Militia 2" disband = yes }
+				delete_units = { division_template = "National Militia 3" disband = yes }
+				delete_units = { division_template = "National Militia 4" disband = yes }
+				delete_units = { division_template = "National Militia" disband = yes }
+			}
+			PER = {
+				delete_units = { division_template = "National Militia 2" disband = yes }
+				delete_units = { division_template = "National Militia 3" disband = yes }
+				delete_units = { division_template = "National Militia 4" disband = yes }
+				delete_units = { division_template = "National Militia" disband = yes }
+			}
+			# Imperial Coalition
+			400 = {
+				create_unit = {
+					division = "name =\"1. Lashkar-e Zerehi\" division_template = \"Lashkar-e Zerehi\" start_experience_factor =  1.0"
+					owner = PER
+					prioritize_location = 8117
+				}
+				create_unit = {
+					division = "name =\"1. Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = PER
+					prioritize_location = 10797
+				}
+				create_unit = {
+					division = "name =\"1. Lashkar-e Mechaniz-e\" division_template = \"Lashkar-e Mechanize\" start_experience_factor =  1.0"
+					owner = PER
+					prioritize_location = 12832
+				}
+				create_unit = {
+					division = "name =\"2. Lashkar-e Motorizeh\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = PER
+					prioritize_location = 12704
+				}
+				create_unit = {
+					division = "name =\"1. Tip-e Piade-e Nezam\" division_template = \"Tip-e Piade Nezam\" start_experience_factor =  1.0"
+					owner = PER
+					prioritize_location = 4928
+				}
+			}
+			1073 = {
+				create_unit = {
+					division = "name =\"1. Tip-e Motorizeh\" division_template = \"Tip-e Motorizeh\" start_experience_factor =  1.0"
+					owner = PER
+					prioritize_location = 14623
+				}
+			}
+			978 = {
+				create_unit = {
+					division = "name =\"1. Tip-e Motorizeh\" division_template = \"Tip-e Motorizeh\" start_experience_factor =  1.0"
+					owner = PER
+					prioritize_location = 3744
+				}
+			}
+			# Islamic Republic
+			402 = {
+				create_unit = {
+					division = "name =\"1. Tip-e Motorize-ye Sepah\" division_template = \"IRGC Infantry Brigade\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 7573
+				}
+				create_unit = {
+					division = "name =\"2. Tip-e Motorize-ye Sepah\" division_template = \"IRGC Infantry Brigade\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 1521
+				}
+				create_unit = {
+					division = "name =\"3. Tip-e Motorize-ye Sepah\" division_template = \"IRGC Infantry Brigade\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 1888
+				}
+				create_unit = {
+					division = "name =\"1. Lashkar-e Mechanize-ye Sepah\" division_template = \"IRGC Mechanized Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 1957
+				}
+				create_unit = {
+					division = "name =\"1. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 5029
+				}
+				create_unit = {
+					division = "name =\"1. Lashkar-e Zerehi-ye Sepah\" division_template = \"IRGC Armored Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 7990
+				}
+			}
+			# Kavir
+			977 = {
+				create_unit = {
+					division = "name =\"4. Tip-e Motorize-ye Sepah\" division_template = \"IRGC Infantry Brigade\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 10828
+				}
+				create_unit = {
+					division = "name =\"5. Tip-e Motorize-ye Sepah\" division_template = \"IRGC Infantry Brigade\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 11249
+				}
+				create_unit = {
+					division = "name =\"8. Tip-e Motorize-ye Sepah\" division_template = \"IRGC Infantry Brigade\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 3777
+				}
+			}
+			# Hormuz
+			978 = {
+				create_unit = {
+					division = "name =\"2. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 1889
+				}
+			}
+			# Ardabil
+			407 = {
+				create_unit = {
+					division = "name =\"3. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 10454
+				}
+			}
+			# Urmia
+			979 = {
+				create_unit = {
+					division = "name =\"4. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 7604
+				}
+			}
+			# Gilan
+			1073 = {
+				create_unit = {
+					division = "name =\"5. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 4637
+				}
+			}
+			# Qom
+			404 = {
+				create_unit = {
+					division = "name =\"6. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 10922
+				}
+				create_unit = {
+					division = "name =\"6. Tip-e Motorize-ye Sepah\" division_template = \"IRGC Infantry Brigade\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 1982
+				}
+			}
+			# Shahroud
+			405 = {
+				create_unit = {
+					division = "name =\"7. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 11671
+				}
+			}
+			# Balochistan
+			401 = {
+				create_unit = {
+					division = "name =\"8. Lashkar-e Kommando-ye Sepah\" division_template = \"IRGC Commando Division\" start_experience_factor =  1.0"
+					owner = IRI
+					prioritize_location = 4891
+				}
+			}
+			# Pan-Iranist
+			403 = {
+				create_unit = {
+					division = "name =\"1. Lashkar-e 'Pezeshkpour'\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor =  1.0"
+					owner = PIF
+					prioritize_location = 10385
+				}
+				create_unit = {
+					division = "name =\"1. Tip-e Motorizeh\" division_template = \"Tip-e Motorizeh\" start_experience_factor =  1.0"
+					owner = PIF
+					prioritize_location = 10768
+				}
+				create_unit = {
+					division = "name =\"1. Lashkar-e Anjoman\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+					owner = PIF
+					prioritize_location = 10768
+				}
+				create_unit = {
+					division = "name =\"2. Lashkar-e Anjoman\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+					owner = PIF
+					prioritize_location = 4580
+				}
+			}
+			407 = {
+				create_unit = {
+					division = "name =\"3. Lashkar-e Anjoman\" division_template = \"Lashkar-e Komandoyee\" start_experience_factor =  1.0"
+					owner = PIF
+					prioritize_location = 4553
+				}
+			}
+		}
+		hidden_effect = {
+			PER = {
+				remove_ideas = vevak
+				remove_ideas = irgc
+				add_ideas = the_military
+				add_ideas = intelligence_community
+			}
+			IRI = {
+				remove_ideas = vevak
+				remove_ideas = irgc
+				add_ideas = shia
+				add_ideas = defence_04
+				add_ideas = edu_04
+				add_ideas = health_02
+				add_ideas = social_03
+				add_ideas = bureau_02
+				add_ideas = police_03
+				add_ideas = unrestrained_corruption
+				add_ideas = mixed_economy
+				add_ideas = multi_ethnic_state_idea
+				add_ideas = PER_brain_drain_5
+				add_ideas = PER_reorganize_school_1
+				add_ideas = officer_military_academy
+				add_ideas = draft_army
+				add_ideas = intervention_limited_interventionism
+				add_ideas = the_military
+				add_ideas = the_bazaar
+				add_ideas = intelligence_community
+			}
+			#
+			MOJ = {
+				remove_ideas = vevak
+				remove_ideas = irgc
+				add_ideas = shia
+				add_ideas = defence_04
+				add_ideas = edu_04
+				add_ideas = health_02
+				add_ideas = social_03
+				add_ideas = bureau_02
+				add_ideas = police_03
+				add_ideas = unrestrained_corruption
+				add_ideas = mixed_economy
+				add_ideas = multi_ethnic_state_idea
+				add_ideas = PER_brain_drain_5
+				add_ideas = PER_reorganize_school_1
+				add_ideas = officer_military_academy
+				add_ideas = draft_army
+				add_ideas = intervention_limited_interventionism
+				add_ideas = the_military
+				add_ideas = the_bazaar
+				add_ideas = intelligence_community
+			}
+			#
+			PIF = {
+				remove_ideas = vevak
+				remove_ideas = irgc
+				add_ideas = shia
+				add_ideas = defence_04
+				add_ideas = edu_04
+				add_ideas = health_02
+				add_ideas = social_03
+				add_ideas = bureau_02
+				add_ideas = police_03
+				add_ideas = unrestrained_corruption
+				add_ideas = mixed_economy
+				add_ideas = multi_ethnic_state_idea
+				add_ideas = PER_brain_drain_5
+				add_ideas = PER_reorganize_school_1
+				add_ideas = officer_military_academy
+				add_ideas = draft_army
+				add_ideas = intervention_limited_interventionism
+				add_ideas = the_military
+				add_ideas = the_bazaar
+				add_ideas = intelligence_community
+			}
+			#
+			IRN = {
+				remove_ideas = vevak
+				remove_ideas = irgc
+				add_ideas = shia
+				add_ideas = defence_04
+				add_ideas = edu_04
+				add_ideas = health_02
+				add_ideas = social_03
+				add_ideas = bureau_02
+				add_ideas = police_03
+				add_ideas = unrestrained_corruption
+				add_ideas = mixed_economy
+				add_ideas = multi_ethnic_state_idea
+				add_ideas = PER_brain_drain_5
+				add_ideas = PER_reorganize_school_1
+				add_ideas = officer_military_academy
+				add_ideas = draft_army
+				add_ideas = intervention_limited_interventionism
+				add_ideas = the_military
+				add_ideas = the_bazaar
+				add_ideas = intelligence_community
+			}
+			#####
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_BOROUMAND
+				}
+				IRN = {
+					change_tag_from = PER
+				}
+			}
+			#
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_PEZESHKPOUR
+				}
+				PIF = {
+					change_tag_from = PER
+				}
+			}
+			#####
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_PEZESHKPOUR
+					has_country_flag = PER_BOROUMAND_JOINED
+				}
+				PIF = {
+					annex_country = {
+						target = IRN
+						transfer_troops = yes
+					}
+				}
+			}
+			#
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_PEZESHKPOUR
+					has_country_flag = PER_PAHLAVI_JOINED
+				}
+				PIF = {
+					annex_country = {
+						target = PER
+						transfer_troops = yes
+					}
+				}
+			}
+			# Boroumand
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_BOROUMAND
+					has_country_flag = PER_PEZESHKPOUR_JOINED
+				}
+				IRN = {
+					annex_country = {
+						target = PIF
+						transfer_troops = yes
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_BOROUMAND
+					has_country_flag = PER_PAHLAVI_JOINED
+				}
+				IRN = {
+					annex_country = {
+						target = PER
+						transfer_troops = yes
+					}
+				}
+			}
+			# Pahlavi
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_PAHLAVI
+					has_country_flag = PER_PEZESHKPOUR_JOINED
+				}
+				PER = {
+					annex_country = {
+						target = PIF
+						transfer_troops = yes
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_country_flag = PER_PLAYING_PAHLAVI
+					has_country_flag = PER_BOROUMAND_JOINED
+				}
+				PER = {
+					annex_country = {
+						target = IRN
+						transfer_troops = yes
+					}
+				}
+			}
+			###
+			drop_cosmetic_tag = yes
+			ROOT = {
+				set_cosmetic_tag = PER_interim_government
+			}
+			#
+			ROOT = {
+				declare_war_on = {
+					target = IRI
+					type = annex_everything
+				}
+			}
+			IRN = {
+				declare_war_on = {
+					target = IRI
+					type = annex_everything
+				}
+			}
+			#
+			hidden_effect = {
+				country_event = {
+					id = PER_civilwar.21
+					days = 5
+				}
+				remove_ideas = PER_ahmadinejad_idea
+				remove_ideas = PER_ghalibaf_idea
+				remove_ideas = PER_hemmati_idea
+				remove_ideas = PER_khatami_idea
+				remove_ideas = PER_mousavi_idea
+				remove_ideas = PER_rafsanjani_idea
+				remove_ideas = PER_raisi_idea
+				remove_ideas = PER_rezaee_idea
+				remove_ideas = PER_rouhani_idea
+				remove_ideas = PER_tavakoli_idea
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = PER_civilwar.3
+	title = PER_civilwar.3.t
+	desc = PER_civilwar.3.d
+	is_triggered_only = yes
+	# South Azerbaijan
+	option = {
+		name = PER_civilwar.3.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.3.a executed"
+		SAZ = {
+			change_tag_from = PER
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+	# Jandullah
+	option = { # Those bastards
+		name = PER_civilwar.3.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.3.b executed"
+		BLC = {
+			change_tag_from = PER
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+	# Komala
+	option = { # Those bastards
+		name = PER_civilwar.3.c
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.3.c executed"
+		IKR = {
+			change_tag_from = PER
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+	# Arabistan
+	option = { #
+	name = PER_civilwar.3.d1
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.d1.c executed"
+		ARA = {
+			change_tag_from = PER
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+# Majlis dissolves
+country_event = {
+	id = PER_civilwar.4
+	title = PER_civilwar.4.t
+	desc = PER_civilwar.4.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = { # Those bastards
+		name = PER_civilwar.4.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.4.a executed"
+		set_country_flag = PER_majlis_dissolved
+		clr_country_flag = PER_reformist_majlis
+		clr_country_flag = PER_principalist_majlis
+		clr_country_flag = PER_influence_majlis
+		clr_country_flag = PER_freed_majlis
+		set_country_flag = PER_controlled_majlis
+		set_country_flag = PER_dissolved_majlis
+		set_variable = {
+			var = PER_majlis_support
+			value = 0
+		}
+		hidden_effect = {
+			country_event = {
+				id = PER_civilwar.2
+				days = 4
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Random events that damage Revolutionary progress
+# Students at College attacked by security forces
+country_event = {
+	id = PER_civilwar.5
+	title = PER_civilwar.5.t
+	desc = PER_civilwar.5.d
+	is_triggered_only = yes
+	picture = GFX_iran_protests_failed_country
+	option = { # Those bastards
+		name = PER_civilwar.5.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.5.a executed"
+		add_stability = -0.02
+		add_political_power = -25
+		custom_effect_tooltip = PER_remove_5_to_rev_progress
+		add_to_variable = {
+			var = revolutionary_recovery_status
+			value = -5
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Street protests cracked down on
+country_event = {
+	id = PER_civilwar.6
+	title = PER_civilwar.6.t
+	desc = PER_civilwar.6.d
+	is_triggered_only = yes
+	picture = GFX_iran_protests_failed_country
+	option = { # Those bastards
+		name = PER_civilwar.6.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.6.a executed"
+		add_stability = -0.02
+		add_political_power = -25
+		custom_effect_tooltip = PER_remove_5_to_rev_progress
+		add_to_variable = {
+			var = revolutionary_recovery_status
+			value = -5
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# I.R. Supporters clash with revolutionaries
+country_event = {
+	id = PER_civilwar.7
+	title = PER_civilwar.7.t
+	desc = PER_civilwar.7.d
+	is_triggered_only = yes
+	picture = GFX_iran_protests_failed_country
+	option = { # Those bastards
+		name = PER_civilwar.7.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.7.a executed"
+		add_stability = -0.02
+		add_political_power = -25
+		custom_effect_tooltip = PER_remove_5_to_rev_progress
+		add_to_variable = {
+			var = revolutionary_recovery_status
+			value = -5
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Internet speeds throttled heavily
+country_event = {
+	id = PER_civilwar.8
+	title = PER_civilwar.8.t
+	desc = PER_civilwar.8.d
+	is_triggered_only = yes
+	picture = GFX_iran_protests_failed_country
+	option = { # Those bastards
+		name = PER_civilwar.8.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.8.a executed"
+		add_stability = -0.02
+		add_political_power = -25
+		custom_effect_tooltip = PER_remove_5_to_rev_progress
+		add_to_variable = {
+			var = revolutionary_recovery_status
+			value = -5
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Pick the Revolution Leader
+country_event = {
+	id = PER_civilwar.9
+	title = PER_civilwar.9.t
+	desc = PER_civilwar.9.d
+	is_triggered_only = yes
+	option = { # PAHLAVI
+		name = PER_civilwar.9.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.9.a executed"
+		set_country_flag = PER_PLAYING_PAHLAVI
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # BOROUMAND
+		name = PER_civilwar.9.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.9.a executed"
+		set_country_flag = PER_PLAYING_BOROUMAND
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # PEZESHKPOUR
+		name = PER_civilwar.9.c
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.9.a executed"
+		set_country_flag = PER_PLAYING_PEZESHKPOUR
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Invite Boroumand
+country_event = {
+	id = PER_civilwar.10
+	title = PER_civilwar.10.t
+	desc = PER_civilwar.10.d
+	is_triggered_only = yes
+	option = { # Send the offer
+		name = PER_civilwar.10.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.10.a executed"
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = PER_MINISTER_GIVEN_AWAY
+					has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				}
+			}
+			random_list = {
+				50 = {
+					country_event = {
+						id = PER_civilwar.16
+					}
+				}
+				50 = {
+					country_event = {
+						id = PER_civilwar.17
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = PER_MINISTER_GIVEN_AWAY
+				NOT = {
+					has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				}
+			}
+			country_event = {
+				id = PER_civilwar.16
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				NOT = {
+					has_country_flag = PER_MINISTER_GIVEN_AWAY
+				}
+			}
+			country_event = {
+				id = PER_civilwar.17
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.10.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.10.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Invite Pezeshkpour
+country_event = {
+	id = PER_civilwar.11
+	title = PER_civilwar.11.t
+	desc = PER_civilwar.11.d
+	is_triggered_only = yes
+	option = { # Send the offer
+		name = PER_civilwar.11.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.11.a executed"
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = PER_MINISTER_GIVEN_AWAY
+					has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				}
+			}
+			random_list = {
+				50 = {
+					country_event = {
+						id = PER_civilwar.18
+					}
+				}
+				50 = {
+					country_event = {
+						id = PER_civilwar.19
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = PER_MINISTER_GIVEN_AWAY
+				NOT = {
+					has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				}
+			}
+			country_event = {
+				id = PER_civilwar.18
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				NOT = {
+					has_country_flag = PER_MINISTER_GIVEN_AWAY
+				}
+			}
+			country_event = {
+				id = PER_civilwar.19
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.11.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.11.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Invite Pahlavi
+country_event = {
+	id = PER_civilwar.12
+	title = PER_civilwar.12.t
+	desc = PER_civilwar.12.d
+	is_triggered_only = yes
+	option = { # Send the offer
+		name = PER_civilwar.12.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.12.a executed"
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = PER_MINISTER_GIVEN_AWAY
+					has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				}
+			}
+			random_list = {
+				50 = {
+					country_event = {
+						id = PER_civilwar.14
+					}
+				}
+				50 = {
+					country_event = {
+						id = PER_civilwar.15
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = PER_MINISTER_GIVEN_AWAY
+				NOT = {
+					has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				}
+			}
+			country_event = {
+				id = PER_civilwar.14
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = PER_MAJLIS_GIVEN_AWAY
+				NOT = {
+					has_country_flag = PER_MINISTER_GIVEN_AWAY
+				}
+			}
+			country_event = {
+				id = PER_civilwar.15
+			}
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.12.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.12.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Pahlavi want control of the Majlis!
+country_event = {
+	id = PER_civilwar.14
+	title = PER_civilwar.14.t
+	desc = PER_civilwar.14.d
+	is_triggered_only = yes
+	option = { # We have no other choice but to accept
+		name = PER_civilwar.14.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.14.a executed"
+		set_country_flag = PER_PAHLAVI_MAJLIS_CONTROL
+		set_country_flag = PER_PAHLAVI_JOINED
+		set_country_flag = PER_MAJLIS_GIVEN_AWAY
+		set_country_flag = PER_MAJLIS_GIVEN_AWAY_PAHLAVI
+		custom_effect_tooltip = PER_CONCEDE_MAJLIS
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.14.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.14.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Pahlavi wants to have favors in the Prime Minister sector
+country_event = {
+	id = PER_civilwar.15
+	title = PER_civilwar.15.t
+	desc = PER_civilwar.15.d
+	is_triggered_only = yes
+	option = { # We have no other choice but to accept
+		name = PER_civilwar.15.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.15.a executed"
+		set_country_flag = PER_PAHLAVI_PRIME_MINISTER_CONTROL
+		set_country_flag = PER_PAHLAVI_JOINED
+		set_country_flag = PER_MINISTER_GIVEN_AWAY
+		set_country_flag = PER_MINISTER_GIVEN_AWAY_PAHLAVI
+		custom_effect_tooltip = PER_CONCEDE_MINISTER
+
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.15.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.15.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Boroumand
+country_event = {
+	id = PER_civilwar.16
+	title = PER_civilwar.16.t
+	desc = PER_civilwar.16.d
+	is_triggered_only = yes
+	option = { # We have no other choice but to accept
+		name = PER_civilwar.16.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.14.a executed"
+		set_country_flag = PER_BOROUMAND_MAJLIS_CONTROL
+		set_country_flag = PER_BOROUMAND_JOINED
+		set_country_flag = PER_MAJLIS_GIVEN_AWAY
+		set_country_flag = PER_MAJLIS_GIVEN_AWAY_BOROUMAND
+		custom_effect_tooltip = PER_CONCEDE_MAJLIS
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.16.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.16.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Boroumand wants to have favors in the Prime Minister sector
+country_event = {
+	id = PER_civilwar.17
+	title = PER_civilwar.17.t
+	desc = PER_civilwar.17.d
+	is_triggered_only = yes
+	option = { # We have no other choice but to accept
+		name = PER_civilwar.17.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.17.a executed"
+		set_country_flag = PER_BOROUMAND_PRIME_MINISTER_CONTROL
+		set_country_flag = PER_BOROUMAND_JOINED
+		set_country_flag = PER_MINISTER_GIVEN_AWAY
+		set_country_flag = PER_MINISTER_GIVEN_AWAY_BOROUMAND
+		custom_effect_tooltip = PER_CONCEDE_MINISTER
+
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.17.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.17.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Pezeshkpour
+country_event = {
+	id = PER_civilwar.18
+	title = PER_civilwar.18.t
+	desc = PER_civilwar.18.d
+	is_triggered_only = yes
+	option = { # We have no other choice but to accept
+		name = PER_civilwar.18.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.18.a executed"
+		set_country_flag = PER_PEZESHKPOUR_MAJLIS_CONTROL
+		set_country_flag = PER_PEZESHKPOUR_JOINED
+		set_country_flag = PER_MAJLIS_GIVEN_AWAY
+		set_country_flag = PER_MAJLIS_GIVEN_AWAY_PEZESHKPOUR
+		custom_effect_tooltip = PER_CONCEDE_MAJLIS
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.18.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.18.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Pezeshkpour wants to have favors in the Prime Minister sector
+country_event = {
+	id = PER_civilwar.19
+	title = PER_civilwar.19.t
+	desc = PER_civilwar.19.d
+	is_triggered_only = yes
+	option = { # We have no other choice but to accept
+		name = PER_civilwar.19.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.19.a executed"
+		set_country_flag = PER_PEZESHKPOUR_PRIME_MINISTER_CONTROL
+		set_country_flag = PER_PEZESHKPOUR_JOINED
+		set_country_flag = PER_MINISTER_GIVEN_AWAY
+		set_country_flag = PER_MINISTER_GIVEN_AWAY_PEZESHKPOUR
+
+		custom_effect_tooltip = PER_CONCEDE_MINISTER
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+	#
+	option = { # Nevermind
+		name = PER_civilwar.19.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.19.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# IR starts intense crackdown
+country_event = {
+	id = PER_civilwar.20
+	title = PER_civilwar.20.t
+	desc = PER_civilwar.20.d
+	is_triggered_only = yes
+	option = { # We have no other choice but to accept
+		name = PER_civilwar.20.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.20.a executed"
+		set_country_flag = PER_starting_the_revolution_2
+
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
+country_event = {
+	id = PER_civilwar.21
+	title = PER_civilwar.21.t
+	desc = PER_civilwar.21.d
+	is_triggered_only = yes
+	option = { # Death to Rajavi
+		name = PER_civilwar.21.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.21.a executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = { # Long Live Rajavi
+		name = PER_civilwar.21.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.21.b executed"
+		MOJ = {
+			change_tag_from = PER
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Pahlavi minister takes office
+country_event = {
+	id = PER_prime_minister.1
+	title = PER_prime_minister.1.t
+	desc = PER_prime_minister.1.d
+	is_triggered_only = yes
+	option = {
+		name = PER_prime_minister.1.a
+		log = "[GetDateText]: [This.GetName]:PER_prime_minister.1.a executed"
+		PER_minister_clear = yes
+		set_country_flag = PER_foad_pashei_minister
+		add_to_variable = { iranian_president_change = 1 }
+		set_country_flag = PER_iranian_minister_given
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# National Front Minister takes office
+country_event = {
+	id = PER_prime_minister.2
+	title = PER_prime_minister.2.t
+	desc = PER_prime_minister.2.d
+	is_triggered_only = yes
+	option = {
+		name = PER_prime_minister.2.a
+		log = "[GetDateText]: [This.GetName]:PER_prime_minister.2.a executed"
+		PER_minister_clear = yes
+		set_country_flag = PER_davoud_minister
+		add_to_variable = { iranian_president_change = 1 }
+		set_country_flag = PER_iranian_minister_given
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# Pan Iranist minister takes office
+country_event = {
+	id = PER_prime_minister.3
+	title = PER_prime_minister.3.t
+	desc = PER_prime_minister.3.d
+	is_triggered_only = yes
+	option = {
+		name = PER_prime_minister.3.a
+		log = "[GetDateText]: [This.GetName]:PER_prime_minister.3.a executed"
+		PER_minister_clear = yes
+		set_country_flag = PER_farhad_baghnani_minister #PER_hashem_aghajari_minister
+		add_to_variable = { iranian_president_change = 1 }
+		set_country_flag = PER_iranian_minister_given
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+# New PM
+country_event = {
+	id = PER_prime_minister.401
+	title = PER_prime_minister.401.t
+	desc = PER_prime_minister.401.d
+	is_triggered_only = yes
+	option = {
+		name = PER_prime_minister.401.a
+		log = "[GetDateText]: [This.GetName]:PER_prime_minister.401.a executed"
+		set_country_flag = PER_minister_selection
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = PER_iranian_minister_given
+				}
+			}
+			set_country_flag = PER_iranian_minister_given
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = {
+		name = PER_prime_minister.401.b
+		log = "[GetDateText]: [This.GetName]:PER_prime_minister.401.b executed"
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+#
