@@ -103,8 +103,8 @@ focus_tree = {
 		available = {
 			hidden_trigger = {
 				NOT = {
-				has_country_flag = PER_persian_revolution
-				has_country_flag = PER_iranian_civilwar
+					has_country_flag = PER_persian_revolution
+					has_country_flag = PER_iranian_civilwar
 				}
 			}
 		}
@@ -8513,7 +8513,14 @@ focus_tree = {
 		y = 1
 		relative_position_id = PER_the_third_development_plan
 		prerequisite = { focus = PER_the_third_development_plan focus = PER_the_revolution }
-
+		available = {
+			hidden_trigger = {
+				NOT = {
+					has_country_flag = PER_persian_revolution
+					has_country_flag = PER_iranian_civilwar
+				}
+			}
+		}
 		cost = 7.15 # 50 Days
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_MILITARY FOCUS_FILTER_POLITICAL }
 
@@ -14992,8 +14999,8 @@ focus_tree = {
 			}
 			hidden_trigger = {
 			NOT = {
-				has_country_flag = PER_persian_revolution
-				has_country_flag = PER_iranian_civilwar
+					has_country_flag = PER_persian_revolution
+					has_country_flag = PER_iranian_civilwar
 				}
 			}
 		}
@@ -17028,31 +17035,38 @@ focus_tree = {
 		mutually_exclusive = { focus = PER_the_third_development_plan }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_the_revolution"
-			set_country_flag = PER_persian_revolution
 			set_country_flag = PER_hide_focus_branches
-			set_country_flag = PER_starting_the_revolution
-			set_country_flag = in_civil_war_iran
-			hidden_effect = {
-				country_event = {
-					id = PER_civilwar.9
-				}
-				country_event = {
-					id = PER_civilwar.20
-					days = 60
-				}
-			}
-			# custom_effect_tooltip =	PER_revolutionary_decisions_tt
-			# #Note to sheep he needs to clean this up onces droid reads and combine variables in one effect
-			# custom_effect_tooltip =	PER_army_size_Plus_five_tt
-			# add_to_variable = { var = army_size_jang value = -0.05 }
-			# clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
-			# clamp_variable = { var = PER_army_size_Display_number min = 0 max = 100 }
-			# ROOT = { country_event = { id = PER_revolution.1 hours = 0 } }
 			mark_focus_tree_layout_dirty = yes
-			custom_effect_tooltip = PER_iranian_unify2_tt
-			add_to_variable = { var = iranian_unify value = 0 }
-			clamp_variable = { var = iranian_unify min = 0 max = 1 }
-			set_variable = { revolutionary_recovery_status = 0 }
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = PER_selected_this_focus_already
+					}
+				}
+				set_country_flag = PER_persian_revolution
+				set_country_flag = PER_starting_the_revolution
+				set_country_flag = in_civil_war_iran
+				hidden_effect = {
+					country_event = {
+						id = PER_civilwar.9
+					}
+					country_event = {
+						id = PER_civilwar.20
+						days = 60
+					}
+				}
+				# custom_effect_tooltip =	PER_revolutionary_decisions_tt
+				# #Note to sheep he needs to clean this up onces droid reads and combine variables in one effect
+				# custom_effect_tooltip =	PER_army_size_Plus_five_tt
+				# add_to_variable = { var = army_size_jang value = -0.05 }
+				# clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
+				# clamp_variable = { var = PER_army_size_Display_number min = 0 max = 100 }
+				# ROOT = { country_event = { id = PER_revolution.1 hours = 0 } }
+				custom_effect_tooltip = PER_iranian_unify2_tt
+				add_to_variable = { var = iranian_unify value = 0 }
+				clamp_variable = { var = iranian_unify min = 0 max = 1 }
+				set_variable = { revolutionary_recovery_status = 0 }
+			}
 		}
 		ai_will_do = {
 			factor = 0
@@ -17240,6 +17254,17 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_great_referendum"
 			hidden_effect = {
+				if = {
+					limit = {
+						has_country_flag = rival_government_PER
+					}
+					clr_country_flag = rival_government_PER
+					clr_country_flag = rival_government_D01
+					clr_country_flag = rival_government_D02
+					clr_country_flag = rival_government_D03
+					clr_country_flag = rival_government_D04
+				}
+				remove_ideas = rival_government
 				clr_country_flag = in_civil_war_iran
 				set_power_balance = {
 					id = PER_clergy_balance_of_power_category
@@ -22456,6 +22481,60 @@ focus_tree = {
 			change_influence_percentage = yes
 			custom_effect_tooltip = PER_will_recieve_american_arms
 			set_country_flag = PER_american_weapons
+			USA = {
+				set_country_flag = PER_american_weapons
+			}
+			TUR = {
+				set_country_flag = PER_american_weapons
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	focus = {
+		id = PER_revolutionary_outposts
+		icon = coalition_army
+
+		x = 2
+		y = 1
+		allow_branch = { has_country_flag = PER_persian_revolution }
+		prerequisite = { focus = PER_the_revolution }
+		relative_position_id = PER_the_revolution
+		cost = 12.9
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PER_revolutionary_outposts"
+			custom_effect_tooltip = PER_revolutionary_troops
+			set_cosmetic_tag = PER_revolutionary_divisions_granted
+			USA = {
+				set_country_flag = PER_revolutionary_troops
+			}
+			TUR = {
+				set_country_flag = PER_revolutionary_troops
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#
+	focus = {
+		id = PER_capture_and_sell_mullah_assets
+		icon = anti_establishment2
+
+		x = 4
+		y = 1
+		allow_branch = { has_country_flag = PER_persian_revolution }
+		prerequisite = { focus = PER_the_revolution }
+		relative_position_id = PER_the_revolution
+		cost = 12.9
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PER_revolutionary_outposts"
+			set_temp_variable = { treasury_change = 100 }
+			modify_treasury_effect = yes
 		}
 		ai_will_do = {
 			factor = 1
