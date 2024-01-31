@@ -309,3 +309,45 @@ determine_power_ranking = {
 		add_ideas = minor_power
 	}
 }
+
+generate_tension_on_law_change = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = military_law_change_cooldown_flag
+					has_war = yes
+				}
+			}
+		}
+
+		# regional power
+		set_temp_variable = { tension_modifier = 1 }
+		if = {
+			limit = { has_idea = superpower }
+			set_temp_variable = { tension_modifier = 2.5 }
+		}
+		else_if = {
+			limit = { has_idea = great_power }
+			set_temp_variable = { tension_modifier = 2 }
+		}
+		else_if = {
+			limit = { has_idea = large_power }
+			set_temp_variable = { tension_modifier = 1.5 }
+		}
+
+		# 2 is default tension rise
+		multiply_temp_variable = { tension_modifier = 2 }
+
+		add_named_threat = {
+			threat = tension_modifier
+			name = military_law_change_generate_tension
+		}
+
+		set_country_flag = {
+			flag = military_law_change_cooldown_flag
+			days = 100
+			value = 1
+		}
+	}
+}
