@@ -4220,7 +4220,6 @@ focus_tree = {
 			air_experience = 25
 			navy_experience = 25
 			add_command_power = 20
-			increase_military_spending = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -4420,9 +4419,6 @@ focus_tree = {
 				}
 			}
 			CUB = {
-				add_political_power = 50
-			}
-			CUB = {
 				add_opinion_modifier = {
 					target =SOV
 					modifier = improve_trade
@@ -4460,11 +4456,8 @@ focus_tree = {
 				}
 			}
 			CUB = {
-				add_political_power = 50
-			}
-			CUB = {
 				add_opinion_modifier = {
-					target =CHI
+					target = CHI
 					modifier = improve_trade
 				}
 			}
@@ -4502,14 +4495,6 @@ focus_tree = {
 					variant_name = "T-72"
 				}
 			}
-			else = {
-				add_equipment_to_stockpile = {
-					type = MBT_3
-					amount = 120
-					producer = SOV
-				}
-			}
-
 			set_temp_variable = { treasury_change = -35 }
 			modify_treasury_effect = yes
 		}
@@ -4539,14 +4524,6 @@ focus_tree = {
 					variant_name = "T-72"
 				}
 			}
-			else = {
-				add_equipment_to_stockpile = {
-					type = MBT_3
-					amount = 120
-					producer = CHI
-				}
-			}
-
 			set_temp_variable = { treasury_change = -25 }
 			modify_treasury_effect = yes
 		}
@@ -4665,24 +4642,133 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CUB_prepare_people"
 			add_war_support = 0.05
+
+			add_tech_bonus = {
+				name = CUB_mechanized_army
+				bonus = 0.25
+				uses = 2
+				category = cat_GUERRILLA_WARFARE
+			}
 		}
 		ai_will_do = {
 			factor = 1
 		}
 	}
-	#will add more focuses on this path
+
+
 	focus = {
 		id = CUB_new_army_doctrine
 		icon = focus_generic_full_social_mobilization
 
 		x =0
-		y =4
+		y =1
+		relative_position_id =CUB_union_de_industrias_militares
+		cost = 5
+		prerequisite = { focus = CUB_union_de_industrias_militares }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_new_army_doctrine"
+			army_experience = 25
+
+			add_doctrine_cost_reduction = {
+				cost_reduction = 0.3
+				uses = 1
+				category = land_doctrine
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = CUB_contract_with_ak
+        icon = KK
+		x =0
+		y =1
 		relative_position_id =CUB_new_equipment
 		cost = 5
 		prerequisite = { focus = CUB_new_equipment }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus CUB_new_army_doctrine"
-			army_experience = 25
+			log = "[GetDateText]: [Root.GetName]: Focus  CUB_contract_with_ak"
+
+			if = {
+				limit = { has_dlc = "No Step Back" }
+
+				add_equipment_to_stockpile = {
+					type = infantry_weapons
+					amount = 1500
+					producer = SOV
+					variant_name = "AK-74"
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = CUB_union_de_industrias_militares
+        icon = ak103
+		x =0
+		y =1
+		relative_position_id =CUB_contract_with_ak
+		cost = 5
+		prerequisite = { focus = CUB_contract_with_ak }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_union_de_industrias_militares "
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = arms_factory
+					level = 2
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { temp_opinion = 2 }
+			change_defense_industry_opinion = yes
+			add_tech_bonus = {
+				uses = 1
+				bonus = 0.3
+				category = Cat_INF_WEP
+			}
+
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = CUB_new_mechanized_army
+       icon = generic_entrenchment
+		x = -1
+		y =1
+		relative_position_id =CUB_buy_chi_tanks
+		cost = 5
+		prerequisite = {
+			focus = CUB_buy_chi_tanks
+			focus = CUB_buy_rus_vehicles
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_ter_defence_reforms"
+			add_political_power = 30
+			army_experience = 30
+			add_command_power = 10
+
+			add_tech_bonus = {
+				name = CUB_mechanized_army
+				bonus = 0.25
+				uses = 2
+				category = Cat_ARMOR
+			}
+
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 		}
 		ai_will_do = {
 			factor = 1
