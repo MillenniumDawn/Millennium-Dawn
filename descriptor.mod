@@ -1,4 +1,4 @@
-version="1.9.1"
+version="1.9.4"
 name="Millennium Dawn Developer Version"
 tags={
 	"Alternative History"
