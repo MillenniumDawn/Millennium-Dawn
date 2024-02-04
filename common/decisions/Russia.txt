@@ -7,7 +7,10 @@ SOV_democracy_taiwam_category = {
 
 		visible = {
 			country_exists = TAI
-			has_completed_focus = SOV_expand_trade_with_taiwan
+			OR = {
+				has_completed_focus = SOV_Cooperation_with_Taiwan
+				has_completed_focus = SOV_expand_trade_with_taiwan
+			}
 			TAI = {
 				OR = {
 				NOT = { is_subject_of = CHI }
@@ -41,95 +44,6 @@ SOV_democracy_taiwam_category = {
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = TAI }
 			change_influence_percentage = yes
-		}
-	}
-	SOV_prepare_a_deal = {
-		cost = 25
-		icon = GFX_decision_taiwan_export
-		days_remove = 150
-		fire_only_once = yes
-
-		visible = {
-			country_exists = TAI
-			has_completed_focus = SOV_Buy_out_Taiwans_microchip_technology
-			TAI = {
-				OR = {
-				NOT = { is_subject_of = CHI }
-				NOT = { is_subject_of = SOV }
-				}
-			}
-			OR = {
-				western_liberals_are_in_power = yes
-				western_conservatism_are_in_power = yes
-				western_social_democrats_are_in_power = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 100
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SOV_prepare_a_deal"
-			add_opinion_modifier = {
-				target = TAI
-				modifier = improve_trade
-			}
-			TAI = {
-				add_opinion_modifier = {
-					target = SOV
-					modifier = improve_trade
-				}
-			}
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = TAI }
-			change_influence_percentage = yes
-			set_improved_trade_agreement = yes
-			set_country_flag = SOV_baikal_9_TT
-		}
-	}
-	SOV_buy_microchips = {
-		cost = 25
-		icon = GFX_decision_taiwan_export
-		days_remove = 150
-		fire_only_once = yes
-
-		visible = {
-			country_exists = TAI
-			NOT = {
-				SOV = {
-					has_decision = SOV_prepare_a_deal
-				}
-			}
-			has_completed_focus = SOV_Buy_out_Taiwans_microchip_technology
-			has_country_flag = SOV_baikal_9_TT
-			TAI = {
-				OR = {
-				NOT = { is_subject_of = CHI }
-				NOT = { is_subject_of = SOV }
-				}
-			}
-			OR = {
-				western_liberals_are_in_power = yes
-				western_conservatism_are_in_power = yes
-				western_social_democrats_are_in_power = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 100
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SOV_buy_microchips"
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = TAI }
-			change_influence_percentage = yes
-			TAI = {
-				country_event = russia.52
-			}
 		}
 	}
 	SOV_more_weapon_taiwan = {
@@ -1805,7 +1719,7 @@ SOV_moa_category = {
 			}
 			random_owned_controlled_state = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 653 }
+				prioritize = { 666 }
 				create_unit = {
 					division = "name = \"Malorossiya Liberation Army\" division_template = \"Malorossiya Liberation Army\" start_experience_factor = 1.0"
 					owner = SOV
@@ -2537,7 +2451,7 @@ SOV_wagner_category = {
 			}
 			random_owned_controlled_state = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 668 }
+				prioritize = { 666 }
 				create_unit = {
 					division = "name = \"DSHRG Rusich\" division_template = \"Battalion of Russian Nationalists\" start_experience_factor = 0.2"
 					owner = SOV
@@ -3577,6 +3491,171 @@ SOV_wagner_category = {
 		}
 	}
 }
+
+SOV_500_days_category = {
+	SOV_500_days_ticker_mission = {
+		available = {
+			always = no
+		}
+		activation = {
+			has_completed_focus = SOV_capitalism_in_500_days
+		}
+		days_mission_timeout = 500
+		is_good = no
+		fire_only_once = yes
+		icon = GFX_decision_gre_paying_ifc_debt
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = SOV_500_days_ura_tt
+					check_variable = { 500_days_completed = 4 }
+			}
+		}
+		visible = {
+			check_variable = { 500_days_completed < 4 }
+		}
+
+		cancel_effect = {
+			custom_effect_tooltip = SOV_500_days_ura_tt
+			country_event = { id = sov_yavlinskiy.1 days = 1 }
+		}
+
+		timeout_effect = {
+			country_event = { id = sov_yavlinskiy.2 days = 1 }
+			custom_effect_tooltip = SOV_500_days_pizda_tt
+			clr_country_flag = days_500_in_progress
+		}
+	}
+
+	SOV_500_days_fase_one = {
+		cost = 90
+		icon = GFX_lib_button
+		days_remove = 90
+		fire_only_once = yes
+		available = {
+			check_variable = { 500_days_completed < 1 }
+		}
+		modifier = {
+			production_speed_offices_factor = 0.07
+			stability_factor = -0.05
+			health_cost_multiplier_modifier = 0.05
+			production_speed_buildings_factor = 0.10
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_500_days_fase_one"
+			add_stability = 0.06
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = 500_days_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_500_days_one_tt
+			add_to_variable = { SOV_500_days_offices = 0.05 }
+			add_to_variable = { SOV_500_days_building = 0.05 }
+			add_to_variable = { SOV_500_days_stability = 0.07 }
+		}
+	}
+	SOV_500_days_fase_two = {
+		cost = 90
+		icon = GFX_lib_button
+		days_remove = 140
+		fire_only_once = yes
+		available = {
+			check_variable = { 500_days_completed = 1 }
+		}
+		modifier = {
+			consumer_goods_factor = -0.1
+			tax_gain_multiplier_modifier = 0.05
+			stability_factor = -0.08
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_500_days_fase_two"
+			add_stability = 0.03
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = 500_days_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_500_days_two_tt
+			add_to_variable = { SOV_500_days_tax_multiplier = 0.1 }
+			add_to_variable = { SOV_500_days_consumer = -0.06 }
+			add_to_variable = { SOV_500_days_stability = 0.03 }
+		}
+	}
+	SOV_500_days_fase_three = {
+		cost = 70
+		icon = GFX_lib_button
+		days_remove = 140
+		fire_only_once = yes
+		available = {
+			check_variable = { 500_days_completed = 2 }
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		
+		modifier = {
+			stability_factor = -0.15
+			bureaucracy_cost_multiplier_modifier = 0.15
+			projects_cost_modifier = 0.05
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_500_days_fase_three"
+			add_stability = 0.05
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = 500_days_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_500_days_three_tt
+			add_to_variable = { SOV_500_days_health_cost = 0.1 }
+			add_to_variable = { SOV_500_days_education_cost = 0.05 }
+			add_to_variable = { SOV_500_days_projects_cost = -0.04 }
+		}
+	}
+	SOV_500_days_fase_four = {
+		cost = 100
+		icon = GFX_lib_button
+		days_remove = 90
+		fire_only_once = yes
+		available = {
+			check_variable = { 500_days_completed = 3 }
+		}
+		
+		ai_will_do = {
+			factor = 100
+		}
+		modifier = {
+			econ_cycle_upg_cost_multiplier_modifier = 0.08
+			stability_factor = -0.15
+			productivity_growth_modifier = 0.06
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_500_days_fase_four"
+			add_stability = 0.05
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = 500_days_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_500_days_four_tt
+			add_to_variable = { SOV_500_days_productivity_growth = 0.06 }
+			add_to_variable = { SOV_500_days_econ_cycle_upg = -0.05 }
+			add_to_variable = { SOV_500_days_stability = 0.05 }
+		}
+	}
+	
+}
+
 #NPP Content
 SOV_npp_category = {
 	SOV_npp_ticker_mission = {
@@ -7852,6 +7931,7 @@ SOV_restoration_of_influence_category = {
 			}
 			POL = {
 				country_event = sov_warsaw_pact.1
+				set_country_flag = sov_northern_front
 			}
 			every_country = {
 				if = {
@@ -8152,6 +8232,7 @@ SOV_restoration_of_influence_category = {
 			}
 			BUL = {
 				country_event = sov_warsaw_pact.6
+				set_country_flag = sov_southern_front
 			}
 			BUL = {
 				if = {
@@ -8476,6 +8557,7 @@ SOV_restoration_of_influence_category = {
 			}
 			ROM = {
 				country_event = sov_warsaw_pact.6
+				set_country_flag = sov_southern_front
 			}
 			ROM = {
 				if = {
@@ -8801,6 +8883,8 @@ SOV_restoration_of_influence_category = {
 			}
 			HUN = {
 				country_event = sov_warsaw_pact.6
+				set_country_flag = sov_northern_front
+				set_country_flag = sov_southern_front
 			}
 			HUN = {
 				if = {
@@ -9126,6 +9210,7 @@ SOV_restoration_of_influence_category = {
 			}
 			ALB = {
 				country_event = sov_warsaw_pact.6
+				set_country_flag = sov_southern_front
 			}
 			ALB = {
 				if = {
@@ -9469,6 +9554,7 @@ SOV_restoration_of_influence_category = {
 			}
 			CZE = {
 				country_event = sov_warsaw_pact.6
+				set_country_flag = sov_northern_front
 			}
 			CZE = {
 				if = {
@@ -9514,6 +9600,7 @@ SOV_restoration_of_influence_category = {
 			}
 			SLO = {
 				country_event = sov_warsaw_pact.6
+				set_country_flag = sov_northern_front
 			}
 			SLO = {
 				if = {
@@ -10226,6 +10313,7 @@ SOV_restoration_of_influence_category = {
 				set_temp_variable = { tag_index = SOV }
 				set_temp_variable = { influence_target = GER }
 				change_influence_percentage = yes
+				set_country_flag = raskol
 			}
 			GER = {
 				country_event = sov_warsaw_pact.9
@@ -10620,27 +10708,19 @@ SOV_warsaw_pact_decision_category = {
 		days_remove = 108
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = cant_start_exercises_tt
 				NOT = { has_country_flag = cant_start_exercises1 }
 				NOT = { has_country_flag = cant_start_exercises2 }
 				NOT = { has_country_flag = cant_start_exercises3 }
 			}
-			tag = SOV
-			POL = {
-				has_autonomy_state = autonomy_warsaw
-				exists = yes
-			}
+			original_tag = SOV
+			has_war = no
 		}
 		visible = {
 			tag = SOV
 		}
 		complete_effect = {
-			hidden_effect = {
-			set_temp_variable = { modify_warsawexer = 1 }
-			modify_warsawexer_support = yes
-			}
 			custom_effect_tooltip = cant_start_exercises1_tt_effect
 			set_country_flag = {
 				flag = cant_start_exercises1
@@ -10699,28 +10779,30 @@ SOV_warsaw_pact_decision_category = {
 				NOT = { has_country_flag = cant_start_exercises3 }
 			}
 			has_war = no
-			tag = SOV
-			BUL = {
-				has_autonomy_state = autonomy_warsaw
-				exists = yes
-			}
-			ROM = {
-				has_autonomy_state = autonomy_warsaw
-				exists = yes
-			}
-			HUN = {
-				has_autonomy_state = autonomy_warsaw
-				exists = yes
+			original_tag = SOV
+			OR = {
+				BUL = {
+					has_autonomy_state = autonomy_warsaw
+					exists = yes
+				}
+				HUN = {
+					has_autonomy_state = autonomy_warsaw
+					exists = yes
+				}
+				ROM = {
+					has_autonomy_state = autonomy_warsaw
+					exists = yes
+				}
+				ALB = {
+					has_autonomy_state = autonomy_warsaw
+					exists = yes
+				}
 			}
 		}
 		visible = {
 			tag = SOV
 		}
 		complete_effect = {
-			hidden_effect = {
-				set_temp_variable = { modify_warsawexer = 1 }
-				modify_warsawexer_support = yes
-			}
 			custom_effect_tooltip = cant_start_exercises2_tt_effect
 			set_country_flag = {
 				flag = cant_start_exercises2
@@ -10733,20 +10815,14 @@ SOV_warsaw_pact_decision_category = {
 				days = 97
 			}
 			}
-			BUL = { add_timed_idea = {
-				idea = SOV_warsaw_pact_exercises_south_idea1
-				days = 97
-			}
-			}
-			ROM = { add_timed_idea = {
-				idea = SOV_warsaw_pact_exercises_south_idea1
-				days = 97
-			}
-			}
-			HUN = { add_timed_idea = {
-				idea = SOV_warsaw_pact_exercises_south_idea1
-				days = 97
-			}
+			every_country = {
+				limit = {
+					has_country_flag = sov_southern_front
+				}
+				add_timed_idea = {
+					idea = SOV_warsaw_pact_exercises_south_idea1
+					days = 97
+				}
 			}
 			SOV = {
 				add_named_threat = {
@@ -10783,28 +10859,26 @@ SOV_warsaw_pact_northern_exercises = {
 			NOT = { has_country_flag = cant_start_exercises3 }
 		}
 		has_war = no
-		tag = SOV
-		POL = {
-			has_autonomy_state = autonomy_warsaw
-			exists = yes
-		}
-		CZE = {
-			has_autonomy_state = autonomy_warsaw
-			exists = yes
-		}
-		HUN = {
-			has_autonomy_state = autonomy_warsaw
-			exists = yes
+		original_tag = SOV
+		OR = {
+			CZE = {
+				has_autonomy_state = autonomy_warsaw
+				exists = yes
+			}
+			HUN = {
+				has_autonomy_state = autonomy_warsaw
+				exists = yes
+			}
+			POL = {
+				has_autonomy_state = autonomy_warsaw
+				exists = yes
+			}
 		}
 	}
 	visible = {
 		tag = SOV
 	}
 	complete_effect = {
-		hidden_effect = {
-			set_temp_variable = { modify_warsawexer = 1 }
-			modify_warsawexer_support = yes
-		}
 		custom_effect_tooltip = cant_start_exercises3_tt_effect
 		set_country_flag = {
 			flag = cant_start_exercises3
@@ -10818,19 +10892,10 @@ SOV_warsaw_pact_northern_exercises = {
 				days = 86
 			}
 		}
-		POL = {
-			add_timed_idea = {
-				idea = SOV_warsaw_pact_exercises_north_idea
-				days = 86
+		every_country = {
+			limit = {
+				has_country_flag = sov_northern_front
 			}
-		}
-		CZE = {
-			add_timed_idea = {
-				idea = SOV_warsaw_pact_exercises_north_idea
-				days = 86
-			}
-		}
-		HUN = {
 			add_timed_idea = {
 				idea = SOV_warsaw_pact_exercises_north_idea
 				days = 86
@@ -11992,6 +12057,260 @@ SOV_storm_z_decision_category = {
 		}
 		ai_will_do = {
 			factor = 200
+		}
+	}
+}
+SOV_from_center_category = {
+	SOV_from_center_ticker_mission = {
+		available = {
+			always = no
+		}
+		activation = {
+			has_completed_focus = SOV_from_center_to_regions
+		}
+		days_mission_timeout = 365
+		is_good = no
+		fire_only_once = yes
+		icon = GFX_decision_gre_paying_ifc_debt
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = SOV_from_center_completion_trigger_TT
+				OR = {
+					check_variable = { from_center_completed = 8 }
+					check_variable = { from_center_completed > 8 }
+				}
+			}
+		}
+		visible = {
+			check_variable = { from_center_completed < 8 }
+		}
+
+		cancel_effect = {
+			add_to_variable = { SOV_kasyanov_global_building_slots_factor = 0.05 }
+			add_to_variable = { SOV_kasyanov_production_speed_infrastructure_factor	= 0.1 }
+			custom_effect_tooltip = SOV_kasyanov8_tt
+			add_stability = 0.1
+		}
+
+		timeout_effect = {
+			add_stability = -0.1
+			add_political_power = -100
+		}
+	}
+	SOV_from_center_1 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_1"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_moscow
+			custom_effect_tooltip = SOV_from_center_increase_productivity_irkutsk
+			652 = { add_to_variable = { productivity_state_var = -10 } }
+			685 = { add_to_variable = { productivity_state_var = 10 } }
+		}
+	}
+	SOV_from_center_2 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_2"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_moscow
+			custom_effect_tooltip = SOV_from_center_increase_productivity_yaroslavl
+			652 = { add_to_variable = { productivity_state_var = -10 } }
+			651 = { add_to_variable = { productivity_state_var = 10 } }
+		}
+	}
+	SOV_from_center_3 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_3"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_moscow
+			custom_effect_tooltip = SOV_from_center_increase_productivity_norilsk
+			652 = { add_to_variable = { productivity_state_var = -10 } }
+			683 = { add_to_variable = { productivity_state_var = 10 } }
+		}
+	}
+	SOV_from_center_4 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_4"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_moscow
+			custom_effect_tooltip = SOV_from_center_increase_productivity_khabarovsk
+			652 = { add_to_variable = { productivity_state_var = -10 } }
+			687 = { add_to_variable = { productivity_state_var = 10 } }
+		}
+	}
+	SOV_from_center_5 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_5"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_moscow
+			custom_effect_tooltip = SOV_from_center_increase_productivity_sakhalin
+			652 = { add_to_variable = { productivity_state_var = -10 } }
+			691 = { add_to_variable = { productivity_state_var = 10 } }
+		}
+	}
+	SOV_from_center_6 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_6"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_petersburg
+			custom_effect_tooltip = SOV_from_center_increase_productivity_amur
+			644 = { add_to_variable = { productivity_state_var = -10 } }
+			1069 = { add_to_variable = { productivity_state_var = 10 } }
+		}
+	}
+	SOV_from_center_7 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_7"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_petersburg
+			custom_effect_tooltip = SOV_from_center_increase_productivity_kostroma
+			644 = { add_to_variable = { productivity_state_var = -10 } }
+			650 = { add_to_variable = { productivity_state_var = 10 } }
+		}
+	}
+	SOV_from_center_8 = {
+		cost = 50
+		icon = none
+		days_remove = 90
+		fire_only_once = yes
+		icon = GFX_npp_red_icon
+		modifier = {
+			consumer_goods_factor = 0.01
+		}
+		ai_will_do = {
+			factor = 100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove SOV_from_center_8"
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_to_variable = {
+				var = from_center_completed
+				value = 1
+			}
+			custom_effect_tooltip = SOV_from_center_decrease_productivity_petersburg
+			custom_effect_tooltip = SOV_from_center_increase_productivity_chelyabinsk
+			644 = { add_to_variable = { productivity_state_var = -10 } }
+			675 = { add_to_variable = { productivity_state_var = 10 } }
 		}
 	}
 }
