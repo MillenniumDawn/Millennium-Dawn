@@ -171,7 +171,7 @@ focus_tree = {
 		y = 1
 
 		bypass = {
-			PER = { has_war_with = IRQ }
+
 		}
 
 		relative_position_id = IRQ_iranian_powerplants
@@ -182,7 +182,286 @@ focus_tree = {
 		search_filters = {}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus IRQ_foreign_advisors"
+			hidden_effect = {
+				add_dynamic_modifier = {
+					modifier = IRQ_western_engineers_in_iraq
+				}
+			}
+			set_variable = {
+				western_engineers_in_iraq_speed = 0
+			}
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = USA
+						original_tag = GER
+						original_tag = ENG
+						original_tag = FRA
+						original_tag = ITA
+						original_tag = POL
+						original_tag = BEL
+						original_tag = HOL
+						original_tag = DEN
+					}
+					has_government = democratic
+				}
+				country_event = {
+					id = iraqi_events.6
+				}
+			}
+			custom_effect_tooltip = we_will_receive_5_percent_construction_speed_TT
+		}
+	}
+	focus = {
+		id = IRQ_investments_from_kuwait
+		icon = market_economy
+		x = -1
+		y = 1
 
+		bypass = {
+			KUW = {
+				has_opinion = { target = IRQ value > -14 }
+			}
+		}
+
+		relative_position_id = IRQ_foreign_advisors
+		prerequisite = { focus = IRQ_foreign_advisors }
+
+		cost = 10
+		search_filters = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IRQ_investments_from_kuwait"
+			set_temp_variable = { treasury_change = 25 }
+			modify_treasury_effect = yes
+			KUW = {
+				set_temp_variable = { int_investment_change = 25 }
+				modify_international_investment_effect = yes
+			}
+		}
+	}
+	focus = {
+		id = IRQ_trade_with_syria
+		icon = trade
+		x = 1
+		y = 1
+
+		bypass = {
+			SYR = {
+				has_opinion = { target = IRQ value > 0 }
+			}
+		}
+
+		relative_position_id = IRQ_foreign_advisors
+		prerequisite = { focus = IRQ_foreign_advisors }
+
+		cost = 10
+		search_filters = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IRQ_trade_with_syria"
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			add_opinion_modifier = { target = SYR modifier = major_improve_trade }
+			SYR = {
+				add_opinion_modifier = { target = IRQ modifier = major_improve_trade }
+			}
+			set_temp_variable = { percent_change = 1.5 }
+			set_temp_variable = { tag_index = IRQ }
+			set_temp_variable = { influence_target = SYR }
+			change_influence_percentage = yes
+		}
+	}
+	focus = {
+		id = IRQ_loans_from_neighbours
+		icon = money
+		x = -1
+		y = 1
+
+		relative_position_id = IRQ_trade_with_syria
+		prerequisite = { focus = IRQ_trade_with_syria }
+		prerequisite = { focus = IRQ_investments_from_kuwait }
+
+		cost = 10
+		search_filters = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IRQ_loans_from_neighbours"
+			set_temp_variable = {
+				bruh = 0
+			}
+			if = {
+				limit = {
+					PER = {
+						has_opinion = { target = IRQ value > -11 }
+						NOT = { has_war_with = IRQ }
+					}					
+				}
+				custom_effect_tooltip = loans_from_iran_TT
+				set_temp_variable = { treasury_change = 50 }
+				modify_treasury_effect = yes
+				set_temp_variable = { debt_change = 20 }
+				modify_debt_effect = yes
+				add_to_temp_variable = {
+					bruh = 1
+				}
+			}
+			if = {
+				limit = {
+					SAU = {
+						has_opinion = { target = IRQ value > -11 }
+						NOT = { has_war_with = IRQ }
+					}					
+				}
+				custom_effect_tooltip = loans_from_saudi_TT
+				set_temp_variable = { treasury_change = 50 }
+				modify_treasury_effect = yes
+				set_temp_variable = { debt_change = 20 }
+				modify_debt_effect = yes
+				add_to_temp_variable = {
+					bruh = 1
+				}
+			}
+			if = {
+				limit = {
+					check_variable = {
+						bruh = 1
+					}
+				}
+				custom_effect_tooltip = could_receive_more_if_better_relations_TT
+			}
+			if = {
+				limit = { check_variable = { bruh = 0 } }
+				custom_effect_tooltip = no_good_relation_with_iran_or_saudi_TT
+				set_temp_variable = { treasury_change = 20 }
+				modify_treasury_effect = yes
+				set_temp_variable = { debt_change = 7 }
+				modify_debt_effect = yes
+			}
+		}
+	}
+	focus = {
+		id = IRQ_industrial_military_complex
+		icon = focus_generic_american_investments
+		x = -1
+		y = 1
+
+		relative_position_id = IRQ_loans_from_neighbours
+		prerequisite = { focus = IRQ_loans_from_neighbours }
+
+		bypass = {
+			has_war_with = USA
+		}
+
+		cost = 10
+		search_filters = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IRQ_industrial_military_complex"
+			custom_effect_tooltip = IRQ_industrial_military_complex_note_TT
+			if = {
+				limit = {
+					USA = {
+						IRQ = {
+							influence_higher_30 = yes
+						}
+					}
+				}
+				four_random_arms_factory = yes
+			}
+			else_if = {
+				limit = {
+					USA = {
+						IRQ = {
+							influence_higher_20 = yes
+						}
+					}
+				}
+				three_random_arms_factory = yes
+			}
+			else_if = {
+				limit = {
+					USA = {
+						IRQ = {
+							influence_higher_10 = yes
+						}
+					}
+				}
+				two_random_arms_factory = yes
+			}
+			else = {
+				one_random_arms_factory = yes
+			}
+		}
+	}
+	focus = {
+		id = IRQ_chinese_investments
+		icon = align_to_china
+		x = 1
+		y = 1
+
+		relative_position_id = IRQ_loans_from_neighbours
+		prerequisite = { focus = IRQ_loans_from_neighbours }
+
+		bypass = {
+			has_war_with = CHI
+		}
+
+		cost = 10
+		search_filters = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IRQ_chinese_investments"
+			custom_effect_tooltip = IRQ_chinese_investments_note_TT
+			if = {
+				limit = {
+					CHI = {
+						IRQ = {
+							influence_higher_30 = yes
+						}
+					}
+				}
+				one_office_construction = yes
+				three_random_infrastructure = yes
+				two_random_network_infrastructure = yes
+			}
+			else_if = {
+				limit = {
+					CHI = {
+						IRQ = {
+							influence_higher_20 = yes
+						}
+					}
+				}
+				three_random_infrastructure = yes
+				two_random_network_infrastructure = yes
+			}
+			else_if = {
+				limit = {
+					CHI = {
+						IRQ = {
+							influence_higher_10 = yes
+						}
+					}
+				}
+				two_random_infrastructure = yes
+				one_random_network_infrastructure = yes
+			}
+			else = {
+				one_random_infrastructure = yes
+			}
+		}
+	}
+	focus = {
+		id = IRQ_a_new_day_in_baghdad
+		icon = A_nation_after_ISIS_Focus_Icon
+		x = -1
+		y = 1
+
+		relative_position_id = IRQ_chinese_investments
+		prerequisite = { focus = IRQ_chinese_investments }
+		prerequisite = { focus = IRQ_industrial_military_complex }
+
+		cost = 10
+		search_filters = {}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus IRQ_chinese_investments"
+			add_ideas = IRQ_increased_exports
 		}
 	}
 }
