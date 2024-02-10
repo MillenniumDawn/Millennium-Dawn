@@ -9,60 +9,6 @@ add_namespace = mdmosjap_japannews
 add_namespace = mdmosjap_japannews_kato
 
 #----------------------------------------------------------------
-#Expanded Country Events
-#----------------------------------------------------------------
-#14th Business Cycle
-country_event = {
-	id = mdmosjap_japan.900101
-	title = mdmosjap_japan.900101.t
-	desc = mdmosjap_japan.900101.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	trigger = {
-		original_tag = JAP
-		NOT = {
-			has_idea = JAP_bubble_burst
-			has_country_flag = MDMOSJAP_KENKIHO_RECESSION
-		}
-		num_of_civilian_factories > 64
-		#date < 2005.12.31
-	}
-
-	option = {
-		name = mdmosjap_japan.900101.oA
-		set_country_flag = disable_cycle_costs
-		if = {
-			limit = { has_idea = stable_growth }
-			swap_ideas = { remove_idea = stable_growth add_idea = fast_growth }
-		}
-		if = {
-			limit = { has_idea = stagnation }
-			swap_ideas = { remove_idea = stagnation add_idea = stable_growth }
-		}
-		if = {
-			limit = { has_idea = recession }
-			swap_ideas = { remove_idea = recession add_idea = stagnation }
-		}
-		if = {
-			limit = { has_idea = depression }
-			swap_ideas = { remove_idea = depression add_idea = recession }
-		}
-		clr_country_flag = disable_cycle_costs
-		if = {
-			limit = {
-				OR = {
-					has_idea = stable_growth
-					has_idea = fast_growth
-					has_idea = economic_boom
-				}
-			}
-			add_stability = 0.05
-		}
-	}
-}
-
-#----------------------------------------------------------------
 #Radicalism Events
 #TODO: rework all of these to better integrate the radicalism mechanic
 #----------------------------------------------------------------
@@ -98,19 +44,6 @@ country_event = {
 		modifier = {
 			trigger_mdmosjap_has_radicalism_left_50 = yes
 			factor = 1
-		}
-		modifier = {
-			JAP = { has_country_flag = MDMOSJAP_JAP_NF_MEDIA_TOT2 }
-			factor = 0.8
-		}
-		modifier = {
-			JAP = {
-				OR = {
-					has_country_flag = MDMOSJAP_STATE_OF_EMERGENCY_SENTENCED
-					has_country_flag = MDMOSJAP_STATE_OF_EMERGENCY_INVOKED
-				}
-			}
-			factor = 32
 		}
 	}
 
@@ -1135,123 +1068,73 @@ country_event = {
 	}
 }
 
-
-#Patriotism and Officiers
-#TODO: rework for defense overhaul
+#----------------------------------------------------------------
+#Triggered After Focuses
+#----------------------------------------------------------------
+#Defense Force Officers Host a Party
 country_event = {
-	id = mdmosjap_japan.110301
-	title = mdmosjap_japan.110301.t
-	desc = mdmosjap_japan.110301.d
+	id = Japan.200005000
+	title = Japan.200005000.t
+	desc = Japan.200005000.d
 	#picture = GFX_news_event_hearts_of_iron_4
 
 	trigger = {
 		original_tag = JAP
 		ROOT = {
-			has_completed_focus = JAP_officer_candidate_school
-			trigger_mdmosjap_has_radicalism_right_75 = yes
 			OR = {
-				is_in_array = { ruling_party = 0 }
-				is_in_array = { ruling_party = 1 }
-				is_in_array = { ruling_party = 6 }
-				is_in_array = { ruling_party = 7 }
-				has_government = nationalist
+				has_completed_focus = JAP_jgsdf_org
+				has_completed_focus = JAP_jmsdf_org
+				has_completed_focus = JAP_jasdf_org
 			}
 		}
 	}
 
 	mean_time_to_happen = {
-		days = 28800
+		days = 720
 		modifier = {
-			trigger_mdmosjap_has_radicalism_right_0 = yes
+			JAP = {
+				OR = {
+					has_completed_focus = JAP_revision
+					has_completed_focus = JAP_reflection
+				}
+			}
+			factor = 0.5
+		}
+		modifier = {
+			JAP = {
+					has_completed_focus = JAP_jgsdf_org
+				}
+			}
+			factor = 0.8
+		}
+		modifier = {
+			JAP = {
+					has_completed_focus = JAP_jmsdf_org
+				}
+			}
+			factor = 0.8
+		}
+		modifier = {
+			JAP = {
+					has_completed_focus = JAP_jasdf_org
+				}
+			}
+			factor = 0.8
+		}
+	}
+
+	#Make a note about integrity and peace
+	option = {
+		ai_chance = {
 			factor = 10
 		}
-		modifier = {
-			trigger_mdmosjap_has_radicalism_right_1 = yes
-			factor = 1
-		}
-		modifier = {
-			trigger_mdmosjap_has_radicalism_right_10 = yes
-			factor = 1
-		}
-		modifier = {
-			trigger_mdmosjap_has_radicalism_right_25 = yes
-			factor = 1
-		}
-		modifier = {
-			trigger_mdmosjap_has_radicalism_right_50 = yes
-			factor = 1
-		}
-		modifier = {
-			trigger_mdmosjap_has_radicalism_right_75 = yes
-			factor = 0.5
-		}
-		modifier = {
-			trigger_mdmosjap_has_radicalism_right_90 = yes
-			factor = 0.5
-		}
-		modifier = {
-			JAP = {
-				OR = {
-					has_completed_focus = JAP_adapt_article_9
-					has_completed_focus = JAP_article_of_state_emergency_prerogative
-				}
-			}
-			factor = 0.5
-		}
-		modifier = {
-			JAP = {
-				OR = {
-					has_country_flag = MDMOSJAP_STATE_OF_EMERGENCY_SENTENCED
-					has_country_flag = MDMOSJAP_STATE_OF_EMERGENCY_INVOKED
-				}
-			}
-			factor = 0.5
-		}
-	}
-
-	#Embrace Patriotism for the People and Liberty
-	option = {
-		ai_chance = {
-			factor = 25
-			modifier = {
-				OR = {
-					NOT = { is_in_array = { ruling_party = 2 } }
-					NOT = { is_in_array = { ruling_party = 3 } }
-					NOT = { is_in_array = { ruling_party = 4 } }
-					NOT = { is_in_array = { ruling_party = 5 } }
-					NOT = { is_in_array = { ruling_party = 18 } }
-					NOT = { is_in_array = { ruling_party = 19 } }
-				}
-				factor = 4
-			}
-			modifier = {
-				OR = {
-					NOT = { is_in_array = { ruling_party = 1 } }
-					NOT = { is_in_array = { ruling_party = 6 } }
-					NOT = { is_in_array = { ruling_party = 7 } }
-					NOT = { is_in_array = { ruling_party = 20 } }
-					NOT = { is_in_array = { ruling_party = 21 } }
-					NOT = { is_in_array = { ruling_party = 22 } }
-				}
-				factor = 0
-			}
-		}
-		name = mdmosjap_japan.110301.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.110301.oA"
-		increase_mdmosjap_concon_left_2 = yes
-		set_temp_variable = { jap_radical_change = -1 }
-		jap_modify_radicalism_left = yes
-		set_temp_variable = { jap_radical_change = 1 }
+		name = Japan.200005000.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.200005000.oA"
+		set_temp_variable = { jap_radical_change = 3 }
 		jap_modify_radicalism_right = yes
-		mdmosjap_increase_party_popularity_array_2_var_2 = yes
-		mdmosjap_increase_party_popularity_array_3_var_2 = yes
-		mdmosjap_increase_party_popularity_array_4_var_2 = yes
-		mdmosjap_increase_party_popularity_array_5_var_2 = yes
-		mdmosjap_increase_party_popularity_array_18_var_2 = yes
-		mdmosjap_increase_party_popularity_array_19_var_2 = yes
 	}
 
-	#Embrace Patriotism for the Government and Regime
+	#Make a note about patriotism and duty
 	option = {
 		ai_chance = {
 			factor = 25
@@ -1278,8 +1161,8 @@ country_event = {
 				factor = 4
 			}
 		}
-		name = mdmosjap_japan.110301.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.110301.oB"
+		name = Japan.200005000.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.200005000.oB"
 		increase_mdmosjap_concon_right_2 = yes
 		set_temp_variable = { jap_radical_change = 1 }
 		jap_modify_radicalism_left = yes
@@ -1294,34 +1177,54 @@ country_event = {
 	}
 }
 
-#Dangersous Sign in North Korea
-#TODO: retool for Korean foreign policy
+#North Korea Prepares For War
 country_event = {
-	id = mdmosjap_japan.250101
-	title = mdmosjap_japan.250101.t
-	desc = mdmosjap_japan.250101.d
+	id = Japan.200004000
+	title = Japan.200004000.t
+	desc = Japan.200004000.d
 	#picture = GFX_news_event_hearts_of_iron_4
 
 	fire_only_once = yes
 	trigger = {
 		original_tag = JAP
-		NKO = { has_completed_focus = NKO_remilitarize_the_DMZ }
+		NKO = {
+			focus_progress = {
+				focus = NKO_remilitarize_the_DMZ
+				progress > 0.2
+			}
+		}
+		#TODO: add the flag for choosing to help assist NKO, otherwise we don't care
 	}
 
-	mean_time_to_happen = { days = 3 }
+	mean_time_to_happen = { days = 5 }
 
+	#Encourage NKO to de-escalate
 	option = {
-		name = mdmosjap_japan.250101.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.250101.oA"
+		name = Japan.200004000.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.200004000.oA"
+		add_political_power = -150
+		set_temp_variable = { jap_radical_change = 3 }
+		jap_modify_radicalism_left = yes
+		set_temp_variable = { jap_radical_change = 5 }
+		jap_modify_radicalism_right = yes
+		#TODO: event for NKO: "Japan Responds to Aggression"
+	}
+
+	#Withdraw all support
+	option = {
+		name = Japan.200004000.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.200004000.oB"
 		add_war_support = 0.05
-		add_stability = -0.05
 		set_temp_variable = { jap_radical_change = 2 }
 		jap_modify_radicalism_left = yes
 		set_temp_variable = { jap_radical_change = 2 }
 		jap_modify_radicalism_right = yes
-		increase_mdmosjap_concon_right_10 = yes
-		hidden_effect = { country_event = { id = mdmosjap_japan.250102 days = 3 } }
+		#TODO: event for NKO: "Japan Rescinds Aid"
+		#TODO: event for KOR: "Japan Rescinds Aid To North Korea"
+		#TODO: store party in charge that supported aid to Korea, and reduce support for them
 	}
+
+	#Secret Talks Against KOR (only if KOR is being aggressive)
 }
 
 #Ministry of Defence Demands Urgent Budget for the Defence
@@ -1926,29 +1829,6 @@ country_event = {
 	}
 }
 
-#[WIP] Dispatch JMSDF to the Indian Ocean? (Mission Trigger)
-#country_event = {
-#	id = mdmosjap_japan.131103001
-#	title = mdmosjap_japan.131103001.t
-#	desc = mdmosjap_japan.131103001.d
-#	#picture = GFX_news_event_hearts_of_iron_4
-#
-#	fire_only_once = yes
-#	trigger = {
-#		JAP = { has_country_flag = MDMOSJAP_JAP_ANTI_TERRORISM_LAW }
-#		USA = { has_country_flag = Operation_enduring_freedom }
-#	}
-#	mean_time_to_happen = { days = 7 }
-#
-#	option = {
-#		name = mdmosjap_japan.131103001.oA
-#		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.131103001.oA"
-#		set_country_flag = MDMOSJAP_MILITARY_DISPATCH_INDIAN_OCEAN_NO
-#		activate_mission_tooltip = mdmosjap_JAP_military_dispatch_to_indian_ocean_no
-#		custom_effect_tooltip = MDMOSJAP_EVENT_MISSION_TRIGGER_INDIAN_OCEAN_TT
-#	}
-#}
-
 #The Birth of Princess Aiko
 country_event = {
 	id = mdmosjap_japan.131201001
@@ -2242,81 +2122,6 @@ country_event = {
 	}
 }
 
-#Koichi Kato Left the Diet (Mutually With mdmosjap_japan_kato.101)
-country_event = {
-	id = mdmosjap_japan.140402001
-	title = mdmosjap_japan.140402001.t
-	desc = mdmosjap_japan.140402001.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	immediate = {
-		set_country_flag = MDMOSJAP_EVENT_KATO_ONCE_QUIT_FROM_DIET
-	}
-
-	option = {
-		name = mdmosjap_japan.140402001.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.140402001.oA"
-		mdmosjap_decrease_party_popularity_array_1_var_1 = yes
-		set_country_flag = { flag = MDMOSJAP_RESIGNATION_COOLDOWN_KOICHI_KATO days = 1095 value = 1 }
-		custom_effect_tooltip = MDMOSJAP_KATO_DROPOUT_2002_TT
-	}
-}
-
-#Hatoyama Resigned Representative of DPJ
-country_event = {
-	id = mdmosjap_japan.141211001
-	title = mdmosjap_japan.141211001.t
-	desc = mdmosjap_japan.141211001.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	trigger = {
-		JAP = {
-			NOT = { is_in_array = { ruling_party = 2 } }
-		}
-	}
-
-	option = {
-		name = mdmosjap_japan.generic_interesting
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.141211001.generic_interesting"
-		mdmosjap_decrease_party_popularity_array_2_var_1 = yes
-		if = {
-			limit = { is_in_array = { ruling_party = 2 } }
-			set_country_flag = MDMOSJAP_HATOYAMA_RESIGNED
-			changepm_mdmosjap_JAP_addflag_resignation = yes			#Make a flag for the resignation of P.M.
-			changepm_mdmosjap_JAP_prime_minister_election = yes		#Choose the next Prime Minister
-		} else = {
-			set_country_flag = { flag = MDMOSJAP_RESIGNATION_COOLDOWN_YUKIO_HATOYAMA days = 1095 value = 1 }
-			custom_effect_tooltip = MDMOSJAP_HATOYAMA_DROPOUT_TT
-		}
-		increase_mdmosjap_concon_right_1 = yes
-		set_temp_variable = { jap_radical_change = -1 }
-		jap_modify_radicalism_left = yes
-	}
-}
-
-#Retirement of Hiromu Nonaka
-country_event = {
-	id = mdmosjap_japan.151001001
-	title = mdmosjap_japan.151001001.t
-	desc = mdmosjap_japan.151001001.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.151001001.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.151001001.oA"
-		set_country_flag = MDMOSJAP_RETIREMENT_HIROMU_NONAKA
-		custom_effect_tooltip = MDMOSJAP_RETIREMENT_HIROMU_NONAKA_TT
-	}
-}
 
 #Takako Doi Resigned Representative of SPD
 country_event = {
@@ -2397,171 +2202,6 @@ country_event = {
 			set_temp_variable = { jap_radical_change = -1 }
 			jap_modify_radicalism_right = yes
 		}
-	}
-}
-
-#Japan-Kuwait Status of Forces Agreement
-country_event = {
-	id = mdmosjap_japan.151222001
-	title = mdmosjap_japan.151222001.t
-	desc = mdmosjap_japan.151222001.d
-	#picture = GFX_eventpic_mdmosjap_jap_election
-
-	fire_only_once = yes
-	trigger = {
-		original_tag = JAP
-		JAP = {
-			is_puppet = no
-			is_subject = no
-			has_war = no
-		}
-		USA = { has_country_flag = Operation_iraqi_freedom }
-		IRQ = {
-			OR = {
-				is_puppet_of = USA
-				is_subject_of = USA
-				AND = {
-					NOT = { has_country_leader = { name = "Saddam Hussain" } }
-					NOT = { has_government = nationalist }
-				}
-			}
-		}
-		KUW = {
-			exists = yes
-			has_civil_war = no
-		}
-	}
-
-	mean_time_to_happen = { days = 7 }
-
-	#Propose the agreement
-	option = {
-		ai_chance = {
-			factor = 80
-			modifier = {
-				has_country_leader = { name = "Yohei Kono" }
-				factor = 0
-			}
-		}
-		name = mdmosjap_japan.151222001.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.151222001.oA"
-		KUW = { country_event = { id = mdmosjap_japan.151222002 days = 1 } }
-	}
-
-	#Withdraw the agreement
-	option = {
-		ai_chance = {
-			factor = 20
-			modifier = {
-				OR = {
-					is_in_array = { ruling_party = 3 }
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 5 }
-					is_in_array = { ruling_party = 18 }
-					is_in_array = { ruling_party = 19 }
-				}
-				factor = 4
-			}
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
-		}
-		name = mdmosjap_japan.151222001.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.151222001.oB"
-		add_political_power = -50
-	}
-}
-
-#Japan Proposes the Kuwait-Japan Status of Forces Agreement
-country_event = {
-	id = mdmosjap_japan.151222002
-	title = mdmosjap_japan.151222002.t
-	desc = mdmosjap_japan.151222002.d
-	#picture = GFX_eventpic_mdmosjap_jap_election
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	#Approve to the agreement
-	option = {
-		ai_chance = {
-			factor = 99
-		}
-		name = mdmosjap_japan.151222002.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.151222002.oA"
-		add_stability = -0.01
-		add_ideas = JAP_KUW_SOFA
-		add_opinion_modifier = { target = FROM modifier = mdmosjap_opinion_KUW_JAP_SOFA }
-		effect_tooltip = {
-			KUW = {
-				give_military_access = JAP
-			#	diplomatic_relation = { country = JAP relation = docking_rights active = yes }
-			#	diplomatic_relation = { country = JAP relation = military_access active = yes }
-			#	generic_grant_2_percent_influence_of_JAP = yes
-			}
-		}
-		FROM = { country_event = { id = mdmosjap_japan.151222003 days = 1 } }
-	}
-
-	#Reject to the agreement
-	option = {
-		ai_chance = {
-			factor = 1
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
-			modifier = {
-				JAP = { has_idea = JAP_japanese_article_9 }
-				factor = 0
-			}
-		}
-		name = mdmosjap_japan.151222002.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.151222002.oB"
-		add_political_power = -50
-		FROM = { country_event = { id = mdmosjap_japan.151222004 days = 1 } }
-	}
-}
-
-#Kuwait Approved to Our Proposal
-country_event = {
-	id = mdmosjap_japan.151222003
-	title = mdmosjap_japan.151222003.t
-	desc = mdmosjap_japan.151222003.d
-	#picture = GFX_eventpic_mdmosjap_jap_election
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.generic_verywell
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.151222003.oA"
-		add_timed_idea = { idea = JAP_operation_in_IRQ days = 1880 }	#2003/12/19 - 2009/2/10
-		KUW = {
-			give_military_access = JAP
-		#	diplomatic_relation = { country = JAP relation = docking_rights active = yes }
-		#	diplomatic_relation = { country = JAP relation = military_access active = yes }
-		#	generic_grant_2_percent_influence_of_JAP = yes
-		}
-		hidden_effect = { add_opinion_modifier = { target = FROM modifier = mdmosjap_opinion_JAP_KUW_SOFA } }
-	}
-}
-
-#Kuwait Rejected to Our Proposal
-country_event = {
-	id = mdmosjap_japan.151222004
-	title = mdmosjap_japan.151222004.t
-	desc = mdmosjap_japan.151222004.d
-	#picture = GFX_eventpic_mdmosjap_jap_election
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.generic_disappointed
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.151222004.oA"
-		add_political_power = -100
 	}
 }
 
@@ -13400,62 +13040,64 @@ country_event = {
 #//////// Visit North /////////
 #Pyongyang Statement: Detail
 country_event = {
-	id = mdmosjap_japan.1610801
-	title = mdmosjap_japan.1610801.t
-	desc = mdmosjap_japan.1610801.d
-	#picture = GFX_news_event_hearts_of_iron_4
+	id = Japan.100010000
+	title = Japan.100010000.t
+	desc = Japan.100010000.d
+	picture = WIP #TODO: gfx
 
 	fire_only_once = yes
 	is_triggered_only = yes
 
-	#Include Abduction
-	option = {
-		ai_chance = {
-			factor = 100
-			modifier = {
-				OR = {
-					has_country_leader = { name = "Koichi Kato" }
-					has_country_leader = { name = "Yohei Kono" }
-				}
-				factor = 0.5
-			}
-			modifier = {
-				OR = {
-					is_in_array = { ruling_party = 3 }
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 5 }
-				}
-				factor = 0
-			}
+	trigger = {
+		country_exists = NKO
+		NKO = {
+			has_war = no
 		}
-		name = mdmosjap_japan.1610801.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610801.oA"
-		add_political_power = -100
-		NKO = { country_event = { id = mdmosjap_japan.1610802 days = 1 } }
 	}
 
-	#Exclude Abduction
+	#Focus on Abduction
+	option = {
+		ai_chance = {
+			factor = 10
+			#TODO: if socialist, factor 0
+		}
+		name = Japan.100010000.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010000.oA"
+		NKO = {
+			set_country_flag = JAP_NKO_CONF_ABDUCTIONS_NOTE
+			country_event = { id = Japan.100010001 days = 1 }
+		}
+		#TODO: custom tooltip if relations not good enough to guarantee success
+	}
+
+	#Focus on Relations
 	option = {
 		ai_chance = {
 			factor = 1
 		}
-		name = mdmosjap_japan.1610801.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610801.oB"
-		#add_stability = -0.01
-		mdmosjap_decrease_ruling_party_popularity_5 = yes
+		name = Japan.100010000.oB
+		add_political_power = -100
+		log = "[GetDateText]: [Root.GetName]: Japan.100010000.oB"
 		NKO = {
-			country_event = { id = mdmosjap_japan.1610802 days = 1 }
+			country_event = { id = Japan.100010001 days = 1 }
 		}
-		JAP = { set_country_flag = MDMOSJAP_POOR_PYONGYANG_STATEMENT }
 	}
 }
 
-#Pyongyang Statement: Kim Jong Il's Response
+#Pyongyang Statement: NKO's Response
 country_event = {
-	id = mdmosjap_japan.1610802
-	title = mdmosjap_japan.1610802.t
-	desc = mdmosjap_japan.1610802.d
-	#picture = GFX_news_event_hearts_of_iron_4
+	id = Japan.100010001
+	title = Japan.100010001.t
+	desc = {
+		text = Japan.100010001.d.a
+		trigger = {
+			has_country_flag = JAP_NKO_CONF_ABDUCTIONS_NOTE
+		}
+	}
+	desc = {
+		text = Japan.100010001.d.b
+	}
+	picture = WIP #TODO: gfx
 
 	fire_only_once = yes
 	is_triggered_only = yes
@@ -13463,844 +13105,456 @@ country_event = {
 	#Accept
 	option = {
 		ai_chance = {
-			factor = 80
-			modifier = {
-				JAP = {
-					OR = {
-						has_country_leader = { name = "Koichi Kato" }
-						has_country_leader = { name = "Yohei Kono" }
-						is_in_array = { ruling_party = 3 }
-						is_in_array = { ruling_party = 4 }
-						is_in_array = { ruling_party = 5 }
-					}
-					NOT = { has_country_flag = MDMOSJAP_POOR_PYONGYANG_STATEMENT }
-				}
-				factor = 0.25
-			}
+			factor = 10
 		}
-		name = mdmosjap_japan.1610802.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610802.oA"
-		add_political_power = -30
-		add_stability = -0.02
-		JAP = {
-			country_event = { id = mdmosjap_japan.1610803 days = 1 }
-		}
+		name = Japan.100010001.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010001.oA"
+		JAP = { country_event = { id = Japan.100010002 days = 1 } }
 	}
 
 	#Refuse
 	option = {
 		ai_chance = {
-			factor = 20
-			modifier = {
-				OR = {
-					is_historical_focus_on = yes
-					JAP = {
-						has_country_flag = MDMOSJAP_POOR_PYONGYANG_STATEMENT
-						OR = {
-							has_country_leader = { name = "Junichiro Koizumi" }
-							has_country_leader = { name = "Koichi Kato" }
-							has_country_leader = { name = "Yohei Kono" }
-							is_in_array = { ruling_party = 3 }
-							is_in_array = { ruling_party = 4 }
-							is_in_array = { ruling_party = 5 }
-						}
-					}
-					NKO = { NOT = { has_government = communism } }
-				}
-				factor = 0
-			}
-		}
-		name = mdmosjap_japan.1610802.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610802.oB"
-		add_stability = 0.02
-		JAP = {
-			country_event = { id = mdmosjap_japan.1610804 days = 1 }
-		}
-	}
-}
-
-#Pyongyang Statement: Kim Jong Il Accepted
-country_event = {
-	id = mdmosjap_japan.1610803
-	title = mdmosjap_japan.1610803.t
-	desc = mdmosjap_japan.1610803.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.generic_great
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610803 - generic_great"
-		JAP = {
-			add_named_threat = { threat = -0.5 name = MDMOSJAP_JAP_pyongyang_statement }
-			add_opinion_modifier = {
-				target = NKO
-				modifier = mdmosjap_opinion_PRK_pyongyang_declaration_agreement
-			}
-		}
-		mdmosjap_increase_ruling_party_popularity_5 = yes
-		NKO = {
-			add_opinion_modifier = {
-				target = JAP
-				modifier = mdmosjap_opinion_PRK_pyongyang_declaration_agreement
-			}
-		}
-		increase_mdmosjap_concon_right_1 = yes
-		set_temp_variable = { jap_radical_change = 2 }
-		jap_modify_radicalism_right = yes
-		news_event = mdmosjap_japannews.1610803
-		set_country_flag = MDMOSJAP_YES_PYONGYANG_STATEMENT
-		JAP = {
-			if = {
-				limit = { NOT = { has_country_flag = MDMOSJAP_POOR_PYONGYANG_STATEMENT } }
-				country_event = { id = mdmosjap_japan.1610805 days = 624 }
-				add_country_leader_trait = abductee_rescuer1
-				remove_opinion_modifier = { target = NKO modifier = mdmosjap_opinion_abduction1 }
-				add_opinion_modifier = { target = NKO modifier = mdmosjap_opinion_abduction2 }
-			}
-		}
-	}
-}
-
-news_event = {
-	id = mdmosjap_japannews.1610803
-	title = mdmosjap_japannews.1610803.t
-	desc = mdmosjap_japannews.1610803.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	is_triggered_only = yes
-
-	major = yes
-
-	#Japan, South Korea
-	option = {
-		trigger = {
-			tag = JAP
-		}
-		name = mdmosjap_japannews.1610803.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610803.oA"
-	}
-
-	#Koreas
-	option = {
-		trigger = {
-			tag = NKO
-		}
-		name = mdmosjap_japannews.1610803.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610803.oB"
-	}
-
-	#The others
-	option = {
-		trigger = {
-			AND = {
-				NOT = { tag = JAP }
-				NOT = { tag = NKO }
-			}
-		}
-		name = mdmosjap_japannews.1610803.oC
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610803.oC"
-	}
-}
-
-#Pyongyang Statement: Kim Jong Il Refused
-country_event = {
-	id = mdmosjap_japan.1610804
-	title = mdmosjap_japan.1610804.t
-	desc = mdmosjap_japan.1610804.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.generic_damn
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610804 - generic_damn"
-		if = {
-			limit = {
-				JAP = { has_country_flag = MDMOSJAP_STRONG_PYONGYANG_STATEMENT }
-			}
-			add_stability = -0.05
-			add_war_support = 0.05
-		}
-		JAP = {
-			add_opinion_modifier = {
-				target = NKO
-				modifier = mdmosjap_opinion_PRK_pyongyang_declaration_disagreement
-			}
-		}
-		increase_mdmosjap_concon_right_2 = yes
-		set_temp_variable = { jap_radical_change = 4 }
-		jap_modify_radicalism_right = yes
-		news_event = mdmosjap_japannews.1610804
-		set_country_flag = MDMOSJAP_NO_PYONGYANG_STATEMENT
-	}
-}
-
-news_event = {
-	id = mdmosjap_japannews.1610804
-	title = mdmosjap_japannews.1610804.t
-	desc = mdmosjap_japannews.1610804.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	is_triggered_only = yes
-
-	major = yes
-
-	#Japan
-	option = {
-		trigger = {
-			tag = JAP
-		}
-		name = mdmosjap_japannews.1610804.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610804.oA"
-	}
-
-	#North Korea
-	option = {
-		trigger = {
-			tag = NKO
-		}
-		name = mdmosjap_japannews.1610804.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610804.oB"
-	}
-
-	#The others
-	option = {
-		trigger = {
-			AND = {
-				NOT = { tag = JAP }
-				NOT = { tag = NKO }
-			}
-		}
-		name = mdmosjap_japannews.1610804.oC
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610804.oC"
-	}
-}
-
-#Pyongyang Statement: Second Visit
-country_event = {
-	id = mdmosjap_japan.1610805
-	title = mdmosjap_japan.1610805.t
-	desc = mdmosjap_japan.1610805.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	#Accept
-	option = {
-		ai_chance = {
-			factor = 80
-			modifier = {
-				JAP = { NOT = { has_country_leader = { name = "Junichiro Koizumi" } } }
-				factor = 0.05
-			}
-			modifier = {
-				OR = {
-					NKO = { has_country_leader = { name = "Kim Jong-Un" } }
-					NKO = { has_country_leader = { name = "Kim Jong-un" } }
-				}
-				factor = 0.01
-			}
-		}
-		name = mdmosjap_japan.1610805.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610805.oA"
-		NKO = {
-			country_event = { id = mdmosjap_japan.1610806 days = 1 }
-		}
-	}
-
-	#Refuse
-	option = {
-		ai_chance = {
-			factor = 20
+			factor = 1
+			#TODO: if relations > -1, factor 0
 			modifier = {
 				NKO = {
-					OR = {
-						has_country_leader = { name = "Kim Jong-nam" }
-						has_country_leader = { name = "Kim Han-sol" }
+					has_opinion = {
+						target = JAP
+						value > -1
 					}
 				}
-				is_historical_focus_on = yes
 				factor = 0
 			}
 		}
-		name = mdmosjap_japan.1610805.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610805.oB"
-		set_temp_variable = { jap_radical_change = 1 }
-		jap_modify_radicalism_right = yes
+		name = Japan.100010001.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010001.oB"
+		JAP = { country_event = { id = Japan.100010002 days = 1 } }
 	}
 }
 
-#Pyongyang Statement: Second Visit - Kim's Response
+#Pyongyang Statement: NKO Invites Leader to Pyongyang
 country_event = {
-	id = mdmosjap_japan.1610806
-	title = mdmosjap_japan.1610806.t
-	desc = mdmosjap_japan.1610806.d
-	#picture = GFX_news_event_hearts_of_iron_4
+	id = Japan.100010002
+	title = Japan.100010002.t
+	desc = Japan.100010002.d
+	picture = WIP #TODO: gfx
 
 	fire_only_once = yes
 	is_triggered_only = yes
+
+	option = {
+		name = Japan.100010002.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010002.OA"
+		JAP = { country_event = { id = Japan.100010004 days = 10 } }
+	}
+}
+
+#Pyongyang Statement: NKO Rejects Letter
+country_event = {
+	id = Japan.100010003
+	title = Japan.100010003.t
+	desc = Japan.100010003.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Japan.100010003.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010003.OA"
+		#TODO: KOR outreach
+	}
+}
+
+
+#Pyongyang Visit: Welcome
+country_event = {
+	id = Japan.100010004
+	title = Japan.100010004.t
+	desc = Japan.100010004.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = NKO
+		NKO = {
+			has_war = no
+		}
+	}
+
+	#Let's go!
+	option = {
+		ai_chance = {
+			factor = 10
+		}
+		name = Japan.100010004.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010004.oA"
+	}
+}
+
+
+#Pyongyang Visit: Request to NKO
+country_event = {
+	id = Japan.100010005
+	title = Japan.100010005.t
+	desc = Japan.100010005.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = NKO
+		NKO = {
+			has_war = no
+		}
+	}
+
+	#Request Acknowledgement of Abductions
+	option = {
+		ai_chance = {
+			factor = 10
+			#TODO: increased factor if conservative
+		}
+		name = Japan.100010005.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010005.oA"
+		NKO = {
+			set_country_flag = JAP_NKO_CONF_ABDUCTIONS_DEMAND
+			country_event = { id = Japan.100010006 days = 1 } # NKO's turn to hear demands
+		}
+		#TODO: custom tooltip if relations not good enough to guarantee success
+	}
+
+	#Request Halt of Nuclear Program
+	option = {
+		ai_chance = {
+			factor = 5
+		}
+		name = Japan.100010005.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010005.oB"
+		NKO = {
+			set_country_flag = JAP_NKO_CONF_NUCLEAR_DEMAND
+			country_event = { id = Japan.100010006 days = 1 } # NKO's turn to hear demands
+		}
+		#TODO: custom tooltip if relations not good enough to guarantee success
+	}
+
+	#Request Rapprochement
+	option = {
+		ai_chance = {
+			factor = 5
+			#TODO: increased factor if progressive
+		}
+		name = Japan.100010005.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010005.oB"
+		NKO = {
+			set_country_flag = JAP_NKO_CONF_NO_DEMAND
+			country_event = { id = Japan.100010006 days = 1 } # NKO's turn to hear demands
+		}
+		#TODO: custom tooltip to show NKO will always accept this
+	}
+}
+
+#Pyongyang Visit: Request to JAP
+country_event = {
+	id = Japan.100010006
+	title = Japan.100010006.t
+	desc = {
+		text = Japan.100010006.d.a
+		trigger = {
+			has_country_flag = JAP_NKO_CONF_ABDUCTIONS_DEMAND
+		}
+	}
+	desc = {
+		text = Japan.100010006.d.b
+		trigger = {
+			has_country_flag = JAP_NKO_CONF_NUCLEAR_DEMAND
+		}
+	}
+	desc = {
+		text = Japan.100010006.d.c
+	}
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = NKO
+		NKO = {
+			has_war = no
+		}
+	}
+
+	#Request Food Aid
+	option = {
+		ai_chance = {
+			factor = 10
+			modifier = {
+				NKO = { country_flag = JAP_NKO_CONF_ABDUCTIONS_DEMAND }
+				factor = 2
+			}
+		}
+		name = Japan.100010006.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010006.oA"
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_FOOD_DEMAND
+			country_event = { id = Japan.100010007 days = 1 } # JAP's turn to hear demands
+		}
+		#TODO: custom tooltip to show AI JAP will always accept this
+	}
+
+	#Request Industrial Assistance
+	option = {
+		ai_chance = {
+			factor = 5
+			modifier = {
+				NKO = { country_flag = JAP_NKO_CONF_NUCLEAR_DEMAND }
+				factor = 2
+			}
+		}
+		name = Japan.100010006.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010006.oB"
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_INDUSTRIAL_DEMAND
+			country_event = { id = Japan.100010007 days = 1 } # JAP's turn to hear demands
+		}
+		#TODO: custom tooltip if relations not good enough to guarantee success
+	}
+
+	#Request Recognition
+	option = {
+		ai_chance = {
+			factor = 5
+			modifier = {
+				NKO = { country_flag = JAP_NKO_CONF_NO_DEMAND }
+				factor = 3
+			}
+			#TODO: more likely if KOR has taken sunshine policy OR if JAP requested rapprochement only
+		}
+		name = Japan.100010006.oC
+		log = "[GetDateText]: [Root.GetName]: Japan.100010006.oC"
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_LEGITIMACY_DEMAND
+			if = {
+				limit = {
+					KOR = { has_completed_focus = KOR_sunshine_policy }
+				}
+				country_event = { id = Japan.100010008 days = 1 } # JAP's turn to hear demands (sunshine)
+			}
+			else = {
+				country_event = { id = Japan.100010009 days = 1 } # JAP's turn to hear demands (exclude KOR)
+			}
+		}
+		#TODO: custom tooltip if relations not good enough to guarantee success
+	}
+
+	#Reject!
+	option = {
+		ai_chance = {
+			factor = 5
+		}
+		name = Japan.100010006.oD
+		log = "[GetDateText]: [Root.GetName]: Japan.100010006.oD"
+		NKO = {
+			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
+		}
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_FAILURE
+		}
+	}
+}
+
+#Pyongyang Visit: JAP Considers NKO's Request
+country_event = {
+	id = Japan.100010007
+	title = Japan.100010007.t
+	desc = {
+		text = Japan.100010007.d.a
+		trigger = {
+			has_country_flag = JAP_NKO_CONF_FOOD_DEMAND
+		}
+	}
+	desc = {
+		text = Japan.100010007.d.b
+	}
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = NKO
+		NKO = {
+			has_war = no
+		}
+	}
 
 	#Accept
 	option = {
 		ai_chance = {
-			factor = 80
+			factor = 10
 			modifier = {
-				JAP = { has_country_flag = MDMOSJAP_POOR_PYONGYANG_STATEMENT }
-				factor = 0.25
+				JAP = { country_flag = JAP_NKO_CONF_FOOD_DEMAND }
+				factor = 1.5
 			}
 			modifier = {
-				OR = {
-					NKO = { has_country_leader = { name = "Kim Jong-Un" } }
-					NKO = { has_country_leader = { name = "Kim Jong-un" } }
-				}
-				factor = 0
+				NKO = { country_flag = JAP_NKO_CONF_INDUSTRIAL_DEMAND }
+				factor = 0.8
 			}
 		}
-		name = mdmosjap_japan.1610806.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610806.oA"
-		JAP = {
-			country_event = { id = mdmosjap_japan.1610807 days = 1 }
-		}
+		name = Japan.100010007.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010007.oA"
+		#TODO: news event Uneasy Agreement
 	}
 
-	#Refuse
+	#Reject
 	option = {
 		ai_chance = {
-			factor = 20
-			modifier = {
-				AND = {
-					is_historical_focus_on = yes
-					JAP = { has_country_flag = MDMOSJAP_POOR_PYONGYANG_STATEMENT }
-				}
-				factor = 4
-			}
-			modifier = {
-				OR = {
-					NKO = { has_country_leader = { name = "Kim Jong-Un" } }
-					NKO = { has_country_leader = { name = "Kim Jong-un" } }
-				}
-				factor = 2
-			}
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 0
-			}
+			factor = 5
 		}
-		name = mdmosjap_japan.1610806.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610806.oB"
-		JAP = {
-			country_event = { id = mdmosjap_japan.1610808 days = 1 }
-		}
-	}
-}
-
-#Pyongyang Statement: Second Visit - Kim Accepted
-country_event = {
-	id = mdmosjap_japan.1610807
-	title = mdmosjap_japan.1610807.t
-	desc = mdmosjap_japan.1610807.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.generic_great
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610807 - generic_great"
-		mdmosjap_increase_ruling_party_popularity_5 = yes
-		set_temp_variable = { jap_radical_change = 1 }
-		jap_modify_radicalism_right = yes
-		JAP = {
-			if = {
-				limit = {
-					has_country_leader_with_trait = abductee_rescuer1
-				}
-				remove_country_leader_trait = abductee_rescuer1
-				add_country_leader_trait = abductee_rescuer2
-			} else = {
-				add_country_leader_trait = abductee_rescuer1
-			}
-		}
-		news_event = mdmosjap_japannews.1610807
-	}
-}
-
-news_event = {
-	id = mdmosjap_japannews.1610807
-	title = mdmosjap_japannews.1610807.t
-	desc = mdmosjap_japannews.1610807.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	is_triggered_only = yes
-
-	major = yes
-
-	#Japan, South Korea
-	option = {
-		trigger = {
-			tag = JAP
-		}
-		name = mdmosjap_japannews.1610807.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610807.oA"
-	}
-
-	#Koreas
-	option = {
-		trigger = {
-			tag = NKO
-		}
-		name = mdmosjap_japannews.1610807.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610807.oB"
-	}
-
-	#The others
-	option = {
-		trigger = {
-			AND = {
-				NOT = { tag = JAP }
-				NOT = { tag = NKO }
-			}
-		}
-		name = mdmosjap_japannews.1610807.oC
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610807.oC"
-	}
-}
-
-#Pyongyang Statement: Kim Refused
-country_event = {
-	id = mdmosjap_japan.1610808
-	title = mdmosjap_japan.1610808.t
-	desc = mdmosjap_japan.1610808.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.generic_damn
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1610808 - generic_damn"
-		if = {
-			limit = {
-				JAP = { has_country_flag = MDMOSJAP_STRONG_PYONGYANG_STATEMENT }
-			}
-			add_stability = -0.05
-			add_war_support = 0.05
-		}
-		JAP = {
-			add_opinion_modifier = {
-				target = NKO
-				modifier = mdmosjap_opinion_PRK_pyongyang_declaration_disagreement
-			}
-		}
-		increase_mdmosjap_concon_right_2 = yes
-		set_temp_variable = { jap_radical_change = 4 }
-		jap_modify_radicalism_right = yes
-		news_event = mdmosjap_japannews.1610808
-		set_country_flag = MDMOSJAP_NO_PYONGYANG_STATEMENT
-	}
-}
-
-news_event = {
-	id = mdmosjap_japannews.1610808
-	title = mdmosjap_japannews.1610808.t
-	desc = mdmosjap_japannews.1610808.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	is_triggered_only = yes
-
-	major = yes
-
-	#Japan
-	option = {
-		trigger = {
-			tag = JAP
-		}
-		name = mdmosjap_japannews.1610808.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610808.oA"
-	}
-
-	#North Korea
-	option = {
-		trigger = {
-			tag = NKO
-		}
-		name = mdmosjap_japannews.1610808.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610808.oB"
-	}
-
-	#The others
-	option = {
-		trigger = {
-			AND = {
-				NOT = { tag = JAP }
-				NOT = { tag = NKO }
-			}
-		}
-		name = mdmosjap_japannews.1610808.oC
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japannews.1610808.oC"
-	}
-}
-
-
-#//////// Send Salt to the Enemy /////////
-#Humanitarian Relief for North Korea
-country_event = {
-	id = mdmosjap_japan.1630801
-	title = mdmosjap_japan.1630801.t
-	desc = mdmosjap_japan.1630801.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.1630801.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630801.oA"
-		set_temp_variable = { jap_radical_change = 2 }
-		jap_modify_radicalism_right = yes
+		name = Japan.100010007.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010007.oB"
 		NKO = {
-			effect_tooltip = { add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief1 } }
-			country_event = mdmosjap_japan.1630802
+			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
+		}
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_FAILURE
 		}
 	}
 }
 
-#Humanitarian Relief from Japan
+#Pyongyang Visit: NKO wants JAP's help negotiating with KOR (sunshine)
 country_event = {
-	id = mdmosjap_japan.1630802
-	title = mdmosjap_japan.1630802.t
-	desc = mdmosjap_japan.1630802.d
-	#picture = GFX_news_event_hearts_of_iron_4
+	id = Japan.100010008
+	title = Japan.100010008.t
+	desc = Japan.100010008.d
+	picture = WIP #TODO: gfx
 
 	fire_only_once = yes
 	is_triggered_only = yes
 
-	option = {
-		name = mdmosjap_japan.1630802.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630802.oA"
-		add_ideas = JAP_NKO_japanese_relief1
-		add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief1 }
-		hidden_effect = {
-			JAP = { country_event = { id = mdmosjap_japan.1630803 days = 365 } }
-		}
-	}
-}
-
-#[HIDDEN] War Check
-country_event = {
-	id = mdmosjap_japan.1630803
-	hidden = yes
-
-	#fire_only_once = yes
-	is_triggered_only = yes
-
-
-	option = {
-		trigger = {
-			ROOT = { NOT = { has_war_with = NKO } }
-		}
-		name = mdmosjap_japan.1630803.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630803.oA"
-		if = {			#Continue Events - Tier 2
-			limit = {
-				ROOT = { NOT = { has_war_with = NKO } }
-				NKO = { has_idea = JAP_NKO_japanese_relief1 }
-			}
-			country_event = mdmosjap_japan.1630804
-		} else_if = {	#Continue Events - Tier 3
-			limit = {
-				ROOT = { NOT = { has_war_with = NKO } }
-				NKO = { has_idea = JAP_NKO_japanese_relief2 }
-			}
-			country_event = mdmosjap_japan.1630808
-		} else = {		#Discontinue Events
-		}
-	}
-}
-
-#Extend the Relief for North Korea to ODA?
-country_event = {
-	id = mdmosjap_japan.1630804
-	title = mdmosjap_japan.1630804.t
-	desc = mdmosjap_japan.1630804.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	#fire_only_once = yes
-	is_triggered_only = yes
-
-	#Extend the relief
-	option = {
-		ai_chance = {
-			factor = 80
-			modifier = {
-				AND = {
-					NOT = { has_country_leader = { name = "Koichi Kato" } }
-					NOT = { has_country_leader = { name = "Yohei Kono" } }
-					NOT = { is_in_array = { ruling_party = 4 } }
-					NOT = { is_in_array = { ruling_party = 5 } }
-				}
-				factor = 0
-			}
-		}
-		name = mdmosjap_japan.1630804.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630804.oA"
+	trigger = {
+		country_exists = NKO
 		NKO = {
-			effect_tooltip = { add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief2 } }
-			country_event = mdmosjap_japan.1630805
-		}
-		hidden_effect = {
-			JAP = { country_event = { id = mdmosjap_japan.1630803 days = 365 } }
+			has_war = no
 		}
 	}
 
-	#Don't need to extend at this moment...
+	#Accept
 	option = {
 		ai_chance = {
 			factor = 10
-			modifier = {
-				OR = {
-					has_country_leader = { name = "Koichi Kato" }
-					has_country_leader = { name = "Yohei Kono" }
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 5 }
-				}
-				factor = 0
-			}
+			# TODO: more likely if not LDP, guaranteed if JAP took rapprochement
 		}
-		name = mdmosjap_japan.1630804.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630804.oB"
-		custom_effect_tooltip = MDMOSJAP_NF_TRY_TO_TAME_BY_TRADE_PROCRASTINATION_TT
-		hidden_effect = {
-			JAP = { country_event = { id = mdmosjap_japan.1630803 days = 365 } }
+		name = Japan.100010008.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010008.oA"
+		#TODO: event three friends (KOR and NKO will get bonus incentives to take Unity Government, JAP will get to suggest who annexes who)
+	}
+
+	#A step too far!
+	option = {
+		ai_chance = {
+			factor = 5
+		}
+		name = Japan.100010008.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010008.oB"
+		NKO = {
+			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
+		}
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_FAILURE
+		}
+	}
+}
+
+#Pyongyang Visit: NKO wants JAP's help dealing with KOR (antagonistic KOR)
+country_event = {
+	id = Japan.100010009
+	title = Japan.100010009.t
+	desc = Japan.100010009.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = NKO
+		NKO = {
+			has_war = no
 		}
 	}
 
-	#End this joke!
+	#Accept
 	option = {
 		ai_chance = {
 			factor = 10
-			modifier = {
-				OR = {
-					has_country_leader = { name = "Koichi Kato" }
-					has_country_leader = { name = "Yohei Kono" }
-					is_in_array = { ruling_party = 3 }
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 5 }
-				}
-				factor = 0
-			}
+			# TODO: more likely if not LDP, guaranteed if JAP took rapprochement
 		}
-		name = mdmosjap_japan.1630804.oC
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630804.oC"
-		NKO = {
-			effect_tooltip = { add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief_halted } }
-			country_event = mdmosjap_japan.1630810
-		}
+		name = Japan.100010009.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010009.oA"
+		#TODO: event peculiar inversion (NKO will get bonuses to north-led unification, and biases towards taking liberal struggle for power)
 	}
-}
 
-#Japan Extend the Economic Relief
-country_event = {
-	id = mdmosjap_japan.1630805
-	title = mdmosjap_japan.1630805.t
-	desc = mdmosjap_japan.1630805.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.1630805.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630805.oA"
-		swap_ideas = {
-			remove_idea = JAP_NKO_japanese_relief1
-			add_idea = JAP_NKO_japanese_relief2
-		}
-		add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief2 }
-		hidden_effect = {
-			remove_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief1 }
-			JAP = { country_event = { id = mdmosjap_japan.1630803 days = 365 } }
-			if = {
-				limit = { KOR = { exists = yes } }
-				KOR = { country_event = { id = mdmosjap_japan.1630806 days = 3 } }
-			}
-		}
-	}
-}
-
-#Japan Strengthening the Friendship with North Korea
-country_event = {
-	id = mdmosjap_japan.1630806
-	title = mdmosjap_japan.1630806.t
-	desc = mdmosjap_japan.1630806.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.1630806.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630806.oA"
-		add_stability = -0.03
-		add_war_support = 0.05
-		add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_KOR_japanese_relief_towards_NKO }
-		JAP = { country_event = { id = mdmosjap_japan.1630807 days = 1 } }
-	}
-}
-
-#South Korea Resents Us
-country_event = {
-	id = mdmosjap_japan.1630807
-	title = mdmosjap_japan.1630807.t
-	desc = mdmosjap_japan.1630807.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.1630807.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630807.oA"
-		add_political_power = -100
-		hidden_effect = { KOR = { add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_KOR_japanese_relief_towards_NKO } } }
-	}
-}
-
-#Open the Trade with North Korea?
-country_event = {
-	id = mdmosjap_japan.1630808
-	title = mdmosjap_japan.1630808.t
-	desc = mdmosjap_japan.1630808.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	#fire_only_once = yes
-	is_triggered_only = yes
-
-	#Extend the relief
+	#A step too far!
 	option = {
 		ai_chance = {
-			factor = 80
-			modifier = {
-				AND = {
-					NOT = { has_country_leader = { name = "Koichi Kato" } }
-					NOT = { has_country_leader = { name = "Yohei Kono" } }
-					NOT = { is_in_array = { ruling_party = 4 } }
-					NOT = { is_in_array = { ruling_party = 5 } }
-				}
-				factor = 0
-			}
+			factor = 5
 		}
-		name = mdmosjap_japan.1630808.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630808.oA"
+		name = Japan.100010009.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010009.oB"
 		NKO = {
-			effect_tooltip = { add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief3 } }
-			country_event = mdmosjap_japan.1630809
+			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
+		}
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_FAILURE
+		}
+	}
+}
+
+#Pyongyang Visit: Ends in Failure
+country_event = {
+	id = Japan.100010010
+	title = Japan.100010010.t
+	desc = Japan.100010010.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = NKO
+		NKO = {
+			has_war = no
 		}
 	}
 
-	#Don't need to extend at this moment...
+	#Pivot towards KOR
 	option = {
 		ai_chance = {
 			factor = 10
-			modifier = {
-				OR = {
-					has_country_leader = { name = "Koichi Kato" }
-					has_country_leader = { name = "Yohei Kono" }
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 5 }
-				}
-				factor = 0
-			}
+			# TODO: more likely if not LDP, guaranteed if JAP took rapprochement
 		}
-		name = mdmosjap_japan.1630808.oB
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630808.oB"
-		custom_effect_tooltip = MDMOSJAP_NF_TRY_TO_TAME_BY_TRADE_PROCRASTINATION_TT
-		hidden_effect = {
-			JAP = { country_event = { id = mdmosjap_japan.1630803 days = 365 } }
-		}
+		name = Japan.100010010.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100010010.oA"
+		#TODO: friends with KOR follow-up events
 	}
 
-	#End this joke!
+	#Pull back from Korean Diplomacy
 	option = {
 		ai_chance = {
-			factor = 10
-			modifier = {
-				OR = {
-					has_country_leader = { name = "Koichi Kato" }
-					has_country_leader = { name = "Yohei Kono" }
-					is_in_array = { ruling_party = 3 }
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 5 }
-				}
-				factor = 0
-			}
+			factor = 5
 		}
-		name = mdmosjap_japan.1630808.oC
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630808.oC"
-		NKO = {
-			effect_tooltip = { add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief_halted } }
-			country_event = mdmosjap_japan.1630810
-		}
-	}
-}
-
-#Opening of the Commercial Trade with Japan
-country_event = {
-	id = mdmosjap_japan.1630809
-	title = mdmosjap_japan.1630809.t
-	desc = mdmosjap_japan.1630809.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.1630809.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630809.oA"
-		swap_ideas = {
-			remove_idea = JAP_NKO_japanese_relief2
-			add_idea = JAP_NKO_japanese_relief3
-		}
-		add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief3 }
-		hidden_effect = {
-			remove_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief2 }
-		}
-	}
-}
-
-#Japan Suddenly Stops the Relief
-country_event = {
-	id = mdmosjap_japan.1630810
-	title = mdmosjap_japan.1630810.t
-	desc = mdmosjap_japan.1630810.d
-	#picture = GFX_news_event_hearts_of_iron_4
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = mdmosjap_japan.1630810.oA
-		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.1630810.oA"
-		if = {
-			limit = { has_idea = JAP_NKO_japanese_relief1 }
-			remove_ideas = JAP_NKO_japanese_relief1
-			remove_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief1 }
-		}
-		if = {
-			limit = { has_idea = JAP_NKO_japanese_relief2 }
-			remove_ideas = JAP_NKO_japanese_relief2
-			remove_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief2 }
-		}
-		if = {
-			limit = { has_idea = JAP_NKO_japanese_relief3 }
-			remove_ideas = JAP_NKO_japanese_relief3
-			remove_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief3 }
-		}
-		add_opinion_modifier = { target = JAP modifier = mdmosjap_opinion_NKO_japanese_relief_halted }
+		name = Japan.100010010.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100010010.oB"
+		#TODO: set some flags to make hostile interactions with NKO and KOR
 	}
 }
 
