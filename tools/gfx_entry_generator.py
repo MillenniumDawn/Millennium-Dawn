@@ -49,7 +49,7 @@ def main():
 	path = os.path.abspath(os.path.join(os.path.dirname(mod),'..'))
 	country_tag_list = createcountrytaglist()
 
-	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\nPlease enter the number of the option you'd like: "))
+	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "))
 
 	if selection == 1:
 		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\gfx\interface\goals'))
@@ -78,8 +78,12 @@ def main():
 
 		print(path)
 		getfiles(path)
+	elif selection == 7:
+		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\gfx\interface\decisions'))
+		print(path)
+		getfiles(path)
 	else:
-		print(f"{bcolors.FAIL}1 through 6 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
+		print(f"{bcolors.FAIL}1 through 7 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
 		return
 
 	print(f"{bcolors.OK}There are {bcolors.RESET}" + str(len(ddslist)) + f"{bcolors.OK} .dds, .png or .tga files available in this directory{bcolors.RESET}\n")
@@ -272,8 +276,33 @@ def main():
 			movefilestointerface('MD_intelligence_icons.gfx')
 			print(f"\nMD_intelligence_icons.gfx has been generated for {len(ddslist)} intelligence agencies.\n\nThe file \"MD_intelligence_icons.gfx\" has been outputted to the interface directory.")
 			return
+		elif selection == 7: # Decisions
+			print("Generating MD_decisions.gfx...")
+			with open ("MD_decisions.gfx", "w") as ffile:
+				ffile.write('spriteTypes = {\n')
+				ffile.write('\n\t### categories\n\n\n')
+				for fname in ddsdict:
+					file_location = fname
+					file_location = file_location.split(modfolder)
+					texture_path = file_location[1] # Should Retrieve the Path
+					file_utility = texture_path
+					texture_path = texture_path.replace("\\", "/")
+					file_utility = file_utility.replace("gfx\\interface\\decisions\\", "")
+					file_utility = file_utility.split("\\")
+
+					texture_name = createitemcall(file_utility)
+
+					if "decision_category_" in texture_name or "decision_" in texture_name or "decisions_" in texture_name or "decisions_category_" in texture_name:
+						ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + texture_name + '\"\n\t\ttexturefile = \"' + texture_path + '\"\n\t}\n\n')
+					else:
+						ffile.write('\tspriteType = {\n\t\tname = \"GFX_decision_' + texture_name + '\"\n\t\ttexturefile = \"' + texture_path + '\"\n\t}\n\n')
+				ffile.write('}')
+			print("Generation of the MD_decisions.gfx...")
+			movefilestointerface('MD_decisions.gfx')
+			print("\nMD_decisions.gfx has been generated for " + str(len(ddslist)) + " decision pictures.\n\nThe files have been outputted into the interface files.")
+			return
 		else:
-			print(f"{bcolors.FAIL}1 through 6 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
+			print(f"{bcolors.FAIL}1 through 7 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}")
 			return
 
 # Utilities:
