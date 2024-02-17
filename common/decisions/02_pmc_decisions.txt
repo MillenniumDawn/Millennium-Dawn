@@ -6115,6 +6115,76 @@ pmc_category = {
 			EGY = {clr_country_flag = sinai_yes}
 		}
 	}
+	pmc_gard = {
+		icon = GFX_decision_gard_button
+		visible = {
+			BLR = { has_country_flag = gard_create}
+			NOT = {tag = BLR}
+			has_country_flag = other_opened
+			country_exists = BLR
+		}
+		available = {
+			BLR = { has_opinion = { target = ROOT value > 15 } }
+			custom_trigger_tooltip = {
+				tooltip = pmc_gard_TT
+				BLR = {NOT = {has_country_flag = gard_yes}}
+			}
+		}
+
+		fire_only_once = no
+		days_remove = 365
+		days_re_enable = 10
+
+		complete_effect = {
+			hidden_effect = {
+				division_template = {
+					name = "Mercenary of Gard Service"
+					is_locked = yes
+					priority = 2
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 0 y = 3 }
+					}
+					support = {
+						H_Engi_Comp = { x = 0 y = 0 }
+						L_Recce_Comp = { x = 0 y = 1 }
+					}
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 2148 }
+					create_unit = {
+						division = "name = \"Mercenary of Gard Service\" division_template = \"Mercenary of Gard Service\" start_experience_factor = 0.8"
+						owner = ROOT
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				BLR = {country_event = pmc_events.2}
+				BLR = {
+				set_temp_variable = { treasury_change = 2.5 }
+				modify_treasury_effect = yes
+				}
+			}
+			BLR = {set_country_flag = gard_yes}
+			set_temp_variable = { percent_change = 0.5 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			delete_unit_template_and_units = {
+				division_template = "Mercenary of Gard Service"
+				disband = no
+			}
+			BLR = {clr_country_flag = gard_yes}
+		}
+	}
 	#CREATED PMC DECISION
 	pmc_sinai_create = {
 		icon = GFX_decision_union_button
@@ -6123,7 +6193,7 @@ pmc_category = {
 			tag = EGY
 			country_exists = EGY
 		}
-		fire_only_once = no
+		fire_only_once = yes
 		days_remove = 365
 		days_re_enable = 10
 
@@ -6131,9 +6201,27 @@ pmc_category = {
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
 		}
-
 		remove_effect = {
 			EGY = {set_country_flag = sinai_create}
+			custom_effect_tooltip = pmc_create_pmc_tt
+		}
+	}
+	pmc_gard_create = {
+		icon = GFX_decision_gard_button
+		visible = {
+			date > 2005.1.1
+			tag = BLR
+			country_exists = BLR
+		}
+		fire_only_once = yes
+		days_remove = 365
+		days_re_enable = 10
+		complete_effect = {
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+		}
+		remove_effect = {
+			BLR = {set_country_flag = gard_create}
 			custom_effect_tooltip = pmc_create_pmc_tt
 		}
 	}
