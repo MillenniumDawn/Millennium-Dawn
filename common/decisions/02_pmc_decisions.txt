@@ -6302,6 +6302,88 @@ pmc_category = {
 			BLR = {clr_country_flag = gard_yes}
 		}
 	}
+	pmc_patriot = {
+		icon = GFX_decision_patriot_button
+		visible = {
+			SOV = { has_country_flag = patriot_create}
+			NOT = {tag = SOV}
+			has_country_flag = other_opened
+			country_exists = SOV
+		}
+		available = {
+			SOV = { has_opinion = { target = ROOT value > 20 } }
+			custom_trigger_tooltip = {
+				tooltip = pmc_patriot_TT
+				SOV = {NOT = {has_country_flag = patriot_yes}}
+			}
+		}
+		ai_will_do = {
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+		}
+		fire_only_once = no
+		days_remove = 365
+		days_re_enable = 10
+
+		complete_effect = {
+			hidden_effect = {
+				division_template = {
+					name = "Patriot Heavy Mechanized Unit"
+					is_locked = yes
+					priority = 2
+					regiments = {
+						Arm_Inf_Bat = { x = 0 y = 0 }
+						Arm_Inf_Bat = { x = 0 y = 1 }
+						Arm_Inf_Bat = { x = 0 y = 2 }
+						Arm_Inf_Bat = { x = 1 y = 0 }
+						Arm_Inf_Bat = { x = 1 y = 1 }
+						Arm_Inf_Bat = { x = 1 y = 2 }
+					}
+					support = {
+						armor_Comp = { x = 0 y = 0 }
+						Arm_Recce_Comp = { x = 0 y = 1 }
+						H_Engi_Comp = { x = 0 y = 2 }
+					}
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 2148 }
+					create_unit = {
+						division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
+						owner = ROOT
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -5.5 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				SOV = {country_event = pmc_events.2}
+				SOV = {
+				set_temp_variable = { treasury_change = 5.5 }
+				modify_treasury_effect = yes
+				}
+			}
+			SOV = {set_country_flag = patriot_yes}
+			set_temp_variable = { percent_change = 0.5 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			delete_unit_template_and_units = {
+				division_template = "Patriot Heavy Mechanized Unit"
+				disband = no
+			}
+			SOV = {clr_country_flag = patriot_yes}
+		}
+	}
 	#CREATED PMC DECISION
 	pmc_sinai_create = {
 		icon = GFX_decision_union_button
@@ -6346,6 +6428,29 @@ pmc_category = {
 		}
 		remove_effect = {
 			BLR = {set_country_flag = gard_create}
+			custom_effect_tooltip = pmc_create_pmc_tt
+		}
+	}
+	pmc_patriot_create = {
+		icon = GFX_decision_patriot_button
+		visible = {
+			tag = SOV
+			country_exists = SOV
+		}
+		fire_only_once = yes
+		days_remove = 365
+		days_re_enable = 10
+		complete_effect = {
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = {
+			modifier = {
+				add = 1
+			}
+		}
+		remove_effect = {
+			SOV = {set_country_flag = patriot_create}
 			custom_effect_tooltip = pmc_create_pmc_tt
 		}
 	}
