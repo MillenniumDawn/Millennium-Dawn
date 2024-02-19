@@ -1,4 +1,5 @@
 add_namespace = iraqi_events
+add_namespace = iraq_war
 
 country_event = {
 	id = iraqi_events.1 # New Year Reports
@@ -369,5 +370,177 @@ country_event = {
 		ai_chance = {
 			base = 0.8
 		}
+	}
+}
+
+# Iraq war events
+country_event = {
+	id = iraq_war.1 # USA is petitioning a war against us!
+	title = iraq_war.1.t
+	desc = iraq_war.1.d
+	picture = null
+
+	is_triggered_only = yes
+	# Time to prepare for war
+	option = {
+		name = iraq_war.1.a
+		log = "[GetDateText]: [This.GetName]: iraq_war.1.a executed"
+		set_country_flag = IRQ_prepare_for_usa_war
+		# Unlock decisions to allow for fortifications, new divisions, manpower, allies, etc.
+	}
+	# Yeah I think it's time to go somewhere else..
+	option = {
+		name = iraq_war.2.a
+		log = "[GetDateText]: [This.GetName]: iraq_war.2.a executed"
+		set_country_flag = IRQ_interim_government
+		custom_effect_tooltip = IRQ_saddam_leaves_interim_govt
+		hidden_effect = {
+			set_temp_variable = { party_index = 13 }
+			set_temp_variable = { party_popularity_increase = 1.00 }
+			set_temp_variable = { temp_outlook_increase = 1.00 }
+			add_relative_party_popularity = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 13 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+			}
+		}
+	}
+}
+# (For USA)
+country_event = {
+	id = iraq_war.11 # Saddam flees Iraq!
+	title = iraq_war.11.t
+	desc = iraq_war.11.d
+	picture = null
+
+	is_triggered_only = yes
+	#
+	option = {
+		name = iraq_war.11.a
+		log = "[GetDateText]: [This.GetName]: iraq_war.11.a executed"
+		custom_effect_tooltip = IRQ_gets_ultimatum
+		newline = yes
+		IRQ = {
+			country_event = {
+				id = iraq_war.3
+			}
+		}
+	}
+}
+# (For USA)
+country_event = {
+	id = iraq_war.2 # Saddams Ultimatum
+	title = iraq_war.2.t
+	desc = iraq_war.2.d
+	picture = null
+
+	is_triggered_only = yes
+	# Demand that Saddam Hussein leaves the nation
+	option = {
+		name = iraq_war.2.a
+		log = "[GetDateText]: [This.GetName]: iraq_war.2.a executed"
+		custom_effect_tooltip = IRQ_gets_ultimatum
+		newline = yes
+		IRQ = {
+			country_event = {
+				id = iraq_war.3
+			}
+		}
+	}
+	# No, dictators can't be negotiated with
+	option = {
+		name = iraq_war.2.b
+		log = "[GetDateText]: [This.GetName]: iraq_war.2.b executed"
+		set_country_flag = Operation_iraqi_freedom
+		create_wargoal = {
+			target = IRQ
+			type = puppet_wargoal_focus
+		}
+		every_country = {
+			limit = { is_in_array = { global.ct_states = THIS } }
+			set_temp_variable = { rad_change = 10 }
+			modify_radicalization_effect = yes
+		}
+		hidden_effect = { news_event = { id = wotnews.11 hours = 6 } }
+	}
+}
+# (For Iraq)
+country_event = {
+	id = iraq_war.3 # U.S. President sends us an ultimatum
+	title = iraq_war.3.t
+	desc = iraq_war.3.d
+	picture = null
+
+	is_triggered_only = yes
+	# Let them come
+	option = {
+		name = iraq_war.3.a
+		log = "[GetDateText]: [This.GetName]: iraq_war.3.a executed"
+		USA = {
+			country_event = {
+				id = iraq_war.4
+				days = 2
+			}
+		}
+	}
+	# Shit, pack the bags we're going to Jordan!
+	option = {
+		name = iraq_war.3.b
+		log = "[GetDateText]: [This.GetName]: iraq_war.3.b executed"
+		set_country_flag = IRQ_interim_government
+		custom_effect_tooltip = IRQ_saddam_leaves_interim_govt
+		hidden_effect = {
+			set_temp_variable = { party_index = 13 }
+			set_temp_variable = { party_popularity_increase = 1.00 }
+			set_temp_variable = { temp_outlook_increase = 1.00 }
+			add_relative_party_popularity = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 13 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = no
+				}
+			}
+		}
+	}
+}
+# (For USA)
+country_event = {
+	id = iraq_war.4 # Saddam refuses to leave the nation
+	title = iraq_war.4.t
+	desc = iraq_war.4.d
+	picture = null
+
+	is_triggered_only = yes
+	# The operation shall commence..
+	option = {
+		name = iraq_war.4.a
+		log = "[GetDateText]: [This.GetName]: iraq_war.4.a executed"
+		set_country_flag = Operation_iraqi_freedom
+		create_wargoal = {
+			target = IRQ
+			type = puppet_wargoal_focus
+		}
+		every_country = {
+			limit = { is_in_array = { global.ct_states = THIS } }
+			set_temp_variable = { rad_change = 10 }
+			modify_radicalization_effect = yes
+		}
+		hidden_effect = { news_event = { id = wotnews.11 hours = 6 } }
 	}
 }
