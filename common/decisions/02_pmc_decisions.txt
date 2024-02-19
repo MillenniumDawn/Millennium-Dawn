@@ -6705,6 +6705,105 @@ pmc_category = {
 			SOV = {clr_country_flag = redut_yes}
 		}
 	}
+	pmc_gazprom = {
+		icon = GFX_decision_gaz_button
+		visible = {
+			SOV = { has_country_flag = gazprom_create}
+			NOT = {tag = SOV}
+			has_country_flag = other_opened
+			country_exists = SOV
+		}
+		available = {
+			SOV = { has_opinion = { target = ROOT value > 20 } }
+			custom_trigger_tooltip = {
+				tooltip = pmc_gazprom_TT
+				SOV = {NOT = {has_country_flag = gazprom_yes}}
+			}
+		}
+		ai_will_do = {
+			modifier = {
+				add = 1
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				alliance_strength_ratio > 2
+			}
+		}
+		fire_only_once = no
+		days_remove = 365
+		days_re_enable = 10
+
+		complete_effect = {
+			if = {
+				limit = { 
+					OR = {
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+				}
+				add_timed_idea = {
+					idea = pmc_gazprom_idea1
+					days = 365
+				}
+			}
+			else = {
+				add_timed_idea = {
+					idea = pmc_gazprom_idea
+					days = 365
+				}
+			}
+			hidden_effect = {
+				division_template = {
+					name = "Gazprom PMC Battalion"
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						L_Inf_Bat = { x = 0 y = 2 }
+						L_Inf_Bat = { x = 0 y = 3 }
+						L_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+						L_Engi_Comp = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
+				random_owned_controlled_state = {
+					limit = { ROOT = { has_full_control_of_state = PREV } }
+					prioritize = { 2148 }
+					create_unit = {
+						division = "name = \"Gazprom PMC Battalion\" division_template = \"Gazprom PMC Battalion\" start_experience_factor = 0.3"
+						owner = ROOT
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -5.5 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				SOV = {country_event = pmc_events.2}
+				SOV = {
+				set_temp_variable = { treasury_change = 5.5 }
+				modify_treasury_effect = yes
+				}
+			}
+			SOV = {set_country_flag = gazprom_yes}
+			set_temp_variable = { percent_change = 1.5 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			delete_unit_template_and_units = {
+				division_template = "Gazprom PMC Battalion"
+				disband = no
+			}
+			SOV = {clr_country_flag = gazprom_yes}
+		}
+	}
 	#CREATED PMC DECISION
 	pmc_sinai_create = {
 		icon = GFX_decision_union_button
