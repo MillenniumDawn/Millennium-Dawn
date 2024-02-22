@@ -3119,11 +3119,12 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan.100015000.oA"
 		decrease_two_level_economic_growth = yes
 		add_stability = -0.05
-		#todo: bonus to liberals popularity
+		#TODO: bonus to liberals popularity
 		set_temp_variable = { jap_radical_change = 15 }
 		jap_modify_radicalism_left = yes
 		set_temp_variable = { jap_radical_change = 10 }
 		jap_modify_radicalism_right = yes
+		#TODO: custom tooltip: will require us to spend money to escape the recession
 		country_event = { id = Japan.100015020 days = 5 } #american financial crisis: hands across the pacific
 	}
 
@@ -3202,6 +3203,17 @@ country_event = {
 	id = Japan.100015010
 	title = Japan.100015010.t
 	desc = Japan.100015010.d
+	desc = {
+		text = Japan.100015010.d.a #USA left the FTAAP on bad terms
+		trigger = {
+			USA = {
+				has_country_flag = JAP_RECESSION_USA_REJECTED_SOVEREIGNTY
+			}
+		}
+	}
+	desc = {
+		text = Japan.100015010.d.b #JAP terminated the FTAAP in response to recession aftershocks
+	}
 	picture = WIP #TODO: gfx
 
 	fire_only_once = yes
@@ -3213,11 +3225,26 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan.100015010.oA"
 		#TODO: EAEC invitation focuses should take less time to finish, higher penalty to include australia/nz
 		add_ideas = JAP_seap_member
-		every_other_country = { #invite countries that used to be in FTAAP and still want to be back
+		if = {
 			limit = {
-				has_country_flag = JAP_FTAAP_FORMER_MEMBER
+				USA = {
+					has_country_flag = JAP_RECESSION_USA_REJECTED_SOVEREIGNTY
+				}
 			}
-			country_event = { id = Japan.100015011 random_days = 2 random_hours = 12 } #american financial crisis: revive FTAAP as SEAP
+			every_other_country = { #FTAAP exists but is collapsing with USA's exit
+				limit = {
+					has_idea = JAP_ftaap_member
+				}
+				country_event = { id = Japan.100015011 random_days = 2 random_hours = 12 } #american financial crisis: revive FTAAP as SEAP
+			}
+		}
+		else = {
+			every_other_country = { #invite countries that used to be in FTAAP and still want to be back
+				limit = {
+					has_country_flag = JAP_FTAAP_FORMER_MEMBER
+				}
+				country_event = { id = Japan.100015011 random_days = 2 random_hours = 12 } #american financial crisis: revive FTAAP as SEAP
+			}
 		}
 	}
 
@@ -3228,10 +3255,9 @@ country_event = {
 		#TODO: EPA focuses should take less time to finish
 		#TODO: big bonus to nationalist
 	}
-
 }
 
-#American Financial Crisis: Revive the FTAAP as SEAP (All other non-USA former FTAAP members that are open to returning)
+#American Financial Crisis: Southeast Asian Partnership? (All other non-USA former FTAAP members that are open to returning)
 country_event = {
 	id = Japan.100015011
 	title = Japan.100015011.t
@@ -3241,22 +3267,421 @@ country_event = {
 	fire_only_once = yes
 	is_triggered_only = yes
 
-	#So long as it remains Asian
+	#This time it's for Asians
 	option = {
 		name = Japan.100015011.oA
 		log = "[GetDateText]: [Root.GetName]: Japan.100015011.oA"
+		add_political_power = -50
+		if = {
+			limit = {
+				has_idea = JAP_ftaap_member #may still have FTAAP if USA left instead of JAP dissolving
+			}
+			remove_ideas = JAP_ftaap_member
+		}
 		add_ideas = JAP_seap_member
 	}
 
 	#Not again
 	option = {
-		name = Japan.100100015011015011.oB
+		name = Japan.100015011.oB
 		log = "[GetDateText]: [Root.GetName]: Japan.100015011.oB"
 		add_political_power = 100
+		if = {
+			limit = {
+				has_idea = JAP_ftaap_member
+			}
+			remove_ideas = JAP_ftaap_member
+			add_stability = 0.03
+		}
 		#TODO: add nationalist support, if not nationalist
 	}
-
 }
+
+#American Financial Crisis: Hands Across The Pacific (JAP)
+country_event = {
+	id = Japan.100015020
+	title = Japan.100015020.t
+	desc = Japan.100015020.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Help Our Friends
+	option = {
+		name = Japan.100015020.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015020.oA"
+		set_temp_variable = { treasury_change = -100 }
+		modify_treasury_effect = yes
+		USA = {
+			country_event = { id = Japan.100015021 } #american financial crisis: jap pledges economic cooperation
+		}
+		#TODO: mission 180 days: recovering from the recession (JAP) (kicks off Japan.100015022)
+	}
+
+	#An opportunity to assert ourselves
+	option = {
+		name = Japan.100015020.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015020.oB"
+		add_political_power = 100
+		set_temp_variable = { treasury_change = -350 }
+		modify_treasury_effect = yes
+		USA = {
+			country_event = { id = Japan.100015031 } #american financial crisis: japanese market dominance
+		}
+		#TODO: add nationalist support, if not nationalist
+		#custom tooltip: america will be able to counter us if they spend more
+		#TODO: mission 90 days: picking up the american economy (JAP) (kicks off Japan.100015032)
+	}
+}
+
+#American Financial Crisis: JAP Pledges Economic Cooperation (JAP)
+#TODO: maybe this should be news
+country_event = {
+	id = Japan.100015021
+	title = Japan.100015021.t
+	desc = Japan.100015021.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Let's hope for a swift recovery
+	option = {
+		name = Japan.100015021.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015021.oA"
+		#TODO: mission 180 days: recovering from the recession (USA)
+	}
+}
+
+#American Financial Crisis: Friends in Need (JAP)
+country_event = {
+	id = Japan.100015022
+	title = Japan.100015022.t
+	desc = Japan.100015022.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#We're just friends, nothing more
+	option = {
+		name = Japan.100015022.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015022.oA"
+		every_controlled_state = {
+			multiply_variable = { productivity_state_var = 1.05 } # increases all states' productivity by 5%
+		}
+		USA = {
+			country_event = { id = Japan.100015023 } #american financial crisis: japanese industrial partnerships
+		}
+	}
+
+	#We are the closest of friends
+	option = {
+		name = Japan.100015022.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015022.oB"
+		#TODO: only available if USFJ issue was resolved amicably
+		USA = {
+			country_event = { id = Japan.100015024 } #american financial crisis: foundations of a pacific common market
+		}
+		#TODO: decision: Post-Recession Boom (USA/JAP) (kicks off Japan.100015025 when USA has recovered from recession)
+	}
+}
+
+
+#American Financial Crisis: Japanese Industrial Partnerships (USA)
+country_event = {
+	id = Japan.100015023
+	title = Japan.100015023.t
+	desc = Japan.100015023.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#A much needed boost
+	option = {
+		name = Japan.100015023.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015023.oA"
+		every_controlled_state = {
+			multiply_variable = { productivity_state_var = 1.05 } # increases all states' productivity by 5%
+		}
+	}
+}
+
+#American Financial Crisis: Foundations of a Pacific Common Market (USA)
+country_event = {
+	id = Japan.100015024
+	title = Japan.100015024.t
+	desc = Japan.100015024.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#This will protect us for the future
+	option = {
+		name = Japan.100015024.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015024.oA"
+		#TODO: add liberals popularity
+	}
+
+	#This isn't politically feasible
+	option = {
+		name = Japan.100015024.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015024.oB"
+		set_country_flag = JAP_RECESSION_USA_COMMON_MARKET_REJECT
+		add_political_power = 150
+		#TODO: confirmation events for JAP and maybe a change in direction
+	}
+}
+
+#American Financial Crisis: The American-Japanese Market (JAP/USA)
+country_event = {
+	id = Japan.100015025
+	title = Japan.100015025.t
+	desc = Japan.100015025.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#A Toast To Trans-Pacific Hegemony!
+	option = {
+		name = Japan.100015025.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015025.oA"
+		if = {
+			limit = {
+				original_tag = JAP
+			}
+			add_ideas = JAP_japusa_bros_jap
+			USA = {
+				add_opinion_modifier = {
+					target = JAP
+					modifier = common_market
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				original_tag = USA
+			}
+			add_ideas = JAP_japusa_bros_usa
+			JAP = {
+				add_opinion_modifier = {
+					target = USA
+					modifier = common_market
+				}
+			}
+		}
+	}
+}
+
+#American Financial Crisis: Japanese Market Dominance (USA)
+country_event = {
+	id = Japan.100015030
+	title = Japan.100015030.t
+	desc = Japan.100015030.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Concerning, but what choice do we have?
+	option = {
+		name = Japan.100015030.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015030.oA"
+		add_political_power = -50
+		add_stability = 0.02
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = JAP }
+		set_temp_variable = { influence_target = USA }
+		change_influence_percentage = yes
+	}
+
+	#We must act before they can!
+	option = {
+		name = Japan.100015030.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015030.oB"
+		set_temp_variable = { treasury_change = -350 }
+		modify_treasury_effect = yes
+		add_political_power = 100
+		set_country_flag = JAP_RECESSION_USA_HOUSE_MARKET_BUYOUT #prevents the economic vampirism option later
+		JAP = {
+			country_event = { id = Japan.100015031 } #american financial crisis: america moves to counter us
+		}
+	}
+}
+
+#American Financial Crisis: America Moves to Counter Us! (JAP)
+country_event = {
+	id = Japan.100015031
+	title = Japan.100015031.t
+	desc = Japan.100015031.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#We'll do this the polite way, then
+	option = {
+		name = Japan.100015030.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015030.oA"
+		set_temp_variable = { treasury_change = 175 }
+		modify_treasury_effect = yes
+		#TODO:custom tooltip: we won't be able to take control of the american economy later
+	}
+}
+
+#American Financial Crisis: Assertive Control (JAP)
+country_event = {
+	id = Japan.100015032
+	title = Japan.100015032.t
+	desc = Japan.100015032.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#They did the same to us
+	option = {
+		name = Japan.100015032.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015032.oA"
+		trigger = {
+			limit = {
+				USA = {
+					NOT = {
+						has_country_flag = JAP_RECESSION_USA_COMMON_MARKET_REJECT
+					}
+				}
+			}
+		}
+		#TODO:custom tooltip: USA gets the idea JAP_vampire_tribute for 720 days
+	}
+
+	#We must spread our roots deeper
+	option = {
+		name = Japan.100015032.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015032.oB"
+		USA = {
+			country_event = { id = Japan.100015034 } #american financial crisis: japan proposes a supervised recovery plan
+		}
+		#TODO:custom tooltip: USA may choose to decline our assistance
+	}
+}
+
+#American Financial Crisis: Japan "Helps" Revive The Housing Market (USA)
+country_event = {
+	id = Japan.100015033
+	title = Japan.100015033.t
+	desc = Japan.100015033.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#This is humiliating... but look at those numbers go up!
+	option = {
+		name = Japan.100015033.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015033.oA"
+		increase_two_level_economic_growth = yes
+		add_timed_idea = {
+			idea = JAP_vampire_tribute
+			days = 720
+		}
+		add_stability = 0.03
+		add_political_power = -50
+	}
+
+	#TODO: populist option?
+}
+
+#American Financial Crisis: Japan Proposes a Supervised Recovery Plan (USA)
+country_event = {
+	id = Japan.100015034
+	title = Japan.100015034.t
+	desc = Japan.100015034.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#We have little choice at this point
+	option = {
+		name = Japan.100015034.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015034.oA"
+		add_political_power = 100
+		increase_economic_growth = yes
+		#TODO: news event maybe?
+
+	}
+
+	#Exit the FTAAP at once!
+	option = {
+		name = Japan.100015034.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015034.oB"
+		remove_ideas = JAP_ftaap_member
+		set_country_flag = JAP_RECESSION_USA_REJECTED_SOVEREIGNTY
+		JAP = {
+			country_event = { id = Japan.100015010 } #american financial crisis: the shattering
+		}
+	}
+}
+
+#American Financial Crisis: Congress Signs the SRP! (JAP)
+country_event = {
+	id = Japan.100015035
+	title = Japan.100015035.t
+	desc = Japan.100015035.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#This is our chance!
+	option = {
+		name = Japan.100015035.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015035.oA"
+		#TODO: activate mission: Tighten the Leash
+	}
+}
+
+#American Financial Crisis: Tug the Leash (JAP)
+#TODO: triggered by mission expire: Tighten the Leash
+country_event = {
+	id = Japan.100015036
+	title = Japan.100015036.t
+	desc = Japan.100015036.d
+	picture = WIP #TODO: gfx
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Impose the Pacific Stability Treaty!
+	option = {
+		name = Japan.100015036.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100015034.oA"
+		#TODO: option available if JAP influence in USA > 60%
+		#TODO: USA becomes supervised state
+
+	}
+
+	#Force the Basing Issue!
+	option = {
+		name = Japan.100015036.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015034.oB"
+		#TODO: USFJ basing issue
+		#TODO: if influence in USA <= 60%, possible flashpoint
+	}
+
+	#Impose both!
+	option = {
+		name = Japan.100015036.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100015034.oB"
+		#TODO: option available if JAP influence in USA > 60%
+	}
+}
+
 
 #Haken-giri
 #TODO: maybe make this if the player hasnt completed temporary staff labor reform and is economically conservative
