@@ -2610,7 +2610,6 @@ BLR_Foreign_azot_trade_category = {
 		}
 	}
 }
-
 #UNION STATE
 BLR_Union_state_category = {
 	BLR_union_migratio_card = {
@@ -2633,17 +2632,27 @@ BLR_Union_state_category = {
 				has_global_flag = RULE_SUPPORT_UNION_STATE
 			}
 		}
-		remove_effect = {
-			BLR = {
-			set_temp_variable = { modify_union_state = 5 }
-			modify_union_state_support = yes
-			}
-		}
 		available = {
 			NOT = {BLR = {	has_autonomy_state = autonomy_union_state}}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BLR_union_migratio_card"
+			if = {
+				limit = {
+					tag = BLR
+				}
+				add_timed_idea = { idea = UNION_blr_migration days = 300 }
+			}
+			if = {
+				limit = {
+					tag = SOV
+				}
+				add_timed_idea = { idea = UNION_sov_migration days = 300 }
+			}
+			BLR = {
+				set_temp_variable = { modify_union_state = 5 }
+				modify_union_state_support = yes
+			}
 		}
 	}
 	BLR_joint_military_academies = {
@@ -2666,17 +2675,27 @@ BLR_Union_state_category = {
 				has_global_flag = RULE_SUPPORT_UNION_STATE
 			}
 		}
-		remove_effect = {
-			BLR = {
-			set_temp_variable = { modify_union_state = 5 }
-			modify_union_state_support = yes
-			}
-		}
 		available = {
 			NOT = {BLR = {	has_autonomy_state = autonomy_union_state}}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BLR_joint_military_academies"
+			if = {
+				limit = {
+					tag = BLR
+				}
+				add_timed_idea = { idea = UNION_blr_academies days = 300 }
+			}
+			if = {
+				limit = {
+					tag = SOV
+				}
+				add_timed_idea = { idea = UNION_sov_academies days = 300 }
+			}
+			BLR = {
+				set_temp_variable = { modify_union_state = 5 }
+				modify_union_state_support = yes
+			}
 		}
 	}
 	BLR_harmonization_of_legislation = {
@@ -2695,12 +2714,6 @@ BLR_Union_state_category = {
 				has_global_flag = RULE_SUPPORT_UNION_STATE
 			}
 		}
-		remove_effect = {
-			BLR = {
-			set_temp_variable = { modify_union_state = 7 }
-			modify_union_state_support = yes
-			}
-		}
 		available = {
 			NOT = {BLR = {	has_autonomy_state = autonomy_union_state}}
 		}
@@ -2710,6 +2723,22 @@ BLR_Union_state_category = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BLR_harmonization_of_legislation"
+			if = {
+				limit = {
+					tag = BLR
+				}
+				add_timed_idea = { idea = UNION_blr_legistation days = 300 }
+			}
+			if = {
+				limit = {
+					tag = SOV
+				}
+				add_timed_idea = { idea = UNION_sov_legistation days = 300 }
+			}
+			BLR = {
+				set_temp_variable = { modify_union_state = 7 }
+				modify_union_state_support = yes
+			}
 		}
 	}
 	BLR_influency_union_state = {
@@ -2832,6 +2861,18 @@ BLR_Union_state_category = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BLR_state_structures"
+			if = {
+				limit = {
+					tag = BLR
+				}
+				add_timed_idea = { idea = UNION_blr_structures days = 300 }
+			}
+			if = {
+				limit = {
+					tag = SOV
+				}
+				add_timed_idea = { idea = UNION_sov_structures days = 300 }
+			}
 			BLR = {
 				set_temp_variable = { modify_union_state = 3 }
 				modify_union_state_support = yes
@@ -2863,6 +2904,18 @@ BLR_Union_state_category = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BLR_citizenship_of_the_union"
+			if = {
+				limit = {
+					tag = BLR
+				}
+				add_timed_idea = { idea = UNION_blr_citizen days = 300 }
+			}
+			if = {
+				limit = {
+					tag = SOV
+				}
+				add_timed_idea = { idea = UNION_sov_citizen days = 300 }
+			}
 			BLR = {
 				set_temp_variable = { modify_union_state = 3 }
 				modify_union_state_support = yes
@@ -3068,6 +3121,7 @@ BLR_Union_state_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SOV_sozdat_union_state"
 			BLR = { country_event = belarus_union.11 }
+			BLR = { set_country_flag = BLR_unionstate_agree }
 		}
 	}
 	BLR_create_union_state = {
@@ -3086,7 +3140,10 @@ BLR_Union_state_category = {
 				tooltip = UNS_support_for_union_more_80
 				check_variable = { BLR.union_state > 80 }
 			}
-			is_subject = no
+			OR = {
+				is_subject = no
+				BLR = {	is_subject_of = SOV	}
+			}
 		}
 		visible = {
 			tag = BLR
@@ -3094,9 +3151,8 @@ BLR_Union_state_category = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BLR_up_pro_union_state_parties"
-			SOV = {
-				country_event = { id = belarus_union.9 days = 1 }
-			}
+			SOV = {	country_event = { id = belarus_union.9 days = 1 }}
+			BLR = { set_country_flag = BLR_unionstate_agree }
 			hidden_effect = {
 				if = {
 					limit = {
