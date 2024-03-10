@@ -1,0 +1,562 @@
+add_namespace = SMA
+add_namespace = SMA_news
+add_namespace = SMA_countries
+
+country_event = {
+	id = SMA_countries.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA_countries.1" }
+	title = SMA_countries.1.t
+	desc = SMA_countries.1.d
+	is_triggered_only = yes
+	option = { # yes
+		name = SMA_countries.1.a
+		log = "[GetDateText]: [This.GetName]: SMA_countries.1.a executed"
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 30
+				is_historical_focus_on = yes
+			}
+		}
+		ROOT = {
+			set_temp_variable = { treasury_change = -8.00 }
+			modify_treasury_effect = yes
+		}
+		SMA = {
+			country_event = SMA_countries.3
+		}
+		948 = {
+			add_building_construction = {
+				type = air_base
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+	option = { # no
+		name = SMA_countries.1.b
+		log = "[GetDateText]: [This.GetName]: SMA_countries.1.b executed"
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = -30 
+				is_historical_focus_on = yes
+			}
+		}
+		SMA = {
+			country_event = SMA_countries.2
+		}
+	}
+}
+country_event = {
+	id = SMA_countries.2 # If Italy No
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA_countries.2" }
+	title = SMA_countries.2.t
+	desc = SMA_countries.2.d
+	picture = GFX_declined_offer_no
+	is_triggered_only = yes
+	option = {
+		name = SMA_countries.2.a
+		log = "[GetDateText]: [This.GetName]: SMA_countries.2.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+country_event = {
+	id = SMA_countries.3 # If Italy Yes
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA_countries.3" }
+	title = SMA_countries.3.t
+	desc = SMA_countries.3.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+	option = {
+		name = SMA_countries.3.a
+		log = "[GetDateText]: [This.GetName]: SMA_countries.3.a executed"
+		ai_chance = {
+			factor = 1
+		}
+		add_ideas = SMA_rights_of_italian_workers_in_san_marino
+		set_temp_variable = { treasury_change = -2.00 }
+		modify_treasury_effect = yes
+	}
+}
+
+country_event = {
+	id = SMA_countries.4 # Ask To Build other countries
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA_countries.4" }
+	title = SMA_countries.4.t
+	desc = SMA_countries.4.d
+	is_triggered_only = yes
+	option = { # yes
+		name = SMA_countries.4.a
+		log = "[GetDateText]: [This.GetName]: SMA_countries.4.a executed"
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 30
+				is_historical_focus_on = yes
+			}
+		}
+		if = {
+			limit = {
+				ROOT = { tag = GER }
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = -6.00 }
+				modify_treasury_effect = yes
+			}
+			SMA = {
+				one_random_industrial_complex = yes
+
+				set_temp_variable = { treasury_change = 7.50 }
+				modify_treasury_effect = yes
+				set_temp_variable = { treasury_change = -1.50 }
+				modify_treasury_effect = yes
+
+				set_temp_variable = { percent_change = -5 }
+				change_domestic_influence_percentage = yes
+			}
+		}
+		if = {
+			limit = {
+				ROOT = { tag = FRA }
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = -2.50 }
+				modify_treasury_effect = yes
+			}
+			SMA = {
+				one_random_industrial_complex = yes
+				set_temp_variable = { treasury_change = 3.50 }
+				modify_treasury_effect = yes
+
+				set_temp_variable = { percent_change = -0.5 }
+				change_domestic_influence_percentage = yes
+			}
+		}
+		if = {
+			limit = {
+				ROOT = { tag = ITA }
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = -2.00 }
+				modify_treasury_effect = yes
+			}
+			SMA = {
+				random_owned_state = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+				
+				set_temp_variable = { treasury_change = -1.00 }
+				modify_treasury_effect = yes
+
+				set_temp_variable = { percent_change = -0.5 }
+				change_domestic_influence_percentage = yes
+			}
+		}
+		if = {
+			limit = {
+				ROOT = { tag = POL }
+			}
+			if = {
+				limit = {
+					POL = { has_country_flag = san_marino_investment_one }
+				}
+				ROOT = {
+					set_temp_variable = { treasury_change = -2.50 }
+					modify_treasury_effect = yes
+				}
+				SMA = {
+					one_random_industrial_complex = yes
+					set_temp_variable = { treasury_change = 3.50 }
+					modify_treasury_effect = yes
+
+					set_temp_variable = { percent_change = -0.5 }
+					change_domestic_influence_percentage = yes
+				}
+			}
+			else_if = {
+				limit = {
+					POL = { NOT = { has_country_flag = san_marino_investment_one } }
+				}
+				ROOT = {
+					set_temp_variable = { treasury_change = -2.00 }
+					modify_treasury_effect = yes
+
+					set_country_flag = san_marino_investment_one
+				}
+				SMA = {
+					random_owned_state = {
+						add_extra_state_shared_building_slots = 1
+						add_building_construction = {
+							type = internet_station
+							level = 1
+							instant_build = yes
+						}
+					}
+
+					set_temp_variable = { treasury_change = 1.00 }
+					modify_treasury_effect = yes
+
+					set_temp_variable = { percent_change = -0.5 }
+					change_domestic_influence_percentage = yes
+				}
+			}
+		}
+		SMA = {
+			country_event = SMA_countries.6
+		}
+	}
+	option = { # no
+		name = SMA_countries.4.b
+		log = "[GetDateText]: [This.GetName]: SMA_countries.4.b executed"
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = -30 
+				is_historical_focus_on = yes
+			}
+		}
+		SMA = {
+			country_event = SMA_countries.5
+		}
+	}
+}
+country_event = {
+	id = SMA_countries.5 # If countries No
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA_countries.5" }
+	title = SMA_countries.5.t
+	desc = SMA_countries.5.d
+	picture = GFX_declined_offer_no
+	is_triggered_only = yes
+	option = {
+		name = SMA_countries.5.a
+		log = "[GetDateText]: [This.GetName]: SMA_countries.5.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+country_event = {
+	id = SMA_countries.6 # If countries Yes
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA_countries.6" }
+	title = SMA_countries.6.t
+	desc = SMA_countries.6.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+	option = {
+		name = SMA_countries.6.a
+		log = "[GetDateText]: [This.GetName]: SMA_countries.6.a executed"
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+news_event = {
+	id = SMA_news.1
+	title = SMA_news.1.t
+	desc = SMA_news.1.desc
+	picture = GFX_christian_event
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SMA_news.1.a
+		log = "[GetDateText]: [This.GetName]: SMA_news.1.a executed"
+	}
+
+}
+
+news_event = {
+	id = SMA_news.2
+	title = SMA_news.2.t
+	desc = SMA_news.2.desc
+	picture = GFX_news_update_gdpc
+	major = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = SMA_news.2.a
+		log = "[GetDateText]: [This.GetName]: SMA_news.2.a executed"
+		trigger = {
+			NOT = { tag = SMA }
+		}
+	}
+	option = {
+		name = SMA_news.2.b
+		log = "[GetDateText]: [This.GetName]: SMA_news.2.b executed"
+		trigger = {
+			tag = SMA
+		}
+	}
+}
+
+country_event = {
+	id = SMA.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA.1" }
+	title = SMA.1.t
+	desc = SMA.1.d
+	is_triggered_only = yes
+	option = {
+		name = SMA.1.a
+		log = "[GetDateText]: [This.GetName]: SMA.1.a executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		HLS = {
+			every_owned_state = {
+				add_core_of = SMA
+			}
+		}
+		SMA = {
+			annex_country = {
+				target = HLS
+				transfer_troops = yes
+			}
+			81 = { add_core_of = SMA }
+			960 = { add_core_of = SMA }
+			265 = { add_core_of = SMA }
+			create_country_leader = {
+				name = "Pope John Paul II"
+				picture = "pope_john_paul.dds"
+				ideology = Monarchist
+				traits = { nationalist_Monarchist }
+				expire = "2099.1.1"
+			}
+			news_event = { id = SMA_news.1 }
+			set_cosmetic_tag = HLS_AUTH_nationalist
+		}
+	}
+	option = {
+		name = SMA.1.b
+		log = "[GetDateText]: [This.GetName]: SMA.1.b executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+country_event = {
+	id = SMA.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA.2" }
+	title = SMA.2.t
+	desc = SMA.2.d
+	picture = GFX_report_event_Sicily_Farms
+	is_triggered_only = yes
+	option = {
+		name = SMA.2.a
+		log = "[GetDateText]: [This.GetName]: SMA.2.a executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		SMA = {
+			add_stability = 0.1
+			set_temp_variable = { treasury_change = -3.50 }
+			modify_treasury_effect = yes
+		}
+	}
+	option = {
+		name = SMA.2.b
+		log = "[GetDateText]: [This.GetName]: SMA.2.b executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		SMA = {
+			add_stability = -0.15
+		}
+	}
+}
+
+country_event = {
+	id = SMA.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA.3" }
+	title = SMA.3.t
+	desc = SMA.3.d
+	picture = GFX_united_states_dollar
+	is_triggered_only = yes
+	option = {
+		name = SMA.3.a
+		log = "[GetDateText]: [This.GetName]: SMA.3.a executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		news_event = SMA_news.2
+		set_temp_variable = { treasury_change = 25.00 }
+		modify_treasury_effect = yes
+	}
+	option = {
+		name = SMA.3.b
+		log = "[GetDateText]: [This.GetName]: SMA.3.b executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		add_stability = 0.3
+		add_political_power = 100
+	}
+}
+
+country_event = {
+	id = SMA.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA.4" }
+	title = SMA.4.t
+	desc = SMA.4.d
+	picture = GFX_typhoon
+	is_triggered_only = yes
+	option = {
+		name = SMA.4.a
+		log = "[GetDateText]: [This.GetName]: SMA.4.a executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		add_political_power = 100
+		every_other_country = {
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.02
+			}
+		}
+	}
+}
+
+country_event = {
+	id = SMA.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA.5" }
+	title = SMA.5.t
+	desc = SMA.5.d
+	picture = GFX_internal_faction_religion
+	is_triggered_only = yes
+	option = {
+		name = SMA.5.a
+		log = "[GetDateText]: [This.GetName]: SMA.5.a executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		hidden_effect = {
+			set_country_flag = chose_bened
+		}
+	}
+
+	option = {
+		name = SMA.5.b
+		log = "[GetDateText]: [This.GetName]: SMA.5.a executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		hidden_effect = {
+			set_country_flag = chose_franc
+		}
+	}
+}
+
+country_event = {
+	id = SMA.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA.6" }
+	title = SMA.6.t
+	desc = SMA.6.d
+	picture = GFX_internal_faction_religion
+	trigger = {
+		date > 2005.4.2
+		tag = SMA
+		has_government = nationalist
+	}
+	is_triggered_only = yes
+	option = {
+		name = SMA.6.a
+		log = "[GetDateText]: [This.GetName]: SMA.6.a executed"
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+		add_stability = -0.05
+		kill_country_leader = yes
+		set_country_flag = john_died_sma
+	}
+}
+
+country_event = {
+	id = SMA.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event SMA.8" }
+	title = SMA.8.t
+	desc = SMA.8.d
+	picture = GFX_social_democrats
+	is_triggered_only = yes
+
+	option = { # Yes
+		name = SMA.8.a
+		log = "[GetDateText]: [This.GetName]: SMA.8.a executed"
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+		}
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = -1.00 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+	}
+	option = { # No
+		name = SMA.8.b
+		log = "[GetDateText]: [This.GetName]: SMA.8.b executed"
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = -4
+				is_historical_focus_on = yes
+			}
+		}
+		add_stability = -0.15
+	}
+}
