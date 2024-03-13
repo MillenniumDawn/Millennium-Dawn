@@ -44,12 +44,13 @@ focus_tree = {
 		relative_position_id = CUB_cpc_new_people
 		prerequisite = { focus = CUB_cpc_new_people }
 		prerequisite = { focus =CUB_cpc_new_people	}
-		cost = 5
+		cost = 7
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CUB_cpc_reforms"
-			add_political_power = 100
 			add_ideas = CUB_battle_idea1
-
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.025 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -4797,12 +4798,11 @@ focus_tree = {
         icon = CUB_cpcreforms
 		x = 0
 		y = 1
-		cost = 10
+		cost = 7
 		prerequisite = { focus =CUB_cubafuture}
 		relative_position_id =CUB_cubafuture
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CUB_cpc_reforms"
-			add_political_power = 100
 			swap_ideas = {
 				remove_idea = CUB_cpc_idea1
 				add_idea =CUB_cpc_idea2
@@ -4822,7 +4822,7 @@ focus_tree = {
 		icon = CUB_newcommunist
 		x = 0
 		y = 1
-		cost = 10
+		cost = 5
 		prerequisite = { focus =CUB_cpc_reforms}
 		relative_position_id =CUB_cpc_reforms
 		completion_reward = {
@@ -4831,7 +4831,6 @@ focus_tree = {
 				remove_idea = CUB_cpc_idea2
 				add_idea =CUB_cpc_idea3
 			}
-			add_political_power = 50
 		}
 		ai_will_do = {
 			factor = 1
@@ -4856,6 +4855,11 @@ focus_tree = {
 				ideology = communism
 				popularity = 0.05
 			}
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.05
+			}
+
 		}
 		ai_will_do = {
 			factor = 1
@@ -4876,6 +4880,42 @@ focus_tree = {
 		mutually_exclusive = {focus= CUB_raul_in_power}
 		relative_position_id =CUB_castro_in_power
 		completion_reward = {
+			if = {
+				limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 4 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					}
+					set_leader = yes
+				}
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+			add_to_variable = { party_pop_array^4 = 0.075 }
+			recalculate_party = yes
+				else_if = {
+					limit = { is_in_array = { ruling_party = 4 } }
+					add_popularity = {
+						ideology = communism
+						popularity = 0.05
+					}
+					add_to_variable = { party_pop_array^4 = 0.075 }
+					recalculate_party = yes
+				}
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.025 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -4896,6 +4936,7 @@ focus_tree = {
 		mutually_exclusive = {focus= CUB_friends_in_power}
 		relative_position_id = CUB_castro
 		completion_reward = {
+			country_event = sov_medvedeva.8
 		}
 		ai_will_do = {
 			factor = 1
