@@ -44,6 +44,7 @@ init_investment_system = {
 	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 7500 }
 	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
 	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 12500 }
+	set_variable = { global.BUILD_CONST_COST_NUCLEAR_REACTOR = 62500 }
 
 	### BUILDING MONETARY COST
 	# Balance Change: Cost increased by 60% from standardization
@@ -59,6 +60,7 @@ init_investment_system = {
 	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
 	set_variable = { global.BUILD_COST_REFINERY = 13.60 }
 	set_variable = { global.BUILD_COST_FOSSIL_POWERPLANT = 5.2 }
+	set_variable = { global.BUILD_COST_NUCLEAR_REACTOR = 14.4 }
 
 	every_country = {
 		set_variable = { project_build_amount^-1 = 1 }
@@ -143,6 +145,9 @@ project_monetary_cost_calculation = {
 	else_if = { limit = { check_variable = { project_building_type^-1 = 12 } }
 		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FOSSIL_POWERPLANT }
 	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 13 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_NUCLEAR_REACTOR }
+	}
 
 	# AC Build Cost Modifiers
 	set_temp_variable = { AC_cost_modifier = 1 }
@@ -224,6 +229,10 @@ get_building_construction_values = {
 		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FOSSIL_POWERPLANT }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
 	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 13 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_NUCLEAR_REACTOR }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_nuclear_reactor_factor }
+	}
 
 	add_to_temp_variable = { var = construction_speed value = -0.25 }
 	add_to_temp_variable = { var = construction_speed value = modifier@production_speed_buildings_factor }
@@ -300,6 +309,10 @@ add_finished_buildings = {
 		add_building_construction = { type = fossil_powerplant level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 13 } }
+		add_building_construction = { type = nuclear_reactor level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
 }
 
 # Function: calculate_ai_construction_speed
@@ -322,15 +335,21 @@ calculate_ai_construction_speed = {
 	}
 	add_to_temp_variable = { construction_speed = local_state_modifier }
 
-	# Calculate the net modifier from investment duration modifier and receiving_duration_investment_modifier
+	# Calculate the net modifier from the investment duration modifier and receiving_duration_investment_modifier
 	set_temp_variable = { receiving_investment_duration_temp = 0 }
 	var:AI_best_target = {
 		CONTROLLER = {
 			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 		}
 	}
-	add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
-	add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
+	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
+		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+	else = {
+		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
 
 	# Total Factory Output
 	# Assume the maximum of
@@ -374,7 +393,7 @@ init_project = {
 		}
 		add_to_temp_variable = { construction_speed = local_state_modifier }
 
-		# Calculate the net modifier from investment duration modifier and receiving_duration_investment_modifier
+		# Calculate the net modifier from the investment duration modifier and receiving_duration_investment_modifier
 		set_temp_variable = { receiving_investment_duration_temp = 0 }
 		PREV = {
 			CONTROLLER = {
@@ -382,14 +401,20 @@ init_project = {
 			}
 		}
 		add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
-		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+		if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
+			add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		}
+		else = {
+			subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		}
 
 		# Displayed Construction Modifier
 		# 200% means you produce the building at 2x the speed in this case
 		set_variable = { displayable_construction_modifier = construction_speed }
 
 		# Total Factory Output
-		# Assume the maximum of industry assigned
+		# Assume the maximum of industry-assigned
 		# 5 x 15 Civilian Industry Devoted to a single construction
 		multiply_temp_variable = { construction_speed = 75 }
 
@@ -439,8 +464,16 @@ init_project_two = {
 			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 		}
 	}
-	add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
-	add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
+	# Clamp to absolute -100%
+	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } } # Ensures we add the value if it's positive so we don't get weirdness
+		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+	else = {
+		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+
 
 	# Total Factory Output
 	# Assume the maximum of
@@ -623,7 +656,6 @@ end_project = {
 					remove_from_array = { array = project_type_in_state index = i }
 				}
 			}
-			remove_from_array = { array = projects_in_state value = PREV.id }
 
 			set_temp_variable = { tag_index = THIS.id }
 		}
