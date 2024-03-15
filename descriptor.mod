@@ -5,6 +5,10 @@ tags={
 	"Gameplay"
 	"Events"
 	"Graphics"
+	"Map"
+	"National Focuses"
+	"Balance"
+	"Fixes"
 }
 supported_version="1.14.*"
 picture = "thumbnail.png"
