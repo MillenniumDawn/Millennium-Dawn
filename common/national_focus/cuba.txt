@@ -4014,13 +4014,23 @@ focus_tree = {
 		icon = CUB_fidelcastro
 		x =0
 		y = 1
-		cost = 10
+		cost = 5
 		prerequisite = { focus =CUB_privatization}
 		relative_position_id = CUB_privatization
 		completion_reward = {
 			add_political_power = 100
-			set_temp_variable = { temp_opinion = 10 }
-			change_small_medium_business_owners_opinion = yes
+			hidden_effect = {
+				if = {
+					limit = {
+						has_idea = small_medium_business_owners
+						NOT = {
+							has_idea = farmers
+						}
+					}
+				set_temp_variable = { temp_opinion = 10 }
+				change_small_medium_business_owners_opinion = yes
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -5095,25 +5105,6 @@ focus_tree = {
 		id = CUB_banks_usa
 		x =-1
 		y = 1
-		cost = 5
-		prerequisite = { focus =CUB_open_pos}
-		prerequisite = { focus =CUB_prisoners}
-		relative_position_id =CUB_open_pos
-		completion_reward = {
-		}
-		ai_will_do = {
-			factor = 1
-
-			modifier = {
-				factor = 2
-				is_historical_focus_on = yes
-			}
-		}
-	}
-	focus = {
-		id = CUB_banks_usa
-		x =-1
-		y = 1
 		cost = 10
 		prerequisite = { focus =CUB_open_pos}
 		prerequisite = { focus =CUB_prisoners}
@@ -5279,15 +5270,10 @@ focus_tree = {
 		relative_position_id =CUB_expand_ties_alba
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus CUB_alba"
-			every_country = {
-				limit = { has_idea = CUB_alba_idea }
-				CUB = {
+			CUB = {
 				set_temp_variable = { percent_change = 5 }
 				change_domestic_influence_percentage = yes
 				}
-				set_temp_variable = { percent_change = 5 }
-				change_domestic_influence_percentage = yes
-			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -5688,7 +5674,7 @@ focus_tree = {
 		prerequisite = {focus =CUB_multi_party}
 		relative_position_id =CUB_president
 		completion_reward = {
-			add_country_leader_trait = russian_duumviri
+			add_country_leader_trait = new_cuban
 		}
 		ai_will_do = {
 			factor = 1
@@ -5880,11 +5866,40 @@ focus_tree = {
 		id = CUB_new_socialism_ideas
 		x =3
 		y = 1
-		cost = 5
+		cost = 10
 		prerequisite = {focus = CUB_continue_reformism}
 		mutually_exclusive = {focus=CUB_bring_liberalism_to_cuba}
 		relative_position_id =  CUB_continue_reformism
 		completion_reward = {
+			hidden_effect = {
+				clear_array = ruling_party
+				add_to_array = { ruling_party = 4 }
+				set_temp_variable = { current_cons_popularity = party_pop_array^0 }
+				multiply_temp_variable = { current_cons_popularity = 0.5 }
+				recalculate_party = yes
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.2
+				}
+				create_country_leader = {
+					name = "Miguel Diaz Canel"
+					picture = "miguel_diaz_canel.dds"
+					ideology =Communist-State
+					traits = {
+						technocrat
+						communist_sympathizer
+					}
+				}
+			}
+			custom_effect_tooltip = CUB_migel_comeback
 		}
 		ai_will_do = {
 			factor = 1
@@ -5903,6 +5918,10 @@ focus_tree = {
 		prerequisite = {focus = CUB_continue_reformism}
 		relative_position_id =  CUB_continue_reformism
 		completion_reward = {
+			CUB = {
+				set_temp_variable = { percent_change = 5 }
+				change_domestic_influence_percentage = yes
+			}
 		}
 		ai_will_do = {
 			factor = 1
