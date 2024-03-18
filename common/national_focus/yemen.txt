@@ -1,4 +1,18 @@
 #Author(s): Created and Developed by PokemonUnited26
+### search_filters = { FOCUS_FILTER_POLITICAL }
+### search_filters = { FOCUS_FILTER_RESEARCH }
+### search_filters = { FOCUS_FILTER_INDUSTRY }
+### search_filters = { FOCUS_FILTER_STABILITY }
+### search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+### search_filters = { FOCUS_FILTER_MANPOWER }
+### search_filters = { FOCUS_FILTER_ANNEXATION }
+### search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+### search_filters = { FOCUS_FILTER_INFLUENCE }
+### search_filters = { FOCUS_FILTER_EXPENDITURE }
+### search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+### search_filters = { FOCUS_FILTER_CORRUPTION }
+### search_filters = { FOCUS_FILTER_INSURGENCY }
+
 focus_tree = {
 	id = yem_focus
 	country = {
@@ -298,6 +312,56 @@ focus_tree = {
 					}
 				}
 				unlock_decision_tooltip = YEM_dancing_on_the_heads_of_snakes_3_4
+			}
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = -0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = 0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_political_power = 50
+				add_stability = 0.05
 			}
 		}
 
@@ -677,6 +741,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_equality_among_muslims"
+			swap_ideas = {
+				remove_idea = YEM_shia_sunni_divide
+				add_idea = ummah_wadidah
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -694,14 +762,366 @@ focus_tree = {
 		prerequisite = { focus = YEM_Cult_of_Saleh }
 
 		cost = 5
-
+	
+		available = {
+			NOT = {
+				power_balance_value = {
+					id = YEM_power_balance
+					value < -0.3
+				}
+				power_balance_value = {
+					id = YEM_power_balance
+					value > 0.3
+				}
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Constitutional_Reformation_of_2001"
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = -0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = 0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_stability = 0.05
+			}	
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			add_relative_party_popularity = yes
+
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_military_appointments
+		icon = null
+
+		x = 0
+		y = 1
+
+		relative_position_id = YEM_Cult_of_Saleh
+		prerequisite = { focus = YEM_Cult_of_Saleh }
+		
+		available = {
+			NOT = {
+				power_balance_value = {
+					id = YEM_power_balance
+					value < -0.3
+				}
+				power_balance_value = {
+					id = YEM_power_balance
+					value > 0.3
+				}
+			}
+		}
+		
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_military_appointments"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_ysp_traitors
+		icon = null
+
+		x = 2
+		y = 1
+
+		relative_position_id = YEM_Cult_of_Saleh
+		prerequisite = { focus = YEM_Cult_of_Saleh }
+		
+		available = {
+			NOT = {
+				power_balance_value = {
+					id = YEM_power_balance
+					value < -0.3
+				}
+				power_balance_value = {
+					id = YEM_power_balance
+					value > 0.3
+				}
+			}
+		}
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_ysp_traitors"
+			add_popularity = {
+				ideology = communism
+				popularity = -0.05
+			}
+
 		}
 
 		ai_will_do = { factor = 1 }
 	}
 
+	focus = {
+		id = YEM_Election_Reforms
+		icon = null
+		
+		x = 0
+		y = 1
+
+		relative_position_id = YEM_military_appointments
+
+		prerequisite = { focus = YEM_ysp_traitors focus = YEM_Constitutional_Reformation_of_2001 focus = YEM_military_appointments }
+		
+		available = {
+			NOT = {
+				power_balance_value = {
+					id = YEM_power_balance
+					value < -0.15
+				}
+				power_balance_value = {
+					id = YEM_power_balance
+					value > 0.15
+				}
+			}
+		}
+		
+		cancel_if_invalid = yes 
+		
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Election_Reforms"
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = -0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = 0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_stability = 0.05
+			}	
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_Shura_Council_Reforms
+		icon = null
+
+		x = -4
+		y = 1
+		
+		available = {
+			has_completed_focus = YEM_Constitutional_Reformation_of_2001
+			NOT = {
+				has_completed_focus = YEM_remove_sharia
+			}
+		}
+		relative_position_id = YEM_Election_Reforms
+
+		prerequisite = { focus = YEM_Election_Reforms }
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Shura_Council_Reforms"
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = -0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+						}
+					}
+				}
+				add_power_balance_value = {
+					id = YEM_power_balance
+					value = 0.1
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							power_balance_value = {
+								id = YEM_power_balance
+								value < 0
+							}
+							power_balance_value = {
+								id = YEM_power_balance
+								value > 0
+							}
+						}
+					}
+				}
+				add_stability = 0.05
+			}	
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_Representation_Question
+		icon = null
+
+		x = -1
+		y = 1
+
+		relative_position_id = YEM_Shura_Council_Reforms
+		prerequisite = { focus = YEM_Shura_Council_Reforms }
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Representation_Question"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_Ballot_Reforms
+		icon = null
+
+		x = 1
+		y = 1
+
+		relative_position_id = YEM_Shura_Council_Reforms
+		prerequisite = { focus = YEM_Shura_Council_Reforms }
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Ballot_Reforms"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+ 	focus = {
+		id = YEM_Religious_Councils
+		icon = null
+
+		x = -1
+		y = 1
+
+		relative_position_id = YEM_Ballot_Reforms
+		prerequisite = { focus = YEM_Ballot_Reforms }
+		prerequisite = { focus = YEM_Representation_Question}
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Religious_Councils"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
 	focus = {
 		id = YEM_combat_saudi_strains
 		icon = null
@@ -875,25 +1295,6 @@ focus_tree = {
 			set_temp_variable = { party_index = 10 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			add_relative_party_popularity = yes
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-
-	focus = {
-		id = YEM_military_appointments
-		icon = null
-
-		x = 0
-		y = 1
-
-		relative_position_id = YEM_Cult_of_Saleh
-		prerequisite = { focus = YEM_Cult_of_Saleh }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_military_appointments"
 		}
 
 		ai_will_do = { factor = 1 }
@@ -1261,28 +1662,6 @@ focus_tree = {
 	}
 
 	focus = {
-		id = YEM_Election_Reforms
-		icon = null
-		
-		x = 0
-		y = 1
-
-		relative_position_id = YEM_military_appointments
-
-		prerequisite = { focus = YEM_ysp_traitors }
-		prerequisite = { focus = YEM_Constitutional_Reformation_of_2001 }
-		prerequisite = { focus = YEM_military_appointments}
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Election_Reforms"
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-
-	focus = {
 		id = YEM_Concessions_to_the_Ulema
 		icon = null
 
@@ -1355,80 +1734,6 @@ focus_tree = {
 		ai_will_do = { factor = 1 }
 	}
 
-	focus = {
-		id = YEM_Shura_Council_Reforms
-		icon = null
-
-		x = -4
-		y = 1
-
-		relative_position_id = YEM_Election_Reforms
-
-		prerequisite = { focus = YEM_Election_Reforms }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Shura_Council_Reforms"
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-	focus = {
-		id = YEM_Representation_Question
-		icon = null
-
-		x = -1
-		y = 1
-
-		relative_position_id = YEM_Shura_Council_Reforms
-		prerequisite = { focus = YEM_Shura_Council_Reforms }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Representation_Question"
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-	focus = {
-		id = YEM_Ballot_Reforms
-		icon = null
-
-		x = 1
-		y = 1
-
-		relative_position_id = YEM_Shura_Council_Reforms
-		prerequisite = { focus = YEM_Shura_Council_Reforms }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Ballot_Reforms"
-		}
-
-		ai_will_do = { factor = 1 }
-	}
- 	focus = {
-		id = YEM_Religious_Councils
-		icon = null
-
-		x = -1
-		y = 1
-
-		relative_position_id = YEM_Ballot_Reforms
-		prerequisite = { focus = YEM_Ballot_Reforms }
-		prerequisite = { focus = YEM_Representation_Question}
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Religious_Councils"
-		}
-
-		ai_will_do = { factor = 1 }
-	}
 	focus = {
 		id = YEM_Rig_the_Election_System
 		icon = null
@@ -1507,6 +1812,39 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_tribal_developments"
+			set_temp_variable = { temp_opinion = -5 }
+			change_landowners_opinion = yes
+			if = {
+				limit = {
+					any_state = {
+						 free_building_slots = {
+							building = industrial_complex
+							size > 1
+						}
+					}
+					any_state = {
+						 NOT = {
+							OR = {	
+								has_state_category = state_00
+								has_state_category = state_inhospitable
+								impassable = yes
+								is_island_state = yes
+								is_one_state_island = yes
+							 }
+						}
+					}
+				}
+				random_owned_controlled_state = {
+					add_building_construction = {
+						type = industrial_complex
+							level = 1
+							instant_build = yes
+						}
+					add_extra_state_shared_building_slots = 1
+				}
+				set_temp_variable = { treasury_change = -3.75 }
+				modify_treasury_effect = yes
+			}			
 		}
 
 		ai_will_do = { factor = 1 }
@@ -1671,26 +2009,7 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
-
-	focus = {
-		id = YEM_ysp_traitors
-		icon = null
-
-		x = 2
-		y = 1
-
-		relative_position_id = YEM_Cult_of_Saleh
-		prerequisite = { focus = YEM_Cult_of_Saleh }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_ysp_traitors"
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-
+	
 	focus = {
 		id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
 		icon = null
@@ -1847,76 +2166,6 @@ focus_tree = {
 				}
 				add_country_leader_trait = pro_al_qaeda
 			}
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-
-	focus = {
-		id = YEM_spread_of_salafi
-		icon = null
-
-		x = 0
-		y = 2
-		
-		relative_position_id = YEM_Salafist_Support
-		prerequisite = { focus = YEM_Salafist_Support }
-		
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_spread_of_salafi"
-			if = {
-				limit = {
-					any_owned_state = {
-						has_state_flag = aqy_no_presence
-					}
-				}
-				every_state = {
-					limit = {
-						has_state_flag = aqy_no_presence
-					}	
-					clr_state_flag = aqy_no_presence
-				}
-			}
-			custom_effect_tooltip = all_state_al_qaeda_tt
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-	focus = {
-		id = YEM_spread_outward_salafi
-		icon = null
-
-		x = -2
-		y = 1
-
-		relative_position_id = YEM_spread_of_salafi
-		prerequisite = { focus = YEM_spread_of_salafi }
-		
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_spread_outward_salafi"
-		}
-
-		ai_will_do = { factor = 1 }
-	}
-	
-	focus = {
-		id = YEM_invite_salafi_jihadis
-		icon = null
-
-		x = 0
-		y = 1
-
-		relative_position_id = YEM_spread_of_salafi
-		prerequisite = { focus = YEM_spread_of_salafi }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_invite_salafi_jihadis"
 		}
 
 		ai_will_do = { factor = 1 }
@@ -5530,70 +5779,18 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
-
-	focus = {
-		id = YEM_spread_of_wahhabi
-		icon = null
-
-		x = 0
-		y = 2
-
-		relative_position_id = YEM_Wahhabist_Doctrine
-		prerequisite = { focus = YEM_Wahhabist_Doctrine }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_spread_of_wahhabi"
-		}
-		ai_will_do = { factor = 1 }
-	}
 	
-	focus = {
-		id = YEM_dammaj
-		icon = null
-
-		x = 0
-		y = 1
-
-		relative_position_id = YEM_spread_of_wahhabi
-		prerequisite = { focus = YEM_spread_of_wahhabi }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_dammaj"
-		}
-		ai_will_do = { factor = 1 }
-	}
-
-	focus = {
-		id = YEM_saudi_support
-		icon = null
-
-		x = 2
-		y = 1
-
-		relative_position_id = YEM_spread_of_wahhabi
-		prerequisite = { focus = YEM_spread_of_wahhabi }
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_saudi_support"
-		}
-		ai_will_do = { factor = 1 }
-	}
-
 	focus = {
 		id = YEM_The_Military # The Yemeni Military
 		icon = Generic_Tank_through_Wall
 
-		x = 24
-		y = 15
+		x = 0
+		y = 2
 
 		cost = 5
-
+		
+		relative_position_id = YEM_end_water_crisis
+		
 		completion_reward = {
 			add_command_power = 25
 			195 = {
@@ -6790,12 +6987,11 @@ focus_tree = {
 		id = YEM_look_inward
 		icon = null
 
-		x = -2
+		x = 4
 		y = 1
 
 		relative_position_id = YEM_Semi-Stable_Republic
 		prerequisite = { focus = YEM_Semi-Stable_Republic }
-		allow_branch = { has_completed_focus = YEM_Semi-Stable_Republic }
 
 		cost = 5
 
@@ -6806,22 +7002,1452 @@ focus_tree = {
 		ai_will_do = { factor = 1 }
 	}
 	focus = {
-		id = YEM_look_outward
+		id = YEM_minorities
 		icon = null
 
-		x = 2
+		x = 6
 		y = 1
 
-		relative_position_id = YEM_Semi-Stable_Republic
-		prerequisite = { focus = YEM_Semi-Stable_Republic }
-		allow_branch = {has_completed_focus = YEM_Semi-Stable_Republic }
+		relative_position_id = YEM_look_inward
+		prerequisite = { focus = YEM_look_inward }
 
 		cost = 5
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_look_outward"
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_minorities"
 		}
 
 		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_on_the_muhamashin
+		icon = null
+
+		x = -1
+		y = 1
+
+		relative_position_id = YEM_minorities
+		prerequisite = { focus = YEM_minorities }
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_on_the_muhamashin"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_regional_ethnics
+		icon = null
+
+		x = 1
+		y = 1
+
+		relative_position_id = YEM_minorities
+		prerequisite = { focus = YEM_minorities }
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_regional_ethnics"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_religious_groups
+		icon = null
+
+		x = 0
+		y = 2
+
+		relative_position_id = YEM_minorities
+		prerequisite = { focus = YEM_minorities }
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_religious_groups"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_maintain_tradition
+		icon = islam_hijab
+
+		x = -2
+		y = 1
+		
+		relative_position_id = YEM_look_inward
+
+		cost = 4.3
+
+		prerequisite = {
+			focus = YEM_look_inward
+		}
+		mutually_exclusive = { focus = YEM_westernization_policies focus = YEM_the_yemeni_way }
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			add_stability = 0.05
+			log = "[GetDateText]: [This.GetName]: focus YEM_maintain_tradition executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_the_yemeni_way
+		icon = molotov_ribbentrop_pact
+
+		x = 0
+		y = 1
+		
+		relative_position_id = YEM_look_inward
+
+		cost = 4.3
+
+		prerequisite = {
+			focus = YEM_look_inward
+		}
+		mutually_exclusive = { focus = YEM_westernization_policies focus = YEM_maintain_tradition }
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			custom_effect_tooltip = YEM_westernization_policies_tt
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_ulema_opinion = yes
+			change_the_wahabi_ulema_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_westernization_policies executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_westernization_policies
+		icon = democracy2
+
+		x = 2
+		y = 1
+		
+		relative_position_id = YEM_look_inward
+
+		cost = 5
+
+		prerequisite = { focus = YEM_look_inward }
+		mutually_exclusive = { focus = YEM_maintain_tradition focus = YEM_the_yemeni_way }
+
+		search_filters = { FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+		available = { has_completed_focus = YEM_weaken_the_mutaween }
+
+		completion_reward = {
+			custom_effect_tooltip = YEM_westernization_policies_tt
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_ulema_opinion = yes
+			change_the_wahabi_ulema_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_westernization_policies executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_anti_corruption_drive
+		icon = anti_establishment
+
+		x = 4
+		y = 1
+		relative_position_id = YEM_look_inward
+
+		cost = 8.58
+
+		prerequisite = { focus = YEM_look_inward }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_CORRUPTION }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = 20 }
+			modify_treasury_effect = yes
+			decrease_corruption = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_saudi_royal_family_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_anti_corruption_drive executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_scripture
+		icon = sharia_law
+
+		x = -1
+		y = 1
+		relative_position_id = YEM_maintain_tradition
+
+		cost = 6.45
+
+		prerequisite = { focus = YEM_maintain_tradition }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_SOCIAL_CONSERVATISM }
+		completion_reward = {
+			set_temp_variable = { temp_modify_social_con_government = 10 }
+			modify_social_conservatism_government = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_wahabi_ulema_opinion = yes
+			change_the_ulema_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_scripture executed"
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				OR = {
+					is_historical_focus_on = no
+					jihadist_government = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = YEM_traditional_gender_roles
+		icon = become_puppet
+
+		x = 1
+		y = 1
+		
+		relative_position_id = YEM_maintain_tradition
+
+		cost = 5
+
+		prerequisite = { focus = YEM_maintain_tradition focus = YEM_the_yemeni_way }
+		mutually_exclusive = {
+			focus = YEM_womens_rights
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+
+		completion_reward = {
+			set_temp_variable = { temp_modify_social_con_government = 10 }
+			modify_social_conservatism_government = yes
+			set_no_women_effect = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+			recalculate_party = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_traditional_gender_roles executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_womens_rights
+		icon = POL_looseabortion
+
+		x = 1
+		y = 1
+		
+		relative_position_id = YEM_the_yemeni_way
+
+		cost = 2.9
+
+		mutually_exclusive = {
+			focus = YEM_traditional_gender_roles
+		}
+		prerequisite = { focus = YEM_the_yemeni_way focus = YEM_westernization_policies }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_political_power = 75
+			log = "[GetDateText]: [This.GetName]: focus YEM_womens_rights executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_reform
+		icon = end_sharia_law
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_westernization_policies
+
+		cost = 6.45
+
+		prerequisite = { focus = YEM_westernization_policies }
+
+		search_filters = { FOCUS_FILTER_SOCIAL_CONSERVATISM }
+		completion_reward = {
+			set_temp_variable = { temp_modify_social_con_government = -10 }
+			modify_social_conservatism_government = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_wahabi_ulema_opinion = yes
+			change_the_ulema_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_reform executed"
+		}
+	}
+	focus = {
+		id = YEM_break_segregated_schools
+		icon = literacy_rate_improvment
+
+		x = 1
+		y = 1
+		
+		relative_position_id = YEM_womens_rights
+		mutually_exclusive = {
+			focus = YEM_maintain_segregated_schools focus = YEM_promote_segregated_schools
+		}
+		prerequisite = { focus = YEM_womens_rights }
+		prerequisite = { focus = YEM_reform }
+
+		cost = 5.72
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_break_segregated_schools"
+			add_political_power = 75
+			add_tech_bonus = {
+				bonus = 0.5
+				uses = 2
+				category = computing_tech
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_maintain_segregated_schools
+		icon = education_reform
+
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_womens_rights
+		mutually_exclusive = {
+			focus = YEM_break_segregated_schools focus = YEM_promote_segregated_schools
+		}
+		prerequisite = { focus = YEM_womens_rights focus = YEM_traditional_gender_roles }
+
+		cost = 5.72
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_maintain_segregated_schools"
+			add_stability = 0.05
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_promote_segregated_schools
+		icon = null
+
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_traditional_gender_roles
+		mutually_exclusive = {
+			focus = YEM_maintain_segregated_schools focus = YEM_break_segregated_schools
+		}
+		prerequisite = { focus = YEM_traditional_gender_roles }
+		prerequisite = { focus = YEM_scripture }
+
+		cost = 5.72
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_promote_segregated_schools"
+			add_stability = 0.05
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_reform_personal_status_laws
+		icon = treaty4
+
+		x = 1
+		y = 1
+		
+		relative_position_id = YEM_maintain_segregated_schools
+
+		cost = 7.2
+
+		prerequisite = { focus = YEM_maintain_segregated_schools focus = YEM_break_segregated_schools }
+		mutually_exclusive = {
+			focus = YEM_maintain_islamic_trad
+		}
+
+		search_filters = { FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+		available = { has_completed_focus = YEM_weaken_the_mutaween }
+
+		completion_reward = {
+			set_temp_variable = { temp_modify_social_con_government = -20 }
+			modify_social_conservatism_government = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_wahabi_ulema_opinion = yes
+			change_the_ulema_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_reform_personal_status_laws executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_women_army
+		icon = Generic_Female_Commander
+
+		x = 0
+		y = 1
+		
+		relative_position_id = YEM_reform_personal_status_laws
+		prerequisite = { focus = YEM_reform_personal_status_laws }
+
+		cost = 5.72
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_women_army"
+
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_end_censorship
+		icon = social_media
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_reform
+
+		cost = 5
+
+		prerequisite = { focus = YEM_reform }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = -5 }
+			change_saudi_royal_family_opinion = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -1 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_end_censorship executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}	
+	focus = {
+		id = YEM_lgbtqa
+		icon = pro_lgbt
+		x = 0
+		y = 1
+		
+		relative_position_id = YEM_end_censorship
+
+		cost = 7.86
+
+
+		prerequisite = { focus = YEM_end_censorship }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_lgbtqa"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_censorship
+		icon = BRA_soc_con_twitter
+
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_scripture
+
+		cost = 5
+
+		prerequisite = { focus = YEM_scripture }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+
+		completion_reward = {
+			set_temp_variable = { temp_opinion = -5 }
+			change_saudi_royal_family_opinion = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -1 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_censorship executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_islamic_internet
+		icon = null
+
+		x = 0
+		y = 1
+		
+		relative_position_id = YEM_censorship
+
+		cost = 5
+
+		prerequisite = { focus = YEM_censorship }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+
+
+		completion_reward = {
+			if = {
+				limit = { original_tag = BHR }
+				BHR_open_nation_level_up = yes
+			}
+			else_if = {
+				limit = {
+					has_government = neutrality
+					NOT = {
+						original_tag = BHR
+					}
+				}
+				open_nation_level_up = yes
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						original_tag = BHR
+						has_government = neutrality
+					}
+				}
+				YEM_open_nation_level_up = yes
+			}
+			set_temp_variable = { temp_opinion = -5 }
+			change_saudi_royal_family_opinion = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -1 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_islamic_internet executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}		
+	focus = {
+		id = YEM_maintain_islamic_trad
+		icon = null
+
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_maintain_segregated_schools
+
+		prerequisite = { focus = YEM_maintain_segregated_schools focus = YEM_promote_segregated_schools }
+		mutually_exclusive = {
+			focus = YEM_reform_personal_status_laws
+		}
+
+		cost = 5.72
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_maintain_islamic_trad"
+			add_stability = 0.05
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_open_mosques
+		icon = null
+
+		x = 0
+		y = 1
+		
+		relative_position_id = YEM_maintain_islamic_trad
+
+		prerequisite = { focus = YEM_maintain_islamic_trad }
+
+		cost = 5.72
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_open_mosques"
+			add_stability = 0.05
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_a_new_path
+		icon = support_democracy
+
+		x = -4
+		y = 1
+
+		relative_position_id = YEM_Semi-Stable_Republic
+		prerequisite = { focus = YEM_Semi-Stable_Republic }
+
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_a_new_path"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_empower_baath_supporters
+		icon = military_mission2
+
+		x = -5
+		y = 1
+		relative_position_id = YEM_a_new_path
+
+		cost = 8.58
+
+		prerequisite = { focus = YEM_a_new_path }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_timed_idea = {
+				idea = baath_movement
+				days = 180
+			}
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.1 }
+			add_relative_party_popularity = yes
+
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_wahabi_ulema_opinion = yes
+			change_the_ulema_opinion = yes
+			if = {
+				limit = { has_idea = idea_gcc_member_state }
+				set_temp_variable = { temp_modify_gcc_unity = -5 }
+				modify_gcc_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_empower_baath_supporters executed"
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				is_historical_focus_on = no
+			}
+		}
+	}
+	focus = {
+		id = YEM_defensive_nationalism
+		icon = military_sphere
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_empower_baath_supporters
+
+		cost = 4.3
+
+		prerequisite = { focus = YEM_empower_baath_supporters }
+		mutually_exclusive = { focus = YEM_aggressive_nationalism }
+
+		available = { has_government = nationalist }
+
+		completion_reward = {
+			add_ideas = defensive_nationalism
+			log = "[GetDateText]: [This.GetName]: focus YEM_defensive_nationalism executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = YEM_aggressive_nationalism
+		icon = ultimatum
+
+		x = -1
+		y = 1
+		relative_position_id = YEM_empower_baath_supporters
+
+		cost = 4.3
+
+		prerequisite = { focus = YEM_empower_baath_supporters }
+		mutually_exclusive = { focus = YEM_defensive_nationalism }
+
+		available = { has_government = nationalist }
+
+		completion_reward = {
+			add_ideas = aggressive_nationalism
+			log = "[GetDateText]: [This.GetName]: focus YEM_aggressive_nationalism executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_revive_baathist_dream
+		icon = focus_generic_fascist_propaganda
+		cost = 10
+		prerequisite = {
+			focus = YEM_aggressive_nationalism focus = YEM_defensive_nationalism
+		}
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_aggressive_nationalism
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			has_government = communism
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_revive_baathist_dream"
+		}
+
+	}
+	focus = {
+		id = YEM_baathist_beacon
+		icon = Generic_Arabia
+		cost = 10
+		prerequisite = {
+			focus = YEM_revive_baathist_dream
+		}
+		x = 0
+		y = 1
+		relative_position_id = YEM_revive_baathist_dream
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			has_government = communism
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_baathist_beacon"
+
+		}
+
+	}
+	focus = {
+		id = YEM_baathist_renaissance
+		icon = Generic_Arabia
+		cost = 10
+		prerequisite = {
+			focus = YEM_baathist_beacon
+		}
+		x = 0
+		y = 1
+		relative_position_id = YEM_baathist_beacon
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			has_government = communism
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_baathist_renaissance"
+			custom_effect_tooltip = TT_SYR_REVIVE_BAATHISM_COST
+		}
+
+	}
+	focus = {
+		id = YEM_reach_out_egypt
+		icon = align_to_egypt
+		cost = 10
+		prerequisite = {
+			focus = YEM_revive_baathist_dream
+		}
+		x = -2
+		y = 1
+		relative_position_id = YEM_revive_baathist_dream
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			EGY = { exists = yes }
+			EGY = { is_in_faction = no }
+			EGY = { is_subject = no }
+			NOT = { has_war_with = EGY }
+			is_in_faction = yes
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_reach_out_egypt"
+		}
+	}
+	focus = {
+		id = YEM_ties_egypt
+		icon = null
+		cost = 10
+		prerequisite = {
+			focus = YEM_reach_out_egypt
+		}
+		x = 0
+		y = 1
+		relative_position_id = YEM_reach_out_egypt
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_ties_egypt"
+		}
+	}
+	focus = {
+		id = YEM_reach_out_syria
+		icon = align_to_syria
+		cost = 10
+		prerequisite = {
+			focus = YEM_revive_baathist_dream
+		}
+		x = 2
+		y = 1
+		relative_position_id = YEM_revive_baathist_dream
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			SYR = { exists = yes }
+			SYR = { is_in_faction = no }
+			SYR = { is_subject = no }
+			NOT = { has_war_with = SYR }
+			is_in_faction = yes
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_reach_out_syria"
+		}
+	}
+	focus = {
+		id = YEM_ties_syria
+		icon = null
+		cost = 10
+		prerequisite = {
+			focus = YEM_reach_out_syria
+		}
+		x = 0
+		y = 1
+		relative_position_id = YEM_reach_out_syria
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_ties_syria"
+		}
+	}
+	focus = {
+		id = YEM_arab_confederation
+		icon = arabunion
+		cost = 10
+		prerequisite = {
+			focus = YEM_baathist_renaissance
+		}
+		prerequisite = {
+			focus = YEM_ties_syria focus = YEM_ties_egypt
+		}
+		x = 0
+		y = 1
+		relative_position_id = YEM_baathist_renaissance
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			is_in_faction = no
+			has_government = communism
+			custom_trigger_tooltip = {
+				tooltip = null
+				is_in_array = {
+					array = ruling_party
+					value = 7
+				}
+			}
+			EGY = {
+				custom_trigger_tooltip = {
+					tooltip = null
+					is_in_array = {
+						array = ruling_party
+						value = 7
+					}
+				}
+			}
+
+		}
+
+		bypass = {
+			EGY = { is_subject_of = ROOT }
+		}
+
+		cancel_if_invalid = yes
+
+
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+		completion_reward = {
+		}
+
+	}
+
+	focus = {
+		id = YEM_integrate_the_union
+		icon = treaty2
+		cost = 20
+		prerequisite = {
+			focus = YEM_arab_confederation
+		}
+
+		x = 0
+		y = 1
+		relative_position_id = YEM_arab_confederation
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		available = {
+			is_in_faction = no
+			has_government = communism
+			custom_trigger_tooltip = {
+				tooltip = null
+				is_in_array = {
+					array = ruling_party
+					value = 7
+				}
+			}
+		}
+
+		bypass = {
+		}
+
+		cancel_if_invalid = yes
+
+
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_integrate_the_union"
+			if = {
+				limit = { EGY = { NOT = { is_subject_of = ROOT } } }
+				effect_tooltip = {
+					every_state = {
+						limit = { is_core_of = EGY }
+						add_core_of = ROOT
+					}
+					annex_country = {
+						target = EGY
+						transfer_troops = yes
+					}
+				}
+			}
+			else = {
+				every_state = {
+					limit = { is_core_of = EGY }
+					add_core_of = ROOT
+				}
+				annex_country = {
+					target = EGY
+					transfer_troops = yes
+				}
+				every_country = {
+					limit = {
+						NOT = { original_tag = EGY }
+						is_arabic_nation = yes
+						is_subject_of = ROOT
+					}
+					every_owned_state = {
+						limit = { is_core_of = THIS }
+						add_core_of = ROOT
+					}
+					ROOT = {
+						annex_country = {
+							target = PREV
+							transfer_troops = yes
+						}
+					}
+				}
+			}
+			custom_effect_tooltip = null
+			set_country_flag = leader_of_arab_union
+			set_global_flag = arab_union_formed
+		}
+	}	
+	focus = {
+		id = YEM_empower_sunni_democrats
+		icon = sunni_politics
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_a_new_path
+
+		cost = 8.58
+
+		prerequisite = { focus = YEM_a_new_path }
+		mutually_exclusive = { focus = YEM_empower_shia_democrats }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			add_timed_idea = {
+				idea = sunni_movement
+				days = 180
+			}
+			set_temp_variable = { party_index = 12 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_ulema_opinion = yes
+			change_the_wahabi_ulema_opinion = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -5 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_empower_sunni_democrats executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+
+
+	focus = {
+		id = YEM_empower_shia_democrats
+		icon = ummah
+
+		x = -1
+		y = 1
+		relative_position_id = YEM_a_new_path
+
+		cost = 8.58
+
+		prerequisite = { focus = YEM_a_new_path }
+		mutually_exclusive = { focus = YEM_empower_sunni_democrats }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			OR = {
+				has_idea = substantial_shia_population
+				has_idea = large_shia_population
+			}
+		}
+
+		completion_reward = {
+			add_timed_idea = {
+				idea = shia_movement
+				days = 180
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.1
+			}
+			recalculate_party = yes
+			shia_resistance_level_down = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -5 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_empower_shia_democrats executed"
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				is_historical_focus_on = no
+			}
+		}
+	}
+	focus = {
+		id = YEM_a_moderate_stance
+		icon = concessions2
+
+		x = -1
+		y = 1
+		relative_position_id = YEM_empower_sunni_democrats
+
+		cost = 7.2
+
+		prerequisite = { focus = YEM_empower_shia_democrats focus = YEM_empower_sunni_democrats }
+		mutually_exclusive = { focus = YEM_shia_swivel  focus = YEM_socialist_past }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			has_government = communism
+			OR = {
+				has_completed_focus = YEM_shia_dominance
+				has_completed_focus = YEM_fair_representation
+			}
+		}
+
+		completion_reward = {
+			add_ideas = national_shiism
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
+			custom_effect_tooltip = shirazi_popularity_tt
+			set_temp_variable = { party_index = 8 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			set_temp_variable = { temp_outlook_increase = 0.1 }
+			add_relative_party_popularity = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -5 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_favor_the_shiraziyyin executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_socialist_past
+		icon = democratic_communism
+		x = 1
+		y = 1
+		relative_position_id = YEM_empower_sunni_democrats
+
+		cost = 7.86
+
+
+		prerequisite = { focus = YEM_empower_sunni_democrats }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_socialist_past"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_ysp_victory
+		icon = labor_unions
+		x = 0
+		y = 1
+		relative_position_id = YEM_socialist_past
+
+		cost = 7.86
+
+
+		prerequisite = { focus = YEM_socialist_past	}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_ysp_victory"
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 19 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = YEM_shia_swivel
+		icon = jihad
+
+		x = -1
+		y = 1
+		relative_position_id = YEM_empower_shia_democrats
+
+		cost = 7.2
+
+		prerequisite = { focus = YEM_empower_shia_democrats }
+		mutually_exclusive = { focus = YEM_a_moderate_stance }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			has_government = communism
+			has_completed_focus = YEM_shia_dominance
+		}
+
+		completion_reward = {
+			add_ideas = transnational_shiism
+			if = {
+				limit = { check_variable = { gdp_per_capita < 15 } }
+				add_ideas = iranian_aid
+			}
+			custom_effect_tooltip = vilayat_e_faqih_popularity_tt
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = PER.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -10 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_favor_khomeinism executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_al_houthi_2
+		icon = iran_resistence_economy
+
+		x = -1
+		y = 1
+		relative_position_id = YEM_shia_swivel
+
+		cost = 7.2
+
+		prerequisite = { focus = YEM_shia_swivel }
+		mutually_exclusive = { focus = YEM_back_to_the_past }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			has_government = communism
+			has_completed_focus = YEM_shia_dominance
+		}
+
+		completion_reward = {
+			add_ideas = transnational_shiism
+			if = {
+				limit = { check_variable = { gdp_per_capita < 15 } }
+				add_ideas = iranian_aid
+			}
+			custom_effect_tooltip = vilayat_e_faqih_popularity_tt
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = PER.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			if = {
+				limit = { has_idea = idea_GCC_member_state }
+				set_temp_variable = { temp_modify_GCC_unity = -10 }
+				modify_GCC_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_favor_khomeinism executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_back_to_the_past
+		icon = monarchism
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_shia_swivel
+
+		cost = 7.2
+
+		prerequisite = { focus = YEM_shia_swivel}
+		mutually_exclusive = { focus = YEM_al_houthi_2 }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+		completion_reward = {
+			add_stability = 0.02
+			set_temp_variable = { temp_opinion = 5 }
+			change_saudi_royal_family_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus YEM_back_to_the_past executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_irredentism
+		icon = aggressive_diplomacy
+
+		x = 0
+		y = 2
+		relative_position_id = YEM_a_moderate_stance
+
+		cost = 10
+
+		prerequisite = { focus = YEM_a_moderate_stance focus = YEM_back_to_the_past }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			add_war_support = 0.05
+			if = {
+				limit = { has_idea = idea_gcc_member_state }
+				set_temp_variable = { temp_modify_gcc_unity = -10 }
+				modify_gcc_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_irredentism executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_into_arabia
+		icon = null
+
+		x = -1
+		y = 1
+		relative_position_id = YEM_irredentism
+
+		cost = 10
+
+		prerequisite = { focus = YEM_irredentism }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			add_war_support = 0.05
+			if = {
+				limit = { has_idea = idea_gcc_member_state }
+				set_temp_variable = { temp_modify_gcc_unity = -10 }
+				modify_gcc_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_into_arabia executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_across_the_gulf
+		icon = null
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_irredentism
+
+		cost = 10
+
+		prerequisite = { focus = YEM_irredentism }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			add_war_support = 0.05
+			if = {
+				limit = { has_idea = idea_gcc_member_state }
+				set_temp_variable = { temp_modify_gcc_unity = -10 }
+				modify_gcc_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_across_the_gulf executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = YEM_arabia_felix
+		icon = null
+
+		x = 1
+		y = 1
+		relative_position_id = YEM_into_arabia
+
+		cost = 10
+
+		prerequisite = { focus = YEM_across_the_gulf focus = YEM_into_arabia }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			add_war_support = 0.05
+			if = {
+				limit = { has_idea = idea_gcc_member_state }
+				set_temp_variable = { temp_modify_gcc_unity = -10 }
+				modify_gcc_unity = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus YEM_arabia_felix executed"
+		}
+
+		ai_will_do = { base = 1 }
 	}
 }
