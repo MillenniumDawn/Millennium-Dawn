@@ -6889,7 +6889,8 @@ country_event = {
 			id = 3734
 			name = SOV_Ekaterinodar
 		}
-		hidden_effect = { 668 = { set_state_name = SOV_Ekaterinodar } }
+		hidden_effect = { 668 = { set_state_name = SOV_North_Ekaterinodar } }
+		hidden_effect = { 1140 = { set_state_name = SOV_South_Ekaterinodar } }
 		set_province_name = {
 			id = 9299
 			name = SOV_Stavropol_on_Volga
@@ -7539,6 +7540,84 @@ country_event = {
 		}
 	}
 }
+##Operation Declared in Finland
+country_event = {
+	id = sov_final_strike.8
+	title = sov_final_strike.8.t
+	desc = sov_final_strike.8.d
+	picture = GFX_declare_svo
+	is_triggered_only = yes
+	fire_only_once = yes
+	trigger = {
+		has_completed_focus = SOV_the_final_strike
+	}
+	option = {
+		name = sov_final_strike.8.a
+		log = "[GetDateText]: [This.GetName]: sov_final_strike.8.a"
+		add_to_variable = { party_pop_array^6 = 0.05 }
+		recalculate_party = yes
+		every_country = {
+			limit = {
+				OR = {
+					has_idea = NATO_member
+					has_idea = EU_member
+				}
+			}
+			add_opinion_modifier = {
+				target = SOV
+				modifier = major_breach_of_trust
+			}
+		}
+		hidden_effect = {
+			news_event = {
+				hours = 6
+				id = russia_news.13
+			}
+			IF = {
+				limit = {
+					NOT = {
+						OR = {
+							has_idea = negligible_corruption
+							has_idea = slight_corruption
+							has_idea = modest_corruption
+							has_idea = medium_corruption
+						}
+					}
+				}
+				SOV = {
+					country_event = { id = sov_final_strike.2 days = 15 }
+				}
+			}
+			else = {
+				SOV = {
+					country_event = { id = sov_final_strike.3 days = 15 }
+				}
+			}
+			IF = {
+				limit = { NOT = { SOV = { has_country_flag = SOV_western_sanctions } } }
+				set_country_flag = SOV_western_sanctions
+				add_dynamic_modifier = { modifier = SOV_western_sanctions_modifier }
+				country_event = { id = sov_final_strike.7 days = 15 }
+				USA = {
+					country_event = { id = sov_final_strike.9 days = 1 }
+				}
+				GER = {
+					country_event = { id = sov_final_strike.9 days = 1 }
+				}
+				FRA = {
+					country_event = { id = sov_final_strike.9 days = 1 }
+				}
+				ENG = {
+					country_event = { id = sov_final_strike.9 days = 1 }
+				}
+			}
+			decrease_economic_growth = yes
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
 
 news_event = {
 	id = russia_news.11
@@ -7590,6 +7669,59 @@ news_event = {
 			NOT = { is_in_faction_with = SOV }
 			NOT = { has_idea = NATO_member }
 			NOT = { original_tag = UKR }
+		}
+	}
+}
+news_event = {
+	id = russia_news.13
+	immediate = { log = "[GetDateText]: [Root.GetName]: event russia_news.13" }
+	title = russia_news.13.t
+	desc = russia_news.13.d
+	picture = GFX_news_event_war
+	major = yes
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = russia_news.13.o1
+		log = "[GetDateText]: [This.GetName]: russia_news.13.o1 executed"
+		trigger = { original_tag = SOV }
+	}
+
+	option = {
+		name = russia_news.13.o2
+		log = "[GetDateText]: [This.GetName]: russia_news.11.o2 executed"
+		trigger = {
+			is_in_faction_with = SOV
+			NOT = { original_tag = SOV }
+		}
+	}
+
+	option = {
+		name = russia_news.13.o3
+		log = "[GetDateText]: [This.GetName]: russia_news.13.o3 executed"
+		trigger = {
+			has_idea = NATO_member
+		}
+	}
+
+	option = {
+		name = russia_news.13.o4
+		log = "[GetDateText]: [This.GetName]: russia_news.11.o4 executed"
+		trigger = {
+			OR = {
+				has_war_with = SOV
+				original_tag = FIN
+			}
+		}
+	}
+
+	option = {
+		name = russia_news.13.o5
+		log = "[GetDateText]: [This.GetName]: russia_news.13.o5 executed"
+		trigger = {
+			NOT = { is_in_faction_with = SOV }
+			NOT = { has_idea = NATO_member }
+			NOT = { original_tag = FIN }
 		}
 	}
 }
@@ -7802,6 +7934,51 @@ country_event = {
 		modify_treasury_effect = yes
 		ai_chance = {
 			base = 50
+		}
+	}
+}
+##Impose sanctions on Russia
+country_event = {
+	id = sov_final_strike.9
+	title = sov_final_strike.9.t
+	desc = sov_final_strike.9.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+	option = {
+		name = sov_final_strike.9.a
+		log = "[GetDateText]: [This.GetName]: sov_final_strike.9.a"
+		set_country_flag = SOV_imposed_sanctions
+		SOV = {
+			add_to_variable = { SOV_sanctions_roi = -0.02 }
+			add_to_variable = { SOV_sanctions_invest_cost = 0.05 }
+			add_to_variable = { SOV_sanctions_office_tax_gain = -0.02 }
+			add_to_variable = { SOV_sanctions_construction_speed = -0.02 }
+			add_to_variable = { SOV_sanctions_opinion_gain = -0.01 }
+			add_to_variable = { SOV_sanctions_research_speed = -0.01 }
+			add_to_variable = { SOV_sanctions_tax_cost = 0.01 }
+			set_country_flag = SOV_has_santions_flag
+			country_event = { id = sov_final_strike.5 days = 1 }
+		}
+		add_timed_idea = { idea = SOV_sanction_backfire_idea_harsh days = 720 }
+		ai_chance = {
+			base = 25
+			modifier = {
+				is_historical_focus_on = yes
+				add = 70
+			}
+		}
+	}
+	option = {
+		name = sov_final_strike.9.b
+		log = "[GetDateText]: [This.GetName]: sov_final_strike.9.b"
+		FIN = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = major_breach_of_trust
+			}
+		}
+		ai_chance = {
+			base = 10
 		}
 	}
 }
@@ -8041,6 +8218,7 @@ country_event = {
 				ideology = communism
 				set_cosmetic_tag = GER_com_reb_tech
 				set_country_flag = sov_northern_front
+				set_country_flag = GDR_test
 				size = 0.8
 				add_ideas = SOV_support_nov_idea
 				add_ideas = SOV_warsaw_pact_idea
@@ -8226,6 +8404,7 @@ country_event = {
 			popularity = -0.25
 		}
 		clr_country_flag = warsaw_member_check
+		set_country_flag = WP_escaped
 		ai_chance = {
 			base = 40
 		}
@@ -8244,11 +8423,77 @@ country_event = {
 			}
 		}
 		clr_country_flag = warsaw_member_check
+		set_country_flag = WP_normal_puppet
 		ai_chance = {
 			base = 60
 		}
 
 	}
+}
+
+country_event = {
+    id = sov_warsaw_pact.17
+    title = Sov_warsaw_pact.17.t
+    desc = Sov_warsaw_pact.17.d
+    picture = GFX_retaliatory_strike
+    is_triggered_only = yes
+    option = {
+        name = Sov_warsaw_pact.17.a
+        log = "[GetDateText]: [This.GetName]: Sov_warsaw_pact.17.a"
+		add_political_power = -150
+		add_stability = 0.02
+		add_war_support = 0.05
+        SOV = {
+            create_wargoal = {
+                type = take_state_focus
+                target = GER
+            }
+        }
+        ai_chance = {
+            base = 90
+        }
+
+    }
+
+    option = {
+        name = Sov_warsaw_pact.17.b
+        log = "[GetDateText]: [This.GetName]: Sov_warsaw_pact.17.b"
+		every_country = {
+			limit = {
+				has_country_flag = GDR_test
+			}
+			country_event = sov_warsaw_pact.18
+		}
+		add_political_power = -300
+		add_stability = -0.04
+		add_war_support = -0.07
+        ai_chance = {
+            base = 10
+        }
+
+    }
+}
+
+country_event = {
+    id = sov_warsaw_pact.18
+    title = Sov_warsaw_pact.18.t
+    desc = Sov_warsaw_pact.18.d
+    picture = GFX_warsaw_event1
+    is_triggered_only = yes
+    option = {
+        name = Sov_warsaw_pact.18.a
+        log = "[GetDateText]: [This.GetName]: Sov_warsaw_pact.18.a"
+		add_stability = -0.02
+		add_war_support = -0.01
+		leave_faction = yes
+		SOV = {
+			end_puppet = ROOT
+		}
+        ai_chance = {
+            base = 100
+        }
+
+    }
 }
 
 ##SSG Start
