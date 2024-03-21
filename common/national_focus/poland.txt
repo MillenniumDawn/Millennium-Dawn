@@ -133,21 +133,79 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_red_dream"
-			set_country_flag = POL_communism_uprising_again_activation
-			set_temp_variable = { party_index = 5 }
-			set_temp_variable = { party_popularity_increase = 0.12 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.12 }
-			set_temp_variable = { temp_outlook_increase = 0.12 }
-			add_relative_party_popularity = yes
+			if = {
+				limit = {
+					NOT = {
+						is_ai = yes
+					}
+				}
+				set_country_flag = POL_communism_uprising_again_activation
+				set_temp_variable = { party_index = 5 }
+				set_temp_variable = { party_popularity_increase = 0.12 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.12 }
+				set_temp_variable = { temp_outlook_increase = 0.12 }
+				add_relative_party_popularity = yes
 
-			add_ideas = POL_economy_status1_idea
-			add_ideas = POL_solidarity_strength1_idea
-			add_ideas = POL_communism_domination1_idea
+				add_ideas = POL_economy_status1_idea
+				add_ideas = POL_solidarity_strength1_idea
+				add_ideas = POL_communism_domination1_idea
 
-			add_political_power = 75
-			custom_effect_tooltip = POL_leave_nato_warning_TT
+				add_political_power = 75
+				custom_effect_tooltip = POL_leave_nato_warning_TT
+			}
+			else = {
+				add_ideas = POL_communism_domination5_idea
+				set_temp_variable = { party_index = 5 }
+				set_temp_variable = { party_popularity_increase = 0.5 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.5 }
+				set_temp_variable = { temp_outlook_increase = 0.5 }
+				add_relative_party_popularity = yes
+				random_list = {
+					50 = {
+						set_temp_variable = { rul_party_temp = 4 }
+						change_ruling_party_effect = yes
+						hidden_effect = {
+							set_politics = {
+								ruling_party = communism
+								elections_allowed = no
+							}
+							set_popularities = {
+								democratic = 0
+								neutrality = 0
+								fascism = 0
+								communism = 100
+							}
+							NATO_leave = yes
+						}
+					}
+					50 = {
+						set_temp_variable = { rul_party_temp = 5 }
+						change_ruling_party_effect = yes
+						hidden_effect = {
+							set_politics = {
+								ruling_party = communism
+								elections_allowed = no
+							}
+							set_popularities = {
+								democratic = 0
+								neutrality = 0
+								fascism = 0
+								communism = 100
+							}
+							NATO_leave = yes
+						}
+					}
+				}
+
+				complete_national_focus = POL_fight_the_democracy
+				complete_national_focus = POL_strike_the_government
+				complete_national_focus = POL_negative_effects_of_privatization
+				complete_national_focus = POL_antagonize_the_europe
+			}
 
 			mark_focus_tree_layout_dirty = yes
 		}
@@ -1982,12 +2040,6 @@ focus_tree = {
 			add_war_support = 0.1
 			if = {
 				limit = {
-					has_idea = NATO_member
-				}
-				NATO_leave = yes
-			}
-			else_if = {
-				limit = {
 					is_in_faction = yes
 				}
 				leave_faction = yes
@@ -3000,6 +3052,7 @@ focus_tree = {
 			remove_coalition_members_effect = yes
 			add_ideas = POL_second_red_revolution1_idea
 			NATO_leave = yes
+			leave_faction = yes
 			decrease_two_level_economic_growth = yes
 			news_event = poland_news.34
 		}
@@ -18690,7 +18743,6 @@ focus = {
 			log = "[GetDateText]: [Root.GetName]: POL_nationalist_leave_nato"
 			if = {
 				limit = { has_idea = NATO_member }
-
 				NATO_leave = yes
 			}
 		}
@@ -19723,6 +19775,7 @@ focus = {
 			if = {
 				limit = {
 					has_any_power_balance = no
+					is_ai = no
 				}
 				set_power_balance = {
 					id = POL_korwin_walesa_bop
@@ -19731,12 +19784,24 @@ focus = {
 					set_value = 0.1
 				}
 				add_ideas = POL_walesa_opposition_idea
+				hidden_effect = {
+					news_event = { id = poland_news.10 }
+					news_event = { id = poland_news.11 }
+					mark_focus_tree_layout_dirty = yes
+				}
 			}
-
-			hidden_effect = {
-				news_event = { id = poland_news.10 }
-				news_event = { id = poland_news.11 }
-				mark_focus_tree_layout_dirty = yes
+			else = {
+				set_temp_variable = { rul_party_temp = 23 }
+				change_ruling_party_effect = yes
+				hidden_effect = {
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = yes
+					}
+					set_country_flag = POL_korwin_wins
+					news_event = { id = poland_news.13 }
+					mark_focus_tree_layout_dirty = yes
+				}
 			}
 		}
 
@@ -19810,6 +19875,7 @@ focus = {
 			if = {
 				limit = {
 					has_any_power_balance = no
+					is_ai = no
 				}
 				set_power_balance = {
 					id = POL_walesa_korwin_bop
@@ -19818,11 +19884,23 @@ focus = {
 					set_value = 0.1
 				}
 				add_ideas = POL_korwin_opposition_idea
+				hidden_effect = {
+					news_event = { id = poland_news.32 }
+					mark_focus_tree_layout_dirty = yes
+				}
 			}
-
-			hidden_effect = {
-				news_event = { id = poland_news.32 }
-				mark_focus_tree_layout_dirty = yes
+			else = {
+				set_temp_variable = { rul_party_temp = 14 }
+				change_ruling_party_effect = yes
+				hidden_effect = {
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = yes
+					}
+					set_country_flag = POL_walesa_wins
+					news_event = { id = poland_news.12 }
+					mark_focus_tree_layout_dirty = yes
+				}
 			}
 		}
 
