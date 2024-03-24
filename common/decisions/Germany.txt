@@ -555,6 +555,56 @@ GER_Rheinmetall = {
 		}
 	}
 
+	lynx_decision = {
+		icon = GFX_decision_generic_tank
+
+		fire_only_once = yes
+		custom_cost_trigger = {
+			has_army_experience > 34
+		}
+		custom_cost_text = army_xp_35
+
+		visible = {
+			original_tag = GER
+		}
+
+		available = {
+			has_tech = big_autocannon_tech_3
+			has_tech = diesel_engine_tech_5
+			has_tech = tank_components_tech_3
+			has_tech = afv_tech_3
+			has_tech = armor_tech_3
+			has_tech = Heavy_Anti_tank_3
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision lynx_decision"
+			army_experience = -35
+			create_equipment_variant = {
+				name = "Lynx"
+				type = ifv_hull_3
+				modules = {
+					main_armament_slot = big_autocannon_3
+					turret_type_slot = afv_unmanned_turret
+					suspension_type_slot = afv_torsion_bar_suspension
+					armor_type_slot = afv_composite_armor_gen3
+					engine_type_slot = tank_diesel_engine_gen5
+					special_armament_type_slot = double_feed_system
+					special_type_slot_1 = afv_atgm_gen4
+					special_type_slot_2 = smoke_launchers_2
+					special_type_slot_3 = afv_mine_protection
+					special_type_slot_4 = afv_battlestation_3
+				}
+				upgrades = {
+					afv_nsb_armor_upgrade = 4
+				}
+				icon = "GFX_ifv_hull_3_a"
+			}
+		}
+
+		ai_will_do = { factor = 0 }
+	}
+
 	GER_Fuchs_1A7 = {
 		icon = decision
 		available = {
@@ -2842,6 +2892,7 @@ GER_Anker_army = {
 
 		available = {
 			Root = { num_divisions > 20 }
+			has_idea = Nato_member
 			has_opinion = {
  					target = From
 					value > 20
@@ -2882,151 +2933,175 @@ GER_Anker_army = {
 			factor = 1
 		}
 		complete_effect = {
-		From = {
-			set_temp_variable = { percent_change = 5.5 }
-			set_temp_variable = { tag_index = GER }
-			set_temp_variable = { influence_target = From }
-			change_influence_percentage = yes
-			army_experience = 25
-			add_ideas = Ger_idea_European_Army
-		}
-		GER = {
-			add_ideas = Ger_idea_European_Army
-			add_manpower = 5000
-			army_experience = 25
+			GER = {
+				if = {
+					limit = {
+						NOT = {
+							has_idea = Ger_idea_European_Army
+						}
+					}
+				add_ideas = Ger_idea_European_Army
+				add_manpower = 5000
+				army_experience = 25
+				give_guarantee = FROM
+				}
+				if = {
+					limit = {
+						has_idea = Ger_idea_European_Army
+					}
+				}
+				add_manpower = 5000
+				army_experience = 25
+				give_guarantee = FROM
+				}
+			From = {
+				set_temp_variable = { percent_change = 2.5 }
+				set_temp_variable = { tag_index = GER }
+				set_temp_variable = { influence_target = From }
+				change_influence_percentage = yes
+				army_experience = 25
+				add_ideas = Ger_idea_European_Army
 			}
 		}
 	}
 }
 
-GER_Foreign = {
-	GER_Foreign_Politics_1 = {
+# GER_Foreign = {
+# 	GER_Foreign_Politics_1 = {
 
-		icon = generic_prepare_civil_war
+# 		icon = generic_prepare_civil_war
 
- 		allowed = {
- 			original_tag = GER
- 		}
+#  		allowed = {
+#  			original_tag = GER
+#  		}
 
- 		available = {
-			ROOT = {
- 				has_government = democratic
-			}
- 		}
+#  		available = {
+# 			ROOT = {
+#  				has_government = democratic
+# 			}
+#  		}
 
- 		target_trigger = {
- 				NOT = { has_war_with = ROOT }
-				NOT = { has_government = nationalist }
-				NOT = { has_government = fascism }
-
-
-		}
-
-		visible = {
-			ROOT = {
- 				has_opinion = {
- 					target = From
-					value > 9
- 				}
-			}
- 		}
-
- 		cost = 100
-
-		days_re_enable = 365
+#  		target_trigger = {
+#  				NOT = { has_war_with = ROOT }
+# 				NOT = { has_government = nationalist }
+# 				NOT = { has_government = fascism }
 
 
+# 		}
 
- 		ai_will_do = {
- 			factor = 25
- 		}
+# 		visible = {
+# 			ROOT = {
+#  				has_opinion = {
+#  					target = From
+# 					value > 9
+#  				}
+# 			}
+# 			FROM = {
+#  				NOT = { has_war_with = ROOT }
+# 				NOT = { has_government = nationalist }
+# 				NOT = { has_government = fascism }
+# 				check_variable = { gdp_per_capita > 8.500 }
+# 				has_war_support < 0.55
+# 				has_stability > 0.35
+# 				check_variable = { gdp_total > 150.00 }
+#  			}
+#  		}
 
-		complete_effect = {
- 			log = "[GetDateText]: [Root.GetName]: Decision GER_sell_MBT_europe"
- 			country_event = { id = germany.511 }
+#  		cost = 200
 
-		}
-	}
-	GER_Foreign_Politics_2 = {
-
-		icon = generic_prepare_civil_war
-
- 		allowed = {
- 			original_tag = GER
- 		}
-
- 		available = {
-			ROOT = {
- 				has_opinion = {
- 					target = From
-					value > 9
- 				}
-			}
- 			FROM = {
- 				has_opinion = {
- 					target = ROOT
- 					value > 9
- 				}
-				has_war_support < 0.55
-				has_stability > 0.35
-				has_war = no
-
- 			}
- 		}
-
- 		target_trigger = {
- 				NOT = { has_war_with = ROOT }
-				NOT = { has_government = nationalist }
-				NOT = { has_government = fascism }
-
-
-		}
-
-		visible = {
-			ROOT = {
-				has_completed_focus = GER_Restructure_the_Foreign_Ministery
- 				has_opinion = {
- 					target = From
-					value > 9
- 				}
-			}
-			FROM = {
-				check_variable = { research_slots_from_gdp_c = 1 }
- 				NOT = { has_war_with = ROOT }
-				NOT = { has_government = nationalist }
-				NOT = { has_government = fascism }
-				check_variable = { gdp_per_capita < 7.500 }
-				has_war_support < 0.55
-				has_stability > 0.35
-				check_variable = { gdp_total < 150.00 }
-				check_variable = { gdp_total > 12.00 }
- 			}
-
- 		}
-
- 		cost = 75
-
-		days_remove = 20
-		days_re_enable = 365
-
-
- 		ai_will_do = {
- 			factor = 25
- 		}
- 		fire_only_once = no
+# 		days_re_enable = 365
 
 
 
-		remove_effect = {
- 			log = "[GetDateText]: [Root.GetName]: Decision GER_sell_MBT_europe"
- 			country_event = { id = germany.512 }
-		}
-	}
+#  		ai_will_do = {
+#  			factor = 25
+#  		}
 
-}
+# 		complete_effect = {
+#  			log = "[GetDateText]: [Root.GetName]: Decision GER_sell_MBT_europe"
+#  			country_event = { id = germany.511 }
+
+# 		}
+# 	}
+# 	GER_Foreign_Politics_2 = {
+
+# 		icon = generic_prepare_civil_war
+
+#  		allowed = {
+#  			original_tag = GER
+#  		}
+
+#  		available = {
+# 			ROOT = {
+#  				has_opinion = {
+#  					target = From
+# 					value > 9
+#  				}
+# 			}
+#  			FROM = {
+#  				has_opinion = {
+#  					target = ROOT
+#  					value > 9
+#  				}
+# 				has_war_support < 0.55
+# 				has_stability > 0.35
+# 				has_war = no
+
+#  			}
+#  		}
+
+#  		target_trigger = {
+#  				NOT = { has_war_with = ROOT }
+# 				NOT = { has_government = nationalist }
+# 				NOT = { has_government = fascism }
+
+
+# 		}
+
+# 		visible = {
+# 			ROOT = {
+# 				has_completed_focus = GER_Restructure_the_Foreign_Ministery
+#  				has_opinion = {
+#  					target = From
+# 					value > 9
+#  				}
+# 			}
+# 			FROM = {
+# 				check_variable = { research_slots_from_gdp_c = 1 }
+#  				NOT = { has_war_with = ROOT }
+# 				NOT = { has_government = nationalist }
+# 				NOT = { has_government = fascism }
+# 				check_variable = { gdp_per_capita < 7.500 }
+# 				has_war_support < 0.55
+# 				has_stability > 0.35
+# 				check_variable = { gdp_total < 150.00 }
+# 				check_variable = { gdp_total > 12.00 }
+#  			}
+
+#  		}
+
+#  		cost = 150
+
+# 		days_remove = 20
+# 		days_re_enable = 365
+
+
+#  		ai_will_do = {
+#  			factor = 25
+#  		}
+#  		fire_only_once = no
+
+
+
+# 		remove_effect = {
+#  			log = "[GetDateText]: [Root.GetName]: Decision GER_sell_MBT_europe"
+#  			country_event = { id = germany.512 }
+# 		}
+# 	}
+# }
 
 GER_V_fall_Decision = {
-	GER_Terroitorial_Defense = {
+		GER_Terroitorial_Defense = {
 		fire_only_once = yes
 		days_remove = 180
 		available = {
@@ -3324,123 +3399,133 @@ GER_V_fall_Decision = {
 	}
 }
 
-# GER_Officer_Training_Decisions = {
+GER_Officer_Training_Decisions = {
 
-# 	GER_send_Army_leader_to_Nato_Defense_College = {
-# 		fire_only_once = no
-# 		days_remove = 180
-# 		cost = 100
-# 		available = {
-# 			original_tag = GER
-# 		}
+	GER_send_Army_leader_to_Nato_Defense_College = {
+		fire_only_once = no
+		days_remove = 180
+		cost = 100
+		available = {
+			original_tag = GER
+		}
 
-# 		visible = {
-#  			original_tag = GER
-# 			has_idea = Nato_member
-# 		}
-# 		complete_effect = {
-# 			set_temp_variable = { treasury_change = -0.05 }
-# 				modify_treasury_effect = yes
-# 		}
-# 		remove_effect = {
-# 			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
-# 			random_Army_leader = { gain_xp = 150 }
+		visible = {
+			 original_tag = GER
+			has_idea = Nato_member
+		}
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
+			custom_effect_tooltip = GER_oberst_TT
+			hidden_effect = {
+			random_Army_leader = { gain_xp = 100 }
+			}
+	   }
+   }
+	GER_Training_for_Oberst = {
+		fire_only_once = no
+		days_remove = 365
+		cost = 100
+		available = {
+			original_tag = GER
+		}
 
-# 		}
-# 	}
-# 	GER_Training_for_Oberst = {
-# 		fire_only_once = no
-# 		days_remove = 365
-# 		cost = 100
-# 		available = {
-# 			original_tag = GER
-# 		}
+		visible = {
+			 original_tag = GER
+			has_idea = Nato_member
+		}
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
+				GER = {
+			random_country_division = { add_divisional_commander_xp = 150 }
+			random_country_division = { add_divisional_commander_xp = 150 }
+			random_country_division = { add_divisional_commander_xp = 150 }
+				}
+			}
+		}
 
-# 		visible = {
-#  			original_tag = GER
-# 			has_idea = Nato_member
-# 		}
-# 		complete_effect = {
-# 			set_temp_variable = { treasury_change = -0.05 }
-# 				modify_treasury_effect = yes
-# 		}
-# 		remove_effect = {
-# 			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
-# 			random_country_division = { add_divisional_commander_xp = 150 }
-# 			random_country_division = { add_divisional_commander_xp = 150 }
-# 			random_country_division = { add_divisional_commander_xp = 150 }
+	GER_Training_for_Oberst_II = {
+		fire_only_once = no
+		days_remove = 90
+		cost = 100
+		available = {
+			original_tag = GER
+		}
 
-# 		}
-# 	}
-# 	GER_Training_for_Oberst_II = {
-# 		fire_only_once = no
-# 		days_remove = 90
-# 		cost = 100
-# 		available = {
-# 			original_tag = GER
-# 		}
+		visible = {
+			 original_tag = GER
+			has_idea = Nato_member
+		}
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
+				GER = {
+			random_country_division = { add_divisional_commander_xp = 50 }
+			random_country_division = { add_divisional_commander_xp = 50 }
+			random_country_division = { add_divisional_commander_xp = 50 }
+				}
+			}
+		}
 
-# 		visible = {
-#  			original_tag = GER
-# 			has_idea = Nato_member
-# 		}
-# 		complete_effect = {
-# 			set_temp_variable = { treasury_change = -0.05 }
-# 				modify_treasury_effect = yes
-# 		}
-# 		remove_effect = {
-# 			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
-# 			random_country_division = { add_divisional_commander_xp = 50 }
-# 			random_country_division = { add_divisional_commander_xp = 50 }
-# 			random_country_division = { add_divisional_commander_xp = 50 }
+	GER_Training_for_a_General = {
+		fire_only_once = no
+		days_remove = 180
+		cost = 100
+		available = {
+			original_tag = GER
+		}
 
-# 		}
-# 	}
-# 	GER_Training_for_a_General = {
-# 		fire_only_once = no
-# 		days_remove = 180
-# 		cost = 100
-# 		available = {
-# 			original_tag = GER
-# 		}
+		visible = {
+			 original_tag = GER
+			has_idea = Nato_member
+		}
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
+			custom_effect_tooltip = GER_oberst_III_TT
+			hidden_effect = {
+			random_Army_leader = { gain_xp = 100 }
+			}
+		}
+	}
+	GER_Training_for_all_Generalstaff = {
+		fire_only_once = no
+		days_remove = 60
+		cost = 100
+		available = {
+			original_tag = GER
+		}
 
-# 		visible = {
-#  			original_tag = GER
-# 			has_idea = Nato_member
-# 		}
-# 		complete_effect = {
-# 			set_temp_variable = { treasury_change = -0.05 }
-# 				modify_treasury_effect = yes
-# 		}
-# 		remove_effect = {
-# 			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
-# 			random_Army_leader = { gain_xp = 150 }
-
-# 		}
-# 	}
-# 	GER_Training_for_all_Generalstaff = {
-# 		fire_only_once = no
-# 		days_remove = 60
-# 		cost = 100
-# 		available = {
-# 			original_tag = GER
-# 		}
-
-# 		visible = {
-#  			original_tag = GER
-# 			has_idea = Nato_member
-# 		}
-# 		complete_effect = {
-# 			set_temp_variable = { treasury_change = -0.05 }
-# 				modify_treasury_effect = yes
-# 		}
-# 		remove_effect = {
-# 			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
-# 			every_Army_leader = { gain_xp = 25 }
-
-# 		}
-# 	}
-# }
+		visible = {
+			 original_tag = GER
+			has_idea = Nato_member
+		}
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_recruitment_campaigns"
+			custom_effect_tooltip = GER_oberst_IV_TT
+			hidden_effect = {
+			every_Army_leader = { gain_xp = 25 }
+			}
+		}
+	}
+}
 GER_Blohm_and_Voss_Company = {
 	Ger_MEKO_System = {
 
