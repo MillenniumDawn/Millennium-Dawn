@@ -454,44 +454,15 @@ IRQ_the_constitution = {
 }
 
 IRQ_civil_war_mechanic = {
-	IRQ_open_operations_against_salafists = {
-		visible = { }
-		available = {
-			NOT = {
-				has_country_flag = IRQ_jihadist_conducting_attack
-			}
-		}
-		days_remove = 20
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision IRQ_open_operations_against_salafists"
-			set_country_flag = IRQ_conducting_attack
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision IRQ_open_operations_against_salafists"
-			clr_country_flag = IRQ_conducting_attack
-			hidden_effect = {
-
-			}
-		}
-		ai_will_do = {
-			base = 0
-		}
-	}
 	IRQ_start_negotiations_shias = {
 		visible = { }
 		days_remove = 0
+		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_start_negotiations_shias"
-		}
-		ai_will_do = {
-			base = 0
-		}
-	}
-	IRQ_start_negotiations_kurds = {
-		visible = { }
-		days_remove = 0
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision IRQ_start_negotiations_kurds"
+			country_event = {
+				id = iraq_civil_war.6
+			}
 		}
 		ai_will_do = {
 			base = 0
@@ -500,8 +471,16 @@ IRQ_civil_war_mechanic = {
 	IRQ_request_coalition_forces = {
 		visible = { }
 		days_remove = 0
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_request_coalition_forces"
+			add_timed_idea = {
+				idea = IRQ_air_support_granted
+				days = 60
+			}
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_request_coalition_forces"
+			custom_effect_tooltip = IRQ_request_airstrike
 		}
 		ai_will_do = {
 			base = 0
@@ -510,8 +489,14 @@ IRQ_civil_war_mechanic = {
 	IRQ_request_awakening_council_militias = {
 		visible = { }
 		days_remove = 0
+		fire_only_once = yes
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision IRQ_request_coalition_forces"
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_request_awakening_council_militias"
+			custom_effect_tooltip = IRQ_al_sahwa
+			add_to_variable = { var = IRQ_government_troops value = 50000 }
+			clamp_variable = { var = IRQ_government_troops min = 0 max = 1000000 }
+			add_to_variable = { var = IRQ_government_readiness value = -8 }
+			clamp_variable = { var = IRQ_government_readiness min = 0 max = 100 }
 		}
 		ai_will_do = {
 			base = 0
@@ -520,8 +505,32 @@ IRQ_civil_war_mechanic = {
 	IRQ_militarize_police_force = {
 		visible = { }
 		days_remove = 0
+		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_militarize_police_force"
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = 14500
+			}
+			add_equipment_to_stockpile = {
+				type = command_control_equipment
+				amount = 7400
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -15.50 }
+			modify_treasury_effect = yes
+			newline = yes
+			add_stability = -0.05
+			newline = yes
+			if = {
+				limit = {
+					NOT = {
+						has_idea = police_05
+					}
+				}
+				increase_policing_budget = yes
+				block_police_decrease = yes
+			}
 		}
 		ai_will_do = {
 			base = 0
@@ -530,8 +539,30 @@ IRQ_civil_war_mechanic = {
 	IRQ_recruitment_campaign = {
 		visible = { }
 		days_remove = 0
+		custom_cost_trigger = {
+			has_equipment = {
+				Inf_equipment > 499
+			}
+		}
+		custom_cost_text = IRQ_assualt
+
+		available = {
+			has_equipment = {
+				Inf_equipment > 499
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_recruitment_campaign"
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = -500
+			}
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_recruitment_campaign"
+			custom_effect_tooltip = IRQ_increase_readiness_by_2
+			add_to_variable = { var = IRQ_government_readiness value = 2 }
+			clamp_variable = { var = IRQ_government_readiness min = 0 max = 100 }
 		}
 		ai_will_do = {
 			base = 0
@@ -539,18 +570,18 @@ IRQ_civil_war_mechanic = {
 	}
 
 	# Missions (Attacks, etc)
-	IRQ_turban_people_attack_player = { # Salafists Attack Player
-		activation = { has_country_flag = IRQ_attack_cooldown }
-		visible = { always = yes }
-		available = {
-			always = no
-		}
-		days_mission_timeout = 24
-		is_good = yes
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout IRQ_turban_people_attack_player"
-			clr_country_flag = IRQ_attack_cooldown
-		}
-	}
+	# IRQ_turban_people_attack_player = { # Salafists Attack Player
+	# 	activation = { has_country_flag = IRQ_attack_cooldown }
+	# 	visible = { has_country_flag = IRQ_attack_cooldown }
+	# 	available = {
+	# 		always = no
+	# 	}
+	# 	days_mission_timeout = 24
+	# 	is_good = yes
+	# 	timeout_effect = {
+	# 		log = "[GetDateText]: [Root.GetName]: Decision timeout IRQ_turban_people_attack_player"
+	# 		clr_country_flag = IRQ_attack_cooldown
+	# 	}
+	# }
 
 }
