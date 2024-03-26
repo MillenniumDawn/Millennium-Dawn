@@ -1320,7 +1320,14 @@ focus_tree = {
 
 		x = 40
 		y = 2
+        available = {
+		custom_trigger_tooltip = {
+			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+			USA = { has_country_flag = war_on_terror_speech }
+		}
 
+		is_subject = no
+	    }
 		prerequisite = { focus = YEM_Al-Qaeda }
 		available = { 
 			if = {
@@ -1337,7 +1344,7 @@ focus_tree = {
 			}
 		}
 
-		cost = 5
+		cost = 2
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_The_War_on_Terror"
@@ -2026,7 +2033,7 @@ focus_tree = {
 	
 	focus = {
 		id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
-		icon = null
+		icon = isis_tahrir_alliance
 
 		x = 39
 		y = 3
@@ -2036,7 +2043,18 @@ focus_tree = {
 		mutually_exclusive = { focus = YEM_Join_the_War_on_Terror }
 		
 		cost = 5
-
+available = {
+		custom_trigger_tooltip = {
+			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+			USA = { has_country_flag = war_on_terror_speech }
+		}
+		OR = {
+			has_government = fascism
+		}
+		country_exists = USA
+		NOT = { has_war_with = USA }
+		is_subject = no
+	}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Openly_Support_Aden-Abyan_Islamic_Army"
 			if = {
@@ -2123,6 +2141,15 @@ focus_tree = {
 
 		x = 42
 		y = 3
+available = {
+		custom_trigger_tooltip = {
+			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+			USA = { has_country_flag = war_on_terror_speech }
+		}
+		country_exists = USA
+		NOT = { has_war_with = USA }
+		is_subject = no
+	}
 
 
 		prerequisite = { focus = YEM_The_War_on_Terror }
@@ -2130,7 +2157,6 @@ focus_tree = {
 		mutually_exclusive = { focus = YEM_Join_the_War_on_Terror }
 
 		cost = 5
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Secretly_support_Aden-Abyan_Islamic_Army"
 		}
@@ -2144,7 +2170,15 @@ focus_tree = {
 
 		x = 44
 		y = 3
-
+available = {
+		custom_trigger_tooltip = {
+			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+			USA = { has_country_flag = war_on_terror_speech }
+		}
+		country_exists = USA
+		NOT = { has_war_with = USA }
+		is_subject = no
+	    }
 		prerequisite = { focus = YEM_The_War_on_Terror }
 		mutually_exclusive = { focus = YEM_Secretly_support_Aden-Abyan_Islamic_Army }
 		mutually_exclusive = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
@@ -2160,7 +2194,7 @@ focus_tree = {
 
 	focus = {
 		id = YEM_Salafist_Support
-		icon = null
+		icon = isis_aks
 
 		x = 38
 		y = 4
@@ -2187,7 +2221,7 @@ focus_tree = {
 
 	focus = {
 		id = YEM_Terrorists_escape
-		icon = null
+		icon = align_to_hamas
 
 		x = 42
 		y = 4
@@ -2196,8 +2230,65 @@ focus_tree = {
 
 		cost = 5
 
+		ai_will_do = {
+		factor = 1
+		modifier = {
+			factor = 0
+			is_historical_focus_on = no
+ 		}
+	    }
+
+        available = {
+		OR = {
+			country_exists = HAM
+			country_exists = PAL
+		}
+		OR = {
+			HAM = { owns_state = 209 }
+			PAL = { owns_state = 209 }
+		}
+	}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Terrorists_escape"
+		     if = {
+			limit = { NOT = { country_exists = HAM } }
+			209 = { add_core_of = HAM }
+			PAL = { release = HAM }
+			hidden_effect = {
+				every_state = {
+					limit = { is_core_of = PAL }
+					add_core_of = HAM
+				}
+				every_state = {
+					limit = { is_claimed_by = PAL }
+					add_claim_by = HAM
+				}
+				HAM = { load_oob = HAM_2017 }
+				ISR = {
+					remove_state_claim = 209
+					add_state_core = 209
+				}
+				PAL = {
+					add_state_core = 209
+				}
+			}
+			ISR = { country_event = { id = SyriaFocus.76 hours = 6 } }
+			PAL = { country_event = { id = SyriaFocus.76 hours = 6 } }
+		}
+		add_opinion_modifier = {
+			target = HAM
+			modifier = declaration_of_friendship
+		}
+		reverse_add_opinion_modifier = {
+			target = HAM
+			modifier = declaration_of_friendship
+		}
+		HAM = {
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -2223,7 +2314,7 @@ focus_tree = {
 
 	focus = {
 		id = YEM_Use_Terrorists_as_excuse_for_more_financial_backing
-		icon = null
+		icon = focus_generic_financial_agreement
 
 		x = 43
 		y = 5
@@ -8016,7 +8107,7 @@ random_list = {
 	}
 	focus = {
 		id = YEM_baathist_beacon
-		icon = Generic_Arabia
+		icon = focus_generic_fascist_propaganda
 		cost = 10
 		prerequisite = {
 			focus = YEM_revive_baathist_dream
