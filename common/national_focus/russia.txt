@@ -2542,6 +2542,9 @@ focus_tree = {
 				target = BLR
 				type = puppet_wargoal_focus
 			}
+			hidden_effect = {
+				country_event = { id = russia.15 days = 1 }
+			}
 		}
 		ai_will_do = {
 			factor = 155
@@ -2568,14 +2571,9 @@ focus_tree = {
 			}
 			NOT = { UKR = { is_in_faction_with = SOV } }
 			UKR = { has_country_flag = UKR_civil_war_in_the_donbass_flag }
-		}
-		bypass = {
 			OR = {
-				NOT = { country_exists = UKR }
-				UKR = { is_in_faction_with = SOV }
-				UKR = { is_subject_of = SOV }
-				NOT = { country_exists = DPR }
-				NOT = { country_exists = LpR }
+				country_exists = DPR
+				country_exists = LPR
 			}
 		}
 		cancel = {
@@ -2981,6 +2979,7 @@ focus_tree = {
 			custom_effect_tooltip = SOV_sanctions_warning_TT
 			hidden_effect = {
 				country_event = sov_final_strike.1
+				country_event = { id = russia.15 days = 1 }
 			}
 		}
 		ai_will_do = {
@@ -3032,6 +3031,7 @@ focus_tree = {
 			}
 			custom_effect_tooltip = SOV_sanctions_warning_TT
 			hidden_effect = {
+				country_event = { id = russia.15 days = 1 }
 				country_event = sov_final_strike.8
 			}
 		}
@@ -3096,7 +3096,7 @@ focus_tree = {
 		x = -2
 		y = 2
 		relative_position_id = SOV_counter_euromaidan
-		cost = 6
+		cost = 5
 		available = {
 			OR = {
 				emerging_anarchist_communism_are_in_power = yes
@@ -3107,133 +3107,59 @@ focus_tree = {
 				NOT = { is_subject_of = SOV }
 				NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
 				NOT = { is_in_faction_with = SOV }
+			}
+			OR = {
+				country_exists = DPR
+				country_exists = LPR
+				country_exists = HPR
 			}
 		}
 		prerequisite = { focus = SOV_the_novorossiyan_uprising }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_supportlnrdnr_rus"
-			add_political_power = -100
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			LPR = {
-				add_ideas = SOV_support_nov_idea
-				add_manpower = 1000
-				division_template = {
-					name = "Kuban Cossacks Regiment"
-					regiments = {
-						Militia_Bat = { x = 0 y = 0 }
-						Militia_Bat = { x = 0 y = 1 }
-						Militia_Bat = { x = 1 y = 0 }
-						Militia_Bat = { x = 1 y = 1 }
-					}
-					priority = 2
+			if = {
+				limit = { country_exists = LPR }
+				LPR = {
+					country_event = russia.66
 				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 46 }
-					create_unit = {
-						division = "name = \"Kuban Cossacks Regiment\" division_template = \"Kuban Cossacks Regiment\" start_experience_factor = 0.4"
-						owner = LPR
-					}
+				send_equipment = {
+					equipment = Inf_equipment
+					amount = 1000
+					target = LPR
 				}
+				add_political_power = -50
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-			send_equipment = {
-				equipment = Inf_equipment
-				amount = 1000
-				target = LPR
-			}
-			DPR = {
-				add_ideas = SOV_support_nov_idea
-				add_manpower = 1000
-				division_template = {
-					name = "Death Battallion"
-					regiments = {
-						Militia_Bat = { x = 0 y = 0 }
-						Militia_Bat = { x = 0 y = 1 }
-						Militia_Bat = { x = 1 y = 0 }
-						Militia_Bat = { x = 1 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 46 }
-					create_unit = {
-						division = "name = \"Death Battallion\" division_template = \"Death Battallion\" start_experience_factor = 0.4"
-						owner = DPR
-					}
-				}
-			}
-			send_equipment = {
-				equipment = Inf_equipment
-				amount = 1000
-				target = DPR
-			}
-			NOV = { add_ideas = SOV_support_nov_idea }
-		}
-		ai_will_do = {
-			factor = 155
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 50
-			}
-			modifier = {
-				has_global_flag = SOV_PUTIN_PATH
-				add = 50
-			}
-		}
-	}
-	focus = {
-		id = SOV_wagner_to_donetsk
-		icon = sov_wagner_jambo
-		x = -3
-		y = 4
-		relative_position_id = SOV_extend_term_limits
-		cost = 2
-		available = {
-			NOT = {
+			if = {
+				limit = { country_exists = DPR }
 				DPR = {
-				has_idea = SOV_wagner_military_advisors
+					country_event = russia.67
 				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = wagner_rebellion
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			OR = {
-				emerging_anarchist_communism_are_in_power = yes
-				emerging_autocracy_are_in_power = yes
-				emerging_reactionaries_are_in_power = yes
-			}
-			UKR = {
-				NOT = { is_subject_of = SOV }
-				NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
-				NOT = { is_in_faction_with = SOV }
-			}
-			country_exists = DPR
-			NOT = {
-				OR = {
-					emerging_communist_state_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
+				send_equipment = {
+					equipment = Inf_equipment
+					amount = 1000
+					target = DPR
 				}
+				add_political_power = -50
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-		}
-		prerequisite = { focus = SOV_supportlnrdnr_rus }
-		search_filters = { FOCUS_FILTER_INFLUENCE }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_wagner_to_donetsk"
-			custom_effect_tooltip = SOV_leto_donetsk_TT
-			set_temp_variable = { percent_change = 8 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = DPR }
-			change_influence_percentage = yes
-			set_temp_variable = { modify_wagner = -1500 }
-			modify_wagner_support = yes
-			DPR = {
-				country_event = russia_wagner.40
+			if = {
+				limit = { country_exists = HPR }
+				HPR = {
+					country_event = russia.68
+				}
+				send_equipment = {
+					equipment = Inf_equipment
+					amount = 1000
+					target = HPR
+				}
+				add_political_power = -50
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-
 		}
 		ai_will_do = {
 			factor = 155
@@ -3247,7 +3173,6 @@ focus_tree = {
 			}
 		}
 	}
-
 	focus = {
 		id = SOV_acquire_drones
 		icon = shahed
@@ -3546,7 +3471,7 @@ focus_tree = {
 		x = -9
 		y = 8
 		relative_position_id = SOV_counter_euromaidan
-		cost = 7
+		cost = 5
 		available = {
 			has_country_flag = rusich_create
 			has_war = yes
@@ -3566,6 +3491,8 @@ focus_tree = {
 			custom_effect_tooltip = SOV_nati_TT
 			add_popularity = { ideology = nationalist popularity = 0.05 }
 			recalculate_party = yes
+			country_event = russia.64
+			country_event = russia.65
 			if = {
 				limit = {
 					has_completed_focus = SOV_slavic_corps
@@ -3576,24 +3503,6 @@ focus_tree = {
 			hidden_effect = {
 				wagner_bunt_check = yes
 			}
-			hidden_effect = {
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Hispaniola\" division_template = \"Battalion of Russian Nationalists\" start_experience_factor = 0.2"
-					owner = SOV
-				}
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"Russian National Unity\" division_template = \"Battalion of Russian Nationalists\" start_experience_factor = 0.2"
-					owner = SOV
-				}
-			}
-		}
 	}
 	ai_will_do = {
 		factor = 155
@@ -3628,7 +3537,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_special_o"
-			add_ideas = SOV_spetznaz_o
+			country_event = russia.17
 			if = {
 				limit = {
 					NOT = {
@@ -3675,39 +3584,13 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
 			set_country_flag = gazprom_create
+			country_event = russia.63
 			if = {
 				limit = {
 					has_completed_focus = SOV_slavic_corps
 				}	
 				set_temp_variable = { modify_wagnerbund = -1 }
 				modify_wagnerbund_support = yes
-			}
-			hidden_effect = {
-				wagner_bunt_check = yes
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Potok\" division_template = \"PMC Battalion\" start_experience_factor = 0.1"
-					owner = ROOT
-				}
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Fakel\" division_template = \"PMC Battalion\" start_experience_factor = 0.1"
-					owner = ROOT
-				}
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Plamya\" division_template = \"PMC Battalion\" start_experience_factor = 0.1"
-					owner = ROOT
-				}
 			}
 		}
 	ai_will_do = {
@@ -10403,7 +10286,6 @@ focus_tree = {
 			custom_effect_tooltip = SOV_honor_gorbachevs_legacy_tt
 			add_to_variable = { SOV_revived_politburo_democratic_support = 0.05 }
 			add_to_variable = { SOV_revived_politburo_drift_defence_factor = 0.05 }
-			set_cosmetic_tag = SOV_USSR_democratic
 			hidden_effect = {
 				country_event = russia.102
 			}
@@ -25604,7 +25486,6 @@ focus_tree = {
 			add_relative_party_popularity = yes
 			set_temp_variable = { treasury_change = -15.00 }
 			modify_treasury_effect = yes
-
 			add_timed_idea = {
 				idea = SOV_investments_in_ben
 				days = 130
