@@ -1313,15 +1313,41 @@ focus_tree = {
 
 		ai_will_do = { factor = 1 }
 	}
-
 	focus = {
-		id = YEM_The_War_on_Terror
-		icon = usa_attacked
+		id = YEM_crackdown_on_terror
+		icon = null
 
 		x = 2
 		y = 1
 		
 		relative_position_id = YEM_Al-Qaeda
+		
+        available = {
+		}
+
+		prerequisite = { focus = YEM_Al-Qaeda }
+		
+		mutually_exclusive = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
+		available = { 
+		}
+
+		cost = 2
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_The_War_on_Terror"
+		}
+
+		ai_will_do = { factor = 1 }
+	}
+	
+	focus = {
+		id = YEM_The_War_on_Terror
+		icon = usa_attacked
+
+		x = 0
+		y = 1
+		
+		relative_position_id = YEM_crackdown_on_terror
 		
         available = {
 		custom_trigger_tooltip = {
@@ -1333,7 +1359,6 @@ focus_tree = {
 	    }
 		prerequisite = { focus = YEM_Al-Qaeda }
 		
-		mutually_exclusive = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
 		available = { 
 			if = {
 				OR = {
@@ -2047,7 +2072,7 @@ focus_tree = {
 		
 		prerequisite = { focus = YEM_Al-Qaeda }
 		
-		mutually_exclusive = { focus = YEM_The_War_on_Terror }
+		mutually_exclusive = { focus = YEM_crackdown_on_terror }
 		
 		cost = 10
 		
@@ -2073,32 +2098,526 @@ focus_tree = {
 			set_temp_variable = { party_index = 11 }
 			set_temp_variable = { party_popularity_increase = 0.1 }
 			add_relative_party_popularity = yes
-			#custom_effect_tooltip = send_event_to_subjects_tt
 			
-			every_core_state = {
-				limit = {
-					AND = {
-						NOT = {
-							OR = {
-								state = 1077
-								state = 1104
-								state = 1107
-								state = 200
-							}
-						}
-						NOT = {
-							check_variable = { AQY_presence < 4 }
-							check_variable = { AQY_presence > 2 }
+			
+			custom_effect_tooltip = AQY_presence_max_tt
+			hidden_effect = {
+				if = {
+					limit = {
+						195 = {
+							check_variable = { var = AQY_presence value = 3 compare = equals }
 						}
 					}
+					195 = { add_to_variable = { var = AQY_presence value = 1 } }		
 				}
-				set_variable = { var = AQY_presence value = 2 } 				
+				if = {
+					limit = {
+						195 = {
+							check_variable = { var = AQY_presence value = 2 compare = equals }
+						}
+					}
+					195 = { add_to_variable = { var = AQY_presence value = 2 } }
+				}
+				if = {
+					limit = {
+						195 = {
+							check_variable = { var = AQY_presence value = 1 compare = equals }
+						}
+					}
+					195 = { add_to_variable = { var = AQY_presence value = 3 } }	
+				}
+				if = {
+					limit = {
+						197 = {
+							check_variable = { var = AQY_presence value = 3 compare = equals }
+						}
+					}
+					197 = { add_to_variable = { var = AQY_presence value = 1 } }		
+				}
+				if = {
+					limit = {
+						197 = {
+							check_variable = { var = AQY_presence value = 2 compare = equals }
+						}
+					}
+					197 = { add_to_variable = { var = AQY_presence value = 2 } }	
+				}
+				if = {
+					limit = {
+						197 = {
+							check_variable = { var = AQY_presence value = 1 compare = equals }
+						}
+					}
+					197 = { add_to_variable = { var = AQY_presence value = 3 } }		
+				}
+				if = {
+					limit = {
+						1103 = {
+							check_variable = { var = AQY_presence value = 3 compare = equals }
+						}
+					}
+					1103 = { add_to_variable = { var = AQY_presence value = 1 } }		
+				}
+				if = {
+					limit = {
+						1103 = {
+							check_variable = { var = AQY_presence value = 2 compare = equals }
+						}
+					}
+					1103 = { add_to_variable = { var = AQY_presence value = 2 } }	
+				}
+				if = {
+					limit = {
+						1103 = {
+							check_variable = { var = AQY_presence value = 1 compare = equals }
+						}
+					}		
+					1103 = { add_to_variable = { var = AQY_presence value = 3 } }
+				}
 			}
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		ai_will_do = { factor = 1 }
 	}
+	focus = {
+		id = YEM_Salafist_Support
+		icon = isis_aks
 
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
+		
+		prerequisite = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
+		mutually_exclusive = { focus = YEM_Wahhabist_Doctrine }
+		
+		cost = 5
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Salafist_Support"
+			if = {
+				limit = {
+					has_country_leader_with_trait = anti_salafist
+				}
+				swap_ruler_traits = { remove = anti_salafist add = pro_salafi }
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						has_country_leader_with_trait = anti_salafist
+					}
+				}
+				add_country_leader_trait = pro_salafi 
+			}
+			add_stability = -0.1
+
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_Wahhabist_Doctrine
+		icon = null
+
+		x = 1
+		y = 1
+
+		prerequisite = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
+		mutually_exclusive = { focus = YEM_Salafist_Support }
+
+		cost = 10
+		
+		relative_position_id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Wahhabist_Doctrine"
+			if = {
+				limit = {
+					NOT = { 
+						has_country_leader_with_trait = pro_saudi
+					}
+				}
+				add_country_leader_trait = pro_saudi 
+			}
+			if = {
+				limit = {
+					has_country_leader_with_trait = pro_salafi
+				}
+				swap_ruler_traits = { remove = pro_salafi add = pro_wahhabi } 
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_leader_with_trait = pro_salafi
+					}
+				}
+				add_country_leader_trait = pro_wahhabi 
+			}
+			add_stability = -0.05
+
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = YEM_Islamic_state_of_Yemen
+		icon = null
+
+		x = 1
+		y = 1
+
+		prerequisite = { focus = YEM_Salafist_Support focus = YEM_Wahhabist_Doctrine  }
+		
+		relative_position_id = YEM_Salafist_Support
+		
+		available = {
+			OR  = {
+				AND = {
+					has_completed_focus = YEM_Salafist_Support
+					fascism > 0.35
+				}
+				AND = {
+					has_completed_focus = YEM_Wahhabist_Doctrine
+					fascism > 0.5
+				}
+			}
+		}
+
+		cost = 10
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus YEM_Islamic_state_of_Yemen"
+			if = {
+				limit = {
+					NOT = {
+						ROOT = {
+							OR = {
+								has_completed_focus = YEM_Salafist_Support
+								has_completed_focus = YEM_Wahhabist_Doctrine
+							}
+						}
+					}
+				}		 
+				custom_effect_tooltip = YEM_islamic_state_tt
+			}
+			if = {
+				limit = {
+					has_completed_focus = YEM_Salafist_Support
+				}	
+				custom_effect_tooltip = YEM_islamic_state_1_tt
+				hidden_effect = {
+					if = {
+						limit = {
+							194 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							194 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							194 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}
+					if = {
+						limit = {
+							195 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							195 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							195 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}
+					if = {
+						limit = {
+							196 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							196 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							196 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}	
+					if = {
+						limit = {
+							197 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							197 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							197 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}	
+					if = {
+						limit = {
+							198 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							198 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							198 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}
+					if = {
+						limit = {
+							199 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							199 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							199 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}
+					if = {
+						limit = {
+							951 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							951 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							951 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}
+					if = {
+						limit = {
+							952 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							952 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							952 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}	
+					if = {
+						limit = {
+							1103 = {
+								check_variable = { var = AQY_presence value = 4 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 300
+						}							
+					}
+					if = {
+						limit = {
+							1103 = {
+								check_variable = { var = AQY_presence value = 3 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 200
+						}					
+					}
+					if = {
+						limit = {
+							1103 = {
+								check_variable = { var = AQY_presence value = 2 compare = equals }
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons
+							amount = 100
+						}						
+					}
+				}	
+			}	
+			if = {
+				limit = {
+					has_completed_focus = YEM_Wahhabist_Doctrine
+				}		 
+			}			
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+	}
 	focus = {
 		id = YEM_Secretly_support_Aden-Abyan_Islamic_Army
 		icon = terrorism
@@ -2161,52 +2680,13 @@ focus_tree = {
 	}
 
 	focus = {
-		id = YEM_Salafist_Support
-		icon = isis_aks
-
-		x = -1
-		y = 1
-		
-		relative_position_id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
-		
-		prerequisite = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
-		mutually_exclusive = { focus = YEM_Wahhabist_Doctrine }
-		
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Salafist_Support"
-			if = {
-				limit = {
-					has_country_leader_with_trait = anti_salafist
-				}
-				swap_ruler_traits = { remove = anti_salafist add = pro_salafi }
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						has_country_leader_with_trait = anti_salafist
-					}
-				}
-				add_country_leader_trait = pro_salafi 
-			}
-			add_stability = -0.1
-
-			set_temp_variable = { party_index = 11 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			add_relative_party_popularity = yes
-		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		ai_will_do = { factor = 1 }
-	}
-
-	focus = {
 		id = YEM_Terrorists_escape
 		icon = null
 
-		x = 42
-		y = 4
+		x = 0
+		y = 1
 
+		relative_position_id = YEM_Secretly_support_Aden-Abyan_Islamic_Army
 		prerequisite = { focus = YEM_Secretly_support_Aden-Abyan_Islamic_Army }
 
 		cost = 5
@@ -2233,9 +2713,11 @@ focus_tree = {
 		id = YEM_American_Terrorist_Elimination_Assistance
 		icon = align_to_america2
 
-		x = 44
-		y = 4
-
+		x = 0
+		y = 1
+		
+		relative_position_id = YEM_Join_the_War_on_Terror
+		
 		prerequisite = { focus = YEM_Join_the_War_on_Terror }
 
 		cost = 5
@@ -2251,9 +2733,10 @@ focus_tree = {
 		id = YEM_Use_Terrorists_as_excuse_for_more_financial_backing
 		icon = focus_generic_financial_agreement
 
-		x = 43
-		y = 5
-
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_American_Terrorist_Elimination_Assistance
 		prerequisite = { focus = YEM_Terrorists_escape focus = YEM_American_Terrorist_Elimination_Assistance }
 
 		cost = 5
@@ -2593,12 +3076,12 @@ focus_tree = {
 		id = YEM_American_Financial_backing
 		icon = focus_generic_american_investments
 
-		x = -1
+		x = 0
 		y = 2
 
-		relative_position_id = YEM_IMF_debt_council
-		prerequisite = { focus = YEM_IMF_debt_council }
-		prerequisite = { focus = YEM_Join_the_War_on_Terror }
+		relative_position_id = YEM_more_funds
+		prerequisite = { focus = YEM_more_funds }
+		prerequisite = { focus = YEM_American_Terrorist_Elimination_Assistance }
 
 		cost = 7
 
@@ -5698,36 +6181,6 @@ add_building_construction = {
 
 		ai_will_do = { factor = 1 }
 	}
-	focus = {
-		id = YEM_Islamic_state_of_Yemen
-		icon = null
-
-		x = 1
-		y = 1
-
-		prerequisite = { focus = YEM_Salafist_Support focus = YEM_Wahhabist_Doctrine  }
-		
-		relative_position_id = YEM_Salafist_Support
-		
-		available = {
-			OR  = {
-				AND = {
-					has_completed_focus = YEM_Salafist_Support
-					fascism > 0.25
-				}
-				AND = {
-					has_completed_focus = YEM_Wahhabist_Doctrine
-					fascism > 0.5
-				}
-			}
-		}
-
-		cost = 5
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Islamic_state_of_Yemen"
-		}
-	}
 
 	focus = {
 		id = YEM_Spread_out_funds
@@ -6148,47 +6601,7 @@ add_building_construction = {
 		ai_will_do = { factor = 1 }
 	}
 
-	focus = {
-		id = YEM_Wahhabist_Doctrine
-		icon = null
 
-		x = 1
-		y = 1
-
-		prerequisite = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
-		mutually_exclusive = { focus = YEM_Salafist_Support }
-
-		cost = 5
-		
-		relative_position_id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus YEM_Wahhabist_Doctrine"
-			if = {
-				limit = {
-					NOT = { 
-						has_country_leader_with_trait = pro_saudi
-					}
-				}
-				add_country_leader_trait = pro_saudi 
-			}
-			if = {
-				limit = {
-					has_country_leader_with_trait = pro_salafi
-				}
-				swap_ruler_traits = { remove = pro_salafi add = pro_wahhabi } 
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_country_leader_with_trait = pro_salafi
-					}
-				}
-				add_country_leader_trait = pro_wahhabi 
-			}
-		}
-
-		ai_will_do = { factor = 1 }
-	}
 	
 	focus = {
 		id = YEM_The_Military # The Yemeni Military
