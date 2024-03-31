@@ -2542,6 +2542,9 @@ focus_tree = {
 				target = BLR
 				type = puppet_wargoal_focus
 			}
+			hidden_effect = {
+				country_event = { id = russia.15 days = 1 }
+			}
 		}
 		ai_will_do = {
 			factor = 155
@@ -2568,14 +2571,9 @@ focus_tree = {
 			}
 			NOT = { UKR = { is_in_faction_with = SOV } }
 			UKR = { has_country_flag = UKR_civil_war_in_the_donbass_flag }
-		}
-		bypass = {
 			OR = {
-				NOT = { country_exists = UKR }
-				UKR = { is_in_faction_with = SOV }
-				UKR = { is_subject_of = SOV }
-				NOT = { country_exists = DPR }
-				NOT = { country_exists = LpR }
+				country_exists = DPR
+				country_exists = LPR
 			}
 		}
 		cancel = {
@@ -2821,6 +2819,14 @@ focus_tree = {
 					reverse_add_opinion_modifier = { target = ROOT modifier = military_aid }
 				}
 			}
+			if = {
+				limit = { country_exists = HPR }
+				HPR = {
+					remove_ideas = Non_State_Actor
+					add_opinion_modifier = { target = ROOT modifier = military_aid }
+					reverse_add_opinion_modifier = { target = ROOT modifier = military_aid }
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 155
@@ -2981,6 +2987,7 @@ focus_tree = {
 			custom_effect_tooltip = SOV_sanctions_warning_TT
 			hidden_effect = {
 				country_event = sov_final_strike.1
+				country_event = { id = russia.15 days = 1 }
 			}
 		}
 		ai_will_do = {
@@ -3025,14 +3032,15 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		will_lead_to_war_with = FIN
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_the_final_strike"
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_secret_strike"
 			create_wargoal = {
 				target = FIN
 				type = puppet_wargoal_focus
 			}
 			custom_effect_tooltip = SOV_sanctions_warning_TT
 			hidden_effect = {
-				country_event = sov_final_strike.1
+				country_event = { id = russia.15 days = 1 }
+				country_event = sov_final_strike.8
 			}
 		}
 		ai_will_do = {
@@ -3096,7 +3104,7 @@ focus_tree = {
 		x = -2
 		y = 2
 		relative_position_id = SOV_counter_euromaidan
-		cost = 6
+		cost = 5
 		available = {
 			OR = {
 				emerging_anarchist_communism_are_in_power = yes
@@ -3107,133 +3115,59 @@ focus_tree = {
 				NOT = { is_subject_of = SOV }
 				NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
 				NOT = { is_in_faction_with = SOV }
+			}
+			OR = {
+				country_exists = DPR
+				country_exists = LPR
+				country_exists = HPR
 			}
 		}
 		prerequisite = { focus = SOV_the_novorossiyan_uprising }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_supportlnrdnr_rus"
-			add_political_power = -100
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			LPR = {
-				add_ideas = SOV_support_nov_idea
-				add_manpower = 1000
-				division_template = {
-					name = "Kuban Cossacks Regiment"
-					regiments = {
-						Militia_Bat = { x = 0 y = 0 }
-						Militia_Bat = { x = 0 y = 1 }
-						Militia_Bat = { x = 1 y = 0 }
-						Militia_Bat = { x = 1 y = 1 }
-					}
-					priority = 2
+			if = {
+				limit = { country_exists = LPR }
+				LPR = {
+					country_event = russia.66
 				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 46 }
-					create_unit = {
-						division = "name = \"Kuban Cossacks Regiment\" division_template = \"Kuban Cossacks Regiment\" start_experience_factor = 0.4"
-						owner = LPR
-					}
+				send_equipment = {
+					equipment = Inf_equipment
+					amount = 1000
+					target = LPR
 				}
+				add_political_power = -50
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-			send_equipment = {
-				equipment = Inf_equipment
-				amount = 1000
-				target = LPR
-			}
-			DPR = {
-				add_ideas = SOV_support_nov_idea
-				add_manpower = 1000
-				division_template = {
-					name = "Death Battallion"
-					regiments = {
-						Militia_Bat = { x = 0 y = 0 }
-						Militia_Bat = { x = 0 y = 1 }
-						Militia_Bat = { x = 1 y = 0 }
-						Militia_Bat = { x = 1 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 46 }
-					create_unit = {
-						division = "name = \"Death Battallion\" division_template = \"Death Battallion\" start_experience_factor = 0.4"
-						owner = DPR
-					}
-				}
-			}
-			send_equipment = {
-				equipment = Inf_equipment
-				amount = 1000
-				target = DPR
-			}
-			NOV = { add_ideas = SOV_support_nov_idea }
-		}
-		ai_will_do = {
-			factor = 155
-			modifier = {
-				is_historical_focus_on = yes
-				factor = 50
-			}
-			modifier = {
-				has_global_flag = SOV_PUTIN_PATH
-				add = 50
-			}
-		}
-	}
-	focus = {
-		id = SOV_wagner_to_donetsk
-		icon = sov_wagner_jambo
-		x = -3
-		y = 4
-		relative_position_id = SOV_extend_term_limits
-		cost = 2
-		available = {
-			NOT = {
+			if = {
+				limit = { country_exists = DPR }
 				DPR = {
-				has_idea = SOV_wagner_military_advisors
+					country_event = russia.67
 				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = wagner_rebellion
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			OR = {
-				emerging_anarchist_communism_are_in_power = yes
-				emerging_autocracy_are_in_power = yes
-				emerging_reactionaries_are_in_power = yes
-			}
-			UKR = {
-				NOT = { is_subject_of = SOV }
-				NOT = { has_completed_focus = UKR_pro_russian_government_in_power }
-				NOT = { is_in_faction_with = SOV }
-			}
-			country_exists = DPR
-			NOT = {
-				OR = {
-					emerging_communist_state_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
+				send_equipment = {
+					equipment = Inf_equipment
+					amount = 1000
+					target = DPR
 				}
+				add_political_power = -50
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-		}
-		prerequisite = { focus = SOV_supportlnrdnr_rus }
-		search_filters = { FOCUS_FILTER_INFLUENCE }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_wagner_to_donetsk"
-			custom_effect_tooltip = SOV_leto_donetsk_TT
-			set_temp_variable = { percent_change = 8 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = DPR }
-			change_influence_percentage = yes
-			set_temp_variable = { modify_wagner = -1500 }
-			modify_wagner_support = yes
-			DPR = {
-				country_event = russia_wagner.40
+			if = {
+				limit = { country_exists = HPR }
+				HPR = {
+					country_event = russia.68
+				}
+				send_equipment = {
+					equipment = Inf_equipment
+					amount = 1000
+					target = HPR
+				}
+				add_political_power = -50
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
 			}
-
 		}
 		ai_will_do = {
 			factor = 155
@@ -3247,7 +3181,6 @@ focus_tree = {
 			}
 		}
 	}
-
 	focus = {
 		id = SOV_acquire_drones
 		icon = shahed
@@ -3403,7 +3336,7 @@ focus_tree = {
 			focus = SOV_secret_strike 
 			focus = SOV_belarus_strike
 		}
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pmc_redut"
 			custom_effect_tooltip = SOV_pmc_redut_TT
@@ -3491,7 +3424,7 @@ focus_tree = {
 
 		}
 		prerequisite = { focus = SOV_pmc_redut }
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_storm_z"
 			custom_effect_tooltip = WAG_zeks_TT
@@ -3546,7 +3479,7 @@ focus_tree = {
 		x = -9
 		y = 8
 		relative_position_id = SOV_counter_euromaidan
-		cost = 7
+		cost = 5
 		available = {
 			has_country_flag = rusich_create
 			has_war = yes
@@ -3560,12 +3493,14 @@ focus_tree = {
 		bypass = { has_completed_focus = SOV_rva }
 		prerequisite = { focus = SOV_storm_z }
 		prerequisite = { focus = SOV_special_o }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rus_nati_help"
 			custom_effect_tooltip = SOV_nati_TT
 			add_popularity = { ideology = nationalist popularity = 0.05 }
 			recalculate_party = yes
+			country_event = russia.64
+			country_event = russia.65
 			if = {
 				limit = {
 					has_completed_focus = SOV_slavic_corps
@@ -3576,24 +3511,6 @@ focus_tree = {
 			hidden_effect = {
 				wagner_bunt_check = yes
 			}
-			hidden_effect = {
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Hispaniola\" division_template = \"Battalion of Russian Nationalists\" start_experience_factor = 0.2"
-					owner = SOV
-				}
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"Russian National Unity\" division_template = \"Battalion of Russian Nationalists\" start_experience_factor = 0.2"
-					owner = SOV
-				}
-			}
-		}
 	}
 	ai_will_do = {
 		factor = 155
@@ -3625,10 +3542,10 @@ focus_tree = {
 		}
 		prerequisite = { focus = SOV_pmc_redut }
 		prerequisite = { focus = SOV_volunteer_gifts }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_special_o"
-			add_ideas = SOV_spetznaz_o
+			country_event = russia.17
 			if = {
 				limit = {
 					NOT = {
@@ -3668,46 +3585,20 @@ focus_tree = {
 			}
 		}
 		prerequisite = { focus = SOV_special_o }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pmc_gazprom"
 			custom_effect_tooltip = pmc_gazrpom_create_TT
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
 			set_country_flag = gazprom_create
+			country_event = russia.63
 			if = {
 				limit = {
 					has_completed_focus = SOV_slavic_corps
 				}	
 				set_temp_variable = { modify_wagnerbund = -1 }
 				modify_wagnerbund_support = yes
-			}
-			hidden_effect = {
-				wagner_bunt_check = yes
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Potok\" division_template = \"PMC Battalion\" start_experience_factor = 0.1"
-					owner = ROOT
-				}
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Fakel\" division_template = \"PMC Battalion\" start_experience_factor = 0.1"
-					owner = ROOT
-				}
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 666 }
-				create_unit = {
-					division = "name = \"PMC Plamya\" division_template = \"PMC Battalion\" start_experience_factor = 0.1"
-					owner = ROOT
-				}
 			}
 		}
 	ai_will_do = {
@@ -3784,7 +3675,7 @@ focus_tree = {
 			has_war = yes
 		}
 		prerequisite = { focus = SOV_volunteer_gifts }
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reconservation"
 			add_equipment_to_stockpile = {
@@ -4275,7 +4166,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_rus_nati_help focus = SOV_pmc_gazproms }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_unite_as_one"
 			set_party_index_to_ruling_party = yes
@@ -5150,10 +5041,10 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			factor = 155
+			factor = 1
 			modifier = {
 				has_global_flag = SOV_NAZBOL_RUSSIA_PATH
-				add = 50
+				add = 155
 			}
 		}
 	}
@@ -5497,7 +5388,7 @@ focus_tree = {
 			nationalist_fascist_are_in_power = yes
 		}
 		prerequisite = { focus = SOV_nazbols_free }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_nazbols_oligarch"
 			decrease_corruption = yes
@@ -5751,10 +5642,10 @@ focus_tree = {
 			change_oligarchs_opinion = yes
 		}
 		ai_will_do = {
-			factor = 155
+			factor = 1
 			modifier = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
+				add = 155
 			}
 		}
 	}
@@ -5874,7 +5765,7 @@ focus_tree = {
 			}
 		}
 		prerequisite = { focus = SOV_zhirinovsky_first }
-		search_filters = { FOCUS_FILTER_CORRUPTION }
+		search_filters = { FOCUS_FILTER_CORRUPTION  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_purge_disloyal_oligarchs"
 			decrease_corruption = yes
@@ -5998,10 +5889,10 @@ focus_tree = {
 			custom_effect_tooltip = unlock_econ_sov_TT
 		}
 		ai_will_do = {
-			factor = 155
+			factor = 1
 			modifier = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
+				add = 155
 			}
 		}
 	}
@@ -6079,7 +5970,7 @@ focus_tree = {
 		}
 		mutually_exclusive = { focus = SOV_guarantee_the_oligarchs }
 		prerequisite = { focus = SOV_ensure_a_balance }
-		search_filters = { FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_STABILITY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_guarantee_the_people"
 			if = {
@@ -6489,7 +6380,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_zhirinovsky }
 		mutually_exclusive = { focus = SOV_ensure_a_balance }
 		mutually_exclusive = { focus = SOV_empower_the_oligarchs }
-		search_filters = { FOCUS_FILTER_CORRUPTION }
+		search_filters = { FOCUS_FILTER_CORRUPTION  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_side_with_the_people"
 			custom_effect_tooltip = unlock_econ_sov_TT
@@ -6512,10 +6403,10 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			factor = 155
+			factor = 1
 			modifier = {
 				has_global_flag = SOV_NAZBOL_RUSSIA_PATH
-				add = 50
+				add = 155
 			}
 		}
 	}
@@ -6542,10 +6433,10 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			factor = 155
+			factor = 1
 			modifier = {
 				has_global_flag = SOV_NAZBOL_RUSSIA_PATH
-				add = 50
+				add = 155
 			}
 		}
 	}
@@ -6660,10 +6551,10 @@ focus_tree = {
 			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
-			factor = 155
+			factor = 1
 			modifier = {
 				has_global_flag = SOV_NAZBOL_RUSSIA_PATH
-				add = 50
+				add = 155
 			}
 		}
 	}
@@ -6777,10 +6668,10 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			factor = 155
+			factor = 1
 			modifier = {
 				has_global_flag = SOV_NAZBOL_RUSSIA_PATH
-				add = 50
+				add = 155
 			}
 		}
 	}
@@ -9691,7 +9582,7 @@ focus_tree = {
 			}
 		}
 		prerequisite = { focus = SOV_russian_irredentism }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_yun_armia_big"
 			swap_ideas = {
@@ -9881,7 +9772,9 @@ focus_tree = {
 			add_state_claim = 1097
 			add_state_claim = 555
 			add_state_claim = 554
+			add_state_claim = 552
 			add_state_claim = 1096
+			add_state_claim = 1095
 			add_state_claim = 596
 			add_state_claim = 597
 		}
@@ -10401,7 +10294,6 @@ focus_tree = {
 			custom_effect_tooltip = SOV_honor_gorbachevs_legacy_tt
 			add_to_variable = { SOV_revived_politburo_democratic_support = 0.05 }
 			add_to_variable = { SOV_revived_politburo_drift_defence_factor = 0.05 }
-			set_cosmetic_tag = SOV_USSR_democratic
 			hidden_effect = {
 				country_event = russia.102
 			}
@@ -10591,7 +10483,7 @@ focus_tree = {
 				neutrality_neutral_communism_are_in_power = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MANPOWER  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_communist_purges"
 			add_political_power = -75
@@ -11358,7 +11250,7 @@ focus_tree = {
 			}
 		}
 		prerequisite = { focus = SOV_increase_minimum_wage }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_INDUSTRY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ban_private_land_ownership"
 			country_event = { id = sov_communists.1 days = 1 }
@@ -14748,7 +14640,7 @@ focus_tree = {
 				wagner_bunt_check = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL  FOCUS_FILTER_PMC_WAGNER }
 		ai_will_do = {
 			factor = 155
 			modifier = {
@@ -15049,7 +14941,7 @@ focus_tree = {
 				wagner_bunt_check = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL  FOCUS_FILTER_PMC_WAGNER }
 		ai_will_do = {
 			factor = 155
 			modifier = {
@@ -18075,7 +17967,7 @@ focus_tree = {
 		x = 25
 		y = 20
 		cost = 1
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_groznyy_offensive"
 			add_war_support = 0.05
@@ -18100,7 +17992,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = SOV_groznyy_offensive
 		prerequisite = { focus = SOV_groznyy_offensive }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_finish_1998_reforms"
 			add_political_power = 50
@@ -18142,7 +18034,7 @@ focus_tree = {
 			has_war = yes
 		}
 		prerequisite = { focus = SOV_FSB_expansion }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pogranci_fsb"
 			swap_ideas = {
@@ -18185,7 +18077,7 @@ focus_tree = {
 			}
 		}
 		prerequisite = { focus = SOV_SVR_expansion }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_moa"
 			if = {
@@ -18222,7 +18114,7 @@ focus_tree = {
 			has_idea = SOV_disorg_in_army2_idea
 		}
 		prerequisite = { focus = SOV_mechanize }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_contracts_with_minobr"
 			custom_effect_tooltip = SOV_contract_miobr_TT
@@ -18259,7 +18151,7 @@ focus_tree = {
 		cost = 7
 		prerequisite = { focus = SOV_2008_military_reforms }
 		available = { NOT = { has_idea = SOV_outdated_army_idea_3 } }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reorganize_airforce"
 			air_experience = 20
@@ -18286,7 +18178,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_reorganize_airforce }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_airforce_structure_change"
 			add_political_power = -50
@@ -18313,7 +18205,7 @@ focus_tree = {
 		cost = 7
 		prerequisite = { focus = SOV_airforce_structure_change }
 		available = { has_completed_focus = SOV_modernize_soviet_missile_stockpiles }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_form_the_uac"
 			set_temp_variable = { treasury_change = -5 }
@@ -18340,7 +18232,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_form_the_uac }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_fighter_production"
 			air_experience = 20
@@ -18370,7 +18262,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_form_the_uac }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_cas_production"
 			air_experience = 20
@@ -18427,7 +18319,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_form_the_uac }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_bombers_production"
 			air_experience = 20
@@ -18470,7 +18362,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_csto_training_exercises }
 		prerequisite = { focus = SOV_FSB_expansion }
 		prerequisite = { focus = SOV_alpha_omon_exp }
-		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_2001_military_reforms"
 			set_temp_variable = { treasury_change = -5 }
@@ -18518,7 +18410,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_csto_training_exercises"
 			army_experience = 30
@@ -18554,7 +18446,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_armata_universal_combat_platform }
 		prerequisite = { focus = SOV_armyreform_spec }
 		prerequisite = { focus = SOV_ratnik_program }
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_mechanized_infantry_renovations"
 			set_temp_variable = { treasury_change = -3.5 }
@@ -18607,7 +18499,7 @@ focus_tree = {
 		cost = 7
 		available = { NOT = { has_idea = SOV_outdated_army_idea_3 } }
 		prerequisite = { focus = SOV_2008_military_reforms }
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_armata_universal_combat_platform"
 			add_ideas = SOV_reforming_army
@@ -18628,7 +18520,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_reform_army }
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_armyreform_spec"
 			swap_ideas = {
@@ -18662,7 +18554,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_reform_army }
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_armata_universal_combat_platform"
 			set_temp_variable = { treasury_change = -5 }
@@ -18702,7 +18594,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		bypass = {
 			has_completed_focus = SOV_eliminate_FSS
 		}
@@ -18736,7 +18628,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_SVR_expansion"
 			add_political_power = 50
@@ -18754,7 +18646,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_alpha_omon_exp"
 			army_experience = 15
@@ -18787,7 +18679,7 @@ focus_tree = {
 		cost = 5
 		prerequisite = { focus = SOV_alpha_omon_exp }
 		prerequisite = { focus = SOV_csto_training_exercises }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_black_gussard"
 			add_ideas = S0V_15th_idea
@@ -18825,7 +18717,7 @@ focus_tree = {
 		cost = 7
 		prerequisite = { focus = SOV_2001_military_reforms }
 		prerequisite = { focus = SOV_black_gussard }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_2008_military_reforms"
 			set_temp_variable = { treasury_change = -7 }
@@ -18872,7 +18764,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_2008_military_reforms }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_increased_arms_exports_2"
 			one_random_arms_factory = yes
@@ -18922,7 +18814,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_2008_military_reforms }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_form_yunarmiya"
 			set_temp_variable = { temp_opinion = 5 }
@@ -18955,7 +18847,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_2008_military_reforms }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_reserve_officer_training_system"
 			increase_officer_training_level = yes
@@ -19003,7 +18895,7 @@ focus_tree = {
 				has_idea = intervention_global_interventionism
 			}
 		}
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_plausible_deniability_doctrine"
 			increase_intervention_law_effect = yes
@@ -19046,7 +18938,7 @@ focus_tree = {
 		available = {
 			NOT = { has_completed_focus = SOV_rva }
 		}
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_form_bars"
 			set_temp_variable = { treasury_change = -4 }
@@ -19106,7 +18998,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 8
 		prerequisite = { focus = SOV_plausible_deniability_doctrine }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosgvardia"
 			set_temp_variable = { treasury_change = -4 }
@@ -19164,7 +19056,7 @@ focus_tree = {
 			}
 		}
 		prerequisite = { focus = SOV_rosgvardia focus = SOV_form_bars }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_slavic_corps"
 			custom_effect_tooltip = SOV_slavic_wagner_TT
@@ -19217,7 +19109,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_mechanized_infantry_renovations }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_mto"
 			swap_ideas = {
@@ -19251,7 +19143,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_mto }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_arta"
 			swap_ideas = {
@@ -19285,7 +19177,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_arta }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_mechanize"
 			swap_ideas = {
@@ -19319,7 +19211,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_reorganize_airforce }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_missile_development"
 			set_temp_variable = { treasury_change = -6 }
@@ -19369,7 +19261,7 @@ focus_tree = {
 			focus = SOV_pakfa
 			focus = SOV_pakda
 		}
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_airspace_forces"
 			country_event = russia.54
@@ -19392,7 +19284,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_russian_airspace_forces }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_space_forces_improvement"
 			set_temp_variable = { treasury_change = -5 }
@@ -19418,7 +19310,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_space_forces_improvement }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_roscosmos_defense"
 			set_temp_variable = { treasury_change = -8 }
@@ -19443,7 +19335,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_space_forces_improvement }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_roscosmos_ground_support"
 			set_temp_variable = { treasury_change = -3 }
@@ -19468,7 +19360,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 7
 		prerequisite = { focus = SOV_space_forces_improvement }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_roscosmos_intel"
 			set_temp_variable = { treasury_change = -4 }
@@ -19497,7 +19389,7 @@ focus_tree = {
 			focus = SOV_roscosmos_defense
 			focus = SOV_roscosmos_ground_support
 		}
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_roscosmos_final"
 			set_temp_variable = { treasury_change = -10 }
@@ -19524,7 +19416,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 5
 		prerequisite = { focus = SOV_missile_development }
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_missile_defense_investments"
 			set_temp_variable = { treasury_change = -10.5 }
@@ -19562,7 +19454,7 @@ focus_tree = {
 		relative_position_id = SOV_reorganize_airforce
 		cost = 5
 		prerequisite = { focus = SOV_missile_development }
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_modernize_soviet_missile_stockpiles"
 			set_temp_variable = { treasury_change = -4 }
@@ -19664,7 +19556,7 @@ focus_tree = {
 			focus = SOV_uav_production
 			focus = SOV_fighter_production
 		}
-		search_filters = { FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pakfa"
 			set_temp_variable = { treasury_change = -7 }
@@ -19695,7 +19587,7 @@ focus_tree = {
 			focus = SOV_uav_production
 			focus = SOV_bombers_production
 		}
-		search_filters = { FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_pakda"
 			set_temp_variable = { treasury_change = -3 }
@@ -20694,7 +20586,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_expand_kalashnikov_concern"
 			set_temp_variable = { treasury_change = -20 }
@@ -20726,7 +20618,7 @@ focus_tree = {
 		relative_position_id = SOV_expand_kalashnikov_concern
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rostech"
 			set_temp_variable = { treasury_change = -10 }
@@ -20750,7 +20642,7 @@ focus_tree = {
 		relative_position_id = SOV_expand_kalashnikov_concern
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosoboronprom"
 			set_temp_variable = { treasury_change = -10 }
@@ -20776,7 +20668,7 @@ focus_tree = {
 		relative_position_id = SOV_expand_kalashnikov_concern
 		cost = 7
 		prerequisite = { focus = SOV_finish_1998_reforms }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_kbp"
 			set_temp_variable = { treasury_change = -15 }
@@ -20813,7 +20705,7 @@ focus_tree = {
 			focus = SOV_rosoboronprom
 			focus = SOV_expand_kalashnikov_concern
 			}
-		search_filters = { FOCUS_FILTER_POLITICAL }
+			search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_tula_arms"
 			set_temp_variable = { treasury_change = -7.5 }
@@ -20842,7 +20734,7 @@ focus_tree = {
 			focus = SOV_rostech
 			focus = SOV_expand_kalashnikov_concern
 		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_orsis"
 			set_temp_variable = { treasury_change = -7.5 }
@@ -20871,7 +20763,7 @@ focus_tree = {
 			focus = SOV_rostech
 			focus = SOV_expand_kalashnikov_concern
 		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_lobaev_arms"
 			set_temp_variable = { treasury_change = -7.5 }
@@ -22174,7 +22066,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_rosgvardia }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_start_org"
@@ -22224,7 +22116,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_rosguard_start_org
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS  FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_rosguard_start_org }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_armor"
@@ -22259,7 +22151,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_rosguard_start_org
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		prerequisite = { focus = SOV_rosguard_start_org }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_military"
@@ -22293,7 +22185,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_rosguard_start_org
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		prerequisite = { focus = SOV_rosguard_start_org }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_occup"
@@ -22327,7 +22219,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SOV_rosguard_start_org
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		prerequisite = { focus = SOV_rosguard_occup }
 		prerequisite = { focus = SOV_rosguard_armor }
 		prerequisite = { focus = SOV_rosguard_military }
@@ -22384,7 +22276,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = SOV_rosguard_start_org
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_rosguard_tank }
 		available = {
 			has_country_flag = rosgvardia_wagner
@@ -22417,7 +22309,7 @@ focus_tree = {
 		x = -4
 		y = 27
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = wagner_rebellion
@@ -22454,7 +22346,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_start_org }
 		available = {
 			custom_trigger_tooltip = {
@@ -22495,7 +22387,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_exersises }
 		available = {
 			custom_trigger_tooltip = {
@@ -22535,7 +22427,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_start_org }
 		available = {
 			custom_trigger_tooltip = {
@@ -22576,7 +22468,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_arms_ideology }
 		available = {
 			custom_trigger_tooltip = {
@@ -22614,7 +22506,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_intel }
 		prerequisite = { focus = SOV_wagner_polit_ideology }
 		available = {
@@ -22654,7 +22546,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = SOV_wagner_start_org
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_officer_training }
 		available = {
 			custom_trigger_tooltip = {
@@ -22692,7 +22584,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_officer_training }
 		prerequisite = { focus = SOV_wagner_tank_army }
 		available = {
@@ -22734,7 +22626,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_officer_training }
 		available = {
 			custom_trigger_tooltip = {
@@ -22790,7 +22682,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_tank_army }
 		prerequisite = { focus = SOV_wagner_diplomatic }
 		available = {
@@ -22839,7 +22731,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_aerospace_force }
 		prerequisite = { focus = SOV_wagner_extended_invansion }
 		available = {
@@ -22881,7 +22773,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = SOV_wagner_start_org
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_air_army }
 		available = {
 			custom_trigger_tooltip = {
@@ -22919,7 +22811,7 @@ focus_tree = {
 			}
 		}
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_wagner_party_start"
 			custom_effect_tooltip = SOV_wagner_prigozin_TT
@@ -22938,6 +22830,9 @@ focus_tree = {
 			recalculate_party = yes
 			set_cosmetic_tag = SOV_wagner_empire
 			clr_country_flag = dynamic_flag
+			hidden_effect = {
+				wagner_bunt_rus = yes
+			}
 		}
 		ai_will_do = { factor = 1 }
 	}
@@ -22948,7 +22843,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_party_start }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -22970,7 +22865,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_persons_agree }
 		available = {
 			OR = {
@@ -22999,7 +22894,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_persons_agree }
 		bypass = {
 			NOT = { country_exists = BLR }
@@ -23025,7 +22920,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = SOV_wagner_party_start
 		cost = 2.86
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_lukash }
 		bypass = {
 			NOT = { country_exists = UKR }
@@ -23058,7 +22953,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = SOV_wagner_party_start
 		cost = 2.86
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_start_ukraine }
 		available = {
 			NOT = {
@@ -23096,7 +22991,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_party_start
 		cost = 2.86
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_start_ukraine }
 		available = {
 			NOT = {
@@ -23138,7 +23033,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = SOV_wagner_party_start
 		cost = 2.86
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_start_ukraine }
 		available = {
 			NOT = {
@@ -23179,7 +23074,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_party_start
 		cost = 2.86
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_ukraine_arms }
 		available = {
 			NOT = {
@@ -23213,7 +23108,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = SOV_wagner_party_start
 		cost = 2.86
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_military_help_ukraine }
 		prerequisite = { focus = SOV_wagner_recruitment_of_intelligence_in_ukraine }
 		available = {
@@ -23295,7 +23190,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = SOV_wagner_party_start
 		cost = 1.43
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_military_revolt_ukraine }
 		available = {
 			UKR = {
@@ -23345,7 +23240,7 @@ focus_tree = {
 		y = 8
 		relative_position_id = SOV_wagner_party_start
 		cost = 4
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_enter_to_help_mal }
 		available = {
 			UKR = {
@@ -23378,7 +23273,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_party_start }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -23405,7 +23300,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_legalize_pmc }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -23427,7 +23322,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_wagner_party_start
 		cost = 3
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_party_start }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -23444,51 +23339,6 @@ focus_tree = {
 			}
 			add_to_variable = { party_pop_array^22 = 0.06 }
 			recalculate_party = yes
-			retire_character = SOV_sergey_shoygu
-			retire_character = SOV_valery_gerasimov
-			hidden_effect = {
-				TUV = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 22 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
-					set_politics = {
-						ruling_party = nationalist
-						elections_allowed = yes
-					}
-					add_popularity = {
-						ideology = nationalist
-						popularity = 0.85
-					}
-					add_to_variable = { party_pop_array^22 = 0.75 }
-					recalculate_party = yes
-					country_event = subject_rus.44
-					create_country_leader = {
-						name = "Sergey Shoygu"
-						picture = "gfx/leaders/SOV/Sergey_Shoygu.dds"
-						expire = "2045.1.1"
-						ideology = Nat_Autocracy
-						traits = {
-							nationalist_Nat_Autocracy
-						}
-					}
-					add_state_core = 1011
-					transfer_state = 1011
-					declare_war_on = {
-						target = SOV
-						type = annex_everything
-					}
-				}
-			}
 		}
 	ai_will_do = { factor = 1 }
 	}
@@ -23499,7 +23349,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SOV_wagner_party_start
 		cost = 6
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_lampace_down }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -23531,7 +23381,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_patriots_down }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -23569,7 +23419,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = SOV_wagner_party_start
 		cost = 6
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_transcaucasian_hogwarts }
 		bypass = {
 			NOT = { country_exists = GEO }
@@ -23599,7 +23449,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_invest_aze_ip }
 		bypass = {
 			NOT = { country_exists = AZE }
@@ -23638,7 +23488,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_aze_oil_invest }
 		bypass = {
 			NOT = { country_exists = AZE }
@@ -23702,7 +23552,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = SOV_wagner_party_start
 		cost = 6
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_transcaucasian_hogwarts }
 		bypass = {
 			NOT = { country_exists = GEO }
@@ -23732,7 +23582,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_invest_geo_ip }
 		bypass = {
 			NOT = { country_exists = GEO }
@@ -23783,9 +23633,8 @@ focus_tree = {
 		y = 6
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_invest_geo_wine }
-
 		bypass = {
 			NOT = { country_exists = GEO }
 		}
@@ -23848,7 +23697,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_defend_russian_in_aze }
 		prerequisite = { focus = SOV_defend_russian_in_geo }
 		bypass = {
@@ -23900,7 +23749,7 @@ focus_tree = {
 		y = 8
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_ANNEXATION }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_armenia_attack }
 		bypass = {
 			NOT = { country_exists = ARM }
@@ -23973,7 +23822,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = SOV_wagner_party_start
 		cost = 6
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_centers }
 		prerequisite = { focus = SOV_wagner_patriots_down }
 
@@ -24008,7 +23857,7 @@ focus_tree = {
 		y = 7
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_black_eagle }
 		prerequisite = { focus = SOV_wagner_ter_oborona }
 		prerequisite = { focus = SOV_wagner_arrest_officers }
@@ -24035,7 +23884,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_party_start
 		cost = 6
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_vagneryata }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -24087,7 +23936,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = SOV_wagner_party_start
 		cost = 4
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_invansion_principle }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_wagner_black_eagle"
@@ -24135,7 +23984,7 @@ focus_tree = {
 		y = 4
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_ideology }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -24166,7 +24015,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = SOV_wagner_party_start
 		cost = 5.86
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_foreign_legion }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -24234,7 +24083,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_vagneryata }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -24260,7 +24109,7 @@ focus_tree = {
 		y = 5
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_vagneryata }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -24286,7 +24135,7 @@ focus_tree = {
 		y = 6
 		relative_position_id = SOV_wagner_party_start
 		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_with_army }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -24311,7 +24160,7 @@ focus_tree = {
 		y = 8
 		relative_position_id = SOV_wagner_party_start
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_PMC_WAGNER }
 		prerequisite = { focus = SOV_wagner_voenkors }
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -24690,7 +24539,7 @@ focus_tree = {
 			western_autocrats_are_in_power = yes
 		}
 		prerequisite = { focus = SOV_enforce_liberal_values }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL  FOCUS_FILTER_PMC_WAGNER}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_crush_putinism"
 			set_temp_variable = { percent_change = -5 }
@@ -24826,7 +24675,7 @@ focus_tree = {
 		x = 34
 		y = 25
 		cost = 7
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		prerequisite = { focus = SOV_2008_military_reforms }
 		available = { NOT = { has_idea = SOV_outdated_army_idea_3 } }
 		completion_reward = {
@@ -24850,7 +24699,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = SOV_start_fleet_reforms
 		prerequisite = { focus = SOV_start_fleet_reforms }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_cancel_unnecessary_projects"
 			set_temp_variable = { treasury_change = -15 }
@@ -24873,7 +24722,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = SOV_start_fleet_reforms
 		prerequisite = { focus = SOV_start_fleet_reforms }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_Updated_naval_doctrine"
 			set_temp_variable = { treasury_change = -15 }
@@ -24907,7 +24756,7 @@ focus_tree = {
 		relative_position_id = SOV_start_fleet_reforms
 		prerequisite = { focus = SOV_cancel_unnecessary_projects }
 		prerequisite = { focus = SOV_Updated_naval_doctrine }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_groznyy_offensive"
 			set_temp_variable = { treasury_change = -35 }
@@ -24926,7 +24775,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = SOV_start_fleet_reforms
 		prerequisite = { focus = SOV_begin_modernization_of_our_fleet }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_optimize_Russian_legal_proceedings"
 			set_temp_variable = { treasury_change = -20 }
@@ -24951,7 +24800,7 @@ focus_tree = {
 		relative_position_id = SOV_start_fleet_reforms
 		prerequisite = { focus = SOV_begin_modernization_of_our_fleet }
 		prerequisite = { focus = SOV_Optimize_our_fleet }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_optimize_Russian_legal_proceedings"
 			set_temp_variable = { treasury_change = -25 }
@@ -25603,7 +25452,6 @@ focus_tree = {
 			add_relative_party_popularity = yes
 			set_temp_variable = { treasury_change = -15.00 }
 			modify_treasury_effect = yes
-
 			add_timed_idea = {
 				idea = SOV_investments_in_ben
 				days = 130
@@ -27701,7 +27549,7 @@ focus_tree = {
 		}
 		prerequisite = { focus = SOV_reduce_taxes_on_small_businesses }
 		prerequisite = { focus = SOV_ease_administrative_pressure }
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_demilitarize_mia"
 			add_to_variable = { SOV_kasyanov_equipment_cost_multiplier_modifier = -0.1 }
@@ -29076,7 +28924,7 @@ focus_tree = {
 			}
 		}
 		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS  FOCUS_FILTER_PMC_WAGNER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_regional_control"
 			custom_effect_tooltip = SOV_jreci_4_tooltip
@@ -29924,7 +29772,7 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		prerequisite = { focus = SOV_reform_army }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_ratnik_program"
 			army_experience = 10
