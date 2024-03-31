@@ -7,6 +7,7 @@ add_namespace = mdmosjap_japan_kato
 add_namespace = mdmosjap_EDT
 add_namespace = mdmosjap_japannews
 add_namespace = mdmosjap_japannews_kato
+add_namespace = japan_foreign_policy
 
 #----------------------------------------------------------------
 #Radicalism Events
@@ -17845,3 +17846,751 @@ country_event = {
 	}
 
 }
+
+#----------------------------------------------------------------
+#Focus Fired Events - Foreign Policy
+#----------------------------------------------------------------
+
+#Direction of Foreign Policyevent
+country_event = {
+    id = japan_foreign_policy.1
+    title = "japan_foreign_policy.1.title"
+    desc = "japan_foreign_policy.1.desc"
+    picture = "GFX_report_event_generic_building_construction"
+
+    is_triggered_only = yes
+
+    option = { # Option A: Just democratic SEA nations
+        name = "japan_foreign_policy.1.option.a"
+        ai_chance = { factor = 50 }
+        
+        every_country = {
+            limit = {
+                has_idea = minor_power
+                is_SE_Asia = yes
+                government = democracy
+                NOT = { tag = JAP }
+            }
+            country_event = { id = japan_foreign_policy.2 days = 2 }
+        }
+        JAP = {
+            # Adjust the economy or investment variable accordingly
+        }
+        
+    }
+    
+    option = { # Option B: All SEA nations
+        name = "japan_foreign_policy.1.option.b"
+        ai_chance = { factor = 30 }
+
+        every_country = {
+            limit = {
+                has_idea = minor_power
+                is_SE_Asia = yes
+                NOT = { tag = JAP }
+            }
+            country_event = { id = japan_foreign_policy.2 days = 2 }
+        }
+        JAP = {
+            # Adjust the economy or investment variable accordingly
+        }
+    }
+
+    option = { # Option C: Keep it at home
+        name = "japan_foreign_policy.1.option.c"
+        ai_chance = { factor = 20 }
+        add_ideas = japan_infrastructure_bonus
+    }
+
+# Idea for Japan's domestic focus, with a placeholder effect
+#ideas = {
+#    japan_domestic_focus = {
+        # This idea should provide a significant but temporary boost to infrastructure construction speed
+#        infrastructure_construction_speed = 0.10 # Adjust as needed for balance
+#        duration = 365 # This idea lasts for a year
+#    }
+#}
+
+}
+
+
+
+# Japan Offers Developmental Assistance
+country_event = {
+    id = japan_foreign_policy.2
+    title = "japan_foreign_policy.2.title"
+    desc = "japan_foreign_policy.2.desc"
+    picture = "GFX_report_event_aid_package"
+
+    is_triggered_only = yes # Triggered by Japan's earlier choice
+
+    option = { # Option A: Accept the assistance
+        name = "japan_foreign_policy.2.option.a"
+        ai_chance = { factor = 70 }
+
+        japan = { add_opinion_modifier = { target = THIS modifier = japan_assistance_accepted } }
+        
+        if = {
+            limit = { num_of_states > 1 }
+            random_state = { limit = { is_core = THIS } add_infrastructure = 1 }
+            random_state = { limit = { is_core = THIS NOT = { id = PREV } } add_infrastructure = 1 }
+        }
+        
+        # Adjust for your mod's mechanics regarding influence
+        add_influence = { influencer = JAP amount = 2 }
+        
+        # Set a flag to mark the acceptance of assistance
+        set_country_flag = accepted_ODAC_assistance
+    }
+
+    option = { # Option B: Decline the assistance
+        name = "japan_foreign_policy.2.option.b"
+        ai_chance = { factor = 30 }
+
+        add_domestic_independence = 5.0
+        
+        # Add political power
+        add_political_power = 50
+    }
+
+# Opinion modifier for accepting assistance
+#opinion_modifier = {
+#    id = japan_assistance_accepted
+#    value = 50 # Adjust based on your mod's scale for relation improvements
+#    duration = 365 # Lasts for one year, adjust as necessary
+#}
+
+}
+
+
+
+# Expanded ODAC Support
+country_event = {
+    id = japan_foreign_policy.3
+    title = "japan_foreign_policy.3.title"
+    desc = "japan_foreign_policy.3.desc"
+    picture = "GFX_report_event_diplomatic_mission"
+
+    is_triggered_only = yes # Triggered through gameplay or decisions.
+
+    option = { # Option A: Support to those who accepted ODAC before
+        name = "japan_foreign_policy.3.option.a"
+        ai_chance = { factor = 50 }
+        
+        every_country = {
+            limit = {
+                is_SE_Asia = yes
+                has_country_flag = accepted_ODAC_assistance
+            }
+            country_event = { id = japan_foreign_policy.4 days = 2 }
+        }
+    }
+    
+    option = { # Option B: Send offers to all SEA countries
+        name = "japan_foreign_policy.3.option.b"
+        ai_chance = { factor = 30 }
+
+        every_country = {
+            limit = {
+                is_SE_Asia = yes
+                is_minor = yes
+            }
+            country_event = { id = japan_foreign_policy.4 days = 2 }
+        }
+    }
+
+    option = { # Option C: Keep it cordial
+        name = "japan_foreign_policy.3.option.c"
+        ai_chance = { factor = 20 }
+
+        every_country = {
+            limit = { is_SE_Asia = yes }
+            japan = { add_opinion_modifier = { target = THIS modifier = japan_foreign_policy_cordial } }
+        }
+    }
+}
+#opinion_modifiers = {
+#    japan_foreign_policy_cordial = {
+#        value = 30    # The positive impact on relations, adjust as needed.
+#        duration = 365    # Lasts for one year, adjust to fit your scenario.
+#    }
+#}
+
+# Japan Expands Their Developmental Assistance
+country_event = {
+    id = japan_foreign_policy.4
+    title = "japan_foreign_policy.4.title"
+    desc = "japan_foreign_policy.4.desc"
+    picture = "GFX_report_event_diplomatic_mission"
+
+    is_triggered_only = yes # This event is triggered by the previous choice in japan_foreign_policy.3
+
+    option = { # Option A: Accept further assistance
+        name = "japan_foreign_policy.4.option.a"
+        ai_chance = { factor = 65 }
+        
+        # Relation boost with Japan
+        japan = { add_opinion_modifier = { target = THIS modifier = japan_assistance_boost } }
+        
+        # Gets idea "Japanese ODAC Planning" for 730 days
+        add_ideas = japanese_ODAC_planning
+    }
+    
+    option = { # Option B: Decline and assert independence
+        name = "japan_foreign_policy.4.option.b"
+        ai_chance = { factor = 35 }
+
+        # Increase domestic independence by 8.0%
+        # This mechanic needs to be adjusted based on your mod's specific variables and systems
+        add_domestic_independence = 8.0
+        
+        # Add political power
+        add_political_power = 100
+    }
+
+# Opinion modifier for relation boost with Japan, for accepting further assistance
+#opinion_modifiers = {
+#    japan_assistance_boost = {
+#        value = 50    # Positive impact on relations, adjust based on your mod's scale.
+#        duration = 730    # Lasts for two years.
+#    }
+#}
+
+# Idea "Japanese ODAC Planning"
+#ideas = {
+#    japanese_ODAC_planning = {
+        # The specifics of this idea need to be filled out based on what effects you want it to have.
+        # For example, it could boost construction speed, reduce consumer goods factories percentage, etc.
+        # Placeholder values:
+#        construction_speed = 0.10    
+#        duration = 730    # Lasts for 730 days, two years.
+#    }
+
+}
+
+}
+
+
+#Close Japanese Ties
+country_event = {
+    id = japan_foreign_policy.5
+    title = "japan_foreign_policy.5.title"
+    desc = "japan_foreign_policy.5.desc"
+    picture = "GFX_report_event_japanese_diplomacy"
+
+    is_triggered_only = yes 
+
+    option = {
+        name = "japan_foreign_policy.5.option.a"
+        tooltip = "This will strengthen our bonds with Japan across various sectors."
+
+        JAP = { 
+            add_opinion_modifier = { target = THIS modifier = close_japanese_ties_positive }
+        } 
+		#maybe it would change the opinion?
+
+    }
+}
+
+#Free Trade Area of the Asia-Pacific (China)
+country_event = {
+    id = japan_foreign_policy.6
+    title = "japan_foreign_policy.6.title"
+    desc = "japan_foreign_policy.6.desc"
+    picture = "GFX_report_event_trade_conference"
+
+    is_triggered_only = yes # This event is triggered by specific conditions or actions.
+
+    option = { # Option A: Create or Expand FTAAP
+        name = "japan_foreign_policy.6.option.a"
+        ai_chance = { factor = 50 }
+
+        # Conditions based on government type
+        if = {
+            limit = { NOT = { government = liberal } }
+            add_political_power = -200
+            add_popularity = { ideology = radical_right amount = 0.08 }
+            add_popularity = { ideology = radical_left amount = 0.04 }
+        }
+
+        # Notify CHI and TAI about FTAAP entry
+        CHI = { country_event = { id = japan_foreign_policy.7 days = 2 } }
+		# Enter FTAAP?(CHI)
+        TAI = { country_event = { id = japan_foreign_policy.8 days = 2 } }
+		# Enter FTAAP?(TAI)
+    }
+
+    option = { # Option B: Better not
+        name = "japan_foreign_policy.6.option.b"
+        ai_chance = { factor = 50 }
+
+        # Apply effects if not a liberal government
+        if = {
+            limit = { NOT = { government = liberal } }
+            add_political_power = 150
+            add_party_popularity = { ideology = current_government_ideology amount = 0.03 }
+        }
+
+        # Conditional event trigger for Japan's reaction
+        if = {
+            limit = { 
+                NOT = { has_completed_focus = FTAAP_focus }
+                NOT = { has_country_flag = took_ftaap_route }
+            }
+            # Trigger an event reflecting Japan's stance against globalization
+            JAP = { country_event = { id = japan_foreign_policy.9 days = 2 } }
+        }
+    }
+}
+
+
+# Enter FTAAP?(CHI)
+country_event = {
+    id = japan_foreign_policy.7
+    title = "japan_foreign_policy.7.title"
+    desc = "japan_foreign_policy.7.desc"
+    picture = "GFX_report_event_chinese_trade"
+
+    is_triggered_only = yes 
+	# Triggered by Japan's FTAAP actions
+
+    option = { # Option A: Join FTAAP if Japan does not invite Taiwan Province
+        name = "japan_foreign_policy.7.option.a"
+        tooltip = "Joining the FTAAP will bolster our economic growth, provided Taiwan Province is not invited by Japan."
+        
+        # Conditional action based on the status of Taiwan's invitation
+        if = {
+            limit = { NOT = { has_country_flag = taiwan_invited_to_ftaap } }
+            add_political_power = -100
+            add_ideas = china_ftaap_engagement_idea
+
+            # Modify opinions based on FTAAP support without Taiwan's invitation.
+            JAP = { add_opinion_modifier = { target = THIS modifier = ftaap_supportive } }
+        }
+        else = {
+            add_political_power = 50
+            tooltip = "Japan has invited Taiwan authorities, complicating our decision to join."
+        }
+    }
+
+    option = { # Option B: Refuse to join FTAAP because Taiwan authorities are being invited
+        name = "japan_foreign_policy.7.option.b"
+        tooltip = "We refuse to join the FTAAP as long as Taiwan authorities are being invited by Japan."
+
+        # Action for refusing to join due to Taiwan's invitation
+        add_political_power = 150
+        add_ideas = china_ftaap_refusal_idea
+
+        # Reflecting the diplomatic stance and internal political dynamics.
+        JAP = { add_opinion_modifier = { target = THIS modifier = ftaap_refusal } }
+    }
+
+	option = { # Option C: Join FTAAP regardless of Taiwan's participation
+        name = "japan_foreign_policy.7.option.c"
+        tooltip = "Even if Taiwan is in the FTAAP, we are still willing to join for the greater economic benefit and regional cooperation."
+
+        add_political_power = -150
+        add_ideas = china_ftaap_inclusive_idea
+
+        # Reflecting a pragmatic approach to FTAAP participation
+        JAP = { add_opinion_modifier = { target = THIS modifier = ftaap_inclusive } }
+        if = {
+            limit = { has_country_flag = taiwan_invited_to_ftaap }
+            add_opinion_modifier = { target = TAI modifier = ftaap_china_inclusive }
+        }
+    }
+
+# Placeholder Ideas for China's FTAAP Stance
+#ideas = {
+#    china_ftaap_engagement_idea = {
+        # Benefits of engaging with FTAAP without Taiwan.
+#    }
+#    china_ftaap_refusal_idea = {
+        # Implications of refusing FTAAP due to Taiwan's participation.
+#    }
+#    china_ftaap_inclusive_idea = {
+        # Benefits of a pragmatic approach to FTAAP, joining regardless of Taiwan's status.
+#    }
+#}
+
+# Opinion Modifiers for FTAAP Decisions
+#opinion_modifiers = {
+#    ftaap_supportive = {
+        # Positive boost for supporting FTAAP without Taiwan.
+#    }
+#    ftaap_refusal = {
+        # Negative impact for refusing due to Taiwan's participation.
+#    }
+#    ftaap_inclusive = {
+        # Positive relations boost for a pragmatic, inclusive approach to FTAAP.
+#    }
+#    ftaap_china_inclusive = {
+        # Taiwan's view of China joining FTAAP despite their participation.
+#    }
+#}
+}
+
+# Enter FTAAP?(TAI)
+country_event = {
+    id = japan_foreign_policy.8
+    title = "japan_foreign_policy.8.title"
+    desc = "japan_foreign_policy.8.desc"
+    picture = "GFX_report_event_taiwan_trade"
+
+    is_triggered_only = yes # Triggered by the situation surrounding FTAAP discussions.
+
+    option = { # Option A: Join FTAAP in any case
+        name = "japan_foreign_policy.8.option.a"
+        tooltip = "Our economic future and regional integration are paramount. We will join the FTAAP under any circumstances."
+        
+        # Effects of Taiwan deciding to join the FTAAP regardless of other nations' stances.
+        add_political_power = -50
+        add_ideas = taiwan_ftaap_commitment_idea
+    }
+
+    option = { # Option B: Join FTAAP if the mainland government does not
+        name = "japan_foreign_policy.8.option.b"
+        tooltip = "We will join the FTAAP to assert our economic independence, provided the mainland government abstains."
+
+        # Conditional joining based on China's (mainland government's) decision.
+        if = {
+            limit = { NOT = { has_country_flag = china_joined_ftaap } }
+            add_political_power = -50
+            add_ideas = taiwan_ftaap_conditional_idea
+        }
+        else = {
+            add_political_power = 25
+            tooltip = "The mainland's participation complicates our potential benefits from joining FTAAP."
+        }
+    }
+
+    option = { # Option C: Decline to join FTAAP
+        name = "japan_foreign_policy.8.option.c"
+        tooltip = "Given the current geopolitical tensions and pressures, it's in our best interest to not join the FTAAP."
+
+        # Effects of Taiwan deciding against joining the FTAAP.
+        add_political_power = 100
+        add_stability = 0.05
+    }
+
+#ideas = {
+#    taiwan_ftaap_commitment_idea = {
+        # Benefits of a firm commitment to join FTAAP, enhancing trade and economic integration.
+#    }
+#    taiwan_ftaap_conditional_idea = {
+        # Benefits or conditions of joining FTAAP based on the mainland's participation.
+#    }
+#}
+
+}
+
+
+#Free Trade Area of the Asia-Pacific (South Korea)
+country_event = {
+    id = japan_foreign_policy.9
+    title = "japan_foreign_policy.9.title"
+    desc = "japan_foreign_policy.9.desc"
+    picture = "GFX_report_event_south_korean_trade"
+
+    is_triggered_only = yes # Triggered by specific conditions or actions in the FTAAP context.
+
+    option = { # Option A: Create or Expand FTAAP
+        name = "japan_foreign_policy.9.option.a"
+        tooltip = "Joining or expanding the FTAAP aligns with our economic interests and regional cooperation objectives."
+        
+        # Conditional effects based on government type
+        if = {
+            limit = { NOT = { government = liberal } }
+            add_political_power = -100
+            add_popularity = { ideology = radical_right amount = 0.06 }
+            add_popularity = { ideology = radical_left amount = 0.02 }
+        }
+
+        # Notify South Korea about the decision to enter FTAAP
+        KOR = { country_event = { id = japan_foreign_policy.10 days = 2 } }
+    }
+
+    option = { # Option B: Better not
+        name = "japan_foreign_policy.9.option.b"
+        tooltip = "The risks and uncertainties associated with the FTAAP at this time outweigh the potential benefits."
+
+        # Adjustments if not a liberal government
+        if = {
+            limit = { NOT = { government = liberal } }
+            add_political_power = 50
+            add_party_popularity = { ideology = current_government_ideology amount = 0.03 }
+        }
+
+        # Conditional event trigger based on FTAAP focus completion and previous decisions
+        if = {
+            limit = { 
+                NOT = { has_completed_focus = FTAAP_focus }
+                NOT = { has_country_flag = took_ftaap_route }
+            }
+            # Triggering a significant event if Japan turns against globalization
+            JAP = { country_event = { id = japan_foreign_policy.11 days = 2 } }
+        }
+    }
+}
+
+# Enter FTAAP?(KOR)
+country_event = {
+    id = japan_foreign_policy.10
+    title = "japan_foreign_policy.10.title"
+    desc = "japan_foreign_policy.10.desc"
+    picture = "GFX_report_event_south_korean_trade_dialogue"
+
+    is_triggered_only = yes # This event is triggered following the main FTAAP decision event.
+
+    option = { # Option to join the FTAAP
+        name = "japan_foreign_policy.10.option.a"
+        tooltip = "Joining the FTAAP will strengthen our trade relations and secure our economic future in the Asia-Pacific region."
+        
+        # Effects of joining the FTAAP for South Korea
+        add_political_power = -50
+        # Assuming benefits from trade agreements increase economic growth, stability, or other modifiers
+        add_ideas = kor_ftaap_participation_idea
+
+        # Reflecting improved relations with FTAAP member countries
+        every_country = {
+            limit = { is_in_faction_with = KOR or has_country_flag = ftaap_member }
+            add_opinion_modifier = { target = KOR modifier = ftaap_member_positive }
+        }
+    }
+
+    option = { # Option to decline joining the FTAAP
+        name = "japan_foreign_policy.10.option.b"
+        tooltip = "We must prioritize our national interests and sovereignty, even if it means standing apart from the FTAAP."
+        
+        # Effects of not joining the FTAAP
+        add_political_power = 100
+        # Potential for increased self-reliance, national pride, or other modifiers
+        add_ideas = kor_ftaap_refusal_idea
+    }
+
+# Placeholder Ideas for South Korea's FTAAP Stance
+#ideas = {
+#    kor_ftaap_participation_idea = {
+        # Specific benefits of joining the FTAAP, like trade growth, economic stability, etc.
+#    }
+#    kor_ftaap_refusal_idea = {
+        # Implications of refusing the FTAAP, potentially focusing on self-reliance and national sovereignty.
+#    }
+#}
+
+# Opinion Modifiers for FTAAP Participation
+#opinion_modifiers = {
+#    ftaap_member_positive = {
+        # Positive impact on relations for joining FTAAP.
+#    }
+#}
+
+}
+
+
+
+#Free Trade Area of the Asia-Pacific (USA)
+country_event = {
+    id = japan_foreign_policy.12
+    title = "japan_foreign_policy.12.title"
+    desc = "japan_foreign_policy.12.desc"
+    picture = "GFX_report_event_usa_japan_trade"
+
+    is_triggered_only = yes # This event reflects a critical juncture in FTAAP discussions involving the USA.
+
+    option = { # Option A: Create or Expand FTAAP, insist on primacy
+        name = "japan_foreign_policy.12.option.a"
+        tooltip = "We will push forward with the FTAAP, asserting our leadership role while managing our relationship with the USA."
+        
+        add_political_power = 100
+        add_popularity = { ideology = radical_right amount = 0.02 }
+        add_popularity = { ideology = radical_left amount = 0.02 }
+        # Applying a relations penalty with the USA as a consequence of insisting on primacy
+        USA = { add_opinion_modifier = { target = THIS modifier = ftaap_tension } }
+        USA = { country_event = { id = usa_ftaap_decision.1 days = 2 } }
+    }
+
+    option = { # Option B: Create or Expand FTAAP, accept USA's primacy
+        name = "japan_foreign_policy.12.option.b"
+        tooltip = "Acknowledging the USA's primacy can facilitate the FTAAP's creation, ensuring smoother international cooperation."
+        
+        add_popularity = { ideology = radical_right amount = 0.05 }
+        add_popularity = { ideology = radical_left amount = 0.02 }
+        # Triggering an event for the USA to potentially take credit for the FTAAP
+        USA = { country_event = { id = usa_ftaap_credit.1 days = 2 } }
+    }
+
+    option = { # Option C: Better not proceed with FTAAP
+        name = "japan_foreign_policy.12.option.c"
+        tooltip = "The potential drawbacks at this juncture outweigh the benefits of pursuing the FTAAP further."
+        
+        if = {
+            limit = { NOT = { government = liberal } }
+            add_party_popularity = { ideology = current_government_ideology amount = 0.03 }
+        }
+        add_political_power = 50
+        # Conditional trigger for a significant event if FTAAP has not been pursued and focuses are complete
+        if = {
+            limit = { 
+                NOT = { has_completed_focus = FTAAP_focus }
+                NOT = { has_country_flag = took_ftaap_route }
+            }
+            JAP = { country_event = { id = japan_foreign_policy.11 days = 2 } }
+        }
+    }
+
+# Placeholder for Opinion Modifier and Event Triggers
+#opinion_modifiers = {
+#    ftaap_tension = {
+        # Details for the negative relations penalty with the USA due to FTAAP primacy issues.
+#    }
+#}
+
+}
+
+
+
+
+
+#Free Trade Area of the Asia-Pacific (SEA)
+# Corrected Event ID for Japan: Decision on FTAAP with SEA Focus
+country_event = {
+    id = japan_foreign_policy.13
+    title = "japan_foreign_policy.13.title"
+    desc = "japan_foreign_policy.13.desc"
+    picture = "GFX_report_event_asia_trade"
+
+    is_triggered_only = yes # Triggered by Japan's considerations on the FTAAP in the SEA region.
+
+    option = { # Option A: Create or Expand FTAAP
+        name = "japan_foreign_policy.13.option.a"
+        tooltip = "Expanding the FTAAP to include SEA countries will cement our leadership in regional economic integration."
+        
+        if = {
+            limit = { NOT = { government = liberal } }
+            add_political_power = -100
+            add_popularity = { ideology = radical_right amount = 0.03 }
+            add_popularity = { ideology = radical_left amount = 0.03 }
+        }
+
+        # Triggering the FTAAP entry event for all ASEAN countries
+        every_country = {
+            limit = { is_asean_member = yes }
+            country_event = { id = japan_foreign_policy.15 days = 2 }
+        }
+
+        # Referencing the corrected event ID for "Japan Turns Against Globalization!"
+        if = {
+            limit = { 
+                NOT = { has_completed_focus = FTAAP_focus }
+                NOT = { has_country_flag = took_ftaap_route }
+            }
+            JAP = { country_event = { id = japan_foreign_policy.11 days = 2 } }
+        }
+    }
+
+    option = { # Option B: Better not proceed with FTAAP
+        name = "japan_foreign_policy.13.option.b"
+        tooltip = "Considering the complexities and potential backlash, it might be prudent to reassess our approach to the FTAAP."
+
+        if = {
+            limit = { NOT = { government = liberal } }
+            add_party_popularity = { ideology = current_government_ideology amount = 0.03 }
+        }
+        add_political_power = 50
+
+        # Referencing the corrected event ID for a cautious stance on globalization
+        if = {
+            limit = { 
+                NOT = { has_completed_focus = FTAAP_focus }
+                NOT = { has_country_flag = took_ftaap_route }
+            }
+            JAP = { country_event = { id = japan_foreign_policy.11 days = 2 } }
+        }
+    }
+}
+
+
+#Japan Turns Against Globalization!
+country_event = {
+    id = japan_foreign_policy.11
+    title = "japan_foreign_policy.11.title"
+    desc = "japan_foreign_policy.11.desc"
+    picture = "GFX_report_event_japanese_nationalism"
+
+    is_triggered_only = yes # This event is triggered by specific conditions reflecting Japan's stance on globalization.
+
+    option = { # Option A: Japan First!
+        name = "japan_foreign_policy.11.option.a"
+        tooltip = "Prioritizing our domestic economy and small businesses, we adopt a 'Japan First' stance towards globalization."
+        
+        # Effects on domestic sectors and political landscape
+        add_opinion_modifier = {
+            target = small_businesses
+            modifier = small_business_boost
+            opinion = 20
+        }
+        add_opinion_modifier = {
+            target = conglomerates
+            modifier = conglomerate_skepticism
+            opinion = -10
+        }
+        add_opinion_modifier = {
+            target = international_bankers
+            modifier = international_banker_skepticism
+            opinion = -10
+        }
+        add_party_popularity = { ideology = right_wing_populism amount = 0.10 }
+    }
+
+    option = { # Option B: Fair, Not Free Trade
+        name = "japan_foreign_policy.11.option.b"
+        tooltip = "We advocate for fair trade practices that benefit all, rather than unchecked free trade."
+        
+        add_political_power = 100
+        add_party_popularity = { ideology = non_aligned_communism amount = 0.10 }
+        set_country_flag = japan_fair_trade_focus
+    }
+
+#ideas = {
+#    japan_fair_trade_focus = {
+        # Benefits or bonuses from focusing on fair trade and the East Asian Community.
+#    }
+#}
+
+}
+
+#Dialogue with Two Chinas
+
+#The Rogue Kingdom
+
+#<Leader> Visits Pyongyang
+
+#Anti-Terrorism Special Measures Law (or Maritime Security Act)
+
+#Status of USFJ
+
+#----------------------------------------------------------------
+#Event Chain: Japan Wants Okinawa Base Back
+#----------------------------------------------------------------
+
+#Japan Requests Final Decommission of Okinawa Bases! (USA)
+
+#America Refuses!
+
+#Japan Pleads For Support! (CHI)
+
+#Japan Sieges Okinawa Base! (USA)
+
+#Okinawa Skirmish (hot)
+
+#Okinawa Skirmish (cold)
+
+
+#----------------------------------------------------------------
+#Event Chain: Isolating PRC
+#----------------------------------------------------------------
+
+#Japan Speaks Strongly Against Chinese Aggression! (SEA)
+
+#Isolating the Dragon (SEA)
