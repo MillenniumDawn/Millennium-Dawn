@@ -1,4 +1,4 @@
-#Author(s): Created and Developed by PokemonUnited26
+#Author(s): Created and Developed by PokemonUnited26 and University of Toronto and Ahmedt14
 ### search_filters = { FOCUS_FILTER_POLITICAL }
 ### search_filters = { FOCUS_FILTER_RESEARCH }
 ### search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -52,7 +52,7 @@ focus_tree = {
 		id = YEM_Al-Qaeda
 		icon = isis_allegiance
 
-		x = 11
+		x = 12
 		y = 1
 		relative_position_id = YEM_Dancing_on_the_Heads_of_Snakes
 		prerequisite = { 
@@ -1318,8 +1318,11 @@ focus_tree = {
 		id = YEM_The_War_on_Terror
 		icon = usa_attacked
 
-		x = 40
-		y = 2
+		x = 2
+		y = 1
+		
+		relative_position_id = YEM_Al-Qaeda
+		
         available = {
 		custom_trigger_tooltip = {
 			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
@@ -1329,6 +1332,8 @@ focus_tree = {
 		is_subject = no
 	    }
 		prerequisite = { focus = YEM_Al-Qaeda }
+		
+		mutually_exclusive = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
 		available = { 
 			if = {
 				OR = {
@@ -2035,103 +2040,62 @@ focus_tree = {
 		id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
 		icon = isis_tahrir_alliance
 
-		x = 39
-		y = 3
-
-		prerequisite = { focus = YEM_The_War_on_Terror }
-		mutually_exclusive = { focus = YEM_Secretly_support_Aden-Abyan_Islamic_Army}
-		mutually_exclusive = { focus = YEM_Join_the_War_on_Terror }
+		x = -2
+		y = 1
 		
-		cost = 5
-available = {
-		custom_trigger_tooltip = {
-			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
-			USA = { has_country_flag = war_on_terror_speech }
+		relative_position_id = YEM_Al-Qaeda
+		
+		prerequisite = { focus = YEM_Al-Qaeda }
+		
+		mutually_exclusive = { focus = YEM_The_War_on_Terror }
+		
+		cost = 10
+		
+		available = {
 		}
-		OR = {
+		
+		bypass = {
 			has_government = fascism
 		}
-		country_exists = USA
-		NOT = { has_war_with = USA }
-		is_subject = no
-	}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Openly_Support_Aden-Abyan_Islamic_Army"
-			if = {
-				limit = {
-					has_country_leader_with_trait = anti_salafist
-				}
-				swap_ruler_traits = { remove = anti_salafist add = pro_salafi }
+			add_timed_idea = {
+				idea = YEM_turn_to_al_qaeda
+				days = 180
 			}
-			hidden_effect = {
-				if = { 
-					limit = {
-						check_variable = { var = YEM_federal_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_federal_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_central_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_central_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_tribal_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_tribal_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_statal_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_statal_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_shia_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_shia_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_sunni_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_sunni_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_secularist_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_secularist_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_saleh_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_saleh_anger_level = 9 }
-				}
-				if = { 
-					limit = {
-						check_variable = { var = YEM_nosaleh_anger_level value = 9 compare = less_than }
-					}
-					set_variable = { YEM_nosaleh_anger_level = 9 }
-				}
-			}
-			custom_effect_tooltip = set_all_anger_to_9_tt
-			if = { 
+			#every_country = {
+			#	NOT = {
+			#		has_government = fascism
+			#	}
+			#	gets_event = #not created yet
+			#}
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			add_relative_party_popularity = yes
+			#custom_effect_tooltip = send_event_to_subjects_tt
+			
+			every_core_state = {
 				limit = {
-					check_variable = { var = YEM_religist_secularist_bop_level value = 6 compare = less_than_or_equals }
+					AND = {
+						NOT = {
+							OR = {
+								state = 1077
+								state = 1104
+								state = 1107
+								state = 200
+							}
+						}
+						NOT = {
+							check_variable = { AQY_presence < 4 }
+							check_variable = { AQY_presence > 2 }
+						}
+					}
 				}
-				add_to_variable = {
-					var = YEM_religist_secularist_bop_level
-					value = 3
-					tooltip = add_3_to_religist_secularist_bop_level_tt
-				}
+				set_variable = { var = AQY_presence value = 2 } 				
 			}
 		}
-
+		search_filters = { FOCUS_FILTER_POLITICAL }
 		ai_will_do = { factor = 1 }
 	}
 
@@ -2139,21 +2103,23 @@ available = {
 		id = YEM_Secretly_support_Aden-Abyan_Islamic_Army
 		icon = terrorism
 
-		x = 42
-		y = 3
-available = {
-		custom_trigger_tooltip = {
-			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
-			USA = { has_country_flag = war_on_terror_speech }
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_The_War_on_Terror
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+				USA = { has_country_flag = war_on_terror_speech }
+			}
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			is_subject = no
 		}
-		country_exists = USA
-		NOT = { has_war_with = USA }
-		is_subject = no
-	}
 
 
 		prerequisite = { focus = YEM_The_War_on_Terror }
-		mutually_exclusive = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
 		mutually_exclusive = { focus = YEM_Join_the_War_on_Terror }
 
 		cost = 5
@@ -2168,20 +2134,22 @@ available = {
 		id = YEM_Join_the_War_on_Terror
 		icon = align_to_america
 
-		x = 44
-		y = 3
-available = {
-		custom_trigger_tooltip = {
-			tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
-			USA = { has_country_flag = war_on_terror_speech }
-		}
-		country_exists = USA
-		NOT = { has_war_with = USA }
-		is_subject = no
+		x = 1
+		y = 1
+		
+		relative_position_id = YEM_The_War_on_Terror
+		
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TT_OEF_WAR_ON_TERROR_SPEECH_HELD
+				USA = { has_country_flag = war_on_terror_speech }
+			}
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			is_subject = no
 	    }
 		prerequisite = { focus = YEM_The_War_on_Terror }
 		mutually_exclusive = { focus = YEM_Secretly_support_Aden-Abyan_Islamic_Army }
-		mutually_exclusive = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
 
 		cost = 5
 
@@ -2196,9 +2164,11 @@ available = {
 		id = YEM_Salafist_Support
 		icon = isis_aks
 
-		x = 38
-		y = 4
-
+		x = -1
+		y = 1
+		
+		relative_position_id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
+		
 		prerequisite = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
 		mutually_exclusive = { focus = YEM_Wahhabist_Doctrine }
 		
@@ -2208,20 +2178,31 @@ available = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Salafist_Support"
 			if = {
 				limit = {
-					NOT = { 
-						has_country_leader_with_trait = pro_al_qaeda
+					has_country_leader_with_trait = anti_salafist
+				}
+				swap_ruler_traits = { remove = anti_salafist add = pro_salafi }
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						has_country_leader_with_trait = anti_salafist
 					}
 				}
-				add_country_leader_trait = pro_al_qaeda
+				add_country_leader_trait = pro_salafi 
 			}
-		}
+			add_stability = -0.1
 
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
 		ai_will_do = { factor = 1 }
 	}
 
 	focus = {
 		id = YEM_Terrorists_escape
-		icon = align_to_hamas
+		icon = null
 
 		x = 42
 		y = 4
@@ -2239,56 +2220,10 @@ available = {
 	    }
 
         available = {
-		OR = {
-			country_exists = HAM
-			country_exists = PAL
 		}
-		OR = {
-			HAM = { owns_state = 209 }
-			PAL = { owns_state = 209 }
-		}
-	}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Terrorists_escape"
-		     if = {
-			limit = { NOT = { country_exists = HAM } }
-			209 = { add_core_of = HAM }
-			PAL = { release = HAM }
-			hidden_effect = {
-				every_state = {
-					limit = { is_core_of = PAL }
-					add_core_of = HAM
-				}
-				every_state = {
-					limit = { is_claimed_by = PAL }
-					add_claim_by = HAM
-				}
-				HAM = { load_oob = HAM_2017 }
-				ISR = {
-					remove_state_claim = 209
-					add_state_core = 209
-				}
-				PAL = {
-					add_state_core = 209
-				}
-			}
-			ISR = { country_event = { id = SyriaFocus.76 hours = 6 } }
-			PAL = { country_event = { id = SyriaFocus.76 hours = 6 } }
-		}
-		add_opinion_modifier = {
-			target = HAM
-			modifier = declaration_of_friendship
-		}
-		reverse_add_opinion_modifier = {
-			target = HAM
-			modifier = declaration_of_friendship
-		}
-		HAM = {
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
-		}
+
 		}
 
 		ai_will_do = { factor = 1 }
@@ -5767,10 +5702,12 @@ add_building_construction = {
 		id = YEM_Islamic_state_of_Yemen
 		icon = null
 
-		x = 39
-		y = 5
+		x = 1
+		y = 1
 
 		prerequisite = { focus = YEM_Salafist_Support focus = YEM_Wahhabist_Doctrine  }
+		
+		relative_position_id = YEM_Salafist_Support
 		
 		available = {
 			OR  = {
@@ -6215,14 +6152,15 @@ add_building_construction = {
 		id = YEM_Wahhabist_Doctrine
 		icon = null
 
-		x = 40
-		y = 4
+		x = 1
+		y = 1
 
 		prerequisite = { focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
 		mutually_exclusive = { focus = YEM_Salafist_Support }
 
 		cost = 5
-
+		
+		relative_position_id = YEM_Openly_Support_Aden-Abyan_Islamic_Army
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus YEM_Wahhabist_Doctrine"
 			if = {

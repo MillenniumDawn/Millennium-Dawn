@@ -523,6 +523,7 @@ terror_gulf_category = {
 	YEM_al_qaeda_fight_timer = { #Al Qaeda base timer
 		priority = 109
 		allowed = {
+			TAG = YEM
 		}
 		available = {
 			custom_trigger_tooltip = {
@@ -530,6 +531,10 @@ terror_gulf_category = {
 				all_owned_state = {
 					check_variable = { var = AQY_presence value = 0 compare = equals }
 				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = #low_threat_higher_tt
+				check_variable = { threat_level < 20 }
 			}
 		}
 
@@ -539,9 +544,12 @@ terror_gulf_category = {
 		days_mission_timeout = 260
 		fire_only_once = no
 
-
+		cancel_trigger  = {
+			has_completed_focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army
+		}
+		
 		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout per_intervene_SYR"
+			log = "[GetDateText]: [Root.GetName]: Decision timeout YEM_al_qaeda_fight_timer"
 			add_political_power = -25
 		}
 
@@ -549,79 +557,149 @@ terror_gulf_category = {
 			factor = 1
 		}
 	}
-	YEM_dancing_on_the_heads_of_snakes_1_1 = {
-		priority = 105
-		visible = { NOT = { has_country_flag = dhs1_opened } }
-		available = {
-			has_completed_focus = YEM_Al-Qaeda
-		}
-		fire_only_once = no
-		complete_effect = { set_country_flag = dhs1_opened }
-		# keep it open
-		ai_will_do = {
-			factor = 100
-		}
-	}
-	YEM_dancing_on_the_heads_of_snakes_1_2 = {
+	YEM_al_qaeda = { #release terrorists
 		priority = 104
-		visible = { has_country_flag = dhs1_opened }
-		fire_only_once = no
-		complete_effect = { clr_country_flag = dhs1_opened }
-		# keep it open
-		ai_will_do = {
-			factor = 100
+
+		allowed = {
+			TAG = YEM
 		}
-	}
-	YEM_dancing_on_the_heads_of_snakes_1_3 = {
-		priority = 104
-		visible = { has_country_flag = dhs1_opened }
-		available = { NOT = { has_country_flag = dec1_selected } }
-		fire_only_once = no
+		available = { 
+			NOT = { has_country_flag = dec1_selected } 
+			NOT = { has_completed_focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
+			has_completed_focus = YEM_Terrorists_escape
+		}
 		
 		days_remove = 90
-		days_re_enable = 90
+		days_re_enable = 30
+		
 		fire_only_once = no
 		
 		cost = 50
 		
-		complete_effect = { clr_country_flag = dhs1_opened }
-		# keep it open
+		select_effect = { set_country_flag = dec1_selected }
+		
+		complete_effect = { 
+			clr_country_flag = dec1_selected 
+			
+			set_temp_variable = { rad_change = -3 }
+			
+			add_days_mission_timeout = {
+				mission = YEM_al_qaeda_fight_timer
+					days = 90
+			}
+		}
+		
 		ai_will_do = {
 			factor = 100
 		}
 	}
-	YEM_dancing_on_the_heads_of_snakes_1_4 = {
-		priority = 104
-		visible = { has_country_flag = dhs1_opened }
-		available = { NOT = { has_country_flag = dec1_selected } }
+	YEM_al_qaeda_1 = { #request american aid
+		priority = 103
+
+		allowed = {
+			TAG = YEM
+		}
+		available = { 
+			NOT = { has_country_flag = dec1_selected } 
+			NOT = { has_completed_focus = YEM_Openly_Support_Aden-Abyan_Islamic_Army }
+			OR = {
+				has_completed_focus = YEM_American_Terrorist_Elimination_Assistance
+				has_completed_focus = YEM_Use_Terrorists_as_excuse_for_more_financial_backing
+			}
+			country_exists = USA
+			NOT = {
+				USA = {
+					has_government = fascism
+				}
+			}
+		}
 		
-		days_remove = 90
+		days_remove = 30
 		days_re_enable = 90
-		fire_only_once = no
-		
-		cost = 50
 		
 		fire_only_once = no
-		complete_effect = { clr_country_flag = dhs1_opened }
-		# keep it open
+		
+		cost = 100
+		
+		select_effect = { set_country_flag = dec1_selected }
+		
+		complete_effect = { 
+			clr_country_flag = dec1_selected 
+			if = {
+				limit = {
+					ROOT = {
+						has_completed_focus = YEM_American_Terrorist_Elimination_Assistance
+					}
+				}
+				USA = {
+					country_event = #
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_completed_focus = YEM_American_Terrorist_Elimination_Assistance
+						has_completed_focus = YEM_Use_Terrorists_as_excuse_for_more_financial_backing
+					}
+				}
+				USA = {
+					country_event = #
+				}
+			}		
+			if = {
+				limit = {
+					ROOT = {
+						has_completed_focus = YEM_American_Financial_backing
+						has_completed_focus = YEM_Use_Terrorists_as_excuse_for_more_financial_backing
+					}
+				}
+				USA = {
+					country_event = #
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_completed_focus = YEM_American_Financial_backing
+						has_completed_focus = YEM_American_Terrorist_Elimination_Assistance
+						has_completed_focus = YEM_Use_Terrorists_as_excuse_for_more_financial_backing
+					}
+				}
+				USA = {
+					country_event = #
+				}
+			}				
+		}
+		
 		ai_will_do = {
 			factor = 100
 		}
 	}
-	YEM_dancing_on_the_heads_of_snakes_1_5 = {
-		priority = 104
-		visible = { has_country_flag = dhs1_opened }
-		available = { NOT = { has_country_flag = dec1_selected } }
+	YEM_al_qaeda_2 = { #secret aid
+		priority = 102
+
+		allowed = {
+			TAG = YEM
+		}
+		available = { 
+			NOT = { has_country_flag = dec1_selected } 
+			has_completed_focus =  YEM_Secretly_support_Aden-Abyan_Islamic_Army
+		}
 		
-		days_remove = 90
-		days_re_enable = 90
+		days_remove = 60
+		days_re_enable = 30
+		
 		fire_only_once = no
 		
 		cost = 50
 		
-		fire_only_once = no
-		complete_effect = { clr_country_flag = dhs1_opened }
-		# keep it open
+		select_effect = { set_country_flag = dec1_selected }
+		
+		complete_effect = { 
+			clr_country_flag = dec1_selected 
+			set_temp_variable = { rad_change = -3 }
+		}
+		
 		ai_will_do = {
 			factor = 100
 		}
@@ -795,7 +873,6 @@ terror_gulf_category = {
 			952 = {
 				check_variable = { var = AQY_presence value = 0 compare = greater_than }
 			}
-			#has_country_flag = SPR_spanish_elections_flag
 		}
 
 		complete_effect = {
