@@ -39,14 +39,6 @@ focus_tree = {
 		}
 		ai_will_do = {
 			factor = 1
-			modifier = {
-				add = 155
-				has_global_flag = PER_NO_REVOULT_IRAN
-			}
-			modifier = {
-				factor = 10
-				is_historical_focus_on = yes
-			}
 		}
 	}
 	focus = {
@@ -75,7 +67,7 @@ focus_tree = {
 				name = BOT_the_energy_debate
 				bonus = 0.5
 				uses = 1
-				category = synth_resources
+				category = cat_renewable
 			}
 			add_tech_bonus = {
 				name = industry
@@ -9547,7 +9539,7 @@ focus_tree = {
 					name = naval_doctrine_bonus_TT
 					cost_reduction = 0.5
 					uses = 1
-					category = naval_doctrine
+					category = Cat_naval_doctrine
 				}
 			}
 		}
@@ -11881,7 +11873,7 @@ focus_tree = {
 				name = naval_doctrine_bonus_TT
 				cost_reduction = 0.5
 				uses = 1
-				category = naval_doctrine
+				category = Cat_naval_doctrine
 			}
 			navy_experience = 20
 			SOV = {
@@ -11889,7 +11881,7 @@ focus_tree = {
 					name = naval_doctrine_bonus_TT
 					cost_reduction = 0.5
 					uses = 1
-					category = naval_doctrine
+					category = Cat_naval_doctrine
 				}
 				navy_experience = 20
 			}
@@ -13694,7 +13686,7 @@ focus_tree = {
 				name = naval_doctrine_bonus_TT
 				cost_reduction = 0.75
 				uses = 1
-				category = naval_doctrine
+				category = Cat_naval_doctrine
 			}
 		}
 	}
@@ -14679,7 +14671,7 @@ focus_tree = {
 				name = Cat_NAVAL_MODULES
 				bonus = 1.0
 				uses = 2
-				category = Cat_NAVAL_MODULES
+				category = Cat_NAVAL_MISC
 			}
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
@@ -17180,32 +17172,59 @@ focus_tree = {
 		mutually_exclusive = { focus = PER_the_third_development_plan }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_the_revolution"
-			set_country_flag = PER_hide_focus_branches
-			mark_focus_tree_layout_dirty = yes
-			set_country_flag = PER_persian_revolution
-			set_country_flag = PER_starting_the_revolution
-			set_country_flag = in_civil_war_iran
-			set_country_flag = PER_finish_off_IRGC
-			hidden_effect = {
+			if = {
+				limit = {
+					is_ai = no
+				}
+				set_country_flag = PER_hide_focus_branches
+				mark_focus_tree_layout_dirty = yes
+				set_country_flag = PER_persian_revolution
+				set_country_flag = PER_starting_the_revolution
+				set_country_flag = in_civil_war_iran
+				set_country_flag = PER_finish_off_IRGC
+				hidden_effect = {
+					country_event = {
+						id = PER_civilwar.20
+						days = 60
+					}
+				}
+				# custom_effect_tooltip =	PER_revolutionary_decisions_tt
+				# #Note to sheep he needs to clean this up onces droid reads and combine variables in one effect
+				# custom_effect_tooltip =	PER_army_size_Plus_five_tt
+				# add_to_variable = { var = army_size_jang value = -0.05 }
+				# clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
+				# clamp_variable = { var = PER_army_size_Display_number min = 0 max = 100 }
+				ROOT = { country_event = { id = PER_revolution.1 } }
+				custom_effect_tooltip = PER_iranian_unify2_tt
+				add_to_variable = { var = iranian_unify value = 0 }
+				clamp_variable = { var = iranian_unify min = 0 max = 1 }
+				set_variable = { revolutionary_recovery_status = 0 }
+			}
+			# For AI
+			if = {
+				limit = {
+					is_ai = yes
+				}
 				country_event = {
-					id = PER_civilwar.20
-					days = 60
+					id = PER_civilwar.1
+					days = 290
 				}
 			}
-			# custom_effect_tooltip =	PER_revolutionary_decisions_tt
-			# #Note to sheep he needs to clean this up onces droid reads and combine variables in one effect
-			# custom_effect_tooltip =	PER_army_size_Plus_five_tt
-			# add_to_variable = { var = army_size_jang value = -0.05 }
-			# clamp_variable = { var = army_size_jang min = 0.20 max = 1 }
-			# clamp_variable = { var = PER_army_size_Display_number min = 0 max = 100 }
-			ROOT = { country_event = { id = PER_revolution.1 } }
-			custom_effect_tooltip = PER_iranian_unify2_tt
-			add_to_variable = { var = iranian_unify value = 0 }
-			clamp_variable = { var = iranian_unify min = 0 max = 1 }
-			set_variable = { revolutionary_recovery_status = 0 }
 		}
 		ai_will_do = {
-			factor = 0
+			factor = 1
+			modifier = {
+				add = 155
+				OR = {
+					has_global_flag = PER_REVOLUTIONARY_PERSIA_PATH
+					has_global_flag = PER_PAN_PERSIA
+					has_global_flag = PER_FIRE_HAS_NO_FRIENDS_IRAN
+				}
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	focus = {
@@ -17398,9 +17417,20 @@ focus_tree = {
 				if = {
 					limit = {
 						has_country_flag = PER_did_the_war
+						is_ai = no
 					}
 					country_event = {
 						id = PER_revolution.3
+						days = 2
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = PER_did_the_war
+						is_ai = yes
+					}
+					country_event = {
+						id = PER_civilwar.53
 						days = 2
 					}
 				}
@@ -19635,7 +19665,7 @@ focus_tree = {
 				bonus = 0.5
 				uses = 2
 				category = Cat_AI
-				category = electronics
+				category = computing_tech
 				category = internet_tech
 			}
 		}
@@ -21655,7 +21685,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_investigate_foreign_plots"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_naval_reform
-				category = naval_doctrine
+				category = Cat_naval_doctrine
 				uses = 1
 				cost_reduction = 0.35
 			}
@@ -23308,11 +23338,7 @@ focus_tree = {
 				bonus = 0.5
 				uses = 2
 				category = Cat_AI
-				category = electronics
-				category = encryption_tech
-				category = decryption_tech
 				category = computing_tech
-				category = radar_tech
 				category = internet_tech
 			}
 		}
@@ -25376,8 +25402,7 @@ focus_tree = {
 
 		x = 2
 		y = 4
-		prerequisite = { focus = PER_exploit_religious_claims }
-		prerequisite = { focus = PER_exploit_cultural_claims }
+		prerequisite = { focus = PER_exploit_religious_claims focus = PER_exploit_cultural_claims }
 		relative_position_id = PER_path_of_destruction
 		available = {
 			AZE = {
@@ -25610,15 +25635,6 @@ focus_tree = {
 		relative_position_id = PER_path_of_destruction
 		cost = 7.15
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		available = {
-			country_exists = AZE
-			NOT = {
-				has_war_with = AZE
-				AZE = {
-					is_subject_of = PER
-				}
-			}
-		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PER_spread_anti_turk_rhetoric"
 			PER = {
