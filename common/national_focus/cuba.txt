@@ -3,12 +3,34 @@
 
 focus_tree = {
 	id = cuba_focus
-	continuous_focus_position = { x = 100 y = 2050 }
+	continuous_focus_position = { x = 100 y = 3000 }
 	country = {
 		factor = 0
 		modifier = {
 			add = 20
 			tag = CUB
+		}
+	}
+	focus = {
+		id = CUB_cuban_politics
+        icon = stability
+		x = 23
+		y = 0
+		cost = 7
+		search_filters = {
+			FOCUS_FILTER_POLITICAL
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_cuban_politics"
+
+		}
+		ai_will_do = {
+			factor = 1
+
+			modifier = {
+				factor = 100
+				is_historical_focus_on = yes
+			}
 		}
 	}
 	focus = {
@@ -3666,9 +3688,11 @@ focus_tree = {
 	focus = {
 		id = CUB_cpc_reforms
         icon = CUB_cpcreforms
-		x = 23
-		y = 0
+		x = -10
+		y = 1
 		cost = 7
+		prerequisite = { focus =CUB_cuban_politics}
+		relative_position_id =CUB_cuban_politics
 		search_filters = {
 			FOCUS_FILTER_POLITICAL
 		}
@@ -6426,9 +6450,11 @@ focus_tree = {
 	focus = {
 		id = CUB_nationalists
 		icon = cubanationalists
-		x =50
+		x =10
 		y = 1
 		cost = 5
+		prerequisite = { focus =CUB_cuban_politics}
+		relative_position_id =CUB_cuban_politics
 		search_filters = {
 			FOCUS_FILTER_POLITICAL
 		}
@@ -7457,6 +7483,77 @@ focus_tree = {
 			create_wargoal = {
 				target = NIC
 				type = annex_everything
+			}
+		}
+		ai_will_do = {
+			factor = 1
+
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	#Democratic branch
+	focus = {
+		id = CUB_democratic_start
+		x =25
+		y = 1
+		cost = 5
+		prerequisite = { focus =CUB_cuban_politics}
+		relative_position_id =CUB_cuban_politics
+		search_filters = {
+			FOCUS_FILTER_POLITICAL
+		}
+		available = {
+			OR = {
+				nationalist_military_junta_are_in_power =  yes
+				nationalist_fascist_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CUB_democratic_start"
+			if = {
+				limit = { NOT = { is_in_array = { ruling_party = 21 } } }
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 21 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					}
+					set_leader = yes
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = no
+					}
+				}
+			}
+			add_to_variable = { party_pop_array^21 = 0.075 }
+			recalculate_party = yes
+				else_if = {
+					limit = { is_in_array = { ruling_party = 21 } }
+					add_popularity = {
+						ideology = nationalist
+						popularity = 0.05
+					}
+					add_to_variable = { party_pop_array^21 = 0.075 }
+					recalculate_party = yes
+				}
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.025 }
+			add_relative_party_popularity = yes
+			news_event = {
+				hours = 6
+				id = cuba_news.35
 			}
 		}
 		ai_will_do = {
