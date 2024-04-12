@@ -6,6 +6,7 @@ add_namespace = EUevent ### next free ID 21
 add_namespace = EUcheat
 add_namespace = EUupdate
 add_namespace = EUelection
+add_namespace = EUvote
 
 # EU Cheat EVents
 # Mainly Utility
@@ -34,27 +35,6 @@ country_event = {
 	}
 }
 
-# EUcheat.2 == Adds all Potential EU nations to the Union
-country_event = {
-	id = EUcheat.2
-	title = EUcheat.2.t
-	desc = EUcheat.2.d
-	is_triggered_only = yes
-
-	option = { #a
-		name = EUcheat.2.a
-		log = "[GetDateText]: [Root.GetName]: event EUcheat.1.a"
-		for_each_scope_loop = {
-			array = global.EU_potential
-			if = {
-				limit = { NOT = { has_idea = EU_member } }
-				add_ideas = EU_member
-			}
-		}
-		force_update_map_mode = { mapmode = EU_map_mode }
-	}
-}
-
 ### EUupdate
 
 # Triggers the Update to the EUU_monitor nation and preps the
@@ -76,18 +56,11 @@ country_event = {
 			add_ideas = EUU_monitor
 			activate_mission = EU_update_vars_mission
 			activate_mission = EU_clear_voting_mission
-			if = {
-				limit = {
-					has_start_date < 2000.01.02
-				}
-				country_event = {
-					id = EUelection.2
-				}
+			if = { limit = { has_start_date < 2000.01.02 }
+				country_event = { id = EUelection.2 }
 			}
 			else = {
-				country_event = {
-					id = EUelection.3
-				}
+				country_event = { id = EUelection.3 }
 			}
 			activate_mission = EU_election_5_years
 		}
@@ -167,6 +140,32 @@ country_event = {
 			array = global.EU_member
 			country_event = { id = EUevent.17 }
 		}
+	}
+}
+
+### Parliment Vote Started
+country_event = {
+	id = EUvote.1
+	title = EUvote.1.t
+	desc = EUvote.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = EUvote.1.a
+	}
+}
+
+### Council Vote Started
+country_event = {
+	id = EUvote.2
+	title = EUvote.2.t
+	desc = EUvote.2.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = EUvote.2.a
 	}
 }
 
@@ -320,9 +319,7 @@ country_event = {
 	option = { #a
 		name = EUevent.5.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.5.a"
-		ROOT = {
-			add_ideas = european_debt_crisis
-		}
+		ROOT = { add_ideas = european_debt_crisis }
 		if = {
 			limit = {
 				OR = {
@@ -334,9 +331,7 @@ country_event = {
 					original_tag = CYP
 				}
 			}
-			ROOT = {
-				add_ideas = EUU_national_dept_crisis_eu
-			}
+			ROOT = { add_ideas = EUU_national_dept_crisis_eu }
 		}
 	}
 }
@@ -405,7 +400,7 @@ country_event = {
 		}
 	}
 }
-### troika_reforms accomplised
+### Troika Reforms Accomplished
 country_event = {
 	id = EUevent.8
 	title = EUevent.8.t
@@ -433,8 +428,6 @@ country_event = {
 	title = EUevent.9.t
 	desc = EUevent.9.d
 
-	#picture = GFX_eu
-
 	is_triggered_only = yes
 
 	option = { #a
@@ -447,14 +440,7 @@ country_event = {
 			}
 			leaving_EU = yes
 		}
-		#every_country = { ### changed news event to major, fire only once
-		#	limit = {
-		#		has_idea = EU_member
-		#	}
-		news_event = {
-			id = EU_news.20
-		}
-		#}
+		news_event = { id = EU_news.20 }
 	}
 }
 
@@ -477,12 +463,8 @@ country_event = {
 			}
 		}
 		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			news_event = {
-					id = EU_news.25
-			}
+			limit = { has_idea = EU_member }
+			news_event = { id = EU_news.25 }
 		}
 		ai_chance = {
 			factor = 100
@@ -492,12 +474,8 @@ country_event = {
 		name = EUevent.10.b
 		log = "[GetDateText]: [Root.GetName]: event EUevent.10.b"
 		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			news_event = {
-					id = EU_news.26
-			}
+			limit = { has_idea = EU_member }
+			news_event = { id = EU_news.26 }
 		}
 		ai_chance = {
 			factor = 0
@@ -505,773 +483,6 @@ country_event = {
 	}
 }
 
-### euroscepticism decline -3% ###
-country_event = {
-	id = EUevent.11
-	title = EUevent.11.t
-	desc = EUevent.11.d
-
-	#picture = GFX_eu
-
-	is_triggered_only = yes
-
-	option = {
-		name = EUevent.11.a
-		log = "[GetDateText]: [Root.GetName]: event EUevent.11.a"
-		### effect
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = THIS.eurosceptic
-					value = -0.03
-				}
-				if = {
-					limit = {
-						check_variable = { THIS.eurosceptic > 1 }
-					}
-					set_variable = { THIS.eurosceptic = 1 }
-				}
-				else_if = {
-					limit = {
-						check_variable = { THIS.eurosceptic < 0 }
-					}
-					set_variable = { THIS.eurosceptic = 0 }
-				}
-		}
-		### updating variables
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUpopTotal
-					value = THIS.max_manpower_k
-				}
-		}
-
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUmemberstatesTotal
-					value = 1
-				}
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_EUpopRatio
-					value = 0
-				}
-				add_to_variable = {
-					var = THIS.var_EUpopRatio
-					value = THIS.max_manpower_k
-				}
-				divide_variable = {
-					var = THIS.var_EUpopRatio
-					value = global.var_EUpopTotal
-				}
-			}
-		}
-
-		###Europeanism Update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_proeuropean
-					value = 1
-				}
-				subtract_from_variable = {
-					var = THIS.var_proeuropean
-					value = THIS.eurosceptic
-				}
-				multiply_variable = {
-					var = THIS.var_proeuropean
-					value = max_manpower_k
-				}
-			}
-		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_to_variable = {
-					var = global.var_europeanism
-					value = THIS.var_proeuropean
-				}
-			}
-		}
-
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
-		###Europeanism Update End
-	}
-}
-
-### euroscepticism decline -5% ###
-country_event = {
-	id = EUevent.12
-	title = EUevent.12.t
-	desc = EUevent.12.d
-
-	#picture = GFX_eu
-
-	is_triggered_only = yes
-
-	option = {
-		name = EUevent.12.a
-		log = "[GetDateText]: [Root.GetName]: event EUevent.12.a"
-		### effect
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = THIS.eurosceptic
-					value = -0.05
-				}
-				if = {
-					limit = {
-						check_variable = { THIS.eurosceptic > 1 }
-					}
-					set_variable = { THIS.eurosceptic = 1 }
-				}
-				else_if = {
-					limit = {
-						check_variable = { THIS.eurosceptic < 0 }
-					}
-					set_variable = { THIS.eurosceptic = 0 }
-				}
-		}
-		### updating variables
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUpopTotal
-					value = THIS.max_manpower_k
-				}
-		}
-
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUmemberstatesTotal
-					value = 1
-				}
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_EUpopRatio
-					value = 0
-				}
-				add_to_variable = {
-					var = THIS.var_EUpopRatio
-					value = THIS.max_manpower_k
-				}
-				divide_variable = {
-					var = THIS.var_EUpopRatio
-					value = global.var_EUpopTotal
-				}
-			}
-		}
-
-		###Europeanism Update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_proeuropean
-					value = 1
-				}
-				subtract_from_variable = {
-					var = THIS.var_proeuropean
-					value = THIS.eurosceptic
-				}
-				multiply_variable = {
-					var = THIS.var_proeuropean
-					value = max_manpower_k
-				}
-			}
-		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_to_variable = {
-					var = global.var_europeanism
-					value = THIS.var_proeuropean
-				}
-			}
-		}
-
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
-		###Europeanism Update End
-	}
-}
-
-### euroscepticism rise 3% ###
-country_event = {
-	id = EUevent.13
-	title = EUevent.13.t
-	desc = EUevent.13.d
-
-	#picture = GFX_eu
-
-	is_triggered_only = yes
-
-	option = {
-		name = EUevent.13.a
-		log = "[GetDateText]: [Root.GetName]: event EUevent.13.a"
-		### effect
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = THIS.eurosceptic
-					value = 0.03
-				}
-				if = {
-					limit = {
-						check_variable = { THIS.eurosceptic > 1 }
-					}
-					set_variable = { THIS.eurosceptic = 1 }
-				}
-				else_if = {
-					limit = {
-						check_variable = { THIS.eurosceptic < 0 }
-					}
-					set_variable = { THIS.eurosceptic = 0 }
-				}
-		}
-		### updating variables
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUpopTotal
-					value = THIS.max_manpower_k
-				}
-		}
-
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUmemberstatesTotal
-					value = 1
-				}
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_EUpopRatio
-					value = 0
-				}
-				add_to_variable = {
-					var = THIS.var_EUpopRatio
-					value = THIS.max_manpower_k
-				}
-				divide_variable = {
-					var = THIS.var_EUpopRatio
-					value = global.var_EUpopTotal
-				}
-			}
-		}
-
-		###Europeanism Update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_proeuropean
-					value = 1
-				}
-				subtract_from_variable = {
-					var = THIS.var_proeuropean
-					value = THIS.eurosceptic
-				}
-				multiply_variable = {
-					var = THIS.var_proeuropean
-					value = max_manpower_k
-				}
-			}
-		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_to_variable = {
-					var = global.var_europeanism
-					value = THIS.var_proeuropean
-				}
-			}
-		}
-
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
-		###Europeanism Update End
-	}
-}
-
-### euroscepticism rise 5% ###
-country_event = {
-	id = EUevent.14
-	title = EUevent.14.t
-	desc = EUevent.14.d
-
-	#picture = GFX_eu
-
-	is_triggered_only = yes
-
-	option = {
-		name = EUevent.14.a
-		log = "[GetDateText]: [Root.GetName]: event EUevent.14.a"
-		### effect
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = THIS.eurosceptic
-					value = 0.05
-				}
-				if = {
-					limit = {
-						check_variable = { THIS.eurosceptic > 1 }
-					}
-					set_variable = { THIS.eurosceptic = 1 }
-				}
-				else_if = {
-					limit = {
-						check_variable = { THIS.eurosceptic < 0 }
-					}
-					set_variable = { THIS.eurosceptic = 0 }
-				}
-		}
-		### updating variables
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUpopTotal
-					value = THIS.max_manpower_k
-				}
-		}
-
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUmemberstatesTotal
-					value = 1
-				}
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_EUpopRatio
-					value = 0
-				}
-				add_to_variable = {
-					var = THIS.var_EUpopRatio
-					value = THIS.max_manpower_k
-				}
-				divide_variable = {
-					var = THIS.var_EUpopRatio
-					value = global.var_EUpopTotal
-				}
-			}
-		}
-
-		###Europeanism Update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_proeuropean
-					value = 1
-				}
-				subtract_from_variable = {
-					var = THIS.var_proeuropean
-					value = THIS.eurosceptic
-				}
-				multiply_variable = {
-					var = THIS.var_proeuropean
-					value = max_manpower_k
-				}
-			}
-		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_to_variable = {
-					var = global.var_europeanism
-					value = THIS.var_proeuropean
-				}
-			}
-		}
-
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
-		###Europeanism Update End
-	}
-}
-
-### ROOT euroscepticism decline -5% ###
-country_event = {
-	id = EUevent.15
-	title = EUevent.15.t
-	desc = EUevent.15.d
-
-	#picture = GFX_eu
-
-	is_triggered_only = yes
-
-	option = {
-		name = EUevent.15.a
-		log = "[GetDateText]: [Root.GetName]: event EUevent.15.a"
-		### effect
-		ROOT = {
-				add_to_variable = {
-					var = THIS.eurosceptic
-					value = -0.05
-				}
-				if = {
-					limit = {
-						check_variable = { THIS.eurosceptic > 1 }
-					}
-					set_variable = { THIS.eurosceptic = 1 }
-				}
-				else_if = {
-					limit = {
-						check_variable = { THIS.eurosceptic < 0 }
-					}
-					set_variable = { THIS.eurosceptic = 0 }
-				}
-		}
-		### updating variables
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUpopTotal
-					value = THIS.max_manpower_k
-				}
-		}
-
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUmemberstatesTotal
-					value = 1
-				}
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_EUpopRatio
-					value = 0
-				}
-				add_to_variable = {
-					var = THIS.var_EUpopRatio
-					value = THIS.max_manpower_k
-				}
-				divide_variable = {
-					var = THIS.var_EUpopRatio
-					value = global.var_EUpopTotal
-				}
-			}
-		}
-
-		###Europeanism Update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_proeuropean
-					value = 1
-				}
-				subtract_from_variable = {
-					var = THIS.var_proeuropean
-					value = THIS.eurosceptic
-				}
-				multiply_variable = {
-					var = THIS.var_proeuropean
-					value = max_manpower_k
-				}
-			}
-		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_to_variable = {
-					var = global.var_europeanism
-					value = THIS.var_proeuropean
-				}
-			}
-		}
-
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
-		###Europeanism Update End
-	}
-}
-
-### ROOT euroscepticism rise 5% ###
-country_event = {
-	id = EUevent.16
-	title = EUevent.16.t
-	desc = EUevent.16.d
-
-	#picture = GFX_eu
-
-	is_triggered_only = yes
-
-	option = {
-		name = EUevent.16.a
-		log = "[GetDateText]: [Root.GetName]: event EUevent.16.a"
-		### effect
-		ROOT = {
-				add_to_variable = {
-					var = THIS.eurosceptic
-					value = 0.05
-				}
-				if = {
-					limit = {
-						check_variable = { THIS.eurosceptic > 1 }
-					}
-					set_variable = { THIS.eurosceptic = 1 }
-				}
-				else_if = {
-					limit = {
-						check_variable = { THIS.eurosceptic < 0 }
-					}
-					set_variable = { THIS.eurosceptic = 0 }
-				}
-		}
-		### updating variables
-		set_variable = {
-			var = global.var_EUpopTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUpopTotal
-					value = THIS.max_manpower_k
-				}
-		}
-
-		set_variable = {
-			var = global.var_EUmemberstatesTotal
-			value = 0
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-				add_to_variable = {
-					var = global.var_EUmemberstatesTotal
-					value = 1
-				}
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_EUpopRatio
-					value = 0
-				}
-				add_to_variable = {
-					var = THIS.var_EUpopRatio
-					value = THIS.max_manpower_k
-				}
-				divide_variable = {
-					var = THIS.var_EUpopRatio
-					value = global.var_EUpopTotal
-				}
-			}
-		}
-
-		###Europeanism Update
-		set_variable = {
-			var = global.var_europeanism
-			value = 0
-		}
-
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_variable = {
-					var = THIS.var_proeuropean
-					value = 1
-				}
-				subtract_from_variable = {
-					var = THIS.var_proeuropean
-					value = THIS.eurosceptic
-				}
-				multiply_variable = {
-					var = THIS.var_proeuropean
-					value = max_manpower_k
-				}
-			}
-		}
-		every_country = {
-			if = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_to_variable = {
-					var = global.var_europeanism
-					value = THIS.var_proeuropean
-				}
-			}
-		}
-
-		divide_variable = {
-			var = global.var_europeanism
-			value = global.var_EUpopTotal
-		}
-		###Europeanism Update End
-	}
-}
 
 ### EU–Turkey deal member states
 
@@ -1437,14 +648,6 @@ country_event = {
 		clear_EU_Parliament = yes
 		election_EU_Parliament = yes
 		activate_mission = EU_election_2004
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			#news_event = { ### Result of EU Parliament elections
-			#	id = EU_news.53
-			#}
-		}
 	}
 }
 
@@ -1463,13 +666,5 @@ country_event = {
 		clear_EU_Parliament = yes
 		election_EU_Parliament = yes
 		activate_mission = EU_election_2019
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			#news_event = { ### Result of EU Parliament elections
-			#	id = EU_news.54
-			#}
-		}
 	}
 }
