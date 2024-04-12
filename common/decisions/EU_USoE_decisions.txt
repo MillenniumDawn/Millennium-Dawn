@@ -1,12 +1,6 @@
-##########################
-##########################
-### EU_voting_category ###
-##########################
-##########################
-
 EU_USoE_category = {
 
- ### USoE Decisions ###
+	### USoE Decisions ###
 
 	EU_USoE_capital_of_europe = {
 		cost = 100
@@ -46,13 +40,6 @@ EU_USoE_category = {
 				has_country_flag = USoE_westernize_THIS
 			}
 		}
-		available = {
-			#has_country_flag = USoE
-		}
-
-		#visible = {
-		#	has_country_flag = USoE
-		#}
 
 		complete_effect = {
 			if = {
@@ -109,6 +96,85 @@ EU_USoE_category = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+	}
+
+	USoE_integrate_new_members = {
+
+		cost = 1500
+		available = {
+			influence_on_all_other_EU_members_25_percent = yes
+			custom_trigger_tooltip = {
+				tooltip = "Has formed the United States of Europe"
+				has_country_flag = USoE
+			}
+		}
+
+		visible = {
+			has_country_flag = USoE
+			has_idea = EU_member
+		}
+
+		#fire_only_once = yes # Will not re-enable after being removed
+
+		complete_effect = {
+			custom_effect_tooltip = "All member states become part of the United States of Europe"
+			hidden_effect = {
+				every_country = {
+					limit = { has_idea = EU_member }
+					EUU = { inherit_technology = PREV }
+				}
+				EUU = {
+					for_each_loop = {
+						array = researched_techs
+						if = {
+							limit = {
+								NOT = { is_in_array = { eu_technologies = v } }
+							}
+							add_to_temp_array = { eu_technologies = v }
+						}
+					}
+				}
+				for_each_loop = {
+					array = eu_technologies
+					meta_effect = {
+						text = {
+							set_technology = {
+								[TECH] = 1
+								popup = no
+							}
+						}
+						TECH = "[?v.GetTokenKey]"
+					}
+				}
+				### end of bug fix
+				every_country = {
+					limit = { has_idea = EU_member }
+					#clr_country_flag = USoE_transfer_navy
+					set_country_flag = USoE_member
+					every_unit_leader = {
+						set_unit_leader_flag = USoE_unit_leader
+						set_nationality = ROOT
+						add_unit_leader_trait = military_reorganization
+					}
+					every_owned_state = {
+						limit = {
+							OR = {
+								is_on_continent = europe
+								is_core_of = GEO
+								is_core_of = ARM
+								is_core_of = AZE
+								is_core_of = TUR
+								is_core_of = POR
+								is_core_of = SPR
+							}
+							NOT = { is_core_of = ROOT }
+						}
+						add_core_of = ROOT
+					}
+					country_event = EUevent.4
+				}
+			}
 		}
 	}
 }
@@ -506,7 +572,6 @@ EU_environmental_imperialism_category = {
 			always = yes
 		}
 		available = {
-			#synthetic_refinery > num_owned_states
 			set_temp_variable = { a = num_owned_states }
 			subtract_from_temp_variable = { a = 1 }
 			synthetic_refinery > a
@@ -526,8 +591,6 @@ EU_environmental_imperialism_category = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			#custom_effect_tooltip = tooltip_EU_USoE_environmental_puppet
-			#set_country_flag = EU_USoE_environmental_puppet
 			every_country = {
 				limit = {
 					has_country_flag = USoE
@@ -540,7 +603,6 @@ EU_environmental_imperialism_category = {
 		}
 		timeout_effect = {
 			add_ideas = USoE_environmental_sanctions
-			#show_ideas_tooltip = USoE_environmental_sanctions
 			clr_country_flag = EU_USoE_environmental_imperialism_target
 			every_country = {
 				limit = {
@@ -556,7 +618,7 @@ EU_environmental_imperialism_category = {
 		}
 	}
 
-	#Green Energy Reconstruction
+	# Green Energy Reconstruction
 	EU_USoE_environmental_imperialism_restructure_industry_decision = {
 		cost = 100
 		available = {
@@ -619,13 +681,7 @@ EU_environmental_imperialism_category = {
 		}
 		target_array = global.EU_potential
 		cost = 100
-		available = {
-			#has_idea = USoE_environmental_sanctions
-		}
 
-		visible = {
-			#has_idea = USoE_environmental_sanctions
-		}
 		complete_effect = {
 			remove_ideas = USoE_environmental_sanctions
 			set_country_flag = break_environmental_sanctions
