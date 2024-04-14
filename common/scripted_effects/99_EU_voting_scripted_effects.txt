@@ -19,7 +19,7 @@ EU_update_AI_general_voting_modifiers = {
 	if = { limit = { influence_higher_50 = yes }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = 15 }
 	}
-	### modifiers for eurosceptic
+	# Modifiers for Eurosceptism
 	if = { limit = { check_variable = { var = THIS.eurosceptic value = 0.1 compare = greater_than_or_equals } }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -5 }
 	}
@@ -36,8 +36,14 @@ EU_update_AI_general_voting_modifiers = {
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -20 }
 	}
 	# if China or Russia have significant influence, AI will not support measures
-	if = { limit = { RUS_or_CHI_is_top_3_influencer = yes }
-		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -200 }
+	if = { limit = { EU_external_sov_chi_influence_15 = yes }
+		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -100 }
+	}
+	if = { limit = { EU_external_sov_chi_influence_10 = yes }
+		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -50 }
+	}
+	if = { limit = { EU_external_sov_chi_influence_5 = yes }
+		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -25 }
 	}
 
 	# Common Law Section, this is something that can and is repeated so we will be tucking it in here with the general modifiers since that goes at the end.
@@ -1908,6 +1914,10 @@ cleanup_european_union_voting_yes = {
 	clear_array = global.EU_active_vote_rejecters
 	every_country = {
 		limit = { has_idea = EU_member }
+		# For display purposes
+		if = { limit = { is_ai = no }
+			set_country_flag = { flag = delay_player_next_council_vote days = 180 value = 1 }
+		}
 		if = {
 			limit = { has_country_flag = current_vote_influenced }
 			clr_country_flag = current_vote_influenced
@@ -1927,8 +1937,11 @@ cleanup_european_union_voting_no = {
 	clear_array = global.EU_active_vote_rejecters
 	every_country = {
 		limit = { has_idea = EU_member }
-		if = {
-			limit = { has_country_flag = current_vote_influenced }
+		# For display purposes
+		if = { limit = { is_ai = no }
+			set_country_flag = { flag = delay_player_next_council_vote days = 180 value = 1 }
+		}
+		if = { limit = { has_country_flag = current_vote_influenced }
 			clr_country_flag = current_vote_influenced
 		}
 	}
