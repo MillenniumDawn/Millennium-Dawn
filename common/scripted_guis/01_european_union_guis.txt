@@ -57,8 +57,8 @@ scripted_gui = {
 			}
 		}
 		# Test Interval
-		ai_test_interval = 18
-		ai_max_weight_taken_per_test = 3
+		ai_test_interval = 24
+		ai_max_weight_taken_per_test = 1
 
 		properties = {
 			eu_president_council = { image = "[?global.eucouncil.GetFlag]" }
@@ -535,6 +535,18 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = tooltip_EU_exit_available
 					NOT = { has_country_flag = Article_50 }
+				}
+				NOT = { has_country_flag = cant_invoke_article_50 }
+
+				hidden_trigger = {
+					# Stopgap to stop them from spamming this
+					if = {
+						limit = { is_ai = yes }
+						OR = {
+							check_variable = { THIS.eurosceptic > 0.60 }
+							EU_external_sov_chi_influence_50 = yes
+						}
+					}
 				}
 			}
 
@@ -3281,15 +3293,40 @@ scripted_gui = {
 					base = 1
 					modifier = {
 						check_variable = { THIS.eurosceptic > 0.75 }
-						add = 100
+						add = 25
 					}
 					modifier = {
 						check_variable = { THIS.eurosceptic > 0.60 }
-						add = 100
+						add = 25
 					}
 					modifier = {
-						add = 100
+						add = 10
+						gov_is_EUexiteer = yes
+					}
+					modifier = {
+						add = 25
 						EU_external_sov_chi_influence_50 = yes
+					}
+					modifier = {
+						add = -25
+						has_government = democratic
+					}
+					modifier = {
+						add = -10
+						has_idea = NATO_member
+					}
+					modifier = {
+						add = -10
+						democratic > 0.45
+					}
+					# Killswitch
+					modifier = {
+						factor = 0
+						OR = {
+							has_country_flag = cant_invoke_article_50
+							check_variable = { THIS.eurosceptic < 0.50 }
+							NOT = { EU_external_sov_chi_influence_50 = yes }
+						}
 					}
 				}
 			}
@@ -4344,7 +4381,7 @@ scripted_gui = {
 							}
 						}
 					}
-						### Euroscepticism
+					### Euroscepticism
 					modifier = {
 						add = -80
 						any_of_scopes = {
@@ -4370,7 +4407,7 @@ scripted_gui = {
 					}
 					modifier = {
 						add = -80
-							check_variable = { global.OMT_size_limit > 2000 }
+						check_variable = { global.OMT_size_limit > 2000 }
 					}
 				}
 			}
