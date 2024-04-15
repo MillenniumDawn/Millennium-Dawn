@@ -56,6 +56,9 @@ scripted_gui = {
 				is_in_array = { global.EU_member = THIS.id }
 			}
 		}
+		# Test Interval
+		ai_test_interval = 18
+		ai_max_weight_taken_per_test = 3
 
 		properties = {
 			eu_president_council = { image = "[?global.eucouncil.GetFlag]" }
@@ -2550,6 +2553,12 @@ scripted_gui = {
 					EUXXX = "[EUXXX_EP_agenda]"
 					PG_X = "[PG_X_influence]"
 				}
+				hidden_effect = {
+					every_country = {
+						limit = { has_idea = EU_member }
+						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+					}
+				}
 				update_eu_dirty_variable = yes
 			}
 			remove_vote_button_click = {
@@ -2570,6 +2579,12 @@ scripted_gui = {
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
 					PG_X = "[PG_X_influence]"
+				}
+				hidden_effect = {
+					every_country = {
+						limit = { has_idea = EU_member }
+						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+					}
 				}
 				update_eu_dirty_variable = yes
 			}
@@ -2619,6 +2634,12 @@ scripted_gui = {
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
 					PG_X = "[PG_X_influence]"
+				}
+				hidden_effect = {
+					every_country = {
+						limit = { has_idea = EU_member }
+						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+					}
 				}
 				update_eu_dirty_variable = yes
 			}
@@ -3257,14 +3278,18 @@ scripted_gui = {
 			# Main Screen/Offices Section
 			EU_Article_50_click = {
 				ai_will_do = {
-					base = 0
+					base = 1
 					modifier = {
 						check_variable = { THIS.eurosceptic > 0.75 }
-						add = 10000
+						add = 100
 					}
 					modifier = {
 						check_variable = { THIS.eurosceptic > 0.60 }
 						add = 100
+					}
+					modifier = {
+						add = 100
+						EU_external_sov_chi_influence_50 = yes
 					}
 				}
 			}
@@ -4493,6 +4518,7 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = con_vote_wait
 					NOT = { has_global_flag = delay_next_council_vote }
+					NOT = { has_country_flag = delay_player_next_council_vote }
 				}
 				ROOT = {
 					OR = {
@@ -4508,8 +4534,8 @@ scripted_gui = {
 					check_variable = { global.current_active_vote_disp = 0 }
 				}
 				custom_trigger_tooltip = {
-					tooltip = no_external_influence_tt
-					NOT = { RUS_or_CHI_is_top_3_influencer = yes }
+					tooltip = EU_no_external_sov_chi_influence_15_tt
+					EU_external_sov_chi_influence_15 = no
 				}
 				custom_trigger_tooltip = {
 					tooltip = no_high_sceptics_tt
@@ -4531,34 +4557,20 @@ scripted_gui = {
 					tooltip = country_not_supporting
 					OR = {
 						AND = {
-							is_in_array = {
-								array = global.EU_active_vote_supporters
-								value = ROOT
-							}
-							is_in_array = {
-								array = global.EU_active_vote_rejecters
-								value = THIS
-							}
+							is_in_array = { array = global.EU_active_vote_supporters value = ROOT }
+							is_in_array = { array = global.EU_active_vote_rejecters value = THIS }
 						}
 						AND = {
-							is_in_array = {
-								array = global.EU_active_vote_supporters
-								value = THIS
-							}
-							is_in_array = {
-								array = global.EU_active_vote_rejecters
-								value = ROOT
-							}
+							is_in_array = { array = global.EU_active_vote_supporters value = THIS }
+							is_in_array = { array = global.EU_active_vote_rejecters value = ROOT }
 						}
 					}
 				}
 				custom_trigger_tooltip = {
-					tooltip = not_eastern_inf
-					NOT = { RUS_or_CHI_is_top_3_influencer = yes }
+					tooltip = EU_no_external_sov_chi_influence_15_tt
+					EU_external_sov_chi_influence_15 = no
 				}
-				THIS = {
-					is_ai = yes
-				}
+				THIS = { is_ai = yes }
 				ROOT = {
 					set_temp_variable = { base_pp_cost = 300 }
 					set_temp_variable = { pp_multipler = PREV.var_EUpopRatio }
@@ -5328,26 +5340,11 @@ scripted_gui = {
 				update_eu_dirty_variable = yes
 			}
 			list_of_council_voting_members_button_click = {
-				if = {
-					limit = {
-						is_in_array = {
-							array = global.EU_active_vote_supporters
-							value = ROOT
-						}
-					}
+				if = { limit = { is_in_array = { array = global.EU_active_vote_supporters value = ROOT } }
 					add_to_array = { global.EU_active_vote_supporters = THIS }
 					add_to_variable = { global.EU_active_vote_yes = 1 }
-					if = {
-						limit = {
-							is_in_array = {
-								array = global.EU_active_vote_rejecters
-								value = THIS
-							}
-						}
-						remove_from_array = {
-							array = global.EU_active_vote_rejecters
-							value = THIS
-						}
+					if = { limit = { is_in_array = { array = global.EU_active_vote_rejecters value = THIS } }
+						remove_from_array = { array = global.EU_active_vote_rejecters value = THIS }
 						subtract_from_variable = { global.EU_active_vote_no = 1 }
 					}
 					set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
@@ -5356,17 +5353,8 @@ scripted_gui = {
 				} else = {
 					add_to_array = { global.EU_active_vote_rejecters = THIS }
 					add_to_variable = { global.EU_active_vote_no = 1 }
-					if = {
-						limit = {
-							is_in_array = {
-								array = global.EU_active_vote_supporters
-								value = THIS
-							}
-						}
-						remove_from_array = {
-							array = global.EU_active_vote_supporters
-							value = THIS
-						}
+					if = { limit = { is_in_array = { array = global.EU_active_vote_supporters value = THIS } }
+						remove_from_array = { array = global.EU_active_vote_supporters value = THIS }
 						subtract_from_variable = { global.EU_active_vote_yes = 1 }
 					}
 					set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
@@ -5402,7 +5390,6 @@ scripted_gui = {
 			list_of_available_council_votes = {
 				array = global.EU_council_votes
 				entry_container = "available_council_votes_list"
-				change_scope = yes
 				ai_weights = {
 					name_of_available_vote_button_click = {
 						ai_will_do = {
@@ -5643,7 +5630,7 @@ scripted_gui = {
 
 			has_political_power > 500
 			check_variable = { global.current_active_agenda_disp = 0 }
-			NOT = { has_country_flag = delay_next_parliment_vote }
+			NOT = { has_country_flag = delay_next_parliament_vote }
 		}
 		ai_test_interval = 168 # 7 Days
 		ai_max_weight_taken_per_test = 1
@@ -5653,15 +5640,15 @@ scripted_gui = {
 			name_of_available_reform_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = par_vote_wait
-					NOT = { has_country_flag = delay_next_parliment_vote }
+					NOT = { has_country_flag = delay_next_parliament_vote }
 				}
 				custom_trigger_tooltip = {
 					tooltip = no_active_agenda
 					check_variable = { global.current_active_agenda_disp = 0 }
 				}
 				custom_trigger_tooltip = {
-					tooltip = no_external_influence_tt
-					NOT = { RUS_or_CHI_is_top_3_influencer = yes }
+					tooltip = EU_no_external_sov_chi_influence_15_tt
+					EU_external_sov_chi_influence_15 = no
 				}
 				if = {
 					limit = { check_variable = { v = 002 } }
