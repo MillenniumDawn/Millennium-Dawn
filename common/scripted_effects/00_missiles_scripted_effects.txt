@@ -9947,8 +9947,10 @@ add_new_satellite_to_orbit = {
 				check_variable = { sat_3_array^num > 335 }
 				check_variable = { sat_6_array^num > 0 }
 			}
-			set_variable = { sat_3_array^i = var_orbit_display_ID } #set_variable = { sat_3_array^i = 1 }
-			log = "any_of sat_3_array^i [?sat_3_array^i] var_orbit_display_ID [?var_orbit_display_ID] sat_3_array^num [?sat_3_array^num]"
+			set_variable = { sat_3_array^i = var_orbit_display_ID }
+			if = { limit = { is_debug = yes }
+				log = "any_of sat_3_array^i [?sat_3_array^i] var_orbit_display_ID [?var_orbit_display_ID] sat_3_array^num [?sat_3_array^num]"
+			}
 		}
 		else_if = {
 			limit = {
@@ -9958,7 +9960,9 @@ add_new_satellite_to_orbit = {
 				}
 				check_variable = { sat_3_array^num > 335 }
 			}
-			log = "all_of sat_3_array^i [?sat_3_array^i] var_orbit_display_ID [?var_orbit_display_ID] sat_3_array^num [?sat_3_array^num]"
+			if = { limit = { is_debug = yes }
+				log = "all_of sat_3_array^i [?sat_3_array^i] var_orbit_display_ID [?var_orbit_display_ID] sat_3_array^num [?sat_3_array^num]"
+			}
 			add_new_satellite_to_orbit_6 = yes
 		}
 		else = {
@@ -10129,7 +10133,7 @@ add_new_satellite_to_orbit_2 = {
 		add_to_temp_variable = { temp2 = add_plus_X2 }
 		add_to_variable = { add_plus_X2 = 1 }
 	}
-	set_variable = { sat_2_array^temp2 = var_orbit_display_ID } #set_variable = { sat_2_array^temp2 = 1 }
+	set_variable = { sat_2_array^temp2 = var_orbit_display_ID }
 }
 add_new_satellite_to_orbit_3 = {
 	add_to_variable = { var_sat_in_orbit = 1 }
@@ -10148,8 +10152,10 @@ add_new_satellite_to_orbit_3 = {
 		add_to_temp_variable = { temp3 = add_plus_X3 }
 		add_to_variable = { add_plus_X3 = 1 }
 	}
-	set_variable = { sat_3_array^temp3 = var_orbit_display_ID } #set_variable = { sat_3_array^temp3 = 1 }
-	log = "sat_3_array^temp3 [?sat_3_array^temp3] var_orbit_display_ID [?var_orbit_display_ID] orbit_array^num [?orbit_array^num]"
+	set_variable = { sat_3_array^temp3 = var_orbit_display_ID }
+	if = { limit = { is_debug = yes }
+		log = "sat_3_array^temp3 [?sat_3_array^temp3] var_orbit_display_ID [?var_orbit_display_ID] orbit_array^num [?orbit_array^num]"
+	}
 }
 add_new_satellite_to_orbit_4 = {
 	add_to_variable = { var_sat_in_orbit = 1 }
@@ -10633,29 +10639,22 @@ remove_killsat_used = {
 
 #remove used rods
 remove_rods_used = {
-	# while_loop_effect = {
-	# 	limit = {
-	# 		check_variable = { ROOT.var_KILLSAT_salvo > 0 }
-	# 	}
-		for_each_loop = {
-			array = orbit_array
-			if = {
-				limit = {
-					check_variable = { ROOT.orbit_array^i = ROOT.var_RODS_type }
-				}
-				set_variable = { ROOT.var_rods_fired = i }
+	for_each_loop = {
+		array = orbit_array
+		if = {
+			limit = {
+				check_variable = { ROOT.orbit_array^i = ROOT.var_RODS_type }
 			}
+			set_variable = { ROOT.var_rods_fired = i }
 		}
-		set_variable = { tempTAG = ROOT.id }
-		ROOT = {
-			set_variable = { var_sat_ID = ROOT.var_rods_fired }
-			remove_satellite_from_system = yes
-			remove_satellite_from_orbit = yes
-		}
-		#subtract_from_variable = { ROOT.var_KILLSAT_salvo = 1 }
-	# }
+	}
+	set_variable = { tempTAG = ROOT.id }
+	ROOT = {
+		set_variable = { var_sat_ID = ROOT.var_rods_fired }
+		remove_satellite_from_system = yes
+		remove_satellite_from_orbit = yes
+	}
 	set_satellites_gui = yes
-	#set_variable = { var_KILLSAT_orbit = KILL_satellite_array^var_KILLSAT_type }
 }
 
 ### right container # sat access arrays
@@ -10947,13 +10946,6 @@ update_nuclear_deterrence = {
 		}
 		add_to_variable = { var_nuclear_deterrence_PP_factor = 0.75 }
 	}
-	# no stability malus
-	#set_temp_variable = { temp1 = var_nuclear_deterrence }
-	#multiply_temp_variable = { temp1 = 0.005 }
-	#add_to_variable = { var_nuclear_stability_factor = temp1 }
-	#
-	### balancing switching to political_power_factor in %
-	#
 	multiply_variable = { var_nuclear_deterrence_PP_factor = 0.01 }
 }
 
@@ -11057,11 +11049,7 @@ set_eligible_alert_targets = {
 	for_each_scope_loop = {
 		array = enemies
 		every_controlled_state = {
-			limit = {
-				NOT = {
-					is_core_of = ROOT
-				}
-			}
+			limit = { NOT = { is_core_of = ROOT } }
 			set_temp_variable = { temp_target_value = 0 }
 
 			set_temp_variable = { temp0 = building_level@industrial_complex }
