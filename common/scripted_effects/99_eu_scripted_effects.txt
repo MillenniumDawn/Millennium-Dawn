@@ -4415,11 +4415,12 @@ distribute_EU_budget = {
 	distribute_EU_growth_exp = yes
 	distribute_EU_natural_exp = yes
 	### distribute_EU_global_exp
-	every_country = {
-		limit = {
-			is_leader_of_EU_foreign_policy = yes
+	for_each_scope_loop = {
+		array = global.EU_member
+		if = {
+			limit = { is_leader_of_EU_foreign_policy = yes }
+			set_variable = { EU_global_exp_subsidies = global.EU_global_exp_total }
 		}
-		set_variable = { EU_global_exp_subsidies = global.EU_global_exp_total }
 	}
 	distribute_EU_admin_exp = yes
 	EU_budget_total_gain = yes
@@ -4598,21 +4599,16 @@ distribute_EU_admin_exp = {
 				has_idea = EU_commission_president
 			}
 		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-				has_idea = frontex_ExDir
+		for_each_scope_loop = {
+			array = global.EU_member
+			if = { limit = { has_idea = frontex_ExDir }
+				set_variable = { THIS.EU_admin_subsidies = 0.5 }
+				multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
 			}
-			set_variable = { THIS.EU_admin_subsidies = 0.5 }
-			multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
-		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-				has_idea = EU_commission_president
+			if = { limit = { has_idea = EU_commission_president }
+				set_variable = { THIS.EU_admin_subsidies = 0.5 }
+				multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
 			}
-			set_variable = { THIS.EU_admin_subsidies = 0.5 }
-			multiply_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
 		}
 	}
 	else_if = {
@@ -4628,12 +4624,11 @@ distribute_EU_admin_exp = {
 				}
 			}
 		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-				has_idea = frontex_ExDir
+		for_each_scope_loop = {
+			array = global.EU_member
+			if = { limit = { has_idea = frontex_ExDir }
+				set_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
 			}
-			set_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
 		}
 	}
 	else_if = {
@@ -4649,22 +4644,19 @@ distribute_EU_admin_exp = {
 				has_idea = EU_commission_president
 			}
 		}
-		every_country = {
-			limit = {
-				has_idea = EU_member
-				has_idea = EU_commission_president
+		for_each_scope_loop = {
+			array = global.EU_member
+			if = { limit = { has_idea = EU_commission_president }
+				set_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
 			}
-			set_variable = { THIS.EU_admin_subsidies = global.EU_admin_exp_total }
 		}
 	}
 	update_eu_dirty_variable = yes
 }
 
 EU_budget_total_gain = {
-	every_country = {
-		limit = {
-			has_idea = EU_member
-		}
+	for_each_scope_loop = {
+		array = global.EU_member
 		set_variable = { THIS.EU_budget_total_gain = 0 }
 		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_growth_subsidies }
 		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_natural_subsidies }
