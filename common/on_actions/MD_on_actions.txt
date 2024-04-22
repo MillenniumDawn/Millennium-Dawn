@@ -16,6 +16,7 @@ on_actions = {
 			recalculate_influence = yes
 			force_update_map_mode = { mapmode = influence_map_mode }
 
+			# Initialize the Investment Pulse for this Week
 			if = {
 				limit = {
 					is_ai = yes
@@ -39,6 +40,30 @@ on_actions = {
 				# Check whether the larger nation has an investment target in scope 0
 				if = { limit = { NOT = { check_variable = { investment_targets^0 = 0 } } }
 					country_event = AC_event.500
+				}
+			}
+
+			# European Union Checks
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				if = {
+					limit = {
+						has_country_flag = EU_potential
+					}
+					log = "[GetDateText]: [ROOT.GetName]: on_weekly check_breach_of_EU_value"
+					check_breach_of_EU_value = yes
+				}
+				### POTEF election polls
+
+				if = {
+					limit = {
+						has_idea = EUU_monitor
+						any_of_scopes = {
+							array = global.EU_potential
+							has_active_mission = EU_POTEF_election_campaign
+						}
+					}
+					log = "[GetDateText]: [ROOT.GetName]: on_weekly POTEF_election"
+					POTEF_election = yes
 				}
 			}
 
@@ -255,6 +280,35 @@ on_actions = {
 					add_ideas = ARM_AZE_small_people
 				}
 			}
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				if = { limit = { FROM = { has_idea = EU_member } }
+					log = "[GetDateText]: [ROOT.GetName]: on_annex leaving_EU"
+					FROM = {
+						clr_country_flag = EU_voted
+						clr_country_flag = gov_strong_resist
+						clr_country_flag = gov_resist
+						clr_country_flag = gov_support
+						clr_country_flag = gov_strong_support
+						clr_country_flag = EU_voted_yes
+						clr_country_flag = EU_voted_no
+
+						leaving_EU = yes
+					}
+				}
+				if = { limit = { FROM = { has_idea = EUU_monitor } }
+					log = "[GetDateText]: [ROOT.GetName]: on_annex EUU_monitor change"
+					random_country = {
+						limit = {
+							has_country_flag = EU_potential
+							is_ai = yes
+						}
+						add_ideas = EUU_monitor
+						activate_mission = EU_update_vars_mission
+						activate_mission = EU_clear_voting_mission
+					}
+				}
+			}
 		}
 	}
 
@@ -287,6 +341,16 @@ on_actions = {
 				else = {
 					set_variable = { global.month = 1 }
 				}
+
+				if = {
+					limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+					random_country = {
+						limit = { has_idea = EU_member NOT = { has_global_flag = EU_gdp_updated } }
+						set_EU_gdp = yes
+						set_global_flag = { flag = EU_gdp_updated value = 1 }
+					}
+				}
+
 				calculate_average_world_productivity = yes
 
 				# National Updates:
@@ -469,6 +533,71 @@ on_actions = {
 				log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 			}
 			productivity_growth_effect = yes
+
+			# Research Configuration for AI
+			if = { limit = { is_ai = yes }
+				if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^9 } }
+					set_temp_variable = { temp_research_slot = 9 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^8 } }
+					set_temp_variable = { temp_research_slot = 8 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^7 } }
+					set_temp_variable = { temp_research_slot = 7 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^6 } }
+					set_temp_variable = { temp_research_slot = 6 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^5 } }
+					set_temp_variable = { temp_research_slot = 5 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^4 } }
+					set_temp_variable = { temp_research_slot = 4 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^3 } }
+					set_temp_variable = { temp_research_slot = 3 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^2 } }
+					set_temp_variable = { temp_research_slot = 2 }
+				}
+				else = {
+					set_temp_variable = { temp_research_slot = 1 }
+				}
+
+				if = {
+					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^6 } }
+					add_to_temp_variable = { temp_research_slot = 6 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^5 } }
+					add_to_temp_variable = { temp_research_slot = 5 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^4 } }
+					add_to_temp_variable = { temp_research_slot = 4 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^3 } }
+					add_to_temp_variable = { temp_research_slot = 3 }
+				}
+				else_if = {
+					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^2 } }
+					add_to_temp_variable = { temp_research_slot = 2 }
+				}
+				else = {
+					add_to_temp_variable = { temp_research_slot = 1 }
+				}
+
+				set_research_slots = temp_research_slot
+			}
 		}
 	}
 }
