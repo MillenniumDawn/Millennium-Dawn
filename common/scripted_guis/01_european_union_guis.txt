@@ -1357,16 +1357,13 @@ scripted_gui = {
 			EU_global_expenses_visible = {
 				EU_european_union_euro_fiscal_trigger = yes
 			}
+			# Budget Sections
 			EU_global_expenses_click_enabled = {
 				has_idea = EU_member
 				check_variable = { global.EU_global_exp_ratio < 0.80 }
 				check_variable = { global.EU_growth_exp_ratio > 0.07 }
 				check_variable = { global.EU_natural_exp_ratio > 0.07 }
-				any_of_scopes = {
-					array = global.EU_member
-					has_country_flag = EU_budget_draft
-					has_active_mission = EU_budget_draft_mission
-				}
+				EU_has_a_current_budget_draft_trigger = yes
 				has_political_power > 100
 			}
 			EU_global_expenses_right_click_enabled = {
@@ -1374,11 +1371,7 @@ scripted_gui = {
 				check_variable = { global.EU_global_exp_ratio > 0.09 }
 				check_variable = { global.EU_growth_exp_ratio < 0.80 }
 				check_variable = { global.EU_natural_exp_ratio < 0.80 }
-				any_of_scopes = {
-					array = global.EU_member
-					has_country_flag = EU_budget_draft
-					has_active_mission = EU_budget_draft_mission
-				}
+				EU_has_a_current_budget_draft_trigger = yes
 				has_political_power > 100
 			}
 			EU_administration_expenses_visible = {
@@ -1389,11 +1382,7 @@ scripted_gui = {
 				check_variable = { global.EU_admin_exp_ratio < 0.80 }
 				check_variable = { global.EU_growth_exp_ratio > 0.05 }
 				check_variable = { global.EU_natural_exp_ratio > 0.05 }
-				any_of_scopes = {
-					array = global.EU_member
-					has_country_flag = EU_budget_draft
-					has_active_mission = EU_budget_draft_mission
-				}
+				EU_has_a_current_budget_draft_trigger = yes
 				has_political_power > 100
 			}
 			EU_administration_expenses_right_click_enabled = {
@@ -1401,11 +1390,7 @@ scripted_gui = {
 				check_variable = { global.EU_admin_exp_ratio > 0.09 }
 				check_variable = { global.EU_growth_exp_ratio < 0.80 }
 				check_variable = { global.EU_natural_exp_ratio < 0.80 }
-				any_of_scopes = {
-					array = global.EU_member
-					has_country_flag = EU_budget_draft
-					has_active_mission = EU_budget_draft_mission
-				}
+				EU_has_a_current_budget_draft_trigger = yes
 				has_political_power > 100
 			}
 			EU_growth_natural_subsidies_visible = {
@@ -1415,22 +1400,14 @@ scripted_gui = {
 				has_idea = EU_member
 				check_variable = { global.EU_natural_exp_ratio > 0.10 }
 				check_variable = { global.EU_growth_exp_ratio < 0.80 }
-				any_of_scopes = {
-					array = global.EU_member
-					has_country_flag = EU_budget_draft
-					has_active_mission = EU_budget_draft_mission
-				}
+				EU_has_a_current_budget_draft_trigger = yes
 				has_political_power > 100
 			}
 			EU_growth_natural_subsidies_right_click_enabled = {
 				has_idea = EU_member
 				check_variable = { global.EU_growth_exp_ratio > 0.10 }
 				check_variable = { global.EU_natural_exp_ratio < 0.80 }
-				any_of_scopes = {
-					array = global.EU_member
-					has_country_flag = EU_budget_draft
-					has_active_mission = EU_budget_draft_mission
-				}
+				EU_has_a_current_budget_draft_trigger = yes
 				has_political_power > 100
 			}
 			EU_run_omt_program_visible = {
@@ -2547,10 +2524,19 @@ scripted_gui = {
 							set_global_flag = focus_[EUXXX]_EP_approval
 							remove_mission = EU_parliament_focus_EUXXX_approve
 							remove_from_array = { array = global.EU_potential_votes value = global.current_active_agenda_disp }
-							add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
+							if = {
+								limit = {
+									NOT = {
+										check_variable = { global.current_active_agenda_disp = 0 }
+										check_variable = { global.current_active_agenda_disp = 999 }
+										check_variable = { global.current_active_agenda_disp = 998 }
+									}
+								}
+								add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
+								set_variable = { global.pass_vote_mission_ender = 1 }
+							}
 							set_variable = { global.current_active_agenda_disp = 0 }
 							set_variable = { global.active_MEP_Support = 0 }
-							set_variable = { global.pass_vote_mission_ender = 1 }
 						}
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
@@ -2648,11 +2634,7 @@ scripted_gui = {
 			}
 
 			approve_IPA_button_click = {
-				set_country_flag = {
-					flag = instrument_for_pre_accession_assistance
-					days = 5 #180
-					value = 1
-				}
+				set_country_flag = { flag = instrument_for_pre_accession_assistance days = 180 value = 1 }
 				custom_effect_tooltip = instrument_for_pre_accession_assistance_tt
 				for_each_scope_loop = {
 					array = global.EU_potential
@@ -2662,17 +2644,14 @@ scripted_gui = {
 							NOT = { has_idea = EU_member }
 						}
 						activate_mission = pre_accession_assistance_program
-						add_timed_idea = {
-							idea = EU_pre_accession_assistance
-							days = 5 #180
-						}
+						add_timed_idea = { idea = EU_pre_accession_assistance days = 180 }
 						set_variable = { var_IPA = ROOT.id }
 					}
 				}
 				update_eu_dirty_variable = yes
 			}
 			euroscepticism_country_button_click = {
-				log = "[GetDateText]: [ROOT.GetName]: decision root_pro_european_campaign"
+				log = "[GetDateText]: [ROOT.GetName]: EU GUI root_pro_european_campaign"
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = -0.003 }
 				modify_treasury_effect = yes
@@ -2710,7 +2689,7 @@ scripted_gui = {
 				update_eu_dirty_variable = yes
 			}
 			euroscepticism_euwide_button_click = {
-				log = "[GetDateText]: [ROOT.GetName]: decision euroscepticism_campaign"
+				log = "[GetDateText]: [ROOT.GetName]: EU GUI euroscepticism_campaign"
 				set_temp_variable = { treasury_change = global.EU_gdp }
 				if = { limit = { NOT = { is_in_array = { global.EU_member = THIS } } }
 					add_to_temp_variable = { treasury_change = ROOT.gdp_total }
@@ -2790,7 +2769,7 @@ scripted_gui = {
 				update_eu_dirty_variable = yes
 			}
 			proeuro_country_button_click = {
-				log = "[GetDateText]: [ROOT.GetName]: decision root_pro_european_campaign"
+				log = "[GetDateText]: [ROOT.GetName]: EU GUI root_pro_european_campaign"
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = -0.003 }
 				modify_treasury_effect = yes
@@ -2828,7 +2807,7 @@ scripted_gui = {
 				update_eu_dirty_variable = yes
 			}
 			proeuro_euwide_button_click = {
-				log = "[GetDateText]: [ROOT.GetName]: decision pro_european_campaign"
+				log = "[GetDateText]: [ROOT.GetName]: EU GUI pro_european_campaign"
 				set_temp_variable = { treasury_change = global.EU_gdp }
 				if = { limit = { NOT = { is_in_array = { global.EU_member = THIS } } }
 					add_to_temp_variable = { treasury_change = ROOT.gdp_total }
@@ -3979,7 +3958,19 @@ scripted_gui = {
 
 			approve_IPA_button_click = {
 				ai_will_do = {
-					factor = 0
+					factor = 1
+					modifier = {
+						factor = 0
+						any_of = {
+							array = global.EU_potential
+							var:global.EU_potential^i = {
+								AND = {
+									has_country_flag = EU_candidate
+									NOT = { has_idea = EU_member }
+								}
+							}
+						}
+					}
 				}
 			}
 			euroscepticism_country_button_click = {
@@ -3987,9 +3978,7 @@ scripted_gui = {
 					factor = 1
 					modifier = {
 						add = -40
-						NOT = {
-							gov_is_eurosceptical = yes
-						}
+						NOT = { gov_is_eurosceptical = yes }
 					}
 					modifier = {
 						add = 1
@@ -4014,9 +4003,7 @@ scripted_gui = {
 					factor = 1
 					modifier = {
 						add = -40
-						NOT = {
-							gov_is_eurosceptical = yes
-						}
+						NOT = { gov_is_eurosceptical = yes }
 					}
 					modifier = {
 						add = 1
@@ -4048,15 +4035,11 @@ scripted_gui = {
 					factor = 1
 					modifier = {
 						add = 1
-						NOT = {
-							gov_is_eurosceptical = yes
-						}
+						NOT = { gov_is_eurosceptical = yes }
 					}
 					modifier = {
 						add = 1
-						NOT = {
-							gov_is_eurosceptical = yes
-						}
+						NOT = { gov_is_eurosceptical = yes }
 						slowdown_european_integration = yes
 					}
 					modifier = {
@@ -4082,15 +4065,11 @@ scripted_gui = {
 					factor = 1
 					modifier = {
 						add = 1
-						NOT = {
-							gov_is_eurosceptical = yes
-						}
+						NOT = { gov_is_eurosceptical = yes }
 					}
 					modifier = {
 						add = 1
-						NOT = {
-							gov_is_eurosceptical = yes
-						}
+						NOT = { gov_is_eurosceptical = yes }
 						slowdown_european_integration = yes
 					}
 					modifier = {
@@ -4531,7 +4510,15 @@ scripted_gui = {
 			# Check for the AI to push a vote to council
 			NOT = { has_global_flag = delay_next_council_vote }
 			OR = {
-				has_political_power > 750
+				AND = {
+					NOT = {
+						has_idea = EU_commission_president
+						has_idea = EU_council_president
+						has_idea = EU_parliament_president
+						influence_on_all_other_EU_members_3_percent = yes
+					}
+					has_political_power > 350
+				}
 				has_idea = EU_commission_president
 				has_idea = EU_council_president
 				has_idea = EU_parliament_president
@@ -4979,7 +4966,6 @@ scripted_gui = {
 		ai_check = {
 			is_in_array = { global.EU_member = THIS.id }
 
-			has_political_power > 500
 			check_variable = { global.current_active_agenda_disp = 0 }
 			NOT = { has_country_flag = delay_next_parliament_vote }
 		}
