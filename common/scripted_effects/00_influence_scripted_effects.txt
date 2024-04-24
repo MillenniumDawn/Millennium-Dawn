@@ -342,7 +342,7 @@ delete_influencer_check = {
 		array = influence_array
 		index = i
 		# Ensures the Index is Not Empty
-		if = { limit = { NOT = { check_variable = { i = 0 } } }
+		if = { limit = { NOT = { check_variable = { influence_array^i = 0 } } }
 			if = {
 				limit = {
 					any_of = {
@@ -362,7 +362,7 @@ delete_influencer_check = {
 	}
 
 
-	# Delete Non-Existant Nation
+	# Delete Non-Existent Nation
 	# Purpose:
 	# Configured to remove nations that no longer exist. i.e. They have been annexed. It is a garbage collection event.
 	for_loop_effect = {
@@ -506,6 +506,7 @@ change_influence_percentage = {
 			set_temp_variable = { influence_defense_change = modifier@foreign_influence_defense_modifier }
 			subtract_from_temp_variable = { influence_change = influence_defense_change }
 
+
 			# Custom Influence Amount
 			# HOW TO: You will want to check if the tag_index is the original tag
 			# the has idea will check if the target country has an idea. It can be used to
@@ -516,6 +517,13 @@ change_influence_percentage = {
 					has_idea = USA_usaid
 				}
 				add_to_temp_variable = { influence_change = 0.05 }
+			}
+			if = {
+				limit = {
+					has_idea = cfa_franc
+					check_variable = { tag_index = FRA }
+				}
+				add_to_temp_variable = { influence_change = 0.15 }
 			}
 
 			add_to_temp_variable = { influence_change = 1 }
@@ -671,11 +679,15 @@ init_auto_influence_array = {
 }
 
 update_auto_influence_array = {
-	log = "[GetDateText]: [THIS.GetName]: update_auto_influence_array running"
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: update_auto_influence_array running"
+	}
 	set_variable = { auto_influence_cap = 3 }
 	add_to_variable = { auto_influence_cap = THIS.modifier@foreign_influence_auto_influence_cap_modifier }
 
-	log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
+	}
 	set_variable = { auto_influence_cost = 0 }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
 		add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
@@ -684,7 +696,9 @@ update_auto_influence_array = {
 	for_each_loop = {
 		array = auto_influence_array
 		if = { limit = { check_variable = { i > auto_influence_cap } NOT = { check_variable = { v = 0 } } }
-			log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
+			}
 			set_variable = { auto_influence_array^i = 0 }
 			var:auto_influence_array^i = {
 				PREV = {
