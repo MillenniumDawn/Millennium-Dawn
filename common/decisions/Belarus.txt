@@ -1,116 +1,3 @@
-BLR_belarus_nazbols_category = {
-	BLR_nazbols_politics = {
-		cost = 20
-		icon = GFX_decision_nazbols_coup_button
-		days_remove = 220
-		fire_only_once = no
-
-
-		visible = {
-			nationalist_fascist_are_in_power = yes
-			has_completed_focus = BLR_nazbol_bribe_politician
-			SOV = { NOT = { nationalist_fascist_are_in_power = yes } }
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove BLR_nazbols_politics"
-			set_temp_variable = { treasury_change = -12 }
-			modify_treasury_effect = yes
-			SOV = {
-				add_to_variable = { party_pop_array^21 = 0.09 }
-				recalculate_party = yes
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.09
-			 	}
-			}
-		}
-	}
-	BLR_nazbols_unite_prop = {
-		cost = 35
-		icon = GFX_decision_nazbols_coup_button
-		days_remove = 170
-		fire_only_once = no
-
-
-		visible = {
-			nationalist_fascist_are_in_power = yes
-			SOV = { NOT = { nationalist_fascist_are_in_power = yes } }
-			has_completed_focus = BLR_unite_with_rus_nazbol
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove BLR_nazbols_unite_prop"
-			set_temp_variable = { treasury_change = 5 }
-			modify_treasury_effect = yes
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = BLR }
-			set_temp_variable = { influence_target = SOV }
-			change_influence_percentage = yes
-			SOV = {
-				add_to_variable = { party_pop_array^21 = 0.05 }
-				recalculate_party = yes
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.06
-				}
-			}
-		}
-	}
-	BLR_nazbols_protests = {
-		cost = 15
-		icon = GFX_decision_nazbols_coup_button
-		days_remove = 200
-		fire_only_once = no
-
-		visible = {
-			nationalist_fascist_are_in_power = yes
-			SOV = { NOT = { nationalist_fascist_are_in_power = yes } }
-			has_completed_focus = BLR_unite_with_rus_nazbol
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove BLR_nazbols_unite_prop"
-			set_temp_variable = { treasury_change = -7 }
-			modify_treasury_effect = yes
-			SOV = {
-				add_to_variable = { party_pop_array^21 = 0.08 }
-					recalculate_party = yes
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.08
-				}
-				add_stability = -0.03
-			}
-		}
-	}
-	BLR_nazbols_militaries = {
-		cost = 40
-		icon = GFX_decision_nazbols_coup_button
-		days_remove = 270
-		fire_only_once = no
-
-		visible = {
-			nationalist_fascist_are_in_power = yes
-			SOV = { NOT = { nationalist_fascist_are_in_power = yes } }
-			has_completed_focus = BLR_unite_with_rus_nazbol
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove BLR_nazbols_militaries"
-			set_temp_variable = { treasury_change = -9 }
-			modify_treasury_effect = yes
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = BLR }
-			set_temp_variable = { influence_target = SOV }
-			change_influence_percentage = yes
-			SOV = {
-				add_to_variable = { party_pop_array^21 = 0.04 }
-				recalculate_party = yes
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.04
-				}
-			}
-		}
-	}
-}
 BLR_belarus_support_category = {
 	BLR_ter_oboronaup_start = {
 		cost = 15
@@ -2967,6 +2854,33 @@ BLR_Union_state_category = {
 			BLR = { set_country_flag = BLR_unionstate_agree }
 		}
 	}
+	SOV_pro_union_state_revout = {
+		icon = GFX_decision_unionstate_fist_button
+		cost = 180
+		days_remove = 10
+		fire_only_once = yes
+		ai_will_do = {
+			factor = 0
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SOV_targeted_country_has_more_than_60_percent_influence_TT
+				BLR = { SOV_targeted_country_has_more_than_60_percent_influence = yes }
+			}
+		}
+		visible = {
+			tag = SOV
+			country_exists = BLR
+			BLR = { 
+				is_subject = no
+				emerging_reactionaries_are_in_power = yes 
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_pro_union_state_revout"
+			SOV = { country_event = belarus_another.65 }
+		}
+	}
 	BLR_create_union_state = {
 		icon = GFX_decision_a_union_state
 		cost = 40
@@ -3041,8 +2955,8 @@ BLR_Union_state_category = {
 			}
 		}
 	}
-	BLR_integrate_army = {
-		icon = GFX_decision_unionstate_officer_button
+	BLR_verbovka_in_fsb = {
+		icon = GFX_decision_a_union_state
 		cost = 65
 		days_remove = 170
 		ai_will_do = {
@@ -3052,32 +2966,393 @@ BLR_Union_state_category = {
 				has_global_flag = BLR_FOLLOW_UNION_STATE
 			}
 		}
+		fire_only_once = yes
 		visible = {
-			has_completed_focus = BLR_union_become_one
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
 			tag = BLR
-			NOT = { country_exists = SOV }
+			country_exists = SOV
 		}
 
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BLR_integrate_army"
-			if = {
-				limit = { SOV = { has_idea = full_ratnik_conversion } }
-				add_ideas = full_ratnik_conversion
-			}
-			if = {
-				limit = { SOV = { has_idea = SOV_youth_army } }
-				add_ideas = SOV_youth_army
-			}
-			if = {
-				limit = { SOV = { has_idea = SOV_youth_army2 } }
-				add_ideas = SOV_youth_army2
-			}
-			SOV = {
-				every_unit_leader = {
-					set_nationality = BLR
-				}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_verbovka_in_fsb"
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 4.2 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_union_tv = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
 			}
 		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_union_tv"
+			SOV = {
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.02 }
+				add_relative_party_popularity = yes
+			}
+			set_temp_variable = { treasury_change = -8.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_region_coop_rus = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_region_coop_rus"
+			set_temp_variable = { percent_change = 2.1 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+			custom_effect_tooltip = BLR_region_coop_tt
+		}
+	}
+	BLR_recruit_military = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_region_coop_rus"
+			increase_corruption = yes
+			set_temp_variable = { treasury_change = -7.3 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 3.5 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_anti_oligarch_prop = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_anti_oligarch_prop"
+			SOV = {
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.03 }
+				add_relative_party_popularity = yes
+			}
+			set_temp_variable = { treasury_change = -6.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 2.3 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_verbovka_in_gosduma = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_verbovka_in_gosduma"
+			increase_corruption = yes
+			set_temp_variable = { treasury_change = -16.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 2.3 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_tv_nostalgy = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_tv_nostalgy"
+			SOV = {
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.02 }
+				add_relative_party_popularity = yes
+			}
+			set_temp_variable = { treasury_change = -5.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 2.5 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_verbovka_in_regions = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_verbovka_in_regions"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1.4 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_verbovka_in_rus_tv = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_verbovka_in_rus_tv"
+			SOV = {
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.04 }
+				add_relative_party_popularity = yes
+			}
+			set_temp_variable = { treasury_change = -11.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 2.2 }
+			set_temp_variable = { tag_index = BLR }
+			set_temp_variable = { influence_target = SOV }
+			change_influence_percentage = yes
+		}
+	}
+	BLR_union_become_one = {
+		icon = GFX_decision_a_union_state
+		cost = 65
+		days_remove = 170
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 355
+				has_global_flag = BLR_FOLLOW_UNION_STATE
+			}
+		}
+		fire_only_once = yes
+		visible = {
+			is_subject = yes
+			has_autonomy_state = autonomy_union_state
+			tag = BLR
+			country_exists = SOV
+			custom_trigger_tooltip = {
+				tooltip = BLR_SOV_more_than_70_percent_influence_TT
+				SOV = { BLR_targeted_country_has_more_than_70_percent_influence = yes }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BLR_union_become_one"
+			custom_effect_tooltip = BLR_Union_state_create_TT
+			set_country_flag = luka_union_prezik
+			clr_country_flag = nobody_union_prezik
+			SOV = { every_core_state = { add_core_of = BLR } }
+			set_capital = {
+				state = 652
+				remember_old_capital = no
+			}
+			add_stability = -0.10
+			add_war_support = -0.10
+			add_political_power = -200
+			hidden_effect = {
+				if = {
+					limit = { CHE = { is_subject_of = SOV } }
+					annex_country = { target = CHE transfer_troops = yes }
+					add_to_variable = { treasury = CHE.treasury }
+					add_to_variable = { debt = CHE.debt }
+					add_to_variable = { int_investments = CHE.int_investments }
+				}
+				if = {
+					limit = { BSH = { is_subject_of = SOV } }
+					annex_country = { target = BSH transfer_troops = yes }
+					add_to_variable = { treasury = BSH.treasury }
+					add_to_variable = { debt = BSH.debt }
+					add_to_variable = { int_investments = BSH.int_investments }
+				}
+				if = {
+					limit = { DPR = { is_subject_of = SOV } }
+					annex_country = { target = DPR transfer_troops = yes }
+					add_to_variable = { treasury = DPR.treasury }
+					add_to_variable = { debt = DPR.debt }
+					add_to_variable = { int_investments = DPR.int_investments }
+				}
+				if = {
+					limit = { LPR = { is_subject_of = SOV } }
+					annex_country = { target = LPR transfer_troops = yes }
+					add_to_variable = { treasury = LPR.treasury }
+					add_to_variable = { debt = LPR.debt }
+					add_to_variable = { int_investments = DPR.int_investments }
+				}
+				BLR = {
+				add_to_variable = { treasury = SOV.treasury }
+				add_to_variable = { debt = SOV.debt }
+				add_to_variable = { int_investments = SOV.int_investments }
+				for_each_loop = {
+					array = missile_inventory_array
+					value = v
+					index = i
+					add_to_variable = {
+						missile_inventory_array^i = SOV.missile_inventory_array^i
+					}
+				}
+				for_each_loop = {
+					array = GNSS_satellite_array
+					value = v
+					index = i
+					add_to_variable = {
+						GNSS_satellite_array^i = SOV.GNSS_satellite_array^i
+					}
+				}
+				for_each_loop = {
+					array = COM_satellite_array
+					value = v
+					index = i
+					add_to_variable = {
+						COM_satellite_array^i = SOV.COM_satellite_array^i
+					}
+				}
+				for_each_loop = {
+					array = SPY_satellite_array
+					value = v
+					index = i
+					add_to_variable = {
+						SPY_satellite_array^i = SOV.SPY_satellite_array^i
+					}
+				}
+				for_each_loop = {
+					array = nuclear_warhead_inventory_array
+					value = v
+					index = i
+					add_to_variable = {
+						nuclear_warhead_inventory_array^i = SOV.nuclear_warhead_inventory_array^i
+					}
+				}
+			}
+			BLR = { inherit_technology = SOV }
+			annex_country = { target = SOV transfer_troops = yes }
+			set_cosmetic_tag = BLR_UNS_Communism
+			clr_country_flag = dynamic_flag
+			set_temp_variable = { percent_change = 25 }
+			change_domestic_influence_percentage = yes
+		}
+	}
 	}
 	#AGROCULTURE BELARUS ADDED
 	SOV_added_agroculzure = {
@@ -3284,131 +3559,6 @@ BLR_Union_state_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SOV_added_140z1"
 			add_ideas = BLR_140_zavod_union_state1
-		}
-	}
-	###Belarus try Annex Russia###
-	BLR_coppution_scandal_on_tv = {
-		icon = GFX_decision_unionstate_tv_button
-		cost = 20
-		days_remove = 180
-		available = {
-			has_completed_focus = BLR_union_tv
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 355
-				has_global_flag = BLR_FOLLOW_UNION_STATE
-			}
-		}
-		visible = {
-			has_completed_focus = BLR_path_to_president_uns
-			country_exists = SOV
-			tag = BLR
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BLR_coppution_scandal_on_tv "
-			SOV = {
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.01 }
-				add_relative_party_popularity = yes
-			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			set_temp_variable = { percent_change = 1.2 }
-			set_temp_variable = { tag_index = BLR }
-			set_temp_variable = { influence_target = SOV }
-			change_influence_percentage = yes
-		}
-	}
-	BLR_poezdka_po_region_rf = {
-		icon = GFX_decision_unionstate_russia_button
-		cost = 20
-		days_remove = 60
-		available = {
-			has_completed_focus = BLR_region_coop_rus
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 355
-				has_global_flag = BLR_FOLLOW_UNION_STATE
-			}
-		}
-		visible = {
-			has_completed_focus = BLR_path_to_president_uns
-			country_exists = SOV
-			tag = BLR
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BLR_poezdka_po_region_rf"
-			set_temp_variable = { treasury_change = -3.2 }
-			modify_treasury_effect = yes
-			set_temp_variable = { percent_change = 0.9 }
-			set_temp_variable = { tag_index = BLR }
-			set_temp_variable = { influence_target = SOV }
-			change_influence_percentage = yes
-		}
-	}
-	BLR_luka_on_tv = {
-		icon = GFX_decision_unionstate_tv_button
-		cost = 80
-		days_remove = 40
-		available = {
-			has_completed_focus = BLR_region_coop_rus
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 355
-				has_global_flag = BLR_FOLLOW_UNION_STATE
-			}
-		}
-		visible = {
-			has_completed_focus = BLR_path_to_president_uns
-			country_exists = SOV
-			tag = BLR
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BLR_luka_on_tv "
-			SOV = {
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = -0.01 }
-				add_relative_party_popularity = yes
-			}
-			set_temp_variable = { percent_change = 0.9 }
-			set_temp_variable = { tag_index = BLR }
-			set_temp_variable = { influence_target = SOV }
-			change_influence_percentage = yes
-		}
-	}
-	BLR_verbovka_chinovnik = {
-		icon = GFX_decision_unionstate_cash_button
-		cost = 15
-		days_remove = 100
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 355
-				has_global_flag = BLR_FOLLOW_UNION_STATE
-			}
-		}
-		available = {
-			has_completed_focus = BLR_verbovka_in_regions
-		}
-
-		visible = {
-			has_completed_focus = BLR_path_to_president_uns
-			country_exists = SOV
-			tag = BLR
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BLR_verbovka_chinovnik"
-			set_temp_variable = { treasury_change = -2.2 }
-			modify_treasury_effect = yes
-			set_temp_variable = { percent_change = 0.8 }
-			set_temp_variable = { tag_index = BLR }
 		}
 	}
 	#TATARSTAN INDUSTRY ADDED
@@ -4151,7 +4301,7 @@ BLR_Tracktor_category = {
 			country_exists = BSH
 			BSH = {	is_subject_of = SOV	}
 			has_country_flag = BLR_MTZ_first_tracktor
-			has_completed_focus = BLR_region_coop_rus
+			has_decision = BLR_region_coop_rus
 		}
 		available = {
 			NOT = { has_country_flag = BLR_peding_offer }
@@ -4182,7 +4332,7 @@ BLR_Tracktor_category = {
 			country_exists = CHE
 			CHE = {	is_subject_of = SOV	}
 			has_country_flag = BLR_MTZ_first_tracktor
-			has_completed_focus = BLR_region_coop_rus
+			has_decision = BLR_region_coop_rus
 		}
 		available = {
 			custom_trigger_tooltip = {
@@ -4906,7 +5056,7 @@ BLR_mzkt_category = {
 		allowed = { original_tag = BLR }
 		cost = 10
 		visible = {
-			has_completed_focus = BLR_region_coop_rus
+			has_decision = BLR_region_coop_rus
 			country_exists = BSH
 			BSH = {	is_subject_of = SOV	}
 		}
