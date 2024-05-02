@@ -34,8 +34,11 @@ CodingStandards:
  stage: codingstandards
  image: python:3.11
  interruptible: true
- only:
-  - merge_requests
+ rules:
+  - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
+    when: never
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: always
  script:
   - pip install requests
   - python3 tools/check_basic_style_2.py $Bot_Token
@@ -44,9 +47,12 @@ Styling:
  stage: styling
  image: python:3.11
  interruptible: true
- only:
-   - merge_requests
  needs: ["CodingStandards"]
+ rules:
+  - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
+    when: never
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: always
  script:
   - pip install requests
   - python3 tools/coding_standards.py $Bot_Token
@@ -55,9 +61,12 @@ FixingStyling:
   stage: correctstyling
   image: python:3.11
   interruptible: true
-  only:
-    - merge_requests
   needs: ["Styling"]
+  rules:
+   - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
+     when: never
+   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+     when: always
   script:
    - pip install requests
    - python3 tools/fix_styling.py $Bot_Token
@@ -76,10 +85,13 @@ FixingStyling:
 CWTools_CI:
  stage: codingstandards
  interruptible: true
- only:
-   - merge_requests
  tags:
    - cwtools
+ rules:
+  - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
+    when: never
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: always
  script:
   - echo "Pulling down the CWTools action validator"
   - wget -O - -q https://raw.githubusercontent.com/cwtools/cwtools-action/v1.0.0/lib/gitlab_setup.sh | sh -s
