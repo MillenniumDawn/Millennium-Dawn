@@ -3,10 +3,11 @@
 # Default Unit Production
 default_army_production_strategy = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		NOT = {
 			original_tag = USA
 			original_tag = CHI
+			original_tag = SOV
 		}
 	}
 	enable = { num_of_military_factories < 11 }
@@ -19,25 +20,23 @@ default_army_production_strategy = {
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = armor value = 35 }
-	ai_strategy = { type = role_ratio id = marines value = 20 }
-	ai_strategy = { type = role_ratio id = mot_marines value = 15 }
-	ai_strategy = { type = role_ratio id = meh_marines value = 30 }
+	ai_strategy = { type = role_ratio id = marines value = 10 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 10 }
-	ai_strategy = { type = role_ratio id = Air_arm value = 10 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = 40 }
 }
 
 default_army_production_strategy_maj = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		NOT = {
 			original_tag = USA
 			original_tag = CHI
+			original_tag = SOV
 		}
 	}
 	enable = { num_of_military_factories > 10 }
-	abort_when_not_enabled = yes
+	abort = { num_of_military_factories > 29 }
 
 	ai_strategy = { type = role_ratio id = L_Inf value = 5 }
 	ai_strategy = { type = role_ratio id = Militia value = 0 }
@@ -46,12 +45,34 @@ default_army_production_strategy_maj = {
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 35 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = armor value = 40 }
-	ai_strategy = { type = role_ratio id = marines value = 0 }
-	ai_strategy = { type = role_ratio id = mot_marines value = 0 }
-	ai_strategy = { type = role_ratio id = meh_marines value = 20 }
+	ai_strategy = { type = role_ratio id = marines value = 20 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 15 }
-	ai_strategy = { type = role_ratio id = Air_arm value = 15 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 50 }
+}
+
+default_army_production_strategy_global = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = {
+			original_tag = USA
+			original_tag = CHI
+			original_tag = SOV
+		}
+	}
+	enable = { num_of_military_factories > 29 }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = L_Inf value = 0 }
+	ai_strategy = { type = role_ratio id = Militia value = 0 }
+	ai_strategy = { type = role_ratio id = infantry value = 0 }
+	ai_strategy = { type = role_ratio id = garrison value = 0 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 20 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
+	ai_strategy = { type = role_ratio id = armor value = 40 }
+	ai_strategy = { type = role_ratio id = marines value = 20 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 15 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = 50 }
 }
 
@@ -77,9 +98,10 @@ default_AI_needs_to_live = {
 
 focus_on_l_inf_units = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
+		num_of_military_factories < 11 # only produce shit units if you are shit
 		has_equipment = { Inf_equipment > 2000 }
 		has_equipment = { util_vehicle_equipment > 100 }
 		has_equipment = { cnc_equipment > 300 }
@@ -90,73 +112,67 @@ focus_on_l_inf_units = {
 	ai_strategy = { type = build_army id = L_Inf value = 50 }
 }
 
-focus_on_motorized_units = {
+dont_build_marines_without_sea = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		has_equipment = { util_vehicle_equipment > 1500 }
-		has_equipment = { cnc_equipment > 500 }
+		num_of_naval_factories < 1
 	}
-	abort = {
-		has_equipment = { util_vehicle_equipment < 1000 }
-		has_equipment = { cnc_equipment < 501 }
-	}
+	abort_when_not_enabled = yes
 
-	ai_strategy = { type = role_ratio id = mot_marines value = 25 }
-	ai_strategy = { type = build_army id = mot_marines value = 15 }
-	ai_strategy = { type = role_ratio id = infantry value = 100 }
-	ai_strategy = { type = build_army id = infantry value = 50 }
+	ai_strategy = { type = role_ratio id = marines value = -50 }
+	ai_strategy = { type = build_army id = marines value = -50 }
 }
 
 focus_on_apc_mechanized = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		has_equipment = { apc_hull > 2000 }
+		has_equipment = { apc_hull > 1000 }
 	}
 	abort = {
-		has_equipment = { apc_hull < 1000 }
+		has_equipment = { apc_hull < 500 }
 	}
 
-	ai_strategy = { type = role_ratio id = apc_mechanized value = 200 }
-	ai_strategy = { type = build_army id = apc_mechanized value = 100 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 10 }
+	ai_strategy = { type = build_army id = apc_mechanized value = 10 }
 }
 
 focus_on_ifv_mechanized = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		has_equipment = { ifv_hull > 2000 }
+		has_equipment = { ifv_hull > 1000 }
 	}
 	abort = {
-		has_equipment = { ifv_hull < 1000 }
+		has_equipment = { ifv_hull < 500 }
 	}
 
-	ai_strategy = { type = role_ratio id = ifv_mechanized value = 200 }
-	ai_strategy = { type = build_army id = ifv_mechanized value = 100 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 10 }
+	ai_strategy = { type = build_army id = ifv_mechanized value = 10 }
 }
 
 focus_on_armor = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 	}
 	enable = {
-		has_equipment = { mbt_hull > 1500 }
+		has_equipment = { mbt_hull > 750 }
 	}
 	abort = {
-		has_equipment = { mbt_hull < 1000 }
+		has_equipment = { mbt_hull < 350 }
 	}
 
-	ai_strategy = { type = role_ratio id = armor value = 250 }
-	ai_strategy = { type = build_army id = armor value = 100 }
+	ai_strategy = { type = role_ratio id = armor value = 10 }
+	ai_strategy = { type = build_army id = armor value = 10 }
 }
 
 default_air_unit_production_low_mils = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		# Custom AI
 		NOT = {
 			original_tag = USA #United States
@@ -179,7 +195,7 @@ default_air_unit_production_low_mils = {
 
 default_air_unit_production_mod_mils = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		# Custom AI
 		NOT = {
 			original_tag = USA #United States
@@ -203,7 +219,7 @@ default_air_unit_production_mod_mils = {
 
 default_air_unit_production_high_mils = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		# Custom AI
 		NOT = {
 			original_tag = USA #United States
@@ -226,7 +242,7 @@ default_air_unit_production_high_mils = {
 
 default_air_units_production_cv_variants_low_mils = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		NOT = {
 			original_tag = USA
 			original_tag = CHI
@@ -251,7 +267,7 @@ default_air_units_production_cv_variants_low_mils = {
 
 default_air_units_production_cv_variants_mod_mils = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		NOT = {
 			original_tag = USA
 			original_tag = CHI
@@ -276,7 +292,7 @@ default_air_units_production_cv_variants_mod_mils = {
 
 default_air_units_production_cv_variants_high_mils = {
 	allowed = {
-		disabled_ai_for_units = yes
+		ai_for_units_is_not_disabled = yes
 		NOT = {
 			original_tag = USA
 			original_tag = CHI

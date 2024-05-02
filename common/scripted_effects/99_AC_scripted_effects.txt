@@ -335,15 +335,35 @@ calculate_ai_construction_speed = {
 	}
 	add_to_temp_variable = { construction_speed = local_state_modifier }
 
-	# Calculate the net modifier from investment duration modifier and receiving_duration_investment_modifier
+	# Calculate the net modifier from the investment duration modifier and receiving_duration_investment_modifier
 	set_temp_variable = { receiving_investment_duration_temp = 0 }
 	var:AI_best_target = {
 		CONTROLLER = {
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = ECB_president }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+			}
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = EU_finance_minister }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
 			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 		}
 	}
-	add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
-	add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
+	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
+		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+	else = {
+		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
 
 	# Total Factory Output
 	# Assume the maximum of
@@ -387,22 +407,42 @@ init_project = {
 		}
 		add_to_temp_variable = { construction_speed = local_state_modifier }
 
-		# Calculate the net modifier from investment duration modifier and receiving_duration_investment_modifier
+		# Calculate the net modifier from the investment duration modifier and receiving_duration_investment_modifier
 		set_temp_variable = { receiving_investment_duration_temp = 0 }
 		PREV = {
 			CONTROLLER = {
+				if = {
+					limit = {
+						is_in_array = { global.EU_member = THIS.id }
+						ROOT = { has_idea = ECB_president }
+					}
+					add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+				}
+				if = {
+					limit = {
+						is_in_array = { global.EU_member = THIS.id }
+						ROOT = { has_idea = EU_finance_minister }
+					}
+					add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+				}
 				add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 			}
 		}
 		add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
-		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+		if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
+			add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		}
+		else = {
+			subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		}
 
 		# Displayed Construction Modifier
 		# 200% means you produce the building at 2x the speed in this case
 		set_variable = { displayable_construction_modifier = construction_speed }
 
 		# Total Factory Output
-		# Assume the maximum of industry assigned
+		# Assume the maximum of industry-assigned
 		# 5 x 15 Civilian Industry Devoted to a single construction
 		multiply_temp_variable = { construction_speed = 75 }
 
@@ -449,11 +489,34 @@ init_project_two = {
 	set_temp_variable = { receiving_investment_duration_temp = 0 }
 	PREV = {
 		CONTROLLER = {
+			# Custom modifier for the ECB President
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = ECB_president }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+			}
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = EU_finance_minister }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
 			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 		}
 	}
-	add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
-	add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
+	# Clamp to absolute -100%
+	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } } # Ensures we add the value if it's positive so we don't get weirdness
+		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+	else = {
+		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+
 
 	# Total Factory Output
 	# Assume the maximum of

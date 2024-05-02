@@ -897,12 +897,14 @@ country_event = {
 
 	trigger = {
 		original_tag = KOR
-		has_war_with = NKO
+		OR = {
+			has_war_with = NKO
+			USA = { has_war_with = NKO }
+		}
 		KOR = { is_puppet = no }
 		USA = { is_puppet = no } 
 		has_idea = KOR_wartime_control
 		NOT = { is_in_faction_with = USA }
-		USA = { has_war_with = NKO }
 	}
 
 	mean_time_to_happen = {
@@ -913,13 +915,34 @@ country_event = {
 		name = korea.16.a #We must transfer control
 		log = "[GetDateText]: [This.GetName]: korea.16.a executed"
 		if = {
-			limit = { USA = { is_faction_leader = yes } }
+			limit = { NOT = { has_war_with = NKO } }
+			add_to_war = {
+				targeted_alliance = USA
+				enemy = NKO
+				hostility_reason = asked_to_join
+			}
+		}
+
+		if = {
+			limit = { NOT = { has_idea = NATO_member } }
 			NATO_join = yes
 		}
-		else = {
-			USA = {
-				create_faction = USA_ROK
-				add_to_faction = KOR
+
+		if = {
+			limit = {
+				USA = {
+					NOT = {
+						has_war_with = NKO
+					}
+				}
+			}
+			
+		USA = {
+			add_to_war = {
+				targeted_alliance = KOR
+				enemy = NKO
+				hostility_reason = asked_to_join
+				}
 			}
 		}
 	}
