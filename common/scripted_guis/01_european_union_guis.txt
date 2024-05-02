@@ -7,13 +7,12 @@ scripted_gui = {
 
 		dirty = global.EU_dirty_update_var
 
-		visible = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-
-		triggers = {
-			open_the_eu_gui_click_enabled = {
-				is_ai = no
-			}
+		visible = {
+			NOT = { has_global_flag = GAME_RULE_eu_disabled }
+			is_ai = no
 		}
+
+		triggers = { open_the_eu_gui_click_enabled = { is_ai = no } }
 
 		effects = {
 			open_the_eu_gui_click = {
@@ -81,7 +80,7 @@ scripted_gui = {
 			}
 			draft_eu_budget_click_enabled = {
 				custom_trigger_tooltip = {
-					tooltip = "No Active Budget Draft"
+					tooltip = EU_no_active_budget_draft
 					NOT = {
 						any_of_scopes = {
 							array = global.EU_member
@@ -90,7 +89,7 @@ scripted_gui = {
 					}
 				}
 				custom_trigger_tooltip = {
-					tooltip = "No Ongoing Parliament Vote"
+					tooltip = EU_no_ongoing_parliament_vote
 					NOT = {
 						any_of_scopes = {
 							array = global.EU_member
@@ -102,7 +101,7 @@ scripted_gui = {
 			}
 			draft_mff_click_enabled = {
 				custom_trigger_tooltip = {
-					tooltip = "No Current MFF Draft"
+					tooltip = EU_no_urrent_mff_draft
 					NOT = {
 						any_of_scopes = {
 							array = global.EU_member
@@ -111,7 +110,7 @@ scripted_gui = {
 					}
 				}
 				custom_trigger_tooltip = {
-					tooltip = "No Ongoing Parliament Vote"
+					tooltip = EU_no_ongoing_parliament_vote
 					NOT = {
 						any_of_scopes = {
 							array = global.EU_member
@@ -2524,10 +2523,19 @@ scripted_gui = {
 							set_global_flag = focus_[EUXXX]_EP_approval
 							remove_mission = EU_parliament_focus_EUXXX_approve
 							remove_from_array = { array = global.EU_potential_votes value = global.current_active_agenda_disp }
-							add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
+							if = {
+								limit = {
+									NOT = {
+										check_variable = { global.current_active_agenda_disp = 0 }
+										check_variable = { global.current_active_agenda_disp = 999 }
+										check_variable = { global.current_active_agenda_disp = 998 }
+									}
+								}
+								add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
+								set_variable = { global.pass_vote_mission_ender = 1 }
+							}
 							set_variable = { global.current_active_agenda_disp = 0 }
 							set_variable = { global.active_MEP_Support = 0 }
-							set_variable = { global.pass_vote_mission_ender = 1 }
 						}
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
@@ -4508,7 +4516,7 @@ scripted_gui = {
 						has_idea = EU_parliament_president
 						influence_on_all_other_EU_members_3_percent = yes
 					}
-					has_political_power > 350
+					has_political_power > 500
 				}
 				has_idea = EU_commission_president
 				has_idea = EU_council_president
@@ -4978,8 +4986,7 @@ scripted_gui = {
 					tooltip = EU_no_external_sov_chi_influence_15_tt
 					EU_external_sov_chi_influence_15 = no
 				}
-				if = {
-					limit = { check_variable = { v = 002 } }
+				if = { limit = { check_variable = { v = 002 } }
 					has_political_power > 200
 					custom_trigger_tooltip = {
 						tooltip = eu_canidates_tt
@@ -4990,58 +4997,57 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
-					limit = { check_variable = { v = 101 } }
+				else_if = { limit = { check_variable = { v = 101 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 102 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_convention_tt
 						is_in_array = { global.EU_passed_votes = 101 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 103 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_constitution_tt
 						is_in_array = { global.EU_passed_votes = 102 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 104 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_con_pass_tt
 						is_in_array = { global.EU_passed_votes = 103 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 105 } }
 					custom_trigger_tooltip = {
 						tooltip = treaty_of_lisbon_tt
 						is_in_array = { global.EU_passed_votes = 104 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 201 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 202 } }
 					custom_trigger_tooltip = {
 						tooltip = ecb_intervention_tt
 						is_in_array = { global.EU_passed_votes = 201 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 203 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 204 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 205 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_fin_stab_facility_tt
@@ -5052,7 +5058,7 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 203 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 206 } }
 					custom_trigger_tooltip = {
 						tooltip = treaty_of_lisbon_tt
@@ -5063,14 +5069,14 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 202 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 207 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_stability_mech_tt
 						is_in_array = { global.EU_passed_votes = 205 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 208 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_eco_govment_tt
@@ -5081,25 +5087,25 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 206 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 301 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 302 } }
 					custom_trigger_tooltip = {
 						tooltip = eda_pass_tt
 						is_in_array = { global.EU_passed_votes = 301 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 303 } }
 					custom_trigger_tooltip = {
 						tooltip = perm_struc_cooperation_tt
 						is_in_array = { global.EU_passed_votes = 302 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 304 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_def_fund_tt
@@ -5110,21 +5116,21 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 105 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 305 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_security_council_tt
 						is_in_array = { global.EU_passed_votes = 304 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 306 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_security_council_tt
 						is_in_array = { global.EU_passed_votes = 304 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 307 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_army_tt
@@ -5139,7 +5145,7 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 308 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 308 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_army_tt
@@ -5150,33 +5156,33 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 306 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 401 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 402 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 403 } }
 					has_political_power > 300
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 404 } }
 					custom_trigger_tooltip = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 405 } }
 					custom_trigger_tooltip = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 406 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_border_coast_guard_tt
@@ -5187,7 +5193,7 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 404 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 407 } }
 					custom_trigger_tooltip = {
 						tooltip = dublin_II_tt
@@ -5198,14 +5204,14 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 301 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 408 } }
 					custom_trigger_tooltip = {
 						tooltip = frontex_pass_tt
 						is_in_array = { global.EU_passed_votes = 407 }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 601 } }
 					has_political_power > 500
 					date > 2002.1.1
@@ -5214,7 +5220,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 602 } }
 					has_political_power > 500
 					is_in_array = { global.EU_passed_votes = 601 }
@@ -5231,7 +5237,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 603 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
@@ -5247,7 +5253,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 605 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
@@ -5263,7 +5269,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 606 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
@@ -5279,7 +5285,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 607 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
@@ -5295,7 +5301,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 608 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
@@ -5311,7 +5317,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 609 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
@@ -5327,7 +5333,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = {
+				else_if = {
 					limit = { check_variable = { v = 610 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
@@ -5343,7 +5349,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = { limit = { check_variable = { v = 611 } }
+				else_if = { limit = { check_variable = { v = 611 } }
 					has_political_power > 500
 					custom_trigger_tooltip = {
 						tooltip = 2013_enlargement_pass_tt
@@ -5358,7 +5364,7 @@ scripted_gui = {
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
-				if = { limit = { check_variable = { v = 112 } }
+				else_if = { limit = { check_variable = { v = 112 } }
 					custom_trigger_tooltip = {
 						tooltip = federalized_eu_tt
 						is_in_array = { global.EU_passed_votes = 110 }
@@ -5369,7 +5375,7 @@ scripted_gui = {
 					}
 					has_political_power > 500
 				}
-				if = { limit = { check_variable = { v = 110 } }
+				else_if = { limit = { check_variable = { v = 110 } }
 					custom_trigger_tooltip = {
 						tooltip = euro_min_fin_eco_tt
 						is_in_array = { global.EU_passed_votes = 208 }
@@ -5387,7 +5393,7 @@ scripted_gui = {
 						is_in_array = { global.EU_passed_votes = 406 }
 					}
 				}
-				if = { limit = { check_variable = { v = 111 } }
+				else_if = { limit = { check_variable = { v = 111 } }
 					custom_trigger_tooltip = {
 						tooltip = federalized_eu_tt
 						is_in_array = { global.EU_passed_votes = 110 }
@@ -5410,9 +5416,7 @@ scripted_gui = {
 				set_variable = { global.active_MEP_Support = 0 }
 				every_country = {
 					limit = { has_idea = EU_member }
-					country_event = {
-						id = EUvote.1
-					}
+					country_event = EUvote.1
 				}
 
 				meta_effect = {
@@ -5438,110 +5442,70 @@ scripted_gui = {
 					tag = "[ROOT.GetName]"
 					index = "EU[?v]"
 				}
+
+				# Political Power
 				if = { limit = { check_variable = { v = 002 } }
-					hidden_effect = {
-						add_political_power = -200
-					}
+					hidden_effect = { add_political_power = -200 }
 				}
-				if = { limit = { check_variable = { v = 101 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 101 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 201 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 201 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 203 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 203 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 204 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 204 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 301 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 301 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 401 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 401 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 402 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 402 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 403 } }
-					hidden_effect = {
-						add_political_power = -300
-					}
+				else_if = { limit = { check_variable = { v = 403 } }
+					hidden_effect = { add_political_power = -300 }
 				}
-				if = { limit = { check_variable = { v = 601 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 601 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 602 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 602 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 603 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 603 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 605 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 605 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 606 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 606 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 607 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 607 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 608 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 608 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 609 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 609 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 610 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 610 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 611 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 611 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 112 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 112 } }
+					hidden_effect = { add_political_power = -500 }
 				}
-				if = { limit = { check_variable = { v = 111 } }
-					hidden_effect = {
-						add_political_power = -500
-					}
+				else_if = { limit = { check_variable = { v = 111 } }
+					hidden_effect = { add_political_power = -500 }
 				}
 				update_eu_dirty_variable = yes
 			}
@@ -5746,6 +5710,25 @@ scripted_gui = {
 								add = 0
 								is_in_array = { global.EU_federalization_laws = v }
 								is_autocratic_block = yes
+							}
+							# Historical AI Focus
+							modifier = {
+								add = 20
+								check_variable = { v = 601 }
+								date > 2002.1.1
+								is_historical_focus_on = yes
+							}
+							modifier = {
+								add = 20
+								check_variable = { v = 602 }
+								date > 2006.1.1
+								is_historical_focus_on = yes
+							}
+							modifier = {
+								add = 20
+								check_variable = { v = 603 }
+								date > 2012.1.1
+								is_historical_focus_on = yes
 							}
 							# Killswitch
 							modifier = {
