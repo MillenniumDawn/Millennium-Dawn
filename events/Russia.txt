@@ -28,6 +28,7 @@ add_namespace = russia_union_republics
 add_namespace = sov_kasyanov
 add_namespace = sov_yavlinskiy
 add_namespace = sov_just_russia
+add_namespace = sov_dissolution
 
 #Russian Invites [From.ThisGetName] to Faction
 country_event = {
@@ -990,7 +991,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: russia.17.o1 executed"
 		add_ideas = SOV_spetznaz_o
 	}
-	
+
 }
 ##Annex Manchuria
 country_event = {
@@ -1369,12 +1370,25 @@ country_event = {
 			base = 20
 		}
 		SOV = {
-		set_autonomy = {
-			target = PMR
-			autonomy_state = autonomy_autonomous_state
-			end_wars = no
-			end_civil_wars = no
-		}
+			if = {
+				limit = {
+					has_global_flag = GAME_RULE_allow_colored_puppets
+				}
+				set_autonomy = {
+					target = PMR
+					autonomy_state = autonomy_autonomous_state_colored
+					end_wars = yes
+					end_civil_wars = yes
+				}
+			}
+			else = {
+				set_autonomy = {
+					target = PMR
+					autonomy_state = autonomy_autonomous_state
+					end_wars = yes
+					end_civil_wars = yes
+				}
+			}
 	}
 }
 	option = {
@@ -2085,12 +2099,25 @@ country_event = {
 		name = russia.51.a
 		log = "[GetDateText]: [This.GetName]: russia.51.a executed"
 		SOV = {
-			set_autonomy = {
-			target = ROOT
-			autonomy_state = autonomy_puppet_state
-			end_wars = no
-			end_civil_wars = no
-		}
+			if = {
+				limit = {
+					has_global_flag = GAME_RULE_allow_colored_puppets
+				}
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_puppet_state_colored
+					end_wars = no
+					end_civil_wars = no
+				}
+			}
+			else = {
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_puppet_state
+					end_wars = no
+					end_civil_wars = no
+				}
+			}
 		}
 	}
 }
@@ -3551,7 +3578,7 @@ country_event = {
 				picture = "Western_Alexei_Navalny.dds"
 				expire = "2050.1.1"
 				ideology = liberalism
-				traits = { western_liberalism 
+				traits = { western_liberalism
 				certified_nationalist }
 			}
 		}
@@ -3634,11 +3661,17 @@ country_event = {
 			popularity = 0.05
 		}
 		add_stability = 0.05
+		ai_chance = {
+			base = 10
+		}
 	}
 	option = {
 		name = russia.104.o2
 		log = "[GetDateText]: [This.GetName]: russia.104.o2 executed"
 		country_event = { id = russia.105 days = 10 }
+		ai_chance = {
+			base = 50
+		}
 	}
 }
 country_event = {
@@ -6897,7 +6930,7 @@ country_event = {
 		retire_country_leader = yes
 		create_country_leader = {
 			name = "Vladimir Putin"
-			picture = "Vladimir_Putin.dds"
+			picture = "Vladimir_Putin_older.dds"
 			ideology = Conservative
 			traits = {
 				spy emerging_Conservative geopolitical_thinker political_dancer likeable sly rational
@@ -6911,7 +6944,7 @@ country_event = {
 			elections_allowed = yes
 			election_frequency = 72
 		}
-		
+
 		add_stability = -0.1
 		country_event = { id = rusboloto.1 days = 14 }
 	}
@@ -7764,7 +7797,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sov_other.24.a executed"
 		add_opinion_modifier = { target = NKO modifier = recent_actions_negative }
 		reverse_add_opinion_modifier = { target = NKO modifier = recent_actions_negative }
-		
+
 	}
 }
 #DPK agree to Belarus
@@ -7792,14 +7825,17 @@ country_event = {
 	title = sov_other.26.t
 	desc = sov_other.26.d
 	is_triggered_only = yes
+	trigger = {
+		OR = {
+			NOT = { SOV = { has_country_flag = che_kto_finished } }
+			NOT = { SOV = { has_country_flag = che_bunt_finished } }
+		}
+	}
 	picture = GFX_sov_dubrovka
 	option = {
 		name = sov_other.26.a
 		log = "[GetDateText]: [This.GetName]: sov_other.26.a executed"
-		SOV = {
-			set_temp_variable = { modify_radicalche = 15 }
-			modify_radicalche_support = yes
-		}
+		add_stability = -0.08
 	}
 }
 #Referendum Independence or Not
@@ -7996,12 +8032,12 @@ country_event = {
 				modify_radicalche_support = yes
 			}
 			if = {
-				limit = { 
+				limit = {
 					country_exists = CHE
 					CHE = {
 					is_subject = yes
 					has_autonomy_state = autonomy_republic_rf
-				} 
+				}
 			}
 			CHE = { remove_ideas = CHE_kto }
 			SOV = { remove_ideas = CHE_kto }
@@ -8144,6 +8180,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sov_girkin.1.a executed"
 	}
 }
+
+
 ## USSR Events
 country_event = {
 	id = sov_communists.1
@@ -9051,8 +9089,8 @@ country_event = {
 			}
 			IF = {
 				limit = {
-					BLR = { 
-						has_government = communism 
+					BLR = {
+						has_government = communism
 						has_war = no
 					}
 				}
@@ -9651,6 +9689,9 @@ country_event = {
 					update_party_name = yes
 					set_coalition_drift = yes
 			}
+			GER = {
+				set_capital = { state = 966 }
+			}
 			every_country = {
 				limit = {
 					has_country_flag = GDR_test
@@ -9810,10 +9851,6 @@ country_event = {
 		SOV = {
 			end_puppet = ROOT
 		}
-		add_popularity = {
-			ideology = communism
-			popularity = -0.25
-		}
 		clr_country_flag = warsaw_member_check
 		clr_country_flag = warsaw_pact_reintegrate
 		clr_country_flag = sov_southern_front
@@ -9827,7 +9864,7 @@ country_event = {
 			set_country_flag = OVD_raspalsa
 		}
 		ai_chance = {
-			base = 40
+			base = 70
 		}
 
 	}
@@ -9835,28 +9872,8 @@ country_event = {
 	option = {
 		name = Sov_warsaw_pact.15.b
 		log = "[GetDateText]: [This.GetName]: Sov_warsaw_pact.15.b"
-		SOV = {
-			set_autonomy = {
-				target = ROOT
-				autonomy_state = autonomy_associated_state
-				end_wars = no
-				end_civil_wars = no
-			}
-		}
-		clr_country_flag = warsaw_member_check
-		clr_country_flag = warsaw_pact_reintegrate
-		clr_country_flag = sov_southern_front
-		clr_country_flag = sov_northern_front
-		set_country_flag = WP_normal_puppet
-		remove_ideas = SOV_warsaw_pact_idea
-		remove_ideas = SOV_warsaw_pact_joint_exercises_idea
-		remove_ideas = SOV_warsaw_pact_exercises_south_idea1
-		remove_ideas = SOV_warsaw_pact_exercises_north_idea
-		SOV = {
-			set_country_flag = OVD_raspalsa
-		}
 		ai_chance = {
-			base = 60
+			base = 30
 		}
 
 	}
@@ -9881,7 +9898,7 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 90
+			base = 100
 		}
 
 	}
@@ -9899,7 +9916,7 @@ country_event = {
 		add_stability = -0.04
 		add_war_support = -0.07
 		ai_chance = {
-			base = 10
+			base = 0
 		}
 
 	}
@@ -10870,6 +10887,63 @@ country_event = {
 		}
 		ai_chance = { base = 50 }
 	}
+	option = {
+		name = sov_oligarchs.4.b
+		log = "[GetDateText]: [This.GetName]: sov_oligarchs.4.a"
+		add_stability = 0.05
+		custom_effect_tooltip = SOV_restore_semibankirshina_tt
+		add_to_variable = { SOV_oligarchs_political_power_base = 0.05 }
+		add_to_variable = { SOV_oligarchs_corruption_cost_base = 0.10 }
+		set_country_flag = SOV_semibank
+		update_party_name = yes
+		create_country_leader = {
+			name = "Alexander Nevzorov"
+			picture = "aleksey_nevzorov.dds"
+			ideology = oligarchism
+			traits = { corruptible }
+			expire = "2050.1.1"
+			desc = SOV_semibankirshina_desc
+		}
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = sov_oligarchs.4.c
+		log = "[GetDateText]: [This.GetName]: sov_oligarchs.4.a"
+		add_stability = 0.05
+		custom_effect_tooltip = SOV_restore_semibankirshina_tt
+		add_to_variable = { SOV_oligarchs_political_power_base = 0.05 }
+		add_to_variable = { SOV_oligarchs_corruption_cost_base = 0.10 }
+		set_country_flag = SOV_semibank
+		update_party_name = yes
+		create_country_leader = {
+			name = "Boris Berezovsky"
+			picture = "boris_berezovskiy.dds"
+			ideology = oligarchism
+			traits = { businessman ruthless }
+			expire = "2050.1.1"
+			desc = SOV_semibankirshina_desc
+		}
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = sov_oligarchs.4.e
+		log = "[GetDateText]: [This.GetName]: sov_oligarchs.4.a"
+		add_stability = 0.05
+		custom_effect_tooltip = SOV_restore_semibankirshina_tt
+		add_to_variable = { SOV_oligarchs_political_power_base = 0.05 }
+		add_to_variable = { SOV_oligarchs_corruption_cost_base = 0.10 }
+		set_country_flag = SOV_semibank
+		update_party_name = yes
+		create_country_leader = {
+			name = "Mikhail Khodorkovsky"
+			picture = "mikhail_khodorkovskiy.dds"
+			ideology = oligarchism
+			traits = { businessman rational }
+			expire = "2050.1.1"
+			desc = SOV_semibankirshina_desc
+		}
+		ai_chance = { base = 50 }
+	}
 }
 country_event = {
 	id = sov_kasyanov.1
@@ -10916,7 +10990,7 @@ country_event = {
 			target = SOV
 			modifier = recent_actions_positive
 		}
-		remove_state_claim = 690
+		remove_state_core = 690
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -10935,7 +11009,7 @@ country_event = {
 	option = {
 		name = sov_kasyanov.3.a
 		log = "[GetDateText]: [This.GetName]: sov_kasyanov.3.a"
-		690 = {
+		1168 = {
 			transfer_state_to = JAP
 			remove_core_of = SOV
 		}
@@ -11341,4 +11415,348 @@ country_event = {
 		add_coalition_members_effect = yes
 
 }
+}
+
+country_event = {
+	id = sov_dissolution.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.1" }
+	title = sov_dissolution.1.t
+	desc = sov_dissolution.1.d
+	picture = GFX_sov_russ_dissolved
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.1.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.1.a executed"
+		set_country_flag = SOV_dissolution_flag
+		hidden_effect = {
+			# ESB cores
+			692 = { add_core_of = ESB }
+			687 = { add_core_of = ESB }
+			691 = { add_core_of = ESB }
+			1068 = { add_core_of = ESB }
+			1069 = { add_core_of = ESB }
+			1070 = { add_core_of = ESB }
+			688 = { add_core_of = ESB }
+			689 = { add_core_of = ESB }
+			690 = { add_core_of = ESB }
+			685 = { add_core_of = ESB }
+			686 = { add_core_of = ESB }
+			1136 = { add_core_of = ESB }
+			1137 = { add_core_of = ESB }
+            1168 = { add_core_of = ESB }
+			
+			# CSB cores
+			683 = { add_core_of = CSB }
+			682 = { add_core_of = CSB }
+			1011 = { add_core_of = CSB }
+			684 = { add_core_of = CSB }
+			1066 = { add_core_of = CSB }
+			681 = { add_core_of = CSB }
+			679 = { add_core_of = CSB }
+			678 = { add_core_of = CSB }
+			1067 = { add_core_of = CSB }
+			677 = { add_core_of = CSB }
+			1071 = { add_core_of = CSB }
+			676 = { add_core_of = CSB }
+			675 = { add_core_of = CSB }
+			680 = { add_core_of = CSB }
+			1064 = { add_core_of = CSB }
+			1065 = { add_core_of = CSB }
+
+			# DON cores
+			667 = { add_core_of = DON }
+			665 = { add_core_of = DON }
+			668 = { add_core_of = DON }
+			670 = { add_core_of = DON }
+			1107 = { add_core_of = DON }
+			674 = { add_core_of = DON }
+			673 = { add_core_of = DON }
+			671 = { add_core_of = DON }
+			672 = { add_core_of = DON }
+			666 = { add_core_of = DON }
+		}
+
+		ai_chance = { base = 100 }
+	}
+}
+
+# Shard reintegrated
+country_event = {
+	id = sov_dissolution.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.2" }
+	title = sov_dissolution.2.t
+	desc = sov_dissolution.2.d
+	picture = GFX_sov_russ_unified
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.2.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.2.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+# Russia asks to release a puppet
+country_event = {
+	id = sov_dissolution.3
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.3" }
+	title = sov_dissolution.3.t
+	desc = sov_dissolution.3.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+	# give money
+	option = {
+		name = sov_dissolution.3.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.3.a executed"
+
+		SOV = { country_event = { id = sov_dissolution.4 days = 1 } }
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				SOV = {
+					has_added_tension_amount > 10
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = { target = SOV value > 150 }
+			}
+		}
+	}
+
+	# ask for factories
+	option = {
+		name = sov_dissolution.3.b
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.3.b executed"
+
+		SOV = { country_event = { id = sov_dissolution.5 days = 1 } }
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				SOV = {
+					has_added_tension_amount > 10
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = { target = SOV value > 150 }
+			}
+		}
+	}
+
+	# no
+	option = {
+		name = sov_dissolution.3.c
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.3.c executed"
+
+		SOV = { country_event = { id = sov_dissolution.6 days = 1 } }
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -5
+				has_opinion = { target = SOV value > 150 }
+			}
+		}
+	}
+}
+
+# overlord asks for money
+country_event = {
+	id = sov_dissolution.4
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.4" }
+	title = sov_dissolution.4.t
+	desc = sov_dissolution.4.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.4.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.4.a executed"
+		large_expenditure = yes
+
+		FROM = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.006 }
+			modify_treasury_effect = yes
+			country_event = { id = sov_dissolution.7 days = 1 }
+		}
+
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = sov_dissolution.4.b
+		FROM = { country_event = { id = sov_dissolution.8 days = 1 } }
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.4.a executed"
+	}
+}
+
+# overlord asks factories
+country_event = {
+	id = sov_dissolution.5
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.5" }
+	title = sov_dissolution.5.t
+	desc = sov_dissolution.5.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.5.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.5.a executed"
+		random_owned_state = {
+			remove_building = {
+				type = industrial_complex
+				level = 1
+			}
+			log = "[This.GetName] Removing industry in [This.GetName], [This.GetName]"
+		}
+		random_owned_state = {
+			remove_building = {
+				type = industrial_complex
+				level = 1
+			}
+			log = "[This.GetName] Removing industry in [This.GetName], [This.GetName]"
+		}
+		random_owned_state = {
+			remove_building = {
+				type = industrial_complex
+				level = 1
+			}
+			log = "[This.GetName] Removing industry in [This.GetName], [This.GetName]"
+		}
+
+		FROM = {
+			add_offsite_building = { type = industrial_complex level = 3 }
+			country_event = { id = sov_dissolution.7 days = 1 }
+		}
+
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = sov_dissolution.4.b
+		FROM = { country_event = { id = sov_dissolution.8 days = 1 } }
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.4.a executed"
+	}
+}
+
+# overlord denies
+country_event = {
+	id = sov_dissolution.6
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.6" }
+	title = sov_dissolution.6.t
+	desc = sov_dissolution.6.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.6.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.6.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+# Russia completed the agreement
+country_event = {
+	id = sov_dissolution.7
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.7" }
+	title = sov_dissolution.7.t
+	desc = sov_dissolution.7.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.7.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.7.a executed"
+		end_puppet = SOV.reunification_puppet_target
+		clear_variable = SOV.reunification_puppet_target
+		ai_chance = { base = 100 }
+	}
+}
+
+# Russia disagreed on terms
+country_event = {
+	id = sov_dissolution.8
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.8" }
+	title = sov_dissolution.8.t
+	desc = sov_dissolution.8.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.8.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.8.a executed"
+		ai_chance = { base = 100 }
+	}
+}
+
+# 9 is free
+# Random event - extra pp required
+country_event = {
+	id = sov_dissolution.10
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.10" }
+	title = sov_dissolution.10.t
+	desc = sov_dissolution.10.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.10.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.10.a executed"
+		add_political_power = -100
+		add_to_variable = { reunification_progress = 10 }
+		custom_effect_tooltip = SOV_reunification_plus_10
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = sov_dissolution.10.b
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.10.b executed"
+		subtract_from_variable = { reunification_progress = 10 }
+		custom_effect_tooltip = SOV_reunification_minus_10
+		ai_chance = { base = 10 }
+	}
+}
+
+# Random event - money required
+country_event = {
+	id = sov_dissolution.11
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.11" }
+	title = sov_dissolution.11.t
+	desc = sov_dissolution.11.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.11.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.11.a executed"
+		medium_expenditure = yes
+		add_to_variable = { reunification_progress = 15 }
+		custom_effect_tooltip = SOV_reunification_plus_15
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = sov_dissolution.11.b
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.11.b executed"
+		subtract_from_variable = { reunification_progress = 10 }
+		custom_effect_tooltip = SOV_reunification_minus_10
+		ai_chance = { base = 10 }
+	}
+}
+
+# Random event - factory required
+country_event = {
+	id = sov_dissolution.12
+	immediate = { log = "[GetDateText]: [Root.GetName]: event sov_dissolution.12" }
+	title = sov_dissolution.12.t
+	desc = sov_dissolution.12.d
+	is_triggered_only = yes
+	option = {
+		name = sov_dissolution.12.a
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.12.a executed"
+		random_owned_state = {
+			remove_building = {
+				type = industrial_complex
+				level = 1
+			}
+			log = "[This.GetName] Removing industry in [This.GetName], [This.GetName]"
+		}
+		add_to_variable = { reunification_progress = 20 }
+		custom_effect_tooltip = SOV_reunification_plus_20
+		ai_chance = { base = 100 }
+	}
+	option = {
+		name = sov_dissolution.12.b
+		log = "[GetDateText]: [This.GetName]: sov_dissolution.12.b executed"
+		subtract_from_variable = { reunification_progress = 10 }
+		custom_effect_tooltip = SOV_reunification_minus_10
+		ai_chance = { base = 10 }
+	}
 }
