@@ -1424,6 +1424,7 @@ russian_new_states = {
 			owns_state = 1070
 			owns_state = 690
 			owns_state = 1068
+			owns_state = 1168
 			}
 		}
 		hidden_effect = {
@@ -1440,6 +1441,7 @@ russian_new_states = {
 				transfer_state = 1070
 				transfer_state = 690
 				transfer_state = 1068
+				transfer_state = 1168
 				add_state_core = 689
 				add_state_core = 687
 				add_state_core = 691
@@ -1448,6 +1450,7 @@ russian_new_states = {
 				add_state_core = 1070
 				add_state_core = 690
 				add_state_core = 1068
+				add_state_core = 1168
 			}
 	}
 	}
@@ -1886,6 +1889,7 @@ wagner_bunt_rus = {
 		recalculate_party = yes
 		country_event = subject_rus.44
 		set_cosmetic_tag = SOV_shoigu
+		update_party_name = yes
 		clr_country_flag = dynamic_flag
 		create_country_leader = {
 			name = "Sergey Shoygu"
@@ -1989,6 +1993,7 @@ wagner_bunt_rus = {
 			owns_state = 1070
 			owns_state = 690
 			owns_state = 1068
+			owns_state = 1168
 			}
 		}
 		FAR = {
@@ -2000,6 +2005,7 @@ wagner_bunt_rus = {
 			transfer_state = 1070
 			transfer_state = 690
 			transfer_state = 1068
+			transfer_state = 1168
 			add_state_core = 689
 			add_state_core = 687
 			add_state_core = 691
@@ -2008,6 +2014,7 @@ wagner_bunt_rus = {
 			add_state_core = 1070
 			add_state_core = 690
 			add_state_core = 1068
+			add_state_core = 1168
 		}
 	}
 	###########GERASIMOV###########
@@ -2881,7 +2888,6 @@ warsaw_reintegration = {
 					has_autonomy_state = autonomy_warsaw
 					has_civil_war = yes
 					has_country_flag = WP_escaped
-					has_country_flag = WP_normal_puppet
 				}
 				has_country_flag = warsaw_pact_reintegrate
 			}
@@ -2929,7 +2935,6 @@ warsaw_reintegration = {
 					has_autonomy_state = autonomy_warsaw
 					has_civil_war = yes
 					has_country_flag = WP_escaped
-					has_country_flag = WP_normal_puppet
 				}
 				has_country_flag = warsaw_pact_reintegrate
 			}
@@ -2977,7 +2982,6 @@ warsaw_reintegration = {
 					has_autonomy_state = autonomy_warsaw
 					has_civil_war = yes
 					has_country_flag = WP_escaped
-					has_country_flag = WP_normal_puppet
 				}
 				has_country_flag = warsaw_pact_reintegrate
 			}
@@ -3025,7 +3029,6 @@ warsaw_reintegration = {
 					has_autonomy_state = autonomy_warsaw
 					has_civil_war = yes
 					has_country_flag = WP_escaped
-					has_country_flag = WP_normal_puppet
 				}
 				has_country_flag = warsaw_pact_reintegrate
 			}
@@ -3072,7 +3075,6 @@ warsaw_reintegration = {
 					has_autonomy_state = autonomy_warsaw
 					has_civil_war = yes
 					has_country_flag = WP_escaped
-					has_country_flag = WP_normal_puppet
 				}
 				has_country_flag = warsaw_pact_reintegrate
 			}
@@ -3119,7 +3121,6 @@ warsaw_reintegration = {
 					has_autonomy_state = autonomy_warsaw
 					has_civil_war = yes
 					has_country_flag = WP_escaped
-					has_country_flag = WP_normal_puppet
 				}
 				has_country_flag = warsaw_pact_reintegrate
 			}
@@ -3166,7 +3167,6 @@ warsaw_reintegration = {
 					has_autonomy_state = autonomy_warsaw
 					has_civil_war = yes
 					has_country_flag = WP_escaped
-					has_country_flag = WP_normal_puppet
 				}
 				has_country_flag = warsaw_pact_reintegrate
 			}
@@ -3468,13 +3468,12 @@ smo_odessa_landing = {
 	custom_effect_tooltip = SOV_odessa_naval_tt
 	hidden_effect = {
 	SOV = {
-		transfer_state = 695
+		set_province_controller = 11670
 	}
-	random_owned_controlled_state = {
-		limit = { ROOT = { has_full_control_of_state = PREV } }
-		prioritize = { 695 }
+	695 = {
 		create_unit = {
 			division = "name = \"Special Naval Infantry Brigade\" division_template = \"Naval Infantry Brigade\" start_experience_factor = 0.1"
+			prioritize_location = 11670
 			owner = SOV
 		}
 	}
@@ -3905,11 +3904,24 @@ rus_empire_gover_change_fin = {
 		add_stability = -0.06
 
 	}
-	set_autonomy = {
-		target = FIN
-		autonomy_state = autonomy_puppet_state
-		end_wars = no
-		end_civil_wars = no
+	if = {
+		limit = {
+			has_global_flag = GAME_RULE_allow_colored_puppets
+		}
+		set_autonomy = {
+			target = FIN
+			autonomy_state = autonomy_puppet_state_colored
+			end_wars = no
+			end_civil_wars = no
+		}
+	}
+	else = {
+		set_autonomy = {
+			target = FIN
+			autonomy_state = autonomy_puppet_state
+			end_wars = no
+			end_civil_wars = no
+		}
 	}
 	set_temp_variable = { treasury_change = -12 }
 	modify_treasury_effect = yes
@@ -3933,29 +3945,35 @@ wagner_create_tank_brigade = {
 	set_temp_variable = { modify_wagnerbund = 2 }
 	modify_wagnerbund_support = yes
 	hidden_effect = {
-		division_template = {
-			name = "Wagner Tank Unit"
-			is_locked = yes
-			priority = 2
-			regiments = {
-				armor_Bat = { x = 0 y = 0 }
-				armor_Bat = { x = 0 y = 1 }
-				armor_Bat = { x = 0 y = 2 }
-				Arm_Inf_Bat = { x = 1 y = 0 }
-				Arm_Inf_Bat = { x = 1 y = 1 }
-				Arm_Inf_Bat = { x = 1 y = 2 }
-				Arm_Inf_Bat = { x = 2 y = 0 }
-				SP_Arty_Bat = { x = 2 y = 1 }
-				SP_Arty_Bat = { x = 2 y = 2 }
+		if = {
+			limit = {
+				NOT = { has_country_flag = SOV_wagner_tanki }
 			}
-			support = {
-				SP_AA_Battery = { x = 0 y = 0 }
-				armor_Recce_Comp = { x = 0 y = 1 }
-				H_Engi_Comp = { x = 0 y = 2 }
-				combat_service_support_company = { x = 0 y = 3 }
+			division_template = {
+				name = "Wagner Tank Unit"
+				is_locked = yes
+				priority = 2
+				regiments = {
+					armor_Bat = { x = 0 y = 0 }
+					armor_Bat = { x = 0 y = 1 }
+					armor_Bat = { x = 0 y = 2 }
+					Arm_Inf_Bat = { x = 1 y = 0 }
+					Arm_Inf_Bat = { x = 1 y = 1 }
+					Arm_Inf_Bat = { x = 1 y = 2 }
+					Arm_Inf_Bat = { x = 2 y = 0 }
+					SP_Arty_Bat = { x = 2 y = 1 }
+					SP_Arty_Bat = { x = 2 y = 2 }
 				}
+				support = {
+					SP_AA_Battery = { x = 0 y = 0 }
+					armor_Recce_Comp = { x = 0 y = 1 }
+					H_Engi_Comp = { x = 0 y = 2 }
+					combat_service_support_company = { x = 0 y = 3 }
+				}
+			}
 		}
-	spawn_tank_wagner = yes
+		set_country_flag = SOV_wagner_tanki
+		spawn_tank_wagner = yes
 	set_temp_variable = { modify_wagnerarmy = 1 }
 	modify_wagnerarmy_support = yes
 	wagner_bunt_check = yes
@@ -4033,24 +4051,30 @@ wagner_create_new_brigade = {
 			amount = -300
 			producer = SOV
 		}
-		division_template = {
-			name = "Wagner Heavy Mechanized Unit"
-			is_locked = yes
-			regiments = {
-				Arm_Inf_Bat = { x = 0 y = 0 }
-				Arm_Inf_Bat = { x = 0 y = 1 }
-				Arm_Inf_Bat = { x = 0 y = 2 }
-				Arm_Inf_Bat = { x = 1 y = 0 }
-				Arm_Inf_Bat = { x = 1 y = 1 }
-				Arm_Inf_Bat = { x = 1 y = 2 }
+		if = {
+			limit = {
+				NOT = { has_country_flag = SOV_wagner_mecha }
 			}
-			support = {
-				armor_Comp = { x = 0 y = 0 }
-				Arm_Recce_Comp = { x = 0 y = 1 }
-				H_Engi_Comp = { x = 0 y = 2 }
+			division_template = {
+				name = "Wagner Heavy Mechanized Unit"
+				is_locked = yes
+				regiments = {
+					Arm_Inf_Bat = { x = 0 y = 0 }
+					Arm_Inf_Bat = { x = 0 y = 1 }
+					Arm_Inf_Bat = { x = 0 y = 2 }
+					Arm_Inf_Bat = { x = 1 y = 0 }
+					Arm_Inf_Bat = { x = 1 y = 1 }
+					Arm_Inf_Bat = { x = 1 y = 2 }
+				}
+				support = {
+					armor_Comp = { x = 0 y = 0 }
+					Arm_Recce_Comp = { x = 0 y = 1 }
+					H_Engi_Comp = { x = 0 y = 2 }
+				}
+				priority = 2
 			}
-			priority = 2
 		}
+		set_country_flag = SOV_wagner_mecha
 		spawn_heavy_mech_infantry_wagner = yes
 	}
 }
