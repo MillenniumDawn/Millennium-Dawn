@@ -1,0 +1,136 @@
+on_actions = {
+
+	#For updating the UAR GDP, only do this if one has actually been formed
+	on_monthly = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						is_neo_baathist_uar = yes
+						is_baathist_uar = yes
+					}
+					NOT = { has_country_flag = united_neo_baathist_uar }
+					NOT = { has_country_flag = united_baathist_uar }
+				}
+				#Calculate the total GDP of all Arabic countries
+				set_variable = { total_arabic_gdp = 0 }
+				for_each_scope_loop = {
+					array = global.arabic_countries
+					add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
+				}
+				#Calculate the GDP of UAR and their puppets
+				set_variable = { total_uar_gdp = gdp_total }
+				for_each_scope_loop = {
+					array = ROOT.subjects
+					add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
+				}
+			}
+		}
+	}
+
+	#Show news event about war after Arab unification
+	on_declare_war = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { has_global_flag = UAR_Arab_unification_wars }
+					FROM = {
+						OR = {
+							has_country_flag = united_neo_baathist_uar
+							has_country_flag = united_baathist_uar
+						}
+					}
+					ROOT = {
+						OR = {
+							has_country_flag = formed_neo_baathist_uar
+							has_country_flag = formed_baathist_uar
+							has_country_flag = UAR_created_arab_liberation_front
+						}
+					}
+				}
+				set_global_flag = UAR_Arab_unification_wars
+				hidden_effect = { news_event = { id = UAR_news.7 } }
+			}
+		}
+	}
+
+	#If a non-united UAR is annexed, reset the situation
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					FROM = {
+						has_country_flag = formed_neo_baathist_uar
+					}
+				}
+				FROM = {
+					drop_cosmetic_tag = yes
+					clr_country_flag = formed_neo_baathist_uar
+					clr_global_flag = neo_baathist_uar_formed
+				}
+			}
+			if = {
+				limit = {
+					FROM = {
+						has_country_flag = formed_baathist_uar
+					}
+				}
+				FROM = {
+					drop_cosmetic_tag = yes
+					clr_country_flag = formed_baathist_uar
+					clr_global_flag = baathist_uar_formed
+				}
+			}
+		}
+	}
+
+	#If a non-united UAR is puppeted, reset the situation
+	on_puppet = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						has_country_flag = formed_neo_baathist_uar
+					}
+				}
+				ROOT = {
+					drop_cosmetic_tag = yes
+					clr_country_flag = formed_neo_baathist_uar
+					clr_global_flag = neo_baathist_uar_formed
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						has_country_flag = formed_baathist_uar
+					}
+				}
+				ROOT = {
+					drop_cosmetic_tag = yes
+					clr_country_flag = formed_baathist_uar
+					clr_global_flag = baathist_uar_formed
+				}
+			}
+		}
+	}
+
+	#For achievement
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = {
+					FROM = {
+						OR = {
+							has_country_flag = formed_neo_baathist_uar
+							has_country_flag = formed_baathist_uar
+							has_country_flag = united_neo_baathist_uar
+							has_country_flag = united_baathist_uar
+						}
+					}
+				}
+				ROOT = { set_country_flag = defeated_the_uar }
+			}
+		}
+	}
+
+}
