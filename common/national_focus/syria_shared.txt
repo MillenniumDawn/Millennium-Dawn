@@ -17,7 +17,7 @@ shared_focus = {
 			NOT = {
 				is_in_array = {
 					array = ruling_party
-					value = 20
+					value = 21
 				}
 			}
 		}
@@ -3902,7 +3902,7 @@ shared_focus = {
 			modifier = supports_us
 			target = IRQ
 		}
-		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_index = 21 }
 		set_temp_variable = { party_popularity_increase = 0.1 }
 		set_temp_variable = { temp_outlook_increase = 0.1 }
 		add_relative_party_popularity = yes
@@ -4094,11 +4094,14 @@ shared_focus = {
 				}
 			}
 		}
-
+		custom_trigger_tooltip = {
+			NOT = { has_global_flag = neo_baathist_uar_formed }
+			tooltip = neo_baathist_uar_not_formed_tt
+		}
 	}
 
 	bypass = {
-		EGY = { is_subject_of = ROOT }
+		is_neo_baathist_uar = yes
 	}
 
 	cancel_if_invalid = yes
@@ -4107,12 +4110,29 @@ shared_focus = {
 	search_filters = { FOCUS_FILTER_ANNEXATION }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_the_arab_union"
-		set_cosmetic_tag = UAR_2
-		clr_country_flag = dynamic_flag
-		set_country_flag = is_UAR
-		EGY = {
-			set_country_flag = always_say_yes
-			country_event = { id = md4.14 days = 2 }
+		if = {
+			limit = { NOT = { EGY = { is_subject_of = ROOT } } }
+			EGY = {
+				set_country_flag = always_say_yes
+				country_event = { id = md4.14 days = 2 }
+			}
+		}
+		set_global_flag = neo_baathist_uar_formed
+		set_country_flag = formed_neo_baathist_uar
+		set_cosmetic_tag = UAR_communism
+		custom_effect_tooltip = create_uar_effect_tt
+		custom_effect_tooltip = announce_uar_warning_tt
+		#Calculate the total GDP of all Arabic countries
+		set_variable = { total_arabic_gdp = 0 }
+		for_each_scope_loop = {
+			array = global.arabic_countries
+			add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
+		}
+		#Calculate the GDP of UAR and their puppets
+		set_variable = { total_uar_gdp = gdp_total }
+		for_each_scope_loop = {
+			array = ROOT.subjects
+			add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
 		}
 		hidden_effect = { news_event = { id = SyriaFocusNews.21 hours = 6 } }
 	}
@@ -4198,9 +4218,6 @@ shared_focus = {
 				}
 			}
 		}
-		custom_effect_tooltip = TT_SYR_INTEGRATE_THE_UNION
-		set_country_flag = leader_of_arab_union
-		set_global_flag = arab_union_formed
 	}
 }
 
