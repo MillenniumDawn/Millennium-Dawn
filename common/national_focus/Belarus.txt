@@ -1544,7 +1544,7 @@ focus_tree = {
 	focus = {
 		id = BLR_Young_Front
 		icon = blr_young_front
-		x = -1
+		x = -2
 		y = 4
 		relative_position_id = BLR_true_political_and_national_freedom
 		cost = 5
@@ -1572,12 +1572,39 @@ focus_tree = {
 			custom_effect_tooltip = BLR_belarus_nati19_tt
 		}
 	}
-
+	#Army Reform
+	focus = {
+		id = BLR_zmagar_army
+		icon = blr_zmagar_army
+		x = 0
+		y = 4
+		relative_position_id = BLR_true_political_and_national_freedom
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		available = {
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
+		prerequisite = { focus = BLR_Territorial_claims }
+		ai_will_do = {
+			factor = 155
+			modifier = {
+				factor = 50
+				has_global_flag = BLR_NATIONALIST_PATH
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus BLR_Young_Front"
+			BLR_idea_army = yes
+		}
+	}
 	#White Legion
 	focus = {
 		id = BLR_white_legion
 		icon = blr_whitelegion_case
-		x = 1
+		x = 2
 		y = 4
 		relative_position_id = BLR_true_political_and_national_freedom
 		ai_will_do = {
@@ -1610,7 +1637,7 @@ focus_tree = {
 	focus = {
 		id = BLR_south_river_battalion
 		icon = blr_south_river_battalion
-		x = 3
+		x = 4
 		y = 4
 		relative_position_id = BLR_true_political_and_national_freedom
 		ai_will_do = {
@@ -2490,6 +2517,7 @@ focus_tree = {
 		}
 		prerequisite = { focus = BLR_white_legion }
 		prerequisite = { focus = BLR_Young_Front }
+		prerequisite = { focus = BLR_zmagar_army }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_white_legion_battalion"
 			custom_effect_tooltip = BLR_white_legion_TT
@@ -2593,7 +2621,7 @@ focus_tree = {
 	#Open border
 	focus = {
 		id = BLR_open_border_with_pol
-		icon = blr_open_border_with_pol
+		icon = blr_migrant_crisis
 		x = -1
 		y = 2
 		relative_position_id = BLR_white_legion_battalion
@@ -2618,9 +2646,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_open_border_with_pol"
-			set_temp_variable = { percent_change = 9.1 }
+			set_temp_variable = { percent_change = 3.1 }
 			set_temp_variable = { tag_index = BLR }
 			set_temp_variable = { influence_target = POL }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3.1 }
+			set_temp_variable = { tag_index = POL }
+			set_temp_variable = { influence_target = BLR }
 			change_influence_percentage = yes
 			POL = {
 				add_opinion_modifier = { target = BLR modifier = recent_actions_positive }
@@ -2683,7 +2715,7 @@ focus_tree = {
 			}
 			NOT = { country_exists = SIL }
 		}
-		prerequisite = { focus = BLR_single_currency }
+		prerequisite = { focus = BLR_Asseco_Poland }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_help_silesians"
 			reverse_add_opinion_modifier = {
@@ -2705,7 +2737,7 @@ focus_tree = {
 	focus = {
 		id = BLR_Asseco_Poland
 		icon = blr_asseco_poland
-		x = -1
+		x = -2
 		y = 3
 		relative_position_id = BLR_white_legion_battalion
 		ai_will_do = {
@@ -2726,7 +2758,7 @@ focus_tree = {
 			}
 		}
 		prerequisite = { focus = BLR_open_border_with_pol }
-
+		prerequisite = { focus = BLR_training_for_pol }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Asseco_Poland"
 			one_office_construction = yes
@@ -2735,39 +2767,6 @@ focus_tree = {
 				bonus = 0.55
 				uses = 2
 				category = computing_tech
-			}
-		}
-	}
-	#Single currency
-	focus = {
-		id = BLR_single_currency
-		icon = BLR_Taler_ruble
-		x = -3
-		y = 3
-		relative_position_id = BLR_white_legion_battalion
-		ai_will_do = {
-			factor = 155
-			modifier = {
-				factor = 50
-				has_global_flag = BLR_NATIONALIST_PATH
-			}
-		}
-		cost = 5
-		available = {
-			POL = { nationalist_right_wing_populists_are_in_power = yes }
-			country_exists = POL
-			OR = {
-				nationalist_right_wing_populists_are_in_power = yes
-				nationalist_monarchists_are_in_power = yes
-			}
-		}
-
-		prerequisite = { focus = BLR_training_for_pol }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BLR_single_currency"
-			POL = {
-				country_event = { id = belarus_another.34 days = 1 }
 			}
 		}
 	}
@@ -2797,7 +2796,6 @@ focus_tree = {
 				nationalist_monarchists_are_in_power = yes
 			}
 		}
-		prerequisite = { focus = BLR_single_currency }
 		prerequisite = { focus = BLR_Asseco_Poland }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Intermarium_poland"
@@ -2830,13 +2828,15 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 				nationalist_monarchists_are_in_power = yes
 			}
+			POL = {
+				influence_higher_30 = yes
+			}
 		}
-		prerequisite = { focus = BLR_single_currency }
 		prerequisite = { focus = BLR_Asseco_Poland }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_ynia_Poland"
 			POL = {
-			country_event = { id = belarus_another.19 days = 1 }
+				country_event = { id = belarus_another.19 days = 1 }
 			}
 		}
 	}
@@ -2955,6 +2955,10 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 				nationalist_monarchists_are_in_power = yes
 			}
+			UKR = {has_idea = idea_GUAM_member_state}
+		}
+		bypass = {
+			NOT ={ UKR = {has_idea = idea_GUAM_member_state}}
 		}
 		prerequisite = { focus = BLR_Ukraine_way }
 		ai_will_do = {
@@ -3042,7 +3046,6 @@ focus_tree = {
 				set_temp_variable = { treasury_change = 2 }
 				modify_treasury_effect = yes
 			}
-
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
@@ -3137,7 +3140,7 @@ focus_tree = {
 	#Russofobia
 	focus = {
 		id = BLR_russofobia
-		icon = Zmagar_People
+		icon = antirussiaicon
 		x = 0
 		y = 5
 		relative_position_id = BLR_white_legion_battalion
@@ -3175,42 +3178,17 @@ focus_tree = {
 			}
 		}
 	}
-	#Border picture Russia
-	focus = {
-		id = BLR_border_pic_russia
-		icon = drone
-		x = -1
-		y = 6
-		relative_position_id = BLR_white_legion_battalion
-		ai_will_do = { factor = 155 }
-		cost = 1
-		prerequisite = { focus = BLR_denied_rus_language focus = BLR_russofobia }
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-		available = {
-			OR = {
-				nationalist_right_wing_populists_are_in_power = yes
-				nationalist_monarchists_are_in_power = yes
-			}
-		}
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BLR_border_pic_russia"
-			add_intel = {
-				target = SOV
-				civilian_intel = 5
-				army_intel = 15
-			}
-		}
-	}
 	#No more Russia
 	focus = {
 		id = BLR_attack_russian_bear
-		icon = war_against_russia
+		icon = blr_anti_russian
 		x = 1
-		y = 7
+		y = 6
 		relative_position_id = BLR_white_legion_battalion
 		ai_will_do = { factor = 155 }
 		cost = 4
-		prerequisite = { focus = BLR_denied_rus_language focus = BLR_border_pic_russia }
+		prerequisite = { focus = BLR_denied_rus_language }
+		prerequisite = { focus = BLR_russofobia }
 		search_filters = { FOCUS_FILTER_ANNEXATION }
 		available = {
 			OR = {
