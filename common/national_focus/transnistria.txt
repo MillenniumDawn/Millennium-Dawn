@@ -1142,7 +1142,7 @@ focus_tree = {
 	focus = {
 		id = PMR_military_reform
 		icon = pmr_nation
-		x = -1
+		x = -2
 		y = 1
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_krasno }
@@ -1176,7 +1176,7 @@ focus_tree = {
 	focus = {
 		id = PMR_russian_flag
 		icon = RUS_flag
-		x = 1
+		x = 2
 		y = 1
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_krasno }
@@ -1212,6 +1212,7 @@ focus_tree = {
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_military_reform }
 		prerequisite = { focus = PMR_russian_flag }
+		prerequisite = { focus = PMR_military_reform }
 		cost = 5
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
@@ -1243,10 +1244,10 @@ focus_tree = {
 	focus = {
 		id = PMR_soc_ref
 		icon = welfare
-		x = -1
-		y = 3
+		x = 0
+		y = 1
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_romanovs }
+		prerequisite = { focus = PMR_krasno }
 		cost = 5
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
@@ -1275,7 +1276,7 @@ focus_tree = {
 	focus = {
 		id = PMR_cis_2
 		icon = pmr_cis_2
-		x = 1
+		x = 2
 		y = 3
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_romanovs }
@@ -1344,11 +1345,10 @@ focus_tree = {
 	focus = {
 		id = PMR_deccomus
 		icon = pmr_deccomuniz
-		x = 0
-		y = 4
+		x = -2
+		y = 3
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_cis_2 }
-		prerequisite = { focus = PMR_soc_ref }
+		prerequisite = { focus = PMR_romanovs}
 		cost = 5
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
@@ -1379,7 +1379,7 @@ focus_tree = {
 		x = -2
 		y = 5
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_deccomus }
+		prerequisite = { focus = PMR_not_soviet }
 		cost = 5
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
@@ -1407,9 +1407,9 @@ focus_tree = {
 		id = PMR_orthodoxy
 		icon = orthodox_patriarh
 		x = 0
-		y = 5
+		y = 3
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_deccomus }
+		prerequisite = { focus = PMR_romanovs }
 		cost = 5
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
@@ -1443,7 +1443,7 @@ focus_tree = {
 		x = 2
 		y = 5
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_deccomus }
+		prerequisite = { focus = PMR_not_soviet }
 		cost = 5
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
@@ -1469,7 +1469,7 @@ focus_tree = {
 		id = PMR_continues
 		icon = align_to_transnistria
 		x = -2
-		y = 8
+		y = 6
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_general }
 		cost = 5
@@ -1494,7 +1494,7 @@ focus_tree = {
 		id = PMR_arms
 		icon = focus_FIN_weapon_caches
 		x = -1
-		y = 9
+		y = 7
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_continues }
 		cost = 5
@@ -1522,7 +1522,7 @@ focus_tree = {
 		id = PMR_tourism
 		icon = economic_tourism
 		x = -3
-		y = 9
+		y = 7
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_continues }
 		cost = 5
@@ -1550,7 +1550,7 @@ focus_tree = {
 		id = PMR_hate_mlv
 		icon = mol_and_tra_divide
 		x = -2
-		y = 10
+		y = 8
 		relative_position_id = PMR_krasno
 		prerequisite = { focus = PMR_tourism }
 		prerequisite = { focus = PMR_arms }
@@ -2039,19 +2039,24 @@ focus_tree = {
 			hidden_effect = { add_dynamic_modifier = { modifier = PMR_kommi_modifier } }
 			add_to_variable = { PMR_kommi_political_power_gain = 0.01 }
 			custom_effect_tooltip = PMR_kommi_start_tt
-			if = { limit = { has_idea = the_clergy }
-			swap_ideas = {
-				remove_idea = the_clergy
-				add_idea = communist_cadres
+			if = { 
+				limit = { has_idea = the_clergy }
+				swap_ideas = {
+					remove_idea = the_clergy
+					add_idea = communist_cadres
+				}
 			}
-			}
-			if = { limit = { has_idea = PMR_fragment_rus_empire }
-			remove_ideas = PMR_fragment_rus_empire
-			add_ideas = PMR_fragment_ussr
+			if = { 
+				limit = { has_idea = PMR_fragment_rus_empire }
+				remove_ideas = PMR_fragment_rus_empire
+				add_ideas = PMR_fragment_ussr
 			}
 			hidden_effect = {
-				set_cosmetic_tag = PMR_soviet
-				clr_country_flag = dynamic_flag
+				if = { 
+					limit = { NOT = {has_completed_focus = PMR_return_empire} }
+					set_cosmetic_tag = PMR_soviet
+					clr_country_flag = dynamic_flag
+				}
 			}
 		}
 		ai_will_do = {
@@ -2458,14 +2463,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_just"
-			add_political_power = 75
+			add_political_power = 100
 			hidden_effect = { add_dynamic_modifier = { modifier = PMR_just_inner_modifier } }
 			add_to_variable = { PMR_just_inner_political_power_factor = 0.03 }
 			add_to_variable = { PMR_just_inner_stability_factor = 0.02 }
 			custom_effect_tooltip = PMR_just_inner_start_tt
 			hidden_effect = {
-				set_cosmetic_tag = PMR_republic
-				clr_country_flag = dynamic_flag
+				if = { 
+					limit = { NOT = {has_completed_focus = PMR_return_empire} }
+					set_cosmetic_tag = PMR_republic
+					clr_country_flag = dynamic_flag
+				}
 			}
 		}
 		ai_will_do = {
@@ -2791,15 +2799,29 @@ focus_tree = {
 	focus = {
 		id = PMR_monarchy
 		icon = romanov_crest
-		x = 1
-		y = 19
+		x = 2
+		y = 17
 		relative_position_id = PMR_smirnov_era
 		cost = 5
+		available = {
+			NOT = { 
+				OR = {
+					has_idea = PMR_sheriff4
+					has_idea = PMR_sheriff5
+					has_idea = PMR_sheriff6
+					has_idea = PMR_sheriff7
+				}
+				is_subject = no
+			}
+		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
 		prerequisite = { focus = PMR_general }
+		prerequisite = { focus = PMR_free_internet }
+		prerequisite = { focus = PMR_lgbt }
 		mutually_exclusive = { focus = PMR_continues }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_monarchy"
+			add_ideas = PMR_rule_romanov
 			hidden_effect = {
 				set_cosmetic_tag = PMR_monarchy
 				clr_country_flag = dynamic_flag
@@ -2835,18 +2857,19 @@ focus_tree = {
 	focus = {
 		id = PMR_const
 		icon = monarchism_constitution
-		x = 0
+		x = -1
 		y = 1
 		relative_position_id = PMR_monarchy
-		cost = 5
+		cost = 3
 		available = {
+			is_subject = no
 			nationalist_monarchists_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
 		prerequisite = { focus = PMR_monarchy }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_const"
-			add_ideas = PMR_rule_romanov
+			add_political_power = 150
 			hidden_effect = {
 			create_country_leader = {
 				name = "Vadim Krasnoselskyi"
@@ -2867,15 +2890,16 @@ focus_tree = {
 	focus = {
 		id = PMR_mon_const
 		icon = Parliament_monarchism
-		x = 0
-		y = 2
+		x = 1
+		y = 1
 		relative_position_id = PMR_monarchy
 		cost = 5
 		available = {
+			is_subject = no
 			nationalist_monarchists_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
-		prerequisite = { focus = PMR_const }
+		prerequisite = { focus = PMR_monarchy }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_mon_const"
 			swap_ideas = {
@@ -2891,14 +2915,16 @@ focus_tree = {
 		id = PMR_opponents
 		icon = political_arrests
 		x = 0
-		y = 3
+		y = 2
 		relative_position_id = PMR_monarchy
 		cost = 5
 		available = {
+			is_subject = no
 			nationalist_monarchists_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
 		prerequisite = { focus = PMR_mon_const }
+		prerequisite = { focus = PMR_const }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_opponents"
 			swap_ideas = {
@@ -2916,16 +2942,16 @@ focus_tree = {
 		id = PMR_not_soviet
 		icon = pmr_empire_trans
 		x = 0
-		y = 6
+		y = 4
 		relative_position_id = PMR_krasno
 		cost = 5
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
-		prerequisite = { focus = PMR_lgbt }
+		prerequisite = { focus = PMR_deccomus }
 		prerequisite = { focus = PMR_orthodoxy }
-		prerequisite = { focus = PMR_free_internet }
+		prerequisite = { focus = PMR_cis_2 }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_not_soviet"
 			remove_ideas = PMR_fragment_ussr
@@ -2946,11 +2972,12 @@ focus_tree = {
 	focus = {
 		id = PMR_drozdov
 		icon = sov_jirik_rva
-		x = -1
-		y = 4
+		x = 0
+		y = 3
 		relative_position_id = PMR_monarchy
 		cost = 5
 		available = {
+			is_subject = no
 			nationalist_monarchists_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
@@ -2965,6 +2992,19 @@ focus_tree = {
 			modify_russians_support = yes
 			set_temp_variable = { modify_moldovans = -10 }
 			modify_moldovans_support = yes
+			hidden_effect = {
+				PMR = {
+					division_template = {
+						name = "Infantry Regiment"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+						}
+					}
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -2974,7 +3014,7 @@ focus_tree = {
 		id = PMR_general
 		icon = monarchism_absolutism
 		x = 0
-		y = 7
+		y = 5
 		relative_position_id = PMR_krasno
 		cost = 3
 		available = {
@@ -3006,10 +3046,12 @@ focus_tree = {
 		relative_position_id = PMR_monarchy
 		cost = 5
 		available = {
+			is_subject = no
+			has_manpower > 1000
 			nationalist_monarchists_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
-		prerequisite = { focus = PMR_opponents }
+		prerequisite = { focus = PMR_drozdov }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_revive"
 			set_temp_variable = { treasury_change = -2.00 }
@@ -3018,17 +3060,7 @@ focus_tree = {
 			modify_russians_support = yes
 			set_temp_variable = { modify_moldovans = -10 }
 			modify_moldovans_support = yes
-			PMR = {
-				division_template = {
-					name = "Infantry Regiment"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-					}
-				}
-			}
+			add_manpower = -1000
 			capital_scope = {
 				create_unit = {
 					division = "name = \"The Drozdov Regiment\" division_template = \"Infantry Regiment\" start_experience_factor = 0.1"
@@ -3041,6 +3073,151 @@ focus_tree = {
 			factor = 1
 		}
 	}
+	focus = {
+		id = PMR_kornilov
+		icon = pmr_kornilovci
+		x = -1
+		y = 4
+		relative_position_id = PMR_monarchy
+		cost = 5
+		available = {
+			is_subject = no
+			has_manpower > 1000
+			nationalist_monarchists_are_in_power = yes
+		}
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
+		prerequisite = { focus = PMR_drozdov }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_kornilov"
+			set_temp_variable = { treasury_change = -2.00 }
+			modify_treasury_effect = yes
+			add_manpower = -1000
+			capital_scope = {
+				create_unit = {
+					division = "name = \"The Kornilov Regiment\" division_template = \"Infantry Regiment\" start_experience_factor = 0.1"
+					owner = PMR
+					prioritize_location = 13202
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = PMR_return_empire
+		icon = Rus_wake_up
+		x = 0
+		y = 5
+		relative_position_id = PMR_monarchy
+		cost = 3
+		available = {
+			is_subject = no
+			nationalist_monarchists_are_in_power = yes
+		}
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
+		prerequisite = { focus = PMR_kornilov }
+		prerequisite = { focus = PMR_revive }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_return_empire"
+			set_cosmetic_tag = PMR_rusempire_nationalist
+			clr_country_flag = dynamic_flag
+			add_political_power = 100
+			set_temp_variable = { percent_change = 15 }
+			change_domestic_influence_percentage = yes
+			if = {
+				limit = {
+					has_completed_focus = PMR_last_piece
+				}
+				swap_ideas = {
+					remove_idea = PMR_political_nation_idea3
+					add_idea = PMR_political_nation_idea4
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = PMR_empire_aggresive_politic
+		icon = ak103
+		x = -2
+		y = 6
+		relative_position_id = PMR_monarchy
+		cost = 5
+		available = {
+			is_subject = no
+			nationalist_monarchists_are_in_power = yes
+		}
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
+		prerequisite = { focus = PMR_return_empire }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_empire_aggresive_politic"
+			add_ideas = PMR_aggresive_foreign_policy_idea
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = PMR_empire_arms
+		icon = army_military_industryy
+		x = 0
+		y = 6
+		relative_position_id = PMR_monarchy
+		cost = 5
+		available = {
+			is_subject = no
+			nationalist_monarchists_are_in_power = yes
+		}
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
+		prerequisite = { focus = PMR_return_empire }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_empire_arms"
+			one_random_fossil_fuel_powerplant = yes
+			149 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = PMR_empire_russian_army
+		icon = RUS_white_legacy
+		x = 2
+		y = 6
+		relative_position_id = PMR_monarchy
+		cost = 5
+		available = {
+			is_subject = no
+			nationalist_monarchists_are_in_power = yes
+			has_idea = PMR_new_army1
+		}
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_MONARCHY }
+		prerequisite = { focus = PMR_return_empire }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_empire_russian_army"
+			swap_ideas = {
+				remove_idea = PMR_new_army1
+				add_idea = PMR_new_army2
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
 	focus = {
 		id = PMR_vs_pmr
 		icon = pmr_soldier
@@ -3679,9 +3856,6 @@ focus_tree = {
 		available = {
 			country_exists = ROM
 		}
-		bypass = {
-			NOT = { country_exists = ROM }
-		}
 		will_lead_to_war_with = ROM
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_buharest"
@@ -3726,16 +3900,6 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -1.0 }
 			modify_treasury_effect = yes
 			add_political_power = -150
-			hidden_effect = {
-				if = {
-					limit = {
-						has_completed_focus = PMR_path
-					}
-					OPR = {
-						set_country_flag = PMR_subject_agree
-					}
-				}
-			}
 			if = {
 				limit = {
 					NOT = { country_exists = OPR }
@@ -3773,15 +3937,9 @@ focus_tree = {
 						}
 					}
 				}
-				set_autonomy = {
-					target = OPR
-					autonomy_state = autonomy_moldovian_federation
-					end_wars = no
-					end_civil_wars = no
-				}
-				}
 			}
 		}
+	}
 		ai_will_do = {
 			factor = 1
 			modifier = {
@@ -3801,9 +3959,6 @@ focus_tree = {
 		prerequisite = { focus = PMR_odessa }
 		available = {
 			country_exists = UKR
-		}
-		bypass = {
-			NOT = { country_exists = UKR }
 		}
 		will_lead_to_war_with = UKR
 		completion_reward = {
@@ -4040,14 +4195,6 @@ focus_tree = {
 			custom_effect_tooltip = PMR_federation_based_tt
 			if = {
 				limit = {
-					has_completed_focus = PMR_odessa
-				}
-				OPR = {
-					set_country_flag = PMR_subject_agree
-				}
-			}
-			if = {
-				limit = {
 					has_completed_focus = PMR_kishenev
 				}
 				GGZ = {
@@ -4086,8 +4233,13 @@ focus_tree = {
 		prerequisite = { focus = PMR_political }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_true"
-			set_cosmetic_tag = PMR_Moldova
-			clr_country_flag = dynamic_flag
+			hidden_effect = {
+				if = { 
+					limit = { NOT = {has_completed_focus = PMR_return_empire} }
+					set_cosmetic_tag = PMR_Moldova
+					clr_country_flag = dynamic_flag
+				}
+			}
 			set_capital = { state = 147 }
 			remove_ideas = Lacks_International_Recognition
 		}
@@ -4183,6 +4335,7 @@ focus_tree = {
 				is_subject = no
 			}
 			country_exists = SOV
+			NOT = {has_completed_focus = PMR_return_empire}
 		}
 		bypass = {
 			NOT = { country_exists = SOV }
@@ -4233,6 +4386,7 @@ focus_tree = {
 				is_subject = no
 			}
 			country_exists = SOV
+			NOT = {has_completed_focus = PMR_return_empire}
 		}
 		bypass = {
 			NOT = { country_exists = SOV }
@@ -4286,6 +4440,7 @@ focus_tree = {
 				is_subject = no
 			}
 			country_exists = SOV
+			NOT = {has_completed_focus = PMR_return_empire}
 		}
 		bypass = {
 			NOT = { country_exists = SOV }
@@ -4345,6 +4500,7 @@ focus_tree = {
 				is_subject = no
 			}
 			country_exists = SOV
+			NOT = {has_completed_focus = PMR_return_empire}
 		}
 		bypass = {
 			NOT = { country_exists = SOV }
