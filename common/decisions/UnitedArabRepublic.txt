@@ -1,0 +1,1879 @@
+form_UAR_category = {
+	UAR_announce_neo_baathist_uar = {
+		icon = GFX_decision_arab_federation_announce_button
+		cost = 200
+
+		visible = {
+			NOT = { has_global_flag = neo_baathist_uar_formed }
+			NOT = {
+				is_baathist_uar = yes
+			}
+			is_subject = no
+			NOT = { has_global_flag = neo_baathist_uar_united }
+			NOT = { has_global_flag = baathist_uar_united }
+		}
+
+		available = {
+			emerging_autocracy_are_in_power = yes
+			OR = {
+				has_idea = regional_power
+				has_idea = large_power
+				has_idea = great_power
+				has_idea = superpower
+			}
+			custom_trigger_tooltip = {
+				NOT = { has_global_flag = neo_baathist_uar_formed }
+				tooltip = neo_baathist_uar_not_formed_tt
+			}
+			if = {
+				limit = { original_tag = EGY }
+				has_completed_focus = EGY_pan_arab_effort
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_announce_neo_baathist_uar"
+			set_global_flag = neo_baathist_uar_formed
+			set_country_flag = formed_neo_baathist_uar
+			set_cosmetic_tag = UAR_communism
+			custom_effect_tooltip = create_uar_effect_tt
+			custom_effect_tooltip = announce_uar_warning_tt
+			#Calculate the total GDP of all Arabic countries
+			set_variable = { total_arabic_gdp = 0 }
+			for_each_scope_loop = {
+				array = global.arabic_countries
+				add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
+			}
+			#Calculate the GDP of UAR and their puppets
+			set_variable = { total_uar_gdp = gdp_total }
+			for_each_scope_loop = {
+				array = ROOT.subjects
+				add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
+			}
+			hidden_effect = { news_event = { id = UAR_news.1 hours = 6 } }
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+
+	}
+	UAR_announce_baathist_uar = {
+		icon = GFX_decision_arab_federation_nationalist_announce_button
+		cost = 200
+
+		visible = {
+			NOT = { has_global_flag = baathist_uar_formed }
+			NOT = {
+				is_neo_baathist_uar = yes
+			}
+			is_subject = no
+			NOT = { has_global_flag = neo_baathist_uar_united }
+			NOT = { has_global_flag = baathist_uar_united }
+		}
+
+		available = {
+			nationalist_fascist_are_in_power = yes
+			OR = {
+				has_idea = regional_power
+				has_idea = large_power
+				has_idea = great_power
+				has_idea = superpower
+			}
+			custom_trigger_tooltip = {
+				NOT = { has_global_flag = baathist_uar_formed }
+				tooltip = baathist_uar_not_formed_tt
+			}
+			if = {
+				limit = { original_tag = EGY }
+				has_completed_focus = EGY_pan_arab_effort
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_announce_baathist_uar"
+			set_global_flag = baathist_uar_formed
+			set_country_flag = formed_baathist_uar
+			set_cosmetic_tag = UAR_nationalist
+			custom_effect_tooltip = create_uar_effect_tt
+			custom_effect_tooltip = announce_uar_warning_tt
+			#Calculate the total GDP of all Arabic countries
+			set_variable = { total_arabic_gdp = 0 }
+			for_each_scope_loop = {
+				array = global.arabic_countries
+				add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
+			}
+			#Calculate the GDP of UAR and their puppets
+			set_variable = { total_uar_gdp = gdp_total }
+			for_each_scope_loop = {
+				array = ROOT.subjects
+				add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
+			}
+			hidden_effect = { news_event = { id = UAR_news.1 hours = 6 } }
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+
+	}
+	UAR_invite_country_neo_baathist_uar = {
+		icon = GFX_decision_invite_to_federation_button
+		cost = 100
+
+		target_array = global.arabic_countries
+
+		visible = {
+			is_neo_baathist_uar = yes
+		}
+
+		target_trigger = {
+			FROM = { is_subject = no }
+			FROM = { NOT = { is_baathist_uar = yes } }
+			FROM = { exists = yes }
+		}
+
+		days_re_enable = 365
+
+		available = {
+			FROM = { nationalist_fascist_are_not_in_power = yes }
+			FROM = {
+				OR = {
+					emerging_autocracy_are_in_power = yes
+					AND = {
+						has_government = communism
+						influence_higher_30 = yes
+					}
+					AND = {
+						has_government = neutrality
+						influence_higher_50 = yes
+					}
+					AND = {
+						has_government = nationalist
+						influence_higher_60 = yes
+					}
+					AND = {
+						has_government = democratic
+						influence_higher_70 = yes
+					}
+				}
+			}
+			FROM = { has_war = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_invite_country_neo_baathist_uar"
+			custom_effect_tooltip = UAR_invite_country_to_uar_tt
+			FROM = { country_event = UAR.1 }
+			custom_effect_tooltip = UAR_invite_country_tt
+			effect_tooltip = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = united_neo_baathist_uar
+							has_country_flag = united_baathist_uar
+						}
+					}
+					ROOT = {
+						set_autonomy = {
+							target = FROM
+							autonomy_state = autonomy_uar_regional_command
+						}
+					}
+				}
+				else = {
+					ROOT = {
+						set_autonomy = {
+							target = FROM
+							autonomy_state = autonomy_uar_state
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+
+	}
+	UAR_invite_country_baathist_uar = {
+		icon = GFX_decision_invite_to_federation_button
+		cost = 100
+
+		target_array = global.arabic_countries
+
+		visible = {
+			is_baathist_uar = yes
+		}
+
+		target_trigger = {
+			FROM = { is_subject = no }
+			FROM = { NOT = { is_neo_baathist_uar = yes } }
+			FROM = { exists = yes }
+		}
+
+		days_re_enable = 365
+
+		available = {
+			FROM = { emerging_autocracy_are_not_in_power = yes }
+			FROM = {
+				OR = {
+					nationalist_fascist_are_in_power = yes
+					AND = {
+						has_government = nationalist
+						influence_higher_30 = yes
+					}
+					AND = {
+						has_government = neutrality
+						influence_higher_50 = yes
+					}
+					AND = {
+						has_government = communism
+						influence_higher_60 = yes
+					}
+					AND = {
+						has_government = democratic
+						influence_higher_70 = yes
+					}
+				}
+			}
+			FROM = { has_war = no }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_invite_country_baathist_uar"
+			custom_effect_tooltip = UAR_invite_country_to_uar_tt
+			FROM = { country_event = UAR.1 }
+			custom_effect_tooltip = UAR_invite_country_tt
+			effect_tooltip = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = united_neo_baathist_uar
+							has_country_flag = united_baathist_uar
+						}
+					}
+					ROOT = {
+						set_autonomy = {
+							target = FROM
+							autonomy_state = autonomy_uar_regional_command
+						}
+					}
+				}
+				else = {
+					ROOT = {
+						set_autonomy = {
+							target = FROM
+							autonomy_state = autonomy_uar_state
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+
+	}
+	UAR_country_leaves_neo_baathist_uar = {
+		icon = GFX_decision_generic_independence
+
+		target_array = global.arabic_countries
+
+		target_trigger = {
+			FROM = { is_subject_of = ROOT }
+			FROM = { has_autonomy_state = autonomy_uar_state }
+			FROM = { OVERLORD = { has_country_flag = formed_neo_baathist_uar } }
+			OR = {
+				FROM = { nationalist_fascist_are_in_power = yes }
+				FROM = {
+					NOT = {
+						emerging_autocracy_are_in_power = yes
+						AND = {
+							has_government = communism
+							influence_higher_20 = yes
+						}
+						AND = {
+							has_government = neutrality
+							influence_higher_40 = yes
+						}
+						AND = {
+							has_government = nationalist
+							influence_higher_50 = yes
+						}
+						AND = {
+							has_government = democratic
+							influence_higher_60 = yes
+						}
+					}
+				}
+			}
+			FROM = { exists = yes }
+		}
+
+		activation = {
+			FROM = { has_autonomy_state = autonomy_uar_state }
+		}
+
+		days_mission_timeout = 180
+
+		is_good = no
+
+		available = {
+			OR = {
+				FROM = { NOT = { has_autonomy_state = autonomy_uar_state } }
+				AND = {
+					FROM = { nationalist_fascist_are_not_in_power = yes }
+					FROM = {
+						OR = {
+							emerging_autocracy_are_in_power = yes
+							AND = {
+								has_government = communism
+								influence_higher_30 = yes
+							}
+							AND = {
+								has_government = neutrality
+								influence_higher_50 = yes
+							}
+							AND = {
+								has_government = nationalist
+								influence_higher_60 = yes
+							}
+							AND = {
+								has_government = democratic
+								influence_higher_70 = yes
+							}
+						}
+					}
+				}
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UAR_country_leaves_neo_baathist_uar"
+			set_autonomy = {
+				target = FROM
+				autonomous_state = autonomy_free
+				end_wars = no
+			}
+			hidden_effect = { news_event = { id = UAR_news.3 hours = 6 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_country_leaves_neo_baathist_uar"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = FROM }
+			change_influence_percentage = yes
+		}
+
+	}
+	UAR_country_leaves_baathist_uar = {
+		icon = GFX_decision_generic_independence
+
+		target_array = global.arabic_countries
+
+		target_trigger = {
+			FROM = { is_subject_of = ROOT }
+			FROM = { has_autonomy_state = autonomy_uar_state }
+			FROM = { OVERLORD = { has_country_flag = formed_baathist_uar } }
+			OR = {
+				FROM = { emerging_autocracy_are_in_power = yes }
+				FROM = {
+					NOT = {
+						nationalist_fascist_are_in_power = yes
+						AND = {
+							has_government = nationalist
+							influence_higher_20 = yes
+						}
+						AND = {
+							has_government = neutrality
+							influence_higher_40 = yes
+						}
+						AND = {
+							has_government = communism
+							influence_higher_50 = yes
+						}
+						AND = {
+							has_government = democratic
+							influence_higher_60 = yes
+						}
+					}
+				}
+			}
+			FROM = { exists = yes }
+		}
+
+		activation = {
+			FROM = { has_autonomy_state = autonomy_uar_state }
+		}
+
+		days_mission_timeout = 180
+
+		is_good = no
+
+		available = {
+			OR = {
+				FROM = { NOT = { has_autonomy_state = autonomy_uar_state } }
+				AND = {
+					FROM = { emerging_autocracy_are_not_in_power = yes }
+					FROM = {
+						OR = {
+							nationalist_fascist_are_in_power = yes
+							AND = {
+								has_government = nationalist
+								influence_higher_30 = yes
+							}
+							AND = {
+								has_government = neutrality
+								influence_higher_50 = yes
+							}
+							AND = {
+								has_government = communism
+								influence_higher_60 = yes
+							}
+							AND = {
+								has_government = democratic
+								influence_higher_70 = yes
+							}
+						}
+					}
+				}
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UAR_country_leaves_baathist_uar"
+			set_autonomy = {
+				target = FROM
+				autonomous_state = autonomy_free
+				end_wars = no
+			}
+			hidden_effect = { news_event = { id = UAR_news.3 hours = 6 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_country_leaves_baathist_uar"
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = FROM }
+			change_influence_percentage = yes
+		}
+
+	}
+	UAR_neo_baathist_uar_falls_apart = {
+		icon = GFX_decision_fire
+
+		activation = {
+			has_country_flag = formed_neo_baathist_uar
+			emerging_autocracy_are_not_in_power = yes
+			NOT = { has_country_flag = united_neo_baathist_uar }
+		}
+
+		days_mission_timeout = 180
+
+		is_good = no
+
+		available = {
+			emerging_autocracy_are_in_power = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UAR_neo_baathist_uar_falls_apart"
+			drop_cosmetic_tag = yes
+			clr_country_flag = formed_neo_baathist_uar
+			clr_global_Flag = neo_baathist_uar_formed
+			every_country = {
+				limit = {
+					is_subject_of = ROOT
+					OR = {
+						has_autonomy_state = autonomy_uar_state
+						has_autonomy_state = autonomy_uar_province
+						has_autonomy_state = autonomy_uar_regional_command
+					}
+				}
+				ROOT = {
+					set_autonomy = {
+						target = PREV
+						autonomous_state = autonomy_free
+						end_wars = no
+					}
+				}
+			}
+			hidden_effect = { news_event = { id = UAR_news.4 hours = 6 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_neo_baathist_uar_falls_apart"
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+	}
+	UAR_baathist_uar_falls_apart = {
+		icon = GFX_decision_fire
+
+		activation = {
+			has_country_flag = formed_baathist_uar
+			nationalist_fascist_are_not_in_power = yes
+			NOT = { has_country_flag = united_baathist_uar }
+		}
+
+		days_mission_timeout = 180
+
+		is_good = no
+
+		available = {
+			nationalist_fascist_are_in_power = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UAR_baathist_uar_falls_apart"
+			drop_cosmetic_tag = yes
+			clr_country_flag = formed_baathist_uar
+			clr_global_Flag = baathist_uar_formed
+			every_country = {
+				limit = {
+					is_subject_of = ROOT
+					OR = {
+						has_autonomy_state = autonomy_uar_state
+						has_autonomy_state = autonomy_uar_province
+						has_autonomy_state = autonomy_uar_regional_command
+					}
+				}
+				ROOT = {
+					set_autonomy = {
+						target = PREV
+						autonomous_state = autonomy_free
+						end_wars = no
+					}
+				}
+			}
+			hidden_effect = { news_event = { id = UAR_news.4 hours = 6 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_baathist_uar_falls_apart"
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+	}
+	UAR_campaign_for_arab_unity = {
+		icon = GFX_decision_propaganda
+
+		target_array = global.arabic_countries
+
+		visible = {
+			OR = {
+				is_neo_baathist_uar = yes
+				is_baathist_uar = yes
+			}
+		}
+
+		target_trigger = {
+			FROM = { is_subject_of = ROOT }
+		}
+
+		available = {
+		}
+
+		days_remove = 90
+
+		modifier = {
+			political_power_factor = -0.10
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_campaign_for_arab_unity"
+			set_temp_variable = { treasury_change = FROM.gdp_total }
+			multiply_temp_variable = { treasury_change = -0.25 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_campaign_for_arab_unity"
+			FROM = {
+				add_autonomy_score = {
+					value = -200
+					localization = UAR_campaign_for_arab_unity_tt
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_decision = UAR_campaign_for_arab_unity
+			}
+			modifier = {
+				factor = 0.5
+				FROM = { has_autonomy_state = autonomy_uar_province }
+			}
+			modifier = {
+				factor = 0.25
+				FROM = { has_autonomy_state = autonomy_uar_regional_command }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.7 }
+			}
+		}
+
+	}
+	UAR_unite_neo_baathist_uar = {
+		icon = GFX_decision_create_federation_button
+		cost = 100
+
+		fire_only_once = yes
+
+		visible = {
+			is_neo_baathist_uar = yes
+		}
+
+		available = {
+			set_temp_variable = { gdp_share = total_uar_gdp }
+			divide_temp_variable = { gdp_share = total_arabic_gdp }
+			custom_trigger_tooltip = {
+				tooltip = UAR_unite_uar_tt
+				check_variable = { gdp_share > 0.40 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_unite_neo_baathist_uar"
+			custom_effect_tooltip = UAR_unite_neo_baathist_uar_tt
+			set_global_flag = neo_baathist_uar_united
+			set_country_flag = united_neo_baathist_uar
+			clr_country_flag = formed_neo_baathist_uar
+			every_country = {
+				limit = {
+					is_subject_of = ROOT
+					is_arabic_nation = yes
+				}
+				every_owned_state = {
+					limit = {
+						is_core_of = THIS
+					}
+					add_core_of = ROOT
+				}
+				ROOT = {
+					annex_country = {
+						target = PREV
+						transfer_troops = yes
+					}
+				}
+			}
+			random_country = {
+				limit = {
+					is_arabic_nation = yes
+					has_country_flag = formed_baathist_uar
+				}
+				country_event = { id = UAR.7 hours = 6 }
+				effect_tooltip = {
+					create_wargoal = {
+						target = ROOT
+						type = annex_everything
+					}
+				}
+				ROOT = {
+					create_wargoal = {
+						target = PREV
+						type = annex_everything
+					}
+				}
+			}
+			every_country = {
+				limit = {
+					is_arabic_nation = yes
+					NOT = { has_country_flag = formed_neo_baathist_uar }
+					NOT = { has_country_flag = united_neo_baathist_uar }
+					NOT = { has_country_flag = formed_baathist_uar }
+					OR = {
+						has_idea = regional_power
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+				}
+				country_event = { id = UAR.4 hours = 6 }
+				custom_effect_tooltip = UAR_unite_neo_baathist_uar_coalition_tt
+			}
+			hidden_effect = { news_event = { id = UAR_news.5 hours = 6 } }
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+
+	}
+	UAR_unite_baathist_uar = {
+		icon = GFX_decision_create_federation_button
+		cost = 100
+
+		fire_only_once = yes
+
+		visible = {
+			is_baathist_uar = yes
+		}
+
+		available = {
+			set_temp_variable = { gdp_share = total_uar_gdp }
+			divide_temp_variable = { gdp_share = total_arabic_gdp }
+			custom_trigger_tooltip = {
+				tooltip = UAR_unite_uar_tt
+				check_variable = { gdp_share > 0.40 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_unite_baathist_uar"
+			custom_effect_tooltip = UAR_unite_neo_baathist_uar_tt
+			set_global_flag = baathist_uar_united
+			set_country_flag = united_baathist_uar
+			clr_country_flag = formed_baathist_uar
+			every_country = {
+				limit = {
+					is_subject_of = ROOT
+					is_arabic_nation = yes
+				}
+				every_owned_state = {
+					limit = {
+						is_core_of = THIS
+					}
+					add_core_of = ROOT
+				}
+				ROOT = {
+					annex_country = {
+						target = PREV
+						transfer_troops = yes
+					}
+				}
+			}
+			random_country = {
+				limit = {
+					is_arabic_nation = yes
+					has_country_flag = formed_neo_baathist_uar
+				}
+				country_event = { id = UAR.7 hours = 6 }
+				effect_tooltip = {
+					create_wargoal = {
+						target = ROOT
+						type = annex_everything
+					}
+				}
+				ROOT = {
+					create_wargoal = {
+						target = PREV
+						type = annex_everything
+					}
+				}
+			}
+			every_country = {
+				limit = {
+					is_arabic_nation = yes
+					NOT = { has_country_flag = formed_neo_baathist_uar }
+					NOT = { has_country_flag = formed_baathist_uar }
+					NOT = { has_country_flag = united_baathist_uar }
+					OR = {
+						has_idea = regional_power
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+				}
+				country_event = { id = UAR.4 hours = 6 }
+				custom_effect_tooltip = UAR_unite_neo_baathist_uar_coalition_tt
+			}
+			hidden_effect = { news_event = { id = UAR_news.5 hours = 6 } }
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+
+	}
+
+	### Integration decisions in case a formed UAR annexes a country
+	#Integration duration 10 d per 1 million people
+	#Integration PP cost 5 PP per 1 million people
+	#Integration money cost 2 billion per 1 million people
+	#Based on starting population
+
+	#Mauritania, 2.64 million
+	UAR_integrate_MAU = {
+
+		icon = GFX_decision_infiltrate_state
+		cost = 15
+		days_remove = 30
+
+		visible = {
+			NOT = { country_exists = MAU }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = MAU
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_MAU"
+			set_temp_variable = { treasury_change = -11 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_MAU"
+			every_state = {
+				limit = { is_core_of = MAU }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Morocco, 28.73 million
+	UAR_integrate_MOR = {
+		icon = GFX_decision_infiltrate_state
+		cost = 145
+		days_remove = 290
+
+		visible = {
+			NOT = { country_exists = MOR }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = MOR
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_MOR"
+			set_temp_variable = { treasury_change = -115 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_MOR"
+			every_state = {
+				limit = { is_core_of = MOR }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Sahrawi, 0.52 million
+	UAR_integrate_SHA = {
+		icon = GFX_decision_infiltrate_state
+		cost = 5
+		days_remove = 5
+
+		visible = {
+			NOT = { country_exists = SHA }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = SHA
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_SHA"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_SHA"
+			every_state = {
+				limit = { is_core_of = SHA }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Algeria, 30.57 million
+	UAR_integrate_ALG = {
+		icon = GFX_decision_infiltrate_state
+		cost = 155
+		days_remove = 305
+
+		visible = {
+			NOT = { country_exists = ALG }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = ALG
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_ALG"
+			set_temp_variable = { treasury_change = -122 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_ALG"
+			every_state = {
+				limit = { is_core_of = ALG }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Tunisia, 9.56 million
+	UAR_integrate_TUN = {
+		icon = GFX_decision_infiltrate_state
+		cost = 50
+		days_remove = 95
+
+		visible = {
+			NOT = { country_exists = TUN }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = TUN
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_TUN"
+			set_temp_variable = { treasury_change = -38 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_TUN"
+			every_state = {
+				limit = { is_core_of = TUN }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Libya, 5.15 million
+	UAR_integrate_LBA = {
+		icon = GFX_decision_infiltrate_state
+		cost = 30
+		days_remove = 55
+
+		visible = {
+			NOT = { country_exists = LBA }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = LBA
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_LBA"
+			set_temp_variable = { treasury_change = -21 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_LBA"
+			every_state = {
+				limit = { is_core_of = LBA }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Egypt, 67.71 million
+	UAR_integrate_EGY = {
+		icon = GFX_decision_infiltrate_state
+		cost = 340
+		days_remove = 680
+
+		visible = {
+			NOT = { country_exists = EGY }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = EGY
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_EGY"
+			set_temp_variable = { treasury_change = -270 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_EGY"
+			every_state = {
+				limit = { is_core_of = EGY }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Sudan, 19.59 million
+	UAR_integrate_SUD = {
+		icon = GFX_decision_infiltrate_state
+		cost = 100
+		days_remove = 195
+
+		visible = {
+			NOT = { country_exists = SUD }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = SUD
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_SUD"
+			set_temp_variable = { treasury_change = -78 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_SUD"
+			every_state = {
+				limit = { is_core_of = SUD }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Palestine (incl. Israel), 9.89 million
+	UAR_integrate_PAL = {
+		icon = GFX_decision_infiltrate_state
+		cost = 50
+		days_remove = 100
+
+		visible = {
+			NOT = { country_exists = PAL }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = PAL
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_PAL"
+			set_temp_variable = { treasury_change = -39 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_PAL"
+			every_state = {
+				limit = { is_core_of = PAL }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Jordan, 4.80 million
+	UAR_integrate_JOR = {
+		icon = GFX_decision_infiltrate_state
+		cost = 25
+		days_remove = 50
+
+		visible = {
+			NOT = { country_exists = JOR }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = JOR
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_JOR"
+			set_temp_variable = { treasury_change = -19 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_JOR"
+			every_state = {
+				limit = { is_core_of = JOR }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Lebanon, 3.74 million
+	UAR_integrate_LEB = {
+		icon = GFX_decision_infiltrate_state
+		cost = 20
+		days_remove = 40
+
+		visible = {
+			NOT = { country_exists = LEB }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = LEB
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_LEB"
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_LEB"
+			every_state = {
+				limit = { is_core_of = LEB }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Syria, 16.01 million
+	UAR_integrate_SYR = {
+		icon = GFX_decision_infiltrate_state
+		cost = 80
+		days_remove = 160
+
+		visible = {
+			NOT = { country_exists = SYR }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = SYR
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_SYR"
+			set_temp_variable = { treasury_change = -64 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_SYR"
+			every_state = {
+				limit = { is_core_of = SYR }
+				add_core_of = ROOT
+			}
+		}
+	}
+
+	#Iraq, 26.14 million
+	UAR_integrate_IRQ = {
+		icon = GFX_decision_infiltrate_state
+		cost = 130
+		days_remove = 260
+
+		visible = {
+			NOT = { country_exists = IRQ }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = IRQ
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_IRQ"
+			set_temp_variable = { treasury_change = -104 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_IRQ"
+			every_state = {
+				limit = { is_core_of = IRQ }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Kuwait, 1.94 million
+	UAR_integrate_KUW = {
+		icon = GFX_decision_infiltrate_state
+		cost = 10
+		days_remove = 20
+
+		visible = {
+			NOT = { country_exists = KUW }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = KUW
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_KUW"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_KUW"
+			every_state = {
+				limit = { is_core_of = KUW }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Saudi Arabia, 20.26 million
+	UAR_integrate_SAU = {
+		icon = GFX_decision_infiltrate_state
+		cost = 105
+		days_remove = 205
+
+		visible = {
+			NOT = { country_exists = SAU }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = SAU
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_SAU"
+			set_temp_variable = { treasury_change = -81 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_SAU"
+			every_state = {
+				limit = { is_core_of = SAU }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Bahrain, 0.6 million
+	UAR_integrate_BHR = {
+		icon = GFX_decision_infiltrate_state
+		cost = 5
+		days_remove = 10
+
+		visible = {
+			NOT = { country_exists = BHR }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = BHR
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_BHR"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_BHR"
+			every_state = {
+				limit = { is_core_of = BHR }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Qatar, 0.6 million
+	UAR_integrate_QAT = {
+		icon = GFX_decision_infiltrate_state
+		cost = 5
+		days_remove = 10
+
+		visible = {
+			NOT = { country_exists = QAT }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = QAT
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_QAT"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_QAT"
+			every_state = {
+				limit = { is_core_of = QAT }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#UAE, 3.4 million
+	UAR_integrate_UAE = {
+		icon = GFX_decision_infiltrate_state
+		cost = 20
+		days_remove = 35
+
+		visible = {
+			NOT = { country_exists = UAE }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = UAE
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_UAE"
+			set_temp_variable = { treasury_change = -14 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_UAE"
+			every_state = {
+				limit = { is_core_of = UAE }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Oman, 2.26 million
+	UAR_integrate_OMA = {
+		icon = GFX_decision_infiltrate_state
+		cost = 15
+		days_remove = 25
+
+		visible = {
+			NOT = { country_exists = OMA }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = OMA
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_OMA"
+			set_temp_variable = { treasury_change = -9 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_OMA"
+			every_state = {
+				limit = { is_core_of = OMA }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+	#Yemen, 19.23 million
+	UAR_integrate_YEM = {
+		icon = GFX_decision_infiltrate_state
+		cost = 100
+		days_remove = 195
+
+		visible = {
+			NOT = { country_exists = YEM }
+			OR = {
+				has_country_flag = formed_neo_baathist_uar
+				has_country_flag = formed_baathist_uar
+				has_country_flag = united_neo_baathist_uar
+				has_country_flag = united_baathist_uar
+			}
+			any_owned_state = {
+				is_core_of = YEM
+				NOT = { is_core_of = ROOT }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = united_uar_for_coring_tt
+				OR = {
+					has_country_flag = united_neo_baathist_uar
+					has_country_flag = united_baathist_uar
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_integrate_YEM"
+			set_temp_variable = { treasury_change = -77 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UAR_integrate_YEM"
+			every_state = {
+				limit = { is_core_of = YEM }
+				add_core_of = ROOT
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.8 }
+			}
+		}
+	}
+
+}
