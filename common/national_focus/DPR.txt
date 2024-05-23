@@ -8,14 +8,23 @@ focus_tree = {
 			original_tag = DPR
 		}
 	}
-	 continuous_focus_position = { x = 3000 y = 1100 }
-
+	continuous_focus_position = { x = 3000 y = 1100 }
 	focus = {
 		id = DPR_start
 		icon = sov_novorossia_bunt
 		x = 20
 		y = 0
 		cost = 0.1
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_start"
@@ -28,107 +37,23 @@ focus_tree = {
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
-		id = DPR_economic_integrate
-		icon = BRA_mensalao_new
-		x = -5
-		y = 9
-		available = {
-			country_exists = LPR
-		}
-		prerequisite = {
-			focus = DPR_lnr_friend
-		}
-		relative_position_id = DPR_start
-		cost = 7
-		search_filters = {  FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_economic_integrate"
-			set_temp_variable = { tag_index = DPR }
-			set_temp_variable = { influence_target = LPR }
-			set_temp_variable = { percent_change = 5.5 }
-			change_influence_percentage = yes
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.08
-			}
-
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_politic_integrate
-		icon = meeting
-		x = -3
-		y = 9
-		available = {
-			country_exists = LPR
-		}
-		prerequisite = {
-			focus = DPR_lnr_friend
-		}
-		relative_position_id = DPR_start
-		cost = 7
-		search_filters = {  FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_politic_integrate"
-			set_temp_variable = { tag_index = DPR }
-			set_temp_variable = { influence_target = LPR }
-			set_temp_variable = { percent_change = 4.5 }
-			change_influence_percentage = yes
-			add_political_power = 100
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.09
-			}
-
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_law_integrate
-		icon = pass_legislation
-		x = -4
-		y = 10
-		available = {
-			country_exists = LPR
-		}
-		prerequisite = {
-			focus = DPR_economic_integrate
-		}
-		prerequisite = {
-			focus = DPR_politic_integrate
-		}
-		relative_position_id = DPR_start
-		cost = 7
-		search_filters = {  FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_law_integrate"
-			set_temp_variable = { tag_index = DPR }
-			set_temp_variable = { influence_target = LPR }
-			set_temp_variable = { percent_change = 7.5 }
-			change_influence_percentage = yes
-			add_stability = -0.1
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.05
-			}
-
-		}
-		ai_will_do = { factor = 20 }
-	}
-
-	focus = {
 		id = DPR_vstavai_dombass
 		icon = dpr_vstavai
 		x = 0
 		y = 1
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
-		cost = 7
+		prerequisite = { focus = DPR_start }
+		cost = 1
 		search_filters = { FOCUS_FILTER_POLITICAL  FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_MANPOWER }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_vstavai_dombass"
@@ -136,21 +61,266 @@ focus_tree = {
 			add_ideas = DPR_vstaia_donbass
 			add_war_support = 0.05
 			add_manpower = 750
-
-
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
-		id = DPR_reform_army
-		icon = dpr_vs
-		x = -6
-		y = 2
+		id = DPR_create_nov
+		icon = align_to_novorossiya
+		x = 7
+		y = 1
 		relative_position_id = DPR_start
 		prerequisite = {
-			focus = DPR_vstavai_dombass
+			focus = DPR_start
 		}
-		cost = 10
+		available = {
+			country_exists = LPR
+			LPR = { is_subject = no }
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		bypass = {
+			has_idea = NOV_novorossia
+		}
+		cost = 1
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_create_nov"
+			LPR = { 
+				add_ideas = NOV_novorossia
+				country_event = dpr.7 
+			}
+			add_ideas = NOV_novorossia
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_army
+		icon = NOV_army
+		x = 7
+		y = 2
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_create_nov }
+		available = {
+			country_exists = LPR
+			LPR = { is_subject = no }
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		bypass = {
+			has_idea = NOV_novorossia1
+		}
+		cost = 1
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_army"
+			give_military_access = LPR
+			swap_ideas = {
+				remove_idea = NOV_novorossia
+				add_idea = NOV_novorossia1
+			}
+			LPR = {
+				swap_ideas = {
+					remove_idea = NOV_novorossia
+					add_idea = NOV_novorossia1
+				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = LPR }
+				set_temp_variable = { influence_target = DPR }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = DPR }
+			set_temp_variable = { influence_target = LPR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_propaganda
+		icon = NOV_propaganda
+		x = 6
+		y = 3
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_nov_army }
+		available = {
+			country_exists = LPR
+			LPR = { is_subject = no }
+			LPR = {	influence_higher_30 = yes }
+		}
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_propaganda"
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = DPR }
+			set_temp_variable = { influence_target = LPR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_economic
+		icon = NOV_economic
+		x = 6
+		y = 4
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_nov_propaganda }
+		available = {
+			country_exists = LPR
+			LPR = { is_subject = no }
+			LPR = {	influence_higher_50 = yes }
+		}
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_economic"
+			set_temp_variable = { percent_change = 15 }
+			set_temp_variable = { tag_index = DPR }
+			set_temp_variable = { influence_target = LPR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_zavods
+		icon = NOV_zavods
+		x = 8
+		y = 3
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_nov_army }
+		available = {
+			country_exists = LPR
+			LPR = { is_subject = no }
+			LPR = {	influence_higher_30 = yes }
+		}
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_zavods"
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = DPR }
+			set_temp_variable = { influence_target = LPR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_politic
+		icon = NOV_admin
+		x = 8
+		y = 4
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_nov_zavods }
+		available = {
+			country_exists = LPR
+			LPR = { is_subject = no }
+			LPR = {	influence_higher_50 = yes }
+		}
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_zavods"
+			set_temp_variable = { percent_change = 15 }
+			set_temp_variable = { tag_index = DPR }
+			set_temp_variable = { influence_target = LPR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_annex
+		icon = NOV_create
+		x = 7
+		y = 5
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_nov_politic }
+		prerequisite = { focus = DPR_nov_economic }
+		available = {
+			country_exists = LPR
+			LPR = { is_subject_of = DPR }
+		}
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_annex"
+			annex_country = { target = LPR transfer_troops = yes }
+			LPR = { every_core_state = { add_core_of = DPR } }
+			DPR = {
+				add_to_variable = { treasury = LPR.treasury }
+				add_to_variable = { debt = LPR.debt }
+				add_to_variable = { int_investments = LPR.int_investments }
+			}
+			add_political_power = 200
+			set_cosmetic_tag = NOV_communism
+			clr_country_flag = dynamic_flag
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_annex_hpr
+		icon = hpr_start
+		x = 6
+		y = 6
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_nov_annex }
+		available = {
+			country_exists = HPR
+			HPR = { is_subject_of = DPR }
+		}
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_annex_hpr"
+			annex_country = { target = HPR transfer_troops = yes }
+			HPR = { every_core_state = { add_core_of = DPR } }
+			DPR = {
+				add_to_variable = { treasury = HPR.treasury }
+				add_to_variable = { debt = HPR.debt }
+				add_to_variable = { int_investments = HPR.int_investments }
+			}
+			add_political_power = -50
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_nov_annex_opr
+		icon = opr_start
+		x = 8
+		y = 6
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_nov_annex }
+		available = {
+			country_exists = OPR
+			OPR = { is_subject_of = DPR }
+		}
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_nov_annex_hpr"
+			annex_country = { target = OPR transfer_troops = yes }
+			OPR = { every_core_state = { add_core_of = DPR } }
+			DPR = {
+				add_to_variable = { treasury = OPR.treasury }
+				add_to_variable = { debt = OPR.debt }
+				add_to_variable = { int_investments = OPR.int_investments }
+			}
+			add_political_power = -50
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_reform_army
+		icon = dpr_vs
+		x = -8
+		y = 2
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_vstavai_dombass }
+		cost = 1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_reform_army"
@@ -163,38 +333,120 @@ focus_tree = {
 				amount = 2000
 				producer = SOV
 			}
-
+			create_corps_commander = {
+				name = "Seks"
+				portrait_path = "gfx/leaders/DPR/dpr_seks.dds"
+				traits = { bold }
+				skill = 3
+				attack_skill = 3
+				defense_skill = 3
+				planning_skill = 3
+				logistics_skill = 3
+			}
 		}
-		ai_will_do = { factor = 20 }
+		ai_will_do = { factor = 155 }
 	}
 	focus = {
 		id = DPR_bank
-		icon = generic_bank
-		x = -2
+		icon = dpr_bank
+		x = 0
 		y = 2
 		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
 		prerequisite = {
 			focus = DPR_vstavai_dombass
 		}
-		cost = 7
+		cost = 5
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_bank"
 			one_office_construction = yes
-
 		}
-		ai_will_do = { factor = 20 }
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = DPR_government
+		icon = dpr_gover
+		x = -2
+		y = 2
+		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		prerequisite = { focus = DPR_vstavai_dombass }
+		cost = 1
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_government"
+			remove_ideas = DPR_no_goverment_idea
+		}
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = DPR_donetsk_build
+		icon = military_fort
+		x = 2
+		y = 2
+		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		prerequisite = { focus = DPR_vstavai_dombass }
+		cost = 1
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_propaganda"
+			add_stability = 0.1
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			693 = {
+				add_building_construction = { type = bunker province = 6474 level = 2 }
+			}
+		}
+		ai_will_do = { factor = 155 }
 	}
 	focus = {
 		id = DPR_propaganda
 		icon = propaganda
-		x = 0
-		y = 2
+		x = 1
+		y = 3
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_vstavai_dombass
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
-		cost = 7
+		prerequisite = { focus = DPR_donetsk_build }
+		prerequisite = { focus = DPR_bank }
+		cost = 5
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_propaganda"
@@ -202,50 +454,26 @@ focus_tree = {
 			add_manpower = 550
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
-			add_power_balance_value = {
-				id = DPR_power_balance
-				value = 0.10
-			}
 		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_preemnik_dkpr
-		icon = dpr_dksp
-		x = 0
-		y = 3
-		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_propaganda
-		}
-		cost = 5
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_preemnik_dkpr"
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.15 }
-			add_relative_party_popularity = yes
-			DPR = { add_state_claim = 1076 }
-			DPR = { add_state_claim = 1075 }
-			DPR = { add_state_claim = 1085 }
-			DPR = { add_state_claim = 1087 }
-			DPR = { add_state_claim = 694 }
-			DPR = { add_state_claim = 696 }
-			DPR = { add_state_claim = 1030 }
-			DPR = { add_state_claim = 693 }
-
-		}
-		ai_will_do = { factor = 20 }
+		ai_will_do = { factor = 1 }
 	}
 	focus = {
 		id = DPR_pasports
 		icon = dpr_pasport
-		x = -2
+		x = -1
 		y = 3
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_bank
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
+		prerequisite = { focus = DPR_bank }
 		cost = 5
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY  }
 		completion_reward = {
@@ -256,82 +484,110 @@ focus_tree = {
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
-		id = DPR_warehouse
-		icon = Generic_Military_Equipment
-		x = -8
+		id = DPR_gaz_contracts_russia
+		icon = Rosneft
+		x = -3
 		y = 3
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_reform_army
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
-		cost = 7
+		prerequisite = { focus = DPR_government }
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY  }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_gaz_contracts_russia"
+			add_ideas = DPR_russian_oil
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
+		id = DPR_warehouse
+		icon = Generic_Military_Equipment
+		x = -10
+		y = 3
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_reform_army }
+		cost = 1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_warehouse"
 			add_equipment_to_stockpile = {
-					type = infantry_weapons3
-					amount = 1500
-					producer = SOV
-				}
-
+				type = infantry_weapons3
+				amount = 1500
+				producer = SOV
+			}
 			add_equipment_to_stockpile = {
-					type = command_control_equipment2
-					amount = 250
-					producer = SOV
-				}
-
+				type = command_control_equipment2
+				amount = 250
+				producer = SOV
+			}
 			add_equipment_to_stockpile = {
-					type = AA_Equipment
-					amount = 100
-					producer = SOV
-				}
+				type = AA_Equipment
+				amount = 100
+				producer = SOV
+			}
 			add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 15
-					producer = SOV
-				}
-
+				type = Anti_Air_0
+				amount = 15
+				producer = SOV
+			}
 		}
-		ai_will_do = { factor = 20 }
+		ai_will_do = { factor = 155 }
 	}
 	focus = {
 		id = DPR_vpk
 		icon = army_tank_industry
 		x = -6
-		y = 4
+		y = 3
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_gos_granitca
-		}
-		prerequisite = {
-			focus = DPR_warehouse
-		}
-		prerequisite = {
-			focus = DPR_somali
-		}
+		prerequisite = { focus = DPR_reform_army }
 		cost = 7
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS  FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_vpk"
-			two_random_arms_factory = yes
-
+			one_random_arms_factory = yes
+			add_ideas = DPR_vpk 
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
-		id = DPR_rzso_cheburashka
-		icon = dpr_rzso_cheburashka
-		x = -4
-		y = 5
+		id = DPR_rifles
+		icon = army_more_ak47
+		x = -7
+		y = 4
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_vpk
-		}
-		cost = 7
+		prerequisite = { focus = DPR_vpk }
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_rzso_cheburashka"
-			set_temp_variable = { treasury_change = -4.00 }
+			swap_ideas = {
+				remove_idea = DPR_vpk 
+				add_idea = DPR_vpk1
+			}
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
+		id = DPR_rzso_snejinka
+		icon = dpr_snow
+		x = -5
+		y = 4
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_vpk }
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_rzso_cheburashka"
+			set_temp_variable = { treasury_change = -1.00 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
 				name = DPR_cheburashka
@@ -339,46 +595,57 @@ focus_tree = {
 				uses = 2
 				category = Cat_SP_R_ARTY
 			}
-
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
-		id = DPR_rifles
-		icon = army_more_ak47
-		x = -8
+		id = DPR_rzso_cheburashka
+		icon = dpr_rzso_cheburashka
+		x = -6
 		y = 5
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_vpk
-		}
-		cost = 7
+		prerequisite = { focus = DPR_rzso_snejinka }
+		prerequisite = { focus = DPR_rifles }
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_rzso_cheburashka"
-			set_temp_variable = { treasury_change = -1.00 }
-			modify_treasury_effect = yes
-
-			add_tech_bonus = {
-				name = Cat_INF_WEP
-				bonus = 0.45
-				uses = 1
-				category = Cat_INF_WEP
+			swap_ideas = {
+				remove_idea = DPR_vpk1
+				add_idea = DPR_vpk2
 			}
-
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
+		id = DPR_blpa
+		icon = Drones
+		x = -6
+		y = 6
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_rzso_cheburashka }
+		cost = 5
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_rzso_cheburashka"
+			set_temp_variable = { treasury_change = -4.00 }
+			modify_treasury_effect = yes
+			swap_ideas = {
+				remove_idea = DPR_vpk2
+				add_idea = DPR_vpk3
+			}
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
 		id = DPR_univer
 		icon = army_doctrine
-		x = -6
-		y = 5
+		x = -7
+		y = 7
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_vpk
-		}
 		cost = 7
+		prerequisite = { focus = DPR_gos_granitca }
+		prerequisite = { focus = DPR_blpa }
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_univer"
@@ -389,19 +656,12 @@ focus_tree = {
 	focus = {
 		id = DPR_reforms_army
 		icon = dpr_vs
-		x = -6
-		y = 6
+		x = -9
+		y = 7
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_rifles
-		}
-		prerequisite = {
-			focus = DPR_univer
-		}
-		prerequisite = {
-			focus = DPR_rzso_cheburashka
-		}
-		cost = 7
+		prerequisite = { focus = DPR_khan }
+		prerequisite = { focus = DPR_gos_granitca }
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_reform_army"
@@ -416,10 +676,20 @@ focus_tree = {
 		id = DPR_rebuild_ruins
 		icon = economic_civil_industry
 		x = 3
-		y = 2
+		y = 3
 		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
 		prerequisite = {
-			focus = DPR_vstavai_dombass
+			focus = DPR_donetsk_build
 		}
 		cost = 7
 		search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -429,20 +699,17 @@ focus_tree = {
 				remove_idea = DPR_donbass_ruins
 				add_idea = DPR_donbass_ruins2
 			}
-
 		}
-		ai_will_do = { factor = 20 }
+		ai_will_do = { factor = 1 }
 	}
 	focus = {
 		id = DPR_gos_granitca
 		icon = military_fort
-		x = -4
-		y = 3
+		x = -8
+		y = 6
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_reform_army
-		}
-		cost = 7
+		prerequisite = { focus = DPR_somali }
+		cost = 5
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_gos_granitca"
@@ -455,43 +722,91 @@ focus_tree = {
 			}
 
 		}
-		ai_will_do = { factor = 20 }
+		ai_will_do = { factor = 1 }
 	}
+	focus = {
+		id = DPR_interbrigade
+		icon = sov_nazbol_military
+		x = -8
+		y = 5
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_somali }
+		cost = 1
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_gos_granitca"
+			hidden_effect = {
+				division_template = {
+					name = "Batalyon Dobrovolchev"
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						L_Inf_Bat = { x = 0 y = 2 }
+						L_Inf_Bat = { x = 0 y = 3 }
+					}
+					priority = 0
+				}
+			}
+			693 = {
+				create_unit = {
+					division = "name = \"Interbrigade Donetsk\" division_template = \"Batalyon Dobrovolchev\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
 
+		}
+		ai_will_do = { factor = 155 }
+	}
 	focus = {
 		id = DPR_infra
 		icon = infrastructure1
-		x = 3
+		x = 2
 		y = 6
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_nationalise
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
-		prerequisite = {
-			focus = DPR_npz
-		}
+		prerequisite = { focus = DPR_npz }
+		prerequisite = { focus = DPR_youth }
 		cost = 5
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_resource_from_sov"
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_infra"
 			one_random_infrastructure = yes
-
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
 		id = DPR_bivaluta
-		icon = russian_ruble
-		x = -1
-		y = 5
+		icon = hpr_grivna_ban
+		x = -2
+		y = 4
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_internet
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
 		prerequisite = {
-			focus = DPR_sports
+			focus = DPR_pasports
 		}
-		cost = 10
+		prerequisite = {
+			focus = DPR_gaz_contracts_russia
+		}
+		cost = 5
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_bivaluta"
@@ -502,14 +817,131 @@ focus_tree = {
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
+		id = DPR_religion_boost
+		icon = orthodox_patriarh
+		x = -3
+		y = 5
+		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		prerequisite = { focus = DPR_bivaluta }
+		cost = 3
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_religion_boost"
+			add_political_power = 150
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
+		id = DPR_anti_gibdd
+		icon = anti_lgbt
+		x = -1
+		y = 5
+		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		prerequisite = { focus = DPR_bivaluta }
+		prerequisite = { focus = DPR_internet }
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_anti_gibdd"
+			add_ideas = DPR_anti_lgbt
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
+		id = DPR_anti_ukrain
+		icon = attack_ukraine
+		x = -2
+		y = 6
+		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		prerequisite = { focus = DPR_anti_gibdd }
+		prerequisite = { focus = DPR_religion_boost }
+		cost = 4
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_anti_ukrain"
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = UKR }
+			set_temp_variable = { influence_target = DPR }
+			change_influence_percentage = yes
+			add_stability = -0.05
+			add_war_support = 0.10
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
+		id = DPR_mgb
+		icon = dpr_mgb
+		x = 0
+		y = 6
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_anti_gibdd }
+		prerequisite = { focus = DPR_youth }
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_mgb"
+			add_ideas = DPR_mgb
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
 		id = DPR_internet
 		icon = economic_internet
-		x = -2
+		x = 0
 		y = 4
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_pasports
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
+		prerequisite = { focus = DPR_pasports }
+		prerequisite = { focus = DPR_propaganda	}
 		cost = 7
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
@@ -527,42 +959,232 @@ focus_tree = {
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
+		id = DPR_youth
+		icon = dpr_youth
+		x = 1
+		y = 5
+		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		prerequisite = {
+			focus = DPR_sports
+		}
+		prerequisite = {
+			focus = DPR_internet
+		}
+		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_youth"
+			add_ideas = DPR_youth_front
+		}
+		ai_will_do = { factor = 20 }
+	}
+	focus = {
 		id = DPR_somali
 		icon = dpr_somali
-		x = -6
+		x = -8
 		y = 3
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_reform_army
-		}
-		cost = 7
+		prerequisite = { focus = DPR_reform_army }
+		cost = 1
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_obtf_kaskad"
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_somali"
+			693 = {
 				create_unit = {
-					division = "name = \"Batalyon Somali\" division_template = \"Tankovyi Batalyon\" start_experience_factor = 1.0"
+					division = "name = \"Batalyon Somali\" division_template = \"Tankovyi Batalyon\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_sparta
+		icon = dpr_sparta
+		x = -9
+		y = 4
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_somali }
+		prerequisite = { focus = DPR_warehouse }
+		cost = 1
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_sparta"
+			693 = {
+				create_unit = {
+					division = "name = \"Batalyon Sparta\" division_template = \"Batalyon Spetsnaza\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_oplot
+		icon = dpr_oplot
+		x = -11
+		y = 4
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_warehouse }
+		cost = 1
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_sparta"
+			693 = {
+				create_unit = {
+					division = "name = \"Brigada Oplot\" division_template = \"Mekhanizirovannaya Brigada\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_territorial_defence
+		icon = DPR_ter_defence
+		x = -12
+		y = 5
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_oplot }
+		cost = 2
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_ter_oborona"
+			hidden_effect = {
+				division_template = {
+					name = "Territorial Defense Brigade"
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						Mot_Inf_Bat = { x = 1 y = 0 }
+					}
+				}
+			}
+			add_manpower = -1500
+			add_ideas = DPR_ter_orobona
+			693 = {
+				create_unit = {
+					division = "name = \"1st Battalion of Territorial defence\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
+			693 = {
+				create_unit = {
+					division = "name = \"3rd Battalion of Territorial defence\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 0.1"
+					prioritize_location = 6474
 					owner = DPR
 				}
 			}
 			set_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_dizel
+		icon = dpr_disel
+		x = -10
+		y = 5
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_oplot }
+		prerequisite = { focus = DPR_sparta }
+		cost = 1
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_sparta"
+			693 = {
+				create_unit = {
+					division = "name = \"Brigada Dizel\" division_template = \"Tankovyi Batalyon\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_khan
+		icon = DPR_khan
+		x = -10
+		y = 6
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_dizel }
+		cost = 1
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_khan"
+			division_template = {
+				name = "Separate Special Purpose Battalion"
+				regiments = {
+					Special_Forces = { x = 0 y = 0 }
+				}
+			}
+			693 = {
+				create_unit = {
+					division = "name = \"Separate Special Purpose Battalion Khan\" division_template = \"Separate Special Purpose Battalion\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = { factor = 155 }
+	}
+	focus = {
+		id = DPR_guard
+		icon = dpr_guard
+		x = -11
+		y = 7
+		relative_position_id = DPR_start
+		prerequisite = { focus = DPR_khan }
+		cost = 1
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_sparta"
+			693 = {
+				create_unit = {
+					division = "name = \"Respublikanskaya Gvardiya DNR\" division_template = \"Mekhanizirovannaya Brigada\" start_experience_factor = 0.1"
+					prioritize_location = 6474
+					owner = DPR
+				}
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
 		id = DPR_obtf_kaskad
 		icon = dpr_kaskad
-		x = -1
-		y = 6
+		x = -8
+		y = 8
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_bivaluta
-		}
-		cost = 7
+		prerequisite = { focus = DPR_reforms_army }
+		prerequisite = { focus = DPR_univer }
+		cost = 3
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_obtf_kaskad"
@@ -588,49 +1210,57 @@ focus_tree = {
 						combat_service_support_company = { x = 0 y = 3 }
 					}
 			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 693 }
+			693 = {
 				create_unit = {
 					division = "name = \"OBTF Kaskad\" division_template = \"OBTF Kaskad\" start_experience_factor = 1.0"
+					prioritize_location = 6474
 					owner = DPR
 				}
 			}
-
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
 		id = DPR_nationalise
 		icon = economic_nationalisation
-		x = 2
+		x = 4
 		y = 4
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_rebuild_ruins
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
+		prerequisite = { focus = DPR_rebuild_ruins }
 		cost = 7
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_nationalise"
 			two_random_industrial_complex = yes
-
+			set_temp_variable = { percent_change = -6 }
+			set_temp_variable = { tag_index = UKR }
+			set_temp_variable = { influence_target = DPR }
+			change_influence_percentage = yes
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
 		id = DPR_npz
 		icon = oil_production2
-		x = 4
-		y = 4
+		x = 3
+		y = 5
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_rebuild_ruins
-		}
+		prerequisite = { focus = DPR_nationalise }
+		prerequisite = { focus = DPR_sports }
 		cost = 7
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_nationalise"
+			log = "[GetDateText]: [Root.GetName]: Focus DPR_npz"
 			set_temp_variable = { temp_opinion = 3 }
 			change_fossil_fuel_industry_opinion = yes
 			693 = {
@@ -642,114 +1272,66 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
-
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
 		id = DPR_sports
 		icon = dpr_sport
-		x = 0
+		x = 2
 		y = 4
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_preemnik_dkpr
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
 		}
-		cost = 7
+		prerequisite = {
+			focus = DPR_rebuild_ruins
+		}
+		prerequisite = {
+			focus = DPR_propaganda
+		}
+		cost = 5
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_sports"
 			add_ideas = DPR_sport_development
-			add_stability = 0.015
-
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_ros_banks
-		icon = russian_investments
-		x = 2
-		y = 10
-		relative_position_id = DPR_start
-		available = {
-			DPR = { 
-				is_subject_of = SOV 
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = {
-			focus = DPR_integrate_army
-		}
-		prerequisite = {
-			focus = DPR_first_invest
-		}
-		cost = 7
-		search_filters = {  FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_ros_banks"
-			one_office_construction = yes
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = DPR }
-			change_influence_percentage = yes
-
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_ros_invest
-		icon = russian_cooperation
-		x = 0
-		y = 10
-		relative_position_id = DPR_start
-		available = {
-			DPR = { 
-				is_subject_of = SOV 
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = {
-			focus = DPR_integrate_army
-		}
-		prerequisite = {
-			focus = DPR_first_invest
-		}
-		cost = 7
-		search_filters = {  FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_ros_invest"
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = DPR }
-			change_influence_percentage = yes
-			set_temp_variable = { treasury_change = 8.5 }
-			modify_treasury_effect = yes
-			SOV = {
-				set_temp_variable = { treasury_change = -8.5 }
-				modify_treasury_effect = yes
-				set_temp_variable = { int_investment_change = 8.5 }
-				modify_international_investment_effect = yes
-			}
-
 		}
 		ai_will_do = { factor = 20 }
 	}
 	focus = {
 		id = DPR_vstuplenie_v_rf
 		icon = constitution
-		x = 1
+		x = 0
 		y = 7
 		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_obtf_kaskad
+		cost = 3
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+			has_war = no
 		}
 		prerequisite = {
-			focus = DPR_reforms_army
+			focus = DPR_anti_ukrain
+		}
+		prerequisite = {
+			focus = DPR_mgb
 		}
 		prerequisite = {
 			focus = DPR_infra
 		}
-		cost = 7
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_vstuplenie_v_rf"
@@ -772,13 +1354,24 @@ focus_tree = {
 	focus = {
 		id = DPR_referendum
 		icon = russian_elections
-		x = 1
+		x = 0
 		y = 8
 		relative_position_id = DPR_start
+		available = {
+			OR = {
+				DPR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+			has_war = no
+		}
 		prerequisite = {
 			focus = DPR_vstuplenie_v_rf
 		}
-		cost = 7
+		cost = 5
 		search_filters = {  FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DPR_referendum"
@@ -786,811 +1379,7 @@ focus_tree = {
 		}
 		ai_will_do = { factor = 20 }
 	}
-	focus = {
-		id = DPR_integrate_army
-		icon = sov_ratnik
-		x = 2
-		y = 9
-		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_referendum
-		}
-		available = {
-			DPR = { 
-				is_subject_of = SOV
-				has_autonomy_state = autonomy_republic_rf
-			}
-			SOV = {
-			has_completed_focus = SOV_ratnik_program
-			}
-		}
-		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_integrate_army"
-			add_ideas = full_ratnik_conversion
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_first_invest
-		icon = russian_investements
-		x = 0
-		y = 9
-		relative_position_id = DPR_start
-		prerequisite = {
-			focus = DPR_referendum
-		}
-		available = {
-			DPR = { 
-				is_subject_of = SOV 
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		cost = 5
-		search_filters = {  FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_first_invest"
-			set_temp_variable = { treasury_change = 20 }
-			modify_treasury_effect = yes
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = DPR }
-			set_temp_variable = { percent_change = 2.5 }
-			change_influence_percentage = yes
-			remove_ideas = DPR_donbass_ruins2
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_novorossia
-		icon = dpr_lpr_country
-		x = -4
-		y = 7
-		relative_position_id = DPR_start
-		available = {
-			country_exists = LPR
-		}
-		prerequisite = {
-			focus = DPR_obtf_kaskad
-		}
-		prerequisite = {
-			focus = DPR_reforms_army
-		}
-		prerequisite = {
-			focus = DPR_infra
-		}
-		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_novorossia"
-			add_political_power = -100
-			give_guarantee = LPR
-			set_temp_variable = { tag_index = DPR }
-			set_temp_variable = { influence_target = LPR }
-			set_temp_variable = { percent_change = 1.5 }
-			change_influence_percentage = yes
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.1
-			}
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_lnr_friend
-		icon = dpr_lpr
-		x = -4
-		y = 8
-		relative_position_id = DPR_start
-		available = {
-			country_exists = LPR
-		}
-		prerequisite = {
-			focus = DPR_novorossia
-		}
-		cost = 7
-		search_filters = {  FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_novorossia"
-			give_military_access = LPR
-			LPR = { give_military_access = DPR }
-			set_temp_variable = { tag_index = DPR }
-			set_temp_variable = { influence_target = LPR }
-			set_temp_variable = { percent_change = 2.5 }
-			change_influence_percentage = yes
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.05
-			}
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_novorossia_create
-		icon = align_to_novorossiya
-		x = -4
-		y = 11
-		relative_position_id = DPR_start
-		available = {
-			country_exists = LPR
-			LPR = { is_subject_of = DPR }
-		}
-
-		prerequisite = {
-			focus = DPR_law_integrate
-		}
-		cost = 7
-		search_filters = {  FOCUS_FILTER_POLITICAL  FOCUS_FILTER_ANNEXATION }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_novorossia_create"
-			annex_country = {
-				transfer_troops = yes
-				target = LPR
-			}
-			add_stability = 0.2
-			set_cosmetic_tag = NOV
-			DPR = { add_state_core = 1076 }
-			DPR = { add_state_core = 1075 }
-			DPR = { add_state_core = 1085 }
-			DPR = { add_state_core = 1087 }
-			DPR = { add_state_core = 694 }
-			DPR = { add_state_core = 696 }
-			DPR = { add_state_core = 1030 }
-			DPR = { add_state_core = 693 }
-			DPR = { add_state_core = 695 }
-			DPR = { add_state_core = 1086 }
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.10
-			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.10
-			}
-			SOV = { country_event = dpr.5 }
-		}
-		ai_will_do = { factor = 20 }
-	}
-
-	focus = {
-		id = DPR_strelkov_rise
-		icon = dpr_strelkov_rise
-		x = -1
-		y = 12
-		relative_position_id = DPR_start
-		available = {
-			has_government = nationalist
-		}
-		cost = 3
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_strelkov_rise"
-			create_country_leader = {
-				name = "Igor Strelkov"
-				picture = "Girkin_Strelkov.dds"
-				ideology = Nat_Autocracy
-				traits = {
-					nationalist_Nat_Autocracy pro_russia military_career
-				}
-			}
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.2
-			}
-			add_to_variable = { party_pop_array^22 = 0.2 }
-			recalculate_party = yes
-			add_political_power = 50
-
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_traitor_cleane
-		icon = BLR_Anti_Corruption
-		x = -3
-		y = 13
-		relative_position_id = DPR_start
-		available = {
-			nationalist_military_junta_are_in_power = yes
-		}
-
-		prerequisite = {
-			focus = DPR_strelkov_rise
-		}
-		cost = 7
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_traitor_cleane"
-			add_ideas = DPR_strelkov_politics
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_war_economic
-		icon = army_tank_industry
-		x = -1
-		y = 13
-		relative_position_id = DPR_start
-		available = {
-			nationalist_military_junta_are_in_power = yes
-		}
-		prerequisite = {
-			focus = DPR_strelkov_rise
-		}
-		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_critisize_kremlin"
-			increase_military_spending = yes
-			increase_officer_training_level = yes
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_critisize_kremlin
-		icon = KHM_kremlin
-		x = 1
-		y = 13
-		relative_position_id = DPR_start
-		available = {
-			nationalist_military_junta_are_in_power = yes
-		}
-		prerequisite = {
-			focus = DPR_strelkov_rise
-		}
-		cost = 4
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_critisize_kremlin"
-			add_war_support = 0.30
-			SOV = {
-				add_opinion_modifier = { target = DPR modifier = no_diplomatic_ties }
-			}
-			add_opinion_modifier = { target = SOV modifier = no_diplomatic_ties }
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_total_mobilisation
-		icon = dpr_mobilisation
-		x = -1
-		y = 14
-		relative_position_id = DPR_start
-		available = {
-			NOT = { DPR = { is_subject_of = UKR } }
-			nationalist_military_junta_are_in_power = yes
-		}
-		prerequisite = {
-			focus = DPR_war_economic
-		}
-		prerequisite = {
-			focus = DPR_critisize_kremlin
-		}
-		prerequisite = {
-			focus = DPR_traitor_cleane
-		}
-		cost = 7
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_total_mobilisation"
-			if = {
-				limit = { has_idea = partial_draft_army }
-				swap_ideas = {
-					remove_idea = partial_draft_army
-					add_idea = draft_army
-				}
-			}
-			else_if = {
-				limit = { has_idea = volunteer_army }
-				swap_ideas = {
-					remove_idea = volunteer_army
-					add_idea = draft_army
-				}
-			}
-			else_if = {
-				limit = { has_idea = no_military }
-				swap_ideas = {
-					remove_idea = no_military
-					add_idea = draft_army
-				}
-			}
-			swap_ideas = {
-				remove_idea = DPR_strelkov_politics
-				add_idea = DPR_strelkov_politics1
-			}
-			add_manpower = 9000
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_total_war
-		icon = attack_ukraine
-		x = -1
-		y = 15
-		relative_position_id = DPR_start
-		available = {
-			NOT = { DPR = { is_subject_of = UKR } }
-			nationalist_military_junta_are_in_power = yes
-			UKR = {
-				NOT = { is_subject_of = SOV }
-				NOT = { is_in_faction_with = SOV }
-			}
-		}
-		prerequisite = {
-			focus = DPR_total_mobilisation
-		}
-		cost = 7
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-		will_lead_to_war_with = UKR
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus DPR_total_war"
-			create_wargoal = {
-				target = UKR
-				type = annex_everything
-			}
-		}
-		ai_will_do = { factor = 20 }
-	}
-	focus = {
-		id = DPR_putin
-		icon = vladimir_putin
-		x = 25
-		y = 10
-		cost = 5
-		available = {
-			SOV = {
-				exists = yes
-				emerging_reactionaries_are_in_power = yes 
-			}
-			DPR = {
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_putin"
-			add_political_power = 100
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_rosatom
-		icon = rosatom
-		x = -1
-		y = 1
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_found_rosatom
-				emerging_reactionaries_are_in_power = yes 
-			}
-			DPR = {
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_putin }
-		relative_position_id = DPR_putin
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_rosatom"
-			add_ideas = DPR_rosatom_idea
-			set_temp_variable = { treasury_change = -1.5 }
-			modify_treasury_effect = yes
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_zdravok
-		icon = generic_hospital
-		x = 1
-		y = 1
-		cost = 7
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_2011_healthcare_reforms
-				emerging_reactionaries_are_in_power = yes 
-			}
-			DPR = {
-				is_subject_of = SOV	
-			}
-		}
-		prerequisite = { focus = DPR_putin }
-		relative_position_id = DPR_putin
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_zdravo"
-			add_stability = 0.03
-			set_temp_variable = { party_index = 6 }
-			set_temp_variable = { party_popularity_increase = 0.025 }
-			add_relative_party_popularity = yes
-			increase_healthcare_budget = yes
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_aggressive
-		icon = inter_with_rus
-		x = 2
-		y = 2
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_aggressive_foreign_policy
-				emerging_reactionaries_are_in_power = yes 
-			}
-			DPR = {
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_zdravok }
-		relative_position_id = DPR_putin
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_aggressive"
-			add_ideas = DPR_aggresive_foriegn_policy_putin_idea 
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_uchneia_s_br
-		icon = blr_allied_resolve
-		x = 0
-		y = 2
-		cost = 3
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_exercises_belarus_start
-				emerging_reactionaries_are_in_power = yes 
-			}
-			BLR = { 
-				exists = yes
-				has_government = communism 
-			}
-			DPR = {
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		bypass = {
-			BLR = {
-				exists = no
-			}
-		}
-		prerequisite = { focus = DPR_zdravok }
-		prerequisite = { focus = DPR_rosatom }
-		relative_position_id = DPR_putin
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_uchneia_s_br"
-			add_timed_idea = { idea = SUB_military_exercises_allied_resolve_idea days = 65 }
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_union_state
-		icon = blr_accounting_chamber
-		x = -2
-		y = 2
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				emerging_reactionaries_are_in_power = yes 
-			}
-			BLR = {
-				exists = yes
-				has_idea = BLR_union_integration_part1
-			}
-			DPR = {
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		bypass = {
-			BLR = {
-				exists = no
-			}
-		}
-		prerequisite = { focus = DPR_rosatom }
-		relative_position_id = DPR_putin
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_union_state"
-			add_political_power = -30
-			BLR = {
-				set_temp_variable = { modify_union_state = 4 }
-				modify_union_state_support = yes
-			}
-			set_temp_variable = { modify_subjectavtoritet = 7 }
-			modify_subjectavtoritet_support = yes
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_z
-		icon = the_z_apc
-		x = 0
-		y = 3
-		cost = 10
-		available = {
-			SOV = {
-				has_completed_focus = SOV_anti_bsb
-				emerging_reactionaries_are_in_power = yes 
-			}
-			DPR = {
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_uchneia_s_br }
-		prerequisite = { focus = DPR_union_state }
-		prerequisite = { focus = DPR_aggressive }
-		relative_position_id = DPR_putin
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_z"
-			add_ideas = SUB_z_propaganda
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.15
-			}
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_zyuga
-		icon = gennady_zyuganov
-		x = 27
-		y = 14
-		cost = 5
-		available = {
-			SOV = {
-				exists = yes
-				emerging_communist_state_are_in_power = yes
-			}
-			DPR = {
-				emerging_communist_state_are_in_power = yes
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_zyuga"
-			add_political_power = 100
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_stalin
-		icon = cult_of_stalin
-		x = 2
-		y = 1
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_restalinization
-				emerging_communist_state_are_in_power = yes
-			}
-			DPR = {
-				emerging_communist_state_are_in_power = yes
-				is_subject_of = SOV
-				has_autonomy_state = autonomy_republic_rf	
-			}
-		}
-		prerequisite = { focus = DPR_zyuga }
-		relative_position_id = DPR_zyuga
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_stalin"
-			add_political_power = 75
-			add_ideas = SUB_idea_restalinization
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_socialist_humanism
-		icon = qg
-		x = 0
-		y = 1
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_socialist_humanism
-				emerging_communist_state_are_in_power = yes
-			}
-			DPR = {
-				emerging_communist_state_are_in_power = yes
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_zyuga }
-		relative_position_id = DPR_zyuga
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_socialist_humanism"
-			add_ideas = SUB_socialist_humanism_idea
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_first_two_year_plan
-		icon = five_year_plan
-		x = -1
-		y = 2
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_socialist_humanism
-				emerging_communist_state_are_in_power = yes
-			}
-			DPR = {
-				emerging_communist_state_are_in_power = yes
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_socialist_humanism }
-		relative_position_id = DPR_zyuga
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		mutually_exclusive = { focus = DPR_reestablish_the_military_industrial_complexs }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_first_two_year_plan"
-			add_political_power = -50
-			add_timed_idea = {
-				idea = SUB_zyunganovs_two_year_plans_idea
-				days = 720
-			}
-			set_temp_variable = { treasury_change = -4.5 }
-			modify_treasury_effect = yes
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_a_second_two_year_plan
-		icon = five_year_plan3
-		x = -1
-		y = 3
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_a_second_two_year_plan
-				emerging_communist_state_are_in_power = yes
-			}
-			DPR = {
-				emerging_communist_state_are_in_power = yes
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_first_two_year_plan }
-		relative_position_id = DPR_zyuga
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_reestablish_the_military_industrial_complexs"
-			add_political_power = -25
-			add_ideas = SUB_successful_planned_economy_idea
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_reestablish_the_military_industrial_complexs
-		icon = t14_armata
-		x = 1
-		y = 2
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_reestablish_the_military_industrial_complex
-				emerging_communist_state_are_in_power = yes
-			}
-			DPR = {
-				emerging_communist_state_are_in_power = yes
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_socialist_humanism }
-		relative_position_id = DPR_zyuga
-		mutually_exclusive = { focus = DPR_first_two_year_plan }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_reestablish_the_military_industrial_complexs"
-			add_timed_idea = {
-				idea = SUB_reestablish_the_military_industrial_complex_idea
-				days = 720
-			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
-	focus = {
-		id = DPR_a_new_economic_policy
-		icon = coins
-		x = 1
-		y = 3
-		cost = 10
-		available = {
-			SOV = {
-				exists = yes
-				has_completed_focus = SOV_a_new_economic_policy
-				emerging_communist_state_are_in_power = yes
-			}
-			DPR = {
-				emerging_communist_state_are_in_power = yes
-				is_subject_of = SOV	
-				has_autonomy_state = autonomy_republic_rf
-			}
-		}
-		prerequisite = { focus = DPR_reestablish_the_military_industrial_complexs }
-		relative_position_id = DPR_zyuga
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: DPR_reestablish_the_military_industrial_complexs"
-			add_ideas = SUB_idea_new_economic_policy
-			set_temp_variable = { treasury_change = -8.5 }
-			modify_treasury_effect = yes
-		}
-	
-		ai_will_do = {
-			factor = 1
-		}
-	}
+	shared_focus = SUB_russia_politic
 }
 
 

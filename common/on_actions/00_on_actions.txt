@@ -127,7 +127,7 @@ on_actions = {
 	on_monthly = {
 		effect = {
 			# Generic
-			cic_contract_wipe = yes
+			#cic_contract_wipe = yes
 			ai_update_build_units = yes
 			if = {
 				limit = {
@@ -742,6 +742,17 @@ on_actions = {
 			roll_corruption_events = yes
 			calculate_expected_spending = yes
 			apply_protest_effects = yes
+			ai_weapon_dump = yes
+
+			# used in strategies, instead of checking it directly there
+			if = {
+				limit = {
+					has_war = no
+					any_country = { has_wargoal_against = ROOT }
+				}
+
+				set_country_flag = { flag = someone_has_wargoal_against_this_flag value = 1 days = 100 }
+			}
 
 			# Egyptian Thing
 			country_event = egypt.100
@@ -821,6 +832,8 @@ on_actions = {
 				}
 			}
 
+			# reset every day, stays lingering for some time after justification is finished
+			set_country_flag = { flag = country_is_justified_on_flag value = 1 days = 70 }
 		}
 	}
 
@@ -1125,23 +1138,22 @@ on_actions = {
 					set_variable = { gdpc_converging_var = FROM.gdpc_converging_var }
 					update_budget_laws_for_FROM_nation = yes
 
-					set_variable = { economic_cycles = FROM.economic_cycles }
-					if = { limit = { check_variable = { economic_cycles = 6 } }
+					if = { limit = { FROM = { has_idea = depression } }
 						add_ideas = depression
 					}
-					else_if = { limit = { check_variable = { economic_cycles = 5 } }
+					else_if = { limit = { FROM = { has_idea = recession } }
 						add_ideas = recession
 					}
-					else_if = { limit = { check_variable = { economic_cycles = 4 } }
+					else_if = { limit = { FROM = { has_idea = stagnation } }
 						add_ideas = stagnation
 					}
-					else_if = { limit = { check_variable = { economic_cycles = 3 } }
+					else_if = { limit = { FROM = { has_idea = stable_growth } }
 						add_ideas = stable_growth
 					}
-					else_if = { limit = { check_variable = { economic_cycles = 2 } }
+					else_if = { limit = { FROM = { has_idea = fast_growth } }
 						add_ideas = fast_growth
 					}
-					else_if = { limit = { check_variable = { economic_cycles = 1 } }
+					else_if = { limit = { FROM = { has_idea = economic_boom } }
 						add_ideas = economic_boom
 					}
 
@@ -1433,6 +1445,14 @@ on_actions = {
 
 					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 					country_event = { id = brotherhood.2 }
+
+					#Add into UAR array
+					if = {
+						limit = {
+							is_in_array = { global.arabic_countries = FROM }
+						}
+						add_to_array = { global.arabic_countries = ROOT }
+					}
 
 					#Recognition
 					if = {
@@ -2411,6 +2431,333 @@ on_actions = {
 
 			# Triggers the Anti Bully War Weariness Effect
 			public_war_weariness_effect = yes
+
+			##########RUSSIA ATTACKING AZERBAIJAN
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = AZE }
+				}
+				####Armenia reaction
+				if = {
+					limit = {
+						country_exists = ARM
+						ARM = {
+							has_war = no
+							OR = {
+								AND = {
+									is_subject = no
+									NOT = { is_in_faction = yes }
+								}
+								has_idea = CSTO_member
+							}
+						}
+					}
+					ARM = { country_event = SOV_Global.2 }
+				}
+				####Turkey reaction
+				if = {
+					limit = {
+						country_exists = TUR
+						TUR = {
+							has_war = no
+							is_subject = no
+						}
+					}
+					TUR = { country_event = SOV_Global.3 }
+				}
+				####Iran reaction
+				if = {
+					limit = {
+						country_exists = PER
+						NOT = { AZE = { is_subject_of = PER } }
+						PER = {
+							is_neighbor_of = AZE
+							has_war = no
+							is_subject = no
+						}
+					}
+					PER = { country_event = SOV_Global.4 }
+				}
+			}
+			##########RUSSIA ATTACKING BELARUS
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = BLR }
+				}
+				####Lithinia reaction
+				if = {
+					limit = {
+						country_exists = LIT
+						NOT = { LIT = { is_subject_of = SOV } }
+						LIT = {
+							NOT = { is_in_faction_with = SOV }
+							has_war = no
+						}
+					}
+					LIT = { country_event = SOV_Global.5 }
+				}
+				####Latvia reaction
+				if = {
+					limit = {
+						country_exists = LAT
+						NOT = { LAT = { is_subject_of = SOV } }
+						LAT = {
+							NOT = { is_in_faction_with = SOV }
+							has_war = no
+						}
+					}
+					LAT = { country_event = SOV_Global.5 }
+				}
+				####Estonia reaction
+				if = {
+					limit = {
+						country_exists = EST
+						NOT = { EST = { is_subject_of = SOV } }
+						EST = {
+							NOT = { is_in_faction_with = SOV }
+							has_war = no
+						}
+					}
+					EST = { country_event = SOV_Global.5 }
+				}
+				####Ukraine reaction
+				if = {
+					limit = {
+						country_exists = UKR
+						NOT = { UKR = { is_subject_of = SOV } }
+						UKR = {
+							NOT = { is_in_faction_with = SOV }
+							has_war = no
+						}
+					}
+					UKR = { country_event = SOV_Global.17 }
+				}
+			}
+			##########RUSSIA ATTACKING TAJIKISTAN
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = TAJ }
+				}
+				####Kyrgyzstan reaction
+				if = {
+					limit = {
+						country_exists = KYR
+						KYR = {
+							is_subject = no
+							NOT = { is_in_faction = yes }
+							has_war = no
+						}
+					}
+					KYR = { country_event = SOV_Global.7 }
+				}
+			}
+			##########RUSSIA ATTACKING KYRGYSTAN
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = KYR }
+				}
+				####Tajikistan reaction
+				if = {
+					limit = {
+						country_exists = TAJ
+						TAJ = {
+							is_subject = no
+							NOT = { is_in_faction = yes }
+							has_war = no
+						}
+					}
+					TAJ = { country_event = SOV_Global.8 }
+				}
+			}
+			##########RUSSIA ATTACKING TURKMENISTAN
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = TRK }
+				}
+				####Iran reaction
+				if = {
+					limit = {
+						TRK = { NOT = { is_in_faction_with = PER } }
+						country_exists = PER
+						PER = {
+							is_subject = no
+							has_war = no
+						}
+					}
+					PER = { country_event = SOV_Global.9 }
+				}
+			}
+			##########RUSSIA ATTACKING UZBEKISTAN
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = UZB }
+				}
+				####Kyrgystan reaction
+				if = {
+					limit = {
+						UZB = { NOT = { is_in_faction_with = KYR } }
+						country_exists = KYR
+						KYR = {
+							is_subject = no
+							has_war = no
+						}
+					}
+					KYR = { country_event = SOV_Global.11 }
+				}
+				####Iran reaction
+				if = {
+					limit = {
+						UZB = { NOT = { is_in_faction_with = PER } }
+						country_exists = PER
+						PER = {
+							is_subject = no
+							has_war = no
+						}
+					}
+					PER = { country_event = SOV_Global.12 }
+				}
+			}
+			##########RUSSIA ATTACKING LITHINIA
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = LIT }
+				}
+				####Belarus Nationalists reaction
+				if = {
+					limit = {
+						country_exists = BLR
+						NOT = { BLR = { is_subject_of = SOV } }
+						NOT = { BLR = { is_subject_of = LIT } }
+						BLR = {
+							OR = {
+								nationalist_right_wing_populists_are_in_power = yes
+								nationalist_monarchists_are_in_power = yes
+							}
+							NOT = { is_in_faction_with = SOV }
+							NOT = { is_in_faction_with = LIT }
+							has_war = no
+						}
+					}
+					BLR = { country_event = SOV_Global.10 }
+				}
+			}
+			##########RUSSIA NATIONALIST TAKE WARGOAL FOCUS ON BALTIC
+			if = {
+				limit = {
+					original_tag = SOV
+					SOV = { has_completed_focus = SOV_zhirinovsky_secure_baltics }
+				}
+				####Lithinia reaction
+				if = {
+					limit = {
+						country_exists = LIT
+						NOT = { LIT = { is_subject_of = SOV } }
+						LIT = {
+							NOT = { is_in_faction_with = SOV }
+							has_war = no
+						}
+					}
+					LIT = { country_event = SOV_Global.5 }
+				}
+				####Latvia reaction
+				if = {
+					limit = {
+						country_exists = LAT
+						NOT = { LAT = { is_subject_of = SOV } }
+						LAT = {
+							NOT = { is_in_faction_with = SOV }
+							has_war = no
+						}
+					}
+					LAT = { country_event = SOV_Global.5 }
+				}
+				####Estonia reaction
+				if = {
+					limit = {
+						country_exists = EST
+						NOT = { EST = { is_subject_of = SOV } }
+						EST = {
+							NOT = { is_in_faction_with = SOV }
+							has_war = no
+						}
+					}
+					EST = { country_event = SOV_Global.5 }
+				}
+			}
+			##########RUSSIA ATTACKING UKRAINE
+			if = {
+				limit = {
+					original_tag = SOV
+					FROM = { original_tag = UKR }
+				}
+				####Belarus Reaction
+				if = {
+					limit = {
+						country_exists = BLR
+						NOT = { BLR = { is_subject_of = SOV } }
+						NOT = { BLR = { is_subject_of = UKR } }
+						BLR = {
+							OR = {
+								nationalist_right_wing_populists_are_in_power = yes
+								nationalist_monarchists_are_in_power = yes
+								has_government = democratic
+							}
+							NOT = { is_in_faction_with = SOV }
+							NOT = { is_in_faction_with = UKR }
+							has_war = no
+						}
+					}
+					BLR = { country_event = SOV_Global.15 }
+				}
+				####Belarus Try to Attack Ukraine
+				if = {
+					limit = {
+						country_exists = BLR
+						BLR = { is_subject = no }
+						BLR = {
+							NOT = {
+								is_in_faction = yes
+							}
+							has_war = no
+						}
+						UKR = {
+							surrender_progress > 0.6
+						}
+						OR = {
+							UKR = { owns_state = 669 }
+							UKR = { owns_state = 1110 }
+						}
+						BLR = {
+							nationalist_right_wing_populists_are_in_power = yes
+							NOT = { is_in_faction_with = SOV }
+							NOT = { is_in_faction_with = UKR }
+							has_war = no
+						}
+					}
+					BLR = { country_event = SOV_Global.19 }
+				}
+				####Transnistria attack?
+				if = {
+					limit = {
+						country_exists = PMR
+						PMR = { is_subject = no }
+						PMR = {
+							NOT = {
+								is_in_faction = yes
+							}
+							has_war = no
+						}
+					}
+					UKR = { country_event = SOV_Global.18 }
+				}
+			}
 		}
 	}
 
@@ -2821,51 +3168,6 @@ on_actions = {
 				pmc_variables_setup = yes
 			}
 
-			### Constants ###
-			## Karabakh ##
-			# Tension
-			set_variable = { global.CONST_default_karabakh_tension = 20 }
-			set_variable = { global.CONST_karabakh_min_tension = 0 }
-			set_variable = { global.CONST_karabakh_max_tension = 100 }
-			set_variable = { global.CONST_karabakh_tension_level_low = 25 }
-			set_variable = { global.CONST_karabakh_tension_level_medium = 50 }
-			set_variable = { global.CONST_karabakh_tension_level_high = 75 }
-			set_variable = { global.CONST_karabakh_tension_change_low = 10 }
-			set_variable = { global.CONST_karabakh_tension_change_medium = 20 }
-			set_variable = { global.CONST_karabakh_tension_change_high = 30 }
-			set_variable = { global.CONST_karabakh_drift_lowest = 3 }
-			set_variable = { global.CONST_karabakh_drift_low = 5 }
-			set_variable = { global.CONST_karabakh_drift_medium = 8 }
-			set_variable = { global.CONST_karabakh_drift_high = 10 }
-			set_variable = { global.CONST_karabakh_drift_modifier_low = 0.75 }
-			set_variable = { global.CONST_karabakh_drift_modifier_high = 1.25 }
-			# Readiness
-			set_variable = { global.CONST_karabakh_default_readiness = 25 }
-			set_variable = { global.CONST_karabakh_readiness_min = 0 }
-			set_variable = { global.CONST_karabakh_readiness_max = 100 }
-			set_variable = { global.CONST_karabakh_readiness_low = 30 }
-			set_variable = { global.CONST_karabakh_readiness_medium = 50 }
-			set_variable = { global.CONST_karabakh_readiness_high = 80 }
-			set_variable = { global.CONST_karabakh_readiness_change_low = 5 }
-			set_variable = { global.CONST_karabakh_readiness_change_medium = 10 }
-			set_variable = { global.CONST_karabakh_readiness_change_drift = 2 }
-			set_variable = { global.CONST_karabakh_readiness_drift_modifier_low = 0.5 }
-			set_variable = { global.CONST_karabakh_readiness_drift_modifier_high = 1.5 }
-			# Operations
-			set_variable = { global.CONST_karabakh_mission_raid = 1 }
-			set_variable = { global.CONST_karabakh_mission_arty = 2 }
-			set_variable = { global.CONST_karabakh_mission_recon = 3 }
-			set_variable = { global.CONST_karabakh_mission_digin = 4 }
-			set_variable = { global.CONST_karabakh_mission_question_locals = 5 }
-			set_variable = { global.CONST_karabakh_mission_aerial_recon = 6 }
-			set_variable = { global.CONST_karabakh_mission_unmanned_recon = 7 }
-			# War support
-			set_variable = { global.CONST_karabakh_war_support_low = 0.4 }
-			set_variable = { global.CONST_karabakh_war_support_medium = 0.6 }
-			set_variable = { global.CONST_karabakh_war_support_high = 0.85 }
-
-			set_variable = { global.karabakh_tension = global.CONST_default_karabakh_tension }
-
 			ARM = {
 				activate_mission = karabakh_main_countdown_mission
 				set_variable = { karabakh_readiness = global.CONST_karabakh_default_readiness }
@@ -2923,10 +3225,7 @@ on_actions = {
 			}
 
 			ITA = {
-				if = {
-					limit = {
-						is_ai = no
-					}
+				if = { limit = { is_ai = no }
 					country_event = italy_md.23
 				}
 				resize_array = {
@@ -2974,14 +3273,14 @@ on_actions = {
 				# Sets Global vars for investment then resizes array
 				init_investment_system = yes
 				init_auto_influence_array = yes
+				research_slot_init_for_country = yes
 
 				# AGRICULTURE INIT
 				AGRI_plant_the_seeds = yes
 				# LITERACY RATES INIT
 				EDU_learn_your_ABCs_with_dread = yes
 
-				# Together for Victory Configuration
-				if = { limit = { has_dlc = "Together for Victory" has_idea = NATO_member }
+				if = { limit = { has_idea = NATO_member }
 					add_to_tech_sharing_group = NATO_Tech_Share
 				}
 				# La Resistance Variable Configuration
@@ -3013,8 +3312,10 @@ on_actions = {
 
 				# DO NOT TOUCH THIS AT ALL I WILL HURT YOU
 				#set_rule = { can_access_market = no  }
+				# Sets the Screens to Open by Default
 				if = { limit = { is_ai = no }
 					set_country_flag = open_energy_screen
+					set_country_flag = open_research_screen
 				}
 
 				# Calculate Utilities
@@ -3039,6 +3340,9 @@ on_actions = {
 					limit = { has_start_date > 2016.1.1 }		#2017 relations
 					country_event = { id = init_relations.0 }
 				}
+
+				# Configure Starting European Union Values
+				on_startup_euu_action = yes
 
 				set_power_ranking_ideas_for_every_country = yes
 			}
@@ -3153,6 +3457,7 @@ on_actions = {
 			PER_government_change = yes
 			TUR_government_change = yes
 			GER_government_change = yes
+			CHI_government_change = yes
 		}
 	}
 
@@ -3214,6 +3519,10 @@ on_actions = {
 						}
 					}
 
+					PREV = {
+						add_to_array = { array = shards_array value = ROOT }
+					}
+
 					ROOT = {
 						if = {
 							limit = {
@@ -3253,42 +3562,27 @@ on_actions = {
 						set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
 						multiply_temp_variable = { temp_nationalist = 100 }
 
-						if = {
-							limit = {
-								has_government = nationalist
-							}
+						if = { limit = { has_government = nationalist }
 							multiply_temp_variable = { temp_neutrality = 0.5 }
 							add_to_temp_variable = { temp_nationalist = temp_neutrality }
 							add_to_array = { ruling_party = 20 }
 						}
-						else_if = {
-							limit = {
-								has_government = communism
-							}
+						else_if = { limit = { has_government = communism }
 							multiply_temp_variable = { temp_democratic = 0.5 }
 							add_to_temp_variable = { temp_communism = temp_democratic }
 							add_to_array = { ruling_party = 6 }
 						}
-						else_if = {
-							limit = {
-								has_government = democratic
-							}
+						else_if = { limit = { has_government = democratic }
 							multiply_temp_variable = { temp_communism = 0.5 }
 							add_to_temp_variable = { temp_democratic = temp_communism }
 							add_to_array = { ruling_party = 1 }
 						}
-						else_if = {
-							limit = {
-								has_government = fascism
-							}
+						else_if = { limit = { has_government = fascism }
 							multiply_temp_variable = { temp_neutrality = 0.5 }
 							add_to_temp_variable = { temp_fascism = temp_neutrality }
 							add_to_array = { ruling_party = 14 }
 						}
-						else_if = {
-							limit = {
-								has_government = neutrality
-							}
+						else_if = { limit = { has_government = neutrality }
 							add_to_array = { ruling_party = 11 }
 						}
 						# neutrals fight eachother
@@ -3341,23 +3635,22 @@ on_actions = {
 						set_variable = { gdp_per_capita = PREV.gdp_per_capita }
 						update_budget_laws_for_new_nation = yes
 
-						set_variable = { economic_cycles = PREV.economic_cycles }
-						if = { limit = { check_variable = { economic_cycles = 6 } }
+						if = { limit = { PREV = { has_idea = depression } }
 							add_ideas = depression
 						}
-						else_if = { limit = { check_variable = { economic_cycles = 5 } }
+						else_if = { limit = { PREV = { has_idea = recession } }
 							add_ideas = recession
 						}
-						else_if = { limit = { check_variable = { economic_cycles = 4 } }
+						else_if = { limit = { PREV = { has_idea = stagnation } }
 							add_ideas = stagnation
 						}
-						else_if = { limit = { check_variable = { economic_cycles = 3 } }
+						else_if = { limit = { PREV = { has_idea = stable_growth } }
 							add_ideas = stable_growth
 						}
-						else_if = { limit = { check_variable = { economic_cycles = 2 } }
+						else_if = { limit = { PREV = { has_idea = fast_growth } }
 							add_ideas = fast_growth
 						}
-						else_if = { limit = { check_variable = { economic_cycles = 1 } }
+						else_if = { limit = { PREV = { has_idea = economic_boom } }
 							add_ideas = economic_boom
 						}
 
