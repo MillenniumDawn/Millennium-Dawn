@@ -108,6 +108,13 @@ calculate_tax_rate = {
 		multiply_variable = { receiving_investment_cost_form_corporate_tax = 0.01 }
 		multiply_variable = { consumer_goods_from_corporate_tax = 1.5 } # Doubles the Consumer Goods Penalty
 
+		# Productivity
+		set_temp_variable = { base_modifier = corporate_tax_rate }
+		multiply_temp_variable = { base_modifier = -1 }
+		add_to_temp_variable = { base_modifier = 20 }
+		set_variable = { productivity_growth_modifier_from_corporate_tax = base_modifier }
+		multiply_variable = { productivity_growth_modifier_from_corporate_tax = 0.005 }
+
 		if = {
 			limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
 			add_dynamic_modifier = { modifier = population_tax_stability_hit }
@@ -862,6 +869,16 @@ calculate_additional_income_rate = {
 			multiply_variable = { additional_income_azot = 0.1 }
 			add_to_variable = { additional_income_rate = additional_income_azot }
 		}
+		if = {
+			limit = { has_idea = BLR_kal_with }
+			set_variable = { additional_income_BLR_kal_with = 0.150 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_kal_with }
+		}
+		if = {
+			limit = { has_idea = BLR_kal_without }
+			set_variable = { additional_income_BLR_kal_without = 0.210 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_kal_without }
+		}
 	}
 	# Russia
 	if = {
@@ -880,6 +897,21 @@ calculate_additional_income_rate = {
 			limit = { has_idea = CRM_naval }
 			set_variable = { CRM_naval_gain = -0.45 }
 			add_to_variable = { additional_income_rate = CRM_naval_gain }
+		}
+		if = {
+			limit = { has_idea = BLR_oil_sov }
+			set_variable = { additional_income_BLR_oil_sov = 0.044 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_oil_sov }
+		}
+		if = {
+			limit = { has_idea = BLR_oil_sov_positive }
+			set_variable = { additional_income_BLR_oil_sov_positive = 0.066 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_oil_sov_positive }
+		}
+		if = {
+			limit = { has_idea = BLR_kal_with }
+			set_variable = { additional_income_BLR_kal_with = 0.150 }
+			add_to_variable = { additional_income_rate = additional_income_BLR_kal_with }
 		}
 
 	}
@@ -1052,6 +1084,14 @@ calculate_additional_income_rate = {
 		set_variable = { additional_income_gulf_exploitation = gdp_total }
 
 		add_to_variable = { additional_income_rate = additional_income_gulf_exploitation }
+	}
+	if = {
+		limit = { original_tag = DEN }
+		set_variable = { additional_income_DEN_consume_tax = gdp_per_capita }
+		multiply_variable = { additional_income_DEN_consume_tax = 0.21 }
+		multiply_variable = { additional_income_DEN_consume_tax = 0.04 }
+		multiply_variable = { additional_income_DEN_consume_tax = welfare_gain }
+		add_to_variable = { additional_income_rate = additional_income_DEN_consume_tax }
 	}
 
 	#Sold Equipment Tax Income
@@ -2669,6 +2709,19 @@ calculate_additional_expense_rate = {
 		}
 	}
 	if = {
+		limit = { original_tag = BLR }
+		if = {
+			limit = { has_idea = BLR_oil_russian }
+			set_variable = { additional_expense_BLR_oil_russian = 0.044 }
+			add_to_variable = { additional_expenses_rate = additional_expense_BLR_oil_russian }
+		}
+		if = {
+			limit = { has_idea = BLR_oil_russian_positive }
+			set_variable = { additional_expense_BLR_oil_russian_positive = 0.066 }
+			add_to_variable = { additional_expenses_rate = additional_expense_BLR_oil_russian_positive }
+		}
+	}
+	if = {
 		limit = { original_tag = EGY }
 		if = {
 			limit = { has_idea = EGY_broken_economy_idea }
@@ -2715,6 +2768,15 @@ calculate_additional_expense_rate = {
 			set_variable = { additional_income_evergreen = EGY.current_evergreen_capacity }
 			multiply_variable = { additional_income_evergreen = 0.1 }
 			add_to_variable = { additional_income_rate = additional_income_evergreen }
+		}
+	}
+
+	if = {
+		limit = { original_tag = MNT }
+		if = {
+			limit = { has_idea = MNT_yacht }
+			set_variable = { additional_income_mnt_yacht = 0.215 }
+			add_to_variable = { additional_income_rate = additional_income_mnt_yacht  }
 		}
 	}
 }
@@ -2895,6 +2957,8 @@ update_display = {
 
 	set_variable = { display_income = tax_gain }
 	add_to_variable = { display_income = resource_sale_rate }
+	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
+	divide_variable = { resource_to_tax_income = tax_gain }
 	if = { limit = { NOT = { has_country_flag = int_reinvestment_flag } }
 		add_to_variable = { display_income = int_investments_rate }
 	}
@@ -3304,7 +3368,7 @@ calculate_gdp = {
 
 	set_temp_variable = { civ_facs_worker_requirement_multiplier = 1 }
 	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
-	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
 	clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 }
 	set_temp_variable = { max_workers_in_civ_facs = industrial_complex_total }
 	multiply_temp_variable = { max_workers_in_civ_facs = workers_per_civ_fac }
@@ -3324,7 +3388,7 @@ calculate_gdp = {
 
 	set_temp_variable = { offices_worker_requirement_multiplier = 1 }
 	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@offices_worker_requirement_modifier }
-	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
 	clamp_temp_variable = { var = offices_worker_requirement_multiplier min = 0.10 }
 	set_temp_variable = { max_workers_in_offices = office_park_total }
 	multiply_temp_variable = { max_workers_in_offices = workers_per_office }

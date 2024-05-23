@@ -10,7 +10,7 @@ focus_tree = {
 		}
 	}
 
-	continuous_focus_position = { x = 2350 y = 600 }
+	continuous_focus_position = { x = 2350 y = 1200 }
 
 	#economics
 	focus = {
@@ -620,15 +620,37 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus GRE_purchase_air executed"
-			add_tech_bonus = {
-				name = GRE_purchase_air
-				bonus = 0.3
-				uses = 2
-				technology = cas1
-				technology = cas2
-				technology = cas3
-				technology = cas4
-				technology = cas5
+			if = {
+				limit = {
+					has_dlc = "By Blood Alone"
+				}
+				add_tech_bonus = {
+					name = GRE_purchase_air
+					bonus = 0.3
+					uses = 2
+					technology = gen_3_medium
+					technology = gen_4_medium
+					technology = engines_2
+					technology = engines_3
+					technology = flying_wing_design
+					technology = variable_wing_design
+					technology = delta_wing_design
+					technology = early_weapons
+					technology = ag_weapons_1
+					technology = ag_weapons_2
+				}
+			}
+			else = {
+				add_tech_bonus = {
+					name = GRE_purchase_air_bba
+					bonus = 0.3
+					uses = 2
+					technology = cas1
+					technology = cas2
+					technology = cas3
+					technology = cas4
+					technology = cas5
+				}
 			}
 			set_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
@@ -857,7 +879,7 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus GRE_h_navy executed"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_naval_reform
-				category = naval_doctrine
+				category = Cat_naval_doctrine
 				uses = 2
 				cost_reduction = 0.50
 			}
@@ -4077,23 +4099,34 @@ focus_tree = {
 		available = {
 			country_exists = CHI
 			CHI = {
+				has_completed_focus = CHI_Form_the_SCO
+				has_opinion = {
+					target = GRE
+					value > 4
+				}
+			}
+		}
+		
+		bypass = {
+			OR = {
 				has_idea = sco_member
+				hidden_trigger = {
+					OR = {
+						has_idea = sco_member_econ
+						has_idea = sco_member_pol
+						has_idea = sco_member_mil
+					}
+				}
 			}
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: GRE_china_trade"
-			add_ideas = sco_member
-			add_opinion_modifier = { target = CHI modifier = free_trade_agreement }
-			reverse_add_opinion_modifier = { target = CHI modifier = free_trade_agreement }
-			set_temp_variable = { receiver_nation = CHI.id }
-			set_temp_variable = { sender_nation = GRE.id }
-			set_improved_trade_agreement = yes
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = GRE.id }
-			set_temp_variable = { influence_target = CHI.id }
-			change_influence_percentage = yes
+			log = "[GetDateText]: [Root.GetName]: GRE_china_trade"
+			hidden_effect = {
+				activate_decision = apply_to_join_as_a_member
+			}
+			custom_effect_tooltip = GRE_process_sco_member_tt
 		}
 
 		ai_will_do = {
@@ -4194,7 +4227,8 @@ focus_tree = {
 	###	Start of EU Focus Tree ###	x = 15 y = 20
 	##############################
 
-	shared_focus = EU001
+	shared_focus = USoE001
+	shared_focus = POTEF001
 
 	############################
 	### End of EU Focus Tree ###

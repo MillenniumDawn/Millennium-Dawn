@@ -423,9 +423,24 @@ country_event = {
 		release_puppet = QUE
 		custom_effect_tooltip = CAN_quebec_autonomous_tt
 		hidden_effect = {
-			set_autonomy = {
-				target = QUE
-				autonomy_state = autonomy_autonomous_state
+			if = {
+				limit = {
+					has_global_flag = GAME_RULE_allow_colored_puppets
+				}
+				set_autonomy = {
+					target = QUE
+					autonomy_state = autonomy_autonomous_state_colored
+					end_wars = yes
+					end_civil_wars = yes
+				}
+			}
+			else = {
+				set_autonomy = {
+					target = QUE
+					autonomy_state = autonomy_autonomous_state
+					end_wars = yes
+					end_civil_wars = yes
+				}
 			}
 			set_variable = { french_happiness_var = 90 }
 			CAN_update_french_happiness = yes
@@ -1495,8 +1510,17 @@ country_event = { ###Withdrawing the Security Council Bid
 	option = {
 		name = canada_md_politics.15.a
 		log = "[GetDateText]: [This.GetName]: canada_md_politics.15.a executed"
-		add_war_support = 0.025
-		increase_intervention_law_effect = yes
+		add_war_support = 0.04
+		if = {
+			limit = {
+				OR = {
+					NOT = { has_idea = intervention_global_interventionism }
+					NOT = { has_idea = intervention_neo_imperialism }
+				}
+			}
+			increase_intervention_law_effect = yes
+		}
+
 	}
 	option = {
 		name = canada_md_politics.15.b
