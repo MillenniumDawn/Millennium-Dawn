@@ -71,13 +71,39 @@ AGRI_civil_war = {
 }
 
 AGRI_allocation_change_effect = {
-	add_to_variable = { agri_crop_allocation^crop_type = allocation_change }
+	set_temp_variable = { AGRI_allocation_addition = allocation_change }
+	set_temp_variable = { AGRI_allocation_subtraction = allocation_change }
+	multiply_temp_variable = { AGRI_allocation_subtraction = -1 }
+	if = { # SELF CORRECTING EFFECT (REDUCES AMOUNT OF CODE NEEDED IN CALLING EFFECT)
+		limit = { check_variable = { crop_type = 0 } }
+		if = {
+			limit = { check_variable = { allocation_change > 0 } }
+			add_to_variable = { agri_crop_allocation^0 = AGRI_allocation_addition }
+			add_to_variable = { agri_crop_allocation^1 = AGRI_allocation_subtraction }
+		}
+		else = {
+			add_to_variable = { agri_crop_allocation^0 = AGRI_allocation_subtraction }
+			add_to_variable = { agri_crop_allocation^1 = AGRI_allocation_addition }
+		}
+	}
+	if = {
+		limit = { check_variable = { crop_type = 1 } }
+		if = {
+			limit = { check_variable = { allocation_change > 0 } }
+			add_to_variable = { agri_crop_allocation^0 = AGRI_allocation_subtraction }
+			add_to_variable = { agri_crop_allocation^1 = AGRI_allocation_addition }
+		}
+		else = {
+			add_to_variable = { agri_crop_allocation^0 = AGRI_allocation_addition }
+			add_to_variable = { agri_crop_allocation^1 = AGRI_allocation_subtraction }
+		}
+	}
 	clamp_variable = {
 		var = agri_crop_allocation^crop_type
 		min = 0
 		max = 1
 	}
-	custom_effect_tooltip = agri_allocation_change
+	custom_effect_tooltip = AGRI_allocation_change_effect_TT
 }
 
 AGRI_price_change_effect = {
@@ -180,6 +206,85 @@ AGRI_plow_the_fields = {
 		AGRI_allocation_change_effect = yes
 	}
 }
+
+AGRI_give_tobacco_company_rights = {
+	if = {
+		limit = {
+			var:nation_with_land = {
+				var:nation_with_industry = {
+					NOT = { has_country_flag = AGRI_tobacco_rights@PREV }
+				}
+			}
+		}
+		var:nation_with_land = {
+			set_country_flag = {
+				flag = AGRI_sold_rights_TOB
+				value = 1
+				days = 360
+			}
+			var:nation_with_industry = {
+				hidden_effect = {
+					set_country_flag = {
+						flag = AGRI_tobacco_rights@PREV
+						value = 1
+						days = 360
+					}
+					var:nation_with_land = {
+						set_country_flag = {
+							flag = AGRI_tobacco_rights@PREV
+							value = 1
+							days = 360
+						}
+					}
+				}
+			}
+		}
+		custom_effect_tooltip = AGRI_give_tobacco_company_rights_SELLING_TT
+	}
+	else = { custom_effect_tooltip = AGRI_give_tobacco_company_rights_SOLD_TT }
+}
+
+AGRI_give_tea_company_rights = {
+	if = {
+		limit = {
+			var:nation_with_land = {
+				var:nation_with_industry = {
+					NOT = { has_country_flag = AGRI_tea_rights@PREV }
+				}
+			}
+		}
+		var:nation_with_land = {
+			set_country_flag = {
+				flag = AGRI_sold_rights_TEA
+				value = 1
+				days = 360
+			}
+			var:nation_with_industry = {
+				hidden_effect = {
+					set_country_flag = {
+						flag = AGRI_tea_rights@PREV
+						value = 1
+						days = 360
+					}
+					var:nation_with_land = {
+						set_country_flag = {
+							flag = AGRI_tea_rights@PREV
+							value = 1
+							days = 360
+						}
+					}
+				}
+			}
+		}
+		custom_effect_tooltip = AGRI_give_tea_company_rights_SELLING_TT
+	}
+	else = { custom_effect_tooltip = AGRI_give_tea_company_rights_SOLD_TT }
+}
+
+
+
+
+
 
 # AGRI_drought_check = {
 # 	if = {
