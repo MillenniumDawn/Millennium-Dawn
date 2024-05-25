@@ -1,0 +1,3998 @@
+#Author(s): Angriest Bird, BrokenDROID
+focus_tree = {
+	id = philippines_focus
+	country = {
+		factor = 0
+		modifier = {
+			add = 25
+			tag = PHI
+		}
+	}
+	continuous_focus_position = { x = 3200 y = 1100 }
+	# # ASEAN Shared Tree
+	# shared_focus = ASEAN_asean
+
+	# Internal Affairs
+	focus = {
+		id = PHI_internal_affairs
+		icon = filipino_unity
+
+		x = 10
+		y = 0
+
+		cost = 8.6
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_internal_affairs"
+			add_stability = 0.02
+			add_political_power = 100
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_start_date > 1999.1.1
+				add = 50
+			}
+		}
+	}
+
+	focus = {
+		id = PHI_the_pull_of_religion
+		icon = NIG_fifty_fifty
+
+		x = -8
+		y = 1
+		relative_position_id = PHI_internal_affairs
+		cost = 10
+
+		prerequisite = { focus = PHI_internal_affairs }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			is_subject = no
+			has_civil_war = no
+			has_war = no
+			has_country_flag = phi_milf_exists
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_the_pull_of_religion"
+			add_dynamic_modifier = {
+				modifier = PHI_religious_dynamic_modifier
+			}
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			factor = 25
+			modifier = {
+				has_start_date > 1999.1.1
+				add = 5
+			}
+		}
+	}
+
+	focus = {
+		id = PHI_mobilize_army
+		icon = recruitment
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_internal_affairs
+		cost = 5.9 # 50 Days
+		prerequisite = { focus = PHI_internal_affairs }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			is_subject = no
+			has_civil_war = no
+			NOT = { has_idea = no_military }
+		}
+		bypass = {
+			has_idea = no_military
+		}
+		cancel = {
+			has_civil_war = yes
+			has_idea = no_military
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_mobilize_army"
+			increase_military_spending = yes
+			add_war_support = 0.02
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_completed_focus = PHI_the_pull_of_religion
+				add = 3
+			}
+			modifier = {
+				OR = {
+					has_idea = defence_00
+					has_idea = defence_01
+					has_idea = defence_02
+				}
+				factor = 5
+			}
+		}
+	}
+
+	focus = {
+		id = PHI_syncretism
+		icon = religious_partnership_catholic_sunni
+
+		x = -3
+		y = 1
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 2
+		prerequisite = { focus = PHI_the_pull_of_religion }
+		mutually_exclusive = { focus = PHI_secular }
+		mutually_exclusive = { focus = PHI_denounce_islam }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			has_civil_war = no
+			has_war = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_syncretism"
+			set_temp_variable = { temp_change = -2 }
+			PHI_change_strength_of_milf = yes
+
+			add_ideas = PHI_syncretism_one_focus
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+	}
+
+	focus = {
+		id = PHI_secular
+		icon = land_of_harmony
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 2
+
+		prerequisite = { focus = PHI_the_pull_of_religion }
+		mutually_exclusive = { focus = PHI_syncretism }
+		mutually_exclusive = { focus = PHI_denounce_islam }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			has_idea = christian
+			has_civil_war = no
+			has_war = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_secular"
+			add_ideas = PHI_secularism
+			add_war_support = -0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_allow_muslim_teachings
+		icon = quaran_book
+
+		x = -4
+		y = 2
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 10
+		prerequisite = { focus = PHI_syncretism }
+		search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_allow_muslim_teachings"
+			add_stability = 0.03
+			if = {
+				limit = { has_variable = literacy_rate }
+				set_temp_variable = { LR_change = 0.02 }
+				update_literacy_rate = yes
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.02
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_maintain_stability
+		icon = support_the_left_right
+
+		x = -2
+		y = 2
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 5
+		prerequisite = { focus = PHI_syncretism }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_maintain_stability"
+			PHI = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = -300
+				}
+			}
+			739 = {
+				add_building_construction = {
+					type = bunker
+					level = 3
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -1.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reduce_the_christian_impact
+		icon = christianophobia
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 2
+		prerequisite = {
+			focus = PHI_syncretism
+			focus = PHI_secular
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_reduce_the_christian_impact"
+			SPR = {
+				add_opinion_modifier = {
+					target = PHI
+					modifier = small_decrease
+				}
+			}
+			set_temp_variable = { percent_change = -1 }
+			set_temp_variable = { tag_index = PHI }
+			set_temp_variable = { influence_target = SPR }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_separations
+		icon = renounce_treaty
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 10
+		prerequisite = { focus = PHI_secular }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_separations"
+			decrease_corruption = yes
+			decrease_centralization = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_education_reforms
+		icon = science2
+
+		x = -4
+		y = 3
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 4
+		prerequisite = { focus = PHI_allow_muslim_teachings }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_education_reforms"
+			increase_education_budget = yes
+			set_temp_variable = { treasury_change = -3.25 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_unity_amongst_faiths
+		icon = land_of_harmony
+
+		x = -2
+		y = 3
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 8
+		prerequisite = { focus = PHI_maintain_stability }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			has_civil_war = no
+			has_war = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_unity_amongst_faiths"
+			set_temp_variable = { temp_change = -2 }
+			PHI_change_strength_of_milf = yes
+			swap_ideas = {
+				remove_idea = PHI_syncretism_one_focus
+				add_idea = PHI_syncretism_two_focus
+			}
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_physical_over_metaphysical
+		icon = political_pressure
+
+		x = 0
+		y = 3
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 5
+		prerequisite = { focus = PHI_reduce_the_christian_impact }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+			add_stability = 0.03
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_nation_of_many
+		icon = religious_unity
+
+		x = 2
+		y = 3
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 8
+		prerequisite = { focus = PHI_separations }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			swap_ideas = {
+				remove_idea = PHI_secularism
+				add_idea = PHI_secularism_two
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_pro_muslim_discussions
+		icon = islamist_gov2
+
+		x = -4
+		y = 4
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 10
+		prerequisite = { focus = PHI_education_reforms }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			add_timed_idea = {
+				idea = PHI_islam_banking
+				days = 360
+			}
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_push
+		icon = religious_partnership_catholic_sunni
+
+		x = -2
+		y = 4
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 8
+		prerequisite = { focus = PHI_unity_amongst_faiths }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			swap_ideas = {
+				remove_idea = PHI_syncretism_two_focus
+				add_idea = PHI_syncretism_three_focus
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_revised_legal_codes
+		icon = examine_foreign_laws
+		x = 0
+		y = 4
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 10
+		prerequisite = { focus = PHI_physical_over_metaphysical }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			add_ideas = PHI_revise_legal_code
+			increase_centralization = yes
+			add_political_power = -150
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_prosper_together
+		icon = economic_prosperity
+
+		x = 2
+		y = 4
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 5
+		prerequisite = { focus = PHI_nation_of_many }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			736 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_delicate_balance
+		icon = stability
+
+		x = -3
+		y = 5
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 5
+		prerequisite = { focus = PHI_pro_muslim_discussions }
+		prerequisite = { focus = PHI_the_push }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_common_moral
+		icon = propaganda
+
+		x = 0
+		y = 5
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 8
+		prerequisite = { focus = PHI_revised_legal_codes }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			increase_social_spending = yes
+			set_temp_variable = { treasury_change = -16.75 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_finalize_the_secularization
+		icon = christianophobia
+
+		x = 2
+		y = 5
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 8
+		prerequisite = { focus = PHI_prosper_together }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			swap_ideas = {
+				remove_idea = christian
+				add_idea = pluralist
+			}
+			swap_ideas = {
+				remove_idea = PHI_secularism_two
+				add_idea = PHI_secularism_three
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_a_nation_united
+		icon = land_of_harmony
+
+		x = -2
+		y = 6
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 3
+		prerequisite = { focus = PHI_common_moral }
+		prerequisite = { focus = PHI_the_delicate_balance }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+			add_political_power = 75
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_nation_reborn
+		icon = support_the_left_right
+
+		x = 2
+		y = 6
+		relative_position_id = PHI_the_pull_of_religion
+		cost = 3
+		prerequisite = { focus = PHI_common_moral }
+		prerequisite = { focus = PHI_finalize_the_secularization }
+		prerequisite = { focus = PHI_devout_catholic_nation }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			ROOT = {
+				country_event = {
+					id = philippines.1
+					hours = 0
+				}
+			 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##Military Religious
+	focus = {
+		id = PHI_denounce_islam
+		icon = islamophobia
+
+		x = -2
+		y = 1
+		relative_position_id = PHI_mobilize_army
+		cost = 2
+		prerequisite = { focus = PHI_mobilize_army }
+		mutually_exclusive = { focus = PHI_syncretism }
+		mutually_exclusive = { focus = PHI_secular }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			set_temp_variable = { temp_change = 5 }
+			PHI_change_strength_of_milf = yes
+			SAU = {
+				add_opinion_modifier = {
+					target = PHI
+					modifier = large_decrease
+				}
+			}
+			PER = {
+				add_opinion_modifier = {
+					target = PHI
+					modifier = large_decrease
+				}
+			}
+			IND = {
+				add_opinion_modifier = {
+					target = PHI
+					modifier = large_decrease
+				}
+			}
+			add_political_power = 75
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_pilfer_the_islamic_communities
+		icon = anti_establishment2
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_mobilize_army }
+		mutually_exclusive = { focus = PHI_negotiations }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_negotiations
+		icon = intelligence_exchange
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_mobilize_army }
+
+		mutually_exclusive = { focus = PHI_pilfer_the_islamic_communities }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_discuss_the_contraceptive_issues
+		icon = POL_looseabortion
+
+		x = -4
+		y = 2
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = {
+			focus = PHI_secular
+			focus = PHI_denounce_islam
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			ROOT = {
+				country_event = {
+					id = philippines.2
+					hours = 0
+				}
+			 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_ban_public_islamic_practice
+		icon = end_sharia_law
+
+		x = -2
+		y = 2
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_denounce_islam }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+			set_temp_variable = { temp_change = 2 }
+			PHI_change_strength_of_milf = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.05
+			}
+			increase_policing_budget = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_instill_order
+		icon = fascism3
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_pilfer_the_islamic_communities }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_strike_a_bargain
+		icon = legislation
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_negotiations }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_physical_over_metaphysical"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_remain_true_to_god
+		icon = christian_faiths
+
+		x = -4
+		y = 3
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_discuss_the_contraceptive_issues }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+			add_ideas = PHI_true_to_god
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_deny_muslim_citizenship
+		icon = end_sharia_law
+
+		x = -2
+		y = 3
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_ban_public_islamic_practice }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+			add_ideas = PHI_deny_muslims
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_infiltrate_the_islamic_liberation
+		icon = infiltration
+
+		x = 0
+		y = 3
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_instill_order }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_levy_taxes
+		icon = coins
+
+		x = 2
+		y = 3
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_strike_a_bargain }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_bolster_the_christians
+		icon = christianity
+
+		x = -4
+		y = 4
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_remain_true_to_god }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+			swap_ideas = {
+				remove_idea = maritime_industry
+				add_idea = the_clergy
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_clergy_opinion = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = PHI }
+			set_temp_variable = { influence_target = SPR }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_establish_the_caste
+		icon = demand_territory
+
+		x = -2
+		y = 4
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_deny_muslim_citizenship }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
+			increase_centralization = yes
+			set_temp_variable = { treasury_change = -4.30 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_discover_their_whereabouts
+		icon = grand_battleplan
+
+		x = 0
+		y = 4
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_infiltrate_the_islamic_liberation }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_moro_federal_relations
+		icon = improve_relations_blue
+
+		x = 2
+		y = 4
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_levy_taxes }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_devout_catholic_nation
+		icon = preaching
+
+		x = -4
+		y = 5
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_bolster_the_christians }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+			swap_ideas = {
+				remove_idea = PHI_true_to_god
+				add_idea = PHI_true_to_god_two
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reeducation_therapy
+		icon = examine_foreign_laws
+
+		x = -2
+		y = 5
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_establish_the_caste }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+			set_temp_variable = { temp_change = 5 }
+			PHI_change_strength_of_milf = yes
+			736 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			set_temp_variable = { treasury_change = -12.50 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reactivate_the_national_guard
+		icon = volunteers
+
+		x = 1
+		y = 5
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = {
+			focus = PHI_moro_federal_relations
+			focus = PHI_discover_their_whereabouts
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_preparations
+		icon = army_reform
+
+		x = 3
+		y = 5
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = { focus = PHI_moro_federal_relations }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_from_front_to_ashes
+		icon = political_pressure
+
+		x = -2
+		y = 6
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = {
+			focus = PHI_reeducation_therapy
+			focus = PHI_finalize_the_secularization
+			focus = PHI_the_delicate_balance
+		}
+		prerequisite = { focus = PHI_reactivate_the_national_guard }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_peaceful_solution
+		icon = peace
+
+		x = 1
+		y = 6
+		relative_position_id = PHI_mobilize_army
+		cost = 10
+		prerequisite = {
+			focus = PHI_reeducation_therapy
+			focus = PHI_finalize_the_secularization
+			focus = PHI_the_delicate_balance
+		}
+		prerequisite = { focus = PHI_reactivate_the_national_guard }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_threat_is_real
+		icon = demand_territory3
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = {
+			focus = PHI_a_nation_united
+			focus = PHI_the_nation_reborn
+			focus = PHI_from_front_to_ashes
+			focus = PHI_the_peaceful_solution
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_moro_will_burn
+		icon = trade # placeholder ##Need icon for Moro Islamic Liberation Front Logo
+
+		x = 4
+		y = 1
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = {
+			focus = PHI_a_nation_united
+			focus = PHI_the_nation_reborn
+			focus = PHI_from_front_to_ashes
+			focus = PHI_the_peaceful_solution
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_autonomy_for_moros
+		icon = break_free
+
+		x = 6
+		y = 1
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_the_peaceful_solution }
+		mutually_exclusive = { focus = PHI_proper_representation }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_proper_representation
+		icon = government_beu
+
+		x = 8
+		y = 1
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_the_peaceful_solution }
+		mutually_exclusive = { focus = PHI_autonomy_for_moros }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_coalition_training
+		icon = coalition_army
+
+		x = -2
+		y = 2
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_the_threat_is_real }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_oef_philippines
+		icon = war3
+
+		x = 1
+		y = 2
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_the_threat_is_real }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_zambonga_trials
+		icon = trade # placeholder
+
+		x = 4
+		y = 2
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_moro_will_burn }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reinforce_the_muslim_state
+		icon = trade # placeholder
+
+		x = 6
+		y = 2
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_autonomy_for_moros }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_minority_delegations
+		icon = trade # placeholder
+
+		x = 8
+		y = 2
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_proper_representation }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_american_model
+		icon = trade # placeholder
+
+		x = -3
+		y = 3
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_coalition_training }
+		mutually_exclusive = { focus = PHI_eastern_model }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_eastern_model
+		icon = trade # placeholder
+
+		x = -1
+		y = 3
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_coalition_training }
+		mutually_exclusive = { focus = PHI_american_model }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_expand_the_campaign
+		icon = trade # placeholder
+
+		x = 1
+		y = 3
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_oef_philippines }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_verdict
+		icon = trade # placeholder
+
+		x = 4
+		y = 3
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = { focus = PHI_zambonga_trials }
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_a_new_moro
+		icon = trade # placeholder
+
+		x = 7
+		y = 3
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = {
+			focus = PHI_minority_delegations
+			focus = PHI_reinforce_the_muslim_state
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_officer_investiture
+		icon = trade # placeholder
+
+		x = -2
+		y = 4
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = {
+			focus = PHI_american_model
+			focus = PHI_eastern_model
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_condone_operation_pacific_eagle
+		icon = trade # placeholder
+
+		x = 2
+		y = 4
+		relative_position_id = PHI_the_nation_reborn
+		cost = 10
+		prerequisite = {
+			focus = PHI_the_verdict
+			focus = PHI_expand_the_campaign
+		}
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PHI_remain_true_to_god"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##The Kamara
+	focus = {
+		id = PHI_reform_house
+		icon = Election_graphics
+
+		x = 8
+		y = 1
+		relative_position_id = PHI_internal_affairs
+		cost = 10
+		prerequisite = { focus = PHI_internal_affairs }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_reform_house"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_centralized_bureaucracy
+		icon = trade # placeholder
+
+		x = -2
+		y = 1
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_reform_house }
+		mutually_exclusive = {
+			focus = PHI_decentralized_regionalism
+			focus = PHI_status_quo
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_centralized_bureaucracy"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_status_quo
+		icon = trade # placeholder
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_reform_house }
+		mutually_exclusive = {
+			focus = PHI_centralized_bureaucracy
+			focus = PHI_decentralized_regionalism
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_status_quo"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_decentralized_regionalism
+		icon = trade # placeholder
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_reform_house }
+		mutually_exclusive = {
+			focus = PHI_centralized_bureaucracy
+			focus = PHI_status_quo
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_afp_modernizations
+		icon = trade # placeholder
+
+		x = 4
+		y = 1
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_reform_house }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_consolidation_of_power
+		icon = trade # placeholder
+
+		x = -2
+		y = 2
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_centralized_bureaucracy }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_consolidation_of_power"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_maintain_the_establishment
+		icon = trade # placeholder
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_status_quo }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_maintain_the_establishment"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = PHI_spread_the_responsibility
+		icon = trade # placeholder
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_decentralized_regionalism }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_spread_the_responsibility"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reinforce_the_federals
+		icon = trade # placeholder
+
+		x = -2
+		y = 3
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_consolidation_of_power }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_reinforce_the_federals"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_spread_stability
+		icon = trade # placeholder
+
+		x = 0
+		y = 3
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_maintain_the_establishment }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_spread_stability"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reduced_taxes
+		icon = trade # placeholder
+
+		x = 2
+		y = 3
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_spread_the_responsibility }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_reduced_taxes"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_economic_interventionism
+		icon = trade # placeholder
+
+		x = -2
+		y = 4
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = { focus = PHI_reinforce_the_federals }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_economic_interventionism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_administrative_reforms
+		icon = trade # placeholder
+
+		x = 1
+		y = 4
+		relative_position_id = PHI_reform_house
+		cost = 10
+		prerequisite = {
+			focus = PHI_reduced_taxes
+			focus = PHI_spread_stability
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_administrative_reforms"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = PHI_home_grown_military_industry
+		icon = trade # placeholder
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_afp_modernizations
+		cost = 10
+		prerequisite = { focus = PHI_afp_modernizations }
+		prerequisite = { focus = PHI_encourage_labour }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_filipino_military_industry
+		icon = trade # placeholder
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_afp_modernizations
+		cost = 10
+		prerequisite = { focus = PHI_home_grown_military_industry }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_manila_corporations
+		icon = trade # placeholder
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_afp_modernizations
+		cost = 10
+		prerequisite = { focus = PHI_move_talla }
+		prerequisite = { focus = PHI_home_grown_military_industry }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_manila_corporations"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_military_research_foundations
+		icon = trade # placeholder
+
+		x = 0
+		y = 3
+		relative_position_id = PHI_afp_modernizations
+		cost = 10
+		prerequisite = { focus = PHI_filipino_military_industry }
+		prerequisite = { focus = PHI_manila_corporations }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = PHI_new_found_patriotism
+		icon = trade # placeholder
+
+		x = 2
+		y = 3
+		relative_position_id = PHI_afp_modernizations
+		cost = 10
+		prerequisite = { focus = PHI_manila_corporations }
+		prerequisite = { focus = PHI_filipino_military_industry }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_new_found_patriotism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	#Military Portion of the Tree
+	focus = {
+		id = PHI_military_forces_of_philippines
+		icon = trade # placeholder
+
+		x = 70
+		y = 0
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_airforce
+		icon = Philippine_Air_Force
+
+		x = -5
+		y = 1
+		relative_position_id = PHI_military_forces_of_philippines
+		cost = 7.5
+
+		prerequisite = { focus = PHI_military_forces_of_philippines }
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_AIR_XP }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_airforce"
+			air_experience = 100
+			add_doctrine_cost_reduction = {
+				name = PHI_airforce
+				category = air_doctrine
+				uses = 2
+				cost_reduction = 0.5
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_army
+		icon = Philippine_Army
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_military_forces_of_philippines
+		cost = 10
+		prerequisite = { focus = PHI_military_forces_of_philippines }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_army"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_integrate_the_ilaga
+		icon = volunteers
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_military_forces_of_philippines
+		cost = 10
+		prerequisite = { focus = PHI_military_forces_of_philippines }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_integrate_the_ilaga"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_filipino_navy
+		icon = Philippine_Navy
+
+		x = 4
+		y = 1
+		relative_position_id = PHI_military_forces_of_philippines
+		cost = 10
+		prerequisite = { focus = PHI_military_forces_of_philippines }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_filipino_navy"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_import_next_gen_aircraft
+		icon = advan_fighters
+
+		x = -1
+		y = 1
+		relative_position_id = PHI_airforce
+		cost = 10
+		prerequisite = { focus = PHI_airforce }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_import_next_gen_aircraft"
+			set_temp_variable = { treasury_change = -1.50 }
+			modify_treasury_effect = yes
+
+			add_tech_bonus = {
+				name = Cat_FIGHTER
+				bonus = 0.50
+				uses = 1
+				category = Cat_FIGHTER
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_combat_helicopters
+		icon = helicopter_1
+
+		x = 1
+		y = 1
+		relative_position_id = PHI_airforce
+		cost = 10
+		prerequisite = { focus = PHI_airforce }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_counter_guerilla
+		icon = counter
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_army
+		cost = 10
+		prerequisite = { focus = PHI_army }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_defense
+		icon = defense
+
+		x = -2
+		y = 1
+		relative_position_id = PHI_army
+		cost = 10
+		prerequisite = { focus = PHI_army }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_offense
+		icon = combined_arms
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_army
+		cost = 10
+		prerequisite = { focus = PHI_army }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_revitalized_our_fleet
+		icon = frigates
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_filipino_navy
+		cost = 10
+		prerequisite = { focus = PHI_filipino_navy }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_revitalized_our_fleet"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_defend_our_islands
+		icon = Naval_Upgrade
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_filipino_navy
+		cost = 10
+		prerequisite = { focus = PHI_filipino_navy }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_defend_our_islands"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_filipino_bomb_squad
+		icon = tanks2
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_airforce
+		cost = 10
+		prerequisite = { focus = PHI_import_next_gen_aircraft }
+		prerequisite = { focus = PHI_combat_helicopters }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_filipino_bomb_squad"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_defensive_air_installations
+		icon = air_defense2
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_airforce
+		cost = 10
+		prerequisite = { focus = PHI_defense }
+		prerequisite = { focus = PHI_combat_helicopters }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_defensive_air_installations"
+			two_anti_air = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_army_modernization
+		icon = army_reform
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_army
+		cost = 10
+		prerequisite = {
+			focus = PHI_counter_guerilla
+			focus = PHI_offense
+			focus = PHI_defense
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_karangalan
+		icon = special_forces
+
+		x = 3
+		y = 2
+		relative_position_id = PHI_army
+		cost = 10
+		prerequisite = { focus = PHI_offense }
+		prerequisite = { focus = PHI_revitalized_our_fleet }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_divert_our_spending
+		icon = Generic_Naval_Treaty
+
+		x = 5
+		y = 2
+		relative_position_id = PHI_army
+		cost = 10
+		prerequisite = { focus = PHI_defend_our_islands }
+		prerequisite = { focus = PHI_revitalized_our_fleet }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_unmanned_airforce
+		icon = drone2
+
+		x = -1
+		y = 3
+		relative_position_id = PHI_airforce
+		cost = 10
+		prerequisite = { focus = PHI_import_next_gen_aircraft }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_unmanned_airforce"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_heli_infantry
+		icon = soldier
+
+		x = 1
+		y = 3
+		relative_position_id = PHI_airforce
+		cost = 10
+		prerequisite = { focus = PHI_filipino_bomb_squad }
+		prerequisite = { focus = PHI_defensive_air_installations }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_heli_infantry"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_consider_a_draft
+		icon = conscription
+
+		x = -1
+		y = 1
+		relative_position_id = PHI_army_modernization
+		cost = 10
+		prerequisite = { focus = PHI_army_modernization }
+		mutually_exclusive = { focus = PHI_new_standing_army }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_new_standing_army
+		icon = soldier2
+
+		x = 1
+		y = 1
+		relative_position_id = PHI_army_modernization
+		cost = 10
+		prerequisite = { focus = PHI_army_modernization }
+		mutually_exclusive = { focus = PHI_consider_a_draft }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_fortress_island
+		icon = generic_entrenchment
+
+		x = 1
+		y = 1
+		relative_position_id = PHI_consider_a_draft
+		cost = 10
+		prerequisite = {
+			focus = PHI_new_standing_army
+			focus = PHI_consider_a_draft
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##Internal Dev/Economic Focuses
+	focus = {
+		id = PHI_internal_dev
+		icon = trade # placeholder
+
+		x = 16
+		y = 1
+		relative_position_id = PHI_internal_affairs
+		cost = 10
+		prerequisite = { focus = PHI_internal_affairs }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_internal_dev"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_encourage_labour
+		icon = trade # placeholder
+
+		x = -2
+		y = 1
+		relative_position_id = PHI_internal_dev
+		cost = 10
+		prerequisite = { focus = PHI_internal_dev }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_encourage_labour"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_move_talla
+		icon = trade # placeholder
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_encourage_labour
+		cost = 10
+		prerequisite = { focus = PHI_encourage_labour }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_move_talla"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_recover_finance
+		icon = trade # placeholder
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_internal_dev
+		cost = 10
+		prerequisite = { focus = PHI_internal_dev }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_recover_finance"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_new_research
+		icon = trade # placeholder
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_recover_finance
+		cost = 10
+		prerequisite = { focus = PHI_recover_finance }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_new_research"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = PHI_request_funding
+		icon = trade # placeholder
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_internal_dev
+		cost = 10
+		prerequisite = { focus = PHI_internal_dev focus = PHI_adp }
+		mutually_exclusive = { focus = PHI_exploit_bank }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reinforce_homemade_production
+		icon = trade # placeholder
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_request_funding
+		cost = 10
+		prerequisite = { focus = PHI_request_funding }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_convert_agriculture
+		icon = trade # placeholder
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_move_talla
+		cost = 10
+		prerequisite = {
+			focus = PHI_move_talla
+			focus = PHI_new_research
+			focus = PHI_reinforce_homemade_production
+		}
+		mutually_exclusive = { focus = PHI_develop_new_gmos }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_convert_agriculture"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_develop_new_gmos
+		icon = trade # placeholder
+
+		x = 4
+		y = 1
+		relative_position_id = PHI_move_talla
+		cost = 10
+		prerequisite = {
+			focus = PHI_move_talla
+			focus = PHI_new_research
+			focus = PHI_reinforce_homemade_production
+		}
+		mutually_exclusive = { focus = PHI_convert_agriculture }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_decentralized_regionalism"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_kahripans_curse
+		icon = trade # placeholder
+
+		x = 1
+		y = 1
+		relative_position_id = PHI_convert_agriculture
+		cost = 10
+		prerequisite = {
+			focus = PHI_convert_agriculture
+			focus = PHI_develop_new_gmos
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_kahripans_curse"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	# Focus Tree Section: Foreign Affairs
+	focus = {
+		id = PHI_foreign_affairs
+		icon = global_community
+
+		x = 40
+		y = 0
+		cost = 5
+		available = {
+			is_subject = no
+		}
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_foreign_affairs"
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_adp
+		icon = factory_complex # TODO: Replace with Asian Development Bank logo
+
+		x = -8
+		y = 1
+		relative_position_id = PHI_foreign_affairs
+		cost = 10
+		prerequisite = { focus = PHI_foreign_affairs }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_adp"
+			set_temp_variable = { GDP_calculator = gdp_total_display }
+			multiply_temp_variable = { GDP_calculator = -0.05 }
+			clamp_variable = { var = GDP_calculator min = -50 max = 0 }
+			custom_effect_tooltip = PHI_adp_effect_tooltip
+			set_temp_variable = { treasury_change = GDP_calculator }
+			modify_treasury_effect = yes
+			set_variable = { PHI_adp_total_income = GDP_calculator }
+			unlock_decision_category_tooltip = PHI_asian_development_bank_category
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_exploit_bank
+		icon = trade # placeholder
+
+		x = -2
+		y = 1
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_adp }
+		mutually_exclusive = { focus = PHI_request_funding }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_expand_adp
+		icon = trade # TODO: Replace with Asian Development Bank logo w/ a money symbol
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_adp }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reduce_adp_autonomy
+		icon = trade # placeholder
+
+		x = -2
+		y = 2
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_exploit_bank }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_deposit_adp
+		icon = trade # placeholder
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_expand_adp }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_nationalize_the_bank
+		icon = trade # placeholder
+
+		x = -2
+		y = 3
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_reduce_adp_autonomy }
+		mutually_exclusive = { focus = PHI_foreign_backers }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_foreign_backers
+		icon = trade # placeholder
+
+		x = 0
+		y = 3
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_deposit_adp }
+		mutually_exclusive = { focus = PHI_nationalize_the_bank }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_expansionary_foreign_investment
+		icon = trade # placeholder
+
+		x = -1
+		y = 4
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = {
+			focus = PHI_foreign_backers
+			focus = PHI_nationalize_the_bank
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_loan_to_developers
+		icon = trade # placeholder
+
+		x = 1
+		y = 4
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_maintain_the_adps_growth }
+		prerequisite = { focus = PHI_foreign_backers }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_improve_relations_myn
+		icon = trade # placeholder
+
+		x = -6
+		y = 2
+		relative_position_id = PHI_foreign_affairs
+		cost = 10
+		prerequisite = { focus = PHI_adp }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_open_in_myn
+		icon = trade # placeholder
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_improve_relations_myn
+		cost = 10
+		prerequisite = { focus = PHI_improve_relations_myn }
+		prerequisite = { focus = PHI_adp }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_development_in_asia
+		icon = trade # placeholder
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_open_in_myn }
+		prerequisite = { focus = PHI_expand_adp }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_combat_helicopters"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_maintain_the_adps_growth
+		icon = trade # placeholder
+
+		x = 2
+		y = 5
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_development_in_asia }
+		prerequisite = { focus = PHI_deposit_adp }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_draw_east"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_ecb_adp
+		icon = trade # placeholder
+
+		x = 3
+		y = 4
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_adopt_foreign_models }
+		prerequisite = { focus = PHI_maintain_the_adps_growth }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_draw_east"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_global_bank
+		icon = trade # placeholder
+
+		x = 2
+		y = 6
+		relative_position_id = PHI_adp
+		cost = 10
+		prerequisite = { focus = PHI_maintain_the_adps_growth }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_global_bank"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##Alignment Focuses
+	focus = {
+		id = PHI_draw_west
+		icon = support_democracy
+
+		x = -1
+		y = 1
+		relative_position_id = PHI_foreign_affairs
+		cost = 10
+		prerequisite = { focus = PHI_foreign_affairs }
+		mutually_exclusive = { focus = PHI_draw_east }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_draw_west"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_export_resources
+		icon = trade
+
+		x = -3
+		y = 1
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_draw_west }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_draw_east"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_american_influence
+		icon = align_to_america
+
+		x = -3
+		y = 2
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_export_resources }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_draw_east"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_adopt_foreign_models
+		icon = trade # placeholder
+
+		x = -3
+		y = 3
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_american_influence }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_draw_east"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_japanese
+		icon = align_to_japan
+
+		x = -1
+		y = 1
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_draw_west }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reopen_american_military_bases
+		icon = military_bases
+
+		x = 1
+		y = 1
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_draw_west }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_approach_nato
+		icon = nato_nation
+
+		x = 3
+		y = 1
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_draw_west }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_mutual_defense_treaty
+		icon = treaty2
+
+		x = -1
+		y = 2
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_draw_west }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_american_airfields
+		icon = western_investments
+
+		x = 1
+		y = 2
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_reopen_american_military_bases }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_maintain_the_mnna
+		icon = align_to_nato
+
+		x = 3
+		y = 2
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_approach_nato }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_patriots_missiles
+		icon = trade # placeholder
+
+		x = 0
+		y = 3
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_american_airfields }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_american_designs
+		icon = trade # placeholder
+
+		x = 2
+		y = 3
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_american_airfields }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_exploit_offshore_oil
+		icon = oil_production2
+
+		x = 4
+		y = 3
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = {
+			focus = PHI_resource_rights
+			focus = PHI_maintain_the_mnna
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_american_arms_deals
+		icon = trade # placeholder
+
+		x = 0
+		y = 4
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_patriots_missiles }
+		prerequisite = { focus = PHI_american_designs }
+		mutually_exclusive = { focus = PHI_local_production }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_local_production
+		icon = trade # placeholder
+
+		x = 2
+		y = 4
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_patriots_missiles }
+		prerequisite = { focus = PHI_american_designs }
+		mutually_exclusive = { focus = PHI_american_arms_deals }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_resource_agreements
+		icon = resource_extraction
+
+		x = 4
+		y = 4
+		relative_position_id = PHI_draw_west
+		cost = 10
+		prerequisite = { focus = PHI_exploit_offshore_oil }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##Draw to the East
+	focus = {
+		id = PHI_draw_east
+		icon = GFX_brics
+
+		x = 8
+		y = 1
+		relative_position_id = PHI_foreign_affairs
+		cost = 10
+
+		prerequisite = { focus = PHI_foreign_affairs }
+		mutually_exclusive = { focus = PHI_draw_west }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_draw_east"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reopen_scs_dialogue
+		icon = trade # placeholder
+
+		x = -4
+		y = 1
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_draw_east }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_huawei_branch_office
+		icon = huawei
+
+		x = -2
+		y = 1
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_draw_east }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_huawei_branch_office"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_chinese_conversations
+		icon = align_to_china
+
+		x = 0
+		y = 1
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_draw_east }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_chinese_conversations"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_approach_the_bear
+		icon = align_to_russia
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_draw_east }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_resource_rights
+		icon = c
+
+		x = -4
+		y = 2
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_reopen_scs_dialogue }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_request_economic_aid
+		icon = money
+
+		x = -2
+		y = 2
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_huawei_branch_office }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_csto_discussions
+		icon = align_to_csto
+
+		x = 0
+		y = 2
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_chinese_conversations }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_solid_foundation
+		icon = reactionary
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_approach_the_bear }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_chinese_weapon_industries
+		icon = trade # placeholder
+
+		x = -3
+		y = 3
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_resource_rights }
+		prerequisite = { focus = PHI_request_economic_aid }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_take_our_burden
+		icon = trade # placeholder
+
+		x = -1
+		y = 3
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_csto_discussions }
+		prerequisite = { focus = PHI_request_economic_aid }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		ai_will_do = {
+			factor = 1
+		}
+
+		completion_reward = {
+
+		}
+	}
+
+	focus = {
+		id = PHI_filipino_trade_deals
+		icon = trade # placeholder
+
+		x = 1
+		y = 3
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_csto_discussions }
+		prerequisite = { focus = PHI_solid_foundation }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_spraltys_wealth
+		icon = trade # placeholder
+
+		x = 3
+		y = 3
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_solid_foundation }
+		prerequisite = { focus = PHI_the_ultimate_concession }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_procurement_from_china
+		icon = trade # placeholder
+
+		x = -2
+		y = 4
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_chinese_weapon_industries }
+		prerequisite = { focus = PHI_filipino_trade_deals }
+		mutually_exclusive = { focus = PHI_russian_designs }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_russian_designs
+		icon = trade # placeholder
+
+		x = 0
+		y = 4
+		relative_position_id = PHI_draw_east
+		cost = 10
+
+		prerequisite = { focus = PHI_chinese_weapon_industries }
+		prerequisite = { focus = PHI_filipino_trade_deals }
+		mutually_exclusive = { focus = PHI_procurement_from_china }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##South China Sea Branch
+	focus = {
+		id = PHI_south_china_sea
+		icon = trade # placeholder
+
+		x = 16
+		y = 1
+		relative_position_id = PHI_foreign_affairs
+		cost = 10
+
+		prerequisite = { focus = PHI_foreign_affairs }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_renegotiate_nine_dash_line
+		icon = trade # placeholder
+
+		x = -2
+		y = 1
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_south_china_sea }
+		mutually_exclusive = { focus = PHI_shred_the_treaties }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_shred_the_treaties
+		icon = renounce_treaty
+
+		x = 2
+		y = 1
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_south_china_sea }
+		mutually_exclusive = { focus = PHI_renegotiate_nine_dash_line }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_shred_the_treaties"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_ultimate_concession
+		icon = trade # placeholder
+
+		x = -3
+		y = 2
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_renegotiate_nine_dash_line }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_diplomatic_solution
+		icon = trade # placeholder
+
+		x = -1
+		y = 2
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = {
+			focus = PHI_shred_the_treaties
+			focus = PHI_renegotiate_nine_dash_line
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_reaffirms_claims
+		icon = treaty4
+
+		x = 2
+		y = 2
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_shred_the_treaties }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_reaffirms_claims"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_anti_chinese_propaganda
+		icon = propaganda
+
+		x = 4
+		y = 2
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_shred_the_treaties }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_affirm_filipino_strength
+		icon = trade # placeholder
+
+		x = -2
+		y = 3
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = {
+			focus = PHI_the_ultimate_concession
+			focus = PHI_diplomatic_solution
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+
+	focus = {
+		id = PHI_seek_american_backing
+		icon = align_to_america
+
+		x = 1
+		y = 3
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_reaffirms_claims }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_seek_american_backing"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_rally_the_asian_minors
+		icon = improve_relations_blue
+
+		x = 3
+		y = 3
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_reaffirms_claims }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_rally_the_asian_minors"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_drop_the_pretense
+		icon = trade # placeholder
+
+		x = -3
+		y = 4
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_the_ultimate_concession }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_purchase_the_islands
+		icon = trade # placeholder
+
+		x = -1
+		y = 4
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_diplomatic_solution }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_approach_nato"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_seek_natos_blessing
+		icon = nato_nation
+
+		x = 1
+		y = 4
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_seek_american_backing }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_seek_natos_blessing"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_the_asian_minor_bloc
+		icon = asia
+
+		x = 3
+		y = 4
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = { focus = PHI_rally_the_asian_minors }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_the_asian_minor_bloc"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_defy_the_dragon
+		icon = dragon
+
+		x = 2
+		y = 5
+		relative_position_id = PHI_south_china_sea
+		cost = 10
+
+		prerequisite = {
+			focus = PHI_the_asian_minor_bloc
+			focus = PHI_seek_natos_blessing
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_defy_the_dragon"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	# Political Party Section
+	focus = {
+		id = PHI_the_political_sector
+		icon = trade # placeholder
+
+		x = 23
+		y = 7
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_administrative_reforms"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_lakas
+		icon = trade # placeholder
+
+		x = -6
+		y = 1
+		relative_position_id = PHI_the_political_sector
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_administrative_reforms"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_god_damn_libs
+		icon = trade # placeholder
+
+		x = -3
+		y = 1
+		relative_position_id = PHI_the_political_sector
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_administrative_reforms"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_pdp_laban
+		icon = trade # placeholder
+
+		x = -3
+		y = 1
+		relative_position_id = PHI_the_political_sector
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_administrative_reforms"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PHI_
+		icon = trade # placeholder
+
+		x = -3
+		y = 1
+		relative_position_id = PHI_the_political_sector
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus PHI_administrative_reforms"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
