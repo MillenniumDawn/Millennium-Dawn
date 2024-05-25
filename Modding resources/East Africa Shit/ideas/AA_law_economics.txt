@@ -1,0 +1,885 @@
+ideas = {
+	economic_cycles = {
+		law = yes
+		use_list_view = yes
+		depression = {
+			cost = 300
+			removal_cost = -1
+			level = 6
+			available = { has_idea = depression }
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea depression"
+				if = {
+					limit = { NOT = { has_country_flag = disable_cycle_costs } }
+					custom_effect_tooltip = econ_cycle_upg_cost_TT
+					custom_effect_tooltip = economic_cycle_TT
+					hidden_effect = {
+						set_variable = { law_attitude = 1 }
+						set_variable = { law_change = 6 }
+						subtract_from_variable = { law_change = economic_cycles }
+						law_attitude_change = yes
+						ingame_update_setup = yes
+					}
+				}
+				calculate_cost_pp_economic_cycles = yes
+				economic_cycle_drift_popularity = yes
+			}
+			modifier = {
+				stability_factor = -0.1
+				productivity_growth_modifier = -3
+			}
+			ai_will_do = { #you never want to be here! VERY BAD
+				factor = 0
+			}
+			cancel_if_invalid = no
+		}
+		recession = {
+			cost = 150
+			removal_cost = -1
+			level = 5
+			available = {
+				OR = {
+					has_idea = depression
+					has_idea = recession
+				}
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea recession"
+				if = {
+					limit = { NOT = { has_country_flag = disable_cycle_costs } }
+					custom_effect_tooltip = econ_cycle_upg_cost_TT
+					custom_effect_tooltip = economic_cycle_TT
+					hidden_effect = {
+						set_variable = { law_attitude = 1 }
+						set_variable = { law_change = 5 }
+						subtract_from_variable = { law_change = economic_cycles }
+						law_attitude_change = yes
+						subtract_from_variable = { var = treasury value = econ_cycle_upg_cost }
+						ingame_update_setup = yes
+					}
+				}
+				calculate_cost_pp_economic_cycles = yes
+				economic_cycle_drift_popularity = yes
+			}
+			modifier = {
+				production_speed_buildings_factor = 0.20
+				stability_factor = -0.05
+				productivity_growth_modifier = -1.5
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = { # Treat improving economy as extremely urgent if in depression
+					factor = 350
+					has_idea = depression
+				}
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.5
+					has_idea = depression
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
+				}
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.75
+					has_idea = depression
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
+				}
+				modifier = { # At war, don't focus efforts on economics *as much*
+					factor = 0.80
+					has_idea = depression
+					has_war = yes
+				}
+				modifier = { # Set ai_will_do to 0 if in recession to encourage AI to get out of recession - experimental
+					factor = 0
+					has_idea = recession
+				}
+				#killswitch
+				modifier = {
+					factor = 0
+					check_variable = { pp_cost_economic > 100 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		stagnation = {
+			cost = 200
+			removal_cost = -1
+			level = 4
+			available = {
+				OR = {
+					has_idea = recession
+					has_idea = stagnation
+				}
+				if = {
+					limit = { original_tag = TUR }
+					NOT = { has_idea = TUR_no_economic_plan }
+				}
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea stagnation"
+				if = {
+					limit = { NOT = { has_country_flag = disable_cycle_costs } }
+					custom_effect_tooltip = econ_cycle_upg_cost_TT
+					custom_effect_tooltip = economic_cycle_TT
+					hidden_effect = {
+						set_variable = { law_attitude = 1 }
+						set_variable = { law_change = 4 }
+						subtract_from_variable = { law_change = economic_cycles }
+						law_attitude_change = yes
+						subtract_from_variable = { var = treasury value = econ_cycle_upg_cost }
+						ingame_update_setup = yes
+					}
+				}
+				calculate_cost_pp_economic_cycles = yes
+				economic_cycle_drift_popularity = yes
+			}
+			modifier = {
+				production_speed_buildings_factor = 0.30
+				stability_factor = -0.02
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = { # Treat improving economy as very urgent if in recession
+					factor = 250
+					has_idea = recession
+				}
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.4
+					has_idea = recession
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
+				}
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.5
+					has_idea = recession
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
+				}
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 15
+					has_idea = recession
+					check_variable = { gdp_per_capita < 4.000 }
+				}
+				modifier = {
+					factor = 10
+					has_idea = recession
+					check_variable = { gdp_per_capita > 3.999 }
+					check_variable = { gdp_per_capita < 15.000 }
+				}
+				modifier = { # Set ai_will_do to 0.1 if in stagnation to encourage AI to get out of stagnation - experimental
+					factor = 0.1
+					has_idea = stagnation
+				}
+				modifier = { # At war, don't focus efforts on economics
+					factor = 0.8
+					has_idea = recession
+					has_war = yes
+				}
+				#killswitch
+				modifier = {
+					factor = 0
+					check_variable = { pp_cost_economic > 100 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		stable_growth = {
+			cost = 250
+			removal_cost = -1
+			level = 3
+			available = {
+				OR = {
+					has_idea = stagnation
+					has_idea = stable_growth
+				}
+				if = {
+					limit = { original_tag = TUR }
+					NOT = { has_idea = TUR_no_economic_plan }
+				}
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea stable_growth"
+				if = {
+					limit = { NOT = { has_country_flag = disable_cycle_costs } }
+					custom_effect_tooltip = econ_cycle_upg_cost_TT
+					custom_effect_tooltip = economic_cycle_TT
+					hidden_effect = {
+						set_variable = { law_attitude = 1 }
+						set_variable = { law_change = 3 }
+						subtract_from_variable = { law_change = economic_cycles }
+						law_attitude_change = yes
+						subtract_from_variable = { var = treasury value = econ_cycle_upg_cost }
+						ingame_update_setup = yes
+					}
+				}
+				calculate_cost_pp_economic_cycles = yes
+				economic_cycle_drift_popularity = yes
+			}
+			default = yes
+			modifier = {
+				production_speed_buildings_factor = 0.35
+				productivity_growth_modifier = 1
+			}
+			ai_will_do = {
+				factor = 2 # Stable growth should be goal for AI most of the time
+				modifier = {
+					factor = 25 # Nations should consider reviving a stagnant economy important.
+					has_idea = stagnation
+				}
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.5
+					has_idea = stagnation
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
+				}
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.8
+					has_idea = stagnation
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
+				}
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 15
+					has_idea = stagnation
+					check_variable = { gdp_per_capita < 4.000 }
+				}
+				modifier = {
+					factor = 8
+					has_idea = stagnation
+					check_variable = { gdp_per_capita > 3.999 }
+					check_variable = { gdp_per_capita < 15.000 }
+				}
+				modifier = {
+					factor = 100
+					has_idea = stagnation
+					has_political_power > 750 # If has a great abundance of PP, emphasize growth further I guess? Experimental.
+				}
+				modifier = {
+					factor = 0.6 # Should encourage growth when possible
+					has_idea = stable_growth
+				}
+				modifier = {
+					factor = 0.80 # Country shouldn't focus too much on economic growth when at war, but should still want to get to stable growth at a lower priority
+					has_idea = stagnation
+					has_war = yes
+				}
+				#killswitch
+
+				modifier = {
+					factor = 0
+					check_variable = { pp_cost_economic > 100 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		fast_growth = {
+			cost = 300
+			removal_cost = -1
+			level = 2
+			available = {
+				OR = {
+					has_idea = stable_growth
+					has_idea = fast_growth
+				}
+				if = {
+					limit = { original_tag = TUR }
+					NOT = { has_idea = TUR_no_economic_plan }
+				}
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea fast_growth"
+				if = {
+					limit = { NOT = { has_country_flag = disable_cycle_costs } }
+					custom_effect_tooltip = econ_cycle_upg_cost_TT
+					custom_effect_tooltip = economic_cycle_TT
+					hidden_effect = {
+						set_variable = { law_attitude = 1 }
+						set_variable = { law_change = 2 }
+						subtract_from_variable = { law_change = economic_cycles }
+						law_attitude_change = yes
+						subtract_from_variable = { var = treasury value = econ_cycle_upg_cost }
+						ingame_update_setup = yes
+					}
+				}
+				calculate_cost_pp_economic_cycles = yes
+				economic_cycle_drift_popularity = yes
+			}
+			modifier = {
+				production_speed_buildings_factor = 0.45
+				stability_factor = 0.02
+				productivity_growth_modifier = 2
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					factor = 25 # If an abundance of PP is accumulated, grow economy.
+					has_idea = stable_growth
+					has_political_power > 500
+				}
+				modifier = { # Extremely corrupt nations less likely to invest in country's future
+					factor = 0.4
+					has_idea = stable_growth
+					OR = {
+						has_idea = paralyzing_corruption
+						has_idea = crippling_corruption
+					}
+				}
+				modifier = { # Corrupt nations somewhat less likely to invest in country's future
+					factor = 0.5
+					has_idea = stable_growth
+					OR = {
+						has_idea = rampant_corruption
+						has_idea = unrestrained_corruption
+						has_idea = widespread_corruption
+					}
+				}
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 15
+					has_idea = stable_growth
+					check_variable = { gdp_per_capita < 4.000 }
+				}
+				modifier = {
+					factor = 8
+					has_idea = stable_growth
+					check_variable = { gdp_per_capita > 3.999 }
+					check_variable = { gdp_per_capita < 15.000 }
+				}
+				modifier = {
+					factor = 0.5 # Should encourage growth at low priority when possible
+					has_idea = fast_growth
+				}
+				modifier = { # Don't bother with economic growth if at war
+					factor = 0.5
+					has_war = yes
+					has_idea = stable_growth
+				}
+				#killswitch
+				modifier = {
+					factor = 0
+					check_variable = { pp_cost_economic > 100 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		economic_boom = {
+			cost = 350
+			removal_cost = -1
+			level = 1
+			available = {
+				OR = {
+					has_idea = fast_growth
+					has_idea = economic_boom
+				}
+				if = {
+					limit = { original_tag = TUR }
+					NOT = { has_idea = TUR_no_economic_plan }
+				}
+			}
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea economic_boom"
+				if = {
+					limit = { NOT = { has_country_flag = disable_cycle_costs } }
+					custom_effect_tooltip = econ_cycle_upg_cost_TT
+					custom_effect_tooltip = economic_cycle_TT
+					hidden_effect = {
+						set_variable = { law_attitude = 1 }
+						set_variable = { law_change = 1 }
+						subtract_from_variable = { law_change = economic_cycles }
+						law_attitude_change = yes
+						subtract_from_variable = { var = treasury value = econ_cycle_upg_cost }
+						ingame_update_setup = yes
+					}
+				}
+				calculate_cost_pp_economic_cycles = yes
+				economic_cycle_drift_popularity = yes
+			}
+			modifier = {
+				production_speed_buildings_factor = 0.55
+				stability_factor = 0.04
+				productivity_growth_modifier = 3
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = { # Low GDP nations more likely to want higher economic growth rates
+					factor = 15
+					has_idea = stable_growth
+					check_variable = { gdp_per_capita < 4.000 }
+				}
+				modifier = {
+					factor = 5
+					has_idea = stable_growth
+					check_variable = { gdp_per_capita > 6.999 }
+					check_variable = { gdp_per_capita < 15.000 }
+				}
+				modifier = {
+					factor = 5
+					has_political_power > 500
+				}
+				modifier = { # Don't bother with economic growth if at war
+					factor = 0.2
+					has_idea = fast_growth
+					has_war = yes
+				}
+				#killswitch
+				modifier = {
+					factor = 0
+					check_variable = { pp_cost_economic > 100 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+	}
+	trade_laws = {
+		law = yes
+		use_list_view = yes
+		md_closed_economy = { #No Exports
+			cost = 150
+			removal_cost = -1
+			level = 1
+			available = {
+				OR = {
+					has_elections = no
+					NOT = { has_idea = rentier_state }
+				}
+				OR = {
+					has_autocratic_government = yes
+					AND = {
+						any_enemy_country = {
+							strength_ratio = { tag = ROOT ratio > 1 }
+						}
+						OR = {
+							custom_trigger_tooltip = {
+								tooltip = consumes_more_than_produced_steel_tt
+								check_variable = { resource_consumed@steel > resource_produced@steel }
+							}
+							custom_trigger_tooltip = {
+								tooltip = consumes_more_than_produced_aluminium_tt
+								check_variable = { resource_consumed@aluminium > resource_produced@aluminium }
+							}
+							custom_trigger_tooltip = {
+								tooltip = consumes_more_than_produced_oil_tt
+								check_variable = { resource_consumed@oil > resource_produced@oil }
+							}
+							custom_trigger_tooltip = {
+								tooltip = consumes_more_than_produced_tungsten_tt
+								check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = consumption_economy
+							has_idea = semi_consumption_economy
+							has_idea = mixed_economy
+							has_idea = export_economy
+							has_idea = globalized_trade_economy
+						}
+						trade_decrease_blocked = yes
+					}
+					trade_decrease_blocked = no
+				}
+			}
+			on_add = {
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea closed_economy"
+			}
+			modifier = {
+				min_export = 0.10
+				consumer_goods_factor = 0.08
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					has_elections = no
+					add = 5
+				}
+				modifier = {
+					add = 15
+					has_idea = consumption_economy
+					has_totalitarian_government = yes
+				}
+				modifier = {
+					add = 10
+					has_idea = consumption_economy
+					OR = {
+						check_variable = { resource_consumed@steel > resource_produced@steel }
+						check_variable = { resource_consumed@oil > resource_produced@oil }
+						check_variable = { resource_consumed@aluminium > resource_produced@aluminium }
+						check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+					}
+				}
+				modifier = {
+					factor = 0.05
+					has_government = nationalist
+					has_idea = consumption_economy
+				}
+				modifier = {
+					factor = 0
+					check_variable = { resource@steel < 1 }
+					check_variable = { resource@oil < 1 }
+					check_variable = { resource@aluminium < 1 }
+					check_variable = { resource@tungsten < 1 }
+					check_variable = { resource@chromium < 1 }
+					check_variable = { resource@rubber < 1 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		consumption_economy = { #Despite consuming the majority of your resources. You still export around 20%
+			cost = 150
+			removal_cost = -1
+			level = 2
+			available = {
+				NOT = { has_idea = rentier_state }
+				if = {
+					limit = {
+						OR = {
+							has_idea = semi_consumption_economy
+							has_idea = mixed_economy
+							has_idea = export_economy
+							has_idea = globalized_trade_economy
+						}
+						trade_decrease_blocked = yes
+					}
+					trade_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = md_closed_economy
+						}
+						trade_increase_blocked = yes
+					}
+					trade_increase_blocked = no
+				}
+			}
+			modifier = {
+				min_export = 0.20
+				trade_opinion_factor = 0.15
+				consumer_goods_factor = 0.06
+				resource_export_multiplier_modifier = 0.04
+			}
+			on_add = {
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea consumption_economy"
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 15
+					has_idea = semi_consumption_economy
+					has_totalitarian_government = yes
+				}
+				modifier = {
+					OR = {
+						check_variable = { resource_produced@steel < 100 }
+						check_variable = { resource_produced@oil < 100 }
+						check_variable = { resource_produced@aluminium < 100 }
+						check_variable = { resource_produced@tungsten < 100 }
+					}
+					add = 25
+				}
+				modifier = {
+					factor = 0.01
+					has_idea = md_closed_economy
+					OR = {
+						check_variable = { resource_consumed@steel > resource_produced@steel }
+						check_variable = { resource_consumed@oil > resource_produced@oil }
+						check_variable = { resource_consumed@aluminium > resource_produced@aluminium }
+						check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+					}
+				}
+				modifier = {
+					factor = 0
+					check_variable = { resource@steel < 1 }
+					check_variable = { resource@oil < 1 }
+					check_variable = { resource@aluminium < 1 }
+					check_variable = { resource@tungsten < 1 }
+					check_variable = { resource@chromium < 1 }
+					check_variable = { resource@rubber < 1 }
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		semi_consumption_economy = {
+			cost = 150
+			removal_cost = -1
+			level = 3
+			available = {
+				NOT = { has_idea = rentier_state }
+				if = {
+					limit = {
+						OR = {
+							has_idea = mixed_economy
+							has_idea = export_economy
+							has_idea = globalized_trade_economy
+						}
+						trade_decrease_blocked = yes
+					}
+					trade_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = md_closed_economy
+							has_idea = consumption_economy
+						}
+						trade_increase_blocked = yes
+					}
+					trade_increase_blocked = no
+				}
+			}
+			modifier = {
+				min_export = 0.40
+				trade_opinion_factor = 0.30
+				consumer_goods_factor = 0.03
+				resource_export_multiplier_modifier = 0.08
+			}
+			on_add = {
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea semi_consumption_economy"
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 15
+					has_idea = mixed_economy
+					has_totalitarian_government = yes
+				}
+				modifier = {
+					check_variable = { resource_produced@steel > 100 }
+					check_variable = { resource_produced@oil > 100 }
+					check_variable = { resource_produced@aluminium > 100 }
+					check_variable = { resource_produced@tungsten > 100 }
+					add = 25
+				}
+				modifier = {
+					factor = 0.01
+					has_idea = consumption_economy
+					OR = {
+						check_variable = { resource_consumed@steel > resource_produced@steel }
+						check_variable = { resource_consumed@oil > resource_produced@oil }
+						check_variable = { resource_consumed@aluminium > resource_produced@aluminium }
+						check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+					}
+				}
+				modifier = {
+					factor = 0
+					check_variable = { resource@steel < 1 }
+					check_variable = { resource@oil < 1 }
+					check_variable = { resource@aluminium < 1 }
+					check_variable = { resource@tungsten < 1 }
+					check_variable = { resource@chromium < 1 }
+					check_variable = { resource@rubber < 1 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		mixed_economy = {
+			cost = 150
+			removal_cost = -1
+			level = 4
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = export_economy
+							has_idea = globalized_trade_economy
+						}
+						trade_decrease_blocked = yes
+					}
+					trade_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = md_closed_economy
+							has_idea = consumption_economy
+							has_idea = semi_consumption_economy
+						}
+						trade_increase_blocked = yes
+					}
+					trade_increase_blocked = no
+				}
+			}
+			modifier = {
+				min_export = 0.5
+				resource_export_multiplier_modifier = 0.12
+			}
+			on_add = {
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mixed_economy"
+			}
+			default = yes
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 15
+					has_idea = export_economy
+					has_totalitarian_government = yes
+				}
+				modifier = {
+					factor = 0.01
+					has_idea = semi_consumption_economy
+					OR = {
+						check_variable = { resource_consumed@steel > resource_produced@steel }
+						check_variable = { resource_consumed@oil > resource_produced@oil }
+						check_variable = { resource_consumed@aluminium > resource_produced@aluminium }
+						check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+					}
+				}
+				modifier = {
+					factor = 0
+					check_variable = { resource@steel < 1 }
+					check_variable = { resource@oil < 1 }
+					check_variable = { resource@aluminium < 1 }
+					check_variable = { resource@tungsten < 1 }
+					check_variable = { resource@chromium < 1 }
+					check_variable = { resource@rubber < 1 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		export_economy = {
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea export_economy"
+				ingame_update_setup = yes
+			}
+			cost = 150
+			removal_cost = -1
+			level = 5
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = globalized_trade_economy
+						}
+						trade_decrease_blocked = yes
+					}
+					trade_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = md_closed_economy
+							has_idea = consumption_economy
+							has_idea = semi_consumption_economy
+							has_idea = mixed_economy
+						}
+						trade_increase_blocked = yes
+					}
+					trade_increase_blocked = no
+				}
+			}
+			modifier = {
+				min_export = 0.65
+				consumer_goods_factor = -0.03
+				resource_export_multiplier_modifier = 0.16
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 15
+					has_idea = globalized_trade_economy
+					has_totalitarian_government = yes
+				}
+				modifier = {
+					factor = 0.01
+					has_idea = mixed_economy
+					OR = {
+						check_variable = { resource_consumed@steel > resource_produced@steel }
+						check_variable = { resource_consumed@oil > resource_produced@oil }
+						check_variable = { resource_consumed@aluminium > resource_produced@aluminium }
+						check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+					}
+				}
+				modifier = {
+					factor = 0
+					check_variable = { resource@steel < 1 }
+					check_variable = { resource@oil < 1 }
+					check_variable = { resource@aluminium < 1 }
+					check_variable = { resource@tungsten < 1 }
+					check_variable = { resource@chromium < 1 }
+					check_variable = { resource@rubber < 1 }
+				}
+			}
+			cancel_if_invalid = no
+		}
+		globalized_trade_economy = { #Major economic powerhouse. We export all GOODs equally.
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea globalized_trade_economy"
+				ingame_update_setup = yes
+			}
+			cost = 150
+			removal_cost = -1
+			level = 6
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = md_closed_economy
+							has_idea = consumption_economy
+							has_idea = semi_consumption_economy
+							has_idea = mixed_economy
+							has_idea = export_economy
+						}
+						trade_increase_blocked = yes
+					}
+					trade_increase_blocked = no
+				}
+			}
+			modifier = {
+				min_export = 0.8
+				consumer_goods_factor = -0.06
+				resource_export_multiplier_modifier = 0.20
+			}
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					factor = 0.01
+					has_idea = export_economy
+					OR = {
+						check_variable = { resource_consumed@steel > resource_produced@steel }
+						check_variable = { resource_consumed@oil > resource_produced@oil }
+						check_variable = { resource_consumed@aluminium > resource_produced@aluminium }
+						check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+					}
+				}
+				modifier = {
+					factor = 0
+					check_variable = { resource@steel < 1 }
+					check_variable = { resource@oil < 1 }
+					check_variable = { resource@aluminium < 1 }
+					check_variable = { resource@tungsten < 1 }
+					check_variable = { resource@chromium < 1 }
+					check_variable = { resource@rubber < 1 }
+				}
+				modifier = {
+					add = 100
+					has_idea = mp_optimization_idea
+				}
+			}
+			cancel_if_invalid = no
+		}
+	}
+}
