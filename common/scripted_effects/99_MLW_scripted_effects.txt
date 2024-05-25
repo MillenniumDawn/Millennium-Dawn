@@ -1,6 +1,5 @@
 MLW_MZUZU_motors_phase_1 = {
 	clear_array = MLW.MZUZU_markets
-	MLW = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MOZ = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	TNZ = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	ZAM = { add_to_array = { MLW.MZUZU_markets = THIS } }
@@ -9,7 +8,6 @@ MLW_MZUZU_motors_phase_1 = {
 MLW_MZUZU_motors_phase_2 = {
 	clear_array = MLW.MZUZU_markets
 	BOT = { add_to_array = { MLW.MZUZU_markets = THIS } }
-	MLW = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MOZ = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	TNZ = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	ZAM = { add_to_array = { MLW.MZUZU_markets = THIS } }
@@ -26,7 +24,6 @@ MLW_MZUZU_motors_phase_3 = {
 	COM = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	LES = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MAD = { add_to_array = { MLW.MZUZU_markets = THIS } }
-	MLW = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MOZ = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MRT = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	RWA = { add_to_array = { MLW.MZUZU_markets = THIS } }
@@ -61,7 +58,6 @@ MLW_MZUZU_motors_phase_4 = {
 	KEN = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	LES = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MAD = { add_to_array = { MLW.MZUZU_markets = THIS } }
-	MLW = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MOZ = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MRT = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	NAM = { add_to_array = { MLW.MZUZU_markets = THIS } }
@@ -115,7 +111,6 @@ MLW_MZUZU_motors_phase_5 = {
 	MAD = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MAL = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MAU = { add_to_array = { MLW.MZUZU_markets = THIS } }
-	MLW = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MOR = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MOZ = { add_to_array = { MLW.MZUZU_markets = THIS } }
 	MRT = { add_to_array = { MLW.MZUZU_markets = THIS } }
@@ -158,6 +153,139 @@ MLW_MZUZU_market_change_order_quantity = {
 
 
 MLW_MZUZU_market_target_effect = {
-	set_variable = { ROOT.MM_tag_selected = THIS.id }
+	set_variable = { ROOT.MZ_tag_selected = THIS.id }
 	refresh_gui = yes
+}
+
+MLW_MZUZU_exporting_to_target_check = {
+	if = {
+		limit = {
+			check_variable = { var:MZ_tag_selected.MLW_MZ_tag_export > 0 }
+			NOT = { is_in_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected } }
+		}
+		add_to_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
+	}
+	if = {
+		limit = {
+			check_variable = { var:MZ_tag_selected.MLW_MZ_tag_export = 0 }
+			is_in_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
+		}
+		remove_from_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
+	}
+}
+
+
+# LETS DO SOME FACKIN MAFFS
+
+
+MLW_MZUZU_weekly_ticker = {
+	MLW_MZUZU_manufacture_effect = yes
+	MLW_MZUZU_export_effect = yes
+	MLW_MZUZU_income_effect = yes
+}
+
+MLW_MZUZU_monthly_ticker = {}
+
+MLW_MZUZU_market_cap_change = {
+	for_each_loop = {
+		array = MLW.MLW_MZ_exporters
+		set_temp_variable = { MLW_MZ_market_share_temp = THIS.MLW_MZ_tag_export }
+		set_temp_variable = { MLW_MZ_customers_temp = THIS.workforce_total_display }
+		divide_temp_variable = { MLW_MZ_market_share_temp = MLW_MZ_customers_temp }
+		multiply_temp_variable = { MLW_MZ_market_share_temp = 4 }
+		set_temp_variable = { MLW_MZ_market_share_frame_temp = MLW_MZ_market_share_temp }
+		divide_temp_variable = { MLW_MZ_market_share_frame_temp = 20 }
+		multiply_temp_variable = { MLW_MZ_market_share_temp = 0.001 }
+		multiply_temp_variable = { MLW_MZ_market_share_temp = 0.5 }
+		add_to_variable = { THIS.MLW_MZ_market_share_display = MLW_MZ_market_share_temp }
+		add_to_variable = { THIS.MLW_MZ_market_share_frame = MLW_MZ_market_share_frame_temp }
+	}
+}
+
+# this should run the "build beep beeps" math
+MLW_MZUZU_manufacture_effect = {
+	set_variable = { MLW_MZ_weekly_production = 0 }
+	# 0
+	set_temp_variable = { MLW_MZ_fact_temp = MLW_MZUZU_DM_factory_use }
+	# 2 - 2
+	set_temp_variable = { MLW_MZ_prod_temp = 1 }
+	# 1
+	add_to_temp_variable = { MLW_MZ_prod_temp = ROOT.modifier@MLW_MZUZU_production_modifier }
+	# 1.25
+	multiply_temp_variable = { MLW_MZ_prod_temp = 1000 }
+	# 1250
+	multiply_temp_variable = { MLW_MZ_prod_temp = MLW_MZ_fact_temp }
+	# 2500
+	add_to_variable = { MLW_MZ_weekly_production = MLW_MZ_prod_temp }
+	# 2500
+	add_to_variable = { MLW_MZ_stockpiled = MLW_MZ_weekly_production }
+	# 53000 - 2500
+	# 55500
+}
+
+# this runs the "remove beep beeps" math
+MLW_MZUZU_export_effect = {
+	set_variable = { MLW_MZ_total_exports = 0 }
+	# 0
+	for_each_loop = {
+		array = MLW.MLW_MZ_exporters
+		add_to_temp_variable = { sum = THIS.MLW_MZ_tag_export }
+	}
+	# ex code (4 export tags)
+	# 38
+	# 67
+	# 105
+	# 308
+	# ---
+	# 518
+	set_temp_variable = { MLW_MZ_total_exports_temp = sum }
+	# 518
+	multiply_temp_variable = { MLW_MZ_total_exports_temp = -1 }
+	# -518
+	set_variable = { MLW_MZ_total_exports = sum }
+	# 518
+	add_to_variable = { MLW_MZ_stockpiled = MLW_MZ_total_exports_temp }
+	# 55500
+	# -518
+	# 54982
+	clamp_variable = {
+		var = MLW_MZ_stockpiled
+		min = 0
+		max = 2000000
+	}
+}
+
+# then this is what gives you money, yay money
+MLW_MZUZU_income_effect = {
+	set_variable = { MLW_MZ_weekly_income = 0 }
+	# 0
+	if = {
+		limit = { check_variable = { MLW_MZ_stockpiled > MLW_MZ_total_exports } }
+		set_temp_variable = { MLW_MZ_income_temp = 1 }
+		# 1
+		add_to_temp_variable = { MLW_MZ_income_temp = ROOT.modifier@MLW_MZUZU_income_modifier }
+		# 1.05
+		multiply_temp_variable = { MLW_MZ_income_temp = MLW_MZ_total_exports }
+		# 1.05
+		# 518
+		multiply_temp_variable = { MLW_MZ_income_temp = MLW_MZ_ppu }
+		clamp_temp_variable = MLW_MZ_income_temp
+		# 544
+		# 2
+		# 1088
+		multiply_temp_variable = { MLW_MZ_income_temp = 0.001 }
+		# 1.088
+		multiply_temp_variable = { MLW_MZ_income_temp = 0.01 }
+		# 0.108
+		set_variable = { MLW_MZ_weekly_income = MLW_MZ_income_temp }
+		# 0.108
+		if = {
+			limit = { has_country_flag = MLW_MZ_orders_unfulfilled }
+			clr_country_flag = MLW_MZ_orders_unfulfilled
+		}
+	}
+	if = {
+		limit = { NOT = { has_country_flag = MLW_MZ_orders_unfulfilled } }
+		set_country_flag = MLW_MZ_orders_unfulfilled
+	}
 }
