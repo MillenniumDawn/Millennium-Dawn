@@ -1,0 +1,319 @@
+EGY_update_military_standing = {
+	set_variable = { EGY_military_standing_value = 0 }
+
+	#Military spending
+	set_variable = { EGY_military_standing_spending = 0 }
+	if = {
+		limit = { has_idea = defence_04 }
+		add_to_variable = { EGY_military_standing_spending = 20 }
+	}
+	else_if = {
+		limit = { has_idea = defence_05 }
+		add_to_variable = { EGY_military_standing_spending = 40 }
+	}
+	else_if = {
+		limit = { has_idea = defence_06 }
+		add_to_variable = { EGY_military_standing_spending = 60 }
+	}
+	else_if = {
+		limit = { has_idea = defence_07 }
+		add_to_variable = { EGY_military_standing_spending = 80 }
+	}
+	else_if = {
+		limit = { has_idea = defence_08 }
+		add_to_variable = { EGY_military_standing_spending = 100 }
+	}
+	add_to_variable = { EGY_military_standing_value = EGY_military_standing_spending }
+
+	#Military internal faction opinion counts as positive
+	set_variable = { EGY_military_standing_opinion = ROOT.the_military_opinion }
+	add_to_variable = { EGY_military_standing_value = EGY_military_standing_opinion }
+
+	#Corruption above level 5 is -20 points per level
+	set_variable = { EGY_military_standing_corruption = 0 }
+	if = {
+		limit = { has_idea = systematic_corruption }
+		add_to_variable = { EGY_military_standing_corruption = 20 }
+	}
+	else_if = {
+		limit = { has_idea = unrestrained_corruption }
+		add_to_variable = { EGY_military_standing_corruption = 40 }
+	}
+	else_if = {
+		limit = { has_idea = rampant_corruption }
+		add_to_variable = { EGY_military_standing_corruption = 60 }
+	}
+	else_if = {
+		limit = { has_idea = crippling_corruption }
+		add_to_variable = { EGY_military_standing_corruption = 80 }
+	}
+	else_if = {
+		limit = { has_idea = paralyzing_corruption }
+		add_to_variable = { EGY_military_standing_corruption = 100 }
+	}
+	add_to_variable = { EGY_military_standing_value = EGY_military_standing_corruption }
+
+	#Bad economic cycle is -25 points per level below stable growth
+	set_variable = { EGY_military_standing_economy = 0 }
+	if = {
+		limit = { has_idea = stagnation }
+		add_to_variable = { EGY_military_standing_economy = -25 }
+	}
+	else_if = {
+		limit = { has_idea = recession }
+		add_to_variable = { EGY_military_standing_economy = -50 }
+	}
+	else_if = {
+		limit = { has_idea = depression }
+		add_to_variable = { EGY_military_standing_economy = -75 }
+	}
+	add_to_variable = { EGY_military_standing_value = EGY_military_standing_economy }
+
+	#Interest rate multiplied by -5
+	set_variable = { EGY_military_standing_interest_rate = ROOT.interest_rate }
+	round_variable = EGY_military_standing_interest_rate
+	multiply_variable = { EGY_military_standing_interest_rate = -5 }
+	add_to_variable = { EGY_military_standing_value = EGY_military_standing_interest_rate }
+
+	#Different parties have different base opinions
+	set_variable = { EGY_military_standing_party = 0 }
+	if = { # Muslim Brotherhood, Coptic, & Shi'ites
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 12 }
+				is_in_array = { ruling_party = 9 }
+				is_in_array = { ruling_party = 8 }
+			}
+		}
+		set_variable = { EGY_military_standing_party = -100 }
+	}
+	else_if = {
+		limit = { # Salafists
+			OR = {
+				is_in_array = { ruling_party = 10 }
+				is_in_array = { ruling_party = 11 }
+			}
+		}
+		set_variable = { EGY_military_standing_party = -50 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 0 }
+				is_in_array = { ruling_party = 1 }
+				is_in_array = { ruling_party = 2 }
+				is_in_array = { ruling_party = 3 }
+				is_in_array = { ruling_party = 7 }
+				is_in_array = { ruling_party = 21 }
+			}
+		}
+		set_variable = { EGY_military_standing_party = 50 }
+	}
+	else_if = {
+		limit = { is_in_array = { ruling_party = 22 } }
+		set_variable = { EGY_military_standing_party = 100 }
+	}
+	add_to_variable = { EGY_military_standing_value = EGY_military_standing_party }
+}
+
+coptic_events = {
+	random_list = {
+		60 = { add_to_variable = { event_counter_1_coptic = 1 } }
+		40 = { }
+	}
+	if = {
+		limit = { check_variable = { event_counter_1_coptic > 5 } }
+		set_variable = { event_counter_1_coptic = 0 }
+		random_list = {
+			20 = { country_event = egypt_copts.1 }
+			20 = { country_event = egypt_copts.2 }
+			20 = { country_event = egypt_copts.3 }
+			20 = { country_event = egypt_copts.4 }
+			20 = { country_event = egypt_copts.5 }
+		}
+	}
+}
+
+modify_coptic_opinion_effect = {
+	custom_effect_tooltip = modify_coptic_opinion_effect_tt
+	add_to_variable = { EGY_coptic_people_opinion = coptic_opinion_change }
+	clamp_variable = {
+		var = EGY_coptic_people_opinion
+		min = 0
+		max = 100
+	}
+	update_coptic_ideas = yes
+}
+
+modify_coptic_pol_influence_effect = {
+	custom_effect_tooltip = modify_coptic_pol_influence_effect_tt
+	add_to_variable = { EGY_copts_political_influence = coptic_pol_influence_change }
+	clamp_variable = {
+		var = EGY_copts_political_influence
+		min = 0
+		max = 100
+	}
+}
+
+check_broken_economy_conditions_for_reducing = {
+	if = {
+		limit = {
+			check_variable = { EGY_slums_left > 8 }
+			check_variable = { EGY_slums_left < 13 }
+		}
+		hidden_effect = {
+			remove_ideas = { EGY_broken_economy_idea EGY_broken_economy_idea_1 EGY_broken_economy_idea_2 EGY_broken_economy_idea_3 }
+			add_ideas = EGY_broken_economy_idea_1
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { EGY_slums_left > 4 }
+			check_variable = { EGY_slums_left < 9 }
+		}
+		hidden_effect = {
+			remove_ideas = { EGY_broken_economy_idea EGY_broken_economy_idea_1 EGY_broken_economy_idea_2 EGY_broken_economy_idea_3 }
+			add_ideas = EGY_broken_economy_idea_2
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { EGY_slums_left > 0 }
+			check_variable = { EGY_slums_left < 5 }
+		}
+		hidden_effect = {
+			remove_ideas = { EGY_broken_economy_idea EGY_broken_economy_idea_1 EGY_broken_economy_idea_2 EGY_broken_economy_idea_3 }
+			add_ideas = EGY_broken_economy_idea_3
+		}
+	}
+	else_if = {
+		limit = { check_variable = { EGY_slums_left < 1 } }
+		hidden_effect = { remove_ideas = { EGY_broken_economy_idea EGY_broken_economy_idea_1 EGY_broken_economy_idea_2 EGY_broken_economy_idea_3 } }
+	}
+}
+
+update_coptic_ideas = {
+	hidden_effect = {
+		if = {
+			limit = { EGY = { owns_state = 217 } }
+			if = {
+				limit = {
+					check_variable = { EGY_coptic_people_opinion < 30 }
+					NOT = { has_idea = EGY_Copts_are_enraged_idea }
+				}
+				EGY = {
+					remove_ideas = { EGY_Copts_is_very_satisfied_idea EGY_Copts_is_satisfied_idea EGY_Copts_are_neutral_idea EGY_Copts_are_not_satisfied_idea }
+					add_ideas = EGY_Copts_are_enraged_idea
+					country_event = egypt.150
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { EGY_coptic_people_opinion > 29 }
+					check_variable = { EGY_coptic_people_opinion < 50 }
+					NOT = { has_idea = EGY_Copts_are_not_satisfied_idea }
+				}
+				EGY = {
+					remove_ideas = { EGY_Copts_is_very_satisfied_idea EGY_Copts_is_satisfied_idea EGY_Copts_are_neutral_idea EGY_Copts_are_enraged_idea }
+					add_ideas = EGY_Copts_are_not_satisfied_idea
+					country_event = egypt.150
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { EGY_coptic_people_opinion > 49 }
+					check_variable = { EGY_coptic_people_opinion < 60 }
+					NOT = { has_idea = EGY_Copts_are_neutral_idea }
+				}
+				EGY = {
+					remove_ideas = { EGY_Copts_is_very_satisfied_idea EGY_Copts_is_satisfied_idea EGY_Copts_are_not_satisfied_idea EGY_Copts_are_enraged_idea }
+					add_ideas = EGY_Copts_are_neutral_idea
+					country_event = egypt.150
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { EGY_coptic_people_opinion > 59 }
+					check_variable = { EGY_coptic_people_opinion < 80 }
+					NOT = { has_idea = EGY_Copts_is_satisfied_idea }
+				}
+				EGY = {
+					remove_ideas = { EGY_Copts_is_very_satisfied_idea EGY_Copts_are_neutral_idea EGY_Copts_are_not_satisfied_idea EGY_Copts_are_enraged_idea }
+					add_ideas = EGY_Copts_is_satisfied_idea
+					country_event = egypt.150
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { EGY_coptic_people_opinion > 79 }
+					NOT = { has_idea = EGY_Copts_is_very_satisfied_idea }
+				}
+				EGY = {
+					remove_ideas = { EGY_Copts_is_satisfied_idea EGY_Copts_are_neutral_idea EGY_Copts_are_not_satisfied_idea EGY_Copts_are_enraged_idea }
+					add_ideas = EGY_Copts_is_very_satisfied_idea
+					country_event = egypt.150
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { EGY_coptic_people_opinion < 20 }
+					EGY = { 
+						owns_state = 217
+						NOT = {
+							has_country_flag = copts_revolted
+						}
+					 }
+				}
+				EGY = {
+					set_country_flag = copts_revolted
+					remove_ideas = { EGY_Copts_is_very_satisfied_idea EGY_Copts_is_satisfied_idea EGY_Copts_are_neutral_idea EGY_Copts_are_not_satisfied_idea EGY_Copts_are_enraged_idea }
+					start_civil_war = {
+						ideology = neutrality
+						set_cosmetic_tag = EGY_COPTIC
+						size = 0
+						load_focus_tree = egypt_focus
+						states = { 217 }
+						add_equipment_to_stockpile = {
+							type = Inf_equipment
+							amount = 10000
+							producer = EGY
+						}
+						swap_ideas = {
+							remove_idea = sunni
+							add_idea = eastern_church_eth
+						}
+						division_template = {
+							name = "Coptic Militia"
+							regiments = {
+								Militia_Bat = { x = 0 y = 0 }
+								Militia_Bat = { x = 0 y = 1 }
+								Militia_Bat = { x = 1 y = 0 }
+								Militia_Bat = { x = 1 y = 1 }
+							}
+							priority = 2
+						}
+						217 = {
+							create_unit = {
+								division = "name = \"Coptic Militia\" division_template = \"Coptic Militia\" start_experience_factor = 1.0"
+								owner = ROOT
+							}
+							create_unit = {
+								division = "name = \"Coptic Militia\" division_template = \"Coptic Militia\" start_experience_factor = 1.0"
+								owner = ROOT
+							}
+							create_unit = {
+								division = "name = \"Coptic Militia\" division_template = \"Coptic Militia\" start_experience_factor = 1.0"
+								owner = ROOT
+							}
+						}
+						clear_array = ruling_party
+						add_to_array = { ruling_party = 13 }
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+					}
+				}
+			}
+		}
+	}
+}

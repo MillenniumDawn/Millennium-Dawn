@@ -1,0 +1,1036 @@
+# Author(s): Deflinok
+add_namespace = subject_rus
+#Subject In Sovfed
+country_event = {
+	id = subject_rus.1
+	title = subject_rus.1.t
+	desc = subject_rus.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.1.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.1.a executed"
+		SOV = { set_temp_variable = { modify_subjectnumber = 1 } }
+	}
+}
+#Subject In Sovfed
+country_event = {
+	id = subject_rus.2
+	title = subject_rus.2.t
+	desc = subject_rus.2.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.2.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.2.a executed"
+		add_ideas = SUB_invervention_rus
+		clear_variable = SOV.subjectvote
+		clear_variable = SOV.subjectnevote
+	}
+}
+#Subject Voted for Military Doctrine
+country_event = {
+	id = subject_rus.3
+	title = subject_rus.3.t
+	desc = subject_rus.3.d
+	timeout_days = 2
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.3.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.3.a executed"
+		SOV = {
+			set_temp_variable = { modify_subjectvote = 1 }
+			modify_subjectvote_support = yes
+		}
+		ai_chance = {
+			base = 70
+		}
+	}
+	option = {
+		name = subject_rus.3.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.3.b executed"
+		SOV = {
+			set_temp_variable = { modify_subjectnevote = 1 }
+			modify_subjectnevote_support = yes
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				tag = CHE
+				add = -50
+			}
+		}
+	}
+}
+#Subject Voted for Military Doctrine - Result
+country_event = {
+	id = subject_rus.4
+	title = subject_rus.4.t
+	desc = subject_rus.4.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.4.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.4.a executed"
+		if = {
+			limit = { check_variable = { SOV.subjectnevote < SOV.subjectvote } }
+			set_country_flag = subject_aggresive_policy
+			set_country_flag = SOV_campaign_war_net
+			every_other_country = {
+			limit = {
+				has_autonomy_state = autonomy_republic_rf
+				NOT = { has_idea = SUB_invervention_rus }
+			}
+			country_event = { id = subject_rus.2 days = 1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { SOV.subjectnevote > SOV.subjectvote } }
+			custom_effect_tooltip = subject_nevotecampaign_tt
+		}
+		if = {
+			limit = { check_variable = { SOV.subjectnevote = SOV.subjectvote } }
+			custom_effect_tooltip = subject_nevotecampaign_tt
+		}
+	}
+}
+#Bashkiriya AES
+country_event = {
+	id = subject_rus.5
+	title = subject_rus.5.t
+	desc = subject_rus.5.d
+	timeout_days = 5
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.5.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.5.a executed"
+		BSH = { country_event = subject_rus.6 }
+		SOV = { set_country_flag = BSH_aes_ok }
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = BSH }
+		change_influence_percentage = yes
+	}
+	option = {
+		name = subject_rus.5.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.5.b executed"
+		BSH = { country_event = subject_rus.7 }
+		set_temp_variable = { percent_change = -5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = BSH }
+		change_influence_percentage = yes
+	}
+}
+#Bashkiriya AES Agree
+country_event = {
+	id = subject_rus.6
+	title = subject_rus.6.t
+	desc = subject_rus.6.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.6.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.6.a executed"
+		one_random_nuclear_reactor = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = BSH
+				modifier = recent_actions_positive
+			}
+		}
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#Bashkiriya AES Disagree
+country_event = {
+	id = subject_rus.7
+	title = subject_rus.7.t
+	desc = subject_rus.7.d
+
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.7.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.7.a executed"
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_negative
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = BSH
+				modifier = recent_actions_negative
+			}
+		}
+		set_temp_variable = { modify_subjectavtoritet = -4 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#Bashkiriya Try to create Idel-Ural
+country_event = {
+	id = subject_rus.8
+	title = subject_rus.8.t
+	desc = subject_rus.8.d
+	timeout_days = 5
+	picture = GFX_Map_IdelUral
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.8.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.8.a executed"
+		BSH = { country_event = { id = subject_rus.9 days = 1 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = BSH }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = subject_rus.8.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.8.b executed"
+		BSH = { country_event = { id = subject_rus.10 days = 1 } }
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = BSH }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Bashkiriya Annex Tatarstan
+country_event = {
+	id = subject_rus.9
+	title = subject_rus.9.t
+	desc = subject_rus.9.d
+	picture = GFX_Map_IdelUral
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.9.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.9.a executed"
+		set_cosmetic_tag = BSH_IDL
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+		TAT = {
+			every_core_state = { add_core_of = BSH }
+			every_unit_leader = {
+				set_nationality = BSH
+			}
+		}
+		BSH = {
+			add_to_variable = { treasury = TAT.treasury }
+			add_to_variable = { debt = TAT.debt }
+			add_to_variable = { int_investments = TAT.int_investments }
+		}
+		annex_country = { target = TAT transfer_troops = yes }
+		set_temp_variable = { percent_change = 0.5 }
+		change_domestic_influence_percentage = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = BSH
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+#Subsidies
+country_event = {
+	id = subject_rus.13
+	title = subject_rus.13.t
+	desc = subject_rus.13.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.13.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.13.a executed"
+		FROM = { country_event = { id = subject_rus.14 days = 1 } }
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		change_influence_percentage = yes
+		add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = subject_rus.13.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.13.b executed"
+		FROM = { country_event = { id = subject_rus.15 days = 1 } }
+		add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
+		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
+		set_temp_variable = { percent_change = -3 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Subsidies Gives
+country_event = {
+	id = subject_rus.14
+	title = subject_rus.14.t
+	desc = subject_rus.14.d
+	timeout_days = 2
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.11.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.14.a executed"
+		set_temp_variable = { modify_subjectavtoritet = -26 }
+		modify_subjectavtoritet_support = yes
+		set_temp_variable = { treasury_change = 20 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+#Subsidies Not Gives
+country_event = {
+	id = subject_rus.15
+	title = subject_rus.15.t
+	desc = subject_rus.15.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.15.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.15.a executed"
+		set_temp_variable = { modify_subjectavtoritet = -16 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#USAID
+country_event = {
+	id = subject_rus.16
+	title = subject_rus.16.t
+	desc = subject_rus.16.d
+	picture = GFX_USA_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.16.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.16.a executed"
+		FROM = {
+		add_ideas = USA_usaid
+		set_temp_variable = { temp_opinion = 5 }
+		change_international_bankers_opinion = yes
+	}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {	#Net
+		name = subject_rus.16.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.16.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Tatarstan Try to create Idel-Ural
+country_event = {
+	id = subject_rus.17
+	title = subject_rus.17.t
+	desc = subject_rus.17.d
+	timeout_days = 5
+	picture = GFX_Map_IdelUral
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.17.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.17.a executed"
+		TAT = { country_event = { id = subject_rus.18 days = 1 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = TAT }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = subject_rus.17.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.17.b executed"
+		TAT = { country_event = { id = subject_rus.19 days = 1 } }
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = TAT }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Tatarstan Annex Bashkiriya
+country_event = {
+	id = subject_rus.18
+	title = subject_rus.18.t
+	desc = subject_rus.18.d
+	picture = GFX_Map_IdelUral
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.18.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.18.a executed"
+		set_cosmetic_tag = BSH_IDL
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+		BSH = {
+			every_core_state = { add_core_of = TAT }
+			every_unit_leader = {
+				set_nationality = TAT
+			}
+		}
+		TAT = {
+			add_to_variable = { treasury = BSH.treasury }
+			add_to_variable = { debt = BSH.debt }
+			add_to_variable = { int_investments = BSH.int_investments }
+		}
+		annex_country = { target = BSH transfer_troops = yes }
+		set_temp_variable = { percent_change = 0.5 }
+		change_domestic_influence_percentage = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = TAT
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+#Tatarstan Not annex Bashkiriya
+country_event = {
+	id = subject_rus.19
+	title = subject_rus.19.t
+	desc = subject_rus.19.d
+	picture = GFX_Map_IdelUral
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.19.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.19.a executed"
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_negative
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = TAT
+				modifier = recent_actions_negative
+			}
+		}
+		set_temp_variable = { modify_subjectavtoritet = -4 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#Tatneft Neft 
+country_event = {
+	id = subject_rus.22
+	title = subject_rus.22.t
+	desc = subject_rus.22.d
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.22.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.22.a executed"
+		capital_scope = {
+			add_resource = {
+				type = oil
+				amount = 4
+			}
+		}
+		set_temp_variable = { treasury_change = -3.75 }
+		modify_treasury_effect = yes
+		TAT = { country_event = { id = subject_rus.23 days = 1 } }
+		if = {
+			limit = { TAT = { has_autonomy_state = autonomy_republic_rf } }
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = TAT }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = subject_rus.22.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.22.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Tatneft Neft 
+country_event = {
+	id = subject_rus.23
+	title = subject_rus.23.t
+	desc = subject_rus.23.d
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.23.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.23.a executed"
+		set_temp_variable = { treasury_change = 3.75 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { TAT = { has_autonomy_state = autonomy_republic_rf } }
+			set_temp_variable = { modify_subjectavtoritet = 3 }
+			modify_subjectavtoritet_support = yes
+		}
+	}
+}
+#Tatarstan Separatism
+country_event = {
+	id = subject_rus.24
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.24" }
+	title = subject_rus.24.t
+	desc = subject_rus.24.d
+	picture = GFX_SOV_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {	#Rus
+		name = subject_rus.24.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.24.a executed"
+		set_country_flag = TAT_we_choose_rus
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {	#Ne Rus
+		name = subject_rus.24.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.24.b executed"
+		set_country_flag = TAT_we_choose_indep
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Tatarstan Separatism
+country_event = {
+	id = subject_rus.25
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.25" }
+	title = subject_rus.25.t
+	desc = subject_rus.25.d
+	picture = GFX_SOV_generic
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {	#War
+		name = subject_rus.25.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.25.a executed"
+		declare_war_on = {
+			target = TAT
+			type = annex_everything
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {	#Net
+		name = subject_rus.25.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.25.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Chechen Bunt
+country_event = {
+	id = subject_rus.26
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.26" }
+	title = subject_rus.26.t
+	desc = subject_rus.26.d
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.26.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.26.a executed"
+		if = {
+			limit = { original_tag = CHE }
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.45
+			}
+			leave_faction = yes
+			SOV = {
+				set_autonomy = {
+					target = CHE
+					autonomy_state = autonomy_free
+				}
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				recalculate_party = yes
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+	}
+}
+#BSH invest Hubei China
+country_event = {
+	id = subject_rus.27
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.27" }
+	title = subject_rus.27.t
+	desc = subject_rus.27.d
+	picture = GFX_generic_factory
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.27.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.27.a executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		BSH = { country_event = subject_rus.29 }
+		if = {
+			limit = {
+				570 = {
+					is_owned_and_controlled_by = CHI
+				}
+			}
+			570 = { add_dynamic_modifier = { modifier = SUB_bsh_hubei } }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = subject_rus.27.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.27.b executed"
+		BSH = { country_event = subject_rus.29 }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#BSH invest Hubei China
+country_event = {
+	id = subject_rus.28
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.28" }
+	title = subject_rus.28.t
+	desc = subject_rus.28.d
+	picture = GFX_generic_factory
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.28.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.28.a executed"
+		set_temp_variable = { treasury_change = 10 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+#BSH invest Hubei China
+country_event = {
+	id = subject_rus.29
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.29" }
+	title = subject_rus.29.t
+	desc = subject_rus.29.d
+	picture = GFX_generic_factory
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.28.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.29.a executed"
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+#Chechnya Try to annex Ingushetia
+country_event = {
+	id = subject_rus.32
+	title = subject_rus.32.t
+	desc = subject_rus.32.d
+	timeout_days = 5
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.32.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.32.a executed"
+		CHE = { country_event = { id = subject_rus.33 days = 1 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = CHE }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = subject_rus.32.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.32.b executed"
+		CHE = { country_event = { id = subject_rus.34 days = 1 } }
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = CHE }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Chechnya Annex Ingushetia
+country_event = {
+	id = subject_rus.33
+	title = subject_rus.33.t
+	desc = subject_rus.33.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.33.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.33.a executed"
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+		CHE = { transfer_state = 1126 }
+		set_temp_variable = { percent_change = 0.5 }
+		change_domestic_influence_percentage = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = CHE
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+#Chechnya Not Annex Ingushetia
+country_event = {
+	id = subject_rus.34
+	title = subject_rus.34.t
+	desc = subject_rus.34.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.34.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.34.a executed"
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_negative
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = CHE
+				modifier = recent_actions_negative
+			}
+		}
+		set_temp_variable = { modify_subjectavtoritet = -4 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#Crimean Tatar Bund
+country_event = {
+	id = subject_rus.35
+	title = subject_rus.35.t
+	desc = subject_rus.35.d
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.35.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.35.a executed"
+		division_template = {
+			name = "Rebels"
+				regiments = {
+					Militia_Bat = { x = 0 y = 0 }
+				}
+		}
+		random_owned_controlled_state = {
+			limit = { ROOT = { has_full_control_of_state = PREV } }
+			prioritize = { 669 }
+			create_unit = {
+				division = "name = \"Rebels\" division_template = \"Rebels\" start_experience_factor = 0.1"
+				owner = ROOT
+			}
+		}
+		random_owned_controlled_state = {
+			limit = { ROOT = { has_full_control_of_state = PREV } }
+			prioritize = { 669 }
+			create_unit = {
+				division = "name = \"Rebels\" division_template = \"Rebels\" start_experience_factor = 0.1"
+				owner = ROOT
+			}
+		}
+	}
+}
+#Subject Country Flag
+country_event = {
+	id = subject_rus.36
+	title = subject_rus.36.t
+	desc = subject_rus.36.d
+	is_triggered_only = yes
+	picture = GFX_sovfed
+	option = {
+		name = subject_rus.36.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.36.a executed"
+		
+	}
+}
+#Subject Country Flag loose
+country_event = {
+	id = subject_rus.37
+	title = subject_rus.37.t
+	desc = subject_rus.37.d
+	is_triggered_only = yes
+	picture = GFX_sovfed
+	option = {
+		name = subject_rus.37.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.37.a executed"
+		
+	}
+}
+#Buildings
+country_event = {
+	id = subject_rus.38
+	title = subject_rus.38.t
+	desc = subject_rus.38.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.38.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.38.a executed"
+		FROM = { country_event = { id = subject_rus.39 days = 1 } }
+		set_temp_variable = { percent_change = 6 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		change_influence_percentage = yes
+		add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = subject_rus.38.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.38.b executed"
+		FROM = { country_event = { id = subject_rus.40 days = 1 } }
+		add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
+		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
+		set_temp_variable = { percent_change = -6 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Buildings Gives
+country_event = {
+	id = subject_rus.39
+	title = subject_rus.39.t
+	desc = subject_rus.39.d
+	timeout_days = 2
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.39.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.39.a executed"
+		set_temp_variable = { modify_subjectavtoritet = -38 }
+		modify_subjectavtoritet_support = yes
+		one_random_industrial_complex = yes
+		one_random_fossil_fuel_powerplant = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+#Subsidies Not Gives
+country_event = {
+	id = subject_rus.40
+	title = subject_rus.40.t
+	desc = subject_rus.40.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.40.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.40.a executed"
+		set_temp_variable = { modify_subjectavtoritet = -21 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+
+#Start rebellion
+country_event = {
+	id = subject_rus.41
+	title = subject_rus.41.t
+	desc = subject_rus.41.d
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.41.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.41.a executed"
+		KHM = {
+			set_autonomy = {
+			target = ROOT
+			autonomy_state = autonomy_republic_rf
+	 	}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = subject_rus.41.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.41.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Start rebellion
+country_event = {
+	id = subject_rus.42
+	title = subject_rus.42.t
+	desc = subject_rus.42.d
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.42.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.42.a executed"
+		PMR = { 
+			set_temp_variable = { modify_subjectavtoritet = -20 }
+			modify_subjectavtoritet_support = yes
+			country_event = diplomatic_response.1
+		}
+		create_wargoal = {
+			type = annex_everything
+			target = MLV
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = subject_rus.42.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.42.b executed"
+		PMR = { 
+			set_temp_variable = { modify_subjectavtoritet = -10 }
+			modify_subjectavtoritet_support = yes
+			country_event = diplomatic_response.2 
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Start KTO
+country_event = {
+	id = subject_rus.43
+	title = subject_rus.43.t
+	desc = subject_rus.43.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	picture = GFX_sov_kto_start
+	option = {
+		name = subject_rus.43.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.43.a executed"
+	}
+}
+#Tuva Rebellion
+country_event = {
+	id = subject_rus.44
+	title = subject_rus.44.t
+	desc = subject_rus.44.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.44.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.44.a executed"
+		division_template = {
+			name = "Patriot Heavy Mechanized Unit"
+			is_locked = yes
+			priority = 2
+			regiments = {
+				Arm_Inf_Bat = { x = 0 y = 0 }
+				Arm_Inf_Bat = { x = 0 y = 1 }
+				Arm_Inf_Bat = { x = 0 y = 2 }
+				Arm_Inf_Bat = { x = 1 y = 0 }
+				Arm_Inf_Bat = { x = 1 y = 1 }
+				Arm_Inf_Bat = { x = 1 y = 2 }
+			}
+			support = {
+				armor_Comp = { x = 0 y = 0 }
+				Arm_Recce_Comp = { x = 0 y = 1 }
+				H_Engi_Comp = { x = 0 y = 2 }
+			}
+		}
+		random_owned_controlled_state = {
+			limit = { ROOT = { has_full_control_of_state = PREV } }
+			prioritize = { 1011 }
+			create_unit = {
+				division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
+				owner = ROOT
+			}
+		}
+		random_owned_controlled_state = {
+			limit = { ROOT = { has_full_control_of_state = PREV } }
+			prioritize = { 1011 }
+			create_unit = {
+				division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
+				owner = ROOT
+			}
+		}
+		random_owned_controlled_state = {
+			limit = { ROOT = { has_full_control_of_state = PREV } }
+			prioritize = { 1011 }
+			create_unit = {
+				division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
+				owner = ROOT
+			}
+		}
+	}
+}
