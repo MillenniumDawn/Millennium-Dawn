@@ -1,23 +1,34 @@
 decision_category_energy = {
 	energy_building_enrichment_facilities = {
-		icon = ger_mefo_bills
+		icon = GFX_decision_energy_build_button
 		allowed = { always = no }
 		available = { always = yes }
 
-		days_mission_timeout = 120
+		days_mission_timeout = ROOT.enrichment_facility_time
 		fire_only_once = no
 		selectable_mission = yes
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
-			set_temp_variable = { temp_change = 1 }
-			build_enrichment_facilities_effect = yes
-			set_country_flag = { flag = recently_built_enrichment_facility value = 1 days = 90 }
+			if = { limit = { has_country_flag = single_enrichment_facility }
+				set_temp_variable = { temp_change = 1 }
+				build_enrichment_facilities_effect = yes
+			}
+			else = {
+				set_temp_variable = { temp_change = 3 }
+				build_enrichment_facilities_effect = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
+			clear_variable = ROOT.enrichment_facility_time
+			clr_country_flag = build_three_enrichment_facility
+			clr_country_flag = single_enrichment_facility
 		}
 	}
 
 	block_all_reactor_grade_purchases = {
-		icon = ger_mefo_bills
+		icon = GFX_decision_energy_buycancel_button
 		allowed = { always = yes }
 
 		visible = {
@@ -32,7 +43,7 @@ decision_category_energy = {
 	}
 
 	unblock_all_reactor_grade_purchases = {
-		icon = ger_mefo_bills
+		icon = GFX_decision_energy_buyagree_button
 		allowed = { always = yes }
 
 		visible = {
@@ -47,7 +58,7 @@ decision_category_energy = {
 	}
 
 	energy_buy_reactor_grade_material = {
-		icon = ger_mefo_bills
+		icon = GFX_decision_energy_buy_button
 		allowed = { always = yes }
 		visible = {
 			FROM = {

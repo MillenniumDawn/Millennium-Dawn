@@ -14,14 +14,21 @@ on_actions = {
 					}
 				}
 				ITA = {
-					add_state_core = 929
-					add_state_core = 948
-					annex_country = { target = HLS transfer_troops = yes }
-					annex_country = { target = SMA transfer_troops = yes }
-					for_each_scope_loop = {
-						array = core_states
-						remove_core_of = HLS
-						remove_core_of = SMA
+					if = {
+						limit = {
+							SMA = {
+								is_ai = yes
+							}
+						}
+						add_state_core = 929
+						add_state_core = 948
+						annex_country = { target = HLS transfer_troops = yes }
+						annex_country = { target = SMA transfer_troops = yes }
+						for_each_scope_loop = {
+							array = core_states
+							remove_core_of = HLS
+							remove_core_of = SMA
+						}
 					}
 				}
 				SPR = {
@@ -105,7 +112,7 @@ on_actions = {
 					}
 				}
 				SAM = {
-				    add_state_core = 533
+					add_state_core = 533
 					add_state_core = 535
 					add_state_core = 543
 					add_state_core = 546
@@ -179,6 +186,43 @@ on_actions = {
 				set_global_flag = GAME_RULE_microstates_removed
 			}
 
+			# Debt Rule
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_starting_debt_rule
+						option = player_only
+					}
+				}
+				every_country = {
+					limit = { is_ai = no }
+					set_variable = { debt = 0 }
+				}
+			}
+			else_if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_starting_debt_rule
+						option = ai_only
+					}
+				}
+				every_country = {
+					limit = { is_ai = yes }
+					set_variable = { debt = 0 }
+				}
+			}
+			else_if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_starting_debt_rule
+						option = everyone
+					}
+				}
+				every_country = {
+					set_variable = { debt = 0 }
+				}
+			}
+
 			# Disable NATO
 			if = {
 				limit = {
@@ -203,25 +247,6 @@ on_actions = {
 				set_global_flag = GAME_RULE_nato_disabled
 			}
 
-			# Disable The EU
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = rule_disable_eu
-						option = yes
-					}
-				}
-				every_country = {
-					limit = { has_idea = EU_member }
-					remove_ideas = {
-						EU_member
-						foreign_data_kraken
-						asylum_shopping
-					}
-				}
-				set_global_flag = GAME_RULE_eu_disabled
-			}
-
 			# Allow cheat decisions
 			if = {
 				limit = {
@@ -242,7 +267,27 @@ on_actions = {
 				}
 				set_global_flag = game_rule_LIC_HRE_Alaska
 			}
-			# Allow toggling cheat decissions
+			#South Ossetia Scythia path
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = SOO_Scythia
+						option = yes
+					}
+				}
+				set_global_flag = game_rule_SOO_Scythia
+			}
+			#Tesak Cuba path
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = CUB_Tesak
+						option = yes
+					}
+				}
+				set_global_flag = game_rule_CUB_Tesak
+			}
+			# Allow toggling cheat decisions
 			if = {
 				limit = {
 					has_game_rule = {
@@ -982,6 +1027,17 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_disable_ledger
+			}
+
+			# Colored Puppets
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = allow_colored_puppets
+						option = yes
+					}
+				}
+				set_global_flag = GAME_RULE_allow_colored_puppets
 			}
 
 			# Vanilla Diplomacy Action
@@ -2006,44 +2062,65 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = RUS_ai_behavior
+							option = IRON_DIMON_RUSSIA
+						}
+					}
+					set_global_flag = SOV_IRON_DIMON_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_ai_behavior
+							option = LIBERAL_DIMON_RUSSIA
+						}
+					}
+					set_global_flag = SOV_LIBERAL_DIMON_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_ai_behavior
+							option = OLIGARCHS_RUSSIA
+						}
+					}
+					set_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_ai_behavior
+							option = CONFEDERATION_RUSSIA
+						}
+					}
+					set_global_flag = SOV_CONFEDERATION_RUSSIA_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_ai_behavior
 							option = RANDOM
 						}
 					}
 					random_list = {
-						15 = { set_country_flag = SOV_PUTIN_PATH }
-						15 = { set_country_flag = SOV_PEACEFUL_REFORM_PATH }
-						15 = { set_country_flag = SOV_RISE_OF_RUSSIA_PATH }
-						15 = { set_country_flag = SOV_THE_RED_MENACE_PATH }
-						15 = { set_country_flag = SOV_NAZBOL_RUSSIA_PATH }
-						15 = { set_country_flag = RANDOM  }
+						10 = { set_country_flag = SOV_PUTIN_PATH }
+						10 = { set_country_flag = SOV_PEACEFUL_REFORM_PATH }
+						10 = { set_country_flag = SOV_RISE_OF_RUSSIA_PATH }
+						10 = { set_country_flag = SOV_THE_RED_MENACE_PATH }
+						10 = { set_country_flag = SOV_NAZBOL_RUSSIA_PATH }
+						10 = { set_country_flag = SOV_IRON_DIMON_PATH }
+						10 = { set_country_flag = SOV_LIBERAL_DIMON_PATH }
+						10 = { set_country_flag = SOV_OLIGARCHS_RUSSIA_PATH }
+						10 = { set_country_flag = RANDOM  }
 					}
 				}
 				if = {
 					limit = {
 						has_game_rule = {
-							rule = RUS_AI_JIRIK_BEHAVIOR
-							option = RULE_SUPPORT_ARMENIA
-						}
-					}
-					set_global_flag = RULE_SUPPORT_ARMENIA
-				}
-				else_if = {
-					limit = {
-						has_game_rule = {
-							rule = RUS_AI_JIRIK_BEHAVIOR
-							option = RULE_SUPPORT_TURKEY
-						}
-					}
-					set_global_flag = RULE_SUPPORT_TURKEY
-				}
-			   	if = {
-					limit = {
-						has_game_rule = {
 							rule = RUS_AI_PUTIN_BEHAVIOR
-							option = RULE_SUPPORT_KADYR
+							option = RULE_SUPPORT_ARMY
 						}
 					}
-					set_global_flag = RULE_SUPPORT_KADYR
+					set_global_flag = RULE_SUPPORT_ARMY
 				}
 				else_if = {
 					limit = {
@@ -2054,7 +2131,60 @@ on_actions = {
 					}
 					set_global_flag = RULE_SUPPORT_WAGNER
 				}
-			   
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_AI_PUTIN_BEHAVIOR
+							option = RULE_SUPPORT_TURKEY
+						}
+					}
+					set_global_flag = RULE_SUPPORT_TURKEY
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_AI_PUTIN_BEHAVIOR
+							option = RULE_SUPPORT_SAHEL
+						}
+					}
+					set_global_flag = RULE_SUPPORT_SAHEL
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_AI_PUTIN_BEHAVIOR
+							option = RULE_SUPPORT_ARMENIA
+						}
+					}
+					set_global_flag = RULE_SUPPORT_ARMENIA
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_AI_PUTIN_BEHAVIOR
+							option = RULE_SUPPORT_SSG
+						}
+					}
+					set_global_flag = RULE_SUPPORT_SSG
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_AI_PUTIN_BEHAVIOR
+							option = RULE_SUPPORT_USSR
+						}
+					}
+					set_global_flag = RULE_SUPPORT_USSR
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = RUS_AI_PUTIN_BEHAVIOR
+							option = RULE_SUPPORT_UNION_STATE
+						}
+					}
+					set_global_flag = RULE_SUPPORT_UNION_STATE
+				}
 			}
 
 			USA = {
@@ -2151,6 +2281,72 @@ on_actions = {
 						25 = { set_global_flag = SIN_PRESSURE_SOUTH_ASIAN_SEAS_PATH }
 						25 = { }
 					}
+				}
+			}
+
+			ARM = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = ARM_ai_behavior
+							option = KOCHARYAN
+						}
+					}
+					set_global_flag = ARM_KOCHARYAN_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = ARM_ai_behavior
+							option = TSARUKYAN
+						}
+					}
+					set_global_flag = ARM_TSARUKYAN_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = ARM_ai_behavior
+							option = NATIONALISTS
+						}
+					}
+					set_global_flag = ARM_NATIONALISTS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = ARM_ai_behavior
+							option = DEMOCRATS
+						}
+					}
+					set_global_flag = ARM_DEMOCRATS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = ARM_ai_behavior
+							option = DEM_NATS
+						}
+					}
+					set_global_flag = ARM_DEM_NATS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = ARM_ai_behavior
+							option = COMMIES
+						}
+					}
+					set_global_flag = ARM_COMMIES_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = ARM_ai_behavior
+							option = NEUTRALS
+						}
+					}
+					set_global_flag = ARM_NEUTRALS_PATH
 				}
 			}
 
@@ -2502,15 +2698,88 @@ on_actions = {
 					limit = {
 						has_game_rule = {
 							rule = PER_ai_behavior
+							option = PER_NO_REVOULT_IRAN
+						}
+					}
+					set_global_flag = PER_NO_REVOULT_IRAN
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = PER_ai_behavior
 							option = RANDOM
 						}
 					}
 					random_list = {
-						25 = { }
-						25 = { set_global_flag = PER_REVOLUTIONARY_PERSIA_PATH }
-						25 = { set_global_flag = PER_PAN_PERSIA }
-						25 = { set_global_flag = PER_FIRE_HAS_NO_FRIENDS_IRAN }
+						20 = { }
+						20 = { set_global_flag = PER_REVOLUTIONARY_PERSIA_PATH }
+						20 = { set_global_flag = PER_PAN_PERSIA }
+						20 = { set_global_flag = PER_FIRE_HAS_NO_FRIENDS_IRAN }
+						20 = { set_global_flag = PER_NO_REVOULT_IRAN }
 					}
+				}
+			}
+			SER = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = SER_ai_behavior
+							option = RANDOM
+						}
+					}
+					random_list = {
+						20 = { }	#Default
+						10 = { set_global_flag = SER_MILOCEVIC_COMMI_FOCUS_PATH }
+						10 = { set_global_flag = SER_MILOCEVIC_NATI_FOCUS_PATH }
+						20 = { set_global_flag = SER_MILOCEVIC_FEDERATION_FOCUS_PATH }
+						20 = { set_global_flag = SER_SERBIAN_KINGDOM_FOCUS_PATH }
+						20 = { set_global_flag = SER_SERBIAN_LIBERALS_FOCUS_PATH }
+					}
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = SER_ai_behavior
+							option = MILOCEVIC_COMMI
+						}
+					}
+					set_global_flag = SER_MILOCEVIC_COMMI_FOCUS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = SER_ai_behavior
+							option = MILOCEVIC_NATI
+						}
+					}
+					set_global_flag = SER_MILOCEVIC_NATI_FOCUS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = SER_ai_behavior
+							option = MILOCEVIC_FEDERATION
+						}
+					}
+					set_global_flag = SER_MILOCEVIC_FEDERATION_FOCUS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = SER_ai_behavior
+							option = SERBIAN_KINGDOM
+						}
+					}
+					set_global_flag = SER_SERBIAN_KINGDOM_FOCUS_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = SER_ai_behavior
+							option = SERBIAN_LIBERALS
+						}
+					}
+					set_global_flag = SER_SERBIAN_LIBERALS_FOCUS_PATH
 				}
 			}
 			UKR = {
@@ -2863,35 +3132,175 @@ on_actions = {
 					50 = { set_global_flag = BLR_DONT_FOLLOW_UNION_STATE }
 					50 = { set_global_flag = BLR_FOLLOW_UNION_STATE }
 				}
+			PMR = {
 				if = {
 					limit = {
 						has_game_rule = {
-							rule = BLR_arms_police_behavior
-							option = BLR_POLICE_PRIORITY
+							rule = PMR_ai_behavior
+							option = PMR_HISTORIC_DEFAULT
 						}
 					}
-					set_global_flag = BLR_POLICE_PRIORITY
+					set_global_flag = PMR_HISTORIC_DEFAULT_PATH
 				}
 				else_if = {
 					limit = {
 						has_game_rule = {
-							rule = BLR_arms_police_behavior
-							option = BLR_ARMY_PRIORITY
+							rule = PMR_ai_behavior
+							option = PMR_LIBERAL
 						}
 					}
-					set_global_flag = BLR_ARMY_PRIORITY
+					set_global_flag = PMR_LIBERAL_PATH
 				}
 				else_if = {
 					limit = {
 						has_game_rule = {
-							rule = BLR_arms_police_behavior
-							option = RANDOM
+							rule = PMR_ai_behavior
+							option = PMR_PATRIOTIC
 						}
 					}
-					50 = { set_global_flag = BLR_POLICE_PRIORITY }
-					50 = { set_global_flag = BLR_ARMY_PRIORITY }
+					set_global_flag = PMR_PATRIOTIC_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = PMR_ai_behavior
+							option = PMR_COMMUNISM
+						}
+					}
+					set_global_flag = PMR_COMMUNISM_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = PMR_ai_behavior
+							option = PMR_UKRAINE
+						}
+					}
+					set_global_flag = PMR_UKRAINE_PATH
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = PMR_sub_behavior
+							option = PMR_PASSIVE_DEFAULT
+						}
+					}
+					set_global_flag = PMR_PASSIVE_DEFAULT_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = PMR_sub_behavior
+							option = PMR_LEBED
+						}
+					}
+					set_global_flag = PMR_LEBED_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = PMR_sub_behavior
+							option = PMR_SHERIFF
+						}
+					}
+					set_global_flag = PMR_SHERIFF_PATH
+				}
+			}
+			CUB = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = CUB_ai_behavior
+							option = CUB_HISTORIC_DEFAULT
+						}
+					}
+					set_global_flag = CUB_HISTORIC_DEFAULT_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = CUB_ai_behavior
+							option = CUB_LIBERAL
+						}
+					}
+					set_global_flag = CUB_LIBERAL_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = CUB_ai_behavior
+							option = CUB_COMMUNISM
+						}
+					}
+					set_global_flag = CUB_COMMUNISM_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = CUB_ai_behavior
+							option = CUB_NATIONALIST
+						}
+					}
+					set_global_flag = CUB_NATIONALIST_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = CUB_ai_behavior
+							option = CUB_DEMOCRATS
+						}
+					}
+					set_global_flag = CUB_DEMOCRATS_PATH
+				}
+			}
+			POL = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = POL_ai_behavior
+							option = HISTORICAL
+						}
+					}
+					set_global_flag = POL_HISTORICAL_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = POL_ai_behavior
+							option = COMMUNISM
+						}
+					}
+					set_global_flag = POL_COMMUNISM_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = POL_ai_behavior
+							option = KORWIN_AG
+						}
+					}
+					set_global_flag = POL_KORWIN_AG_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = POL_ai_behavior
+							option = KORWIN_PE
+						}
+					}
+					set_global_flag = POL_KORWIN_PE_PATH
+				}
+				else_if = {
+					limit = {
+						has_game_rule = {
+							rule = POL_ai_behavior
+							option = WALESA
+						}
+					}
+					set_global_flag = POL_WALESA_PATH
 				}
 			}
 		}
 	}
+}
 }
