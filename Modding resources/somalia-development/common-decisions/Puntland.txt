@@ -1,0 +1,832 @@
+PUN_plunder = {
+	PUN_raid_fishing_villages = {
+		icon = generic_naval
+
+		available = {
+			has_war = no
+			has_civil_war = no
+			has_navy_size = { size > 0 }
+		}
+
+		days_remove = 14
+		days_re_enable = 30 #Ensures ample time between looting
+		fire_only_once = no
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove PUN_raid_fishing_villages"
+			add_to_variable = { var = pirates_morale value = 5 }
+			clamp_variable = { var = pirates_morale min = 0 max = 100 }
+			add_to_variable = { var = pirates_loot value = 1 }
+			custom_effect_tooltip = PUN_morale_increases_5_tt
+			custom_effect_tooltip = gain_1_loot_tooltip
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 3
+				check_variable = { pirates_loot < 5 }
+			}
+			modifier = {
+				add = 2
+				has_navy_size = { size > 2 }
+			}
+		}
+	}
+
+	PUN_raid_cargo_ship = {
+		icon = generic_naval
+		days_remove = 30
+		days_re_enable = 45
+		fire_only_once = no
+		available = {
+			has_navy_size = { size > 2 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove PUN_raid_cargo_ship"
+			random_list = {
+				65 = { ROOT = { country_event = { id = puntland.16 } } }	#Success
+				35 = { ROOT = { country_event = { id = puntland.17 } } }	#Fail
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_hire_new_sailors = {
+		icon = hol_attract_foreign_investors
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PUN_has_1_loot_tt
+				check_variable = {
+					var = pirates_loot
+					value = 1
+					compare = greater_than_or_equals
+				}
+			}
+		}
+
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { pirates_loot > 0 }
+		}
+		custom_cost_text = cost_1_loot
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_raid_cargo_ship"
+			add_to_variable = { var = pirates_loot value = -1 }
+			add_manpower = 500
+			custom_effect_tooltip = cost_1_loot_tooltip
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				has_manpower < 20000
+				add = 2
+			}
+		}
+	}
+
+	PUN_sell_loot = {
+		icon = hol_attract_foreign_investors
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PUN_has_1_loot_tt
+				check_variable = {
+					var = pirates_loot
+					value = 1
+					compare = greater_than_or_equals
+				}
+			}
+		}
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { pirates_loot > 0 }
+		}
+		custom_cost_text = cost_1_loot
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_sell_loot"
+			subtract_from_variable = { var = pirates_loot value = 1 }
+			subtract_from_variable = { treasury = 0.5 }
+			custom_effect_tooltip = 0_5_billion_expense_tt
+			custom_effect_tooltip = cost_1_loot_tooltip
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	PUN_share_loot = {
+		icon = hol_attract_foreign_investors
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PUN_has_2_loot_tt
+				check_variable = {
+					var = pirates_loot
+					value = 2
+					compare = greater_than_or_equals
+				}
+			}
+		}
+
+		fire_only_once = no
+
+		custom_cost_trigger = {
+			check_variable = { pirates_loot > 1 }
+		}
+		custom_cost_text = cost_2_loot
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_share_loot"
+			add_to_variable = {
+				var = pirates_morale
+				value = 10
+			}
+			clamp_variable = {
+				var = pirates_morale
+				min = 0
+				max = 100
+			}
+			add_to_variable = {
+				var = pirates_loot
+				value = -2
+			}
+			custom_effect_tooltip = PUN_morale_increases_10_tt
+			custom_effect_tooltip = cost_2_loot_tooltip
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	PUN_purchase_weapons1 = {
+		icon = hol_attract_foreign_investors
+
+		available = {
+			custom_trigger_tooltip = {
+			tooltip = PUN_has_2_loot_tt
+				check_variable = {
+					var = pirates_loot
+					value = 1
+					compare = greater_than_or_equals
+				}
+			}
+		}
+		days_remove = 10
+		days_re_enable = 30
+
+		custom_cost_trigger = {
+			check_variable = { pirates_loot > 1 }
+		}
+		custom_cost_text = cost_2_loot
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_purchase_weapons1"
+			add_to_variable = { var = pirates_loot value = -1 }
+			custom_effect_tooltip = cost_1_loot_tooltip
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = 800
+				producer = SOV
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	PUN_invest_loot2 = {
+		icon = hol_attract_foreign_investors
+		visible = {
+			any_controlled_state = {
+				free_building_slots = {
+					building = infrastructure
+					size > 0
+					include_locked = yes
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+			tooltip = PUN_has_3_loot_tt
+				check_variable = {
+					var = pirates_loot
+					value = 3
+					compare = greater_than_or_equals
+				}
+			}
+		}
+		days_remove = 45
+		days_re_enable = 45
+
+		custom_cost_trigger = {
+			check_variable = { pirates_loot > 2 }
+		}
+		custom_cost_text = cost_3_loot
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_invest_loot2"
+			add_to_variable = {
+				var = pirates_loot
+				value = -3
+			}
+			custom_effect_tooltip = cost_3_loot_tooltip
+			random_owned_controlled_state = {
+				limit = {
+					free_building_slots = {
+						building = infrastructure
+						size < 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				check_variable = { pirates_loot > 2 }
+				add = 1
+			}
+		}
+	}
+
+	PUN_invest_loot1 = {
+		icon = hol_attract_foreign_investors
+		visible = {
+			any_controlled_state = {
+				free_building_slots = {
+					building = industrial_complex
+					size > 0
+					include_locked = yes
+				}
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+			tooltip = PUN_has_4_loot_tt
+				check_variable = {
+					var = pirates_loot
+					value = 4
+					compare = greater_than_or_equals
+				}
+			}
+		}
+		days_remove = 60
+		days_re_enable = 60
+
+		custom_cost_trigger = {
+			check_variable = { pirates_loot > 3 }
+		}
+		custom_cost_text = cost_4_loot
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_invest_loot2"
+			add_to_variable = {
+				var = pirates_loot
+				value = -4
+			}
+			custom_effect_tooltip = cost_4_loot_tooltip
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				check_variable = { pirates_loot > 2 }
+				add = 1
+			}
+		}
+	}
+}
+
+PUN_treasure_hunt = {
+	PUN_ignore_treasure = {
+		icon = compass
+		available = {
+			NOT = { has_country_flag = PUN_treasure_hunt_started }
+		}
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_ignore_treasure"
+			set_country_flag = PUN_aborted_treasure
+			if = {
+				limit = {
+					check_variable = { own_ships = 1 }
+				}
+				create_ship = {
+					type = corvette_1
+					equipment_variant = "Corvette"
+					creator = PUN
+					name = "Pirate Vessel 1"
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { own_ships = 2 }
+				}
+				create_ship = {
+					type = corvette_1
+					equipment_variant = "Corvette"
+					creator = PUN
+					name = "Pirate Vessel 1"
+				}
+				create_ship = {
+					type = corvette_1
+					equipment_variant = "Corvette"
+					creator = PUN
+					name = "Pirate Vessel 2"
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { own_ships = 3 }
+				}
+				create_ship = {
+					type = corvette_1
+					equipment_variant = "Corvette"
+					creator = PUN
+					name = "Pirate Vessel 1"
+				}
+				create_ship = {
+					type = corvette_1
+					equipment_variant = "Corvette"
+					creator = PUN
+					name = "Pirate Vessel 2"
+				}
+				create_ship = {
+					type = corvette_1
+					equipment_variant = "Corvette"
+					creator = PUN
+					name = "Pirate Vessel 3"
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { own_crewmembers > 0 }
+				}
+				add_manpower = own_crewmembers
+			}
+			clear_variable = own_crewmembers
+			clear_variable = own_ships
+			clear_variable = enemies_crewmembers
+			clear_variable = enemies_ships
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	PUN_add_ships = {
+		icon = generic_naval
+		allowed = { tag = PUN }
+
+		available = {
+			has_navy_size = { unit = corvette size > 0 }
+		}
+		visible = { has_country_flag = PUN_treasure_hunt_started }
+
+		fire_only_once = no
+
+		complete_effect = {	#TODO remove real ships lowest class
+			destroy_ships = {
+				type = corvette
+				count = 1
+			}
+			add_to_variable = {
+				var = own_ships
+				value = 1
+			}
+			custom_effect_tooltip = PUN_add_1_ship_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_search_for_hints = {
+		icon = compass
+		available = {
+		}
+
+		days_remove = 2
+
+		fire_only_once = yes
+
+		remove_effect = {
+			PUN = { country_event = { id = puntland.3 days = 1 } }
+			set_country_flag = PUN_station_1
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_socotra = {
+		icon = generic_naval
+
+		available = {
+			has_navy_size = { unit = corvette size > 0 }
+			has_manpower > 50
+			has_war = no
+			has_civil_war = no
+		}
+
+		visible = { has_country_flag = PUN_station_1 }
+		days_remove = 3
+
+		fire_only_once = yes
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove PUN_socotra"
+			PUN = { country_event = { id = puntland.4 days = 1 } }
+			set_country_flag = PUN_treasure_hunt_started
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PUN_socotra"
+			destroy_ships = {
+				type = corvette
+				count = 1
+			}
+			add_to_variable = {
+				var = own_ships
+				value = 1
+			}
+			add_to_variable = {
+				var = own_crewmembers
+				value = 42
+			}
+			add_manpower = -42
+			custom_effect_tooltip = PUN_increase_ship_1_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_return_socotra = {
+
+		icon = generic_naval
+
+		allowed = { tag = PUN }
+
+		available = {
+			has_navy_size = { unit = corvette size > 1 }
+			has_manpower > 50
+			has_war = no
+			has_civil_war = no
+		}
+
+		activation = {
+		}
+
+		visible = {
+			has_country_flag = PUN_station_1
+			has_country_flag = PUN_return_to_socotra_flag
+		}
+
+
+
+		fire_only_once = yes
+
+		complete_effect = {
+			ROOT = { country_event = { id = puntland.6 } }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_norway = {
+
+		icon = generic_naval
+
+		allowed = { tag = PUN }
+
+		available = {
+
+		}
+
+		activation = {
+		}
+
+		visible = { has_country_flag = PUN_dead_end_norway }
+
+
+
+		selectable_mission = yes
+		days_remove = 30
+
+		fire_only_once = yes
+
+		remove_effect = {
+			PUN = { country_event = { id = puntland.13 days = 1 } }
+			set_country_flag = PUN_aborted_treasure
+		}
+
+		complete_effect = {
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_brazil = {
+
+		icon = generic_naval
+
+		allowed = { tag = PUN }
+
+		available = {
+
+		}
+
+		activation = {
+		}
+
+		visible = { has_country_flag = PUN_brazil }
+
+
+
+		selectable_mission = yes
+		days_remove = 25
+
+		fire_only_once = yes
+
+		remove_effect = {
+		}
+
+		complete_effect = {
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_sri_lanka = {
+
+		icon = generic_naval
+
+		allowed = { tag = PUN }
+
+		available = {
+
+		}
+
+		activation = {
+		}
+
+		visible = { has_country_flag = PUN_sri_lanka }
+
+
+
+		selectable_mission = yes
+		days_remove = 6
+
+		fire_only_once = yes
+
+		remove_effect = {
+		}
+
+		complete_effect = {
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_cheat_ships = {
+
+		icon = generic_naval
+
+		allowed = { tag = PUN }
+
+		available = {
+			#FIXME: include game rule for cheat decisions to include here
+		}
+		visible = { }
+
+
+
+		fire_only_once = no
+
+		remove_effect = {
+		}
+
+		complete_effect = {
+			load_oob = "PUN_cheat_ships"
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	PUN_cheat_dockyards = {
+
+		icon = generic_naval
+
+		allowed = { tag = PUN }
+
+		available = {
+			#FIXME: include game rule for cheat decisions to include here
+		}
+
+		activation = {
+		}
+
+		visible = { }
+
+
+
+		fire_only_once = no
+
+		remove_effect = {
+		}
+
+		complete_effect = {
+			239 = {
+				add_building_construction = {
+					type = dockyard
+					level = 4
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+
+PUN_decisions = {
+	PUN_alliance_with_ethiopia_dec = {
+		icon = decision_hol_exchange_intelligence_data
+
+		visible = {
+			has_country_flag = PUN_declined_alliance_flg
+		}
+
+		available = {
+			ETH = { is_in_faction = no }
+		}
+
+		fire_only_once = yes
+
+		complete_effect = {
+			ETH = { country_event = { id = ethiopia.21 days = 1 } }
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	PUN_unite_somalia_dec = {
+		icon = decision_hol_exchange_intelligence_data
+		visible = {
+			has_completed_focus = PUN_reunite_somalia
+		}
+
+		available = {
+			OR = {
+				240 = { is_owned_and_controlled_by = ROOT }
+				any_other_country = {
+					240 = { is_owned_and_controlled_by = PREV }
+					is_puppet_of = ROOT
+				}
+			}
+			OR = {
+				581 = { is_owned_and_controlled_by = ROOT }
+				any_other_country = {
+					581 = { is_owned_and_controlled_by = PREV }
+					is_puppet_of = ROOT
+				}
+			}
+			OR = {
+				584 = { is_owned_and_controlled_by = ROOT }
+				any_other_country = {
+					584 = { is_owned_and_controlled_by = PREV }
+					is_puppet_of = ROOT
+				}
+			}
+			OR = {
+				593 = { is_owned_and_controlled_by = ROOT }
+				any_other_country = {
+					593 = { is_owned_and_controlled_by = PREV }
+					is_puppet_of = ROOT
+				}
+			}
+		}
+
+		cost = 150
+
+		fire_only_once = yes
+
+		complete_effect = {
+			set_cosmetic_tag = PUN_UNITED_SOM
+			add_state_core = 240
+			add_state_core = 581
+			add_state_core = 584
+			add_state_core = 593
+			add_state_core = 237
+			if = {
+				limit = { any_other_country = { 240 = { is_owned_and_controlled_by = PREV } is_puppet_of = ROOT } }
+				PREV = { transfer_state = 240 }
+			}
+			if = {
+				limit = { any_other_country = { 581 = { is_owned_and_controlled_by = PREV } is_puppet_of = ROOT } }
+				PREV = { transfer_state = 581 }
+			}
+			if = {
+				limit = { any_other_country = { 584 = { is_owned_and_controlled_by = PREV } is_puppet_of = ROOT } }
+				PREV = { transfer_state = 584 }
+			}
+			if = {
+				limit = { any_other_country = { 593 = { is_owned_and_controlled_by = PREV } is_puppet_of = ROOT } }
+				PREV = { transfer_state = 593 }
+			}
+			if = {
+				limit = { any_other_country = { 237 = { is_owned_and_controlled_by = PREV } is_puppet_of = ROOT } }
+				PREV = { transfer_state = 237 }
+			}
+			if = {
+				limit = { any_other_country = { 238 = { is_owned_and_controlled_by = PREV } is_puppet_of = ROOT } }
+				PREV = { transfer_state = 238 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}
+
+###TODO one time half the ships sink, preferably at the forelast mission
+###TODO large naval battle in the last mission
+PUN_deferral_system = {
+	PUN_pay_five_hundred_mil_decision = {
+		icon = hol_attract_foreign_investors
+		fire_only_once = yes
+		complete_effect = {
+			subtract_from_variable = {
+				var = treasury value = 0.5
+				tooltip = 0_5_billion_expense_tt
+			}
+			subtract_from_variable = {
+				var = treasury value = 0.5
+				tooltip = 0_5_deferral_tt
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 5
+				check_variable = { treasury > 0.5 }
+			}
+		}
+	}
+
+	PUN_construction_boon_ = {
+		#Replace with economics decisions so Puntland can still use those
+	}
+}
