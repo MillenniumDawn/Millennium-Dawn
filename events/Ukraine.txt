@@ -593,26 +593,10 @@ country_event = {
 		UKR = { country_event = diplomatic_response.1 }
 
 		ai_chance = {
-			base = 40
-
+			base = 100
 			modifier = {
-				add = 40
-				if = { limit = { has_government = communism }
-					has_government = communism
-					UKR = { has_government = communism }
-				}
-				else_if = { limit = { has_government = neutrality }
-					has_government = neutrality
-					UKR = { has_government = neutrality }
-				}
-				else_if = { limit = { has_government = democratic }
-					has_government = democratic
-					UKR = { has_government = neutrality }
-				}
-				else_if = { limit = { has_government = neutrality }
-					has_government = neutrality
-					UKR = { has_government = democratic }
-				}
+				is_subject = yes
+				add = -100
 			}
 		}
 	}
@@ -624,30 +608,10 @@ country_event = {
 		set_country_flag = did_not_support_the_baltic_black_sea_union
 		UKR = { country_event = diplomatic_response.2 }
 		ai_chance = {
-			base = 10
+			base = 0
 			modifier = {
-				add = 20
-				has_government = communism
-				UKR = { has_government = democratic }
-			}
-			modifier = {
-				add = 20
-				has_government = neutrality
-				UKR = { has_government = communism }
-			}
-			modifier = {
-				add = 20
-				has_government = democratic
-				UKR = { has_government = communism }
-			}
-			modifier = {
-				add = 20
-				has_government = neutrality
-				UKR = { has_government = communism }
-			}
-			modifier = {
-				add = 60
-				has_government = nationalist
+				is_subject = yes
+				add = 100
 			}
 		}
 	}
@@ -689,7 +653,11 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 80
+			base = 100
+			modifier = {
+				is_subject = yes
+				add = -100
+			}
 		}
 	}
 	option = {
@@ -710,12 +678,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 25
+			base = 0
 			modifier = {
-				add = 25
-				OR = {
-					tag = BLR
-					tag = MLV
-				}
+				is_subject = yes
+				add = 100
 			}
 		}
 	}
@@ -853,6 +819,7 @@ country_event = { ##Ukrainian Civil War
 		name = ukraine_revolution.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_revolution.1.o1 executed"
 		news_event = ukraine_news.7
+		UKR = { add_ideas = UKR_civil_war }
 		DPR = {
 			transfer_state = 693
 			transfer_state = 1030
@@ -872,13 +839,16 @@ country_event = { ##Ukrainian Civil War
 			set_variable = { Donbass_war_progress = 20 }
 		}
 		hidden_effect = {
+			SOV = { country_event = { id = russia.16 days = 1 } }
 			OPR = {
+				add_ideas = DPR_civil_war
 				transfer_state = 695
 				transfer_state = 333
 				add_state_core = 695
 				add_state_core = 333
 			}
 			HPR = {
+				add_ideas = DPR_civil_war
 				transfer_state = 696
 				add_state_core = 696
 			}
@@ -886,6 +856,7 @@ country_event = { ##Ukrainian Civil War
 				SOV = { country_event = { id = ukraine_revolution.2 days = 7 } }
 			}
 			DPR = {
+				add_ideas = DPR_civil_war
 				create_country_leader = {
 					name = "Alexander Zakharchenko"
 					picture = "Alexander_Zakharchenko.dds"
@@ -908,6 +879,7 @@ country_event = { ##Ukrainian Civil War
 				set_equipment_fraction = 0.25
 			}
 			LPR = {
+				add_ideas = DPR_civil_war
 				create_country_leader = {
 					name = "Igor Plotnitsky"
 					picture = "Igor_Plotnitsky.dds"
@@ -934,12 +906,30 @@ country_event = { ##Ukrainian Civil War
 			set_country_flag = UKR_civil_war_in_the_donbass_flag
 			add_ideas = UKR_volunteer_movement
 			country_event = { id = ukraine_md.19 days = 14 }
+			if = {
+				limit = { 
+					OR = {
+					country_exists = DPR
+					country_exists = LPR
+					country_exists = HPR
+					}
+				}
+				country_event = { id = ukraine_revolution.14 days = 260 }
+			}
 			declare_war_on = {
 				target = OPR
 				type = annex_everything
 			}
 			declare_war_on = {
 				target = HPR
+				type = annex_everything
+			}
+			declare_war_on = {
+				target = LPR
+				type = annex_everything
+			}
+			declare_war_on = {
+				target = DPR
 				type = annex_everything
 			}
 		}
@@ -1338,7 +1328,64 @@ country_event = { ###Russia Returns the Crimea
 		}
 	}
 }
-
+country_event = { ###White Peace
+	id = ukraine_revolution.14
+	title = ukraine_revolution.14.t
+	desc = ukraine_revolution.14.d
+	picture = GFX_negotiations
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			country_exists = DPR
+			country_exists = LPR
+			country_exists = HPR
+			country_exists = OPR
+		}
+	}
+	option = {
+		name = ukraine_revolution.14.a
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.14.a executed"
+		remove_ideas = UKR_civil_war
+		donetsk_minsk_control = yes
+		kharkiv_minsk_control = yes
+		lugansk_minsk_control = yes
+		odessa_minsk_control = yes
+		if = {
+			limit = { 
+				country_exists = DPR
+			}
+			UKR = {	white_peace = DPR }
+		}
+		if = {
+			limit = { 
+				country_exists = LPR
+			}
+			UKR = {	white_peace = LPR }
+		}
+		if = {
+			limit = { 
+				country_exists = HPR
+			}
+			UKR = {	white_peace = HPR }
+		}
+		if = {
+			limit = { 
+				country_exists = OPR
+			}
+			UKR = { white_peace = OPR }
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+	option = {
+		name = ukraine_revolution.14.b
+		log = "[GetDateText]: [This.GetName]: ukraine_revolution.14.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
 # Ukraine asks for money
 country_event = {
 	id = ukraine_md.20
