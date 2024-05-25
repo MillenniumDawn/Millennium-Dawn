@@ -1,0 +1,2066 @@
+﻿add_namespace = puntland
+add_namespace = puntland_piracy
+add_namespace = puntland_news
+add_namespace = puntland_elections
+add_namespace = puntland_money
+
+### Pirates demand to plunder again
+country_event = {
+	id = puntland.1
+	title = puntland.1.t
+	desc = puntland.1.d
+	picture = GFX_somali_pirates
+
+	trigger = {
+		tag = PUN
+		has_country_flag = PUN_civil_war_finished_flg
+		has_completed_focus = PUN_pirate_rebuild_haradhere
+		has_completed_focus = PUN_pirate_rebuild_fleet
+		has_navy_size = { size > 0 }
+	}
+
+	mean_time_to_happen = {
+		days = 60
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.1.a
+		log = "[GetDateText]: [This.GetName]: puntland.1.a executed"
+		unlock_decision_category_tooltip = PUN_plunder
+	}
+}
+
+###The Choice of Piracy
+country_event = {
+	id = puntland.2
+	title = puntland.2.t
+	desc = puntland.2.d
+	picture = GFX_somali_pirates
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = puntland.2.a
+		log = "[GetDateText]: [This.GetName]: puntland.2.a executed"
+		add_political_power = 100
+		add_stability = 0.05
+
+		ai_chance = {
+			factor = 1
+			modifier = {
+				has_game_rule = {
+					rule = PUN_ai_behavior
+					option = PIRATE
+				}
+				factor = 0
+			}
+		}
+	}
+
+	option = {
+		name = puntland.2.b
+		log = "[GetDateText]: [This.GetName]: puntland.2.b executed"
+		trigger = { NOT = { has_completed_focus = PUN_empower_darod } }
+		add_ideas = PUN_pirate_navy
+		set_country_flag = PUN_is_pirate
+		add_to_variable = { var = own_crewmembers value = 1 }
+		custom_effect_tooltip = PUN_crewmember_increases_1_tt
+		add_to_variable = { var = enemies_ships value = 1 }
+		custom_effect_tooltip = PUN_increase_enemy_ship_1_tt
+		add_to_variable = { var = pirates_morale value = 15 }
+		custom_effect_tooltip = PUN_morale_increases_15_tt
+		if = {
+			limit = {
+				NOT = { has_tech = corvette_1 }
+			}
+			set_technology = {
+				corvette_1 = 1
+			}
+		}
+
+		ai_chance = {
+			factor = 0
+			modifier = {
+				has_game_rule = {
+					rule = PUN_AI_BEHAVIOR
+					option = PIRATE
+				}
+				add = 20
+			}
+		}
+	}
+}
+
+### Search for evidences
+country_event = {
+	id = puntland.3
+	title = puntland.3.t
+	desc = puntland.3.d
+	picture = GFX_pirate_map
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = puntland.3.a
+		log = "[GetDateText]: [This.GetName]: puntland.3.a executed"
+		add_to_variable = { enemies_crewmembers = 4 }
+		custom_effect_tooltip = PUN_enemy_crewmember_increases_4_tt
+	}
+}
+
+### Arrived in Socotra
+country_event = {
+	id = puntland.4
+	title = puntland.4.t
+	desc = puntland.4.d
+	picture = GFX_pirate_map
+	is_triggered_only = yes
+
+	option = {
+		name = puntland.4.a	### Search at the harbor	#TODO player find the ship, but abandoned
+		trigger = { NOT = { has_country_flag = PUN_option1 } }
+		log = "[GetDateText]: [This.GetName]: puntland.4.a executed"
+		country_event = { id = puntland.7 days = 1 }
+		set_country_flag = PUN_option1
+	}
+	option = {
+		name = puntland.4.b	### Search at the bar	#TODO player find out that they rented some mercenaries. Before you get a question about ships name, if wrong you get back to main event and can try again, but lost a day
+		trigger = { NOT = { has_country_flag = PUN_option2 } }
+		log = "[GetDateText]: [This.GetName]: puntland.4.a executed"
+		country_event = { id = puntland.8 days = 1 }
+		set_country_flag = PUN_option2
+		#TODO All 3 options lead to a different locations, you need to visit all 3 to find the final location, all locations gives a single hint where this is. i.E.: one says its in a cave, other one something else
+	}
+	option = {
+		name = puntland.4.c	### Search in the marketplace	#TODO player find out that they left some hours ago
+		trigger = { NOT = { has_country_flag = PUN_option3 } }
+		log = "[GetDateText]: [This.GetName]: puntland.4.a executed"
+		country_event = { id = puntland.9 days = 1 }
+		set_country_flag = PUN_option3
+	}
+	###TODO all three options lead to nothing, but if all three are finished a man comes to you and tell you to where they left, for a ship, if you decline a decision activates which you can activate later again
+}
+
+### Captain dies and mission fails
+country_event = {
+	id = puntland.5
+	title = puntland.5.t
+	desc = puntland.5.d
+	picture = GFX_sinking_ship
+
+	trigger = {
+		has_country_flag = PUN_treasure_hunt_started
+		OR = {
+			check_variable = {
+				var = own_crewmembers
+				value = 1
+				compare = less_than
+			}
+			check_variable = {
+				var = own_ships
+				value = 1
+				compare = less_than
+			}
+		}
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.5.a
+		log = "[GetDateText]: [This.GetName]: puntland.5.a executed"
+		set_country_flag = PUN_aborted_treasure
+		kill_country_leader = yes
+		add_stability = -0.3
+		create_country_leader = {
+			name = "Pirate Council"
+			picture = "Pirate_Council.dds"
+			expire = "2050.1.1"
+			ideology = Nat_Autocracy
+			traits = {
+			}
+		}
+		if = {
+			limit = { has_idea = PUN_mercenaries_in_government }
+			ROOT = { country_event = { id = puntland.33 days = 3 } }	#Mercenaries take over
+		}
+		else = { ROOT = { country_event = { id = puntland.34 days = 3 } } }	#Vote
+	}
+}
+
+### Man approaches us
+country_event = {
+	id = puntland.6
+	title = puntland.6.t
+	desc = puntland.6.d
+	picture = GFX_pirate_map
+
+	trigger = {
+		has_country_flag = PUN_option1
+		has_country_flag = PUN_option2
+		has_country_flag = PUN_option3
+	}
+
+	fire_only_once = yes
+
+	immediate = {
+		clr_country_flag = PUN_option1
+		clr_country_flag = PUN_option2
+		clr_country_flag = PUN_option3
+	}
+
+	option = {
+		name = puntland.6.a
+		log = "[GetDateText]: [This.GetName]: puntland.6.a executed"
+		trigger = {
+			check_variable = {
+				var = own_ships
+				value = 1
+				compare = greater_than
+			}
+		}
+		add_to_variable = {
+			var = own_ships
+			value = -1
+		}
+	}
+	option = {
+		name = puntland.6.b
+		log = "[GetDateText]: [This.GetName]: puntland.6.b executed"
+		set_country_flag = PUN_return_to_socotra_flag
+	}
+	option = {
+		name = puntland.6.c
+		log = "[GetDateText]: [This.GetName]: puntland.6.c executed"
+		clr_country_flag = PUN_return_to_socotra_flag
+	}
+}
+
+### Search at the harbor
+country_event = {
+	id = puntland.7
+	title = puntland.7.t
+	desc = puntland.7.d
+	picture = GFX_harbor
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.7.a	#Norway
+		log = "[GetDateText]: [This.GetName]: puntland.7.a executed"
+		country_event = { id = puntland.10 }
+	}
+	option = {
+		name = puntland.7.b	#Sri Lanka
+		log = "[GetDateText]: [This.GetName]: puntland.7.b executed"
+		country_event = { id = puntland.11 }
+	}
+	option = {
+		name = puntland.7.c	#Brazil
+		log = "[GetDateText]: [This.GetName]: puntland.7.c executed"
+		country_event = { id = puntland.12 }
+	}
+}
+
+### Search in the bars
+country_event = {
+	id = puntland.8
+	title = puntland.8.t
+	desc = puntland.8.d
+	picture = GFX_bar
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.8.a
+		log = "[GetDateText]: [This.GetName]: puntland.8.a executed"
+		add_to_variable = {
+			var = enemies_crewmembers
+			value = 26
+		}
+		if = {
+			limit = { has_country_flag = PUN_option1 has_country_flag = PUN_option2 has_country_flag = PUN_option3 }
+			country_event = { id = puntland.6 }
+		}
+		else = { hidden_effect = { country_event = { id = puntland.4 } } }
+	}
+}
+
+### Search at the townsquare
+country_event = {
+	id = puntland.9
+	title = puntland.9.t
+	desc = puntland.9.d
+	picture = GFX_marketplace
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.9.a
+		log = "[GetDateText]: [This.GetName]: puntland.9.a executed"
+		if = {
+			limit = { has_country_flag = PUN_option1 has_country_flag = PUN_option2 has_country_flag = PUN_option3 }
+			country_event = { id = puntland.6 }
+		}
+		else = { hidden_effect = { country_event = { id = puntland.4 } } }
+	}
+}
+
+### Search at the harbor - Norway
+country_event = {
+	id = puntland.10
+	title = puntland.10.t
+	desc = puntland.10.d
+	picture = GFX_norwegian_flag
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.10.a
+		log = "[GetDateText]: [This.GetName]: puntland.10.a executed"
+		country_event = { id = puntland.10 }
+		if = {
+			limit = { has_country_flag = PUN_option1 has_country_flag = PUN_option2 has_country_flag = PUN_option3 }
+			country_event = { id = puntland.6 }
+		}
+		else = { hidden_effect = { country_event = { id = puntland.4 } } }
+		set_country_flag = PUN_dead_end_norway
+	}
+}
+
+### Search at the harbor - Sri Lanka
+country_event = {
+	id = puntland.11
+	title = puntland.11.t
+	desc = puntland.11.d
+	picture = GFX_island
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.11.a
+		log = "[GetDateText]: [This.GetName]: puntland.11.a executed"
+		set_country_flag = PUN_sri_lanka
+	}
+}
+
+### Search at the harbor - Brazil
+country_event = {
+	id = puntland.12
+	title = puntland.12.t
+	desc = puntland.12.d
+	picture = GFX_pirate_map
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.12.a
+		log = "[GetDateText]: [This.GetName]: puntland.12.a executed"
+		set_country_flag = PUN_brazil
+	}
+}
+
+### Arrived in Norway
+country_event = {
+	id = puntland.13
+	title = puntland.13.t
+	desc = puntland.13.d
+	picture = GFX_jail
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.13.a
+		log = "[GetDateText]: [This.GetName]: puntland.13.a executed"
+		add_political_power = -100
+	}
+}
+
+
+### Pirates getting bored
+
+country_event = {
+	id = puntland.14
+
+	hidden = yes
+
+	trigger = {
+		tag = PUN
+		has_country_flag = PUN_is_pirate
+		OR = {
+			has_completed_focus = PUN_pirate_rebuild_haradhere
+			has_completed_focus = PUN_pirate_rebuild_fleet
+		}
+			has_war = no
+			has_civil_war = no
+		}
+
+		mean_time_to_happen = {
+			days = 60
+		}
+
+		option = {
+			name = puntland.14.a
+			log = "[GetDateText]: [This.GetName]: puntland.14.a executed"
+			random_list = {
+					100 = { country_event = { id = puntland.15 } }
+			#		10 = {  }
+			#		20 = {  }
+			#		30 = {  }
+			#		30 = {  }
+				}
+		}
+}
+
+country_event = {	### Pirates complain
+	id = puntland.15
+	title = puntland.15.t
+	desc = puntland.15.d
+	picture = GFX_somali_pirates
+
+	is_triggered_only = yes
+
+	option = {
+		name = puntland.15.a
+		log = "[GetDateText]: [This.GetName]: puntland.15.a executed"
+		add_to_variable = {
+			var = pirates_morale
+			value = -5
+		}
+		clamp_variable = {
+		var = pirates_morale
+		min = 0
+		max = 100
+		}
+		custom_effect_tooltip = PUN_morale_drops_5_tt
+	}
+}
+
+country_event = {
+	id = puntland.16	### Sucess
+	title = puntland.16.t
+	desc = puntland.16.d
+	picture = GFX_cargo_ship
+
+	is_triggered_only = yes
+
+	option = {
+		name = puntland.16.a
+		log = "[GetDateText]: [This.GetName]: puntland.16.a executed"
+		add_to_variable = {
+			var = pirates_morale
+			value = 15
+		}
+		clamp_variable = {
+			var = pirates_morale
+			min = 0
+			max = 100
+		}
+		add_to_variable = {
+			var = pirates_loot
+			value = 4
+		}
+		custom_effect_tooltip = PUN_morale_increases_15_tt
+		custom_effect_tooltip = PUN_loot_4_tt
+		set_country_flag = PUN_recently_raided_flg
+	}
+}
+
+country_event = {
+	id = puntland.17	### Failure
+	title = puntland.17.t
+	desc = puntland.17.d
+	picture = GFX_cargo_ship
+
+	is_triggered_only = yes
+
+	option = {
+		name = puntland.17.a
+		log = "[GetDateText]: [This.GetName]: puntland.17.a executed"
+		add_to_variable = {
+			var = pirates_morale
+			value = -10
+		}
+		clamp_variable = {
+			var = pirates_morale
+			min = 0
+			max = 100
+		}
+		destroy_ships = {
+			type = corvette
+			count = 1
+		}
+		add_manpower = -40
+		custom_effect_tooltip = PUN_morale_drops_10_tt
+		set_country_flag = PUN_recently_raided_flg
+	}
+}
+
+country_event = {
+	id = puntland.18	### set up for cargo ship decision
+	title = puntland.18.t
+	desc = puntland.18.d
+	picture = GFX_cargo_ship
+
+	trigger = {
+		tag = PUN
+		has_country_flag = PUN_is_pirate
+		has_war = no
+		has_civil_war = no
+		has_navy_size = { size > 0 }
+		NOT = { has_country_flag = PUN_recently_raided_flg }
+	}
+
+	mean_time_to_happen = {
+		days = 60
+	}
+
+	fire_only_once = no
+
+	option = {
+		name = puntland.18.a
+		log = "[GetDateText]: [This.GetName]: puntland.18.a executed"
+		set_country_flag = PUN_cargo_sighted
+		activate_mission = PUN_raid_cargo_ship
+	}
+}
+
+country_event = {
+	id = puntland.19	### just to clear the country flag again
+
+	hidden = yes
+
+	trigger = {
+		tag = PUN
+		has_country_flag = PUN_cargo_sighted
+	}
+
+	fire_only_once = no
+
+	option = {
+		name = puntland.19.a
+		log = "[GetDateText]: [This.GetName]: puntland.19.a executed"
+		clr_country_flag = PUN_cargo_sighted
+	}
+}
+
+country_event = {
+	id = puntland.20	### Pirates Morale causes civil war
+	title = puntland.20.t
+	desc = puntland.20.d
+	picture = GFX_somali_pirates
+
+	trigger = {
+		tag = PUN
+		has_country_flag = PUN_is_pirate
+		check_variable = {
+			var = pirates_morale
+			value = 0
+			compare = less_than_or_equals
+		}
+	}
+
+	fire_only_once = no
+
+	option = {
+		name = puntland.20.a
+		log = "[GetDateText]: [This.GetName]: puntland.20.a executed"
+		start_civil_war = {
+				ideology = nationalist
+				size = 0.5
+		}
+		hidden_effect = {
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "The Captain"
+				picture = "Pirate_Captain.dds"
+				expire = "2050.1.1"
+				ideology = Nat_Autocracy
+				traits = {
+				}
+			}
+		}
+		set_country_flag = PUN_civil_war_started_flg
+		add_political_power = -150
+	}
+}
+
+country_event = {
+	id = puntland.21	### People protest against new friends
+	title = puntland.21.t
+	desc = puntland.21.d
+	picture = GFX_african_demonstration
+
+	trigger = {
+		tag = PUN
+		focus_progress = {
+			focus = PUN_pirate_new_captain
+			progress > 0.3
+		}
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.21.a
+		log = "[GetDateText]: [This.GetName]: puntland.21.a executed"
+		add_stability = -0.1
+		add_political_power = -50
+	}
+}
+
+country_event = {
+	id = puntland.22	### Mercenaries offer there help
+	title = puntland.22.t
+	desc = puntland.22.d
+	picture = GFX_ETH_ELF
+
+	trigger = {
+		tag = PUN
+		focus_progress = {
+			focus = PUN_pirate_new_captain
+		progress > 0.6
+		}
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.22.a
+		log = "[GetDateText]: [This.GetName]: puntland.22.a executed"
+		set_country_flag = PUN_accepted_mercenaries_flg
+	}
+	option = {
+		name = puntland.22.b
+		log = "[GetDateText]: [This.GetName]: puntland.22.a executed"
+	}
+}
+
+country_event = {
+	id = puntland.23	### Civil war against the Pirates
+	title = puntland.23.t
+	desc = puntland.23.d
+	picture = GFX_somalian_civil_war
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.23.a
+		log = "[GetDateText]: [This.GetName]: puntland.23.a executed"
+		start_civil_war = {
+			ideology = neutrality
+			size = 0.8
+			capital = 928
+			states = { 928 }
+		}
+		random_other_country = {
+			limit = {
+				original_tag = PUN
+				has_government = neutrality
+			}
+			load_oob = PUN_government_units
+			set_equipment_fraction = 0.8
+			set_stability = 0.8
+			set_war_support = 0.7
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.35
+			}
+			country_event = { id = puntland.26 } #TODO
+		}
+		if = {
+			limit = { has_country_flag = PUN_accepted_mercenaries_flg }
+			country_event = { id = puntland.24 days = 1 }
+		}
+		load_oob = PUN_pirate_units
+		hidden_effect = {
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "The Captain"
+				picture = "Pirate_Captain.dds"
+				expire = "2050.1.1"
+				ideology = Nat_Autocracy
+				traits = {
+				}
+			}
+		}
+		set_country_flag = PUN_civil_war_started_flg
+		add_political_power = -100
+	}
+}
+
+country_event = {
+	id = puntland.24	### Mercenaries show up
+	title = puntland.24.t
+	desc = puntland.24.d
+	picture = GFX_ETH_ELF
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.24.a
+		log = "[GetDateText]: [This.GetName]: puntland.24.a executed"
+		load_oob = PUN_mercenary_unit
+		create_corps_commander = {
+			name = "Khadar Wardi"
+			picture = "Somali_Mercenary.dds"
+			traits = {
+			}
+			skill = 8
+		}
+	}
+}
+
+country_event = {
+	id = puntland.25	### Just to set-up and clear civil war country flag
+
+	hidden = yes
+
+	fire_only_once = no
+
+	trigger = {
+		tag = PUN
+		has_civil_war = no
+		has_country_flag = PUN_civil_war_started_flg
+	}
+
+	option = {
+		name = puntland.25.a
+		log = "[GetDateText]: [This.GetName]: puntland.25.a executed"
+		clr_country_flag = PUN_civil_war_started_flg
+		set_country_flag = PUN_civil_war_finished_flg
+		if = {
+			limit = { has_country_flag = PUN_accepted_mercenaries_flg }
+			ROOT = { country_event = { id = puntland.27 } }
+		}
+		ROOT = { country_event = { id = puntland.35 } }
+		create_country_leader = {
+			name = "The Captain"
+			picture = "Pirate_Captain.dds"
+			expire = "2050.1.1"
+			ideology = Nat_Autocracy
+			traits = {
+			}
+		}
+	}
+}
+
+country_event = {
+	id = puntland.26	### delete units
+
+	hidden = yes
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = puntland.26.a
+		log = "[GetDateText]: [This.GetName]: puntland.26.a executed"
+	#	delete_unit_template_and_units = { division_template = "Ciidanka Daraawiishta Puntland" }
+	}
+}
+
+country_event = {
+	id = puntland.27	### Mercenaries gets there price
+	title = puntland.27.t
+	desc = puntland.27.d
+	picture = GFX_ETH_ELF
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.27.a
+		log = "[GetDateText]: [This.GetName]: puntland.27.a executed"
+		add_ideas = PUN_mercenaries_in_government
+		clr_country_flag = PUN_accepted_mercenaries_flg
+	}
+}
+
+country_event = {
+	id = puntland.28	### event to delete units
+
+	hidden = yes
+
+	trigger = {
+		tag = PUN
+		has_completed_focus = PUN_pirate_new_captain
+		has_civil_war = no
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.28.a
+		log = "[GetDateText]: [This.GetName]: puntland.28.a executed"
+		start_civil_war = {
+			ideology = fascism
+			size = 0.9
+		}
+		random_country = {
+			limit = { original_tag = PUN has_government = fascism }
+			country_event = { id = puntland.29 }
+		}
+	}
+}
+
+country_event = {
+	id = puntland.29	### event to delete units
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.29.a
+		log = "[GetDateText]: [This.GetName]: puntland.29.a executed"
+		PUN = {
+			annex_country = { target = ROOT transfer_troops = no }
+			country_event = { id = puntland.23 }
+		}
+	}
+}
+
+country_event = {
+	id = puntland.30	### MV Feisty Gas
+	title = puntland.30.t
+	desc = puntland.30.d
+	picture = GFX_gas_tanker
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.30.a
+		log = "[GetDateText]: [This.GetName]: puntland.30.a executed"
+		set_country_flag = PUN_recently_raided_flg
+		add_to_variable = {
+			var = pirates_morale
+			value = 10
+		}
+		clamp_variable = {
+			var = pirates_morale
+			min = 0
+			max = 100
+		}
+		add_to_variable = {
+			var = pirates_loot
+			value = 1
+		}
+		custom_effect_tooltip = PUN_morale_increases_10_tt
+		custom_effect_tooltip = PUN_loot_1_tt
+	}
+}
+
+country_event = {
+	id = puntland.31	### hidden event to clear recently raided flag
+
+	hidden = yes
+
+	trigger = {
+		tag = PUN
+		has_country_flag = PUN_recently_raided_flg
+	}
+
+	mean_time_to_happen = {
+		days = 30
+	}
+
+	fire_only_once = no
+
+	option = {
+		name = puntland.31.a
+		log = "[GetDateText]: [This.GetName]: puntland.31.a executed"
+		clr_country_flag = PUN_recently_raided_flg
+	}
+}
+
+country_event = {
+	id = puntland.32	### MV Semlow
+	title = puntland.32.t
+	desc = puntland.32.d
+	picture = GFX_cargo_ship
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.32.a
+		log = "[GetDateText]: [This.GetName]: puntland.32.a executed"
+		set_country_flag = PUN_recently_raided_flg
+		add_stability = 0.05
+		add_political_power = 60
+	}
+	option = {
+		name = puntland.32.b
+		log = "[GetDateText]: [This.GetName]: puntland.32.b executed"
+		set_country_flag = PUN_recently_raided_flg
+		add_to_variable = {
+			var = pirates_loot
+			value = 2
+		}
+		custom_effect_tooltip = PUN_loot_2_tt
+		add_stability = -0.05
+		add_political_power = -100
+	}
+}
+
+country_event = {
+	id = puntland.33	### Mercenaries take over government
+	title = puntland.33.t
+	desc = puntland.33.d
+	picture = GFX_ETH_ELF
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.33.a
+		log = "[GetDateText]: [This.GetName]: puntland.33.a executed"
+		create_country_leader = {
+			name = "Khadar Wardi"
+			picture = "Somali_Mercenary.dds"
+			expire = "2050.1.1"
+			ideology = Nat_Autocracy
+			traits = {
+			}
+		}
+		add_political_power = -100
+	}
+}
+
+country_event = {
+	id = puntland.34	### pirates elect new leader
+	title = puntland.34.t
+	desc = puntland.34.d
+	picture = GFX_somali_pirates
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.34.a
+		log = "[GetDateText]: [This.GetName]: puntland.34.a executed"
+		create_country_leader = {
+			name = "The Captain II"
+			picture = "generic_politicians/blackjihadi_002.dds"
+			expire = "2050.1.1"
+			ideology = Nat_Autocracy
+			traits = {
+			}
+		}
+		add_political_power = -100
+	}
+}
+
+country_event = {
+	id = puntland.35	### Battle of Boosaaso
+	title = puntland.35.t
+	desc = puntland.35.d
+	picture = GFX_boosaaso
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.35.a
+		log = "[GetDateText]: [This.GetName]: puntland.35.a executed"
+		add_political_power = 20
+	}
+}
+
+country_event = {
+	id = puntland.36	### Civil- Or Military Service?
+	title = puntland.36.t
+	desc = puntland.36.d
+	picture = GFX_ETH_ELF
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.36.a
+		log = "[GetDateText]: [This.GetName]: puntland.36.a executed"
+		add_manpower = 10000
+		army_experience = 10
+	}
+	option = {
+		name = puntland.36.b
+		log = "[GetDateText]: [This.GetName]: puntland.36.b executed"
+		239 = {
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+### Border Dispute With Somaliland
+country_event = {
+	id = puntland.37	### Border Dispute With Somaliland
+	title = puntland.37.t
+	desc = puntland.37.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.37.a	### We prefer Negotiations
+		log = "[GetDateText]: [This.GetName]: puntland.37.a executed"
+		set_country_flag = PUN_talk_with_somaliland_flg
+		SML = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = PUN_peaceful_stance_opm
+			}
+		}
+	}
+	option = {
+		name = puntland.37.b	### Take It By Force
+		log = "[GetDateText]: [This.GetName]: puntland.37.b executed"
+		set_country_flag = PUN_attack_somaliland_flg
+		SML = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = PUN_aggressive_stance_opm
+			}
+		}
+	}
+}
+
+country_event = {
+	id = puntland.38	### Somaliland Declines Our Alliance
+	title = puntland.38.t
+	desc = puntland.38.d
+	picture = GFX_declined_offer_no
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.38.a
+		log = "[GetDateText]: [This.GetName]: puntland.38.a executed"
+		set_country_flag = PUN_declined_alliance_flg
+	}
+}
+
+country_event = {
+	id = puntland.39	### Ethiopia Sends Some Help
+	title = puntland.39.t
+	desc = puntland.39.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.39.a
+		log = "[GetDateText]: [This.GetName]: puntland.39.a executed"
+		add_manpower = 5000
+		add_equipment_to_stockpile = { type = infantry_weapons amount = 5000 }
+		add_equipment_to_stockpile = { type = L_AT_Equipment amount = 150 }
+	}
+}
+
+country_event = {
+	id = puntland.40	### Ethiopia Sends Massive Help
+	title = puntland.40.t
+	desc = puntland.40.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.40.a
+		log = "[GetDateText]: [This.GetName]: puntland.40.a executed"
+		add_manpower = 10000
+		add_equipment_to_stockpile = { type = infantry_weapons amount = 10000 }
+		add_equipment_to_stockpile = { type = L_AT_Equipment amount = 300 }
+		add_equipment_to_stockpile = { type = artillery_0 amount = 24 }
+	}
+}
+
+country_event = {
+	id = puntland.41	### Ethiopia Sends Nothing
+	title = puntland.41.t
+	desc = puntland.41.d
+	picture = GFX_declined_offer_no
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.41.a
+		log = "[GetDateText]: [This.GetName]: puntland.41.a executed"
+	}
+}
+
+country_event = {
+	id = puntland.42	### Ethiopia Wants to strike too
+	title = puntland.42.t
+	desc = puntland.42.d
+	picture = GFX_ETH_truck
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.42.a
+		log = "[GetDateText]: [This.GetName]: puntland.42.a executed"
+	}
+}
+
+country_event = {
+	id = puntland.43	### Militias Join Somaliland
+	title = puntland.43.t
+	desc = puntland.43.d
+	picture = GFX_ETH_ELF
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.43.a
+		log = "[GetDateText]: [This.GetName]: puntland.43.a executed"
+		add_political_power = -20
+		remove_ideas = PUN_militias
+		effect_tooltip = { SML = { load_oob = SML_puntland_militias } }
+		if = {
+			limit = { NOT = { has_completed_focus = PUN_demobilise } }
+			delete_unit_template_and_units = { division_template = "Militia" }
+		}
+	}
+}
+
+country_event = {
+	id = puntland.44	### Alliance With Ethiopia Declined
+	title = puntland.44.t
+	desc = puntland.44.d
+	picture = GFX_declined_offer_no
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.44.a
+		log = "[GetDateText]: [This.GetName]: puntland.44.a executed"
+		#trigger = { num_faction_members > 1 }
+		add_political_power = -20
+	}
+	option = {	### Dissolve the alliance
+		name = puntland.44.b
+		log = "[GetDateText]: [This.GetName]: puntland.44.a executed"
+		trigger = { num_faction_members < 1 }
+		add_political_power = -50
+		dismantle_faction = yes
+		ai_chance = { factor = 0 }
+	}
+}
+
+country_event = {
+	id = puntland.45	### United Somalia ask to join there ranks
+	title = puntland.45.t
+	desc = puntland.45.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.45.a	# Accept
+		log = "[GetDateText]: [This.GetName]: puntland.45.a executed"
+		if = {
+			limit = { has_global_flag = sna_was_it_flg }
+			clr_global_flag = sna_was_it_flg
+			SNA = { country_event = { id = somalia.3 } }
+			effect_tooltip = {
+				SNA = { annex_country = { target = ROOT transfer_troops = yes } }
+			}
+		}
+		if = {
+			limit = { has_global_flag = sws_was_it_flg }
+			clr_global_flag = sws_was_it_flg
+			SWS = { country_event = { id = somalia.3 } }
+			effect_tooltip = {
+				SWS = { annex_country = { target = ROOT transfer_troops = yes } }
+			}
+		}
+		if = {
+			limit = { has_global_flag = som_was_it_flg }
+			clr_global_flag = som_was_it_flg
+			SOM = { country_event = { id = somalia.3 } }
+			effect_tooltip = {
+				SOM = { annex_country = { target = ROOT transfer_troops = yes } }
+			}
+		}
+		if = {
+			limit = { has_global_flag = jub_was_it_flg }
+			clr_global_flag = jub_was_it_flg
+			JUB = { country_event = { id = somalia.3 } }
+			effect_tooltip = {
+				JUB = { annex_country = { target = ROOT transfer_troops = yes } }
+			}
+		}
+		if = {
+			limit = { has_global_flag = sml_was_it_flg }
+			clr_global_flag = sml_was_it_flg
+			SML = { country_event = { id = somalia.3 } }
+			effect_tooltip = {
+				SML = { annex_country = { target = ROOT transfer_troops = yes } }
+			}
+		}
+		ai_chance = { factor = 1 }
+	}
+	option = {	### Decline
+		name = puntland.45.b
+		log = "[GetDateText]: [This.GetName]: puntland.45.a executed"
+		if = {
+			limit = { has_global_flag = sna_was_it_flg }
+			clr_global_flag = sna_was_it_flg
+			SNA = { country_event = { id = somalia.4 } }
+			effect_tooltip = {
+				SNA = {
+					create_wargoal = {
+					type = puppet_wargoal_focus
+					target = ROOT
+						generator = { 239 928 }
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_global_flag = sws_was_it_flg }
+			clr_global_flag = sws_was_it_flg
+			SWS = { country_event = { id = somalia.4 } }
+			effect_tooltip = {
+				SWS = {
+					create_wargoal = {
+					type = puppet_wargoal_focus
+					target = ROOT
+						generator = { 239 928 }
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_global_flag = som_was_it_flg }
+			clr_global_flag = som_was_it_flg
+			SOM = { country_event = { id = somalia.4 } }
+			effect_tooltip = {
+				SOM = {
+					create_wargoal = {
+					type = puppet_wargoal_focus
+					target = ROOT
+						generator = { 239 928 }
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_global_flag = jub_was_it_flg }
+			clr_global_flag = jub_was_it_flg
+			JUB = { country_event = { id = somalia.4 } }
+			effect_tooltip = {
+				JUB = {
+					create_wargoal = {
+					type = puppet_wargoal_focus
+					target = ROOT
+						generator = { 239 928 }
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_global_flag = sml_was_it_flg }
+			clr_global_flag = sml_was_it_flg
+			SML = { country_event = { id = somalia.4 } }
+			effect_tooltip = {
+				SML = {
+					create_wargoal = {
+					type = puppet_wargoal_focus
+					target = ROOT
+						generator = { 239 928 }
+					}
+				}
+			}
+		}
+		ai_chance = { factor = 0 }
+	}
+}
+
+country_event = {
+	id = puntland.46	### Minister Assassinated
+	title = puntland.46.t
+	desc = puntland.46.d
+	picture = GFX_puntland_police_force_ev
+
+	trigger = {
+		date > 2008.1.1
+		original_tag = PUN
+	}
+
+	mean_time_to_happen = {
+		days = 365
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.46.a
+		log = "[GetDateText]: [This.GetName]: puntland.46.a executed"
+		add_political_power = -25
+		add_stability = -0.04
+	}
+	option = {
+		name = puntland.46.b
+		log = "[GetDateText]: [This.GetName]: puntland.46.b executed"
+		trigger = {
+			NOT = { has_idea = police_05 }
+		}
+		add_political_power = -50
+		add_stability = -0.01
+		increase_policing_budget = yes
+	}
+}
+
+country_event = {
+	id = puntland.47	### Expand the port of bosaso
+	title = puntland.47.t
+	desc = puntland.47.d
+	picture = GFX_boosaaso
+
+	trigger = {
+		original_tag = PUN
+		focus_progress = {
+			focus = PUN_export_hub
+			progress > 0.1
+		}
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.47.a	### Expand existing port
+		log = "[GetDateText]: [This.GetName]: puntland.47.a executed"
+		effect_tooltip = {
+			928 = {
+				add_building_construction = {
+					type = naval_base
+					province = 3202
+					level = 2
+					instant_build = yes
+				}
+			}
+			custom_effect_tooltip = PUN_building_tt
+		}
+		set_country_flag = PUN_expand_bosaso_flg
+	}
+	option = {
+		name = puntland.47.b	### Build a new port
+		log = "[GetDateText]: [This.GetName]: puntland.47.b executed"
+		effect_tooltip = {
+			928 = {
+				add_building_construction = {
+					type = naval_base
+					province = 3202
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			custom_effect_tooltip = PUN_building_tt
+		}
+		set_country_flag = PUN_build_new_port_flg
+	}
+}
+
+country_event = {
+	id = puntland.48	### CCECC offers there help
+	title = puntland.48.t
+	desc = puntland.48.d
+	picture = GFX_china_ccecc
+
+	trigger = {
+		original_tag = PUN
+		focus_progress = {
+			focus = PUN_rebuild_country
+			progress > 0.3
+		}
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.48.a	### Accept
+		log = "[GetDateText]: [This.GetName]: puntland.48.a executed"
+		add_stability = -0.05
+		custom_effect_tooltip = PUN_ccecc_tt
+		set_country_flag = PUN_accepted_ccecc_flg
+	}
+	option = {
+		name = puntland.48.b	### Decline
+		log = "[GetDateText]: [This.GetName]: puntland.48.b executed"
+		add_political_power = -10
+		CHI = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = PUN_denied_ccecc
+			}
+		}
+	}
+}
+
+country_event = {
+	id = puntland.49	### UAE wants to help to create the PMPF
+	title = puntland.49.t
+	desc = puntland.49.d
+	picture = GFX_puntland_police_force_ev
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.49.a	### Accept
+		log = "[GetDateText]: [This.GetName]: puntland.49.a executed"
+		if = {
+			limit = { has_country_flag = PMPF_uae_help1 }
+			clr_country_flag = PMPF_uae_help1
+			add_equipment_to_stockpile = { type = infantry_weapons amount = 500 }
+			navy_experience = 5
+		}
+		if = {
+			limit = { has_country_flag = PMPF_uae_help2 }
+			clr_country_flag = PMPF_uae_help1
+			add_equipment_to_stockpile = { type = infantry_weapons amount = 500 }
+			custom_effect_tooltip = PUN_49_1_tt
+			hidden_effect = { ROOT = { country_event = { id = puntland.50 days = 365 } } }
+			UAE = {
+				subtract_from_variable = {
+					var = treasury
+					value = 0.1
+				}
+			}
+			navy_experience = 10
+		}
+		if = {
+			limit = { has_country_flag = PMPF_uae_help3 }
+			clr_country_flag = PMPF_uae_help
+			add_equipment_to_stockpile = { type = infantry_weapons amount = 500 }
+			custom_effect_tooltip = PUN_49_2_tt
+			hidden_effect = { ROOT = { country_event = { id = puntland.51 days = 365 } } }
+			UAE = {
+				subtract_from_variable = {
+					var = treasury
+					value = 0.3
+				}
+			}
+			navy_experience = 15
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+	option = {
+		name = puntland.49.b	### Decline
+		log = "[GetDateText]: [This.GetName]: puntland.49.b executed"
+		add_political_power = -10
+		effect_tooltip = {
+			UAE = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = PUN_declined_ships
+				}
+			}
+		}
+		UAE = { country_event = { id = uae.2 days = 2 } }
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+country_event = {
+	id = puntland.50	### PMF Abdullahi
+	title = puntland.50.t
+	desc = puntland.50.d
+	picture = GFX_corvette
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.50.a
+		log = "[GetDateText]: [This.GetName]: puntland.50.a executed"
+		add_political_power = 10
+		load_oob = PUN_uae_1
+	}
+}
+
+country_event = {
+	id = puntland.51	### 3 corvettes
+	title = puntland.51.t
+	desc = puntland.51.d
+	picture = GFX_corvette
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.51.a
+		log = "[GetDateText]: [This.GetName]: puntland.51.a executed"
+		add_political_power = 20
+		load_oob = PUN_uae_2
+	}
+}
+
+country_event = {
+	id = puntland.52	### Veterans protest march
+	title = puntland.52.t
+	desc = puntland.52.d
+	picture = GFX_african_demonstration
+
+	trigger = {
+		original_tag = PUN
+		date > 2003.1.1
+		NOT = { has_completed_focus = PUN_veterans }
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.52.a
+		log = "[GetDateText]: [This.GetName]: puntland.52.a executed"
+		add_stability = -0.05
+		add_political_power = -25
+	}
+}
+
+country_event = {
+	id = puntland.53	### What should we do with the injailed Pirates?
+	title = puntland.53.t
+	desc = puntland.53.d
+	picture = GFX_jail
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.53.a
+		log = "[GetDateText]: [This.GetName]: puntland.53.a executed"
+		add_ideas = PUN_reformed_pirates
+	}
+	option = {
+		name = puntland.53.b
+		log = "[GetDateText]: [This.GetName]: puntland.53.a executed"
+		army_experience = 10
+		add_manpower = 200
+	}
+	option = {
+		name = puntland.53.c
+		log = "[GetDateText]: [This.GetName]: puntland.53.a executed"
+		add_stability = 0.05
+	}
+}
+
+country_event = {
+	id = puntland.54	### Reformed Pirates take up arms
+	title = puntland.54.t
+	desc = puntland.54.d
+	picture = GFX_somali_pirates
+
+	trigger = {
+		original_tag = PUN
+		has_idea = PUN_reformed_pirates
+		has_country_flag = PUN_civil_war_started_flg
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.54.a
+		log = "[GetDateText]: [This.GetName]: puntland.54.a executed"
+		remove_ideas = PUN_reformed_pirates
+		army_experience = 5
+		add_manpower = 200
+	}
+}
+
+country_event = {
+	id = puntland.55	### Status of the Puntland State of Somalia
+	title = puntland.55.t
+	desc = puntland.55.d
+	picture = GFX_puntland_flag
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.55.a
+		log = "[GetDateText]: [This.GetName]: puntland.55.a executed"
+		add_political_power = 10
+	}
+}
+
+country_event = {
+	id = puntland.56	### Country gets asked
+	title = puntland.56.t
+	desc = puntland.56.d
+	picture = GFX_puntland_flag
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.56.a	# Ask USA
+		log = "[GetDateText]: [This.GetName]: puntland.56.a executed"
+		USA = { country_event = { id = puntland.57 days = 3 } }
+		custom_effect_tooltip = PUN_accepted_agency_tt
+		effect_tooltip = { add_ideas = PUN_supported_by_cia }
+		custom_effect_tooltip = USA_gain_influence_TT
+		ai_chance = { factor = 2 }
+	}
+	option = {
+		name = puntland.56.b	# Ask China
+		log = "[GetDateText]: [This.GetName]: puntland.56.b executed"
+		CHI = { country_event = { id = puntland.57 days = 3 } }
+		custom_effect_tooltip = PUN_accepted_agency_tt
+		effect_tooltip = { add_ideas = PUN_supported_by_mss }
+		custom_effect_tooltip = CHI_gain_influence_TT
+		ai_chance = { factor = 1 }
+	}
+	option = {
+		name = puntland.56.c	# Ask Ethiopia
+		log = "[GetDateText]: [This.GetName]: puntland.56.c executed"
+		ETH = { country_event = { id = puntland.57 days = 3 } }
+		custom_effect_tooltip = PUN_accepted_agency_tt
+		effect_tooltip = { add_ideas = PUN_supported_by_niss }
+		custom_effect_tooltip = ETH_gain_influence_TT
+		ai_chance = { factor = 0 }
+	}
+}
+
+country_event = {
+	id = puntland.57	### Follow-up event for above, reaction of the asked country
+	title = puntland.57.t
+	desc = puntland.57.d
+	picture = GFX_puntland_flag
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.57.a	# Yes
+		log = "[GetDateText]: [This.GetName]: puntland.57.a executed"
+		PUN = { country_event = { id = puntland.58 } }
+		if = {
+			limit = { original_tag = USA }
+			PUN = { set_country_flag = usa_was_it_flg }
+		}
+		if = {
+			limit = { original_tag = CHI }
+			PUN = { set_country_flag = chi_was_it_flg }
+		}
+		if = {
+			limit = { original_tag = ETH }
+			PUN = { set_country_flag = eth_was_it_flg }
+		}
+		custom_effect_tooltip = ROOT_gain_influence_TT
+		ai_chance = { factor = 1 }
+	}
+	option = {
+		name = puntland.57.b	# No
+		log = "[GetDateText]: [This.GetName]: puntland.58.b executed"
+		PUN = { country_event = { id = puntland.59 } }
+		ai_chance = { factor = 0 }
+	}
+}
+
+country_event = {
+	id = puntland.58	### Follow-up event for above, reaction of the asked country - accepted
+	title = puntland.58.t
+	desc = puntland.58.d
+	picture = GFX_puntland_flag
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.58.a	# Yes
+		log = "[GetDateText]: [This.GetName]: puntland.58.a executed"
+		if = {
+			limit = { has_country_flag = chi_was_it_flg }
+			add_ideas = PUN_supported_by_mss
+			clr_country_flag = chi_was_it_flg
+			for_loop_effect = {
+				end = influence_array^num value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = CHI }
+					}
+					add_to_variable = { influence_array_val^v = 3 }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = found }
+				}
+				add_to_array = { influence_array = CHI.id }
+				add_to_array = { influence_array_val = 3 }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		if = {
+			limit = { has_country_flag = usa_was_it_flg }
+			add_ideas = PUN_supported_by_cia
+			clr_country_flag = usa_was_it_flg
+			for_loop_effect = {
+				end = influence_array^num value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = USA }
+					}
+					add_to_variable = { influence_array_val^v = 3 }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = found }
+				}
+				add_to_array = { influence_array = USA.id }
+				add_to_array = { influence_array_val = 3 }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+		if = {
+			limit = { has_country_flag = eth_was_it_flg }
+			add_ideas = PUN_supported_by_niss
+			clr_country_flag = eth_was_it_flg
+			for_loop_effect = {
+				end = influence_array^num value = v
+				if = {
+					limit = {
+						check_variable = { influence_array^v = ETH }
+					}
+					add_to_variable = { influence_array_val^v = 3 }
+					set_country_flag = found
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = found }
+				}
+				add_to_array = { influence_array = ETH.id }
+				add_to_array = { influence_array_val = 3 }
+			}
+			clr_country_flag = found
+			recalculate_influence = yes
+		}
+	}
+}
+
+country_event = {
+	id = puntland.59	### Follow-up event for above, reaction of the asked country - declined
+	title = puntland.59.t
+	desc = puntland.59.d
+	picture = GFX_puntland_flag
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.59.a	# Yes
+		log = "[GetDateText]: [This.GetName]: puntland.59.a executed"
+		add_political_power = -10
+	}
+}
+
+country_event = {
+	id = puntland.60	### Airport build by oil company
+	title = puntland.60.t
+	desc = puntland.60.d
+	picture = GFX_puntland_airport
+
+	trigger = {
+		original_tag = PUN
+		has_full_control_of_state = 928
+		has_completed_focus = PUN_exploit_oil
+		has_completed_focus = PUN_bosaso_airport
+	}
+
+	mean_time_to_happen = {
+		days = 600
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.60.a
+		log = "[GetDateText]: [This.GetName]: puntland.60.a executed"
+		add_political_power = 10
+		928 = {
+			add_building_construction = {
+				type = air_base
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+
+news_event = {
+	id = puntland.61	### First pirate activity 2005
+	title = puntland.61.t
+	desc = puntland.61.d
+	picture = GFX_somali_pirates
+
+	trigger = {
+	 date > 2005.1.1
+	}
+
+	mean_time_to_happen = {
+		days = 365
+	}
+
+	fire_only_once = yes
+
+	option = {
+		name = puntland.61.a
+		log = "[GetDateText]: [This.GetName]: puntland.61.a executed"
+		set_country_flag = PUN_pirates_started_flg
+	}
+}
+
+
+###TODO Bored events also when since a long time you didnt raid anyone
+##Pirates Raid the Railways
+country_event = {
+	id = puntland_piracy.1
+	title = puntland_piracy.1.t
+	desc = puntland_piracy.1.d
+	picture = GFX_somali_pirates
+	trigger = {
+		original_tag = PUN
+		NOT = { has_country_flag = PUN_is_pirate } ##Obviously Pirates Raiding you stops becoming a problem
+	}
+
+	option = {
+		name = puntland_piracy.1.a
+		log = "[GetDateText]: [This.GetName]: puntland_piracy.1.a executed"
+		random_owned_state = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.2
+			}
+		}
+		add_manpower = -15
+	}
+}
+
+##Pirates Seize a Cargo Ship
+country_event = {
+	id = puntland_piracy.2
+	title = puntland_piracy.2.t
+	desc = puntland_piracy.2.d
+	picture = GFX_cargo_ship
+	trigger = {
+		original_tag = PUN
+		NOT = { has_country_flag = PUN_is_pirate } ##Obviously Pirates Raiding you stops becoming a problem
+	}
+
+	option = {
+		name = puntland_piracy.2.a
+		log = "[GetDateText]: [This.GetName]: puntland_piracy.2.a executed"
+		add_stability = -0.01
+		add_political_power = -50
+	}
+}
+
+##Election Events to Set the Proper Elections
+###Formation of Horseed
+country_event = {
+	id = puntland_elections.1
+	title = puntland_elections.1.t
+	desc = puntland_elections.1.d
+	picture = GFX_election_day
+	trigger = {
+		original_tag = PUN
+		date < 2008.11.03
+		date > 2008.11.01
+		NOT = { has_country_flag = PUN_formation_of_horseed }
+	}
+	fire_only_once = yes
+
+	option = {
+		name = puntland_elections.1.a
+		log = "[GetDateText]: [This.GetName]: puntland_elections.1.a executed"
+		set_country_flag = PUN_formation_of_horseed
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+##Puntland Money Events - Pair with Monetary Decisions
+country_event = {
+	id = puntland_money.1
+	title = puntland_money.1.t
+	desc = puntland_money.1.d
+	picture = GFX_stock_market
+	trigger = {
+		original_tag = PUN
+	}
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = puntland_money.1.a
+		log = "[GetDateText]: [This.GetName]: puntland_money.1.a executed"
+		set_country_flag = PUN_deferred_money_flag
+		custom_effect_tooltip = PUN_accept_deferral_system_tt
+		set_variable = { puntland_deferred_amount = 0 } ##Basis Determined
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	option = {
+		name = puntland_money.1.b
+		log = "[GetDateText]: [This.GetName]: puntland_money.1.a executed"
+		add_political_power = 100
+		add_to_variable = {
+			treasury = 5
+			tooltip = 5_billion_revenue_tt
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+#############
+### INDEX ###
+#############
+# 1 - Pirates demand to sail again
+# 2 - The pirate captain is dead
+# 3 - Possible location of the boat found [Treasure Hunt]
+# 4 - We arrived in Socotra [Treasure Hunt]
+# 5 - [Root.GetLeader] dies [Treasure Hunt]
+# 6 - An Unknown man approaches us [Treasure Hunt]
+# 7 - A day at the harbor [Treasure Hunt]
+# 8 - A day in the local pubs [Treasure Hunt]
+# 9 - Search at the townsquare [Treasure Hunt]
+# 10 - His name was Abdurafi [Treasure Hunt]
+# 11 - His name was Abduwali [Treasure Hunt]
+# 12 - His name was Abdullah [Treasure Hunt]
+# 13 - Arrived in Norway [Treasure Hunt]
+# 14 - Set-up for pirates do dumb things [Hidden]
+# 15 - Pirates complaining
+# 16 - Cargo ship sucessfully raided
+# 17 - Cargo ship raid failed
+# 18 - Big cargo-ship sighted
+# 19 - To clear the country flag again for cargo ships [Hidden]
+# 20 - Pirates start a civil war
+# 21 - People demonstrate against new friends
+# 22 - Mercenaries offer there help
+# 23 - Demonstrations escalate
+# 24 - Mercenaries show up
+# 25 - Clear civil war country flag [Hidden]
+# 26 - Set-up to delete all units [Hidden] TODO duplicate???
+# 27 - Mercenaries demand there reward
+# 28 - Set-up to delete all units [Hidden] TODO duplicate???
+# 29 - Set-up to delete all units [Hidden] TODO duplicate???
+# 30 - MV Feisty Gas attacked
+# 31 - To clear recently raided flag [Hidden]
+# 32 - -MV Semlow attacked
+# 33 - Mercenaries took over the gvernment
+# 34 - New Captain elected
+# 35 - Battle of Boosaaso
+# 36 - Civil- Or Military Service?
+# 37 - Border Dispute With Somaliland
+# 38 - Somaliland Declines Our Alliance
+# 39 - Ethiopia Sends Some Help
+# 40 - Ethiopia Sends Massive Help
+# 41 - Ethiopia Stays Neutral
+# 42 - Ethiopia Mobilize Its Forces
+# 43 - Militias Join Somaliland
+# 44 - Ethiopia Declined Our Alliance
+# 45 - United Somalia ask to join there ranks
+# 46 - Assassination Of The Information & Telecommunication Minister
+# 47 - Expansion of Bosasos Port
+# 48 - CCECC offers there help
+# 49 - UAE offers there help to finance the PMPF
+# 50 - PMF Abdullahi finished
+# 51 - 3 corvettes finished
+# 52 - Veterans Protest
+# 53 - What should we do with the injailed Pirates?
+# 54 - Reformed Pirates take up arms
+# 55 - Status of the Puntland State of Somalia
+# 56 - Ask for foreign Counter-Insurgency support
+# 57 - Follow-up event for above, reaction of the asked country
+# 58 - Accepted
+# 59 - Declined
+# 60 - Oil Exploration Company builds runaway for Bosaso Airport
+# 61 - First pirate activity 2005
