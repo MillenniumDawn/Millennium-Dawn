@@ -1,0 +1,3217 @@
+### Puntland's focus tree
+### Angriest Bird
+focus_tree = {
+	id = puntland_focus
+	country = {
+		factor = 0
+		modifier = {
+			add = 25
+			tag = PUN
+		}
+	}
+	continuous_focus_position = { x = 1500 y = 950 }
+	shared_focus = SOM_a_nation_torn
+	### Land of Punt
+	focus = {
+		id = PUN_land_of_punt
+		icon = gentleman_officers
+		x = 12
+		y = 0
+		cost = 5
+
+		available = {
+			has_war = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_land_of_punt"
+			add_political_power = 75
+			add_stability = 0.05
+			country_event = { id = puntland.55 }
+			country_event = { id = puntland_money.1 days = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_start_date < 2020.1.1
+				add = 10
+			}
+		}
+	}
+
+	#Remnants of The Somalian Civil War
+	focus = {
+		id = PUN_remnants_civil_war
+		icon = city_fort
+		x = -6
+		y = 1
+		relative_position_id = PUN_land_of_punt
+		cost = 10
+
+		prerequisite = { focus = PUN_land_of_punt }
+		available = {
+			is_subject = no #Must be independent
+			NOT = { has_war_with = SOM } #Can't have war with Somalian Government
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_remnants_civil_war"
+			add_ideas = PUN_remnants_idea
+			capital_scope = { #NOTE: Represents people settling in Puntland
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = PUN_deferred_money_flag }
+				}
+				subtract_from_variable = {
+					treasury = 0.5
+					tooltip = 0_5_billion_expense_tt
+				}
+			}
+			else = {
+				add_to_variable = {
+					puntland_deferred_amount = 0.5
+					tooltip = 0_5_deferred_expense_tt
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Empower The Darod - Regional Politics
+	focus = {
+		id = PUN_empower_darod
+		icon = demand_territory
+		x = -4
+		y = 1
+		relative_position_id = PUN_remnants_civil_war
+		cost = 10
+		prerequisite = { focus = PUN_remnants_civil_war }
+		available = {
+			OR = {
+				has_idea = sunni
+				has_idea = shia
+				has_government = fascism
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_empower_darod"
+			if = {
+				limit = { NOT = { has_idea = The_Ulema } }
+				add_ideas = The_Ulema
+			}
+			else = {
+				increase_The_Ulema_opinion = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Secure The Somaliland Border
+	focus = {
+		id = PUN_secure_border
+		icon = military_fort
+		x = -2
+		y = 1
+		relative_position_id = PUN_empower_darod
+		cost = 5
+
+		prerequisite = { focus = PUN_empower_darod }
+
+		available = {
+			has_full_control_of_state = 928 #Bari
+			has_full_control_of_state = 239 #Puntland
+			has_full_control_of_state = 238 #Maahkir
+		}
+
+		cancel = {
+			NOT = {
+				has_full_control_of_state = 928 #Bari
+				has_full_control_of_state = 239 #Puntland
+				has_full_control_of_state = 238 #Maahkir
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_empower_darod"
+			928 = {
+				add_building_construction = {
+					type = bunker
+					province = 765
+					level = 1
+					instant_build = yes
+				}
+			}
+			239 = {
+				add_building_construction = {
+					type = bunker
+					province = 4909
+					level = 1
+					instant_build = yes
+				}
+			}
+			238 = {
+				add_building_construction = {
+					type = bunker
+					province = 12814
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 10921
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Secure The Southern Border
+	focus = {
+		id = PUN_secure_border1
+		icon = military_fort
+		x = 2
+		y = 1
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = { focus = PUN_empower_darod }
+
+		available = {
+			has_full_control_of_state = 239
+		}
+		cancel = {
+			NOT = { has_full_control_of_state = 239 }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_secure_border1"
+			239 = {
+				add_building_construction = {
+					type = bunker
+					province = 11088
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 1964
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Solve The Somaliland Border Dispute
+	focus = {
+		id = PUN_border_dispute
+		icon = position_armies
+		x = 0
+		y = 1
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = {
+			focus = PUN_empower_darod
+		}
+
+		available = {
+			country_exists = SML
+			NOT = { has_war_with = SML }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_border_dispute"
+			country_event = { id = puntland.37 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Seek Ethiopian Support
+	focus = {
+		id = PUN_ethiopian_support
+		icon = align_to_ethiopia
+		x = -1
+		y = 2
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = { focus = PUN_border_dispute }
+
+		available = {
+			NOT = {
+				has_war_with = ETH
+				is_in_faction_with = ETH
+			}
+			has_country_flag = PUN_attack_somaliland_flg
+		}
+		bypass = {
+			ETH = {
+				OR = {
+					is_in_faction_with = SML
+					is_subject_of = PUN #Just in case
+				}
+			}
+			NOT = { country_exists = ETH }
+		}
+		cancel = {
+			has_war_with = ETH
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_border_dispute"
+			ETH = { country_event = { id = ethiopia.20 days = 3 } }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Retake Maakhir
+	focus = {
+		id = PUN_retake_maakhir
+		icon = war2
+		x = -1
+		y = 3
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = {
+			focus = PUN_ethiopian_support
+		}
+
+		available = {
+			NOT = { owns_state = 238 }
+		}
+		bypass = {
+			owns_state = 238
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_retake_maakhir"
+			if = {
+				limit = {
+					SML = { owns_state = 238 }
+				}
+				declare_war_on = {
+					target = SML
+					type = take_state_focus
+					generator = { 238 }
+				}
+			}
+			else = {
+				any_country = {
+					limit = {
+						owns_state = 238
+					}
+					declare_war_on = {
+						target = PREV
+						type = take_state_focus
+						generator = { 238 }
+					}
+				}
+			}
+			if = {
+				limit = {
+					ETH = { has_country_flag = ETH_direct_support_flg }
+				}
+				ETH = {
+					add_to_war = {
+						targeted_alliance = PREV
+						enemy = SML
+						hostility_reason = asked_to_join
+					}
+				}
+			}
+			hidden_effect = {
+				if = {
+					limit = {
+						NOT = {
+							has_completed_focus = PUN_demobilise
+							has_completed_focus = PUN_integrate
+							has_completed_focus = PUN_veterans
+						}
+					}
+					ROOT = { country_event = { id = puntland.43 days = 3 } }
+					SML = { country_event = { id = somaliland.2 days = 3 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Befriend Somaliland
+	focus = {
+		id = PUN_befriend_somaliland
+		icon = tripartite_pact
+		x = 1
+		y = 2
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = { focus = PUN_border_dispute }
+
+		available = {
+			NOT = {
+				has_war_with = SML
+			}
+			country_exists = SML
+			has_country_flag = PUN_talk_with_somaliland_flg
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_befriend_somaliland"
+			add_opinion_modifier = { target = SML modifier = declaration_of_friendship }
+			SML = { add_opinion_modifier = { target = PUN modifier = declaration_of_friendship } }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Northern Somalian Alliance
+	focus = {
+		id = PUN_northern_alliance
+		icon = diplomatic_treaty
+		x = 1
+		y = 3
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = { focus = PUN_border_dispute }
+		mutually_exclusive = { focus = PUN_retake_maakhir }
+		available = {
+			NOT = { in_faction_with = SML }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_northern_alliance"
+			create_faction = Northern_Somalian_Alliance
+			SML = { country_event = { id = somaliland.1 days = 3 } }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Expand Las Khoreys Port
+	focus = {
+		id = PUN_expand_las_khorey
+		icon = naval_dockyard
+		x = -2
+		y = 4
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = {
+			focus = PUN_retake_maakhir
+		}
+		available = {
+			has_full_control_of_state = 238
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_expand_las_khorey"
+			238 = {
+				add_building_construction = {
+					type = naval_base
+					province = 10921
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Secure New State
+	focus = {
+		id = PUN_secure_maakhir
+		icon = city_fort
+		x = -1
+		y = 6
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = { focus = PUN_retake_maakhir }
+
+		available = {
+			has_full_control_of_state = 938
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_secure_maakhir"
+			938 = {
+				add_building_construction = {
+					type = bunker
+					province = 8094
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = bunker
+					province = 1905
+					level = 1
+					instant_build = yes
+				}
+			}
+			add_state_core = 938
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Reunite Somalia
+	focus = {
+		id = PUN_reunite_somalia
+		icon = attack_somalia
+		x = 2
+		y = 4
+		relative_position_id = PUN_empower_darod
+		cost = 10
+
+		prerequisite = {
+			focus = PUN_retake_maakhir
+			focus = PUN_northern_alliance
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_state_claim = 240
+			add_state_claim = 584
+			add_state_claim = 593
+			add_state_claim = 581
+			unlock_decision_tooltip = PUN_unite_somalia_dec
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PUN_somaliland_integration
+		icon = attack
+		x = -2
+		y = 1
+		relative_position_id = PUN_reunite_somalia
+		cost = 10
+
+		prerequisite = { focus = PUN_reunite_somalia }
+		available = {
+		}
+
+		completion_reward = {
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PUN_the_capture_of_mogadishu
+		icon = attack
+		x = 0
+		y = 1
+		relative_position_id = PUN_reunite_somalia
+		cost = 10
+
+		prerequisite = { focus = PUN_reunite_somalia }
+		available = {
+			#FIXME: Owns Mogadishu
+			#FIXME: Other Civil War Factions do not exist
+
+		}
+
+		completion_reward = {
+
+		}
+	}
+
+	focus = {
+		id = PUN_jubba_valley
+		icon = attack
+		x = 2
+		y = 1
+		relative_position_id = PUN_reunite_somalia
+		cost = 10
+
+		prerequisite = { focus = PUN_reunite_somalia }
+		available = {
+			#FIXME: Owns Mogadishu
+			#FIXME: Other Civil War Factions do not exist
+
+		}
+
+		completion_reward = {
+
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = PUN_the_new_government
+		icon = x
+		x = 0
+		y = 2
+		relative_position_id = PUN_reunite_somalia
+		cost = 10
+
+		prerequisite = { focus = PUN_the_capture_of_mogadishu }
+		prerequisite = { focus = PUN_jubba_valley }
+		prerequisite = { focus = PUN_somaliland_integration }
+
+		completion_reward = {
+			#FIXME: Become somalia - Opens up new shared tree having to do with rebuilidng as this whole tree has to do with Puntland
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Democratisation
+	focus = {
+		id = PUN_democratisation
+		icon = pdrc
+		x = 2
+		y = 1
+		relative_position_id = PUN_remnants_civil_war
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_remnants_civil_war
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_ideas = PUN_democratisation_id
+		}
+	}
+
+	### Own National Identity
+	focus = {
+		id = PUN_identity
+		icon = national_unity
+		x = -1
+		y = 1
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_democratisation
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_war_support = 0.05
+			add_stability = 0.1
+		}
+	}
+
+	### Our Constitution
+	focus = {
+		id = PUN_constitution
+		icon = pass_legislation
+		x = 1
+		y = 1
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_democratisation
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_political_power = 100
+		}
+	}
+
+	### Puntland TV And Radio
+	focus = {
+		id = PUN_radio
+		icon = propaganda
+		x = -2
+		y = 2
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_constitution
+		}
+		prerequisite = {
+			focus = PUN_identity
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+		}
+	}
+
+	### Golis Telecom Somalia
+	focus = {
+		id = PUN_golis
+		icon = golis
+		x = -2
+		y = 3
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_radio
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_war_support = 0.05
+		}
+	}
+
+	### Anti-Corruption Campaign
+	focus = {
+		id = PUN_corruption
+		icon = union_negotiations
+		x = 0
+		y = 2
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_constitution
+		}
+		prerequisite = {
+			focus = PUN_identity
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			decrease_corruption = yes
+		}
+	}
+
+	### Tackle Money Forgery
+	focus = {
+		id = PUN_forgery
+		icon = economic_crisis
+		x = 0
+		y = 3
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_corruption
+		}
+		prerequisite = {
+			focus = PUN_radio
+			focus = PUN_reform_security
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			remove_ideas = PUN_widespread_money_forgery
+		}
+	}
+
+	### Reform The Security And Judicial Sectors
+	focus = {
+		id = PUN_reform_security
+		icon = self_management
+		x = 2
+		y = 2
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_constitution
+		}
+		prerequisite = {
+			focus = PUN_identity
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			increase_centralization = yes
+		}
+	}
+
+	### Puntland Agency For Social Welfare
+	focus = {
+		id = PUN_social_welfare
+		icon = concessions2
+		x = 2
+		y = 3
+		relative_position_id = PUN_democratisation
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_reform_security
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			increase_social_spending = yes
+		}
+	}
+
+	##Economic Prosperity Tree
+	### Rebuild Our Country
+	focus = {
+		id = PUN_rebuild_country
+		icon = construction
+		x = 20
+		y = 1
+		relative_position_id = PUN_land_of_punt
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+		prerequisite = { focus = PUN_land_of_punt }
+
+		available = {
+
+		}
+
+		completion_reward = {
+			swap_ideas = { remove_idea = PUN_remnants_idea add_idea = PUN_rebuild_idea }
+		}
+	}
+
+	### African Oil Corp.
+	focus = {
+		id = PUN_african_oil
+		icon = oil_trade
+		x = -4
+		y = 1
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_rebuild_country
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			swap_ideas = { remove_idea = farmers add_idea = fossil_fuel_industry }
+		}
+	}
+
+	### Exploit The Oil Reserves In Nogal
+	focus = {
+		id = PUN_exploit_oil
+		icon = oil_production
+		x = -1
+		y = 1
+		relative_position_id = PUN_african_oil
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_african_oil }
+
+		available = {
+			has_full_control_of_state = 238 #Maakhir
+		}
+
+		completion_reward = {	# 4 Billion barrel
+			238 = {
+				add_resource = {
+					type = oil
+					amount = 2
+				}
+			}
+		}
+	}
+
+	### Exploit The Oil Reserves In Darhoor
+	focus = {
+		id = PUN_exploit_oil1
+		icon = oil_production
+		x = 1
+		y = 1
+		relative_position_id = PUN_african_oil
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_african_oil
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_resource = {
+					type = oil
+					amount = 1
+				}
+			}
+		}
+	}
+
+	### Exploration Deal With CCECC
+	focus = {
+		id = PUN_exploit_deal
+		icon = oil_production
+		x = 0
+		y = 2
+		relative_position_id = PUN_african_oil
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_exploit_oil1
+			focus = PUN_exploit_oil
+		}
+
+		available = {
+			has_country_flag = PUN_accepted_ccecc_flg
+		}
+
+		completion_reward = {
+			for_loop_effect = {
+				end = influence_array^num value = v
+						if = {
+								limit = {
+										check_variable = { influence_array^v = CHI }
+								}
+								add_to_variable = { influence_array_val^v = 3 }
+								set_country_flag = found
+						}
+				}
+				if = {
+					limit = {
+							NOT = { has_country_flag = found }
+					}
+					add_to_array = { influence_array = CHI.id }
+					add_to_array = { influence_array_val = 3 }
+				}
+				clr_country_flag = found
+				recalculate_influence = yes
+				if = {
+					limit = { has_idea = fossil_fuel_industry }
+					increase_internal_faction_opinion = yes
+					custom_effect_tooltip = PUN_opinion_internal_faction_fuel_increased_tt
+				}
+		}
+	}
+
+	### Ministry Of Aviation And Airports
+	focus = {
+		id = PUN_aviation_ministry
+		icon = PUN_ministry_air
+		x = 0
+		y = 1
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_rebuild_country
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			air_experience = 10
+		}
+	}
+
+	### Build The Bosaso Airport
+	focus = {
+		id = PUN_bosaso_airport
+		icon = build_airport
+		x = 1
+		y = 2
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_aviation_ministry
+		}
+		prerequisite = {
+			focus = PUN_mubarak_group
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Expand The Garowe Airport
+	focus = {
+		id = PUN_garowe_airport
+		icon = build_airport
+		x = -1
+		y = 2
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_aviation_ministry
+		}
+		prerequisite = {
+			focus = PUN_mubarak_group
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			239 = {
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Expand The Bosaso Airport
+	focus = {
+		id = PUN_bosaso_airport1
+		icon = build_airport
+		x = 2
+		y = 3
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_bosaso_airport
+		}
+		prerequisite = {
+			focus = PUN_develop_bosaso
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Expand The Abdullahi Yusuf Airport
+	focus = {
+		id = PUN_abdullah_yusuf_airport
+		icon = build_airport
+		x = 0
+		y = 3
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_bosaso_airport
+			focus = PUN_garowe_airport
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Mubarak Group
+	focus = {
+		id = PUN_mubarak_group
+		icon = mubarak_group
+		x = 3
+		y = 1
+		relative_position_id = PUN_rebuild_country
+		cost = 20
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_rebuild_country
+		}
+
+		available = {
+		}
+
+		completion_reward = {
+			add_ideas = PUN_mubarak_id
+		}
+	}
+
+	### Develop Bosaso
+	focus = {
+		id = PUN_develop_bosaso
+		icon = construction2
+		x = 3
+		y = 2
+		relative_position_id = PUN_rebuild_country
+		cost = 20
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_mubarak_group
+		}
+
+		available = {
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 2
+			}
+		}
+	}
+
+	### New Somalian Export-Hub
+	focus = {
+		id = PUN_export_hub
+		icon = naval_dockyard
+		x = 3
+		y = 4
+		relative_position_id = PUN_rebuild_country
+		cost = 30
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_develop_bosaso
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			if = {
+				limit = { has_country_flag = PUN_expand_bosaso_flg }
+				928 = {
+					add_building_construction = {
+						type = naval_base
+						province = 3202
+						level = 2
+						instant_build = yes
+					}
+				}
+				clr_country_flag = PUN_expand_bosaso_flg
+			}
+			else_if = {
+				limit = { has_country_flag = PUN_build_new_port_flg }
+				928 = {
+					add_building_construction = {
+						type = naval_base
+						province = 3202
+						level = 1
+						instant_build = yes
+					}
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+				clr_country_flag = PUN_build_new_port_flg
+			}
+			else = {
+				effect_tooltip = {
+					928 = {
+						add_building_construction = {
+							type = naval_base
+							province = 3202
+							level = 2
+							instant_build = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+	### Rebuild Hafun
+	focus = {
+		id = PUN_harfun
+		icon = naval_dockyard
+		x = 3
+		y = 5
+		relative_position_id = PUN_rebuild_country
+		cost = 30
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_export_hub
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {	# To rebuild the salt pan facility would cost 3 Mio
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					province = 10891
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Highway Authorities Rehabilitation Work
+	focus = {
+		id = PUN_highway
+		icon = construct_infrastructure
+		x = 5
+		y = 2
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_mubarak_group
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			239 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Upgrade- And Repair Project
+	focus = {
+		id = PUN_repair_projects
+		icon = continuous_repairments
+		x = 5
+		y = 3
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_highway
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			swap_ideas = { remove_idea = PUN_rebuild_idea add_idea = PUN_rebuild_idea1 }
+		}
+	}
+
+	### Coastal Highway Connection
+	focus = {
+		id = PUN_highway_connections
+		icon = construct_infrastructure
+		x = 5
+		y = 4
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_repair_projects
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			239 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Coastal Highway Connection
+	focus = {
+		id = PUN_garowe_highway
+		icon = construct_infrastructure
+		x = 5
+		y = 5
+		relative_position_id = PUN_rebuild_country
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_highway_connections
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			239 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	##Research Tree
+	### Open The Puntland State Universities
+	focus = {
+		id = PUN_open_university
+		icon = science
+		x = 6
+		y = 1
+		relative_position_id = PUN_remnants_civil_war
+		cost = 10
+
+		prerequisite = { focus = PUN_remnants_civil_war }
+		available = {
+			date > 2004.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_open_university"
+			add_ideas = scientific_advances
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Develop An Educational Policy
+	focus = {
+		id = PUN_develop_educational_policy
+		icon = tech_sharing
+		x = 0
+		y = 1
+		relative_position_id = PUN_open_university
+		cost = 10
+
+		prerequisite = {
+			focus = PUN_open_university
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_develop_educational_policy"
+			increase_education_budget = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Expand The East African University
+	focus = {
+		id = PUN_expand_university
+		icon = eau
+		x = 0
+		y = 2
+		relative_position_id = PUN_open_university
+		cost = 10
+
+		prerequisite = {
+			focus = PUN_develop_educational_policy
+		}
+
+		available = {
+			date > 2008.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_expand_university"
+			add_research_slot = 1
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### Encourage Education In Rural Areas
+	focus = {
+		id = PUN_encourage_education
+		icon = scientific_exchange
+		x = 0
+		y = 3
+		relative_position_id = PUN_open_university
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_expand_university
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_encourage_education"
+			increase_education_budget = yes
+		}
+	}
+
+	### Admas University College-Garowe
+	focus = {
+		id = PUN_college
+		icon = admas_university
+		x = -1
+		y = 4
+		relative_position_id = PUN_open_university
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_encourage_education
+		}
+
+		available = {
+			date > 2012.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PUN_college"
+			swap_ideas = {
+				remove_idea = scientific_advances
+				add_idea = scientific_advances2
+			}
+		}
+	}
+
+	### CITYCOT College
+	focus = {
+		id = PUN_citycot_college
+		icon = citycot
+		x = 1
+		y = 4
+		relative_position_id = PUN_open_university
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_encourage_education
+		}
+
+		available = {
+			date > 2012.1.1
+		}
+
+		completion_reward = {
+			add_research_slot = 1
+		}
+	}
+
+	### Maakhir University
+	focus = {
+		id = PUN_maakhir_university
+		icon = maakhir_university
+		x = 0
+		y = 5
+		relative_position_id = PUN_open_university
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_citycot_college
+		}
+		prerequisite = {
+			focus = PUN_college
+		}
+
+		available = {
+			date > 2016.1.1
+		}
+
+		completion_reward = {
+			add_research_slot = 1
+		}
+	}
+
+####################
+#### Army Branch ###
+####################
+
+	### Puntland Security Force
+	focus = {
+		id = PUN_army
+		icon = psf
+		x = 6
+		y = 1
+		relative_position_id = PUN_land_of_punt
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_land_of_punt
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			army_experience = 5
+			add_tech_bonus = {
+				name = land_doc_bonus
+				bonus = 0.5
+				uses = 2
+				category = land_doctrine
+			}
+			if = {
+				limit = { has_idea = defence_00 }
+				swap_ideas = { remove_idea = defence_00 add_idea = defence_01 }
+			}
+			if = {
+				limit = { has_idea = defence_01 }
+				swap_ideas = { remove_idea = defence_01 add_idea = defence_02 }
+			}
+			if = {
+				limit = { has_idea = defence_02 }
+				swap_ideas = { remove_idea = defence_02 add_idea = defence_03 }
+			}
+			if = {
+				limit = { has_idea = defence_03 }
+				swap_ideas = { remove_idea = defence_03 add_idea = defence_04 }
+			}
+			if = {
+				limit = { has_idea = defence_04 }
+				swap_ideas = { remove_idea = defence_04 add_idea = defence_05 }
+			}
+			if = {
+				limit = { has_idea = defence_05 }
+				swap_ideas = { remove_idea = defence_05 add_idea = defence_06 }
+			}
+			if = {
+				limit = { has_idea = defence_06 }
+				swap_ideas = { remove_idea = defence_06 add_idea = defence_07 }
+			}
+			if = {
+				limit = { has_idea = defence_07 }
+				swap_ideas = { remove_idea = defence_07 add_idea = defence_08 }
+			}
+			if = {
+				limit = { has_idea = defence_08 }
+				swap_ideas = { remove_idea = defence_08 add_idea = defence_09 }
+			}
+			if = {
+				limit = { has_idea = defence_09 }
+				add_political_power = 150 #Has Desired Amount
+			}
+		}
+	}
+
+	### Puntland Dervish Force
+	focus = {
+		id = PUN_dervish_force
+		icon = dervish_force
+		x = 2
+		y = 1
+		relative_position_id = PUN_army
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_army
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			army_experience = 10
+			add_tech_bonus = {
+				name = land_doc_bonus
+				bonus = 0.25
+				uses = 2
+				category = land_doctrine
+			}
+			if = {
+				limit = { has_idea = defence_00 }
+				swap_ideas = { remove_idea = defence_00 add_idea = defence_01 }
+			}
+			if = {
+				limit = { has_idea = defence_01 }
+				swap_ideas = { remove_idea = defence_01 add_idea = defence_02 }
+			}
+			if = {
+				limit = { has_idea = defence_02 }
+				swap_ideas = { remove_idea = defence_02 add_idea = defence_03 }
+			}
+			if = {
+				limit = { has_idea = defence_03 }
+				swap_ideas = { remove_idea = defence_03 add_idea = defence_04 }
+			}
+			if = {
+				limit = { has_idea = defence_04 }
+				swap_ideas = { remove_idea = defence_04 add_idea = defence_05 }
+			}
+			if = {
+				limit = { has_idea = defence_05 }
+				swap_ideas = { remove_idea = defence_05 add_idea = defence_06 }
+			}
+			if = {
+				limit = { has_idea = defence_06 }
+				swap_ideas = { remove_idea = defence_06 add_idea = defence_07 }
+			}
+			if = {
+				limit = { has_idea = defence_07 }
+				swap_ideas = { remove_idea = defence_07 add_idea = defence_08 }
+			}
+			if = {
+				limit = { has_idea = defence_08 }
+				swap_ideas = { remove_idea = defence_08 add_idea = defence_09 }
+			}
+			if = {
+				limit = { has_idea = defence_09 }
+				add_political_power = 150 #Has Desired Amount
+			}
+		}
+	}
+
+	### Puntland Intelligence Service
+	focus = {
+		id = PUN_intelligence_service
+		icon = espionage
+		x = 0
+		y = 1
+		relative_position_id = PUN_dervish_force
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_dervish_force
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			if = {
+				limit = { has_idea = police_01 }
+				swap_ideas = { remove_idea = police_01 add_idea = police_02 }
+			}
+			if = {
+				limit = { has_idea = police_02 }
+				swap_ideas = { remove_idea = police_02 add_idea = police_03 }
+			}
+			if = {
+				limit = { has_idea = police_03 }
+				swap_ideas = { remove_idea = police_03 add_idea = police_04 }
+			}
+			if = {
+				limit = { has_idea = police_04 }
+				swap_ideas = { remove_idea = police_04 add_idea = police_05 }
+			}
+			if = {
+				limit = { has_idea = police_05 }
+				add_political_power = 150 #Has Desired Amount
+			}
+		}
+	}
+
+	### Seek Foreign Counter-Terrorism Agencies Support
+	focus = {
+		id = PUN_foreign_support_intelligence
+		icon = seek_foreign_intelligence_support
+		x = 0
+		y = 2
+		relative_position_id = PUN_dervish_force
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_intelligence_service
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			ROOT = { country_event = { id = puntland.56 } }
+		}
+	}
+
+	### Puntland Intelligence Agency
+	focus = {
+		id = PUN_intelligence_agency
+		icon = espionage
+		x = 0
+		y = 3
+		relative_position_id = PUN_dervish_force
+		cost = 10
+		prerequisite = {
+			focus = PUN_foreign_support_intelligence
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					NOT = {
+						has_idea = PUN_supported_by_niss
+						has_idea = PUN_supported_by_mss
+						has_idea = PUN_supported_by_cia
+					}
+				}
+				increase_policing_budget = yes
+			}
+			else = {
+				add_stability = 0.05
+			}
+		}
+	}
+
+	### Galgala Campaign
+	focus = {
+		id = PUN_galgala_campaign
+		icon = war4
+		x = 4
+		y = 4
+		relative_position_id = PUN_army
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_foreign_support_intelligence
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+	}
+
+	### Anti-Piracy Law
+	focus = {
+		id = PUN_anti_piracy_law
+		icon = pirate_flag_forbidden
+		x = 2
+		y = 1
+		relative_position_id = PUN_land_of_punt
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_land_of_punt
+		}
+
+		available = {
+			has_country_flag = PUN_pirates_started_flg
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+			add_political_power = 100
+			custom_effect_tooltip = PUN_defend_against_pirates_tt
+		}
+	}
+
+	### Puntland Maritime Police Force
+	focus = {
+		id = PUN_maritime_police
+		icon = pmpf
+		x = -2
+		y = 1
+		relative_position_id = PUN_army
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_army
+		}
+		prerequisite = {
+			focus = PUN_anti_piracy_law
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			navy_experience = 5
+			add_tech_bonus = {
+				name = navy_cor_bonus
+				bonus = 0.5
+				uses = 1
+				category = Cat_CORVETTE
+			}
+			increase_maritime_industry_opinion = yes
+		}
+	}
+
+	### Stop Illegal Fishing
+	focus = {
+		id = PUN_stop_illegal_fishing
+		icon = stop_illegal_fishing
+		x = -1
+		y = 1
+		relative_position_id = PUN_maritime_police
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_maritime_police
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			remove_ideas = PUN_illegal_fishing
+		}
+	}
+
+	### Anti-Piracy Operations In Harardhere
+	focus = {
+		id = PUN_operation_harardhere
+		icon = flames_of_rebellion
+		x = -1
+		y = 2
+		relative_position_id = PUN_maritime_police
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_stop_illegal_fishing
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			swap_ideas = { remove_idea = PUN_sea_piracy add_idea = PUN_sea_piracy1 }
+		}
+	}
+
+	### Logistical- And Humanitarian Support
+	focus = {
+		id = PUN_human_support
+		icon = navy2
+		x = 1
+		y = 1
+		relative_position_id = PUN_maritime_police
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_maritime_police
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_ideas = PUN_support_id
+		}
+	}
+
+	### Skill Training Program
+	focus = {
+		id = PUN_skill_training
+		icon = naval_doctrine
+		x = 1
+		y = 2
+		relative_position_id = PUN_maritime_police
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_human_support
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			swap_ideas = { remove_idea = PUN_support_id add_idea = PUN_support_id_1 }
+			ROOT = { country_event = { id = puntland.53 } }
+		}
+	}
+
+	### EUCAP Nestor Base In Garowe
+	focus = {
+		id = PUN_nestor_base
+		icon = eucap
+		x = 0
+		y = 3
+		relative_position_id = PUN_maritime_police
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_operation_harardhere
+		}
+		prerequisite = {
+			focus = PUN_skill_training
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			navy_experience = 10
+			### TODO add tech bonus for navy doctrine later in
+		}
+	}
+
+	### Expand The PMPF Base
+	focus = {
+		id = PUN_expand_pmpf
+		icon = naval_dockyard
+		x = -1
+		y = 4
+		relative_position_id = PUN_maritime_police
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_nestor_base
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			928 = {
+				add_building_construction = {
+					type = naval_base
+					province = 3202
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### Attack The Pirate HQ In Eyl
+	focus = {
+		id = PUN_destroy_pirates
+		icon = war3
+		x = 1
+		y = 4
+		relative_position_id = PUN_maritime_police
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_nestor_base
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			remove_ideas = PUN_sea_piracy1
+			ROOT = { country_event = { id = puntland.2 } }
+		}
+	}
+
+	#########################
+	#### Political Branch ###
+	#########################
+
+		### Directorate of Demining, Demobilization and Reintegration
+		focus = {
+			id = PUN_dddr
+			icon = self_management
+			x = 12
+			y = 1
+			relative_position_id = PUN_land_of_punt
+			cost = 10
+
+			ai_will_do = { factor = 1 }
+
+			prerequisite = {
+				focus = PUN_land_of_punt
+			}
+
+			available = {
+
+			}
+
+			completion_reward = {
+				increase_social_spending = yes #Increases social spending
+			}
+		}
+
+		### Demobilise The Militias
+		focus = {
+			id = PUN_demobilise
+			icon = combined_arms
+			x = -2
+			y = 1
+			relative_position_id = PUN_dddr
+			cost = 10
+
+			ai_will_do = { factor = 1 }
+
+			prerequisite = {
+				focus = PUN_dddr
+			}
+
+			available = {
+
+			}
+
+			completion_reward = {
+				if = {
+					limit = { has_idea = PUN_militias }
+					swap_ideas = {
+						remove_idea = PUN_militias
+						add_idea = PUN_militias1
+					}
+				}
+				else_if = {
+					limit = { has_idea = PUN_militias1 }
+					swap_ideas = {
+						remove_idea = PUN_militias1
+						add_idea = PUN_militias2
+					}
+				}
+				else_if = {
+					limit = { has_idea = PUN_militias2 }
+					remove_ideas = PUN_militias2
+				}
+				delete_unit_template_and_units = { division_template = "Militia" }
+				add_equipment_to_stockpile = { type = infantry_weapons amount = 10000 }
+				add_equipment_to_stockpile = { type = L_AT_Equipment amount = 300 }
+			}
+		}
+
+		### Integrate Local Militias
+		focus = {
+			id = PUN_integrate
+			icon = great_railway_incident
+			x = 0
+			y = 1
+			relative_position_id = PUN_dddr
+			cost = 10
+
+			ai_will_do = { factor = 1 }
+
+			prerequisite = {
+				focus = PUN_dddr
+			}
+
+			available = {
+
+			}
+
+			completion_reward = {
+				if = {
+					limit = { has_idea = PUN_militias }
+					swap_ideas = {
+						remove_idea = PUN_militias
+						add_idea = PUN_militias1
+					}
+				}
+				else_if = {
+					limit = { has_idea = PUN_militias1 }
+					swap_ideas = {
+						remove_idea = PUN_militias1
+						add_idea = PUN_militias2
+					}
+				}
+				else_if = {
+					limit = { has_idea = PUN_militias2 }
+					remove_ideas = PUN_militias2
+				}
+				ROOT = { country_event = { id = puntland.36 days = 1 } }
+			}
+		}
+
+		### Create The Veterans Found
+		focus = {
+			id = PUN_veterans
+			icon = coins
+			x = 2
+			y = 1
+			relative_position_id = PUN_dddr
+			cost = 10
+
+			ai_will_do = { factor = 1 }
+
+			prerequisite = {
+				focus = PUN_dddr
+			}
+
+			available = {
+
+			}
+
+			completion_reward = {
+				if = {
+					limit = { has_idea = PUN_militias }
+					swap_ideas = {
+						remove_idea = PUN_militias
+						add_idea = PUN_militias1
+					}
+				}
+				else_if = {
+					limit = { has_idea = PUN_militias1 }
+					swap_ideas = {
+						remove_idea = PUN_militias1
+						add_idea = PUN_militias2
+					}
+				}
+				else_if = {
+					limit = { has_idea = PUN_militias2 }
+					remove_ideas = PUN_militias2
+				}
+			}
+		}
+
+		### Puntland Police Force
+		focus = {
+			id = PUN_police_force
+			icon = PUN_police_force
+			x = 0
+			y = 4
+			relative_position_id = PUN_dddr
+			cost = 10
+
+			ai_will_do = { factor = 1 }
+
+			prerequisite = {
+				focus = PUN_demobilise
+			}
+			prerequisite = {
+				focus = PUN_veterans
+			}
+			prerequisite = {
+				focus = PUN_integrate
+			}
+
+			available = {
+
+			}
+
+			completion_reward = {
+				if = {
+					limit = { has_idea = police_01 }
+					swap_ideas = { remove_idea = police_01 add_idea = police_02 }
+				}
+				if = {
+					limit = { has_idea = police_02 }
+					swap_ideas = { remove_idea = police_02 add_idea = police_03 }
+				}
+				if = {
+					limit = { has_idea = police_03 }
+					swap_ideas = { remove_idea = police_03 add_idea = police_04 }
+				}
+				if = {
+					limit = { has_idea = police_04 }
+					swap_ideas = { remove_idea = police_04 add_idea = police_05 }
+				}
+				if = {
+					limit = { has_idea = police_05 }
+					add_political_power = 150 #Has Desired Amount
+				}
+			}
+		}
+
+		### Somali Police Force
+		focus = {
+			id = PUN_somali_police_force
+			icon = general_staff
+			x = 0
+			y = 6
+			relative_position_id = PUN_dddr
+			cost = 10
+
+			ai_will_do = { factor = 1 }
+
+			prerequisite = {
+				focus = PUN_police_force
+			}
+
+			available = {
+				240 = { is_owned_and_controlled_by = PUN }
+				584 = { is_owned_and_controlled_by = PUN }
+				593 = { is_owned_and_controlled_by = PUN }
+				581 = { is_owned_and_controlled_by = PUN }
+			}
+
+			completion_reward = {
+				if = {
+					limit = { has_idea = police_01 }
+					swap_ideas = { remove_idea = police_01 add_idea = police_02 }
+				}
+				if = {
+					limit = { has_idea = police_02 }
+					swap_ideas = { remove_idea = police_02 add_idea = police_03 }
+				}
+				if = {
+					limit = { has_idea = police_03 }
+					swap_ideas = { remove_idea = police_03 add_idea = police_04 }
+				}
+				if = {
+					limit = { has_idea = police_04 }
+					swap_ideas = { remove_idea = police_04 add_idea = police_05 }
+				}
+				if = {
+					limit = { has_idea = police_05 }
+					add_political_power = 150 #Has Desired Amount
+				}
+			}
+		}
+
+		### Special Protection Unit
+		focus = {
+			id = PUN_special_proection_unit
+			icon = special_forces
+			x = -2
+			y = 1
+			relative_position_id = PUN_police_force
+			cost = 10
+
+			ai_will_do = { factor = 1 }
+
+			prerequisite = {
+				focus = PUN_police_force
+			}
+			prerequisite = {
+				focus = PUN_intelligence_agency
+			}
+
+			available = {
+
+			}
+
+			completion_reward = {
+				army_experience = 10
+			}
+		}
+
+	#Pirate Stuff
+	### A New Captain Arises
+	focus = {
+		id = PUN_pirate_new_captain
+		icon = pirate_captain
+		x = 50
+		y = 0
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_political_power = 150
+			PUN_add_10_pirate_morale = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 22 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				#meta_effect = {
+				#	text = {
+				#		set_country_flag = [META_SET_RULING_PARTY]
+				#	}
+				#	META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				#}
+				set_leader = yes
+				set_cosmetic_tag = PUN_PIRATE
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			add_popularity = { ideology = nationalist popularity = 0.20 }
+			create_country_leader = {
+				name = "The Captain"
+				picture = "Pirate_Captain.dds"
+				expire = "2050.1.1"
+				ideology = Nat_Autocracy
+				traits = {
+					war_criminal
+					warmonger
+				}
+			}
+		}
+	}
+
+	### Rebuild Haradhere
+	focus = {
+		id = PUN_pirate_rebuild_haradhere
+		icon = naval_dockyard
+		x = 2
+		y = 1
+		cost = 10
+		relative_position_id = PUN_pirate_new_captain
+
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_pirate_new_captain
+		}
+
+		available = {
+			has_civil_war = no
+		}
+
+		completion_reward = {
+			239 = {
+				add_building_construction = {
+					type = naval_base
+					province = 11088
+					instant_build = yes
+					level = 1
+				}
+			}
+		}
+
+	}
+
+	### Expand Eyl
+	focus = {
+		id = PUN_pirate_expand_eyl
+		icon = naval_dockyard
+		x = -1
+		y = 1
+		relative_position_id = PUN_pirate_rebuild_haradhere
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_pirate_rebuild_haradhere
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			239 = {
+				add_building_construction = {
+					type = naval_base
+					province = 11090
+					instant_build = yes
+					level = 2
+				}
+			}
+		}
+
+	}
+
+	### Expand Bosaso
+	focus = {
+		id = PUN_pirate_expand_bosaso
+		icon = naval_dockyard
+		x = 1
+		y = 1
+		relative_position_id = PUN_pirate_rebuild_haradhere
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = {
+			focus = PUN_pirate_rebuild_haradhere
+		}
+
+		available = {
+
+		}
+
+		completion_reward = {
+			239 = {
+				add_building_construction = {
+					type = naval_base
+					province = 3202
+					instant_build = yes
+					level = 2
+				}
+			}
+		}
+
+	}
+
+	### Establish New Seaports
+	focus = {
+		id = PUN_pirate_establish_new_seaports
+		icon = naval_dockyard
+		x = 0
+		y = 2
+		relative_position_id = PUN_pirate_rebuild_haradhere
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_expand_bosaso }
+		prerequisite = { focus = PUN_pirate_expand_eyl }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	######################
+	### Plunder Branch ###
+	######################
+
+	### Expand Plunder Domain
+	focus = {
+		id = PUN_pirate_expand_plunder_domain
+		icon = treasure_chest
+		x = 7
+		y = 2
+		relative_position_id = PUN_pirate_new_captain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_rebuild_haradhere }
+		prerequisite = { focus = PUN_pirate_rebuild_fleet }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### To The North
+	focus = {
+		id = PUN_pirate_north
+		icon = northwards
+		x = -2
+		y = 1
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_expand_plunder_domain }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### To The East
+	focus = {
+		id = PUN_pirate_east
+		icon = eastwards
+		x = 0
+		y = 1
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_expand_plunder_domain }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### To The South
+	focus = {
+		id = PUN_pirate_south
+		icon = southwards
+		x = 2
+		y = 1
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_expand_plunder_domain }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Retake Libertatia
+	focus = {
+		id = PUN_pirate_retake_libertatia
+		icon = take_libertalia
+		x = 0
+		y = 2
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_south }
+		prerequisite = { focus = PUN_pirate_east }
+		prerequisite = { focus = PUN_pirate_north }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Rebase Capital
+	focus = {
+		id = PUN_pirate_rebase_capital
+		icon = ile_saint_marie
+		x = -2
+		y = 3
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_retake_libertatia }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Expedition To The Caribic
+	focus = {
+		id = PUN_pirate_expedition_caribean
+		icon = caribic_expedition
+		x = 0
+		y = 3
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_retake_libertatia }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Fortify Madagascar
+	focus = {
+		id = PUN_pirate_fortify_madagascar
+		icon = military_fort
+		x = 2
+		y = 3
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_retake_libertatia }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Sail To Nassau
+	focus = {
+		id = PUN_pirate_nassau
+		icon = take_nassau
+		x = -2
+		y = 4
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_expedition_caribean }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Sail To Tortuga
+	focus = {
+		id = PUN_pirate_tortuga
+		icon = take_tortuga
+		x = 0
+		y = 4
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_expedition_caribean }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Sail To Port Royal
+	focus = {
+		id = PUN_pirate_port_royale
+		icon = take_port_royale
+		x = 2
+		y = 4
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_expedition_caribean }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Pirate Republic
+	focus = {
+		id = PUN_pirate_pirate_republic
+		icon = pirate_flag
+		x = 0
+		y = 5
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_port_royale }
+		prerequisite = { focus = PUN_pirate_nassau }
+		prerequisite = { focus = PUN_pirate_tortuga }
+
+		available = {
+
+		}
+
+		completion_reward = {
+			hidden_effect = { set_cosmetic_tag = PUN_PIRATE_REP }
+		}
+
+	}
+
+	### Fortify Islands
+	focus = {
+		id = PUN_pirate_fortify_islands
+		icon = military_fort
+		x = 0
+		y = 6
+		relative_position_id = PUN_pirate_expand_plunder_domain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_pirate_republic }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	###################
+	### Navy Branch ###
+	###################
+	### Rebuild Our Fleet
+	focus = {
+		id = PUN_pirate_rebuild_fleet
+		icon = battleships2
+		x = -4
+		y = 1
+		relative_position_id = PUN_pirate_new_captain
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_new_captain }
+
+		available = {
+
+		}
+
+		completion_reward = {
+			add_ideas = pirate_rebuild_efforts
+		}
+
+	}
+
+	### Restore Dockyards
+	focus = {
+		id = PUN_pirate_restore_dockyards
+		icon = naval_dockyard
+		x = -2
+		y = 1
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_rebuild_fleet }
+
+		available = {
+			has_civil_war = no
+		}
+
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = pirate_rebuild_efforts
+				add_idea = pirate_rebuild_efforts_2
+			}
+		}
+
+	}
+
+	### Bosaso Dockyard
+	focus = {
+		id = PUN_pirate_bosaso_dockyards
+		icon = naval_dockyard
+		x = -2
+		y = 2
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_restore_dockyards }
+
+		available = {
+
+		}
+
+		completion_reward = {
+			239 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+	}
+
+	### Eyl Dockyard
+	focus = {
+		id = PUN_pirate_eyl_dockyards
+		icon = naval_dockyard
+		x = -2
+		y = 3
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_bosaso_dockyards }
+
+		available = {
+
+		}
+
+		completion_reward = {
+			239 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+	}
+
+	### Capture Ships
+	focus = {
+		id = PUN_pirate_capture_ships
+		icon = amphibious_assault
+		x = 0
+		y = 1
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_rebuild_fleet }
+
+		available = {
+			has_civil_war = no
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Steal Designs
+	focus = {
+		id = PUN_pirate_steal_designs
+		icon = stolen_papers
+		x = 0
+		y = 2
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_capture_ships }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Chastises
+	focus = {
+		id = PUN_pirate_chastises
+		icon = secret_weapons
+		x = 0
+		y = 3
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_steal_designs }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Ship Articles
+	focus = {
+		id = PUN_pirate_ship_articles
+		icon = forceful_treaty
+		x = 2
+		y = 1
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_rebuild_fleet }
+
+		available = {
+			has_navy_size = { size > 0 }
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Pirate Code
+	focus = {
+		id = PUN_pirate_code
+		icon = dangerous_laws
+		x = 2
+		y = 2
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_ship_articles }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### Recruitment
+	focus = {
+		id = PUN_pirate_recruitment
+		icon = military_mission
+		x = 2
+		y = 3
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_code }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+
+	### New raiding techniques
+	focus = {
+		id = PUN_pirate_raiding_techniques
+		icon = small_arms2
+		x = 2
+		y = 4
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_recruitment }
+
+		available = {
+
+		}
+
+		completion_reward = {
+			custom_effect_tooltip = PUN_improved_raiding_tt
+		}
+
+	}
+
+	### Flagship
+	focus = {
+		id = PUN_pirate_flagship
+		icon = battleships
+		x = 0
+		y = 4
+		relative_position_id = PUN_pirate_rebuild_fleet
+
+		cost = 10
+
+		ai_will_do = { factor = 1 }
+
+		prerequisite = { focus = PUN_pirate_recruitment }
+		prerequisite = { focus = PUN_pirate_chastises }
+		prerequisite = { focus = PUN_pirate_eyl_dockyards }
+
+		available = {
+
+		}
+
+		completion_reward = {
+
+		}
+
+	}
+}
