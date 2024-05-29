@@ -30,6 +30,9 @@ Playtester Access:
 
 MD has a number of maintainers who can push and pull from master. Most lead devs and a handful of select developers can also approve merge requests. If you need a merge request approved, please start by requesting a council member to look at the merge request in the discord.
 
+## Fork Users
+Thanks for wanting to help with MD! Please make sure to add yourself to [Authors](./AUTHORS.txt) and that your change is in the [Changelog](./Changelog.txt) so we can give you credit and that your update is added to the changelog.
+
 Thanks for reading!
 
 Sincerely, Bird
