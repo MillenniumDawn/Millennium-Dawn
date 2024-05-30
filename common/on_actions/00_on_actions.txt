@@ -744,6 +744,16 @@ on_actions = {
 			apply_protest_effects = yes
 			ai_weapon_dump = yes
 
+			# Monthly Foreign Influence Tick
+			if = { limit = { difficulty < 1 }
+				set_temp_variable = { percent_change = 0.05 }
+				add_to_temp_variable = { percent_change = modifier@foreign_influence_monthly_domestic_independence_gain_modifier }
+				set_temp_variable = { temp_percentage = 1 }
+				add_to_temp_variable = { temp_percentage_modifier = modifier@foreign_influence_monthly_domestic_independence_gain_factor }
+				multiply_temp_variable = { percent_change = temp_percentage_modifier }
+				change_domestic_influence_percentage = yes
+			}
+
 			# used in strategies, instead of checking it directly there
 			if = {
 				limit = {
@@ -878,23 +888,13 @@ on_actions = {
 			}
 			if = {
 				limit = {
-					NOT = {
-						has_global_flag = ETH_victory_ERI
-					}
+					NOT = { has_global_flag = ETH_victory_ERI }
 						ROOT = { original_tag = ERI }
 						FROM = { original_tag = ETH }
 					}
 					ERI = {
 						kill_country_leader = yes
-					}
-					every_owned_state = {
-						limit = {
-							is_core_of = ERI
-							is_controlled_by = ETH
-						}
-						ETH = {
-							set_state_owner = PREV
-						}
+						every_owned_state = { ETH = { transfer_state = PREV } }
 					}
 					set_global_flag = ETH_victory_ERI
 				}
@@ -3167,7 +3167,6 @@ on_actions = {
 				# PMC Setup
 				pmc_variables_setup = yes
 			}
-
 			ARM = {
 				activate_mission = karabakh_main_countdown_mission
 				set_variable = { karabakh_readiness = global.CONST_karabakh_default_readiness }
@@ -3185,6 +3184,14 @@ on_actions = {
 			AZE = {
 				activate_mission = karabakh_main_countdown_mission
 				set_variable = { karabakh_readiness = global.CONST_karabakh_default_readiness }
+			}
+			FRA = {
+				# NEPAD Setup Used Later
+				set_variable = { FRA_nepad_sponsor_weekly_cost = 0.450 }
+				set_variable = { global.africa_nepad_building_construction_modifier = 0.05 }
+				set_variable = { global.africa_nepad_education_modifier = -0.05 }
+				set_variable = { global.africa_nepad_social_care_modifier = -0.05 }
+				set_variable = { global.africa_nepad_health_cost_modifier = -0.05 }
 			}
 
 			#Fixing war between a bunch of countries because raisins
@@ -3342,7 +3349,7 @@ on_actions = {
 				on_startup_euu_action = yes
 
 				set_power_ranking_ideas_for_every_country = yes
-				
+
 				every_country = {
 					# Calculate Starting MIO Size
 					calculate_starting_mio_size = yes
