@@ -1,0 +1,4530 @@
+ideas = {
+	###Military Spending
+	Military_Spending = {
+		law = yes
+		use_list_view = yes
+
+		defence_00 = {
+			removal_cost = -1
+			level = 1
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = defence_00_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 1 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_00"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				has_idea = no_military
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_01
+							has_idea = defence_02
+							has_idea = defence_03
+							has_idea = defence_04
+							has_idea = defence_05
+							has_idea = defence_06
+							has_idea = defence_07
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 0.00
+				industrial_capacity_dockyard = 0.00
+				production_speed_arms_factory_factor = -0.5
+				production_speed_dockyard_factor = -0.5
+				mil_facs_worker_requirement_modifier = -0.5
+				military_factories_productivity = -0.5
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 500
+					has_war = no
+					has_idea = no_military
+				}
+				modifier = {
+					factor = 2.5
+					has_idea = defence_01
+					ai_has_major_economic_problems = yes
+				}
+				modifier = {
+					factor = 0
+					has_idea = defence_01
+					NOT = { has_idea = no_military }
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_communist_government_or_in_coalition = yes
+						has_totalitarian_government_or_in_coalition = yes
+						has_autocratic_government_or_in_coalition = yes
+						has_conservative_government_or_in_coalition = yes
+					}
+				}
+			}
+			cancel_if_invalid = no
+		}
+		defence_01 = {
+			removal_cost = -1
+			level = 2
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = defence_01_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 2 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_01"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_02
+							has_idea = defence_03
+							has_idea = defence_04
+							has_idea = defence_05
+							has_idea = defence_06
+							has_idea = defence_07
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 0.1
+				industrial_capacity_dockyard = 0.1
+				production_speed_arms_factory_factor = 0.02
+				production_speed_dockyard_factor = 0.02
+				mil_facs_worker_requirement_modifier = 0.1
+				military_factories_productivity = 0.1
+				dockyard_productivity = 0.1
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Regional-Interventionist nations should not want tiny budgets
+					factor = 0
+					OR = {
+						has_idea = intervention_neo_imperialism
+						has_idea = intervention_global_interventionism
+						has_idea = intervention_regional_interventionism
+					}
+				}
+				modifier = { # EU bloc feeling of safety encourages lower spending.
+					factor = 5
+					has_war = no
+					threat < 0.5
+					has_idea = defence_01
+					OR = {
+						has_idea = EU_member
+						has_idea = SWI_swiss_neutrality
+					}
+					all_neighbor_country = {
+						OR = {
+							has_idea = EU_member
+							has_idea = SWI_swiss_neutrality
+						}
+					}
+				}
+				modifier = { # NATO bloc feeling of safety encourages lower spending
+					factor = 5
+					has_war = no
+					threat < 0.5
+					has_idea = defence_01
+					has_idea = NATO_member
+				}
+				modifier = { # Mobility one step either direction.
+					add = 25
+					OR = {
+						has_idea = defence_00
+						has_idea = defence_02
+					}
+				}
+				modifier = {
+					add = 15
+					has_idea = defence_00
+					OR = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					factor = 0
+					ai_has_minor_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_major_economic_problems = no
+					NOT = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+					has_idea = defence_01
+				}
+				modifier = { # Non-powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = non_power
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+					}
+				}
+				modifier = { # Minor powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = minor_power
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+					}
+				}
+				modifier = {
+					factor = 2
+					has_idea = defence_01
+					has_war = no
+					is_major = no
+					manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_00
+					OR = {
+						has_autocratic_government = yes
+						has_totalitarian_government = yes
+						has_government = nationalist
+						has_government = fascism
+					}
+					NOT = { tag = SAU }
+				}
+				modifier = {
+					factor = 1.25
+					has_idea = defence_00
+					tag = SAU
+				}
+				modifier = { # Consider increasing spending if threat is high
+					add = 10
+					has_idea = defence_00
+					OR = {
+						threat > 0.20
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 2.5
+					has_idea = defence_00
+					OR = {
+						threat > 0.50
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = { #Tries to boost for the extra manpower
+					#Prio if low on manpower
+					add = 150
+					manpower_per_military_factory < 250
+					has_idea = defence_00 #Next Level up from defence_01
+				}
+				modifier = { # Military buildup while at war
+					add = 500
+					has_idea = defence_00
+					has_war = yes
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_00
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+				modifier = {
+					factor = 0
+					has_idea = no_military
+				}
+			}
+			cancel_if_invalid = no
+		}
+		defence_02 = {
+			default = yes
+			removal_cost = -1
+			level = 3
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = defence_02_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 3 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_02"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_03
+							has_idea = defence_04
+							has_idea = defence_05
+							has_idea = defence_06
+							has_idea = defence_07
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 0.2
+				industrial_capacity_dockyard = 0.2
+				production_speed_arms_factory_factor = 0.04
+				production_speed_dockyard_factor = 0.04
+				mil_facs_worker_requirement_modifier = 0.2
+				military_factories_productivity = 0.2
+				dockyard_productivity = 0.2
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Global-interventionist nations should not want small budgets
+					factor = 0
+					OR = {
+						has_idea = intervention_neo_imperialism
+						has_idea = intervention_global_interventionism
+					}
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+				}
+				modifier = { ##AI is under threat
+					add = 15
+					has_idea = defence_01
+					OR = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					factor = 0
+					ai_has_minor_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_major_economic_problems = no
+					NOT = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+					has_idea = defence_02
+				}
+				modifier = { # EU bloc feeling of safety encourages lower spending.
+					factor = 4
+					has_war = no
+					threat < 0.5
+					has_idea = defence_02
+					OR = {
+						has_idea = EU_member
+						has_idea = SWI_swiss_neutrality
+					}
+					all_neighbor_country = {
+						OR = {
+							has_idea = EU_member
+							has_idea = SWI_swiss_neutrality
+						}
+					}
+				}
+				modifier = { # NATO bloc feeling of safety encourages lower spending
+					factor = 4
+					has_war = no
+					threat < 0.5
+					has_idea = defence_02
+					has_idea = NATO_member
+					all_neighbor_country = {
+						has_idea = NATO_member
+					}
+				}
+				modifier = {
+					factor = 2
+					has_idea = defence_02
+					has_war = no
+					is_major = no
+					manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = { # Non-powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = non_power
+					OR = {
+						has_idea = defence_02
+						has_idea = defence_03
+					}
+				}
+				modifier = { # Minor powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = minor_power
+					OR = {
+						has_idea = defence_02
+						has_idea = defence_03
+					}
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_01
+					OR = {
+						has_autocratic_government = yes
+						has_totalitarian_government = yes
+						has_government = nationalist
+						has_government = fascism
+					}
+					NOT = { tag = SAU }
+				}
+				modifier = {
+					factor = 1.25
+					has_idea = defence_01
+					tag = SAU
+				}
+				modifier = { # Consider increasing spending if threat is high
+					add = 10
+					has_idea = defence_01
+					OR = {
+						threat > 0.20
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 2.5
+					has_idea = defence_01
+					OR = {
+						threat > 0.50
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = {
+					#Prio if low on manpower
+					add = 150
+					manpower_per_military_factory <  450
+					has_idea = defence_01
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 15
+					has_idea = defence_01
+					surrender_progress > 0.1
+				}
+				modifier = {
+					add = 500
+					has_idea = defence_01
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 25
+					has_idea = defence_01
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 15
+					has_idea = defence_03
+					has_war = no
+					manpower_per_military_factory > 10000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_01
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+			}
+			cancel_if_invalid = no
+		}
+		defence_03 = {
+			removal_cost = -1
+			level = 4
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = defence_03_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 4 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_03"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_04
+							has_idea = defence_05
+							has_idea = defence_06
+							has_idea = defence_07
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 0.3
+				industrial_capacity_dockyard = 0.3
+				production_speed_arms_factory_factor = 0.06
+				production_speed_dockyard_factor = 0.06
+				mil_facs_worker_requirement_modifier = 0.3
+				military_factories_productivity = 0.3
+				dockyard_productivity = 0.3
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Imperialist nations should not want medium budgets
+					factor = 0
+					OR = {
+						has_idea = intervention_neo_imperialism
+					}
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = defence_02
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = defence_04
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_03
+				}
+				modifier = {
+					factor = 2
+					has_idea = defence_03
+					has_war = no
+					is_major = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_02
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_02
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = defence_02
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = defence_02
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = defence_02
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = defence_02
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = defence_02
+					threat > 0.8
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 22
+					manpower_per_military_factory <  450
+					num_of_military_factories > 0
+					has_idea = defence_02
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = defence_02
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_02
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_02
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_04
+					has_war = no
+					manpower_per_military_factory > 8000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_02
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+			}
+			cancel_if_invalid = no
+		}
+		defence_04 = {
+			removal_cost = -1
+			level = 5
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = defence_04_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 5 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_04"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_05
+							has_idea = defence_06
+							has_idea = defence_07
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+							has_idea = defence_03
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 0.45
+				industrial_capacity_dockyard = 0.45
+				production_speed_arms_factory_factor = 0.09
+				production_speed_dockyard_factor = 0.09
+				mil_facs_worker_requirement_modifier = 0.45
+				military_factories_productivity = 0.45
+				dockyard_productivity = 0.45
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_04
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = defence_03
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = defence_05
+				}
+				modifier = {
+					factor = 2
+					has_idea = defence_04
+					has_war = no
+					is_major = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_03
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = defence_03
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = defence_03
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = defence_03
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = defence_03
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = defence_03
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = defence_03
+					threat > 0.8
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 23
+					has_war = yes
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = defence_03
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = defence_03
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_03
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_03
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_05
+					has_war = no
+					manpower_per_military_factory > 6000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_03
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		defence_05 = {
+			removal_cost = -1
+			level = 6
+
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = defence_05_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 6 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 6 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_05"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_06
+							has_idea = defence_07
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+							has_idea = defence_03
+							has_idea = defence_04
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 0.6
+				industrial_capacity_dockyard = 0.6
+				production_speed_arms_factory_factor = 0.12
+				production_speed_dockyard_factor = 0.12
+				mil_facs_worker_requirement_modifier = 0.6
+				military_factories_productivity = 0.6
+				dockyard_productivity = 0.6
+			}
+
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_05
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = defence_04
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = defence_06
+				}
+				modifier = {
+					factor = 2
+					has_idea = defence_05
+					has_war = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_04
+				}
+				modifier = { # Salafists want to increase military
+					factor = 6
+					has_idea = defence_04
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 6
+					has_idea = defence_04
+					threat > 0.8
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 23
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = defence_04
+					has_war = yes
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_war = yes
+					has_idea = defence_04
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_04
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_04
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_06
+					has_war = no
+					manpower_per_military_factory > 3000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_04
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.0
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.0
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't increase to large spending if lower and significantly stronger than enemies
+					factor = 0
+					OR = {
+						has_idea = defence_04
+					}
+					alliance_strength_ratio > 2
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		defence_06 = {
+			removal_cost = -1
+			level = 7
+
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = defence_06_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 7 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 7 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_06"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_07
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+							has_idea = defence_03
+							has_idea = defence_04
+							has_idea = defence_05
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 0.8
+				industrial_capacity_dockyard = 0.8
+				production_speed_arms_factory_factor = 0.16
+				production_speed_dockyard_factor = 0.16
+				mil_facs_worker_requirement_modifier = 0.8
+				military_factories_productivity = 0.8
+				dockyard_productivity = 0.8
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = defence_06
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = defence_05
+				}
+				modifier = {
+					factor = 2
+					has_idea = defence_06
+					has_war = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_05
+				}
+				modifier = { # Salafists want to increase military
+					factor = 6
+					has_idea = defence_05
+					has_government = fascism
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 23
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = defence_05
+					has_war = yes
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = defence_05
+					has_war = yes
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_05
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_05
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_07
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_05
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.2
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.2
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't increase to very large spending if lower and significantly stronger than enemies
+					factor = 0
+					OR = {
+						has_idea = defence_05
+					}
+					alliance_strength_ratio > 2
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		defence_07 = {
+			removal_cost = -1
+			level = 8
+
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = defence_07_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 8 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 8 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_07"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+							has_idea = defence_03
+							has_idea = defence_04
+							has_idea = defence_05
+							has_idea = defence_06
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+			modifier = {
+				production_factory_max_efficiency_factor = 1.0
+				industrial_capacity_dockyard = 1.0
+				production_speed_arms_factory_factor = 0.2
+				production_speed_dockyard_factor = 0.2
+				mil_facs_worker_requirement_modifier = 1
+				military_factories_productivity = 1
+				dockyard_productivity = 1
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 4
+					has_idea = defence_07
+					has_war = no
+					manpower_per_military_factory > 1000 # If is a nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_06
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 27
+					manpower_per_military_factory < 450
+					has_war = yes
+					has_idea = defence_06
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_war = yes
+					has_idea = defence_06
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_06
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_06
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_08
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_06
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.4
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.4
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't go to huge spending if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.8
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		defence_08 = {
+			removal_cost = -1
+			level = 9
+
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = defence_08_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 9 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 9 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_08"
+			}
+
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				OR = {
+					threat > 0.4
+					any_country = {
+						is_justifying_wargoal_against = ROOT # Experimenting on THIS vs ROOT
+						strength_ratio = { tag = ROOT ratio > 2.0 } # 2x stronger than THIS
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_09
+						}
+						defence_decrease_blocked = yes
+					}
+					defence_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+							has_idea = defence_03
+							has_idea = defence_04
+							has_idea = defence_05
+							has_idea = defence_06
+							has_idea = defence_07
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+
+			modifier = {
+				production_factory_max_efficiency_factor = 1.25
+				industrial_capacity_dockyard = 1.25
+				production_speed_arms_factory_factor = 0.25
+				production_speed_dockyard_factor = 0.25
+				mil_facs_worker_requirement_modifier = 1.25
+				military_factories_productivity = 1.25
+				dockyard_productivity = 1.25
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Should never advance to or remain at gigantic spending without war
+					factor = 0
+					has_war = no
+				}
+				modifier = {
+					add = 500
+					AND = {
+						has_war = no
+						has_idea = defence_09
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_07
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 27
+					manpower_per_military_factory < 450
+					has_idea = defence_07
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = defence_07
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = defence_07
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = defence_07
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = defence_09
+					has_war = no
+					manpower_per_military_factory > 500
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = defence_07
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't go to gigantic spending if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.85
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		defence_09 = { #Total War
+			removal_cost = -1
+			level = 10
+
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = defence_09_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 10 }
+				subtract_from_variable = { law_change = Military_Spending }
+				law_attitude_change = yes
+				set_variable = { Military_Spending = 10 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea defence_09"
+			}
+
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				OR = {
+					has_war = yes
+					threat > 0.6
+					any_country = {
+						is_justifying_wargoal_against = THIS
+						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_00
+							has_idea = defence_01
+							has_idea = defence_02
+							has_idea = defence_03
+							has_idea = defence_04
+							has_idea = defence_05
+							has_idea = defence_06
+							has_idea = defence_07
+							has_idea = defence_08
+						}
+						defence_increase_blocked = yes
+					}
+					defence_increase_blocked = no
+				}
+			}
+
+			modifier = {
+				production_factory_max_efficiency_factor = 2.0
+				industrial_capacity_dockyard = 2.0
+				production_speed_arms_factory_factor = 0.4
+				production_speed_dockyard_factor = 0.4
+				mil_facs_worker_requirement_modifier = 2
+				military_factories_productivity = 2
+				dockyard_productivity = 2
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Should never maintain total war spending when not at war
+					factor = 0
+					has_war = no
+				}
+				modifier = {
+					add = 1
+					has_idea = defence_08
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 27
+					has_war = yes
+					manpower_per_military_factory < 450
+					has_idea = defence_08
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = defence_08
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 5
+					has_idea = defence_08
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 10
+					has_idea = defence_08
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 10
+					has_idea = defence_08
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't go to total war if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.9
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+	}
+
+	###Conscription Law
+	Conscription_Law = {
+		law = yes
+		use_list_view = yes
+
+		no_military = {
+			removal_cost = -1
+			cost = 150 #was 300
+			level = 4
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = no_military_TT
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea no_military"
+			}
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = volunteer_army
+							has_idea = partial_draft_army
+							has_idea = draft_army
+						}
+						conscription_decrease_blocked = yes
+					}
+					conscription_decrease_blocked = no
+				}
+			}
+
+			modifier = {
+				conscription = 0.00
+				army_attack_factor = -0.9
+				army_defence_factor = -0.9
+				personnel_cost_multiplier_modifier = 1.0
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					#If we have no military industry and have someone to protect us, no need for military
+					add = 1
+					AND = {
+						num_of_military_factories < 1
+						is_in_faction = yes
+					}
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		volunteer_army = {
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea volunteer_army"
+			}
+
+			cost = 150 #was 300
+			removal_cost = -1
+			level = 3
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = partial_draft_army
+							has_idea = draft_army
+						}
+						conscription_decrease_blocked = yes
+					}
+					conscription_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = no_military
+						}
+						conscription_increase_blocked = yes
+					}
+					conscription_increase_blocked = no
+				}
+			}
+
+			modifier = {
+				conscription = 0.025
+				army_morale_factor = 0.10
+				army_org_factor = 0.10
+				experience_gain_army = 0.06
+				experience_gain_navy = 0.03
+				experience_gain_air = 0.03
+				personnel_cost_multiplier_modifier = 0.80
+				total_workforce_modifier = -0.025
+			}
+
+			ai_will_do = {
+				factor = 0.1
+				## When to stay at volunteer army
+				modifier = { # Inertia to stay at present size
+					add = 5
+					has_idea = volunteer_army
+				}
+				modifier = { # If not at war, less willing to go to draft
+					factor = 2
+					has_war = no
+					has_idea = volunteer_army
+				}
+				modifier = { # If plenty of manpower, less willing to go to draft
+					factor = 2
+					has_idea = volunteer_army
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Less willing to go to draft if low military budget
+					factor = 2
+					has_idea = volunteer_army
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+						has_idea = defence_03
+					}
+				}
+				##When to downgrade to volunteer army
+				modifier = { # If not at war and plenty of manpower, can downgrade
+					add = 20
+					has_idea = partial_draft_army
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Nationalists and autocrats less likely to reduce draft
+					factor = 0.25
+					OR = {
+						has_autocratic_government = yes
+						has_government = nationalist
+					}
+				}
+				##When to switch to volunteers from having no military
+				modifier = {
+					#We want to switch to having an army if tensions are high
+					add = 20
+					AND = {
+						has_idea = no_military
+						threat > 0.5
+					}
+				}
+				modifier = {
+					#Nationalists/autocrats want an army
+					add = 20
+					AND = {
+						has_idea = no_military
+						OR = {
+							has_autocratic_government = yes
+							has_government = nationalist
+							has_government = fascism
+						}
+					}
+				}
+				modifier = {
+					factor = 20
+					has_war = no
+					has_idea = draft_army
+					ai_has_high_deficit = no
+					NOT = {
+						has_idea = social_01
+						has_idea = social_02
+						has_idea = health_01
+						has_idea = health_02
+						has_idea = edu_01
+						has_idea = edu_02
+					}
+				}
+				modifier = {
+					factor = 0
+					has_war = no
+					has_idea = draft_army
+					ai_has_high_deficit = yes
+					check_variable = { defence_gain  > 10.00 }
+					OR = {
+						has_idea = social_01
+						has_idea = social_02
+						has_idea = health_01
+						has_idea = health_02
+						has_idea = edu_01
+						has_idea = edu_02
+					}
+				}
+			}
+
+			default = yes
+			cancel_if_invalid = no
+		}
+
+		partial_draft_army = {
+			allowed_civil_war = { always = yes }
+			on_add = {
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea partial_draft_army"
+			}
+
+			cost = 150 #was 300
+			removal_cost = -1
+			level = 2
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = draft_army
+						}
+						conscription_decrease_blocked = yes
+					}
+					conscription_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = no_military
+							has_idea = volunteer_army
+						}
+						conscription_increase_blocked = yes
+					}
+					conscription_increase_blocked = no
+				}
+			}
+
+			modifier = {
+				conscription = 0.035
+				army_attack_factor = -0.05
+				army_core_attack_factor = 0.05
+				army_defence_factor = -0.05
+				army_core_defence_factor = 0.05
+				training_time_factor = -0.10
+				experience_gain_army = 0.04
+				experience_gain_navy = 0.02
+				experience_gain_air = 0.02
+				personnel_cost_multiplier_modifier = 0.40
+				total_workforce_modifier = -0.035
+			}
+
+			ai_will_do = {
+				factor = 0
+				## When to remain at partial draft
+				modifier = { # Inertia to remain at partial draft
+					add = 5
+					has_idea = partial_draft_army
+				}
+				modifier = { # If not at war, less willing to go to full draft
+					factor = 1.5
+					has_war = no
+					has_idea = partial_draft_army
+				}
+				modifier = { # If plenty of manpower, less willing to go to full draft
+					factor = 1.5
+					has_idea = partial_draft_army
+					manpower_per_military_factory > 1000
+				}
+				##When to downgrade to partial draft
+				modifier = {
+					#If we are in a faction, we don't need as big of an army
+					add = 1
+					AND = {
+						has_idea = draft_army
+						is_in_faction = yes
+					}
+				}
+				##When to switch from having volunteers to a limited draft
+				modifier = { # If world tension is high, consider insituting a draft
+					add = 5
+					has_idea = volunteer_army
+					threat > 0.5
+				}
+				modifier = { # If at war, consider instituting limited draft
+					add = 10
+					has_idea = volunteer_army
+					has_war = yes
+				}
+				modifier = { # Urgently institute draft if at war with major country and manpower is low
+					factor = 200
+					has_idea = volunteer_army
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+					manpower_per_military_factory < 5000
+				}
+				modifier = {
+					#These ideologies want bigger armies
+					add = 20
+					AND = {
+						has_idea = volunteer_army
+						OR = {
+							has_government = nationalist
+							has_government = fascism
+						}
+					}
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+
+		draft_army = {
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea draft_army"
+			}
+
+			cost = 150 #was 300
+			removal_cost = -1
+			level = 1
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = no_military
+							has_idea = volunteer_army
+							has_idea = partial_draft_army
+						}
+						conscription_increase_blocked = yes
+					}
+					conscription_increase_blocked = no
+				}
+			}
+
+			modifier = {
+				conscription = 0.04
+				army_morale_factor = -0.10
+				army_org_factor = -0.10
+				army_attack_factor = -0.20
+				army_core_attack_factor = 0.20
+				army_defence_factor = -0.20
+				army_core_defence_factor = 0.20
+				training_time_factor = -0.20
+				experience_gain_army = 0.02
+				experience_gain_navy = 0.01
+				experience_gain_air = 0.01
+				total_workforce_modifier = -0.04
+			}
+
+			ai_will_do = {
+				factor = 0.1
+				## When to remain at partial draft
+				modifier = { # Inertia to remain at full draft
+					add = 5
+					has_idea = draft_army
+				}
+				modifier = { # Less willing to remain at full draft if at peace and not autocratic
+					factor = 0.5
+					has_idea = draft_army
+					has_war = no
+					has_autocratic_government = no
+					NOT = { has_government = fascism }
+				}
+				##When to switch from having partial draft to a full draft
+				modifier = { # Reluctant to expand draft at lower military spending - should encourage AI to increase funding first
+					factor = 0.5
+					has_idea = partial_draft_army
+					OR = {
+						has_idea = defence_01
+						has_idea = defence_02
+						has_idea = defence_03
+						has_idea = defence_04
+						has_idea = defence_05
+					}
+				}
+				modifier = { # If world tension is high, consider insituting a draft
+					add = 5
+					has_idea = partial_draft_army
+					threat > 0.8
+				}
+				modifier = { # If at war, consider instituting full draft
+					add = 5
+					has_idea = partial_draft_army
+					has_war = yes
+				}
+				modifier = { # Urgently institute full draft if at war with major country and manpower is low
+					factor = 80
+					has_idea = partial_draft_army
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+					manpower_per_military_factory < 2500
+				}
+				modifier = {
+					#These ideologies want bigger armies
+					add = 20
+					has_idea = partial_draft_army
+					manpower_per_military_factory < 1000
+					OR = {
+						has_government = nationalist
+						has_government = fascism
+					}
+				}
+				modifier = {
+					add = 100
+					has_war = no
+					has_idea = volunteer_army
+					check_variable = { treasury_rate < -20.00 }
+					check_variable = { defence_gain > 20.00 }
+					OR = {
+						has_idea = social_01
+						has_idea = social_02
+						has_idea = health_01
+						has_idea = health_02
+						has_idea = edu_01
+						has_idea = edu_02
+					}
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+	}
+
+	###Women's status in the military
+	Military_Status_Women = {
+		law = yes
+		use_list_view = yes
+
+		no_women_in_military = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea no_women_in_military" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = volunteer_women
+							has_idea = drafted_women
+						}
+						women_conscription_decrease_blocked = yes
+					}
+					women_conscription_decrease_blocked = no
+				}
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				conscription_factor = 0.00
+				stability_factor = 0.1
+				total_workforce_modifier = -0.1 #no woman in the military is usually paired with no woman workers
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					#Women should be protected
+					factor = 10
+					original_tag = SOV
+				}
+				modifier = {
+					#Women should be protected
+					factor = 10
+					has_government = nationalist
+					NOT = { original_tag = ERI }
+				}
+				modifier = {
+					#Salafists don't want women in the army
+					add = 2000
+					has_government = fascism
+				}
+			}
+			cancel_if_invalid = no
+		}
+
+		volunteer_women = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea volunteer_women" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				OR = {
+					has_idea = volunteer_army
+					has_idea = partial_draft_army
+					has_idea = draft_army
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = drafted_women
+						}
+						women_conscription_decrease_blocked = yes
+					}
+					women_conscription_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = no_women_in_military
+						}
+						women_conscription_increase_blocked = yes
+					}
+					women_conscription_increase_blocked = no
+				}
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				conscription = 0.004
+				monthly_population = -0.1
+			}
+
+			ai_will_do = {
+				factor = 1
+
+				modifier = {
+					#We are desperate enought accept this now
+					add = 2
+					has_war = yes
+					has_manpower < 10000
+				}
+
+				modifier = {
+					add = 20000
+					any_other_country = {
+						is_major = yes
+						has_war_with = ROOT
+					}
+				}
+				modifier = { # Salafists will never allow women to serve in combat
+					factor = 0
+					has_government = fascism
+				}
+			}
+
+			default = yes
+		}
+
+		drafted_women = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea drafted_women" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				OR = {
+					has_idea = partial_draft_army
+					has_idea = draft_army
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = no_women_in_military
+							has_idea = volunteer_women
+						}
+						women_conscription_increase_blocked = yes
+					}
+					women_conscription_increase_blocked = no
+				}
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				conscription = 0.02
+				monthly_population = -0.25
+				total_workforce_modifier = -0.01
+			}
+
+			ai_will_do = {
+				factor = 0
+
+				modifier = {
+					#Surrounded by hostile nations (mainly for Israel)
+					add = 5
+					NOT = { has_government = nationalist }
+					NOT = { has_government = fascism }
+					all_neighbor_country = {
+						has_opinion = { target = ROOT value < 0 }
+					}
+				}
+				modifier = {
+					add = 30000
+					any_other_country = {
+						is_major = yes
+						has_war_with = ROOT
+					}
+				}
+				modifier = { # Salafists will never allow women to serve in combat
+					factor = 0
+					has_government = fascism
+				}
+			}
+		}
+	}
+
+	### Foreign Intervention Law
+	Foreign_Intervention_Law = {
+		law = yes
+		use_list_view = yes
+
+		intervention_isolation = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea intervention_isolation" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				NOT = {
+					has_idea = the_military
+					is_in_faction = yes
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_local_security
+							has_idea = intervention_limited_interventionism
+							has_idea = intervention_regional_interventionism
+							has_idea = intervention_global_interventionism
+							has_idea = intervention_neo_imperialism
+						}
+						intervention_decrease_blocked = yes
+					}
+					intervention_decrease_blocked = no
+				}
+			}
+
+			cost = 200 #was 350
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				lend_lease_tension = 0.20
+				send_volunteers_tension = 0.50
+				guarantee_tension = 0.60
+				join_faction_tension = 0.80
+				generate_wargoal_tension = 0.95
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 20
+					OR = {
+						has_idea = no_military
+						has_idea = defence_00
+					}
+				}
+			}
+		}
+
+		intervention_local_security = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea intervention_local_security" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_limited_interventionism
+							has_idea = intervention_regional_interventionism
+							has_idea = intervention_global_interventionism
+							has_idea = intervention_neo_imperialism
+						}
+						intervention_decrease_blocked = yes
+					}
+					intervention_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_isolation
+						}
+						intervention_increase_blocked = yes
+					}
+					intervention_increase_blocked = no
+				}
+			}
+
+			cost = 200 #was 350
+			removal_cost = -1
+			level = 2
+
+			modifier = {
+				lend_lease_tension = 0.15
+				send_volunteers_tension = 0.30
+				guarantee_tension = 0.40
+				join_faction_tension = 0.60
+				generate_wargoal_tension = 0.75
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 1
+					OR = {
+						has_idea = non_power
+						has_idea = minor_power
+					}
+				}
+			}
+
+			default = yes
+		}
+
+		intervention_limited_interventionism = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea intervention_limited_interventionism" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_regional_interventionism
+							has_idea = intervention_global_interventionism
+							has_idea = intervention_neo_imperialism
+						}
+						intervention_decrease_blocked = yes
+					}
+					intervention_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_isolation
+							has_idea = intervention_local_security
+						}
+						intervention_increase_blocked = yes
+					}
+					intervention_increase_blocked = no
+				}
+			}
+
+			cost = 200 #was 350
+			removal_cost = -1
+			level = 3
+
+			modifier = {
+				lend_lease_tension = 0.10
+				send_volunteers_tension = 0.20
+				guarantee_tension = 0.30
+				join_faction_tension = 0.45
+				generate_wargoal_tension = 0.55
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 1
+					has_idea = regional_power
+				}
+			}
+		}
+
+		intervention_regional_interventionism = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea intervention_regional_interventionism" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_global_interventionism
+							has_idea = intervention_neo_imperialism
+						}
+						intervention_decrease_blocked = yes
+					}
+					intervention_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_isolation
+							has_idea = intervention_local_security
+							has_idea = intervention_limited_interventionism
+						}
+						intervention_increase_blocked = yes
+					}
+					intervention_increase_blocked = no
+				}
+			}
+
+			cost = 200 #was 350
+			removal_cost = -1
+			level = 4
+
+			modifier = {
+				lend_lease_tension = 0.05
+				send_volunteers_tension = 0.10
+				guarantee_tension = 0.20
+				join_faction_tension = 0.25
+				generate_wargoal_tension = 0.35
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 1
+					has_idea = great_power
+				}
+			}
+		}
+
+		intervention_global_interventionism = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea intervention_global_interventionism" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_neo_imperialism
+						}
+						intervention_decrease_blocked = yes
+					}
+					intervention_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_isolation
+							has_idea = intervention_local_security
+							has_idea = intervention_limited_interventionism
+							has_idea = intervention_regional_interventionism
+						}
+						intervention_increase_blocked = yes
+					}
+					intervention_increase_blocked = no
+				}
+			}
+
+			cost = 200 #was 350
+			removal_cost = -1
+			level = 5
+
+			modifier = {
+				lend_lease_tension = 0.00
+				send_volunteers_tension = 0.05
+				guarantee_tension = 0.10
+				join_faction_tension = 0.15
+				generate_wargoal_tension = 0.15
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 1
+					has_idea = superpower
+				}
+			}
+		}
+
+		intervention_neo_imperialism = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea intervention_neo_imperialism" }
+
+			allowed_civil_war = { always = yes }
+
+			available = {
+				#has_autocratic_government = yes
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = intervention_isolation
+							has_idea = intervention_local_security
+							has_idea = intervention_limited_interventionism
+							has_idea = intervention_regional_interventionism
+							has_idea = intervention_global_interventionism
+						}
+						intervention_increase_blocked = yes
+					}
+					intervention_increase_blocked = no
+				}
+			}
+
+			cost = 200 #was 350
+			removal_cost = -1
+			level = 6
+
+			modifier = {
+				lend_lease_tension = 0.00
+				send_volunteers_tension = 0.0
+				guarantee_tension = 0.0
+				join_faction_tension = 0.0
+				generate_wargoal_tension = 0.0
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 10
+					has_government = fascism
+				}
+				modifier = {
+					add = 10
+					has_government = nationalist
+					any_neighbor_country = {
+						any_owned_state = {
+							OR = {
+								is_claimed_by = ROOT
+								is_core_of = ROOT
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	Officer_Training_Law = {
+		law = yes
+		use_list_view = yes
+
+		officer_baptism_by_fire = {
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_basic_training
+							has_idea = officer_advanced_training
+							has_idea = officer_military_school
+							has_idea = officer_military_academy
+							has_idea = officer_international_education
+						}
+						officer_training_decrease_blocked = yes
+					}
+					officer_training_decrease_blocked = no
+				}
+			}
+
+			on_add = {
+				ingame_update_setup = yes
+				custom_effect_tooltip = officer_baptism_by_fire_TT
+				log = "[GetDateText]: [Root.GetName]: add idea officer_baptism_by_fire"
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				military_leader_cost_factor = -0.50
+				army_leader_start_level = -1
+				navy_leader_start_level = -1
+				command_power_gain_mult = 0
+				max_command_power = 0
+				experience_gain_army = -0.01
+				experience_gain_navy = 0.00
+				experience_gain_air = 0.00
+			}
+
+			ai_will_do = {
+				factor = 0
+			}
+		}
+
+		officer_basic_training = {
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_advanced_training
+							has_idea = officer_military_school
+							has_idea = officer_military_academy
+							has_idea = officer_international_education
+						}
+						officer_training_decrease_blocked = yes
+					}
+					officer_training_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_baptism_by_fire
+						}
+						officer_training_increase_blocked = yes
+					}
+					officer_training_increase_blocked = no
+				}
+			}
+
+			on_add = {
+				ingame_update_setup = yes
+				custom_effect_tooltip = officer_basic_training_TT
+				log = "[GetDateText]: [Root.GetName]: add idea officer_basic_training"
+			}
+
+			default = yes
+
+			cost = 150
+			removal_cost = -1
+			level = 2
+
+			modifier = {
+				military_leader_cost_factor = -0.25
+				army_leader_start_level = 0
+				navy_leader_start_level = 0
+				command_power_gain_mult = 0.05
+				max_command_power = -10
+				experience_gain_army = 0.00
+				experience_gain_navy = 0.00
+				experience_gain_air = 0.00
+				special_forces_cap = 0.1
+				personnel_cost_multiplier_modifier = 0.05
+			}
+
+			ai_will_do = {
+				factor = 0
+			}
+
+
+		}
+
+		officer_advanced_training = {
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_military_school
+							has_idea = officer_military_academy
+							has_idea = officer_international_education
+						}
+						officer_training_decrease_blocked = yes
+					}
+					officer_training_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_baptism_by_fire
+							has_idea = officer_basic_training
+						}
+						officer_training_increase_blocked = yes
+					}
+					officer_training_increase_blocked = no
+				}
+			}
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea officer_advanced_training"
+				ingame_update_setup = yes
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 3
+
+			modifier = {
+				military_leader_cost_factor = 0
+				army_leader_start_level = 1
+				navy_leader_start_level = 1
+				command_power_gain_mult = 0.1
+				max_command_power = -20
+				experience_gain_army = 0.01
+				experience_gain_navy = 0.01
+				experience_gain_air = 0.01
+				special_forces_cap = 0.2
+				personnel_cost_multiplier_modifier = 0.10
+			}
+
+			ai_will_do = {
+				factor = 0
+			}
+		}
+
+		officer_military_school = {
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_military_academy
+							has_idea = officer_international_education
+						}
+						officer_training_decrease_blocked = yes
+					}
+					officer_training_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_baptism_by_fire
+							has_idea = officer_basic_training
+							has_idea = officer_advanced_training
+						}
+						officer_training_increase_blocked = yes
+					}
+					officer_training_increase_blocked = no
+				}
+			}
+
+			on_add = {
+				ingame_update_setup = yes
+				custom_effect_tooltip = officer_military_school_TT
+				log = "[GetDateText]: [Root.GetName]: add idea officer_military_school"
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 4
+
+			modifier = {
+				military_leader_cost_factor = 0.3
+				army_leader_start_level = 2
+				navy_leader_start_level = 2
+				command_power_gain_mult = 0.15
+				max_command_power = -30
+				experience_gain_army = 0.02
+				experience_gain_navy = 0.02
+				experience_gain_air = 0.02
+				special_forces_cap = 0.3
+				personnel_cost_multiplier_modifier = 0.15
+			}
+
+			ai_will_do = {
+				factor = 0
+			}
+		}
+
+		officer_military_academy = {
+			allowed_civil_war = { always = yes }
+
+			available = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_international_education
+						}
+						officer_training_decrease_blocked = yes
+					}
+					officer_training_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_baptism_by_fire
+							has_idea = officer_basic_training
+							has_idea = officer_advanced_training
+							has_idea = officer_military_school
+						}
+						officer_training_increase_blocked = yes
+					}
+					officer_training_increase_blocked = no
+				}
+			}
+
+			on_add = {
+				ingame_update_setup = yes
+				custom_effect_tooltip = officer_military_academy_TT
+				log = "[GetDateText]: [Root.GetName]: add idea officer_military_academy"
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 5
+
+			modifier = {
+				military_leader_cost_factor = 0.7
+				army_leader_start_level = 3
+				navy_leader_start_level = 3
+				command_power_gain_mult = 0.20
+				max_command_power = -40
+				experience_gain_army = 0.03
+				experience_gain_navy = 0.03
+				experience_gain_air = 0.03
+				special_forces_cap = 0.4
+				personnel_cost_multiplier_modifier = 0.20
+			}
+			ai_will_do = {
+				factor = 0
+			}
+		}
+
+		officer_international_education = {
+			allowed_civil_war = { always = yes }
+
+			available = {
+				OR = {
+					is_in_faction = yes
+					has_idea = NATO_member
+					has_idea = sco_member
+					hidden_trigger = {
+						OR = {
+							has_idea = sco_member_econ
+							has_idea = sco_member_pol
+							has_idea = sco_member_mil
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = officer_baptism_by_fire
+							has_idea = officer_basic_training
+							has_idea = officer_advanced_training
+							has_idea = officer_military_school
+							has_idea = officer_military_academy
+						}
+						officer_training_increase_blocked = yes
+					}
+					officer_training_increase_blocked = no
+				}
+			}
+
+			on_add = {
+				ingame_update_setup = yes
+				custom_effect_tooltip = officer_international_education_TT
+				log = "[GetDateText]: [Root.GetName]: add idea officer_international_education"
+			}
+
+			cost = 150
+			removal_cost = -1
+			level = 6
+
+			modifier = {
+				military_leader_cost_factor = 1.00
+				army_leader_start_level = 4
+				navy_leader_start_level = 4
+				command_power_gain_mult = 0.25
+				max_command_power = -50
+				experience_gain_army = 0.04
+				experience_gain_navy = 0.04
+				experience_gain_air = 0.04
+				special_forces_cap = 0.5
+				personnel_cost_multiplier_modifier = 0.25
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 1
+					OR = {
+						is_in_faction = yes
+						has_idea = NATO_member
+					}
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_idea = no_military
+						has_idea = defence_00
+					}
+				}
+			}
+		}
+	}
+	###mobilization law
+	mobilization_law = {
+		law = yes
+		use_list_view = yes
+
+		mobilization_00 = {
+			removal_cost = -1
+			level = 1
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = mobilization_00_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 1 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 1 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_00"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				has_idea = no_military
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -1.00
+			}
+
+			ai_will_do = {
+				factor = 1
+				modifier = {
+					add = 500
+					has_war = no
+					has_idea = no_military
+				}
+				modifier = {
+					factor = 2.5
+					has_idea = mobilization_01
+					ai_has_major_economic_problems = yes
+				}
+				modifier = {
+					factor = 0
+					has_idea = mobilization_01
+					NOT = { has_idea = no_military }
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_communist_government_or_in_coalition = yes
+						has_totalitarian_government_or_in_coalition = yes
+						has_autocratic_government_or_in_coalition = yes
+						has_conservative_government_or_in_coalition = yes
+					}
+				}
+			}
+			cancel_if_invalid = no
+		}
+		mobilization_01 = {
+			removal_cost = -1
+			level = 2
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = mobilization_01_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 2 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 2 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_01"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -0.95
+				stability_factor = -0.05
+				war_stability_factor = 0.05
+				total_workforce_modifier = -0.01 #mobilized people can't work
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Regional-Interventionist nations should not want tiny budgets
+					factor = 0
+					OR = {
+						has_idea = intervention_neo_imperialism
+						has_idea = intervention_global_interventionism
+						has_idea = intervention_regional_interventionism
+					}
+				}
+				modifier = { # EU bloc feeling of safety encourages lower spending.
+					factor = 5
+					has_war = no
+					threat < 0.5
+					has_idea = mobilization_01
+					OR = {
+						has_idea = EU_member
+						has_idea = SWI_swiss_neutrality
+					}
+					all_neighbor_country = {
+						OR = {
+							has_idea = EU_member
+							has_idea = SWI_swiss_neutrality
+						}
+					}
+				}
+				modifier = { # NATO bloc feeling of safety encourages lower spending
+					factor = 5
+					has_war = no
+					threat < 0.5
+					has_idea = mobilization_01
+					has_idea = NATO_member
+				}
+				modifier = { # Mobility one step either direction.
+					add = 25
+					OR = {
+						has_idea = mobilization_00
+						has_idea = mobilization_02
+					}
+				}
+				modifier = {
+					add = 15
+					has_idea = mobilization_00
+					OR = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					factor = 0
+					ai_has_minor_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_major_economic_problems = no
+					NOT = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+					has_idea = mobilization_01
+				}
+				modifier = { # Non-powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = non_power
+					OR = {
+						has_idea = mobilization_01
+						has_idea = mobilization_02
+					}
+				}
+				modifier = { # Minor powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = minor_power
+					OR = {
+						has_idea = mobilization_01
+						has_idea = mobilization_02
+					}
+				}
+				modifier = {
+					factor = 2
+					has_idea = mobilization_01
+					has_war = no
+					is_major = no
+					manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = mobilization_00
+					OR = {
+						has_autocratic_government = yes
+						has_totalitarian_government = yes
+						has_government = nationalist
+						has_government = fascism
+					}
+					NOT = { tag = SAU }
+				}
+				modifier = {
+					factor = 1.25
+					has_idea = mobilization_00
+					tag = SAU
+				}
+				modifier = { # Consider increasing spending if threat is high
+					add = 10
+					has_idea = mobilization_00
+					OR = {
+						threat > 0.20
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 2.5
+					has_idea = mobilization_00
+					OR = {
+						threat > 0.50
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = { #Tries to boost for the extra manpower
+					#Prio if low on manpower
+					add = 150
+					manpower_per_military_factory < 250
+					has_idea = mobilization_00 #Next Level up from mobilization_01
+				}
+				modifier = { # Military buildup while at war
+					add = 500
+					has_idea = mobilization_00
+					has_war = yes
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_00
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+				modifier = {
+					factor = 0
+					has_idea = no_military
+				}
+			}
+			cancel_if_invalid = no
+		}
+		mobilization_02 = {
+			default = yes
+			removal_cost = -1
+			level = 3
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = mobilization_02_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 3 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 3 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_02"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -0.90
+				stability_factor = -0.10
+				war_stability_factor = 0.10
+				total_workforce_modifier = -0.02 #mobilized people can't work
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Global-interventionist nations should not want small budgets
+					factor = 0
+					OR = {
+						has_idea = intervention_neo_imperialism
+						has_idea = intervention_global_interventionism
+					}
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+				}
+				modifier = { ##AI is under threat
+					add = 15
+					has_idea = mobilization_01
+					OR = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					factor = 0
+					ai_has_minor_economic_problems = no
+					ai_has_moderate_economic_problems = no
+					ai_has_major_economic_problems = no
+					NOT = {
+						has_country_flag = ai_yes_unit_build
+						has_country_flag = AI_is_threatened
+					}
+					has_idea = mobilization_02
+				}
+				modifier = { # EU bloc feeling of safety encourages lower spending.
+					factor = 4
+					has_war = no
+					threat < 0.5
+					has_idea = mobilization_02
+					OR = {
+						has_idea = EU_member
+						has_idea = SWI_swiss_neutrality
+					}
+					all_neighbor_country = {
+						OR = {
+							has_idea = EU_member
+							has_idea = SWI_swiss_neutrality
+						}
+					}
+				}
+				modifier = { # NATO bloc feeling of safety encourages lower spending
+					factor = 4
+					has_war = no
+					threat < 0.5
+					has_idea = mobilization_02
+					has_idea = NATO_member
+					all_neighbor_country = {
+						has_idea = NATO_member
+					}
+				}
+				modifier = {
+					factor = 2
+					has_idea = mobilization_02
+					has_war = no
+					is_major = no
+					manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = { # Non-powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = non_power
+					OR = {
+						has_idea = mobilization_02
+						has_idea = mobilization_03
+					}
+				}
+				modifier = { # Minor powers shouldn't waste their money on large militaries
+					factor = 2
+					has_war = no
+					has_idea = minor_power
+					OR = {
+						has_idea = mobilization_02
+						has_idea = mobilization_03
+					}
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = mobilization_01
+					OR = {
+						has_autocratic_government = yes
+						has_totalitarian_government = yes
+						has_government = nationalist
+						has_government = fascism
+					}
+					NOT = { tag = SAU }
+				}
+				modifier = {
+					factor = 1.25
+					has_idea = mobilization_01
+					tag = SAU
+				}
+				modifier = { # Consider increasing spending if threat is high
+					add = 10
+					has_idea = mobilization_01
+					OR = {
+						threat > 0.20
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 2.5
+					has_idea = mobilization_01
+					OR = {
+						threat > 0.50
+						any_neighbor_country = {
+							has_war = yes
+						}
+					}
+				}
+				modifier = {
+					#Prio if low on manpower
+					add = 150
+					manpower_per_military_factory <  450
+					has_idea = mobilization_01
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 15
+					has_idea = mobilization_01
+					surrender_progress > 0.1
+				}
+				modifier = {
+					add = 500
+					has_idea = mobilization_01
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 25
+					has_idea = mobilization_01
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 15
+					has_idea = mobilization_03
+					has_war = no
+					manpower_per_military_factory > 10000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_01
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+			}
+			cancel_if_invalid = no
+		}
+		mobilization_03 = {
+			removal_cost = -1
+			level = 4
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = mobilization_03_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 4 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 4 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_03"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -0.85
+				stability_factor = -0.15
+				war_stability_factor = 0.15
+				total_workforce_modifier = -0.03 #mobilized people can't work
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Imperialist nations should not want medium budgets
+					factor = 0
+					OR = {
+						has_idea = intervention_neo_imperialism
+					}
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = mobilization_02
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = mobilization_04
+				}
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = mobilization_03
+				}
+				modifier = {
+					factor = 2
+					has_idea = mobilization_03
+					has_war = no
+					is_major = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = mobilization_02
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = mobilization_02
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = mobilization_02
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = mobilization_02
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = mobilization_02
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = mobilization_02
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = mobilization_02
+					threat > 0.8
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 22
+					manpower_per_military_factory <  450
+					num_of_military_factories > 0
+					has_idea = mobilization_02
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = mobilization_02
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = mobilization_02
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = mobilization_02
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = mobilization_04
+					has_war = no
+					manpower_per_military_factory > 8000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_02
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+			}
+			cancel_if_invalid = no
+		}
+		mobilization_04 = {
+			removal_cost = -1
+			level = 5
+			allowed_civil_war = { always = yes }
+			on_add = {
+				custom_effect_tooltip = mobilization_04_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 5 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 5 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_04"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -0.775
+				stability_factor = -0.20
+				war_stability_factor = 0.20
+				total_workforce_modifier = -0.045 #mobilized people can't work
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = mobilization_04
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = mobilization_03
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = mobilization_05
+				}
+				modifier = {
+					factor = 2
+					has_idea = mobilization_04
+					has_war = no
+					is_major = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = mobilization_03
+				}
+				modifier = { # Autocratic governments want larger militaries
+					factor = 2
+					has_idea = mobilization_03
+					has_autocratic_government = yes
+				}
+				modifier = { # Totalitarian governments want larger militaries
+					factor = 2
+					has_idea = mobilization_03
+					has_totalitarian_government = yes
+				}
+				modifier = { # Nationalist government want larger militaries
+					factor = 2
+					has_idea = mobilization_03
+					has_government = nationalist
+				}
+				modifier = { # Salafists want to increase military
+					factor = 4
+					has_idea = mobilization_03
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is high
+					factor = 2
+					has_idea = mobilization_03
+					threat > 0.4
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 4
+					has_idea = mobilization_03
+					threat > 0.8
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 23
+					has_war = yes
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = mobilization_03
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = mobilization_03
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = mobilization_03
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = mobilization_03
+					has_war = yes
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = mobilization_05
+					has_war = no
+					manpower_per_military_factory > 6000
+				}
+				modifier = { # Urgent military buildup if any neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_03
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+					}
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		mobilization_05 = {
+			removal_cost = -1
+			level = 6
+
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = mobilization_05_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 6 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 6 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_05"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -0.7
+				stability_factor = -0.25
+				war_stability_factor = 0.25
+				total_workforce_modifier = -0.06 #mobilized people can't work
+			}
+
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = mobilization_05
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = mobilization_04
+				}
+				modifier = {
+					factor = 0
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = mobilization_06
+				}
+				modifier = {
+					factor = 2
+					has_idea = mobilization_05
+					has_war = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = mobilization_04
+				}
+				modifier = { # Salafists want to increase military
+					factor = 6
+					has_idea = mobilization_04
+					has_government = fascism
+				}
+				modifier = { # Consider increasing spending if threat is very high
+					factor = 6
+					has_idea = mobilization_04
+					threat > 0.8
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 23
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = mobilization_04
+					has_war = yes
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_war = yes
+					has_idea = mobilization_04
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = mobilization_04
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = mobilization_04
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = mobilization_06
+					has_war = no
+					manpower_per_military_factory > 3000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_04
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.0
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.0
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't increase to large spending if lower and significantly stronger than enemies
+					factor = 0
+					OR = {
+						has_idea = mobilization_04
+					}
+					alliance_strength_ratio > 2
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		mobilization_06 = {
+			removal_cost = -1
+			level = 7
+
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = mobilization_06_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 7 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 7 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_06"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -0.6
+				stability_factor = -0.30
+				war_stability_factor = 0.30
+				total_workforce_modifier = -0.08 #mobilized people can't work
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Inertia to remain at current spending levels without other circumstances intervening
+					add = 2
+					has_idea = mobilization_06
+				}
+				modifier = {
+					add = 15
+					original_tag = CHI
+					num_of_available_military_factories < 100
+					has_idea = mobilization_05
+				}
+				modifier = {
+					factor = 2
+					has_idea = mobilization_06
+					has_war = no
+					OR = {
+						manpower_per_military_factory > 1000 # If is a nonmajor nation without enemies and with sufficient manpower, don't bother increasing
+						num_of_military_factories < 1
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = mobilization_05
+				}
+				modifier = { # Salafists want to increase military
+					factor = 6
+					has_idea = mobilization_05
+					has_government = fascism
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 23
+					manpower_per_military_factory < 450
+					num_of_military_factories > 0
+					has_idea = mobilization_05
+					has_war = yes
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = mobilization_05
+					has_war = yes
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = mobilization_05
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = mobilization_05
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = mobilization_07
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_05
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.2
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.2
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't increase to very large spending if lower and significantly stronger than enemies
+					factor = 0
+					OR = {
+						has_idea = mobilization_05
+					}
+					alliance_strength_ratio > 2
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		mobilization_07 = {
+			removal_cost = -1
+			level = 8
+
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = mobilization_07_TT
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 8 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 8 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_07"
+			}
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_08
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+			modifier = {
+				conscription_factor = -0.5
+				stability_factor = -0.35
+				war_stability_factor = 0.35
+				total_workforce_modifier = -0.1 #mobilized people can't work
+			}
+
+
+
+			ai_will_do = {
+				factor = 0
+				modifier = {
+					add = 4
+					has_idea = mobilization_07
+					has_war = no
+					manpower_per_military_factory > 1000 # If is a nation without enemies and with sufficient manpower, don't bother increasing
+				}
+				modifier = {
+					add = 1
+					has_idea = mobilization_06
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 27
+					manpower_per_military_factory < 450
+					has_war = yes
+					has_idea = mobilization_06
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_war = yes
+					has_idea = mobilization_06
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = mobilization_06
+					has_war = yes
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = mobilization_06
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = mobilization_08
+					has_war = no
+					manpower_per_military_factory > 1000
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_06
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.4
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.4
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't go to huge spending if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.8
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		mobilization_08 = {
+			removal_cost = -1
+			level = 9
+
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = mobilization_08_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 9 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 9 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_08"
+			}
+
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				OR = {
+					threat > 0.4
+					any_country = {
+						is_justifying_wargoal_against = ROOT # Experimenting on THIS vs ROOT
+						strength_ratio = { tag = ROOT ratio > 2.0 } # 2x stronger than THIS
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_09
+						}
+						mobilization_decrease_blocked = yes
+					}
+					mobilization_decrease_blocked = no
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+
+			modifier = {
+				conscription_factor = -0.375
+				stability_factor = -0.40
+				war_stability_factor = 0.40
+				total_workforce_modifier = -0.125 #mobilized people can't work
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Should never advance to or remain at gigantic spending without war
+					factor = 0
+					has_war = no
+				}
+				modifier = {
+					add = 500
+					AND = {
+						has_war = no
+						has_idea = mobilization_09
+					}
+				}
+				modifier = {
+					add = 1
+					has_idea = mobilization_07
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 27
+					manpower_per_military_factory < 450
+					has_idea = mobilization_07
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = mobilization_07
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 1000
+					has_idea = mobilization_07
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 80
+					has_idea = mobilization_07
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Military drawdown if war is over
+					add = 10
+					has_idea = mobilization_09
+					has_war = no
+					manpower_per_military_factory > 500
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 100
+					has_idea = mobilization_07
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't go to gigantic spending if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.85
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+		mobilization_09 = { #Total War
+			removal_cost = -1
+			level = 10
+
+			allowed = { always = yes }
+			allowed_civil_war = { always = yes }
+
+			on_add = {
+				custom_effect_tooltip = mobilization_09_TT
+
+				set_variable = { law_attitude = 4 }
+				set_variable = { law_change = 10 }
+				subtract_from_variable = { law_change = mobilization_law }
+				law_attitude_change = yes
+				set_variable = { mobilization_law = 10 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [Root.GetName]: add idea mobilization_09"
+			}
+
+			available = {
+				if = {
+					limit = { original_tag = PER }
+					custom_trigger_tooltip = {
+						tooltip = PER_majlis_block_tt
+					}
+					NOT = {
+						hidden_trigger = {
+							has_country_flag = PER_majlis_block
+						}
+					}
+				}
+				OR = {
+					has_war = yes
+					threat > 0.6
+					any_country = {
+						is_justifying_wargoal_against = THIS
+						strength_ratio = { tag = THIS ratio > 2.0 } # 2x stronger than THIS
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							has_idea = mobilization_00
+							has_idea = mobilization_01
+							has_idea = mobilization_02
+							has_idea = mobilization_03
+							has_idea = mobilization_04
+							has_idea = mobilization_05
+							has_idea = mobilization_06
+							has_idea = mobilization_07
+							has_idea = mobilization_08
+						}
+						mobilization_increase_blocked = yes
+					}
+					mobilization_increase_blocked = no
+				}
+			}
+
+			modifier = {
+				conscription_factor = 0
+				stability_factor = -0.45
+				war_stability_factor = 0.45
+				total_workforce_modifier = -0.2 #mobilized people can't work
+			}
+
+			ai_will_do = {
+				factor = 0
+				modifier = { # Should never maintain total war spending when not at war
+					factor = 0
+					has_war = no
+				}
+				modifier = {
+					add = 1
+					has_idea = mobilization_08
+				}
+				modifier = {
+					#Prio if low on manpower
+					factor = 27
+					has_war = yes
+					manpower_per_military_factory < 450
+					has_idea = mobilization_08
+				}
+				modifier = {
+					#Higher chance if doing badly
+					factor = 3
+					has_idea = mobilization_08
+					surrender_progress > 0.1
+				}
+				modifier = { # Urgent military buildup if at war with a major.
+					factor = 5
+					has_idea = mobilization_08
+					any_enemy_country = {
+						is_major = yes
+					}
+				}
+				modifier = { # Military buildup while at war. Will want to get at least to medium spending.
+					factor = 10
+					has_idea = mobilization_08
+					has_war = yes
+					manpower_per_military_factory < 1000 # If already has enough manpower, will not urgently increase spending.
+				}
+				modifier = { # Urgent military buildup if any powerful neighbor country has or is justifying a wargoal against us
+					factor = 10
+					has_idea = mobilization_08
+					any_home_area_neighbor_country = {
+						OR = {
+							has_war_with = ROOT
+							has_wargoal_against = ROOT
+							is_justifying_wargoal_against = ROOT
+						}
+						OR = {
+							is_major = yes
+							strength_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+							ic_ratio = {
+								tag = ROOT
+								ratio > 1.8
+							}
+						}
+					}
+				}
+				modifier = { # Shouldn't go to total war if not at war with powerful enemies.
+					factor = 0
+					has_war = yes
+					alliance_strength_ratio > 0.9
+				}
+			}
+
+			cancel_if_invalid = no
+		}
+	}
+}
