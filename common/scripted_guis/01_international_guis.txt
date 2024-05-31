@@ -1,0 +1,4165 @@
+#Author(s): Doolittle
+scripted_gui = {
+	#button to actually open the UI
+	open_the_international_scripted_gui = {
+		context_type = player_context
+		window_name = "IS_open_the_international_system_gui_window"
+		parent_window_name = "MapmodesInterface_Ingame"
+		dirty = global.num_days
+
+		visible = { is_ai = no }
+
+		effects = {
+			open_the_international_system_click = {
+				if = { limit = { NOT = { has_country_flag = international_open  } }
+					set_country_flag = international_open
+				}
+				else = {
+					clr_country_flag = international_open
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_country_flag = pmc_menu_open
+							has_country_flag = state_menu_open
+							has_country_flag = counterterror_open
+						}
+					}
+					set_country_flag = pmc_menu_open
+				}
+				update_international_system_gui = yes
+			}
+		}
+	}
+
+	# this will need three different windows currently, with room for expansion
+	# expansion will need to cover all the other needed systems
+	international_systems_gui = {
+		context_type = player_context
+		window_name = "IS_main_background_window"
+
+		dirty = global.international_system_refresh_gui
+		ai_test_interval = 96
+		ai_max_weight_taken_per_test = 1
+
+		visible = {
+			OR = {
+				is_ai = yes
+				has_country_flag = international_open
+			}
+		}
+
+		triggers = {
+			statehood_info_display_visible = {
+				has_country_flag = state_menu_open
+			}
+			switch_recog_button_visible = {
+				has_country_flag = state_menu_open
+			}
+			switch_recog_button_click_enabled = {
+				NOT = {
+					has_idea = Non_State_Actor
+					has_idea = Lacks_International_Recognition
+					has_idea = Lacks_International_Recognition_Taiwan
+					has_idea = rival_government
+				}
+				if = {
+					limit = { original_tag = SWI }
+					has_completed_focus = SWI_join_the_united_nations
+				}
+				country_exists = var:open_state
+				var:open_state = {
+					is_subject = no
+				}
+				meta_trigger = {
+					text = {
+						NOT = {
+							has_country_flag = rival_government_[stname]
+						}
+						OR = {
+							AND = {
+								NOT = { has_country_flag = Recognised_[stname] }
+								var:open_state = { has_idea = rival_government }
+							}
+							var:open_state = { has_country_flag = recognised_opponent_[stroot] }
+						}
+						any_country = {
+							exists = yes
+							has_country_flag = rival_government_[stname]
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+					stroot = "[?ROOT.GetTag]"
+				}
+			}
+			pressure_countries_recog_button_visible = {
+				has_country_flag = state_menu_open
+			}
+			ir_nation_sel_disp_visible = {
+				has_country_flag = state_menu_open
+			}
+			pressure_countries_recog_button_click_enabled = {
+				var:open_state = { has_idea = Lacks_International_Recognition }
+				country_exists = var:open_state
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = has_recog_tt
+							has_country_flag = Recognised_[stname]
+						}
+						custom_trigger_tooltip = {
+							tooltip = recent_pressure_tt
+							NOT = { has_country_flag = pressure_timer_[stname] }
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+				}
+				if = {
+					limit = { original_tag = SWI }
+					has_completed_focus = SWI_join_the_united_nations
+				}
+				var:open_state = { has_idea = Lacks_International_Recognition }
+				country_exists = var:open_state
+				is_full_state = yes
+
+				has_political_power > 100
+			}
+			grant_recog_button_visible = {
+				has_country_flag = state_menu_open
+			}
+			grant_recog_button_click_enabled = {
+				var:open_state = { has_idea = Lacks_International_Recognition }
+				country_exists = var:open_state
+				NOT = {
+					has_idea = Non_State_Actor
+					has_idea = Lacks_International_Recognition
+					has_idea = Lacks_International_Recognition_Taiwan
+					has_idea = rival_government
+				}
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = not_recog_tt
+							NOT = { has_country_flag = Recognised_[stname] }
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+				}
+
+				has_political_power > 25
+			}
+			rescind_recog_button_visible = {
+				has_country_flag = state_menu_open
+			}
+			rescind_recog_button_click_enabled = {
+				var:open_state = { has_idea = Lacks_International_Recognition }
+				country_exists = var:open_state
+				if = {
+					limit = { original_tag = SWI }
+					has_completed_focus = SWI_join_the_united_nations
+				}
+				var:open_state = { has_idea = Lacks_International_Recognition }
+				country_exists = var:open_state
+				is_full_state = yes
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = has_recog_tt
+							has_country_flag = Recognised_[stname]
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+				}
+				has_political_power > 25
+			}
+			move_embassy_ISR_button_visible = {
+				NOT = {
+					original_tag = ISR
+					original_tag = PAL
+					AND = {
+						original_tag = HEZ
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+					has_country_flag = moved_ISR_embassy
+				}
+				country_exists = PAL
+				ISR = {
+					exists = yes
+					owns_state = 207
+				}
+				has_country_flag = state_menu_open
+			}
+			move_embassy_ISR_button_click_enabled = {
+				NOT = {
+					original_tag = ISR
+					original_tag = PAL
+					AND = {
+						original_tag = HEZ
+						OR = {
+							emerging_hardline_shiite_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+						}
+					}
+					has_country_flag = moved_ISR_embassy
+				}
+				country_exists = PAL
+				ISR = {
+					exists = yes
+					owns_state = 207
+				}
+			}
+			remove_light_inf_button_visible = {
+				is_major_company = yes
+			}
+			remove_light_inf_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_hired_tt
+					if = { limit = { has_country_flag = blackwater_sel }
+						has_country_flag = pmc_recruited_blackwater_light
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						has_country_flag = pmc_recruited_aegis_light
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						has_country_flag = pmc_recruited_constellis_light
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						has_country_flag = pmc_recruited_wagner_light
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						has_country_flag = pmc_recruited_md_light
+					}
+				}
+			}
+			remove_mot_inf_button_visible = {
+				is_major_company = yes
+			}
+			remove_mot_inf_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_hired_tt
+					if = { limit = { has_country_flag = blackwater_sel }
+						has_country_flag = pmc_blackwater_mot
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						has_country_flag = pmc_aegis_mot
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						has_country_flag = pmc_constellis_mot
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						has_country_flag = pmc_wagner_mot
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						has_country_flag = pmc_md_mot
+					}
+				}
+			}
+			remove_mech_inf_button_visible = {
+				is_major_company = yes
+			}
+			remove_mech_inf_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_hired_tt
+					if = { limit = { has_country_flag = blackwater_sel }
+						has_country_flag = pmc_blackwater_mech
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						has_country_flag = pmc_aegis_mech
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						has_country_flag = pmc_constellis_mech
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						has_country_flag = pmc_wagner_mech
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						has_country_flag = pmc_md_mech
+					}
+				}
+			}
+			remove_hvy_inf_button_visible = {
+				is_major_company = yes
+			}
+			remove_hvy_inf_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_hired_tt
+					if = { limit = { has_country_flag = blackwater_sel }
+						has_country_flag = pmc_blackwater_heavy_mech
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						has_country_flag = pmc_aegis_heavy_mech
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						has_country_flag = pmc_constellis_heavy_mech
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						has_country_flag = pmc_wagner_heavy_mech
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						has_country_flag = pmc_md_heavy_mech
+					}
+				}
+			}
+			remove_spec_inf_button_visible = {
+				is_major_company = yes
+			}
+			remove_spec_inf_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_hired_tt
+					if = { limit = { has_country_flag = blackwater_sel }
+						has_country_flag = pmc_blackwater_special_unit
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						has_country_flag = pmc_aegis_special_unit
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						has_country_flag = pmc_constellis_special_unit
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						has_country_flag = pmc_wagner_special_unit
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						has_country_flag = pmc_md_special_unit
+					}
+				}
+			}
+			remove_tank_button_visible = {
+				is_major_company = yes
+			}
+			remove_tank_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_hired_tt
+					if = { limit = { has_country_flag = blackwater_sel }
+						has_country_flag = pmc_blackwater_tank
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						has_country_flag = pmc_aegis_tank
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						has_country_flag = pmc_constellis_tank
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						has_country_flag = pmc_wagner_tank
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						has_country_flag = pmc_md_tank
+					}
+				}
+			}
+			remove_sf_inf_button_visible = {
+				is_major_company = yes
+			}
+
+			pmc_info_display_visible = {
+				has_country_flag = pmc_menu_open
+			}
+
+			remove_sf_inf_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = has_hired_tt
+					if = { limit = { has_country_flag = blackwater_sel }
+						has_country_flag = pmc_blackwater_specops
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						has_country_flag = pmc_aegis_specops
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						has_country_flag = pmc_constellis_specops
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						has_country_flag = pmc_wagner_specops
+					}
+					else_if = { limit = { has_country_flag = md_sel }
+						has_country_flag = pmc_md_specops
+					}
+				}
+			}
+			campaign_USA_button_visible = {
+				has_country_flag = state_menu_open
+				OR = {
+					has_idea = Lacks_International_Recognition
+					has_idea = rival_government
+				}
+			}
+			campaign_USA_button_click_enabled = {
+				USA = {
+					has_opinion = {
+						target = ROOT
+						value > 49
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							original_tag = KAC
+							original_tag = KAR
+							original_tag = SHN
+							original_tag = NHN
+							original_tag = WAA
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = USA_recognition_BRM_tt
+						USA = {
+							if = {
+								limit = {
+									BRM = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@BRM }
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = { original_tag = TAI }
+					custom_trigger_tooltip = {
+						tooltip = USA_recognition_CHI_tt
+						USA = {
+							if = {
+								limit = {
+									CHI = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@CHI }
+							}
+						}
+					}
+				}
+				if = {
+					limit = { NOT = { CHI = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = CHI_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = CHI } }
+					}
+				}
+				if = {
+					limit = { NOT = { SOV = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = SOV_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = SOV } }
+					}
+				}
+				has_elections = yes
+
+				has_political_power > 200
+			}
+			campaign_SOV_button_visible = {
+				has_country_flag = state_menu_open
+				OR = {
+					has_idea = Lacks_International_Recognition
+					has_idea = rival_government
+				}
+			}
+			campaign_SOV_button_click_enabled = {
+				SOV = {
+					has_opinion = {
+						target = ROOT
+						value > 49
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							original_tag = KAC
+							original_tag = KAR
+							original_tag = SHN
+							original_tag = NHN
+							original_tag = WAA
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = SOV_recognition_BRM_tt
+						SOV = {
+							if = {
+								limit = {
+									BRM = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@BRM }
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = { original_tag = TAI }
+					custom_trigger_tooltip = {
+						tooltip = SOV_recognition_CHI_tt
+						SOV = {
+							if = {
+								limit = {
+									CHI = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@CHI }
+							}
+						}
+					}
+				}
+				if = {
+					limit = { NOT = { SOV = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = USA_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = USA } }
+					}
+				}
+				if = {
+					limit = { NOT = { SOV = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = ENG_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = ENG } }
+					}
+				}
+				if = {
+					limit = { NOT = { SOV = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = FRA_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = FRA } }
+					}
+				}
+				if = {
+					limit = { NOT = { SOV = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = GER_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = GER } }
+					}
+				}
+
+				has_political_power > 200
+			}
+			campaign_CHI_button_visible = {
+				has_country_flag = state_menu_open
+				OR = {
+					has_idea = Lacks_International_Recognition
+					has_idea = rival_government
+				}
+			}
+			campaign_CHI_button_click_enabled = {
+				CHI = {
+					has_opinion = {
+						target = ROOT
+						value > 49
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							original_tag = KAC
+							original_tag = KAR
+							original_tag = SHN
+							original_tag = NHN
+							original_tag = WAA
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = CHI_recognition_BRM_tt
+						CHI = {
+							if = {
+								limit = {
+									BRM = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@BRM }
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = { original_tag = TAI }
+					CHI = {
+						NOT = {
+							has_opinion_modifier = declared_independence
+						}
+					}
+				}
+				if = {
+					limit = { NOT = { CHI = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = USA_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = USA } }
+					}
+				}
+				if = {
+					limit = { NOT = { CHI = { has_completed_focus = CHI_Sign_Strategic_Partnership_Agreement } } }
+					custom_trigger_tooltip = {
+						tooltip = JAP_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = JAP } }
+					}
+				}
+				if = {
+					limit = { NOT = { CHI = { has_completed_focus = CHI_Sino_Indian_Treaty_of_Friendship } } }
+					custom_trigger_tooltip = {
+						tooltip = RAJ_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = RAJ } }
+					}
+				}
+
+				has_political_power > 200
+			}
+			campaign_ENG_button_visible = {
+				has_country_flag = state_menu_open
+				OR = {
+					has_idea = Lacks_International_Recognition
+					has_idea = rival_government
+				}
+			}
+			campaign_ENG_button_click_enabled = {
+				ENG = {
+					has_opinion = {
+						target = ROOT
+						value > 49
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							original_tag = KAC
+							original_tag = KAR
+							original_tag = SHN
+							original_tag = NHN
+							original_tag = WAA
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = ENG_recognition_BRM_tt
+						ENG = {
+							if = {
+								limit = {
+									BRM = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@BRM }
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = { original_tag = TAI }
+					custom_trigger_tooltip = {
+						tooltip = ENG_recognition_CHI_tt
+						ENG = {
+							if = {
+								limit = {
+									CHI = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@CHI }
+							}
+						}
+					}
+				}
+				if = {
+					limit = { NOT = { CHI = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = CHI_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = CHI } }
+					}
+				}
+				if = {
+					limit = { NOT = { SOV = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = SOV_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = SOV } }
+					}
+				}
+				has_elections = yes
+
+				has_political_power > 200
+			}
+			campaign_FRA_button_visible = {
+				has_country_flag = state_menu_open
+				OR = {
+					has_idea = Lacks_International_Recognition
+					has_idea = rival_government
+				}
+			}
+			campaign_FRA_button_click_enabled = {
+				FRA = {
+					has_opinion = {
+						target = ROOT
+						value > 49
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							original_tag = KAC
+							original_tag = KAR
+							original_tag = SHN
+							original_tag = NHN
+							original_tag = WAA
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = FRA_recognition_BRM_tt
+						FRA = {
+							if = {
+								limit = {
+									BRM = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@BRM }
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = { original_tag = TAI }
+					custom_trigger_tooltip = {
+						tooltip = FRA_recognition_CHI_tt
+						FRA = {
+							if = {
+								limit = {
+									CHI = {
+										has_opinion_modifier = declared_independence
+									}
+								}
+								check_variable = { opinion@ROOT > opinion@CHI }
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						NOT = { CHI = { has_government = democratic } }
+					}
+					custom_trigger_tooltip = {
+						tooltip = CHI_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = CHI } }
+					}
+				}
+				if = {
+					limit = { NOT = { SOV = { has_government = democratic } } }
+					custom_trigger_tooltip = {
+						tooltip = SOV_influence_below_tt
+						NOT = { check_variable = { influence_array^0 = SOV } }
+					}
+				}
+				has_elections = yes
+
+				has_political_power > 200
+			}
+			un_ascension_button_visible = {
+				has_country_flag = state_menu_open
+				OR = {
+					has_idea = Lacks_International_Recognition
+					has_idea = rival_government
+				}
+			}
+			un_ascension_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = two_thirds_tt
+					check_variable = {
+						var = Granted_Recognition
+						value = 120
+						compare = greater_than
+					}
+				}
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = security_council_support_tt
+							USA = {
+								has_country_flag = Recognised_[thname]
+							}
+							ENG = {
+								has_country_flag = Recognised_[thname]
+							}
+							FRA = {
+								has_country_flag = Recognised_[thname]
+							}
+							SOV = {
+								has_country_flag = Recognised_[thname]
+							}
+							CHI = {
+								has_country_flag = Recognised_[thname]
+							}
+						}
+					}
+					thname = "[?THIS.GetTag]"
+				}
+
+				has_political_power > 100
+			}
+			counterterror_info_display_visible = {
+				has_country_flag = counterterror_open
+			}
+			counterterror_instruct_display_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_region_asia_button_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_region_africa_button_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_region_me_button_visible = {
+				has_country_flag = counterterror_open
+			}
+			mor_promote_tolerant_islam_button_visible = {
+				has_country_flag = counterterror_open
+			}
+			mor_promote_tolerant_islam_button_click_enabled = {
+				original_tag = MOR
+				NOT = { has_government = fascism }
+				NOT = { has_idea = youth_radicalization }
+				custom_trigger_tooltip = {
+					tooltip = influences_other_middle_eastern_country_tt
+					any_of_scopes = {
+						array = global.middle_east_ct_states
+						is_influencer = yes
+					}
+				}
+
+				has_political_power > 50
+			}
+			oma_promote_tolerant_islam_button_visible = {
+				has_country_flag = counterterror_open
+			}
+			oma_promote_tolerant_islam_button_click_enabled = {
+				original_tag = OMA
+				has_idea = ibadi
+				NOT = { has_government = fascism }
+				NOT = { has_idea = youth_radicalization }
+				custom_trigger_tooltip = {
+					tooltip = influences_other_middle_eastern_country_tt
+					any_of_scopes = {
+						array = global.middle_east_ct_states
+						is_influencer = yes
+					}
+				}
+
+				has_political_power > 50
+			}
+			ct_fund_deradicalisation_programs_button_visible = {
+				has_country_flag = counterterror_open
+				OR = {
+					is_in_array = { global.asia_ct_states = THIS.id }
+					is_in_array = { global.africa_ct_states = THIS.id }
+					is_in_array = { global.middle_east_ct_states = THIS.id }
+				}
+			}
+			ct_fund_deradicalisation_programs_button_click_enabled = {
+				no_jihadist_government = yes
+				custom_trigger_tooltip = {
+					tooltip = fund_derad_tt
+					NOT = { has_country_flag = funding_derad }
+				}
+				has_idea = youth_radicalization
+				NOT = {
+					has_idea = paralyzing_corruption
+					has_idea = crippling_corruption
+				}
+
+				has_political_power > 25
+			}
+			ct_training_button_visible = {
+				has_country_flag = counterterror_open
+				OR = {
+					is_in_array = { global.asia_ct_states = THIS.id }
+					is_in_array = { global.africa_ct_states = THIS.id }
+					is_in_array = { global.middle_east_ct_states = THIS.id }
+				}
+			}
+			ct_training_button_click_enabled = {
+				no_jihadist_government = yes
+
+				command_power > 20
+
+				custom_trigger_tooltip = {
+					tooltip = conduct_training_tt
+					NOT = { has_country_flag = conducting_training }
+				}
+			}
+			ct_raid_button_visible = {
+				has_country_flag = counterterror_open
+				OR = {
+					is_in_array = { global.asia_ct_states = THIS.id }
+					is_in_array = { global.africa_ct_states = THIS.id }
+					is_in_array = { global.middle_east_ct_states = THIS.id }
+				}
+			}
+			ct_raid_button_click_enabled = {
+				no_jihadist_government = yes
+				custom_trigger_tooltip = {
+					tooltip = conduct_raid_tt
+					NOT = { has_country_flag = conducting_raid }
+				}
+				OR = {
+					has_idea = police_03
+					has_idea = police_04
+					has_idea = police_05
+				}
+				custom_trigger_tooltip = {
+					tooltip = low_threat_higher_tt
+					check_variable = { threat_level > 10 }
+				}
+				command_power > 40
+			}
+			ct_strike_button_visible = {
+				has_country_flag = counterterror_open
+				OR = {
+					is_in_array = { global.asia_ct_states = THIS.id }
+					is_in_array = { global.africa_ct_states = THIS.id }
+					is_in_array = { global.middle_east_ct_states = THIS.id }
+				}
+			}
+			ct_strike_button_click_enabled = {
+				no_jihadist_government = yes
+				custom_trigger_tooltip = {
+					tooltip = conduct_strike_tt
+					NOT = { has_country_flag = conducting_strike }
+				}
+				OR = {
+					has_deployed_air_force_size = {
+						size > 9
+						type = cas
+					}
+					has_deployed_air_force_size = {
+						size > 9
+						type = tactical_bomber
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = severe_threat_higher_tt
+					check_variable = { threat_level > 50 }
+				}
+				command_power > 40
+			}
+			ct_deploy_advisors_button_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_deploy_advisors_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = ct_capable_nation
+					scripted_influencer_tags = yes
+				}
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = has_not_sent_advisors
+							NOT = { has_country_flag = military_advisors_[ctnation] }
+						}
+					}
+					ctnation = "[?var:ct_state_selected.GetTag]"
+				}
+				if = {
+					limit = {
+						has_country_flag = ct_selected_me
+					}
+					has_country_flag = middle_east_influencer
+				} else_if = {
+					limit = {
+						has_country_flag = ct_selected_africa
+					}
+					has_country_flag = africa_influencer
+				} else_if = {
+					limit = {
+						has_country_flag = ct_selected_asia
+					}
+					has_country_flag = asia_influencer
+				}
+				var:ct_state_selected = {
+					no_jihadist_government = yes
+					exists = yes
+				}
+				var:ct_state_selected = {
+					custom_trigger_tooltip = {
+						tooltip = not_a_main_nation
+						NOT = {
+							original_tag = ISR
+							original_tag = PER
+							original_tag = PAL
+							original_tag = HAM
+							original_tag = HEZ
+							original_tag = TUA
+							original_tag = SHA
+							is_Caucasus = yes
+						}
+					}
+				}
+				var:ct_state_selected = {
+					is_top5_influencer_ct = yes
+				}
+				custom_trigger_tooltip = {
+					tooltip = limited_interventionism_tt
+					OR = {
+						has_idea = intervention_regional_interventionism
+						has_idea = intervention_global_interventionism
+						has_idea = intervention_neo_imperialism
+						has_idea = intervention_limited_interventionism
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = superior_officer_law_tt
+					if = {
+						limit = { var:ct_state_selected = { has_idea = officer_baptism_by_fire } }
+						NOT = { has_idea = officer_baptism_by_fire }
+					}
+					else_if = {
+						limit = { var:ct_state_selected = { has_idea = officer_basic_training } }
+						NOT = { has_idea = officer_baptism_by_fire }
+						NOT = { has_idea = officer_basic_training }
+					}
+					else_if = {
+						limit = { var:ct_state_selected = { has_idea = officer_advanced_training } }
+						NOT = { has_idea = officer_baptism_by_fire }
+						NOT = { has_idea = officer_basic_training }
+						NOT = { has_idea = officer_advanced_training }
+					}
+					else_if = {
+						limit = { var:ct_state_selected = { has_idea = officer_military_school } }
+						NOT = { has_idea = officer_baptism_by_fire }
+						NOT = { has_idea = officer_basic_training }
+						NOT = { has_idea = officer_advanced_training }
+						NOT = { has_idea = officer_military_school }
+					}
+					else_if = {
+						limit = { var:ct_state_selected = { has_idea = officer_military_academy } }
+						has_idea = officer_international_education
+					}
+					var:ct_state_selected = { NOT = { has_idea = officer_international_education } }
+				}
+				command_power > 40
+			}
+			ct_withdraw_advisors_button_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_withdraw_advisors_button_click_enabled = {
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = has_sent_advisors
+							has_country_flag = military_advisors_[ctnation]
+						}
+					}
+					ctnation = "[?var:ct_state_selected.GetTag]"
+				}
+			}
+			ct_nation_sel_disp_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_threat_disp_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_rad_disp_visible = {
+				has_country_flag = counterterror_open
+			}
+			ct_nation_disp_visible = {
+				has_country_flag = counterterror_open
+			}
+		}
+
+		effects = {
+			is_close_button_click = {
+				clr_country_flag = international_open
+				clr_country_flag = state_menu_open
+				clr_country_flag = counterterror_open
+				clr_country_flag = pmc_menu_open
+				clear_array = selected_units
+				clear_array = ct_region_selected
+				clear_variable = comp_check
+				clear_variable = open_state
+				clear_variable = ct_state_selected
+				clr_country_pmc_flag = yes
+				clear_ct_flags = yes
+				update_international_system_gui = yes
+			}
+			pmc_menu_button_click = {
+				clr_country_flag = state_menu_open
+				clr_country_flag = counterterror_open
+				clear_variable = open_state
+				set_country_flag = pmc_menu_open
+				update_international_system_gui = yes
+			}
+			counterterror_menu_button_click = {
+				clear_array = selected_units
+				clear_variable = comp_check
+				clr_country_pmc_flag = yes
+				clear_variable = open_state
+				clr_country_flag = pmc_menu_open
+				clr_country_flag = state_menu_open
+				set_country_flag = counterterror_open
+				if = {
+					limit = {
+						is_in_array = { array = global.asia_ct_states value = THIS }
+					}
+					for_each_loop = {
+						array = global.asia_ct_states
+						value = v
+
+						add_to_array = { ct_region_selected = v }
+					}
+					set_country_flag = ct_selected_asia
+					set_variable = { ct_state_selected = THIS }
+				}
+				if = {
+					limit = {
+						is_in_array = {
+							array = global.africa_ct_states
+							value = THIS
+						}
+					}
+					for_each_loop = {
+						array = global.africa_ct_states
+						value = v
+
+						add_to_array = { ct_region_selected = v }
+					}
+					set_country_flag = ct_selected_africa
+					set_variable = { ct_state_selected = THIS }
+				}
+				if = {
+					limit = {
+						is_in_array = {
+							array = global.middle_east_ct_states
+							value = THIS
+						}
+					}
+					for_each_loop = {
+						array = global.middle_east_ct_states
+						value = v
+
+						add_to_array = { ct_region_selected = v }
+					}
+					set_country_flag = ct_selected_me
+					set_variable = { ct_state_selected = THIS }
+				}
+				update_international_system_gui = yes
+			}
+			int_recognition_menu_button_click = {
+				clear_array = selected_units
+				clear_variable = comp_check
+				clr_country_pmc_flag = yes
+				clr_country_flag = pmc_menu_open
+				clr_country_flag = counterterror_open
+				set_country_flag = state_menu_open
+				update_international_system_gui = yes
+			}
+			move_embassy_ISR_button_click = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = superpower
+							has_idea = great_power
+							has_idea = large_power
+						}
+					}
+					ISR = { add_political_power = 50 }
+				}
+				else_if = {
+					limit = { has_idea = regional_power }
+					ISR = { add_political_power = 35 }
+				}
+				else = { ISR = { add_political_power = 20 } }
+				set_country_flag = moved_ISR_embassy
+				update_international_system_gui = yes
+			}
+			remove_light_inf_button_click = {
+				if = { limit = { has_country_flag = blackwater_sel }
+					delete_light_infantry_blackwater = yes
+				}
+				else_if = { limit = { has_country_flag = aegis_sel }
+					delete_light_infantry_aegis = yes
+				}
+				else_if = { limit = { has_country_flag = constellis_sel }
+					delete_light_infantry_constellis = yes
+				}
+				else_if = { limit = { has_country_flag = wagner_sel }
+					delete_light_infantry_wagner = yes
+				}
+				update_international_system_gui = yes
+			}
+			remove_mot_inf_button_click = {
+				if = { limit = { has_country_flag = blackwater_sel }
+					delete_mot_infantry_blackwater = yes
+				}
+				else_if = { limit = { has_country_flag = aegis_sel }
+					delete_mot_infantry_aegis = yes
+				}
+				else_if = { limit = { has_country_flag = constellis_sel }
+					delete_mot_infantry_constellis = yes
+				}
+				else_if = { limit = { has_country_flag = wagner_sel }
+					delete_mot_infantry_wagner = yes
+				}
+				update_international_system_gui = yes
+			}
+			remove_mech_inf_button_click = {
+				if = { limit = { has_country_flag = blackwater_sel }
+					delete_mech_infantry_blackwater = yes
+				}
+				else_if = { limit = { has_country_flag = aegis_sel }
+					delete_mech_infantry_aegis = yes
+				}
+				else_if = { limit = { has_country_flag = constellis_sel }
+					delete_mech_infantry_constellis = yes
+				}
+				else_if = { limit = { has_country_flag = wagner_sel }
+					delete_mech_infantry_wagner = yes
+				}
+				update_international_system_gui = yes
+			}
+			remove_hvy_inf_button_click = {
+				if = { limit = { has_country_flag = blackwater_sel }
+					delete_heavy_mech_infantry_blackwater = yes
+				}
+				else_if = { limit = { has_country_flag = aegis_sel }
+					delete_heavy_mech_infantry_aegis = yes
+				}
+				else_if = { limit = { has_country_flag = constellis_sel }
+					delete_heavy_mech_infantry_constellis = yes
+				}
+				else_if = { limit = { has_country_flag = wagner_sel }
+					delete_heavy_mech_infantry_wagner = yes
+				}
+				update_international_system_gui = yes
+			}
+			remove_spec_inf_button_click = {
+				if = { limit = { has_country_flag = blackwater_sel }
+					delete_special_unit_blackwater = yes
+				}
+				else_if = { limit = { has_country_flag = aegis_sel }
+					delete_special_unit_aegis = yes
+				}
+				else_if = { limit = { has_country_flag = constellis_sel }
+					delete_special_unit_constellis = yes
+				}
+				else_if = { limit = { has_country_flag = wagner_sel }
+					delete_special_unit_wagner = yes
+				}
+				update_international_system_gui = yes
+			}
+			remove_tank_button_click = {
+				if = { limit = { has_country_flag = blackwater_sel }
+					delete_tank_unit_blackwater = yes
+				}
+				else_if = { limit = { has_country_flag = aegis_sel }
+					delete_tank_unit_aegis = yes
+				}
+				else_if = { limit = { has_country_flag = constellis_sel }
+					delete_tank_unit_constellis = yes
+				}
+				else_if = { limit = { has_country_flag = wagner_sel }
+					delete_tank_unit_wagner = yes
+				}
+				update_international_system_gui = yes
+			}
+			remove_sf_inf_button_click = {
+				if = { limit = { has_country_flag = blackwater_sel }
+					delete_specops_unit_blackwater = yes
+				}
+				else_if = { limit = { has_country_flag = aegis_sel }
+					delete_specops_unit_aegis = yes
+				}
+				else_if = { limit = { has_country_flag = constellis_sel }
+					delete_specops_unit_constellis = yes
+				}
+				else_if = { limit = { has_country_flag = wagner_sel }
+					delete_specops_unit_wagner = yes
+				}
+				update_international_system_gui = yes
+			}
+			grant_recog_button_click = {
+				add_political_power = -25
+				meta_effect = {
+					text = {
+						THIS = {
+							set_country_flag = Recognised_[stname]
+						}
+
+						if = {
+							limit = {
+								NOT = {
+									has_country_flag = original_owner_[stname]
+									has_country_flag = supports_original_owner_[stname]
+								}
+							}
+							every_country = {
+								limit = {
+									OR = {
+										has_country_flag = original_owner_[stname]
+										has_country_flag = supports_original_owner_[stname]
+									}
+									NOT = { has_country_flag = Recognised_[stname] }
+								}
+								add_opinion_modifier = {
+									target = ROOT
+									modifier = recognises_them
+								}
+							}
+							every_country = {
+								limit = {
+									has_country_flag = original_owner_[stname]
+									NOT = { has_country_flag = Recognised_[stname] }
+								}
+								news_event = { id = recognition.1 }
+							}
+						}
+						else_if = {
+							limit = {
+								has_country_flag = supports_original_owner_[stname]
+							}
+							every_country = {
+								limit = {
+									has_country_flag = original_owner_[stname]
+									NOT = { has_country_flag = Recognised_[stname] }
+								}
+								add_opinion_modifier = {
+									target = ROOT
+									modifier = recognises_them
+								}
+								news_event = { id = recognition.1 }
+							}
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+				}
+				var:open_state = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = recognises_us
+					}
+					news_event = { id = recognition.2 }
+				}
+
+				add_to_variable = {
+					var = var:open_state.Granted_Recognition
+					value = 1
+				}
+				update_international_system_gui = yes
+			}
+			pressure_countries_recog_button_click = {
+				meta_effect = {
+					text = {
+						every_country = {
+							limit = {
+								is_influencer = yes
+								NOT = { has_country_flag = Recognised_[stname] }
+								NOT = { tag = ROOT }
+								is_full_state = yes
+							}
+							set_country_flag = pressured_to_recognize_[stname]
+							country_event = { id = recognition.8 }
+						}
+						set_country_flag = {
+							flag = pressure_timer_[stname]
+							days = 180
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+				}
+				add_political_power = -100
+				update_international_system_gui = yes
+			}
+			rescind_recog_button_click = {
+				meta_effect = {
+					text = {
+						clr_country_flag = Recognised_[stname]
+
+						every_country = {
+							limit = {
+								has_country_flag = original_owner_[stname]
+								NOT = { has_country_flag = Recognised_[stname] }
+							}
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = withdrew_recognition_them
+							}
+							news_event = { id = recognition.4 }
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+				}
+				var:open_state = {
+					add_opinion_modifier = {
+						modifier = withdrew_recognition
+						target = ROOT
+					}
+					subtract_from_variable = {
+						var = Granted_Recognition
+						value = 1
+					}
+					news_event = { id = recognition.3 }
+				}
+				update_international_system_gui = yes
+			}
+			switch_recog_button_click = {
+				if = {
+					limit = { FROM = { has_idea = rival_government } }
+					set_country_flag = Recognised_@FROM
+				}
+				var:open_state = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = recognises_us
+					}
+					if = {
+						limit = { original_tag = CHI }
+						CHI = {
+							remove_opinion_modifier = {
+								modifier = recognize_taiwan_chi
+								target = ROOT
+							}
+						}
+						if = {
+							limit = { ROOT = { has_country_flag = loyal_to_ROC } }
+							CHI = {
+								remove_opinion_modifier = {
+									target = ROOT
+									modifier = harsh_sanctions
+								}
+							}
+							ROOT = { clr_country_flag = loyal_to_ROC }
+						}
+					}
+					news_event = { id = recognition.5 }
+					meta_effect = {
+						text = {
+							clr_country_flag = recognised_opponent_[rname]
+						}
+						rname = "[?ROOT.GetTag]"
+					}
+				}
+				meta_effect = {
+					text = {
+						every_country = {
+							limit = {
+								has_country_flag = rival_government_[stname]
+							}
+							if = {
+								limit = { original_tag = TAI }
+								remove_opinion_modifier = {
+									modifier = recognize_taiwan
+									target = ROOT
+								}
+							}
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = recognises_them_rival
+							}
+							subtract_from_variable = {
+								var = Granted_Recognition
+								value = 1
+							}
+							set_country_flag = recognised_opponent_[rname]
+							news_event = { id = recognition.6 }
+						}
+					}
+					stname = "[?var:open_state.GetTag]"
+					rname = "[?ROOT.GetTag]"
+				}
+				add_to_variable = {
+					var = var:open_state.Granted_Recognition
+					value = 1
+				}
+				update_international_system_gui = yes
+			}
+			campaign_USA_button_click = {
+				set_country_flag = USA_recognition_campaign
+				USA = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = is_trying_to_win_our_favour
+					}
+				}
+
+				add_political_power = -200
+				update_international_system_gui = yes
+			}
+			campaign_SOV_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Decision campaign_for_recognition_SOV"
+				set_country_flag = SOV_recognition_campaign
+				SOV = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = is_trying_to_win_our_favour
+					}
+				}
+
+				add_political_power = -200
+				update_international_system_gui = yes
+			}
+			campaign_CHI_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Decision campaign_for_recognition_CHI"
+				set_country_flag = CHI_recognition_campaign
+				CHI = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = is_trying_to_win_our_favour
+					}
+				}
+
+				add_political_power = -200
+			}
+			campaign_ENG_button_click = {
+				set_country_flag = ENG_recognition_campaign
+				ENG = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = is_trying_to_win_our_favour
+					}
+				}
+
+				add_political_power = -200
+				update_international_system_gui = yes
+			}
+			campaign_FRA_button_click = {
+				set_country_flag = FRA_recognition_campaign
+				FRA = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = is_trying_to_win_our_favour
+					}
+				}
+
+				add_political_power = -200
+				update_international_system_gui = yes
+			}
+			un_ascension_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Decision un_ascension_button_click"
+				remove_ideas = Lacks_International_Recognition
+				if = { limit = { has_idea = rival_government }
+					remove_ideas = rival_government
+				}
+				remove_from_array = {
+					global.Unrecognised_States = THIS
+				}
+				set_temp_variable = { percent_change = 5 }
+				change_domestic_influence_percentage = yes
+				every_country = {
+					news_event = { id = recognition.7 }
+				}
+
+				add_political_power = -100
+				update_international_system_gui = yes
+			}
+			ct_region_asia_button_click = {
+				clear_array = ct_region_selected
+				clear_ct_flags = yes
+				for_each_loop = {
+					array = global.asia_ct_states
+					value = v
+
+					add_to_array = { ct_region_selected = v }
+				}
+				set_country_flag = ct_selected_asia
+				set_country_flag = {
+					flag = ct_change_timer
+					days = 270
+				}
+				update_international_system_gui = yes
+			}
+			ct_region_africa_button_click = {
+				clear_array = ct_region_selected
+				clear_ct_flags = yes
+				for_each_loop = {
+					array = global.africa_ct_states
+					value = v
+
+					add_to_array = { ct_region_selected = v }
+				}
+				set_country_flag = ct_selected_africa
+				set_country_flag = {
+					flag = ct_change_timer
+					days = 270
+				}
+				update_international_system_gui = yes
+			}
+			ct_region_me_button_click = {
+				clear_array = ct_region_selected
+				clear_ct_flags = yes
+				for_each_loop = {
+					array = global.middle_east_ct_states
+					value = v
+
+					add_to_array = { ct_region_selected = v }
+				}
+				set_country_flag = ct_selected_me
+				set_country_flag = {
+					flag = ct_change_timer
+					days = 270
+				}
+				update_international_system_gui = yes
+			}
+			mor_promote_tolerant_islam_button_click = {
+				every_other_country = {
+					limit = {
+						is_in_array = { global.middle_east_ct_states = THIS.id }
+						is_influencer = yes
+					}
+					set_temp_variable = { rad_change = -5 }
+					modify_radicalization_effect = yes
+				}
+				log = "[GetDateText]: [This.GetName]: decision MOR_promote_tolerant_islam executed"
+				update_international_system_gui = yes
+			}
+			oma_promote_tolerant_islam_button_click = {
+				every_other_country = {
+					limit = {
+						is_in_array = { global.middle_east_ct_states = THIS.id }
+						is_influencer = yes
+					}
+					set_temp_variable = { rad_change = -5 }
+					modify_radicalization_effect = yes
+				}
+				log = "[GetDateText]: [This.GetName]: decision OMA_promote_tolerant_islam executed"
+				update_international_system_gui = yes
+			}
+			ct_fund_deradicalisation_programs_button_click = {
+				set_country_flag = funding_derad
+				activate_mission = terror_fund_deradicalisation_programmes
+				update_international_system_gui = yes
+			}
+			ct_training_button_click = {
+				set_country_flag = conducting_training
+				activate_mission = terror_ct_training_mission
+				update_international_system_gui = yes
+			}
+			ct_raid_button_click = {
+				set_country_flag = conducting_raid
+				activate_mission = terror_conduct_raid
+				update_international_system_gui = yes
+			}
+			ct_strike_button_click = {
+				set_country_flag = conducting_strike
+				activate_mission = terror_conduct_strike
+				update_international_system_gui = yes
+			}
+			ct_deploy_advisors_button_click = {
+				log = "[GetDateText]: [This.GetName]: decision deploy_military_advisors executed"
+				add_command_power = -40
+				add_manpower = -150
+				meta_effect = {
+					text = {
+						set_country_flag = military_advisors_[ctnation]
+					}
+					ctnation = "[?var:ct_state_selected.GetTag]"
+				}
+				var:ct_state_selected = { add_to_variable = { foreign_advisors = 1 } }
+				custom_effect_tooltip = deploy_military_advisors_tt
+				update_international_system_gui = yes
+			}
+			ct_withdraw_advisors_button_click = {
+				log = "[GetDateText]: [This.GetName]: decision withdraw_military_advisors executed"
+				add_command_power = -40
+				add_manpower = 150
+				meta_effect = {
+					text = {
+						clr_country_flag = military_advisors_@FROM
+					}
+					ctnation = "[?var:ct_state_selected.GetTag]"
+				}
+				var:ct_state_selected = { subtract_from_variable = { foreign_advisors = 1 } }
+				custom_effect_tooltip = withdraw_military_advisors_tt
+				update_international_system_gui = yes
+			}
+		}
+
+		ai_weights = {
+			move_embassy_ISR_button_click = {
+				ai_will_do = {
+					factor = 1
+					modifier = {
+						add = 10
+						has_opinion = {
+							target = ISR
+							value > 0
+						}
+					}
+					modifier = {
+						add = 25
+						has_opinion = {
+							target = ISR
+							value > 25
+						}
+					}
+					modifier = {
+						add = 100
+						has_opinion = {
+							target = ISR
+							value > 50
+						}
+					}
+					modifier = {
+						add = 300
+						has_opinion = {
+							target = ISR
+							value > 75
+						}
+					}
+					modifier = {
+						add = -10000
+						has_opinion = {
+							target = ISR
+							value < 0
+						}
+					}
+				}
+			}
+			remove_light_inf_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						has_army_size = { size > 75 }
+					}
+				}
+			}
+			remove_mot_inf_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						has_army_size = { size > 75 }
+					}
+				}
+			}
+			remove_mech_inf_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						has_army_size = { size > 75 }
+					}
+				}
+			}
+			remove_hvy_inf_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						has_army_size = { size > 75 }
+					}
+				}
+			}
+			remove_spec_inf_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						has_army_size = { size > 75 }
+					}
+				}
+			}
+			remove_tank_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						has_army_size = { size > 75 }
+					}
+				}
+			}
+			remove_sf_inf_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						has_army_size = { size > 75 }
+					}
+				}
+			}
+			grant_recog_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 50
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  > 50 } } }
+					}
+
+					modifier = {
+						add = 75
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  > 60 } } }
+					}
+
+					modifier = {
+						add = 100
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  > 70 } } }
+					}
+
+					modifier = {
+						factor = 0
+						check_variable = { var:v = THIS }
+					}
+				}
+			}
+			pressure_countries_recog_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 50
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  > 50 } } }
+					}
+
+					modifier = {
+						add = 75
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  > 60 } } }
+					}
+
+					modifier = {
+						add = 100
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  > 70 } } }
+					}
+				}
+			}
+			rescind_recog_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 50
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  < 15 } } }
+					}
+
+					modifier = {
+						add = 400
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  < 0 } } }
+					}
+				}
+			}
+			switch_recog_button_click = {
+				ai_will_do = {
+					factor = 1
+					modifier = {
+						add = 50
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  < 15 } } }
+					}
+
+					modifier = {
+						add = 400
+						var:open_state = { ROOT = { has_opinion = { target = PREV value  < 0 } } }
+					}
+				}
+			}
+			campaign_USA_button_click = {
+				ai_will_do = {
+					factor = 300
+
+					modifier = {
+						factor = 0
+						meta_trigger = {
+							text = {
+								USA = {
+									has_country_flag = Recognised_[thname]
+								}
+							}
+							thname = "[?THIS.GetTag]"
+						}
+					}
+				}
+			}
+			campaign_SOV_button_click = {
+				ai_will_do = {
+					factor = 300
+
+					modifier = {
+						factor = 0
+						meta_trigger = {
+							text = {
+								SOV = {
+									has_country_flag = Recognised_[thname]
+								}
+							}
+							thname = "[?THIS.GetTag]"
+						}
+					}
+				}
+			}
+			campaign_CHI_button_click = {
+				ai_will_do = {
+					factor = 300
+
+					modifier = {
+						factor = 0
+						meta_trigger = {
+							text = {
+								CHI = {
+									has_country_flag = Recognised_[thname]
+								}
+							}
+							thname = "[?THIS.GetTag]"
+						}
+					}
+				}
+			}
+			campaign_ENG_button_click = {
+				ai_will_do = {
+					factor = 300
+
+					modifier = {
+						factor = 0
+						meta_trigger = {
+							text = {
+								ENG = {
+									has_country_flag = Recognised_[thname]
+								}
+							}
+							thname = "[?THIS.GetTag]"
+						}
+					}
+				}
+			}
+			campaign_FRA_button_click = {
+				ai_will_do = {
+					factor = 300
+
+					modifier = {
+						factor = 0
+						meta_trigger = {
+							text = {
+								FRA = {
+									has_country_flag = Recognised_[thname]
+								}
+							}
+							thname = "[?THIS.GetTag]"
+						}
+					}
+				}
+			}
+			un_ascension_button_click = {
+				ai_will_do = {
+					factor = 300
+				}
+			}
+			ct_region_asia_button_click = {
+				ai_will_do = {
+					factor = 100
+
+					modifier = {
+						factor = 0
+						has_country_flag = ct_change_timer
+					}
+				}
+			}
+			ct_region_africa_button_click = {
+				ai_will_do = {
+					factor = 100
+
+					modifier = {
+						factor = 0
+						has_country_flag = ct_change_timer
+					}
+				}
+			}
+			ct_region_me_button_click = {
+				ai_will_do = {
+					factor = 100
+
+					modifier = {
+						factor = 0
+						has_country_flag = ct_change_timer
+					}
+				}
+			}
+			mor_promote_tolerant_islam_button_click = {
+				ai_will_do = {
+					factor = 50
+				}
+			}
+			oma_promote_tolerant_islam_button_click = {
+				ai_will_do = {
+					factor = 50
+				}
+			}
+			ct_fund_deradicalisation_programs_button_click = {
+				ai_will_do = {
+					factor = 1
+					modifier = {
+						add = 10
+						check_variable = { radicalization < 10 }
+					}
+					modifier = {
+						add = 50
+						check_variable = { radicalization > 9 }
+						check_variable = { radicalization < 30 }
+					}
+					modifier = {
+						add = 100
+						check_variable = { radicalization > 29 }
+						check_variable = { radicalization < 50 }
+					}
+					modifier = {
+						add = 200
+						check_variable = { radicalization > 49 }
+					}
+				}
+			}
+			ct_training_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 10
+						has_country_flag = threat_level_low
+					}
+					modifier = {
+						add = 25
+						has_country_flag = threat_level_moderate
+					}
+					modifier = {
+						add = 100
+						has_country_flag = threat_level_substantial
+					}
+					modifier = {
+						add = 150
+						has_country_flag = threat_level_severe
+					}
+					modifier = {
+						add = 200
+						has_country_flag = threat_level_critical
+					}
+				}
+			}
+			ct_raid_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 10
+						has_country_flag = threat_level_low
+					}
+					modifier = {
+						add = 25
+						has_country_flag = threat_level_moderate
+					}
+					modifier = {
+						add = 100
+						has_country_flag = threat_level_substantial
+					}
+					modifier = {
+						add = 150
+						has_country_flag = threat_level_severe
+					}
+					modifier = {
+						add = 200
+						has_country_flag = threat_level_critical
+					}
+				}
+			}
+			ct_deploy_advisors_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 50
+						var:ct_state_selected = {
+							has_country_flag = threat_level_moderate
+						}
+					}
+					modifier = {
+						add = 100
+						var:ct_state_selected = {
+							has_country_flag = threat_level_substantial
+						}
+					}
+					modifier = {
+						add = 150
+						var:ct_state_selected = {
+							has_country_flag = threat_level_severe
+						}
+					}
+					modifier = {
+						add = 200
+						var:ct_state_selected = {
+							has_country_flag = threat_level_critical
+						}
+					}
+					modifier = {
+						add = -500
+						has_war = yes
+					}
+				}
+			}
+			ct_withdraw_advisors_button_click = {
+				ai_will_do = {
+					factor = 1
+
+					modifier = {
+						add = 100
+						var:ct_state_selected = {
+							has_country_flag = threat_level_moderate
+						}
+					}
+
+					modifier = {
+						add = 200
+						var:ct_state_selected = {
+							has_country_flag = threat_level_low
+						}
+					}
+
+					modifier = {
+						add = 200
+						has_war = yes
+					}
+				}
+			}
+		}
+	}
+
+	international_pmc_units_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = international_systems_gui
+		window_name = "IS_pmc_units_container"
+
+		dirty = global.international_system_refresh_gui
+		ai_test_interval = 168
+		ai_max_weight_taken_per_test = 1
+
+		dynamic_lists = {
+			list_of_available_pmc_units = {
+				array = THIS.selected_units
+				entry_container = IS_available_pmc_units_list
+				ai_weights = {
+					#TODO: For further international system updates, detail this out further for better ai utilization
+					name_of_pmc_units_button_click = {
+						ai_will_do = {
+							factor = 1
+
+							modifier = {
+								add = 25
+								has_army_size = { size < 40 }
+							}
+							modifier = {
+								add = 50
+								has_army_size = { size < 30 }
+							}
+							modifier = {
+								add = 75
+								has_army_size = { size < 20 }
+							}
+							modifier = {
+								add = 100
+								has_army_size = { size < 10 }
+							}
+							#buy armor if you need it bois
+							modifier = {
+								add = 100
+								has_army_size = {
+									size < 5
+									type = armor
+								}
+								check_variable = { v = 006 }
+							}
+							#killswitch for recently grabbing a major pmc
+							modifier = {
+								factor = 0
+								has_country_flag = hold_major_pmc_purchase
+							}
+							#killswitch for not having a major selected, just in case
+							modifier = {
+								factor = 0
+								NOT = {
+									has_country_flag = blackwater_sel
+									has_country_flag = aegis_sel
+									has_country_flag = wagner_sel
+									has_country_flag = constellis_sel
+								}
+							}
+						}
+					}
+				}
+			}
+
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				AND = {
+					is_major_company = yes
+					has_country_flag = pmc_menu_open
+				}
+			}
+		}
+
+		triggers = {
+			name_of_pmc_units_button_click_enabled = {
+				OR = {
+					has_country_flag = blackwater_sel
+					has_country_flag = aegis_sel
+					has_country_flag = wagner_sel
+					has_country_flag = constellis_sel
+				}
+
+				OR = {
+					if = { limit = { check_variable = { v = 001 } }
+						set_temp_variable = { up_chk = 0 }
+						NOT = { has_country_flag = inf_hire }
+					}
+					else_if = { limit = { check_variable = { v = 002 } }
+						set_temp_variable = { up_chk = 0 }
+						NOT = { has_country_flag = mot_inf_hire }
+					}
+					else_if = { limit = { check_variable = { v = 003 } }
+						set_temp_variable = { up_chk = 0 }
+						NOT = { has_country_flag = mech_inf_hire }
+					}
+					else_if = { limit = { check_variable = { v = 004 } }
+						set_temp_variable = { up_chk = 1 }
+						NOT = { has_country_flag = hvy_inf_hire }
+					}
+					else_if = { limit = { check_variable = { v = 005 } }
+						set_temp_variable = { up_chk = 1 }
+						NOT = { has_country_flag = spec_inf_hire }
+					}
+					else_if = { limit = { check_variable = { v = 006 } }
+						set_temp_variable = { up_chk = 2 }
+						NOT = { has_country_flag = tank_hire }
+					}
+					else_if = { limit = { check_variable = { v = 007 } }
+						set_temp_variable = { up_chk = 2 }
+						NOT = { has_country_flag = sf_hire }
+					}
+				}
+
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = pmc_upgrade_tt
+							check_variable = { global.merc_upgrade^[compcheck] > [upchk] }
+						}
+						if = {
+							limit = { NOT = { tag = USA } }
+							USA = { has_opinion = { target = ROOT value > 0 } }
+						}
+						set_temp_variable = { sum = global.merc_deploy_cost^1 }
+						add_to_temp_variable = { sum = global.merc_deployed^[compcheck] }
+						pmc_can_recruit = yes
+						custom_trigger_tooltip = {
+							tooltip = pmc_surpassing_TT
+							NOT = { check_variable = { sum > global.merc_capacity^[compcheck] } }
+						}
+					}
+					compcheck = "[?comp_check]"
+					upchk = "[?up_chk]"
+				}
+			}
+		}
+
+		effects = {
+			name_of_pmc_units_button_click = {
+				if = { limit = { check_variable = { v = 001 }}
+					if = { limit = { has_country_flag = blackwater_sel }
+						set_country_flag = inf_hire
+						activate_mission = get_blackwater_light_infantry
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						set_country_flag = inf_hire
+						activate_mission = get_aegis_light_infantry
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						set_country_flag = inf_hire
+						activate_mission = get_constellis_light_infantry
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						set_country_flag = inf_hire
+						activate_mission = get_wagner_light_infantry
+					}
+				}
+				if = { limit = { check_variable = { v = 002 }}
+					if = { limit = { has_country_flag = blackwater_sel }
+						set_country_flag = mot_inf_hire
+						activate_mission = get_blackwater_mot_infantry
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						set_country_flag = mot_inf_hire
+						activate_mission = get_aegis_mot_infantry
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						set_country_flag = mot_inf_hire
+						activate_mission = get_constellis_mot_infantry
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						set_country_flag = mot_inf_hire
+						activate_mission = get_wagner_mot_infantry
+					}
+				}
+				if = { limit = { check_variable = { v = 003 }}
+					if = { limit = { has_country_flag = blackwater_sel }
+						set_country_flag = mech_inf_hire
+						activate_mission = get_blackwater_mech_infantry
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						set_country_flag = mech_inf_hire
+						activate_mission = get_aegis_mech_infantry
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						set_country_flag = mech_inf_hire
+						activate_mission = get_constellis_mech_infantry
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						set_country_flag = mech_inf_hire
+						activate_mission = get_wagner_mech_infantry
+					}
+				}
+				if = { limit = { check_variable = { v = 004 }}
+					if = { limit = { has_country_flag = blackwater_sel }
+						set_country_flag = hvy_inf_hire
+						activate_mission = get_blackwater_heavy_mech_infantry
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						set_country_flag = hvy_inf_hire
+						activate_mission = get_aegis_heavy_mech_infantry
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						set_country_flag = hvy_inf_hire
+						activate_mission = get_constellis_heavy_mech_infantry
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						set_country_flag = hvy_inf_hire
+						activate_mission = get_wagner_heavy_mech_infantry
+					}
+				}
+				if = { limit = { check_variable = { v = 005 }}
+					if = { limit = { has_country_flag = blackwater_sel }
+						set_country_flag = spec_inf_hire
+						activate_mission = get_blackwater_special_infantry
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						set_country_flag = spec_inf_hire
+						activate_mission = get_aegis_special_infantry
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						set_country_flag = spec_inf_hire
+						activate_mission = get_constellis_special_infantry
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						set_country_flag = spec_inf_hire
+						activate_mission = get_wagner_special_infantry
+					}
+				}
+				if = { limit = { check_variable = { v = 006 }}
+					if = { limit = { has_country_flag = blackwater_sel }
+						set_country_flag = tank_hire
+						activate_mission = get_blackwater_tank
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						set_country_flag = tank_hire
+						activate_mission = get_aegis_tank
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						set_country_flag = tank_hire
+						activate_mission = get_constellis_tank
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						set_country_flag = tank_hire
+						activate_mission = get_wagner_tank
+					}
+				}
+				if = { limit = { check_variable = { v = 007 }}
+					if = { limit = { has_country_flag = blackwater_sel }
+						set_country_flag = sf_hire
+						activate_mission = get_blackwater_specops
+					}
+					else_if = { limit = { has_country_flag = aegis_sel }
+						set_country_flag = sf_hire
+						activate_mission = get_aegis_specops
+					}
+					else_if = { limit = { has_country_flag = constellis_sel }
+						set_country_flag = sf_hire
+						activate_mission = get_constellis_specops
+					}
+					else_if = { limit = { has_country_flag = wagner_sel }
+						set_country_flag = sf_hire
+						activate_mission = get_wagner_specops
+					}
+				}
+				if = { limit = { is_ai = yes }
+					set_country_flag = {
+						flag = hold_major_pmc_purchase
+						days = 90
+					}
+				}
+				update_international_system_gui = yes
+			}
+		}
+	}
+
+	international_pmc_companies_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = international_systems_gui
+		window_name = "IS_pmc_companies_container"
+
+		dirty = global.international_system_refresh_gui
+		ai_test_interval = 168
+		ai_max_weight_taken_per_test = 1
+
+		dynamic_lists = {
+			list_of_available_pmc_companies = {
+				array = global.PMC_companies
+				entry_container = IS_available_pmc_companies_list
+				ai_weights = {
+					name_of_pmc_companies_button_click = {
+						ai_will_do = {
+							factor = 1
+							#Get Buffs
+							modifier = {
+								add = 5
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = superpower
+							}
+							modifier = {
+								add = 5
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = great_power
+							}
+							modifier = {
+								add = 10
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = large_power
+							}
+							modifier = {
+								add = 20
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = regional_power
+							}
+							modifier = {
+								add = 30
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = minor_power
+							}
+							modifier = {
+								add = 30
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = non_power
+							}
+							modifier = {
+								add = 30
+								has_army_size = { size > 20 }
+							}
+							modifier = {
+								add = -30
+								has_army_size = { size < 21 }
+							}
+							#Get Units (Smol)
+							modifier = {
+								add = 0
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = superpower
+							}
+							modifier = {
+								add = 0
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = great_power
+							}
+							modifier = {
+								add = 5
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = large_power
+							}
+							modifier = {
+								add = 20
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = regional_power
+							}
+							modifier = {
+								add = 30
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = minor_power
+							}
+							modifier = {
+								add = 30
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = non_power
+							}
+							modifier = {
+								add = 30
+								has_army_size = { size < 20 }
+							}
+							modifier = {
+								add = -30
+								has_army_size = { size > 19 }
+							}
+							#Get Units (Lorg)
+							modifier = {
+								add = 5
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = superpower
+							}
+							modifier = {
+								add = 5
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = great_power
+							}
+							modifier = {
+								add = 10
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = large_power
+							}
+							modifier = {
+								add = 20
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = regional_power
+							}
+							modifier = {
+								add = 30
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = minor_power
+							}
+							modifier = {
+								add = 30
+								is_in_array = { global.PMC_buffs = v }
+								has_idea = non_power
+							}
+							modifier = {
+								add = 30
+								has_army_size = { size < 20 }
+							}
+							modifier = {
+								add = -30
+								has_army_size = { size > 19 }
+							}
+							#when at war, hire what you can get
+							modifier = {
+								factor = 5
+								has_war = yes
+							}
+							#killswitch for recent hires or selections
+							modifier = {
+								factor = 0
+								has_country_flag = ai_recent_pmc_select
+							}
+							#killswitch for being broke
+							modifier = {
+								factor = 0
+								check_variable = { treasury_rate < -10 }
+								NOT = { has_war = yes }
+							}
+							modifier = {
+								factor = 0
+								check_variable = { treasury_rate < -20 }
+								has_war = yes
+							}
+							#killswitch for non-state actor / unrecognized state
+							modifier = {
+								factor = 0
+								has_idea = non_state_actor
+							}
+							modifier = {
+								factor = 0
+								has_idea = Lacks_International_Recognition
+							}
+							modifier = {
+								factor = 0
+								has_idea = Lacks_International_Recognition_Taiwan
+							}
+						}
+					}
+				}
+			}
+
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				has_country_flag = pmc_menu_open
+			}
+		}
+
+		triggers = {
+			name_of_pmc_companies_button_click_enabled = {
+				if = { limit = { check_variable = { v = 001 }}
+					OR = {
+						USA = { has_opinion = { target = ROOT value > 0 } }
+						tag = USA
+					}
+				}
+				if = { limit = { check_variable = { v = 002 }}
+					OR = {
+						ENG = { has_opinion = { target = ROOT value > 0 } }
+						tag = ENG
+					}
+				}
+				if = { limit = { check_variable = { v = 003 }}
+					always = yes
+				}
+				if = { limit = { check_variable = { v = 004 }}
+					SOV = {
+						has_completed_focus = SOV_slavic_corps
+						NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
+					}
+					OR = {
+						SOV = { has_opinion = { target = ROOT value > 0 } }
+						tag = SOV
+					}
+					custom_trigger_tooltip = {
+						tooltip = banned_pmc_operations_TT
+						NOT = { SOV = { has_country_flag = banned_pmc_operations } }
+					}
+				}
+				if = { limit = { check_variable = { v = 005 } }
+					NOT = {	has_war_with = USA }
+					OR = {
+						USA = { has_opinion = { target = ROOT value > 10 } }
+						tag = USA
+					}
+					custom_trigger_tooltip = {
+						tooltip = pmc_mpri_TT
+						USA = { NOT = { has_country_flag = mpri_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 006 } }
+					country_exists = TUR
+					NOT = { tag = TUR }
+					NOT = {	has_war_with = TUR }
+					TUR = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_sadat_TT
+						TUR = { NOT = { has_country_flag = sadat_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 007 } }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_rsb_TT
+						SOV = { NOT = { has_country_flag = rsb_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 008 } }
+					NOT = { tag = ENG }
+					country_exists = ENG
+					NOT = {	has_war_with = ENG }
+					ENG = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_sadline_TT
+						ENG = { NOT = { has_country_flag = sadline_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 009 } }
+					NOT = { tag = USA }
+					country_exists = USA
+					NOT = {	has_war_with = USA }
+					USA = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_kbr_TT
+						USA = { NOT = { has_country_flag = kbr_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 010 } }
+					NOT = { tag = ISR }
+					country_exists = ISR
+					NOT = {	has_war_with = ISR }
+					ISR = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_nirtal_TT
+						ISR = { NOT = { has_country_flag = nirtal_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 011 } }
+					NOT = { tag = USA }
+					country_exists = USA
+					NOT = {	has_war_with = USA }
+					has_war = yes
+					USA = { has_opinion = { target = ROOT value > 10 } }
+					ENG = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_halo_TT
+						USA = { NOT = { has_country_flag = halo_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 012 } }
+					NOT = { tag = FRA }
+					country_exists = FRA
+					NOT = {	has_war_with = FRA }
+					has_war = yes
+					FRA = { has_opinion = { target = ROOT value > 15 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_dci_TT
+						FRA = { NOT = { has_country_flag = dci_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 013 } }
+					NOT = { tag = CAN }
+					country_exists = CAN
+					NOT = {	has_war_with = CAN }
+					CAN = { has_opinion = { target = ROOT value > 15 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_garda_TT
+						CAN = { NOT = { has_country_flag = garda_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 014 } }
+					NOT = { tag = POL }
+					country_exists = POL
+					NOT = {	has_war_with = POL }
+					POL = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_eu_TT
+						POL = { NOT = { has_country_flag = eu_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 015 } }
+					country_exists = GER
+					NOT = { tag = GER }
+					NOT = {	has_war_with = GER }
+					GER = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_itt_TT
+						GER = { NOT = { has_country_flag = itt_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 016 } }
+					date > 2007.1.1
+					country_exists = GER
+					NOT = {	has_war_with = GER }
+					GER = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_asgard_TT
+						GER = { NOT = { has_country_flag = asgrad_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 017 } }
+					EGY = { has_country_flag = sinai_create }
+					NOT = { tag = EGY }
+					country_exists = EGY
+					NOT = {	has_war_with = EGY }
+					EGY = { has_opinion = { target = ROOT value > 15 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_sinai_TT
+						EGY = { NOT = { has_country_flag = sinai_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 018 } }
+					BLR = { has_country_flag = gard_create }
+					NOT = { tag = BLR }
+					country_exists = BLR
+					NOT = {	has_war_with = BLR }
+					BLR = { has_opinion = { target = ROOT value > 15 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_gard_TT
+						BLR = { NOT = { has_country_flag = gard_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 019 } }
+					SOV = { has_country_flag = patriot_create }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_patriot_TT
+						SOV = { NOT = { has_country_flag = patriot_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 020 } }
+					CHI = { has_country_flag = dewe_create }
+					NOT = { tag = CHI }
+					country_exists = CHI
+					NOT = {	has_war_with = CHI }
+					CHI = { has_opinion = { target = ROOT value > 15 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_dewe_TT
+						CHI = { NOT = { has_country_flag = dewe_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 021 } }
+					CHI = { has_country_flag = over_create }
+					NOT = { tag = CHI }
+					country_exists = CHI
+					NOT = {	has_war_with = CHI }
+					CHI = { has_opinion = { target = ROOT value > 15 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_over_TT
+						CHI = { NOT = { has_country_flag = over_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 022 } }
+					CHI = { has_country_flag = front_create }
+					NOT = { tag = CHI }
+					country_exists = CHI
+					NOT = {	has_war_with = CHI }
+					CHI = { has_opinion = { target = ROOT value > 15 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_front_TT
+						CHI = { NOT = { has_country_flag = front_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 023 } }
+					SOV = { has_country_flag = redut_create }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_redut_TT
+						SOV = { NOT = { has_country_flag = redut_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 024 } }
+					SOV = { has_country_flag = gazprom_create }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_gazprom_TT
+						SOV = { NOT = { has_country_flag = gazprom_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 025 } }
+					EST = { has_country_flag = iron_create }
+					NOT = { tag = EST }
+					country_exists = EST
+					NOT = {	has_war_with = EST }
+					EST = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_iron_TT
+						EST = { NOT = { has_country_flag = iron_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 026 } }
+					PMR = { has_country_flag = sheriff_create }
+					NOT = { tag = PMR }
+					country_exists = PMR
+					NOT = {	has_war_with = PMR }
+					PMR = { has_opinion = { target = ROOT value > 10 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_sheriff_TT
+						PMR = { NOT = { has_country_flag = sheriff_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 027 } }
+					SOV = { has_country_flag = lukoil_create }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_lukoil_TT
+						SOV = { NOT = { has_country_flag = lukoil_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 028 } }
+					SOV = { has_country_flag = rosneft_create }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_rosneft_TT
+						SOV = { NOT = { has_country_flag = rosneft_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 029 } }
+					SOV = { has_country_flag = sberbank_create }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_sberbank_TT
+						SOV = { NOT = { has_country_flag = sberbank_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 030 } }
+					SOV = { has_country_flag = vtb_create }
+					NOT = { tag = SOV }
+					country_exists = SOV
+					NOT = {	has_war_with = SOV }
+					SOV = { has_opinion = { target = ROOT value > 20 } }
+					custom_trigger_tooltip = {
+						tooltip = pmc_vtb_TT
+						SOV = { NOT = { has_country_flag = vtb_yes } }
+					}
+				}
+				if = { limit = { check_variable = { v = 031 } }
+					check_variable = { global.merc_upgrade^4 > -1 }
+					set_temp_variable = { sum = global.merc_deploy_cost^0 }
+					add_to_temp_variable = { sum = global.merc_deployed^4 }
+					pmc_can_recruit = yes
+					custom_trigger_tooltip = {
+						tooltip = pmc_surpassing_TT
+						NOT = { check_variable = { sum > global.merc_capacity^4 } }
+					}
+				}
+			}
+		}
+
+		effects = {
+			name_of_pmc_companies_button_click = {
+				if = { limit = { check_variable = { v = 001 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = blackwater_sel
+					set_sel_pmc_units = yes
+					custom_effect_tooltip = pmc_open_units_list
+				}
+				if = { limit = { check_variable = { v = 002 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = aegis_sel
+					set_sel_pmc_units = yes
+					custom_effect_tooltip = pmc_open_units_list
+				}
+				if = { limit = { check_variable = { v = 003 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = constellis_sel
+					set_sel_pmc_units = yes
+					custom_effect_tooltip = pmc_open_units_list
+				}
+				if = { limit = { check_variable = { v = 004 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = wagner_sel
+					set_sel_pmc_units = yes
+					custom_effect_tooltip = pmc_open_units_list
+				}
+				if = { limit = { check_variable = { v = 031 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = md_sel
+					set_sel_pmc_units = yes
+					custom_effect_tooltip = pmc_open_units_list
+				}
+				if = { limit = { check_variable = { v = 005 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = mpri_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_mrpi_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_mrpi_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						USA = { country_event = pmc_events.2 }
+					}
+					USA = { set_country_flag = mpri_yes }
+					activate_mission = pmc_mpri
+				}
+				if = { limit = { check_variable = { v = 006 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = sadat_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_sadat_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_sadat_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -4 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						TUR = { country_event = pmc_events.5 }
+					}
+					TUR = { set_country_flag = sadat_yes }
+					activate_mission = pmc_sadat
+				}
+				if = { limit = { check_variable = { v = 007 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = rsb_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_rsb_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_rsb_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -3.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.4 }
+					}
+					SOV = { set_country_flag = rsb_yes }
+					activate_mission = pmc_rsb
+				}
+				if = { limit = { check_variable = { v = 008 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = sandline_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Mercenary SpecOps SandLine Unit"
+							is_locked = yes
+							priority = 2
+							regiments = {
+								Special_Forces = { x = 0 y = 0 }
+								Special_Forces = { x = 0 y = 1 }
+								Special_Forces = { x = 0 y = 2 }
+								Special_Forces = { x = 0 y = 3 }
+								Arty_Bat = { x = 2 y = 0 }
+								Arty_Bat = { x = 2 y = 1 }
+							}
+							support = {
+								H_Engi_Comp = { x = 0 y = 0 }
+								L_Recce_Comp = { x = 0 y = 1 }
+								SP_AA_Battery = { x = 0 y = 3 }
+							}
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Mercenary SpecOps SandLine Unit\" division_template = \"Mercenary SpecOps SandLine Unit\" start_experience_factor = 1.0"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -2.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						ENG = { country_event = pmc_events.3 }
+					}
+					ENG = { set_country_flag = sadline_yes }
+					activate_mission = pmc_sadline
+				}
+				if = { limit = { check_variable = { v = 009 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = kbr_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_kbr_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_kbr_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -3.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						USA = { country_event = pmc_events.4 }
+					}
+					USA = { set_country_flag = kbr_yes }
+					activate_mission = pmc_kbr
+				}
+				if = { limit = { check_variable = { v = 010 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = nirtal_sel
+					set_sel_pmc_units = yes
+					add_equipment_to_stockpile = {
+						type = Inf_equipment
+						amount = 1500
+					}
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_nirtal_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_nirtal_idea
+							days = 365
+						}
+					}
+					hidden_effect = {
+						ISR = { country_event = pmc_events.4 }
+					}
+					set_temp_variable = { treasury_change = -3.5 }
+					modify_treasury_effect = yes
+					ISR = { set_country_flag = nirtal_yes }
+					activate_mission = pmc_nirtal
+				}
+				if = { limit = { check_variable = { v = 011 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = halo_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_halo_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_halo_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -1.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						USA = { country_event = pmc_events.6 }
+						ENG = { country_event = pmc_events.6 }
+					}
+					USA = { set_country_flag = halo_yes }
+					activate_mission = pmc_halo
+				}
+				if = { limit = { check_variable = { v = 012 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = defense_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_dci_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_dci_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -4 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						FRA = { country_event = pmc_events.4 }
+					}
+					FRA = { set_country_flag = dci_yes }
+					activate_mission = pmc_dci
+				}
+				if = { limit = { check_variable = { v = 013 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = gardaworld_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Mercenary SpecOps GardaWorld Unit"
+							is_locked = yes
+							priority = 2
+							regiments = {
+								Special_Forces = { x = 0 y = 0 }
+								Special_Forces = { x = 0 y = 1 }
+								Special_Forces = { x = 0 y = 2 }
+								Special_Forces = { x = 0 y = 3 }
+							}
+							support = {
+								H_Engi_Comp = { x = 0 y = 0 }
+								L_Recce_Comp = { x = 0 y = 1 }
+							}
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Mercenary SpecOps GardaWorld Unit\" division_template = \"Mercenary SpecOps GardaWorld Unit\" start_experience_factor = 0.7"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -2.5 }
+					modify_treasury_effect = yes
+					CAN = { set_country_flag = garda_yes }
+					hidden_effect = {
+						CAN = { country_event = pmc_events.3 }
+					}
+					activate_mission = pmc_garda
+				}
+				if = { limit = { check_variable = { v = 014 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = esa_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_eu_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_eu_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -4 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						POL = { country_event = pmc_events.5 }
+					}
+					POL = { set_country_flag = eu_yes }
+					activate_mission = pmc_eu
+				}
+				if = { limit = { check_variable = { v = 015 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = g4s_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Mercenary SpecOps G4S Unit"
+							is_locked = yes
+							priority = 2
+							regiments = {
+								Special_Forces = { x = 0 y = 0 }
+								Special_Forces = { x = 0 y = 1 }
+								Special_Forces = { x = 0 y = 2 }
+								Special_Forces = { x = 0 y = 3 }
+								Special_Forces = { x = 1 y = 0 }
+								Special_Forces = { x = 1 y = 1 }
+								Special_Forces = { x = 1 y = 2 }
+								Special_Forces = { x = 1 y = 3 }
+								Arty_Bat = { x = 2 y = 0 }
+								Arty_Bat = { x = 2 y = 1 }
+							}
+							support = {
+								H_Engi_Comp = { x = 0 y = 0 }
+								L_Recce_Comp = { x = 0 y = 1 }
+								SP_AA_Battery = { x = 0 y = 3 }
+							}
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Mercenary SpecOps G4S Unit\" division_template = \"Mercenary SpecOps G4S Unit\" start_experience_factor = 1.0"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -3.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						GER = { country_event = pmc_events.4 }
+					}
+					GER = { set_country_flag = itt_yes }
+					activate_mission = pmc_itt
+				}
+				if = { limit = { check_variable = { v = 016 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = asgard_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_asgard_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_asgard_idea
+							days = 365
+						}
+					}
+					set_temp_variable = { treasury_change = -3.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						GER = { country_event = pmc_events.4 }
+					}
+					GER = { set_country_flag = asgrad_yes }
+					activate_mission = pmc_asgard
+				}
+				if = { limit = { check_variable = { v = 017 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = union_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Mercenary The Union of the Tribes of Sinai"
+							is_locked = yes
+							priority = 2
+							regiments = {
+								Special_Forces = { x = 0 y = 0 }
+								Special_Forces = { x = 0 y = 1 }
+								Special_Forces = { x = 0 y = 2 }
+								Special_Forces = { x = 0 y = 3 }
+							}
+							support = {
+								H_Engi_Comp = { x = 0 y = 0 }
+								L_Recce_Comp = { x = 0 y = 1 }
+							}
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Mercenary The Union of the Tribes of Sinai\" division_template = \"Mercenary The Union of the Tribes of Sinai\" start_experience_factor = 0.3"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -2.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						EGY = { country_event = pmc_events.3 }
+					}
+					EGY = { set_country_flag = sinai_yes }
+					activate_mission = pmc_sinai
+				}
+				if = { limit = { check_variable = { v = 018 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = gard_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Mercenary of Gard Service"
+							is_locked = yes
+							priority = 2
+							regiments = {
+								Special_Forces = { x = 0 y = 0 }
+								Special_Forces = { x = 0 y = 1 }
+								Special_Forces = { x = 0 y = 2 }
+								Special_Forces = { x = 0 y = 3 }
+							}
+							support = {
+								H_Engi_Comp = { x = 0 y = 0 }
+								L_Recce_Comp = { x = 0 y = 1 }
+							}
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Mercenary of Gard Service\" division_template = \"Mercenary of Gard Service\" start_experience_factor = 0.8"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -2.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						BLR = { country_event = pmc_events.3 }
+					}
+					BLR = { set_country_flag = gard_yes }
+					activate_mission = pmc_gard
+				}
+				if = { limit = { check_variable = { v = 019 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = patriot_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Patriot Heavy Mechanized Unit"
+							is_locked = yes
+							priority = 2
+							regiments = {
+								Arm_Inf_Bat = { x = 0 y = 0 }
+								Arm_Inf_Bat = { x = 0 y = 1 }
+								Arm_Inf_Bat = { x = 0 y = 2 }
+								Arm_Inf_Bat = { x = 1 y = 0 }
+								Arm_Inf_Bat = { x = 1 y = 1 }
+								Arm_Inf_Bat = { x = 1 y = 2 }
+							}
+							support = {
+								armor_Comp = { x = 0 y = 0 }
+								Arm_Recce_Comp = { x = 0 y = 1 }
+								H_Engi_Comp = { x = 0 y = 2 }
+							}
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.2 }
+					}
+					SOV = { set_country_flag = patriot_yes }
+					activate_mission = pmc_patriot
+				}
+				if = { limit = { check_variable = { v = 020 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = dewe_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Mercenary of Dewe Security Services"
+							is_locked = yes
+							priority = 2
+							regiments = {
+								Special_Forces = { x = 0 y = 0 }
+								Special_Forces = { x = 0 y = 1 }
+								Special_Forces = { x = 0 y = 2 }
+								Special_Forces = { x = 0 y = 3 }
+							}
+							support = {
+								H_Engi_Comp = { x = 0 y = 0 }
+								L_Recce_Comp = { x = 0 y = 1 }
+							}
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Mercenary of Dewe Security Services\" division_template = \"Mercenary of Dewe Security Services\" start_experience_factor = 0.3"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -3.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						CHI = { country_event = pmc_events.4 }
+					}
+					CHI = { set_country_flag = dewe_yes }
+					activate_mission = pmc_dewe
+				}
+				if = { limit = { check_variable = { v = 021 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = over_sel
+					set_sel_pmc_units = yes
+					set_temp_variable = { treasury_change = -2.5 }
+					modify_treasury_effect = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_over_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_over_idea
+							days = 365
+						}
+					}
+					hidden_effect = {
+						CHI = { country_event = pmc_events.3 }
+					}
+					CHI = { set_country_flag = over_yes }
+					activate_mission = pmc_over
+				}
+				if = { limit = { check_variable = { v = 022 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = front_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_front_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_front_idea
+							days = 365
+						}
+					}
+					add_equipment_to_stockpile = {
+						type = infantry_weapons1
+						amount = 1000
+						producer = CHI
+					}
+					add_equipment_to_stockpile = {
+						type = command_control_equipment
+						amount = 500
+						producer = CHI
+					}
+					set_temp_variable = { treasury_change = -7.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						CHI = { country_event = pmc_events.2 }
+					}
+					CHI = { set_country_flag = front_yes }
+					activate_mission = pmc_front
+				}
+				if = { limit = { check_variable = { v = 023 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = redut_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Redut PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+								L_Inf_Bat = { x = 0 y = 2 }
+								L_Inf_Bat = { x = 0 y = 3 }
+								Arty_Bat = { x = 0 y = 4 }
+								L_Inf_Bat = { x = 1 y = 0 }
+								L_Inf_Bat = { x = 1 y = 1 }
+								L_Inf_Bat = { x = 1 y = 2 }
+								L_Inf_Bat = { x = 1 y = 3 }
+								Arty_Bat = { x = 1 y = 4 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Redut PMC Battalion\" division_template = \"Redut PMC Battalion\" start_experience_factor = 1.0"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.2 }
+					}
+					SOV = { set_country_flag = redut_yes }
+					activate_mission = pmc_redut
+				}
+				if = { limit = { check_variable = { v = 024 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = gaz_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_gazprom_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_gazprom_idea
+							days = 365
+						}
+					}
+					hidden_effect = {
+						division_template = {
+							name = "Gazprom PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+								L_Inf_Bat = { x = 0 y = 2 }
+								L_Inf_Bat = { x = 0 y = 3 }
+								L_Inf_Bat = { x = 1 y = 0 }
+								L_Inf_Bat = { x = 1 y = 1 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Gazprom PMC Battalion\" division_template = \"Gazprom PMC Battalion\" start_experience_factor = 0.3"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.2 }
+					}
+					SOV = { set_country_flag = gazprom_yes }
+					activate_mission = pmc_gazprom
+				}
+				if = { limit = { check_variable = { v = 025 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = iron_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Iron Navy PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Iron Navy PMC Battalion\" division_template = \"Iron Navy PMC Battalion\" start_experience_factor = 0.1"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -1.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						EST = { country_event = pmc_events.6 }
+					}
+					EST = { set_country_flag = iron_yes }
+					activate_mission = pmc_iron
+				}
+				if = { limit = { check_variable = { v = 026 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = sheriff_sel
+					set_sel_pmc_units = yes
+					hidden_effect = {
+						division_template = {
+							name = "Sheriff PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Sheriff PMC Battalion\" division_template = \"Sheriff PMC Battalion\" start_experience_factor = 0.1"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -1.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						PMR = { country_event = pmc_events.6 }
+					}
+					PMR = { set_country_flag = sheriff_yes }
+					activate_mission = pmc_sheriff
+				}
+				if = { limit = { check_variable = { v = 027 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = lukoil_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_lukoil_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_lukoil_idea
+							days = 365
+						}
+					}
+					hidden_effect = {
+						division_template = {
+							name = "Lukoil PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+								L_Inf_Bat = { x = 0 y = 2 }
+								L_Inf_Bat = { x = 0 y = 3 }
+								L_Inf_Bat = { x = 1 y = 0 }
+								L_Inf_Bat = { x = 1 y = 1 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Lukoil PMC Battalion\" division_template = \"Lukoil PMC Battalion\" start_experience_factor = 0.1"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.2 }
+					}
+					SOV = { set_country_flag = lukoil_yes }
+					activate_mission = pmc_lukoil
+				}
+				if = { limit = { check_variable = { v = 028 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = rosneft_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_rosneft_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_rosneft_idea
+							days = 365
+						}
+					}
+					hidden_effect = {
+						division_template = {
+							name = "Rosneft PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+								L_Inf_Bat = { x = 0 y = 2 }
+								L_Inf_Bat = { x = 0 y = 3 }
+								L_Inf_Bat = { x = 1 y = 0 }
+								L_Inf_Bat = { x = 1 y = 1 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Rosneft PMC Battalion\" division_template = \"Rosneft PMC Battalion\" start_experience_factor = 0.1"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.2 }
+					}
+					SOV = { set_country_flag = rosneft_yes }
+					activate_mission = pmc_rosneft
+				}
+				if = { limit = { check_variable = { v = 029 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = sberbank_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_sberbank_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_sberbank_idea
+							days = 365
+						}
+					}
+					hidden_effect = {
+						division_template = {
+							name = "Sber PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+								L_Inf_Bat = { x = 0 y = 2 }
+								L_Inf_Bat = { x = 0 y = 3 }
+								L_Inf_Bat = { x = 1 y = 0 }
+								L_Inf_Bat = { x = 1 y = 1 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Sber PMC Battalion\" division_template = \"Sber PMC Battalion\" start_experience_factor = 0.1"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.2 }
+					}
+					SOV = { set_country_flag = sberbank_yes }
+					activate_mission = pmc_sberbank
+				}
+				if = { limit = { check_variable = { v = 030 } }
+					clr_country_pmc_flag = yes
+					set_country_flag = vtb_sel
+					set_sel_pmc_units = yes
+					if = {
+						limit = {
+							OR = {
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
+							}
+						}
+						add_timed_idea = {
+							idea = pmc_vtb_idea1
+							days = 365
+						}
+					}
+					else = {
+						add_timed_idea = {
+							idea = pmc_vtb_idea
+							days = 365
+						}
+					}
+					hidden_effect = {
+						division_template = {
+							name = "Vtb PMC Battalion"
+							regiments = {
+								L_Inf_Bat = { x = 0 y = 0 }
+								L_Inf_Bat = { x = 0 y = 1 }
+								L_Inf_Bat = { x = 0 y = 2 }
+								L_Inf_Bat = { x = 0 y = 3 }
+								L_Inf_Bat = { x = 1 y = 0 }
+								L_Inf_Bat = { x = 1 y = 1 }
+							}
+							support = {
+								L_Recce_Comp = { x = 0 y = 0 }
+								L_Engi_Comp = { x = 0 y = 1 }
+							}
+							priority = 2
+						}
+						random_owned_controlled_state = {
+							limit = { ROOT = { has_full_control_of_state = PREV } }
+							prioritize = { 2148 }
+							create_unit = {
+								division = "name = \"Vtb PMC Battalion\" division_template = \"Vtb PMC Battalion\" start_experience_factor = 0.1"
+								owner = ROOT
+							}
+						}
+					}
+					set_temp_variable = { treasury_change = -5.5 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						SOV = { country_event = pmc_events.2 }
+					}
+					SOV = { set_country_flag = vtb_yes }
+					activate_mission = pmc_vtb
+				}
+				if = { limit = { is_ai = yes }
+					set_country_flag = {
+						flag = ai_recent_pmc_select
+						days = 120
+					}
+				}
+				update_international_system_gui = yes
+			}
+		}
+	}
+
+	international_state_unrecognized_countries_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = international_systems_gui
+		window_name = "IS_unrecognized_states_container"
+
+		dirty = global.international_system_refresh_gui
+		ai_test_interval = 168
+		ai_max_weight_taken_per_test = 1
+
+		dynamic_lists = {
+			list_of_unrecognized_states = {
+				array = global.Unrecognised_States
+				entry_container = IS_states_to_recognize_list
+				ai_weights = {
+					name_of_state_button_click = {
+						ai_will_do = {
+							factor = 1
+
+							modifier = {
+								add = 25
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  > 10 } } }
+							}
+							modifier = {
+								add = 50
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  > 25 } } }
+							}
+							modifier = {
+								add = 100
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  > 50 } } }
+							}
+							#dont select them if there is negative opinion
+							modifier = {
+								add = -100
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  < 0 } } }
+							}
+							#killswitch if a nation has recently picked a nation
+							modifier = {
+								factor = 0
+								has_country_flag = state_swap_slow_flag
+							}
+						}
+					}
+				}
+			}
+
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				has_country_flag = state_menu_open
+			}
+		}
+
+		triggers = {
+			name_of_state_button_click_enabled = {
+				NOT = { has_war_with = var:v }
+			}
+		}
+
+		effects = {
+			name_of_state_button_click = {
+				set_variable = { open_state = v }
+				set_country_flag = has_nation_selected
+				if = { limit = { is_ai = yes }
+					set_country_flag = {
+						flag = state_swap_slow_flag
+						days = 120
+					}
+				}
+				update_international_system_gui = yes
+			}
+		}
+	}
+
+	international_counterterror_countries_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = international_systems_gui
+		window_name = "IS_counter_terror_states_container"
+
+		dirty = global.international_system_refresh_gui
+		ai_test_interval = 168
+		ai_max_weight_taken_per_test = 1
+
+		dynamic_lists = {
+			IS_list_of_counterterror_states = {
+				array = ct_region_selected
+				entry_container = IS_counter_terror_state_support_list
+				ai_weights = {
+					name_of_ct_state_button_click = {
+						ai_will_do = {
+							factor = 1
+
+							modifier = {
+								add = 25
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  > 25 } } }
+							}
+							modifier = {
+								add = 25
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  > 50 } } }
+							}
+							modifier = {
+								add = 25
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  > 75 } } }
+							}
+
+							modifier = {
+								add = 10
+								var:v = {
+									has_country_flag = threat_level_low
+								}
+							}
+							modifier = {
+								add = 25
+								var:v = {
+									has_country_flag = threat_level_moderate
+								}
+							}
+							modifier = {
+								add = 50
+								var:v = {
+									has_country_flag = threat_level_substantial
+								}
+							}
+							modifier = {
+								add = 75
+								var:v = {
+									has_country_flag = threat_level_severe
+								}
+							}
+							modifier = {
+								add = 150
+								var:v = {
+									has_country_flag = threat_level_critical
+								}
+							}
+
+							modifier = {
+								add = -50
+								var:ct_state_selected = { ROOT = { has_opinion = { target = PREV value  < 0 } } }
+							}
+
+							#Killswitch for having recently selected a nation to do CT advisors with
+							modifier = {
+								factor = 0
+								has_country_flag = ct_nation_sel_delay
+							}
+						}
+					}
+				}
+			}
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				has_country_flag = counterterror_open
+			}
+		}
+
+		effects = {
+			name_of_ct_state_button_click = {
+				set_variable = { ct_state_selected = v }
+				if = { limit = { is_ai = yes }
+					set_country_flag = {
+						flag = ct_nation_sel_delay
+						days = 180
+					}
+				}
+				update_international_system_gui = yes
+			}
+		}
+	}
+
+	international_counterterror_stats_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = international_systems_gui
+		window_name = "IS_counter_terror_stats_container"
+
+		dirty = global.international_system_refresh_gui
+		dynamic_lists = {
+			IS_list_of_counterterror_stats = {
+				array = ct_region_selected
+				entry_container = counter_terror_stat_list
+				change_scope = yes
+			}
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				has_country_flag = counterterror_open
+			}
+		}
+	}
+}
