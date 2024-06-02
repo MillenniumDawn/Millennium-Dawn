@@ -177,7 +177,7 @@ catdec_mdmosjap_JAP_war_strategies = {
 		ai_will_do = { factor = 0 }
 	}
 
-	JAP_dec_jsdf_navy_equipment_heavy = {
+	JAP_dec_jsdf_navy_equipment_light = {
 		allowed = { original_tag = JAP }
 
 		visible = {
@@ -604,9 +604,7 @@ catdec_mdmosjap_JAP_war_strategies = {
 			if = {
 				limit = { NOT = { has_dlc = "By Blood Alone" } }
 				add_equipment_to_stockpile = {
-					equipment = {
-						type = MR_Fighter3
-					}
+					type = MR_Fighter3
 					amount = 50
 				}
 
@@ -614,9 +612,7 @@ catdec_mdmosjap_JAP_war_strategies = {
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				add_equipment_to_stockpile = {
-					equipment = {
-						type = MR_Fighter3
-					}
+					type = MR_Fighter3
 					amount = 50
 				}
 			}
@@ -646,9 +642,7 @@ catdec_mdmosjap_JAP_war_strategies = {
 			if = {
 				limit = { NOT = { has_dlc = "By Blood Alone" } }
 				add_equipment_to_stockpile = {
-					equipment = {
-						type = MR_Fighter3
-					}
+					type = MR_Fighter3
 					amount = 50
 				}
 
@@ -656,9 +650,7 @@ catdec_mdmosjap_JAP_war_strategies = {
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				add_equipment_to_stockpile = {
-					equipment = {
-						type = MR_Fighter3
-					}
+					type = MR_Fighter3
 					amount = 50
 				}
 			}
@@ -2565,194 +2557,4 @@ catdec_mdmosjap_JAP_diet = {
 			factor = 0
 		}
 	}
-
-	#Recover from the Financial Crisis
-	mdmosjap_JAP_recover_fincrisis = {
-		allowed = { original_tag = JAP }
-
-		fire_only_once = yes
-		days_mission_timeout = var_JAP_financial_crisis_recover_date_counts
-		is_good = yes
-		activation = {
-			JAP = {
-				has_country_flag = MDMOSJAP_JAP_LEHMAN_SHOCK_RECOVER_DATE_CONFIRMED
-				NOT = { has_country_flag = MDMOSJAP_JAP_LEHMAN_SHOCK_RECOVER_START }
-			}
-		}
-
-		available = {
-			hidden_trigger = {
-				JAP = { NOT = { has_country_flag = MDMOSJAP_JAP_LEHMAN_SHOCK_RECOVER_DATE_CONFIRMED } }
-			}
-		}
-
-		#complete_effect = {
-		#	JAP = {
-		#		country_event = mdmosjap_japan.20030925
-		#	}
-		#}
-
-		timeout_effect = {
-			if = {
-				limit = { NOT = { has_country_flag = MDMOSJAP_JAP_LEHMAN_SHOCK_RECOVER_START } }
-				JAP = {
-					remove_ideas = JAP_lehman_shock
-					add_timed_idea = { idea = JAP_lehman_shock_recovery days = 180 }
-					set_country_flag = MDMOSJAP_JAP_LEHMAN_SHOCK_RECOVER_START
-				}
-			} else = { }
-		}
-	}
-
-#----------------------------------------------------------------
-#The Japan's Oil Diplomacy
-#----------------------------------------------------------------
-catdec_mdmosjap_JAP_oil_diplomacy = {
-
-	#Gain annual oil interests
-	dec_mdmosjap_JAP_gain_annual_oil_interests = {
-		icon = oil
-		on_map_mode = map_only
-
-		visible = {
-			ROOT = {
-				OR = {
-					tag = JAP
-					tag = JPW
-					tag = JPK
-					tag = JPC
-				}
-				has_completed_focus = JAP_oil_diplomacy
-			}
-		#	FROM = {
-		#		OR = {
-		#			capital_scope = { is_on_continent = africa }
-		#			capital_scope = { is_on_continent = middle_east }
-		#		}
-		#		exists = yes
-		#		NOT = { has_war = yes }
-		#		any_owned_state = { has_resources_amount = { resource = oil amount > 4 } }
-		#	}
-		}
-
-		target_root_trigger = { has_completed_focus = JAP_oil_diplomacy }
-		target_trigger = {
-			FROM = {
-				OR = {
-					capital_scope = { is_on_continent = africa }
-					capital_scope = { is_on_continent = middle_east }
-				}
-				exists = yes
-				any_owned_state = { has_resources_amount = { resource = oil amount > 0 } }
-				NOT = { has_idea = md_closed_economy }
-			}
-		}
-
-		highlight_states = {
-			is_controlled_by = FROM
-		}
-
-		available = {
-			ROOT = {
-				hidden_trigger = {
-					OR = {
-						tag = JAP
-						tag = JPW
-						tag = JPK
-						tag = JPC
-					}
-				}
-				has_completed_focus = JAP_oil_diplomacy
-				NOT = { has_war = yes }
-				NOT = { is_puppet = yes }
-				NOT = { is_subject = yes }
-				NOT = { has_war_with = FROM }
-				NOT = { has_idea = md_closed_economy }
-			}
-			FROM = {
-				OR = {
-					capital_scope = { is_on_continent = africa }
-					capital_scope = { is_on_continent = middle_east }
-				}
-				exists = yes
-				NOT = { has_war = yes }
-				any_owned_state = { has_resources_amount = { resource = oil amount > 4 } }
-				NOT = { has_idea = md_closed_economy }
-		#		NOT = { tag = ISI }
-		#		NOT = { has_war = yes }
-		#		NOT = { has_idea = Non_State_Actor }
-			}
-		}
-
-		#cost = 10
-		custom_cost_trigger = {
-			ROOT = {
-				check_variable = { treasury > 10.0 }
-			#	has_political_power > 10
-			}
-		}
-		#custom_cost_text = CCT_mdmosjap_treasury_10_pp_10
-		custom_cost_text = CCT_mdmosjap_treasury_10
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: dec_mdmosjap_JAP_gain_annual_oil_interests -> [From.GetName]"
-			capital_scope = {
-				add_resource = { type = oil amount = 1 }
-			}
-			FROM = {
-				#Copied and arranged from spread_influence
-				add_to_variable = { influence_gain = 10 } #base gain
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						add_to_variable = { influence_array_val^v = influence_gain }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { NOT = { has_country_flag = found } }
-						add_to_array = { influence_array = ROOT.id }
-						add_to_array = { influence_array_val = influence_gain }
-				}
-				clr_country_flag = found
-				recalculate_influence = yes
-
-				country_event = mdmosjap_japan.3000101
-				custom_effect_tooltip = JAP_OIL_DIPLOMACY_DECISION_TARGET_EFFECT_TT
-			}
-		#	add_political_power = -10
-			subtract_from_variable = { treasury = 10.0 }
-			add_to_variable = { int_investments = 10.0 }
-		}
-
-		days_remove = 365
-		modifier = {
-			consumer_goods_factor = 0.01
-		}
-		remove_effect = {
-			capital_scope = {
-				add_resource = { type = oil amount = -1 }
-			}
-		}
-
-		ai_will_do = {
-			base = 0
-		}
-	}
-}
-#----------------------------------------------------------------
-#Japan tree details_defense
-#----------------------------------------------------------------
-catdec_japan_tree_details_defense = {
-	dec_proceed_with_ship_order = {
-		allowed = { original_tag = JAP }
-
-	}
-}
-catdec_japan_naval_vessel_specialization = {
-
 }
