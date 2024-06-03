@@ -3283,56 +3283,44 @@ update_state_variables = {
 calculate_gdp = {
 	set_variable = { var = gdp_total value = 0 }
 
-	#calculates employment
+	# Calculates Unemployment
 	set_temp_variable = { workforce_total = population_total_m }
 	multiply_temp_variable = { workforce_total = 0.6 }
 	set_temp_variable = { workforce_total_multiplier = 1 }
 	add_to_temp_variable = { workforce_total_multiplier = modifier@total_workforce_modifier }
-	clamp_temp_variable = {
-		var = workforce_total_multiplier
-		min = 0
-		max = 1.5 #this means that the maximum available workforce can't exceed 90% of the population
-	}
+	# this means that the maximum available workforce can't exceed 90% of the population
+	clamp_temp_variable = { var = workforce_total_multiplier min = 0 max = 1.5 }
 	multiply_temp_variable = { workforce_total = workforce_total_multiplier }
-	set_variable = { workforce_total_display = workforce_total }
-	set_variable = { workforce_total_percentage_display = workforce_total_display }
+	set_variable = { workforce_total_percentage_display = workforce_total }
 	divide_variable = { workforce_total_percentage_display = population_total_m }
 
-	#primary sector
-
-	#employment in resources extraction
+	# Primary sector
+	# Employment in resources extraction
 	set_variable = { resource_sector_workers = total_resource_amount }
 	multiply_variable = { resource_sector_workers = 100 } #in thousands
 	set_temp_variable = { resource_sector_workers_multiplier = 1 }
 	add_to_temp_variable = { resource_sector_workers_multiplier = modifier@resource_sector_workers_modifier }
 	multiply_variable = { resource_sector_workers = resource_sector_workers_multiplier }
 	divide_variable = { resource_sector_workers = gdpc_converging_var }
-	#number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
+	# Number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
 	multiply_variable = { resource_sector_workers = 0.001 } #from thousands to milions
 	set_temp_variable = { max_resource_workers = workforce_total }
 	multiply_temp_variable = { max_resource_workers = 0.75 } #percentage cap to resource workers
 	subtract_from_temp_variable = { workforce_total = max_resource_workers }
 	set_variable = { resource_sector_worker_fulfillment = max_resource_workers }
 	divide_variable = { resource_sector_worker_fulfillment = resource_sector_workers }
-	clamp_variable = {
-		var = resource_sector_worker_fulfillment
-		min = 0
-		max = 1
-	}
+	clamp_variable = { var = resource_sector_worker_fulfillment min = 0 max = 1 }
 	set_variable = { resource_sector_worker_fulfillment_var = -1 }
 	add_to_variable = { resource_sector_worker_fulfillment_var = resource_sector_worker_fulfillment }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = resources_manpower_fulfillment_modifier } } }
 		add_dynamic_modifier = { modifier = resources_manpower_fulfillment_modifier }
 	}
-	if = {
-		limit = {
-			check_variable = { resource_sector_workers > max_resource_workers }
-		}
+	if = { limit = { check_variable = { resource_sector_workers > max_resource_workers } }
 		set_variable = { resource_sector_workers = max_resource_workers }
 	}
 	subtract_from_temp_variable = { max_resource_workers = resource_sector_workers }
 	add_to_temp_variable = { workforce_total = max_resource_workers }
-	#calculates gdp from resources
+	# Calculates gdp from resources
 	set_temp_variable = { gdp_from_resource_sector = total_resource_amount }
 	multiply_temp_variable = { gdp_from_resource_sector = 0.5 } #gdp per resource, currently flat will look to improve it based on fluctuating price maybe
 	set_temp_variable = { gdp_from_resource_sector_multiplier = 1 }
@@ -3342,7 +3330,7 @@ calculate_gdp = {
 	add_to_temp_variable = { gdp_from_resource_sector_tech_multiplier = modifier@local_resources_factor }
 	multiply_temp_variable = { gdp_from_resource_sector = gdp_from_resource_sector_tech_multiplier }
 
-	#employment in agriculture
+	# Employment in agriculture
 	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
 	clamp_temp_variable = {
 		var = temp_gdp_per_capita
@@ -3369,12 +3357,10 @@ calculate_gdp = {
 		set_temp_variable = { agriculture_workers_perc_modifier = modifier@agriculture_workers_modifier }
 		add_to_temp_variable = { agriculture_workers_perc_modifier = 1 }
 		multiply_temp_variable = { agriculture_workers_percentage = agriculture_workers_perc_modifier }
-		clamp_temp_variable = { #just in case there are very very low gdp/c
-			var = agriculture_workers_percentage
-			min = 0.0
-			max = 0.9
-		}
+		# just in case there are very very low gdp/c
+		clamp_temp_variable = { var = agriculture_workers_percentage min = 0.0 max = 0.9 }
 	}
+
 	set_variable = { agriculture_workers = workforce_total }
 	multiply_variable = { agriculture_workers = agriculture_workers_percentage }
 	set_variable = { gdp_from_agriculture = agriculture_workers }
@@ -3387,7 +3373,7 @@ calculate_gdp = {
 	multiply_variable = { gdp_from_agriculture = 1.337 } #control factor
 	subtract_from_temp_variable = { workforce_total = agriculture_workers }
 
-	#factories and offices
+	# Factories & Offices Employment
 	set_temp_variable = { workers_per_civ_fac = 0.360 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
 	set_temp_variable = { workers_per_mil_fac = 0.025 }
 	set_temp_variable = { workers_per_dockyard = 0.025 }
