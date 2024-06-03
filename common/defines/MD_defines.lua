@@ -220,7 +220,7 @@
 	NDefines.NTechnology.MAX_TECH_SHARING_BONUS = 0.25 -- Nerfed to 0.25 from Tech Sharing
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 100
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 24
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
@@ -383,18 +383,19 @@
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
 	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
-	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 100 -- Eyeballed average amount of airplanes in the airwings
+	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 50 -- Eyeballed average amount of airplanes in the airwings
 	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 20 -- 2
+	NDefines.NAir.AI_ALLOWED_PLANES_KEPT_IN_RESERVE = 0.15
 	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 6 -- 2.5
-	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.80 -- 0.3
+	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.70 -- 0.3
 	NDefines.NAir.COMBAT_BETTER_SPEED_DAMAGE_INCREASE = 0.45 -- 0.6
 	NDefines.NAir.COMBAT_MULTIPLANE_CAP = 3.0 -- 3.0
 	NDefines.NAir.COMBAT_DAMAGE_STATS_MULTILPIER = 0.3 -- 0.2
 	NDefines.NAir.COMBAT_DAMAGE_SCALE = 1.1 -- 0.25
 	NDefines.NAir.COMBAT_DAMAGE_SCALE_CARRIER = 6 -- 6
 	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE = 10000 -- 10000 --Upped the count to ensure more airusages and coverage
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 6000 -- 10000
-	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 5000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_GROUND_ATTACK = 7000 -- 10000
+	NDefines.NAir.COMBAT_MAX_WINGS_AT_ONCE_PORT_STRIKE = 7000 -- 10000
 	NDefines.NAir.DETECT_CHANCE_FROM_OCCUPATION = 0.05 -- 0.10
 	NDefines.NAir.DETECT_CHANCE_FROM_RADARS = 0.85 -- 0.5
 	NDefines.NAir.DETECT_CHANCE_FROM_AIRCRAFTS = 0.975 -- 0.8
@@ -450,7 +451,7 @@
 	NDefines.NAir.DISRUPTION_FACTOR = 6.0 -- 4.0
 	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
 	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
-	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 20 -- 50 is vanilla
+	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4 -- 30
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 4 -- 1
