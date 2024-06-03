@@ -1,0 +1,189 @@
+#######
+##IRE##
+#######
+
+# ** Notes **
+# Using variables and testing
+# In HOI4 variables can only store numbers, NOT strings / char. 
+# A variable with no value assigned is by default 0.
+# Make sure to declare the variable in correct scope for intended use. 
+# Or else if the variable dont exist it will cause errors upon attempting to access it.
+# Localisation: Variables and flags wont display unless localisation is made for them.
+# Testing needs to be done through decisions/console commands.
+# Temporary variables are useful to reduce impact on performance.
+#	Values stored inside temp.vars are deleted once the code is executed. 
+# Outside of HOI4 Example of temp.var: variable defined in a method, instance-variables for objects. 
+# Temp.var can normally be stored forever by declaring them static. 
+#####################################################################
+# When to use variables?
+# Working with values that needs to be changed, or generated in-game.
+# Variables are useful for counting (just as in any other program)
+# Variables can be used in focuses/decisions/events effect and / or conditions
+#####################################################################
+# Basic variable commands:
+# set_variable - creates variable and sets it's value to the given value
+# add_to_variable - += to variable
+# substract_from_variable - -= to variable
+# multiply_variable - *= to variable
+# clear_variable - clears the variable, deleting it from the game. C: free(var), python: del var
+# round_variable - rounds off to closest integer
+# (trigger) check_variable - checks the value of a variable 
+# effect = var:varName - Uses the variable to modify the effect with its value
+# var:TAG.varName - TAG. Looks at scope to other countries
+IRE_republicanism_TT_decision_category = {
+
+}
+
+IRE_debug_category = {
+    clear_variable_decision = {
+        icon = generic_industry
+
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+            clear_variable = IRE_republicanism
+
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+    add_to_variable_decision = {
+        icon = generic_industry
+
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+            add_to_variable = { IRE_republicanism = 25 } # 50 + 25
+            ARM = { add_political_power = var:IRE.IRE_republicanism } 
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+    send_equipment_decision = {
+        icon = generic_industry
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+            send_equipment = {
+                equipment = infantry_weapons1
+                amount = var:num_equipment@command_control_equipment # or. amount = var:varNum / IRE_republicanism
+                target = ARM
+            }
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+    start_civil_war_decision = {
+        icon = generic_industry
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+            SAU = {
+                start_civil_war = {
+                   ideology = communism
+                   size = var:SOV.party_popularity@communism # party popularity value from nationalist object owned by TAG.
+                }
+            }
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+    befriend_country_decision = {
+        icon = generic_industry
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+            set_variable = { country_to_befriend = ARM.id }
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+    guarantee_friend_decision = {
+        icon = generic_industry
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+           SOV = { give_guarantee = var:IRE.country_to_befriend }
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+    temp_var1_decision = {
+        icon = generic_industry
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+            set_temp_variable = { num_weapons = 500 }
+            multiply_temp_variable = { num_weapons = 5 }
+            SOV = {
+                send_equipment = {
+                    equipment = command_control_equipment
+                    amount = var:IRE.num_weapons
+                    target = ARM
+                }
+            }
+        }
+        ai_will_do = {
+            factor = 10
+        }
+    }
+    temp_randomVar_decision = {
+        icon = generic_industry
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+            set_temp_variable = { random_num_weapons = 0 }
+            randomize_temp_variable = {
+                var = random_num_weapons
+                distribution = uniform
+                min = 200
+                max = 4000
+            }
+            SOV = {
+                send_equipment = {
+                    equipment = command_control_equipment
+                    amount = var:IRE.num_weapons
+                    target = KUR
+                }
+            }
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+    skeleton_decision = {
+        icon = generic_industry
+        available = { is_ai = no }
+        visible = { is_debug = yes }
+        fire_only_once = no
+        cost = 0
+        complete_effect = {
+        }
+        ai_will_do = {
+            factor = 1
+        }
+    }
+}
+
