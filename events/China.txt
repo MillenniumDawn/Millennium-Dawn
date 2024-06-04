@@ -2151,47 +2151,34 @@ country_event = {
 
 	is_triggered_only = yes
 
+	# Accept their Demands
 	option = {
-		name = china.24.a #Accept their demands.
-		clr_country_flag = Recognised_ROC
-			CHI = {
-				remove_opinion_modifier = {
-					modifier = recognize_taiwan_chi
-					target = ROOT
-				}
-			}
-			TAI = {
-				add_opinion_modifier = {
-					modifier = revoked_recognize_taiwan
-					target = ROOT
-				}
-				remove_opinion_modifier = {
-					modifier = recognize_taiwan
-					target = ROOT
-				}
-			}
-		add_political_power = -100
+		name = china.24.a
 		log = "[GetDateText]: [This.GetName]: china.24.a executed"
+		clr_country_flag = Recognised_ROC
+		CHI = {
+			remove_opinion_modifier = { modifier = recognize_taiwan_chi target = ROOT }
+		}
+		TAI = {
+			add_opinion_modifier = { modifier = revoked_recognize_taiwan target = ROOT }
+			remove_opinion_modifier = { modifier = recognize_taiwan target = ROOT }
+		}
+		add_political_power = -100
 	}
 
+	# We are nothing if not loyal!
 	option = {
-		name = china.24.b #We are nothing if not loyal!
+		name = china.24.b
 		log = "[GetDateText]: [This.GetName]: china.24.b executed"
-		add_opinion_modifier = {
-			target = CHI
-			modifier = attacks_on_our_economy
-		}
+		add_opinion_modifier = { target = CHI modifier = attacks_on_our_economy }
 		CHI = {
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = harsh_sanctions
-			}
+			add_opinion_modifier = { target = ROOT modifier = harsh_sanctions }
 		}
 		set_country_flag = loyal_to_ROC
 	}
 }
 
-#Taiwan SAR establish
+# Taiwan S.A.R Established
 country_event = {
 	id = china.25
 	title = china.25.t
@@ -2203,166 +2190,163 @@ country_event = {
 
 	option = {
 		name = china.25.a
+		log = "[GetDateText]: [This.GetName]: china.25.a executed"
 		add_political_power = 100
 		set_autonomy = {
-				target = TAI
-				autonomy_state = autonomy_special_administrative_region_TAI
+			target = TAI
+			autonomy_state = autonomy_special_administrative_region_TAI
+		}
+		TAI = { set_country_flag = TAI_sar_exec }
+		if = {
+			limit = {
+				CHI = { has_government = communism }
+				TAI = { has_country_flag = TAI_coup_success }
 			}
-			TAI = { set_country_flag = TAI_sar_exec }
-			if = {
-				limit = {
-					AND = { CHI = { has_government = communism }
-                            TAI = { has_country_flag = TAI_coup_success }
-							}
-				}
-				hidden_effect = {
-					TAI = {
-						set_politics = {
-							ruling_party = communism
-							elections_allowed = no
-						}
-						set_popularities = {
-							democratic = 59.0
-							communism = 37.0
-							fascism = 0.0
-							neutrality = 4.0
-							nationalist = 0.0
-						}
-						set_variable = { party_pop_array^1 = 0.320 } #conservatism
-						set_variable = { party_pop_array^2 = 0.270 } #liberalism
-						set_variable = { party_pop_array^6 = 0.370 } #Reactionary
-						set_variable = { party_pop_array^14 = 0.03 } #Neutral_conservatism
-						set_variable = { party_pop_array^18 = 0.01 } #neutral_Social
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 6 }
-						update_government_coalition_strength = yes
-						update_party_name = yes
-						set_coalition_drift = yes
-						recalculate_party = yes
+			hidden_effect = {
+				TAI = {
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
 					}
+					set_popularities = {
+						democratic = 59.0
+						communism = 37.0
+						fascism = 0.0
+						neutrality = 4.0
+						nationalist = 0.0
+					}
+					set_variable = { party_pop_array^1 = 0.320 } #conservatism
+					set_variable = { party_pop_array^2 = 0.270 } #liberalism
+					set_variable = { party_pop_array^6 = 0.370 } #Reactionary
+					set_variable = { party_pop_array^14 = 0.03 } #Neutral_conservatism
+					set_variable = { party_pop_array^18 = 0.01 } #neutral_Social
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 6 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					recalculate_party = yes
 				}
+			}
+		}
+		else_if = {
+			limit = {
+				TAI = { NOT = { has_country_flag = TAI_coup_success } }
+				CHI = { NOT = { has_government = communism } }
+			}
+			hidden_effect = {
+				TAI = {
+					set_politics = {
+						ruling_party = democratic
+						elections_allowed = yes
+					}
+					set_popularities = {
+						democratic = 68.0
+						communism = 0.5
+						fascism = 0.0
+						neutrality = 31.5
+						nationalist = 0.0
+					}
+					set_variable = { party_pop_array^1 = 0.390 } #conservatism
+					set_variable = { party_pop_array^2 = 0.290 } #liberalism
+					set_variable = { party_pop_array^6 = 0.005 } #conservatism
+					set_variable = { party_pop_array^14 = 0.3 } #Neutral_conservatism
+					set_variable = { party_pop_array^18 = 0.015 } #neutral_Social
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 1 }
+					add_to_array = { gov_coalition_array = 6 }
+					add_to_array = { gov_coalition_array = 14 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					recalculate_party = yes
+					recalculate_party = yes
+				}
+			}
+		}
+		TAI = {
+			set_cosmetic_tag = TAI_autonomy_special_administrative_region
+			clr_country_flag = dynamic_flag
+			add_ideas = Non_State_Actor
+			add_ideas = One_Country_Two_Systems
+			if = {
+				limit = { has_idea = legacy_of_1949 }
+				remove_ideas = legacy_of_1949
 			}
 			else_if = {
-				limit = {
-						AND = {
-							TAI = { NOT = { has_country_flag = TAI_coup_success } }
-							CHI = { NOT = { has_government = communism } }
-						}		
-				}
-				hidden_effect = {
-					TAI = {
-						set_politics = {
-							ruling_party = democratic
-							elections_allowed = yes
-						}
-						set_popularities = {
-							democratic = 68.0
-							communism = 0.5
-							fascism = 0.0
-							neutrality = 31.5
-							nationalist = 0.0
-						}
-						set_variable = { party_pop_array^1 = 0.390 } #conservatism
-						set_variable = { party_pop_array^2 = 0.290 } #liberalism
-						set_variable = { party_pop_array^6 = 0.005 } #conservatism
-						set_variable = { party_pop_array^14 = 0.3 } #Neutral_conservatism
-						set_variable = { party_pop_array^18 = 0.015 } #neutral_Social
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 1 }
-						add_to_array = { gov_coalition_array = 6 }
-						add_to_array = { gov_coalition_array = 14 }
-						update_government_coalition_strength = yes
-						update_party_name = yes
-						set_coalition_drift = yes
-						recalculate_party = yes
-						recalculate_party = yes
-					}
-				}
-			}
-			TAI = {
-				set_cosmetic_tag = TAI_autonomy_special_administrative_region
-				clr_country_flag = dynamic_flag
-				add_ideas = Non_State_Actor
-				add_ideas = One_Country_Two_Systems
-				if = {
-					limit = { has_idea = legacy_of_1949 }
-					remove_ideas = legacy_of_1949
-				}
-				else_if = {
-					limit = { has_idea = legacy_of_1949_1 }
-					remove_ideas = legacy_of_1949_1
-				}
-				if = {
-					limit = { has_idea = Major_Non_NATO_Ally }
-					remove_ideas = Major_Non_NATO_Ally
-				}
-				if = {
-					limit = { has_idea = rival_government }
-					remove_ideas = rival_government
-				}
-				if = {
-					limit = { has_idea = fate_of_mongolian_area }
-					remove_ideas = fate_of_mongolian_area
-				}
-				else_if = {
-					limit = { has_idea = fate_of_mongolian_area_1 }
-					remove_ideas = fate_of_mongolian_area_1
-				}
+				limit = { has_idea = legacy_of_1949_1 }
+				remove_ideas = legacy_of_1949_1
 			}
 			if = {
-				limit = { NOT = { has_completed_focus = CHI_Settle_Territorial_Disputes } }
-				hidden_effect = {
-					every_state = { #remove core for former Mainland states
-						limit = {
-							is_greater_china_state = yes
-						}
-						remove_core_of = TAI
+				limit = { has_idea = Major_Non_NATO_Ally }
+				remove_ideas = Major_Non_NATO_Ally
+			}
+			if = {
+				limit = { has_idea = rival_government }
+				remove_ideas = rival_government
+			}
+			if = {
+				limit = { has_idea = fate_of_mongolian_area }
+				remove_ideas = fate_of_mongolian_area
+			}
+			else_if = {
+				limit = { has_idea = fate_of_mongolian_area_1 }
+				remove_ideas = fate_of_mongolian_area_1
+			}
+		}
+		if = {
+			limit = { NOT = { has_completed_focus = CHI_Settle_Territorial_Disputes } }
+			hidden_effect = {
+				every_state = { #remove core for former Mainland states
+					limit = {
+						is_greater_china_state = yes
 					}
-					every_state = { #remove claim for former Mainland states
-						limit = {
-							is_greater_china_state = yes
-						}
-						remove_claim_by = TAI
-					}
-					496 = { remove_claim_by = TAI }
-					722 = { remove_claim_by = TAI }
-					1011 = { remove_claim_by = TAI }
-					every_state = { #add core for current own
-						limit = {
-							is_taiwan_area_state = yes
-						}
-						add_core_of = TAI
-					}
+					remove_core_of = TAI
 				}
-				hidden_effect = {
-					CHI = {
-						remove_state_core = 598
-						remove_state_core = 599
-						remove_state_core = 600
-						remove_state_core = 1155
-						remove_state_core = 1156
-						remove_state_core = 1157
-						remove_state_core = 1158
-						transfer_state = 430
-						transfer_state = 491
-						transfer_state = 1015
-						transfer_state = 1109
-						add_state_core = 491
-						430 = { remove_core_of = TAI }
-						491 = { remove_core_of = TAI }
-						1015 = { remove_core_of = TAI }
-						1109 = { remove_core_of = TAI }
+				every_state = { #remove claim for former Mainland states
+					limit = {
+						is_greater_china_state = yes
 					}
+					remove_claim_by = TAI
+				}
+				496 = { remove_claim_by = TAI }
+				722 = { remove_claim_by = TAI }
+				1011 = { remove_claim_by = TAI }
+				every_state = { #add core for current own
+					limit = {
+						is_taiwan_area_state = yes
+					}
+					add_core_of = TAI
 				}
 			}
+			hidden_effect = {
+				CHI = {
+					remove_state_core = 598
+					remove_state_core = 599
+					remove_state_core = 600
+					remove_state_core = 1155
+					remove_state_core = 1156
+					remove_state_core = 1157
+					remove_state_core = 1158
+					transfer_state = 430
+					transfer_state = 491
+					transfer_state = 1015
+					transfer_state = 1109
+					add_state_core = 491
+					430 = { remove_core_of = TAI }
+					491 = { remove_core_of = TAI }
+					1015 = { remove_core_of = TAI }
+					1109 = { remove_core_of = TAI }
+				}
+			}
+		}
 		news_event = { id = china_news.24 days = 5 }
-		log = "[GetDateText]: [This.GetName]: china.25.a executed"
 	}
 }
 
-#Deceased of Republic of China
+# Deceased Republic of China
 country_event = {
 	id = china.26
 	title = china.26.t
@@ -2380,7 +2364,7 @@ country_event = {
 	}
 }
 
-#China threaten reckoning Japanses war crime
+# China threaten reckoning Japanses war crime
 country_event = {
 	id = china.27
 	title = china.27.t
@@ -2399,7 +2383,7 @@ country_event = {
 	}
 }
 
-#The NPCSC Decision on Hong Kong
+# The NPCSC Decision on Hong Kong
 country_event = {
 	id = china.28
 	title = china.28.t
@@ -3532,9 +3516,9 @@ country_event = {
 		}
 		custom_effect_tooltip = CHI_varyag_construction_tt
 		add_tech_bonus = {
-			name = Cat_CARRIER
+			name = CAT_carrier
 			bonus = 1
-			category = Cat_CARRIER
+			category = CAT_carrier
 		}
 		navy_experience = 25
 	}
@@ -3792,7 +3776,7 @@ country_event = {
 		days = 5
 	}
 
-	option = {	#New 
+	option = {	#New
 		name = china.58.a
 		log = "[GetDateText]: [This.GetName]: china.58.a executed"
 		add_political_power = 100
@@ -3819,7 +3803,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: china.59.a executed"
 		ai_chance = { base = 80 }
 		set_country_flag = CHI_taiwan_strait_war
-	    declare_war_on = {
+		declare_war_on = {
 		 target = TAI
 		 type = annex_everything
 	   }
@@ -3858,7 +3842,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: china.60.a executed"
 		ai_chance = { base = 80 }
 		set_country_flag = CHI_taiwan_strait_war
-	    declare_war_on = {
+		declare_war_on = {
 		 target = TAI
 		 type = annex_everything
 	   }
