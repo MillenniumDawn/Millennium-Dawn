@@ -1,98 +1,1112 @@
-﻿add_namespace = Somalia
+﻿add_namespace = somalia
 add_namespace = SomaliaNews
 
-### Somalia civil war cleanup events ###
-#Al-Shabaab victory
-news_event = {
-
-	id = SomaliaNews.0
-	title = SomaliaNews.0.t
-	desc = SomaliaNews.0.d
-
-	picture = GFX_news_somalia_civil_war_jihadists
-
-	major = yes
-
+# The Foundation of the TNG
+# This goes to either SNA or SOM
+country_event = {
+	id = somalia.1
+	title = somalia.1.t
+	desc = somalia.1.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
 	is_triggered_only = yes
-
-	option = {
-		name = SomaliaNews.0.a
-		log = "[GetDateText]: [This.GetName]: SomaliaNews.0.a executed"
-		trigger = {	NOT = { has_government = fascism } }
-		ai_chance = { factor = 100 }
-	}
-	option = {
-		name = SomaliaNews.0.b
-		log = "[GetDateText]: [This.GetName]: SomaliaNews.0.b executed"
-		trigger = {	has_government = fascism }
-		ai_chance = { factor = 100 }
+	trigger = {
+		OR = {
+			original_tag = SOM
+			original_tag = SNA
+		}
 	}
 
+	# Form the TNG
+	option = {
+		name = somalia.1.a
+		log = "[GetDateText]: [This.GetName]: somalia.1.a executed"
+		if = {
+			limit = { original_tag = SOM }
+			SNA = {
+				country_event = { id = somalia.2 days = 7 }
+			}
+		}
+		else = {
+			SOM = {
+				country_event = { id = somalia.2 days = 7 }
+			}
+		}
+		SWS = {
+			country_event = { id = somalia.2 days = 7 }
+		}
+		PUN = {
+			country_event = { id = somalia.2 days = 7 }
+		}
+
+		hidden_effect = {
+			country_event = { id = somalia.3 days = 14 random_days = 5 random_hours = 12 }
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 5
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 5
+				has_government = democratic
+			}
+		}
+	}
+
+	# Continue the Conflict
+	option = {
+		name = somalia.1.b
+		log = "[GetDateText]: [This.GetName]: somalia.1.b executed"
+		add_war_support = 0.05
+
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				is_historical_focus_on = no
+			}
+		}
+	}
 }
 
-#Government victory
-news_event = {
-
-	id = SomaliaNews.1
-	title = SomaliaNews.1.t
-	desc = SomaliaNews.1.d
-
-	picture = GFX_news_somalia_civil_war
-
-	major = yes
-
+# Support the Creation of a TNG
+country_event = {
+	id = somalia.2
+	title = somalia.2.t
+	desc = somalia.2.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
 	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = SOM
+			original_tag = SNA
+			original_tag = SWS
+			original_tag = PUN
+		}
+	}
 
 	option = {
-		name = SomaliaNews.1.a
-		log = "[GetDateText]: [This.GetName]: SomaliaNews.1.a executed"
-		trigger = {	NOT = { has_government = fascism } }
-		ai_chance = { factor = 100 }
-	}
-	option = {
-		name = SomaliaNews.1.b
-		log = "[GetDateText]: [This.GetName]: SomaliaNews.1.b executed"
-		trigger = {	has_government = fascism }
-		ai_chance = { factor = 100 }
-	}
-
-}
-
-#Government victory
-news_event = {
-
-	id = SomaliaNews.2
-	title = SomaliaNews.2.t
-	desc = {
-		text = SomaliaNews.2.SOM.d
-		trigger = { FROM = { original_tag = SOM } }
-	}
-	desc = {
-		text = SomaliaNews.2.SNA.d
-		trigger = { FROM = { original_tag = SNA } }
-	}
-	desc = {
-		text = SomaliaNews.2.Separatist.d
-		trigger = {
-			FROM = {
+		name = somalia.2.a
+		log = "[GetDateText]: [This.GetName]: somalia.2.a executed"
+		set_country_flag = SOM_supports_the_annexation_tng
+		set_country_flag = generic_election_killswitch
+		ai_chance = {
+			factor = 10
+			modifier = {
+				# Somalia under Salad willingly puts down arms
 				OR = {
+					original_tag = SOM
+					original_tag = SNA
+				}
+				factor = 2
+			}
+			modifier = {
+				factor = 0.25
+				OR = {
+					original_tag = PUN
 					original_tag = SWS
-					original_tag = JUB
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 24.999 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 24.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 24.999 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.5
+				OR = {
+					AND = {
+						FROM = { has_government = democratic }
+						has_government = democratic
+					}
+					AND = {
+						FROM = { has_government = neutrality }
+						has_government = neutrality
+					}
+					AND = {
+						FROM = { has_government = communism }
+						has_government = communism
+					}
 				}
 			}
 		}
 	}
 
-	picture = GFX_news_somalia_civil_war
+	option = {
+		name = somalia.2.b
+		log = "[GetDateText]: [This.GetName]: somalia.2.b executed"
+		set_country_flag = SOM_supports_the_autonomy_tng
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				OR = {
+					original_tag = PUN
+					original_tag = SWS
+				}
+			}
+			modifier = {
+				original_tag = SOM
+				factor = 0.5
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array_val^0 > 14.999 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array_val^1 > 14.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array_val^2 > 14.999 }
+					}
+				}
+			}
+			modifier = {
+				factor = 1.25
+				FROM = { has_government = democratic }
+				OR = {
+					has_government = communism
+					has_government = neutrality
+				}
+			}
+			modifier = {
+				factor = 1.25
+				FROM = { has_government = communism }
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+				}
+			}
+			modifier = {
+				factor = 1.25
+				FROM = { has_government = neutrality }
+				OR = {
+					has_government = communism
+					has_government = democratic
+				}
+			}
+		}
+	}
 
-	major = yes
+	option = {
+		name = somalia.2.c
+		log = "[GetDateText]: [This.GetName]: somalia.2.c executed"
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 2
+				is_historical_focus_on = no
+			}
+			modifier = {
+				factor = 0.5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
 
+# The Beginning of a TNG
+country_event = {
+	id = somalia.3
+	title = somalia.3.t
+	desc = somalia.3.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+
+	# A New Dawn for Somalia
+	option = {
+		name = somalia.3.a
+		log = "[GetDateText]: [This.GetName]: somalia.3.a executed"
+		# Puntland
+		if = { limit = { PUN = { has_country_flag = SOM_supports_the_autonomy_tng } }
+			set_autonomy = {
+				target = PUN
+				autonomy_state = autonomy_associated_state
+			}
+			PUN = {
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 13 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+
+					add_popularity = {
+						ideology = neutrality
+						popularity = 0.15
+					}
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = yes
+					}
+				}
+
+				create_country_leader = {
+					name = "Abdullahi Yusuf Ahmed"
+					picture = "PUN_Abdullahi_Yusuf_Ahmed.dds"
+					ideology = Neutral_Autocracy
+					traits = {
+						neutrality_Neutral_Autocracy
+						career_politician
+						military_career
+					}
+				}
+			}
+		}
+		else_if = { limit = { PUN = { has_country_flag = SOM_supports_the_annexation_tng } }
+			PUN = {
+				every_unit_leader = {
+					set_nationality = PREV.PREV
+				}
+				hidden_effect = {
+					FROM = {
+						add_to_variable = { treasury = PUN.treasury }
+						add_to_variable = { debt = PUN.debt }
+						add_to_variable = { int_investments = PUN.int_investments }
+					}
+				}
+			}
+			annex_country = {
+				target = PUN
+				transfer_troops = yes
+			}
+		}
+
+		# Somalia
+		if = { limit = { original_tag = SNA }
+			hidden_effect = {
+				SNA = { change_tag_from = SOM }
+			}
+			if = { limit = { SOM = { has_country_flag = SOM_supports_the_autonomy_tng } }
+				set_autonomy = {
+					target = SNA
+					autonomy_state = autonomy_associated_state
+				}
+			}
+			else_if = { limit = { SOM = { has_country_flag = SOM_supports_the_annexation_tng } }
+				annex_country = {
+					target = SNA
+					transfer_troops = yes
+				}
+				SNA = {
+					every_unit_leader = {
+						set_nationality = PREV.PREV
+					}
+					hidden_effect = {
+						FROM = {
+							add_to_variable = { treasury = SNA.treasury }
+							add_to_variable = { debt = SNA.debt }
+							add_to_variable = { int_investments = SNA.int_investments }
+						}
+					}
+				}
+			}
+		}
+		else = {
+			# Somali National Alliance
+			if = { limit = { SNA = { has_country_flag = SOM_supports_the_autonomy_tng } }
+				set_autonomy = {
+					target = SNA
+					autonomy_state = autonomy_associated_state
+				}
+				SNA = {
+					hidden_effect = {
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 14 }
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						set_ruling_leader = yes
+						set_leader = yes
+
+						add_popularity = { ideology = neutrality popularity = 0.15 }
+						set_politics = {
+							ruling_party = neutrality
+							elections_allowed = yes
+						}
+					}
+					create_country_leader = {
+						name = "Hussein Farrah Aidid"
+						picture = "SNA_Hussein_Farrah_Aidid.dds"
+						ideology = Neutral_conservatism
+						traits = {
+							neutrality_Neutral_conservatism
+						}
+					}
+				}
+			}
+			else_if = { limit = { SNA = { has_country_flag = SOM_supports_the_annexation_tng } }
+				SNA = {
+					every_unit_leader = {
+						set_nationality = PREV.PREV
+					}
+					hidden_effect = {
+						FROM = {
+							add_to_variable = { treasury = SNA.treasury }
+							add_to_variable = { debt = SNA.debt }
+							add_to_variable = { int_investments = SNA.int_investments }
+						}
+					}
+				}
+				annex_country = {
+					target = SNA
+					transfer_troops = yes
+				}
+			}
+		}
+
+		# Southwestern State of Somalia
+		if = { limit = { SWS = { has_country_flag = SOM_supports_the_autonomy_tng } }
+			set_autonomy = {
+				target = SWS
+				autonomy_state = autonomy_associated_state
+			}
+			SWS = {
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 13 }
+					update_government_coalition_strength = yes
+					update_party_name = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+
+					add_popularity = { ideology = neutrality popularity = 0.15 }
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = yes
+					}
+				}
+				create_country_leader = {
+					name = "Hasan Muhammad Nur Shatigadud"
+					picture = "SWS_Hasan_Muhammad_Nur_Shatigadud.dds"
+					ideology = Neutral_Autocracy
+					traits = {
+						neutrality_Neutral_Autocracy
+					}
+				}
+			}
+		}
+		else_if = { limit = { SWS = { has_country_flag = SOM_supports_the_annexation_tng } }
+			SWS = {
+				every_unit_leader = {
+					set_nationality = PREV.PREV
+				}
+				hidden_effect = {
+					FROM = {
+						add_to_variable = { treasury = SWS.treasury }
+						add_to_variable = { debt = SWS.debt }
+						add_to_variable = { int_investments = SWS.int_investments }
+					}
+				}
+			}
+			annex_country = {
+				target = SWS
+				transfer_troops = yes
+			}
+		}
+
+		if = { limit = { controls_state = 593 }
+			set_capital = { state = 593 }
+		}
+		set_cosmetic_tag = SOM_TNG
+
+		news_event = somalia.1003
+
+		country_event = { id = somalia.4 days = 70 random_days = 20 }
+	}
+}
+
+# The Transitional Federal Government Elections
+country_event = {
+	id = somalia.4
+	title = somalia.4.t
+	desc = somalia.4.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+
+	# Abdiqasim Salad
+	option = {
+		name = somalia.4.a
+		log = "[GetDateText]: [This.GetName]: somalia.4.a executed"
+		if = { limit = { NOT = { has_country_leader = { name = "Abdiqasim Salad" ruling_only = yes } } }
+			create_country_leader = {
+				name = "Abdiqasim Salad"
+				picture = "SOM_Abdiqasim_Salad_Hassan.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					career_politician
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Abdullahi Ahmed Addou
+	option = {
+		name = somalia.4.b
+		log = "[GetDateText]: [This.GetName]: somalia.4.b executed"
+		create_country_leader = {
+			name = "Abdullahi Ahmed Addou"
+			picture = "abdulahi_ahmed_addou.dds"
+			ideology = Western_Autocracy
+			traits = {
+				western_Western_Autocracy
+				former_finance_minister
+			}
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# 2001
+# The Formation of the Juba Valley Alliance
+country_event = {
+	id = somalia.5
+	title = somalia.5.t
+	desc = somalia.5.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+
+	# The Question of the TFG
+	option = {
+		name = somalia.5.a
+		log = "[GetDateText]: [This.GetName]: somalia.5.a executed"
+		country_event = { id = somalia.6 days = 7 }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# The Rise of General Morgan
+	option = {
+		name = somalia.5.b
+		log = "[GetDateText]: [This.GetName]: somalia.5.b executed"
+		create_country_leader = {
+			name = "Mohammed Said Hersi Morgan"
+			picture = "JUB_Mohammed_Said_Hersi_Morgan.dds"
+			ideology = Nat_Autocracy
+			traits = {
+				nationalist_Nat_Autocracy
+				JUB_the_butcher
+			}
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# The Question of the TFG
+country_event = {
+	id = somalia.6
+	title = somalia.6.t
+	desc = somalia.6.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+
+	# Support the TFG
+	option = {
+		name = somalia.6.a
+		log = "[GetDateText]: [This.GetName]: somalia.6.a executed"
+		SOM = { country_event = { id = somalia.7 days = 3 } }
+		set_country_flag = SOM_jubba_rejoins_somalia
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Reject the TFG
+	option = {
+		name = somalia.6.b
+		log = "[GetDateText]: [This.GetName]: somalia.6.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# The Jubba Valley Alliance Joins the TFG
+country_event = {
+	id = somalia.7
+	title = {
+		text = somalia.7.t1
+		trigger = { FROM = { has_country_flag = SOM_jubba_rejoins_somalia } }
+	}
+	title = {
+		text = somalia.7.t2
+		trigger = { FROM = { has_country_flag = SOM_jubba_rejoins_somalia } }
+	}
+	desc = {
+		text = somalia.7.d1
+		trigger = { NOT = { FROM = { has_country_flag = SOM_jubba_rejoins_somalia } } }
+	}
+	desc = {
+		text = somalia.7.d2
+		trigger = { NOT = { FROM = { has_country_flag = SOM_jubba_rejoins_somalia } } }
+	}
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+
+	# Somalia is Nearly United
+	option = {
+		name = somalia.7.a
+		log = "[GetDateText]: [This.GetName]: somalia.7.a executed"
+		trigger = {
+			FROM = { has_country_flag = SOM_jubba_rejoins_somalia }
+		}
+		set_autonomy = {
+			target = JUB
+			autonomy_state = autonomy_associated_state
+		}
+		JUB = {
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 22 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+
+				add_popularity = { ideology = nationalist popularity = 0.15 }
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
+			}
+
+			create_country_leader = {
+				name = "Barre Adan Shire Hiiraale"
+				picture = "JUB_Barre_Adan_Shire_Hiiraale.dds"
+				ideology = Nat_Autocracy
+				traits = {
+					nationalist_Nat_Autocracy
+					military_career
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Leave Them to Their Own Devices
+	option = {
+		name = somalia.7.b
+		log = "[GetDateText]: [This.GetName]: somalia.7.b executed"
+		trigger = { FROM = { NOT = { has_country_flag = SOM_jubba_rejoins_somalia } } }
+		white_peace = JUB
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Reclaim the Territory at Any Costs!
+	option = {
+		name = somalia.7.c
+		log = "[GetDateText]: [This.GetName]: somalia.7.c executed"
+		trigger = { FROM = { NOT = { has_country_flag = SOM_jubba_rejoins_somalia } } }
+		if = {
+			limit = {
+				NOT = { has_war_with = JUB }
+			}
+			create_wargoal = {
+				type = annex_everything
+				target = JUB
+			}
+		}
+		JUB = {
+			every_owned_state = {
+				limit = {
+					is_core_of = JUB
+					NOT = { is_core_of = SOM }
+				}
+				add_core_of = SOM
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# 2004
+# The Formation of the TFG
+country_event = {
+	id = somalia.8
+	title = somalia.8.t
+	desc = somalia.8.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+
+	# The TFG Forms
+	option = {
+		name = somalia.8.a
+		log = "[GetDateText]: [This.GetName]: somalia.8.a executed"
+		if = { limit = { JUB = { is_subject_of = PREV } }
+			JUB = {
+				every_unit_leader = {
+					set_nationality = PREV.PREV
+				}
+				every_owned_state = {
+					limit = {
+						is_core_of = JUB
+						NOT = { is_core_of = SOM }
+					}
+					add_core_of = SOM
+				}
+				hidden_effect = {
+					FROM = {
+						add_to_variable = { treasury = JUB.treasury }
+						add_to_variable = { debt = JUB.debt }
+						add_to_variable = { int_investments = JUB.int_investments }
+					}
+				}
+			}
+			annex_country = {
+				target = JUB
+				transfer_troops = yes
+			}
+		}
+		if = { limit = { SWS = { is_subject_of = PREV } }
+			SWS = {
+				every_unit_leader = {
+					set_nationality = PREV.PREV
+				}
+				every_owned_state = {
+					limit = {
+						is_core_of = JUB
+						NOT = { is_core_of = SOM }
+					}
+					add_core_of = SOM
+				}
+				hidden_effect = {
+					FROM = {
+						add_to_variable = { treasury = SWS.treasury }
+						add_to_variable = { debt = SWS.debt }
+						add_to_variable = { int_investments = SWS.int_investments }
+					}
+				}
+			}
+			annex_country = {
+				target = SWS
+				transfer_troops = yes
+			}
+		}
+		if = { limit = { SNA = { is_subject_of = PREV } }
+			SNA = {
+				every_unit_leader = {
+					set_nationality = PREV.PREV
+				}
+				every_owned_state = {
+					limit = {
+						is_core_of = SNA
+						NOT = { is_core_of = SOM }
+					}
+					add_core_of = SOM
+				}
+				hidden_effect = {
+					FROM = {
+						add_to_variable = { treasury = SNA.treasury }
+						add_to_variable = { debt = SNA.debt }
+						add_to_variable = { int_investments = SNA.int_investments }
+					}
+				}
+			}
+			annex_country = {
+				target = SNA
+				transfer_troops = yes
+			}
+		}
+		if = { limit = { PUN = { is_subject_of = PREV } }
+			PUN = {
+				every_unit_leader = {
+					set_nationality = PREV.PREV
+				}
+				every_owned_state = {
+					limit = {
+						is_core_of = PUN
+						NOT = { is_core_of = SOM }
+					}
+					add_core_of = SOM
+				}
+				hidden_effect = {
+					FROM = {
+						add_to_variable = { treasury = PUN.treasury }
+						add_to_variable = { debt = PUN.debt }
+						add_to_variable = { int_investments = PUN.int_investments }
+					}
+				}
+			}
+			annex_country = {
+				target = PUN
+				transfer_troops = yes
+			}
+		}
+
+		set_cosmetic_tag = SOM_TFG
+		news_event = somalia.1002
+		country_event = { id = somalia.9 days = 4 }
+	}
+}
+
+# The Elections
+country_event = {
+	id = somalia.9
+	title = somalia.9.t
+	desc = somalia.9.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+	immediate = {
+		clr_country_flag = generic_election_killswitch
+	}
+
+	# Abdullahi Yusuf Ahmed
+	option = {
+		name = somalia.9.a
+		log = "[GetDateText]: [This.GetName]: somalia.9.a executed"
+		if = { limit = { NOT = { has_country_leader = { name = "Abdullahi Yusuf Ahmed" ruling_only = yes } } }
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 13 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+
+			create_country_leader = {
+				name = "Abdullahi Yusuf Ahmed"
+				picture = "PUN_Abdullahi_Yusuf_Ahmed.dds"
+				ideology = Neutral_Autocracy
+				traits = {
+					neutrality_Neutral_Autocracy
+					career_politician
+					military_career
+				}
+			}
+		}
+
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 5
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 2
+				has_government = neutrality
+			}
+		}
+	}
+
+	# Abdullahi Ahmed Addou
+	option = {
+		name = somalia.9.b
+		log = "[GetDateText]: [This.GetName]: somalia.9.b executed"
+		if = { limit = { NOT = { has_country_leader = { name = "Abdullahi Ahmed Addou" ruling_only = yes } } }
+			create_country_leader = {
+				name = "Abdullahi Ahmed Addou"
+				picture = "abdulahi_ahmed_addou.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					former_finance_minister
+				}
+			}
+		}
+
+		ai_chance = {
+			factor = 4
+			modifier = {
+				factor = 2
+				is_historical_focus_on = no
+			}
+			modifier = {
+				factor = 2
+				has_government = democratic
+			}
+		}
+	}
+
+	# Abdiqasim Salad
+	option = {
+		name = somalia.9.c
+		log = "[GetDateText]: [This.GetName]: somalia.9.c executed"
+		if = { limit = { NOT = { has_country_leader = { name = "Abdiqasim Salad" ruling_only = yes } } }
+			create_country_leader = {
+				name = "Abdiqasim Salad"
+				picture = "SOM_Abdiqasim_Salad_Hassan.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					career_politician
+				}
+			}
+		}
+
+		ai_chance = {
+			factor = 4
+			modifier = {
+				factor = 2
+				is_historical_focus_on = no
+			}
+			modifier = {
+				factor = 2
+				has_government = democratic
+			}
+		}
+	}
+}
+
+# 2006
+# The Rise of Islamic Courts Union
+country_event = {
+	id = somalia.10
+	title = somalia.10.t
+	desc = somalia.10.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
+	is_triggered_only = yes
+	trigger = {
+		NOT = { SOM = { has_war_with = SHB } }
+		NOT = { SOM = { has_government = fascism } }
+		SOM = { has_country_flag = SOM_al_shabaab_rises }
+	}
+	immediate = {
+		set_global_flag = SOM_the_islamic_courts_union_began
+	}
+
+	# Al-Shabaab Rises
+	option = {
+		name = somalia.10.a
+		log = "[GetDateText]: [This.GetName]: somalia.10.a executed"
+		set_country_flag = SOM_al_shabaab_rises
+		SHB = {
+			add_state_core = 239
+			add_state_core = 240
+			add_state_core = 581
+			add_state_core = 584
+			add_state_core = 593
+			add_state_core = 928
+			add_state_core = 975
+			add_state_core = 238
+			add_state_core = 938
+			add_state_core = 237
+			add_state_core = 937
+
+			transfer_state = 581
+			584 = {
+				SHB = {
+					set_province_controller = 13334
+					set_province_controller = 580
+					set_province_controller = 13332
+					set_province_controller = 13874
+					set_province_controller = 8164
+				}
+			}
+
+			declare_war_on = {
+				target = SOM
+				type = civil_war
+			}
+
+			set_cosmetic_tag = SHB_ICU
+
+			hidden_effect = {
+				load_oob = "SHB_ICU_2006"
+				ingame_update_setup = yes
+			}
+		}
+	}
+
+	# For Allah!
+	option = {
+		name = somalia.10.b
+		log = "[GetDateText]: [This.GetName]: somalia.10.b executed"
+		set_country_flag = SOM_al_shabaab_rises
+		SHB = {
+			add_state_core = 239
+			add_state_core = 240
+			add_state_core = 581
+			add_state_core = 584
+			add_state_core = 593
+			add_state_core = 928
+			add_state_core = 975
+			add_state_core = 238
+			add_state_core = 938
+			add_state_core = 237
+			add_state_core = 937
+
+			transfer_state = 581
+			584 = {
+				SHB = {
+					set_province_controller = 13334
+					set_province_controller = 580
+					set_province_controller = 13332
+					set_province_controller = 13874
+					set_province_controller = 8164
+				}
+			}
+
+			declare_war_on = {
+				target = SOM
+				type = civil_war
+			}
+
+			set_cosmetic_tag = SHB_ICU
+
+			hidden_effect = {
+				load_oob = "SHB_ICU_2006"
+				ingame_update_setup = yes
+			}
+		}
+		hidden_effect = {
+			THIS = { change_tag_from = SHB }
+		}
+	}
+}
+
+# End of the Somali Civil War
+country_event = {
+	id = somalia.11
+	title = somalia.11.t
+	desc = somalia.11.d
+	picture = GFX_politics_negotiations # TODO: Replace with better image
 	is_triggered_only = yes
 
 	option = {
-		name = SomaliaNews.2.a
-		log = "[GetDateText]: [This.GetName]: SomaliaNews.2.a executed"
-		ai_chance = { factor = 100 }
-	}
+		name = somalia.11.a
+		log = "[GetDateText]: [This.GetName]: somalia.11.a executed"
+		add_stability = 0.05
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
 
+		# Reassumes the Mantle of SOM if not SHB
+		if = { limit = { original_tag = SOM }
+			set_cosmetic_tag = SOM
+		}
+		hidden_effect = {
+			if = { limit = { original_tag = SOM }
+				for_each_scope_loop = {
+					array = SOM.core_states
+					remove_core_of = SHB
+				}
+				news_event = somalia.1000
+			}
+			if = { limit = { original_tag = SHB }
+				for_each_scope_loop = {
+					array = SHB.core_states
+					remove_core_of = SOM
+				}
+				news_event = somalia.1001
+			}
+			set_country_flag = SOM_victor_of_the_somali_civil_war
+		}
+		set_global_flag = SOM_victor_of_the_somali_civil_war_cleanedup
+	}
+}
+
+# News Event
+# The Transitional Federal Government Won
+news_event = {
+	id = somalia.1000
+	title = somalia.1000.t
+	desc = somalia.1000.d
+	picture = GFX_news_somalia_civil_war
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = somalia.1000.a
+		log = "[GetDateText]: [This.GetName]: somalia.1000.a executed"
+	}
+}
+
+# ICU Has Won
+news_event = {
+	id = somalia.1001
+	title = somalia.1001.t
+	desc = somalia.1001.d
+	picture = GFX_news_somalia_civil_war_jihadists
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = somalia.1001.a
+		log = "[GetDateText]: [This.GetName]: somalia.1001.a executed"
+	}
+}
+
+# The TFG Has Formed
+news_event = {
+	id = somalia.1002
+	title = somalia.1002.t
+	desc = somalia.1002.d
+	picture = GFX_news_election_rally
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = somalia.1002.a
+		log = "[GetDateText]: [This.GetName]: somalia.1002.a executed"
+	}
+}
+
+# The TNG Has Formed
+news_event = {
+	id = somalia.1003
+	title = somalia.1003.t
+	desc = somalia.1003.d
+	picture = GFX_news_election_rally
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = somalia.1003.a
+		log = "[GetDateText]: [This.GetName]: somalia.1003.a executed"
+	}
 }
