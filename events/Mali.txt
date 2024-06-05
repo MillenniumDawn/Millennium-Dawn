@@ -316,6 +316,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = ALG
+		country_exists = MAL
 		NOT = { country_exists = TUA } # Tuaregs have to be in Mali for this to make sense
 		MAL = {
 			owns_state = 1163
@@ -382,6 +383,7 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = MAL
+		NOT = { country_exists = TUA }
 	}
 
 	# Accept the Accords
@@ -400,7 +402,15 @@ country_event = {
 		}
 
 		ai_chance = {
-			base = 1
+			base = 5
+			modifier = {
+				add = 10
+				has_country_leader = { name = "Amadou Toumani Touré" ruling_only = yes }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { interest_rate > 8 }
+			}
 		}
 	}
 
@@ -410,6 +420,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: mali.7.b executed"
 		set_country_flag = MAL_rejected_the_algerian_peace_accords
 		set_global_flag = MAL_tuareg_rebellion_2007_escalated
+		news_event = { id = mali.1000 days = 3 }
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.10 }
 		set_temp_variable = { temp_outlook_increase = 0.10 }
@@ -530,6 +541,14 @@ country_event = {
 
 		ai_chance = {
 			base = 1
+			modifier = {
+				add = 5
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 10
+				has_country_leader = { name = "Amadou Toumani Touré" ruling_only = yes }
+			}
 		}
 	}
 
@@ -616,6 +635,10 @@ country_event = {
 
 		ai_chance = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { interest_rate < 10 }
+			}
 		}
 	}
 
@@ -661,6 +684,10 @@ country_event = {
 
 		ai_chance = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { interest_rate > 10 }
+			}
 		}
 	}
 
@@ -678,6 +705,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { interest_rate < 10 }
+			}
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -912,6 +943,10 @@ country_event = {
 
 		ai_chance = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { interest_rate < 10 }
+			}
 		}
 	}
 
@@ -950,12 +985,14 @@ country_event = {
 	is_triggered_only = yes
 	trigger = {
 		original_tag = MAL
+		NOT = { country_exists = TUA }
 	}
 
 	# A Major Figure Dies
 	option = {
 		name = mali.19.a
 		log = "[GetDateText]: [This.GetName]: mali.19.a executed"
+		add_stability = -0.01
 
 		ai_chance = {
 			base = 1
@@ -1063,6 +1100,7 @@ country_event = {
 	}
 	immediate = {
 		set_global_flag = MAL_malian_civil_war_phase_one
+		news_event = { id = mali.1001 days = 3 }
 		hidden_effect = {
 			TUA = {
 				transfer_state = 1163
@@ -1184,6 +1222,7 @@ country_event = {
 	}
 	immediate = {
 		set_global_flag = MAL_malian_civil_war_phase_two
+		news_event = { id = mali.1002 days = 3 }
 		hidden_effect = {
 			start_civil_war = {
 				ideology = fascism
@@ -1619,6 +1658,105 @@ country_event = {
 		name = mali.33.a
 		log = "[GetDateText]: [This.GetName]: mali.33.a executed"
 		set_global_flag = MAL_malian_civil_war_cleanedup
+		news_event = { id = mali.1004 days = 3 }
+		add_stability = 0.05
+		add_political_power = 150
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		delete_unit_template_and_units = {
+			division_template = "Rebel Groups"
+		}
+
+		hidden_effect = {
+			if = {
+				limit = {
+					FRA = {
+						has_relation_modifier = {
+							target = TUA
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				FRA = {
+					remove_relation_modifier = {
+						target = TUA
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+			if = {
+				limit = {
+					FRA = {
+						has_relation_modifier = {
+							target = MAL
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				FRA = {
+					remove_relation_modifier = {
+						target = MAL
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+			if = {
+				limit = {
+					any_country = {
+						original_tag = MAL
+						FRA = {
+							has_relation_modifier = {
+								target = PREV
+								modifier = generic_increased_military_support
+							}
+						}
+					}
+				}
+				random_country = {
+					limit = {
+						original_tag = MAL
+						NOT = { tag = MAL }
+					}
+					FRA = {
+						remove_relation_modifier = {
+							target = PREV
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# The Victor of the Tuareg Rebellion of 2006
+country_event = {
+	id = mali.34
+	title = mali.34.t
+	desc = mali.34.d
+	picture = GFX_mali_flag
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = TUA
+			original_tag = MAL
+		}
+		has_global_flag = MAL_tuareg_rebellion_2007_escalated
+		NOT = { has_global_flag = MAL_tuareg_rebellion_2007_escalated_cleanup }
+	}
+
+	# To the Victor the Spoils
+	option = {
+		name = mali.34.a
+		log = "[GetDateText]: [This.GetName]: mali.34.a executed"
+		set_global_flag = MAL_tuareg_rebellion_2007_escalated_cleanup
+		news_event = { id = mali.1003 days = 3 }
 		add_stability = 0.05
 		add_political_power = 150
 		set_party_index_to_ruling_party = yes
@@ -1696,4 +1834,77 @@ country_event = {
 }
 
 # News Event Section
-# TODO: Need to create news events
+# The Tuareg Rebellion of 2006
+news_event = {
+	id = mali.1000
+	title = mali.1000.t
+	desc = mali.1000.d
+	# TODO: Add an image
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = mali.1000.a
+		log = "[GetDateText]: [This.GetName]: mali.1000.a executed"
+	}
+}
+
+# The Tuareg Rebellion of 2012
+news_event = {
+	id = mali.1001
+	title = mali.1001.t
+	desc = mali.1001.d
+	# TODO: Add an image
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = mali.1001.a
+		log = "[GetDateText]: [This.GetName]: mali.1001.a executed"
+	}
+}
+
+# Ansar Dine Joins the Malian Civil War
+news_event = {
+	id = mali.1002
+	title = mali.1002.t
+	desc = mali.1002.d
+	# TODO: Add an image
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = mali.1001.a
+		log = "[GetDateText]: [This.GetName]: mali.1002.a executed"
+	}
+}
+
+# Victor of the 2006 Rebellion
+news_event = {
+	id = mali.1003
+	title = mali.1003.t
+	desc = mali.1003.d
+	# TODO: Add an image
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = mali.1003.a
+		log = "[GetDateText]: [This.GetName]: mali.1003.a executed"
+	}
+}
+
+# End of the Malian Civil War
+news_event = {
+	id = mali.1004
+	title = mali.1004.t
+	desc = mali.1004.d
+	# TODO: Add an image
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = mali.1004.a
+		log = "[GetDateText]: [This.GetName]: mali.1004.a executed"
+	}
+}
