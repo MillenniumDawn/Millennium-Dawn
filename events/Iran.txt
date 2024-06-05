@@ -7963,6 +7963,7 @@ country_event = { #Revolutionary Tension
 			407 = { add_core_of = SAZ }
 			408 = { transfer_state_to = IKR }
 			979 = { transfer_state_to = IKR }
+			1139 = { transfer_state_to = IKR }
 			408 = { add_core_of = IKR }
 			979 = { add_core_of = IKR }
 			#
@@ -8044,7 +8045,6 @@ country_event = { #Revolution Begins
 	option = {
 		name = PER_revolution.2.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.2.a executed"
-		#
 		custom_effect_tooltip = PER_iranian_revolution_time
 		set_country_flag = PER_majlis_dissolved
 		clr_country_flag = PER_reformist_majlis
@@ -8812,7 +8812,9 @@ country_event = { #MEK Rebellion
 	desc = PER_revolution.12.d
 	picture = GFX_mek_rebellion
 	is_triggered_only = yes
-
+	trigger = {
+		has_country_flag = party6_banned
+	}
 	option = { #Down with Dictator, be it the Mullah or Mojahed
 		name = PER_revolution.12.a
 		log = "[GetDateText]: [This.GetName]:PER_revolution.12.a executed"
@@ -8886,7 +8888,8 @@ country_event = { #MEK Rebellion
 			979 = { transfer_state_to = MOJ }
 			1039 = { transfer_state_to = MOJ }
 			399 = { transfer_state_to = MOJ }
-			404 = { transfer_state_to = MOJ }
+			1139 = { transfer_state_to = MOJ }
+			1138 = { transfer_state_to = MOJ }
 			MOJ = {
 				division_template = {
 					name = "NLA Tip-e Piade Nezam"
@@ -8915,6 +8918,42 @@ country_event = { #MEK Rebellion
 					target = PER
 					type = puppet_wargoal_focus
 				}
+			}
+		}
+		hidden_effect = {
+			set_country_flag = manual_civil_war_debuff_removal
+			remove_ideas = civil_war_disorganised_military_1
+			remove_ideas = civil_war_disorganised_military_2_military
+			remove_ideas = civil_war_disorganised_military_2_production
+			remove_ideas = civil_war_disorganised_military_2_experience
+			remove_ideas = civil_war_disorganised_military_3_military
+			remove_ideas = civil_war_disorganised_military_3_production
+			remove_ideas = civil_war_disorganised_military_3_experience
+			remove_ideas = civil_war_disorganised_military_4_military
+			remove_ideas = civil_war_disorganised_military_4_production
+			remove_ideas = civil_war_disorganised_military_4_experience
+			remove_ideas = civil_war_disorganised_military_5_military
+			remove_ideas = civil_war_disorganised_military_5_production
+			remove_ideas = civil_war_disorganised_military_5_experience
+			clr_country_flag = manual_civil_war_debuff_removal
+		}
+		MOJ = {
+			hidden_effect = {
+				set_country_flag = manual_civil_war_debuff_removal
+				remove_ideas = civil_war_disorganised_military_1
+				remove_ideas = civil_war_disorganised_military_2_military
+				remove_ideas = civil_war_disorganised_military_2_production
+				remove_ideas = civil_war_disorganised_military_2_experience
+				remove_ideas = civil_war_disorganised_military_3_military
+				remove_ideas = civil_war_disorganised_military_3_production
+				remove_ideas = civil_war_disorganised_military_3_experience
+				remove_ideas = civil_war_disorganised_military_4_military
+				remove_ideas = civil_war_disorganised_military_4_production
+				remove_ideas = civil_war_disorganised_military_4_experience
+				remove_ideas = civil_war_disorganised_military_5_military
+				remove_ideas = civil_war_disorganised_military_5_production
+				remove_ideas = civil_war_disorganised_military_5_experience
+				clr_country_flag = manual_civil_war_debuff_removal
 			}
 		}
 		ai_chance = {
@@ -11308,6 +11347,19 @@ country_event = { #Civil War Ends
 	option = {
 		name = PER_revolution.300.a
 		log = "[GetDateText]: [This.GetName]:PER_sway.300.a executed"
+		set_country_flag = PER_freed_majlis
+		clr_country_flag = PER_controlled_majlis
+		clr_country_flag = PER_dissolved_majlis
+		clr_country_flag = PER_majlis_dissolved
+		if = {
+			limit = {
+				has_country_flag = PER_qom_granted
+			}
+			country_event = {
+				id = PER_civilwar.101
+				days = 12
+			}
+		}
 		set_power_balance = {
 			id = PER_clergy_balance_of_power_category
 			set_default = yes
@@ -11316,16 +11368,11 @@ country_event = { #Civil War Ends
 		set_country_flag = PER_civilwar_is_now_over
 		#
 		hidden_effect = {
-			1039 = { transfer_state_to = HRM }
-			transfer_units_fraction = {
-				target = HRM
-				size = 1.0
-				stockpile_ratio = 0
-				army_ratio = 1.0
-				navy_ratio = 0
-				air_ratio = 0
+			country_event = {
+				id = PER_majlis.39
+				days = 31
 			}
-			1039 = { transfer_state_to = PER }
+			add_ideas = PER_incompetant_join_chiefs_of_staff
 			if = {
 				limit = {
 					has_dlc = "La Resistance"
@@ -11437,7 +11484,6 @@ country_event = { #Civil War Ends
 		#
 		clr_country_flag = PER_civil_war
 		clr_country_flag = PER_controlled_majlis
-		set_country_flag = PER_freed_majlis
 		news_event = {
 			id = PER_rev_flavor.8
 			days = 2
@@ -11449,167 +11495,44 @@ country_event = { #Civil War Ends
 					days = 720
 				}
 			}
-			if = {
-				limit = {
-					NOT = {
-						1039 = {
-							has_state_flag = PER_locals_swayed
+			hidden_effect = {
+				if = {
+					limit = {
+						any_core_state = {
+							is_owned_and_controlled_by = PER
+							NOT = {
+								has_state_flag = PER_locals_swayed
+							}
 						}
 					}
-				}
-				1039 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						979 = {
-							has_state_flag = PER_locals_swayed
+					every_core_state = {
+						limit = {
+							NOT = {
+								has_state_flag = PER_locals_swayed
+							}
 						}
+						add_dynamic_modifier = { modifier = PER_IRGC_PRESENT }
 					}
 				}
-				979 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
+				#
 			}
-			if = {
-				limit = {
-					NOT = {
-						408 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				408 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						399 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				399 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						407 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				407 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						404 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				404 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						406 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				406 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						400 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				400 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						977 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				977 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						1073 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				1073 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						976 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				976 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						400 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				400 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						978 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				978 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						403 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				403 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						402 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				402 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			if = {
-				limit = {
-					NOT = {
-						401 = {
-							has_state_flag = PER_locals_swayed
-						}
-					}
-				}
-				401 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-			}
-			#
+		}
+		hidden_effect = {
+			set_country_flag = manual_civil_war_debuff_removal
+			remove_ideas = civil_war_disorganised_military_1
+			remove_ideas = civil_war_disorganised_military_2_military
+			remove_ideas = civil_war_disorganised_military_2_production
+			remove_ideas = civil_war_disorganised_military_2_experience
+			remove_ideas = civil_war_disorganised_military_3_military
+			remove_ideas = civil_war_disorganised_military_3_production
+			remove_ideas = civil_war_disorganised_military_3_experience
+			remove_ideas = civil_war_disorganised_military_4_military
+			remove_ideas = civil_war_disorganised_military_4_production
+			remove_ideas = civil_war_disorganised_military_4_experience
+			remove_ideas = civil_war_disorganised_military_5_military
+			remove_ideas = civil_war_disorganised_military_5_production
+			remove_ideas = civil_war_disorganised_military_5_experience
+			clr_country_flag = manual_civil_war_debuff_removal
 		}
 		complete_national_focus = PER_iran_reborn
 		clr_country_flag = PER_iranian_civilwar
@@ -11624,43 +11547,20 @@ country_event = { #Referendum
 
 	is_triggered_only = yes
 
-	option = { #Democracy
-		name = PER_revolution.301.a
-		log = "[GetDateText]: [This.GetName]:PER_sway.301.a executed"
-		news_event = {
-			id = PER_rev_flavor.12
-			days = 1
-		}
-		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = 0.35 }
-		set_temp_variable = { temp_outlook_increase = 0.35 }
-		add_relative_party_popularity = yes
-		hidden_effect = {
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = { ruling_party = 14 }
-			update_government_coalition_strength = yes
-			set_coalition_drift = yes
-			set_ruling_leader = yes
-			set_leader = yes
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
-		}
-		ai_chance = {
-			base = 3
-		}
-	}
 	#
 	option = { # Pahlavi
 		name = PER_revolution.301.b
 		log = "[GetDateText]: [This.GetName]:PER_sway.301.b executed"
+		clr_country_flag = is_IRAN
 		set_temp_variable = { party_index = 0 }
 		set_temp_variable = { party_popularity_increase = 0.35 }
 		set_temp_variable = { temp_outlook_increase = 0.35 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.50 }
+			set_temp_variable = { temp_outlook_increase = -0.50 }
+			add_relative_party_popularity = yes
 			clear_array = ruling_party
 			clear_array = gov_coalition_array
 			add_to_array = { ruling_party = 0 }
@@ -11685,11 +11585,16 @@ country_event = { #Referendum
 	option = { # Pan Iranist
 		name = PER_revolution.301.c
 		log = "[GetDateText]: [This.GetName]:PER_sway.301.c executed"
+		clr_country_flag = is_IRAN
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.35 }
 		set_temp_variable = { temp_outlook_increase = 0.35 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.50 }
+			set_temp_variable = { temp_outlook_increase = -0.50 }
+			add_relative_party_popularity = yes
 			clear_array = ruling_party
 			clear_array = gov_coalition_array
 			add_to_array = { ruling_party = 20 }
@@ -11714,11 +11619,17 @@ country_event = { #Referendum
 	option = { # Artesh
 		name = PER_revolution.301.d1
 		log = "[GetDateText]: [This.GetName]:PER_sway.301.d1 executed"
+		clr_country_flag = is_IRAN
 		set_temp_variable = { party_index = 22 }
 		set_temp_variable = { party_popularity_increase = 0.35 }
 		set_temp_variable = { temp_outlook_increase = 0.35 }
 		add_relative_party_popularity = yes
 		hidden_effect = {
+			add_ideas = PER_IRG_issue
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.50 }
+			set_temp_variable = { temp_outlook_increase = -0.50 }
+			add_relative_party_popularity = yes
 			clear_array = ruling_party
 			clear_array = gov_coalition_array
 			add_to_array = { ruling_party = 22 }
@@ -15100,17 +15011,31 @@ country_event = { ##Iran asks us to cease support for foreign bases (BHR)
 	}
 }
 #
-country_event = { ##Bahrain Keeps their bases
+country_event = { # Iran Undermines our Interests!
 	id = PER_political.992
 	title = PER_political.992.t
 	desc = PER_political.992.d
 	is_triggered_only = yes
 
-	option = { #Nah
+	option = { # Forget it
 		name = PER_political.992.a
 		log = "[GetDateText]: [This.GetName]:PER_political.992.a executed"
+		add_stability = -0.10
 		ai_chance = {
-			base = 3
+			base = 0
+		}
+	}
+	option = { # We cannot have a rogue state to our south!
+		name = PER_political.992.b
+		log = "[GetDateText]: [This.GetName]:PER_political.992.b executed"
+		SOV = {
+			declare_war_on = {
+				target = PER
+				type = puppet_wargoal_focus
+			}
+		}
+		ai_chance = {
+			base = 5
 		}
 	}
 }
@@ -15372,222 +15297,6 @@ country_event = { ##India Joins
 		}
 	}
 }
-#####################
-country_event = { ##Iran Requests Bases KUW
-	id = PER_political.1910
-	title = PER_political.1910.t
-	desc = PER_political.1910.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.1910.a
-		log = "[GetDateText]: [This.GetName]:PER_political.1910.a executed"
-		PER = {
-			country_event = {
-				id = PER_political.19101
-				days = 1
-			}
-		}
-		KUW = {
-			give_military_access = PER
-		}
-		ai_chance = {
-			base = 3
-		}
-	}
-	option = { #No
-	name = PER_political.1910.a
-		log = "[GetDateText]: [This.GetName]:PER_political.1910.a executed"
-		PER = {
-			country_event = {
-				id = PER_political.19102
-				days = 1
-			}
-		}
-		PER = {
-			add_opinion_modifier = {
-				target = KUW
-				modifier = large_decrease
-			}
-		}
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-country_event = { ##Kuwait Says Yes To Iranian Bases
-	id = PER_political.19101
-	title = PER_political.19101.t
-	desc = PER_political.19101.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.19101.a
-		log = "[GetDateText]: [This.GetName]:PER_political.19101.a executed"
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = PER }
-		set_temp_variable = { influence_target = KUW }
-		change_influence_percentage = yes
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-#
-country_event = { ##Kuwait Says No To Iranian Bases
-	id = PER_political.19102
-	title = PER_political.19102.t
-	desc = PER_political.19102.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.19102.a
-		log = "[GetDateText]: [This.GetName]:PER_political.19102.a executed"
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-###
-country_event = { ##Iran Requests Bases BHR
-	id = PER_political.1911
-	title = PER_political.1911.t
-	desc = PER_political.1911.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.1911.a
-		log = "[GetDateText]: [This.GetName]:PER_political.1911.a executed"
-		PER = {
-			country_event = {
-				id = PER_political.19111
-				days = 1
-			}
-		}
-		BHR = {
-			give_military_access = PER
-		}
-		ai_chance = {
-			base = 3
-		}
-	}
-	option = { #No
-	name = PER_political.1911.a
-		log = "[GetDateText]: [This.GetName]:PER_political.1911.a executed"
-		PER = {
-			country_event = {
-				id = PER_political.19112
-				days = 1
-			}
-		}
-		PER = {
-			add_opinion_modifier = {
-				target = BHR
-				modifier = large_decrease
-			}
-		}
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-#
-country_event = { ##Bahrain Says Yes To Iranian Bases
-	id = PER_political.19111
-	title = PER_political.19111.t
-	desc = PER_political.19111.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.19111.a
-		log = "[GetDateText]: [This.GetName]:PER_political.19111.a executed"
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = PER }
-		set_temp_variable = { influence_target = BHR }
-		change_influence_percentage = yes
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-#
-country_event = { ##Bahrain Says No To Iranian Bases
-	id = PER_political.19112
-	title = PER_political.19112.t
-	desc = PER_political.19112.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.19112.a
-		log = "[GetDateText]: [This.GetName]:PER_political.19112.a executed"
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-####
-country_event = { ##Iran Requests Bases Qatar
-	id = PER_political.1912
-	title = PER_political.1912.t
-	desc = PER_political.1912.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.1912.a
-		log = "[GetDateText]: [This.GetName]:PER_political.1912.a executed"
-		PER = {
-			country_event = {
-				id = PER_political.19121
-				days = 1
-			}
-		}
-		QAT = {
-			give_military_access = PER
-		}
-		ai_chance = {
-			base = 3
-		}
-	}
-	option = { #No
-	name = PER_political.1912.a
-		log = "[GetDateText]: [This.GetName]:PER_political.1912.a executed"
-		PER = {
-			country_event = {
-				id = PER_political.191212
-				days = 1
-			}
-		}
-		PER = {
-			add_opinion_modifier = {
-				target = QAT
-				modifier = large_decrease
-			}
-		}
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-#
-country_event = { ##Qatar Says Yes To Iranian Bases
-	id = PER_political.19121
-	title = PER_political.19121.t
-	desc = PER_political.19121.d
-	is_triggered_only = yes
-
-	option = { #Yes
-		name = PER_political.19121.a
-		log = "[GetDateText]: [This.GetName]:PER_political.19121.a executed"
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = PER }
-		set_temp_variable = { influence_target = QAT }
-		change_influence_percentage = yes
-		ai_chance = {
-			base = 3
-		}
-	}
-}
-#
 country_event = { # Iran asks us for Leapord Tanks
 	id = PER_political.9865
 	title = PER_political.9865.t
@@ -19617,7 +19326,6 @@ country_event = { # Free Majlis elections (Player can't do shit about it)
 	title = PER_majlis.48.t
 	desc = PER_majlis.48.d
 	picture = GFX_iran_majles
-
 	is_triggered_only = yes
 	trigger = {
 		has_country_flag = PER_freed_majlis
@@ -19626,6 +19334,9 @@ country_event = { # Free Majlis elections (Player can't do shit about it)
 				emerging_hardline_shiite_are_in_power = yes
 				emerging_moderate_shiite_are_in_power = yes
 			}
+		}
+		NOT = {
+			has_civil_war = yes
 		}
 	}
 	option = {
@@ -19680,6 +19391,9 @@ country_event = { # Influence Majlis elections (Post-Revolution)
 				emerging_hardline_shiite_are_in_power = yes
 				emerging_moderate_shiite_are_in_power = yes
 			}
+		}
+		NOT = {
+			has_civil_war = yes
 		}
 	}
 	option = {
@@ -20486,6 +20200,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 	trigger = {
+		has_country_flag = PER_fuck_qom
 		NOT = {
 			OR = {
 				emerging_hardline_shiite_are_in_power = yes
@@ -20919,6 +20634,87 @@ country_event = {
 		add_power_balance_value = {
 			id = PER_clergy_balance_of_power_category
 			value = 0.10
+		}
+		custom_effect_tooltip = PER_qom_state_TT
+		add_ideas = PER_qom_taxes
+		hidden_effect = {
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_qom_state_created
+				copy_tag = PER
+				set_cosmetic_tag = QOM_state
+				set_country_flag = is_IRAN
+				set_politics = {
+					ruling_party = communism
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+				start_politics_input = yes
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.00 } #Conservative
+				set_variable = { party_pop_array^7 = 1.00 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+				### Ruling Party
+				add_to_array = { ruling_party = 7 }
+				startup_politics = yes
+				set_popularities = {
+					communism = 100
+				}
+				# Leader
+				create_country_leader = {
+					name = "Qom Seminaries Council"
+					picture = "qom_leader.dds"
+					ideology = anarchist_communism
+					traits = {
+						emerging_anarchist_communism
+					}
+				}
+				add_ideas = PER_stronghold_of_islamism
+				add_ideas = shia
+			}
+		}
+		#
+		hidden_effect = {
+			1144 = { transfer_state_to = QOM }
+			set_autonomy = {
+				target = QOM
+				autonomy_state = autonomy_autonomous_state
+			}
+			QOM = {
+				set_country_flag = PER_federalized
+			}
+			QOM = {
+				add_popularity = { # Increase Emerging
+					ideology = communism
+					popularity = 0.50
+				}
+			}
+			PER = { every_core_state = { remove_core_of = QOM } }
+			1144 = {
+				add_core_of = QOM
+			}
 		}
 	}
 }
@@ -21981,296 +21777,6 @@ country_event = {
 		}
 	}
 }
-# # # # # # #
-country_event = {
-	id = iran_md.26 # Some time in 2004, rise of the PJAK
-	title = iran_md.26.t
-	desc = iran_md.26.d
-	picture = GFX_pjak_event
-	is_triggered_only = yes
-	trigger = {
-		PER = {
-			NOT = {
-				emerging_anarchist_communism_are_in_power = yes
-			}
-		}
-		OR = {
-			1039 = {
-				is_owned_and_controlled_by = PER
-			}
-			979 = {
-				is_owned_and_controlled_by = PER
-			}
-			408 = {
-				is_owned_and_controlled_by = PER
-			}
-		}
-	}
-	option = { # Damn
-		name = iran_md.26.a
-		log = "[GetDateText]: [This.GetName]:iran_md.26.a executed"
-		set_country_flag = PER_pjak_active
-		add_ideas = TUR_PKK_active_foreign
-		# PJAK forces
-		add_to_variable = { var = PER_pjak_army_size value = 2250 }
-		clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
-		# Iranian forces
-		add_to_variable = { var = PER_pjak_iran_army_size value = 1270 }
-		clamp_variable = { var = PER_pjak_iran_army_size min = 0 max = 30000 }
-		#
-		add_to_variable = { var = PER_pjak_strength_var value = 50 }
-		clamp_variable = { var = PER_pjak_strength_var min = 0 max = 100 }
-		if = {
-			limit = {
-				1039 = {
-					is_owned_and_controlled_by = PER
-				}
-			}
-			1039 = { add_dynamic_modifier = { modifier = PER_pjak_activity } }
-		}
-		if = {
-			limit = {
-				979 = {
-					is_owned_and_controlled_by = PER
-				}
-			}
-			979 = { add_dynamic_modifier = { modifier = PER_pjak_activity } }
-		}
-		if = {
-			limit = {
-				408 = {
-					is_owned_and_controlled_by = PER
-				}
-			}
-			408 = { add_dynamic_modifier = { modifier = PER_pjak_activity } }
-		}
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-#
-country_event = {
-	id = iran_md.27 # Some time in 2005, PJAK launch attack on mili factory
-	title = iran_md.27.t
-	desc = iran_md.27.d
-	picture = GFX_pjak_event
-	is_triggered_only = yes
-	trigger = {
-		PER = {
-			NOT = {
-				emerging_anarchist_communism_are_in_power = yes
-			}
-		}
-		has_country_flag = PER_pjak_active
-		408 = {
-			is_controlled_by = PER
-		}
-	}
-	option = { # Damn
-		name = iran_md.27.a
-		log = "[GetDateText]: [This.GetName]:iran_md.27.a executed"
-		408 = {
-			damage_building = {
-				type = arms_factory
-				damage = 1.0
-			}
-		}
-		add_stability = -0.05
-		ai_chance = {
-			base = 5
-		}
-	}
-	#
-	option = { # Damn
-		name = iran_md.27.b
-		log = "[GetDateText]: [This.GetName]:iran_md.27.b executed"
-		custom_effect_tooltip = PER_pjak_increase_10
-		add_to_variable = { var = PER_pjak_strength_var value = 10 }
-		clamp_variable = { var = PER_pjak_strength_var min = 0 max = 100 }
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-#
-country_event = {
-	id = iran_md.271 # Some time in 2006, PJAK launch attack on mili factory
-	title = iran_md.271.t
-	desc = iran_md.271.d
-	picture = GFX_pjak_event
-	is_triggered_only = yes
-	trigger = {
-		PER = {
-			NOT = {
-				emerging_anarchist_communism_are_in_power = yes
-			}
-		}
-		has_country_flag = PER_pjak_active
-		1039 = {
-			is_controlled_by = PER
-		}
-	}
-	option = { # Damn
-		name = iran_md.271.a
-		log = "[GetDateText]: [This.GetName]:iran_md.271.a executed"
-		1039 = {
-			damage_building = {
-				type = industrial_complex
-				damage = 1.0
-			}
-		}
-		1039 = {
-			damage_building = {
-				type = infrastructure
-				damage = 1.0
-			}
-		}
-		1039 = {
-			damage_building = {
-				type = fossil_powerplant
-				damage = 1.0
-			}
-		}
-		add_stability = -0.05
-		ai_chance = {
-			base = 5
-		}
-	}
-	#
-	option = { # Damn
-		name = iran_md.271.b
-		log = "[GetDateText]: [This.GetName]:iran_md.271.b executed"
-		custom_effect_tooltip = PER_suffer_500_casualties
-		add_to_variable = { var = PER_pjak_iran_army_size value = -500 }
-		clamp_variable = { var = PER_pjak_iran_army_size min = 0 max = 30000 }
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-#
-country_event = {
-	id = iran_md.272 # Some time in 2006, PJAK launch attack on mili factory
-	title = iran_md.272.t
-	desc = iran_md.272.d
-	picture = GFX_pjak_event
-	is_triggered_only = yes
-	trigger = {
-		PER = {
-			NOT = {
-				emerging_anarchist_communism_are_in_power = yes
-			}
-		}
-		has_country_flag = PER_pjak_active
-		1039 = {
-			is_controlled_by = PER
-		}
-	}
-	option = { # Damn
-		name = iran_md.272.a
-		log = "[GetDateText]: [This.GetName]:iran_md.272.a executed"
-		set_temp_variable = { treasury_change = -90.00 }
-		modify_treasury_effect = yes
-		add_political_power = -200
-		ai_chance = {
-			base = 5
-		}
-	}
-	#
-	option = { # Damn
-		name = iran_md.272.b
-		log = "[GetDateText]: [This.GetName]:iran_md.272.b executed"
-		custom_effect_tooltip = PER_pjak_grow_300
-		add_to_variable = { var = PER_pjak_army_size value = 300 }
-		clamp_variable = { var = PER_pjak_army_size min = 0 max = 30000 }
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-#
-country_event = {
-	id = iran_md.28 # Some time in 2005, PJAK launch attack on mili factory
-	title = iran_md.28.t
-	desc = iran_md.28.d
-	picture = GFX_pjak_event
-	is_triggered_only = yes
-	trigger = {
-		PER = {
-			NOT = {
-				emerging_anarchist_communism_are_in_power = yes
-			}
-		}
-		has_country_flag = PER_pjak_active
-		408 = {
-			is_controlled_by = PER
-		}
-	}
-	option = { # Damn
-		name = iran_md.28.a
-		log = "[GetDateText]: [This.GetName]:iran_md.28.a executed"
-		hidden_effect = {
-			1039 = { remove_dynamic_modifier = { modifier = PER_pjak_activity } }
-			979 = { remove_dynamic_modifier = { modifier = PER_pjak_activity } }
-			408 = { remove_dynamic_modifier = { modifier = PER_pjak_activity } }
-			408 = {
-				add_core_of = IKR
-			}
-			979 = {
-				add_core_of = IKR
-			}
-			1039 = {
-				add_core_of = IKR
-			}
-			408 = {
-				remove_core_of = PER
-			}
-			979 = {
-				remove_core_of = PER
-			}
-			1039 = {
-				remove_core_of = PER
-			}
-			IKR = {
-				set_cosmetic_tag = IKR_pjak_state
-				set_country_flag = is_IKR_PER
-			}
-			#
-			if = {
-				limit = {
-					408 = {
-						is_owned_and_controlled_by = PER
-					}
-				}
-				408 = { transfer_state_to = IKR }
-			}
-			#
-			if = {
-				limit = {
-					979 = {
-						is_owned_and_controlled_by = PER
-					}
-				}
-				979 = { transfer_state_to = IKR }
-			}
-			#
-			if = {
-				limit = {
-					1039 = {
-						is_owned_and_controlled_by = PER
-					}
-				}
-				1039 = { transfer_state_to = IKR }
-			}
-		}
-		add_stability = -0.05
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-#
 country_event = {
 	id = iran_md.29 # State visit to the USA (Pahlavi)
 	title = iran_md.29.t
@@ -22606,8 +22112,8 @@ country_event = {
 		name = iran_md.236.c
 		log = "[GetDateText]: [This.GetName]:iran_md.235.a executed"
 		create_country_leader = {
-			name = "Habibollah Sayyari"
-			picture = "habibollah_sayyari.dds"
+			name = "Farzad Esmaili "
+			picture = "Portrait_Farzad_Esmaili.dds"
 			ideology = Nat_Autocracy
 			traits = {
 				nationalist_Nat_Autocracy
@@ -22620,6 +22126,266 @@ country_event = {
 	option = {
 		name = iran_md.236.e
 		log = "[GetDateText]: [This.GetName]:iran_md.235.a executed"
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+country_event = {
+	id = iran_md.237
+	title = iran_md.237.t
+	desc = iran_md.237.d
+	is_triggered_only = yes
+	# Nationwide Reforms
+	option = {
+		name = iran_md.237.a
+		log = "[GetDateText]: [This.GetName]:iran_md.237.a executed"
+		increase_centralization = yes
+		newline = yes
+		decrease_corruption = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+	# Local level reforms
+	option = {
+		name = iran_md.237.b
+		log = "[GetDateText]: [This.GetName]:iran_md.237.b executed"
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_bazaar_opinion = yes
+		newline = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iran_md.238
+	title = iran_md.238.t
+	desc = iran_md.238.d
+	is_triggered_only = yes
+	# Grant them their rights
+	option = {
+		name = iran_md.238.a
+		log = "[GetDateText]: [This.GetName]:iran_md.238.a executed"
+		add_power_balance_value = {
+			id = PER_clergy_balance_of_power_category
+			value = -0.05
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	# Represent them in Parliament
+	option = {
+		name = iran_md.238.b
+		log = "[GetDateText]: [This.GetName]:iran_md.238.b executed"
+		custom_effect_tooltip = PER_gain_some_election
+		add_to_variable = { PER_majlis_support = 5 }
+		newline = yes
+		add_power_balance_value = {
+			id = PER_clergy_balance_of_power_category
+			value = -0.10
+		}
+		newline = yes
+		add_stability = -0.02
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Iran asks us to use our ports
+country_event = {
+	id = iran_md.239
+	title = iran_md.239.t
+	desc = iran_md.239.d
+	is_triggered_only = yes
+	# Grant them rights
+	option = {
+		name = iran_md.239.a
+		log = "[GetDateText]: [This.GetName]:iran_md.239.a executed"
+		FSA = {
+			add_ai_strategy = {
+				type = befriend
+				id = "PER"
+				value = 100
+			}
+			add_ai_strategy = {
+				type = support
+				id = "PER"
+				value = 100
+			}
+		}
+		give_military_access = PER
+		189 = {
+			add_building_construction = {
+				type = dockyard
+				level = 2
+			}
+		}
+		PER = {
+			country_event = {
+				id = iran_md.2391
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_opinion = { target = PER value > 0 }
+				add = 50
+			}
+		}
+	}
+	# No
+	option = {
+		name = iran_md.239.b
+		log = "[GetDateText]: [This.GetName]:iran_md.238.b executed"
+		PER = {
+			country_event = {
+				id = iran_md.2392
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.2391
+	title = iran_md.2391.t
+	desc = iran_md.2391.d
+	is_triggered_only = yes
+	# Grant them rights
+	option = {
+		name = iran_md.2391.a
+		log = "[GetDateText]: [This.GetName]:iran_md.2391.a executed"
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = PER }
+		set_temp_variable = { influence_target = FSA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.2392
+	title = iran_md.2392.t
+	desc = iran_md.2392.d
+	is_triggered_only = yes
+	# Grant them rights
+	option = {
+		name = iran_md.2392.a
+		log = "[GetDateText]: [This.GetName]:iran_md.2392.a executed"
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+# Iran wants to purchase ships
+country_event = {
+	id = iran_md.240
+	title = iran_md.240.t
+	desc = iran_md.240.d
+	is_triggered_only = yes
+	# Sure
+	option = {
+		name = iran_md.240.a
+		log = "[GetDateText]: [This.GetName]:iran_md.240.a executed"
+		PER = {
+			country_event = {
+				id = iran_md.2401
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_opinion = { target = PER value > 0 }
+				add = 50
+			}
+		}
+	}
+	# No
+	option = {
+		name = iran_md.240.b
+		log = "[GetDateText]: [This.GetName]:iran_md.240.b executed"
+		PER = {
+			country_event = {
+				id = iran_md.2402
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+#
+country_event = {
+	id = iran_md.2401
+	title = iran_md.2401.t
+	desc = iran_md.2401.d
+	is_triggered_only = yes
+	# ok
+	option = {
+		name = iran_md.2401.a
+		log = "[GetDateText]: [This.GetName]:iran_md.2401.a executed"
+		create_ship = {
+			type = carrier_hull_1
+			equipment_variant = "Enterprise Class"
+			creator = USA
+			name = "IRIS Koroush"
+		}
+		newline = yes
+		create_ship = {
+			type = destroyer_hull_2
+			equipment_variant = "Spruance Class - Flight I"
+			creator = USA
+			name = "IRIS Azadi"
+		}
+		newline = yes
+		create_ship = {
+			type = destroyer_hull_2
+			equipment_variant = "Spruance Class - Flight I"
+			creator = USA
+			name = "IRIS Piroozi"
+		}
+		newline = yes
+		create_ship = {
+			type = cruiser_hull_2
+			equipment_variant = "Ticonderoga Class - Mark 26 Twin-Arm Missile Variant"
+			creator = USA
+			name = "IRIS Shoja"
+		}
+		newline = yes
+		set_temp_variable = { treasury_change = -140 }
+		modify_treasury_effect = yes
+		newline = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+country_event = {
+	id = iran_md.2402
+	title = iran_md.2402.t
+	desc = iran_md.2402.d
+	is_triggered_only = yes
+	# ok
+	option = {
+		name = iran_md.2402.a
+		log = "[GetDateText]: [This.GetName]:iran_md.2402.a executed"
 		ai_chance = {
 			base = 5
 		}
@@ -22685,11 +22451,23 @@ country_event = {
 				id = PER_rev_flavor.7
 				days = 1
 			}
+			#game lock with very small chance of spawning Zoroastrian shit
+			random_list = {
+				99 = {
+					set_country_flag = ZOR_not_spawned
+				}
+				1 = {
+					country_event = { id = PER_civilwar.103 days = 14 }
+					modifier = {
+						factor = 10000 #need to flip little over kill
+						has_global_flag = game_rule_PER_spawn_Zoroastrian
+					}
+				}
+			}
 			country_event = {
 				id = PER_civilwar.41
 				days = 2
 			}
-			set_cosmetic_tag = PER_interim_government
 			if = {
 				limit = {
 					has_country_flag = PER_american_weapons
@@ -22804,6 +22582,7 @@ country_event = {
 				set_country_flag = PER_dissolved_majlis
 			}
 			406 = { transfer_state_to = MOJ }
+			1138 = { transfer_state_to = MOJ }
 			MOJ = { set_province_controller = 829 }
 			MOJ = { set_province_controller = 3988 }
 			MOJ = { set_province_controller = 9816 }
@@ -22914,6 +22693,11 @@ country_event = {
 				}
 				402 = { transfer_state_to = IRI }
 				977 = { transfer_state_to = IRI }
+				1150 = { transfer_state_to = IRI }
+				1151 = { transfer_state_to = IRI }
+				1145 = { transfer_state_to = IRI }
+				1144 = { transfer_state_to = IRI }
+				978 = { transfer_state_to = IRI }
 				IRI = { set_province_controller = 10922 }
 				IRI = { set_province_controller = 1982 }
 				IRI = { set_province_controller = 4891 }
@@ -23603,7 +23387,6 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			remove_ideas = corruption_in_the_government
 			remove_ideas = PER_self_humiliation_idea_10
 			remove_ideas = PER_jihad_of_construction
 			remove_ideas = the_holy_defence
@@ -23707,14 +23490,54 @@ country_event = {
 					maneuvering_skill = 2
 					coordination_skill = 3
 				}
+
+
+				# Foreign intervention
+
+				SAU = {
+					add_relation_modifier = {
+						target = ARA
+						modifier = generic_increased_military_support
+					}
+				}
+
+				AZE = {
+					add_relation_modifier = {
+						target = SAZ
+						modifier = generic_increased_military_support
+					}
+				}
+
+				IRQ = {
+					add_relation_modifier = {
+						target = MOJ
+						modifier = generic_increased_military_support
+					}
+				}
+
+				HEZ = {
+					add_relation_modifier = {
+						target = IRQ
+						modifier = generic_increased_military_support
+					}
+				}
+
+				ISR = {
+					add_relation_modifier = {
+						target = PER
+						modifier = generic_increased_military_support
+					}
+				}
 			}
+		}
+		hidden_effect = {
+			set_cosmetic_tag = PER_interim_government
 		}
 		ai_chance = {
 			base = 5
 		}
 	}
 }
-#
 country_event = {
 	id = PER_civilwar.3
 	title = PER_civilwar.3.t
@@ -24326,13 +24149,14 @@ country_event = {
 		name = PER_civilwar.50.a
 		log = "[GetDateText]: [This.GetName]:PER_civilwar.50.a executed"
 		set_country_flag = PER_civilwar_is_now_over
+		set_country_flag = PER_peaceful_revolution
 		hidden_effect = {
 			set_country_flag = PER_majlis_dissolved
 			clr_country_flag = PER_reformist_majlis
 			clr_country_flag = PER_principalist_majlis
 			clr_country_flag = PER_influence_majlis
-			clr_country_flag = PER_freed_majlis
-			set_country_flag = PER_controlled_majlis
+			set_country_flag = PER_freed_majlis
+			clr_country_flag = PER_controlled_majlis
 			set_country_flag = PER_dissolved_majlis
 			set_variable = {
 				var = PER_majlis_support
@@ -24342,7 +24166,6 @@ country_event = {
 				id = PER_civilwar.51
 				days = 3
 			}
-			remove_ideas = corruption_in_the_government
 			remove_ideas = PER_self_humiliation_idea_10
 			remove_ideas = PER_jihad_of_construction
 			remove_ideas = the_holy_defence
@@ -24503,6 +24326,15 @@ country_event = {
 			hidden_effect = {
 				if = {
 					limit = {
+						has_country_flag = PER_qom_granted
+					}
+					country_event = {
+						id = PER_civilwar.101
+						days = 12
+					}
+				}
+				if = {
+					limit = {
 						has_dlc = "La Resistance"
 					}
 					create_intelligence_agency = {
@@ -24539,7 +24371,6 @@ country_event = {
 				change_influence_percentage = yes
 				#
 				set_country_flag = do_not_retire
-
 				if = {
 					limit = {
 						has_government = democratic
@@ -24606,13 +24437,11 @@ country_event = {
 						elections_allowed = no
 					}
 				}
-
 				clr_country_flag = do_not_retire
 			}
 			#
 			clr_country_flag = PER_civil_war
 			clr_country_flag = PER_controlled_majlis
-			set_country_flag = PER_freed_majlis
 			news_event = {
 				id = PER_rev_flavor.8
 				days = 2
@@ -24624,165 +24453,15 @@ country_event = {
 						days = 720
 					}
 				}
-				if = {
-					limit = {
-						NOT = {
-							1039 = {
+				hidden_effect = {
+					every_core_state = {
+						limit = {
+							NOT = {
 								has_state_flag = PER_locals_swayed
 							}
 						}
+						add_dynamic_modifier = { modifier = PER_IRGC_PRESENT }
 					}
-					1039 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							979 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					979 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							408 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					408 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							399 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					399 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							407 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					407 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							404 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					404 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							406 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					406 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							400 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					400 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							977 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					977 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							1073 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					1073 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							976 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					976 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							400 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					400 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							978 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					978 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							403 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					403 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							402 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					402 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
-				}
-				if = {
-					limit = {
-						NOT = {
-							401 = {
-								has_state_flag = PER_locals_swayed
-							}
-						}
-					}
-					401 = { add_dynamic_modifier = { modifier = PER_IRGC_PRESENT  } }
 				}
 				#
 			}
@@ -25078,40 +24757,6 @@ country_event = { ##JUMP
 					count = 1
 				}
 			}
-			#
-			if = {
-				limit = {
-					has_country_flag = PER_revolutionary_troops
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Shapour'\" division_template = \"Lashkar-e Engelabi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Koroush'\" division_template = \"Lashkar-e Engelabi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Jamshid'\" division_template = \"Lashkar-e Engelabi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-				capital_scope = {
-					create_unit = {
-						division = "name =\"Lashkar-e 'Khaju'\" division_template = \"Lashkar-e Engelabi\" start_experience_factor =  1.0"
-						owner = ROOT
-						count = 1
-					}
-				}
-			}
 		}
 		ai_chance = {
 			base = 3
@@ -25196,8 +24841,578 @@ country_event = {
 	}
 }
 
+# During revolution events
+
+# Clerical Fate
+country_event = {
+	id = PER_civilwar.100
+	title = PER_civilwar.100.t
+	desc = PER_civilwar.100.d
+	is_triggered_only = yes
+	# Irans Vatican (Allows for far alt-hist)
+	option = {
+		name = PER_civilwar.100.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.100.a executed"
+		custom_effect_tooltip = PER_qom_state_TT
+		set_country_flag = PER_qom_granted
+		ai_chance = {
+			base = 5
+		}
+	}
+	# No exceptions will be made
+	option = {
+		name = PER_civilwar.100.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.100.b executed"
+		set_country_flag = PER_fuck_qom
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = PER_civilwar.101
+	title = PER_civilwar.101.t
+	desc = PER_civilwar.101.d
+	is_triggered_only = yes
+	option = {
+		name = PER_civilwar.101.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.101.a executed"
+		custom_effect_tooltip = PER_qom_state_TT
+		add_ideas = PER_qom_taxes
+		hidden_effect = {
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_qom_state_created
+				copy_tag = PER
+				set_cosmetic_tag = QOM_state
+				set_country_flag = is_IRAN
+				set_politics = {
+					ruling_party = communism
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+				start_politics_input = yes
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.00 } #Conservative
+				set_variable = { party_pop_array^7 = 1.00 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+				### Ruling Party
+				add_to_array = { ruling_party = 7 }
+				startup_politics = yes
+				set_popularities = {
+					communism = 100
+				}
+				# Leader
+				create_country_leader = {
+					name = "Qom Seminaries Council"
+					picture = "qom_leader.dds"
+					ideology = anarchist_communism
+					traits = {
+						emerging_anarchist_communism
+					}
+				}
+				add_ideas = PER_stronghold_of_islamism
+				add_ideas = shia
+			}
+		}
+		#
+		hidden_effect = {
+			1144 = { transfer_state_to = QOM }
+			set_autonomy = {
+				target = QOM
+				autonomy_state = autonomy_autonomous_state
+			}
+			QOM = {
+				set_country_flag = PER_federalized
+			}
+			QOM = {
+				add_popularity = { # Increase Emerging
+					ideology = communism
+					popularity = 0.50
+				}
+			}
+			PER = { every_core_state = { remove_core_of = QOM } }
+			1144 = {
+				add_core_of = QOM
+			}
+			QOM = {
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 7 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
+					}
+					create_country_leader = {
+						name = "Qom Seminaries Council"
+						picture = "qom_leader.dds"
+						ideology = anarchist_communism
+						traits = {
+							emerging_anarchist_communism
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# The MEK legal matters
+country_event = {
+	id = PER_civilwar.102
+	title = PER_civilwar.102.t
+	desc = PER_civilwar.102.d
+	is_triggered_only = yes
+	# Maintain Ban on the MEK
+	option = {
+		name = PER_civilwar.102.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.102.a executed"
+		custom_effect_tooltip = PER_will_piss_off_MEK_TT
+		hidden_effect = {
+			country_event = {
+				id = PER_revolution.12
+				days = 45
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	# Legalize the MEK
+	option = {
+		name = PER_civilwar.102.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.102.b executed"
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		add_relative_party_popularity = yes
+		newline = yes
+		custom_effect_tooltip = MEK_unbanned_TT
+		clr_country_flag = party6_banned
+		newline = yes
+		add_stability = -0.03
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+# Spawn Zoroastrian state
+#Zoroastrian Underground Army of Yazd
+country_event = {
+	id = PER_civilwar.103
+	title = PER_civilwar.103.t
+	desc = PER_civilwar.103.d
+	is_triggered_only = yes
+	# Zoroastrianism spawns
+	option = {
+		name = PER_civilwar.103.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.103.a executed"
+		custom_effect_tooltip = PER_play_as_Zoroastrianism_spawns
+		hidden_effect = {
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_Zoroastrian_spawned
+				copy_tag = PER
+				set_cosmetic_tag = PER_Zoroastrian_Flag
+				set_capital = { state = 1147 remember_old_capital = yes }
+				set_country_flag = is_IRAN
+				set_popularities = { democratic = 37.0 communism = 13.0 fascism = 6.0 neutrality = 39.0 nationalist = 5.0 }
+				set_politics = { ruling_party = democratic last_election = "1997.6.8" election_frequency = 48 elections_allowed = yes } start_politics_input = yes
+				### Generic Set Up
+				country_event = { id = PER_civilwar.104 }
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.05 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.23 } #conservatism
+				set_variable = { party_pop_array^2 = 0.09 } #liberalism
+				set_variable = { party_pop_array^3 = 0 } #socialism
+				set_variable = { party_pop_array^4 = 0.02 } #Communist-State
+				set_variable = { party_pop_array^5 = 0 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.04 } #Conservative
+				set_variable = { party_pop_array^7 = 0 } #Autocracy
+				set_variable = { party_pop_array^8 = 0 } #Mod_Vilayat_e_Faqih
+				set_variable = { party_pop_array^9 = 0 } #Vilayat_e_Faqih
+				set_variable = { party_pop_array^10 = 0 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.13 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.37 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0 } #oligarchism
+				set_variable = { party_pop_array^16 = 0 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.02 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.01 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.04 } #Monarchist
+				add_to_array = { ruling_party = 1 }
+				add_to_array = { gov_coalition_array = 4 }
+				add_to_array = { gov_coalition_array = 22 }
+				startup_politics = yes
+				create_country_leader = { name = "Farhang Mehr" picture = "Farhang_Mehr.dds" ideology = conservatism }
+				add_ideas = zoroastrian
+				hidden_effect = { #Removes IRGC Generals and replaces them with Artesh (Army) Generals
+					set_country_flag = PER_artesh_rises
+					delete_unit_template_and_units = { division_template = "IRGC Marine Brigade" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Quds Unit"	disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Infantry Brigade" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Armored Division" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Mechanized Division" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Commando Division" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Airborne Brigade" disband = yes }
+					####
+					# Ground Force
+					retire_character = PER_mostafa_izadi
+					retire_character = PER_mohammad_hejazi
+					retire_character = PER_mohammad_jafari
+					retire_character = PER_ali_najafi
+					retire_character = PER_ahmadreza_pourdastan
+					retire_character = PER_ali_fadavi
+				}
+
+			}
+		}
+		#no news events
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Play as Zoroastrian state
+	option = {
+		name = PER_civilwar.103.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.103.b executed"
+		custom_effect_tooltip = PER_play_as_Zoroastrianism_spawns
+		custom_effect_tooltip = PER_play_as_Zoroastrianism
+		ai_chance = {
+			base = 0
+		}
+		#Rise from Ashes
+		#Ignite the Spirit #game rule name
+		hidden_effect = {
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_Zoroastrian_spawned
+				copy_tag = PER
+				set_cosmetic_tag = PER_Zoroastrian_Flag
+				set_capital = { state = 1147 remember_old_capital = yes }
+				set_country_flag = is_IRAN
+				set_popularities = { democratic = 37.0 communism = 13.0 fascism = 6.0 neutrality = 39.0 nationalist = 5.0 }
+				set_politics = { ruling_party = democratic last_election = "1997.6.8" election_frequency = 48 elections_allowed = yes } start_politics_input = yes
+				### Generic Set Up
+				country_event = { id = PER_civilwar.104 }
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.05 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.23 } #conservatism
+				set_variable = { party_pop_array^2 = 0.09 } #liberalism
+				set_variable = { party_pop_array^3 = 0 } #socialism
+				set_variable = { party_pop_array^4 = 0.02 } #Communist-State
+				set_variable = { party_pop_array^5 = 0 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0.04 } #Conservative
+				set_variable = { party_pop_array^7 = 0 } #Autocracy
+				set_variable = { party_pop_array^8 = 0 } #Mod_Vilayat_e_Faqih
+				set_variable = { party_pop_array^9 = 0 } #Vilayat_e_Faqih
+				set_variable = { party_pop_array^10 = 0 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.13 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.37 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0 } #oligarchism
+				set_variable = { party_pop_array^16 = 0 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.02 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.01 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.04 } #Monarchist
+				add_to_array = { ruling_party = 1 }
+				add_to_array = { gov_coalition_array = 4 }
+				add_to_array = { gov_coalition_array = 22 }
+				startup_politics = yes
+				create_country_leader = { name = "Farhang Mehr" picture = "Farhang_Mehr.dds" ideology = conservatism }
+				add_ideas = zoroastrian
+				hidden_effect = { #Removes IRGC Generals and replaces them with Artesh (Army) Generals
+					set_country_flag = PER_artesh_rises
+					delete_unit_template_and_units = { division_template = "IRGC Marine Brigade" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Quds Unit"	disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Infantry Brigade" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Armored Division" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Mechanized Division" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Commando Division" disband = yes }
+					delete_unit_template_and_units = { division_template = "IRGC Airborne Brigade" disband = yes }
+					####
+					# Ground Force
+					retire_character = PER_mostafa_izadi
+					retire_character = PER_mohammad_hejazi
+					retire_character = PER_mohammad_jafari
+					retire_character = PER_ali_najafi
+					retire_character = PER_ahmadreza_pourdastan
+					retire_character = PER_ali_fadavi
+				}
+
+			}
+			ZOR = { change_tag_from = PER }
+		}
+	}
+}
+#remove the civil war units and creates custom ones
+#Zoroastrian Underground Army of Yazd
+country_event = {
+	id = PER_civilwar.104
+	title = PER_civilwar.104.t
+	desc = PER_civilwar.104.d
+	is_triggered_only = yes
+	hidden = yes
+	# Removes units
+	option = {
+		name = PER_civilwar.104.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.104.a executed"
+		ZOR = {
+			add_ideas = international_bankers
+			add_ideas = farmers
+			add_ideas = landowners
+			every_country = {
+				limit = {
+					original_tag = PER
+				}
+				declare_war_on = { target = ROOT type = civil_war }
+				ROOT = {
+					every_core_state = {
+						remove_core_of = ZOR
+						set_state_flag = ZOR_core_4_later  #this dont work womp womp
+					}
+				}
+			}
+			set_country_flag = PER_Zoroastrian_spawned
+			add_ideas = PER_Zoroastrianism_Flame_of_Resistance
+			add_state_core = 977
+			add_state_core = 1147
+			declare_war_on = { target = BLC type = civil_war }
+			declare_war_on = { target = PER type = civil_war }
+			PER = { declare_war_on = { target = ZOR type = civil_war } }
+			declare_war_on = { target = IRI type = civil_war }
+			create_wargoal = { target = ARA type = civil_war }
+			create_wargoal = { target = SAZ type = civil_war }
+			create_wargoal = { target = MOJ type = civil_war }
+			MOJ = { create_wargoal = { target = ZOR type = civil_war } }
+			1147 = { transfer_state_to = HRM }
+			transfer_units_fraction = {
+				target = HRM
+				size = 1.0
+				stockpile_ratio = 0
+				army_ratio = 1.0
+				navy_ratio = 0
+				air_ratio = 0
+			}
+			1147 = { transfer_state_to = ZOR }
+			set_province_controller = 14673
+			1147 = { set_demilitarized_zone = no }
+			if = {
+				limit = {
+					country_exists = ISI
+				}
+				IRI = { set_state_controller = 1147 }
+				else = {
+					PER = { set_state_controller = 1147 }
+				}
+			}
+			set_province_controller = 14673
+			PER = { set_province_controller = 14263 }
+			division_template = {
+				name = "Lashkar-e Yazd" #dont know what to call this
+				regiments = {
+					Special_Forces = { x = 0 y = 0 }
+					Special_Forces = { x = 0 y = 1 }
+					Special_Forces = { x = 0 y = 2 }
+					Special_Forces = { x = 0 y = 3 }
+					Special_Forces = { x = 1 y = 0 }
+					SP_Arty_Bat = { x = 1 y = 1 }
+				}
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
+					SP_AA_Battery = { x = 0 y = 1 }
+				}
+			}
+			1147 = { create_unit = { division = "name =\"Lashkar-e Rostam\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor = 1.0" owner = ROOT count =  1 } }
+			1147 = { create_unit = { division = "name =\"Lashkar-e Zāl\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor = 1.0" owner = ROOT count =  1 } }
+			1147 = { create_unit = { division = "name =\"Lashkar-e Esfandiyār\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor = 1.0" owner = ROOT count =  1 } }
+			1147 = { create_unit = { division = "name =\"Lashkar-e Lohrasp\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor = 1.0" owner = ROOT count =  1 } }
+			1147 = { create_unit = { division = "name =\"Lashkar-e Mehrāb\" division_template = \"Lashkar-e Motorizeh\" start_experience_factor = 1.0" owner = ROOT count =  1 } }
+			#Licence produced German G3 rifle
+			add_equipment_to_stockpile = { type = infantry_weapons amount = 14000 producer = GER }
+			add_equipment_to_stockpile = { type = Anti_Air_1 amount = 20 producer = USA }
+			add_equipment_to_stockpile = { type = Anti_Air_0 amount = 22 producer = SOV }
+			add_equipment_to_stockpile = { type = artillery_0 amount = 2 producer = CHI }
+			add_equipment_to_stockpile = { type = command_control_equipment1 amount = 34 }
+			#i need to find out how to get rid of the civil war units
+			#delete_unit_template_and_units = { division_template = "IRGC Marine Brigade" disband = yes }
+		}
+		every_country = {
+			limit = {
+				original_tag = PER
+			}
+			declare_war_on = { target = ZOR type = annex_everything }
+		}
+		#no news events
+		ai_chance = {
+			base = 1
+		}
+	}
+}
 
 #
+country_event = {
+	id = PER_civilwar.301
+	title = PER_civilwar.301.t
+	desc = PER_civilwar.301.d
+	is_triggered_only = yes
+	# Green Path
+	option = {
+		name = PER_civilwar.301.a
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.301.a executed"
+		# news_event = {
+		# 	id = PER_rev_flavor.12
+		# 	days = 1
+		# }
+		clr_country_flag = is_IRAN
+		set_temp_variable = { party_index = 12 }
+		set_temp_variable = { party_popularity_increase = 0.50 }
+		set_temp_variable = { temp_outlook_increase = 0.35 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 12 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	# Freedom Movement
+	option = {
+		name = PER_civilwar.301.b
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.301.b executed"
+		clr_country_flag = is_IRAN
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.50 }
+		set_temp_variable = { temp_outlook_increase = 0.35 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 18 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	# National Front
+	option = {
+		name = PER_civilwar.301.c
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.301.c executed"
+		clr_country_flag = is_IRAN
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = { party_popularity_increase = 0.50 }
+		set_temp_variable = { temp_outlook_increase = 0.35 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 14 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	# Green Party
+	option = {
+		name = PER_civilwar.301.e
+		log = "[GetDateText]: [This.GetName]:PER_civilwar.301.e executed"
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable = { party_popularity_increase = 0.35 }
+		set_temp_variable = { temp_outlook_increase = 0.35 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.50 }
+			set_temp_variable = { temp_outlook_increase = -0.50 }
+			add_relative_party_popularity = yes
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 0 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+		}
+		news_event = {
+			id = PER_rev_flavor.9
+			days = 1
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
 # Pahlavi minister takes office
 country_event = {
 	id = PER_prime_minister.1
