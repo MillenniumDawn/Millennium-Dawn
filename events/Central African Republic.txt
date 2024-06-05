@@ -1,204 +1,1725 @@
-﻿add_namespace = CentralAfrica
-add_namespace = CentralAfricaNews
+﻿add_namespace = central_africa
 
-### Central African civil war cleanup events ###
-
-#Give the winner CAR cosmetic tag
+# Lead Up to the Central African Bush War
+# 2000
+# The Status of Jean-Luc Mandaba
 country_event = {
-	id = CentralAfrica.0
-	immediate = { log = "[GetDateText]: [Root.GetName]: event CentralAfrica.0" }
-
-	hidden = yes
-
-	trigger = {
-		has_start_date > 2016.1.1
-		OR = {
-			AND = {
-				tag = CAR
-				NOT = {
-					country_exists = BAL
-					country_exists = SEL
-				}
-			}
-			AND = {
-				tag = BAL
-				NOT = {
-					country_exists = CAR
-					country_exists = SEL
-				}
-			}
-			AND = {
-				tag = SEL
-				NOT = {
-					country_exists = CAR
-					country_exists = BAL
-				}
-			}
-			AND = {
-				tag = LOG
-				OR = {
-					NOT = { country_exists = CAR }
-					CAR = { is_subject_of = LOG }
-				}
-				OR = {
-					NOT = { country_exists = SEL }
-					SEL = { is_subject_of = LOG }
-				}
-				OR = {
-					NOT = { country_exists = BAL }
-					BAL = { is_subject_of = LOG }
-				}
-			}
-		}
-		NOT = { has_global_flag = CAR_Civil_War_Over }
-	}
-
-	mean_time_to_happen = {
-		days = 2
-	}
-
-	immediate = {
-		#Civil war is over
-		set_global_flag = CAR_Civil_War_Over
-		#Clear core status
-		324 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		325 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		921 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		922 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		#Make the winner Central African Republic
-		if = {
-			limit = {
-				OR = {
-					tag = BAL
-					tag = SEL
-				}
-			}
-			set_cosmetic_tag = CAR
-			set_country_flag = dynamic_flag
-			set_country_flag = dynamic_rebel_flag
-			remove_ideas = Non_State_Actor
-		}
-		if = {
-			limit = { NOT = { tag = LOG } }
-			add_state_core = 324
-			add_state_core = 325
-			add_state_core = 921
-			add_state_core = 922
-			set_capital = { state = 324 }
-		}
-		if = {
-			limit = {
-				has_start_date > 2001.1.1
-			}
-			news_event = { id = CentralAfricaNews.1 hours = 6 }
-		}
-	}
-}
-
-#Recreate Central African Republic in case it has been annexed
-country_event = {
-	id = CentralAfrica.1
-	immediate = { log = "[GetDateText]: [Root.GetName]: event CentralAfrica.1" }
-
-	hidden = yes
-
-	trigger = {
-		NOT = {
-			country_exists = CAR
-			country_exists = SEL
-			country_exists = BAL
-		}
-		NOT = { 324 = { is_core_of = CAR } }
-	}
-
-	mean_time_to_happen = {
-		days = 2
-	}
-
-	immediate = {
-		#Clear core status
-		324 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		325 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		921 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		922 = {
-			remove_core_of = CAR
-			remove_core_of = BAL
-			remove_core_of = SEL
-		}
-		CAR = {
-			add_state_core = 324
-			add_state_core = 325
-			add_state_core = 921
-			add_state_core = 922
-			set_capital = { state = 324 }
-		}
-	}
-	option = {
-		name = CentralAfrica.1.a
-		log = "[GetDateText]: [This.GetName]: CentralAfrica.1.a executed"
-	}
-}
-
-#Ending on Central African Civil War
-news_event = {
-
-	id = CentralAfricaNews.1
-	title = CentralAfricaNews.1.t
-	desc = {
-		text = CentralAfricaNews.1.CAR.d
-		trigger = { FROM = { original_tag = CAR } }
-	}
-	desc = {
-		text = CentralAfricaNews.1.SEL.d
-		trigger = { FROM = { original_tag = SEL } }
-	}
-	desc = {
-		text = CentralAfricaNews.1.BAL.d
-		trigger = { FROM = { original_tag = BAL } }
-	}
-	desc = {
-		text = CentralAfricaNews.1.LOG.d
-		trigger = { FROM = { original_tag = LOG } }
-	}
-
-	picture = GFX_news_central_african_civil_war
-
-	major = yes
-
+	id = central_africa.2
+	title = central_africa.2.t
+	desc = central_africa.2.d
+	picture = GFX_politics_dictatorship
 	is_triggered_only = yes
 
-	option = {
-		name = CentralAfricaNews.1.a
-		log = "[GetDateText]: [This.GetName]: CentralAfricaNews.1.a executed"
-		ai_chance = { factor = 100 }
+	trigger = {
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+		date < 2002.1.1
 	}
 
+	# Discretely Eliminate Him
+	option = {
+		name = central_africa.2.a
+		log = "[GetDateText]: [This.GetName]: central_africa.2.a executed"
+		set_country_flag = CAR_eliminates_mandaba
+
+		hidden_effect = {
+			country_event = { id = central_africa.3 days = 7 random_days = 14 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Leave Him
+	option = {
+		name = central_africa.2.b
+		log = "[GetDateText]: [This.GetName]: central_africa.2.b executed"
+
+		hidden_effect = {
+			random_list = {
+				60 = { }
+				40 = { country_event = { id = central_africa.4 days = 7 random_days = 14 } }
+			}
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# The Death of Jean-Luc Mandaba
+country_event = {
+	id = central_africa.3
+	title = central_africa.3.t
+	desc = central_africa.3.d
+	picture = GFX_politics_demands
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+		date < 2004.1.1
+	}
+
+	# Good Riddance
+	option = {
+		name = central_africa.3.a
+		log = "[GetDateText]: [This.GetName]: central_africa.3.a executed"
+		set_country_flag = CAR_death_of_jean_luc_mandaba
+
+		hidden_effect = {
+			random_list = {
+				40 = { }
+				60 = { country_event = { id = central_africa.4 days = 7 random_days = 14 } }
+			}
+		}
+	}
+}
+
+# Anti-Patassé Protests
+country_event = {
+	id = central_africa.4
+	title = central_africa.4.t
+	desc = central_africa.4.d
+	picture = GFX_african_demonstration
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = CAR_death_of_jean_luc_mandaba }
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+		date < 2004.1.1
+	}
+
+	# Allow Them Their Say
+	option = {
+		name = central_africa.4.a
+		log = "[GetDateText]: [This.GetName]: central_africa.4.a executed"
+		set_country_flag = CAR_allowed_anti_patasse_protests
+		add_stability = -0.05
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Stamp Out the Protests
+	option = {
+		name = central_africa.4.b
+		log = "[GetDateText]: [This.GetName]: central_africa.4.b executed"
+		set_country_flag = CAR_stamped_out_protests_patasse_protests
+		add_stability = -0.01
+		add_political_power = -100
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# 2001
+# The May Coup
+country_event = {
+	id = central_africa.5
+	title = central_africa.5.t
+	desc = central_africa.5.d
+	picture = GFX_african_demonstration
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+	}
+
+	# Incite Violence
+	option = {
+		name = central_africa.5.a
+		log = "[GetDateText]: [This.GetName]: central_africa.5.a executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.06 }
+		set_temp_variable = { temp_outlook_increase = 0.06 }
+		add_relative_party_popularity = yes
+		add_stability = -0.05
+
+		hidden_effect = { country_event = { id = central_africa.6 days = 15 random_days = 45 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Calm the Militias
+	option = {
+		name = central_africa.5.b
+		log = "[GetDateText]: [This.GetName]: central_africa.5.b executed"
+		add_political_power = -100
+		add_stability = -0.02
+
+		hidden_effect = { country_event = { id = central_africa.6 days = 15 random_days = 45 } }
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# The Bozizé Question
+country_event = {
+	id = central_africa.6
+	title = central_africa.6.t
+	desc = central_africa.6.d
+	picture = GFX_francois_bozzie
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+	}
+
+	# Arrest Bozizé
+	option = {
+		name = central_africa.6.a
+		log = "[GetDateText]: [This.GetName]: central_africa.6.a executed"
+		set_country_flag = CAR_arrest_bozzie
+
+		hidden_effect = { country_event = { id = central_africa.7 days = 20 random_days = 5 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+
+	# He Would Never
+	option = {
+		name = central_africa.6.b
+		log = "[GetDateText]: [This.GetName]: central_africa.6.b executed"
+
+		hidden_effect = { country_event = { id = central_africa.7 days = 20 random_days = 5 } }
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# Bozizé Flees to Chad
+country_event = {
+	id = central_africa.7
+	title = central_africa.7.t
+	desc = central_africa.7.d
+	picture = GFX_francois_bozzie
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+	}
+
+	# the Traitor Escapes...
+	option = {
+		name = central_africa.7.a
+		log = "[GetDateText]: [This.GetName]: central_africa.7.a executed"
+		add_stability = -0.075
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Invade Chad
+	option = {
+		name = central_africa.7.b
+		log = "[GetDateText]: [This.GetName]: central_africa.7.b executed"
+		trigger = {
+			NOT = { has_country_flag = CAR_arrest_bozzie }
+		}
+
+		add_war_support = 0.05
+		add_stability = -0.05
+		create_wargoal = {
+			target = CHA
+			type = puppet_wargoal_focus
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# 2003
+# Bozizé Returns Seizing Bangui
+country_event = {
+	id = central_africa.8
+	title = central_africa.8.t
+	desc = central_africa.8.d
+	picture = GFX_francois_bozzie
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+		NOT = { has_war_with = CHA }
+	}
+
+	# Allow the Transition of Power
+	option = {
+		name = central_africa.8.a
+		log = "[GetDateText]: [This.GetName]: central_africa.8.a executed"
+		clear_array = ruling_party
+		clear_array = gov_coalition_array
+		add_to_array = { ruling_party = 3 }
+		update_government_coalition_strength = yes
+		update_party_name = yes
+		set_coalition_drift = yes
+		set_ruling_leader = yes
+		set_leader = yes
+		set_politics = {
+			ruling_party = democratic
+			elections_allowed = yes
+		}
+
+		hidden_effect = {
+			country_event = { id = central_africa.9 days = 180 random_days = 30 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Fight Bozize
+	option = {
+		name = central_africa.8.b
+		log = "[GetDateText]: [This.GetName]: central_africa.8.b executed"
+		effect_tooltip = {
+			start_civil_war = {
+				ideology = democratic
+				size = 0.3
+				states = { 921 }
+			}
+		}
+		hidden_effect = {
+			start_civil_war = {
+				ideology = democratic
+				size = 0.3
+				states = { 921 }
+			}
+			random_other_country = {
+				limit = { original_tag = CAR }
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 3 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+
+				create_country_leader = {
+					name = "François Bozizé Yangouvonda"
+					picture = "Francois_Bozize.dds"
+					ideology = socialism
+					traits = {
+						western_socialism
+					}
+				}
+
+				hidden_effect = {
+					set_variable = { population_tax_rate = CAR.population_tax_rate }
+					set_variable = { corporate_tax_rate = CAR.corporate_tax_rate }
+					ingame_update_setup = yes
+					EDU_learn_your_ABCs_with_dread = yes
+					set_variable = { literacy_rate = CAR.literacy_rate }
+					if = {
+						limit = {
+							CAR = { is_agrarian_economy = yes }
+						}
+						AGRI_plant_the_seeds = yes
+						set_variable = { agri_crop_allocation^0 = CAR.agri_crop_allocation^0 }
+						set_variable = { agri_crop_allocation^1 = CAR.agri_crop_allocation^1 }
+						set_variable = { agri_crop_price^0 = CAR.agri_crop_price^0 }
+						set_variable = { agri_crop_price^1 = CAR.agri_crop_price^1 }
+						AGRI_update_math_variables = yes
+					}
+				}
+
+				division_template = {
+					name = "Militia"
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+					}
+				}
+
+				921 = {
+					create_unit = {
+						division = "name = \"1. Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"2. Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"3. Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# The Shadow Of War Looms Over the CAR
+country_event = {
+	id = central_africa.9
+	title = central_africa.9.t
+	desc = central_africa.9.d
+	picture = GFX_african_rebels
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+		NOT = { has_war_with = CHA }
+	}
+
+	# Minor Details...
+	option = {
+		name = central_africa.9.a
+		log = "[GetDateText]: [This.GetName]: central_africa.9.a executed"
+		add_stability = -0.03
+	}
+}
+
+# 2004
+# Allow Patassé Into the Elections
+country_event = {
+	id = central_africa.10
+	title = central_africa.10.t
+	desc = central_africa.10.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# Allow Patassé to Participate
+	option = {
+		name = central_africa.10.a
+		log = "[GetDateText]: [This.GetName]: central_africa.10.a executed"
+		set_temp_variable = { party_index = 18 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	# Bar Patassé from the Elections
+	option = {
+		name = central_africa.10.b
+		log = "[GetDateText]: [This.GetName]: central_africa.10.b executed"
+		set_country_flag = CAR_bars_patasse_from_election
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# 2005
+# The Presidential Election
+country_event = {
+	id = central_africa.12
+	title = central_africa.12.t
+	desc = central_africa.12.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CAR
+		has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+		NOT = { has_war_with = CHA }
+	}
+
+	# François Bozizé
+	option = {
+		name = central_africa.12.a
+		log = "[GetDateText]: [This.GetName]: central_africa.12.a executed"
+		if = { limit = { has_country_leader = { name = "François Bozizé Yangouvonda" ruling_only = yes } }
+			add_political_power = 100
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+		else = {
+			# National convergence party
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 3 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Martin Ziguélé
+	option = {
+		name = central_africa.12.b
+		log = "[GetDateText]: [This.GetName]: central_africa.12.b executed"
+		if = { limit = { has_country_leader = { name = "Martin Ziguélé" ruling_only = yes } }
+			add_political_power = 100
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+		else = {
+			#MLPC
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 18 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	# Patassé Wins Unexpectedly
+	option = {
+		name = central_africa.12.c
+		trigger = { NOT = { has_country_flag = CAR_bars_patasse_from_election } }
+		log = "[GetDateText]: [This.GetName]: central_africa.12.c executed"
+
+		if = { limit = { has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes } }
+			add_political_power = 100
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+		else = {
+			# MLPC
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 18 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+
+			create_country_leader = {
+				name = "Ange-Félix Patassé"
+				picture = "Ange_Felix_Patasse.dds"
+				ideology = neutral_Social
+				traits = {
+					neutrality_neutral_Social
+					career_politician
+				}
+			}
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# The Central African Republic Bush War
+# Triggered from the 00_yearly_effects
+country_event = {
+	id = central_africa.13
+	title = central_africa.13.t
+	desc = central_africa.13.d
+	picture = GFX_car_bush_war
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# The War Begins
+	option = {
+		name = central_africa.13.a
+		log = "[GetDateText]: [This.GetName]: central_africa.13.a executed"
+		set_global_flag = CAR_central_african_bush_war_begun
+		add_timed_idea = { idea = CAR_central_bush_republic_war_idea days = 730 }
+		news_event = { id = central_africa.1000 days = 3 }
+
+		CAR = { country_event = { id = central_africa.14 days = 7 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Request French Support in the Bush War
+# French support here will escalate the conflict from low-level fighting to major fighting
+# but it will prevent the fighting in the second civil war
+country_event = {
+	id = central_africa.14
+	title = central_africa.14.t
+	desc = central_africa.14.d
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# Request French Assistance
+	option = {
+		name = central_africa.14.a
+		log = "[GetDateText]: [This.GetName]: central_africa.14.a executed"
+		custom_effect_tooltip = CAR_central_africa.14.a.tt
+		FRA = { country_event = { id = central_africa.15 days = 7 } }
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# It is not needed
+	option = {
+		name = central_africa.14.b
+		log = "[GetDateText]: [This.GetName]: central_africa.14.b executed"
+		# We do nothing here and so it just keeps it chugging
+		if = { limit = { has_idea = CAR_central_bush_republic_war_idea }
+			modify_timed_idea = { idea = CAR_central_bush_republic_war_idea days = 180 }
+		}
+		else = {
+			add_timed_idea = { idea = CAR_central_bush_republic_war_idea days = 180 }
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# French Response to Above
+country_event = {
+	id = central_africa.15
+	title = central_africa.15.t
+	desc = central_africa.15.d
+	picture = GFX_message_signing
+	is_triggered_only = yes
+	trigger = {
+		original_tag = FRA
+	}
+
+	# Support Bozizé
+	option = {
+		name = central_africa.15.a
+		log = "[GetDateText]: [This.GetName]: central_africa.15.a executed"
+		set_country_flag = FRA_supports_bozzie
+		if = { limit = { NOT = { has_completed_focus = FRA_CAR_intervention } }
+			effect_tooltip = {
+				unlock_national_focus = FRA_CAR_intervention
+			}
+		}
+		CAR = { country_event = { id = central_africa.16 days = 7 } }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Decline The Request
+	option = {
+		name = central_africa.15.b
+		log = "[GetDateText]: [This.GetName]: central_africa.15.b executed"
+		CAR = { country_event = { id = central_africa.16 days = 7 } }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# Response back to CAR
+country_event = {
+	id = central_africa.16
+	title = { trigger = { FRA = { has_country_flag = FRA_supports_bozzie } }
+		text = central_africa.16.t1
+	}
+	title = { trigger = { NOT = { FRA = { has_country_flag = FRA_supports_bozzie } } }
+		text = central_africa.16.t2
+	}
+	desc = { trigger = { FRA = { has_country_flag = FRA_supports_bozzie } }
+		text = central_africa.16.d1
+	}
+	desc = { trigger = { NOT = { FRA = { has_country_flag = FRA_supports_bozzie } } }
+		text = central_africa.16.d2
+	}
+	picture = GFX_message_signing
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# France Support Us!
+	option = {
+		name = central_africa.16.a
+		trigger = { FRA = { has_country_flag = FRA_supports_bozzie } }
+		log = "[GetDateText]: [This.GetName]: central_africa.16.a executed"
+
+		effect_tooltip = {
+			start_civil_war = {
+				ideology = neutrality
+				size = 0.3
+				states = { 921 }
+			}
+		}
+		news_event = { id = central_africa.1001 days = 3 }
+		hidden_effect = {
+			start_civil_war = {
+				ideology = neutrality
+				size = 0.5
+				states = { 921 }
+			}
+			CAR = {
+				remove_ideas = CAR_central_bush_republic_war_idea
+			}
+			random_other_country = {
+				limit = { original_tag = CAR }
+				set_cosmetic_tag = CAR_REBEL_ONE
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 13 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+
+				create_country_leader = {
+					name = "Michel Djotodia"
+					picture = "gfx/leaders/CAR/michel_djotodia.dds"
+					ideology = Neutral_Autocracy
+					traits = {
+						neutrality_Neutral_Autocracy
+						economist
+						guerrilla_leader
+					}
+				}
+
+				hidden_effect = {
+					set_variable = { population_tax_rate = CAR.population_tax_rate }
+					set_variable = { corporate_tax_rate = CAR.corporate_tax_rate }
+					ingame_update_setup = yes
+					EDU_learn_your_ABCs_with_dread = yes
+					set_variable = { literacy_rate = CAR.literacy_rate }
+					if = {
+						limit = {
+							CAR = { is_agrarian_economy = yes }
+						}
+						AGRI_plant_the_seeds = yes
+						set_variable = { agri_crop_allocation^0 = CAR.agri_crop_allocation^0 }
+						set_variable = { agri_crop_allocation^1 = CAR.agri_crop_allocation^1 }
+						set_variable = { agri_crop_price^0 = CAR.agri_crop_price^0 }
+						set_variable = { agri_crop_price^1 = CAR.agri_crop_price^1 }
+						AGRI_update_math_variables = yes
+					}
+				}
+
+				division_template = {
+					name = "Militia"
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+					}
+				}
+
+				921 = {
+					create_unit = {
+						division = "name = \"1. Goula Rebels\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"2. Kara Rebels\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"3. Rounga Rebels\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+				}
+				922 = {
+					PREV = {
+						set_province_controller = 8078
+						set_province_controller = 11597
+					}
+					create_unit = {
+						division = "name = \"4. Mbum Rebels\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+						prioritize_location = 8078
+					}
+					create_unit = {
+						division = "name = \"5. Sara Rebels\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+						prioritize_location = 11597
+					}
+				}
+			}
+		}
+		remove_ideas = CAR_central_bush_republic_war_idea
+
+		# Escalates the Conflict
+		clr_global_flag = CAR_central_african_bush_war_begun
+		set_global_flag = CAR_central_african_bush_war_escalated
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Lack of Support
+	option = {
+		name = central_africa.16.b
+		trigger = { NOT = { FRA = { has_country_flag = FRA_supports_bozzie } } }
+		log = "[GetDateText]: [This.GetName]: central_africa.16.b executed"
+
+		if = { limit = { has_idea = CAR_central_bush_republic_war_idea }
+			modify_timed_idea = { idea = CAR_central_bush_republic_war_idea days = 180 }
+		}
+		else = {
+			add_timed_idea = { idea = CAR_central_bush_republic_war_idea days = 180 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# The End of the Central African Republic Bush War
+country_event = {
+	id = central_africa.17
+	title = central_africa.17.t
+	desc = central_africa.17.d
+	picture = GFX_africa_technical # TODO: Replace with a more accurate picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+		has_civil_war = no
+		has_global_flag = CAR_central_african_bush_war_escalated
+		NOT = { has_global_flag = CAR_central_african_bush_war_escalated_cleanedup }
+		NOT = { has_idea = CAR_central_bush_republic_war_idea }
+	}
+
+	# To the Victors the Spoils
+	option = {
+		name = central_africa.17.a
+		log = "[GetDateText]: [This.GetName]: central_africa.17.a executed"
+		news_event = { id = central_africa.1002 days = 3 }
+		add_stability = 0.05
+		add_political_power = 100
+		delete_unit_template_and_units = {
+			division_template = "Rebel Groups"
+		}
+		delete_unit_template_and_units = {
+			division_template = "Militia"
+		}
+		if = {
+			limit = { has_cosmetic_tag = CAR_REBEL_ONE }
+			drop_cosmetic_tag = yes
+		}
+		if = {
+			limit = { NOT = { has_cosmetic_tag = CAR } }
+			set_cosmetic_tag = CAR
+		}
+		set_global_flag = CAR_central_african_bush_war_escalated_cleanedup
+		hidden_effect = {
+			if = {
+				limit = {
+					FRA = {
+						has_relation_modifier = {
+							target = CAR
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				FRA = {
+					remove_relation_modifier = {
+						target = CAR
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+			if = {
+				limit = {
+					any_country = {
+						original_tag = CAR
+						FRA = {
+							has_relation_modifier = {
+								target = PREV
+								modifier = generic_increased_military_support
+							}
+						}
+					}
+				}
+				random_country = {
+					limit = {
+						original_tag = CAR
+						NOT = { tag = CAR }
+					}
+					FRA = {
+						remove_relation_modifier = {
+							target = PREV
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Fires before central_africa.17
+# Triggered from the 00_yearly_effects
+# A Tense Peace...
+country_event = {
+	id = central_africa.18
+	title = central_africa.18.t
+	desc = central_africa.18.d
+	picture = GFX_message_signing
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# Peace in Our Time
+	option = {
+		name = central_africa.18.a
+		log = "[GetDateText]: [This.GetName]: central_africa.18.a executed"
+		if = { limit = { has_global_flag = CAR_central_african_bush_war_escalated }
+			country_event = { id = central_africa.17 days = 30 random_days = 90 }
+		}
+		else = {
+			news_event = { id = central_africa.1002 days = 3 }
+		}
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Accusations of Violations
+country_event = {
+	id = central_africa.19
+	title = central_africa.19.t
+	desc = central_africa.19.d
+	picture = GFX_african_rebels
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# Calm the Rebels Down
+	option = {
+		name = central_africa.19.a
+		log = "[GetDateText]: [This.GetName]: central_africa.19.a executed"
+		add_stability = 0.02
+		add_political_power = -75
+
+		hidden_effect = {
+			country_event = { id = central_africa.22 days = 120 random_days = 15 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# They're the problem!
+	option = {
+		name = central_africa.19.b
+		log = "[GetDateText]: [This.GetName]: central_africa.19.b executed"
+		set_stability = -0.05
+
+		hidden_effect = {
+			country_event = { id = central_africa.22 days = 120 random_days = 15 }
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# Bozizé Requests Support Against the Rebels
+country_event = {
+	id = central_africa.20
+	title = central_africa.20.t
+	desc = central_africa.20.d
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# Support Bozizé
+	option = {
+		name = central_africa.20.a
+		log = "[GetDateText]: [This.GetName]: central_africa.20.a executed"
+		hidden_effect = {
+			FRA = { set_country_flag = FRA_supports_bozzie_two }
+		}
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 1.5
+				CAR = { has_country_flag = CAR_blamed_the_rebels }
+			}
+		}
+	}
+
+	# We Are Not Kingmakers
+	option = {
+		name = central_africa.20.b
+		log = "[GetDateText]: [This.GetName]: central_africa.20.b executed"
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# CAR Response to the Event
+country_event = {
+	id = central_africa.21
+	title = { trigger = { FRA = { has_country_flag = FRA_supports_bozzie_two } }
+		text = central_africa.21.t1
+	}
+	title = { trigger = { NOT = { FRA = { has_country_flag = FRA_supports_bozzie_two } } }
+		text = central_africa.21.t2
+	}
+	desc = { trigger = { FRA = { has_country_flag = FRA_supports_bozzie_two } }
+		text = central_africa.21.d1
+	}
+	desc = { trigger = { NOT = { FRA = { has_country_flag = FRA_supports_bozzie_two } } }
+		text = central_africa.21.d2
+	}
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+	}
+
+	# They've Supported Us!
+	option = {
+		name = central_africa.21.a
+		trigger = { FRA = { has_country_flag = FRA_supports_bozzie_two } }
+		log = "[GetDateText]: [This.GetName]: central_africa.21.a executed"
+	}
+
+	# They're the Problem!
+	option = {
+		name = central_africa.21.b
+		trigger = { NOT = { FRA = { has_country_flag = FRA_supports_bozzie_two } } }
+		log = "[GetDateText]: [This.GetName]: central_africa.21.b executed"
+	}
+}
+
+# The Central African Republic Civil War
+# triggered from central_africa.19
+country_event = {
+	id = central_africa.22
+	title = central_africa.22.t
+	desc = central_africa.22.d
+	picture = GFX_african_rebels
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+		# This war does not trigger if the Bush War further Escalates
+		NOT = { has_global_flag = CAR_central_african_bush_war_escalated }
+		# Martin is the only firm option of preventing this as he was friendly with all sides
+		OR = {
+			has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes }
+			has_country_leader = { name = "François Bozizé Yangouvonda" ruling_only = yes }
+		}
+	}
+	immediate = {
+		set_global_flag = CAR_central_african_republic_civil_war
+		news_event = { id = central_africa.1003 days = 3 }
+		# Configures the Initial Civil War
+		hidden_effect = {
+			SEL = {
+				# Add Cores
+				add_state_core = 921
+				add_state_core = 324
+				add_state_core = 325
+				add_state_core = 922
+				# Transfer the main state
+				transfer_state = 921
+				CAR = {
+					set_province_controller = 9344
+					set_province_controller = 1974
+					set_province_controller = 9345
+					set_province_controller = 9348
+					set_province_controller = 1883
+					set_province_controller = 9319
+					set_province_controller = 5084
+					set_province_controller = 9333
+
+					division_template = {
+						name = "Militia"
+						is_locked = yes
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Militia_Bat = { x = 0 y = 3 }
+						}
+					}
+					capital_scope = {
+						# Inflates the army but they are going to be at a considerable disadvantage
+						create_unit = {
+							division = "name = \"1. Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = CAR
+						}
+						create_unit = {
+							division = "name = \"2. Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = CAR
+						}
+						create_unit = {
+							division = "name = \"3. Militia\" division_template = \"Militia\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = CAR
+						}
+					}
+				}
+				declare_war_on = { target = CAR type = annex_everything }
+				set_temp_variable = { rul_party_temp = 13 }
+				change_ruling_party_effect = yes
+				hidden_effect = {
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+					create_country_leader = {
+						name = "Michel Djotodia"
+						picture = "gfx/leaders/CAR/michel_djotodia.dds"
+						ideology = Neutral_Autocracy
+						traits = {
+							neutrality_Neutral_Autocracy
+							economist
+							guerrilla_leader
+						}
+					}
+					# Refer to common/scripted_effects/01_civil_war_effects.txt
+					CAR_common_rebel_setup = yes
+					921 = {
+						create_unit = {
+							division = "name = \"1. FDPC\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+							prioritize_location = 7919
+						}
+						create_unit = {
+							division = "name = \"2. FDPC\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+							prioritize_location = 7919
+						}
+						create_unit = {
+							division = "name = \"1. CPJP\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+							prioritize_location = 7919
+						}
+						create_unit = {
+							division = "name = \"1. UFDR\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+							prioritize_location = 9353
+						}
+						create_unit = {
+							division = "name = \"2. UFDR\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+							prioritize_location = 9353
+						}
+						create_unit = {
+							division = "name = \"1. CPSK\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+							prioritize_location = 9353
+						}
+						create_unit = {
+							division = "name = \"1. A2R\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+							prioritize_location = 9353
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# Séléka is the stronger option here as they have more support.
+	# The French will start to intervene here and this is where the historical options really start to kick in
+	# Play as CAR
+	option = {
+		name = central_africa.22.a
+		log = "[GetDateText]: [This.GetName]: central_africa.22.a executed"
+	}
+
+	option = {
+		name = central_africa.22.b
+		log = "[GetDateText]: [This.GetName]: central_africa.22.b executed"
+
+		SEL = {
+			change_tag_from = CAR
+		}
+	}
+}
+
+# [CAR.GetLeader] Abandons the Country
+country_event = {
+	id = central_africa.23
+	title = central_africa.23.t
+	desc = central_africa.23.d
+	picture = GFX_francois_bozzie
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+		has_global_flag = CAR_central_african_republic_civil_war
+		# The event can't fire as the historical deviation has already happened
+		NOT = { has_global_flag = CAR_central_african_bush_war_escalated }
+	}
+
+	# These are Truly Trying Times
+	option = {
+		name = central_africa.23.a
+		log = "[GetDateText]: [This.GetName]: central_africa.23.a executed"
+		add_stability = -0.15
+		if = { limit = { has_country_leader = { name = "Ange-Félix Patassé" ruling_only = yes } }
+			create_country_leader = {
+				name = "Transitional Government"
+				picture = "gfx/leaders/CAR/car_transitional_govt.dds"
+				ideology = neutral_Social
+				traits = {
+					neutrality_neutral_Social
+				}
+			}
+			# Sets it to the correct ideology
+		}
+		if = { limit = { has_country_leader = { name = "François Bozizé Yangouvonda" ruling_only = yes } }
+			create_country_leader = {
+				name = "Transitional Government"
+				picture = "gfx/leaders/CAR/car_transitional_govt.dds"
+				ideology = socialism
+				traits = {
+					western_socialism
+				}
+			}
+			# sets it to the correct ideology so it shows up accordingly
+		}
+
+		# Declares Himself the Leader
+		hidden_effect = {
+			country_event = { id = central_africa.24 days = 7 }
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# Djotodia Declares Himself President of the CAR
+country_event = {
+	id = central_africa.24
+	title = central_africa.24.t
+	desc = central_africa.24.d
+	picture = GFX_car_michel_djotodia
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = CAR
+			original_tag = SEL
+		}
+		has_global_flag = CAR_central_african_republic_civil_war
+		# The event can't fire as the historical deviation has already happened
+		NOT = { has_global_flag = CAR_central_african_bush_war_escalated }
+	}
+
+	# A New President
+	option = {
+		name = central_africa.24.a
+		log = "[GetDateText]: [This.GetName]: central_africa.24.a executed"
+		set_country_flag = CAR_michel_declared_himself_president
+
+		if = {
+			limit = { SEL = { is_ai = no } }
+			SEL = {
+				annex_country = {
+					target = CAR
+					transfer_troops = yes
+				}
+				change_tag_from = CAR # Switch back to CAR
+			}
+		}
+		else = {
+			annex_country = {
+				target = SEL
+				transfer_troops = yes
+			}
+		}
+		delete_unit_template_and_units = { division_template = "Militia" disband = yes }
+		if = {
+			limit = { has_country_leader = { name = "Michel Djotodia" ruling_only = yes } }
+			add_political_power = 100
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+		else = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 13 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+	}
+}
+
+# The End of the Central African Republic Civil War
+country_event = {
+	id = central_africa.25
+	title = central_africa.25.t
+	desc = central_africa.25.d
+	picture = GFX_message_signing # TODO: Replace with more accurate picture
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = CAR
+			original_tag = LOG
+			original_tag = SEL
+			original_tag = BAL
+		}
+		has_global_flag = CAR_central_african_republic_civil_war_phase_two
+		NOT = { has_global_flag = CAR_central_african_republic_civil_war_cleanedup }
+	}
+
+	option = {
+		name = central_africa.25.a
+		log = "[GetDateText]: [This.GetName]: central_africa.25.a executed"
+		set_global_flag = CAR_central_african_republic_civil_war_cleanedup
+		news_event = { id = central_africa.1004 days = 3 }
+		add_stability = 0.05
+		add_political_power = 100
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		delete_unit_template_and_units = {
+			division_template = "Rebel Groups"
+		}
+		delete_unit_template_and_units = {
+			division_template = "Militia"
+		}
+
+		hidden_effect = {
+			if = {
+				limit = {
+					FRA = {
+						has_relation_modifier = {
+							target = LOG
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				FRA = {
+					remove_relation_modifier = {
+						target = LOG
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+			if = {
+				limit = {
+					FRA = {
+						has_relation_modifier = {
+							target = BAL
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				FRA = {
+					remove_relation_modifier = {
+						target = BAL
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+			if = {
+				limit = {
+					FRA = {
+						has_relation_modifier = {
+							target = CAR
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				FRA = {
+					remove_relation_modifier = {
+						target = CAR
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+			if = {
+				limit = {
+					FRA = {
+						has_relation_modifier = {
+							target = SEL
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				FRA = {
+					remove_relation_modifier = {
+						target = SEL
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 1
+		}
+	}
+}
+
+# The Next Phase
+# The third event here triggers the main civil war where the 2014 setup occurs
+country_event = {
+	id = central_africa.26
+	title = central_africa.26.t
+	desc = central_africa.26.d
+	picture = GFX_africa_technical
+	is_triggered_only = yes
+	trigger = {
+		original_tag = CAR
+		has_country_flag = CAR_michel_declared_himself_president
+		has_country_leader = { name = "Michel Djotodia" ruling_only = yes }
+	}
+	immediate = {
+		# Map Configuration
+		hidden_effect = {
+			# Ex-Seleka
+			SEL = {
+				add_state_core = 922
+				add_state_core = 921
+				add_state_core = 324
+				add_state_core = 325
+				transfer_state = 325
+				set_cosmetic_tag = SEL_EX
+			}
+			"LOG" = {
+				add_state_core = 922
+				transfer_state = 921
+			}
+			BAL = {
+				add_state_core = 922
+				add_state_core = 921
+				add_state_core = 324
+				add_state_core = 325
+				transfer_state = 922
+			}
+			CAR = {
+				set_province_controller = 9253
+				set_province_controller = 9227
+				set_province_controller = 11534
+				set_province_controller = 11504
+				set_province_controller = 9223
+				# Control in Bangassou
+				set_province_controller = 11553
+				set_province_controller = 9248
+				set_province_controller = 9302
+				set_province_controller = 12719
+			}
+
+			# War Configuration
+			SEL = {
+				declare_war_on = { target = CAR type = annex_everything }
+				declare_war_on = { target = LOG type = annex_everything }
+				declare_war_on = { target = BAL type = annex_everything }
+				hidden_effect = {
+					set_temp_variable = { rul_party_temp = 13 }
+					change_ruling_party_effect = yes
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+					create_country_leader = {
+						name = "Gen. Ali Darassa"
+						picture = "SEL_ali_darassa.dds"
+						ideology = Neutral_Autocracy
+						traits = {
+							neutrality_Neutral_Autocracy
+						}
+					}
+					# For Party Scripted Setup
+					set_country_flag = SEL_ex_seleka
+					# Refer to common/scripted_effects/01_civil_war_effects.txt
+					CAR_common_rebel_setup = yes
+					capital_scope = {
+						create_unit = {
+							division = "name = \"1. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+						}
+						create_unit = {
+							division = "name = \"2. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+						}
+						create_unit = {
+							division = "name = \"3. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = SEL
+						}
+					}
+				}
+			}
+			"LOG" = {
+				declare_war_on = { target = CAR type = annex_everything }
+				declare_war_on = { target = SEL type = annex_everything }
+				declare_war_on = { target = BAL type = annex_everything }
+				hidden_effect = {
+					set_temp_variable = { rul_party_temp = 20 }
+					change_ruling_party_effect = yes
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = no
+					}
+					create_country_leader = {
+						name = "Noureddine Adam"
+						picture = "noureddine_adam.dds"
+						ideology = Nat_Populism
+						traits = {
+							nationalist_Nat_Populism
+						}
+					}
+					# Refer to common/scripted_effects/01_civil_war_effects.txt
+					CAR_common_rebel_setup = yes
+					capital_scope = {
+						create_unit = {
+							division = "name = \"1. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = LOG
+						}
+						create_unit = {
+							division = "name = \"2. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = LOG
+						}
+						create_unit = {
+							division = "name = \"3. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = LOG
+						}
+					}
+				}
+			}
+			BAL = {
+				declare_war_on = { target = CAR type = annex_everything }
+				declare_war_on = { target = SEL type = annex_everything }
+				declare_war_on = { target = LOG type = annex_everything }
+				hidden_effect = {
+					set_temp_variable = { rul_party_temp = 13 }
+					change_ruling_party_effect = yes
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+					create_country_leader = {
+						name = "Levy Yakete"
+						picture = "levy_yakete.dds"
+						ideology = Neutral_Autocracy
+						traits = {
+							neutrality_Neutral_Autocracy
+						}
+					}
+					# Refer to common/scripted_effects/01_civil_war_effects.txt
+					CAR_common_rebel_setup = yes
+					capital_scope = {
+						create_unit = {
+							division = "name = \"1. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = BAL
+						}
+						create_unit = {
+							division = "name = \"2. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = BAL
+						}
+						create_unit = {
+							division = "name = \"3. Rebel Group\" division_template = \"Rebel Groups\" start_experience_factor = 0.5 start_equipment_factor = 1"
+							owner = BAL
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# Fight the Rebels - Central African Republic
+	option = {
+		name = central_africa.26.a
+		log = "[GetDateText]: [This.GetName]: central_africa.26.a executed"
+
+
+		ai_chance = {
+			factor = 1
+		}
+	}
+
+	# Support Anti-Balaka - Play as Anti-Balaka
+	option = {
+		name = central_africa.26.b
+		log = "[GetDateText]: [This.GetName]: central_africa.26.b executed"
+
+		BAL = {
+			change_tag_from = CAR
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	# Support the Republic of Logone - Play as Republic of Logone
+	option = {
+		name = central_africa.26.c
+		log = "[GetDateText]: [This.GetName]: central_africa.26.c executed"
+		"LOG" = {
+			change_tag_from = CAR
+		}
+
+		ai_chance = {
+			factor = 0
+		}
+	}
+
+	# Support Séléka - Play as Séléka
+	option = {
+		name = central_africa.26.d1
+		log = "[GetDateText]: [This.GetName]: central_africa.26.d1 executed"
+
+		SEL = {
+			change_tag_from = CAR
+		}
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
+
+# New Events
+
+# The Central AFrican Republic Bush War
+news_event = {
+	id = central_africa.1000
+	title = central_africa.1000.t
+	desc = central_africa.1000.d
+	picture = GFX_news_event_car_bush_war
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = central_africa.1000.a
+		log = "[GetDateText]: [This.GetName]: central_africa.1000.a executed"
+	}
+}
+
+# The Central African Republic Bush War Escalates
+news_event = {
+	id = central_africa.1001
+	title = central_africa.1001.t
+	desc = central_africa.1001.d
+	picture = GFX_news_event_car_bush_war2
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = central_africa.1001.a
+		log = "[GetDateText]: [This.GetName]: central_africa.1001.a executed"
+	}
+}
+
+# End of the Central African Republic Bush War
+news_event = {
+	id = central_africa.1002
+	title = central_africa.1002.t
+	desc = central_africa.1002.d
+	picture = GFX_news_event_car_bush_war3
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = central_africa.1002.a
+		log = "[GetDateText]: [This.GetName]: central_africa.1002.a executed"
+	}
+}
+
+# The Central African Republic Civil War
+news_event = {
+	id = central_africa.1003
+	title = central_africa.1003.t
+	desc = central_africa.1003.d
+	picture = GFX_news_event_car_civil_war
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = central_africa.1003.a
+		log = "[GetDateText]: [This.GetName]: central_africa.1003.a executed"
+	}
+}
+
+# The Central African Republic Civil War Concludes
+news_event = {
+	id = central_africa.1004
+	title = central_africa.1004.t
+	desc = central_africa.1004.d
+	picture = GFX_news_event_car_parliament
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = central_africa.1004.a
+		log = "[GetDateText]: [This.GetName]: central_africa.1004.a executed"
+	}
 }

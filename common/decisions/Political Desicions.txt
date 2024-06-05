@@ -11,6 +11,13 @@ generic_coalition_politics_desicions = {
 
 		visible = {
 			if = {
+				limit = { tag = IRQ	}
+				OR = {
+					NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+					NOT = { has_country_leader = { name = "Jay Garner" ruling_only = yes } }
+				}
+			}
+			if = {
 				limit = { tag = SAU }
 				NOT = { is_in_array = { ruling_party = 10 } }
 			}
@@ -312,6 +319,13 @@ generic_coalition_politics_desicions = {
 		fixed_random_seed = no
 
 		visible = {
+			if = {
+				limit = { tag = IRQ	}
+				OR = {
+					NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+					NOT = { has_country_leader = { name = "Jay Garner" ruling_only = yes } }
+				}
+			}
 			has_elections = no
 			if = {
 				limit = { tag = CHI }
@@ -526,6 +540,34 @@ generic_coalition_politics_desicions = {
 		}
 	}
 
+	# Auto-Decline corruption events
+	auto_decline_corruption_offers = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			NOT = {
+				has_country_flag = auto_decline_corruption
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision auto_decline_corruption_offers"
+			set_country_flag = auto_decline_corruption
+		}
+	}
+
+	lift_auto_decline_corruption_events = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			has_country_flag = auto_decline_corruption
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision lift_auto_decline_corruption_events"
+			clr_country_flag = auto_decline_corruption
+		}
+	}
 
 	### Extremist Civil Wars
 
@@ -5425,6 +5467,48 @@ generic_coalition_politics_desicions = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision give_in_to_protestors"
 			give_in_to_protestors_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 50
+		}
+	}
+
+	# Generic Country Unique
+	AFRICA_remove_the_cfa_franc = {
+		allowed = { is_french_africa_nation = yes }
+		icon = generic_civil_support
+
+		visible = {
+			OR = {
+				has_idea = cfa_franc
+				has_idea = cfa_franc_2
+			}
+		}
+
+		available = {
+			OR = {
+				has_war_with = FRA
+				has_government = nationalist
+				FRA = {
+					NOT = {
+						influence_higher_15 = yes
+					}
+				}
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFRICA_remove_the_cfa_franc"
+			if = {
+				limit = { has_idea = CFA_franc }
+				remove_ideas = CFA_franc
+			}
+			else = {
+				remove_ideas = CFA_franc_2
+			}
 		}
 
 		ai_will_do = {
