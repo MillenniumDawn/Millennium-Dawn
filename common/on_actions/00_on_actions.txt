@@ -116,6 +116,18 @@ on_actions = {
 	on_daily = {
 		effect = {
 			energy_on_daily = yes
+			# For the GUI (IRQ)
+			if = {
+				limit = {
+					original_tag = IRQ
+					IRQ = {
+						check_variable = {
+							IRQ_count_down_var > 0
+						}
+					}
+				}
+				add_to_variable = { IRQ_count_down_var = -1 }
+			}
 		}
 	}
 	on_weekly = {
@@ -746,7 +758,7 @@ on_actions = {
 
 			# Monthly Foreign Influence Tick
 			if = { limit = { difficulty > 1 }
-				set_temp_variable = { percent_change = 0.10 }
+				set_temp_variable = { percent_change = global.rule_monthly_domestic_independence_gain_amount }
 				add_to_temp_variable = { percent_change = modifier@foreign_influence_monthly_domestic_independence_gain_modifier }
 				set_temp_variable = { temp_percentage_modifier = 1 }
 				add_to_temp_variable = { temp_percentage_modifier = modifier@foreign_influence_monthly_domestic_independence_gain_factor }
@@ -882,6 +894,33 @@ on_actions = {
 					country_event = {
 						id = PER_revolution.300
 						days = 0
+					}
+				}
+			}
+			if = { # Badr Victory
+				limit = {
+					has_country_flag = IRQ_badr_oponent
+				}
+				news_event = {
+					id = iraqi_flavor_events.9
+				}
+			}
+			if = { # Sadrist Victory
+				limit = {
+					has_country_flag = IRQ_sadr_oponent
+				}
+				news_event = {
+					id = iraqi_flavor_events.8
+				}
+			}
+			if = {
+				limit = {
+					has_country_flag = IRQ_war_with_america
+				}
+				IRQ = {
+					country_event = {
+						id = iraq_war.9
+						days = 1
 					}
 				}
 			}
@@ -2427,6 +2466,19 @@ on_actions = {
 				limit = { ROOT = { tag = CHI } }
 				add_to_variable = { chinese_aggression = 10 }
 			}
+			# USA declares war on Iraq (OIF)
+			if = {
+				limit = {
+					USA = {
+						has_country_flag = Operation_iraqi_freedom
+					}
+					FROM = { original_tag = USA }
+					tag = IRQ
+				}
+				IRQ = {
+					set_country_flag = IRQ_iraq_war_ongoing
+				}
+			}
 
 			# Triggers the Anti Bully War Weariness Effect
 			public_war_weariness_effect = yes
@@ -3474,6 +3526,7 @@ on_actions = {
 			TUR_government_change = yes
 			GER_government_change = yes
 			CHI_government_change = yes
+			IRQ_government_change = yes
 		}
 	}
 
