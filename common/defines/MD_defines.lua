@@ -1,5 +1,3 @@
--- Last Modified 10/11/2022 - Dread: Added a load of peace based defines, tweaked for fine tuning of AI peace deals
-
 	-- NGame ssection
 	NDefines.NGame.START_DATE = "2000.1.1.12"
 	NDefines.NGame.END_DATE = "2100.1.1.1"
@@ -38,7 +36,7 @@
 	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
 	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.35  -- Reduced from 0.50
-	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.009						-- Each months tension decays this much
+	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.012						-- Each months tension decays this much
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MIN = 0 					-- Timed tension scale won't decrease under this value
@@ -76,7 +74,6 @@
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_COOLDOWN_WEIGHT = 1			-- Importance of leadership change cooldown when determining how close a faction member is to being able to assume leadership.
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_MANPOWER_WEIGHT = 2			-- Importance of manpower in field when determining how close a faction member is to being able to assume leadership.
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_FACTORY_WEIGHT = 2			-- Importance of factory count when determining how close a faction member is to being able to assume leadership.
-
 
 	-- Peace related defines
 	NDefines.NDiplomacy.BASE_PEACE_PUPPET_FACTOR = 100							-- (100 in vanilla) Base factor for puppet in %.
@@ -140,8 +137,8 @@
 	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
 	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 60 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
-	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 1 -- 0.75
-	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1 -- 1.25
+	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
+	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
 	-- Market AI
 	NDefines.NAI.MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
 	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
@@ -210,8 +207,6 @@
 	NDefines.NProduction.CAPITAL_SHIP_MAX_NAV_FACTORIES_PER_LINE = 5
 	NDefines.NProduction.MINIMUM_NUMBER_OF_FACTORIES_TAKEN_BY_CONSUMER_GOODS_VALUE = 0		-- The minimum number of factories we have to put on consumer goods, by value.
 	NDefines.NProduction.MINIMUM_NUMBER_OF_FACTORIES_TAKEN_BY_CONSUMER_GOODS_PERCENT = 0	-- The minimum number of factories we have to put on consumer goods, in percent.
-
-	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- Make the max number of factories 0 for purchase -- CLAMPED AT 0
 
 	NDefines.NTechnology.MAX_SUBTECHS = 5
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
@@ -1006,6 +1001,7 @@
 		100, -- RESERVE_FLEET
 		200, -- NAVAL INVASION SUPPORT
 	}
+
 	-- NDefines.NAI.MIN_UNITS_FACTOR_FRONT_ORDER = 10.0
 	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.1					-- 0.1
 	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.0		-- 0
