@@ -6,6 +6,12 @@ calculate_total_legco_seats = {
 }
 set_total_legco_seats = {
 	if = {
+		limit = { 
+			date < 2001.9.30
+		}
+		set_variable = { legco_total_seats = 59 }
+	}
+	if = {
 		limit = {
 			date > 2001.10.1
 			NOT = {
@@ -60,31 +66,47 @@ calculate_legco_seats_four_yearly = {
 	add_to_variable = { legco_LC_party_pop = party_pop_array^23 }
 	add_to_variable = { legco_LC_party_pop = party_pop_array^24 }
 
-	set_variable = { legco_PE_seats = legco_total_seats }
-	multiply_variable = { legco_PE_seats = legco_PE_party_pop }
-	#multiply_variable = { legco_PE_seats = 0.01 }
-	round_variable = legco_PE_seats
-	set_variable = { legco_PD_seats = legco_total_seats }
-	multiply_variable = { legco_PD_seats = legco_PD_party_pop }
-	#multiply_variable = { legco_PD_seats = 0.01 }
-	round_variable = legco_PD_seats
-	set_variable = { legco_LC_seats = legco_total_seats }
-	multiply_variable = { legco_LC_seats = legco_LC_party_pop }
-	#multiply_variable = { legco_LC_seats = 0.01 }
-	round_variable = legco_LC_seats
-	custom_effect_tooltip = legco_election_seats
+	set_variable = { legco_temp_PE_seats = legco_total_seats }
+	multiply_variable = { legco_temp_PE_seats = legco_PE_party_pop }
+
+	set_variable = { legco_temp_PD_seats = legco_total_seats }
+	multiply_variable = { legco_temp_PD_seats = legco_PD_party_pop }
+
+	set_variable = { legco_temp_LC_seats = legco_total_seats }
+	multiply_variable = { legco_temp_LC_seats = legco_LC_party_pop }
+
+	set_temp_variable = { legco_temp_total_seats = legco_temp_PE_seats }
+	add_to_temp_variable = { legco_temp_total_seats = legco_temp_PD_seats }
+	add_to_temp_variable = { legco_temp_total_seats = legco_temp_LC_seats }
+
+	if = {
+		limit = {
+			check_variable = { legco_total_seats > legco_temp_total_seats }
+		}
+		set_temp_variable = { legco_temp_additional_seats = legco_total_seats }
+		subtract_from_temp_variable = { legco_temp_additional_seats = legco_temp_total_seats }
+		add_to_variable = { legco_temp_PE_seats = legco_temp_additional_seats }
+	}
+
+	round_variable = legco_temp_PE_seats
+	round_variable = legco_temp_PD_seats
+	round_variable = legco_temp_LC_seats
 	
-	clamp_temp_variable = {
+	set_variable = { legco_PE_seats = legco_temp_PE_seats }
+	set_variable = { legco_PD_seats = legco_temp_PD_seats }
+	set_variable = { legco_LC_seats = legco_temp_LC_seats }
+
+	clamp_variable = {
 		var = legco_PE_seats
 		min = 0
 		max = legco_total_seats
 	}	
-	clamp_temp_variable = {
+	clamp_variable = {
 		var = legco_PD_seats
 		min = 0
 		max = legco_total_seats
 	}
-	clamp_temp_variable = {
+	clamp_variable = {
 		var = legco_LC_seats
 		min = 0
 		max = legco_total_seats
