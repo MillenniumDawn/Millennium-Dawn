@@ -177,15 +177,15 @@ MLW_MZ_market_change_order_quantity = {
 	custom_effect_tooltip = MLW_MZ_market_change_order_quantity_TT
 	clamp_variable = {
 		var = MLW_MZUZU_sales_stored
-		min = var:MZ_tag_selected.MLW_MZ_tag_export
+		min = var:MZ_tag_selected.MLW_MZUZU_tag_export
 		max = MLW_MZ_weekly_production
 	}
 }
 
 MLW_MZ_send_invoices = {
-	add_to_variable = { var:MLW_MZ_tag_selected.MLW_MZ_weekly_sales = MLW_MZUZU_sales_stored }
-	set_variable = { var:MLW_MZ_tag_selected.MLW_MZ_export_amount = MLW_MZUZU_sales_stored }
-	multiply_variable = { var:MLW_MZ_tag_selected.MLW_MZ_export_amount = -1 }
+	# add_to_variable = { var:MLW_MZ_tag_selected.MLW_MZUZU_sales = MLW_MZUZU_sales_stored }
+	set_variable = { var:MLW_MZ_tag_selected.MLW_MZUZU_tag_export = MLW_MZUZU_sales_stored }
+	multiply_variable = { var:MLW_MZ_tag_selected.MLW_MZUZU_export_amount = -1 }
 	custom_effect_tooltip = MLW_MZ_send_invoices_TT
 }
 
@@ -229,14 +229,14 @@ MLW_MZUZU_market_target_effect = {
 MLW_MZUZU_exporting_to_target_check = {
 	if = {
 		limit = {
-			check_variable = { var:MZ_tag_selected.MLW_MZ_tag_export > 0 }
+			check_variable = { var:MZ_tag_selected.MLW_MZUZU_tag_export > 0 }
 			NOT = { is_in_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected } }
 		}
 		add_to_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
 	}
 	if = {
 		limit = {
-			check_variable = { var:MZ_tag_selected.MLW_MZ_tag_export = 0 }
+			check_variable = { var:MZ_tag_selected.MLW_MZUZU_tag_export = 0 }
 			is_in_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
 		}
 		remove_from_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
@@ -266,7 +266,6 @@ MLW_MZUZU_lease_failsafe = {
 
 # LETS DO SOME FACKIN MAFFS
 
-
 MLW_MZUZU_weekly_ticker = {
 	MLW_MZUZU_manufacture_effect = yes
 	MLW_MZUZU_export_effect = yes
@@ -278,7 +277,7 @@ MLW_MZUZU_monthly_ticker = {}
 MLW_MZUZU_market_cap_change = {
 	for_each_loop = {
 		array = MLW.MLW_MZ_exporters
-		set_temp_variable = { MLW_MZ_market_share_temp = THIS.MLW_MZ_tag_export }
+		set_temp_variable = { MLW_MZ_market_share_temp = THIS.MLW_MZUZU_tag_export }
 		set_temp_variable = { MLW_MZ_customers_temp = THIS.workforce_total_display }
 		divide_temp_variable = { MLW_MZ_market_share_temp = MLW_MZ_customers_temp }
 		multiply_temp_variable = { MLW_MZ_market_share_temp = 4 }
@@ -296,23 +295,31 @@ MLW_MZUZU_manufacture_effect = {
 	set_variable = { MLW_MZ_weekly_production = 0 }
 	# 0
 	set_temp_variable = { MLW_MZ_fact_temp = MLW_MZUZU_DM_factory_use }
+	log = "MLW_MZ_fact_temp - [?MLW_MZ_fact_temp]"
 	# 2 - 2
 	set_temp_variable = { MLW_MZ_prod_temp = 1 }
+	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
 	# 1
 	add_to_temp_variable = { MLW_MZ_prod_temp = ROOT.modifier@MLW_MZUZU_production_modifier }
+	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
 	# 1.25
 	multiply_temp_variable = { MLW_MZ_prod_temp = 1000 }
+	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
 	# 1250
 	multiply_temp_variable = { MLW_MZ_prod_temp = MLW_MZ_fact_temp }
+	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
 	# 2500
 	add_to_variable = { MLW_MZ_weekly_production = MLW_MZ_prod_temp }
-	clamp_temp_variable = { # seriously this is an insane amount of cars
+	log = "MLW_MZ_weekly_production - [?MLW_MZ_weekly_production]"
+	clamp_variable = { # seriously this is an insane amount of cars
 		var = MLW_MZ_weekly_production
 		min = 0
 		max = 2000000
 	}
+	log = "MLW_MZ_weekly_production - [?MLW_MZ_weekly_production]"
 	# 2500
 	add_to_variable = { MLW_MZ_stockpiled = MLW_MZ_weekly_production }
+	log = "MLW_MZ_stockpiled - [?MLW_MZ_stockpiled]"
 	# 53000 - 2500
 	# 55500
 }
@@ -321,9 +328,10 @@ MLW_MZUZU_manufacture_effect = {
 MLW_MZUZU_export_effect = {
 	set_variable = { MLW_MZ_total_exports = 0 }
 	# 0
-	for_each_loop = {
+	for_each_scope_loop = {
 		array = MLW.MLW_MZ_exporters
-		add_to_temp_variable = { sum = THIS.MLW_MZ_tag_export }
+		add_to_temp_variable = { sum = THIS.MLW_MZUZU_tag_export }
+		log = "[THIS.GetName] - [?THIS.MLW_MZUZU_tag_export|0] units exported"
 	}
 	# ex code (4 export tags)
 	# 38
@@ -356,26 +364,36 @@ MLW_MZUZU_income_effect = {
 	if = {
 		limit = { check_variable = { MLW_MZ_stockpiled > MLW_MZ_total_exports } }
 		set_temp_variable = { MLW_MZ_income_temp = 1 }
+		log = "income temp setting - [?MLW_MZ_income_temp]"
 		# 1
-		add_to_temp_variable = { MLW_MZ_income_temp = ROOT.modifier@MLW_MZUZU_income_modifier }
-		# 1.05
+		add_to_temp_variable = { MLW_MZ_income_temp = modifier@MLW_MZUZU_income_modifier }
+		log = "after multiplier modifier - [?MLW_MZ_income_temp]"
+		# 1
 		multiply_temp_variable = { MLW_MZ_income_temp = MLW_MZ_total_exports }
-		# 1.05
-		# 518
+		log = "after multiplied by total exports - [?MLW_MZ_income_temp]"
+		log = "total exports - [?MLW_MZ_total_exports]"
+		# 1
+		# 678
 		multiply_temp_variable = { MLW_MZ_income_temp = MLW_MZ_ppu }
+		log = "after multiplied by price per unit - [?MLW_MZ_income_temp]"
+		log = "price per unit - [?MLW_MZ_ppu]"
+		# 678
+		# 2
+		# 1356
 		clamp_temp_variable = {
 			var = MLW_MZ_income_temp
 			min = 0
 			max = 2000000
 		}
-		# 544
-		# 2
-		# 1088
+		log = "after clamping - [?MLW_MZ_income_temp]"
 		multiply_temp_variable = { MLW_MZ_income_temp = 0.001 }
-		# 1.088
+		log = "multiplied by 0.001 - [?MLW_MZ_income_temp]"
+		# 0.013
 		multiply_temp_variable = { MLW_MZ_income_temp = 0.01 }
+		log = "multiplied further by 0.01 - [?MLW_MZ_income_temp]"
 		# 0.108
 		set_variable = { MLW_MZ_weekly_income = MLW_MZ_income_temp }
+		log = "overall weekly income from car sales - [?MLW_MZ_weekly_income]"
 		# 0.108
 		if = {
 			limit = { has_country_flag = MLW_MZ_orders_unfulfilled }
