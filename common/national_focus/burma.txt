@@ -7,23 +7,30 @@ focus_tree = {
 	}
 	continuous_focus_position = { x = 0 y = 1500 }
 
-	##MILITARY FOCUS##
+	# Political Focuses
 	focus = {
 		id = BRM_address_the_democracy_question
 		icon = treaty2
+
 		x = 9
 		y = 0
-		cost = 10
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		cost = 6.8
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_address_the_democracy_question"
-			add_political_power = 100
+			add_political_power = 150
+			add_stability = 0.05
 		}
 
 		ai_will_do = {
-			factor = 1
+			base = 10
+			modifier = {
+				factor = 2
+				check_variable = { interest_rate > 6 }
+			}
 		}
 	}
 
@@ -33,6 +40,7 @@ focus_tree = {
 		x = 0
 		y = 2
 		relative_position_id = BRM_address_the_democracy_question
+
 		cost = 6.8
 
 		prerequisite = {
@@ -52,8 +60,8 @@ focus_tree = {
 		ai_will_do = {
 			factor = 1
 			modifier = {
-				factor = 5
-				check_variable = { interest_rate > 8 }
+				factor = 8
+				check_variable = { interest_rate > 6 }
 			}
 		}
 	}
@@ -64,6 +72,7 @@ focus_tree = {
 		x = 0
 		y = 3
 		relative_position_id = BRM_address_the_democracy_question
+
 		cost = 6.8
 
 		prerequisite = { focus = BRM_the_new_economic_boom }
@@ -76,17 +85,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
 			set_temp_variable = { debt_change = debt }
-			multiply_temp_variable = { debt_change = -0.10 }
+			multiply_temp_variable = { debt_change = -0.20 }
 			clamp_temp_variable = { var = debt_change max = 0 min = -100 }
 			modify_debt_effect = yes
-			add_timed_idea = {
-				idea = BRM_loan_refactoring_idea
-				days = 365
-			}
+			add_timed_idea = { idea = BRM_loan_refactoring_idea days = 365 }
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 1
 			modifier = {
 				factor = 5
 				check_variable = { interest_rate > 8 }
@@ -116,6 +122,14 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 1
+			modifier = {
+				factor = 8
+				check_variable = { interest_rate > 6 }
+			}
+			modifier = {
+				factor = 1.5
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -136,7 +150,7 @@ focus_tree = {
 			add_stability = -0.05
 			add_popularity = { ideology = nationalist popularity = 0.05 }
 			recalculate_party = yes
-			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { percent_change = 8 }
 			change_domestic_influence_percentage = yes
 		}
 
@@ -162,18 +176,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_propose_the_2008_constitution"
-			if = {
-				limit = {
-					BRM = {
-						has_start_date < 2016.01.01
-					}
-				}
-				news_event = {
-					id = Burma_News.1
-					days = 2
-					random_hours = 4
-				}
-
+			if = { limit = { BRM = { has_start_date < 2016.01.01 } }
+				news_event = { id = Burma_News.1 days = 2 random_hours = 4 }
 			}
 
 			add_popularity = { ideology = neutrality popularity = 0.05 }
@@ -225,7 +229,7 @@ focus_tree = {
 					random_hours = 4
 				}
 			}
-			add_political_power = 50
+			add_political_power = 100
 			GCC_open_nation_level_up = yes
 		}
 
@@ -276,7 +280,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = BRM_propose_the_2008_constitution }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
 			if = {
@@ -293,7 +297,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_allow_labour_strikes_and_unions"
 			add_political_power = 50
 			GCC_open_nation_level_up = yes
-
+			set_temp_variable = { temp_change = 5 }
+			change_labour_unions_opinion = yes
+			change_communist_cadres_opinion = yes
 		}
 
 		ai_will_do = {
@@ -1957,12 +1963,9 @@ focus_tree = {
 			}
 			every_country = {
 				limit = { has_opinion_modifier = asean_plus_three_relations }
-				remove_opinion_modifier = {
-					target = BRM
-					modifier = asean_plus_three_relations
-				}
+				remove_opinion_modifier = { target = BRM modifier = asean_plus_three_relations }
 			}
-			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
 		}
 
@@ -2416,10 +2419,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_distract_attentions_abroad"
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.05
-			}
+			add_popularity = { ideology = nationalist popularity = 0.05 }
 			recalculate_party = yes
 		}
 
@@ -2947,17 +2947,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_focus_on_the_tatmadaw"
-			add_political_power = 50
-			army_experience = 50
-			air_experience = 50
-			navy_experience = 50
+			add_political_power = 75
+			army_experience = 100
+			air_experience = 100
+			navy_experience = 100
 
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -2978,7 +2978,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -2998,7 +2998,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3042,7 +3042,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3088,7 +3088,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3134,7 +3134,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3179,7 +3179,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3215,7 +3215,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3244,7 +3244,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3265,7 +3265,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3318,7 +3318,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3353,7 +3353,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3374,7 +3374,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3417,7 +3417,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3444,7 +3444,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3474,7 +3474,14 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
+			modifier = {
+				factor = 0
+				OR = {
+					has_active_mission = bankruptcy_incoming_collapse
+					check_variable = { interest_rate > 10.00 }
+				}
+			}
 		}
 	}
 
@@ -3504,7 +3511,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3558,7 +3565,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3588,7 +3595,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3609,7 +3616,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 40
+			factor = 5
 		}
 	}
 
@@ -3698,20 +3705,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_cooperation_with_china"
 			CHI = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation
-				}
+				add_opinion_modifier = { target = BRM modifier = cooperation }
 			}
 			every_country = {
 				limit = {
 					NOT = { tag = BRM }
 					has_idea = ASEAN_Member
 				}
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation_with_china
-				}
+				add_opinion_modifier = { target = BRM modifier = cooperation_with_china }
 			}
 		}
 
@@ -3726,6 +3727,7 @@ focus_tree = {
 		x = 5
 		y = 4
 		relative_position_id = BRM_focus_on_the_tatmadaw
+
 		cost = 8.6
 
 		prerequisite = { focus = BRM_increase_cooperation_with_china }
@@ -3764,6 +3766,7 @@ focus_tree = {
 		x = 9
 		y = 3
 		relative_position_id = BRM_focus_on_the_tatmadaw
+
 		cost = 5
 
 		prerequisite = { focus = BRM_cooperate_with_foreign_powers }
@@ -3772,16 +3775,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_cooperation_with_south_korea"
 			KOR = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation
-				}
+				add_opinion_modifier = { target = BRM modifier = cooperation }
 			}
 			NKO = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation_with_the_south
-				}
+				add_opinion_modifier = { target = BRM modifier = cooperation_with_the_south }
 			}
 		}
 
@@ -3796,6 +3793,7 @@ focus_tree = {
 		x = 11
 		y = 3
 		relative_position_id = BRM_focus_on_the_tatmadaw
+
 		cost = 5
 
 		prerequisite = { focus = BRM_cooperate_with_foreign_powers }
@@ -3804,16 +3802,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_cooperation_with_north_korea"
 			NKO = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation
-				}
+				add_opinion_modifier = { target = BRM modifier = cooperation }
 			}
 			KOR = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation_with_the_north
-				}
+				add_opinion_modifier = { target = BRM modifier = cooperation_with_the_north }
 			}
 		}
 
@@ -3825,9 +3817,11 @@ focus_tree = {
 	focus = {
 		id = BRM_south_korean_naval_power
 		icon = navy3
+
 		x = 9
 		y = 4
 		relative_position_id = BRM_focus_on_the_tatmadaw
+
 		cost = 8.6
 
 		prerequisite = { focus = BRM_increase_cooperation_with_south_korea }
@@ -3857,9 +3851,11 @@ focus_tree = {
 	focus = {
 		id = BRM_north_korean_missiles
 		icon = rocketry
+
 		x = 11
 		y = 4
 		relative_position_id = BRM_focus_on_the_tatmadaw
+
 		cost = 8.6
 
 		prerequisite = { focus = BRM_increase_cooperation_with_north_korea }
@@ -3868,19 +3864,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BRM_north_korean_missiles"
 			add_tech_bonus = {
-				name = artillery_bonus
+				name = BRM_north_korean_missiles
 				bonus = 0.25
 				uses = 2
 				category = CAT_l_at
 			}
 			add_tech_bonus = {
-				name = artillery_bonus
+				name = BRM_north_korean_missiles
 				bonus = 0.25
 				uses = 2
 				category = CAT_l_aa
 			}
 			add_tech_bonus = {
-				name = artillery_bonus
+				name = BRM_north_korean_missiles
 				bonus = 0.25
 				uses = 2
 				category = CAT_arty
