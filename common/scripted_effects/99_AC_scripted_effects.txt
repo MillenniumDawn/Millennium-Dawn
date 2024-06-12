@@ -35,15 +35,15 @@ init_investment_system = {
 	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 47500 }
 	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 52500 }
 	set_variable = { global.BUILD_CONST_COST_DOCKYARD = 47500 }
-	set_variable = { global.BUILD_CONST_COST_INFRASTRUCTURE = 12500 }
+	set_variable = { global.BUILD_CONST_COST_INFRASTRUCTURE = 14500 }
 	set_variable = { global.BUILD_CONST_COST_OFFICES = 50000 }
 	set_variable = { global.BUILD_CONST_COST_ANTIAIR = 15000 }
-	set_variable = { global.BUILD_CONST_COST_RADAR = 5000 }
-	set_variable = { global.BUILD_CONST_COST_AIRBASE = 3000 }
+	set_variable = { global.BUILD_CONST_COST_RADAR = 8000 }
+	set_variable = { global.BUILD_CONST_COST_AIRBASE = 4000 }
 	set_variable = { global.BUILD_CONST_COST_FUEL_SILO = 15000 }
 	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 7500 }
 	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
-	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 12500 }
+	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 16500 }
 	set_variable = { global.BUILD_CONST_COST_NUCLEAR_REACTOR = 62500 }
 
 	### BUILDING MONETARY COST
@@ -172,6 +172,14 @@ project_monetary_cost_calculation = {
 				limit = {
 					has_idea = FRA_idea_development_investment
 					PREV.PREV = { original_tag = FRA }
+				}
+				add_to_temp_variable = { AC_cost_modifier = -0.05 }
+			}
+			if = {
+				limit = {
+					PREV.PREV = {
+						has_country_flag = mutual_investment_treaty_@ROOT
+					}
 				}
 				add_to_temp_variable = { AC_cost_modifier = -0.05 }
 			}
@@ -336,6 +344,7 @@ add_finished_buildings = {
 	}
 }
 
+# TODO: Try to remove this if I can
 # Function: calculate_ai_construction_speed
 # Purpose: calculate the AI construction speed for display purposes within the event
 calculate_ai_construction_speed = {
@@ -378,6 +387,14 @@ calculate_ai_construction_speed = {
 				limit = {
 					has_idea = FRA_idea_development_investment
 					PREV.PREV = { original_tag = FRA }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
+			if = {
+				limit = {
+					PREV.PREV = {
+						has_country_flag = mutual_investment_treaty_@PREV
+					}
 				}
 				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
 			}
@@ -456,7 +473,13 @@ init_project = {
 				if = {
 					limit = {
 						has_idea = FRA_idea_development_investment
-						ROOT = { original_tag = FRA  }
+						ROOT = { original_tag = FRA }
+					}
+					add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+				}
+				if = {
+					limit = {
+						has_country_flag = mutual_investment_treaty_@ROOT
 					}
 					add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
 				}
@@ -546,6 +569,14 @@ init_project_two = {
 				}
 				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
 			}
+			if = {
+				limit = {
+					PREV.PREV = {
+						has_country_flag = mutual_investment_treaty_@PREV
+					}
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
 			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
 		}
 	}
@@ -582,6 +613,8 @@ init_project_two = {
 	set_variable = { project_construction_duration^-2 = project_construction_duration^project }
 }
 
+# - Used in the AC_event.10 to AC Event Master Event
+# Purpose: It properly calculates the section
 start_project_two = {
 	# Get available project
 	get_available_project = yes
