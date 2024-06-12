@@ -2,13 +2,8 @@
 scripted_diplomatic_actions = {
 	##Yard1's Recall Volunteers mod integrated :D
 	recall_volunteers = {
-		allowed = {
-			ROOT = { is_ai = no }
-		}
-
-		visible = {
-			has_global_flag = allowed_recall_volunteers
-		}
+		allowed = { ROOT = { is_ai = no } }
+		visible = { has_global_flag = allowed_recall_volunteers }
 
 		selectable = {
 			# doing this for nicer tooltips
@@ -72,7 +67,13 @@ scripted_diplomatic_actions = {
 					NOT = { has_war_with = ROOT }
 					has_opinion = { target = ROOT value > 10 }
 				}
-				if = { limit = { is_in_faction = yes }
+				if = {
+					limit = {
+						is_in_faction = yes
+						any_allied_country = {
+							exists = yes
+						}
+					}
 					# Do not ally your enemies friends
 					any_allied_country = {
 						NOT = { has_war_with = ROOT }
@@ -81,7 +82,7 @@ scripted_diplomatic_actions = {
 			}
 			ERI_is_not_transitional_government = yes
 		}
-		cost = 50
+		cost = 75
 		requires_acceptance = yes
 		show_acceptance_on_action_button = yes
 		icon = 17
@@ -113,7 +114,6 @@ scripted_diplomatic_actions = {
 					set_temp_variable = { tag_index = PREV.id }
 					set_temp_variable = { influence_target = THIS.id }
 					change_influence_percentage = yes
-					recalculate_influence = yes
 					add_to_variable = { signed_trade_agreements = 1 }
 
 					if = {
@@ -162,52 +162,10 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					add = -10
-					THIS = { has_opinion = { target = ROOT value < 0 } }
-					THIS = { has_opinion = { target = ROOT value > -25 } }
-				}
-				modifier = {
-					add = -15
-					THIS = { has_opinion = { target = ROOT value < -24 } }
-					THIS = { has_opinion = { target = ROOT value > -50 } }
-				}
-				modifier = {
-					add = -20
-					THIS = { has_opinion = { target = ROOT value < -49 } }
-					THIS = { has_opinion = { target = ROOT value > -100 } }
-				}
-				modifier = {
-					add = -30
-					THIS = { has_opinion = { target = ROOT value < -99 } }
-					THIS = { has_opinion = { target = ROOT value > -150 } }
-				}
-				modifier = {
-					add = -50
-					THIS = { has_opinion = { target = ROOT value < -150 } }
-				}
-				modifier = {
-					add = 5
-					THIS = { has_opinion = { target = ROOT value > 0 } }
-					THIS = { has_opinion = { target = ROOT value < 25 } }
-				}
-				modifier = {
-					add = 10
-					THIS = { has_opinion = { target = ROOT value > 24 } }
-					THIS = { has_opinion = { target = ROOT value < 50 } }
-				}
-				modifier = {
-					add = 15
-					THIS = { has_opinion = { target = ROOT value > 49 } }
-					THIS = { has_opinion = { target = ROOT value < 100 } }
-				}
-				modifier = {
-					add = 25
-					THIS = { has_opinion = { target = ROOT value > 99 } }
-					THIS = { has_opinion = { target = ROOT value < 150 } }
-				}
-				modifier = {
-					add = 30
-					THIS = { has_opinion = { target = ROOT value > 149 } }
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.05 }
+					check_variable = { opinion_calculator > -60 }
+					add = opinion_calculator
 				}
 			}
 			condition_four = {
@@ -359,6 +317,10 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				factor = 0
+				ROOT = { check_variable = { interest_rate > 8 } }
+			}
+			modifier = {
+				factor = 0
 				ROOT = {
 					NOT = { check_variable = { pending_trade_offer_country = 0 } }
 				}
@@ -376,7 +338,7 @@ scripted_diplomatic_actions = {
 			}
 			ERI_is_not_transitional_government = yes
 		}
-		cost = 50
+		cost = 75
 		can_be_sent = { always = yes }
 		show_acceptance_on_action_button = no
 		requires_acceptance = no
@@ -441,6 +403,22 @@ scripted_diplomatic_actions = {
 				ROOT = { has_war_with = PREV }
 				add = 100
 			}
+			modifier = {
+				factor = 1.10
+				ROOT = { has_political_power > 499 }
+			}
+			modifier = {
+				factor = 0.50
+				ROOT = { has_political_power < 450 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_political_power < 250 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { check_variable = { interest_rate > 8 } }
+			}
 		}
 	}
 
@@ -477,7 +455,7 @@ scripted_diplomatic_actions = {
 			ERI_is_not_transitional_government = yes
 		}
 
-		cost = 50
+		cost = 75
 		requires_acceptance = yes
 		show_acceptance_on_action_button = yes
 		icon = 19
@@ -490,7 +468,6 @@ scripted_diplomatic_actions = {
 
 			ROOT = {
 				set_variable = { pending_assume_debt_offer = PREV.id }
-				set_country_flag = pending_assume_debt@PREV
 			}
 		}
 		complete_effect = {
@@ -500,10 +477,8 @@ scripted_diplomatic_actions = {
 				subtract_from_variable = { treasury = assuming_debt_value }
 				ingame_update_setup = yes
 			}
-			THIS = {
-				subtract_from_variable = { debt = ROOT.assuming_debt_value }
-				ingame_update_setup = yes
-			}
+			subtract_from_variable = { debt = ROOT.assuming_debt_value }
+			ingame_update_setup = yes
 			ROOT = {
 				clear_variable = assuming_debt_value
 			}
@@ -514,10 +489,8 @@ scripted_diplomatic_actions = {
 				clear_variable = pending_assume_debt_offer
 				clear_variable = assuming_debt_value
 			}
-			THIS = {
-				add_opinion_modifier = { target = ROOT modifier = reject_assuming_debt }
-				reverse_add_opinion_modifier = { target = ROOT modifier = reject_assuming_debt }
-			}
+			add_opinion_modifier = { target = ROOT modifier = reject_assuming_debt }
+			reverse_add_opinion_modifier = { target = ROOT modifier = reject_assuming_debt }
 		}
 
 		accept_title = DIPLO_ACTION_ASSUME_DEBT_ACCEPT
@@ -528,7 +501,6 @@ scripted_diplomatic_actions = {
 		ai_acceptance = {
 			base_assume_debt_condition = {
 				base = -50
-
 			}
 			condition_two = {
 				base = 0
@@ -544,52 +516,10 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					add = -10
-					THIS = { has_opinion = { target = ROOT value < 0 } }
-					THIS = { has_opinion = { target = ROOT value > -25 } }
-				}
-				modifier = {
-					add = -15
-					THIS = { has_opinion = { target = ROOT value < -24 } }
-					THIS = { has_opinion = { target = ROOT value > -50 } }
-				}
-				modifier = {
-					add = -20
-					THIS = { has_opinion = { target = ROOT value < -49 } }
-					THIS = { has_opinion = { target = ROOT value > -100 } }
-				}
-				modifier = {
-					add = -30
-					THIS = { has_opinion = { target = ROOT value < -99 } }
-					THIS = { has_opinion = { target = ROOT value > -150 } }
-				}
-				modifier = {
-					add = -50
-					THIS = { has_opinion = { target = ROOT value < -150 } }
-				}
-				modifier = {
-					add = 5
-					THIS = { has_opinion = { target = ROOT value > 0 } }
-					THIS = { has_opinion = { target = ROOT value < 25 } }
-				}
-				modifier = {
-					add = 10
-					THIS = { has_opinion = { target = ROOT value > 24 } }
-					THIS = { has_opinion = { target = ROOT value < 50 } }
-				}
-				modifier = {
-					add = 15
-					THIS = { has_opinion = { target = ROOT value > 49 } }
-					THIS = { has_opinion = { target = ROOT value < 100 } }
-				}
-				modifier = {
-					add = 25
-					THIS = { has_opinion = { target = ROOT value > 99 } }
-					THIS = { has_opinion = { target = ROOT value < 150 } }
-				}
-				modifier = {
-					add = 30
-					THIS = { has_opinion = { target = ROOT value > 149 } }
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.05 }
+					check_variable = { opinion_calculator > -60 }
+					add = opinion_calculator
 				}
 			}
 			condition_four = {
@@ -838,10 +768,407 @@ scripted_diplomatic_actions = {
 				ROOT = { has_political_power < 150 }
 			}
 			modifier = {
+				factor = 1.10
+				ROOT = { has_political_power > 499 }
+			}
+			modifier = {
+				factor = 0.50
+				ROOT = { has_political_power < 450 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_political_power < 250 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { check_variable = { interest_rate > 8 } }
+			}
+			modifier = {
 				factor = 0
 				ROOT = {
 					NOT = { check_variable = { pending_assume_debt_offer = 0 } }
 				}
+			}
+		}
+	}
+
+	# Form a Mutual Investment Treaty
+	propose_mutual_investment_treaty = {
+		allowed = { always = yes }
+		visible = {
+			NOT = { has_country_flag = mutual_investment_treaty_@ROOT }
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = PROPOSE_MUTUAL_INVESTMENT_TREATY_TOOLTIP
+				NOT = { has_country_flag = mutual_investment_treaty_@ROOT }
+			}
+			NOT = { has_war_with = ROOT }
+			has_opinion = { target = ROOT value > 25 }
+			if = {
+				limit = {
+					is_in_faction = yes
+					any_allied_country = {
+						exists = yes
+					}
+				}
+				# Do not ally your enemies friends
+				any_allied_country = {
+					NOT = { has_war_with = ROOT }
+				}
+			}
+			ERI_is_not_transitional_government = yes
+		}
+
+		cost = 75
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		icon = 19 # TODO: Add a new icon for this
+		send_description = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY
+
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_mutual_investment_treaty"
+			ROOT = { set_variable = { pending_mutual_investment_treaty_offer = PREV.id } }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_mutual_investment_treaty"
+			set_country_flag = mutual_investment_treaty_@ROOT
+			ROOT = {
+				clear_variable = pending_mutual_investment_treaty_offer
+				set_country_flag = mutual_investment_treaty_@PREV
+			}
+			THIS = {
+				add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
+				add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
+				reverse_add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
+				reverse_add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				# Permanent Investment Targets
+				set_temp_variable = { target_nation = THIS.id }
+				set_temp_variable = { adding_nation = ROOT.id }
+				change_permanent_investment_target = yes
+				ROOT = {
+					set_temp_variable = { percent_change = 1 }
+					set_temp_variable = { tag_index = PREV.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+
+					# Permanent Investment Targets
+					set_temp_variable = { target_nation = THIS.id }
+					set_temp_variable = { adding_nation = PREV.id }
+					change_permanent_investment_target = yes
+				}
+			}
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect propose_mutual_investment_treaty"
+			ROOT = {
+				clear_variable = pending_mutual_investment_treaty_offer
+			}
+			add_opinion_modifier = { target = ROOT modifier = reject_mutual_investment_treaty }
+			reverse_add_opinion_modifier = { target = ROOT modifier = reject_mutual_investment_treaty }
+		}
+
+		accept_title = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY_ACCEPT
+		accept_description = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY_ACCEPT_DESC
+		reject_title = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY_REJECT
+		reject_description = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY_REJECT_DESC
+
+		ai_acceptance = {
+			base_mutual_investment_treaty_condition = {
+				base = -25
+				modifier = {
+					ROOT = { has_country_flag = italy_china_trade_deal }
+					THIS = { has_country_flag = italy_china_trade_deal }
+					add = 40
+				}
+			}
+			condition_two = {
+				base = 0
+				modifier = {
+					add = 5
+					is_same_government_THIS_ROOT = yes
+				}
+				modifier = {
+					add = -50
+					THIS = { has_government = nationalist }
+				}
+			}
+			condition_three = {
+				base = 0
+				modifier = {
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.05 }
+					check_variable = { opinion_calculator > -60 }
+					add = opinion_calculator
+				}
+			}
+			condition_four = {
+				base = 0
+				modifier = {
+					ROOT = { has_idea = NATO_member }
+					THIS = { has_idea = NATO_member }
+					add = 10
+				}
+			}
+			condition_five = {
+				base = 0
+				modifier = {
+					THIS = {
+						OR = {
+							has_idea = EU_member
+							tag = SWI
+						}
+					}
+					ROOT = { has_idea = EU_member }
+					add = 15
+				}
+			}
+			condition_six = {
+				base = 0
+				modifier = {
+					ROOT = { is_in_faction_with = PREV }
+					add = 10
+				}
+			}
+			condition_seven = {
+				base = 0
+				modifier = {
+					add = 10
+					is_subject_of = ROOT
+				}
+			}
+			condition_eight = {
+				base = 0
+				modifier = {
+					add = 10
+					is_influencer = yes
+				}
+			}
+		}
+
+		ai_desire = {
+			base = 25
+			modifier = {
+				ROOT = { has_opinion = { target = PREV value > 0 } }
+				add = 2
+			}
+			modifier = {
+				ROOT = { has_opinion = { target = PREV value > 25 } }
+				add = 5
+			}
+			modifier = {
+				ROOT = { has_opinion = { target = PREV value > 50 } }
+				add = 5
+			}
+			modifier = {
+				ROOT = { original_tag = SOV }
+				THIS = { has_idea = NATO_member }
+				add = -5
+			}
+			modifier = {
+				ROOT = { is_in_faction_with = PREV }
+				add = 2
+			}
+			modifier = {
+				ROOT = { has_idea = EU_member }
+				THIS = { has_idea = EU_member }
+				add = 2
+			}
+			modifier = {
+				ROOT = { has_idea = NATO_member }
+				THIS = { has_idea = NATO_member }
+				add = 2
+			}
+			modifier = {
+				ROOT = { is_guaranteed_by = PREV }
+				add = 1
+			}
+			modifier = {
+				add = 5
+				is_subject_of = ROOT
+			}
+			modifier = {
+				add = 5
+				is_influencer = yes
+			}
+			modifier = {
+				add = 5
+				is_top3_influencer = yes
+			}
+			modifier = {
+				OR = {
+					AND = {
+						ROOT = { tag = CHI }
+						THIS = { tag = USA }
+					}
+					AND = {
+						ROOT = { tag = USA }
+						THIS = { tag = CHI }
+					}
+					AND = {
+						ROOT = { tag = NKO }
+						THIS = { tag = KOR }
+					}
+					AND = {
+						ROOT = { tag = KOR }
+						THIS = { tag = NKO }
+					}
+					AND = {
+						ROOT = { tag = JAP }
+						THIS = { tag = NKO }
+					}
+					AND = {
+						ROOT = { tag = NKO }
+						THIS = { tag = JAP }
+					}
+				}
+				factor = 0
+			}
+			modifier = {
+				ROOT = {
+					OR = {
+						any_enemy_country = {
+							is_in_faction_with = PREV.PREV
+						}
+						any_allied_country = {
+							has_war_with = PREV.PREV
+						}
+					}
+				}
+				factor = 0
+			}
+			modifier = {
+				factor = 1.10
+				ROOT = { has_political_power > 499 }
+			}
+			modifier = {
+				factor = 0.50
+				ROOT = { has_political_power < 450 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_political_power < 250 }
+			}
+			modifier = {
+				factor = 1.10
+				ROOT = { has_political_power > 499 }
+			}
+			modifier = {
+				factor = 0.50
+				ROOT = { has_political_power < 450 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_political_power < 250 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { check_variable = { interest_rate > 8 } }
+			}
+			modifier = {
+				factor = 0
+				ROOT = {
+					NOT = { check_variable = { pending_mutual_investment_treaty_offer = 0 } }
+				}
+			}
+		}
+	}
+
+	cancel_mutual_investment_treaty = {
+		allowed = { always = yes }
+		visible = {
+			has_country_flag = mutual_investment_treaty_@ROOT
+		}
+		selectable = {
+			custom_trigger_tooltip = {
+				tooltip = CANCEL_MUTUAL_INVESTMENT_TOOLTIP
+				THIS = { has_country_flag = mutual_investment_treaty_@ROOT }
+			}
+			ERI_is_not_transitional_government = yes
+		}
+		cost = 75
+		can_be_sent = { always = yes }
+		show_acceptance_on_action_button = no
+		requires_acceptance = no
+		icon = 17
+		send_description = DIPLO_ACTION_CANCEL_MUTUAL_INVESTMENT_TREATY
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action cancel_proposed_mutual_investment_treaty"
+			THIS = {
+				clr_country_flag = mutual_investment_treaty_@ROOT
+				remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
+				remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
+				set_temp_variable = { target_nation = ROOT.id }
+				set_temp_variable = { remove_nation = THIS.id }
+				change_permanent_investment_target = yes
+				ROOT = {
+					clr_country_flag = mutual_investment_treaty_@ROOT
+					remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
+					remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
+					set_temp_variable = { target_nation = THIS.id }
+					set_temp_variable = { remove_nation = ROOT.id }
+					change_permanent_investment_target = yes
+				}
+			}
+		}
+
+		ai_desire = {
+			base = 1
+			modifier = {
+				ROOT = {
+					has_opinion = { target = PREV value < 0 }
+				}
+				add = 25
+			}
+			modifier = {
+				ROOT = {
+					has_opinion = { target = PREV value < -25 }
+				}
+				add = 25
+			}
+			modifier = {
+				ROOT = {
+					has_opinion = { target = PREV value < -50 }
+				}
+				add = 25
+			}
+			modifier = {
+				ROOT = {
+					has_opinion = { target = PREV value < -75 }
+				}
+				add = 100
+			}
+			modifier = {
+				ROOT = {
+					any_enemy_country = { is_in_faction_with = PREV.PREV }
+				}
+				add = 100
+			}
+			modifier = {
+				ROOT = { has_war_with = PREV }
+				add = 100
+			}
+			modifier = {
+				factor = 1.10
+				ROOT = { has_political_power > 499 }
+			}
+			modifier = {
+				factor = 0.50
+				ROOT = { has_political_power < 450 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_political_power < 250 }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { check_variable = { interest_rate > 8 } }
 			}
 		}
 	}
