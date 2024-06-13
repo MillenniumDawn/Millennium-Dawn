@@ -447,6 +447,7 @@
 	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
 	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
+	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
 
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4 -- 30
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 4 -- 1
