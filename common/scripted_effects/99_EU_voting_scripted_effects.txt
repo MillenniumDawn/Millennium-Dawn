@@ -1608,7 +1608,8 @@ focus_EU110_QMV_result = {
 focus_EU111_QMV_result = {
 	if = { # QMV - yes
 		limit = {
-			EU_voting_decision_result_trigger = yes
+			#EU_voting_decision_result_trigger = yes
+			always = yes
 		}
 		set_country_flag = focus_EU111_QMV_yes
 
@@ -1618,111 +1619,111 @@ focus_EU111_QMV_result = {
 			remove_ideas = EU_member
 		}
 
-		ROOT = {
-			hidden_effect = {
-				EUU = {
-					for_each_loop = {
-						array = researched_techs
-						if = {
-							limit = {
-								NOT = { is_in_array = { eu_technologies = v } }
-							}
-							add_to_temp_array = { eu_technologies = v }
+		for_each_scope_loop = {
+			array = global.EU_active_vote_rejecters
+			remove_ideas = EU_member
+		}
+
+		hidden_effect = {
+			every_country = {
+				limit = { has_idea = EU_member }
+				EUU = { inherit_technology = THIS }
+				set_country_flag = USoE_member
+				every_unit_leader = {
+					set_unit_leader_flag = USoE_unit_leader
+					set_nationality = ROOT
+					add_unit_leader_trait = military_reorganization
+				}
+				every_owned_state = {
+					limit = {
+						OR = {
+							is_on_continent = europe
+							is_core_of = GEO
+							is_core_of = ARM
+							is_core_of = AZE
+							is_core_of = TUR
+							is_core_of = POR
+							is_core_of = SPR
+						}
+						NOT = { is_core_of = ROOT }
+					}
+					add_core_of = ROOT
+				}
+				if = { limit = { NOT = { original_tag = ROOT } }
+					ROOT = {
+						add_to_variable = { treasury = PREV.treasury }
+						add_to_variable = { debt = PREV.debt }
+						add_to_variable = { int_investments = PREV.int_investments }
+						for_each_loop = {
+							array = missile_inventory_array
+							value = v
+							index = i
+							add_to_variable = { missile_inventory_array^i = PREV.missile_inventory_array^i }
+						}
+						for_each_loop = {
+							array = GNSS_satellite_array
+							value = v
+							index = i
+							add_to_variable = { GNSS_satellite_array^i = PREV.GNSS_satellite_array^i }
+						}
+						for_each_loop = {
+							array = COM_satellite_array
+							value = v
+							index = i
+							add_to_variable = { COM_satellite_array^i = PREV.COM_satellite_array^i }
+						}
+						for_each_loop = {
+							array = SPY_satellite_array
+							value = v
+							index = i
+							add_to_variable = { SPY_satellite_array^i = PREV.SPY_satellite_array^i }
+						}
+						for_each_loop = {
+							array = nuclear_warhead_inventory_array
+							value = v
+							index = i
+							add_to_variable = { nuclear_warhead_inventory_array^i = PREV.nuclear_warhead_inventory_array^i }
+						}
+						annex_country = {
+							target = PREV
+							transfer_troops = yes
 						}
 					}
 				}
+			}
+			EUU = {
 				for_each_loop = {
-					array = eu_technologies
-					meta_effect = {
-						text = {
+					array = researched_techs
+					if = {
+						limit = {
+							NOT = { is_in_array = { eu_technologies = v } }
+						}
+						add_to_temp_array = { eu_technologies = v }
+					}
+				}
+			}
+			for_each_loop = {
+				array = eu_technologies
+				meta_effect = {
+					text = {
+						ROOT = {
 							set_technology = {
 								[TECH] = 1
 								popup = no
 							}
 						}
-						TECH = "[?v.GetTokenKey]"
 					}
-				}
-				every_country = {
-					limit = { has_idea = EU_member }
-					EUU = { inherit_technology = PREV }
-					set_country_flag = USoE_member
-					every_unit_leader = {
-						set_unit_leader_flag = USoE_unit_leader
-						set_nationality = ROOT
-						add_unit_leader_trait = military_reorganization
-					}
-					every_owned_state = {
-						limit = {
-							OR = {
-								is_on_continent = europe
-								is_core_of = GEO
-								is_core_of = ARM
-								is_core_of = AZE
-								is_core_of = TUR
-								is_core_of = POR
-								is_core_of = SPR
-							}
-							NOT = { is_core_of = ROOT }
-						}
-						add_core_of = ROOT
-					}
-					if = {
-						limit = {
-							NOT = { original_tag = FROM }
-						}
-						FROM = {
-							annex_country = {
-								target = ROOT
-								transfer_troops = yes
-							}
-							# Integrates Entire Economy of the nation
-							add_to_variable = { treasury = ROOT.treasury }
-							add_to_variable = { debt = ROOT.debt }
-							add_to_variable = { int_investments = ROOT.int_investments }
-
-							for_each_loop = {
-								array = missile_inventory_array
-								value = v
-								index = i
-								add_to_variable = { missile_inventory_array^i = ROOT.missile_inventory_array^i }
-							}
-							for_each_loop = {
-								array = GNSS_satellite_array
-								value = v
-								index = i
-								add_to_variable = { GNSS_satellite_array^i = ROOT.GNSS_satellite_array^i }
-							}
-							for_each_loop = {
-								array = COM_satellite_array
-								value = v
-								index = i
-								add_to_variable = { COM_satellite_array^i = ROOT.COM_satellite_array^i }
-							}
-							for_each_loop = {
-								array = SPY_satellite_array
-								value = v
-								index = i
-								add_to_variable = { SPY_satellite_array^i = ROOT.SPY_satellite_array^i }
-							}
-							for_each_loop = {
-								array = nuclear_warhead_inventory_array
-								value = v
-								index = i
-								add_to_variable = { nuclear_warhead_inventory_array^i = ROOT.nuclear_warhead_inventory_array^i }
-							}
-						}
-					}
-				}
-				ROOT = {
-					set_cosmetic_tag = USoE
-					clr_country_flag = dynamic_flag
-					set_country_flag = USoE
-					add_ideas = multi_ethnic_state_idea
+					TECH = "[?v.GetTokenKey]"
 				}
 			}
-			custom_effect_tooltip = form_USoE_tt
 		}
+		ROOT = {
+			set_cosmetic_tag = USoE
+			clr_country_flag = dynamic_flag
+			set_country_flag = USoE
+			add_ideas = multi_ethnic_state_idea
+		}
+		custom_effect_tooltip = form_USoE_tt
 		cleanup_european_union_voting_yes = yes
 	}
 	else = { # QMV - no
