@@ -1632,6 +1632,58 @@ focus_EU111_QMV_result = {
 			every_controlled_state = {
 				add_core_of = UOE
 			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = setup_missiles }
+				}
+				set_country_flag = setup_missiles
+				set_variable = { var_missile_trajectory_ID = -1 }
+				set_variable = { var_KB_ID = -1 }
+				set_variable = { missile_launch_selected_TAG = THIS.id }
+				set_variable = { orbit_selected_TAG = THIS.id }
+				set_variable = { nukes_selected_TAG = THIS.id }
+				set_variable = { var_nuke_energy_ratio = 0.50 }
+				set_variable = { var_nuke_nuclear_material_ratio = 0.50 }
+				set_variable = { var_CIC_use_enrichment = 0 }
+				set_variable = { var_CIC_use_nuclear = 0 }
+				set_variable = { var_nuke_energy_prod = 0 }
+				set_variable = { var_nuke_nuclear_material_prod = 0 }
+				set_variable = { var_nuclear_warhead_prod_factor = 2 }
+				set_variable = { var_nuclear_material_stockpile = 0 }
+				set_variable = { var_fire_sort_button = 2 }
+				set_variable = { var_NSAM_auto_redeploy = 1 }
+				set_variable = { var_SAM_auto_redeploy = 1 }
+				set_variable = { var_NSAM_MD_auto_redeploy = 1 }
+				set_variable = { var_SAM_MD_auto_redeploy = 1 }
+				set_variable = { var_NABM_auto_redeploy = 1 }
+				set_variable = { var_ABM_auto_redeploy = 1 }
+				set_variable = { var_kinetic_bombardment_stats = 2 }
+				set_variable = { var_CV_number_LAM = 1 }
+				resize_array = { missile_inventory_array = 154 }
+				add_dynamic_modifier = { modifier = air_defense_modifiers_system }
+				add_dynamic_modifier = { modifier = GNSS_system }
+				add_dynamic_modifier = { modifier = COMSAT_system }
+				add_dynamic_modifier = { modifier = SPYSAT_system }
+				calculate_NSAM_AD_gui_vars = yes
+				calculate_SAM_AD_gui_vars = yes
+				calculate_SAM_MD_sea_gui_vars = yes
+				calculate_SAM_MD_land_gui_vars = yes
+				calculate_ABM_sea_gui_vars = yes
+				calculate_ABM_land_gui_vars = yes
+				set_sat_orbit_startup = yes
+				set_variable = { var_nuclear_material_nuclear_deterrence_factor = 0.005 }
+				clear_payload_types = yes
+				add_to_array = { array = spp_inventory_array value = 1 index = 0 }
+				add_to_array = { array = spp_inventory_array value = 30 index = 1 }
+				add_to_array = { array = spp_inventory_array value = 1 index = 2 }
+				#for testing network traffic
+				set_COM_sat_receiver_tech_array = yes
+				#testing nukes
+				set_variable = { var_launch_nuke_num = 0 }
+				set_variable = { var_on_nuke_drop = 0 }
+				set_variable = { global.temp_count = 0 }
+			}
+			missile_ui_update = yes
 		}
 
 		UOE = { change_tag_from = ROOT }
@@ -1665,10 +1717,22 @@ focus_EU111_QMV_result = {
 
 		set_temp_variable = { merged_states = 0 } #how many states have been merged
 		set_temp_variable = { stab_merge_tracker = 0 }
+		resize_array = { UOE.eu_technologies = 0 }
 		hidden_effect = {
 			every_country = {
 				limit = { has_idea = EU_member }
-				EUU = { inherit_technology = THIS }
+				for_each_loop = {
+					array = researched_techs
+					value = v
+					if = {
+						limit = {
+							NOT = { is_in_array = { UOE.eu_technologies = v } }
+						}
+						add_to_array = { UOE.eu_technologies = v }
+						log = "[THIS.GetTag] technology [?v.GetTokenKey] added to UOE"
+					}
+				}
+				log = "Final Tech Array Verify [?UOE.eu_technologies^0.GetTokenKey]"
 				set_country_flag = USoE_member
 				every_unit_leader = {
 					set_unit_leader_flag = USoE_unit_leader
@@ -1878,41 +1942,41 @@ focus_EU111_QMV_result = {
 
 				log = "current breakdown is [?democ_track], [?fac_track], [?com_track], [?neut_track], [?nat_track]"
 
-				if = { limit = { NOT = { original_tag = UOE } }
+				if = { limit = { NOT = { tag = UOE } }
+					for_each_loop = {
+						array = missile_inventory_array
+						value = v
+						index = i
+						add_to_variable = { UOE.missile_inventory_array^i = missile_inventory_array^i }
+					}
+					for_each_loop = {
+						array = GNSS_satellite_array
+						value = v
+						index = i
+						add_to_variable = { UOE.GNSS_satellite_array^i = GNSS_satellite_array^i }
+					}
+					for_each_loop = {
+						array = COM_satellite_array
+						value = v
+						index = i
+						add_to_variable = { UOE.COM_satellite_array^i = COM_satellite_array^i }
+					}
+					for_each_loop = {
+						array = SPY_satellite_array
+						value = v
+						index = i
+						add_to_variable = { UOE.SPY_satellite_array^i = SPY_satellite_array^i }
+					}
+					for_each_loop = {
+						array = nuclear_warhead_inventory_array
+						value = v
+						index = i
+						add_to_variable = { UOE.nuclear_warhead_inventory_array^i = nuclear_warhead_inventory_array^i }
+					}
 					UOE = {
 						add_to_variable = { treasury = PREV.treasury }
 						add_to_variable = { debt = PREV.debt }
 						add_to_variable = { int_investments = PREV.int_investments }
-						for_each_loop = {
-							array = missile_inventory_array
-							value = v
-							index = i
-							add_to_variable = { missile_inventory_array^i = PREV.missile_inventory_array^i }
-						}
-						for_each_loop = {
-							array = GNSS_satellite_array
-							value = v
-							index = i
-							add_to_variable = { GNSS_satellite_array^i = PREV.GNSS_satellite_array^i }
-						}
-						for_each_loop = {
-							array = COM_satellite_array
-							value = v
-							index = i
-							add_to_variable = { COM_satellite_array^i = PREV.COM_satellite_array^i }
-						}
-						for_each_loop = {
-							array = SPY_satellite_array
-							value = v
-							index = i
-							add_to_variable = { SPY_satellite_array^i = PREV.SPY_satellite_array^i }
-						}
-						for_each_loop = {
-							array = nuclear_warhead_inventory_array
-							value = v
-							index = i
-							add_to_variable = { nuclear_warhead_inventory_array^i = PREV.nuclear_warhead_inventory_array^i }
-						}
 						annex_country = {
 							target = PREV
 							transfer_troops = yes
@@ -1920,29 +1984,22 @@ focus_EU111_QMV_result = {
 					}
 				}
 			}
-			EUU = {
-				for_each_loop = {
-					array = researched_techs
-					if = {
-						limit = {
-							NOT = { is_in_array = { eu_technologies = v } }
-						}
-						add_to_temp_array = { eu_technologies = v }
-					}
-				}
-			}
-			for_each_loop = {
-				array = eu_technologies
+			log = "Pre-Start Array Verification [?UOE.eu_technologies^0.GetTokenKey]"
+			UOE = {
 				meta_effect = {
 					text = {
-						UOE = {
+						for_each_loop = {
+							array = UOE.eu_technologies
+							value = v
+							index = i
+							log = "tech check [?UOE.eu_technologies^0.GetTokenKey]"
 							set_technology = {
-								[TECH] = 1
+								[techName] = 1
 								popup = no
 							}
 						}
 					}
-					TECH = "[?v.GetTokenKey]"
+					techName = "[?UOE.eu_technologies^i.GetTokenKey]"
 				}
 			}
 			find_highest_in_array = {
@@ -2297,6 +2354,7 @@ focus_EU111_QMV_result = {
 				set_law_vars = yes
 				update_neighbors_effects = yes
 				economic_cycle_drift_popularity = yes
+				set_missile_display_stats = yes
 				ai_update_build_units = yes
 				calculate_expected_spending = yes
 			}
