@@ -1812,6 +1812,25 @@ country_event = {
 		}
 	}
 
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.75
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 1.25
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 1.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 2.5
+			has_idea = depression
+		}
+	}
+
 	option = { # Subsidize Convoy Production Speed
 		name = internal_factions_events.25.o1
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.25.o1 executed"
@@ -1932,7 +1951,10 @@ country_event = {
 	desc = internal_factions_events.27.d
 	picture = GFX_weapons_arms1
 	is_triggered_only = yes
-	trigger = { has_idea = defense_industry }
+	trigger = {
+		has_idea = defense_industry
+		NOT = { has_country_flag = DEF_military_industry_thriving_expense }
+	}
 
 	mean_time_to_happen = {
 		modifier = {
@@ -1947,6 +1969,10 @@ country_event = {
 			factor = 1.25
 			threat > 0.50
 		}
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
 	}
 
 	option = {
@@ -1959,19 +1985,574 @@ country_event = {
 
 		set_temp_variable = { temp_opinion = 5 }
 		change_defense_industry_opinion = yes
+		set_country_flag = { flag = defence_industry_subsidies value = 1 days = 180 }
+
+		ai_chance = {
+			base = 1
+		}
 	}
 
 	option = {
 		name = internal_factions_events.27.o2
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.27.o2 executed"
 
-		set_temp_variable = { temp_opinion = 10 }
+		set_temp_variable = { temp_opinion = 5 }
 		change_defense_industry_opinion = yes
-		add_political_power = -150
+		add_political_power = -75
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.04 }
 		set_temp_variable = { temp_outlook_increase = 0.04 }
 		add_relative_party_popularity = yes
 
+	}
+}
+
+# Industrial Conglomerates Are Upset About Lack of Industrialization
+country_event = {
+	id = internal_factions_events.28
+	title = internal_factions_events.28.t
+	desc = internal_factions_events.28.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+	trigger = {
+		check_variable = { agriculture_percent > 0.04 }
+		OR = {
+			has_idea = industrial_conglomerates
+			has_idea = farmers
+		}
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.15
+			check_variable = { agriculture_percent > 0.05 }
+		}
+		modifier = {
+			factor = 1.25
+			check_variable = { agriculture_percent > 0.09 }
+		}
+		modifier = {
+			factor = 1.50
+			check_variable = { agriculture_percent > 0.14 }
+		}
+		modifier = {
+			factor = 1.75
+			check_variable = { agriculture_percent > 0.2 }
+		}
+		modifier = {
+			factor = 2
+			check_variable = { agriculture_percent > 0.3 }
+		}
+		modifier = {
+			factor = 2.25
+			check_variable = { agriculture_percent > 0.4 }
+		}
+	}
+
+	# Fuck the Industrialists!
+	option = {
+		name = internal_factions_events.28.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.28.o1 executed"
+
+		set_temp_variable = { temp_opinion = -5 }
+		change_industrial_conglomerates_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				check_variable = { industrial_conglomerates_opinion > 90 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { farmers_opinion < 45 }
+			}
+		}
+	}
+
+	# Maybe, they could use a pence
+	option = {
+		name = internal_factions_events.28.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.28.o2 executed"
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_industrial_conglomerates_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_farmers_opinion = yes
+
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate > 8 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { farmers_opinion < 45 }
+			}
+		}
+	}
+
+	# Honestly, this is pointless
+	option = {
+		name = internal_factions_events.28.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.28.o3 executed"
+
+		set_temp_variable = { temp_opinion = -10 }
+		change_industrial_conglomerates_opinion = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				check_variable = { industrial_conglomerates_opinion < 50 }
+			}
+		}
+	}
+}
+
+# Farmers Demand Reduced Taxes
+country_event = {
+	id = internal_factions_events.29
+	title = internal_factions_events.29.t
+	desc = internal_factions_events.29.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+	trigger = {
+		has_idea = farmers
+		NOT = { has_country_flag = FARM_recently_requested_tax_cuts }
+		NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		check_variable = { corporate_tax_rate > 10 }
+		check_variable = { farmers_opinion < 75 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.25
+			check_variable = { corporate_tax_rate > 15 }
+		}
+		modifier = {
+			factor = 1.50
+			check_variable = { corporate_tax_rate > 20 }
+		}
+		modifier = {
+			factor = 1.75
+			check_variable = { corporate_tax_rate > 25 }
+		}
+		modifier = {
+			factor = 2
+			check_variable = { corporate_tax_rate > 30 }
+		}
+		modifier = {
+			factor = 2.5
+			check_variable = { corporate_tax_rate > 35 }
+		}
+		modifier = {
+			factor = 3
+			check_variable = { corporate_tax_rate > 40 }
+		}
+	}
+
+	# Accept the Request
+	option = {
+		name = internal_factions_events.29.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.29.a executed"
+		set_variable = { reduction_target_farmers_tax_rate = corporate_tax_rate }
+		subtract_from_variable = { reduction_target_farmers_tax_rate = 5 }
+
+		activate_mission = reduce_taxes_farmer_mission
+		set_country_flag = { flag = FARM_recently_requested_tax_cuts value = 1 days = 180 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_war = yes
+ 			}
+			modifier = {
+				factor = 1.25
+				num_of_available_civilian_factories < 15
+			}
+		}
+	}
+
+	# We need the money
+	option = {
+		name = internal_factions_events.29.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.29.b executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+		set_country_flag = { flag = FARM_recently_requested_tax_cuts value = 1 days = 180 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 1.25
+				check_variable = { interest_rate > 8 }
+			}
+		}
+	}
+}
+
+# Farmers - Broken Promises
+country_event = {
+	id = internal_factions_events.30
+	title = internal_factions_events.30.t
+	desc = internal_factions_events.30.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	option = {
+		name = internal_factions_events.30.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.30.a executed"
+
+		set_temp_variable = { temp_opinion = -15 }
+		change_farmers_opinion = yes
+	}
+}
+
+# Industrialists Converts an Agro-Industrial Complex
+country_event = {
+	id = internal_factions_events.31
+	title = internal_factions_events.31.t
+	desc = internal_factions_events.31.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			AND = {
+				check_variable = { small_medium_business_owners_opinion > 60 }
+				has_idea = small_medium_business_owners
+			}
+			AND = {
+				check_variable = { small_medium_business_owners_opinion > 60 }
+				has_idea = the_bazaar
+			}
+			AND = {
+				check_variable = { the_donju_opinion > 60 }
+				has_idea = the_donju
+			}
+			AND = {
+				check_variable = { chaebols_opinion > 60 }
+				has_idea = chaebols
+			}
+			AND = {
+				check_variable = { industrial_conglomerates_opinion > 60 }
+				has_idea = industrial_conglomerates
+			}
+			AND = {
+				check_variable = { communist_cadres_opinion > 60 }
+				has_idea = communist_cadres
+			}
+			AND = {
+				check_variable = { oligarchs_opinion > 60 }
+				has_idea = oligarchs
+			}
+		}
+		check_variable = { agriculture_district_total > 0 }
+		NOT = { has_country_flag = recent_agricultural_industry_civ_conversion }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.15
+			check_variable = { agriculture_percent > 0.05 }
+		}
+		modifier = {
+			factor = 1.25
+			check_variable = { agriculture_percent > 0.09 }
+		}
+		modifier = {
+			factor = 1.50
+			check_variable = { agriculture_percent > 0.14 }
+		}
+		modifier = {
+			factor = 1.75
+			check_variable = { agriculture_percent > 0.2 }
+		}
+		modifier = {
+			factor = 2
+			check_variable = { agriculture_percent > 0.3 }
+		}
+		modifier = {
+			factor = 2.15
+			check_variable = { agriculture_percent > 0.4 }
+		}
+		modifier = {
+			factor = 1.50
+			has_idea = economic_boom
+		}
+		modifier = {
+			factor = 1.25
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 1.15
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 0.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.50
+			has_idea = depression
+		}
+	}
+
+	# Oh, okay!
+	option = {
+		name = internal_factions_events.31.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.31.a executed"
+		random_owned_controlled_state = {
+			limit = {
+				check_variable = { building_level@agriculture_district > 0 }
+			}
+			remove_building = {
+				type = agriculture_district
+				level = 1
+			}
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		set_temp_variable = { temp_opinion = -10 }
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+
+		set_country_flag = { flag = recent_agricultural_industry_civ_conversion value = 1 days = 180 }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Maintain the Agro-Industrial Complex
+	option = {
+		name = internal_factions_events.31.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.31.b executed"
+		trigger = {
+			OR = {
+				has_idea = farmers
+				has_idea = landowners
+			}
+		}
+		add_political_power = -75
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+
+		set_country_flag = { flag = recent_agricultural_industry_civ_conversion value = 1 days = 180 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 2
+				check_variable = { total_unemployed_percentage_display < 0.01 }
+			}
+		}
+	}
+
+	# How about two?
+	option = {
+		name = internal_factions_events.31.c
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.31.c executed"
+		trigger = {
+			has_idea = industrial_conglomerates
+			check_variable = { agriculture_district_total > 1 }
+		}
+		random_owned_controlled_state = {
+			limit = {
+				check_variable = { building_level@agriculture_district > 0 }
+			}
+			remove_building = {
+				type = agriculture_district
+				level = 1
+			}
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+		random_owned_controlled_state = {
+			limit = {
+				check_variable = { building_level@agriculture_district > 0 }
+			}
+			remove_building = {
+				type = agriculture_district
+				level = 1
+			}
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		add_political_power = -150
+
+		set_temp_variable = { temp_opinion = -15 }
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_industrial_conglomerates_opinion = yes
+		change_chaebols_opinion = yes
+		change_the_donju_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_communist_cadres_opinion = yes
+		change_oligarchs_opinion = yes
+
+		set_country_flag = { flag = recent_agricultural_industry_civ_conversion value = 1 days = 270 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				check_variable = { total_unemployed_percentage_display < 0.01 }
+			}
+			modifier = {
+				factor = 0
+				# Save the PP for debt stuff
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+}
+
+# Bankers Buy a Grain Silo
+country_event = {
+	id = internal_factions_events.32
+	title = internal_factions_events.32.t
+	desc = internal_factions_events.32.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			AND = {
+				check_variable = { international_bankers_opinion > 74 }
+				has_idea = international_bankers
+			}
+			AND = {
+				check_variable = { wall_street_opinion > 74 }
+				has_idea = wall_street
+			}
+		}
+		check_variable = { agriculture_district_total > 0 }
+		NOT = { has_country_flag = recent_agricultural_industry_office_conversion }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.25
+			check_variable = { agriculture_percent > 0.05 }
+		}
+		modifier = {
+			factor = 1.50
+			check_variable = { agriculture_percent > 0.09 }
+		}
+		modifier = {
+			factor = 1.75
+			check_variable = { agriculture_percent > 0.14 }
+		}
+		modifier = {
+			factor = 2
+			check_variable = { agriculture_percent > 0.2 }
+		}
+		modifier = {
+			factor = 2.5
+			check_variable = { agriculture_percent > 0.3 }
+		}
+		modifier = {
+			factor = 2.75
+			check_variable = { agriculture_percent > 0.4 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = economic_boom
+		}
+		modifier = {
+			factor = 1.50
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 1.25
+			has_idea = stable_growth
+		}
+		modifier = {
+			factor = 0.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.50
+			has_idea = depression
+		}
+	}
+
+	# Nice.
+	option = {
+		name = internal_factions_events.32.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.32.a executed"
+
+		random_owned_controlled_state = {
+			limit = {
+				check_variable = { building_level@agriculture_district > 0 }
+			}
+			remove_building = {
+				type = agriculture_district
+				level = 1
+			}
+			add_building_construction = {
+				type = offices
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		set_temp_variable = { temp_opinion = -10 }
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+
+		set_country_flag = { flag = recent_agricultural_industry_office_conversion value = 1 days = 365 }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Give it To a Farmer!
+	option = {
+		name = internal_factions_events.31.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.31.b executed"
+		trigger = {
+			OR = {
+				has_idea = farmers
+				has_idea = landowners
+			}
+		}
+		add_political_power = -100
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_farmers_opinion = yes
+		change_landowners_opinion = yes
+
+		set_country_flag = { flag = recent_agricultural_industry_office_conversion value = 1 days = 365 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 2
+				check_variable = { total_unemployed_percentage_display < 0.01 }
+			}
+		}
 	}
 }
