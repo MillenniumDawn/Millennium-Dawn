@@ -1,10 +1,58 @@
 decision_category_internal_factions = {
+	# Farmers
+	reduce_taxes_farmer_mission = {
+		activation = { always = no }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = reduce_taxes_farmer_mission_tt
+				check_variable = { var = corporate_tax_rate value = reduction_target_farmers_tax_rate compare = less_than_or_equals }
+			}
+		}
+		days_mission_timeout = 365
+
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision reduce_taxes_farmer_mission"
+			country_event = { id = internal_factions_events.30 days = 1 }
+			effect_tooltip = {
+				set_temp_variable = { temp_opinion = -15 }
+				change_farmers_opinion = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision reduce_taxes_farmer_mission"
+			set_temp_variable = { temp_opinion = 10 }
+			change_farmers_opinion = yes
+		}
+	}
+
+	agricultural_district_tax_credits_decision = {
+		icon = generic
+		visible = {
+			has_idea = farmers
+		}
+		available = {
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			NOT = { has_active_mission = reduce_taxes_farmer_mission }
+		}
+		days_remove = 120
+		days_re_enable = 120
+		cost = 75
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision remove agricultural_district_tax_credits_decision"
+			set_temp_variable = { temp_opinion = 8 }
+			change_farmers_opinion = yes
+		}
+		modifier = {
+			agriculture_district_income_tax_modifier = -0.10
+		}
+	}
+
+	# Labour Unions
 	tax_labour_unions_decision = {
 		icon = generic
 		visible = {
-			has_idea = labour_unions
-		}
-		available = {
 			has_idea = labour_unions
 		}
 		days_remove = 60
@@ -16,7 +64,8 @@ decision_category_internal_factions = {
 			change_labour_unions_opinion = yes
 		}
 		modifier = {
-			consumer_goods_factor = -0.02
+			consumer_goods_factor = -0.10
+			population_tax_income_multiplier_modifier = 0.05
 		}
 	}
 	raise_wages_labour_unions_decision = {
@@ -24,32 +73,19 @@ decision_category_internal_factions = {
 		visible = {
 			has_idea = labour_unions
 		}
-		available = {
-			has_idea = labour_unions
-		}
 		days_remove = 60
 		days_re_enable = 30
 		cost = 50
-		complete_effect = {
+		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: decision remove raise_wages_labour_unions_decision"
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
-			if = { limit = { has_idea = small_medium_business_owners }
-				change_small_medium_business_owners_opinion = yes
-			}
-			else_if = { limit = { has_idea = the_bazaar }
-				change_the_bazaar_opinion = yes
-			}
-			else_if = { limit = { has_idea = the_donju }
-				change_the_donju_opinion = yes
-			}
-			else_if = { limit = { has_idea = chaebols }
-				change_chaebols_opinion = yes
-			}
-			else_if = { limit = { has_idea = industrial_conglomerates }
-				change_industrial_conglomerates_opinion = yes
-			}
+			change_small_medium_business_owners_opinion = yes
+			change_the_bazaar_opinion = yes
+			change_the_donju_opinion = yes
+			change_chaebols_opinion = yes
+			change_industrial_conglomerates_opinion = yes
 		}
 	}
 }
