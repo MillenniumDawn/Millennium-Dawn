@@ -3,30 +3,178 @@ UOE_culture_balance_cat = {
 		fire_only_once = no
 		days_remove = 30
 		cost = 50
+		visible = {
+			NOT = { has_country_flag = banned_western_media }
+		}
 		complete_effect = {
 			add_power_balance_value = {
 				id = UOE_culture_balance
-				value = -0.02
+				value = -0.01
 			}
-		}
-		modifier = {
-			democratic_drift = 0.01
-			neutrality_drift = 0.01
+			add_to_variable = { UOE_bop_cult_dif = 0.01 }
 		}
 	}
 	UOE_encourage_eastern_media = {
 		fire_only_once = no
 		days_remove = 30
 		cost = 50
+		visible = {
+			NOT = { has_country_flag = banned_eastern_media }
+		}
 		complete_effect = {
 			add_power_balance_value = {
 				id = UOE_culture_balance
-				value = 0.02
+				value = 0.01
 			}
+			add_to_variable = { UOE_bop_cult_dif = 0.01 }
+		}
+	}
+	UOE_ban_western_media_production = {
+		fire_only_once = yes
+		days_remove = 30
+		cost = 100
+		visible = {
+			NOT = { OR = { has_country_flag = banned_eastern_media has_country_flag = banned_western_media } }
+		}
+		complete_effect = {
+			set_country_flag = banned_western_media
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = -0.05
+			}
+			add_stability = -0.05
+			#TODO: this will increase the liklihood of nations to revolt and leave the USoE
+		}
+	}
+	UOE_ban_eastern_media_production = {
+		fire_only_once = yes
+		days_remove = 30
+		cost = 100
+		visible = {
+			NOT = { OR = { has_country_flag = banned_eastern_media has_country_flag = banned_western_media } }
+		}
+		complete_effect = {
+			set_country_flag = banned_eastern_media
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = 0.05
+			}
+			add_stability = -0.05
+			#TODO: this will increase the liklihood of nations to revolt and leave the USoE
+		}
+	}
+	UOE_western_grassroots_campaign = {
+		fire_only_once = no
+		days_remove = 60
+		cost = 100
+		visible = {
+			has_completed_focus = UOE_A_War_of_Cultures
+		}
+		complete_effect = {
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = -0.05
+			}
+			add_to_variable = { UOE_bop_cult_dif = -0.03 }
+		}
+		modifier = {
+			democratic_drift = 0.01
+			neutrality_drift = 0.01
+			stability_weekly_factor = -0.001
+		}
+	}
+	UOE_eastern_grassroots_campaign = {
+		fire_only_once = no
+		days_remove = 60
+		cost = 100
+		visible = {
+			has_completed_focus = UOE_A_War_of_Cultures
+		}
+		complete_effect = {
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = 0.05
+			}
+			add_to_variable = { UOE_bop_cult_dif = 0.03 }
 		}
 		modifier = {
 			communism_drift = 0.01
 			nationalist_drift = 0.01
+			stability_weekly_factor = -0.001
+		}
+	}
+	UOE_cultural_unity_event = {
+		fire_only_once = no
+		days_remove = 7
+		cost = 200
+		visible = {
+			has_completed_focus = UOE_Bridge_the_Gap
+		}
+		complete_effect = {
+			if = { limit = { power_balance_value = { id = UOE_culture_balance value > 0 } }
+				set_temp_variable = { treasury_change = -20 }
+				modify_treasury_effect = yes
+
+				add_power_balance_value = {
+					id = UOE_culture_balance
+					value = -0.05
+				}
+			}else = {
+				add_power_balance_value = {
+					id = UOE_culture_balance
+					value = 0.05
+				}
+			}
+			if = { limit = { check_variable = { UOE_bop_cult_dif > 0 } }
+				add_to_variable = { UOE_bop_cult_dif = -0.05 }
+			}else = {
+				add_to_variable = { UOE_bop_cult_dif = 0.05 }
+			}
+		}
+	}
+	UOE_american_assistance = {
+		fire_only_once = no
+		days_remove = 180
+		cost = 200
+		visible = {
+			has_completed_focus = UOE_Appeal_to_America
+		}
+		complete_effect = {
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = -0.1
+			}
+			add_to_variable = { UOE_bop_cult_dif = -0.05 }
+			set_temp_variable = { percent_change = 0.05 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = UOE }
+			change_influence_percentage = yes
+		}
+		modifier = {
+			stability_weekly_factor = -0.001
+			democratic_drift = 0.02
+		}
+	}
+	UOE_russian_assistance = {
+		fire_only_once = no
+		days_remove = 180
+		cost = 200
+		visible = {
+			has_completed_focus = UOE_Appeal_to_Russia
+		}
+		complete_effect = {
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = 0.1
+			}
+			add_to_variable = { UOE_bop_cult_dif = 0.05 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = UOE }
+			change_influence_percentage = yes
+		}
+		modifier = {
+			stability_weekly_factor = -0.001
+			communism_drift = 0.02
 		}
 	}
 }
