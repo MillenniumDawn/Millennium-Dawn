@@ -2464,6 +2464,47 @@ focus_EU111_QMV_result = {
 				set_variable = { party_pop_array^21 = party_22 } #Nat_Fascism
 				set_variable = { party_pop_array^22 = party_23 } #Nat_Autocracy
 				set_variable = { party_pop_array^23 = party_24 } #Monarchist
+				for_each_loop = {
+					array = party_pop_array
+					value = party_size
+
+					add_to_temp_variable = { add_check = party_size }
+				}
+
+				log = "Current Total Party Size is [?add_check]"
+
+				if = { limit =  { NOT = { check_variable = { add_check = 1 } } }
+					if = { limit = { check_variable = { add_check < 1 } }
+						find_highest_in_array = {
+							array = party_pop_array
+							value = add_pty_val
+							index = spot_hold
+						}
+						set_temp_variable = { mod_hold = 1 }
+						subtract_from_temp_variable = { mod_hold = add_check }
+						add_to_temp_variable = { add_pty_val = mod_hold }
+						set_variable = { party_pop_array^spot_hold = add_pty_val }
+					}else = {
+						find_highest_in_array = {
+							array = party_pop_array
+							value = add_pty_val
+							index = spot_hold
+						}
+						subtract_from_temp_variable = { add_check = 1 }
+						subtract_from_temp_variable = { add_pty_val = add_check }
+						set_variable = { party_pop_array^spot_hold = add_pty_val }
+					}
+				}
+
+				for_each_loop = {
+					array = party_pop_array
+					value = party_size
+
+					add_to_temp_variable = { add_check = party_size }
+				}
+
+				log = "Current Final Total Party Size is [?add_check]"
+
 				find_highest_in_array = {
 					array = party_pop_array
 					index = sel_party
@@ -2693,6 +2734,18 @@ focus_EU111_QMV_result = {
 
 				# Regional Influencers
 				set_counter_terror_influencer = yes
+
+				set_country_leader_name = {
+					name = UOE_TRANSITIONAL_COUNCIL
+				}
+				set_country_leader_description = {
+					desc = UOE_TRANSITIONAL_COUNCIL_DESC
+				}
+				set_country_leader_portrait = {
+					portrait = GFX_UOE_TRANSITIONAL_COUNCIL
+				}
+				add_country_leader_trait = transitional_government
+				add_country_leader_trait = governmental_shock
 			}
 		}
 		custom_effect_tooltip = form_USoE_tt
