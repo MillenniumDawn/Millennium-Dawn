@@ -1613,6 +1613,7 @@ focus_EU111_QMV_result = {
 		}
 		set_country_flag = focus_EU111_QMV_yes
 
+		#Removes all EU members who voted against the merge, and removes all candiates
 		for_each_scope_loop = {
 			array = global.EU_active_vote_rejecters
 			remove_ideas = EU_member
@@ -1622,6 +1623,7 @@ focus_EU111_QMV_result = {
 			clr_country_flag = EU_canidate
 		}
 
+		#Initial state transfer, enables the missile sysetm on the UOE before adding missiles
 		ROOT = {
 			random_state = {
 				transfer_state_to = UOE
@@ -1686,6 +1688,9 @@ focus_EU111_QMV_result = {
 			missile_ui_update = yes
 		}
 
+		#Switches the initating player to the UOE, Initilizes the base variables properly
+		#TODO: Add checks here for an MP game or players NOT the nation forming the UOE
+		#They too should be swapped into the UOE if coop is enabled
 		UOE = { change_tag_from = ROOT }
 
 		add_to_temp_array = { eco_cycle_array = 0 } #Depression(0) Recession(1) Stagnation(2) Stable(3) Fast(4) Booming (5)
@@ -1721,6 +1726,7 @@ focus_EU111_QMV_result = {
 		hidden_effect = {
 			every_country = {
 				limit = { has_idea = EU_member }
+				#Pulls all techs into a single array to apply later
 				for_each_loop = {
 					array = researched_techs
 					value = v
@@ -1733,6 +1739,7 @@ focus_EU111_QMV_result = {
 					}
 				}
 				log = "Final Tech Array Verify [?UOE.eu_technologies^0.GetTokenKey]"
+				#Sets all military assets to UOE, and cores all current states for UOE
 				set_country_flag = USoE_member
 				every_unit_leader = {
 					set_unit_leader_flag = USoE_unit_leader
@@ -1757,17 +1764,19 @@ focus_EU111_QMV_result = {
 
 				#Dynamically pull and set all the idea variables, weeeeeee
 
+				#Sets Starting Culture BOP Information
 				if = { limit = { OR = { democratic > 0.2 neutrality > 0.2 } }
-					add_to_variable = { UOE.cult_start_bias = -0.05 }
+					add_to_variable = { UOE.cult_start_bias = -0.03 }
 					add_to_variable = { UOE.west_start_track = 1 }
 					add_to_array = { UOE.western_nation = THIS }
 				}
 				if = { limit = { OR = { nationalist > 0.2 communism > 0.2 } }
-					add_to_variable = { UOE.cult_start_bias = 0.05 }
+					add_to_variable = { UOE.cult_start_bias = 0.03 }
 					add_to_variable = { UOE.east_start_track = 1 }
 					add_to_array = { UOE.eastern_nation = THIS }
 				}
 
+				#Pulls and sets all info for internal faction selection
 				if = { limit = { has_idea = small_medium_business_owners }
 					add_to_temp_variable = { small_medium_bus_op_track = small_medium_business_owners_opinion }
 					add_to_temp_variable = { small_medium_bus_track = 1 }
@@ -1837,6 +1846,7 @@ focus_EU111_QMV_result = {
 					add_to_temp_variable = { wahabi_ulema_track = 1 }
 				}
 
+				#Pulls and sets all info for laws
 				if = { limit = { has_idea = economic_boom }
 					add_to_temp_variable = { eco_cycle_array^5 = 1 }
 				}else_if = { limit = { has_idea = fast_growth }
@@ -1986,9 +1996,12 @@ focus_EU111_QMV_result = {
 					add_to_temp_variable = { mil_array^9 = 1 }
 				}
 
+				#adds state to the total merged states counter
 				add_to_temp_variable = { merged_states = 1 }
+				#Pulls and sets info if nation has intel agency
 				if = { limit = { has_intelligence_agency = yes} add_to_temp_variable = { has_agency_num = 1 } }
 
+				#Sets tax rates, stability, influence, and political party numbers
 				add_to_temp_variable = { corp_rate_hold = corporate_tax_rate }
 				add_to_temp_variable = { pop_rate_hold = population_tax_rate }
 				add_to_temp_variable = { stab_merge_tracker = stability }
@@ -2027,6 +2040,7 @@ focus_EU111_QMV_result = {
 
 				log = "current breakdown is [?democ_track], [?fac_track], [?com_track], [?neut_track], [?nat_track]"
 
+				#Adds all missile system stuff here
 				if = { limit = { NOT = { tag = UOE } }
 					for_each_loop = {
 						array = missile_inventory_array
@@ -2071,6 +2085,7 @@ focus_EU111_QMV_result = {
 			}
 			log = "Pre-Start Array Verification [?UOE.eu_technologies^0.GetTokenKey]"
 
+			#locates the proper laws to select
 			find_highest_in_array = {
 				array = eco_cycle_array
 				index = eco_cycle_sel
@@ -2108,6 +2123,7 @@ focus_EU111_QMV_result = {
 				index = eoc_sel
 			}
 
+			#does the math for all stability, taxes, influence, politics, ect
 			divide_temp_variable = { stab_merge_tracker = merged_states }
 			divide_temp_variable = { corp_rate_hold = merged_states }
 			divide_temp_variable = { pop_rate_hold = merged_states }
@@ -2169,6 +2185,7 @@ focus_EU111_QMV_result = {
 			add_to_temp_variable = { math_tracker = neut_track }
 			add_to_temp_variable = { math_tracker = nat_track }
 
+			#Adjust the math to make sure it adds up right
 			if = {
 				limit = { NOT = { check_variable = { math_tracker = 100 } } }
 				if = {	limit = { check_variable = { math_tracker > 100 } }
@@ -2263,6 +2280,7 @@ focus_EU111_QMV_result = {
 			}
 
 			UOE = {
+				#sets the base info
 				clr_country_flag = dynamic_flag
 				set_country_flag = USoE
 				set_cosmetic_tag = USoE
@@ -2272,7 +2290,7 @@ focus_EU111_QMV_result = {
 					g7_member
 					nuclear_power
 				}
-
+				#Sets stablity, internal factions, politics, ect
 				set_stability = stab_merge_tracker
 
 				set_variable = { small_medium_business_owners_opinion = small_medium_bus_op_track }
@@ -2653,6 +2671,7 @@ focus_EU111_QMV_result = {
 					add_ideas = defence_09
 				}
 
+				#Sets taxes and other economic values
 				set_variable = { corporate_tax_rate = corp_rate_hold }
 				set_variable = { population_tax_rate = pop_rate_hold }
 
@@ -2663,6 +2682,7 @@ focus_EU111_QMV_result = {
 				set_variable = { agriculture_district_employment_var = 1 }
 				set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
 
+				#Unlocks all proper techs for tag
 				for_each_loop = {
 					array = UOE.eu_technologies
 					value = v
@@ -2679,6 +2699,7 @@ focus_EU111_QMV_result = {
 					}
 				}
 
+				#creates an intel agency if enough nations had one at game start
 				if = { limit = { check_variable = { has_agency_num > merged_states } }
 					create_intelligence_agency = {
 						name = "European Foreign Intelligence Service"
@@ -2694,6 +2715,7 @@ focus_EU111_QMV_result = {
 					upgrade_intelligence_agency = upgrade_passive_defense
 				}
 
+				#initilizes all the major systems for players / AI
 				ingame_init_investment_system = yes
 				init_auto_influence_array = yes
 				research_slot_init_for_country = yes
@@ -2745,6 +2767,7 @@ focus_EU111_QMV_result = {
 				# Regional Influencers
 				set_counter_terror_influencer = yes
 
+				#Sets the proper government and traits
 				set_country_leader_name = {
 					name = UOE_TRANSITIONAL_COUNCIL
 				}
@@ -2757,6 +2780,7 @@ focus_EU111_QMV_result = {
 				add_country_leader_trait = transitional_government
 				add_country_leader_trait = unification_shock
 
+				#Sets all starting dynamic modifiers and BOP information
 				set_variable = { UOE_stab_var = -0.15 }
 				set_variable = { UOE_foreign_inf_def_var = -0.4 }
 				set_variable = { UOE_pol_power_var = -0.50 }
@@ -2772,6 +2796,9 @@ focus_EU111_QMV_result = {
 				set_variable = { UOE_navy_var = -0.5 }
 				set_variable = { UOE_air_var = -0.5 }
 				set_variable = { UOE_mil_cost_var = 0.5 }
+
+				set_variable = { UOE_bop_cult_dif = east_start_track }
+				subtract_from_variable = { UOE_bop_cult_dif = west_start_track }
 
 				add_dynamic_modifier = { modifier = UOE_founding_a_new_nation_modifier }
 				add_dynamic_modifier = { modifier = UOE_economic_turmoil_modifier }
