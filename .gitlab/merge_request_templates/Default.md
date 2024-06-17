@@ -12,19 +12,6 @@ Example:
 - Added new game rules for Monaco
 - New python test
 
-## Importance
-
-_DELETE ME: 1 to 10 -- 10 being the most important, 1 being the least important. Scaling revolves around the following guidelines: 1-5; Minor Mechanics, 5-8; Country Specific Content, 8-10; Global Mechanic or Changes_
-
-## Related Issues
-
-_DELETE ME: In this section you need to replace the below #num with the number of your issue. This assigns this merge request to a selected issue since we do not create branches off the issue._
-
-_DELETE ME: Remove this if you don't have a gitlab issue_
-Closes #num
-
-/milestone %"Version 1.9 Roadmap"
-
 /assign me
 
-/reviewer @AngriestBird @WarnerDev @Kalkalash @Fire_Hair @amtoj @crocomoth @alexmarkel0v @TraianoGitHub @KianGHK1530 @Razmode @wellihavenoidea @Patrador @heastel
+/reviewer @AngriestBird @WarnerDev @Kalkalash @amtoj @crocomoth @alexmarkel0v @TraianoGitHub @KianGHK1530 @wellihavenoidea @mahhouse @XCezor @deflinok1
