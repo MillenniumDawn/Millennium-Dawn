@@ -27,6 +27,13 @@ scripted_gui = {
 				update_eu_dirty_variable = yes
 			}
 		}
+
+		# Bums the Missile GUI one for now
+		properties = {
+			open_the_eu_gui = {
+				x = global.var_missiles_button_x
+			}
+		}
 	}
 
 	european_union_gui = {
@@ -142,8 +149,8 @@ scripted_gui = {
 			# Offices Screen
 			eu_president_council_back_click_enabled = {
 				has_idea = EU_member
-				AND = {
-					has_global_flag = european_constitution
+				custom_trigger_tooltip = {
+					tooltip = EU_president_council_unlocks_tt
 					has_global_flag = treaty_of_lisbon
 				}
 				custom_trigger_tooltip = {
@@ -170,7 +177,10 @@ scripted_gui = {
 			}
 			foreign_affairs_security_back_click_enabled = {
 				has_idea = EU_member
-				has_global_flag = EU_foreign_minister
+				custom_trigger_tooltip = {
+					tooltip = EU_high_representative_unlocks_tt
+					has_global_flag = EU_foreign_minister
+				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
 					NOT = {
@@ -195,7 +205,10 @@ scripted_gui = {
 			}
 			eu_sec_general_euro_army_back_click_enabled = {
 				has_idea = EU_member
-				has_global_flag = euro_army
+				custom_trigger_tooltip = {
+					tooltip = EU_sec_general_euro_army_unlocks_tt
+					has_global_flag = euro_army
+				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
 					NOT = {
@@ -220,7 +233,10 @@ scripted_gui = {
 			}
 			eu_sec_general_euro_navy_back_click_enabled = {
 				has_idea = EU_member
-				has_global_flag = euro_navy
+				custom_trigger_tooltip = {
+					tooltip = EU_sec_general_euro_navy_unlocks_tt
+					has_global_flag = euro_navy
+				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
 					NOT = {
@@ -249,7 +265,10 @@ scripted_gui = {
 			}
 			eu_parliament_president_back_click_enabled = {
 				has_idea = EU_member
-				AND = { has_global_flag = european_constitution has_global_flag = treaty_of_lisbon }
+				custom_trigger_tooltip = {
+					tooltip = eu_parliament_president_unlocks_tt
+					has_global_flag = treaty_of_lisbon
+				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
 					NOT = {
@@ -322,7 +341,10 @@ scripted_gui = {
 			}
 			eu_minister_economy_finance_back_click_enabled = {
 				has_idea = EU_member
-				has_global_flag = EU_finance_minister
+				custom_trigger_tooltip = {
+					tooltip = EU_ministry_of_economy_and_finance_unlocks_tt
+					has_global_flag = EU_finance_minister
+				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
 					NOT = {
@@ -347,7 +369,10 @@ scripted_gui = {
 			}
 			eu_ambassador_to_un_back_click_enabled = {
 				has_idea = EU_member
-				has_global_flag = EU_UNSC
+				custom_trigger_tooltip = {
+					tooltip = EU_ambassador_to_un_unlocks_tt
+					has_global_flag = EU_UNSC
+				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
 					NOT = {
@@ -372,7 +397,10 @@ scripted_gui = {
 			}
 			eu_frontex_director_back_click_enabled = {
 				has_idea = EU_member
-				has_global_flag = frontex_ExDir
+				custom_trigger_tooltip = {
+					tooltip = EU_frontex_director_unlocks_tt
+					has_global_flag = frontex_ExDir
+				}
 				custom_trigger_tooltip = {
 					tooltip = office_occupied_tt
 					NOT = {
@@ -2516,6 +2544,7 @@ scripted_gui = {
 						limit = { has_idea = EU_member }
 						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
 					}
+					set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 194 }
 				}
 				update_eu_dirty_variable = yes
 			}
@@ -4549,11 +4578,24 @@ scripted_gui = {
 
 		triggers = {
 			name_of_available_vote_button_click_enabled = {
-				custom_trigger_tooltip = {
-					tooltip = con_vote_wait
-					NOT = { has_global_flag = delay_next_council_vote }
-					NOT = { has_country_flag = delay_player_next_council_vote }
+				if = {
+					limit = {
+						has_global_flag = delay_next_council_vote
+					}
+					custom_trigger_tooltip = {
+						tooltip = con_vote_wait
+						NOT = { has_global_flag = delay_next_council_vote }
+						NOT = { has_country_flag = delay_player_next_council_vote }
+					}
 				}
+				else = {
+					custom_trigger_tooltip = {
+						tooltip = con_vote_wait_no_flag
+						NOT = { has_global_flag = delay_next_council_vote }
+						NOT = { has_country_flag = delay_player_next_council_vote }
+					}
+				}
+
 				ROOT = {
 					OR = {
 						has_political_power > 500
@@ -4636,12 +4678,6 @@ scripted_gui = {
 				clear_array = global.EU_active_vote_supporters
 				clear_array = global.EU_active_vote_rejecters
 
-				every_country = {
-					limit = { has_idea = EU_member }
-					country_event = {
-						id = EUvote.2
-					}
-				}
 				ROOT = {
 					if = {
 						limit = {
@@ -4657,46 +4693,59 @@ scripted_gui = {
 						add_political_power = -500
 					}
 				}
-
-				meta_effect = {
-					text = {
-						if = {
-							limit = { check_variable = { v = 002 } }
-							set_global_flag = focus_EU002_QMV_voted
-							set_global_flag = EU_qualified_majority_voting
-							ROOT = {
-								activate_mission = EU_voting_mission_focus_EU002_QMV_result
-							}
-							if = { limit = { is_ai = no }
-								set_global_flag = EUU_player_proposed_law
-							}
-							every_country = {
-								limit = {
-									has_idea = EU_member
-									NOT = { has_idea = EUU_voting_rights_suspended }
-								}
-								EU_update_AI_focus_EU002_voting_modifier = yes
-							}
+				hidden_effect = {
+					every_country = {
+						limit = {
+							is_ai = no
+							has_idea = EU_member
 						}
-						else = {
-							set_global_flag = focus_[index]_QMV_voted
-							set_global_flag = EU_qualified_majority_voting
-							ROOT = {
-								activate_mission = EU_voting_mission_focus_[index]_QMV_result
-							}
-							every_country = {
-								limit = {
-									has_idea = EU_member
-									NOT = { has_idea = EUU_voting_rights_suspended }
-								}
-								EU_update_AI_focus_[index]_voting_modifier = yes
-							}
+						country_event = {
+							id = EUvote.2
 						}
 					}
-					date = "[GetDateText]"
-					tag = "[ROOT.GetName]"
-					index = "EU[?v]"
+					meta_effect = {
+						text = {
+							if = {
+								limit = { check_variable = { v = 002 } }
+								set_global_flag = focus_EU002_QMV_voted
+								set_global_flag = EU_qualified_majority_voting
+								ROOT = {
+									activate_mission = EU_voting_mission_focus_EU002_QMV_result
+								}
+								if = { limit = { is_ai = no }
+									set_global_flag = EUU_player_proposed_law
+								}
+								every_country = {
+									limit = {
+										has_idea = EU_member
+										NOT = { has_idea = EUU_voting_rights_suspended }
+									}
+									EU_update_AI_focus_EU002_voting_modifier = yes
+								}
+							}
+							else = {
+								set_global_flag = focus_[index]_QMV_voted
+								set_global_flag = EU_qualified_majority_voting
+								ROOT = {
+									activate_mission = EU_voting_mission_focus_[index]_QMV_result
+								}
+								every_country = {
+									limit = {
+										has_idea = EU_member
+										NOT = { has_idea = EUU_voting_rights_suspended }
+									}
+									EU_update_AI_focus_[index]_voting_modifier = yes
+								}
+							}
+						}
+						date = "[GetDateText]"
+						tag = "[ROOT.GetName]"
+						index = "EU[?v]"
+					}
 				}
+
+
+				EU_show_display_effects_for_law = yes
 				clr_global_flag = EUU_player_proposed_law
 				update_eu_dirty_variable = yes
 			}
@@ -4971,6 +5020,10 @@ scripted_gui = {
 								NOT = { check_variable = { global.EUU_recently_failed_vote = -1 } }
 								check_variable = { global.EUU_recently_failed_vote = v }
 							}
+							modifier = {
+								factor = 0
+								has_global_flag = delay_next_council_vote_ai
+							}
 						}
 					}
 				}
@@ -5023,9 +5076,18 @@ scripted_gui = {
 		triggers = {
 			# Shit
 			name_of_available_reform_button_click_enabled = {
-				custom_trigger_tooltip = {
-					tooltip = par_vote_wait
-					NOT = { has_country_flag = delay_next_parliament_vote }
+				if = {
+					limit = { has_country_flag = delay_next_parliament_vote }
+					custom_trigger_tooltip = {
+						tooltip = par_vote_wait
+						NOT = { has_country_flag = delay_next_parliament_vote }
+					}
+				}
+				else = {
+					custom_trigger_tooltip = {
+						tooltip = par_vote_wait_no_flag
+						NOT = { has_country_flag = delay_next_parliament_vote }
+					}
 				}
 				custom_trigger_tooltip = {
 					tooltip = no_active_agenda
@@ -5275,7 +5337,7 @@ scripted_gui = {
 					is_in_array = { global.EU_passed_votes = 601 }
 					custom_trigger_tooltip = {
 						tooltip = allow_2007_enlargement_tt
-						is_in_array = { global.EU_passed_votes = 102 }
+						is_in_array = { global.EU_passed_votes = 601 }
 					}
 					custom_trigger_tooltip = {
 						tooltip = no_ongoing_expansion_tt
@@ -5463,9 +5525,15 @@ scripted_gui = {
 				set_global_flag = { flag = new_council_vote_delay days = 21 value = 1 }
 				set_variable = { global.current_active_agenda_disp = v }
 				set_variable = { global.active_MEP_Support = 0 }
-				every_country = {
-					limit = { has_idea = EU_member }
-					country_event = EUvote.1
+				# Notify all nations if not AI
+				hidden_effect = {
+					every_country = {
+						limit = {
+							is_ai = no
+							has_idea = EU_member
+						}
+						country_event = EUvote.1
+					}
 				}
 
 				meta_effect = {
@@ -5556,6 +5624,9 @@ scripted_gui = {
 				else_if = { limit = { check_variable = { v = 111 } }
 					hidden_effect = { add_political_power = -300 }
 				}
+
+				# Display Section:
+				EU_show_display_effects_for_law = yes
 				update_eu_dirty_variable = yes
 			}
 		}
@@ -5779,10 +5850,19 @@ scripted_gui = {
 								date > 2013.1.1
 								is_historical_focus_on = yes
 							}
+							# Pass the Charter First (We need this)
+							modifier = {
+								add = 100
+								check_variable = { v = 101 }
+							}
 							# Killswitch
 							modifier = {
 								factor = 0
 								NOT = { check_variable = { global.current_active_agenda_disp = 0 } }
+							}
+							modifier = {
+								factor = 0
+								has_global_flag = EP_AI_hold_their_vote
 							}
 						}
 					}
