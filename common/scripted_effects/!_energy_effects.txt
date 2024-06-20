@@ -194,21 +194,22 @@ calculate_energy_use = {
 		add_to_temp_variable = { nuclear_fuel_consumption_multiplier = modifier@nuclear_fuel_consumption_modifier }
 		multiply_variable = { nuclear_fuel_consumption = nuclear_fuel_consumption_multiplier }
 
+		set_variable = { net_nuclear_fuel_display = var_nuke_nuclear_reactor_prod }
+		subtract_from_variable = { net_nuclear_fuel_display = nuclear_fuel_consumption }
+
 		set_variable = { nuclear_energy_generation = modifier@nuclear_energy_gain }
 		set_temp_variable = { nuclear_energy_generation_multiplier = 1 }
 		add_to_temp_variable = { nuclear_energy_generation_multiplier = modifier@nuclear_energy_generation_modifier }
 		multiply_variable = { nuclear_energy_generation = nuclear_energy_generation_multiplier }
-		if = {
-			limit = {
-				check_variable = { var_reactor_material_stockpile = 0 }
-			}
+		if = { limit = { check_variable = { var_reactor_material_stockpile = 0 } }
 			set_temp_variable = { nuclear_fuel_fulfillment = var_nuke_nuclear_reactor_prod }
 			divide_temp_variable = { nuclear_fuel_fulfillment = nuclear_fuel_consumption }
 			clamp_temp_variable = { var = nuclear_fuel_fulfillment min = 0 max = 1 }
 			multiply_variable = { nuclear_energy_generation = nuclear_fuel_fulfillment }
 		}
 		add_to_variable = { energy_sum = nuclear_energy_generation }
-	} else = {
+	}
+	else = {
 		set_variable = { nuclear_fuel_consumption = 0 }
 		set_variable = { nuclear_energy_generation = 0 }
 	}
@@ -254,10 +255,13 @@ calculate_energy_use = {
 	}
 
 	divide_temp_variable = { energy_fulfillment = energy_consumption }
+	set_variable = { energy_balance_value_display = energy_fulfillment }
+	clamp_variable = { var = energy_balance_value_display min = 0 }
 	clamp_temp_variable = { var = energy_fulfillment min = 0 max = 1 }
 	set_variable = { unfulfilled_energy_demand_var = -1 }
 	add_to_variable = { unfulfilled_energy_demand_var = energy_fulfillment }
 	add_to_variable = { energy_sum = energy_withdrawal_from_storage } #for display purposes
+
 
 	# Caps penalty for unfulfilled at 50%, and multiples 100 to get a whole number to reduce to penalty scale
 	set_variable = { unfulfilled_energy_demand_dynmod_var = unfulfilled_energy_demand_var }
