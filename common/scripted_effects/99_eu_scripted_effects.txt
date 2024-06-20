@@ -358,7 +358,7 @@ EU_update_vars = {
 
 		# Euroscepticism update
 		for_each_scope_loop = {
-			array = global.EU_potential
+			array = global.EU_member
 			clamp_variable = { var = THIS.eurosceptic min = 0 max = 1 }
 		}
 		###End of Euroscepticism update
@@ -453,28 +453,25 @@ EU_potential_eurosceptic_change = {
 invest_in_EU_single_market_cic = {
 	if = {
 		limit = {
-			THIS = {
-				any_owned_state = {
-					free_building_slots = {
-						building = industrial_complex size > 0
-						include_locked = no
-					}
+			any_owned_state = {
+				free_building_slots = {
+					building = industrial_complex size > 0
+					include_locked = no
 				}
 			}
 		}
 		custom_effect_tooltip = tooltip_invest_in_EU_single_market_cic
 		hidden_effect = {
-			THIS = {
-				random_owned_state = {
-					limit = {
-						free_building_slots = {
-							building = industrial_complex size > 0
-							include_locked = no
-						}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex size > 0
+						include_locked = no
 					}
-					invest_cic = yes
 				}
+				invest_cic = yes
 			}
+
 		}
 		set_temp_variable = { modify_eurosceptic = -0.03 }
 		set_temp_variable = { modify_eurosceptic_target = THIS }
@@ -487,19 +484,15 @@ invest_in_EU_single_market_cic = {
 invest_in_EU_single_market_infra = {
 	if = {
 		limit = {
-			THIS = {
-				any_owned_state = {
-					infrastructure < 5
-				}
+			any_owned_state = {
+				infrastructure < 5
 			}
 		}
 		custom_effect_tooltip = tooltip_invest_in_EU_single_market_infra
 		hidden_effect = {
-			THIS = {
-				random_owned_state = {
-					limit = { infrastructure < 5 }
-					invest_infra = yes
-				}
+			random_owned_state = {
+				limit = { infrastructure < 5 }
+				invest_infra = yes
 			}
 		}
 		set_temp_variable = { modify_eurosceptic = -0.03 }
@@ -536,9 +529,7 @@ execute_OMT = {
 	custom_effect_tooltip = tooltip_ECB_Outright_Monetary_Transactions_complete_effect
 	hidden_effect = {
 		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
+			limit = { has_idea = EU_member }
 			#log = "start OTM interest_rate [THIS.GetTag] [?THIS.interest_rate] debt [?THIS.debt] OMT_size_limit [?global.OMT_size_limit] OMT_total_value [?global.OMT_total_value]"
 			if = {
 				limit = {
@@ -750,14 +741,12 @@ remove_OMT = {
 #####################################
 
 leaving_EU = {
-
 	remove_ideas = EU_member
-	#EU_Clear_Voting = yes ### old one
 	EU_clear_voting = yes ### new one
 	remove_ideas = the_euro
 	clr_country_flag = EU_candidate
 	custom_effect_tooltip = tooltip_EU_remove_laws_and_offices
-		hidden_effect = {
+	hidden_effect = {
 		### EU law and offices
 		#EU laws
 		remove_ideas = EUU_CFR_EU
@@ -778,16 +767,39 @@ leaving_EU = {
 		remove_ideas = European_Asylum_Agency
 		remove_ideas = Frontex
 		#EU offices
-		remove_ideas = EU_commission_president
-		remove_ideas = EU_council_president
-		remove_ideas = EU_foreign_minister
-		remove_ideas = EU_parliament_president
-		remove_ideas = ECB_president
-		remove_ideas = EU_finance_minister
-		remove_ideas = frontex_ExDir
-		remove_ideas = EUU_euronavy_sc
-		remove_ideas = EUU_euroarmy_sc
-		remove_ideas = EUU_ambassador_unsc
+		if = { limit = { has_idea = EU_commission_president }
+			remove_ideas = EU_commission_president
+		}
+		if = { limit = { has_idea = EU_council_president }
+			remove_ideas = EU_council_president
+		}
+		if = { limit = { has_idea = EU_foreign_minister }
+			remove_ideas = EU_foreign_minister
+		}
+		if = { limit = { has_idea = EU_parliament_president }
+			remove_ideas = EU_parliament_president
+		}
+		if = { limit = { has_idea = ECB_president }
+			remove_ideas = ECB_president
+		}
+		if = { limit = { has_idea = EU_finance_minister }
+			remove_ideas = EU_finance_minister
+		}
+		if = { limit = { has_idea = frontex_ExDir }
+			remove_ideas = frontex_ExDir
+		}
+		if = { limit = { has_idea = EUU_euronavy_sc }
+			remove_ideas = EUU_euronavy_sc
+		}
+		if = { limit = { has_idea = EUU_euroarmy_sc }
+			remove_ideas = EUU_euroarmy_sc
+		}
+		if = { limit = { has_idea = EUU_ambassador_unsc }
+			remove_ideas = EUU_ambassador_unsc
+		}
+		if = { limit = { has_idea = EU_president }
+			remove_ideas = EU_president
+		}
 		if = {
 			limit = {
 				has_idea = EUU_ambassador_unsc
@@ -799,1822 +811,621 @@ leaving_EU = {
 			}
 			remove_ideas = p5_member
 		}
-		remove_ideas = EU_president
 		### End of EU law and offices
 		### leave EDU
-		if = {
-			limit = {
-				has_global_flag = EDU
-			}
+		if = { limit = { has_global_flag = EDU }
 			leave_faction = yes
 		}
 		### clear focus flags for leaving, set for remaining
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU002 }
-			}
-			THIS = { clr_country_flag = focus_EU002 }
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_global_flag = focus_EU002_retry
-			}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU002_yes }
-			}
-			THIS = { clr_country_flag = focus_EU002_yes }
+		if = { limit = { has_country_flag = focus_EU002_yes }
+			clr_country_flag = focus_EU002_yes
 			random_country = {
 				limit = { has_idea = EU_member }
 				set_country_flag = focus_EU002_yes
 			}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU002_QMV_yes }
-			}
-			THIS = { clr_country_flag = focus_EU002_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU002_QMV_yes }
+			clr_country_flag = focus_EU002_QMV_yes
 			random_country = {
 				limit = { has_idea = EU_member }
 				set_country_flag = focus_EU002_QMV_yes
 			}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU002_maj_yes }
-			}
-			THIS = { clr_country_flag = focus_EU002_maj_yes }
-			random_country = {
-				limit = { has_idea = EU_member }
-				set_country_flag = focus_EU002_maj_yes
-			}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU101 }
-			}
-			THIS = { clr_country_flag = focus_EU101 }
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_global_flag = focus_EU101_retry
-			}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU101_yes }
-			}
-			THIS = { clr_country_flag = focus_EU101_yes }
+		if = { limit = { has_country_flag = focus_EU101_yes }
+			clr_country_flag = focus_EU101_yes
 			random_country = {
 				limit = { has_idea = EU_member }
 				set_country_flag = focus_EU101_yes
 			}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU101_QMV_yes }
-			}
-			THIS = { clr_country_flag = focus_EU101_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU101_QMV_yes }
+			clr_country_flag = focus_EU101_QMV_yes
 			random_country = {
 				limit = { has_idea = EU_member }
 				set_country_flag = focus_EU101_QMV_yes
 			}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU101_maj_yes }
-			}
-			THIS = { clr_country_flag = focus_EU101_maj_yes }
+		if = { limit = { has_country_flag = focus_EU102_yes }
+			clr_country_flag = focus_EU102_yes
 			random_country = {
 				limit = { has_idea = EU_member }
-				set_country_flag = focus_EU101_maj_yes
+				set_country_flag = focus_EU102_yes
 			}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU102 }
-			}
-			THIS = { clr_country_flag = focus_EU102 }
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_global_flag = focus_EU102_retry
+		if = { limit = { has_country_flag = focus_EU102_QMV_yes }
+			clr_country_flag = focus_EU102_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU102_QMV_yes
 			}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU102_yes }
+		if = { limit = { has_country_flag = focus_EU103_yes }
+			clr_country_flag = focus_EU103_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU103_yes
 			}
-				THIS = { clr_country_flag = focus_EU102_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU102_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU102_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU103_QMV_yes }
+			clr_country_flag = focus_EU103_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU103_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU102_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU102_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU102_maj_yes }
+		if = { limit = {  has_country_flag = focus_EU104_yes }
+			clr_country_flag = focus_EU104_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU104_yes
 			}
-				THIS = { clr_country_flag = focus_EU102_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU102_maj_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU103 }
+		if = { limit = {  has_country_flag = focus_EU104_QMV_yes }
+			clr_country_flag = focus_EU104_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU104_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU103 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU103_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU103_yes }
+		if = { limit = {  has_country_flag = focus_EU105_yes }
+			clr_country_flag = focus_EU105_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU105_yes
 			}
-				THIS = { clr_country_flag = focus_EU103_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU103_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU103_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU105_QMV_yes }
+			clr_country_flag = focus_EU105_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU105_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU103_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU103_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU103_maj_yes }
+		if = { limit = { has_country_flag = focus_EU201_yes }
+			clr_country_flag = focus_EU201_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU201_yes
 			}
-				THIS = { clr_country_flag = focus_EU103_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU103_maj_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU104 }
-			}
-				THIS = { clr_country_flag = focus_EU104 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU104_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU104_yes }
-			}
-				THIS = { clr_country_flag = focus_EU104_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU104_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU104_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU104_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU104_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU104_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU104_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU104_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU105 }
-			}
-				THIS = { clr_country_flag = focus_EU105 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU105_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU105_yes }
-			}
-				THIS = { clr_country_flag = focus_EU105_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU105_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU105_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU105_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU105_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU105_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU105_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU105_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU201 }
-			}
-				THIS = { clr_country_flag = focus_EU201 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU201_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU201_yes }
-			}
-				THIS = { clr_country_flag = focus_EU201_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU201_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU201_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU201_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU201_QMV_yes }
+				 clr_country_flag = focus_EU201_QMV_yes
 				random_country = {
 					limit = { has_idea = EU_member }
 					set_country_flag = focus_EU201_QMV_yes
 				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU201_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU201_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU201_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU202 }
-			}
-				THIS = { clr_country_flag = focus_EU202 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU202_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU202_yes }
-			}
-				THIS = { clr_country_flag = focus_EU202_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU202_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU202_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU202_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU202_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU202_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU202_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU202_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU203 }
-			}
-				THIS = { clr_country_flag = focus_EU203 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU203_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU203_yes }
-			}
-				THIS = { clr_country_flag = focus_EU203_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU203_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU203_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU203_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU203_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU203_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU203_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU203_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU204 }
-			}
-				THIS = { clr_country_flag = focus_EU204 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU204_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU204_yes }
-			}
-				THIS = { clr_country_flag = focus_EU204_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU204_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU204_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU204_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU204_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU204_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU204_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU204_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU205 }
-			}
-				THIS = { clr_country_flag = focus_EU205 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU205_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU205_yes }
-			}
-				THIS = { clr_country_flag = focus_EU205_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU205_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU205_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU205_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU205_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU205_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU205_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU205_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU206 }
-			}
-				THIS = { clr_country_flag = focus_EU206 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU206_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU206_yes }
-			}
-				THIS = { clr_country_flag = focus_EU206_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU206_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU206_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU202_yes }
+			clr_country_flag = focus_EU202_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU202_yes
 			}
-				THIS = { clr_country_flag = focus_EU206_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU206_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU206_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU206_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU206_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU207 }
-			}
-				THIS = { clr_country_flag = focus_EU207 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU207_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU207_yes }
-			}
-				THIS = { clr_country_flag = focus_EU207_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU207_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU207_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU207_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU207_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU207_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU207_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU207_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU208 }
-			}
-				THIS = { clr_country_flag = focus_EU208 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU208_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU208_yes }
-			}
-				THIS = { clr_country_flag = focus_EU208_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU208_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU208_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU208_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU208_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU208_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU208_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU208_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU301 }
-			}
-				THIS = { clr_country_flag = focus_EU301 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU301_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU301_yes }
-			}
-				THIS = { clr_country_flag = focus_EU301_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU301_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU301_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU301_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU301_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU301_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU301_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU301_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU302 }
-			}
-				THIS = { clr_country_flag = focus_EU302 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU302_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU302_yes }
-			}
-				THIS = { clr_country_flag = focus_EU302_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU302_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU302_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU302_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU302_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU302_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU302_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU302_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU303 }
-			}
-				THIS = { clr_country_flag = focus_EU303 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU303_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU303_yes }
+		if = { limit = { has_country_flag = focus_EU202_QMV_yes }
+			clr_country_flag = focus_EU202_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU202_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU303_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU303_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU303_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU203_yes }
+			clr_country_flag = focus_EU203_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU203_yes
 			}
-				THIS = { clr_country_flag = focus_EU303_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU303_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU303_maj_yes }
+		if = { limit = { has_country_flag = focus_EU203_QMV_yes }
+			clr_country_flag = focus_EU203_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU203_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU303_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU303_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU304 }
-			}
-				THIS = { clr_country_flag = focus_EU304 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU304_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU304_yes }
+		if = { limit = { has_country_flag = focus_EU204_yes }
+			clr_country_flag = focus_EU204_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU204_yes
 			}
-				THIS = { clr_country_flag = focus_EU304_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU304_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU304_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU204_QMV_yes }
+			clr_country_flag = focus_EU204_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU204_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU304_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU304_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU304_maj_yes }
+		if = { limit = { has_country_flag = focus_EU205_yes }
+			clr_country_flag = focus_EU205_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU205_yes
 			}
-				THIS = { clr_country_flag = focus_EU304_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU304_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU305 }
-			}
-				THIS = { clr_country_flag = focus_EU305 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU305_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU305_yes }
+		if = { limit = { has_country_flag = focus_EU205_QMV_yes }
+			clr_country_flag = focus_EU205_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU205_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU305_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU305_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU305_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU206_yes }
+			clr_country_flag = focus_EU206_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU206_yes
 			}
-				THIS = { clr_country_flag = focus_EU305_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU305_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU305_maj_yes }
+		if = { limit = { has_country_flag = focus_EU206_QMV_yes }
+			clr_country_flag = focus_EU206_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU206_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU305_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU305_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU306 }
-			}
-				THIS = { clr_country_flag = focus_EU306 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU306_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU306_yes }
+		if = { limit = { has_country_flag = focus_EU207_yes }
+			clr_country_flag = focus_EU207_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU207_yes
 			}
-				THIS = { clr_country_flag = focus_EU306_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU306_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU306_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU207_QMV_yes }
+			clr_country_flag = focus_EU207_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU207_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU306_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU306_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU306_maj_yes }
+		if = { limit = { has_country_flag = focus_EU208_yes }
+			clr_country_flag = focus_EU208_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU208_yes
 			}
-				THIS = { clr_country_flag = focus_EU306_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU306_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU307 }
-			}
-				THIS = { clr_country_flag = focus_EU307 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU307_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU307_yes }
+		if = { limit = { has_country_flag = focus_EU208_QMV_yes }
+			clr_country_flag = focus_EU208_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU208_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU307_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU307_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU307_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU301_yes }
+			clr_country_flag = focus_EU301_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU301_yes
 			}
-				THIS = { clr_country_flag = focus_EU307_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU307_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU307_maj_yes }
+		if = { limit = { has_country_flag = focus_EU301_QMV_yes }
+			clr_country_flag = focus_EU301_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU301_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU307_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU307_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU308 }
-			}
-				THIS = { clr_country_flag = focus_EU308 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU308_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU308_yes }
+		if = { limit = { has_country_flag = focus_EU302_yes }
+			clr_country_flag = focus_EU302_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU302_yes
 			}
-				THIS = { clr_country_flag = focus_EU308_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU308_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU308_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU302_QMV_yes }
+			clr_country_flag = focus_EU302_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU302_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU308_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU308_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU308_maj_yes }
+		if = { limit = { has_country_flag = focus_EU303_yes }
+			clr_country_flag = focus_EU303_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU303_yes
 			}
-				THIS = { clr_country_flag = focus_EU308_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU308_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU401 }
-			}
-				THIS = { clr_country_flag = focus_EU401 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU401_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU401_yes }
+		if = { limit = { has_country_flag = focus_EU303_QMV_yes }
+			clr_country_flag = focus_EU303_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU303_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU401_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU401_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU401_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU304_yes }
+			clr_country_flag = focus_EU304_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU304_yes
 			}
-				THIS = { clr_country_flag = focus_EU401_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU401_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU401_maj_yes }
+		if = { limit = { has_country_flag = focus_EU304_QMV_yes }
+			clr_country_flag = focus_EU304_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU304_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU401_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU401_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU402 }
-			}
-				THIS = { clr_country_flag = focus_EU402 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU402_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU402_yes }
+		if = { limit = { has_country_flag = focus_EU305_yes }
+			clr_country_flag = focus_EU305_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU305_yes
 			}
-				THIS = { clr_country_flag = focus_EU402_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU402_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU402_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU305_QMV_yes }
+			clr_country_flag = focus_EU305_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU305_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU402_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU402_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU402_maj_yes }
+		if = { limit = { has_country_flag = focus_EU306_yes }
+			clr_country_flag = focus_EU306_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU306_yes
 			}
-				THIS = { clr_country_flag = focus_EU402_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU402_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU403 }
-			}
-				THIS = { clr_country_flag = focus_EU403 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU403_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU403_yes }
+		if = { limit = { has_country_flag = focus_EU306_QMV_yes }
+			clr_country_flag = focus_EU306_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU306_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU403_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU403_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU403_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU307_yes }
+			clr_country_flag = focus_EU307_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU307_yes
 			}
-				THIS = { clr_country_flag = focus_EU403_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU403_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU403_maj_yes }
+		if = { limit = { has_country_flag = focus_EU307_QMV_yes }
+			clr_country_flag = focus_EU307_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU307_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU403_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU403_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU404 }
-			}
-				THIS = { clr_country_flag = focus_EU404 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU404_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU404_yes }
+		if = { limit = { has_country_flag = focus_EU308_yes }
+			clr_country_flag = focus_EU308_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU308_yes
 			}
-				THIS = { clr_country_flag = focus_EU404_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU404_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU404_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU308_QMV_yes }
+			clr_country_flag = focus_EU308_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU308_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU404_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU404_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU404_maj_yes }
+		if = { limit = { has_country_flag = focus_EU401_yes }
+			clr_country_flag = focus_EU401_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU401_yes
 			}
-				THIS = { clr_country_flag = focus_EU404_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU404_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU405 }
-			}
-				THIS = { clr_country_flag = focus_EU405 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU405_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU405_yes }
+		if = { limit = { has_country_flag = focus_EU401_QMV_yes }
+			clr_country_flag = focus_EU401_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU401_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU405_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU405_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU405_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU402_yes }
+			clr_country_flag = focus_EU402_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU402_yes
 			}
-				THIS = { clr_country_flag = focus_EU405_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU405_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU405_maj_yes }
+		if = { limit = { has_country_flag = focus_EU402_QMV_yes }
+			clr_country_flag = focus_EU402_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU402_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU405_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU405_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU406 }
-			}
-				THIS = { clr_country_flag = focus_EU406 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU406_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU406_yes }
+		if = { limit = { has_country_flag = focus_EU403_yes }
+			clr_country_flag = focus_EU403_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU403_yes
 			}
-				THIS = { clr_country_flag = focus_EU406_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU406_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU406_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU403_QMV_yes }
+			clr_country_flag = focus_EU403_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU403_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU406_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU406_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU406_maj_yes }
+		if = { limit = { has_country_flag = focus_EU404_yes }
+			clr_country_flag = focus_EU404_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU404_yes
 			}
-				THIS = { clr_country_flag = focus_EU406_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU406_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU407 }
-			}
-				THIS = { clr_country_flag = focus_EU407 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU407_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU407_yes }
+		if = { limit = { has_country_flag = focus_EU404_QMV_yes }
+			clr_country_flag = focus_EU404_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU404_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU407_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU407_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU407_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU405_yes }
+			clr_country_flag = focus_EU405_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU405_yes
 			}
-				THIS = { clr_country_flag = focus_EU407_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU407_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU407_maj_yes }
+		if = { limit = { has_country_flag = focus_EU405_QMV_yes }
+			clr_country_flag = focus_EU405_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU405_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU407_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU407_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU408 }
-			}
-				THIS = { clr_country_flag = focus_EU408 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU408_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU408_yes }
+		if = { limit = { has_country_flag = focus_EU406_yes }
+			clr_country_flag = focus_EU406_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU406_yes
 			}
-				THIS = { clr_country_flag = focus_EU408_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU408_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU408_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU406_QMV_yes }
+			clr_country_flag = focus_EU406_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU406_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU408_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU408_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU408_maj_yes }
+		if = { limit = { has_country_flag = focus_EU407_yes }
+			clr_country_flag = focus_EU407_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU407_yes
 			}
-				THIS = { clr_country_flag = focus_EU408_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU408_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU601 }
-			}
-				THIS = { clr_country_flag = focus_EU601 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU601_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU601_yes }
+		if = { limit = { has_country_flag = focus_EU407_QMV_yes }
+			clr_country_flag = focus_EU407_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU407_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU601_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU601_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU601_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU408_yes }
+			clr_country_flag = focus_EU408_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU408_yes
 			}
-				THIS = { clr_country_flag = focus_EU601_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU601_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU601_maj_yes }
+		if = { limit = { has_country_flag = focus_EU408_QMV_yes }
+			clr_country_flag = focus_EU408_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU408_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU601_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU601_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU602 }
-			}
-				THIS = { clr_country_flag = focus_EU602 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU602_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU602_yes }
+		if = { limit = { has_country_flag = focus_EU601_yes }
+			clr_country_flag = focus_EU601_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU601_yes
 			}
-				THIS = { clr_country_flag = focus_EU602_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU602_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU602_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU601_QMV_yes }
+			clr_country_flag = focus_EU601_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU601_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU602_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU602_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU602_maj_yes }
+		if = { limit = { has_country_flag = focus_EU602_yes }
+			clr_country_flag = focus_EU602_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU602_yes
 			}
-				THIS = { clr_country_flag = focus_EU602_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU602_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU603 }
-			}
-				THIS = { clr_country_flag = focus_EU603 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU603_retry
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU603_yes }
+		if = { limit = { has_country_flag = focus_EU602_QMV_yes }
+			clr_country_flag = focus_EU602_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU602_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU603_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU603_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU603_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU603_yes }
+			clr_country_flag = focus_EU603_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU603_yes
 			}
-				THIS = { clr_country_flag = focus_EU603_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU603_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU603_maj_yes }
+		if = { limit = { has_country_flag = focus_EU603_QMV_yes }
+			clr_country_flag = focus_EU603_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU603_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU603_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU603_maj_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU110 }
-			}
-				THIS = { clr_country_flag = focus_EU110 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU110_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU110_yes }
+		if = { limit = {  has_country_flag = focus_EU110_yes }
+			clr_country_flag = focus_EU110_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU110_yes
 			}
-				THIS = { clr_country_flag = focus_EU110_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU110_yes
-				}
 		}
 		if = {
 			limit = {
-				THIS = { has_country_flag = focus_EU110_QMV_yes }
+				 has_country_flag = focus_EU110_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU110_QMV_yes }
+				 clr_country_flag = focus_EU110_QMV_yes
 				random_country = {
 					limit = { has_idea = EU_member }
 					set_country_flag = focus_EU110_QMV_yes
 				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU110_maj_yes }
+		if = { limit = { has_country_flag = focus_EU111_yes }
+			clr_country_flag = focus_EU111_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU111_yes
 			}
-				THIS = { clr_country_flag = focus_EU110_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU110_maj_yes
-				}
+		}
+		if = { limit = { has_country_flag = focus_EU111_QMV_yes }
+			clr_country_flag = focus_EU111_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU111_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU112_yes }
+			clr_country_flag = focus_EU112_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU112_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU112_QMV_yes }
+			clr_country_flag = focus_EU112_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU112_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU605_yes }
+			clr_country_flag = focus_EU605_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU605_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU605_QMV_yes }
+			clr_country_flag = focus_EU605_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU605_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU606_yes }
+			clr_country_flag = focus_EU606_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU606_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU606_QMV_yes }
+			clr_country_flag = focus_EU606_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU606_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU607_yes }
+			clr_country_flag = focus_EU607_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU607_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU607_QMV_yes }
+			clr_country_flag = focus_EU607_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU607_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU608_yes }
+			clr_country_flag = focus_EU608_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU608_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU608_QMV_yes }
+			clr_country_flag = focus_EU608_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU608_QMV_yes
+			}
 		}
 		if = {
 			limit = {
-				THIS = { has_country_flag = focus_EU111 }
+				 has_country_flag = focus_EU609_yes
 			}
-				THIS = { clr_country_flag = focus_EU111 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU111_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU111_yes }
-			}
-				THIS = { clr_country_flag = focus_EU111_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU111_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU111_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU111_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU111_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU111_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU111_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU111_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU112 }
-			}
-				THIS = { clr_country_flag = focus_EU112 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU112_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU112_yes }
-			}
-				THIS = { clr_country_flag = focus_EU112_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU112_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU112_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU112_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU112_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU112_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU112_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU112_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU605 }
-			}
-				THIS = { clr_country_flag = focus_EU605 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU605_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU605_yes }
-			}
-				THIS = { clr_country_flag = focus_EU605_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU605_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU605_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU605_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU605_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU605_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU605_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU605_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU606 }
-			}
-				THIS = { clr_country_flag = focus_EU606 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU606_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU606_yes }
-			}
-				THIS = { clr_country_flag = focus_EU606_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU606_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU606_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU606_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU606_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU606_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU606_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU606_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU607 }
-			}
-				THIS = { clr_country_flag = focus_EU607 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU607_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU607_yes }
-			}
-				THIS = { clr_country_flag = focus_EU607_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU607_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU607_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU607_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU607_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU607_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU607_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU607_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU608 }
-			}
-				THIS = { clr_country_flag = focus_EU608 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU608_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU608_yes }
-			}
-				THIS = { clr_country_flag = focus_EU608_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU608_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU608_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU608_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU608_QMV_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU608_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU608_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU608_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU609 }
-			}
-				THIS = { clr_country_flag = focus_EU609 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU609_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU609_yes }
-			}
-				THIS = { clr_country_flag = focus_EU609_yes }
+				 clr_country_flag = focus_EU609_yes
 				random_country = {
 					limit = { has_idea = EU_member }
 					set_country_flag = focus_EU609_yes
 				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU609_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU609_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU609_QMV_yes }
+				 clr_country_flag = focus_EU609_QMV_yes
 				random_country = {
 					limit = { has_idea = EU_member }
 					set_country_flag = focus_EU609_QMV_yes
 				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU609_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU609_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU609_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU610 }
-			}
-				THIS = { clr_country_flag = focus_EU610 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU610_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU610_yes }
-			}
-				THIS = { clr_country_flag = focus_EU610_yes }
+		if = { limit = { has_country_flag = focus_EU610_yes }
+				 clr_country_flag = focus_EU610_yes
 				random_country = {
 					limit = { has_idea = EU_member }
 					set_country_flag = focus_EU610_yes
 				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU610_QMV_yes }
-			}
-				THIS = { clr_country_flag = focus_EU610_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU610_QMV_yes }
+				 clr_country_flag = focus_EU610_QMV_yes
 				random_country = {
 					limit = { has_idea = EU_member }
 					set_country_flag = focus_EU610_QMV_yes
 				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU610_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU610_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU610_maj_yes
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU611 }
-			}
-				THIS = { clr_country_flag = focus_EU611 }
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					set_global_flag = focus_EU611_retry
-				}
-		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU611_yes }
-			}
-				THIS = { clr_country_flag = focus_EU611_yes }
+		if = { limit = { has_country_flag = focus_EU611_yes }
+				 clr_country_flag = focus_EU611_yes
 				random_country = {
 					limit = { has_idea = EU_member }
 					set_country_flag = focus_EU611_yes
 				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU611_QMV_yes }
+		if = { limit = { has_country_flag = focus_EU611_QMV_yes }
+			clr_country_flag = focus_EU611_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU611_QMV_yes
 			}
-				THIS = { clr_country_flag = focus_EU611_QMV_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU611_QMV_yes
-				}
 		}
-		if = {
-			limit = {
-				THIS = { has_country_flag = focus_EU611_maj_yes }
-			}
-				THIS = { clr_country_flag = focus_EU611_maj_yes }
-				random_country = {
-					limit = { has_idea = EU_member }
-					set_country_flag = focus_EU611_maj_yes
-				}
-		}
+
 		### end of focus flag clearing and setting
 	}
 	update_eu_dirty_variable = yes
@@ -4000,6 +2811,11 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential = TUR }
 			add_to_array = { global.EU_potential = UKR }
 			add_to_array = { global.EU_potential = WAS }
+			add_to_array = { global.EU_potential = HLS }
+			add_to_array = { global.EU_potential = SMA }
+			add_to_array = { global.EU_potential = MNC }
+			add_to_array = { global.EU_potential = ADO }
+			add_to_array = { global.EU_potential = LIC }
 
 			country_event = { id = EUupdate.1 }
 
@@ -4634,10 +3450,7 @@ distribute_EU_admin_exp = {
 	else_if = {
 		limit = {
 			NOT = {
-				any_of_scopes = {
-					array = global.EU_member
-					has_idea = frontex_ExDir
-				}
+				any_of_scopes = { array = global.EU_member has_idea = frontex_ExDir }
 			}
 			any_of_scopes = {
 				array = global.EU_member

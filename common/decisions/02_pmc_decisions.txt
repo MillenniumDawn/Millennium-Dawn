@@ -17,47 +17,18 @@
 
 pmc_category = {
 	# Blackwater
-	open_blackwater = {
-		visible = { NOT = { has_country_flag = blackwater_opened } }
-		fire_only_once = no
-		icon = GFX_decision_blackwater_button
-		complete_effect = { set_country_flag = blackwater_opened }
-		# keep it open
-		ai_will_do = {
-			factor = 100
-		}
-	}
-
-	close_blackwater = {
-		visible = { has_country_flag = blackwater_opened }
-		icon = GFX_decision_blackwater_button
-		fire_only_once = no
-		complete_effect = { clr_country_flag = blackwater_opened }
-	}
-
 	get_blackwater_light_infantry = {
-		visible = { has_country_flag = blackwater_opened }
-		icon = GFX_decision_blackwater_button
-		available = {
-			if = {
-				limit = { NOT = { tag = USA } }
-				USA = { has_opinion = { target = ROOT value > 0 } }
-			}
+		available = { always = yes }
+		activation = { always = no }
 
-			set_temp_variable = { sum = global.merc_deploy_cost^0 }
-			add_to_temp_variable = { sum = global.merc_deployed^0 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^0 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_0_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^0 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -120,100 +91,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_light_infantry_blackwater = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = USA value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_blackwater_light_infantry = {
-		available = {
-			NOT = { has_decision = get_blackwater_light_infantry }
-		}
-
-		visible = {
-			has_country_flag = pmc_recruited_blackwater_light
-		}
-		icon = GFX_decision_blackwater_button
-		fire_only_once = no
-
-		complete_effect = {
-			delete_light_infantry_blackwater = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = inf_hire
 		}
 	}
 
 	get_blackwater_mot_infantry = {
-		visible = {
-			has_country_flag = blackwater_opened
-			check_variable = { global.merc_upgrade^0 > 0 }
-		}
-		icon = GFX_decision_blackwater_button
-		available = {
-			if = {
-				limit = { NOT = { tag = USA } }
-				USA = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^1 }
-			add_to_temp_variable = { sum = global.merc_deployed^0 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^0 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mot_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_1_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^1 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -276,100 +175,27 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mot_infantry_blackwater = yes
 			}
-		}
-
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = USA value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_blackwater_mot_infantry = {
-		available = {
-			NOT = { has_decision = get_blackwater_mot_infantry }
-		}
-		icon = GFX_decision_blackwater_button
-		visible = {
-			has_country_flag = pmc_blackwater_mot
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mot_infantry_blackwater = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mot_inf_hire
 		}
 	}
 
 	get_blackwater_mech_infantry = {
-		visible = {
-			has_country_flag = blackwater_opened
-			check_variable = { global.merc_upgrade^0 > 0 }
-		}
-		icon = GFX_decision_blackwater_button
-		available = {
-			if = {
-				limit = { NOT = { tag = USA } }
-				USA = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^2 }
-			add_to_temp_variable = { sum = global.merc_deployed^0 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^0 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mech_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_2_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^2 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -429,95 +255,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mech_infantry_blackwater = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = USA value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_blackwater_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_blackwater_mech_infantry }
-		}
-		icon = GFX_decision_blackwater_button
-		visible = {
-			has_country_flag = pmc_blackwater_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mech_infantry_blackwater = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mech_inf_hire
 		}
 	}
 
 	get_blackwater_heavy_mech_infantry = {
-		visible = {
-			has_country_flag = blackwater_opened
-			check_variable = { global.merc_upgrade^0 > 1 }
-		}
-		icon = GFX_decision_blackwater_button
-		available = {
-			if = {
-				limit = { NOT = { tag = USA } }
-				USA = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^3 }
-			add_to_temp_variable = { sum = global.merc_deployed^0 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^0 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = hvy_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_3_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^3 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -577,95 +336,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_heavy_mech_infantry_blackwater = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = USA value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_blackwater_heavy_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_blackwater_heavy_mech_infantry }
-		}
-		icon = GFX_decision_blackwater_button
-		visible = {
-			has_country_flag = pmc_blackwater_heavy_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_heavy_mech_infantry_blackwater = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = hvy_inf_hire
 		}
 	}
 
 	get_blackwater_special_infantry = {
-		visible = {
-			has_country_flag = blackwater_opened
-			check_variable = { global.merc_upgrade^0 > 1 }
-		}
-		icon = GFX_decision_blackwater_button
-		available = {
-			if = {
-				limit = { NOT = { tag = USA } }
-				USA = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^4 }
-			add_to_temp_variable = { sum = global.merc_deployed^0 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^0 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = spec_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_4_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^4 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -734,95 +426,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_special_blackwater = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = USA value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_blackwater_special_infantry = {
-		available = {
-			NOT = { has_decision = get_blackwater_special_infantry }
-		}
-		icon = GFX_decision_blackwater_button
-		visible = {
-			has_country_flag = pmc_blackwater_special_unit
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_special_unit_blackwater = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = spec_inf_hire
 		}
 	}
 
 	get_blackwater_tank = {
-		visible = {
-			has_country_flag = blackwater_opened
-			check_variable = { global.merc_upgrade^0 > 2 }
-		}
-		icon = GFX_decision_blackwater_button
-		available = {
-			if = {
-				limit = { NOT = { tag = USA } }
-				USA = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^5 }
-			add_to_temp_variable = { sum = global.merc_deployed^0 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^0 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = tank_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_5_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^5 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -886,95 +511,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_tank_blackwater = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = USA value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_blackwater_tank = {
-		available = {
-			NOT = { has_decision = get_blackwater_tank }
-		}
-		icon = GFX_decision_blackwater_button
-		visible = {
-			has_country_flag = pmc_blackwater_tank
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_tank_unit_blackwater = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = tank_hire
 		}
 	}
 
 	get_blackwater_specops = {
-		visible = {
-			has_country_flag = blackwater_opened
-			check_variable = { global.merc_upgrade^0 > 2 }
-		}
-		icon = GFX_decision_blackwater_button
-		available = {
-			if = {
-				limit = { NOT = { tag = USA } }
-				USA = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^6 }
-			add_to_temp_variable = { sum = global.merc_deployed^0 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^0 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = sf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_6_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^6 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -1041,134 +599,29 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_specops_blackwater = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = USA value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_blackwater_specops = {
-		available = {
-			NOT = { has_decision = get_blackwater_specops }
-		}
-		icon = GFX_decision_blackwater_button
-		visible = {
-			has_country_flag = pmc_blackwater_specops
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_specops_unit_blackwater = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = sf_hire
 		}
 	}
 
 	# Wagner
-	open_wagner = {
-		icon = GFX_decision_wagner_button
-		visible = {
-			check_variable = { global.merc_upgrade^1 > -1 }
-			NOT = { has_country_flag = wagner_opened }
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-		}
-		fire_only_once = no
-		complete_effect = { set_country_flag = wagner_opened }
-		ai_will_do = {
-			factor = 100
-		}
-	}
-	close_wagner = {
-		icon = GFX_decision_wagner_button
-		visible = { 
-			has_country_flag = wagner_opened 
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-		}
-		fire_only_once = no
-		complete_effect = { clr_country_flag = wagner_opened }
-	}
-
 	get_wagner_light_infantry = {
-		visible = {
-			has_country_flag = wagner_opened
-			check_variable = { global.merc_upgrade^1 > -1 }
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-		}
-		icon = GFX_decision_wagner_button
-		available = {
-			if = {
-				limit = { NOT = { tag = SOV } }
-				SOV = { has_opinion = { target = ROOT value > 0 } }
+		available = { always = yes }
+		activation = { always = no }
 
-				custom_trigger_tooltip = {
-					tooltip = banned_pmc_operations_TT
-					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
-				}
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^0 }
-			add_to_temp_variable = { sum = global.merc_deployed^1 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^1 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_0_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^0 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -1244,109 +697,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_light_infantry_wagner = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = SOV value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_wagner_light_infantry = {
-		available = {
-			NOT = { has_decision = get_wagner_light_infantry }
-		}
-		icon = GFX_decision_wagner_button
-		visible = {
-			has_country_flag = pmc_recruited_wagner_light
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_light_infantry_wagner = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = inf_hire
 		}
 	}
 
 	get_wagner_mot_infantry = {
-		visible = {
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			has_country_flag = wagner_opened
-			check_variable = { global.merc_upgrade^1 > 0 }
-		}
-		icon = GFX_decision_wagner_button
-		available = {
-			if = {
-				limit = { NOT = { tag = SOV } }
-				SOV = { has_opinion = { target = ROOT value > 0 } }
+		available = { always = yes }
+		activation = { always = no }
 
-				custom_trigger_tooltip = {
-					tooltip = banned_pmc_operations_TT
-					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
-				}
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^1 }
-			add_to_temp_variable = { sum = global.merc_deployed^1 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^1 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mot_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_1_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^1 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -1423,109 +795,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mot_infantry_wagner = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = SOV value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_wagner_mot_infantry = {
-		available = {
-			NOT = { has_decision = get_wagner_mot_infantry }
-		}
-		icon = GFX_decision_wagner_button
-		visible = {
-			has_country_flag = pmc_wagner_mot
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mot_infantry_wagner = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mot_inf_hire
 		}
 	}
 
 	get_wagner_mech_infantry = {
-		visible = {
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			has_country_flag = wagner_opened
-			check_variable = { global.merc_upgrade^1 > 0 }
-		}
-		icon = GFX_decision_wagner_button
-		available = {
-			if = {
-				limit = { NOT = { tag = SOV } }
-				SOV = { has_opinion = { target = ROOT value > 0 } }
+		available = { always = yes }
+		activation = { always = no }
 
-				custom_trigger_tooltip = {
-					tooltip = banned_pmc_operations_TT
-					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
-				}
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^2 }
-			add_to_temp_variable = { sum = global.merc_deployed^1 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^1 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mech_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_2_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^2 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -1599,104 +890,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mech_infantry_wagner = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = SOV value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_wagner_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_wagner_mech_infantry }
-		}
-		icon = GFX_decision_wagner_button
-		visible = {
-			has_country_flag = pmc_wagner_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mech_infantry_wagner = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mech_inf_hire
 		}
 	}
 
 	get_wagner_heavy_mech_infantry = {
-		visible = {
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			has_country_flag = wagner_opened
-			check_variable = { global.merc_upgrade^1 > 1 }
-		}
-		icon = GFX_decision_wagner_button
-		available = {
-			if = {
-				limit = { NOT = { tag = SOV } }
-				SOV = { has_opinion = { target = ROOT value > 0 } }
+		available = { always = yes }
+		activation = { always = no }
 
-				custom_trigger_tooltip = {
-					tooltip = banned_pmc_operations_TT
-					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
-				}
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^3 }
-			add_to_temp_variable = { sum = global.merc_deployed^1 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^1 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = hvy_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_3_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^3 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -1770,104 +985,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_heavy_mech_infantry_wagner = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = SOV value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_wagner_heavy_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_wagner_heavy_mech_infantry }
-		}
-		icon = GFX_decision_wagner_button
-		visible = {
-			has_country_flag = pmc_wagner_heavy_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_heavy_mech_infantry_wagner = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = hvy_inf_hire
 		}
 	}
 
 	get_wagner_special_infantry = {
-		visible = {
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			has_country_flag = wagner_opened
-			check_variable = { global.merc_upgrade^1 > 1 }
-		}
-		icon = GFX_decision_wagner_button
-		available = {
-			if = {
-				limit = { NOT = { tag = SOV } }
-				SOV = { has_opinion = { target = ROOT value > 0 } }
+		available = { always = yes }
+		activation = { always = no }
 
-				custom_trigger_tooltip = {
-					tooltip = banned_pmc_operations_TT
-					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
-				}
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^4 }
-			add_to_temp_variable = { sum = global.merc_deployed^1 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^1 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = spec_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_4_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^4 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -1950,104 +1089,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_special_wagner = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = SOV value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_wagner_special_infantry = {
-		available = {
-			NOT = { has_decision = get_wagner_special_infantry }
-		}
-		icon = GFX_decision_wagner_button
-		visible = {
-			has_country_flag = pmc_wagner_special_unit
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_special_unit_wagner = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = spec_inf_hire
 		}
 	}
 
 	get_wagner_tank = {
-		visible = {
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			has_country_flag = wagner_opened
-			check_variable = { global.merc_upgrade^1 > 2 }
-		}
-		icon = GFX_decision_wagner_button
-		available = {
-			if = {
-				limit = { NOT = { tag = SOV } }
-				SOV = { has_opinion = { target = ROOT value > 0 } }
+		available = { always = yes }
+		activation = { always = no }
 
-				custom_trigger_tooltip = {
-					tooltip = banned_pmc_operations_TT
-					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
-				}
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^5 }
-			add_to_temp_variable = { sum = global.merc_deployed^1 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^1 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = tank_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_5_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^5 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -2125,104 +1188,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_tank_wagner = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = SOV value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_wagner_tank = {
-		available = {
-			NOT = { has_decision = get_wagner_tank }
-		}
-
-		visible = {
-			has_country_flag = pmc_wagner_tank
-		}
-		icon = GFX_decision_wagner_button
-		fire_only_once = no
-
-		complete_effect = {
-			delete_tank_unit_wagner = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = tank_hire
 		}
 	}
 
 	get_wagner_specops = {
-		visible = {
-			SOV = {
-				has_completed_focus = SOV_slavic_corps
-				NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
-			}
-			has_country_flag = wagner_opened
-			check_variable = { global.merc_upgrade^1 > 2 }
-		}
-		icon = GFX_decision_wagner_button
-		available = {
-			if = {
-				limit = { NOT = { tag = SOV } }
-				SOV = { has_opinion = { target = ROOT value > 0 } }
+		available = { always = yes }
+		activation = { always = no }
 
-				custom_trigger_tooltip = {
-					tooltip = banned_pmc_operations_TT
-					NOT = { SOV = { has_country_flag = banned_pmc_operations } }
-				}
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^6 }
-			add_to_temp_variable = { sum = global.merc_deployed^1 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^1 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = sf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_6_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^6 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -2303,112 +1290,29 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_specops_wagner = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = SOV value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_wagner_specops = {
-		available = {
-			NOT = { has_decision = get_wagner_specops }
-		}
-		icon = GFX_decision_wagner_button
-		visible = {
-			has_country_flag = pmc_wagner_specops
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_specops_unit_wagner = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = sf_hire
 		}
 	}
 
 	# Aegis
-	open_aegis = {
-		icon = GFX_decision_aegis_button
-		visible = { NOT = { has_country_flag = aegis_opened } }
-		fire_only_once = no
-		complete_effect = { set_country_flag = aegis_opened }
-		ai_will_do = {
-			factor = 100
-		}
-	}
-
-	close_aegis = {
-		icon = GFX_decision_aegis_button
-		visible = { has_country_flag = aegis_opened }
-		fire_only_once = no
-		complete_effect = { clr_country_flag = aegis_opened }
-	}
-
 	get_aegis_light_infantry = {
-		visible = {
-			has_country_flag = aegis_opened
-		}
-		icon = GFX_decision_aegis_button
-		available = {
-			if = {
-				limit = { NOT = { tag = ENG } }
-				ENG = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^0 }
-			add_to_temp_variable = { sum = global.merc_deployed^2 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^2 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_0_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^0 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -2470,100 +1374,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_light_infantry_aegis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = ENG value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_aegis_light_infantry = {
-		available = {
-			NOT = { has_decision = get_aegis_light_infantry }
-		}
-		icon = GFX_decision_aegis_button
-		visible = {
-			has_country_flag = pmc_recruited_aegis_light
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_light_infantry_aegis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = inf_hire
 		}
 	}
 
 	get_aegis_mot_infantry = {
-		visible = {
-			has_country_flag = aegis_opened
-			check_variable = { global.merc_upgrade^2 > 0 }
-		}
-		icon = GFX_decision_aegis_button
-		available = {
-			if = {
-				limit = { NOT = { tag = ENG } }
-				ENG = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^1 }
-			add_to_temp_variable = { sum = global.merc_deployed^2 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^2 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mot_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_1_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^1 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -2626,100 +1458,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mot_infantry_aegis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = ENG value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_aegis_mot_infantry = {
-		available = {
-			NOT = { has_decision = get_aegis_mot_infantry }
-		}
-		icon = GFX_decision_aegis_button
-		visible = {
-			has_country_flag = pmc_aegis_mot
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mot_infantry_aegis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mot_inf_hire
 		}
 	}
 
 	get_aegis_mech_infantry = {
-		visible = {
-			has_country_flag = aegis_opened
-			check_variable = { global.merc_upgrade^2 > 0 }
-		}
-		icon = GFX_decision_aegis_button
-		available = {
-			if = {
-				limit = { NOT = { tag = ENG } }
-				ENG = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^2 }
-			add_to_temp_variable = { sum = global.merc_deployed^2 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^2 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mech_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_2_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^2 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -2779,95 +1539,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mech_infantry_aegis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = ENG value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_aegis_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_aegis_mech_infantry }
-		}
-		icon = GFX_decision_aegis_button
-		visible = {
-			has_country_flag = pmc_aegis_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mech_infantry_aegis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mech_inf_hire
 		}
 	}
 
 	get_aegis_heavy_mech_infantry = {
-		visible = {
-			has_country_flag = aegis_opened
-			check_variable = { global.merc_upgrade^2 > 1 }
-		}
-		icon = GFX_decision_aegis_button
-		available = {
-			if = {
-				limit = { NOT = { tag = ENG } }
-				ENG = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^3 }
-			add_to_temp_variable = { sum = global.merc_deployed^2 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^2 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = hvy_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_3_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^3 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -2927,95 +1620,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_heavy_mech_infantry_aegis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = ENG value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_aegis_heavy_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_aegis_heavy_mech_infantry }
-		}
-		icon = GFX_decision_aegis_button
-		visible = {
-			has_country_flag = pmc_aegis_heavy_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_heavy_mech_infantry_aegis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = hvy_inf_hire
 		}
 	}
 
 	get_aegis_special_infantry = {
-		visible = {
-			has_country_flag = aegis_opened
-			check_variable = { global.merc_upgrade^2 > 1 }
-		}
-		icon = GFX_decision_aegis_button
-		available = {
-			if = {
-				limit = { NOT = { tag = ENG } }
-				ENG = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^4 }
-			add_to_temp_variable = { sum = global.merc_deployed^2 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^2 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = spec_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_4_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^4 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -3084,95 +1710,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_special_aegis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = ENG value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_aegis_special_infantry = {
-		available = {
-			NOT = { has_decision = get_aegis_special_infantry }
-		}
-		icon = GFX_decision_aegis_button
-		visible = {
-			has_country_flag = pmc_aegis_special_unit
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_special_unit_aegis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = spec_inf_hire
 		}
 	}
 
 	get_aegis_tank = {
-		visible = {
-			has_country_flag = aegis_opened
-			check_variable = { global.merc_upgrade^2 > 2 }
-		}
-		icon = GFX_decision_aegis_button
-		available = {
-			if = {
-				limit = { NOT = { tag = ENG } }
-				ENG = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^5 }
-			add_to_temp_variable = { sum = global.merc_deployed^2 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^2 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = tank_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_5_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^5 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -3236,95 +1795,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_tank_aegis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = ENG value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_aegis_tank = {
-		available = {
-			NOT = { has_decision = get_aegis_tank }
-		}
-		icon = GFX_decision_aegis_button
-		visible = {
-			has_country_flag = pmc_aegis_tank
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_tank_unit_aegis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = tank_hire
 		}
 	}
 
 	get_aegis_specops = {
-		visible = {
-			has_country_flag = aegis_opened
-			check_variable = { global.merc_upgrade^2 > 2 }
-		}
-		icon = GFX_decision_aegis_button
-		available = {
-			if = {
-				limit = { NOT = { tag = ENG } }
-				ENG = { has_opinion = { target = ROOT value > 0 } }
-			}
-			set_temp_variable = { sum = global.merc_deploy_cost^6 }
-			add_to_temp_variable = { sum = global.merc_deployed^2 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^2 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = sf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_6_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^6 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -3391,104 +1883,30 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_specops_aegis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -1
-				ROOT = { has_opinion = { target = ENG value > 10 } }
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_aegis_specops = {
-		available = {
-			NOT = { has_decision = get_aegis_specops }
-		}
-		icon = GFX_decision_aegis_button
-		visible = {
-			has_country_flag = pmc_aegis_specops
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_specops_unit_aegis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = sf_hire
 		}
 	}
 
 	# Constellis
-	open_constellis = {
-		icon = GFX_decision_costellis_button
-		visible = { NOT = { has_country_flag = constellis_opened } }
-		fire_only_once = no
-		complete_effect = { set_country_flag = constellis_opened }
-		ai_will_do = {
-			factor = 100
-		}
-	}
-	close_constellis = {
-		icon = GFX_decision_costellis_button
-		visible = { has_country_flag = constellis_opened }
-		fire_only_once = no
-		complete_effect = { clr_country_flag = constellis_opened }
-	}
 
 	get_constellis_light_infantry = {
-		visible = { has_country_flag = constellis_opened }
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^0 }
-			add_to_temp_variable = { sum = global.merc_deployed^3 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^3 } }
-			}
-		}
-		icon = GFX_decision_costellis_button
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_0_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^0 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -3537,92 +1955,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_light_infantry_constellis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_constellis_light_infantry = {
-		available = {
-			NOT = { has_decision = get_constellis_light_infantry }
-		}
-		icon = GFX_decision_costellis_button
-		visible = {
-			has_country_flag = pmc_recruited_constellis_light
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_light_infantry_constellis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = inf_hire
 		}
 	}
 
 	get_constellis_mot_infantry = {
-		visible = {
-			has_country_flag = constellis_opened
-			check_variable = { global.merc_upgrade^3 > 0 }
-		}
-		icon = GFX_decision_costellis_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^1 }
-			add_to_temp_variable = { sum = global.merc_deployed^3 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^3 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mot_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_1_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^1 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -3672,92 +2026,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mot_infantry_constellis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_constellis_mot_infantry = {
-		available = {
-			NOT = { has_decision = get_constellis_mot_infantry }
-		}
-		icon = GFX_decision_costellis_button
-		visible = {
-			has_country_flag = pmc_constellis_mot
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mot_infantry_constellis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mot_inf_hire
 		}
 	}
 
 	get_constellis_mech_infantry = {
-		visible = {
-			has_country_flag = constellis_opened
-			check_variable = { global.merc_upgrade^3 > 0 }
-		}
-		icon = GFX_decision_costellis_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^2 }
-			add_to_temp_variable = { sum = global.merc_deployed^3 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^3 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mech_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_2_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^2 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -3804,87 +2094,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mech_infantry_constellis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_constellis_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_constellis_mech_infantry }
-		}
-		icon = GFX_decision_costellis_button
-		visible = {
-			has_country_flag = pmc_constellis_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mech_infantry_constellis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mech_inf_hire
 		}
 	}
 
 	get_constellis_heavy_mech_infantry = {
-		visible = {
-			has_country_flag = constellis_opened
-			check_variable = { global.merc_upgrade^3 > 1 }
-		}
-		icon = GFX_decision_costellis_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^3 }
-			add_to_temp_variable = { sum = global.merc_deployed^3 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^3 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = hvy_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_3_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^3 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -3931,87 +2162,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_heavy_mech_infantry_constellis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_constellis_heavy_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_constellis_heavy_mech_infantry }
-		}
-		icon = GFX_decision_costellis_button
-		visible = {
-			has_country_flag = pmc_constellis_heavy_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_heavy_mech_infantry_constellis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = hvy_inf_hire
 		}
 	}
 
 	get_constellis_special_infantry = {
-		visible = {
-			has_country_flag = constellis_opened
-			check_variable = { global.merc_upgrade^3 > 1 }
-		}
-		icon = GFX_decision_costellis_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^4 }
-			add_to_temp_variable = { sum = global.merc_deployed^3 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^3 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = spec_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_4_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^4 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -4067,87 +2239,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_special_constellis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_constellis_special_infantry = {
-		available = {
-			NOT = { has_decision = get_constellis_special_infantry }
-		}
-		icon = GFX_decision_costellis_button
-		visible = {
-			has_country_flag = pmc_constellis_special_unit
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_special_unit_constellis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = spec_inf_hire
 		}
 	}
 
 	get_constellis_tank = {
-		visible = {
-			has_country_flag = constellis_opened
-			check_variable = { global.merc_upgrade^3 > 2 }
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^5 }
-			add_to_temp_variable = { sum = global.merc_deployed^3 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^3 } }
-			}
-		}
-		icon = GFX_decision_costellis_button
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = tank_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_5_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^5 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -4198,87 +2311,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_tank_constellis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_constellis_tank = {
-		available = {
-			NOT = { has_decision = get_constellis_tank }
-		}
-		icon = GFX_decision_costellis_button
-		visible = {
-			has_country_flag = pmc_constellis_tank
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_tank_unit_constellis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = tank_hire
 		}
 	}
 
 	get_constellis_specops = {
-		visible = {
-			has_country_flag = constellis_opened
-			check_variable = { global.merc_upgrade^3 > 2 }
-		}
-		icon = GFX_decision_costellis_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^6 }
-			add_to_temp_variable = { sum = global.merc_deployed^3 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^3 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = sf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_6_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^6 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -4332,107 +2386,29 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_specops_constellis = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_constellis_specops = {
-		available = {
-			NOT = { has_decision = get_constellis_specops }
-		}
-		icon = GFX_decision_costellis_button
-		visible = {
-			has_country_flag = pmc_constellis_specops
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_specops_unit_constellis = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = sf_hire
 		}
 	}
 
 	# MD
-	open_md = {
-		icon = GFX_decision_md_button
-		visible = {
-			check_variable = { global.merc_upgrade^4 > -1 }
-			NOT = { has_country_flag = md_opened }
-		}
-		fire_only_once = no
-		complete_effect = { set_country_flag = md_opened }
-		ai_will_do = {
-			factor = 100
-		}
-	}
-	close_md = {
-		icon = GFX_decision_md_button
-		visible = { has_country_flag = md_opened }
-		fire_only_once = no
-		complete_effect = { clr_country_flag = md_opened }
-	}
-
 	get_md_light_infantry = {
-		visible = {
-			has_country_flag = md_opened
-			check_variable = { global.merc_upgrade^4 > -1 }
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^0 }
-			add_to_temp_variable = { sum = global.merc_deployed^4 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^4 } }
-			}
-		}
-
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_0_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^0 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -4481,92 +2457,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_light_infantry_md = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_md_light_infantry = {
-		available = {
-			NOT = { has_decision = get_md_light_infantry }
-		}
-		icon = GFX_decision_md_button
-		visible = {
-			has_country_flag = pmc_recruited_md_light
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_light_infantry_md = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = inf_hire
 		}
 	}
 
 	get_md_mot_infantry = {
-		visible = {
-			has_country_flag = md_opened
-			check_variable = { global.merc_upgrade^4 > 0 }
-		}
-		icon = GFX_decision_md_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^1 }
-			add_to_temp_variable = { sum = global.merc_deployed^4 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^4 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mot_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_1_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^1 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -4616,92 +2528,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mot_infantry_md = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_md_mot_infantry = {
-		available = {
-			NOT = { has_decision = get_md_mot_infantry }
-		}
-		icon = GFX_decision_md_button
-		visible = {
-			has_country_flag = pmc_md_mot
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mot_infantry_md = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mot_inf_hire
 		}
 	}
 
 	get_md_mech_infantry = {
-		visible = {
-			has_country_flag = md_opened
-			check_variable = { global.merc_upgrade^4 > 0 }
-		}
-		icon = GFX_decision_md_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^2 }
-			add_to_temp_variable = { sum = global.merc_deployed^4 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^4 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = mech_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_2_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^2 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -4748,92 +2596,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_mech_infantry_md = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_md_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_md_mech_infantry }
-		}
-		icon = GFX_decision_md_button
-		visible = {
-			has_country_flag = pmc_md_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_mech_infantry_md = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = mech_inf_hire
 		}
 	}
 
 	get_md_heavy_mech_infantry = {
-		visible = {
-			has_country_flag = md_opened
-			check_variable = { global.merc_upgrade^4 > 1 }
-		}
-		icon = GFX_decision_md_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^3 }
-			add_to_temp_variable = { sum = global.merc_deployed^4 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^4 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = hvy_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_3_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^3 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -4880,92 +2664,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_heavy_mech_infantry_md = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_md_heavy_mech_infantry = {
-		available = {
-			NOT = { has_decision = get_md_heavy_mech_infantry }
-		}
-		icon = GFX_decision_md_button
-		visible = {
-			has_country_flag = pmc_md_heavy_mech
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_heavy_mech_infantry_md = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = hvy_inf_hire
 		}
 	}
 
 	get_md_special_infantry = {
-		visible = {
-			has_country_flag = md_opened
-			check_variable = { global.merc_upgrade^4 > 1 }
-		}
-		icon = GFX_decision_md_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^4 }
-			add_to_temp_variable = { sum = global.merc_deployed^4 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^4 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = spec_inf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_4_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^4 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -5021,92 +2741,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_special_md = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_md_special_infantry = {
-		available = {
-			NOT = { has_decision = get_md_special_infantry }
-		}
-		icon = GFX_decision_md_button
-		visible = {
-			has_country_flag = pmc_md_special_unit
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_special_unit_md = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = spec_inf_hire
 		}
 	}
 
 	get_md_tank = {
-		visible = {
-			has_country_flag = md_opened
-			check_variable = { global.merc_upgrade^4 > 2 }
-		}
-		icon = GFX_decision_md_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^5 }
-			add_to_temp_variable = { sum = global.merc_deployed^4 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^4 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = tank_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_5_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^5 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -5157,92 +2813,28 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_tank_md = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_md_tank = {
-		available = {
-			NOT = { has_decision = get_md_tank }
-		}
-		icon = GFX_decision_md_button
-		visible = {
-			has_country_flag = pmc_md_tank
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_tank_unit_md = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = tank_hire
 		}
 	}
 
 	get_md_specops = {
-		visible = {
-			has_country_flag = md_opened
-			check_variable = { global.merc_upgrade^4 > 2 }
-		}
-		icon = GFX_decision_md_button
-		available = {
-			set_temp_variable = { sum = global.merc_deploy_cost^6 }
-			add_to_temp_variable = { sum = global.merc_deployed^4 }
-			pmc_can_recruit = yes
-			custom_trigger_tooltip = {
-				tooltip = pmc_surpassing_TT
-				NOT = { check_variable = { sum > global.merc_capacity^4 } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 20
-		days_re_enable = 10
+		days_mission_timeout = 20
+		selectable_mission = yes
 
 		complete_effect = {
+			clr_country_flag = sf_hire
+		}
+
+		timeout_effect = {
 			custom_effect_tooltip = pmc_unit_6_TT
 			set_temp_variable = { treasury_change = global.mercs_cost^6 }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -5296,282 +2888,97 @@ pmc_category = {
 			else = {
 				set_variable = { ROOT.pmc_bought = 1 }
 			}
-		}
 
-		remove_effect = {
 			custom_effect_tooltip = pmc_spawn_TT
 			hidden_effect = {
 				spawn_specops_md = yes
 			}
-		}
 
-		ai_will_do = {
-			# only at war
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			# not used when in advantage
-			modifier = {
-				factor = 0
-				OR = {
-					alliance_strength_ratio > 2
-					has_idea = superpower
-					has_idea = great_power
-					has_idea = large_power
-				}
-			}
-			modifier = {
-				add = 1
-				alliance_strength_ratio < 1
-			}
-			modifier = {
-				add = -2
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
-		}
-	}
-
-	disband_md_specops = {
-		available = {
-			NOT = { has_decision = get_md_specops }
-		}
-		icon = GFX_decision_md_button
-		visible = {
-			has_country_flag = pmc_md_specops
-		}
-
-		fire_only_once = no
-
-		complete_effect = {
-			delete_specops_unit_md = yes
-		}
-
-		ai_will_do = {
-			modifier = {
-				add = 10
-				has_war = no
-			}
-			modifier = {
-				add = 10
-				check_variable = { debt_ratio > 1.50 }
-				surrender_progress < 0.4
-			}
+			clr_country_flag = sf_hire
 		}
 	}
 	###NEW PMC'S
 # Other
-	open_other = {
-		visible = { NOT = { has_country_flag = other_opened } }
-		fire_only_once = no
-		icon = GFX_decision_pmc_button
-		complete_effect = { set_country_flag = other_opened }
-		# keep it open
-		ai_will_do = {
-			factor = 100
-		}
-	}
-
-	close_other = {
-		visible = { has_country_flag = other_opened }
-		icon = GFX_decision_pmc_button
-		fire_only_once = no
-		complete_effect = { clr_country_flag = other_opened }
-	}
 	pmc_asgard = {
 		icon = GFX_decision_asgaarg_button
-		visible = {
-			date > 2007.1.1
-			has_country_flag = other_opened
-			country_exists = GER
-			NOT = { tag = GER }
-		}
-		available = {
-			NOT = {	has_war_with = GER }
-			GER = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_asgard_TT
-				GER = { NOT = { has_country_flag = asgrad_yes } }
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
 
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
+		selectable_mission = yes
+
+		days_mission_timeout = 365
+
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_asgard_idea1
-					days = 365
-				}
+				remove_ideas = pmc_asgard_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_asgard_idea
-					days = 365
-				}
+				remove_ideas = pmc_asgard_idea
 			}
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				GER = { country_event = pmc_events.4 }
-			}
-			GER = { set_country_flag = asgrad_yes }
+			GER = { clr_country_flag = asgrad_yes }
 		}
 
-		remove_effect = {
+		timeout_effect = {
 			GER = { clr_country_flag = asgrad_yes }
 		}
 	}
 	pmc_mpri = {
 		icon = GFX_decision_mpri_button
-		visible = {
-			has_country_flag = other_opened
-			country_exists = USA
-			NOT = { tag = USA }
-		}
-		available = {
-			NOT = {	has_war_with = USA }
-			USA = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_mpri_TT
-				USA = { NOT = { has_country_flag = mpri_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
-					} 
+					}
 				}
-				add_timed_idea = {
-					idea = pmc_mrpi_idea1
-					days = 365
-				}
+				remove_ideas = pmc_mrpi_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_mrpi_idea
-					days = 365
-				}
+				remove_ideas = pmc_mrpi_idea
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				USA = { country_event = pmc_events.2 }
-			}
-			USA = { set_country_flag = mpri_yes }
+			USA = { clr_country_flag = mpri_yes }
 		}
 
-		remove_effect = {
+		timeout_effect = {
 			USA = { clr_country_flag = mpri_yes }
 		}
 	}
 	pmc_itt = {
 		icon = GFX_decision_g4s_button
-		visible = {
-			has_country_flag = other_opened
-			country_exists = GER
-			NOT = { tag = GER }
-		}
-		available = {
-			NOT = {	has_war_with = GER }
-			GER = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_itt_TT
-				GER = { NOT = { has_country_flag = itt_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
+
 		fire_only_once = no
 		days_remove = 365
-		days_re_enable = 10
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Mercenary SpecOps G4S Unit"
-					is_locked = yes
-					priority = 2
-					regiments = {
-						Special_Forces = { x = 0 y = 0 }
-						Special_Forces = { x = 0 y = 1 }
-						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
-						Special_Forces = { x = 1 y = 0 }
-						Special_Forces = { x = 1 y = 1 }
-						Special_Forces = { x = 1 y = 2 }
-						Special_Forces = { x = 1 y = 3 }
-						Arty_Bat = { x = 2 y = 0 }
-						Arty_Bat = { x = 2 y = 1 }
-					}
-					support = {
-						H_Engi_Comp = { x = 0 y = 0 }
-						L_Recce_Comp = { x = 0 y = 1 }
-						SP_AA_Battery = { x = 0 y = 3 }
-					}
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Mercenary SpecOps G4S Unit\" division_template = \"Mercenary SpecOps G4S Unit\" start_experience_factor = 1.0"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Mercenary SpecOps G4S Unit"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				GER = { country_event = pmc_events.4 }
-			}
-			GER = { set_country_flag = itt_yes }
+			GER = { clr_country_flag = itt_yes }
 		}
-		remove_effect = {
+		timeout_effect = {
 			delete_unit_template_and_units = {
 				division_template = "Mercenary SpecOps G4S Unit"
 				disband = no
@@ -5581,120 +2988,58 @@ pmc_category = {
 	}
 	pmc_sadat = {
 		icon = GFX_decision_sadat_button
-		visible = {
-			has_country_flag = other_opened
-			country_exists = TUR
-			NOT = { tag = TUR }
-		}
-		available = {
-			NOT = {	has_war_with = TUR }
-			TUR = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_sadat_TT
-				TUR = { NOT = { has_country_flag = sadat_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_sadat_idea1
-					days = 365
-				}
+				remove_ideas = pmc_sadat_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_sadat_idea
-					days = 365
-				}
+				remove_ideas = pmc_sadat_idea
 			}
-			set_temp_variable = { treasury_change = -4 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				TUR = { country_event = pmc_events.5 }
-			}
-			TUR = { set_country_flag = sadat_yes }
+			TUR = { clr_country_flag = sadat_yes }
 		}
 
-		remove_effect = {
+		timeout_effect = {
 			TUR = { clr_country_flag = sadat_yes }
 		}
 	}
 	pmc_rsb = {
 		icon = GFX_decision_rsb_button
-		visible = {
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_rsb_TT
-				SOV = { NOT = { has_country_flag = rsb_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_rsb_idea1
-					days = 365
-				}
+				remove_ideas = pmc_rsb_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_rsb_idea
-					days = 365
-				}
+				remove_ideas = pmc_rsb_idea
 			}
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.4 }
-			}
-			SOV = { set_country_flag = rsb_yes }
+			SOV = { clr_country_flag = rsb_yes }
 		}
 		remove_effect = {
 			SOV = { clr_country_flag = rsb_yes }
@@ -5702,68 +3047,19 @@ pmc_category = {
 	}
 	pmc_sadline = {
 		icon = GFX_decision_sandline_button
-		visible = {
-			NOT = { tag = ENG }
-			has_country_flag = other_opened
-			country_exists = ENG
-		}
-		available = {
-			NOT = {	has_war_with = ENG }
-			ENG = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_sadline_TT
-				ENG = { NOT = { has_country_flag = sadline_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Mercenary SpecOps SandLine Unit"
-					is_locked = yes
-					priority = 2
-					regiments = {
-						Special_Forces = { x = 0 y = 0 }
-						Special_Forces = { x = 0 y = 1 }
-						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
-						Arty_Bat = { x = 2 y = 0 }
-						Arty_Bat = { x = 2 y = 1 }
-					}
-					support = {
-						H_Engi_Comp = { x = 0 y = 0 }
-						L_Recce_Comp = { x = 0 y = 1 }
-						SP_AA_Battery = { x = 0 y = 3 }
-					}
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Mercenary SpecOps SandLine Unit\" division_template = \"Mercenary SpecOps SandLine Unit\" start_experience_factor = 1.0"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Mercenary SpecOps SandLine Unit"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -2.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				ENG = { country_event = pmc_events.3 }
-			}
-			ENG = { set_country_flag = sadline_yes }
+			ENG = { clr_country_flag = sadline_yes }
 		}
 		remove_effect = {
 			delete_unit_template_and_units = {
@@ -5775,59 +3071,28 @@ pmc_category = {
 	}
 	pmc_kbr = {
 		icon = GFX_decision_kbr_button
-		visible = {
-			NOT = { tag = USA }
-			has_country_flag = other_opened
-			country_exists = USA
-		}
-		available = {
-			NOT = {	has_war_with = USA }
-			USA = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_kbr_TT
-				USA = { NOT = { has_country_flag = kbr_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_kbr_idea1
-					days = 365
-				}
+				remove_ideas = pmc_kbr_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_kbr_idea
-					days = 365
-				}
+				remove_ideas = pmc_kbr_idea
 			}
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				USA = { country_event = pmc_events.4 }
-			}
-			USA = { set_country_flag = kbr_yes }
+			USA = { clr_country_flag = kbr_yes }
 		}
 
 		remove_effect = {
@@ -5836,32 +3101,12 @@ pmc_category = {
 	}
 	pmc_nirtal = {
 		icon = GFX_decision_nirtal_button
-		visible = {
-			NOT = { tag = ISR }
-			has_country_flag = other_opened
-			country_exists = ISR
-		}
-		available = {
-			NOT = {	has_war_with = ISR }
-			ISR = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_nirtal_TT
-				ISR = { NOT = { has_country_flag = nirtal_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			add_equipment_to_stockpile = {
@@ -5869,30 +3114,19 @@ pmc_category = {
 				amount = 1500
 			}
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_nirtal_idea1
-					days = 365
-				}
+				remove_ideas = pmc_nirtal_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_nirtal_idea
-					days = 365
-				}
+				remove_ideas = pmc_nirtal_idea
 			}
-			hidden_effect = {
-				ISR = { country_event = pmc_events.4 }
-			}
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			ISR = { set_country_flag = nirtal_yes }
+			ISR = { clr_country_flag = nirtal_yes }
 		}
 
 		remove_effect = {
@@ -5901,62 +3135,28 @@ pmc_category = {
 	}
 	pmc_halo = {
 		icon = GFX_decision_hamo_button
-		visible = {
-			NOT = { tag = USA }
-			has_country_flag = other_opened
-			country_exists = USA
-		}
-		available = {
-			NOT = {	has_war_with = USA }
-			has_war = yes
-			USA = { has_opinion = { target = ROOT value > 10 } }
-			ENG = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_halo_TT
-				USA = { NOT = { has_country_flag = halo_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_halo_idea1
-					days = 365
-				}
+				remove_ideas = pmc_halo_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_halo_idea
-					days = 365
-				}
+				remove_ideas = pmc_halo_idea
 			}
-			set_temp_variable = { treasury_change = -1.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				USA = { country_event = pmc_events.6 }
-				ENG = { country_event = pmc_events.6 }
-			}
-			USA = { set_country_flag = halo_yes }
+			USA = { clr_country_flag = halo_yes }
 		}
 		remove_effect = {
 			USA = { clr_country_flag = halo_yes }
@@ -5964,60 +3164,28 @@ pmc_category = {
 	}
 	pmc_dci = {
 		icon = GFX_decision_dci_button
-		visible = {
-			NOT = { tag = FRA }
-			has_country_flag = other_opened
-			country_exists = FRA
-		}
-		available = {
-			NOT = {	has_war_with = FRA }
-			has_war = yes
-			FRA = { has_opinion = { target = ROOT value > 15 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_dci_TT
-				FRA = { NOT = { has_country_flag = dci_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_dci_idea1
-					days = 365
-				}
+				remove_ideas = pmc_dci_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_dci_idea
-					days = 365
-				}
+				remove_ideas = pmc_dci_idea
 			}
-			set_temp_variable = { treasury_change = -4 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				FRA = { country_event = pmc_events.4 }
-			}
-			FRA = { set_country_flag = dci_yes }
+			FRA = { clr_country_flag = DCI_yes }
 		}
 		remove_effect = {
 			FRA = { clr_country_flag = DCI_yes }
@@ -6025,65 +3193,19 @@ pmc_category = {
 	}
 	pmc_garda = {
 		icon = GFX_decision_garda_button
-		visible = {
-			NOT = { tag = CAN }
-			has_country_flag = other_opened
-			country_exists = CAN
-		}
-		available = {
-			NOT = {	has_war_with = CAN }
-			CAN = { has_opinion = { target = ROOT value > 15 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_garda_TT
-				CAN = { NOT = { has_country_flag = garda_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Mercenary SpecOps GardaWorld Unit"
-					is_locked = yes
-					priority = 2
-					regiments = {
-						Special_Forces = { x = 0 y = 0 }
-						Special_Forces = { x = 0 y = 1 }
-						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
-					}
-					support = {
-						H_Engi_Comp = { x = 0 y = 0 }
-						L_Recce_Comp = { x = 0 y = 1 }
-					}
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Mercenary SpecOps GardaWorld Unit\" division_template = \"Mercenary SpecOps GardaWorld Unit\" start_experience_factor = 0.7"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Mercenary SpecOps GardaWorld Unit"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -2.5 }
-			modify_treasury_effect = yes
-			CAN = { set_country_flag = garda_yes }
-			hidden_effect = {
-				CAN = { country_event = pmc_events.3 }
-			}
+			CAN = { clr_country_flag = garda_yes }
 		}
 		remove_effect = {
 			delete_unit_template_and_units = {
@@ -6095,66 +3217,19 @@ pmc_category = {
 	}
 	pmc_sinai = {
 		icon = GFX_decision_union_button
-		visible = {
-			EGY = { has_country_flag = sinai_create }
-			NOT = { tag = EGY }
-			has_country_flag = other_opened
-			country_exists = EGY
-		}
-		available = {
-			NOT = {	has_war_with = EGY }
-			EGY = { has_opinion = { target = ROOT value > 15 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_sinai_TT
-				EGY = { NOT = { has_country_flag = sinai_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Mercenary The Union of the Tribes of Sinai"
-					is_locked = yes
-					priority = 2
-					regiments = {
-						Special_Forces = { x = 0 y = 0 }
-						Special_Forces = { x = 0 y = 1 }
-						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
-					}
-					support = {
-						H_Engi_Comp = { x = 0 y = 0 }
-						L_Recce_Comp = { x = 0 y = 1 }
-					}
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Mercenary The Union of the Tribes of Sinai\" division_template = \"Mercenary The Union of the Tribes of Sinai\" start_experience_factor = 0.3"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Mercenary The Union of the Tribes of Sinai"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -2.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				EGY = { country_event = pmc_events.3 }
-			}
-			EGY = { set_country_flag = sinai_yes }
+			EGY = { clr_country_flag = sinai_yes }
 		}
 		remove_effect = {
 			delete_unit_template_and_units = {
@@ -6166,66 +3241,19 @@ pmc_category = {
 	}
 	pmc_gard = {
 		icon = GFX_decision_gard_button
-		visible = {
-			BLR = { has_country_flag = gard_create }
-			NOT = { tag = BLR }
-			has_country_flag = other_opened
-			country_exists = BLR
-		}
-		available = {
-			NOT = {	has_war_with = BLR }
-			BLR = { has_opinion = { target = ROOT value > 15 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_gard_TT
-				BLR = { NOT = { has_country_flag = gard_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Mercenary of Gard Service"
-					is_locked = yes
-					priority = 2
-					regiments = {
-						Special_Forces = { x = 0 y = 0 }
-						Special_Forces = { x = 0 y = 1 }
-						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
-					}
-					support = {
-						H_Engi_Comp = { x = 0 y = 0 }
-						L_Recce_Comp = { x = 0 y = 1 }
-					}
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Mercenary of Gard Service\" division_template = \"Mercenary of Gard Service\" start_experience_factor = 0.8"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Mercenary of Gard Service"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -2.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				BLR = { country_event = pmc_events.3 }
-			}
-			BLR = { set_country_flag = gard_yes }
+			BLR = { clr_country_flag = gard_yes }
 		}
 		remove_effect = {
 			delete_unit_template_and_units = {
@@ -6237,69 +3265,19 @@ pmc_category = {
 	}
 	pmc_patriot = {
 		icon = GFX_decision_patriot_button
-		visible = {
-			SOV = { has_country_flag = patriot_create }
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_patriot_TT
-				SOV = { NOT = { has_country_flag = patriot_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Patriot Heavy Mechanized Unit"
-					is_locked = yes
-					priority = 2
-					regiments = {
-						Arm_Inf_Bat = { x = 0 y = 0 }
-						Arm_Inf_Bat = { x = 0 y = 1 }
-						Arm_Inf_Bat = { x = 0 y = 2 }
-						Arm_Inf_Bat = { x = 1 y = 0 }
-						Arm_Inf_Bat = { x = 1 y = 1 }
-						Arm_Inf_Bat = { x = 1 y = 2 }
-					}
-					support = {
-						armor_Comp = { x = 0 y = 0 }
-						Arm_Recce_Comp = { x = 0 y = 1 }
-						H_Engi_Comp = { x = 0 y = 2 }
-					}
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Patriot Heavy Mechanized Unit"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.2 }
-			}
-			SOV = { set_country_flag = patriot_yes }
+			SOV = { clr_country_flag = patriot_yes }
 		}
 
 		remove_effect = {
@@ -6312,66 +3290,19 @@ pmc_category = {
 	}
 	pmc_dewe = {
 		icon = GFX_decision_dewe_button
-		visible = {
-			CHI = { has_country_flag = dewe_create }
-			NOT = { tag = CHI }
-			has_country_flag = other_opened
-			country_exists = CHI
-		}
-		available = {
-			NOT = {	has_war_with = CHI }
-			CHI = { has_opinion = { target = ROOT value > 15 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_dewe_TT
-				CHI = { NOT = { has_country_flag = dewe_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Mercenary of Dewe Security Services"
-					is_locked = yes
-					priority = 2
-					regiments = {
-						Special_Forces = { x = 0 y = 0 }
-						Special_Forces = { x = 0 y = 1 }
-						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
-					}
-					support = {
-						H_Engi_Comp = { x = 0 y = 0 }
-						L_Recce_Comp = { x = 0 y = 1 }
-					}
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Mercenary of Dewe Security Services\" division_template = \"Mercenary of Dewe Security Services\" start_experience_factor = 0.3"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Mercenary of Dewe Security Services"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				CHI = { country_event = pmc_events.4 }
-			}
-			CHI = { set_country_flag = dewe_yes }
+			CHI = { clr_country_flag = dewe_yes }
 		}
 		remove_effect = {
 			delete_unit_template_and_units = {
@@ -6383,60 +3314,28 @@ pmc_category = {
 	}
 	pmc_over = {
 		icon = GFX_decision_over_button
-		visible = {
-			CHI = { has_country_flag = over_create }
-			NOT = { tag = CHI }
-			has_country_flag = other_opened
-			country_exists = CHI
-		}
-		available = {
-			NOT = {	has_war_with = CHI }
-			CHI = { has_opinion = { target = ROOT value > 15 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_over_TT
-				CHI = { NOT = { has_country_flag = over_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			set_temp_variable = { treasury_change = -2.5 }
-			modify_treasury_effect = yes
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_over_idea1
-					days = 365
-				}
+				remove_ideas = pmc_over_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_over_idea
-					days = 365
-				}
+				remove_ideas = pmc_over_idea
 			}
-			hidden_effect = {
-				CHI = { country_event = pmc_events.3 }
-			}
-			CHI = { set_country_flag = over_yes }
+			CHI = { clr_country_flag = over_yes }
 		}
 
 		remove_effect = {
@@ -6445,70 +3344,28 @@ pmc_category = {
 	}
 	pmc_front = {
 		icon = GFX_decision_front_button
-		visible = {
-			CHI = { has_country_flag = front_create }
-			NOT = { tag = CHI }
-			has_country_flag = other_opened
-			country_exists = CHI
-		}
-		available = {
-			NOT = {	has_war_with = CHI }
-			CHI = { has_opinion = { target = ROOT value > 15 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_front_TT
-				CHI = { NOT = { has_country_flag = front_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_front_idea1
-					days = 365
-				}
+				remove_ideas = pmc_front_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_front_idea
-					days = 365
-				}
+				remove_ideas = pmc_front_idea
 			}
-			add_equipment_to_stockpile = {
-				type = infantry_weapons1
-				amount = 1000
-				producer = CHI
-			}
-			add_equipment_to_stockpile = {
-				type = command_control_equipment
-				amount = 500
-				producer = CHI
-			}
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				CHI = { country_event = pmc_events.2 }
-			}
-			CHI = { set_country_flag = front_yes }
+			CHI = { clr_country_flag = front_yes }
 		}
 		remove_effect = {
 			CHI = { clr_country_flag = front_yes }
@@ -6516,71 +3373,19 @@ pmc_category = {
 	}
 	pmc_redut = {
 		icon = GFX_decision_redut_button
-		visible = {
-			SOV = { has_country_flag = redut_create }
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_redut_TT
-				SOV = { NOT = { has_country_flag = redut_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Redut PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						Arty_Bat = { x = 0 y = 4 }
-						L_Inf_Bat = { x = 1 y = 0 }
-						L_Inf_Bat = { x = 1 y = 1 }
-						L_Inf_Bat = { x = 1 y = 2 }
-						L_Inf_Bat = { x = 1 y = 3 }
-						Arty_Bat = { x = 1 y = 4 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Redut PMC Battalion\" division_template = \"Redut PMC Battalion\" start_experience_factor = 1.0"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Redut PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.2 }
-			}
-			SOV = { set_country_flag = redut_yes }
+			SOV = { clr_country_flag = redut_yes }
 		}
 
 		remove_effect = {
@@ -6593,86 +3398,32 @@ pmc_category = {
 	}
 	pmc_gazprom = {
 		icon = GFX_decision_gaz_button
-		visible = {
-			SOV = { has_country_flag = gazprom_create }
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_gazprom_TT
-				SOV = { NOT = { has_country_flag = gazprom_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_gazprom_idea1
-					days = 365
-				}
+				remove_ideas = pmc_gazprom_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_gazprom_idea
-					days = 365
-				}
+				remove_ideas = pmc_gazprom_idea
 			}
-			hidden_effect = {
-				division_template = {
-					name = "Gazprom PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 1 y = 0 }
-						L_Inf_Bat = { x = 1 y = 1 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Gazprom PMC Battalion\" division_template = \"Gazprom PMC Battalion\" start_experience_factor = 0.3"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Gazprom PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.2 }
-			}
-			SOV = { set_country_flag = gazprom_yes }
+			SOV = { clr_country_flag = gazprom_yes }
 		}
 
 		remove_effect = {
@@ -6685,63 +3436,19 @@ pmc_category = {
 	}
 	pmc_iron = {
 		icon = GFX_decision_iron_button
-		visible = {
-			EST = { has_country_flag = iron_create }
-			NOT = { tag = EST }
-			has_country_flag = other_opened
-			country_exists = EST
-		}
-		available = {
-			NOT = {	has_war_with = EST }
-			EST = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_iron_TT
-				EST = { NOT = { has_country_flag = iron_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Iron Navy PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Iron Navy PMC Battalion\" division_template = \"Iron Navy PMC Battalion\" start_experience_factor = 0.1"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Iron Navy PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -1.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				EST = { country_event = pmc_events.6 }
-			}
-			EST = { set_country_flag = iron_yes }
+			EST = { clr_country_flag = iron_yes }
 		}
 
 		remove_effect = {
@@ -6754,59 +3461,28 @@ pmc_category = {
 	}
 	pmc_eu = {
 		icon = GFX_decision_eu_button
-		visible = {
-			has_country_flag = other_opened
-			country_exists = POL
-			NOT = { tag = POL }
-		}
-		available = {
-			NOT = {	has_war_with = POL }
-			POL = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_eu_TT
-				POL = { NOT = { has_country_flag = eu_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_eu_idea1
-					days = 365
-				}
+				remove_ideas = pmc_eu_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_eu_idea
-					days = 365
-				}
+				remove_ideas = pmc_eu_idea
 			}
-			set_temp_variable = { treasury_change = -4 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				POL = { country_event = pmc_events.5 }
-			}
-			POL = { set_country_flag = eu_yes }
+			POL = { clr_country_flag = eu_yes }
 		}
 
 		remove_effect = {
@@ -6815,63 +3491,19 @@ pmc_category = {
 	}
 	pmc_sheriff = {
 		icon = GFX_decision_sheriff_button
-		visible = {
-			PMR = { has_country_flag = sheriff_create }
-			NOT = { tag = PMR }
-			has_country_flag = other_opened
-			country_exists = PMR
-		}
-		available = {
-			NOT = {	has_war_with = PMR }
-			PMR = { has_opinion = { target = ROOT value > 10 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_sheriff_TT
-				PMR = { NOT = { has_country_flag = sheriff_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
-			hidden_effect = {
-				division_template = {
-					name = "Sheriff PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Sheriff PMC Battalion\" division_template = \"Sheriff PMC Battalion\" start_experience_factor = 0.1"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Sheriff PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -1.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				PMR = { country_event = pmc_events.6 }
-			}
-			PMR = { set_country_flag = sheriff_yes }
+			PMR = { clr_country_flag = sheriff_yes }
 		}
 
 		remove_effect = {
@@ -6884,86 +3516,32 @@ pmc_category = {
 	}
 	pmc_lukoil = {
 		icon = GFX_decision_lukoil_button
-		visible = {
-			SOV = { has_country_flag = lukoil_create }
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_lukoil_TT
-				SOV = { NOT = { has_country_flag = lukoil_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_lukoil_idea1
-					days = 365
-				}
+				remove_ideas = pmc_lukoil_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_lukoil_idea
-					days = 365
-				}
+				remove_ideas = pmc_lukoil_idea
 			}
-			hidden_effect = {
-				division_template = {
-					name = "Lukoil PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 1 y = 0 }
-						L_Inf_Bat = { x = 1 y = 1 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Lukoil PMC Battalion\" division_template = \"Lukoil PMC Battalion\" start_experience_factor = 0.1"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Lukoil PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.2 }
-			}
-			SOV = { set_country_flag = lukoil_yes }
+			SOV = { clr_country_flag = lukoil_yes }
 		}
 
 		remove_effect = {
@@ -6976,86 +3554,32 @@ pmc_category = {
 	}
 	pmc_rosneft = {
 		icon = GFX_decision_rosneft_button
-		visible = {
-			SOV = { has_country_flag = rosneft_create }
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_rosneft_TT
-				SOV = { NOT = { has_country_flag = rosneft_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_rosneft_idea1
-					days = 365
-				}
+				remove_ideas = pmc_rosneft_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_rosneft_idea
-					days = 365
-				}
+				remove_ideas = pmc_rosneft_idea
 			}
-			hidden_effect = {
-				division_template = {
-					name = "Rosneft PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 1 y = 0 }
-						L_Inf_Bat = { x = 1 y = 1 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Rosneft PMC Battalion\" division_template = \"Rosneft PMC Battalion\" start_experience_factor = 0.1"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Rosneft PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.2 }
-			}
-			SOV = { set_country_flag = rosneft_yes }
+			SOV = { clr_country_flag = rosneft_yes }
 		}
 
 		remove_effect = {
@@ -7068,86 +3592,32 @@ pmc_category = {
 	}
 	pmc_sberbank = {
 		icon = GFX_decision_sberbank_button
-		visible = {
-			SOV = { has_country_flag = sberbank_create }
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_sberbank_TT
-				SOV = { NOT = { has_country_flag = sberbank_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_sberbank_idea1
-					days = 365
-				}
+				remove_ideas = pmc_sberbank_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_sberbank_idea
-					days = 365
-				}
+				remove_ideas = pmc_sberbank_idea
 			}
-			hidden_effect = {
-				division_template = {
-					name = "Sber PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 1 y = 0 }
-						L_Inf_Bat = { x = 1 y = 1 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Sber PMC Battalion\" division_template = \"Sber PMC Battalion\" start_experience_factor = 0.1"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Sber PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.2 }
-			}
-			SOV = { set_country_flag = sberbank_yes }
+			SOV = { clr_country_flag = sberbank_yes }
 		}
 
 		remove_effect = {
@@ -7160,86 +3630,32 @@ pmc_category = {
 	}
 	pmc_vtb = {
 		icon = GFX_decision_vtb_button
-		visible = {
-			SOV = { has_country_flag = vtb_create }
-			NOT = { tag = SOV }
-			has_country_flag = other_opened
-			country_exists = SOV
-		}
-		available = {
-			NOT = {	has_war_with = SOV }
-			SOV = { has_opinion = { target = ROOT value > 20 } }
-			custom_trigger_tooltip = {
-				tooltip = pmc_vtb_TT
-				SOV = { NOT = { has_country_flag = vtb_yes } }
-			}
-		}
-		ai_will_do = {
-			modifier = {
-				add = 1
-				has_war = yes
-			}
-			modifier = {
-				factor = 0
-				alliance_strength_ratio > 2
-			}
-		}
-		fire_only_once = no
-		days_remove = 365
-		days_re_enable = 10
+		available = { always = yes }
+		activation = { always = no }
+
+		selectable_mission = yes
+
+		days_mission_timeout = 365
 
 		complete_effect = {
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						has_idea = large_power
 						has_idea = great_power
 						has_idea = superpower
 					}
 				}
-				add_timed_idea = {
-					idea = pmc_vtb_idea1
-					days = 365
-				}
+				remove_ideas = pmc_vtb_idea1
 			}
 			else = {
-				add_timed_idea = {
-					idea = pmc_vtb_idea
-					days = 365
-				}
+				remove_ideas = pmc_vtb_idea
 			}
-			hidden_effect = {
-				division_template = {
-					name = "Vtb PMC Battalion"
-					regiments = {
-						L_Inf_Bat = { x = 0 y = 0 }
-						L_Inf_Bat = { x = 0 y = 1 }
-						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 1 y = 0 }
-						L_Inf_Bat = { x = 1 y = 1 }
-					}
-					support = {
-						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
-					priority = 2
-				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 2148 }
-					create_unit = {
-						division = "name = \"Vtb PMC Battalion\" division_template = \"Vtb PMC Battalion\" start_experience_factor = 0.1"
-						owner = ROOT
-					}
-				}
+			delete_unit_template_and_units = {
+				division_template = "Sber PMC Battalion"
+				disband = no
 			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
-			hidden_effect = {
-				SOV = { country_event = pmc_events.2 }
-			}
-			SOV = { set_country_flag = vtb_yes }
+			SOV = { clr_country_flag = sberbank_yes }
 		}
 
 		remove_effect = {
@@ -8261,7 +4677,7 @@ pmc_local_management = {
 			delete_tank_unit_local = yes
 		}
 	}
-	
+
 
 	recruit_specops_unit = {
 		visible = {

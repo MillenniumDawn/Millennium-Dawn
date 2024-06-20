@@ -5,28 +5,17 @@
 	default = yes
 	reset_on_civilwar = yes
 
-	#GCC Shared tree
+	# GCC Shared tree
 	shared_focus = GCC_the_gcc
 
-	#EU shared tree
+	# EU shared tree
 	shared_focus = USoE001
 	shared_focus = POTEF001
 
-	#NKR stuff
+	# NKR stuff
 	shared_focus = NKR_develop_the_new_nation
 
-	#SOO stuff
-	# shared_focus = SOO_develop_the_new_nation
-	#Norway Shit Tree
-	shared_focus = NOR_focus_international_relations
-	shared_focus = NOR_economy
-	shared_focus = NOR_bondevik_motion_of_confidence
-	shared_focus = NOR_military
-
-	# Asean Shared Tree
-	# shared_focus = ASEAN_asean
-
-	#Political Reform
+	# Political Reform
 	focus = {
 		id = GENERIC_political_reform
 		icon = Election_graphics
@@ -46,7 +35,7 @@
 			factor = 1
 			# Grab if we need political power
 			modifier = {
-				factor = 3
+				factor = 1.5
 				check_variable = { interest_rate > 5 }
 			}
 		}
@@ -71,6 +60,11 @@
 
 		ai_will_do = {
 			factor = 1
+			# Grab if we need political power
+			modifier = {
+				factor = 1.5
+				check_variable = { interest_rate > 5 }
+			}
 		}
 	}
 
@@ -94,6 +88,11 @@
 
 		ai_will_do = {
 			factor = 1
+			# Grab if we need political power
+			modifier = {
+				factor = 1.5
+				check_variable = { interest_rate > 5 }
+			}
 		}
 	}
 
@@ -242,8 +241,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_secret_service"
 			add_tech_bonus = {
-				name = Cat_NVG
-				category = Cat_NVG
+				name = CAT_nvg
+				category = CAT_nvg
 				uses = 1
 				bonus = 0.25
 			}
@@ -428,7 +427,7 @@
 				name = GENERIC_network_infrastructure
 				uses = 1
 				bonus = 0.25
-				category = internet_tech
+				category = CAT_internet_tech
 			}
 		}
 
@@ -1919,6 +1918,137 @@
 		}
 	}
 
+	focus = {
+		id = GENERIC_productivity_measures
+		icon = focus_generic_industrialists
+
+		x = 4
+		y = 5
+		relative_position_id = GENERIC_build_roads
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_RESOURCE }
+		prerequisite = { focus = GENERIC_autarky }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_autarky"
+			set_temp_variable = { temp_productivity_change = 20 }
+			flat_productivity_change_effect = yes
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_improved_worker_productivity
+		icon = construct_factory
+
+		x = 3
+		y = 6
+		relative_position_id = GENERIC_build_roads
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_RESOURCE }
+		prerequisite = { focus = GENERIC_economic_measures }
+		mutually_exclusive = { focus = GENERIC_the_manpower_solution }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_improved_worker_productivity"
+			add_ideas = idea_generic_worker_productivity
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_the_manpower_solution
+		icon = union_negotiations
+
+		x = 1
+		y = 6
+		relative_position_id = GENERIC_build_roads
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_RESOURCE }
+		prerequisite = { focus = GENERIC_economic_measures }
+		mutually_exclusive = { focus = GENERIC_improved_worker_productivity }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_manpower_solution"
+			add_ideas = idea_generic_the_manpower_solution
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_emphasize_autarkic_measures
+		icon = protectionism
+
+		x = 1
+		y = 7
+		relative_position_id = GENERIC_build_roads
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_RESOURCE }
+		prerequisite = {
+			focus = GENERIC_improved_worker_productivity
+			focus = GENERIC_the_manpower_solution
+		}
+		mutually_exclusive = { focus = GENERIC_reaching_to_the_global_market }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_emphasize_autarkic_measures"
+			swap_ideas = {
+				remove_idea = economic_autonomy3
+				add_idea = economic_autonomy4
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_reaching_to_the_global_market
+		icon = liberalization_policies
+
+		x = 3
+		y = 7
+		relative_position_id = GENERIC_build_roads
+
+		cost = 7.86
+
+		search_filters = { FOCUS_FILTER_RESOURCE }
+		prerequisite = {
+			focus = GENERIC_improved_worker_productivity
+			focus = GENERIC_the_manpower_solution
+		}
+		mutually_exclusive = { focus = GENERIC_emphasize_autarkic_measures }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_reaching_to_the_global_market"
+			add_ideas = idea_generic_reaching_to_the_global_market
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
 	focus = {
 		id = GENERIC_assure_the_national_fuel_reserve
@@ -1975,8 +2105,11 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_ease_of_business_reforms"
-			capital_scope = { add_extra_state_shared_building_slots = 1 }
 			add_political_power = 150
+			set_temp_variable = { temp_productivity_change = 50 }
+			random_owned_controlled_state = {
+				state_flat_productivity_change_effect = yes
+			}
 		}
 
 		ai_will_do = {
@@ -2019,12 +2152,13 @@
 
 		cost = 7.86
 
+		prerequisite = { focus = GENERIC_ease_of_business_reforms }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
 		available = {
 			gdp_debt_ratio_higher_50 = yes
 		}
 
-		prerequisite = { focus = GENERIC_ease_of_business_reforms }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_attract_foreign_investors"
 			set_temp_variable = { debt_change = debt }
@@ -2043,6 +2177,31 @@
 				check_variable = { interest_rate > 5 }
 				factor = 10
 			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_agricultural_district_subsidization
+		icon = focus_generic_agricultural_subsidies
+
+		x = -5
+		y = 1
+		relative_position_id = GENERIC_ease_of_business_reforms
+
+		cost = 7.86
+
+		prerequisite = { focus = GENERIC_ease_of_business_reforms }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_agricultural_district_subsidization"
+			one_random_agriculture_district = yes
+			add_ideas = agricultural_investments
+		}
+
+		ai_will_do = {
+			factor = 1
 		}
 	}
 
@@ -2413,6 +2572,52 @@
 		}
 	}
 
+	focus = {
+		id = GENERIC_nuclear_energy_expansions
+		icon = nuclear_energy
+
+		x = -2
+		y = 5
+		relative_position_id = GENERIC_ease_of_business_reforms
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+		prerequisite = {
+			focus = GENERIC_renewable_infrastructure
+			focus = GENERIC_improved_energy_cycling
+		}
+
+		available = {
+			has_tech = reactor1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_energy_expansions"
+			if = { limit = { NOT = { has_tech = reactor1 } }
+				effect_tooltip = {
+					random_owned_controlled_state = {
+						add_building_construction = {
+							type = nuclear_reactor
+							level = 1
+							instant_build = yes
+						}
+					}
+
+					set_temp_variable = { treasury_change = -9.00 }
+					modify_treasury_effect = yes
+				}
+			}
+			else = {
+				one_random_nuclear_reactor = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
 	# UNEMPLOYMENT PROGRAMS
 	focus = {
 		id = GENERIC_unemployment_program
@@ -2648,10 +2853,10 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_import_foreign_automobiles"
 			add_political_power = 100
 			add_tech_bonus = {
-				name = Cat_AFV
-				category = Cat_UTIL
-				category = Cat_AFV
-				category = Cat_IFV
+				name = CAT_afv
+				category = CAT_util
+				category = CAT_afv
+				category = CAT_ifv
 				bonus = 0.25
 				uses = 2
 			}
@@ -2840,7 +3045,7 @@
 			navy_experience = 50
 			add_doctrine_cost_reduction = {
 				name = GENERIC_naval_reform
-				category = Cat_naval_doctrine
+				category = CAT_naval_doctrine
 				uses = 1
 				cost_reduction = 0.5
 			}
@@ -2937,10 +3142,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_submarines"
 			add_tech_bonus = {
-				name = Cat_SUB
+				name = CAT_sub
 				uses = 2
 				bonus = 0.5
-				category = Cat_SUB
+				category = CAT_sub
 			}
 		}
 
@@ -2965,10 +3170,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_surface_ships"
 			add_tech_bonus = {
-				name = Cat_SURFACE_SHIP
+				name = CAT_surface_ship
 				uses = 2
 				bonus = 0.5
-				category = Cat_SURFACE_SHIP
+				category = CAT_surface_ship
 			}
 		}
 
@@ -3039,10 +3244,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_submarines"
 			add_tech_bonus = {
-				name = Cat_NUKE_SUB
+				name = CAT_nuke_sub
 				uses = 2
 				bonus = 0.5
-				category = Cat_NUKE_SUB
+				category = CAT_nuke_sub
 			}
 		}
 
@@ -3067,7 +3272,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_innovations"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_naval_doctrine_innovations
-				category = Cat_naval_doctrine
+				category = CAT_naval_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -3098,7 +3303,7 @@
 				name = GENERIC_aircraft_carriers
 				uses = 2
 				bonus = 0.5
-				category = Cat_CARRIER
+				category = CAT_carrier
 			}
 		}
 
@@ -3151,7 +3356,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_expertise"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_naval_doctrine_expertise
-				category = Cat_naval_doctrine
+				category = CAT_naval_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -3181,11 +3386,11 @@
 				name = GENERIC_air_force_reform
 				uses = 1
 				bonus = 0.25
-				category = Cat_AIR_EQP
+				category = CAT_air_eqp
 			}
 			add_doctrine_cost_reduction = {
 				name = GENERIC_air_force_reform
-				category = air_doctrine
+				category = CAT_air_doctrine
 				uses = 1
 				cost_reduction = 0.15
 			}
@@ -3215,7 +3420,7 @@
 				name = GENERIC_fighter_planes
 				uses = 2
 				bonus = 0.5
-				category = Cat_AIR_EQP
+				category = CAT_air_eqp
 			}
 		}
 
@@ -3243,7 +3448,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_air_doctrine_innovations"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_air_doctrine_innovations
-				category = air_doctrine
+				category = CAT_air_doctrine
 				uses = 1
 				cost_reduction = 0.5
 			}
@@ -3276,7 +3481,7 @@
 				name = GENERIC_countermeasures_against_aircraft
 				uses = 2
 				bonus = 0.5
-				category = Cat_AA
+				category = CAT_aa
 			}
 		}
 
@@ -3304,7 +3509,7 @@
 				name = GENERIC_bomber_planes
 				uses = 2
 				bonus = 0.5
-				category = Cat_AIR_EQP
+				category = CAT_air_eqp
 			}
 		}
 
@@ -3333,8 +3538,8 @@
 				name = GENERIC_drones
 				uses = 2
 				bonus = 0.5
-				category = Cat_L_DRONE
-				category = Cat_A_UAV
+				category = CAT_l_drone
+				category = CAT_a_uav
 			}
 		}
 
@@ -3359,7 +3564,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_air_doctrine_expertise"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_air_doctrine_expertise
-				category = air_doctrine
+				category = CAT_air_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -3440,7 +3645,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_land_doctrine_innovations"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_land_doctrine_innovations
-				category = land_doctrine
+				category = CAT_land_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -3514,7 +3719,7 @@
 				name = GENERIC_infantry_equipment_development
 				uses = 2
 				bonus = 0.5
-				category = Cat_INF_WEP
+				category = CAT_inf_wep
 			}
 			add_timed_idea = {
 				days = 365
@@ -3543,7 +3748,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_land_doctrine_expertise"
 			add_doctrine_cost_reduction = {
 				name = GENERIC_land_doctrine_expertise
-				category = land_doctrine
+				category = CAT_land_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -3573,7 +3778,7 @@
 				name = GENERIC_artillery_experiments
 				uses = 2
 				bonus = 0.5
-				category = Cat_ARTY
+				category = CAT_arty
 			}
 		}
 
@@ -3637,7 +3842,7 @@
 				name = GENERIC_self_propelled_artillery
 				uses = 2
 				bonus = 0.5
-				category = Cat_SP_R_ARTY
+				category = CAT_sp_r_arty
 			}
 		}
 
@@ -3665,7 +3870,7 @@
 				name = GENERIC_develop_armor_prototypes
 				uses = 2
 				bonus = 0.5
-				category = Cat_ARMOR
+				category = CAT_armor
 			}
 		}
 
@@ -3693,7 +3898,7 @@
 				name = GENERIC_countermeasures_against_armored_units
 				uses = 2
 				bonus = 0.5
-				category = Cat_AT
+				category = CAT_at
 			}
 		}
 
