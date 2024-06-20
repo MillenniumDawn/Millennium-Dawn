@@ -275,7 +275,10 @@ EU_voting_category = {
 									activate_mission = EU_mff_preparations
 								}
 							}
-							set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+							every_country = {
+								limit = { has_idea = EU_member }
+								set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+							}
 							set_variable = { global.active_MEP_Support = 0 }
 							set_variable = { global.pass_vote_mission_ender = 0 }
 							if = {
@@ -321,8 +324,10 @@ EU_voting_category = {
 								clr_country_flag = EU_mff_draft
 							}
 
-							set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
-
+							every_country = {
+								limit = { has_idea = EU_member }
+								set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+							}
 							if = {
 								limit = { is_in_array = { array = global.EU_council_votes value = 999 } }
 								remove_from_array = {
@@ -3020,12 +3025,11 @@ EU_fiscal_category = {
 		allowed = { always = no }
 		activation = { always = no }
 		visible = { has_idea = EU_member }
-
 		available = {
 			any_of_scopes = {
 				array = global.EU_member
 				OR = {
-					### European Banking Union
+					# European Banking Union
 					has_country_flag = focus_EU202_yes
 					has_country_flag = focus_EU202_QMV_yes
 				}
@@ -3036,7 +3040,7 @@ EU_fiscal_category = {
 					# Eurobonds
 					has_country_flag = focus_EU203_yes
 					has_country_flag = focus_EU203_QMV_yes
-					#  European Stability Mechanism (ESM)
+					# European Stability Mechanism (ESM)
 					has_country_flag = focus_EU205_yes
 					has_country_flag = focus_EU205_QMV_yes
 				}
@@ -3051,45 +3055,37 @@ EU_fiscal_category = {
 			factor = 60
 			modifier = {
 				add = 20
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 1 } ### conservatism
-						is_in_array = { ruling_party = 6 } ### Conservative
-						is_in_array = { ruling_party = 14 } ### Neutral_conservatism
-					}
+				OR = {
+					is_in_array = { ruling_party = 1 } ### conservatism
+					is_in_array = { ruling_party = 6 } ### Conservative
+					is_in_array = { ruling_party = 14 } ### Neutral_conservatism
 				}
 			}
 			modifier = {
 				add = 30
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 2 } ### liberalism
-						is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
-					}
+				OR = {
+					is_in_array = { ruling_party = 2 } ### liberalism
+					is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
 				}
 			}
 			modifier = {
 				add = 40
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 3 } ### socialism
-						is_in_array = { ruling_party = 18 } ### neutral_Social
-						is_in_array = { ruling_party = 17 } ### Neutral_green
-						is_in_array = { ruling_party = 4 } ### Communist-State
-						is_in_array = { ruling_party = 5 } ### anarchist_communism
-						is_in_array = { ruling_party = 19 } ### Neutral_Communism
-					}
+				OR = {
+					is_in_array = { ruling_party = 3 } ### socialism
+					is_in_array = { ruling_party = 18 } ### neutral_Social
+					is_in_array = { ruling_party = 17 } ### Neutral_green
+					is_in_array = { ruling_party = 4 } ### Communist-State
+					is_in_array = { ruling_party = 5 } ### anarchist_communism
+					is_in_array = { ruling_party = 19 } ### Neutral_Communism
 				}
 			}
 			modifier = {
 				add = -60
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 20 } ### Nat_Populism
-						is_in_array = { ruling_party = 21 } ### Nat_Fascism
-						is_in_array = { ruling_party = 22 } ### Nat_Autocracy
-						is_in_array = { ruling_party = 23 } ### Monarchist
-					}
+				OR = {
+					is_in_array = { ruling_party = 20 } ### Nat_Populism
+					is_in_array = { ruling_party = 21 } ### Nat_Fascism
+					is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+					is_in_array = { ruling_party = 23 } ### Monarchist
 				}
 			}
 		}
@@ -3097,29 +3093,33 @@ EU_fiscal_category = {
 		fire_only_once = yes
 
 		timeout_effect = {
+			### European debt crisis
 			every_country = {
 				limit = { has_idea = EU_member }
-				country_event = {
-					id = EUevent.5 ### European debt crisis
+				country_event = { id = EUevent.5 }
+			}
+			effect_tooltip = {
+				add_ideas = european_debt_crisis
+				every_country = {
+					limit = {
+						has_idea = EU_member
+						check_variable = { interest_rate > 5 }
+						check_variable = { debt > 499 }
+					}
+					add_ideas = EUU_national_dept_crisis_eu
 				}
 			}
 		}
 
 		cancel_trigger = {
-			any_of_scopes = {
-				array = global.EU_member
-				has_global_flag = eurozone_reforms
-			}
+			has_global_flag = eurozone_reforms
 		}
 
 		complete_effect = {
+			# Eurozone Reforms
 			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				country_event = {
-					id = EUevent.6 ### eurozone reforms
-				}
+				limit = { has_idea = EU_member }
+				country_event = { id = EUevent.6 }
 				remove_mission = eurozone_reforms
 			}
 		}
