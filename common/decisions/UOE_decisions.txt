@@ -179,3 +179,724 @@ UOE_culture_balance_cat = {
 		}
 	}
 }
+
+UOE_forming_a_government_category = {
+	form_a_government = {
+		available = {
+			has_country_flag = new_government_established
+			has_stability > 0.5
+			custom_trigger_tooltip = {
+				tooltip = recovered_economy_tt
+				NOT = { has_country_flag = unstable_economy }
+			}
+			custom_trigger_tooltip = {
+				tooltip = no_culture_war_tt
+				NOT = { has_power_balance = { id = UOE_culture_balance } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = military_cooperation_tt
+				check_variable = { military_revolt < 0.40 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = government_popularity_tt
+				check_variable = { government_coalition_strength > 0.4 }
+			}
+		}
+
+		is_good = yes
+
+		selectable_mission = no
+		days_mission_timeout = 1460
+
+		complete_effect = {
+			#congrats, your government wont explode!
+			#grant a positive spirit here, to make people happy
+			set_country_flag = military_appeased
+			remove_mission = military_coup_start
+		}
+		timeout_effect = {
+			#damn, the military wants your face now
+			#fire the USoE coups event chain, where in the end, the USoE Military seizes power, or you start a civil war
+			remove_mission = military_coup_start
+		}
+	}
+	military_coup_start = {
+		available = {
+			OR = {
+				has_stability < 0.01
+				custom_trigger_tooltip = {
+					tooltip = military_revolting_tt
+					check_variable = { military_revolt > 0.99 }
+				}
+			}
+		}
+
+		selectable_mission = no
+		days_mission_timeout = 365 #365 normally
+
+		complete_effect = {
+			#oops, your government exploded, time to panic
+			activate_mission = countdown_to_revolution
+		}
+
+		timeout_effect = {
+			if = { limit = { has_active_mission = form_a_government }
+				activate_mission = military_coup_start
+			}
+		}
+	}
+	countdown_to_revolution = {
+		available = {
+			has_stability > 0.1
+			custom_trigger_tooltip = {
+				tooltip = military_not_revolting_tt
+				check_variable = { military_revolt < 1 }
+			}
+		}
+
+		activation = { always = no }
+
+		selectable_mission = no
+		days_mission_timeout = 30
+
+		complete_effect = {
+			#you've recovered, but only just
+			activate_mission = military_coup_start
+		}
+
+		timeout_effect = {
+			#coup time!
+		}
+	}
+}
+
+UOE_economic_instability_category = {
+
+}
+
+EU_USoE_category = {
+	EU_USoE_create_eurosphere_decision = {
+		cost = 200
+		available = {
+			tag = UOE
+			has_country_flag = new_government_established
+		}
+
+		visible = {
+			tag = UOE
+			has_country_flag = new_government_established
+		}
+		days_remove = 7
+		complete_effect = {
+			create_eurosphere = yes
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+
+### Environmental Imperialism
+EU_environmental_imperialism_category = {
+
+	EU_USoE_environmental_imperialism_show_europe = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_europe
+			NOT = { has_country_flag = environmental_imperialism_europe }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in Europe"
+			set_country_flag = environmental_imperialism_europe
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_europe = {
+		available = {
+			has_country_flag = environmental_imperialism_europe
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_europe
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in Europe"
+			clr_country_flag = environmental_imperialism_europe
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_show_north_america = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_north_america
+			NOT = { has_country_flag = environmental_imperialism_north_america }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in North America"
+			set_country_flag = environmental_imperialism_north_america
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_north_america = {
+		available = {
+			has_country_flag = environmental_imperialism_north_america
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_north_america
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in North America"
+			clr_country_flag = environmental_imperialism_north_america
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_show_south_america = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_south_america
+			NOT = { has_country_flag = environmental_imperialism_south_america }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in South America"
+			set_country_flag = environmental_imperialism_south_america
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_south_america = {
+		available = {
+			has_country_flag = environmental_imperialism_south_america
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_south_america
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in South America"
+			clr_country_flag = environmental_imperialism_south_america
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_show_africa = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_africa
+			NOT = { has_country_flag = environmental_imperialism_africa }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in Africa"
+			set_country_flag = environmental_imperialism_africa
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_africa = {
+		available = {
+			has_country_flag = environmental_imperialism_africa
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_africa
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in Africa"
+			clr_country_flag = environmental_imperialism_africa
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_show_asia = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_asia
+			NOT = { has_country_flag = environmental_imperialism_asia }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in Asia"
+			set_country_flag = environmental_imperialism_asia
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_asia = {
+		available = {
+			has_country_flag = environmental_imperialism_asia
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_asia
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in Asia"
+			clr_country_flag = environmental_imperialism_asia
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_show_middle_east = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_middle_east
+			NOT = { has_country_flag = environmental_imperialism_middle_east }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in Middle East"
+			set_country_flag = environmental_imperialism_middle_east
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_middle_east = {
+		available = {
+			has_country_flag = environmental_imperialism_middle_east
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_middle_east
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in Middle East"
+			clr_country_flag = environmental_imperialism_middle_east
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_show_pacific = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_pacific
+			NOT = { has_country_flag = environmental_imperialism_pacific  }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in Pacific"
+			set_country_flag = environmental_imperialism_pacific
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_pacific = {
+		available = {
+			has_country_flag = environmental_imperialism_pacific
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_pacific
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in Pacific"
+			clr_country_flag = environmental_imperialism_pacific
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_show_oceania = {
+		available = {
+			has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_global_flag = environmental_imperialism_oceania
+			NOT = { has_country_flag = environmental_imperialism_oceania  }
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Show Environmental Imperialism in Oceania"
+			set_country_flag = environmental_imperialism_oceania
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	EU_USoE_environmental_imperialism_hide_oceania = {
+		available = {
+			has_country_flag = environmental_imperialism_oceania
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism_oceania
+		}
+		complete_effect = {
+			custom_effect_tooltip = "Hide Environmental Imperialism in Oceania"
+			clr_country_flag = environmental_imperialism_oceania
+		}
+
+	}
+
+	EU_USoE_environmental_imperialism_decision = {
+		allowed = {
+			is_EU_potential = yes
+		}
+		target_root_trigger = {
+			has_country_flag = environmental_imperialism
+		}
+		cost = 100
+		target_trigger = {
+			FROM = {
+				NOT = { has_country_flag = EU_USoE_environmental_imperialism_target }
+				NOT = { has_idea = USoE_environmental_sanctions }
+				OR = {
+					has_idea = regional_power
+					has_idea = large_power
+					has_idea = great_power
+					has_idea = superpower
+				}
+				synthetic_refinery < num_owned_states
+				OR = {
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_europe
+						}
+						capital_scope = {
+							is_on_continent = europe
+						}
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_north_america
+						}
+						capital_scope = {
+							is_on_continent = north_america
+						}
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_south_america
+						}
+						capital_scope = {
+							is_on_continent = south_america
+						}
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_africa
+						}
+						capital_scope = {
+							is_on_continent = africa
+						}
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_asia
+						}
+						capital_scope = {
+							is_on_continent = asia
+						}
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_middle_east
+						}
+						capital_scope = {
+							is_on_continent = middle_east
+						}
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_pacific
+						}
+						capital_scope = {
+							is_on_continent = pacific
+						}
+					}
+					AND = {
+						ROOT = {
+							has_country_flag = environmental_imperialism_oceania
+						}
+						capital_scope = {
+							is_on_continent = oceania
+						}
+					}
+				}
+			}
+		}
+		available = {
+			#has_country_flag = environmental_imperialism
+		}
+
+		visible = {
+			has_country_flag = environmental_imperialism
+			has_country_flag = USoE
+			FROM = {
+				NOT = { has_country_flag = EU_USoE_environmental_imperialism_target }
+			}
+			FROM = {
+				NOT = { has_idea = USoE_environmental_sanctions }
+			}
+			FROM = {
+				NOT = { has_country_flag = fossil_energy_pact }
+			}
+			FROM = {
+				NOT = { has_country_flag = break_environmental_sanctions }
+			}
+		}
+
+		complete_effect = {
+			FROM = {
+				activate_mission = EU_USoE_environmental_imperialism_mission
+				set_country_flag = EU_USoE_environmental_imperialism_target
+				custom_effect_tooltip = "If they don't complete the mission they get:"
+				show_ideas_tooltip = USoE_environmental_sanctions
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	EU_USoE_environmental_imperialism_mission = {
+		allowed = {
+			always = yes
+		}
+		available = {
+			set_temp_variable = { a = num_owned_states }
+			subtract_from_temp_variable = { a = 1 }
+			synthetic_refinery > a
+		}
+		activation = {
+			always = no
+		}
+
+		days_mission_timeout = 30
+		is_good = no
+		selectable_mission = yes
+
+		fire_only_once = yes
+
+		complete_effect = {
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			every_country = {
+				limit = {
+					has_country_flag = USoE
+				}
+				country_event = {
+					id = USoEevent.5
+				}
+			}
+			clr_country_flag = EU_USoE_environmental_imperialism_target
+		}
+		timeout_effect = {
+			add_ideas = USoE_environmental_sanctions
+			clr_country_flag = EU_USoE_environmental_imperialism_target
+			every_country = {
+				limit = {
+					has_country_flag = USoE
+				}
+				country_event = {
+					id = USoEevent.6
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	# Green Energy Reconstruction
+	EU_USoE_environmental_imperialism_restructure_industry_decision = {
+		cost = 100
+		available = {
+			has_country_flag = EU_USoE_environmental_imperialism_target
+		}
+
+		visible = {
+			has_country_flag = EU_USoE_environmental_imperialism_target
+			any_owned_state = {
+				synthetic_refinery < 2
+				industrial_complex > 0
+			}
+		}
+		complete_effect = {
+			set_temp_variable = { temp1 = 0 }
+			every_owned_state = {
+				limit = {
+					synthetic_refinery < 2
+					industrial_complex > 0
+				}
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+				add_to_temp_variable = { temp1 = 1 }
+			}
+			subtract_from_variable = { treasury = temp1 }
+			custom_effect_tooltip = tooltip_green_energy_reconstruction
+			for_loop_effect = {
+				end = temp1
+				if = {
+					limit = {
+						check_variable = { party_pop_array^17 < 0.50 }
+					}
+					set_temp_variable = { party_index = 17 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	EU_USoE_break_environmental_sanctions_decision = {
+		target_root_trigger = {
+			has_idea = USoE_environmental_sanctions
+		}
+		target_trigger = {
+			FROM = {
+				has_country_flag = USoE
+			}
+		}
+		target_array = global.EU_potential
+		cost = 100
+
+		complete_effect = {
+			remove_ideas = USoE_environmental_sanctions
+			set_country_flag = break_environmental_sanctions
+			FROM = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = betrayed_our_cause
+				}
+				reverse_add_opinion_modifier = {
+					target = ROOT
+					modifier = betrayed_our_cause
+				}
+			}
+			FROM = {
+				create_wargoal = {
+					type = topple_government
+					target = ROOT
+				}
+			}
+			FROM = {
+				country_event = {
+					id = USoEevent.7
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_global_flag = fossil_energy_pact }
+					NOT = {	is_in_faction = yes }
+				}
+				create_faction = Fossil_Energy_Pact_faction
+				set_global_flag = fossil_energy_pact
+				set_country_flag = fossil_energy_pact
+			}
+			else_if = {
+				limit = {
+					has_global_flag = fossil_energy_pact
+					NOT = {	is_in_faction = yes }
+				}
+				random_country = {
+					limit = {
+						has_country_flag = fossil_energy_pact
+						is_faction_leader = yes
+					}
+					THIS = { add_to_faction = ROOT }
+				}
+				set_country_flag = fossil_energy_pact
+			}
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 1
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.7
+				}
+			}
+			modifier = {
+				add = 1
+				any_country = {
+					if = {
+						limit = {
+							has_country_flag = fossil_energy_pact
+							is_faction_leader = yes
+						}
+						strength_ratio = {
+							tag = FROM
+							ratio > 0.5
+						}
+					}
+				}
+				strength_ratio = {
+					tag = FROM
+					ratio > 0.1
+				}
+			}
+			modifier = {
+				add = 1
+				any_country = {
+					if = {
+						limit = {
+							has_country_flag = fossil_energy_pact
+							is_faction_leader = yes
+						}
+						strength_ratio = {
+							tag = FROM
+							ratio > 0.7
+						}
+					}
+				}
+			}
+			modifier = {
+				add = 1
+				ic_ratio = {
+					tag = FROM
+					ratio > 0.6
+				}
+			}
+		}
+	}
+}
