@@ -16,14 +16,46 @@ UOE_eoc_prod_track = {
 				log = "adding to low states"
 			}
 		}
+		set_variable = { high_prod_state_count = 0 }
+		set_variable = { low_prod_state_count = 0 }
+
+		if = { check_variable = { gdp_per_capita_tracker = 0 }
+			set_variable = { gdp_per_capita_tracker = gdp_per_capita }
+			set_variable = { gdp_capita_increase = 0 }
+		} else = {
+			monthly_gdp_c_percent_increase = yes
+			set_variable = { gdp_capita_increase = gdp_math_tracker }
+		}
+
+		for_each_loop = {
+			array = high_prod_state
+			add_to_variable = { high_prod_state_count = 1 }
+		}
+
+		for_each_loop = {
+			array = low_prod_state
+			add_to_variable = { low_prod_state_count = 1 }
+		}
+
+		if = { limit = { check_variable = { low_prod_state_count > high_prod_state_count } }
+			add_to_temp_variable = { total_state = low_prod_state_count }
+			add_to_temp_variable = { total_state = high_prod_state_count }
+			set_temp_variable = { low_prod_add = low_prod_state_count }
+			divide_temp_variable = { low_prod_add = total_state }
+			divide_temp_variable = { low_prod_add = 10 }
+			add_to_variable = { low_prod_unrest = low_prod_add }
+		}
+
+		if = { limit = { check_variable = { gdp_capita_increase < 0.02 } }
+			set_temp_variable = { high_prod_add = 0.02 }
+			subract_from_temp_variable = { high_prod_add = gdp_capita_increase }
+			add_to_variable = { high_prod_unrest = high_prod_add }
+		}
 	}
 }
 
-UOE_large_count = {
-	for_each_loop = {
-		array = UOE.high_prod_state
-
-		add_to_temp_variable = { counterupper = 1 }
-	}
-	log = "the count is [?counterupper]"
+monthly_gdp_c_percent_increase = {
+	set_temp_variable = { gdp_math_tracker = gdp_per_capita }
+	subtract_temp_variable = { gdp_math_tracker = gdp_per_capita_tracker }
+	divide_temp_variable = { gdp_math_tracker = gdp_per_capita_tracker }
 }
