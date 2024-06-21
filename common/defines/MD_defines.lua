@@ -148,7 +148,7 @@
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
 	NDefines.NCountry.FUEL_LEASE_CONVOY_RATIO = 0.00005 -- 0.0005
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
-	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.01 --0.01
+	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.008 --0.015 in vanilla, reduced from the 0.01 in MD to accomdate for the migration system
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
