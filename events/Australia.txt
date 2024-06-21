@@ -1,3 +1,4 @@
+#By Iranian Maggot
 add_namespace = australia_md
 
 #the Automotive unions
@@ -548,5 +549,206 @@ country_event = { #Choose IFV: choose Redback/CVSweden/Ajax/LynxOF
 		name = australia_md.17.o4 #Amazing
 		add_ideas = AST_lynxOF
 		log = "[GetDateText]: [This.GetName]: australia_md.17.o4 executed"
+	}
+}
+country_event = { #Deciding Afghanistan Intervention Force
+	id = australia_md.18
+	title = australia_md.18.t
+	desc = australia_md.18.desc
+	picture = generic_factory
+
+	is_triggered_only = yes
+
+	option = {
+		name = australia_md.18.o1 #Small Force, 2 divisions
+		set_country_flag = AST_small_force
+		country_event = { id = australia_md.19 days = 0 }
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		multiply_variable = { AST_war_crime_afghanistan_chance = 0.75 }
+		log = "[GetDateText]: [This.GetName]: australia_md.18.o1 executed"
+	}
+	option = {
+		name = australia_md.18.o2 #Medium Force, 4 divisions
+		set_country_flag = AST_medium_force
+		country_event = { id = australia_md.19 days = 0 }
+		set_temp_variable = { treasury_change = -12 }
+		modify_treasury_effect = yes
+		log = "[GetDateText]: [This.GetName]: australia_md.18.o2 executed"
+	}
+	option = {
+		name = australia_md.18.o3 #Large Force, 6 divisions
+		set_country_flag = AST_large_force
+		country_event = { id = australia_md.19 days = 0 }
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+		multiply_variable = { AST_war_crime_afghanistan_chance = 1.25 }
+		log = "[GetDateText]: [This.GetName]: australia_md.18.o3 executed"
+	}
+}
+country_event = { #Deciding Afghanistan General --- sets the Afghanistan stuff in motion for 2 YEARS
+	id = australia_md.19
+	title = australia_md.19.t
+	desc = australia_md.19.desc
+	picture = generic_factory
+
+	is_triggered_only = yes
+
+	option = {
+		name = australia_md.19.o1 #Send this guy
+		set_country_flag = AST_general1
+		multiply_variable = { AST_war_crime_afghanistan_chance = 0.75 }
+		set_variable = { var = AST_war_crime_afghanistan_chance_compliment value = 100-AST_war_crime_afghanistan_chance }
+		hidden_effect = {
+			random_list = {
+				AST_war_crime_afghanistan_chance = { set_country_flag = AST_war_crime }
+				AST_war_crime_afghanistan_chance_compliment = { }
+			}
+			country_event = { id = australia_md.20 days = 730 }
+		}
+		if = {
+			limit = { has_country_flag = AST_small_force }
+			#2 divs disappear
+		}
+		else_if = {
+			limit = { has_country_flag = AST_medium_force }
+			#4 divs disappear
+		}
+		else = {
+			#6 divs disappear
+		}
+		log = "[GetDateText]: [This.GetName]: australia_md.19.o1 executed"
+	}
+	option = {
+		name = australia_md.19.o2 #Send that guy
+		set_country_flag = AST_general2
+		set_variable = { var = AST_war_crime_afghanistan_chance_compliment value = 100-AST_war_crime_afghanistan_chance }
+		hidden_effect = {
+			random_list = {
+				AST_war_crime_afghanistan_chance = { set_country_flag = AST_war_crime }
+				AST_war_crime_afghanistan_chance_compliment = { }
+			}
+			country_event = { id = australia_md.20 days = 730 }
+		}
+		log = "[GetDateText]: [This.GetName]: australia_md.19.o2 executed"
+	}
+	option = {
+		name = australia_md.19.o3 #Send the other guy
+		set_country_flag = AST_general3
+		multiply_variable = { AST_war_crime_afghanistan_chance = 1.25 }
+		set_variable = { var = AST_war_crime_afghanistan_chance_compliment value = 100-AST_war_crime_afghanistan_chance }
+		hidden_effect = {
+			random_list = {
+				AST_war_crime_afghanistan_chance = { set_country_flag = AST_war_crime }
+				AST_war_crime_afghanistan_chance_compliment = { }
+			}
+			country_event = { id = australia_md.20 days = 730 }
+		}
+		log = "[GetDateText]: [This.GetName]: australia_md.19.o3 executed"
+	}
+}
+country_event = { #Our boys have returned home!
+	id = australia_md.20
+	title = australia_md.20.t
+	desc = australia_md.20.desc
+	picture = generic_factory
+
+	is_triggered_only = yes
+
+	option = {
+		name = australia_md.20.o1 #Glad to see they returned safely
+		#Troops that went, return as diehards
+		#General that was chosen returns and levels up twice, gets +1 attack, +2 defense, +3 logistics, +2 planning. Also gets some traits unlocked
+		if = {
+			limit = { has_country_flag = AST_small_force }
+			army_experience = 50
+			add_war_support = 0.03
+		}
+		else_if = {
+			limit = { has_country_flag = AST_medium_force }
+			army_experience = 100
+			add_war_support = 0.06
+		}
+		else = {
+			army_experience = 150
+			add_war_support = 0.10
+		}
+		hidden_effect = {
+			if = {
+				limit = { has_country_flag = AST_war_crime }
+				country_event = { id = australia_md.21 months = 48 }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: australia_md.20.o1 executed"
+	}
+}
+country_event = { #International Community Rattled by Testimonies of Afghanistani Village Claiming Australian War Crimes
+	id = australia_md.21
+	title = australia_md.21.t
+	desc = australia_md.21.desc
+	picture = generic_factory
+
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		months = 12
+	}
+
+	immediate = {
+		add_war_support = -0.05
+	}
+
+	option = {
+		name = australia_md.21.o1 #He will face the Federal Court of Australia and be discharged from the military
+		country_event = { id = australia_md.22 months = 2 }
+		log = "[GetDateText]: [This.GetName]: australia_md.21.o1 executed"
+	}
+	option = {
+		name = australia_md.21.o2 #Give him up to the ICC
+		country_event = { id = australia_md.23 months = 2 }
+		log = "[GetDateText]: [This.GetName]: australia_md.21.o2 executed"
+	}
+}
+country_event = { #Is convicted by the Federal Court of Australia
+	id = australia_md.22
+	title = australia_md.22.t
+	desc = australia_md.22.desc
+	picture = generic_factory
+
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		months = 4
+	}
+
+	option = { #Good riddance
+		name = australia_md.22.o1
+		add_stability = 0.03
+		block_intervention_increase = yes
+		decrease_intervention_law_effect = yes
+		log = "[GetDateText]: [This.GetName]: australia_md.22.o1 executed"
+	}
+}
+country_event = { #The ICC has found him guilty
+	id = australia_md.23
+	title = australia_md.23.t
+	desc = australia_md.23.desc
+	picture = generic_factory
+
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		months = 10
+	}
+
+	option = { #That will take a toll on our reputation
+		name = australia_md.23.o1
+		add_stability = -0.03
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		set_temp_variable = { temp_outlook_increase = -0.01 }
+		add_relative_party_popularity = yes
+		add_popularity = { ideology = neutrality popularity = 0.02 }
+		log = "[GetDateText]: [This.GetName]: australia_md.23.o1 executed"
 	}
 }
