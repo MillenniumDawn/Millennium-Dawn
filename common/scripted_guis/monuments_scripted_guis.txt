@@ -1,0 +1,2480 @@
+scripted_gui = {
+	open_state_monuments_window = {
+		context_type = selected_state_context
+
+		window_name = "open_state_monuments_window"
+		parent_window_token = selected_state_view
+
+		visible = {
+			state_has_any_monument = yes
+			ROOT = {
+				is_ai = no
+			}
+		}
+
+		effects = {
+			open_button_click = {
+				ROOT = {
+					clear_variable = hide_state_monuments_window
+				}
+			}
+			close_button_click = {
+				ROOT = {
+					set_variable = { hide_state_monuments_window = 1 }
+				}
+			}
+		}
+
+		triggers = {
+			open_button_visible = {
+				ROOT = {
+					has_variable = hide_state_monuments_window
+				}
+			}
+			close_button_visible = {
+				ROOT = {
+					NOT = { has_variable = hide_state_monuments_window }
+				}
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	state_monuments_panel_window = {
+		context_type = selected_state_context
+
+		window_name = "state_monuments_panel_window"
+		parent_window_token = selected_state_view
+
+		visible = {
+			state_has_any_monument = yes
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	state_monuments_window = {
+		context_type = selected_state_context
+
+		window_name = "state_monuments_window"
+		parent_window_name = "state_monuments_panel_window_instance"
+
+		visible = {
+			state_has_any_monument = yes
+			ROOT = {
+				OR = {
+					is_ai = yes
+					NOT = { has_variable = hide_state_monuments_window }
+				}
+			}
+		}
+
+		effects = {
+			close_button_click = {
+				ROOT = {
+					set_variable = { hide_state_monuments_window = 1 }
+				}
+			}
+			build_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					start_monument_construction = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 1 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+			}
+			upgrade_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					start_monument_construction = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 2 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+			}
+			cancel_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					cancel_monument_construction = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 3 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+			}
+			deactivate_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					deactivate_monument_effect = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 4 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+				ROOT = {
+					update_global_monuments_gui = yes
+				}
+			}
+			activate_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					activate_monument_effect = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 5 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+				ROOT = {
+					update_global_monuments_gui = yes
+				}
+			}
+
+			get_upgrade_effects_click = {
+				set_temp_variable = { monument_id = v }
+				meta_effect = {
+					text = {
+						set_temp_variable = { level = monument_[ID]_level }
+					}
+					ID = "[?monument_id]"
+				}
+				add_to_temp_variable = { level = 1 }
+				effect_tooltip = {
+					if = {
+						limit = {
+							check_variable = { level = 1 }
+						}
+						monument_on_build_effect = yes
+					}
+					else_if = {
+						limit = {
+							NOT = { check_variable = { level > 3 } }
+						}
+						monument_on_upgrade_effect = yes
+					}
+				}
+				set_temp_variable = { level = 0 }
+			}
+		}
+
+		triggers = {
+			get_modifier_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				can_use_monument_bonuses = yes
+			}
+			get_modifier_level_0_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						set_temp_variable = { level = 1 }
+						has_less_monument_level = yes
+					}
+					can_use_monument_bonuses = yes
+				}
+			}
+			get_modifier_level_1_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						set_temp_variable = { level = 2 }
+						has_less_monument_level = yes
+					}
+					can_use_monument_bonuses = yes
+				}
+			}
+			get_modifier_level_2_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						set_temp_variable = { level = 3 }
+						has_less_monument_level = yes
+					}
+					can_use_monument_bonuses = yes
+				}
+			}
+			get_modifier_level_3_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				can_use_monument_bonuses = yes
+			}
+			get_upgrade_effects_visible = {
+				hidden_trigger = {
+					always = no
+				}
+			}
+			monument_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+			level_1_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+			level_2_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 2 }
+				has_at_least_monument_level = yes
+			}
+			level_3_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 3 }
+				has_at_least_monument_level = yes
+			}
+			build_button_visible = {
+				set_temp_variable = { monument_id = v }
+				monument_build_potential_trigger = yes
+			}
+			build_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				monument_build_trigger = yes
+			}
+			upgrade_button_visible = {
+				set_temp_variable = { monument_id = v }
+				monument_upgrade_potential_trigger = yes
+			}
+			upgrade_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				monument_upgrade_trigger = yes
+			}
+			deactivate_button_visible = {
+				set_temp_variable = { monument_id = v }
+				potential_can_deactivate_monument = yes
+				if = {
+					limit = {
+						OR = {
+							monument_build_potential_trigger = yes
+							monument_upgrade_potential_trigger = yes
+						}
+					}
+					set_temp_variable = { deactivate_button_y = 30 }
+				}
+				else = {
+					set_temp_variable = { deactivate_button_y = 0 }
+				}
+			}
+			deactivate_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				can_deactivate_monument = yes
+			}
+			activate_button_visible = {
+				set_temp_variable = { monument_id = v }
+				potential_can_activate_monument = yes
+				if = {
+					limit = {
+						OR = {
+							monument_build_potential_trigger = yes
+							monument_upgrade_potential_trigger = yes
+						}
+					}
+					set_temp_variable = { activate_button_y = 30 }
+				}
+				else = {
+					set_temp_variable = { activate_button_y = 0 }
+				}
+			}
+			activate_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				can_activate_monument = yes
+			}
+			progress_bar_bg_visible = {
+				has_monument_construction = yes
+				check_variable = { monument_construction_id = v }
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+			}
+			progress_bar_visible = {
+				has_monument_construction = yes
+				check_variable = { monument_construction_id = v }
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+				set_temp_variable = { monument_progress = 0 }
+				if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_1 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_1 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_2 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_2 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_3 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_3 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_4 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_4 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_5 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_5 }
+				}
+				set_temp_variable = { monument_progress_days = monument_progress }
+				subtract_from_temp_variable = { monument_progress = monument_construction_time }
+				multiply_temp_variable = { monument_progress = -1 }
+				divide_temp_variable = { monument_progress = monument_construction_time }
+				multiply_temp_variable = { monument_progress = 100 }
+				round_temp_variable = monument_progress
+				clamp_temp_variable = {
+					var = monument_progress
+					min = 0
+					max = 100
+				}
+				check_variable = { monument_progress > 0 }
+			}
+			progress_bar_frame_visible = {
+				has_monument_construction = yes
+				check_variable = { monument_construction_id = v }
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+			}
+			cancel_button_visible = {
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+			}
+			natural_monument_icon_visible = {
+				set_temp_variable = { monument_id = v }
+				NOT = { monument_can_downgrade = yes }
+				NOT = { can_cancel_monument_construction = yes }
+			}
+			monument_not_active_overlay_icon_visible = {
+				set_temp_variable = { monument_id = v }
+				NOT = { can_use_monument_bonuses = yes }
+			}
+			monument_icon_frame_visible = {
+				set_temp_variable = { monument_id = v }
+				can_use_monument_bonuses = yes
+			}
+			monument_icon_frame_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+			monument_icon_frame_disabled_visible = {
+				set_temp_variable = { monument_id = v }
+				NOT = { can_use_monument_bonuses = yes }
+			}
+			monument_icon_frame_disabled_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+		}
+
+		properties = {
+			monument_icon = {
+				image = "[This.GetMonumentImage][This.GetMonumentImageDisabled]"
+			}
+			progress_bar = {
+				frame = monument_progress
+			}
+			deactivate_button = {
+				y = deactivate_button_y
+			}
+			activate_button = {
+				y = activate_button_y
+			}
+		}
+
+		dynamic_lists = {
+			monuments_gridbox = {
+				array = state_monuments_array
+				entry_container = monument_list_entry
+
+				ai_weights = {
+					build_button_click = {
+						ai_will_do = {
+							base = 0
+							modifier = {
+								set_temp_variable = { monument_id = v }
+								AI_wants_to_upgrade_monument = yes
+								add = ai_monument_score
+							}
+							modifier = {
+								factor = 0
+								ROOT = {
+									NOT = { AI_has_required_amount_of_PP_for_monuments = yes }
+								}
+							}
+							modifier = {
+								factor = 0
+								ROOT = {
+									NOT = { has_free_monument_upgrade_slot = yes }
+								}
+							}
+							modifier = {
+								factor = 0
+								has_monument_construction = yes
+							}
+							modifier = {
+								factor = 0
+								set_temp_variable = { monument_id = v }
+								OR = {
+									NOT = { monument_build_potential_trigger = yes }
+									NOT = { monument_build_trigger = yes }
+								}
+							}
+						}
+					}
+					upgrade_button_click = {
+						ai_will_do = {
+							base = 0
+							modifier = {
+								set_temp_variable = { monument_id = v }
+								AI_wants_to_upgrade_monument = yes
+								add = ai_monument_score
+							}
+							modifier = {
+								factor = 0
+								ROOT = {
+									NOT = { AI_has_required_amount_of_PP_for_monuments = yes }
+								}
+							}
+							modifier = {
+								factor = 0
+								ROOT = {
+									NOT = { has_free_monument_upgrade_slot = yes }
+								}
+							}
+							modifier = {
+								factor = 0
+								has_monument_construction = yes
+							}
+							modifier = {
+								factor = 0
+								set_temp_variable = { monument_id = v }
+								OR = {
+									NOT = { monument_upgrade_potential_trigger = yes }
+									NOT = { monument_upgrade_trigger = yes }
+								}
+							}
+						}
+					}
+					cancel_button_click = {
+						ai_will_do = {
+							factor = 0
+						}
+					}
+					deactivate_button_click = {
+						ai_will_do = {
+							factor = 0
+						}
+					}
+					activate_button_click = {
+						ai_will_do = {
+							factor = 100
+						}
+					}
+				}
+			}
+		}
+
+		ai_enabled = {
+			always = yes
+		}
+
+		ai_check = {
+			AI_has_required_amount_of_PP_for_monuments = yes
+			has_free_monument_upgrade_slot = yes
+		}
+
+		ai_test_interval = 672
+		ai_test_variance = 0.5
+
+		ai_test_scopes = test_self_controlled_states
+
+		ai_check_scope = {
+			OR = {
+				is_owned_by = ROOT
+				scope_for_monument_bonus_receiver_is_controller = yes
+			}
+			is_controlled_by = ROOT
+			state_has_any_monument = yes
+			has_no_monument_construction = yes
+			any_of = {
+				array = state_monuments_array
+				set_temp_variable = { monument_id = v }
+				OR = {
+					AND = {
+						monument_build_potential_trigger = yes
+						monument_build_trigger = yes
+					}
+					AND = {
+						monument_upgrade_potential_trigger = yes
+						monument_upgrade_trigger = yes
+					}
+				}
+			}
+		}
+
+		ai_max_weight_taken_per_test = 10
+	}
+
+	monument_confirm_popup_window = {
+		context_type = player_context
+
+		window_name = "monument_confirm_popup_window"
+
+		visible = {
+			is_ai = no
+			has_variable = show_monument_confirm_popup_window
+		}
+
+		effects = {
+			accept_button_click = {
+				if = {
+					limit = {
+						OR = {
+							check_variable = { show_monument_confirm_popup_window = 1 }
+							check_variable = { show_monument_confirm_popup_window = 2 }
+						}
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						start_monument_construction = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 3 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						cancel_monument_construction = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 4 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						deactivate_monument_effect = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 5 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						activate_monument_effect = yes
+					}
+				}
+				clear_variable = monument_to_construct
+				clear_variable = show_monument_confirm_popup_window
+				clear_variable = monument_construction_state
+				if = {
+					limit = {
+						has_variable = show_global_monuments_list_window
+					}
+					set_global_monuments_window_states = yes
+				}
+				update_global_monuments_gui = yes
+			}
+			cancel_button_click = {
+				clear_variable = show_monument_confirm_popup_window
+				clear_variable = monument_to_construct
+				clear_variable = monument_construction_state
+				update_global_monuments_gui = yes
+			}
+		}
+
+		triggers = {
+			accept_button_click_enabled = {
+				if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 1 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						monument_build_potential_trigger = yes
+						monument_build_trigger = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 2 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						monument_upgrade_potential_trigger = yes
+						monument_upgrade_trigger = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 3 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						can_cancel_monument_construction = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 4 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						potential_can_deactivate_monument = yes
+						can_deactivate_monument = yes
+					}
+				}
+				else_if = {
+					limit = {
+						check_variable = { show_monument_confirm_popup_window = 5 }
+					}
+					set_temp_variable = { monument_id = monument_to_construct }
+					var:monument_construction_state = {
+						potential_can_activate_monument = yes
+						can_activate_monument = yes
+					}
+				}
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	open_global_monuments_list_window = {
+		context_type = player_context
+
+		window_name = "open_global_monuments_list_window"
+		parent_window_token = top_bar
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			is_ai = no
+		}
+
+		effects = {
+			open_button_click = {
+				if = {
+					limit = {
+						has_variable = show_global_monuments_list_window
+					}
+					set_temp_variable = { keep_filters = 1 }
+					clear_global_monuments_window_variables = yes
+					scoped_sound_effect = "click_close"
+				}
+				else = {
+					open_global_monuments_window = yes
+				}
+			}
+		}
+
+		properties = {
+			open_button = {
+				x = monument_list_open_button_x?0
+				y = monument_list_open_button_y?0
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	global_monuments_list_window = {
+		context_type = player_context
+
+		window_name = "global_monuments_list_window"
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			is_ai = no
+			has_variable = show_global_monuments_list_window
+		}
+
+		effects = {
+			close_button_click = {
+				set_temp_variable = { keep_filters = 1 }
+				clear_global_monuments_window_variables = yes
+			}
+			help_button_click = {
+				if = {
+					limit = {
+						has_variable = show_global_monuments_list_help_window
+					}
+					clear_variable = show_global_monuments_list_help_window
+					scoped_sound_effect = "click_close"
+				}
+				else = {
+					set_variable = { show_global_monuments_list_help_window = 1 }
+					scoped_sound_effect = "monuments_help_sound"
+				}
+				update_global_monuments_gui = yes
+			}
+			owned_states_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = show_only_owned_monuments
+					}
+					clr_country_flag = show_only_owned_monuments
+					if = {
+						limit = {
+							NOT = { scope_for_monument_bonus_receiver_is_controller = yes }
+						}
+						clr_country_flag = show_only_monuments_under_construction
+						clr_country_flag = show_only_possible_monuments_constructions
+					}
+					if = {
+						limit = {
+							check_variable = { show_global_monuments_filter_selection_window = 1 }
+						}
+						clear_variable = show_global_monuments_filter_selection_window
+					}
+				}
+				else = {
+					set_country_flag = show_only_owned_monuments
+				}
+				set_global_monuments_window_states = yes
+			}
+			controlled_states_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = show_only_controlled_monuments
+					}
+					clr_country_flag = show_only_monuments_under_construction
+					clr_country_flag = show_only_possible_monuments_constructions
+					clr_country_flag = show_only_controlled_monuments
+					if = {
+						limit = {
+							check_variable = { show_global_monuments_filter_selection_window = 1 }
+						}
+						clear_variable = show_global_monuments_filter_selection_window
+					}
+				}
+				else = {
+					set_country_flag = show_only_controlled_monuments
+				}
+				set_global_monuments_window_states = yes
+			}
+			monuments_under_construction_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = show_only_monuments_under_construction
+					}
+					clr_country_flag = show_only_monuments_under_construction
+				}
+				else = {
+					set_country_flag = show_only_monuments_under_construction
+					clr_country_flag = show_only_possible_monuments_constructions
+				}
+				set_global_monuments_window_states = yes
+			}
+			possible_monuments_constructions_checkbox_click = {
+				if = {
+					limit = {
+						has_country_flag = show_only_possible_monuments_constructions
+					}
+					clr_country_flag = show_only_possible_monuments_constructions
+				}
+				else = {
+					set_country_flag = show_only_possible_monuments_constructions
+					clr_country_flag = show_only_monuments_under_construction
+				}
+				set_global_monuments_window_states = yes
+			}
+			country_flag_button_click = {
+				if = {
+					limit = {
+						check_variable = { show_global_monuments_filter_selection_window = 1 }
+					}
+					clear_variable = show_global_monuments_filter_selection_window
+				}
+				else = {
+					set_variable = { show_global_monuments_filter_selection_window = 1 }
+				}
+				update_global_monuments_gui = yes
+			}
+			country_flag_button_right_click = {
+				set_variable = { global_monuments_country = ROOT.id }
+				if = {
+					limit = {
+						check_variable = { show_global_monuments_filter_selection_window = 1 }
+					}
+					clear_variable = show_global_monuments_filter_selection_window
+				}
+				set_global_monuments_window_states = yes
+			}
+			status_button_click = {
+				if = {
+					limit = {
+						check_variable = { show_global_monuments_filter_selection_window = 2 }
+					}
+					clear_variable = show_global_monuments_filter_selection_window
+				}
+				else = {
+					set_variable = { show_global_monuments_filter_selection_window = 2 }
+				}
+				update_global_monuments_gui = yes
+			}
+			type_button_click = {
+				if = {
+					limit = {
+						check_variable = { show_global_monuments_filter_selection_window = 3 }
+					}
+					clear_variable = show_global_monuments_filter_selection_window
+				}
+				else = {
+					set_variable = { show_global_monuments_filter_selection_window = 3 }
+				}
+				update_global_monuments_gui = yes
+			}
+			continent_button_click = {
+				if = {
+					limit = {
+						check_variable = { show_global_monuments_filter_selection_window = 4 }
+					}
+					clear_variable = show_global_monuments_filter_selection_window
+				}
+				else = {
+					set_variable = { show_global_monuments_filter_selection_window = 4 }
+				}
+				update_global_monuments_gui = yes
+			}
+			level_button_click = {
+				if = {
+					limit = {
+						check_variable = { show_global_monuments_filter_selection_window = 5 }
+					}
+					clear_variable = show_global_monuments_filter_selection_window
+				}
+				else = {
+					set_variable = { show_global_monuments_filter_selection_window = 5 }
+				}
+				update_global_monuments_gui = yes
+			}
+			reset_button_click = {
+				set_temp_variable = { current_window_var = show_global_monuments_list_window }
+				if = {
+					limit = {
+						has_variable = show_global_monuments_list_help_window
+					}
+					set_temp_variable = { help_window = 1 }
+				}
+				clear_global_monuments_window_variables = yes
+				open_global_monuments_window = yes
+				if = {
+					limit = {
+						check_variable = { help_window = 1 }
+					}
+					set_variable = { show_global_monuments_list_help_window = 1 }
+				}
+				set_variable = { show_global_monuments_list_window = current_window_var }
+				update_global_monuments_gui = yes
+			}
+			monument_state_button_click = {
+				ROOT = {
+					goto_state = PREV
+					update_global_monuments_gui = yes
+				}
+			}
+			build_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					start_monument_construction = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 1 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+				ROOT = {
+					update_global_monuments_gui = yes
+				}
+			}
+			upgrade_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					start_monument_construction = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 2 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+				ROOT = {
+					update_global_monuments_gui = yes
+				}
+			}
+			cancel_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					cancel_monument_construction = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 3 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+				ROOT = {
+					update_global_monuments_gui = yes
+				}
+			}
+			deactivate_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					deactivate_monument_effect = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 4 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+				ROOT = {
+					update_global_monuments_gui = yes
+				}
+			}
+			activate_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						ROOT = {
+							is_ai = yes
+						}
+					}
+					activate_monument_effect = yes
+				}
+				else = {
+					ROOT = {
+						set_variable = { show_monument_confirm_popup_window = 5 }
+						set_variable = { monument_to_construct = monument_id }
+						set_variable = { monument_construction_state = PREV.id }
+					}
+				}
+				ROOT = {
+					update_global_monuments_gui = yes
+				}
+			}
+
+			get_upgrade_effects_click = {
+				set_temp_variable = { monument_id = v }
+				meta_effect = {
+					text = {
+						set_temp_variable = { level = monument_[ID]_level }
+					}
+					ID = "[?monument_id]"
+				}
+				add_to_temp_variable = { level = 1 }
+				effect_tooltip = {
+					if = {
+						limit = {
+							check_variable = { level = 1 }
+						}
+						monument_on_build_effect = yes
+					}
+					else_if = {
+						limit = {
+							NOT = { check_variable = { level > 3 } }
+						}
+						monument_on_upgrade_effect = yes
+					}
+				}
+				set_temp_variable = { level = 0 }
+			}
+		}
+
+		triggers = {
+			no_monuments_info_text_visible = {
+				check_variable = { total_num_of_shown_monuments < 1 }
+			}
+			owned_states_checkbox_visible = {
+				set_temp_variable = { owned_states_checkbox_y = 0 }
+				if = {
+					limit = {
+						has_country_flag = show_only_owned_monuments
+					}
+					set_temp_variable = { owned_states_checkbox_frame = 2 }
+				}
+				else = {
+					set_temp_variable = { owned_states_checkbox_frame = 1 }
+				}
+				if = {
+					limit = {
+						OR = {
+							scope_for_monument_bonus_receiver_is_controller = yes
+							has_country_flag = show_only_owned_monuments
+						}
+						has_country_flag = show_only_controlled_monuments
+						check_variable = { global_monuments_country = ROOT.id }
+					}
+					set_temp_variable = { owned_states_checkbox_y = -16 }
+				}
+			}
+			controlled_states_checkbox_visible = {
+				if = {
+					limit = {
+						has_country_flag = show_only_controlled_monuments
+					}
+					set_temp_variable = { controlled_states_checkbox_frame = 2 }
+				}
+				else = {
+					set_temp_variable = { controlled_states_checkbox_frame = 1 }
+				}
+				if = {
+					limit = {
+						OR = {
+							scope_for_monument_bonus_receiver_is_controller = yes
+							has_country_flag = show_only_owned_monuments
+						}
+						has_country_flag = show_only_controlled_monuments
+						check_variable = { global_monuments_country = ROOT.id }
+					}
+					set_temp_variable = { controlled_states_checkbox_y = -16 }
+				}
+			}
+			monuments_under_construction_checkbox_visible = {
+				OR = {
+					scope_for_monument_bonus_receiver_is_controller = yes
+					has_country_flag = show_only_owned_monuments
+				}
+				has_country_flag = show_only_controlled_monuments
+				check_variable = { global_monuments_country = ROOT.id }
+				if = {
+					limit = {
+						has_country_flag = show_only_monuments_under_construction
+					}
+					set_temp_variable = { monuments_under_construction_checkbox_frame = 2 }
+				}
+				else = {
+					set_temp_variable = { monuments_under_construction_checkbox_frame = 1 }
+				}
+			}
+			monuments_under_construction_text_visible = {
+				OR = {
+					scope_for_monument_bonus_receiver_is_controller = yes
+					has_country_flag = show_only_owned_monuments
+				}
+				has_country_flag = show_only_controlled_monuments
+				check_variable = { global_monuments_country = ROOT.id }
+			}
+			possible_monuments_constructions_checkbox_visible = {
+				OR = {
+					scope_for_monument_bonus_receiver_is_controller = yes
+					has_country_flag = show_only_owned_monuments
+				}
+				has_country_flag = show_only_controlled_monuments
+				check_variable = { global_monuments_country = ROOT.id }
+				if = {
+					limit = {
+						has_country_flag = show_only_possible_monuments_constructions
+					}
+					set_temp_variable = { possible_monuments_constructions_checkbox_frame = 2 }
+				}
+				else = {
+					set_temp_variable = { possible_monuments_constructions_checkbox_frame = 1 }
+				}
+			}
+			possible_monuments_constructions_text_visible = {
+				OR = {
+					scope_for_monument_bonus_receiver_is_controller = yes
+					has_country_flag = show_only_owned_monuments
+				}
+				has_country_flag = show_only_controlled_monuments
+				check_variable = { global_monuments_country = ROOT.id }
+			}
+			country_flag_button_visible = {
+				OR = {
+					has_country_flag = show_only_owned_monuments
+					has_country_flag = show_only_controlled_monuments
+				}
+			}
+			country_flag_frame_visible = {
+				OR = {
+					has_country_flag = show_only_owned_monuments
+					has_country_flag = show_only_controlled_monuments
+				}
+			}
+			get_modifier_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				can_use_monument_bonuses = yes
+			}
+			get_modifier_level_0_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						set_temp_variable = { level = 1 }
+						has_less_monument_level = yes
+					}
+					can_use_monument_bonuses = yes
+				}
+			}
+			get_modifier_level_1_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						set_temp_variable = { level = 2 }
+						has_less_monument_level = yes
+					}
+					can_use_monument_bonuses = yes
+				}
+			}
+			get_modifier_level_2_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						set_temp_variable = { level = 3 }
+						has_less_monument_level = yes
+					}
+					can_use_monument_bonuses = yes
+				}
+			}
+			get_modifier_level_3_triggers_visible = {
+				hidden_trigger = {
+					always = no
+				}
+				set_temp_variable = { monument_id = v }
+				can_use_monument_bonuses = yes
+			}
+			get_upgrade_effects_visible = {
+				hidden_trigger = {
+					always = no
+				}
+			}
+			monument_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+			level_1_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+			level_2_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 2 }
+				has_at_least_monument_level = yes
+			}
+			level_3_icon_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 3 }
+				has_at_least_monument_level = yes
+			}
+			can_use_monument_on_conquest_icon_visible = {
+				OR = {
+					AND = {
+						NOT = { scope_for_monument_bonus_receiver_is_controller = yes }
+						NOT = { is_owned_by = ROOT }
+					}
+					AND = {
+						scope_for_monument_bonus_receiver_is_controller = yes
+						NOT = { is_controlled_by = ROOT }
+					}
+				}
+				set_temp_variable = { monument_id = v }
+				monument_can_downgrade = yes
+				set_temp_variable = { bonus_target = ROOT.id }
+				set_temp_variable = { ignore_owned_controlled = 1 }
+				set_temp_variable = { overwrite_bonus_target = 1 }
+				can_use_monument_bonuses_ignore_disabled_monument_condition = yes
+			}
+			cannot_use_monument_on_conquest_icon_visible = {
+				OR = {
+					AND = {
+						NOT = { scope_for_monument_bonus_receiver_is_controller = yes }
+						NOT = { is_owned_by = ROOT }
+					}
+					AND = {
+						scope_for_monument_bonus_receiver_is_controller = yes
+						NOT = { is_controlled_by = ROOT }
+					}
+				}
+				set_temp_variable = { monument_id = v }
+				monument_can_downgrade = yes
+				set_temp_variable = { bonus_target = ROOT.id }
+				set_temp_variable = { ignore_owned_controlled = 1 }
+				set_temp_variable = { overwrite_bonus_target = 1 }
+				NOT = { can_use_monument_bonuses_ignore_disabled_monument_condition = yes }
+			}
+			build_button_visible = {
+				set_temp_variable = { monument_id = v }
+				monument_build_potential_trigger = yes
+				NOT = { check_variable = { monument_construction_id = monument_id } }
+				set_temp_variable = { build_button_x = 0 }
+				if = {
+					limit = {
+						NOT = { monument_can_downgrade = yes }
+					}
+					set_temp_variable = { build_button_x = -20 }
+				}
+			}
+			build_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				monument_build_trigger = yes
+			}
+			upgrade_button_visible = {
+				set_temp_variable = { monument_id = v }
+				monument_upgrade_potential_trigger = yes
+				NOT = { check_variable = { monument_construction_id = monument_id } }
+				set_temp_variable = { upgrade_button_x = 0 }
+				if = {
+					limit = {
+						NOT = { monument_can_downgrade = yes }
+					}
+					set_temp_variable = { upgrade_button_x = -20 }
+				}
+			}
+			upgrade_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				monument_upgrade_trigger = yes
+			}
+			deactivate_button_visible = {
+				set_temp_variable = { monument_id = v }
+				potential_can_deactivate_monument = yes
+				if = {
+					limit = {
+						OR = {
+							monument_build_potential_trigger = yes
+							monument_upgrade_potential_trigger = yes
+						}
+					}
+					set_temp_variable = { deactivate_button_y = -30 }
+				}
+				else = {
+					set_temp_variable = { deactivate_button_y = 0 }
+				}
+			}
+			deactivate_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				can_deactivate_monument = yes
+			}
+			activate_button_visible = {
+				set_temp_variable = { monument_id = v }
+				potential_can_activate_monument = yes
+				if = {
+					limit = {
+						OR = {
+							monument_build_potential_trigger = yes
+							monument_upgrade_potential_trigger = yes
+						}
+					}
+					set_temp_variable = { activate_button_y = -30 }
+				}
+				else = {
+					set_temp_variable = { activate_button_y = 0 }
+				}
+			}
+			activate_button_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				can_activate_monument = yes
+			}
+			progress_bar_bg_visible = {
+				has_monument_construction = yes
+				check_variable = { monument_construction_id = v }
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+			}
+			progress_bar_visible = {
+				has_monument_construction = yes
+				check_variable = { monument_construction_id = v }
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+				set_temp_variable = { monument_progress = 0 }
+				if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_1 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_1 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_2 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_2 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_3 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_3 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_4 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_4 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { ROOT.monument_construction_state_5 = THIS.id }
+					}
+					set_temp_variable = { monument_progress = ROOT.days_mission_timeout@monument_construction_mission_5 }
+				}
+				set_temp_variable = { monument_progress_days = monument_progress }
+				subtract_from_temp_variable = { monument_progress = monument_construction_time }
+				multiply_temp_variable = { monument_progress = -1 }
+				divide_temp_variable = { monument_progress = monument_construction_time }
+				multiply_temp_variable = { monument_progress = 100 }
+				round_temp_variable = monument_progress
+				clamp_temp_variable = {
+					var = monument_progress
+					min = 0
+					max = 100
+				}
+				check_variable = { monument_progress > 0 }
+			}
+			progress_bar_frame_visible = {
+				has_monument_construction = yes
+				check_variable = { monument_construction_id = v }
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+			}
+			cancel_button_visible = {
+				set_temp_variable = { monument_id = v }
+				can_cancel_monument_construction = yes
+			}
+			natural_monument_icon_visible = {
+				set_temp_variable = { monument_id = v }
+				NOT = { monument_can_downgrade = yes }
+				NOT = { can_cancel_monument_construction = yes }
+			}
+			monument_not_active_overlay_icon_visible = {
+				set_temp_variable = { monument_id = v }
+				NOT = { can_use_monument_bonuses = yes }
+			}
+			monument_icon_frame_visible = {
+				set_temp_variable = { monument_id = v }
+				can_use_monument_bonuses = yes
+			}
+			monument_icon_frame_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+			monument_icon_frame_disabled_visible = {
+				set_temp_variable = { monument_id = v }
+				NOT = { can_use_monument_bonuses = yes }
+			}
+			monument_icon_frame_disabled_click_enabled = {
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = 1 }
+				has_at_least_monument_level = yes
+			}
+		}
+
+		properties = {
+			owned_states_checkbox = {
+				frame = owned_states_checkbox_frame
+				y = owned_states_checkbox_y
+			}
+			owned_states_text = {
+				y = owned_states_checkbox_y
+			}
+			controlled_states_checkbox = {
+				frame = controlled_states_checkbox_frame
+				y = controlled_states_checkbox_y
+			}
+			controlled_states_text = {
+				y = controlled_states_checkbox_y
+			}
+			monuments_under_construction_checkbox = {
+				frame = monuments_under_construction_checkbox_frame
+			}
+			possible_monuments_constructions_checkbox = {
+				frame = possible_monuments_constructions_checkbox_frame
+			}
+			country_flag_button = {
+				image = "[?global_monuments_country.GetFlag]"
+			}
+			monument_icon = {
+				image = "[This.GetMonumentImage][This.GetMonumentImageDisabled]"
+			}
+			progress_bar = {
+				frame = monument_progress
+			}
+			build_button = {
+				x = build_button_x?0
+			}
+			upgrade_button = {
+				x = upgrade_button_x?0
+			}
+			deactivate_button = {
+				y = deactivate_button_y
+			}
+			activate_button = {
+				y = activate_button_y
+			}
+		}
+
+		dynamic_lists = {
+			global_monuments_states_gridbox = {
+				array = global_monuments_states_array
+				entry_container = "global_monument_state_list_entry_[?Root.global_monuments_states_monuments_array^i]"
+				change_scope = yes
+			}
+			global_monuments_gridbox = {
+				array = state_monuments_array
+				entry_container = "[This.GetGlobalMonumentsEntryContainer]"
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	global_monuments_country_selection_window = {
+		context_type = player_context
+
+		window_name = "global_monuments_country_selection_window"
+		parent_window_name = "global_monuments_list_window_filters_anchor"
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			is_ai = no
+			check_variable = { show_global_monuments_filter_selection_window = 1 }
+		}
+
+		effects = {
+			close_button_click = {
+				clear_variable = show_global_monuments_filter_selection_window
+				update_global_monuments_gui = yes
+			}
+			entry_button_click = {
+				ROOT = {
+					if = {
+						limit = {
+							NOT = { tag = PREV }
+						}
+						clr_country_flag = show_only_monuments_under_construction
+						clr_country_flag = show_only_possible_monuments_constructions
+					}
+					set_variable = { global_monuments_country = PREV.id }
+					clear_variable = show_global_monuments_filter_selection_window
+					set_global_monuments_window_states = yes
+				}
+			}
+		}
+
+		properties = {
+			entry_flag = {
+				image = "[This.GetFlag]"
+			}
+		}
+
+		dynamic_lists = {
+			global_monuments_country_selection_gridbox = {
+				array = global.countries
+				entry_container = "[This.GetGlobalMonumentsCountrySelectionListEntry]"
+				change_scope = yes
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	global_monuments_continent_selection_window = {
+		context_type = player_context
+
+		window_name = "global_monuments_continent_selection_window"
+		parent_window_name = "global_monuments_list_window_filters_anchor"
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			is_ai = no
+			check_variable = { show_global_monuments_filter_selection_window = 4 }
+		}
+
+		effects = {
+			close_button_click = {
+				clear_variable = show_global_monuments_filter_selection_window
+				update_global_monuments_gui = yes
+			}
+			all_button_click = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_continent_selection_hide_europe
+							has_country_flag = global_monument_continent_selection_hide_north_america
+							has_country_flag = global_monument_continent_selection_hide_south_america
+							has_country_flag = global_monument_continent_selection_hide_australia
+							has_country_flag = global_monument_continent_selection_hide_africa
+							has_country_flag = global_monument_continent_selection_hide_asia
+							has_country_flag = global_monument_continent_selection_hide_middle_east
+						}
+					}
+					clear_global_monuments_window_continent_filters = yes
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_europe
+					set_country_flag = global_monument_continent_selection_hide_north_america
+					set_country_flag = global_monument_continent_selection_hide_south_america
+					set_country_flag = global_monument_continent_selection_hide_australia
+					set_country_flag = global_monument_continent_selection_hide_africa
+					set_country_flag = global_monument_continent_selection_hide_asia
+					set_country_flag = global_monument_continent_selection_hide_middle_east
+				}
+				set_global_monuments_window_states = yes
+			}
+			europe_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_europe
+					}
+					clr_country_flag = global_monument_continent_selection_hide_europe
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_europe
+				}
+				set_global_monuments_window_states = yes
+			}
+			north_america_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_north_america
+					}
+					clr_country_flag = global_monument_continent_selection_hide_north_america
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_north_america
+				}
+				set_global_monuments_window_states = yes
+			}
+			south_america_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_south_america
+					}
+					clr_country_flag = global_monument_continent_selection_hide_south_america
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_south_america
+				}
+				set_global_monuments_window_states = yes
+			}
+			australia_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_australia
+					}
+					clr_country_flag = global_monument_continent_selection_hide_australia
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_australia
+				}
+				set_global_monuments_window_states = yes
+			}
+			africa_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_africa
+					}
+					clr_country_flag = global_monument_continent_selection_hide_africa
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_africa
+				}
+				set_global_monuments_window_states = yes
+			}
+			asia_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_asia
+					}
+					clr_country_flag = global_monument_continent_selection_hide_asia
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_asia
+				}
+				set_global_monuments_window_states = yes
+			}
+			middle_east_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_middle_east
+					}
+					clr_country_flag = global_monument_continent_selection_hide_middle_east
+				}
+				else = {
+					set_country_flag = global_monument_continent_selection_hide_middle_east
+				}
+				set_global_monuments_window_states = yes
+			}
+		}
+
+		triggers = {
+			all_button_visible = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_continent_selection_hide_europe
+							has_country_flag = global_monument_continent_selection_hide_north_america
+							has_country_flag = global_monument_continent_selection_hide_south_america
+							has_country_flag = global_monument_continent_selection_hide_australia
+							has_country_flag = global_monument_continent_selection_hide_africa
+							has_country_flag = global_monument_continent_selection_hide_asia
+							has_country_flag = global_monument_continent_selection_hide_middle_east
+						}
+					}
+					set_temp_variable = { all_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { all_button_frame = 2 }
+				}
+			}
+			europe_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_europe
+					}
+					set_temp_variable = { europe_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { europe_button_frame = 2 }
+				}
+			}
+			north_america_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_north_america
+					}
+					set_temp_variable = { north_america_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { north_america_button_frame = 2 }
+				}
+			}
+			south_america_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_south_america
+					}
+					set_temp_variable = { south_america_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { south_america_button_frame = 2 }
+				}
+			}
+			australia_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_australia
+					}
+					set_temp_variable = { australia_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { australia_button_frame = 2 }
+				}
+			}
+			africa_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_africa
+					}
+					set_temp_variable = { africa_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { africa_button_frame = 2 }
+				}
+			}
+			asia_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_asia
+					}
+					set_temp_variable = { asia_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { asia_button_frame = 2 }
+				}
+			}
+			middle_east_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_continent_selection_hide_middle_east
+					}
+					set_temp_variable = { middle_east_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { middle_east_button_frame = 2 }
+				}
+			}
+		}
+
+		properties = {
+			all_button = {
+				frame = all_button_frame
+			}
+			europe_button = {
+				frame = europe_button_frame
+			}
+			north_america_button = {
+				frame = north_america_button_frame
+			}
+			south_america_button = {
+				frame = south_america_button_frame
+			}
+			australia_button = {
+				frame = australia_button_frame
+			}
+			africa_button = {
+				frame = africa_button_frame
+			}
+			asia_button = {
+				frame = asia_button_frame
+			}
+			middle_east_button = {
+				frame = middle_east_button_frame
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	global_monuments_type_selection_window = {
+		context_type = player_context
+
+		window_name = "global_monuments_type_selection_window"
+		parent_window_name = "global_monuments_list_window_filters_anchor"
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			is_ai = no
+			check_variable = { show_global_monuments_filter_selection_window = 3 }
+		}
+
+		effects = {
+			close_button_click = {
+				clear_variable = show_global_monuments_filter_selection_window
+				update_global_monuments_gui = yes
+			}
+			all_button_click = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_type_selection_hide_architecture
+							has_country_flag = global_monument_type_selection_hide_nature
+						}
+					}
+					clr_country_flag = global_monument_type_selection_hide_architecture
+					clr_country_flag = global_monument_type_selection_hide_nature
+				}
+				else = {
+					set_country_flag = global_monument_type_selection_hide_architecture
+					set_country_flag = global_monument_type_selection_hide_nature
+				}
+				set_global_monuments_window_states = yes
+			}
+			architecture_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_type_selection_hide_architecture
+					}
+					clr_country_flag = global_monument_type_selection_hide_architecture
+				}
+				else = {
+					set_country_flag = global_monument_type_selection_hide_architecture
+				}
+				set_global_monuments_window_states = yes
+			}
+			nature_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_type_selection_hide_nature
+					}
+					clr_country_flag = global_monument_type_selection_hide_nature
+				}
+				else = {
+					set_country_flag = global_monument_type_selection_hide_nature
+				}
+				set_global_monuments_window_states = yes
+			}
+		}
+
+		triggers = {
+			all_button_visible = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_type_selection_hide_architecture
+							has_country_flag = global_monument_type_selection_hide_nature
+						}
+					}
+					set_temp_variable = { all_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { all_button_frame = 2 }
+				}
+			}
+			architecture_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_type_selection_hide_architecture
+					}
+					set_temp_variable = { architecture_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { architecture_button_frame = 2 }
+				}
+			}
+			nature_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_type_selection_hide_nature
+					}
+					set_temp_variable = { nature_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { nature_button_frame = 2 }
+				}
+			}
+		}
+
+		properties = {
+			all_button = {
+				frame = all_button_frame
+			}
+			architecture_button = {
+				frame = architecture_button_frame
+			}
+			nature_button = {
+				frame = nature_button_frame
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	global_monuments_status_selection_window = {
+		context_type = player_context
+
+		window_name = "global_monuments_status_selection_window"
+		parent_window_name = "global_monuments_list_window_filters_anchor"
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			is_ai = no
+			check_variable = { show_global_monuments_filter_selection_window = 2 }
+		}
+
+		effects = {
+			close_button_click = {
+				clear_variable = show_global_monuments_filter_selection_window
+				update_global_monuments_gui = yes
+			}
+			all_button_click = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_status_selection_hide_active
+							has_country_flag = global_monument_status_selection_hide_inactive
+						}
+					}
+					clr_country_flag = global_monument_status_selection_hide_active
+					clr_country_flag = global_monument_status_selection_hide_inactive
+				}
+				else = {
+					set_country_flag = global_monument_status_selection_hide_active
+					set_country_flag = global_monument_status_selection_hide_inactive
+				}
+				set_global_monuments_window_states = yes
+			}
+			active_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_status_selection_hide_active
+					}
+					clr_country_flag = global_monument_status_selection_hide_active
+				}
+				else = {
+					set_country_flag = global_monument_status_selection_hide_active
+				}
+				set_global_monuments_window_states = yes
+			}
+			inactive_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_status_selection_hide_inactive
+					}
+					clr_country_flag = global_monument_status_selection_hide_inactive
+				}
+				else = {
+					set_country_flag = global_monument_status_selection_hide_inactive
+				}
+				set_global_monuments_window_states = yes
+			}
+		}
+
+		triggers = {
+			all_button_visible = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_status_selection_hide_active
+							has_country_flag = global_monument_status_selection_hide_inactive
+						}
+					}
+					set_temp_variable = { all_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { all_button_frame = 2 }
+				}
+			}
+			active_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_status_selection_hide_active
+					}
+					set_temp_variable = { active_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { active_button_frame = 2 }
+				}
+			}
+			inactive_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_status_selection_hide_inactive
+					}
+					set_temp_variable = { inactive_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { inactive_button_frame = 2 }
+				}
+			}
+		}
+
+		properties = {
+			all_button = {
+				frame = all_button_frame
+			}
+			active_button = {
+				frame = active_button_frame
+			}
+			inactive_button = {
+				frame = inactive_button_frame
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	global_monuments_level_selection_window = {
+		context_type = player_context
+
+		window_name = "global_monuments_level_selection_window"
+		parent_window_name = "global_monuments_list_window_filters_anchor"
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			is_ai = no
+			check_variable = { show_global_monuments_filter_selection_window = 5 }
+		}
+
+		effects = {
+			close_button_click = {
+				clear_variable = show_global_monuments_filter_selection_window
+				update_global_monuments_gui = yes
+			}
+			all_button_click = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_level_selection_hide_0
+							has_country_flag = global_monument_level_selection_hide_1
+							has_country_flag = global_monument_level_selection_hide_2
+							has_country_flag = global_monument_level_selection_hide_3
+						}
+					}
+					clr_country_flag = global_monument_level_selection_hide_0
+					clr_country_flag = global_monument_level_selection_hide_1
+					clr_country_flag = global_monument_level_selection_hide_2
+					clr_country_flag = global_monument_level_selection_hide_3
+				}
+				else = {
+					set_country_flag = global_monument_level_selection_hide_0
+					set_country_flag = global_monument_level_selection_hide_1
+					set_country_flag = global_monument_level_selection_hide_2
+					set_country_flag = global_monument_level_selection_hide_3
+				}
+				set_global_monuments_window_states = yes
+			}
+			level_0_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_0
+					}
+					clr_country_flag = global_monument_level_selection_hide_0
+				}
+				else = {
+					set_country_flag = global_monument_level_selection_hide_0
+				}
+				set_global_monuments_window_states = yes
+			}
+			level_1_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_1
+					}
+					clr_country_flag = global_monument_level_selection_hide_1
+				}
+				else = {
+					set_country_flag = global_monument_level_selection_hide_1
+				}
+				set_global_monuments_window_states = yes
+			}
+			level_2_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_2
+					}
+					clr_country_flag = global_monument_level_selection_hide_2
+				}
+				else = {
+					set_country_flag = global_monument_level_selection_hide_2
+				}
+				set_global_monuments_window_states = yes
+			}
+			level_3_button_click = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_3
+					}
+					clr_country_flag = global_monument_level_selection_hide_3
+				}
+				else = {
+					set_country_flag = global_monument_level_selection_hide_3
+				}
+				set_global_monuments_window_states = yes
+			}
+		}
+
+		triggers = {
+			all_button_visible = {
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = global_monument_level_selection_hide_0
+							has_country_flag = global_monument_level_selection_hide_1
+							has_country_flag = global_monument_level_selection_hide_2
+							has_country_flag = global_monument_level_selection_hide_3
+						}
+					}
+					set_temp_variable = { all_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { all_button_frame = 2 }
+				}
+			}
+			level_0_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_0
+					}
+					set_temp_variable = { level_0_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { level_0_button_frame = 2 }
+				}
+			}
+			level_1_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_1
+					}
+					set_temp_variable = { level_1_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { level_1_button_frame = 2 }
+				}
+			}
+			level_2_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_2
+					}
+					set_temp_variable = { level_2_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { level_2_button_frame = 2 }
+				}
+			}
+			level_3_button_visible = {
+				if = {
+					limit = {
+						has_country_flag = global_monument_level_selection_hide_3
+					}
+					set_temp_variable = { level_3_button_frame = 1 }
+				}
+				else = {
+					set_temp_variable = { level_3_button_frame = 2 }
+				}
+			}
+		}
+
+		properties = {
+			all_button = {
+				frame = all_button_frame
+			}
+			level_0_button = {
+				frame = level_0_button_frame
+			}
+			level_1_button = {
+				frame = level_1_button_frame
+			}
+			level_2_button = {
+				frame = level_2_button_frame
+			}
+			level_3_button = {
+				frame = level_3_button_frame
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	global_monuments_list_help_window = {
+		context_type = player_context
+
+		window_name = "global_monuments_list_help_window"
+		parent_window_name = "global_monuments_list_window"
+
+		dirty = show_global_monuments_list_window
+
+		visible = {
+			has_variable = show_global_monuments_list_help_window
+		}
+
+		effects = {
+			close_button_click = {
+				clear_variable = show_global_monuments_list_help_window
+				update_global_monuments_gui = yes
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	monument_alert_popup_window = {
+		context_type = player_context
+
+		window_name = "monument_alert_popup_window"
+
+		dirty = show_monument_alert_popup_window
+
+		visible = {
+			is_ai = no
+			has_variable = show_monument_alert_popup_window
+			OR = {
+				check_variable = { monument_alert_popup_built_array^num > 0 }
+				check_variable = { monument_alert_popup_canceled_array^num > 0 }
+				check_variable = { monument_alert_popup_downgrade_array^num > 0 }
+			}
+		}
+
+		effects = {
+			goto_button_click = {
+				set_temp_variable = { monument_id = v }
+				random_state = {
+					limit = {
+						has_monument = yes
+					}
+					set_temp_variable = { monument_state = THIS.id }
+				}
+				var:monument_state = {
+					ROOT = {
+						goto_state = PREV
+					}
+				}
+				if = {
+					limit = {
+						is_in_array = { monument_alert_popup_built_array = monument_id }
+					}
+					remove_from_array = { monument_alert_popup_built_array = monument_id }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { monument_alert_popup_canceled_array = monument_id }
+					}
+					remove_from_array = { monument_alert_popup_canceled_array = monument_id }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { monument_alert_popup_downgrade_array = monument_id }
+					}
+					remove_from_array = { monument_alert_popup_downgrade_array = monument_id }
+				}
+				update_monument_alert_popup_window = yes
+			}
+			ok_button_click = {
+				set_temp_variable = { monument_id = v }
+				if = {
+					limit = {
+						is_in_array = { monument_alert_popup_built_array = monument_id }
+					}
+					remove_from_array = { monument_alert_popup_built_array = monument_id }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { monument_alert_popup_canceled_array = monument_id }
+					}
+					remove_from_array = { monument_alert_popup_canceled_array = monument_id }
+				}
+				else_if = {
+					limit = {
+						is_in_array = { monument_alert_popup_downgrade_array = monument_id }
+					}
+					remove_from_array = { monument_alert_popup_downgrade_array = monument_id }
+				}
+				update_monument_alert_popup_window = yes
+			}
+		}
+
+		triggers = {
+			goto_button_visible = {
+				set_temp_variable = { monument_id = v }
+				any_state = {
+					has_monument = yes
+					set_temp_variable = { monument_state = THIS.id }
+					meta_trigger = {
+						text = {
+							set_temp_variable = { monument_level = monument_[ID]_level }
+						}
+						ID = "[?monument_id]"
+					}
+				}
+			}
+		}
+
+		dynamic_lists = {
+			monument_alert_popup_built_gridbox = {
+				array = monument_alert_popup_built_array
+				entry_container = monument_alert_popup_built_entry
+			}
+			monument_alert_popup_canceled_gridbox = {
+				array = monument_alert_popup_canceled_array
+				entry_container = monument_alert_popup_canceled_entry
+			}
+			monument_alert_popup_downgrade_gridbox = {
+				array = monument_alert_popup_downgrade_array
+				entry_container = monument_alert_popup_downgrade_entry
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+
+	monuments_construct_alert_window = {
+		context_type = player_context
+
+		window_name = "monuments_construct_alert_window"
+		parent_window_token = top_bar
+
+		visible = {
+			is_ai = no
+			NOT = { has_country_flag = monuments_construct_alert_disabled }
+			any_controlled_state = {
+				state_has_any_monument = yes
+				OR = {
+					scope_for_monument_bonus_receiver_is_controller = yes
+					is_owned_by = ROOT
+				}
+				any_of = {
+					array = state_monuments_array
+					set_temp_variable = { monument_id = v }
+					set_temp_variable = { level = v }
+					has_less_monument_level = yes
+					OR = {
+						AND = {
+							monument_build_potential_trigger = yes
+							monument_build_trigger = yes
+						}
+						AND = {
+							monument_upgrade_potential_trigger = yes
+							monument_upgrade_trigger = yes
+						}
+					}
+				}
+			}
+		}
+
+		effects = {
+			alert_button_click = {
+				random_controlled_state = {
+					limit = {
+						state_has_any_monument = yes
+						OR = {
+							scope_for_monument_bonus_receiver_is_controller = yes
+							is_owned_by = ROOT
+						}
+						any_of = {
+							array = state_monuments_array
+							set_temp_variable = { monument_id = v }
+							OR = {
+								AND = {
+									monument_build_potential_trigger = yes
+									monument_build_trigger = yes
+								}
+								AND = {
+									monument_upgrade_potential_trigger = yes
+									monument_upgrade_trigger = yes
+								}
+							}
+						}
+					}
+					ROOT = {
+						goto_state = PREV
+					}
+				}
+			}
+			alert_button_right_click = {
+				set_country_flag = { flag = monuments_construct_alert_disabled days = 180 value = 1 }
+			}
+			alert_button_control_right_click = {
+				set_country_flag = monuments_construct_alert_disabled
+			}
+		}
+
+		properties = {
+			alert_button = {
+				x = global.monuments_alert_offset?0
+			}
+			alert_glow = {
+				x = global.monuments_alert_offset?0
+			}
+		}
+
+		ai_enabled = {
+			always = no
+		}
+	}
+}

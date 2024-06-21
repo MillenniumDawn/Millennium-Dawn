@@ -1,0 +1,313 @@
+###### Console Commands ######
+d_monuments_console_commands = {
+	log = "The console commands of the Eu4 Style Monuments mod are:"
+	log = "   - monuments_console_commands"
+	log = "   - monuments_debug"
+	log = "   - set_monument_level"
+	log = "   - set_all_monument_levels"
+	log = "   - add_monument"
+	log = "   - remove_monument"
+	log = "   - move_monuments_list_button"
+	log = "   - update_global_monuments_list"
+	log = "   - set_up_monuments"
+	log = "   - get_monument_name"
+	log = "   - get_all_monument_names"
+}
+
+d_monuments_debug = {
+	FROM = {
+		if = {
+			limit = {
+				has_global_flag = monuments_debug
+			}
+			clr_global_flag = monuments_debug
+			log = "Monuments Debug Mode disabled"
+		}
+		else = {
+			set_global_flag = monuments_debug
+			log = "Monuments Debug Mode enabled"
+		}
+		update_global_monuments_gui = yes
+	}
+}
+
+d_set_monument_level = {
+	if = {
+		limit = {
+			state_has_any_monument = yes
+			check_variable = { args^num > 1 }
+		}
+		set_temp_variable = { monument_id = args^0 }
+		set_temp_variable = { level = args^1 }
+		if = {
+			limit = {
+				has_monument = yes
+			}
+			log = "SET_MONUMENT_LEVEL_TT"
+			set_monument_level = yes
+			if = {
+				limit = {
+					has_monument_construction = yes
+				}
+				clear_variable = monument_construction_id
+				clear_variable = monument_construction_time
+				var:monument_construction_country = {
+					if = {
+						limit = {
+							check_variable = { monument_construction_state_1 = PREV.id }
+						}
+						remove_mission = monument_construction_mission_1
+						activate_mission = monument_construction_mission_1
+						remove_mission = monument_construction_mission_1
+						clear_variable = monument_construction_state_1
+					}
+					else_if = {
+						limit = {
+							check_variable = { monument_construction_state_2 = PREV.id }
+						}
+						remove_mission = monument_construction_mission_2
+						activate_mission = monument_construction_mission_2
+						remove_mission = monument_construction_mission_2
+						clear_variable = monument_construction_state_2
+					}
+					else_if = {
+						limit = {
+							check_variable = { monument_construction_state_3 = PREV.id }
+						}
+						remove_mission = monument_construction_mission_3
+						activate_mission = monument_construction_mission_3
+						remove_mission = monument_construction_mission_3
+						clear_variable = monument_construction_state_3
+					}
+					else_if = {
+						limit = {
+							check_variable = { monument_construction_state_4 = PREV.id }
+						}
+						remove_mission = monument_construction_mission_4
+						activate_mission = monument_construction_mission_4
+						remove_mission = monument_construction_mission_4
+						clear_variable = monument_construction_state_4
+					}
+					else_if = {
+						limit = {
+							check_variable = { monument_construction_state_5 = PREV.id }
+						}
+						remove_mission = monument_construction_mission_5
+						activate_mission = monument_construction_mission_5
+						remove_mission = monument_construction_mission_5
+						clear_variable = monument_construction_state_5
+					}
+				}
+				clear_variable = monument_construction_country
+			}
+		}
+	}
+}
+
+d_set_all_monument_levels = {
+	if = {
+		limit = {
+			is_debug = yes
+		}
+		log = "All monuments were set to level [?args^0?3]."
+		every_state = {
+			limit = {
+				state_has_any_monument = yes
+			}
+			for_each_loop = {
+				array = state_monuments_array
+				set_temp_variable = { monument_id = v }
+				set_temp_variable = { level = args^0?3 }
+				set_monument_level = yes
+				if = {
+					limit = {
+						has_monument_construction = yes
+					}
+					clear_variable = monument_construction_id
+					clear_variable = monument_construction_time
+					var:monument_construction_country = {
+						if = {
+							limit = {
+								check_variable = { monument_construction_state_1 = PREV.id }
+							}
+							remove_mission = monument_construction_mission_1
+							activate_mission = monument_construction_mission_1
+							remove_mission = monument_construction_mission_1
+							clear_variable = monument_construction_state_1
+						}
+						else_if = {
+							limit = {
+								check_variable = { monument_construction_state_2 = PREV.id }
+							}
+							remove_mission = monument_construction_mission_2
+							activate_mission = monument_construction_mission_2
+							remove_mission = monument_construction_mission_2
+							clear_variable = monument_construction_state_2
+						}
+						else_if = {
+							limit = {
+								check_variable = { monument_construction_state_3 = PREV.id }
+							}
+							remove_mission = monument_construction_mission_3
+							activate_mission = monument_construction_mission_3
+							remove_mission = monument_construction_mission_3
+							clear_variable = monument_construction_state_3
+						}
+						else_if = {
+							limit = {
+								check_variable = { monument_construction_state_4 = PREV.id }
+							}
+							remove_mission = monument_construction_mission_4
+							activate_mission = monument_construction_mission_4
+							remove_mission = monument_construction_mission_4
+							clear_variable = monument_construction_state_4
+						}
+						else_if = {
+							limit = {
+								check_variable = { monument_construction_state_5 = PREV.id }
+							}
+							remove_mission = monument_construction_mission_5
+							activate_mission = monument_construction_mission_5
+							remove_mission = monument_construction_mission_5
+							clear_variable = monument_construction_state_5
+						}
+					}
+					clear_variable = monument_construction_country
+				}
+			}
+		}
+	}
+}
+
+d_add_monument = {
+	if = {
+		limit = {
+			is_debug = yes
+		}
+		set_temp_variable = { monument_id = args^0 }
+		set_temp_variable = { level = args^1?1 }
+		if = {
+			limit = {
+				has_not_monument = yes
+				NOT = {
+					any_state = {
+						has_monument = yes
+					}
+				}
+			}
+			log = ADD_MONUMENT_TO_STATE_TT
+			add_monument_to_state = yes
+		}
+	}
+}
+
+d_remove_monument = {
+	if = {
+		limit = {
+			is_debug = yes
+		}
+		set_temp_variable = { monument_id = args^0 }
+		if = {
+			limit = {
+				has_monument = yes
+			}
+			log = REMOVE_MONUMENT_FROM_STATE_TT
+			remove_monument_from_state = yes
+		}
+	}
+}
+
+d_move_monuments_list_button = {
+	FROM = {
+		set_variable = { monument_list_open_button_x = args^0?0 }
+		round_variable = monument_list_open_button_x
+		set_variable = { monument_list_open_button_y = args^1?0 }
+		round_variable = monument_list_open_button_y
+		if = {
+			limit = {
+				check_variable = { monument_list_open_button_x = 0 }
+			}
+			clear_variable = monument_list_open_button_x
+		}
+		if = {
+			limit = {
+				check_variable = { monument_list_open_button_y = 0 }
+			}
+			clear_variable = monument_list_open_button_y
+		}
+		log = "The button to open the Global Monuments List was moved to:"
+		log = "     X: [?monument_list_open_button_x|Y0]"
+		log = "     Y: [?monument_list_open_button_y|Y0]"
+	}
+}
+
+d_update_global_monuments_list = {
+	FROM = {
+		update_global_monuments_gui = yes
+		log = "Global Monuments List was updated."
+	}
+}
+
+d_set_up_monuments = {
+	log = "Starting Monuments were set up."
+	FROM = {
+		set_up_monuments_at_start_effect = yes
+	}
+}
+
+d_get_monument_name = {
+	set_temp_variable = { monument_id = args^0?1 }
+	round_temp_variable = monument_id
+	log = "D_GET_MONUMENT_NAME_TT"
+}
+
+d_get_all_monument_names = {
+	if = {
+		limit = {
+			is_debug = yes
+		}
+		FROM = {
+			clear_array = monuments_temp
+			every_state = {
+				limit = {
+					state_has_any_monument = yes
+				}
+				for_each_loop = {
+					array = state_monuments_array
+					add_to_array = { PREV.monuments_temp = v }
+				}
+			}
+			for_loop_effect = {
+				start = 1
+				end = monuments_temp^num
+				value = v
+				set_temp_variable = { j = v }
+				set_temp_variable = { j_minus = j }
+				subtract_from_temp_variable = { j_minus = 1 }
+				while_loop_effect = {
+					limit = {
+						check_variable = { j > 0 }
+						check_variable = { monuments_temp^j_minus > monuments_temp^j }
+					}
+					# swap j-1 with j if value of j-1 > j
+					set_temp_variable = { temp = monuments_temp^j }
+					set_variable = { monuments_temp^j = monuments_temp^j_minus }
+					set_variable = { monuments_temp^j_minus = temp }
+					subtract_from_temp_variable = { j = 1 }
+					subtract_from_temp_variable = { j_minus = 1 }
+				}
+			}
+			for_each_loop = {
+				array = monuments_temp
+				set_temp_variable = { monument_id = v }
+				random_state = {
+					limit = {
+						has_monument = yes
+					}
+					log = "[This.GetMonumentNameOtherContext] ([This.GetName])"
+				}
+			}
+			clear_array = monuments_temp
+		}
+	}
+}
