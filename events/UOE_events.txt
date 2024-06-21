@@ -11,10 +11,29 @@ country_event = {
 	desc = UOEEvent.1.d
 
 	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		tag = UOE
+	}
 	#peaceful coup
 	option = {
 		name = UOEEvent.1.a
 		log = "[GetDateText]: [Root.GetName]: event UOEEvent.1.a"
+		UOE = {
+			set_temp_variable = { party_sel = ruling_party^0 }
+			set_temp_variable = { party_amnt = party_pop_array^party_sel }
+
+			add_to_temp_variable = { party_1 = party_amnt }
+			add_to_temp_variable = { party_1 = party_pop_array^0 }
+
+			set_variable = { party_pop_array^party_sel = 0 }
+			set_variable = { party_pop_array^0 = party_1}
+
+			clear_array = ruling_party
+			add_to_array = { ruling_party = 0 }
+			set_country_flag = military_takeover
+		}
 
 		ai_chance = {
 			factor = 5
@@ -24,6 +43,18 @@ country_event = {
 	option = {
 		name = UOEEvent.1.b
 		log = "[GetDateText]: [Root.GetName]: event UOEEvent.1.b"
+
+		UOE = {
+			#scale the ratio based on how much the military wants to revolt
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.6
+				army_ratio = 0.6
+				navy_ratio = 0.6
+				air_ratio = 0.6
+			}
+		}
+
 		ai_chance = {
 			factor = 2
 		}
