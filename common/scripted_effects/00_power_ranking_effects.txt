@@ -5,6 +5,7 @@
 set_power_ranking_ideas_for_every_country = {
 	get_global_factories = yes
 	determine_regional_powers = yes
+	continent_check_for_hegemon = yes
 	every_country = {
 		get_percentage_of_global_factories = yes
 		determine_power_ranking = yes
@@ -288,6 +289,7 @@ determine_power_ranking = {
 		regional_power
 		minor_power
 		non_power
+		naval_power_of_the_continent
 	}
 	if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } }
 		add_ideas = non_power
@@ -307,5 +309,77 @@ determine_power_ranking = {
 	}
 	else = {
 		add_ideas = minor_power
+	}
+
+	if = {
+		limit = {
+			OR = {
+				check_variable = { largest_european_navy = THIS.id }
+				check_variable = { largest_sub_saharan_nations = THIS.id }
+				check_variable = { largest_asian_navy = THIS.id }
+				check_variable = { largest_middle_east_navy = THIS.id }
+				check_variable = { largest_american_navy = THIS.id }
+			}
+		}
+		add_ideas = naval_power_of_the_continent
+	}
+}
+
+# Continent Check for Naval Hegemon
+continent_check_for_hegemon = {
+	set_temp_variable = { largest_european_navy = 0 }
+	set_temp_variable = { largest_sub_saharan_nations = 0 }
+	set_temp_variable = { largest_asian_navy = 0 }
+	set_temp_variable = { largest_middle_east_navy = 0 }
+	set_temp_variable = { largest_american_navy = 0 }
+
+	set_temp_variable = { largest_value = 0 }
+	for_each_scope_loop = {
+		array = global.european_nations
+		if = {
+			limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+			set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+			set_temp_variable = { largest_european_navy = THIS.id }
+		}
+	}
+
+	set_temp_variable = { largest_value = 0 }
+	for_each_scope_loop = {
+		array = global.sub_saharan_nations
+		if = {
+			limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+			set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+			set_temp_variable = { largest_sub_saharan_nations = THIS.id }
+		}
+	}
+
+	set_temp_variable = { largest_value = 0 }
+	for_each_scope_loop = {
+		array = global.middle_eastern_nations
+		if = {
+			limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+			set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+			set_temp_variable = { largest_middle_east_navy = THIS.id }
+		}
+	}
+
+	set_temp_variable = { largest_value = 0 }
+	for_each_scope_loop = {
+		array = global.american_nations
+		if = {
+			limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+			set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+			set_temp_variable = { largest_american_navy = THIS.id }
+		}
+	}
+
+	set_temp_variable = { largest_value = 0 }
+	for_each_scope_loop = {
+		array = global.asian_nations
+		if = {
+			limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+			set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+			set_temp_variable = { largest_asian_navy = THIS.id }
+		}
 	}
 }
