@@ -1,0 +1,2744 @@
+@MONUMENT_UPGRADE_TIME = 50
+@MONUMENT_UPGRADE_COST = 50
+
+# usage:
+## set_scope_for_monument_bonus_receiver = yes
+set_scope_for_monument_bonus_receiver = {
+	if = {
+		limit = {
+			scope_for_monument_bonus_receiver_is_controller = yes
+		}
+		set_temp_variable = { bonus_target = CONTROLLER }
+	}
+	else = {
+		set_temp_variable = { bonus_target = OWNER }
+	}
+}
+
+# usage:
+## scope_for_monument_bonus_receiver_is_controller = yes
+scope_for_monument_bonus_receiver_is_controller = {
+	has_global_flag = monuments_game_rule_bonus_target_controller
+}
+
+# usage:
+## state_has_any_monument = yes
+state_has_any_monument = {
+	custom_trigger_tooltip = {
+		tooltip = STATE_HAS_ANY_MONUMENT_TT
+		check_variable = { state_monuments_array^num > 0 }
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## has_monument = yes
+has_monument = {
+	custom_trigger_tooltip = {
+		tooltip = HAS_MONUMENT_TT
+		is_in_array = { state_monuments_array = monument_id }
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## has_not_monument = yes
+has_not_monument = {
+	custom_trigger_tooltip = {
+		tooltip = HAS_NOT_MONUMENT_TT
+		NOT = { is_in_array = { state_monuments_array = monument_id } }
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## set_temp_variable = { level = 1 }
+## has_at_least_monument_level = yes
+has_at_least_monument_level = {
+	clamp_temp_variable = {
+		var = level
+		min = 0
+		max = 3
+	}
+	custom_trigger_tooltip = {
+		tooltip = HAS_AT_LEAST_MONUMENT_LEVEL_TT
+		meta_trigger = {
+			text = {
+				NOT = { check_variable = { monument_[ID]_level < level } }
+			}
+			ID = "[?monument_id]"
+		}
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## set_temp_variable = { level = 1 }
+## has_less_monument_level = yes
+has_less_monument_level = {
+	clamp_temp_variable = {
+		var = level
+		min = 0
+		max = 3
+	}
+	custom_trigger_tooltip = {
+		tooltip = HAS_LESS_MONUMENT_LEVEL_TT
+		meta_trigger = {
+			text = {
+				check_variable = { monument_[ID]_level < level }
+			}
+			ID = "[?monument_id]"
+		}
+	}
+}
+
+# usage:
+## has_monument_construction = yes
+has_monument_construction = {
+	custom_trigger_tooltip = {
+		tooltip = HAS_MONUMENT_CONSTRUCTION_TT
+		has_variable = monument_construction_id
+	}
+}
+
+# usage:
+## has_no_monument_construction = yes
+has_no_monument_construction = {
+	custom_trigger_tooltip = {
+		tooltip = HAS_NO_MONUMENT_CONSTRUCTION_TT
+		NOT = { has_variable = monument_construction_id }
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## monument_build_potential_trigger = yes
+monument_build_potential_trigger = {
+	set_scope_for_monument_bonus_receiver = yes
+	if = {
+		limit = {
+			scope_for_monument_bonus_receiver_is_controller = yes
+		}
+		is_controlled_by = ROOT
+	}
+	else = {
+		is_owned_by = ROOT
+	}
+	set_temp_variable = { level = 1 }
+	has_less_monument_level = yes
+}
+
+# usage:
+## set_temp_variable = { no_cost_check = 0 } # optional
+## set_temp_variable = { monument_id = 1 }
+## monument_build_trigger = yes
+monument_build_trigger = {
+	set_scope_for_monument_bonus_receiver = yes
+	calculate_monument_construction_cost = yes
+	calculate_monument_construction_time = yes
+	has_no_monument_construction = yes
+	ROOT = {
+		has_free_monument_upgrade_slot = yes
+	}
+	ROOT = {
+		has_capitulated = no
+	}
+	hidden_trigger = {
+		if = {
+			limit = {
+				NOT = { check_variable = { no_cost_check = 1 } }
+			}
+			ROOT = {
+				NOT = { has_political_power < monument_construction_cost_temp }
+			}
+		}
+	}
+	can_use_monument_bonuses_ignore_disabled_monument_condition = yes
+	if = {
+		limit = {
+			check_variable = { monument_id = 63 }
+			has_monument = yes
+		}
+		var:bonus_target = {
+			has_war = no
+		}
+		infrastructure > 4
+		has_railway_level = {
+			level = 3
+			state = THIS
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 91 }
+		}
+		var:bonus_target = {
+			has_war = no
+		}
+		var:bonus_target = {
+			set_temp_variable = { ideology_support_value = 0.5 }
+			monument_ideology_support_trigger_communism = yes
+		}
+		var:bonus_target = {
+			custom_trigger_tooltip = {
+				tooltip = MONUMENT_OWNS_ALL_CORE_STATES
+				all_core_state = {
+					is_owned_by = PREV
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 131 }
+		}
+		var:bonus_target = {
+			has_war = no
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 179 }
+		}
+		var:bonus_target = {
+			has_war = no
+		}
+		var:bonus_target = {
+			set_temp_variable = { ideology_support_value = 0.8 }
+			monument_ideology_support_trigger_democratic = yes
+		}
+		all_other_country = {
+			OR = {
+				NOT = { monument_ideology_trigger_fascism = yes }
+				custom_trigger_tooltip = {
+					tooltip = MONUMENT_IS_SUBJECT
+					is_subject = yes
+				}
+				capital_scope = {
+					is_on_continent = africa
+				}
+				capital_scope = {
+					is_on_continent = south_america
+				}
+				is_a_spanish_monument_country = yes
+			}
+		}
+	}
+
+	# Sub Mod Support
+	else = {
+		monument_build_trigger_back_up = yes
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## monument_upgrade_potential_trigger = yes
+monument_upgrade_potential_trigger = {
+	set_scope_for_monument_bonus_receiver = yes
+	if = {
+		limit = {
+			scope_for_monument_bonus_receiver_is_controller = yes
+		}
+		is_controlled_by = ROOT
+	}
+	else = {
+		is_owned_by = ROOT
+	}
+	set_temp_variable = { level = 1 }
+	has_at_least_monument_level = yes
+	set_temp_variable = { level = 3 }
+	has_less_monument_level = yes
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## monument_upgrade_trigger = yes
+monument_upgrade_trigger = {
+	set_scope_for_monument_bonus_receiver = yes
+	calculate_monument_construction_cost = yes
+	calculate_monument_construction_time = yes
+	has_no_monument_construction = yes
+	ROOT = {
+		has_free_monument_upgrade_slot = yes
+	}
+	ROOT = {
+		has_capitulated = no
+	}
+	hidden_trigger = {
+		ROOT = {
+			NOT = { has_political_power < monument_construction_cost_temp }
+		}
+	}
+	can_use_monument_bonuses = yes
+}
+
+# usage:
+## has_free_monument_upgrade_slot = yes
+has_free_monument_upgrade_slot = {
+	custom_trigger_tooltip = {
+		tooltip = HAS_FREE_MONUMENT_UPGRADE_SLOT_TT
+		OR = {
+			NOT = { has_active_mission = monument_construction_mission_1 }
+			NOT = { has_active_mission = monument_construction_mission_2 }
+			NOT = { has_active_mission = monument_construction_mission_3 }
+			NOT = { has_active_mission = monument_construction_mission_4 }
+			NOT = { has_active_mission = monument_construction_mission_5 }
+		}
+	}
+}
+
+# usage:
+## has_used_monument_upgrade_slot = yes
+has_used_monument_upgrade_slot = {
+	custom_trigger_tooltip = {
+		tooltip = HAS_USED_MONUMENT_UPGRADE_SLOT_TT
+		OR = {
+			has_active_mission = monument_construction_mission_1
+			has_active_mission = monument_construction_mission_2
+			has_active_mission = monument_construction_mission_3
+			has_active_mission = monument_construction_mission_4
+			has_active_mission = monument_construction_mission_5
+		}
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## calculate_monument_construction_cost = yes
+calculate_monument_construction_cost = {
+	hidden_trigger = {
+		set_scope_for_monument_bonus_receiver = yes
+		if = {
+			limit = {
+				has_global_flag = monuments_game_rule_no_pp_cost_ai
+				var:bonus_target = {
+					is_ai = yes
+				}
+			}
+			set_temp_variable = { monument_construction_cost_temp = 0 }
+		}
+		else = {
+			# Base Cost
+			set_temp_variable = { monument_construction_cost_temp = @MONUMENT_UPGRADE_COST }
+			# Additional Cost for Specific Monuments
+			if = {
+				limit = {
+					check_variable = { monument_id = 1 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 10 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 2 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 15 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 3 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 15 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 4 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 10 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 6 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 15 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 13 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 19 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 23 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 15 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 43 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 10 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 63 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 74 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 91 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 50 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 101 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 115 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 118 }
+				}
+				subtract_from_temp_variable = { monument_construction_cost_temp = 5 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 131 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 152 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 160 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 50 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 177 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 25 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 179 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = 100 }
+			}
+			else_if = {
+				limit = {
+					check_variable = { monument_id = 182 }
+				}
+				add_to_temp_variable = { monument_construction_cost_temp = -20 }
+			}
+
+			# Sub Mod Support
+			else = {
+				calculate_monument_construction_cost_back_up = yes
+			}
+
+			# Multiplicative Cost Changes based on Current Level
+			if = {
+				limit = {
+					set_temp_variable = { level = 2 }
+					has_at_least_monument_level = yes
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 1.5 }
+			}
+			else_if = {
+				limit = {
+					set_temp_variable = { level = 1 }
+					has_less_monument_level = yes
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 2 }
+			}
+
+			# Other Multiplicative Cost Changes
+			if = {
+				limit = {
+					NOT = { monument_can_downgrade = yes }
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 0.25 }
+			}
+			if = {
+				limit = {
+					NOT = { is_core_of = var:bonus_target }
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 1.5 }
+			}
+			if = {
+				limit = {
+					NOT = { is_owned_by = var:bonus_target }
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 1.25 }
+			}
+
+			if = {
+				limit = {
+					has_global_flag = monuments_game_rule_costs_reduced_by_50
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 0.5 }
+			}
+			else_if = {
+				limit = {
+					has_global_flag = monuments_game_rule_costs_increased_by_50
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 1.5 }
+			}
+			else_if = {
+				limit = {
+					has_global_flag = monuments_game_rule_costs_increased_by_100
+				}
+				multiply_temp_variable = { monument_construction_cost_temp = 2 }
+			}
+
+			# Cost Modifiers
+			round_temp_variable = monument_construction_cost_temp
+			set_temp_variable = { monument_construction_base_cost_temp = monument_construction_cost_temp }
+
+			set_temp_variable = { cost_modifier = modifier@local_monument_construction_cost }
+			add_to_temp_variable = { cost_modifier = ROOT.modifier@monument_construction_cost }
+			if = {
+				limit = {
+					check_variable = { cost_modifier < -0.9 }
+				}
+				set_temp_variable = { cost_modifier = -0.9 }
+			}
+			set_temp_variable = { monument_construction_cost_modifier_temp = cost_modifier }
+			add_to_temp_variable = { cost_modifier = 1 }
+			multiply_temp_variable = { monument_construction_cost_temp = cost_modifier }
+
+			# Final Price
+			round_temp_variable = monument_construction_cost_temp
+			clamp_temp_variable = {
+				var = monument_construction_cost_temp
+				min = 1
+				max = 2000
+			}
+		}
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## calculate_monument_construction_time = yes
+calculate_monument_construction_time = {
+	hidden_trigger = {
+		set_scope_for_monument_bonus_receiver = yes
+		# Base Time
+		set_temp_variable = { monument_construction_time_temp = @MONUMENT_UPGRADE_TIME }
+		# Additional Time for Specific Monuments
+		if = {
+			limit = {
+				check_variable = { monument_id = 1 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 10 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 2 }
+			}
+			subtract_from_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 3 }
+			}
+			subtract_from_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 4 }
+			}
+			subtract_from_temp_variable = { monument_construction_time_temp = 15 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 6 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 13 }
+			}
+			subtract_from_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 19 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 24 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 63 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 50 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 101 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 152 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 160 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = 25 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { monument_id = 182 }
+			}
+			add_to_temp_variable = { monument_construction_time_temp = -20 }
+		}
+
+		# Sub Mod Support
+		else = {
+			calculate_monument_construction_time_back_up = yes
+		}
+
+		# Multiplicative Time Changes based on Current Level
+		if = {
+			limit = {
+				set_temp_variable = { level = 1 }
+				has_less_monument_level = yes
+			}
+			multiply_temp_variable = { monument_construction_time_temp = 2 }
+		}
+
+		# Other Multiplicative Time Changes
+		if = {
+			limit = {
+				NOT = { monument_can_downgrade = yes }
+			}
+			multiply_temp_variable = { monument_construction_time_temp = 0.25 }
+		}
+		if = {
+			limit = {
+				NOT = { is_core_of = var:bonus_target }
+			}
+			multiply_temp_variable = { monument_construction_time_temp = 1.5 }
+		}
+		if = {
+			limit = {
+				NOT = { is_owned_by = var:bonus_target }
+			}
+			multiply_temp_variable = { monument_construction_time_temp = 1.25 }
+		}
+		round_temp_variable = monument_construction_time_temp
+		set_temp_variable = { monument_construction_base_time_temp = monument_construction_time_temp }
+
+		# Time Modifiers
+		set_temp_variable = { time_modifier = modifier@local_monument_construction_time }
+		add_to_temp_variable = { time_modifier = ROOT.modifier@monument_construction_time }
+		if = {
+			limit = {
+				check_variable = { time_modifier < -0.9 }
+			}
+			set_temp_variable = { time_modifier = -0.9 }
+		}
+		set_temp_variable = { monument_construction_time_modifier_temp = time_modifier }
+		add_to_temp_variable = { time_modifier = 1 }
+		multiply_temp_variable = { monument_construction_time_temp = time_modifier }
+
+		# Final Time
+		round_temp_variable = monument_construction_time_temp
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## can_use_monument_bonuses = yes
+can_use_monument_bonuses = {
+	set_scope_for_monument_bonus_receiver = yes
+	can_use_monument_bonuses_ignore_disabled_monument_condition = yes
+	if = {
+		limit = {
+			monument_can_downgrade = yes
+		}
+		custom_trigger_tooltip = {
+			tooltip = HAS_NOT_DISABLED_MONUMENT
+			var:bonus_target = {
+				PREV = {
+					meta_trigger = {
+						text = {
+							NOT = { has_state_flag = deactivated_monument_[ID]_@PREV }
+						}
+						ID = "[?monument_id]"
+					}
+				}
+			}
+		}
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## set_temp_variable = { bonus_target = OWNER }
+## set_temp_variable = { ignore_owned_controlled = 1 }
+## set_temp_variable = { overwrite_bonus_target = 1 }
+## can_use_monument_bonuses_ignore_disabled_monument_condition = yes
+can_use_monument_bonuses_ignore_disabled_monument_condition = {
+	if = {
+		limit = {
+			NOT = { check_variable = { overwrite_bonus_target = 1 } }
+		}
+		set_scope_for_monument_bonus_receiver = yes
+	}
+	set_temp_variable = { overwrite_bonus_target = 0 }
+	if = {
+		limit = {
+			scope_for_monument_bonus_receiver_is_controller = yes
+			NOT = { check_variable = { ignore_owned_controlled = 1 } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = STATE_CONTROLLED_BY_CURRENT_CONTROLLER
+			is_controlled_by = var:bonus_target
+		}
+	}
+	else_if = {
+		limit = {
+			NOT = { check_variable = { ignore_owned_controlled = 1 } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = STATE_OWNED_AND_CONTROLLED_BY_CURRENT_OWNER
+			is_owned_and_controlled_by = var:bonus_target
+		}
+	}
+	set_temp_variable = { ignore_owned_controlled = 0 }
+	set_temp_variable = { ignore_ideologies = 0 }
+
+	if = {
+		limit = {
+			check_variable = { monument_id = 1 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_german_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 2 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_french_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 4 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_german_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 7 }
+		}
+		var:bonus_target = {
+			is_subject = no
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 8 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_usa_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 9 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = TRIGGER_IS_CAPITAL
+					is_capital = yes
+				}
+				var:bonus_target = {
+					is_a_usa_monument_country = yes
+				}
+			}
+		}
+		else = {
+			custom_trigger_tooltip = {
+				tooltip = TRIGGER_IS_CAPITAL
+				is_capital = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 10 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_usa_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 11 }
+		}
+		var:bonus_target = {
+			is_a_soviet_union_monument_country = yes
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 12 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_soviet_union_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 13 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_soviet_union_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 14 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_italian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 16 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_italian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 18 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_italian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 21 }
+		}
+		naval_base > 0
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 22 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = HOL
+					original_tag = BEL
+					is_a_french_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 23 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_german_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 24 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_soviet_union_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 33 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = GRE
+					is_unified_roman_empire_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 35 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = CBD
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 36 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_turkish_monument_country = yes
+					original_tag = GRE
+					is_unified_roman_empire_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 37 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_former_maya_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 38 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = JAP
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 39 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_chinese_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 40 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_mali_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 43 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_italian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 44 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = PRU
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 49 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_indian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 52 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_usa_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 55 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_german_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 56 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_german_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 57 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_english_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 58 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_chinese_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 59 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_spanish_monument_country = yes
+					is_a_muslim_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 60 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = TNZ
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 62 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_spanish_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 63 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_english_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 65 }
+		}
+		custom_trigger_tooltip = {
+			tooltip = TRIGGER_IS_CAPITAL
+			is_capital = yes
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_spanish_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 72 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = ETH
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 73 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_muslim_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 74 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_muslim_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 76 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = EGY
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 77 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = HOL
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 78 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = HOL
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 79 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_spanish_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 80 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_muslim_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 81 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_christian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 82 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = ARG
+					original_tag = BRA
+					original_tag = CHL
+					original_tag = MEX
+					is_an_italian_monument_country = yes
+					is_a_french_monument_country = yes
+					original_tag = BEL
+					original_tag = CAN
+					is_a_usa_monument_country = yes
+					is_a_german_monument_country = yes
+					is_an_english_monument_country = yes
+					is_a_spanish_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 83 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = ISR
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 84 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 85 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_muslim_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 87 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_indian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 88 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = POR
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 89 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_english_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 90 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_french_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 91 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_soviet_union_monument_country = yes
+			}
+		}
+		var:bonus_target = {
+			is_subject = no
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 92 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_an_irish_monument_country = yes
+					is_an_english_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 93 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_an_irish_monument_country = yes
+					is_an_english_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 94 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_polynesian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 95 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_french_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 96 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_french_monument_country = yes
+					is_a_south_french_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 99 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_chinese_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 101 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_catholic_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 102 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_german_monument_country = yes
+					original_tag = POL
+					original_tag = SWE
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 103 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = CZE
+					is_an_austrian_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 104 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = CZE
+					is_an_austrian_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 105 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_austrian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 106 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_an_austrian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 108 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = HUN
+					is_an_austrian_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 109 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_yugoslavian_monument_country = yes
+					original_tag = HUN
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 110 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = ROM
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 111 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = ROM
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 112 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = BUL
+					is_a_soviet_union_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 113 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_yugoslavian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 115 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_turkish_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 117 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_muslim_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 118 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_former_caliphate_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 119 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = PER
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 120 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = PHI
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 121 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = CHL
+					original_tag = PRU
+					original_tag = ARG
+					original_tag = COL
+					original_tag = VEN
+					original_tag = BOL
+					original_tag = URG
+					original_tag = ECU
+					original_tag = PAR
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 123 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_former_maya_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 124 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_former_maya_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 125 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_former_maya_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 131 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_usa_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 132 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_caribbean_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 134 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_caribbean_monument_country = yes
+					is_a_spanish_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 137 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = LAT
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 138 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_chinese_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 140 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = POL
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 141 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = POL
+					original_tag = LIT
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 142 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = POL
+					original_tag = LIT
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 143 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_christian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 145 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_usa_monument_country = yes
+					original_tag = HAW
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 146 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_french_monument_country = yes
+					is_a_german_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 149 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = ARG
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 151 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_soviet_union_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 152 }
+		}
+		is_in_home_area = yes
+		var:bonus_target = {
+			monument_country_owns_and_controls_moscow = yes
+		}
+		monument_country_has_connection_to_moscow = yes
+		var:bonus_target = {
+			monument_country_owns_and_controls_vladivostok = yes
+		}
+		monument_country_has_connection_to_vladivostok = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 154 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = NOR
+					original_tag = SWE
+					original_tag = DEN
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 156 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_german_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 157 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_usa_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 158 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_french_monument_country = yes
+					is_a_german_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 159 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = BHU
+					original_tag = TIB
+					original_tag = NEP
+					is_an_indian_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 161 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					is_a_soviet_union_monument_country = yes
+					original_tag = UKR
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 162 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_literally_china = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 163 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = MEX
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 165 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = ANG
+					original_tag = POR
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 166 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = DAH
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 168 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = MAD
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 169 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_senegambian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 170 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = UGA
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 171 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_usa_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 172 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = ROM
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 175 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_catholic_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 176 }
+		}
+		set_temp_variable = { ignore_ideologies = 1 }
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_christian_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 177 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_soviet_union_monument_country = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 178 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				OR = {
+					original_tag = GRE
+					is_unified_roman_empire_monument_country = yes
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 179 }
+		}
+		var:bonus_target = {
+			is_subject = no
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 180 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				original_tag = SWE
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { monument_id = 181 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = monuments_game_rule_no_country_restriction }
+			}
+			var:bonus_target = {
+				is_a_yugoslavian_monument_country = yes
+			}
+		}
+	}
+
+	# Sub Mod Support
+	else = {
+		can_use_monument_bonuses_back_up = yes
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## can_cancel_monument_construction = yes
+can_cancel_monument_construction = {
+	set_scope_for_monument_bonus_receiver = yes
+	if = {
+		limit = {
+			scope_for_monument_bonus_receiver_is_controller = yes
+		}
+		is_controlled_by = ROOT
+	}
+	else = {
+		is_owned_and_controlled_by = ROOT
+	}
+	has_monument_construction = yes
+	check_variable = { monument_construction_id = monument_id }
+	check_variable = { monument_construction_country = ROOT.id }
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## monument_can_downgrade = yes
+monument_can_downgrade = {
+	NOT = { check_variable = { monument_id = 27 } }
+	NOT = { check_variable = { monument_id = 31 } }
+	NOT = { check_variable = { monument_id = 32 } }
+	NOT = { check_variable = { monument_id = 34 } }
+	NOT = { check_variable = { monument_id = 46 } }
+	NOT = { check_variable = { monument_id = 47 } }
+	NOT = { check_variable = { monument_id = 48 } }
+	NOT = { check_variable = { monument_id = 54 } }
+	NOT = { check_variable = { monument_id = 66 } }
+	NOT = { check_variable = { monument_id = 67 } }
+	NOT = { check_variable = { monument_id = 68 } }
+	NOT = { check_variable = { monument_id = 69 } }
+	NOT = { check_variable = { monument_id = 70 } }
+	NOT = { check_variable = { monument_id = 71 } }
+	NOT = { check_variable = { monument_id = 75 } }
+	NOT = { check_variable = { monument_id = 86 } }
+	NOT = { check_variable = { monument_id = 97 } }
+	NOT = { check_variable = { monument_id = 98 } }
+	NOT = { check_variable = { monument_id = 100 } }
+	NOT = { check_variable = { monument_id = 114 } }
+	NOT = { check_variable = { monument_id = 116 } }
+	NOT = { check_variable = { monument_id = 122 } }
+	NOT = { check_variable = { monument_id = 126 } }
+	NOT = { check_variable = { monument_id = 127 } }
+	NOT = { check_variable = { monument_id = 128 } }
+	NOT = { check_variable = { monument_id = 129 } }
+	NOT = { check_variable = { monument_id = 130 } }
+	NOT = { check_variable = { monument_id = 147 } }
+	NOT = { check_variable = { monument_id = 148 } }
+	NOT = { check_variable = { monument_id = 153 } }
+	NOT = { check_variable = { monument_id = 167 } }
+
+	# Sub Mod Support
+	NOT = { monument_cannot_downgrade_back_up = yes }
+}
+
+# usage:
+## AI_has_required_amount_of_PP_for_monuments = yes
+AI_has_required_amount_of_PP_for_monuments = {
+	has_political_power > var:global.ai_monuments_pp_threshold?300
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## AI_wants_to_upgrade_monument = yes
+AI_wants_to_upgrade_monument = {
+	set_scope_for_monument_bonus_receiver = yes
+	set_temp_variable = { ai_monument_score = 0 }
+	ROOT = {
+		AI_has_required_amount_of_PP_for_monuments = yes
+		has_free_monument_upgrade_slot = yes
+	}
+	OR = {
+		AND = {
+			monument_build_potential_trigger = yes
+			monument_build_trigger = yes
+		}
+		AND = {
+			monument_upgrade_potential_trigger = yes
+			monument_upgrade_trigger = yes
+		}
+	}
+	add_to_temp_variable = { ai_monument_score = 0.5 }
+	if = {
+		limit = {
+			is_capital = yes
+		}
+		add_to_temp_variable = { ai_monument_score = 0.5 }
+	}
+	if = {
+		limit = {
+			set_temp_variable = { level = 2 }
+			has_at_least_monument_level = yes
+		}
+		add_to_temp_variable = { ai_monument_score = 1 }
+	}
+	else_if = {
+		limit = {
+			set_temp_variable = { level = 1 }
+			has_at_least_monument_level = yes
+		}
+		add_to_temp_variable = { ai_monument_score = 0.5 }
+	}
+	# Special Monuments
+	if = {
+		limit = {
+			OR = {
+				check_variable = { monument_id = 63 }
+				check_variable = { monument_id = 91 }
+
+				# Sub Mod Support
+				AI_wants_to_upgrade_monument_back_up_special = yes
+			}
+		}
+		add_to_temp_variable = { ai_monument_score = 10 }
+	}
+	# Strong Monuments
+	if = {
+		limit = {
+			OR = {
+				check_variable = { monument_id = 1 }
+				check_variable = { monument_id = 2 }
+				check_variable = { monument_id = 7 }
+				check_variable = { monument_id = 9 }
+				check_variable = { monument_id = 12 }
+				check_variable = { monument_id = 16 }
+				check_variable = { monument_id = 18 }
+				check_variable = { monument_id = 23 }
+				check_variable = { monument_id = 24 }
+				check_variable = { monument_id = 35 }
+				check_variable = { monument_id = 36 }
+				check_variable = { monument_id = 45 }
+				check_variable = { monument_id = 61 }
+				check_variable = { monument_id = 65 }
+				check_variable = { monument_id = 77 }
+				check_variable = { monument_id = 90 }
+				check_variable = { monument_id = 118 }
+				check_variable = { monument_id = 141 }
+				check_variable = { monument_id = 144 }
+
+				# Sub Mod Support
+				AI_wants_to_upgrade_monument_back_up_strong = yes
+			}
+		}
+		add_to_temp_variable = { ai_monument_score = 10 }
+	}
+	# Weak Monuments
+	if = {
+		limit = {
+			OR = {
+				check_variable = { monument_id = 13 }
+				check_variable = { monument_id = 182 }
+
+				# Sub Mod Support
+				AI_wants_to_upgrade_monument_back_up_weak = yes
+			}
+		}
+		multiply_temp_variable = { ai_monument_score = 0.5 }
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## are_monument_bonuses_active = yes
+are_monument_bonuses_active = {
+	set_scope_for_monument_bonus_receiver = yes
+	var:bonus_target = {
+		meta_trigger = {
+			text = {
+				OR = {
+					has_idea = monument_[ID]_level_0_idea
+					has_idea = monument_[ID]_level_1_idea
+					has_idea = monument_[ID]_level_2_idea
+					has_idea = monument_[ID]_level_3_idea
+				}
+			}
+			ID = "[?monument_id]"
+		}
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## is_monument_valid_for_global_list = yes
+is_monument_valid_for_global_list = {
+	set_scope_for_monument_bonus_receiver = yes
+	OR = {
+		PREV = {
+			NOT = { has_country_flag = show_only_monuments_under_construction }
+		}
+		AND = {
+			has_monument_construction = yes
+			check_variable = { monument_id = monument_construction_id }
+		}
+	}
+	OR = {
+		PREV = {
+			NOT = { has_country_flag = show_only_possible_monuments_constructions }
+		}
+		OR = {
+			AND = {
+				monument_build_potential_trigger = yes
+				monument_build_trigger = yes
+			}
+			AND = {
+				monument_upgrade_potential_trigger = yes
+				monument_upgrade_trigger = yes
+			}
+		}
+	}
+	OR = {
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_type_selection_hide_architecture }
+			}
+			monument_can_downgrade = yes
+		}
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_type_selection_hide_nature }
+			}
+			NOT = { monument_can_downgrade = yes }
+		}
+	}
+	OR = {
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_status_selection_hide_active }
+			}
+			are_monument_bonuses_active = yes
+		}
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_status_selection_hide_inactive }
+			}
+			NOT = { are_monument_bonuses_active = yes }
+		}
+	}
+	OR = {
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_level_selection_hide_0 }
+			}
+			set_temp_variable = { level = 0 }
+			has_at_least_monument_level = yes
+			set_temp_variable = { level = 1 }
+			has_less_monument_level = yes
+		}
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_level_selection_hide_1 }
+			}
+			set_temp_variable = { level = 1 }
+			has_at_least_monument_level = yes
+			set_temp_variable = { level = 2 }
+			has_less_monument_level = yes
+		}
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_level_selection_hide_2 }
+			}
+			set_temp_variable = { level = 2 }
+			has_at_least_monument_level = yes
+			set_temp_variable = { level = 3 }
+			has_less_monument_level = yes
+		}
+		AND = {
+			PREV = {
+				NOT = { has_country_flag = global_monument_level_selection_hide_3 }
+			}
+			set_temp_variable = { level = 3 }
+			has_at_least_monument_level = yes
+		}
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## potential_can_deactivate_monument = yes
+potential_can_deactivate_monument = {
+	set_scope_for_monument_bonus_receiver = yes
+	if = {
+		limit = {
+			scope_for_monument_bonus_receiver_is_controller = yes
+		}
+		is_controlled_by = ROOT
+	}
+	else = {
+		is_owned_and_controlled_by = ROOT
+	}
+	monument_can_downgrade = yes
+	set_temp_variable = { level = 1 }
+	has_at_least_monument_level = yes
+	can_use_monument_bonuses = yes
+	NOT = { check_variable = { monument_construction_id = monument_id } }
+	meta_trigger = {
+		text = {
+			NOT = { has_state_flag = deactivated_monument_[ID]_@ROOT }
+		}
+		ID = "[?monument_id]"
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## can_deactivate_monument = yes
+can_deactivate_monument = {
+	set_scope_for_monument_bonus_receiver = yes
+	ROOT = {
+		NOT = { has_political_power < 25 }
+	}
+	meta_trigger = {
+		text = {
+			NOT = { has_state_flag = activated_monument_[ID]_@ROOT }
+		}
+		ID = "[?monument_id]"
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## potential_can_activate_monument = yes
+potential_can_activate_monument = {
+	set_scope_for_monument_bonus_receiver = yes
+	if = {
+		limit = {
+			scope_for_monument_bonus_receiver_is_controller = yes
+		}
+		is_controlled_by = ROOT
+	}
+	else = {
+		is_owned_and_controlled_by = ROOT
+	}
+	monument_can_downgrade = yes
+	set_temp_variable = { level = 1 }
+	has_at_least_monument_level = yes
+	can_use_monument_bonuses_ignore_disabled_monument_condition = yes
+	NOT = { check_variable = { monument_construction_id = monument_id } }
+	meta_trigger = {
+		text = {
+			has_state_flag = deactivated_monument_[ID]_@ROOT
+		}
+		ID = "[?monument_id]"
+	}
+}
+
+# usage:
+## set_temp_variable = { monument_id = 1 }
+## can_activate_monument = yes
+can_activate_monument = {
+	set_scope_for_monument_bonus_receiver = yes
+	ROOT = {
+		NOT = { has_political_power < 30 }
+	}
+	meta_trigger = {
+		text = {
+			has_state_flag = { flag = deactivated_monument_[ID]_@ROOT days > 30 }
+		}
+		ID = "[?monument_id]"
+	}
+}
