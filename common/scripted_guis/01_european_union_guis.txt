@@ -1968,7 +1968,10 @@ scripted_gui = {
 							}
 						}
 					}
-					remove_ideas = Migrant_Crisis_Europe
+					if = {
+						limit = { has_global_flag = EUU_migrant_crisis_triggered }
+						remove_ideas = Migrant_Crisis_Europe
+					}
 					add_to_variable = { party_pop_array^20 = 0.05 }
 					add_popularity = { ideology = nationalist popularity = 0.05 }
 					recalculate_party = yes
@@ -1984,7 +1987,10 @@ scripted_gui = {
 							}
 						}
 					}
-					remove_ideas = Migrant_Crisis_Europe
+					if = {
+						limit = { has_global_flag = EUU_migrant_crisis_triggered }
+						remove_ideas = Migrant_Crisis_Europe
+					}
 				}
 				# focus_EU406
 				if = {
@@ -2572,6 +2578,7 @@ scripted_gui = {
 						limit = { has_idea = EU_member }
 						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
 					}
+					set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 194 }
 				}
 				update_eu_dirty_variable = yes
 			}
@@ -2618,6 +2625,7 @@ scripted_gui = {
 						limit = { has_idea = EU_member }
 						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
 					}
+					set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 194 }
 				}
 				update_eu_dirty_variable = yes
 			}
@@ -3992,14 +4000,30 @@ scripted_gui = {
 
 			approve_IPA_button_click = {
 				ai_will_do = {
-					factor = 1
+					base = 10
 					modifier = {
-						factor = 0
+						factor = 1.5
 						any_of = {
 							array = global.EU_potential
+							value = v
+							index = i
+
 							var:global.EU_potential^i = {
 								has_country_flag = EU_candidate
 								NOT = { has_idea = EU_member }
+							}
+						}
+					}
+					modifier = {
+						factor = 0
+						all_of = {
+							array = global.EU_potential
+							value = v
+							index = i
+
+							var:global.EU_potential^i = {
+								has_country_flag = EU_candidate
+								has_idea = EU_member
 							}
 						}
 					}
@@ -4007,7 +4031,7 @@ scripted_gui = {
 			}
 			euroscepticism_country_button_click = {
 				ai_will_do = {
-					factor = 1
+					base = 10
 					modifier = {
 						add = -40
 						NOT = { gov_is_eurosceptical = yes }
@@ -4036,7 +4060,7 @@ scripted_gui = {
 			}
 			euroscepticism_euwide_button_click = {
 				ai_will_do = {
-					factor = 1
+					base = 10
 					modifier = {
 						add = -40
 						NOT = { gov_is_eurosceptical = yes }
@@ -5292,6 +5316,7 @@ scripted_gui = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
 					}
+					has_global_flag = EUU_migrant_crisis_triggered
 				}
 				else_if = {
 					limit = { check_variable = { v = 406 } }
@@ -5849,6 +5874,11 @@ scripted_gui = {
 								check_variable = { v = 603 }
 								date > 2013.1.1
 								is_historical_focus_on = yes
+							}
+							# Pass the Charter First (We need this)
+							modifier = {
+								add = 100
+								check_variable = { v = 101 }
 							}
 							# Killswitch
 							modifier = {
