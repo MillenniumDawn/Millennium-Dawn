@@ -1,10 +1,19 @@
+MLW_refresh_AIO = {
+	if = { limit = { check_variable = { MLW.refresh_AIO = 5000 } }
+		set_variable = { MLW.refresh_AIO = 1 }
+	}
+	else = {
+		add_to_variable = { MLW.refresh_AIO = 1 }
+	}
+}
+
 MLW_MZUZU_motors_phase_1 = {
 	clear_array = MLW.MZUZU_markets
 	if = { limit = { country_exists = MOZ } MOZ = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = TNZ } TNZ = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = ZAM } ZAM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	custom_effect_tooltip = MLW_MZUZU_motors_phase_1_TT
-	refresh_gui = yes
+	MLW_refresh_AIO = yes
 }
 
 MLW_MZUZU_motors_phase_2 = {
@@ -20,7 +29,7 @@ MLW_MZUZU_motors_phase_2 = {
 	if = { limit = { country_exists = ZAM } ZAM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = ZIM } ZIM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	custom_effect_tooltip = MLW_MZUZU_motors_phase_2_TT
-	refresh_gui = yes
+	MLW_refresh_AIO = yes
 }
 
 MLW_MZUZU_motors_phase_3 = {
@@ -47,7 +56,7 @@ MLW_MZUZU_motors_phase_3 = {
 	if = { limit = { country_exists = ZAM } ZAM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = ZIM } ZIM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	custom_effect_tooltip = MLW_MZUZU_motors_phase_3_TT
-	refresh_gui = yes
+	MLW_refresh_AIO = yes
 }
 
 MLW_MZUZU_motors_phase_4 = {
@@ -100,7 +109,7 @@ MLW_MZUZU_motors_phase_4 = {
 	if = { limit = { country_exists = ZAM } ZAM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = ZIM } ZIM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	custom_effect_tooltip = MLW_MZUZU_motors_phase_4_TT
-	refresh_gui = yes
+	MLW_refresh_AIO = yes
 }
 
 MLW_MZUZU_motors_phase_5 = {
@@ -168,25 +177,44 @@ MLW_MZUZU_motors_phase_5 = {
 	if = { limit = { country_exists = ZAM } ZAM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = ZIM } ZIM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	custom_effect_tooltip = MLW_MZUZU_motors_phase_5_TT
-	refresh_gui = yes
+	MLW_refresh_AIO = yes
 }
-
 
 MLW_MZ_market_change_order_quantity = {
 	add_to_variable = { MLW_MZUZU_sales_stored = MLW_MZ_sales_change }
 	custom_effect_tooltip = MLW_MZ_market_change_order_quantity_TT
-	clamp_variable = {
-		var = MLW_MZUZU_sales_stored
-		min = var:MZ_tag_selected.MLW_MZUZU_tag_export
-		max = MLW_MZ_weekly_production
+	if = {
+		limit = { has_country_flag = MLW_MZ_allow_deficit }
+		clamp_variable = {
+			var = MLW_MZUZU_sales_stored
+			min = THIS.MLW_MZUZU_export_amount
+		}
 	}
+	else = {
+		clamp_variable = {
+			var = MLW_MZUZU_sales_stored
+			min = THIS.MLW_MZUZU_export_amount
+			max = MLW_MZ_leftover_vehicles
+		}
+	}
+	MLW_refresh_AIO = yes
 }
 
 MLW_MZ_send_invoices = {
-	# add_to_variable = { var:MLW_MZ_tag_selected.MLW_MZUZU_sales = MLW_MZUZU_sales_stored }
-	set_variable = { var:MLW_MZ_tag_selected.MLW_MZUZU_tag_export = MLW_MZUZU_sales_stored }
-	multiply_variable = { var:MLW_MZ_tag_selected.MLW_MZUZU_export_amount = -1 }
+	var:MLW_MZ_tag_selected = {
+		add_to_variable = { THIS.MLW_MZUZU_sales = MLW.MLW_MZUZU_sales_stored }
+		if = {
+			limit = { check_variable = { THIS.MLW_MZUZU_tag_export = 0 } }
+			set_variable = { THIS.MLW_MZUZU_tag_export = MLW.MLW_MZUZU_sales_stored }
+		}
+		else = { add_to_variable = { THIS.MLW_MZUZU_tag_export = MLW.MLW_MZUZU_sales_stored } }
+		set_variable = { THIS.MLW_MZUZU_export_amount = THIS.MLW_MZUZU_tag_export }
+		multiply_variable = { THIS.MLW_MZUZU_export_amount = -1 }
+		MLW_MZUZU_exporting_to_target_check = yes
+	}
+	clear_variable = MLW_MZUZU_sales_stored
 	custom_effect_tooltip = MLW_MZ_send_invoices_TT
+	MLW_MZUZU_set_exports = yes
 }
 
 MLW_MZ_assign_factory = {
@@ -206,40 +234,47 @@ MLW_MZ_assign_factory = {
 	}
 	if = { limit = { check_variable = { MLW_MZUZU_DM_factory_use = 0 } } remove_dynamic_modifier = { modifier = MLW_MZUZU_DM } }
 	force_update_dynamic_modifier = yes
-	MLW_MZUZU_manufacture_effect = yes
+	MLW_MZUZU_set_manufacture = yes
 }
-
-# MLW_MZUZU_market_change_order_quantity = {
-# 	add_to_variable = { MLW_MZUZU_sales_stored = MLW_MZ_sales_change }
-# 	custom_effect_tooltip = MLW_MZUZU_market_change_order_quantity_TT
-# }
 
 MLW_MZ_home_market_target_effect = {
 	set_variable = { ROOT.MLW_MZ_tag_selected = ROOT.id }
 	custom_effect_tooltip = MLW_MZ_home_market_target_effect_TT
-	refresh_gui = yes
+	MLW_refresh_AIO = yes
 }
 
 MLW_MZUZU_market_target_effect = {
 	set_variable = { ROOT.MLW_MZ_tag_selected = THIS.id }
 	custom_effect_tooltip = MLW_MZUZU_market_target_effect_TT
-	refresh_gui = yes
+	MLW_refresh_AIO = yes
+}
+
+MLW_MZUZU_buyout_effect = {
+	custom_effect_tooltip = MLW_MZUZU_buyout_effect_TT
+}
+
+MLW_MZUZU_industrialise_effect = {
+	custom_effect_tooltip = MLW_MZUZU_industrialise_effect_TT
+}
+
+MLW_MZUZU_purchase_land_effect = {
+	custom_effect_tooltip = MLW_MZUZU_purchase_land_effect_TT
 }
 
 MLW_MZUZU_exporting_to_target_check = {
 	if = {
 		limit = {
-			check_variable = { var:MZ_tag_selected.MLW_MZUZU_tag_export > 0 }
-			NOT = { is_in_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected } }
+			check_variable = { THIS.MLW_MZUZU_tag_export > 0 }
+			NOT = { is_in_array = { MLW.MLW_MZ_exporters = THIS.id } }
 		}
-		add_to_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
+		add_to_array = { MLW.MLW_MZ_exporters = THIS.id }
 	}
 	if = {
 		limit = {
-			check_variable = { var:MZ_tag_selected.MLW_MZUZU_tag_export = 0 }
-			is_in_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
+			check_variable = { THIS.MLW_MZUZU_tag_export = 0 }
+			is_in_array = { MLW.MLW_MZ_exporters = THIS.id }
 		}
-		remove_from_array = { MLW.MLW_MZ_exporters = ROOT.MZ_tag_selected }
+		remove_from_array = { MLW.MLW_MZ_exporters = THIS.id }
 	}
 }
 
@@ -266,16 +301,8 @@ MLW_MZUZU_lease_failsafe = {
 
 # LETS DO SOME FACKIN MAFFS
 
-MLW_MZUZU_weekly_ticker = {
-	MLW_MZUZU_manufacture_effect = yes
-	MLW_MZUZU_export_effect = yes
-	MLW_MZUZU_income_effect = yes
-}
-
-MLW_MZUZU_monthly_ticker = {}
-
 MLW_MZUZU_market_cap_change = {
-	for_each_loop = {
+	for_each_scope_loop = {
 		array = MLW.MLW_MZ_exporters
 		set_temp_variable = { MLW_MZ_market_share_temp = THIS.MLW_MZUZU_tag_export }
 		set_temp_variable = { MLW_MZ_customers_temp = THIS.workforce_total_display }
@@ -283,125 +310,120 @@ MLW_MZUZU_market_cap_change = {
 		multiply_temp_variable = { MLW_MZ_market_share_temp = 4 }
 		set_temp_variable = { MLW_MZ_market_share_frame_temp = MLW_MZ_market_share_temp }
 		divide_temp_variable = { MLW_MZ_market_share_frame_temp = 20 }
+		multiply_temp_variable = { MLW_MZ_market_share_frame_temp = 0.005 } # change this if needed to balance increase to market share
 		multiply_temp_variable = { MLW_MZ_market_share_temp = 0.001 }
-		multiply_temp_variable = { MLW_MZ_market_share_temp = 0.5 }
+		divide_temp_variable = { MLW_MZ_market_share_temp = 4 }
 		add_to_variable = { THIS.MLW_MZ_market_share_display = MLW_MZ_market_share_temp }
 		add_to_variable = { THIS.MLW_MZ_market_share_frame = MLW_MZ_market_share_frame_temp }
 	}
 }
 
-# this should run the "build beep beeps" math
-MLW_MZUZU_manufacture_effect = {
-	set_variable = { MLW_MZ_weekly_production = 0 }
-	# 0
+# this sets up the weekly production math
+MLW_MZUZU_set_manufacture = {
 	set_temp_variable = { MLW_MZ_fact_temp = MLW_MZUZU_DM_factory_use }
-	log = "MLW_MZ_fact_temp - [?MLW_MZ_fact_temp]"
-	# 2 - 2
 	set_temp_variable = { MLW_MZ_prod_temp = 1 }
-	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
-	# 1
 	add_to_temp_variable = { MLW_MZ_prod_temp = ROOT.modifier@MLW_MZUZU_production_modifier }
-	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
-	# 1.25
 	multiply_temp_variable = { MLW_MZ_prod_temp = 1000 }
-	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
-	# 1250
 	multiply_temp_variable = { MLW_MZ_prod_temp = MLW_MZ_fact_temp }
-	log = "MLW_MZ_prod_temp - [?MLW_MZ_prod_temp]"
-	# 2500
 	add_to_variable = { MLW_MZ_weekly_production = MLW_MZ_prod_temp }
-	log = "MLW_MZ_weekly_production - [?MLW_MZ_weekly_production]"
 	clamp_variable = { # seriously this is an insane amount of cars
 		var = MLW_MZ_weekly_production
 		min = 0
 		max = 2000000
 	}
-	log = "MLW_MZ_weekly_production - [?MLW_MZ_weekly_production]"
-	# 2500
-	add_to_variable = { MLW_MZ_stockpiled = MLW_MZ_weekly_production }
-	log = "MLW_MZ_stockpiled - [?MLW_MZ_stockpiled]"
-	# 53000 - 2500
-	# 55500
+	set_variable = { MLW_MZ_leftover_vehicles = MLW_MZ_weekly_production }
+	MLW_refresh_AIO = yes
 }
 
-# this runs the "remove beep beeps" math
-MLW_MZUZU_export_effect = {
-	set_variable = { MLW_MZ_total_exports = 0 }
-	# 0
+# this sets up the export variable to be removed in the on_weekly
+MLW_MZUZU_set_exports = {
 	for_each_scope_loop = {
 		array = MLW.MLW_MZ_exporters
 		add_to_temp_variable = { sum = THIS.MLW_MZUZU_tag_export }
 		log = "[THIS.GetName] - [?THIS.MLW_MZUZU_tag_export|0] units exported"
 	}
-	# ex code (4 export tags)
-	# 38
-	# 67
-	# 105
-	# 308
-	# ---
-	# 518
-	set_temp_variable = { MLW_MZ_total_exports_temp = sum }
-	# 518
-	multiply_temp_variable = { MLW_MZ_total_exports_temp = -1 }
-	# -518
 	set_variable = { MLW_MZ_total_exports = sum }
-	# 518
+	set_variable = { MLW_MZ_leftover_vehicles = MLW_MZ_weekly_production }
+	subtract_from_variable = { MLW_MZ_leftover_vehicles = MLW_MZ_total_exports }
+	MLW_refresh_AIO = yes
+}
+
+MLW_MZUZU_production_and_export = {
+	add_to_variable = { MLW_MZ_stockpiled = MLW_MZ_weekly_production }
+	set_temp_variable = { MLW_MZ_total_exports_temp = MLW_MZ_total_exports }
+	multiply_temp_variable = { MLW_MZ_total_exports_temp = -1 }
 	add_to_variable = { MLW_MZ_stockpiled = MLW_MZ_total_exports_temp }
-	# 55500
-	# -518
-	# 54982
 	clamp_variable = {
 		var = MLW_MZ_stockpiled
 		min = 0
 		max = 2000000
 	}
+	MLW_MZUZU_income_effect = yes
 }
 
 # then this is what gives you money, yay money
 MLW_MZUZU_income_effect = {
 	set_variable = { MLW_MZ_weekly_income = 0 }
-	# 0
 	if = {
-		limit = { check_variable = { MLW_MZ_stockpiled > MLW_MZ_total_exports } }
+		limit = {
+			NOT = { has_country_flag = MLW_MZ_allow_deficit }
+			NOT = { has_country_flag = MLW_MZ_income_check }
+			check_variable = { MLW_MZ_stockpiled < MLW_MZ_total_exports }
+		}
+		set_country_flag = {
+			flag = MLW_MZUZU_export_failed
+			days = 60
+		}
+		MLW_MZUZU_export_failed = yes
+	}
+	else_if = {
+		limit = {
+			NOT = { has_country_flag = MLW_MZ_income_check }
+			check_variable = { MLW_MZ_stockpiled = 0 }
+			check_variable = { MLW_MZ_stockpiled < MLW_MZ_total_exports }
+		}
+		set_country_flag = {
+			flag = MLW_MZUZU_export_failed
+			days = 60
+		}
+		MLW_MZUZU_export_failed = yes
+	}
+	else = {
 		set_temp_variable = { MLW_MZ_income_temp = 1 }
-		log = "income temp setting - [?MLW_MZ_income_temp]"
-		# 1
 		add_to_temp_variable = { MLW_MZ_income_temp = modifier@MLW_MZUZU_income_modifier }
-		log = "after multiplier modifier - [?MLW_MZ_income_temp]"
-		# 1
 		multiply_temp_variable = { MLW_MZ_income_temp = MLW_MZ_total_exports }
-		log = "after multiplied by total exports - [?MLW_MZ_income_temp]"
-		log = "total exports - [?MLW_MZ_total_exports]"
-		# 1
-		# 678
 		multiply_temp_variable = { MLW_MZ_income_temp = MLW_MZ_ppu }
-		log = "after multiplied by price per unit - [?MLW_MZ_income_temp]"
-		log = "price per unit - [?MLW_MZ_ppu]"
-		# 678
-		# 2
-		# 1356
 		clamp_temp_variable = {
 			var = MLW_MZ_income_temp
 			min = 0
 			max = 2000000
 		}
-		log = "after clamping - [?MLW_MZ_income_temp]"
 		multiply_temp_variable = { MLW_MZ_income_temp = 0.001 }
-		log = "multiplied by 0.001 - [?MLW_MZ_income_temp]"
-		# 0.013
 		multiply_temp_variable = { MLW_MZ_income_temp = 0.01 }
-		log = "multiplied further by 0.01 - [?MLW_MZ_income_temp]"
-		# 0.108
 		set_variable = { MLW_MZ_weekly_income = MLW_MZ_income_temp }
-		log = "overall weekly income from car sales - [?MLW_MZ_weekly_income]"
-		# 0.108
 		if = {
 			limit = { has_country_flag = MLW_MZ_orders_unfulfilled }
 			clr_country_flag = MLW_MZ_orders_unfulfilled
 		}
+		set_country_flag = {
+			flag = MLW_MZ_income_check
+			days = 8
+		}
 	}
+	MLW_refresh_AIO = yes
+}
+
+# this is the effect for when you have nothing to sell, no sales, cancelled exports, simple as
+MLW_MZUZU_export_failed = {
 	if = {
-		limit = { NOT = { has_country_flag = MLW_MZ_orders_unfulfilled } }
-		set_country_flag = MLW_MZ_orders_unfulfilled
+		limit = { has_country_flag = MLW_MZ_orders_unfulfilled }
+		for_each_scope_loop = {
+			array = MLW.MLW_MZ_exporters
+			clear_variable = MLW_MZUZU_tag_export
+		}
+		set_variable = { MLW_MZ_total_exports = 0 }
+		clear_array = MLW.MLW_MZ_exporters
+		clr_country_flag = MLW_MZ_allow_deficit
+		MLW_refresh_AIO = yes
 	}
 }
