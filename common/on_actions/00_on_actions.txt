@@ -116,26 +116,9 @@ on_actions = {
 	on_daily = {
 		effect = {
 			energy_on_daily = yes
-			# For the GUI (IRQ)
-			if = {
-				limit = {
-					original_tag = IRQ
-					IRQ = {
-						check_variable = {
-							IRQ_count_down_var > 0
-						}
-					}
-				}
-				add_to_variable = { IRQ_count_down_var = -1 }
-			}
 		}
 	}
-	on_weekly = {
-		effect = {
-			random_renewable_variable_calculation = yes
-			worker_requirements_variable_gdpc_converging = yes
-		}
-	}
+
 	on_monthly = {
 		effect = {
 			# Generic
@@ -751,7 +734,16 @@ on_actions = {
 				update_dirty_influence_var = yes
 			}
 
-			roll_corruption_events = yes
+			# Open Borders Impact
+			if = {
+				limit = { has_idea = open_borders }
+				add_to_variable = { months_at_open_borders = 0.03 }
+			}
+			if = {
+				limit = { NOT = { has_idea = open_borders } }
+				set_variable = { months_at_open_borders = 1 }
+			}
+
 			calculate_expected_spending = yes
 			apply_protest_effects = yes
 			ai_weapon_dump = yes
@@ -879,6 +871,143 @@ on_actions = {
 			if = {
 				limit = { FROM = { tag = CHI } }
 				add_to_variable = { chinese_aggression = 1 }
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = faction_resistance_axis_member }
+				}
+				add_ideas = faction_resistance_axis_member
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = faction_cento_alliance }
+				}
+				add_ideas = faction_cento_alliance
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = faction_imperial_bloc_alliance }
+				}
+				add_ideas = faction_imperial_bloc_alliance
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = faction_brics_alliance }
+				}
+				add_ideas = faction_brics_alliance
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = CSTO_member }
+				}
+				add_ideas = CSTO_member
+				add_to_array = { global.CSTO_member = THIS }
+				ROOT = { add_to_tech_sharing_group = CSTO_Tech_Share }
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = faction_baltic_black_sea_union_member }
+				}
+				add_ideas = faction_baltic_black_sea_union_member
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = faction_jerusalem_defence_pact_member }
+				}
+				add_ideas = faction_jerusalem_defence_pact_member
+			}
+			if = {
+				limit = {
+					FROM = { has_idea = S0V_russian_sphere_idea }
+				}
+				add_ideas = S0V_russian_sphere_idea
+			}
+		}
+	}
+
+	#FROM is country getting invited, ROOT is inviting country
+	on_offer_join_faction = {
+		effect = {
+			if = {
+				limit = {
+					has_idea = faction_resistance_axis_member
+				}
+				FROM = { add_ideas = faction_resistance_axis_member }
+			}
+			if = {
+				limit = {
+					has_idea = faction_cento_alliance
+				}
+				FROM = { add_ideas = faction_cento_alliance }
+			}
+			if = {
+				limit = {
+					has_idea = faction_imperial_bloc_alliance
+				}
+				FROM = { add_ideas = faction_imperial_bloc_alliance }
+			}
+			if = {
+				limit = {
+					has_idea = faction_brics_alliance
+				}
+				FROM = { add_ideas = faction_brics_alliance }
+			}
+			if = {
+				limit = {
+					has_idea = CSTO_member
+				}
+				FROM = {
+					add_ideas = CSTO_member
+					add_to_array = { global.CSTO_member = THIS }
+				}
+				FROM = { add_to_tech_sharing_group = CSTO_Tech_Share }
+			}
+			if = {
+				limit = {
+					has_idea = faction_baltic_black_sea_union_member
+				}
+				FROM = { add_ideas = faction_baltic_black_sea_union_member }
+			}
+			if = {
+				limit = {
+					has_idea = faction_jerusalem_defence_pact_member
+				}
+				FROM = { add_ideas = faction_jerusalem_defence_pact_member }
+			}
+		}
+	}
+
+	on_leave_faction = {
+		effect = {
+			if = {
+				limit = { has_idea = faction_resistance_axis_member }
+				remove_ideas = faction_resistance_axis_member
+			}
+			if = {
+				limit = { has_idea = faction_cento_alliance }
+				remove_ideas = faction_cento_alliance
+			}
+			if = {
+				limit = { has_idea = faction_imperial_bloc_alliance }
+				remove_ideas = faction_imperial_bloc_alliance
+			}
+			if = {
+				limit = { has_idea = faction_brics_alliance }
+				remove_ideas = faction_brics_alliance
+			}
+			if = {
+				limit = { has_idea = CSTO_member }
+				remove_ideas = CSTO_member
+				remove_from_array = { global.CSTO_member = THIS }
+				ROOT = { remove_from_tech_sharing_group = CSTO_Tech_Share }
+			}
+			if = {
+				limit = { has_idea = faction_baltic_black_sea_union_member }
+				remove_ideas = faction_baltic_black_sea_union_member
+			}
+			if = {
+				limit = { has_idea = faction_jerusalem_defence_pact_member }
+				remove_ideas = faction_jerusalem_defence_pact_member
 			}
 		}
 	}
@@ -3546,6 +3675,27 @@ on_actions = {
 			GER_government_change = yes
 			CHI_government_change = yes
 			IRQ_government_change = yes
+			if = {
+				limit = {
+					OR = {
+						original_tag = KUW
+						original_tag = SAU
+						original_tag = UAE
+						original_tag = QAT
+						original_tag = BHR
+						original_tag = OMA
+						original_tag = JOR
+						has_cosmetic_tag = SAU_AQ
+						has_cosmetic_tag = SAU_ISI
+					}
+					NOT = {
+						salafist_caliphate_are_in_power = yes
+						has_country_flag = dynamic_flag
+					}
+				}
+				set_country_flag = dynamic_flag
+				drop_cosmetic_tag = yes
+			}
 		}
 	}
 
