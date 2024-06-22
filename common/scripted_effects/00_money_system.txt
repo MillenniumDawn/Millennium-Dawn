@@ -4227,6 +4227,15 @@ calculate_migration_mechanic_values = {
 	clamp_variable = { var = border_control_gain min = 0 }
 
 	# -------------------- #
+	# Cleanup Variables
+	clear_variable = immigration_employment_factor_display
+	clear_variable = immigration_government_factor_display
+	clear_variable = immigration_war_support_factor_display
+	clear_variable = neighbour_war_refugees_display
+	clear_variable = personal_war_refugees_display
+	clear_variable = net_immigration_rate
+	clear_variable = max_net_immigration_rate
+
 	# Add the Dynamic Modifier If you don't have it
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = migration_rate_impact_effect } } }
 		add_dynamic_modifier = { modifier = migration_rate_impact_effect }
@@ -4286,27 +4295,29 @@ calculate_migration_mechanic_values = {
 
 	# War Refugees Section
 	hidden_effect = {
-		set_temp_variable = { war_refugees = 0 }
+		set_temp_variable = { neighbouring_war_refugees = 0 }
 		every_neighbor_country = {
 			limit = {
 				any_neighbor_country = {
 					has_war_with = PREV
 				}
 			}
-			add_to_temp_variable = { PREV.war_refugees = THIS.population_total }
-			multiply_temp_variable = { PREV.war_refugees = 0.01 }
+			add_to_temp_variable = { PREV.neighbouring_war_refugees = THIS.population_total }
+			multiply_temp_variable = { PREV.neighbouring_war_refugees = 0.008 }
 		}
 	}
-	set_variable = { neighbour_war_refugees_display = war_refugees }
-	add_to_variable = { max_net_immigration_rate = war_refugees }
+	set_variable = { neighbour_war_refugees_display = neighbouring_war_refugees }
+	add_to_variable = { max_net_immigration_rate = neighbouring_war_refugees }
 
 	# Check if you are at war and if you have refugees
+	set_temp_variable = { our_war_refugees = 0 }
 	if = { limit = { has_war = yes }
-		multiply_temp_variable = { war_refugees = 0.01 }
-		divide_temp_variable = { war_refugees = population_total }
+		add_to_temp_variable = { our_war_refugees = population_total }
+		multiply_temp_variable = { our_war_refugees = 0.008 }
+		set_variable = { personal_war_refugees_display = our_war_refugees }
+		multiply_variable = { personal_war_refugees_display = -1 }
 	}
-	set_variable = { personal_war_refugees_display = war_refugees }
-	subtract_from_variable = { max_net_immigration_rate = war_refugees }
+	subtract_from_variable = { max_net_immigration_rate = our_war_refugees }
 
 	# Calculate Migration Rate
 	set_temp_variable = { migration_rate_value = modifier@base_migration_rate_value }
@@ -4319,6 +4330,12 @@ calculate_migration_mechanic_values = {
 	}
 	else = {
 		divide_temp_variable = { migration_rate_value = migration_rate_value_multiplier }
+	}
+
+	# Check if there are other countries
+	if = { limit = { check_variable = { global.countries^1 = 0 } }
+		set_variable = { max_net_immigration_rate = 0 }
+		set_variable = { net_immigration_rate = 0 }
 	}
 
 	set_variable = { net_immigration_rate = max_net_immigration_rate }
