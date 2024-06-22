@@ -107,7 +107,7 @@ focus_tree = {
 			change_influence_percentage = yes
 			add_popularity = { ideology = democratic popularity = 0.05 }
 			recalculate_party = yes
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 		}
 
 		ai_will_do = {
@@ -165,7 +165,7 @@ focus_tree = {
 			change_influence_percentage = yes
 			add_popularity = { ideology = neutrality popularity = 0.05 }
 			recalculate_party = yes
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 		}
 
 		ai_will_do = {
@@ -224,7 +224,7 @@ focus_tree = {
 			change_influence_percentage = yes
 			add_popularity = { ideology = communism popularity = 0.05 }
 			recalculate_party = yes
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 		}
 
 		ai_will_do = {
@@ -291,7 +291,7 @@ focus_tree = {
 			set_temp_variable = { tag_index = USA.id }
 			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 			add_popularity = {
 				ideology = democratic
 				popularity = 0.1
@@ -374,7 +374,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_homegrown_companies"
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 			one_office_construction = yes
 		}
 
@@ -519,7 +519,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_industrial_buildup_1"
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 			one_random_infrastructure = yes
 		}
 
@@ -548,7 +548,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_industrial_buildup_2"
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 		}
 
 		ai_will_do = {
@@ -594,7 +594,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_industrial_buildup_3"
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 		}
 
 		ai_will_do = {
@@ -643,7 +643,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_industrial_buildup_4"
-			one_random_industrial_complex = yes
+			one_random_factory_energy_check = yes
 		}
 
 		ai_will_do = {
@@ -965,9 +965,7 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = ETH_request_chinese_investments
-		}
+		prerequisite = { focus = ETH_request_chinese_investments }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
@@ -977,7 +975,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_establish_connections_with_tongji"
-				add_ideas = ETH_idea_cscec
+			add_ideas = ETH_idea_cscec
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = THIS.id }
 		}
 
 		ai_will_do = {
@@ -1439,6 +1440,60 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ETH_provide_assistance_to_somalia
+		icon = focus_ETH_protector_of_the_somalis
+
+		x = 3
+		y = 4
+		relative_position_id = ETH_defense_of_ethiopia
+
+		cost = 10
+
+		prerequisite = { focus = ETH_secure_the_somali_border }
+
+		available = {
+			is_neighbor_of = SOM
+			OR = {
+				NOT = { has_war_with = SOM }
+				has_defensive_war_with = SOM
+			}
+			SOM = { has_war_with = SHB }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ETH_provide_assistance_to_somalia"
+			add_ideas = ETH_ethiopian_intervention_forces
+			if = { limit = { has_war_support < 0.50 }
+				add_war_support = 0.05
+			}
+			if = { limit = { country_exists = SOM }
+				add_relation_modifier = {
+					target = SOM
+					modifier = generic_increased_military_support
+				}
+			}
+			else = {
+				random_country = {
+					limit = {
+						has_cosmetic_tag = SOM
+						has_war_with = SHB
+					}
+					PREV = {
+						add_relation_modifier = {
+							target = PREV
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	focus = {
 		id = ETH_secure_the_kenyan_border
 		icon = focus_ETH_compensation
 
@@ -1661,9 +1716,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_study_foreign_armor_designs"
 			add_tech_bonus = {
-				name = Cat_TANKS
+				name = CAT_tanks
 				bonus = 0.7
-				category = Cat_TANKS
+				category = CAT_tanks
 			}
 		}
 
@@ -1704,7 +1759,7 @@ focus_tree = {
 				name = ETH_study_foreign_aircraft_designs
 				bonus = 0.4
 				uses = 2
-				category = Cat_FIXED_WING
+				category = CAT_fixed_wing
 			}
 		}
 
@@ -1863,7 +1918,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_land_doctrine"
 			add_doctrine_cost_reduction = {
 				name = ETH_land_doctrine
-				category = land_doctrine
+				category = CAT_land_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -1892,7 +1947,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_air_doctrine"
 			add_doctrine_cost_reduction = {
 				name = ETH_air_doctrine
-				category = land_doctrine
+				category = CAT_land_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -2784,13 +2839,7 @@ focus_tree = {
 
 		cost = 10
 
-		allow_branch = {
-			has_country_flag = ETH_eth_vic
-		}
-
-		#allow_branch = {
-		#	has_idea = ETH_eritrean_integrations
-		#}
+		allow_branch = { has_country_flag = ETH_eth_vic }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_start"
@@ -2816,23 +2865,25 @@ focus_tree = {
 
 		cost = 1
 
-		prerequisite = {
-			focus = ETH_eritrea_start
-		}
-
-		mutually_exclusive = {
-			focus = ETH_eritrea_federation
-		}
+		prerequisite = { focus = ETH_eritrea_start }
 
 		available = {
-			always = no
+			NOT = { has_completed_focus = ETH_eritrea_federation }
+			custom_trigger_tooltip = {
+				tooltip = ETH_eritrea_integration_trigger_TT
+				has_country_flag = ETH_assembly_dissolved_FLAG
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_dissolve_assembly"
+			set_country_flag = ETH_locked_annexation_FLAG
 			unlock_decision_category_tooltip = ETH_eritrean_integration_category
 			unlock_decision_tooltip = ETH_integration_process_tick
+			newline = yes
 			add_ideas = ETH_dissolved_the_assembly
+			newline = yes
+			custom_effect_tooltip = ETH_locked_annexation_TT
 		}
 
 		ai_will_do = {
@@ -2931,6 +2982,7 @@ focus_tree = {
 		prerequisite = { focus = ETH_eritrea_tackle_seperatists }
 
 		available = {
+			has_idea = ETH_dissolved_the_assembly
 			custom_trigger_tooltip = {
 				tooltip = ETH_annexation_support_TT
 				check_variable = { ETH_eritrean_acceptance > 99 }
@@ -2941,10 +2993,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_annex"
 			228 = { add_core_of = ETH }
 			229 = { add_core_of = ETH }
+			1078 = { add_core_of = ETH }
 			clear_variable = ETH_eritrean_acceptance
 			clear_variable = ETH_amharic_speakers
 			clear_variable = ETH_propaganda_distribution
 			clear_variable = ETH_crackdown_on_bozos
+			newline = yes
+			remove_ideas = ETH_dissolved_the_assembly
 		}
 
 		ai_will_do = {
@@ -2964,28 +3019,42 @@ focus_tree = {
 
 		cost = 1
 
-		prerequisite = {
-			focus = ETH_eritrea_start
-		}
-
-		mutually_exclusive = {
-			focus = ETH_eritrea_dissolve_assembly
-		}
+		prerequisite = { focus = ETH_eritrea_start }
 
 		available = {
-			always = no
+			NOT = { has_completed_focus = ETH_eritrea_dissolve_assembly }
+			custom_trigger_tooltip = {
+				tooltip = ETH_eritrea_federation_trigger_TT
+				has_country_flag = ETH_locked_federalisation_FLAG
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_federation"
+			set_country_flag = ETH_locked_federalisation_FLAG
 			release = ERI
+			hidden_effect = {
+				set_cosmetic_tag = ETH_federation_ct
+				clr_country_flag = dynamic_flag
+				ERI = {
+					set_country_flag = ETH_transitional_government_FLAG
+					add_ideas = {
+						defence_01
+						volunteer_army
+						volunteer_women
+						intervention_local_security
+					}
+					set_ruling_leader = yes
+					set_leader = yes
+				}
+			}
 			if = {
 				limit = {
 					has_global_flag = GAME_RULE_allow_colored_puppets
 				}
 				set_autonomy = {
 					target = ERI
-					autonomy_state = autonomy_puppet_state_colored
+					autonomy_state = autonomy_autonomous_state_colored
 					end_wars = yes
 					end_civil_wars = yes
 				}
@@ -2993,39 +3062,18 @@ focus_tree = {
 			else = {
 				set_autonomy = {
 					target = ERI
-					autonomy_state = autonomy_puppet_state
+					autonomy_state = autonomy_autonomous_state
 					end_wars = yes
 					end_civil_wars = yes
 				}
 			}
+			newline = yes
 			unlock_decision_category_tooltip = ETH_eritrean_federalisation_category
 			unlock_decision_tooltip = ETH_federalisation_process_tick
+			newline = yes
 			add_ideas = ETH_eritrean_federalisation_underway
-			hidden_effect = {
-				set_cosmetic_tag = ETH_federation_ct
-				clr_country_flag = dynamic_flag
-				ERI = {
-					set_cosmetic_tag = ERI_ETH
-					clr_country_flag = dynamic_flag
-					#load_focus_tree = ERI_eritrea_puppet_focus
-					add_ideas = {
-						defence_01
-						volunteer_army
-						volunteer_women
-						intervention_local_security
-					}
-					create_country_leader = {
-						name = "Eritrean Transitional Government"
-						ideology = Western_Autocracy
-						picture = "Portrait_Eritrea_Government.dds"
-					}
-					create_country_leader = {
-						name = "Eritrean Transitional Government"
-						ideology = Neutral_Autocracy
-						picture = "Portrait_Eritrea_Government.dds"
-					}
-				}
-			}
+			newline = yes
+			custom_effect_tooltip = ETH_locked_federalisation_TT
 		}
 
 		ai_will_do = {
@@ -3044,19 +3092,159 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = ETH_eritrea_federation
-		}
+		prerequisite = { focus = ETH_eritrea_federation }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_assembly"
 			ERI = {
 				country_event = { id = eritrea.3 days = 4 }
-				set_temp_variable = { party_index = 5 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.10 }
-				add_relative_party_popularity = yes
 				set_country_flag = ERI_ethiopian_puppet
+			}
+			newline = yes
+			if = {
+				limit = { has_government = democratic }
+				ERI = {
+					hidden_effect = {
+						set_popularities = {
+							democratic = 70
+							communism = 10
+							fascism = 0
+							neutrality = 10
+							nationalist = 10
+						}
+						set_politics = {
+							ruling_party = democratic
+							elections_allowed = no
+						}
+					}
+					set_temp_variable = { rul_party_temp = 2 }
+					change_ruling_party_effect = yes
+					set_temp_variable = { party_index = 2 }
+					set_temp_variable = { party_popularity_increase = 0.40 }
+					add_relative_party_popularity = yes
+					hidden_effect = {
+						set_partyall_allowed = yes
+						set_partyall_banned = yes
+						add_political_power = 460
+					}
+				}
+			}
+			else_if = {
+				limit = { has_government = communism }
+				ERI = {
+					hidden_effect = {
+						set_popularities = {
+							democratic = 10
+							communism = 70
+							fascism = 0
+							neutrality = 10
+							nationalist = 10
+						}
+						set_politics = {
+							ruling_party = communism
+							elections_allowed = no
+						}
+					}
+				}
+				if = {
+					limit = { emerging_communist_state_are_in_power = yes }
+					ERI = {
+						set_temp_variable = { rul_party_temp = 4 }
+						change_ruling_party_effect = yes
+						set_temp_variable = { party_index = 4 }
+						set_temp_variable = { party_popularity_increase = 0.20 }
+						add_relative_party_popularity = yes
+						hidden_effect = {
+							set_partyall_allowed = yes
+							set_partyall_banned = yes
+							add_political_power = 460
+						}
+					}
+				}
+				else = {
+					ERI = {
+						set_temp_variable = { rul_party_temp = 5 }
+						change_ruling_party_effect = yes
+						set_temp_variable = { party_index = 5 }
+						set_temp_variable = { party_popularity_increase = 0.20 }
+						add_relative_party_popularity = yes
+						hidden_effect = {
+							set_partyall_allowed = yes
+							set_partyall_banned = yes
+							add_political_power = 460
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = { has_government = neutrality }
+				ERI = {
+					hidden_effect = {
+						set_popularities = {
+							democratic = 10
+							communism = 10
+							fascism = 0
+							neutrality = 70
+							nationalist = 10
+						}
+						set_politics = {
+							ruling_party = neutrality
+							elections_allowed = no
+						}
+					}
+					set_temp_variable = { rul_party_temp = 14 }
+					change_ruling_party_effect = yes
+					set_temp_variable = { party_index = 14 }
+					set_temp_variable = { party_popularity_increase = 0.40 }
+					add_relative_party_popularity = yes
+					hidden_effect = {
+						set_partyall_allowed = yes
+						set_partyall_banned = yes
+						add_political_power = 460
+					}
+				}
+			}
+			else_if = {
+				limit = { has_government = nationalist }
+				ERI = {
+					hidden_effect = {
+						set_popularities = {
+							democratic = 10
+							communism = 10
+							fascism = 0
+							neutrality = 10
+							nationalist = 70
+						}
+						set_politics = {
+							ruling_party = nationalist
+							elections_allowed = no
+						}
+					}
+					set_temp_variable = { rul_party_temp = 23 }
+					change_ruling_party_effect = yes
+					set_temp_variable = { party_index = 23 }
+					set_temp_variable = { party_popularity_increase = 0.40 }
+					add_relative_party_popularity = yes
+					hidden_effect = {
+						set_partyall_allowed = yes
+						set_partyall_banned = yes
+						add_political_power = 460
+					}
+				}
+			}
+			else = {
+				custom_effect_tooltip = ETH_eritrea_assembly_TT
+				set_temp_variable = { treasury_change = 250 }
+				modify_treasury_effect = yes
+				ERI = {
+					set_temp_variable = { treasury_change = 250 }
+					modify_treasury_effect = yes
+					hidden_effect = {
+						set_partyall_allowed = yes
+						set_partyall_banned = yes
+						add_political_power = 460
+					}
+				}
 			}
 		}
 
@@ -3134,6 +3322,7 @@ focus_tree = {
 		prerequisite = { focus = ETH_eritrea_tackle_seperatists }
 
 		available = {
+			has_idea = ETH_eritrean_federalisation_underway
 			custom_trigger_tooltip = {
 				tooltip = ETH_federation_support_TT
 				check_variable = { ETH_eritrean_federation_process > 99 }
@@ -3142,34 +3331,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrean_federal_state"
-			if = {
-				limit = {
-					has_global_flag = GAME_RULE_allow_colored_puppets
-				}
-				set_autonomy = {
-					target = ERI
-					autonomy_state = autonomy_autonomous_state_colored
-				}
-			}
-			else = {
-				set_autonomy = {
-					target = ERI
-					autonomy_state = autonomy_autonomous_state
-				}
-			}
 			custom_effect_tooltip = ETH_eritrea_federal_parties_allowed_TT
-			hidden_effect = {
-				ERI = {
+			ERI = {
+				hidden_effect = {
 					set_partyall_allowed = yes
 					allow_elections = yes
 					add_political_power = 230
+					clr_country_flag = ETH_transitional_government_FLAG
+					country_event = { id = MD4_election_campaign.0 days = 14 }
 				}
 			}
 			clear_variable = ETH_eritrean_federation_process
 			clear_variable = ETH_amharic_speakers2
 			clear_variable = ETH_propaganda_distribution2
 			clear_variable = ETH_crackdown_on_bozos2
-
+			newline = yes
+			remove_ideas = ETH_eritrean_federalisation_underway
 		}
 
 		ai_will_do = {
@@ -3197,15 +3374,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_teach_amharic"
 			if = {
-				limit = {
-					has_completed_focus = ETH_eritrea_dissolve_assembly
-				}
+				limit = { has_completed_focus = ETH_eritrea_dissolve_assembly }
 				unlock_decision_tooltip = ETH_fund_amharic_schools
 			}
 			if = {
-				limit = {
-					has_completed_focus = ETH_eritrea_federation
-				}
+				limit = { has_completed_focus = ETH_eritrea_federation }
 				unlock_decision_tooltip = ETH_encourage_language_schools
 			}
 			if = {
@@ -3240,23 +3413,17 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = ETH_eritrea_teach_amharic
-		}
+		prerequisite = { focus = ETH_eritrea_teach_amharic }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_propaganda"
 
 			if = {
-				limit = {
-					has_completed_focus = ETH_eritrea_dissolve_assembly
-				}
+				limit = { has_completed_focus = ETH_eritrea_dissolve_assembly }
 				unlock_decision_tooltip = ETH_distribute_propaganda
 			}
 			if = {
-				limit = {
-					has_completed_focus = ETH_eritrea_federation
-				}
+				limit = { has_completed_focus = ETH_eritrea_federation }
 				unlock_decision_tooltip = ETH_show_off_benefits_federation
 			}
 			if = {
@@ -3285,23 +3452,17 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = ETH_eritrea_propaganda
-		}
+		prerequisite = { focus = ETH_eritrea_propaganda }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ETH_eritrea_tackle_seperatists"
 			if = {
-				limit = {
-					has_completed_focus = ETH_eritrea_dissolve_assembly
-				}
+				limit = { has_completed_focus = ETH_eritrea_dissolve_assembly }
 				unlock_decision_tooltip = ETH_harsh_crackdowns
 				unlock_decision_tooltip = ETH_make_arrests
 			}
 			if = {
-				limit = {
-					has_completed_focus = ETH_eritrea_federation
-				}
+				limit = { has_completed_focus = ETH_eritrea_federation }
 				unlock_decision_tooltip = ETH_falsify_evidence
 				unlock_decision_tooltip = ETH_deport_agitators
 			}

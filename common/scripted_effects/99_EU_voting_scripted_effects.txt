@@ -45,6 +45,29 @@ EU_update_AI_general_voting_modifiers = {
 	if = { limit = { EU_external_sov_chi_influence_5 = yes }
 		add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -25 }
 	}
+	# AI Difficulty check
+	if = { limit = { has_global_flag = EUU_player_proposed_law }
+		if = { limit = { difficulty > 1 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -10 }
+		}
+		if = { limit = { difficulty > 2 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -10 }
+		}
+		if = { limit = { difficulty > 3 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = -10 }
+		}
+	}
+	else = {
+		if = { limit = { difficulty > 1 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = 10 }
+		}
+		if = { limit = { difficulty > 2 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = 10 }
+		}
+		if = { limit = { difficulty > 3 }
+			add_to_temp_variable = { var = EU_AI_focus_modifier_yes_vote value = 10 }
+		}
+	}
 
 	# Common Law Section, this is something that can and is repeated so we will be tucking it in here with the general modifiers since that goes at the end.
 	if = {
@@ -697,7 +720,7 @@ EU_update_AI_focus_EU611_voting_modifier = {
 }
 
 # QMV Results Section
-### EU002 ###
+# EU002 - European Candidate
 focus_EU002_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -713,7 +736,7 @@ focus_EU002_QMV_result = {
 	}
 }
 
-### EU101 ###
+# EU101 - Charter of Fundamental Rights of the European Union
 focus_EU101_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -736,7 +759,7 @@ focus_EU101_QMV_result = {
 	}
 }
 
-### EU102 ###
+# EU102 - European Convention
 focus_EU102_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -747,10 +770,10 @@ focus_EU102_QMV_result = {
 		every_country = {
 			limit = { has_idea = EU_member }
 			if = { limit = { has_idea = european_spirit }
-				add_timed_idea = { idea = european_spirit days = 600 }
+				modify_timed_idea = { idea = european_spirit days = 600 }
 			}
 			else = {
-				modify_timed_idea = { idea = european_spirit days = 600 }
+				add_timed_idea = { idea = european_spirit days = 600 }
 			}
 		}
 
@@ -762,7 +785,7 @@ focus_EU102_QMV_result = {
 	}
 }
 
-### EU103 ###
+# EU103 - European Constitution
 focus_EU103_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -773,10 +796,10 @@ focus_EU103_QMV_result = {
 		every_country = {
 			limit = { has_idea = EU_member }
 			if = { limit = { has_idea = european_spirit }
-				add_timed_idea = { idea = european_spirit days = 600 }
+				modify_timed_idea = { idea = european_spirit days = 600 }
 			}
 			else = {
-				modify_timed_idea = { idea = european_spirit days = 600 }
+				add_timed_idea = { idea = european_spirit days = 600 }
 			}
 		}
 		set_global_flag = european_constitution
@@ -789,7 +812,7 @@ focus_EU103_QMV_result = {
 	}
 }
 
-### EU104 ###
+# EU104 - Treaty of Lisbon
 focus_EU104_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -800,10 +823,10 @@ focus_EU104_QMV_result = {
 		every_country = {
 			limit = { has_idea = EU_member }
 			if = { limit = { has_idea = european_spirit }
-				add_timed_idea = { idea = european_spirit days = 600 }
+				modify_timed_idea = { idea = european_spirit days = 600 }
 			}
 			else = {
-				modify_timed_idea = { idea = european_spirit days = 600 }
+				add_timed_idea = { idea = european_spirit days = 600 }
 			}
 		}
 		set_global_flag = treaty_of_lisbon
@@ -816,7 +839,7 @@ focus_EU104_QMV_result = {
 	}
 }
 
-### EU105 ###
+# EU105 - European External Action Service
 focus_EU105_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -833,7 +856,7 @@ focus_EU105_QMV_result = {
 	}
 }
 
-### EU201 ###
+# EU201 - ECB Intervention
 focus_EU201_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -844,9 +867,8 @@ focus_EU201_QMV_result = {
 		every_country = {
 			limit = { has_idea = EU_member }
 			add_ideas = ECB_zero_interest_rate_policy
-			set_global_flag = ECB_intervention
 		}
-		ROOT = { set_global_flag = ECB_intervention }
+		set_global_flag = ECB_intervention
 
 		cleanup_european_union_voting_yes = yes
 	}
@@ -856,7 +878,7 @@ focus_EU201_QMV_result = {
 	}
 }
 
-### EU202 ###
+# EU202 - European Banking Union
 focus_EU202_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -877,7 +899,7 @@ focus_EU202_QMV_result = {
 	}
 }
 
-### EU203 ###
+# EU203 - Eurobonds
 focus_EU203_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -911,10 +933,8 @@ focus_EU203_QMV_result = {
 			}
 			if = {
 				limit = {
-					NOT = {
-						check_variable = { interest_rate > 7.5 }
-						check_variable = { debt_ratio > 0.75 }
-					}
+					NOT = { check_variable = { interest_rate > 7.5 } }
+					check_variable = { debt_ratio < 1.0 }
 					check_variable = { EU_ratio_of_total_eu_gdp > 0.1 }
 				}
 				add_to_temp_array = { debt_consumers = THIS }
@@ -932,12 +952,12 @@ focus_EU203_QMV_result = {
 			add_to_variable = { debt = debt_number }
 		}
 
-		POR = { remove_ideas = EUU_national_dept_crisis_eu }
-		ITA = { remove_ideas = EUU_national_dept_crisis_eu }
-		IRE = { remove_ideas = EUU_national_dept_crisis_eu }
-		GRE = { remove_ideas = EUU_national_dept_crisis_eu }
-		SPR = { remove_ideas = EUU_national_dept_crisis_eu }
-		CYP = { remove_ideas = EUU_national_dept_crisis_eu }
+		every_country = {
+			limit = {
+				has_idea = EUU_national_dept_crisis_eu
+			}
+			remove_ideas = EUU_national_dept_crisis_eu
+		}
 
 		cleanup_european_union_voting_yes = yes
 	}
@@ -947,7 +967,7 @@ focus_EU203_QMV_result = {
 	}
 }
 
-### EU204 ###
+# EU204 - European Financial Stability Facility
 focus_EU204_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -974,7 +994,7 @@ focus_EU204_QMV_result = {
 	}
 }
 
-### EU205 ###
+# EU205 - European Stability Mechanism (ESM)
 focus_EU205_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -996,7 +1016,7 @@ focus_EU205_QMV_result = {
 	}
 }
 
-### EU206 ###
+# EU206 - Fiscal Union
 focus_EU206_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1017,7 +1037,7 @@ focus_EU206_QMV_result = {
 	}
 }
 
-### EU207 ###
+# EU207 - European Economic Government
 focus_EU207_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1039,7 +1059,7 @@ focus_EU207_QMV_result = {
 	}
 }
 
-### EU208 ###
+# EU208 - European Minister of Economy and Finance
 focus_EU208_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1056,7 +1076,7 @@ focus_EU208_QMV_result = {
 	}
 }
 
-### EU301 ###
+# EU301 - European Defence Agency
 focus_EU301_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1079,7 +1099,7 @@ focus_EU301_QMV_result = {
 	}
 }
 
-### EU302 ###
+# EU302 - Permanent Structured Cooperation (PESCO)
 focus_EU302_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1087,7 +1107,7 @@ focus_EU302_QMV_result = {
 		}
 		set_country_flag = focus_EU302_QMV_yes
 
-		ROOT = { modify_tech_sharing_bonus = { id = EU_Tech_Share bonus = 0.04 } }
+		modify_tech_sharing_bonus = { id = EU_Tech_Share bonus = 0.08 }
 
 		cleanup_european_union_voting_yes = yes
 	}
@@ -1097,7 +1117,7 @@ focus_EU302_QMV_result = {
 	}
 }
 
-### EU303 ###
+# EU303 - European Defence Fund
 focus_EU303_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1117,7 +1137,7 @@ focus_EU303_QMV_result = {
 	}
 }
 
-### EU304 ###
+# EU304 - European Security Council
 focus_EU304_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1138,7 +1158,7 @@ focus_EU304_QMV_result = {
 	}
 }
 
-### EU305 ###
+# EU305 - EuroArmy
 focus_EU305_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1155,7 +1175,7 @@ focus_EU305_QMV_result = {
 	}
 }
 
-### EU306 ###
+# EU306 - EuroNavy
 focus_EU306_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1172,7 +1192,7 @@ focus_EU306_QMV_result = {
 	}
 }
 
-### EU307 ###
+# EU307 - EU Permanent Member of the UNSC
 focus_EU307_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1189,7 +1209,7 @@ focus_EU307_QMV_result = {
 	}
 }
 
-### EU308 ###
+# EU308 - EU Nuclear Power
 focus_EU308_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1273,7 +1293,7 @@ focus_EU308_QMV_result = {
 	}
 }
 
-### EU401 ###
+# EU401 - General Data Protection Regulation
 focus_EU401_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1295,7 +1315,7 @@ focus_EU401_QMV_result = {
 	}
 }
 
-### EU402 ###
+# EU402 - Directive on Copyright in the Digital Single Market
 focus_EU402_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1324,7 +1344,7 @@ focus_EU402_QMV_result = {
 	}
 }
 
-### EU403 ###
+# EU403 - Dublin II Regulation
 focus_EU403_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1340,9 +1360,7 @@ focus_EU403_QMV_result = {
 			set_temp_variable = { temp_outlook_increase = 0.03 }
 			add_relative_party_popularity = yes
 		}
-		ROOT = {
-			set_global_flag = dublin_II
-		}
+		set_global_flag = dublin_II
 
 		cleanup_european_union_voting_yes = yes
 	}
@@ -1352,7 +1370,7 @@ focus_EU403_QMV_result = {
 	}
 }
 
-### EU404 ###
+# EU404 - Relocation and Resettlement of Asylum Seekers
 focus_EU404_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1364,7 +1382,10 @@ focus_EU404_QMV_result = {
 			limit = {
 				has_idea = EU_member
 			}
-			remove_ideas = Migrant_Crisis_Europe
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
 			add_ideas = relocation_asylum_seekers
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
@@ -1380,7 +1401,7 @@ focus_EU404_QMV_result = {
 	}
 }
 
-### EU405 ###
+# EU405 - EU-Turkey Deal
 focus_EU405_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1390,7 +1411,10 @@ focus_EU405_QMV_result = {
 
 		every_country = {
 			limit = { has_idea = EU_member }
-			remove_ideas = Migrant_Crisis_Europe
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
 			add_ideas = EU_Turkey_deal
 		}
 		TUR = {
@@ -1415,7 +1439,7 @@ focus_EU405_QMV_result = {
 	}
 }
 
-### EU406 ###
+# EU406 - European Asylum Agency
 focus_EU406_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1438,7 +1462,7 @@ focus_EU406_QMV_result = {
 	}
 }
 
-### EU407 ###
+# EU407 - Frontex
 focus_EU407_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1459,14 +1483,14 @@ focus_EU407_QMV_result = {
 	}
 }
 
-### EU408 ###
+# EU408 - European Border and Coast Guard Agency
 focus_EU408_QMV_result = {
 	if = { # QMV - yes
 		limit = {
 			EU_voting_decision_result_trigger = yes
 		}
 		set_country_flag = focus_EU408_QMV_yes
-		ROOT = { set_global_flag = frontex_ExDir }
+		set_global_flag = frontex_ExDir
 
 		cleanup_european_union_voting_yes = yes
 	}
@@ -1476,7 +1500,7 @@ focus_EU408_QMV_result = {
 	}
 }
 
-### EU601 - 2003 EU Enlargement ###
+# EU601 - 2003 EU Enlargement
 focus_EU601_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1513,7 +1537,7 @@ focus_EU601_QMV_result = {
 	}
 }
 
-### EU602 - 2007 EU Enlargement ###
+# EU602 - 2007 EU Enlargement
 focus_EU602_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1554,7 +1578,7 @@ focus_EU603_QMV_result = {
 	}
 }
 
-### EU703 ###
+### EU703
 focus_EU703_QMV_result = {
 	if = { # QMV - yes
 		limit = {
@@ -1590,7 +1614,8 @@ focus_EU110_QMV_result = {
 focus_EU111_QMV_result = {
 	if = { # QMV - yes
 		limit = {
-			EU_voting_decision_result_trigger = yes
+			#EU_voting_decision_result_trigger = yes
+			always = yes
 		}
 		set_country_flag = focus_EU111_QMV_yes
 
@@ -1600,111 +1625,111 @@ focus_EU111_QMV_result = {
 			remove_ideas = EU_member
 		}
 
-		ROOT = {
-			hidden_effect = {
-				EUU = {
-					for_each_loop = {
-						array = researched_techs
-						if = {
-							limit = {
-								NOT = { is_in_array = { eu_technologies = v } }
-							}
-							add_to_temp_array = { eu_technologies = v }
+		for_each_scope_loop = {
+			array = global.EU_active_vote_rejecters
+			remove_ideas = EU_member
+		}
+
+		hidden_effect = {
+			every_country = {
+				limit = { has_idea = EU_member }
+				EUU = { inherit_technology = THIS }
+				set_country_flag = USoE_member
+				every_unit_leader = {
+					set_unit_leader_flag = USoE_unit_leader
+					set_nationality = ROOT
+					add_unit_leader_trait = military_reorganization
+				}
+				every_owned_state = {
+					limit = {
+						OR = {
+							is_on_continent = europe
+							is_core_of = GEO
+							is_core_of = ARM
+							is_core_of = AZE
+							is_core_of = TUR
+							is_core_of = POR
+							is_core_of = SPR
+						}
+						NOT = { is_core_of = ROOT }
+					}
+					add_core_of = ROOT
+				}
+				if = { limit = { NOT = { original_tag = ROOT } }
+					ROOT = {
+						add_to_variable = { treasury = PREV.treasury }
+						add_to_variable = { debt = PREV.debt }
+						add_to_variable = { int_investments = PREV.int_investments }
+						for_each_loop = {
+							array = missile_inventory_array
+							value = v
+							index = i
+							add_to_variable = { missile_inventory_array^i = PREV.missile_inventory_array^i }
+						}
+						for_each_loop = {
+							array = GNSS_satellite_array
+							value = v
+							index = i
+							add_to_variable = { GNSS_satellite_array^i = PREV.GNSS_satellite_array^i }
+						}
+						for_each_loop = {
+							array = COM_satellite_array
+							value = v
+							index = i
+							add_to_variable = { COM_satellite_array^i = PREV.COM_satellite_array^i }
+						}
+						for_each_loop = {
+							array = SPY_satellite_array
+							value = v
+							index = i
+							add_to_variable = { SPY_satellite_array^i = PREV.SPY_satellite_array^i }
+						}
+						for_each_loop = {
+							array = nuclear_warhead_inventory_array
+							value = v
+							index = i
+							add_to_variable = { nuclear_warhead_inventory_array^i = PREV.nuclear_warhead_inventory_array^i }
+						}
+						annex_country = {
+							target = PREV
+							transfer_troops = yes
 						}
 					}
 				}
+			}
+			EUU = {
 				for_each_loop = {
-					array = eu_technologies
-					meta_effect = {
-						text = {
+					array = researched_techs
+					if = {
+						limit = {
+							NOT = { is_in_array = { eu_technologies = v } }
+						}
+						add_to_temp_array = { eu_technologies = v }
+					}
+				}
+			}
+			for_each_loop = {
+				array = eu_technologies
+				meta_effect = {
+					text = {
+						ROOT = {
 							set_technology = {
 								[TECH] = 1
 								popup = no
 							}
 						}
-						TECH = "[?v.GetTokenKey]"
 					}
-				}
-				every_country = {
-					limit = { has_idea = EU_member }
-					EUU = { inherit_technology = PREV }
-					set_country_flag = USoE_member
-					every_unit_leader = {
-						set_unit_leader_flag = USoE_unit_leader
-						set_nationality = ROOT
-						add_unit_leader_trait = military_reorganization
-					}
-					every_owned_state = {
-						limit = {
-							OR = {
-								is_on_continent = europe
-								is_core_of = GEO
-								is_core_of = ARM
-								is_core_of = AZE
-								is_core_of = TUR
-								is_core_of = POR
-								is_core_of = SPR
-							}
-							NOT = { is_core_of = ROOT }
-						}
-						add_core_of = ROOT
-					}
-					if = {
-						limit = {
-							NOT = { original_tag = FROM }
-						}
-						FROM = {
-							annex_country = {
-								target = ROOT
-								transfer_troops = yes
-							}
-							# Integrates Entire Economy of the nation
-							add_to_variable = { treasury = ROOT.treasury }
-							add_to_variable = { debt = ROOT.debt }
-							add_to_variable = { int_investments = ROOT.int_investments }
-
-							for_each_loop = {
-								array = missile_inventory_array
-								value = v
-								index = i
-								add_to_variable = { missile_inventory_array^i = ROOT.missile_inventory_array^i }
-							}
-							for_each_loop = {
-								array = GNSS_satellite_array
-								value = v
-								index = i
-								add_to_variable = { GNSS_satellite_array^i = ROOT.GNSS_satellite_array^i }
-							}
-							for_each_loop = {
-								array = COM_satellite_array
-								value = v
-								index = i
-								add_to_variable = { COM_satellite_array^i = ROOT.COM_satellite_array^i }
-							}
-							for_each_loop = {
-								array = SPY_satellite_array
-								value = v
-								index = i
-								add_to_variable = { SPY_satellite_array^i = ROOT.SPY_satellite_array^i }
-							}
-							for_each_loop = {
-								array = nuclear_warhead_inventory_array
-								value = v
-								index = i
-								add_to_variable = { nuclear_warhead_inventory_array^i = ROOT.nuclear_warhead_inventory_array^i }
-							}
-						}
-					}
-				}
-				ROOT = {
-					set_cosmetic_tag = USoE
-					clr_country_flag = dynamic_flag
-					set_country_flag = USoE
-					add_ideas = multi_ethnic_state_idea
+					TECH = "[?v.GetTokenKey]"
 				}
 			}
-			custom_effect_tooltip = form_USoE_tt
 		}
+		ROOT = {
+			set_cosmetic_tag = USoE
+			clr_country_flag = dynamic_flag
+			set_country_flag = USoE
+			add_ideas = multi_ethnic_state_idea
+		}
+		custom_effect_tooltip = form_USoE_tt
 		cleanup_european_union_voting_yes = yes
 	}
 	else = { # QMV - no
@@ -1840,10 +1865,21 @@ focus_EU609_QMV_result = {
 		SWI = { set_country_flag = EU_candidate }
 		NOR = { set_country_flag = EU_candidate }
 		ICE = { set_country_flag = EU_candidate }
+		# Microstates
+		HLS = { set_country_flag = EU_candidate }
+		SMA = { set_country_flag = EU_candidate }
+		MNC = { set_country_flag = EU_candidate }
+		ADO = { set_country_flag = EU_candidate }
+		LIC = { set_country_flag = EU_candidate }
 
 		add_to_array = { global.EU_candiates = SWI }
 		add_to_array = { global.EU_candiates = NOR }
 		add_to_array = { global.EU_candiates = ICE }
+		add_to_array = { global.EU_candiates = HLS }
+		add_to_array = { global.EU_candiates = SMA }
+		add_to_array = { global.EU_candiates = MNC }
+		add_to_array = { global.EU_candiates = ADO }
+		add_to_array = { global.EU_candiates = LIC }
 	}
 	else = { # QMV - no
 		set_country_flag = focus_EU609_QMV_no
@@ -1903,8 +1939,10 @@ focus_EU611_QMV_result = {
 cleanup_european_union_voting_yes = {
 	set_global_flag = EU_qualified_majority_voting_YES
 	set_global_flag = { flag = delay_next_council_vote days = 180 value = 1 }
+	set_global_flag = { flag = delay_next_council_vote_ai days = 194 value = 1 }
 	add_to_array = { array = global.EU_passed_votes value = global.current_active_vote_disp }
 	remove_from_array = { array = global.EU_council_votes value = global.current_active_vote_disp }
+	set_variable = { global.EUU_recently_failed_vote = -1 }
 	set_variable = { global.current_active_vote_disp = 0 }
 	set_variable = { global.EU_active_vote_yes = 0 }
 	set_variable = { global.EU_active_Vote_no = 0 }
@@ -1915,9 +1953,7 @@ cleanup_european_union_voting_yes = {
 	every_country = {
 		limit = { has_idea = EU_member }
 		# For display purposes
-		if = { limit = { is_ai = no }
-			set_country_flag = { flag = delay_player_next_council_vote days = 180 value = 1 }
-		}
+		set_country_flag = { flag = delay_player_next_council_vote days = 180 value = 1 }
 		if = {
 			limit = { has_country_flag = current_vote_influenced }
 			clr_country_flag = current_vote_influenced
@@ -1928,6 +1964,8 @@ cleanup_european_union_voting_yes = {
 cleanup_european_union_voting_no = {
 	set_global_flag = EU_qualified_majority_voting_NO
 	set_global_flag = { flag = delay_next_council_vote days = 180 value = 1 }
+	set_global_flag = { flag = delay_next_council_vote_ai days = 194 value = 1 }
+	set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
 	set_variable = { global.current_active_vote_disp = 0 }
 	set_variable = { global.EU_active_vote_yes = 0 }
 	set_variable = { global.EU_active_Vote_no = 0 }
@@ -1938,11 +1976,200 @@ cleanup_european_union_voting_no = {
 	every_country = {
 		limit = { has_idea = EU_member }
 		# For display purposes
-		if = { limit = { is_ai = no }
-			set_country_flag = { flag = delay_player_next_council_vote days = 180 value = 1 }
-		}
-		if = { limit = { has_country_flag = current_vote_influenced }
+		set_country_flag = { flag = delay_player_next_council_vote days = 180 value = 1 }
+		if = {
+			limit = { has_country_flag = current_vote_influenced }
 			clr_country_flag = current_vote_influenced
+		}
+	}
+}
+
+EU_show_display_effects_for_law = {
+	custom_effect_tooltip = EU_show_display_effects_for_law_tt
+	effect_tooltip = {
+		if = { limit = { check_variable = { v = 101 } }
+			add_ideas = EUU_cfr_eu
+		}
+		else_if = { limit = { check_variable = { v = 102 } }
+			if = { limit = { has_idea = european_spirit }
+				modify_timed_idea = { idea = european_spirit days = 600 }
+			}
+			else = {
+				add_timed_idea = { idea = european_spirit days = 600 }
+			}
+		}
+		else_if = { limit = { check_variable = { v = 103 } }
+			if = { limit = { has_idea = european_spirit }
+				modify_timed_idea = { idea = european_spirit days = 600 }
+			}
+			else = {
+				add_timed_idea = { idea = european_spirit days = 600 }
+			}
+		}
+		else_if = { limit = { check_variable = { v = 104 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU104_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 105 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU105_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 201 } }
+			add_ideas = ECB_zero_interest_rate_policy
+		}
+		else_if = { limit = { check_variable = { v = 202 } }
+			add_stability = 0.05
+		}
+		else_if = { limit = { check_variable = { v = 203 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU203_EP_agenda_additional
+			add_ideas = euro_bonds
+			if = {
+				limit = { has_global_flag = EUU_european_debt_crisis }
+				remove_ideas = european_debt_crisis
+				every_country = {
+					limit = {
+						has_idea = EUU_national_dept_crisis_eu
+					}
+					remove_ideas = EUU_national_dept_crisis_eu
+				}
+			}
+		}
+		else_if = { limit = { check_variable = { v = 204 } }
+			add_stability = 0.10
+			if = {
+				limit = { has_global_flag = EUU_european_debt_crisis }
+				remove_ideas = european_debt_crisis
+				every_country = {
+					limit = {
+						has_idea = EUU_national_dept_crisis_eu
+					}
+					activate_mission = troika_reforms
+				}
+			}
+		}
+		else_if = { limit = { check_variable = { v = 205 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU205_EP_agenda_additional
+			add_ideas = euro_rescue_package
+			if = {
+				limit = { has_global_flag = EUU_european_debt_crisis }
+				remove_ideas = european_debt_crisis
+			}
+		}
+		else_if = { limit = { check_variable = { v = 206 } }
+			add_ideas = fiscal_union
+		}
+		else_if = { limit = { check_variable = { v = 207 } }
+			add_ideas = European_Economic_Government
+		}
+		else_if = { limit = { check_variable = { v = 208 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU208_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 301 } }
+			add_to_tech_sharing_group = EU_Tech_Share
+		}
+		else_if = { limit = { check_variable = { v = 302 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU302_EP_agenda_additional
+			modify_tech_sharing_bonus = { id = EU_Tech_Share bonus = 0.08 }
+		}
+		else_if = { limit = { check_variable = { v = 303 } }
+			add_ideas = European_Defence_Fund
+		}
+		else_if = { limit = { check_variable = { v = 304 } }
+			add_ideas = European_Security_Council
+		}
+		else_if = { limit = { check_variable = { v = 305 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU305_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 306 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU306_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 307 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU307_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 308 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU308_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 401 } }
+			add_ideas = EUU_idea_gdpr
+			remove_ideas = foreign_data_kraken
+		}
+		else_if = { limit = { check_variable = { v = 402 } }
+			add_ideas = EU_copyright
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = -0.03 }
+			set_temp_variable = { temp_outlook_increase = -0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 6 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 14 }
+			add_relative_party_popularity = yes
+		}
+		else_if = { limit = { check_variable = { v = 403 } }
+			remove_ideas = asylum_shopping
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+		else_if = { limit = { check_variable = { v = 404 } }
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
+			add_ideas = relocation_asylum_seekers
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		else_if = { limit = { check_variable = { v = 405 } }
+			if = {
+				limit = { has_global_flag = EUU_migrant_crisis_triggered }
+				remove_ideas = Migrant_Crisis_Europe
+			}
+			add_ideas = EU_Turkey_deal
+		}
+		else_if = { limit = { check_variable = { v = 406 } }
+			remove_ideas = relocation_asylum_seekers
+			remove_ideas = EU_Turkey_deal
+			add_ideas = European_Asylum_Agency
+		}
+		else_if = { limit = { check_variable = { v = 407 } }
+			add_ideas = Frontex
+		}
+		else_if = { limit = { check_variable = { v = 408 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU408_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 601 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU601_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 602 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU602_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 603 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU603_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 605 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU605_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 606 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU606_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 607 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU607_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 608 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU608_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 609 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU609_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 610 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU610_EP_agenda_additional
+		}
+		else_if = { limit = { check_variable = { v = 611 } }
+			custom_effect_tooltip = tooltip_EU_parliament_focus_EU611_EP_agenda_additional
+		}
+		else = {
+			custom_effect_tooltip = EU_show_display_effects_for_law_no_effect_tt
 		}
 	}
 }

@@ -6,6 +6,7 @@ war_on_terror_category = {
 
 		visible = {
 			NOT = { has_country_flag = USA_911_happened }
+			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {
@@ -65,6 +66,7 @@ war_on_terror_category = {
 			has_country_flag = USA_911_happened
 			NOT = { has_country_flag = USA_911_killswitch }
 			country_exists = TAL
+			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {
@@ -99,10 +101,13 @@ war_on_terror_category = {
 		}
 	}
 	usa_operation_enduring_freedom = {
-		visible = { has_country_flag = bin_Laden_stays_home }
+		visible = {
+			has_country_flag = bin_Laden_stays_home
+			NOT = { has_country_flag = collapsed_nation }
+		}
 		available = { always = yes }
 
-		cost = 250
+		cost = 200
 
 		days_remove = 30
 		fire_only_once = yes
@@ -117,42 +122,6 @@ war_on_terror_category = {
 			add_named_threat = {
 				threat = 12
 				name = USA_enduring_freedom
-			}
-			#Add strategy to AI to help AFG
-			if = {
-				limit = { is_ai = yes }
-				add_ai_strategy = {
-					type = send_volunteers_desire
-					id = AFG
-					value = 200
-				}
-				add_ai_strategy = {
-					type = befriend
-					id = AFG
-					value = 200
-				}
-				add_ai_strategy = {
-					type = support
-					id = AFG
-					value = 200
-				}
-			}
-			PER = {
-				add_ai_strategy = {
-					type = send_volunteers_desire
-					id = AFG
-					value = 200
-				}
-				add_ai_strategy = {
-					type = befriend
-					id = AFG
-					value = 200
-				}
-				add_ai_strategy = {
-					type = support
-					id = AFG
-					value = 200
-				}
 			}
 			#Other NATO countries + Australia requested to join
 			every_other_country = {
@@ -260,6 +229,10 @@ war_on_terror_category = {
 
 		ai_will_do = {
 			factor = 1000
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -269,6 +242,7 @@ war_on_terror_category = {
 		visible = {
 			has_country_flag = USA_911_happened
 			NOT = { has_idea = USA_homeland_security }
+			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {
@@ -298,6 +272,7 @@ war_on_terror_category = {
 
 		visible = {
 			has_country_flag = Operation_enduring_freedom
+			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {
@@ -325,6 +300,7 @@ war_on_terror_category = {
 			has_country_flag = Operation_enduring_freedom
 			NOT = { has_idea = USA_guantanamo_bay }
 			owns_state = 424
+			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {
@@ -345,7 +321,7 @@ war_on_terror_category = {
 			CUB = {
 				add_opinion_modifier = {
 					target = USA
-					modifier = territorial_violation
+					modifier = territorial_integrity_violation
 				}
 			}
 			hidden_effect = {
@@ -367,6 +343,8 @@ war_on_terror_category = {
 				has_country_flag = Cooperation_with_taleban
 			}
 			IRQ = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = IRQ_did_a_retard }
 		}
 
 		available = {
@@ -401,6 +379,8 @@ war_on_terror_category = {
 		visible = {
 			has_country_flag = us_prepare_for_iraq_invasion
 			NOT = { has_country_flag = Operation_iraqi_freedom }
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = IRQ_did_a_retard }
 		}
 
 		available = {
@@ -429,37 +409,45 @@ war_on_terror_category = {
 
 		visible = {
 			has_country_flag = us_prepare_for_iraq_invasion
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = IRQ_did_a_retard }
 		}
 
 		available = {
-			has_war_support > 0.6
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = IRQ_did_a_retard
+					}
+				}
+				has_war_support > 0.6
+			}
 		}
 
 		cost = 150
 
-		days_remove = 90
+		days_remove = 120
 		fire_only_once = yes
-
-		war_with_on_remove = IRQ
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove usa_operation_iraqi_freedom"
-			set_country_flag = Operation_iraqi_freedom
-			create_wargoal = {
-				target = IRQ
-				type = puppet_wargoal_focus
+			# IRQ = {
+			# 	add_to_variable = { var = IRQ_war_time_length value = 3 }
+			# 	clamp_variable = { var = IRQ_war_time_length min = 0 max = 5 }
+			# }
+			USA = {
+				country_event = {
+					id = iraq_war.2
+				}
 			}
-			every_country = {
-				limit = { is_in_array = { global.ct_states = THIS } }
-				set_temp_variable = { rad_change = 10 }
-				modify_radicalization_effect = yes
-			}
-			hidden_effect = { news_event = { id = wotnews.11 hours = 6 } }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision usa_operation_iraqi_freedom"
 			set_country_flag = us_preparing_invasion_of_iraq
+			IRQ = {
+				set_country_flag = IRQ_war_with_america
+			}
 			every_other_country = {
 				limit = {
 					OR = {
@@ -469,10 +457,18 @@ war_on_terror_category = {
 				}
 				country_event = { id = wot.17 days = 5 random_hours = 72 }
 			}
+			# Iraq gets warned
+			hidden_effect = {
+				IRQ = {
+					country_event = {
+						id = iraq_war.1
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
-			factor = 1000
+			factor = 10000
 		}
 	}
 
@@ -480,9 +476,10 @@ war_on_terror_category = {
 	usa_withdraw_troops_from_iraq = {
 
 		visible = {
-			date > 2012.1.1
+			date > 2009.1.1
 			IRQ = { is_subject_of = USA }
 			has_global_flag = success_of_operation_iraqi_freedom
+			NOT = { has_country_flag = collapsed_nation }
 		}
 
 		available = {

@@ -275,7 +275,10 @@ EU_voting_category = {
 									activate_mission = EU_mff_preparations
 								}
 							}
-							set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+							every_country = {
+								limit = { has_idea = EU_member }
+								set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+							}
 							set_variable = { global.active_MEP_Support = 0 }
 							set_variable = { global.pass_vote_mission_ender = 0 }
 							if = {
@@ -321,8 +324,10 @@ EU_voting_category = {
 								clr_country_flag = EU_mff_draft
 							}
 
-							set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
-
+							every_country = {
+								limit = { has_idea = EU_member }
+								set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
+							}
 							if = {
 								limit = { is_in_array = { array = global.EU_council_votes value = 999 } }
 								remove_from_array = {
@@ -350,12 +355,8 @@ EU_voting_category = {
 	}
 
 	EU_council_determine_serious_breach_of_EU_values = {
-		allowed = {
-			is_EU_potential = yes
-		}
-		target_root_trigger = {
-			has_idea = EU_member
-		}
+		allowed = { is_EU_potential = yes }
+		target_root_trigger = { has_idea = EU_member }
 		target_trigger = {
 			FROM = {
 				has_idea = EU_member
@@ -369,54 +370,54 @@ EU_voting_category = {
 		available = {
 			FROM = {
 				custom_trigger_tooltip = {
-					tooltip = "Level of breach of EU values > 3."
+					tooltip = number_of_eu_breaches_greater_than_three
 					check_variable = { THIS.breach_of_EU_value > 3 }
 				}
 			}
 			has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
-			custom_trigger_tooltip = {
-				tooltip = "[ROOT.GetNameWithFlag] must be top 3 influencer in all other (voting) member states than [FROM.GetNameWithFlag]."
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							has_idea = EU_member
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
+			NOT = { has_idea = EUU_voting_rights_suspended }
+			OR = {
+				AND = {
+					custom_trigger_tooltip = {
+						tooltip = can_determine_a_breach_of_values_ROOT
+						all_of_scopes = {
+							array = global.EU_member
+							if = {
+								limit = {
+									NOT = { tag = ROOT }
+									NOT = { tag = FROM }
+									has_idea = EU_member
+									NOT = {
+										has_idea = EUU_voting_rights_suspended
+									}
+								}
+								is_top3_influencer = yes
 							}
 						}
-						is_top3_influencer = yes
 					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = "[FROM.GetNameWithFlag] must not be top 3 influencer in any other (voting) member states."
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							has_idea = EU_member
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
+					custom_trigger_tooltip = {
+						tooltip = can_determine_a_breach_of_values_FROM
+						all_of_scopes = {
+							array = global.EU_member
+							if = {
+								limit = {
+									NOT = { tag = ROOT }
+									NOT = { tag = FROM }
+									has_idea = EU_member
+									NOT = {
+										has_idea = EUU_voting_rights_suspended
+									}
+								}
+								NOT = { FROM_is_top3_influencer = yes }
 							}
 						}
-						NOT = { FROM_is_top3_influencer = yes }
 					}
 				}
+				has_idea = EU_commission_president
 			}
 		}
 		visible = {
-			#has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
 			FROM = {
 				check_variable = { THIS.breach_of_EU_value > 3 }
 				NOT = { has_country_flag = serious_breach_of_EU_values }
@@ -430,19 +431,15 @@ EU_voting_category = {
 				eurosceptic_change = yes
 			}
 		}
+
 		ai_will_do = {
 			factor = 1
-
 		}
 	}
 
 	EU_council_revoke_determination_of_serious_breach_of_EU_values = {
-		allowed = {
-			is_EU_potential = yes
-		}
-		target_root_trigger = {
-			has_idea = EU_member
-		}
+		allowed = { is_EU_potential = yes }
+		target_root_trigger = { has_idea = EU_member }
 		target_trigger = {
 			FROM = {
 				has_idea = EU_member
@@ -457,16 +454,12 @@ EU_voting_category = {
 					tooltip = "Level of breach of EU values < 4."
 					check_variable = { THIS.breach_of_EU_value < 4 }
 				}
-				NOT = {
-					has_idea = EUU_voting_rights_suspended
-				}
+				NOT = { has_idea = EUU_voting_rights_suspended }
 			}
 			has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
 			custom_trigger_tooltip = {
-				tooltip = "[ROOT.GetNameWithFlag] must be top 3 influencer in all other (voting) member states than [FROM.GetNameWithFlag]."
+				tooltip = can_determine_a_breach_of_values_FROM
 				all_of_scopes = {
 					array = global.EU_member
 					if = {
@@ -484,13 +477,8 @@ EU_voting_category = {
 			}
 		}
 		visible = {
-			#has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
-			FROM = {
-				has_country_flag = serious_breach_of_EU_values
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
+			FROM = { has_country_flag = serious_breach_of_EU_values }
 		}
 		complete_effect = {
 			FROM = {
@@ -500,19 +488,15 @@ EU_voting_category = {
 				eurosceptic_change = yes
 			}
 		}
+
 		ai_will_do = {
 			factor = 1
-
 		}
 	}
 
 	EU_council_suspend_voting_rights = {
-		allowed = {
-			is_EU_potential = yes
-		}
-		target_root_trigger = {
-			has_idea = EU_member
-		}
+		allowed = { is_EU_potential = yes }
+		target_root_trigger = { has_idea = EU_member }
 		target_trigger = {
 			FROM = {
 				has_country_flag = serious_breach_of_EU_values
@@ -532,49 +516,49 @@ EU_voting_category = {
 				}
 			}
 			has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
-			custom_trigger_tooltip = {
-				tooltip = "[ROOT.GetNameWithFlag] must be top 3 influencer in all other (voting) member states than [FROM.GetNameWithFlag]."
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							has_idea = EU_member
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
+			NOT = { has_idea = EUU_voting_rights_suspended }
+			OR = {
+				AND = {
+					custom_trigger_tooltip = {
+						tooltip = can_determine_a_breach_of_values_ROOT
+						all_of_scopes = {
+							array = global.EU_member
+							if = {
+								limit = {
+									NOT = { tag = ROOT }
+									NOT = { tag = FROM }
+									has_idea = EU_member
+									NOT = {
+										has_idea = EUU_voting_rights_suspended
+									}
+								}
+								is_top3_influencer = yes
 							}
 						}
-						is_top3_influencer = yes
 					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = "[FROM.GetNameWithFlag] must not be top 3 influencer in any other (voting) member states."
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							has_idea = EU_member
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
+					custom_trigger_tooltip = {
+						tooltip = can_determine_a_breach_of_values_FROM
+						all_of_scopes = {
+							array = global.EU_member
+							if = {
+								limit = {
+									NOT = { tag = ROOT }
+									NOT = { tag = FROM }
+									has_idea = EU_member
+									NOT = {
+										has_idea = EUU_voting_rights_suspended
+									}
+								}
+								NOT = { FROM_is_top3_influencer = yes }
 							}
 						}
-						NOT = { FROM_is_top3_influencer = yes }
 					}
 				}
+				has_idea = EU_commission_president
 			}
 		}
 		visible = {
-			#has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
 			FROM = {
 				has_country_flag = serious_breach_of_EU_values
 				NOT = { has_idea = EUU_voting_rights_suspended }
@@ -588,19 +572,15 @@ EU_voting_category = {
 				eurosceptic_change = yes
 			}
 		}
+
 		ai_will_do = {
 			factor = 1
-
 		}
 	}
 
 	EU_council_revoke_voting_rights_suspension = {
-		allowed = {
-			is_EU_potential = yes
-		}
-		target_root_trigger = {
-			has_idea = EU_member
-		}
+		allowed = { is_EU_potential = yes }
+		target_root_trigger = { has_idea = EU_member }
 		target_trigger = {
 			FROM = {
 				has_idea = EU_member
@@ -618,11 +598,9 @@ EU_voting_category = {
 				has_idea = EUU_voting_rights_suspended
 			}
 			has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
 			custom_trigger_tooltip = {
-				tooltip = "[ROOT.GetNameWithFlag] must be top 3 influencer in all other (voting) member states than [FROM.GetNameWithFlag]."
+				tooltip = can_determine_a_breach_of_values_FROM
 				all_of_scopes = {
 					array = global.EU_member
 					if = {
@@ -640,13 +618,8 @@ EU_voting_category = {
 			}
 		}
 		visible = {
-			#has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
-			FROM = {
-				has_idea = EUU_voting_rights_suspended
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
+			FROM = { has_idea = EUU_voting_rights_suspended }
 		}
 		complete_effect = {
 			FROM = {
@@ -656,19 +629,16 @@ EU_voting_category = {
 				eurosceptic_change = yes
 			}
 		}
+
 		ai_will_do = {
 			factor = 1
-
 		}
 	}
-
 
 	### budget rights
 
 	EU_council_suspend_subsidies = {
-		allowed = {
-			is_EU_potential = yes
-		}
+		allowed = { is_EU_potential = yes }
 		target_root_trigger = {
 			has_idea = EU_member
 		}
@@ -686,7 +656,7 @@ EU_voting_category = {
 		available = {
 			FROM = {
 				custom_trigger_tooltip = {
-					tooltip = "Level of breach of EU values > 3."
+					tooltip = number_of_eu_breaches_greater_than_three
 					check_variable = { THIS.breach_of_EU_value > 3 }
 				}
 			}
@@ -694,46 +664,48 @@ EU_voting_category = {
 			NOT = {
 				has_idea = EUU_voting_rights_suspended
 			}
-			custom_trigger_tooltip = {
-				tooltip = "[ROOT.GetNameWithFlag] must be top 3 influencer in all other (voting) member states than [FROM.GetNameWithFlag]."
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							has_idea = EU_member
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
+			OR = {
+				AND = {
+					custom_trigger_tooltip = {
+						tooltip = can_determine_a_breach_of_values_ROOT
+						all_of_scopes = {
+							array = global.EU_member
+							if = {
+								limit = {
+									NOT = { tag = ROOT }
+									NOT = { tag = FROM }
+									has_idea = EU_member
+									NOT = {
+										has_idea = EUU_voting_rights_suspended
+									}
+								}
+								is_top3_influencer = yes
 							}
 						}
-						is_top3_influencer = yes
 					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = "[FROM.GetNameWithFlag] must not be top 3 influencer in any other (voting) member states."
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							has_idea = EU_member
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
+					custom_trigger_tooltip = {
+						tooltip = can_determine_a_breach_of_values_FROM
+						all_of_scopes = {
+							array = global.EU_member
+							if = {
+								limit = {
+									NOT = { tag = ROOT }
+									NOT = { tag = FROM }
+									has_idea = EU_member
+									NOT = {
+										has_idea = EUU_voting_rights_suspended
+									}
+								}
+								NOT = { FROM_is_top3_influencer = yes }
 							}
 						}
-						NOT = { FROM_is_top3_influencer = yes }
 					}
 				}
+				has_idea = EU_commission_president
 			}
 		}
 		visible = {
-			#has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
 			FROM = {
 				has_country_flag = serious_breach_of_EU_values
 				NOT = { has_idea = EUU_subsidies_suspended }
@@ -749,17 +721,12 @@ EU_voting_category = {
 		}
 		ai_will_do = {
 			factor = 1
-
 		}
 	}
 
 	EU_council_revoke_subsidies_suspension = {
-		allowed = {
-			is_EU_potential = yes
-		}
-		target_root_trigger = {
-			has_idea = EU_member
-		}
+		allowed = { is_EU_potential = yes }
+		target_root_trigger = { has_idea = EU_member }
 		target_trigger = {
 			FROM = {
 				has_idea = EU_member
@@ -781,7 +748,7 @@ EU_voting_category = {
 				has_idea = EUU_voting_rights_suspended
 			}
 			custom_trigger_tooltip = {
-				tooltip = "[ROOT.GetNameWithFlag] must be top 3 influencer in all other (voting) member states than [FROM.GetNameWithFlag]."
+				tooltip = can_determine_a_breach_of_values_FROM
 				all_of_scopes = {
 					array = global.EU_member
 					if = {
@@ -799,13 +766,8 @@ EU_voting_category = {
 			}
 		}
 		visible = {
-			#has_idea = EU_member
-			NOT = {
-				has_idea = EUU_voting_rights_suspended
-			}
-			FROM = {
-				has_idea = EUU_subsidies_suspended
-			}
+			NOT = { has_idea = EUU_voting_rights_suspended }
+			FROM = { has_idea = EUU_subsidies_suspended }
 		}
 		complete_effect = {
 			FROM = {
@@ -828,10 +790,7 @@ EU_voting_category = {
 	### Member State Policies # Result Mission QMV ###
 
 	EU_voting_mission_focus_EU002_QMV_result = {
-		#icon = EU_voting_decision
-		allowed = {
-			always = yes
-		}
+		allowed = { always = yes }
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = "Passing Votes"
@@ -3064,48 +3023,31 @@ EU_fiscal_category = {
 
 	eurozone_reforms = {
 		allowed = { always = no }
-
+		activation = { always = no }
+		visible = { has_idea = EU_member }
 		available = {
 			any_of_scopes = {
 				array = global.EU_member
 				OR = {
-					### European Banking Union
+					# European Banking Union
 					has_country_flag = focus_EU202_yes
 					has_country_flag = focus_EU202_QMV_yes
-					has_country_flag = focus_EU202_maj_yes
 				}
 			}
-			OR = {
-				any_of_scopes = {
-					array = global.EU_member
-					OR = {
-						### Eurobonds
-						has_country_flag = focus_EU203_yes
-						has_country_flag = focus_EU203_QMV_yes
-						has_country_flag = focus_EU203_maj_yes
-					}
-				}
-				any_of_scopes = {
-					array = global.EU_member
-					OR = {
-						### European Stability Mechanism (ESM)
-						has_country_flag = focus_EU205_yes
-						has_country_flag = focus_EU205_QMV_yes
-						has_country_flag = focus_EU205_maj_yes
-					}
+			any_of_scopes = {
+				array = global.EU_member
+				OR = {
+					# Eurobonds
+					has_country_flag = focus_EU203_yes
+					has_country_flag = focus_EU203_QMV_yes
+					# European Stability Mechanism (ESM)
+					has_country_flag = focus_EU205_yes
+					has_country_flag = focus_EU205_QMV_yes
 				}
 			}
 		}
 
-		activation = {
-			always = no
-		}
-
-		visible = {
-			has_idea = EU_member
-		}
-
-		days_mission_timeout = 5 #730
+		days_mission_timeout = 365
 
 		selectable_mission = yes
 
@@ -3113,45 +3055,37 @@ EU_fiscal_category = {
 			factor = 60
 			modifier = {
 				add = 20
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 1 } ### conservatism
-						is_in_array = { ruling_party = 6 } ### Conservative
-						is_in_array = { ruling_party = 14 } ### Neutral_conservatism
-					}
+				OR = {
+					is_in_array = { ruling_party = 1 } ### conservatism
+					is_in_array = { ruling_party = 6 } ### Conservative
+					is_in_array = { ruling_party = 14 } ### Neutral_conservatism
 				}
 			}
 			modifier = {
 				add = 30
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 2 } ### liberalism
-						is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
-					}
+				OR = {
+					is_in_array = { ruling_party = 2 } ### liberalism
+					is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
 				}
 			}
 			modifier = {
 				add = 40
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 3 } ### socialism
-						is_in_array = { ruling_party = 18 } ### neutral_Social
-						is_in_array = { ruling_party = 17 } ### Neutral_green
-						is_in_array = { ruling_party = 4 } ### Communist-State
-						is_in_array = { ruling_party = 5 } ### anarchist_communism
-						is_in_array = { ruling_party = 19 } ### Neutral_Communism
-					}
+				OR = {
+					is_in_array = { ruling_party = 3 } ### socialism
+					is_in_array = { ruling_party = 18 } ### neutral_Social
+					is_in_array = { ruling_party = 17 } ### Neutral_green
+					is_in_array = { ruling_party = 4 } ### Communist-State
+					is_in_array = { ruling_party = 5 } ### anarchist_communism
+					is_in_array = { ruling_party = 19 } ### Neutral_Communism
 				}
 			}
 			modifier = {
 				add = -60
-				ROOT = {
-					OR = {
-						is_in_array = { ruling_party = 20 } ### Nat_Populism
-						is_in_array = { ruling_party = 21 } ### Nat_Fascism
-						is_in_array = { ruling_party = 22 } ### Nat_Autocracy
-						is_in_array = { ruling_party = 23 } ### Monarchist
-					}
+				OR = {
+					is_in_array = { ruling_party = 20 } ### Nat_Populism
+					is_in_array = { ruling_party = 21 } ### Nat_Fascism
+					is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+					is_in_array = { ruling_party = 23 } ### Monarchist
 				}
 			}
 		}
@@ -3159,31 +3093,54 @@ EU_fiscal_category = {
 		fire_only_once = yes
 
 		timeout_effect = {
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			### European debt crisis
+			effect_tooltip = {
+				country_event = { id = EUevent.5 }
+				every_country = {
+					limit = { has_idea = EU_member }
+					add_ideas = european_debt_crisis
+					if = {
+						limit = {
+							check_variable = { interest_rate > 4.5 }
+							gdp_debt_ratio_lower_75 = yes
+						}
+						add_ideas = EUU_national_dept_crisis_eu
+					}
 				}
-				country_event = {
-					id = EUevent.5 ### European debt crisis
+			}
+			hidden_effect = {
+				if = {
+					limit = {
+						any_of_scopes = {
+							array = global.EU_member
+							is_ai = no
+						}
+					}
+					random_scope_in_array = {
+						array = global.EU_member
+						limit = { is_ai = no }
+
+						country_event = { id = EUevent.5 }
+					}
+				}
+				else = {
+					random_scope_in_array = {
+						array = global.EU_member
+						country_event = { id = EUevent.5 }
+					}
 				}
 			}
 		}
 
 		cancel_trigger = {
-			any_of_scopes = {
-				array = global.EU_member
-				has_global_flag = eurozone_reforms
-			}
+			has_global_flag = eurozone_reforms
 		}
 
 		complete_effect = {
+			# Eurozone Reforms
 			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				country_event = {
-					id = EUevent.6 ### eurozone reforms
-				}
+				limit = { has_idea = EU_member }
+				country_event = { id = EUevent.6 }
 				remove_mission = eurozone_reforms
 			}
 		}
@@ -3286,6 +3243,10 @@ EU_fiscal_category = {
 
 EU_exit_category = {
 	EU_Revoke_Article_50 = {
+		visible = {
+			has_idea = EU_member
+			has_country_flag = Article_50
+		}
 
 		available = {
 			custom_trigger_tooltip = {
@@ -3294,28 +3255,18 @@ EU_exit_category = {
 			}
 		}
 
-		visible = {
-			has_idea = EU_member
-			has_country_flag = Article_50
-		}
-
 		complete_effect = {
 			custom_effect_tooltip = tooltip_EU_Revoke_Article_50_effect
 			hidden_effect = {
 				ROOT = {
 					clr_country_flag = Article_50
-					news_event = {
-						id = EU_news.22
-					}
-					set_country_flag = {
-						flag = cant_invoke_article_50
-						days = 180
-						value = 1
-					}
+					news_event = { id = EU_news.22 }
+					set_country_flag = { flag = cant_invoke_article_50 days = 180 value = 1 }
 				}
 			}
 		}
-		### AI EU exit
+
+		# AI EU Exit
 		ai_will_do = {
 			factor = 0
 			modifier = {
@@ -3326,22 +3277,28 @@ EU_exit_category = {
 				add = 1
 				NOT = { gov_is_eurosceptical = yes }
 			}
+			modifier = {
+				factor = 0
+				OR = {
+					AND = {
+						has_elections = no
+						check_variable = { THIS.eurosceptic < 0.50 }
+					}
+					EU_external_sov_chi_influence_50 = yes
+				}
+			}
 		}
 	}
 
 	EU_exit = {
-
 		allowed = { always = no }
+		activation = { always = no }
 
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_exit_available
 				has_country_flag = withdrawal_treaty
 			}
-		}
-
-		activation = {
-			always = no
 		}
 
 		visible = {
@@ -3356,48 +3313,35 @@ EU_exit_category = {
 		fire_only_once = yes
 
 		timeout_effect = {
-			ROOT = {
-				if = { ### unprepared no deal exit
-					limit = {
-						NOT = { ROOT = { has_country_flag = focus_EU703_completed } }
-					}
-					add_timed_idea = {
-						idea = no_deal_exit
-						days = 1825 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
-					}
-					leaving_EU = yes
-					clr_country_flag = Article_50
+			# Unprepared No Deal Exit
+			if = { limit = { NOT = { ROOT = { has_country_flag = focus_EU703_completed } } }
+				add_timed_idea = {
+					idea = no_deal_exit
+					days = 1825 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
 				}
-				else_if = { ### prepared no deal exit
-					limit = {
-						ROOT = { has_country_flag = focus_EU703_completed }
-					}
-					add_timed_idea = {
-						idea = no_deal_exit
-						days = 730 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
-					}
-					leaving_EU = yes
-					clr_country_flag = Article_50
+				leaving_EU = yes
+				clr_country_flag = Article_50
+			}
+			else_if = {
+				limit = {
+					ROOT = { has_country_flag = focus_EU703_completed }
 				}
+				add_timed_idea = {
+					idea = no_deal_exit
+					days = 730 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
+				}
+				leaving_EU = yes
+				clr_country_flag = Article_50
 			}
-			#every_country = { ### changed to major, fire only once
-			#	limit = {
-			#		has_idea = EU_member
-			#	}
-			news_event = {
-				id = EU_news.21 ### one member state leaves
-			}
-			#}
+
+			# One Member State Leaves
+			news_event = { id = EU_news.21 }
 		}
 
 		cancel_trigger = { ### by EU_Revoke_Article_50
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_exit_cancel_trigger
-				ROOT = {
-					NOT = {
-						has_country_flag = Article_50
-					}
-				}
+				ROOT = { NOT = { has_country_flag = Article_50 } }
 			}
 		}
 
@@ -3405,69 +3349,67 @@ EU_exit_category = {
 			news_event = { id = EU_news.22 } ### Article 50 is revoked
 		}
 		complete_effect = {
-			ROOT = {
-				add_ideas = withdrawal_treaty
-				leaving_EU = yes
-				clr_country_flag = Article_50
-				news_event = {
-					id = EU_news.21 ### one member state leaves
-				}
-			}
+			add_ideas = withdrawal_treaty
+			leaving_EU = yes
+			clr_country_flag = Article_50
+			### one member state leaves
+			news_event = { id = EU_news.21 }
 		}
+
 		### AI Withdrawal Treaty
 		ai_will_do = {
 			factor = 60
-				### Government factor
-				modifier = {
-					add = -10
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 1 } ### conservatism
-							is_in_array = { ruling_party = 6 } ### Conservative
-							is_in_array = { ruling_party = 14 } ### Neutral_conservatism
-						}
+			### Government factor
+			modifier = {
+				add = -10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 1 } ### conservatism
+						is_in_array = { ruling_party = 6 } ### Conservative
+						is_in_array = { ruling_party = 14 } ### Neutral_conservatism
 					}
 				}
-				modifier = {
-					add = 10
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 2 } ### liberalism
-							is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
-						}
+			}
+			modifier = {
+				add = 10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 2 } ### liberalism
+						is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
 					}
 				}
-				modifier = {
-					add = 20
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 3 } ### socialism
-							is_in_array = { ruling_party = 18 } ### neutral_Social
-							is_in_array = { ruling_party = 17 } ### Neutral_green
-						}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 3 } ### socialism
+						is_in_array = { ruling_party = 18 } ### neutral_Social
+						is_in_array = { ruling_party = 17 } ### Neutral_green
 					}
 				}
-				modifier = {
-					add = 20
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 4 } ### Communist-State
-							is_in_array = { ruling_party = 5 } ### anarchist_communism
-							is_in_array = { ruling_party = 19 } ### Neutral_Communism
-						}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 4 } ### Communist-State
+						is_in_array = { ruling_party = 5 } ### anarchist_communism
+						is_in_array = { ruling_party = 19 } ### Neutral_Communism
 					}
 				}
-				modifier = {
-					add = -30
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 20 } ### Nat_Populism
-							is_in_array = { ruling_party = 21 } ### Nat_Fascism
-							is_in_array = { ruling_party = 22 } ### Nat_Autocracy
-							is_in_array = { ruling_party = 23 } ### Monarchist
-						}
+			}
+			modifier = {
+				add = -30
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 20 } ### Nat_Populism
+						is_in_array = { ruling_party = 21 } ### Nat_Fascism
+						is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+						is_in_array = { ruling_party = 23 } ### Monarchist
 					}
 				}
+			}
 		}
 	}
 
@@ -3488,23 +3430,15 @@ EU_exit_category = {
 		}
 
 		complete_effect = {
-			ROOT = {
-				remove_mission = EU_exit
-				remove_mission = EU_exit_three_month
-				activate_mission = EU_exit_three_month
-
-			}
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				news_event = EU_news.24 ### Article 50 Extension
-			}
+			remove_mission = EU_exit
+			remove_mission = EU_exit_three_month
+			activate_mission = EU_exit_three_month
+			news_event = EU_news.24 ### Article 50 Extension
 		}
 	}
 
 	EU_exit_three_month = {
-
+		activation = { always = no }
 		allowed = { always = no }
 
 		available = {
@@ -3512,10 +3446,6 @@ EU_exit_category = {
 				tooltip = tooltip_EU_exit_available
 				has_country_flag = withdrawal_treaty
 			}
-		}
-
-		activation = {
-			always = no
 		}
 
 		visible = {
@@ -3530,29 +3460,27 @@ EU_exit_category = {
 		fire_only_once = yes
 
 		timeout_effect = {
-			ROOT = {
-				if = { ### unprepared no deal exit
-					limit = {
-						NOT = { ROOT = { has_country_flag = focus_EU703_completed } }
-					}
-					add_timed_idea = {
-						idea = no_deal_exit
-						days = 1825 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
-					}
-					leaving_EU = yes
-					clr_country_flag = Article_50
+			if = { ### unprepared no deal exit
+				limit = {
+					NOT = { ROOT = { has_country_flag = EU_article_50_prepared_no_deal_exit } }
 				}
-				else_if = { ### prepared no deal exit
-					limit = {
-						ROOT = { has_country_flag = focus_EU703_completed }
-					}
-					add_timed_idea = {
-						idea = no_deal_exit
-						days = 730 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
-					}
-					leaving_EU = yes
-					clr_country_flag = Article_50
+				add_timed_idea = {
+					idea = no_deal_exit
+					days = 1825 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
 				}
+				leaving_EU = yes
+				clr_country_flag = Article_50
+			}
+			else_if = { ### prepared no deal exit
+				limit = {
+					ROOT = { has_country_flag = EU_article_50_prepared_no_deal_exit }
+				}
+				add_timed_idea = {
+					idea = no_deal_exit
+					days = 730 # five years # unprepared no deal exit # prepared no deal exit with two years with focus EU703
+				}
+				leaving_EU = yes
+				clr_country_flag = Article_50
 			}
 			news_event = EU_news.21 ### one member state leaves
 		}
@@ -3588,64 +3516,63 @@ EU_exit_category = {
 		### AI Withdrawal Treaty
 		ai_will_do = {
 			factor = 60
-				### Government factor
-				modifier = {
-					add = -10
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 1 } ### conservatism
-							is_in_array = { ruling_party = 6 } ### Conservative
-							is_in_array = { ruling_party = 14 } ### Neutral_conservatism
-						}
+			### Government factor
+			modifier = {
+				add = -10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 1 } ### conservatism
+						is_in_array = { ruling_party = 6 } ### Conservative
+						is_in_array = { ruling_party = 14 } ### Neutral_conservatism
 					}
 				}
-				modifier = {
-					add = 10
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 2 } ### liberalism
-							is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
-						}
+			}
+			modifier = {
+				add = 10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 2 } ### liberalism
+						is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
 					}
 				}
-				modifier = {
-					add = 20
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 3 } ### socialism
-							is_in_array = { ruling_party = 18 } ### neutral_Social
-							is_in_array = { ruling_party = 17 } ### Neutral_green
-						}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 3 } ### socialism
+						is_in_array = { ruling_party = 18 } ### neutral_Social
+						is_in_array = { ruling_party = 17 } ### Neutral_green
 					}
 				}
-				modifier = {
-					add = 20
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 4 } ### Communist-State
-							is_in_array = { ruling_party = 5 } ### anarchist_communism
-							is_in_array = { ruling_party = 19 } ### Neutral_Communism
-						}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 4 } ### Communist-State
+						is_in_array = { ruling_party = 5 } ### anarchist_communism
+						is_in_array = { ruling_party = 19 } ### Neutral_Communism
 					}
 				}
-				modifier = {
-					add = -30
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 20 } ### Nat_Populism
-							is_in_array = { ruling_party = 21 } ### Nat_Fascism
-							is_in_array = { ruling_party = 22 } ### Nat_Autocracy
-							is_in_array = { ruling_party = 23 } ### Monarchist
-						}
+			}
+			modifier = {
+				add = -30
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 20 } ### Nat_Populism
+						is_in_array = { ruling_party = 21 } ### Nat_Fascism
+						is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+						is_in_array = { ruling_party = 23 } ### Monarchist
 					}
 				}
+			}
 		}
 	}
 
 	EU_withdrawal_treaty = {
 
 		available = {
-			has_country_flag = Article_50
 			influence_on_all_other_EU_members_5_percent = yes
 		}
 
@@ -3655,66 +3582,133 @@ EU_exit_category = {
 		}
 
 		complete_effect = {
-			ROOT = {
-				set_country_flag = withdrawal_treaty
-			}
-			news_event = {
-				id = EU_news.23 ### withdrawal_treaty
-			}
+			set_country_flag = withdrawal_treaty
+			### withdrawal_treaty
+			news_event = { id = EU_news.23 }
 		}
+
 		ai_will_do = {
 			factor = 60
-				### Government factor
-				modifier = {
-					add = -10
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 1 } ### conservatism
-							is_in_array = { ruling_party = 6 } ### Conservative
-							is_in_array = { ruling_party = 14 } ### Neutral_conservatism
-						}
+			### Government factor
+			modifier = {
+				add = -10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 1 } ### conservatism
+						is_in_array = { ruling_party = 6 } ### Conservative
+						is_in_array = { ruling_party = 14 } ### Neutral_conservatism
 					}
 				}
-				modifier = {
-					add = 10
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 2 } ### liberalism
-							is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
-						}
+			}
+			modifier = {
+				add = 10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 2 } ### liberalism
+						is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
 					}
 				}
-				modifier = {
-					add = 20
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 3 } ### socialism
-							is_in_array = { ruling_party = 18 } ### neutral_Social
-							is_in_array = { ruling_party = 17 } ### Neutral_green
-						}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 3 } ### socialism
+						is_in_array = { ruling_party = 18 } ### neutral_Social
+						is_in_array = { ruling_party = 17 } ### Neutral_green
 					}
 				}
-				modifier = {
-					add = 20
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 4 } ### Communist-State
-							is_in_array = { ruling_party = 5 } ### anarchist_communism
-							is_in_array = { ruling_party = 19 } ### Neutral_Communism
-						}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 4 } ### Communist-State
+						is_in_array = { ruling_party = 5 } ### anarchist_communism
+						is_in_array = { ruling_party = 19 } ### Neutral_Communism
 					}
 				}
-				modifier = {
-					add = -30
-					ROOT = {
-						OR = {
-							is_in_array = { ruling_party = 20 } ### Nat_Populism
-							is_in_array = { ruling_party = 21 } ### Nat_Fascism
-							is_in_array = { ruling_party = 22 } ### Nat_Autocracy
-							is_in_array = { ruling_party = 23 } ### Monarchist
-						}
+			}
+			modifier = {
+				add = -30
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 20 } ### Nat_Populism
+						is_in_array = { ruling_party = 21 } ### Nat_Fascism
+						is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+						is_in_array = { ruling_party = 23 } ### Monarchist
 					}
 				}
+			}
+		}
+	}
+
+	EU_prepared_no_deal_exit = {
+
+		visible = {
+			has_idea = EU_member
+			has_country_flag = Article_50
+		}
+
+		cost = 150
+
+		complete_effect = {
+			set_country_flag = EU_article_50_prepared_no_deal_exit
+		}
+
+		ai_will_do = {
+			factor = 60
+			### Government factor
+			modifier = {
+				add = -10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 1 } ### conservatism
+						is_in_array = { ruling_party = 6 } ### Conservative
+						is_in_array = { ruling_party = 14 } ### Neutral_conservatism
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 2 } ### liberalism
+						is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
+					}
+				}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 3 } ### socialism
+						is_in_array = { ruling_party = 18 } ### neutral_Social
+						is_in_array = { ruling_party = 17 } ### Neutral_green
+					}
+				}
+			}
+			modifier = {
+				add = 20
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 4 } ### Communist-State
+						is_in_array = { ruling_party = 5 } ### anarchist_communism
+						is_in_array = { ruling_party = 19 } ### Neutral_Communism
+					}
+				}
+			}
+			modifier = {
+				add = -30
+				ROOT = {
+					OR = {
+						is_in_array = { ruling_party = 20 } ### Nat_Populism
+						is_in_array = { ruling_party = 21 } ### Nat_Fascism
+						is_in_array = { ruling_party = 22 } ### Nat_Autocracy
+						is_in_array = { ruling_party = 23 } ### Monarchist
+					}
+				}
+			}
 		}
 	}
 }
@@ -4328,11 +4322,7 @@ EU_apply_for_membership_category = {
 					}
 					add_to_faction = ROOT
 					ROOT = {
-						add_ai_strategy = {
-							type = alliance
-							id = PREV
-							value = 200
-						}
+						add_ai_strategy = { type = alliance id = PREV value = 200 }
 					}
 				}
 				every_country = {
@@ -4353,14 +4343,65 @@ EU_apply_for_membership_category = {
 			hidden_effect = {
 				EU_clear_voting = yes
 			}
-
 		}
+
 		ai_will_do = {
 			factor = 100
 			### Europeanism
 			modifier = {
 				add = -100
 				check_variable = { global.var_europeanism < 0.50 }
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_of_scopes = {
+					array = THIS.influence_array
+					has_idea = EU_member
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_of_scopes = {
+					array = THIS.influence_array
+					OR = {
+						NOT = { original_tag = SOV }
+						NOT = { original_tag = CHI }
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				# Russia is at war with European democratic nations
+				SOV = { NOT = { has_government = democratic } }
+				OR = {
+					SOV = { has_war_with = UKR }
+					SOV = { has_war_with = FIN }
+					SOV = { has_war_with = LIT }
+					SOV = { has_war_with = LAT }
+					SOV = { has_war_with = EST }
+				}
+			}
+			modifier = {
+				factor = 100
+				date > 2004.1.1
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 100
+				date > 2007.1.1
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 100
+				date > 2013.1.1
+				is_historical_focus_on = yes
 			}
 		}
 	}
