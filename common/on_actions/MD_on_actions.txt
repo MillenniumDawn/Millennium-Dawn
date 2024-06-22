@@ -2,6 +2,10 @@
 on_actions = {
 	on_weekly = {
 		effect = {
+			# Random Energy On Weekly
+			random_renewable_variable_calculation = yes
+			worker_requirements_variable_gdpc_converging = yes
+
 			#Update money system right before adjusting weekly value
 			ingame_update_setup = yes
 			#Remove weekly rate from treasury
@@ -15,6 +19,8 @@ on_actions = {
 			# Force Update Influencer Map Mode
 			recalculate_influence = yes
 			force_update_map_mode = { mapmode = influence_map_mode }
+
+
 
 			# Initialize the Investment Pulse for this Week
 			if = {
@@ -45,11 +51,10 @@ on_actions = {
 
 			# European Union Checks
 			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				if = {
-					limit = {
-						has_country_flag = EU_potential
+				if = { limit = { has_country_flag = EU_potential }
+					if = { limit = { is_debug = yes }
+						log = "[GetDateText]: [ROOT.GetName]: on_weekly check_breach_of_EU_value"
 					}
-					log = "[GetDateText]: [ROOT.GetName]: on_weekly check_breach_of_EU_value"
 					check_breach_of_EU_value = yes
 				}
 				### POTEF election polls
@@ -62,7 +67,9 @@ on_actions = {
 							has_active_mission = EU_POTEF_election_campaign
 						}
 					}
-					log = "[GetDateText]: [ROOT.GetName]: on_weekly POTEF_election"
+					if = { limit = { is_debug = yes }
+						log = "[GetDateText]: [ROOT.GetName]: on_weekly POTEF_election"
+					}
 					POTEF_election = yes
 				}
 			}
@@ -388,9 +395,6 @@ on_actions = {
 									has_idea = great_power
 									has_idea = superpower
 								}
-
-								# wait for apc-ifv stuff to merge
-								#NOT = { has_idea = mp_optimization_idea }
 							}
 
 							yearly_investment_targets_routine = yes
@@ -401,7 +405,10 @@ on_actions = {
 						}
 					}
 
-					log = "[GetDateText]: [THIS.GetName]: Triggering [?global.year] events"
+					# Execute and Start the Yearly ETD Events
+					if = { limit = { is_debug = yes }
+						log = "[GetDateText]: [THIS.GetName]: Triggering [?global.year] events"
+					}
 					meta_effect = {
 						text = {
 							trigger_year_[year]_events = yes
@@ -535,7 +542,53 @@ on_actions = {
 						}
 						country_event = { id = terror.13 random_days = 50 }
 					}
+					update_international_system_gui = yes
+				}
 
+				# Calculate the Migrant Trigger
+				if = {
+					limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
+					set_temp_variable = { total_population_refugees = 0 }
+					every_country = {
+						limit = {
+							OR = {
+								is_african_nation = yes
+								is_middle_eastern_nation = yes
+							}
+							OR = {
+								has_war = yes
+								has_civil_war = yes
+								salafist_caliphate_are_in_power = yes
+							}
+						}
+						set_temp_variable = { population_refugees = population_total }
+						multiply_temp_variable = { population_refugees = 0.01 }
+						add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
+					}
+
+					if = { limit = { check_variable = { total_population_refugees > 65 } }
+						set_global_flag = EUU_migrant_crisis_triggered
+						if = {
+							limit = {
+								any_of_scopes = {
+									array = global.EU_member
+									is_ai = no
+								}
+							}
+							random_scope_in_array = {
+								array = global.EU_member
+								limit = { is_ai = no }
+
+								country_event = { id = EUevent.22 }
+							}
+						}
+						else = {
+							random_scope_in_array = {
+								array = global.EU_member
+								country_event = { id = EUevent.22 }
+							}
+						}
+					}
 				}
 
 				# Monthly Single Fire Check
