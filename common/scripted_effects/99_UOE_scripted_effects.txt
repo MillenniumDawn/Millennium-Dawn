@@ -19,7 +19,7 @@ UOE_eoc_prod_track = {
 		set_variable = { high_prod_state_count = 0 }
 		set_variable = { low_prod_state_count = 0 }
 
-		if = { check_variable = { gdp_per_capita_tracker = 0 }
+		if = { limit = { check_variable = { gdp_per_capita_tracker = 0 } }
 			set_variable = { gdp_per_capita_tracker = gdp_per_capita }
 			set_variable = { gdp_capita_increase = 0 }
 		} else = {
@@ -42,20 +42,103 @@ UOE_eoc_prod_track = {
 			add_to_temp_variable = { total_state = high_prod_state_count }
 			set_temp_variable = { low_prod_add = low_prod_state_count }
 			divide_temp_variable = { low_prod_add = total_state }
-			divide_temp_variable = { low_prod_add = 10 }
+			divide_temp_variable = { low_prod_add = 25 }
 			add_to_variable = { low_prod_unrest = low_prod_add }
+			clamp_variable = {
+				var = low_prod_unrest
+				max = 1
+			}
+		}else = {
+			add_to_temp_variable = { total_state = low_prod_state_count }
+			add_to_temp_variable = { total_state = high_prod_state_count }
+			set_temp_variable = { low_prod_remove = low_prod_state_count }
+			divide_temp_variable = { low_prod_remove = total_state }
+			divide_temp_variable = { low_prod_remove = 25 }
+			subtract_from_variable = { low_prod_unrest = low_prod_remove }
+			clamp_variable = {
+				var = low_prod_unrest
+				min = 0
+			}
 		}
 
 		if = { limit = { check_variable = { gdp_capita_increase < 0.02 } }
 			set_temp_variable = { high_prod_add = 0.02 }
-			subract_from_temp_variable = { high_prod_add = gdp_capita_increase }
+			subtract_from_temp_variable = { high_prod_add = gdp_capita_increase }
 			add_to_variable = { high_prod_unrest = high_prod_add }
+			clamp_variable = {
+				var = high_prod_unrest
+				max = 1
+			}
+		}else = {
+			set_temp_variable = { high_prod_remove = 0.02 }
+			set_temp_variable = { gdp_cap_move = gdp_capita_increase }
+			subtract_from_temp_variable = { gdp_cap_move = high_prod_remove }
+			subtract_from_variable = { high_prod_unrest = gdp_cap_move }
+			clamp_variable = {
+				var = high_prod_unrest
+				min = 0
+			}
 		}
 	}
 }
 
+UOE_mil_revolt_track = {
+	#Adjust the revolt for nation stability
+	set_temp_variable = { stab_adjust = 0.5 }
+	subtract_from_temp_variable = { stab_adjust = stability }
+	divide_temp_variable = { stab_adjust = 2 }
+	add_to_variable = { military_revolt = stab_adjust }
+
+	log = "Military revolt after stability is: [?military_revolt]"
+
+	#Adjust the revolt for economic stability
+	set_temp_variable = { econ_stab_adjust = low_prod_unrest }
+	add_to_temp_variable = { econ_stab_adjust = high_prod_unrest }
+	if = { limit = { OR = { check_variable = { econ_stab_adjust = 0 } has_country_flag = resolved_eco_crisis } }
+		add_to_variable = { military_revolt = -0.05 }
+	}else = {
+		divide_temp_variable = { econ_stab_adjust = 6 }
+		add_to_variable = { military_revolt = econ_stab_adjust }
+	}
+
+	log = "Military revolt after econ is: [?military_revolt]"
+
+	#Adjust the revolt for government popularity
+	set_temp_variable = { gov_pop_adjust = 0.4 }
+	subtract_from_temp_variable = { gov_pop_adjust = government_coalition_strength }
+	divide_temp_variable = { gov_pop_adjust = 2 }
+	add_to_variable = { military_revolt = gov_pop_adjust }
+
+	log = "Military revolt after gov pop is: [?military_revolt]"
+
+	#Adjust the revolt for the people being pissed
+	set_temp_variable = { protest_str_adjust = protest_strength }
+	divide_temp_variable = { protest_str_adjust = 100 }
+	set_temp_variable = { protest_rad_adjust = protest_radicalisation }
+	divide_temp_variable = { protest_rad_adjust = 100 }
+	multiply_temp_variable = { protest_str_adjust = protest_rad_adjust }
+	if = { limit = { check_variable = { protest_str_adjust = 0 } }
+		add_to_variable = { military_revolt = -0.01 }
+	}else = {
+		add_to_variable = { military_revolt = protest_str_adjust }
+	}
+
+	log = "Military revolt after protest is: [?military_revolt]"
+
+	log = "Final Calculated Military Revolt Value is: [?military_revolt]"
+
+	#clamp at end to ensure that military revolt stays between 0-100%
+	clamp_variable = {
+		var = military_revolt
+		min = 0
+		max = 1
+	}
+
+	log = "Final Clamped Military Revolt Value is: [?military_revolt]"
+}
+
 monthly_gdp_c_percent_increase = {
 	set_temp_variable = { gdp_math_tracker = gdp_per_capita }
-	subtract_temp_variable = { gdp_math_tracker = gdp_per_capita_tracker }
+	subtract_from_temp_variable = { gdp_math_tracker = gdp_per_capita_tracker }
 	divide_temp_variable = { gdp_math_tracker = gdp_per_capita_tracker }
 }

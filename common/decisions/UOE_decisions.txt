@@ -276,7 +276,145 @@ UOE_forming_a_government_category = {
 }
 
 UOE_economic_instability_category = {
+	assist_low_state_growth = {
+		fire_only_once = no
+		days_remove = 180
+		cost = 50
 
+		complete_effect = {
+			UOE = { medium_expenditure = yes }
+			every_controlled_state = {
+				limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = 0.1
+					}
+				}
+			}
+		}
+
+		remove_effect = {
+			every_controlled_state = {
+				limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = -0.1
+					}
+				}
+			}
+			custom_effect_tooltip = reduce_low_unrest_by_5
+			add_to_variable = { low_prod_unrest = -0.05 }
+			clamp_variable = {
+				var = low_prod_unrest
+				min = 0
+			}
+			custom_effect_tooltip = increase_high_unrest_by_2
+			add_to_variable = { high_prod_unrest = 0.015 }
+			clamp_variable = {
+				var = high_prod_unrest
+				max = 1
+			}
+		}
+	}
+	develop_low_prod_network_infra = {
+		fire_only_once = no
+		days_remove = 200
+		cost = 100
+		complete_effect = {
+			UOE = {
+				set_temp_variable = { money_counter = -3 }
+				multiply_temp_variable = { money_counter = low_prod_state_count }
+				set_temp_variable = { treasury_change = money_counter }
+				modify_treasury_effect = yes
+			}
+		}
+		remove_effect = {
+			every_controlled_state = {
+				limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			custom_effect_tooltip = reduce_low_unrest_by_3
+			add_to_variable = { low_prod_unrest = -0.03 }
+			clamp_variable = {
+				var = low_prod_unrest
+				min = 0
+			}
+			custom_effect_tooltip = increase_high_unrest_by_1
+			add_to_variable = { high_prod_unrest = 0.015 }
+			clamp_variable = {
+				var = high_prod_unrest
+				max = 1
+			}
+		}
+	}
+	end_economic_crisis = {
+		fire_only_once = yes
+
+		available = {
+			has_completed_focus = UOE_Economic_Expansion
+			custom_trigger_tooltip = {
+				tooltip = good_high_prod_unrest
+				check_variable = { high_prod_unrest < 0.5 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = good_low_prod_unrest
+				check_variable = { low_prod_unrest < 0.5 }
+			}
+
+		}
+
+		cost = 100
+		complete_effect = {
+			set_country_flag = resolved_eco_crisis
+			clr_country_flag = unstable_economy
+			remove_mission = low_prod_state_revolt
+			remove_mission = high_prod_state_revolt
+		}
+	}
+	low_prod_state_revolt = {
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = low_prod_states_revolting_now
+				check_variable = { low_prod_unrest > 0.99 }
+			}
+		}
+
+		selectable_mission = no
+		days_mission_timeout = 365
+
+		complete_effect = {
+			activate_mission = low_prod_states_leaving
+		}
+		timeout_effect = {
+			if = {	limit = { NOT = { has_country_flag = resolved_eco_crisis } }
+				activate_mission = low_prod_state_revolt
+			}
+		}
+	}
+	high_prod_state_revolt = {
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = high_prod_states_revolting_now
+				check_variable = { high_prod_unrest > 0.99 }
+			}
+		}
+
+		selectable_mission = no
+		days_mission_timeout = 365
+
+		complete_effect = {
+			activate_mission = high_prod_states_leaving
+		}
+		timeout_effect = {
+			if = {	limit = { NOT = { has_country_flag = resolved_eco_crisis } }
+				activate_mission = high_prod_state_revolt
+			}
+		}
+	}
 }
 
 EU_USoE_category = {
