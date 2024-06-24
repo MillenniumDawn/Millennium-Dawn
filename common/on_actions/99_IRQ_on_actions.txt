@@ -1,0 +1,342 @@
+on_actions = {
+	on_daily_IRQ = {
+		effect = {
+			# For the GUI (IRQ)
+			if = { limit = { check_variable = { IRQ_count_down_var > 0 } }
+				add_to_variable = { IRQ_count_down_var = -1 }
+			}
+		}
+	}
+	on_weekly_IRQ = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+						has_country_leader = { name = "Uday Hussein" ruling_only = yes }
+					}
+					check_variable = {
+						IRQ_saddam_pissboy = 0.50
+					}
+				}
+				country_event = {
+					id = iraq_md.90
+				}
+			}
+			# Events (Meant to increase political influence)
+
+			# Tier 1
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_radicalization > 24.99
+					}
+					check_variable = {
+						IRQ_sunni_radicalization < 34.99
+					}
+					NOT = {
+						check_variable = {
+							IRQ_sunni_political_influence > 99.99
+						}
+					}
+				}
+				IRQ_tier_1_events_random = yes
+			}
+			# Tier 2
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_radicalization > 34.99
+					}
+					check_variable = {
+						IRQ_sunni_radicalization < 44.99
+					}
+					NOT = {
+						check_variable = {
+							IRQ_sunni_political_influence > 99.99
+						}
+					}
+				}
+				IRQ_tier_2_events_random = yes
+			}
+			# Tier 3
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_radicalization > 44.99
+					}
+					check_variable = {
+						IRQ_sunni_radicalization < 54.99
+					}
+					NOT = {
+						check_variable = {
+							IRQ_sunni_political_influence > 99.99
+						}
+					}
+				}
+				IRQ_tier_3_events_random = yes
+			}
+			# Tier 4
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_radicalization > 64.99
+					}
+					NOT = {
+						check_variable = {
+							IRQ_sunni_political_influence > 99.99
+						}
+					}
+				}
+				IRQ_tier_4_events_random = yes
+			}
+
+			# Al-Qaeda spawns, starts civil-war
+
+			if = {
+				limit = {
+					has_war = no
+					has_idea = IRQ_threat_of_al_qaeda
+					fascism > 0.29
+					has_stability < 0.55
+				}
+				country_event = {
+					id = iraq_civil_war.220
+				}
+			}
+		}
+	}
+	on_monthly_IRQ = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+						has_country_leader = { name = "Uday Hussein" ruling_only = yes }
+					}
+					check_variable = {
+						IRQ_saddam_pissboy > 0.24
+					}
+				}
+				IRQ_saddam_pissfit_events = yes
+			}
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+						has_country_leader = { name = "Uday Hussein" ruling_only = yes }
+					}
+					has_stability < 0.40
+				}
+				random_list = {
+					75 = {
+						add_to_variable = { var = IRQ_saddam_pissboy value = 0.01 }
+						clamp_variable = { var = IRQ_saddam_pissboy min = 0 max = 0.50 }
+					}
+					25 = { }
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_country_leader = { name = "Saddam Hussein" ruling_only = yes }
+						has_country_leader = { name = "Uday Hussein" ruling_only = yes }
+					}
+					has_stability > 0.39
+				}
+				random_list = {
+					75 = {
+						add_to_variable = { var = IRQ_saddam_pissboy value = -0.01 }
+						clamp_variable = { var = IRQ_saddam_pissboy min = 0 max = 0.50 }
+					}
+					25 = { }
+				}
+			}
+			if = {
+				limit = {
+					IRQ = {
+						has_country_flag = IRQ_begin_mobilization
+						NOT = {
+							has_war = yes
+						}
+					}
+					NOT = {
+						check_variable = {
+							pmf_recovery_status > 99
+						}
+					}
+				}
+				add_to_variable = { pmf_recovery_status = 2 }
+			}
+
+			if = {
+				limit = {
+					IRQ = {
+						has_country_flag = IRQ_begin_mobilization
+						has_war = yes
+					}
+					NOT = {
+						check_variable = {
+							pmf_recovery_status > 99
+						}
+					}
+				}
+				add_to_variable = { pmf_recovery_status = 4 }
+			}
+
+			if = {
+				limit = {
+					IRQ = {
+						has_country_flag = IRQ_pmf_system
+					}
+					NOT = {
+						has_country_flag = IRQ_begin_mobilization
+					}
+					check_variable = {
+						pmf_recovery_status > 0
+					}
+				}
+				add_to_variable = { pmf_recovery_status = -1 }
+			}
+
+			if = {
+				limit = {
+					NOT = {
+						USA = {
+							OR = {
+								has_country_flag = IRQ_did_a_retard
+								has_country_flag = us_prepare_for_iraq_invasion
+							}
+						}
+					}
+					check_variable = {
+						from.IRQ_american_weariness > 24
+					}
+				}
+				USA = {
+					set_country_flag = IRQ_did_a_retard
+				}
+			}
+
+			# Chance of Decrease in Readiness if not Conducting Attack
+
+			if = {
+				limit = {
+					has_country_flag = IRQ_insurgency_active
+				}
+				random_list = {
+					35 = {
+						add_to_variable = { var = IRQ_government_readiness value = -1 }
+						clamp_variable = { var = IRQ_government_readiness min = 40 max = 100 }
+					}
+					65 = {
+						# Nothing Happens
+					}
+				}
+			}
+
+			# Victory event
+
+			if = {
+				limit = {
+					has_country_flag = IRQ_war_with_shias
+					check_variable = {
+						IRQ_variable_for_win > 12
+					}
+				}
+				country_event = {
+					id = iraq_civil_war.100
+				}
+			}
+
+			# Higher value if at war with Shi'ites
+
+			if = {
+				limit = {
+					NOT = { has_country_flag = IRQ_war_with_shias }
+					check_variable = {
+						IRQ_variable_for_win > 8
+					}
+				}
+				country_event = {
+					id = iraq_civil_war.100
+				}
+			}
+
+			# Sunni Mechanic
+			# Rad increase
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_satisfaction < 34.99
+					}
+				}
+				random_list = {
+					40 = {
+						# Nothing happens
+					}
+					60 = {
+						add_to_variable = { var = IRQ_sunni_radicalization value = 1 }
+						clamp_variable = { var = IRQ_sunni_radicalization min = 0 max = 75 }
+					}
+				}
+			}
+			# Rad decrease
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_satisfaction > 44.99
+					}
+				}
+				random_list = {
+					40 = {
+						# Nothing happens
+					}
+					60 = {
+						add_to_variable = { var = IRQ_sunni_radicalization value = -1 }
+						clamp_variable = { var = IRQ_sunni_radicalization min = 0 max = 75 }
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_radicalization < 19.99
+					}
+				}
+				add_to_variable = { var = IRQ_sunni_political_influence value = -1 }
+				clamp_variable = { var = IRQ_sunni_political_influence min = 0 max = 100 }
+				IRQ_update_dynamic_modifier = yes
+			}
+			# If you piss them off
+			if = {
+				limit = {
+					has_country_flag = IRQ_sunni_mechanic
+					check_variable = {
+						IRQ_sunni_radicalization > 69.99
+						IRQ_sunni_political_influence > 79.99
+					}
+				}
+				random_list = {
+					20 = {
+						country_event = {
+							id = iraq_civil_war.201
+							days = 5
+						}
+					}
+					80 = {
+						# Nothing happens
+					}
+				}
+			}
+		}
+	}
+}
