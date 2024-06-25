@@ -23,6 +23,7 @@ UOE_eoc_prod_track = {
 			set_variable = { gdp_per_capita_tracker = gdp_per_capita }
 			set_variable = { gdp_capita_increase = 0 }
 		} else = {
+			set_variable = { gdp_capita_increase = 0 }
 			monthly_gdp_c_percent_increase = yes
 			set_variable = { gdp_capita_increase = gdp_math_tracker }
 		}
@@ -84,7 +85,7 @@ UOE_eoc_prod_track = {
 
 UOE_mil_revolt_track = {
 	#Adjust the revolt for nation stability
-	set_temp_variable = { stab_adjust = 0.5 }
+	set_temp_variable = { stab_adjust = 0.45 }
 	subtract_from_temp_variable = { stab_adjust = stability }
 	divide_temp_variable = { stab_adjust = 2 }
 	add_to_variable = { military_revolt = stab_adjust }
@@ -135,15 +136,17 @@ UOE_mil_revolt_track = {
 				}
 			}
 		}
-		set_temp_variable = { cult_bop_adjust = power_balance_value@UOE_culture_balance }
+		set_temp_variable = { cult_bop_adjust = cult_start_bias }
 		if = { limit = { check_variable = { cult_bop_adjust < 0 } }
 			multiply_temp_variable = { cult_bop_adjust = -1 }
 		}
-		divide_temp_variable = { cult_bop_adjust = 4 }
+		divide_temp_variable = { cult_bop_adjust = 20 }
 		add_to_variable = { military_revolt = cult_bop_adjust }
 	}else = {
 		add_to_variable = { military_revolt = -0.005}
 	}
+
+	log = "Military revolt after culture is: [?military_revolt]"
 
 	#clamp at end to ensure that military revolt stays between 0-100%
 	clamp_variable = {
@@ -159,4 +162,5 @@ monthly_gdp_c_percent_increase = {
 	set_temp_variable = { gdp_math_tracker = gdp_per_capita }
 	subtract_from_temp_variable = { gdp_math_tracker = gdp_per_capita_tracker }
 	divide_temp_variable = { gdp_math_tracker = gdp_per_capita_tracker }
+	set_variable = { gdp_per_capita_tracker = gdp_per_capita }
 }
