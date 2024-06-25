@@ -40,8 +40,12 @@
 #So treasury_rate is now back to $10B, now subtract the $4B and now treasury rate is $6B
 
 # Constants
+# Adjusted the GDP scaling for all laws
 @spending_laws_gdp_scaling = 0.006
+# Adjusts the money control factor for tax gain
 @money_control_factor_scaling = 0.238
+# Adjusts the percentage of refugees off of your total population
+@refugee_percentage_adjuster = 0.005
 
 # ingame_update_setup
 # This function is used to update the economic setup mid game
@@ -4246,25 +4250,6 @@ calculate_migration_mechanic_values = {
 	}
 	set_variable = { immigration_employment_factor_display = immigration_employment_factor }
 
-	# War Section
-	set_temp_variable = { immigration_war_support_factor = 0 }
-	if = { limit = { has_war = yes }
-		set_temp_variable = { total_war_support = 0.50 }
-		add_to_temp_variable = { total_war_support = modifier@war_support_factor }
-		multiply_temp_variable = { total_war_support = 100 }
-
-		set_temp_variable = { immigration_war_support_factor = total_war_support }
-		if = { limit = { has_defensive_war = no }
-			add_to_temp_variable = { immigration_war_support_factor = -50 }
-			multiply_temp_variable = { immigration_war_support_factor = 0.03 }
-		}
-		else_if = { limit = { has_defensive_war = yes }
-			add_to_temp_variable = { immigration_war_support_factor = -50 }
-			multiply_temp_variable = { immigration_war_support_factor = 0.01 }
-		}
-	}
-	set_variable = { immigration_war_support_factor_display = immigration_war_support_factor }
-
 	# Government Section
 	set_temp_variable = { immigration_government_factor = 0 }
 	if = { limit = { has_liberal_government = yes }
@@ -4292,8 +4277,8 @@ calculate_migration_mechanic_values = {
 					has_war_with = PREV
 				}
 			}
-			add_to_temp_variable = { PREV.neighbouring_war_refugees = THIS.population_total }
-			multiply_temp_variable = { PREV.neighbouring_war_refugees = 0.008 }
+			add_to_temp_variable = { PREV.neighbouring_war_refugees = THIS.population_total_m }
+			multiply_temp_variable = { PREV.neighbouring_war_refugees = @refugee_percentage_adjuster }
 		}
 	}
 	set_variable = { neighbour_war_refugees_display = neighbouring_war_refugees }
@@ -4302,8 +4287,20 @@ calculate_migration_mechanic_values = {
 	# Check if you are at war and if you have refugees
 	set_temp_variable = { our_war_refugees = 0 }
 	if = { limit = { has_war = yes }
-		add_to_temp_variable = { our_war_refugees = population_total }
-		multiply_temp_variable = { our_war_refugees = 0.008 }
+		# Calculate Total Potential Refugees
+		add_to_temp_variable = { our_war_refugees = population_total_m }
+		multiply_temp_variable = { our_war_refugees = @refugee_percentage_adjuster }
+		multiply_temp_variable = { our_war_refugees = 0.20 } # Control factor to make it so the number doesn't get very big
+
+		# Reduce War Refugees Based on War Suppport
+		set_temp_variable = { total_war_support = 0.50 }
+		add_to_temp_variable = { total_war_support = modifier@war_support_factor }
+		clamp_temp_variable = { var = total_war_support min = 0 max = 1 }
+
+		set_temp_variable = { war_support_modifier = -1 }
+		add_to_temp_variable = { war_support_modifier = total_war_support }
+		multiply_temp_variable = { our_war_refugees = total_war_support }
+
 		set_variable = { personal_war_refugees_display = our_war_refugees }
 		multiply_variable = { personal_war_refugees_display = -1 }
 	}
@@ -4327,6 +4324,7 @@ calculate_migration_mechanic_values = {
 		set_variable = { max_net_immigration_rate = 0 }
 		set_variable = { net_immigration_rate = 0 }
 	}
+	clamp_variable = { var = max_net_immigration_rate max = 2.0 min = -2.0 }
 
 	set_variable = { net_immigration_rate = max_net_immigration_rate }
 	multiply_variable = { net_immigration_rate = migration_rate_value }
