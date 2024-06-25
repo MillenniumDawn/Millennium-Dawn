@@ -203,6 +203,8 @@ UOE_forming_a_government_category = {
 			}
 		}
 
+		activation = { always = no }
+
 		is_good = yes
 
 		selectable_mission = no
@@ -232,6 +234,8 @@ UOE_forming_a_government_category = {
 				}
 			}
 		}
+
+		activation = { always = no }
 
 		selectable_mission = no
 		days_mission_timeout = 365 #365 normally
@@ -320,22 +324,34 @@ UOE_economic_instability_category = {
 		fire_only_once = no
 		days_remove = 200
 		cost = 100
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = is_low_prod_tt
+				any_controlled_state = {
+					AND = {
+						check_variable = { productivity_state_var < UOE.overall_productivity }
+						free_building_slots = {
+							building = internet_station
+							size > 1
+							include_locked = yes
+						}
+					}
+				}
+			}
+		}
+
 		complete_effect = {
 			UOE = {
-				set_temp_variable = { money_counter = -3 }
-				multiply_temp_variable = { money_counter = low_prod_state_count }
-				set_temp_variable = { treasury_change = money_counter }
-				modify_treasury_effect = yes
+				medium_expenditure = yes
 			}
 		}
 		remove_effect = {
 			every_controlled_state = {
-				limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
-				add_building_construction = {
-					type = internet_station
-					level = 1
-					instant_build = yes
+				limit = {
+					check_variable = { productivity_state_var < UOE.overall_productivity }
 				}
+				one_state_network_infrastructure = yes
 			}
 			custom_effect_tooltip = reduce_low_unrest_by_3
 			add_to_variable = { low_prod_unrest = -0.03 }
@@ -345,6 +361,98 @@ UOE_economic_instability_category = {
 			}
 			custom_effect_tooltip = increase_high_unrest_by_1
 			add_to_variable = { high_prod_unrest = 0.015 }
+			clamp_variable = {
+				var = high_prod_unrest
+				max = 1
+			}
+		}
+	}
+	country_productivity_program = {
+		fire_only_once = no
+		days_remove = 180
+		cost = 150
+
+		complete_effect = {
+			large_expenditure = yes
+		}
+
+		modifier = {
+			country_productivity_growth_modifier = 0.05
+		}
+
+		remove_effect = {
+			custom_effect_tooltip = reduce_low_unrest_by_10
+			custom_effect_tooltip = reduce_high_unrest_by_5
+			add_to_variable = { low_prod_unrest = -0.10 }
+			add_to_variable = { high_prod_unrest = -0.05 }
+			clamp_variable = {
+				var = low_prod_unrest
+				min = 0
+			}
+			clamp_variable = {
+				var = high_prod_unrest
+				max = 1
+			}
+		}
+	}
+	low_prod_public_campaigns = {
+		fire_only_once = no
+		days_remove = 60
+		cost = 150
+		complete_effect = {
+			medium_expenditure = yes
+			custom_effect_tooltip = reduce_low_unrest_by_10
+			add_to_variable = { low_prod_unrest = -0.1 }
+			clamp_variable = {
+				var = low_prod_unrest
+				min = 0
+			}
+		}
+	}
+	invest_in_developed_areas = {
+		fire_only_once = no
+		day_remove = 265
+		cost = 200
+		complete_effect = {
+			random_controlled_state = {
+				limit = { check_variable = { productivity_state_var > UOE.overall_productivity } }
+
+				three_state_office_construction = yes
+			}
+		}
+	}
+	encourage_educated_movement = {
+		fire_only_once = yes
+		days_remove = 365
+		cost = 300
+		complete_effect = {
+			large_expenditure = yes
+		}
+		remove_effect = {
+			every_controlled_state = {
+				limit = { check_variable = { productivity_state_var > UOE.overall_productivity } }
+				set_temp_variable = { prod_reduce_var = 0.05 }
+				multiply_temp_variable = { prod_reduce_var = productivity_state_var }
+				subtract_from_variable = { productivity_state_var = prod_reduce_var }
+				UOE = {
+					add_to_temp_variable = { prod_add_var = prod_reduce_var }
+				}
+				custom_effect_tooltip = edu_move_high_tt
+			}
+			divide_temp_variable = { prod_add_var = low_prod_state_count }
+			every_controlled_state = {
+				limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
+				custom_effect_tooltip = edu_move_low_tt
+				add_to_variable = { productivity_state_var = UOE.prod_add_var }
+			}
+			custom_effect_tooltip = reduce_low_unrest_by_15
+			custom_effect_tooltip = increase_high_unrest_by_25
+			add_to_variable = { low_prod_unrest = -0.15 }
+			add_to_variable = { high_prod_unrest = 0.2 }
+			clamp_variable = {
+				var = low_prod_unrest
+				min = 0
+			}
 			clamp_variable = {
 				var = high_prod_unrest
 				max = 1
@@ -373,6 +481,7 @@ UOE_economic_instability_category = {
 			clr_country_flag = unstable_economy
 			remove_mission = low_prod_state_revolt
 			remove_mission = high_prod_state_revolt
+			remove_dynamic_modifier = { modifier = UOE_economic_turmoil_modifier }
 		}
 	}
 	low_prod_state_revolt = {
@@ -382,6 +491,8 @@ UOE_economic_instability_category = {
 				check_variable = { low_prod_unrest > 0.99 }
 			}
 		}
+
+		activation = { always = no }
 
 		selectable_mission = no
 		days_mission_timeout = 365
@@ -395,6 +506,27 @@ UOE_economic_instability_category = {
 			}
 		}
 	}
+	low_prod_states_leaving = {
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = low_prod_state_revolt_stopped
+				check_variable = { low_prod_unrest < 0.95 }
+			}
+		}
+		activation = { always = no }
+
+		is_good = yes
+
+		selectable_mission = no
+		days_mission_timeout = 180
+		complete_effect = {
+			activate_mission = low_prod_state_revolt
+		}
+		timeout_effect = {
+			#low prod states LEAVE the USoE
+			country_event = UOEEvent.2
+		}
+	}
 	high_prod_state_revolt = {
 		available = {
 			custom_trigger_tooltip = {
@@ -403,6 +535,8 @@ UOE_economic_instability_category = {
 			}
 		}
 
+		activation = { always = no }
+
 		selectable_mission = no
 		days_mission_timeout = 365
 
@@ -410,9 +544,29 @@ UOE_economic_instability_category = {
 			activate_mission = high_prod_states_leaving
 		}
 		timeout_effect = {
-			if = {	limit = { NOT = { has_country_flag = resolved_eco_crisis } }
+			if = { limit = { NOT = { has_country_flag = resolved_eco_crisis } }
 				activate_mission = high_prod_state_revolt
 			}
+		}
+	}
+	high_prod_states_leaving = {
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = high_prod_state_revolt_stopped
+				check_variable = { high_prod_unrest < 0.95 }
+			}
+		}
+		activation = { always = no }
+
+		is_good = yes
+
+		selectable_mission = no
+		days_mission_timeout = 180
+		complete_effect = {
+			activate_mission = high_prod_state_revolt
+		}
+		timeout_effect = {
+			country_event = UOEEvent.3
 		}
 	}
 }

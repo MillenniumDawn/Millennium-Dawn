@@ -125,7 +125,25 @@ UOE_mil_revolt_track = {
 
 	log = "Military revolt after protest is: [?military_revolt]"
 
-	log = "Final Calculated Military Revolt Value is: [?military_revolt]"
+	#Adjust the revolt for cultural balance number
+	if = {
+		limit = {
+			NOT = {
+				is_power_balance_in_range = {
+					id = UOE_culture_balance
+					range = mid_range
+				}
+			}
+		}
+		set_temp_variable = { cult_bop_adjust = power_balance_value@UOE_culture_balance }
+		if = { limit = { check_variable = { cult_bop_adjust < 0 } }
+			multiply_temp_variable = { cult_bop_adjust = -1 }
+		}
+		divide_temp_variable = { cult_bop_adjust = 4 }
+		add_to_variable = { military_revolt = cult_bop_adjust }
+	}else = {
+		add_to_variable = { military_revolt = -0.005}
+	}
 
 	#clamp at end to ensure that military revolt stays between 0-100%
 	clamp_variable = {
