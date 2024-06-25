@@ -85,7 +85,55 @@ country_event = {
 		name = UOEEvent.2.a
 		log = "[GetDateText]: [Root.GetName]: event UOEEvent.2.a"
 		UOE = {
-
+			set_country_flag = states_exited_due_eco
+			every_controlled_state = {
+				limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
+				add_to_temp_variable = { state_lost_stab_mod = 0.01 }
+				if = { limit = { is_in_array = { core_countries = UOE } }
+					remove_core_of = UOE
+				}
+				set_temp_variable = { release_nation = core_countries^0 }
+				if = {
+					limit = {
+						is_core_of = GER
+					}
+					log = "its a german state"
+					transfer_state_to = GER
+				}else = {
+					transfer_state_to = var:release_nation
+				}
+				var:release_nation = {
+					if = {
+						limit = {
+							NOT = {
+								is_in_array = {
+									array = global.uoe_rel_track
+									value = THIS
+								}
+							}
+						}
+						add_to_array = { global.uoe_rel_track = THIS }
+					}
+					if = {
+						limit = {
+							has_idea = NATO_member
+						}
+						remove_ideas = NATO_member
+					}
+				}
+			}
+			add_to_variable = { military_revolt = state_lost_stab_mod }
+			remove_mission = high_prod_state_revolt
+		}
+		set_temp_variable = { fac_nation = global.uoe_rel_track^0 }
+		remove_from_array = { global.uoe_rel_track = fac_nation }
+		var:fac_nation = {
+			create_faction = alliance_european_states
+		}
+		for_each_loop = {
+			array = global.uoe_rel_track
+			value = state_to_join
+			var:fac_nation = { add_to_faction = state_to_join }
 		}
 
 		ai_chance = {
@@ -103,6 +151,8 @@ country_event = {
 					check_variable = { productivity_state_var < UOE.overall_productivity }
 				}
 			}
+			set_country_flag = states_exited_due_eco
+			remove_mission = high_prod_state_revolt
 		}
 
 		ai_chance = {
@@ -128,7 +178,54 @@ country_event = {
 		name = UOEEvent.3.a
 		log = "[GetDateText]: [Root.GetName]: event UOEEvent.3.a"
 		UOE = {
-
+			set_country_flag = states_exited_due_eco
+			every_controlled_state = {
+				limit = { check_variable = { productivity_state_var > UOE.overall_productivity } }
+				add_to_temp_variable = { state_lost_stab_mod = 0.01 }
+				if = { limit = { is_in_array = { core_countries = UOE } }
+					remove_core_of = UOE
+				}
+				set_temp_variable = { release_nation = core_countries^0 }
+				if = {
+					limit = {
+						is_core_of = GER
+					}
+					transfer_state_to = GER
+				}else = {
+					transfer_state_to = var:release_nation
+				}
+				var:release_nation = {
+					if = {
+						limit = {
+							NOT = {
+								is_in_array = {
+									array = global.uoe_rel_track
+									value = THIS
+								}
+							}
+						}
+						add_to_array = { global.uoe_rel_track = THIS }
+					}
+					if = {
+						limit = {
+							has_idea = NATO_member
+						}
+						remove_ideas = NATO_member
+					}
+				}
+			}
+			add_to_variable = { military_revolt = state_lost_stab_mod }
+			remove_mission = low_prod_state_revolt
+		}
+		set_temp_variable = { fac_nation = global.uoe_rel_track^0 }
+		remove_from_array = { global.uoe_rel_track = fac_nation }
+		var:fac_nation = {
+			create_faction = alliance_european_states
+		}
+		for_each_loop = {
+			array = global.uoe_rel_track
+			value = state_to_join
+			var:fac_nation = { add_to_faction = state_to_join }
 		}
 
 		ai_chance = {
@@ -146,6 +243,8 @@ country_event = {
 					check_variable = { productivity_state_var > UOE.overall_productivity }
 				}
 			}
+			set_country_flag = states_exited_due_eco
+			remove_mission = low_prod_state_revolt
 		}
 
 		ai_chance = {
