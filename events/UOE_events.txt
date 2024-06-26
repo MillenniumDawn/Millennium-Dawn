@@ -29,7 +29,7 @@ country_event = {
 			add_to_temp_variable = { party_1 = party_pop_array^0 }
 
 			set_variable = { party_pop_array^party_sel = 0 }
-			set_variable = { party_pop_array^0 = party_1}
+			set_variable = { party_pop_array^0 = party_1 }
 
 			clear_array = ruling_party
 			add_to_array = { ruling_party = 0 }
@@ -100,19 +100,26 @@ country_event = {
 					log = "its a german state"
 					transfer_state_to = GER
 				}else = {
-					transfer_state_to = var:release_nation
+					if = {
+						limit = {
+							is_core_of = SPR
+						}
+						transfer_state_to = SPR
+					}else = {
+						transfer_state_to = var:release_nation
+					}
 				}
 				var:release_nation = {
 					if = {
 						limit = {
 							NOT = {
 								is_in_array = {
-									array = global.uoe_rel_track
+									array = UOE.uoe_rel_track
 									value = THIS
 								}
 							}
 						}
-						add_to_array = { global.uoe_rel_track = THIS }
+						add_to_array = { UOE.uoe_rel_track = THIS }
 					}
 					if = {
 						limit = {
@@ -125,13 +132,13 @@ country_event = {
 			add_to_variable = { military_revolt = state_lost_stab_mod }
 			remove_mission = high_prod_state_revolt
 		}
-		set_temp_variable = { fac_nation = global.uoe_rel_track^0 }
-		remove_from_array = { global.uoe_rel_track = fac_nation }
+		set_temp_variable = { fac_nation = UOE.uoe_rel_track^0 }
+		remove_from_array = { UOE.uoe_rel_track = fac_nation }
 		var:fac_nation = {
 			create_faction = alliance_european_states
 		}
 		for_each_loop = {
-			array = global.uoe_rel_track
+			array = UOE.uoe_rel_track
 			value = state_to_join
 			var:fac_nation = { add_to_faction = state_to_join }
 		}
@@ -250,5 +257,638 @@ country_event = {
 		ai_chance = {
 			factor = 1
 		}
+	}
+	option = {
+		name = UOEEvent.3.c
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.3.c"
+		UOE = {
+			#puts the western oligarcy in power
+			#unlocks the paradox path
+			#note you will still need to appease the military
+			set_temp_variable = { party_sel = ruling_party^0 }
+			set_temp_variable = { party_amnt = party_pop_array^party_sel }
+
+			set_temp_variable = { party_diff = party_pop_array^0 }
+
+			add_to_temp_variable = { party_1 = party_amnt }
+			add_to_temp_variable = { party_1 = party_pop_array^0 }
+
+			set_variable = { party_pop_array^party_sel = 0 }
+			set_variable = { party_pop_array^0 = party_1 }
+
+			clear_array = ruling_party
+			add_to_array = { ruling_party = 0 }
+
+			subtract_from_temp_variable = { party_amnt = party_diff }
+			add_to_variable = { military_revolt = party_amnt }
+
+			set_country_flag = oligarcy_takeover
+		}
+
+		ai_chance = {
+			factor = 3
+		}
+	}
+}
+
+#First internal faction events
+country_event = {
+	id = UOEEvent.4
+	title = UOEEvent.4.t
+	desc = UOEEvent.4.d
+
+	is_triggered_only = yes
+	fire_only_once = no
+
+	trigger = {
+		tag = UOE
+	}
+
+	option = {
+		name = UOEEvent.4.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.4.a"
+		UOE = {
+			add_ideas = small_medium_business_owners
+
+			set_temp_variable = { mil_change = small_medium_business_owners_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { limit = { check_variable = { mil_change = 0 } }
+				add_to_temp_variable = { mil_change = 0.05 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			add_stability = mil_change
+
+			country_event = UOEEvent.5
+		}
+	}
+	option = {
+		name = UOEEvent.4.b
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.4.b"
+		UOE = {
+			add_ideas = international_bankers
+
+			set_temp_variable = { mil_change = international_bankers_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { limit = { check_variable = { mil_change = 0 } }
+				add_to_temp_variable = { mil_change = 0.05 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			add_stability = mil_change
+
+			country_event = UOEEvent.5
+		}
+	}
+	option = {
+		name = UOEEvent.4.c
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.4.c"
+		UOE = {
+			add_ideas = fossil_fuel_industry
+
+			set_temp_variable = { mil_change = fossil_fuel_industry_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { limit = { check_variable = { mil_change = 0 } }
+				add_to_temp_variable = { mil_change = 0.05 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			add_stability = mil_change
+
+			country_event = UOEEvent.5
+		}
+	}
+	option = {
+		name = UOEEvent.4.dd
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.4.dd"
+		UOE = {
+			country_event = UOEEvent.41
+		}
+	}
+}
+
+country_event = {
+	id = UOEEvent.41
+	title = UOEEvent.41.t
+	desc = UOEEvent.41.d
+
+	is_triggered_only = yes
+	fire_only_once = no
+
+	option = {
+		name = UOEEvent.41.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.41.a"
+		UOE = {
+			add_ideas = industrial_conglomerates
+
+			set_temp_variable = { mil_change = industrial_conglomerates_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { limit = { check_variable = { mil_change = 0 } }
+				add_to_temp_variable = { mil_change = 0.05 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			add_stability = mil_change
+
+			country_event = UOEEvent.5
+		}
+	}
+	option = {
+		name = UOEEvent.41.b
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.41.b"
+		UOE = {
+			add_ideas = oligarchs
+
+			set_temp_variable = { mil_change = oligarchs_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { limit = { check_variable = { mil_change = 0 } }
+				add_to_temp_variable = { mil_change = 0.05 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			add_stability = mil_change
+
+			country_event = UOEEvent.5
+		}
+	}
+	option = {
+		name = UOEEvent.41.c
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.41.c"
+		UOE = {
+			random_list = {
+				small_medium_business_owners_opinion = {
+					add_ideas = small_medium_business_owners
+
+					set_temp_variable = { mil_change = small_medium_business_owners_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+
+					if = { check_variable = { mil_change > 0 }
+						multiply_temp_variable = { mil_change = -1 }
+					}
+					add_stability = mil_change
+				}
+				international_bankers_opinion = {
+					add_ideas = international_bankers
+
+					set_temp_variable = { mil_change = international_bankers_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+
+					if = { check_variable = { mil_change > 0 }
+						multiply_temp_variable = { mil_change = -1 }
+					}
+					add_stability = mil_change
+				}
+				fossil_fuel_industry_opinion = {
+					add_ideas = fossil_fuel_industry
+
+					set_temp_variable = { mil_change = fossil_fuel_industry_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+
+					if = { check_variable = { mil_change > 0 }
+						multiply_temp_variable = { mil_change = -1 }
+					}
+					add_stability = mil_change
+				}
+				industrial_conglomerates_opinion = {
+					add_ideas = industrial_conglomerates
+
+					set_temp_variable = { mil_change = industrial_conglomerates_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+
+					if = { check_variable = { mil_change > 0 }
+						multiply_temp_variable = { mil_change = -1 }
+					}
+					add_stability = mil_change
+				}
+				oligarchs_opinion = {
+					add_ideas = oligarchs
+
+					set_temp_variable = { mil_change = oligarchs_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+
+					if = { check_variable = { mil_change > 0 }
+						multiply_temp_variable = { mil_change = -1 }
+					}
+					add_stability = mil_change
+				}
+			}
+			country_event = UOEEvent.5
+		}
+	}
+	option = {
+		name = UOEEvent.41.dd
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.41.dd"
+
+		UOE = {
+			country_event = UOEEvent.4
+		}
+	}
+}
+
+#second internal faction event
+country_event = {
+	id = UOEEvent.5
+	title = UOEEvent.5.t
+	desc = UOEEvent.5.d
+
+	is_triggered_only = yes
+	fire_only_once = no
+
+	trigger = {
+		tag = UOE
+	}
+
+	option = {
+		name = UOEEvent.5.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.5.a"
+
+		UOE = {
+			add_ideas = maritime_industry
+
+			set_temp_variable = { mil_change = maritime_industry_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent.5.b
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.5.b"
+
+		UOE = {
+			add_ideas = defense_industry
+
+			set_temp_variable = { mil_change = defense_industry_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent.5.c
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.5.c"
+
+		UOE = {
+			add_ideas = the_military
+
+			set_temp_variable = { mil_change = the_military_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent.51.dd
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.51.dd"
+
+		UOE = {
+			country_event = UOEEvent.51
+		}
+	}
+}
+country_event = {
+	id = UOEEvent.51
+	title = UOEEvent.51.t
+	desc = UOEEvent.51.d
+
+	is_triggered_only = yes
+	fire_only_once = no
+
+	trigger = {
+		tag = UOE
+	}
+	option = {
+		name = UOEEvent.51.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.51.a"
+
+		UOE = {
+			add_ideas = the_military
+
+			set_temp_variable = { mil_change = the_military_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent.51.b
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.51.b"
+
+		UOE = {
+			random_list = {
+				maritime_industry_opinion = {
+					add_ideas = maritime_industry
+
+					set_temp_variable = { mil_change = maritime_industry_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+				defense_industry_opinion = {
+					add_ideas = defense_industry
+
+					set_temp_variable = { mil_change = defense_industry_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+				the_military_opinion = {
+					add_ideas = the_military
+
+					set_temp_variable = { mil_change = the_military_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+				intelligence_community_opinion = {
+					add_ideas = intelligence_community
+
+					set_temp_variable = { mil_change = intelligence_community_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+			}
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent.51.c
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.51.c"
+
+		UOE = {
+			country_event = UOEEvent.5
+		}
+	}
+}
+
+#final internal faction event
+country_event = {
+	id = UOEEvent.6
+	title = UOEEvent.6.t
+	desc = UOEEvent.6.d
+
+	is_triggered_only = yes
+	fire_only_once = no
+
+	trigger = {
+		tag = UOE
+	}
+
+	option = {
+		name = UOEEvent.6.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.6.a"
+
+		UOE = {
+			add_ideas = labour_unions
+
+			set_temp_variable = { mil_change = labour_unions_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+		}
+	}
+	option = {
+		name = UOEEvent.6.b
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.6.b"
+
+		UOE = {
+			add_ideas = landowners
+
+			set_temp_variable = { mil_change = landowners_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent.6.c
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.6.c"
+
+		UOE = {
+			add_ideas = farmers
+
+			set_temp_variable = { mil_change = farmers_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent61.dd
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.61.dd"
+
+		country_event = UOEEvent.6
+	}
+}
+country_event = {
+	id = UOEEvent.61
+	title = UOEEvent.61.t
+	desc = UOEEvent.61.d
+
+	is_triggered_only = yes
+	fire_only_once = no
+
+	trigger = {
+		tag = UOE
+	}
+	option = {
+		name = UOEEvent.61.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.61.a"
+
+		UOE = {
+			add_ideas = communist_cadres
+
+			set_temp_variable = { mil_change = communist_cadres_opinion }
+			divide_temp_variable = { mil_change = 100 }
+			divide_temp_variable = { mil_change = 4 }
+
+			if = { check_variable = { mil_change < 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			UOE_mil_revolt_change = yes
+			if = { check_variable = { mil_change > 0 }
+				multiply_temp_variable = { mil_change = -1 }
+			}
+
+			country_event = UOEEvent.6
+		}
+	}
+	option = {
+		name = UOEEvent.61.b
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.61.b"
+
+		UOE = {
+			random_list = {
+				labour_unions_opinion = {
+					add_ideas = labour_unions
+
+					set_temp_variable = { mil_change = labour_unions_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+				landowners_opinion = {
+					add_ideas = landowners
+
+					set_temp_variable = { mil_change = landowners_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+				farmers_opinion = {
+					add_ideas = farmers
+
+					set_temp_variable = { mil_change = farmers_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+				communist_cadres_opinion = {
+					add_ideas = communist_cadres
+
+					set_temp_variable = { mil_change = communist_cadres_opinion }
+					divide_temp_variable = { mil_change = 100 }
+					divide_temp_variable = { mil_change = 4 }
+
+					UOE_mil_revolt_change = yes
+					add_stability = mil_change
+				}
+			}
+		}
+	}
+	option = {
+		name = UOEEvent61.c
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.61.c"
+
+		country_event = UOEEvent.6
 	}
 }
