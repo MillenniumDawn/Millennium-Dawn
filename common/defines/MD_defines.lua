@@ -88,8 +88,8 @@
 	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_MIN = 1.15								-- (1.15 in vanilla) Minimum cost factor for each turn a bid has been uncontested on the state.
 	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_MAX = 1.60								-- (1.60 in vanilla) Maximum cost factor for each turn a bid has been uncontested on the state.
 	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_STEP = 0.15								-- (0.15 in vanilla) Uncontested cost factor will increase by this much each turn.
-	NDefines.NDiplomacy.PEACE_COST_FACTOR_CAPITAL_SHIP_IC = 0.005									-- (0.005 in vanilla) In peace conference, cost for taking one capital ship per IC
-	NDefines.NDiplomacy.PEACE_COST_FACTOR_SCREENING_SHIP_IC = 0.005								-- (0.005 in vanilla) In peace conference, cost for taking a part of the screening ships per IC
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_CAPITAL_SHIP_IC = 0.002									-- (0.005 in vanilla) In peace conference, cost for taking one capital ship per IC
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_SCREENING_SHIP_IC = 0.001								-- (0.005 in vanilla) In peace conference, cost for taking a part of the screening ships per IC
 	NDefines.NDiplomacy.PEACE_INCREASE_COST_FACTOR_PER_MISSING_PERCENT_FOR_CAPITULATION = 0.002	-- (0.002 in vanilla) increase factor if loser has not capitulated, for every percent between surrender level and BASE_SURRENDER_LEVEL
 	-- peace action taker has a discount if they occupy the state depending on compliance
 	-- it's a table where first value is the compliance level, and the second the factor
