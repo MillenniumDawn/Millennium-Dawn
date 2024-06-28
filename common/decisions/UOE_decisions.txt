@@ -9,7 +9,7 @@ UOE_culture_balance_cat = {
 		complete_effect = {
 			add_power_balance_value = {
 				id = UOE_culture_balance
-				value = -0.01
+				value = -0.05
 			}
 			add_to_variable = { UOE_bop_cult_dif = 0.01 }
 		}
@@ -24,7 +24,7 @@ UOE_culture_balance_cat = {
 		complete_effect = {
 			add_power_balance_value = {
 				id = UOE_culture_balance
-				value = 0.01
+				value = 0.05
 			}
 			add_to_variable = { UOE_bop_cult_dif = 0.01 }
 		}
@@ -40,7 +40,7 @@ UOE_culture_balance_cat = {
 			set_country_flag = banned_western_media
 			add_power_balance_value = {
 				id = UOE_culture_balance
-				value = -0.05
+				value = -0.15
 			}
 			add_stability = -0.05
 			#TODO: this will increase the liklihood of nations to revolt and leave the USoE
@@ -57,10 +57,66 @@ UOE_culture_balance_cat = {
 			set_country_flag = banned_eastern_media
 			add_power_balance_value = {
 				id = UOE_culture_balance
-				value = 0.05
+				value = 0.15
 			}
 			add_stability = -0.05
 			#TODO: this will increase the liklihood of nations to revolt and leave the USoE
+		}
+	}
+	UOE_allow_western_demonstrations = {
+		days_remove = 21
+		cost = 150
+		visible = { NOT = { has_country_flag = western_demonstrations_banned } has_country_flag = the_war_begins }
+		complete_effect = {
+			add_stability = 0.05
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = -0.1
+			}
+			every_controlled_state = {
+				add_resistance = -5
+			}
+		}
+	}
+	UOE_allow_eastern_demonstrations = {
+		days_remove = 21
+		cost = 150
+		visible = { NOT = { has_country_flag = eastern_demonstrations_banned } has_country_flag = the_war_begins }
+		complete_effect = {
+			add_stability = 0.05
+			add_power_balance_value = {
+				id = UOE_culture_balance
+				value = 0.1
+			}
+			every_controlled_state = {
+				add_resistance = -5
+			}
+		}
+	}
+	UOE_prohibit_western_demonstrations = {
+		fire_only_once = yes
+		cost = 300
+		visible = { has_country_flag = the_war_begins }
+		complete_effect = {
+			add_power_balance_modifier = {
+				id = UOE_culture_balance
+				modifier = uoe_western_demonstrations_prohibited_modifier
+			}
+			set_country_flag = western_demonstrations_banned
+			add_stability = -0.15
+		}
+	}
+	UOE_prohibit_eastern_demonstrations = {
+		fire_only_once = yes
+		cost = 300
+		visible = { has_country_flag = the_war_begins }
+		complete_effect = {
+			add_power_balance_modifier = {
+				id = UOE_culture_balance
+				modifier = uoe_eastern_demonstrations_prohibited_modifier
+			}
+			set_country_flag = eastern_demonstrations_banned
+			add_stability = -0.15
 		}
 	}
 	UOE_western_grassroots_campaign = {
@@ -68,7 +124,7 @@ UOE_culture_balance_cat = {
 		days_remove = 60
 		cost = 100
 		visible = {
-			has_completed_focus = UOE_A_War_of_Cultures
+			has_country_flag = the_war_begins
 		}
 		complete_effect = {
 			add_power_balance_value = {
@@ -88,7 +144,7 @@ UOE_culture_balance_cat = {
 		days_remove = 60
 		cost = 100
 		visible = {
-			has_completed_focus = UOE_A_War_of_Cultures
+			has_country_flag = the_war_begins
 		}
 		complete_effect = {
 			add_power_balance_value = {
@@ -181,6 +237,22 @@ UOE_culture_balance_cat = {
 }
 
 UOE_forming_a_government_category = {
+	reassure_the_military = {
+		visible = {
+			NOT = { has_country_flag = military_appeased }
+			NOT = { has_country_flag = military_takeover }
+			has_country_flag = propaganda_machine_started
+		}
+
+		days_remove = 30
+		cost = 100
+
+		complete_effect = {
+			set_temp_variable = { mil_change = -0.05 }
+			UOE_mil_revolt_change = yes
+			add_stability = -0.02
+		}
+	}
 	form_a_government = {
 		available = {
 			has_country_flag = new_government_established

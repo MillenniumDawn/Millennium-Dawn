@@ -93,13 +93,17 @@ UOE_mil_revolt_track = {
 	log = "Military revolt after stability is: [?military_revolt]"
 
 	#Adjust the revolt for economic stability
-	set_temp_variable = { econ_stab_adjust = low_prod_unrest }
-	add_to_temp_variable = { econ_stab_adjust = high_prod_unrest }
-	if = { limit = { OR = { check_variable = { econ_stab_adjust = 0 } has_country_flag = resolved_eco_crisis } }
-		add_to_variable = { military_revolt = -0.05 }
+	if = { limit = { has_country_flag = unstable_economy }
+		set_temp_variable = { econ_stab_adjust = low_prod_unrest }
+		add_to_temp_variable = { econ_stab_adjust = high_prod_unrest }
+		if = { limit = { OR = { check_variable = { econ_stab_adjust = 0 } has_country_flag = resolved_eco_crisis } }
+			add_to_variable = { military_revolt = -0.05 }
+		}else = {
+			divide_temp_variable = { econ_stab_adjust = 6 }
+			add_to_variable = { military_revolt = econ_stab_adjust }
+		}
 	}else = {
-		divide_temp_variable = { econ_stab_adjust = 6 }
-		add_to_variable = { military_revolt = econ_stab_adjust }
+		add_to_variable = { military_revolt = -0.025 }
 	}
 
 	log = "Military revolt after econ is: [?military_revolt]"
@@ -127,21 +131,25 @@ UOE_mil_revolt_track = {
 	log = "Military revolt after protest is: [?military_revolt]"
 
 	#Adjust the revolt for cultural balance number
-	if = {
-		limit = {
-			NOT = {
-				is_power_balance_in_range = {
-					id = UOE_culture_balance
-					range = mid_range
+	if = { limit = { has_power_balance = { id = UOE_culture_balance } }
+		if = {
+			limit = {
+				NOT = {
+					is_power_balance_in_range = {
+						id = UOE_culture_balance
+						range = mid_range
+					}
 				}
 			}
+			set_temp_variable = { cult_bop_adjust = cult_start_bias }
+			if = { limit = { check_variable = { cult_bop_adjust < 0 } }
+				multiply_temp_variable = { cult_bop_adjust = -1 }
+			}
+			divide_temp_variable = { cult_bop_adjust = 30 }
+			add_to_variable = { military_revolt = cult_bop_adjust }
+		}else = {
+			add_to_variable = { military_revolt = -0.005}
 		}
-		set_temp_variable = { cult_bop_adjust = cult_start_bias }
-		if = { limit = { check_variable = { cult_bop_adjust < 0 } }
-			multiply_temp_variable = { cult_bop_adjust = -1 }
-		}
-		divide_temp_variable = { cult_bop_adjust = 30 }
-		add_to_variable = { military_revolt = cult_bop_adjust }
 	}else = {
 		add_to_variable = { military_revolt = -0.005}
 	}
