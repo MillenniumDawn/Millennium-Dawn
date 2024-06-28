@@ -1533,7 +1533,7 @@ update_military_rate = {
 		value = v
 		index = i
 		add_to_variable = { array_defence_spend^i = num_of_naval_factories }
-		add_to_variable = { array_defence_spend^i = num_of_military_factories }
+		add_to_variable = { array_defence_spend^i = military_fac }
 	}
 
 	#Set the base cost for each spending level based on size of military industry ( [num_of_mil_factories + num_of_naval_factories]/modifier )
@@ -4240,7 +4240,6 @@ calculate_migration_mechanic_values = {
 	# Cleanup Variables
 	clear_variable = immigration_employment_factor_display
 	clear_variable = immigration_government_factor_display
-	clear_variable = immigration_war_support_factor_display
 	clear_variable = neighbour_war_refugees_display
 	clear_variable = personal_war_refugees_display
 	clear_variable = net_immigration_rate
@@ -4258,11 +4257,12 @@ calculate_migration_mechanic_values = {
 
 	# Calculate Unemployment/Worker fulfillment
 	if = { limit = { check_variable = { average_worker_fulfillment < 1 } }
-		set_temp_variable = { immigration_employment_factor = 1 }
-		subtract_from_temp_variable = { immigration_employment_factor = average_worker_fulfillment }
+		set_temp_variable = { immigration_employment_factor = -1 }
+		add_to_temp_variable = { immigration_employment_factor = average_worker_fulfillment }
 	}
 	else = {
-		set_temp_variable = { immigration_employment_factor = total_unemployed_percentage_display }
+		subtract_from_temp_variable = { immigration_employment_factor = total_unemployed_percentage_display }
+		multiply_temp_variable = { immigration_employment_factore = 2 }
 	}
 	set_variable = { immigration_employment_factor_display = immigration_employment_factor }
 
@@ -4340,6 +4340,7 @@ calculate_migration_mechanic_values = {
 		set_variable = { max_net_immigration_rate = 0 }
 		set_variable = { net_immigration_rate = 0 }
 	}
+	clamp_variable = { var = max_net_immigration_rate max = 2.0 min = -2.0 }
 
 	set_variable = { net_immigration_rate = max_net_immigration_rate }
 	multiply_variable = { net_immigration_rate = migration_rate_value }
