@@ -983,3 +983,142 @@ country_event = {
 		}
 	}
 }
+
+#stabilize the economy
+country_event = {
+	id = UOEEvent.8
+	title = UOEEvent.8.t
+	desc = UOEEVent.8.d
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = UOEEvent.8.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.8.a"
+
+		UOE = {
+			large_expenditure = yes
+			set_country_flag = UOE_massive_subsidies
+			decrease_two_level_economic_growth = yes
+
+			set_temp_variable = { civ_fac_total = num_of_civilian_factories }
+			set_temp_variable = { mil_fac_total = num_of_military_factories }
+			set_temp_variable = { nav_fac_total = num_of_naval_factories }
+			set_temp_variable = { off_park_total = office_park_total }
+
+			multiply_temp_variable = { civ_fac_total = 0.3 }
+			multiply_temp_variable = { mil_fac_total = 0.3 }
+			multiply_temp_variable = { nav_fac_total = 0.3 }
+			multiply_temp_variable = { off_park_total = 0.3 }
+
+			round_temp_variable = civ_fac_total
+			round_temp_variable = mil_fac_total
+			round_temp_variable = nav_fac_total
+			round_temp_variable = off_park_total
+
+			set_temp_variable = { civ_sub_cost = civ_fac_total }
+			set_temp_variable = { mil_sub_cost = mil_fac_total }
+			set_temp_variable = { nav_fac_cost = nav_fac_total }
+			set_temp_variable = { off_park_cost = off_park_total }
+
+			set_variable = { UOE_subsidy_budget_weekly = 100 }
+
+			multiply_temp_variable = { civ_sub_cost = 7.5 }
+			multiply_temp_variable = { mil_sub_cost = 7.5 }
+			multiply_temp_variable = { nav_fac_cost = 7.5 }
+			multiply_temp_variable = { off_park_cost = 12 }
+
+			add_to_variable = { UOE_subsidy_budget_weekly = civ_sub_cost }
+			add_to_variable = { UOE_subsidy_budget_weekly = mil_sub_cost }
+			add_to_variable = { UOE_subsidy_budget_weekly = nav_fac_cost }
+			add_to_variable = { UOE_subsidy_budget_weekly = off_park_cost }
+
+			divide_variable = { UOE_subsidy_budget_weekly = 52 }
+			set_temp_variable = { UOE_subsidy_budget_weekly_temp = UOE_subsidy_budget_weekly }
+
+			custom_effect_tooltip = UOE_subsidies_initial_cost_tooltip
+
+			add_to_temp_variable = { unrest_change = civ_fac_total }
+			add_to_temp_variable = { unrest_change = mil_fac_total }
+			add_to_temp_variable = { unrest_change = nav_fac_total }
+			add_to_temp_variable = { unrest_change = off_park_total }
+			divide_temp_variable = { unrest_change = 2 }
+			round_temp_variable = unrest_change
+			divide_temp_variable = { unrest_change = 100 }
+
+			UOE_low_prod_unrest_change = yes
+		}
+	}
+	option = {
+		name = UOEEvent.8.a
+		log = "[GetDateText]: [Root.GetName]: event UOEEvent.8.a"
+
+		UOE = {
+			increase_economic_growth = yes
+			set_temp_variable = { civ_fac_total = num_of_civilian_factories }
+			set_temp_variable = { mil_fac_total = num_of_military_factories }
+			set_temp_variable = { nav_fac_total = num_of_naval_factories }
+			set_temp_variable = { off_park_total = office_park_total }
+
+			multiply_temp_variable = { civ_fac_total = 0.3 }
+			multiply_temp_variable = { mil_fac_total = 0.3 }
+			multiply_temp_variable = { nav_fac_total = 0.3 }
+			multiply_temp_variable = { off_park_total = 0.3 }
+
+			round_temp_variable = civ_fac_total
+			round_temp_variable = mil_fac_total
+			round_temp_variable = nav_fac_total
+			round_temp_variable = off_park_total
+
+			custom_effect_tooltip = economic_building_loss_tooltip
+
+			for_loop_effect = {
+				end = civ_fac_total
+				random_controlled_state = {
+					remove_building = {
+						type = industrial_complex
+						level = 1
+					}
+				}
+			}
+			for_loop_effect = {
+				end = mil_fac_total
+				random_controlled_state = {
+					remove_building = {
+						type = arms_factory
+						level = 1
+					}
+				}
+			}
+			for_loop_effect = {
+				end = nav_fac_total
+				random_controlled_state = {
+					remove_building = {
+						type = dockyard
+						level = 1
+					}
+				}
+			}
+			for_loop_effect = {
+				end = off_park_total
+				random_controlled_state = {
+					remove_building = {
+						type = offices
+						level = 1
+					}
+				}
+			}
+
+			add_to_temp_variable = { unrest_change = civ_fac_total }
+			add_to_temp_variable = { unrest_change = mil_fac_total }
+			add_to_temp_variable = { unrest_change = nav_fac_total }
+			add_to_temp_variable = { unrest_change = off_park_total }
+			divide_temp_variable = { unrest_change = 4 }
+			round_temp_variable = unrest_change
+			divide_temp_variable = { unrest_change = 100 }
+
+			UOE_high_prod_unrest_change = yes
+		}
+	}
+}
