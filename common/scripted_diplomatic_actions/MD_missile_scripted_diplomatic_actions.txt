@@ -756,9 +756,7 @@ scripted_diplomatic_actions = {
 
 	offer_mil_com_access = {
 		icon = 20
-		allowed = {
-			always = yes
-		}
+		allowed = { always = yes }
 		visible = {
 			ROOT = {
 				NOT = {
@@ -790,6 +788,7 @@ scripted_diplomatic_actions = {
 		cost = 0
 		requires_acceptance = yes
 		show_acceptance_on_action_button = yes
+
 		#### ACTION LOCALISATION ###
 		send_description = OFFER_MIL_COM_ACCESS_LOC
 		receive_description = OFFER_MIL_COM_ACCESS_RECIEVER_LOC
@@ -797,21 +796,22 @@ scripted_diplomatic_actions = {
 		accept_description = OFFER_MIL_COM_ACCESS_ACCEPTED_DESC
 		reject_title = OFFER_MIL_COM_ACCESS_REJECTED_TITLE
 		reject_description = OFFER_MIL_COM_ACCESS_REJECTED_DESC
+
 		#### EFFECTS ###
 		on_sent_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_mil_com_access"
 			ROOT = { set_variable = { pending_mil_com_access_country = PREV.id } }
 		}
 		complete_effect = {
-		# PREV = target / bonus TAG
-		# ROOT = sending TAG / access TAG
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_mil_com_access"
-			ROOT = { add_to_array = { array = ROOT.COM_mil_treaty_array value = PREV.id } }
-			ROOT = { add_to_array = { array = PREV.COM_mil_access_array value = ROOT.id } }
-			ROOT = { add_to_array = { array = PREV.COM_mil_access_system_idx_array value = ROOT.var_COM_mil_system_idx } }
-			ROOT = { add_offer_access_COM_mil_vars = yes }
+			ROOT = {
+				add_to_array = { array = ROOT.COM_mil_treaty_array value = PREV.id }
+				add_to_array = { array = PREV.COM_mil_access_array value = ROOT.id }
+				add_to_array = { array = PREV.COM_mil_access_system_idx_array value = ROOT.var_COM_mil_system_idx }
+				add_offer_access_COM_mil_vars = yes
+				clear_variable = pending_mil_com_access_country
+			}
 			THIS = { force_update_dynamic_modifier = yes }
-			ROOT = { clear_variable = pending_mil_com_access_country }
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_com_access"
@@ -830,12 +830,8 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = -100
 				OR = {
-					check_variable = {
-						THIS.var_COM_mil_system_idx > ROOT.var_COM_mil_system_idx
-					}
-					check_variable = {
-						THIS.var_COM_mil_system_idx = ROOT.var_COM_mil_system_idx
-					}
+					check_variable = { THIS.var_COM_mil_system_idx > ROOT.var_COM_mil_system_idx }
+					check_variable = { THIS.var_COM_mil_system_idx = ROOT.var_COM_mil_system_idx }
 				}
 			}
 			modifier = {

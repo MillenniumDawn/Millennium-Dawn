@@ -1,54 +1,74 @@
-		#energy calculation system.
+# Author(s): Simone, AngriestBird
+# -------------
+# Adjuster Variables
+# The following variable is used to adjust the balance of all consumption without adjusting the ratio of the sources
+@energy_use_balance_multiplier = 1.25
+# The following variable is used to adjust the balance of the Population Energy Consumption
+@population_energy_use_balance_value = 28
+
+# Effect: calculate_energy_use
+# Purpose: Calculates the Energy Use of a nation for the Energy System
 calculate_energy_use = {
-	#if the country doesn't have the dynamic modifier through which we take and give energy, give it the dynamic modifier!
+	# Add the Dynamic Modifiers for the System in case they are not present
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = no_fuel_penalties_modifier } } } add_dynamic_modifier = { modifier = no_fuel_penalties_modifier } }
 
-	#set temp vars for each multiplier and add 1 to the multipliers (which are percentages).
-	#IE: if energy_use_multiplier is modified to 40% (.4) it will be treated as a 140% (1.4) multiplication on its correlating modifier
-	set_temp_variable = { temp_pop_use_m = 1 }
-	add_to_temp_variable = { temp_pop_use_m = modifier@pop_energy_use_multiplier }
-	set_temp_variable = { temp_energy_use_m = 1 }
-	add_to_temp_variable = { temp_energy_use_m = modifier@energy_use_multiplier }
-	set_temp_variable = { temp_energy_gain_m = 1 }
-	add_to_temp_variable = { temp_energy_gain_m = modifier@energy_gain_multiplier }
-
-	#checks the game rule difficulty for player and AI, and adjusts accordingly
+	# Game Rule Increase For AI/Player Difficulty
 	if = { limit = { is_ai = yes }
-		add_to_temp_variable = { temp_energy_gain_m = global.ai_energy_gain_modifier }
-		add_to_temp_variable = { temp_energy_use_m = global.ai_energy_use_modifier }
+		set_temp_variable = { game_rule_energy_gain = global.ai_energy_gain_modifier }
+		set_temp_variable = { game_rule_energy_use = global.ai_energy_use_modifier }
 	}
 	else = {
-		add_to_temp_variable = { temp_energy_gain_m = global.player_energy_gain_modifier }
-		add_to_temp_variable = { temp_energy_use_m = global.player_energy_use_modifier }
+		set_temp_variable = { game_rule_energy_gain = global.player_energy_gain_modifier }
+		set_temp_variable = { game_rule_energy_use = global.player_energy_use_modifier }
 	}
 
-	#overall energy use calculations
-	#add pop energy use, and factor it by its multiplier
-	#multiply the energy use per person by the population to model the amount the population is using as a whole.
+	#set temp vars for each multiplier and add 1 to the multipliers (which are percentages).
+	#IE: if energy_use_multiplier is modified to 40% (.4) it will be treated as a 140% (1.4) multiplication on its correlating modifier
+	# Energy Use Multiplier
+	set_temp_variable = { temp_pop_use_m = 1 }
+	add_to_temp_variable = { temp_pop_use_m = modifier@pop_energy_use_multiplier }
+	add_to_temp_variable = { temp_pop_use_m = game_rule_energy_use }
+	set_temp_variable = { temp_energy_use_m = 1 }
+	add_to_temp_variable = { temp_energy_use_m = modifier@energy_use_multiplier }
+	add_to_temp_variable = { temp_energy_use_m = game_rule_energy_use }
+	# Energy Gain Multiplier
+	set_temp_variable = { temp_energy_gain_m = 1 }
+	add_to_temp_variable = { temp_energy_gain_m = modifier@energy_gain_multiplier }
+	add_to_temp_variable = { temp_energy_gain_m = game_rule_energy_gain }
+
+
+	# Energy Consumption Calculations #
+	# --------------------------------#
+	# Add pop energy use, and factor it by its multiplier
+	# Multiply the energy use per person by the population to model the amount the population is using as a whole.
 	set_temp_variable = { population_energy_use = population_total }
 	multiply_temp_variable = { population_energy_use = 0.001 }
 	multiply_temp_variable = { population_energy_use = temp_pop_use_m }
 
+	# GDP/c Multiplication Section
 	set_temp_variable = { temp_gdp_per_capita = gdp_per_capita }
 	clamp_temp_variable = { var = temp_gdp_per_capita min = 1 }
-	#this value is the turning point of gdp/c anything below reduces energy use, above increases as a result of living expectations.
+	# 40 is considered our middle ground of the GDP/c or the "average" turnstile
 	divide_temp_variable = { temp_gdp_per_capita = 40 }
-	######multiply_temp_variable = { temp_gdp_per_capita = temp_gdp_per_capita } #id like to increase the effect of gdp/c but ^2 seems too drastic, i'd like to find a way to use a smaller exponential
 	multiply_temp_variable = { population_energy_use = temp_gdp_per_capita }
 
 	# Tweak this number to change population consumption relative to other sources of consumption
-	multiply_temp_variable = { population_energy_use = 31 }
+	multiply_temp_variable = { population_energy_use = @population_energy_use_balance_value }
 
-	#add energy_use (static use from special decisions/events)
+	# Add energy_use (static use from special decisions/events)
 	set_temp_variable = { other_energy_use = modifier@energy_use }
 
-	#energy use from buildings
+	# Energy Use from Buildings
 	set_temp_variable = { energy_use_base_civs = 0.5 }
 	set_temp_variable = { energy_use_base_offices = 0.25 }
+	set_temp_variable = { energy_use_base_agriculture_district = 0.10 }
 	set_temp_variable = { energy_use_base_mils = 0.5 }
+
+	# Modifier Calculations for Energy Use from Buildings
 	set_temp_variable = { energy_use_multiplier_civs = 1 }
 	set_temp_variable = { energy_use_multiplier_offices = 1 }
+	set_temp_variable = { energy_use_multiplier_agriculture_district = 1 }
 	set_temp_variable = { energy_use_multiplier_mils = 1 }
 
 	set_temp_variable = { energy_use_civs = industrial_complex_total }
@@ -61,7 +81,12 @@ calculate_energy_use = {
 	add_to_temp_variable = { energy_use_multiplier_offices = modifier@energy_use_modifier_offices }
 	multiply_temp_variable = { energy_use_offices = energy_use_multiplier_offices }
 
-	set_temp_variable = { energy_use_mils = num_of_military_factories }
+	set_temp_variable = { energy_use_agriculture_district = agriculture_district_total }
+	multiply_temp_variable = { energy_use_agriculture_district = energy_use_base_agriculture_district }
+	add_to_temp_variable = { energy_use_multiplier_agriculture_district = modifier@energy_use_modifier_agriculture_district }
+	multiply_temp_variable = { energy_use_agriculture_district = energy_use_multiplier_agriculture_district }
+
+	set_temp_variable = { energy_use_mils = military_fac }
 	add_to_temp_variable = { energy_use_mils = num_of_naval_factories }
 	multiply_temp_variable = { energy_use_mils = energy_use_base_mils }
 	add_to_temp_variable = { energy_use_multiplier_mils = modifier@energy_use_modifier_mils }
@@ -69,44 +94,49 @@ calculate_energy_use = {
 
 	set_temp_variable = { energy_use_buildings = energy_use_civs }
 	add_to_temp_variable = { energy_use_buildings = energy_use_offices }
+	add_to_temp_variable = { energy_use_buildings = energy_use_agriculture_district }
 	add_to_temp_variable = { energy_use_buildings = energy_use_mils }
 
-	# Additive Section of All Internal
+	# Additive Section of All Internal Sources of Energy Consumption
 	set_temp_variable = { temp_total_energy_use = population_energy_use }
 	add_to_temp_variable = { temp_total_energy_use = energy_use_buildings }
 	add_to_temp_variable = { temp_total_energy_use = other_energy_use }
 
-	#factor the entire thing by its multiplier to get final energy use
+	# Factor the entire thing by its multiplier to get final energy use
 	multiply_temp_variable = { temp_total_energy_use = temp_energy_use_m }
 
-	#balance multiplier, modify this if you want to tweak overall energy consumption without touching the ratio of its sources
-	multiply_temp_variable = { temp_total_energy_use = 1.25 }
+	# Balance multiplier, modify this if you want to tweak overall energy consumption without touching the ratio of its sources
+	multiply_temp_variable = { temp_total_energy_use = @energy_use_balance_multiplier }
 	clamp_temp_variable = { var = temp_total_energy_use min = 0.001 }
 
-	# Modify Display vars
+	# Modify Display Variables
 	multiply_temp_variable = { population_energy_use = temp_energy_use_m }
 	multiply_temp_variable = { energy_use_buildings = temp_energy_use_m }
 	multiply_temp_variable = { other_energy_use = temp_energy_use_m }
 	multiply_temp_variable = { energy_use_civs = temp_energy_use_m }
 	multiply_temp_variable = { energy_use_offices = temp_energy_use_m }
+	multiply_temp_variable = { energy_use_agriculture_district = temp_energy_use_m }
 	multiply_temp_variable = { energy_use_mils = temp_energy_use_m }
 
-	multiply_temp_variable = { population_energy_use = 1.25 }
-	multiply_temp_variable = { energy_use_buildings = 1.25 }
-	multiply_temp_variable = { other_energy_use = 1.25 }
-	multiply_temp_variable = { energy_use_civs = 1.25 }
-	multiply_temp_variable = { energy_use_offices = 1.25 }
-	multiply_temp_variable = { energy_use_mils = 1.25 }
+	multiply_temp_variable = { population_energy_use = @energy_use_balance_multiplier }
+	multiply_temp_variable = { energy_use_buildings = @energy_use_balance_multiplier }
+	multiply_temp_variable = { other_energy_use = @energy_use_balance_multiplier }
+	multiply_temp_variable = { energy_use_civs = @energy_use_balance_multiplier }
+	multiply_temp_variable = { energy_use_offices = @energy_use_balance_multiplier }
+	multiply_temp_variable = { energy_use_agriculture_district = @energy_use_balance_multiplier }
+	multiply_temp_variable = { energy_use_mils = @energy_use_balance_multiplier }
 
+	# Display Variables for the Energy Consumption per Type
 	set_variable = { population_energy_use_display_var = population_energy_use }
 	set_variable = { energy_use_buildings_total_display_var = energy_use_buildings }
 	set_variable = { other_energy_use_display_var = other_energy_use }
 	set_variable = { energy_use_civs_total_display_var = energy_use_civs }
 	set_variable = { energy_use_offices_total_display_var = energy_use_offices }
+	set_variable = { energy_use_agriculture_district_total_display_var = energy_use_agriculture_district }
 	set_variable = { energy_use_mils_total_display_var = energy_use_mils }
 
-	#net energy balance calculations
-	#add energy gain to sum, then factor it by corresponding multiplier to get final energy gain (through modifiers)
+	# Net Energy Balance Calculations
+	# Add energy gain to sum, then factor it by corresponding multiplier to get final energy gain (through modifiers)
 	set_variable = { energy_sum = state_renewable_energy_var }
 	set_temp_variable = { temp_renewable_energy_gain_m = 1 }
 	add_to_temp_variable = { temp_renewable_energy_gain_m = modifier@renewable_energy_gain_multiplier }
@@ -115,7 +145,8 @@ calculate_energy_use = {
 	set_variable = { renewable_energy_display_var = energy_sum }
 
 	set_temp_variable = { battery_stored_energy = number_of_battery_parks }
-	multiply_temp_variable = { battery_stored_energy = 100 } #base amount of gwh one battery park can store
+	# Base Amount of GW/h One Battery Park Can Store
+	multiply_temp_variable = { battery_stored_energy = 100 }
 	set_temp_variable = { battery_stored_energy_modifier = 1 }
 	add_to_temp_variable = { battery_stored_energy_modifier = modifier@battery_park_storage_size_modifier }
 	multiply_temp_variable = { battery_stored_energy = battery_stored_energy_modifier }
@@ -124,7 +155,7 @@ calculate_energy_use = {
 	add_to_variable = { energy_sum = hydroelectric_energy_generation }
 	add_to_variable = { energy_sum = geothermal_energy_generation }
 
-	#calculate fuel consumption and energy generation of fossil power plants
+	# Calculate fuel consumption and energy generation of fossil power plants
 	set_variable = { fossil_pp_energy_generation = modifier@fossil_energy_gain }
 	set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
 	add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
@@ -135,15 +166,8 @@ calculate_energy_use = {
 	add_to_temp_variable = { fossil_pp_fuel_consumption_multiplier = modifier@fossil_pp_fuel_consumption_modifier }
 	multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
 	multiply_variable = { fossil_pp_fuel_consumption = -1 }
-	# if = { #can't access those variables, will comment out until someone finds a way
-	# 	limit = {
-	# 		check_variable = { fuel_k = 0 }
-	# 	}
-	# 	set_temp_variable = { fuel_fulfillment = modifier@fuel_gain }
-	# 	divide_temp_variable = { fuel_fulfillment = modifier@fuel_cost }
-	# 	clamp_temp_variable = { var = fuel_fulfillment min = 0 max = 1 }
-	# 	multiply_variable = { fossil_pp_energy_generation = fuel_fulfillment }
-	# }
+
+	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
 	if = { #temporary solution
 		limit = {
@@ -170,26 +194,28 @@ calculate_energy_use = {
 		add_to_temp_variable = { nuclear_fuel_consumption_multiplier = modifier@nuclear_fuel_consumption_modifier }
 		multiply_variable = { nuclear_fuel_consumption = nuclear_fuel_consumption_multiplier }
 
+		set_variable = { net_nuclear_fuel_display = var_nuke_nuclear_reactor_prod }
+		subtract_from_variable = { net_nuclear_fuel_display = nuclear_fuel_consumption }
+
 		set_variable = { nuclear_energy_generation = modifier@nuclear_energy_gain }
 		set_temp_variable = { nuclear_energy_generation_multiplier = 1 }
 		add_to_temp_variable = { nuclear_energy_generation_multiplier = modifier@nuclear_energy_generation_modifier }
 		multiply_variable = { nuclear_energy_generation = nuclear_energy_generation_multiplier }
-		if = {
-			limit = {
-				check_variable = { var_reactor_material_stockpile = 0 }
-			}
+		if = { limit = { check_variable = { var_reactor_material_stockpile = 0 } }
 			set_temp_variable = { nuclear_fuel_fulfillment = var_nuke_nuclear_reactor_prod }
 			divide_temp_variable = { nuclear_fuel_fulfillment = nuclear_fuel_consumption }
 			clamp_temp_variable = { var = nuclear_fuel_fulfillment min = 0 max = 1 }
 			multiply_variable = { nuclear_energy_generation = nuclear_fuel_fulfillment }
 		}
 		add_to_variable = { energy_sum = nuclear_energy_generation }
-	} else = {
+	}
+	else = {
 		set_variable = { nuclear_fuel_consumption = 0 }
 		set_variable = { nuclear_energy_generation = 0 }
 	}
 
-	set_variable = { other_energy_generation = modifier@energy_gain } #flat miscellaneous gain from content
+	# Flat Miscellaneous Gain from Content
+	set_variable = { other_energy_generation = modifier@energy_gain }
 	add_to_variable = { energy_sum = other_energy_generation }
 	multiply_variable = { energy_sum = temp_energy_gain_m }
 
@@ -227,11 +253,15 @@ calculate_energy_use = {
 		divide_temp_variable = { saved_fuel = fossil_pp_energy_generation_multiplier }
 		add_to_variable = { fossil_pp_fuel_consumption = saved_fuel }
 	}
+
 	divide_temp_variable = { energy_fulfillment = energy_consumption }
+	set_variable = { energy_balance_value_display = energy_fulfillment }
+	clamp_variable = { var = energy_balance_value_display min = 0 }
 	clamp_temp_variable = { var = energy_fulfillment min = 0 max = 1 }
 	set_variable = { unfulfilled_energy_demand_var = -1 }
 	add_to_variable = { unfulfilled_energy_demand_var = energy_fulfillment }
 	add_to_variable = { energy_sum = energy_withdrawal_from_storage } #for display purposes
+
 
 	# Caps penalty for unfulfilled at 50%, and multiples 100 to get a whole number to reduce to penalty scale
 	set_variable = { unfulfilled_energy_demand_dynmod_var = unfulfilled_energy_demand_var }
@@ -245,24 +275,22 @@ calculate_energy_use = {
 	multiply_variable = { unfulfilled_energy_demand_dynmod_var_3 = 0.3 }
 	clamp_variable = { var = unfulfilled_energy_demand_dynmod_var_3 min = -0.30 max = 0 }
 
+	# Calculate the Non-Electric Fuel Consumption
 	set_variable = { non_electric_fuel_consumption = population_total_m }
 	multiply_variable = { non_electric_fuel_consumption = -19 }
 	set_temp_variable = { gdpc_scaling_multiplier = gdp_per_capita }
 	multiply_temp_variable = { gdpc_scaling_multiplier = 0.02 } #division by 50, random number but feels right
-	add_to_temp_variable = { gdpc_scaling_multiplier = 0.1 } #could be another number, maybe one, just sets the base cost for superlow gdpc countries
+	add_to_temp_variable = { gdpc_scaling_multiplier = 0.1 } #could be another number, maybe one, just sets the base cost for super low GDP/c countries
 	multiply_variable = { non_electric_fuel_consumption = gdpc_scaling_multiplier }
 	set_temp_variable = { non_electric_fuel_consumption_multiplier = 1 }
 	add_to_temp_variable = { non_electric_fuel_consumption_multiplier = modifier@non_electric_fuel_consumption_modifier }
-	clamp_temp_variable = {
-		var = non_electric_fuel_consumption_multiplier
-		min = 0
-	}
+	clamp_temp_variable = { var = non_electric_fuel_consumption_multiplier min = 0 }
 	multiply_variable = { non_electric_fuel_consumption = non_electric_fuel_consumption_multiplier }
 	multiply_variable = { non_electric_fuel_consumption = no_fuel_killswitch_var }
 	set_variable = { powerplants_and_pop_fuel_consumption = non_electric_fuel_consumption }
 	add_to_variable = { powerplants_and_pop_fuel_consumption = fossil_pp_fuel_consumption }
 
-	# Display Vars
+	# Calculate the Display Variables
 	set_variable = { fossil_pp_fuel_display = fossil_pp_fuel_consumption }
 	multiply_variable = { fossil_pp_fuel_display = 24 }
 
@@ -272,6 +300,8 @@ calculate_energy_use = {
 	force_update_dynamic_modifier = yes
 }
 
+# Effect: energy_on_daily
+# Purpose: applies the energy balance penalties
 energy_on_daily = {
 	set_variable = { no_fuel_penalties_var = 0 }
 	if = {
@@ -285,12 +315,14 @@ energy_on_daily = {
 	multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
 	add_to_variable = { stored_energy = daily_energy_balance }
 	clamp_variable = {
-		var = stored_energy
+		var = ROOT.stored_energy
 		min = 0
-		max = max_stored_energy
+		max = ROOT.max_stored_energy
 	}
 }
 
+# Effect: random_renewable_variable_calculation
+# Purpose: Calculates the randomized variable for the amount of energy gained from Renewable Energy
 random_renewable_variable_calculation = {
 	every_controlled_state = {
 		set_variable_to_random = {

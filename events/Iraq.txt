@@ -1420,7 +1420,19 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: iraq_war.100.a executed"
 		activate_decision = usa_operation_iraqi_freedom
 		ai_chance = {
+			base = 20
+		}
+	}
+	# I Don't Care
+	option = {
+		name = iraq_war.100.b
+		log = "[GetDateText]: [This.GetName]: iraq_war.100.b executed"
+		ai_chance = {
 			base = 1
+			modifier = {
+				has_opinion = { target = IRQ value > 19 }
+				add = 50
+			}
 		}
 	}
 }
@@ -1462,16 +1474,11 @@ country_event = {
 		custom_effect_tooltip = IRQ_draft_constitution_TT
 		set_country_flag = IRQ_bypass_reconstruction
 		set_country_flag = IRQ_war_ended
-		set_country_flag = IRQ_victory_against_america
 		clr_country_flag = IRQ_iraq_war_ongoing
 		set_country_flag = IRQ_Nut_sacks
 		hidden_effect = {
-			set_autonomy = {
-				target = IRQ
-				autonomous_state = autonomy_free
-				end_wars = no
-			}
 			USA = {
+				release = IRQ
 				set_autonomy = {
 					target = IRQ
 					autonomous_state = autonomy_fifty_first_state_iraq
@@ -1508,7 +1515,7 @@ country_event = {
 				id = iraq_civil_war.1
 				days = 90
 			}
-			retire_character = IRQ_izzat_ibrahim_al_douri
+			if = { limit = { has_character = IRQ_izzat_ibrahim_al_douri } retire_character = IRQ_izzat_ibrahim_al_douri }
 
 			# Changes in Internal Factions:
 		}
@@ -1627,16 +1634,11 @@ country_event = {
 		custom_effect_tooltip = IRQ_draft_constitution_TT
 		set_country_flag = IRQ_bypass_reconstruction
 		set_country_flag = IRQ_war_ended
-		set_country_flag = IRQ_victory_against_america
 		clr_country_flag = IRQ_iraq_war_ongoing
 		set_country_flag = IRQ_Nut_sacks
 		hidden_effect = {
-			set_autonomy = {
-				target = IRQ
-				autonomous_state = autonomy_free
-				end_wars = no
-			}
 			USA = {
+				release = IRQ
 				set_autonomy = {
 					target = IRQ
 					autonomous_state = autonomy_fifty_first_state_iraq
@@ -1673,7 +1675,7 @@ country_event = {
 				id = iraq_civil_war.1
 				days = 90
 			}
-			retire_character = IRQ_izzat_ibrahim_al_douri
+			if = { limit = { has_character = IRQ_izzat_ibrahim_al_douri } retire_character = IRQ_izzat_ibrahim_al_douri }
 
 			# Changes in Internal Factions:
 		}
@@ -2078,6 +2080,7 @@ country_event = {
 	option = {
 		name = iraq_war.6.a
 		log = "[GetDateText]: [This.GetName]: iraq_war.6.a executed"
+		clr_country_flag = IRQ_prepare_for_usa_war
 		add_ideas = IRQ_triumph_over_america
 		newline = yes
 		clr_country_flag = IRQ_iraq_war_ongoing
@@ -2086,6 +2089,11 @@ country_event = {
 		set_country_flag = IRQ_war_ended
 		news_event = {
 			id = iraqi_flavor_events.3
+		}
+		hidden_effect = {
+			488 = {
+				transfer_state_to = IRQ
+			}
 		}
 		newline = yes
 		add_stability = 0.10
@@ -2247,19 +2255,16 @@ country_event = {
 		name = iraq_war.9.a
 		log = "[GetDateText]: [This.GetName]: iraq_war.9.a executed"
 		custom_effect_tooltip = IRQ_draft_constitution_TT
+		clr_country_flag = IRQ_prepare_for_usa_war
 		add_ideas = IRQ_aftermath_of_war
 		add_ideas = IRQ_baath_equilibrium
 		set_country_flag = IRQ_war_ended
-		set_country_flag = IRQ_victory_against_america
 		clr_country_flag = IRQ_iraq_war_ongoing
 		set_country_flag = IRQ_Nut_sacks
+		set_global_flag = IRQ_defeated_in_war
 		hidden_effect = {
-			set_autonomy = {
-				target = IRQ
-				autonomous_state = autonomy_free
-				end_wars = no
-			}
 			USA = {
+				release = IRQ
 				set_autonomy = {
 					target = IRQ
 					autonomous_state = autonomy_fifty_first_state_iraq
@@ -2296,7 +2301,7 @@ country_event = {
 				id = iraq_civil_war.1
 				days = 90
 			}
-			retire_character = IRQ_izzat_ibrahim_al_douri
+			if = { limit = { has_character = IRQ_izzat_ibrahim_al_douri } retire_character = IRQ_izzat_ibrahim_al_douri }
 
 			# Changes in Internal Factions:
 		}
@@ -2324,9 +2329,11 @@ country_event = { # Question of Religion
 		set_country_flag = IRQ_article_2
 		set_country_flag = IRQ_islamic_republic_selected
 		custom_effect_tooltip = IRQ_islamic_republic_chosen
-		swap_ideas = {
-			remove_idea = sunni
-			add_idea = shia
+		hidden_effect = {
+			swap_ideas = {
+				remove_idea = sunni
+				add_idea = shia
+			}
 		}
 		ai_chance = {
 			base = 5
@@ -2339,9 +2346,11 @@ country_event = { # Question of Religion
 		set_country_flag = IRQ_article_2
 		set_country_flag = IRQ_secular_republic_selected
 		custom_effect_tooltip = IRQ_secular_republic_chosen
-		swap_ideas = {
-			remove_idea = sunni
-			add_idea = pluralist
+		hidden_effect = {
+			swap_ideas = {
+				remove_idea = sunni
+				add_idea = shia
+			}
 		}
 		ai_chance = {
 			base = 5
@@ -2422,11 +2431,70 @@ country_event = { # Question of Language
 			target = KUR
 			modifier = huge_increase
 		}
-		newline = yes
-		641 = { transfer_state_to = KUR }
-		newline = yes
-		165 = { transfer_state_to = KUR }
-		newline = yes
+		if = {
+			limit = {
+				633 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			633 = { transfer_state_to = KUR }
+		}
+		if = {
+			limit = {
+				164 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			164 = { transfer_state_to = KUR }
+		}
+		if = {
+			limit = {
+				630 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			630 = { transfer_state_to = KUR }
+		}
+		if = {
+			limit = {
+				641 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			641 = { transfer_state_to = KUR }
+		}
+		if = {
+			limit = {
+				165 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			165 = { transfer_state_to = KUR }
+		}
+		if = {
+			limit = {
+				408 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			408 = { transfer_state_to = KUR }
+		}
+		if = {
+			limit = {
+				1139 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			1139 = { transfer_state_to = KUR }
+		}
+		if = {
+			limit = {
+				1138 = {
+					is_owned_and_controlled_by = IRQ
+				}
+			}
+			1138 = { transfer_state_to = KUR }
+		}
 		custom_effect_tooltip = IRQ_cant_influence_kurdistan_TT
 		newline = yes
 		add_stability = 0.10
@@ -2526,6 +2594,7 @@ country_event = { # Question of Militias
 		log = "[GetDateText]: [This.GetName]: iraq_war.15.b executed"
 		set_country_flag = IRQ_article_6
 		set_country_flag = IRQ_allow_militias_selected
+		set_country_flag = IRQ_shias_allied
 		custom_effect_tooltip = IRQ_militias_allowed_chosen
 		newline = yes
 		swap_ideas = {
@@ -2758,12 +2827,12 @@ country_event = { # De-Ba'athification of Iraqi Society
 	option = {
 		name = iraq_war.20.b
 		log = "[GetDateText]: [This.GetName]: iraq_war.20.b executed"
-		retire_character = IRQ_raad_al_hamdani
-		retire_character = IRQ_maher_abd_al_rashid
-		retire_character = IRQ_ayad_futayyih_al_rawi
-		retire_character = IRQ_hamid_raja_shalah
-		retire_character = IRQ_sultan_hashim_ahmad_al_tai
-		retire_character = IRQ_ali_hassan_al_majid
+		if = { limit = { has_character = IRQ_raad_al_hamdani } retire_character = IRQ_raad_al_hamdani }
+		if = { limit = { has_character = IRQ_maher_abd_al_rashid } retire_character = IRQ_maher_abd_al_rashid }
+		if = { limit = { has_character = IRQ_ayad_futayyih_al_rawi } retire_character = IRQ_ayad_futayyih_al_rawi }
+		if = { limit = { has_character = IRQ_hamid_raja_shalah } retire_character = IRQ_hamid_raja_shalah }
+		if = { limit = { has_character = IRQ_sultan_hashim_ahmad_al_tai } retire_character = IRQ_sultan_hashim_ahmad_al_tai }
+		if = { limit = { has_character = IRQ_ali_hassan_al_majid } retire_character = IRQ_ali_hassan_al_majid }
 		ai_chance = {
 			base = 5
 		}
@@ -3226,7 +3295,7 @@ country_event = { # Propose Alliance with the Shi'ites
 			}
 		}
 		ai_chance = {
-			base = 5
+			base = 20
 		}
 	}
 	# We Will Crush Them Too!
@@ -3861,7 +3930,7 @@ country_event = { # Sunni Officers Rally Around Al-Douri
 			}
 		}
 		ai_chance = {
-			base = 5
+			base = 0
 		}
 	}
 }
@@ -5180,7 +5249,7 @@ country_event = {
 			}
 			capital_scope = {
 				create_unit = {
-					division = "name =\"Arabistani Militia\" division_template = \"Arabistani Militia\" start_experience_factor =  1.0"
+					division = "name = \"Arabistani Militia\" division_template = \"Arabistani Militia\" start_experience_factor = 1.0"
 					owner = ARA
 					count = 10
 				}
@@ -6529,7 +6598,11 @@ country_event = {
 	desc = iraq_md.50.d
 	picture = GFX_IRQ_iraq_protests
 	is_triggered_only = yes
-	# Send in the Riot Police without Deadly Force (Sadrists)
+	trigger = {
+		NOT = {
+			has_country_flag = IRQ_shias_allied
+		}
+	}
 	option = {
 		name = iraq_md.50.a
 		log = "[GetDateText]: [This.GetName]: iraq_md.50.b executed"
@@ -6569,7 +6642,11 @@ country_event = {
 	desc = iraq_md.51.d
 	picture = GFX_IRQ_iraq_protests
 	is_triggered_only = yes
-	# Block Transport to the Mosques
+	trigger = {
+		NOT = {
+			has_country_flag = IRQ_shias_allied
+		}
+	}
 	option = {
 		name = iraq_md.51.a
 		log = "[GetDateText]: [This.GetName]: iraq_md.51.a executed"
@@ -6609,7 +6686,11 @@ country_event = {
 	desc = iraq_md.52.d
 	picture = GFX_IRQ_iraq_protests
 	is_triggered_only = yes
-	# Block Transport to the Mosques
+	trigger = {
+		NOT = {
+			has_country_flag = IRQ_shias_allied
+		}
+	}
 	option = {
 		name = iraq_md.52.a
 		log = "[GetDateText]: [This.GetName]: iraq_md.52.a executed"
@@ -6650,7 +6731,11 @@ country_event = {
 	desc = iraq_md.53.d
 	picture = GFX_IRQ_iraq_protests
 	is_triggered_only = yes
-	# Shit
+	trigger = {
+		NOT = {
+			has_country_flag = IRQ_shias_allied
+		}
+	}
 	option = {
 		name = iraq_md.53.a
 		log = "[GetDateText]: [This.GetName]: iraq_md.53.a executed"
@@ -6661,7 +6746,7 @@ country_event = {
 				}
 			}
 			country_event = {
-				id = iraq_md.54
+				id = iraq_md.55
 				days = 2
 			}
 		}
@@ -6672,7 +6757,7 @@ country_event = {
 				}
 			}
 			country_event = {
-				id = iraq_md.55
+				id = iraq_md.54
 				days = 2
 			}
 		}
@@ -6689,7 +6774,11 @@ country_event = {
 	desc = iraq_md.54.d
 	picture = GFX_IRQ_sadrist_protests
 	is_triggered_only = yes
-	# Start Negotiations
+	trigger = {
+		NOT = {
+			has_country_flag = IRQ_shias_allied
+		}
+	}
 	option = {
 		name = iraq_md.54.a
 		log = "[GetDateText]: [This.GetName]: iraq_md.54.a executed"
@@ -7137,20 +7226,21 @@ country_event = {
 		}
 		clr_country_flag = IRQ_war_with_shias
 		set_country_flag = IRQ_sadr_general
-		retire_character = IRQ_othman_ghanimi
-		retire_character = IRQ_babaker_zebari
-		retire_character = IRQ_fadhil_barwari
-		retire_character = IRQ_nazal_qassim
-		retire_character = IRQ_abud_qanbar
-		retire_character = IRQ_othman_farhood
-		retire_character = IRQ_najah_al_shammari
-		retire_character = IRQ_izzat_ibrahim_al_douri
-		retire_character = IRQ_sultan_hashim_ahmad_al_tai
-		retire_character = IRQ_maher_abd_al_rashid
-		retire_character = IRQ_ali_hassan_al_majid
-		retire_character = IRQ_hamid_raja_shalah
-		retire_character = IRQ_mehnaz_bezazi
-		retire_character = IRQ_mahmoud_atai
+		if = { limit = { has_character = IRQ_othman_ghanimi } retire_character = IRQ_othman_ghanimi }
+		if = { limit = { has_character = IRQ_babaker_zebari } retire_character = IRQ_babaker_zebari }
+		if = { limit = { has_character = IRQ_fadhil_barwari } retire_character = IRQ_fadhil_barwari }
+		if = { limit = { has_character = IRQ_nazal_qassim } retire_character = IRQ_nazal_qassim }
+		if = { limit = { has_character = IRQ_abud_qanbar } retire_character = IRQ_abud_qanbar }
+		if = { limit = { has_character = IRQ_othman_farhood } retire_character = IRQ_othman_farhood }
+		if = { limit = { has_character = IRQ_najah_al_shammari } retire_character = IRQ_najah_al_shammari }
+		if = { limit = { has_character = IRQ_izzat_ibrahim_al_douri } retire_character = IRQ_izzat_ibrahim_al_douri }
+		if = { limit = { has_character = IRQ_sultan_hashim_ahmad_al_tai } retire_character = IRQ_sultan_hashim_ahmad_al_tai }
+		if = { limit = { has_character = IRQ_maher_abd_al_rashid } retire_character = IRQ_maher_abd_al_rashid }
+		if = { limit = { has_character = IRQ_ali_hassan_al_majid } retire_character = IRQ_ali_hassan_al_majid }
+		if = { limit = { has_character = IRQ_hamid_raja_shalah } retire_character = IRQ_hamid_raja_shalah }
+		if = { limit = { has_character = IRQ_mehnaz_bezazi } retire_character = IRQ_mehnaz_bezazi }
+		if = { limit = { has_character = IRQ_mahmoud_atai } retire_character = IRQ_mahmoud_atai }
+
 		IRR = {
 			set_country_flag = IRQ_sadr_oponent
 		}
@@ -7168,7 +7258,11 @@ country_event = {
 	desc = iraq_md.55.d
 	picture = GFX_IRQ_badr_protests
 	is_triggered_only = yes
-	# Start Negotiations
+	trigger = {
+		NOT = {
+			has_country_flag = IRQ_shias_allied
+		}
+	}
 	option = {
 		name = iraq_md.55.a
 		log = "[GetDateText]: [This.GetName]: iraq_md.55.a executed"
@@ -7675,20 +7769,20 @@ country_event = {
 		}
 		clr_country_flag = IRQ_war_with_shias
 		set_country_flag = IRQ_badr_general
-		retire_character = IRQ_othman_ghanimi
-		retire_character = IRQ_babaker_zebari
-		retire_character = IRQ_fadhil_barwari
-		retire_character = IRQ_nazal_qassim
-		retire_character = IRQ_abud_qanbar
-		retire_character = IRQ_othman_farhood
-		retire_character = IRQ_najah_al_shammari
-		retire_character = IRQ_izzat_ibrahim_al_douri
-		retire_character = IRQ_sultan_hashim_ahmad_al_tai
-		retire_character = IRQ_maher_abd_al_rashid
-		retire_character = IRQ_ali_hassan_al_majid
-		retire_character = IRQ_hamid_raja_shalah
-		retire_character = IRQ_mehnaz_bezazi
-		retire_character = IRQ_mahmoud_atai
+		if = { limit = { has_character = IRQ_othman_ghanimi } retire_character = IRQ_othman_ghanimi }
+		if = { limit = { has_character = IRQ_babaker_zebari } retire_character = IRQ_babaker_zebari }
+		if = { limit = { has_character = IRQ_fadhil_barwari } retire_character = IRQ_fadhil_barwari }
+		if = { limit = { has_character = IRQ_nazal_qassim } retire_character = IRQ_nazal_qassim }
+		if = { limit = { has_character = IRQ_abud_qanbar } retire_character = IRQ_abud_qanbar }
+		if = { limit = { has_character = IRQ_othman_farhood } retire_character = IRQ_othman_farhood }
+		if = { limit = { has_character = IRQ_najah_al_shammari } retire_character = IRQ_najah_al_shammari }
+		if = { limit = { has_character = IRQ_izzat_ibrahim_al_douri } retire_character = IRQ_izzat_ibrahim_al_douri }
+		if = { limit = { has_character = IRQ_sultan_hashim_ahmad_al_tai } retire_character = IRQ_sultan_hashim_ahmad_al_tai }
+		if = { limit = { has_character = IRQ_maher_abd_al_rashid } retire_character = IRQ_maher_abd_al_rashid }
+		if = { limit = { has_character = IRQ_ali_hassan_al_majid } retire_character = IRQ_ali_hassan_al_majid }
+		if = { limit = { has_character = IRQ_hamid_raja_shalah } retire_character = IRQ_hamid_raja_shalah }
+		if = { limit = { has_character = IRQ_mehnaz_bezazi } retire_character = IRQ_mehnaz_bezazi }
+		if = { limit = { has_character = IRQ_mahmoud_atai } retire_character = IRQ_mahmoud_atai }
 		IRR = {
 			set_country_flag = IRQ_badr_oponent
 		}
@@ -8709,7 +8803,9 @@ country_event = {
 	desc = iraq_md.81.d
 
 	is_triggered_only = yes
-
+	trigger = {
+		country_exists = KUR
+	}
 	option = {
 		name = iraq_md.81.a
 		log = "[GetDateText]: [This.GetName]: iraq_md.81.a executed"

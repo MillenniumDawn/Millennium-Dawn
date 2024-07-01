@@ -12,7 +12,7 @@ IRQ_iraq_war = {
 				is_owned_and_controlled_by = IRQ
 			}
 		}
-		days_mission_timeout = 365
+		days_mission_timeout = 180
 		is_good = no
 		cancel_trigger = {
 			IRQ = {
@@ -55,7 +55,7 @@ IRQ_iraq_war = {
 				is_owned_and_controlled_by = IRQ
 			}
 		}
-		days_mission_timeout = 180
+		days_mission_timeout = 90
 		is_good = no
 		cancel_trigger = {
 			IRQ = {
@@ -199,14 +199,14 @@ IRQ_preparation_for_the_war = {
 				}
 				capital_scope = {
 					create_unit = {
-						division = "name =\"1st. Golden Guard\" division_template = \"Golden Guard Division\" start_experience_factor =  1.0"
+						division = "name =\"1st. Golden Guard\" division_template = \"Golden Guard Division\" start_experience_factor = 1.0"
 						owner = ROOT
 						count = 1
 					}
 				}
 				capital_scope = {
 					create_unit = {
-						division = "name =\"2nd. Golden Guard\" division_template = \"Golden Guard Division\" start_experience_factor =  1.0"
+						division = "name =\"2nd. Golden Guard\" division_template = \"Golden Guard Division\" start_experience_factor = 1.0"
 						owner = ROOT
 						count = 1
 					}
@@ -397,53 +397,46 @@ IRQ_preparation_for_the_war = {
 IRQ_economic_union_menu = {
 	IRQ_invite_to_economic_union_targeted_decision = {
 		visible = { has_country_flag = economic_union_formed_iraq }
-		target_trigger = {
-			FROM = {
-				OR = {
-					has_idea = faction_resistance_axis_member
-					has_opinion = { target = IRQ value > 19 }
-				}
-				NOT = {
-					original_tag = PER
-					has_country_flag = joined_iraqi_economic_union
-				}
-			}
-		}
-		days_remove = 7
-		days_re_enable = 60
+		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_invite_to_economic_union_targeted_decision"
-			set_variable = { recent_invited_country_to_union = FROM.tag }
-			FROM = { country_event = { id = iraqi_events.11 } }
+			every_country = {
+				limit = {
+					has_idea = faction_resistance_axis_member
+				}
+				country_event = {
+					id = iraqi_events.11
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 2
 		}
 	}
-	IRQ_kick_from_economic_union_targeted_decision = {
-		visible = { has_country_flag = economic_union_formed_iraq }
-		target_trigger = {
-			FROM = {
-				has_country_flag = joined_iraqi_economic_union
-				NOT = {
-					original_tag = PER
-				}
-			}
-		}
-		days_remove = 0
-		days_re_enable = 10
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision IRQ_kick_from_economic_union_targeted_decision"
-			set_variable = { recent_invited_country_to_union = FROM.tag }
-			FROM = {
-				clr_country_flag = joined_iraqi_economic_union
-				country_event = { id = iraqi_events.14 }
-			}
-		}
-		ai_will_do = {
-			base = 25
-		}
-	}
+	# IRQ_kick_from_economic_union_targeted_decision = {
+	# 	visible = { has_country_flag = economic_union_formed_iraq }
+	# 	target_trigger = {
+	# 		FROM = {
+	# 			has_country_flag = joined_iraqi_economic_union
+	# 			NOT = {
+	# 				original_tag = PER
+	# 			}
+	# 		}
+	# 	}
+	# 	days_remove = 0
+	# 	days_re_enable = 10
+	# 	remove_effect = {
+	# 		log = "[GetDateText]: [Root.GetName]: Decision IRQ_kick_from_economic_union_targeted_decision"
+	# 		set_variable = { recent_invited_country_to_union = FROM.tag }
+	# 		FROM = {
+	# 			clr_country_flag = joined_iraqi_economic_union
+	# 			country_event = { id = iraqi_events.14 }
+	# 		}
+	# 	}
+	# 	ai_will_do = {
+	# 		base = 25
+	# 	}
+	# }
 }
 
 # The Iraqi Constitution
@@ -554,8 +547,15 @@ IRQ_the_constitution = {
 IRQ_civil_war_mechanic = {
 	IRQ_start_negotiations_shias = {
 		days_remove = 15
-		cost = 50
 		fire_only_once = yes
+		visible = {
+			NOT = {
+				OR = {
+					has_country_flag = IRQ_shias_allied
+					has_country_flag = IRQ_war_with_shias
+				}
+			}
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_start_negotiations_shias"
 			country_event = {
@@ -563,7 +563,7 @@ IRQ_civil_war_mechanic = {
 			}
 		}
 		ai_will_do = {
-			base = 25
+			base = 100
 		}
 	}
 	IRQ_request_coalition_forces = {
@@ -693,6 +693,7 @@ IRQ_political_decisions = {
 	IRQ_mek_revolt_trig = {
 		days_remove = 25
 		fixed_random_seed = yes
+		fire_only_once = yes
 		highlight_states = {
 			highlight_state_targets = {
 				state = 408
@@ -709,6 +710,7 @@ IRQ_political_decisions = {
 		}
 		visible = {
 			has_country_flag = IRQ_mek_revolt_decision
+			nationalist_fascist_are_in_power = yes
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_mek_revolt_trig"
@@ -817,6 +819,10 @@ IRQ_political_decisions = {
 	IRQ_the_blood_quran = {
 		days_remove = 25
 		fixed_random_seed = yes
+		visible = {
+			nationalist_fascist_are_in_power = yes
+		}
+		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_the_blood_quran"
 			random_list = {
@@ -844,6 +850,9 @@ IRQ_political_decisions = {
 		available = {
 			country_exists = JOR
 		}
+		visible = {
+			nationalist_fascist_are_in_power = yes
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_smuggle_goods_from_jordan"
 			random_list = {
@@ -863,6 +872,9 @@ IRQ_political_decisions = {
 	IRQ_al_salam_palace = {
 		days_remove = 25
 		fire_only_once = yes
+		visible = {
+			nationalist_fascist_are_in_power = yes
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_al_salam_palace"
 			557 = {
@@ -883,6 +895,9 @@ IRQ_political_decisions = {
 	IRQ_arrest_muqtada = {
 		days_remove = 25
 		fire_only_once = yes
+		visible = {
+			nationalist_fascist_are_in_power = yes
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_arrest_muqtada"
 			set_temp_variable = { party_index = 20 }
@@ -905,6 +920,7 @@ IRQ_political_decisions = {
 			624 = {
 				is_owned_and_controlled_by = USA
 			}
+			nationalist_fascist_are_in_power = yes
 		}
 		days_remove = 25
 		fire_only_once = yes
@@ -928,6 +944,7 @@ IRQ_political_decisions = {
 	IRQ_commie_paper = {
 		visible = {
 			has_country_flag = IRQ_news_paper
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		days_remove = 25
 		cost = 40
@@ -957,7 +974,7 @@ IRQ_regional_baathism_decisions = {
 			}
 		}
 		days_remove = 90
-
+		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_appoint_control_syria"
 			custom_effect_tooltip = IRQ_puppet_syria_TT
@@ -1008,7 +1025,7 @@ IRQ_regional_baathism_decisions = {
 			}
 		}
 		days_remove = 90
-
+		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_appoint_control_jordan"
 			custom_effect_tooltip = IRQ_puppet_jordan_TT
@@ -1059,7 +1076,7 @@ IRQ_regional_baathism_decisions = {
 			}
 		}
 		days_remove = 90
-
+		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_appoint_control_egypt"
 			custom_effect_tooltip = IRQ_puppet_egypt_TT
@@ -1880,7 +1897,7 @@ IRQ_debaath_balance_of_power_category = {
 			research_speed_factor = -0.05
 		}
 		ai_will_do = {
-			factor = 10
+			base = 50
 		}
 	}
 
@@ -1911,7 +1928,7 @@ IRQ_debaath_balance_of_power_category = {
 			tax_gain_multiplier_modifier = -0.08
 		}
 		ai_will_do = {
-			factor = 10
+			base = 50
 		}
 	}
 
@@ -1942,7 +1959,7 @@ IRQ_debaath_balance_of_power_category = {
 			stability_weekly = 0.002
 		}
 		ai_will_do = {
-			factor = 10
+			base = 50
 		}
 	}
 }

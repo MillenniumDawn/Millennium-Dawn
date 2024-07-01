@@ -350,6 +350,9 @@ focus_tree = {
 		y = 3
 		cost = 7
 		ai_will_do = { factor = 155 }
+		available = {
+			has_tech = reactor1
+		}
 		relative_position_id = BLR_Economic
 		prerequisite = { focus = BLR_viber }
 		prerequisite = { focus = BLR_wot }
@@ -469,10 +472,11 @@ focus_tree = {
 				has_global_flag = BLR_NATIONALIST_PATH
 			}
 		}
-		cost = 2
+		cost = 1
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Pazniak"
+			add_political_power = 100
 			hidden_effect = {
 				if = {
 					limit = { has_idea = CSTO_member }
@@ -490,7 +494,7 @@ focus_tree = {
 							nationalist_monarchists_are_in_power = yes
 						}
 					}
-					SOV = { remove_ideas = BLR_kal_with }
+					SOV = { remove_ideas = SOV_kal_with }
 					swap_ideas = {
 						remove_idea = BLR_kal_with
 						add_idea = BLR_kal_without
@@ -861,8 +865,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		available = {
 			OR = {
-				nationalist_military_junta_are_in_power = yes
-				nationalist_fascist_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
 			}
 		}
 		prerequisite = { focus = BLR_Communistst_clean }
@@ -892,8 +896,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		available = {
 			OR = {
-				nationalist_military_junta_are_in_power = yes
-				nationalist_fascist_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
 			}
 		}
 		prerequisite = { focus = BLR_rofeign_legion }
@@ -1068,7 +1072,7 @@ focus_tree = {
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.01 }
 			add_relative_party_popularity = yes
-			add_to_variable = { BLR_belarus_nati_consumer_goods_factor = -0.07 }
+			add_to_variable = { BLR_belarus_nati_consumer_goods_factor = 0.07 }
 			add_to_variable = { BLR_belarus_nati_political_power_gain = 0.02 }
 			custom_effect_tooltip = BLR_belarus_nati14_tt
 			set_temp_variable = { modify_union_state = -5 }
@@ -1148,25 +1152,30 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_true_political_and_national_freedom"
 			custom_effect_tooltip = BLR_revolution_TT
 			hidden_effect = {
-			decrease_economic_growth = yes
-			set_temp_variable = { modify_union_state = -10 }
-			modify_union_state_support = yes
-			if = {
-				limit = {
-					NOT = {
-						has_completed_focus = BLR_occupation_management_strategies
+				decrease_economic_growth = yes
+				set_temp_variable = { modify_union_state = -10 }
+				modify_union_state_support = yes
+				if = {
+					limit = {
+						NOT = {
+							has_completed_focus = BLR_occupation_management_strategies
+						}
+					}
+					country_event = { id = belarus_another.11 }
+					start_civil_war = {
+						ideology = communism
+						size = 0.3
+						capital = 704
+						states = { 704 1092 }
 					}
 				}
-				country_event = { id = belarus_another.11 }
-				start_civil_war = {
-					ideology = communism
-					size = 0.3
-					capital = 704
-					states = { 704 1092 }
-				}
-				}
 			}
-			remove_ideas = BLR_unstable_national_currency
+			if = {
+				limit = {
+					has_idea = BLR_unstable_national_currency
+				}
+				remove_ideas = BLR_unstable_national_currency
+			}
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.06 }
 			add_relative_party_popularity = yes
@@ -6214,8 +6223,7 @@ focus_tree = {
 		cost = 5
 		search_filters = { FOCUS_FILTER_INFLUENCE	}
 		available = { emerging_reactionaries_are_in_power = yes }
-		prerequisite = { focus = BLR_Eastern_Partnership }
-		prerequisite = { focus = BLR_sso }
+		prerequisite = { focus = BLR_end_reform }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BLR_Potato_Empire"
 			set_party_index_to_ruling_party = yes
@@ -6950,9 +6958,14 @@ focus_tree = {
 			modify_batka_support = yes
 			add_stability = -0.1
 			add_ideas = BLR_army_on_streets
-			swap_ideas = {
-				remove_idea = BLR_unstable_national_currency3
-				add_idea = BLR_unstable_national_currency2
+			if = {
+				limit = {
+					has_idea = BLR_unstable_national_currency3
+				}
+				swap_ideas = {
+					remove_idea = BLR_unstable_national_currency3
+					add_idea = BLR_unstable_national_currency2
+				}
 			}
 		}
 	}
@@ -7162,7 +7175,7 @@ focus_tree = {
 				limit = {
 					has_idea = BLR_kal_with
 				}
-				SOV = { remove_ideas = BLR_kal_with }
+				SOV = { remove_ideas = SOV_kal_with }
 				swap_ideas = {
 					remove_idea = BLR_kal_with
 					add_idea = BLR_kal_without
@@ -7738,7 +7751,6 @@ focus_tree = {
 					has_idea = BLR_unstable_national_currency
 				}
 				remove_ideas = BLR_unstable_national_currency
-
 			}
 			if = {
 				limit = {
@@ -9521,9 +9533,11 @@ focus_tree = {
 			hidden_effect = {
 				set_cosmetic_tag = BLR_AUTH_S_communism
 				clr_country_flag = dynamic_flag
-				swap_ideas = {
-					remove_idea = BLR_unstable_national_currency4
-					add_idea = BLR_unstable_national_currency
+				if = {
+					limit = {
+						has_idea = BLR_unstable_national_currency4
+					}
+					remove_ideas = BLR_unstable_national_currency4
 				}
 				swap_ideas = {
 					remove_idea = farmers
