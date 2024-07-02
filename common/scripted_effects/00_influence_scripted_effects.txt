@@ -44,6 +44,8 @@ recalculate_influence = {
 		delete_influencer_check = yes
 		sort_influence = yes
 
+		# Updated Influencer for CT
+		set_counter_terror_influencer = yes
 		update_dirty_influence_var = yes
 	}
 }
@@ -513,6 +515,12 @@ change_influence_percentage = {
 
 			var:tag_index = {
 				set_temp_variable = { influence_change = modifier@foreign_influence_modifier }
+				if = { limit = { PREV_is_not_on_same_continent = yes }
+					add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
+				}
+				if = { limit = { PREV_is_on_same_continent = yes }
+					add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
+				}
 			}
 
 			set_temp_variable = { influence_defense_change = modifier@foreign_influence_defense_modifier }
@@ -532,11 +540,43 @@ change_influence_percentage = {
 			}
 			if = {
 				limit = {
-					has_idea = cfa_franc
-					check_variable = { tag_index = FRA }
+					OR = {
+						has_idea = cfa_franc
+						has_idea = cfa_franc_2
+					}
+					check_variable = { tag_index = FRA.id }
 				}
-				add_to_temp_variable = { influence_change = 0.15 }
+				add_to_temp_variable = { influence_change = 0.10 }
 			}
+			if = {
+				limit = {
+					has_dynamic_modifier = {
+						modifier = AFRICA_idea_nepad_modifier
+					}
+					check_variable = { tag_index = FRA.id }
+				}
+				add_to_temp_variable = { influence_change = 0.10 }
+			}
+
+			if = {
+				limit = {
+					has_idea = IRQ_expulsion_of_iranian_idea
+					check_variable = { tag_index = PER }
+				}
+				add_to_temp_variable = { influence_change = -0.15 }
+			}
+
+			if = {
+				limit = {
+					has_idea = IRQ_expulsion_of_foreigners_idea
+					OR = {
+						check_variable = { tag_index = PER }
+						check_variable = { tag_index = USA }
+					}
+				}
+				add_to_temp_variable = { influence_change = -0.25 }
+			}
+
 
 			add_to_temp_variable = { influence_change = 1 }
 			multiply_temp_variable = { percent_change = influence_change }
@@ -724,7 +764,7 @@ update_auto_influence_array = {
 		}
 	}
 
-	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	clamp_variable = { var = ROOT.auto_influence_users min = 0 max = 10 }
 	update_dirty_influence_var = yes
 }
 

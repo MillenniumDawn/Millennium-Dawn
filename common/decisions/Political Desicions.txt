@@ -11,6 +11,11 @@ generic_coalition_politics_desicions = {
 
 		visible = {
 			if = {
+				limit = { tag = IRQ	}
+				NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+				NOT = { has_country_leader = { name = "Jay Garner" ruling_only = yes } }
+			}
+			if = {
 				limit = { tag = SAU }
 				NOT = { is_in_array = { ruling_party = 10 } }
 			}
@@ -46,6 +51,15 @@ generic_coalition_politics_desicions = {
 				NOT = {
 					emerging_moderate_shiite_are_in_power = yes
 					emerging_hardline_shiite_are_in_power = yes
+				}
+			}
+			if = {
+				limit = { tag = SER }
+				NOT = {
+					has_country_leader = {
+						name = "Slobodan Milošević"
+						ruling_only = yes
+					}
 				}
 			}
 			NOT = { tag = ITA }
@@ -312,6 +326,13 @@ generic_coalition_politics_desicions = {
 		fixed_random_seed = no
 
 		visible = {
+			if = {
+				limit = { tag = IRQ	}
+				OR = {
+					NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
+					NOT = { has_country_leader = { name = "Jay Garner" ruling_only = yes } }
+				}
+			}
 			has_elections = no
 			if = {
 				limit = { tag = CHI }
@@ -526,6 +547,34 @@ generic_coalition_politics_desicions = {
 		}
 	}
 
+	# Auto-Decline corruption events
+	auto_decline_corruption_offers = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			NOT = {
+				has_country_flag = auto_decline_corruption
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision auto_decline_corruption_offers"
+			set_country_flag = auto_decline_corruption
+		}
+	}
+
+	lift_auto_decline_corruption_events = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			has_country_flag = auto_decline_corruption
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision lift_auto_decline_corruption_events"
+			clr_country_flag = auto_decline_corruption
+		}
+	}
 
 	### Extremist Civil Wars
 
@@ -5154,6 +5203,39 @@ generic_coalition_politics_desicions = {
 		}
 	}
 
+	# Propaganda to Reduce Spending
+	promote_reduced_spending_campaigns = {
+		cost = 50
+		days_remove = 160
+		days_re_enable = 30
+		fire_only_once = no
+		fixed_random_seed = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision promote_outlook_decision_support_the_salafists"
+			custom_effect_tooltip = propaganda_campaign_costs_tt
+			ingame_update_setup = yes
+			random_list = {
+				25 = {
+					increase_corruption = yes
+				}
+				75 = { }
+			}
+		}
+		remove_effect = {
+			ingame_update_setup = yes
+		}
+		modifier = {
+			foreign_influence_defense_modifier = -0.15
+			expected_adm_modifier = -1
+			expected_police_modifier = -1
+			expected_education_modifier = -1
+			expected_healthcare_modifier = -1
+			expected_welfare_modifier = -1
+			expected_mil_modifier = -1
+		}
+	}
+
 	rebuild_bosphorus_strait = {
 
 		icon = GFX_decision_generic_special_project
@@ -5425,6 +5507,48 @@ generic_coalition_politics_desicions = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision give_in_to_protestors"
 			give_in_to_protestors_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 50
+		}
+	}
+
+	# Generic Country Unique
+	AFRICA_remove_the_cfa_franc = {
+		allowed = { is_french_africa_nation = yes }
+		icon = generic_civil_support
+
+		visible = {
+			OR = {
+				has_idea = cfa_franc
+				has_idea = cfa_franc_2
+			}
+		}
+
+		available = {
+			OR = {
+				has_war_with = FRA
+				has_government = nationalist
+				FRA = {
+					NOT = {
+						influence_higher_15 = yes
+					}
+				}
+			}
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFRICA_remove_the_cfa_franc"
+			if = {
+				limit = { has_idea = CFA_franc }
+				remove_ideas = CFA_franc
+			}
+			else = {
+				remove_ideas = CFA_franc_2
+			}
 		}
 
 		ai_will_do = {

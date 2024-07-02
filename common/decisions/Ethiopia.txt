@@ -1,6 +1,5 @@
 ETH_chi_investments_category = {
 	ETH_light_rail = {
-		allowed = { original_tag = ETH }
 		icon = generic_decision
 
 		highlight_states = {
@@ -11,7 +10,6 @@ ETH_chi_investments_category = {
 
 		visible = {
 			NOT = { has_active_mission = ETH_construct_light_rail }
-			has_completed_focus = ETH_request_chinese_investments
 		}
 
 		fire_only_once = yes
@@ -24,7 +22,7 @@ ETH_chi_investments_category = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				check_variable = { treasury > 0.10 }
 				add = 5
@@ -33,11 +31,9 @@ ETH_chi_investments_category = {
 	}
 
 	ETH_construct_light_rail = {
-		allowed = { original_tag = ETH }
 		icon = generic_decision
 
-		activation = { always = no }
-		visible = { always = no }
+		available = { always = no }
 		days_mission_timeout = 90
 
 		highlight_states = {
@@ -83,15 +79,13 @@ ETH_chi_investments_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { factor = 1 }
+		ai_will_do = { base = 1 }
 	}
 
 	ETH_construct_light_rail_2 = {
 		icon = generic_decision
 
-				activation = { always = no }
-		visible = { always = no }
-
+		available = { always = no }
 		days_mission_timeout = 90
 
 		highlight_states = {
@@ -130,7 +124,6 @@ ETH_chi_investments_category = {
 
 		visible = {
 			NOT = { has_active_mission = ETH_construct_addis_ababa_djibouti_railway }
-			has_completed_focus = ETH_request_chinese_investments
 		}
 
 		fire_only_once = yes
@@ -142,16 +135,13 @@ ETH_chi_investments_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { factor = 1 }
+		ai_will_do = { base = 1 }
 	}
 
 	ETH_construct_addis_ababa_djibouti_railway = {
-		allowed = { original_tag = ETH }
 		icon = generic_decision
 
-		activation = { always = no }
-		visible = { always = no }
-
+		available = { always = no }
 		days_mission_timeout = 180
 
 		highlight_states = {
@@ -206,7 +196,6 @@ ETH_european_investments_category = {
 
 		visible = {
 			NOT = { has_active_mission = ETH_rehabilitation_railway }
-			has_completed_focus = ETH_request_european_investments
 			has_country_flag = ETH_railway_destroyed_flg
 		}
 
@@ -219,16 +208,14 @@ ETH_european_investments_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { factor = 1 }
+		ai_will_do = { base = 1 }
 	}
 
 	ETH_rehabilitation_railway = {
 		icon = generic_decision
 
-		activation = { always = no }
-		visible = { always = no }
+		available = { always = no }
 		days_mission_timeout = 90
-		activation = { always = no }
 
 		highlight_states = {
 			highlight_state_targets = {
@@ -278,7 +265,7 @@ ETH_european_investments_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { factor = 1 }
+		ai_will_do = { base = 1 }
 	}
 
 	ETH_rehabilitation_railway_2 = {
@@ -306,10 +293,8 @@ ETH_european_investments_category = {
 }
 
 ETH_eritrean_integration_category = {
-
 	ETH_integration_process_tick = {
 		icon = decision_generic_decision
-		visible = { has_idea = ETH_dissolved_the_assembly }
 
 		activation = {
 			ETH = { has_idea = ETH_dissolved_the_assembly }
@@ -325,6 +310,8 @@ ETH_eritrean_integration_category = {
 			}
 		}
 
+		cancel_trigger = { NOT = { has_idea = ETH_dissolved_the_assembly } }
+
 		days_mission_timeout = 30
 
 		is_good = yes
@@ -333,47 +320,27 @@ ETH_eritrean_integration_category = {
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect ETH_integration_process_tick"
 			activate_mission = ETH_integration_process_tick
-
-			set_temp_variable = { a = ETH_amharic_speakers }
-			set_temp_variable = { b = ETH_propaganda_distribution }
-			set_temp_variable = { c = ETH_crackdown_on_bozos }
-			subtract_from_temp_variable = { a = 20 }
-			multiply_temp_variable = { a = 0.1 }
-			subtract_from_temp_variable = { b = 20 }
-			multiply_temp_variable = { b = 0.1 }
-			subtract_from_temp_variable = { c = 20 }
-			multiply_temp_variable = { c = 0.1 }
-
-			add_to_temp_variable = { a = b }
-			add_to_temp_variable = { a = c }
-
-			add_to_variable = {
-				var = ETH_eritrean_acceptance
-				value = a
-			}
-			clamp_variable = {
-				var = ETH_eritrean_acceptance
-				min = 0
-				max = 100
-			}
+			update_ERI_integration_acceptance = yes
 		}
 	}
 
 	ETH_full_integration = {
 		icon = generic_decision
-		cost = 300
+		cost = 150
 
 		available = {
-			has_idea = ETH_dissolved_the_assembly
 			custom_trigger_tooltip = {
 				tooltip = ETH_ERI_acceptance_100_TT
 				check_variable = { ETH_eritrean_acceptance = 100 }
 			}
-		}
-
-		visible = {
-			has_idea = ETH_dissolved_the_assembly
-			tag = ETH
+			custom_trigger_tooltip = {
+				tooltip = ETH_federalise_ERI_flip_TT
+				NOT = { has_country_flag = ETH_integrating_decisions_FLAG }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ETH_blocked_from_ERI_decisions_INT_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
+			}
 		}
 
 		days_remove = 14
@@ -382,203 +349,273 @@ ETH_eritrean_integration_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_full_integration"
 			remove_ideas = ETH_eritrean_friction
-			remove_ideas = ETH_dissolved_the_assembly
 			remove_decision = ETH_integration_process_tick
 		}
 
-		ai_will_do = {
-			factor = 3
+		ai_will_do = { base = 3 }
+	}
+
+	ETH_federalise_ERI_flip = {
+		icon = generic_decision
+		cost = 250
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ETH_federalise_ERI_flip_TT
+				NOT = { has_country_flag = ETH_integrating_decisions_FLAG }
 			}
+		}
+
+		visible = {
+			NOT = { has_country_flag = ETH_renegotiated_ERI_stance_FLAG }
+		}
+
+		days_remove = 14
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ETH_federalise_ERI_flip"
+			set_country_flag = ETH_blocked_from_ERI_decisions_FLAG
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_federalise_ERI_flip"
+			set_country_flag = ETH_renegotiated_ERI_stance_FLAG
+			remove_decision = ETH_integration_process_tick
+			remove_ideas = ETH_dissolved_the_assembly
+			#
+			set_country_flag = ETH_locked_federalisation_FLAG
+			release = ERI
+			hidden_effect = {
+				set_cosmetic_tag = ETH_federation_ct
+				clr_country_flag = dynamic_flag
+				ERI = {
+					set_cosmetic_tag = ERI_ETH
+					clr_country_flag = dynamic_flag
+					set_country_flag = ETH_transitional_government_FLAG
+					add_ideas = {
+						defence_01
+						volunteer_army
+						volunteer_women
+						intervention_local_security
+					}
+					set_ruling_leader = yes
+					set_leader = yes
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = GAME_RULE_allow_colored_puppets
+				}
+				set_autonomy = {
+					target = ERI
+					autonomy_state = autonomy_autonomous_state_colored
+					end_wars = yes
+					end_civil_wars = yes
+				}
+			}
+			else = {
+				set_autonomy = {
+					target = ERI
+					autonomy_state = autonomy_autonomous_state
+					end_wars = yes
+					end_civil_wars = yes
+				}
+			}
+			newline = yes
+			unlock_decision_category_tooltip = ETH_eritrean_federalisation_category
+			unlock_decision_tooltip = ETH_federalisation_process_tick
+			newline = yes
+			add_ideas = ETH_eritrean_federalisation_underway
+			newline = yes
+			unlock_national_focus = ETH_eritrea_federation
+			newline = yes
+			clr_country_flag = ETH_locked_annexation_FLAG
+			custom_effect_tooltip = ETH_block_from_ERI_decisions_INT_TT
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 10
+				OR = {
+					western_liberals_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+					neutrality_neutral_conservatism_are_in_power = yes
+				}
+			}
+		}
 	}
 
 	ETH_fund_amharic_schools = {
 		icon = generic_decision
-		cost = 100
 
-		visible = {
-			has_idea = ETH_dissolved_the_assembly
-			tag = ETH
-		}
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
 
 		available = {
 			has_completed_focus = ETH_eritrea_teach_amharic
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_1_billion_TT
-				check_variable = { treasury > 1.00 }
+				tooltip = ETH_blocked_from_ERI_decisions_INT_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 30
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_fund_amharic_schools"
 			set_temp_variable = { treasury_change = -1.00 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_amharic_speakers_up_5_TT
-			add_to_variable = { ETH_amharic_speakers = 5 }
-			clamp_variable = {
-				var = ETH_amharic_speakers
-				min = 0
-				max = 100
-			}
+			set_temp_variable = { ETH_amharic_change = 5 }
+			update_ETH_amharic_speakers = yes
+			set_country_flag = ETH_integrating_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_fund_amharic_schools"
+			clr_country_flag = ETH_integrating_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 	ETH_distribute_propaganda = {
 		icon = generic_decision
-		cost = 75
 
-		visible = {
-			has_idea = ETH_dissolved_the_assembly
-			tag = ETH
-		}
+		custom_cost_trigger = { check_variable = { treasury > 0.50 } }
+		custom_cost_text = cost_0_5
 
 		available = {
 			has_completed_focus = ETH_eritrea_propaganda
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_0_5_billion_TT
-				check_variable = { treasury > 0.50 }
+				tooltip = ETH_blocked_from_ERI_decisions_INT_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 30
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_distribute_propaganda"
 			set_temp_variable = { treasury_change = -0.50 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_distribute_propaganda_up_5_TT
-			add_to_variable = { ETH_propaganda_distribution = 5.00 }
-			clamp_variable = {
-				var = ETH_propaganda_distribution
-				min = 0
-				max = 100
-			}
+			set_temp_variable = { ETH_propaganda_change = 5 }
+			update_ETH_propaganda_distribution = yes
+			set_country_flag = ETH_integrating_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_distribute_propaganda"
+			clr_country_flag = ETH_integrating_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 	ETH_utilise_informants = {
 		icon = generic_decision
-		cost = 125
 
-		visible = {
-			has_idea = ETH_dissolved_the_assembly
-			tag = ETH
-		}
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
 
 		available = {
 			has_completed_focus = ETH_maintain_a_watchful_eye
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_1_billion_TT
-				check_variable = { treasury > 1.00 }
+				tooltip = ETH_blocked_from_ERI_decisions_INT_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 60
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_utilise_informants"
 			set_temp_variable = { treasury_change = -1.00 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_bozos_up_2_5_TT
-			add_to_variable = { ETH_crackdown_on_bozos = 2.50 }
-			clamp_variable = {
-				var = ETH_propaganda_distribution
-				min = 0
-				max = 100
-			}
+			set_temp_variable = { ETH_crackdown_change = 2.5 }
+			update_ETH_bozo_crackdown = yes
+			set_country_flag = ETH_integrating_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_utilise_informants"
+			clr_country_flag = ETH_integrating_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 	ETH_harsh_crackdowns = {
 		icon = generic_decision
-		cost = 50
 
-		visible = {
-			has_idea = ETH_dissolved_the_assembly
-			tag = ETH
-		}
+		custom_cost_trigger = { command_power > 24 }
+		custom_cost_text = command_power_more_than_25
 
 		available = {
 			has_completed_focus = ETH_eritrea_tackle_seperatists
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_1_billion_TT
-				check_variable = { treasury > 1.00 }
+				tooltip = ETH_blocked_from_ERI_decisions_INT_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 30
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_harsh_crackdowns"
-			set_temp_variable = { treasury_change = -1.00 }
-			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_bozos_up_5_TT
-			add_to_variable = { ETH_crackdown_on_bozos = 5 }
-			clamp_variable = {
-				var = ETH_propaganda_distribution
-				min = 0
-				max = 100
-			}
+			add_command_power = -25
+			set_temp_variable = { ETH_crackdown_change = 7.5 }
+			update_ETH_bozo_crackdown = yes
+			set_country_flag = ETH_integrating_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_harsh_crackdowns"
+			clr_country_flag = ETH_integrating_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 	ETH_make_arrests = {
 		icon = generic_decision
-		cost = 50
 
-		visible = {
-			has_idea = ETH_dissolved_the_assembly
-			tag = ETH
-		}
+		custom_cost_trigger = { command_power > 14 }
+		custom_cost_text = command_power_more_than_15
 
 		available = {
 			has_completed_focus = ETH_eritrea_tackle_seperatists
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_1_billion_TT
-				check_variable = { treasury > 1.00 }
+				tooltip = ETH_blocked_from_ERI_decisions_INT_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 30
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_make_arrests"
-			set_temp_variable = { treasury_change = -1.00 }
-			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_bozos_up_2_5_TT
-			add_to_variable = { ETH_crackdown_on_bozos = 2.50 }
-			clamp_variable = {
-				var = ETH_propaganda_distribution
-				min = 0
-				max = 100
-			}
+			add_command_power = -15
+			set_temp_variable = { ETH_crackdown_change = 2.5 }
+			update_ETH_bozo_crackdown = yes
+			set_country_flag = ETH_integrating_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_make_arrests"
+			clr_country_flag = ETH_integrating_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 }
 
 ETH_eritrean_federalisation_category = {
-
 	ETH_federalisation_process_tick = {
 		icon = decision_generic_decision
 		visible = { has_idea = ETH_eritrean_federalisation_underway }
@@ -597,43 +634,23 @@ ETH_eritrean_federalisation_category = {
 			}
 		}
 
+		cancel_trigger = { NOT = { has_idea = ETH_eritrean_federalisation_underway } }
+
 		days_mission_timeout = 30
 
 		is_good = yes
 		fire_only_once = no
 
 		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect ETH_integration_process_tick"
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect ETH_federalisation_process_tick"
 			activate_mission = ETH_federalisation_process_tick
-
-			set_temp_variable = { a = ETH_amharic_speakers2 }
-			set_temp_variable = { b = ETH_propaganda_distribution2 }
-			set_temp_variable = { c = ETH_crackdown_on_bozos2 }
-			subtract_from_temp_variable = { a = 20 }
-			multiply_temp_variable = { a = 0.1 }
-			subtract_from_temp_variable = { b = 20 }
-			multiply_temp_variable = { b = 0.1 }
-			subtract_from_temp_variable = { c = 20 }
-			multiply_temp_variable = { c = 0.1 }
-
-			add_to_temp_variable = { a = b }
-			add_to_temp_variable = { a = c }
-
-			add_to_variable = {
-				var = ETH_eritrean_federation_process
-				value = a
-			}
-			clamp_variable = {
-				var = ETH_eritrean_federation_process
-				min = 0
-				max = 100
-			}
+			update_ERI_federalisation_levels = yes
 		}
 	}
 
 	ETH_full_federalisation = {
 		icon = generic_decision
-		cost = 300
+		cost = 150
 
 		available = {
 			has_idea = ETH_eritrean_federalisation_underway
@@ -641,11 +658,14 @@ ETH_eritrean_federalisation_category = {
 				tooltip = ETH_ERI_federalisation_100_TT
 				check_variable = { ETH_eritrean_federation_process = 100 }
 			}
-		}
-
-		visible = {
-			has_idea = ETH_eritrean_federalisation_underway
-			tag = ETH
+			custom_trigger_tooltip = {
+				tooltip = ETH_dissolve_ERI_assembly_flip_TT
+				NOT = { has_country_flag = ETH_federalising_decisions_FLAG }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ETH_blocked_from_ERI_decisions_FED_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
+			}
 		}
 
 		days_remove = 14
@@ -653,7 +673,6 @@ ETH_eritrean_federalisation_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_full_federalisation"
-			remove_ideas = ETH_eritrean_federalisation_underway
 			remove_ideas = ETH_eritrean_friction
 			remove_decision = ETH_federalisation_process_tick
 			#ETH = {
@@ -661,12 +680,67 @@ ETH_eritrean_federalisation_category = {
 			#}
 		}
 
-		ai_will_do = { factor = 3 }
+		ai_will_do = { base = 3 }
+	}
+
+	ETH_dissolve_ERI_assembly_flip = {
+		icon = generic_decision
+		cost = 250
+
+		available = {
+			has_idea = ETH_eritrean_federalisation_underway
+			custom_trigger_tooltip = {
+				tooltip = ETH_dissolve_ERI_assembly_flip_TT
+				NOT = { has_country_flag = ETH_federalising_decisions_FLAG }
+			}
+		}
+
+		visible = {
+			NOT = { has_country_flag = ETH_renegotiated_ERI_stance_FLAG }
+		}
+
+		days_remove = 14
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ETH_dissolve_ERI_assembly_flip"
+			set_country_flag = ETH_blocked_from_ERI_decisions_FLAG
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_dissolve_ERI_assembly_flip"
+			set_country_flag = ETH_renegotiated_ERI_stance_FLAG
+			annex_country = { target = ERI }
+			newline = yes
+			remove_decision = ETH_federalisation_process_tick
+			remove_ideas = ETH_eritrean_federalisation_underway
+			newline = yes
+			unlock_decision_category_tooltip = ETH_eritrean_integration_category
+			unlock_decision_tooltip = ETH_integration_process_tick
+			add_ideas = ETH_dissolved_the_assembly
+			newline = yes
+			unlock_national_focus = ETH_eritrea_dissolve_assembly
+			newline = yes
+			clr_country_flag = ETH_locked_federalisation_FLAG
+			custom_effect_tooltip = ETH_block_from_ERI_decisions_FED_TT
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 10
+				OR = {
+					nationalist_monarchists_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+				}
+			}
+		}
 	}
 
 	ETH_encourage_language_schools = {
 		icon = generic_decision
-		cost = 100
+
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
 
 		visible = {
 			has_idea = ETH_eritrean_federalisation_underway
@@ -676,34 +750,36 @@ ETH_eritrean_federalisation_category = {
 		available = {
 			has_completed_focus = ETH_eritrea_teach_amharic
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_1_billion_TT
-				check_variable = { treasury > 1.00 }
+				tooltip = ETH_blocked_from_ERI_decisions_FED_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 60
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ETH_fund_amharic_schools"
+			log = "[GetDateText]: [Root.GetName]: Decision ETH_encourage_language_schools"
 			set_temp_variable = { treasury_change = -1.00 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_amharic_speakers_up_5_TT2
-			add_to_variable = { ETH_amharic_speakers2 = 5 }
-			clamp_variable = {
-				var = ETH_amharic_speakers2
-				min = 0
-				max = 100
-			}
+			set_temp_variable = { ETH_amharic_change = 5 }
+			update_ETH_amharic_speakers = yes
+			set_country_flag = ETH_federalising_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_encourage_language_schools"
+			clr_country_flag = ETH_federalising_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 	ETH_show_off_benefits_federation = {
 		icon = generic_decision
-		cost = 75
+
+		custom_cost_trigger = { check_variable = { treasury > 2.49 } }
+		custom_cost_text = cost_2_5
 
 		visible = {
 			has_idea = ETH_eritrean_federalisation_underway
@@ -713,71 +789,69 @@ ETH_eritrean_federalisation_category = {
 		available = {
 			has_completed_focus = ETH_eritrea_propaganda
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_2_5_billion_TT
-				check_variable = { treasury > 2.50 }
+				tooltip = ETH_blocked_from_ERI_decisions_FED_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 60
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_show_off_benefits_federation"
 			set_temp_variable = { treasury_change = -2.50 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_distribute_propaganda_up_5_TT2
-			add_to_variable = { ETH_propaganda_distribution2 = 5 }
-			clamp_variable = {
-				var = ETH_propaganda_distribution2
-				min = 0
-				max = 100
-			}
+			set_temp_variable = { ETH_propaganda_change = 5 }
+			update_ETH_propaganda_distribution = yes
+			set_country_flag = ETH_federalising_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_show_off_benefits_federation"
+			clr_country_flag = ETH_federalising_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 	ETH_falsify_evidence = {
 		icon = generic_decision
-		cost = 75
 
-		visible = {
-			has_idea = ETH_eritrean_federalisation_underway
-			tag = ETH
-		}
+		custom_cost_trigger = { command_power > 9 }
+		custom_cost_text = command_power_more_than_10
 
 		available = {
 			has_completed_focus = ETH_eritrea_tackle_seperatists
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_1_billion_TT
-				check_variable = { treasury > 1.00 }
+				tooltip = ETH_blocked_from_ERI_decisions_FED_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 30
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_falsify_evidence"
-			set_temp_variable = { treasury_change = -1.00 }
-			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_bozos_up_2_5_TT2
-			add_to_variable = { ETH_crackdown_on_bozos2 = 2.50 }
-			clamp_variable = {
-				var = ETH_crackdown_on_bozos2
-				min = 0
-				max = 100
-			}
+			add_command_power = -10
+			set_temp_variable = { ETH_crackdown_change = 2.5 }
+			update_ETH_bozo_crackdown = yes
+			set_country_flag = ETH_federalising_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_falsify_evidence"
+			clr_country_flag = ETH_federalising_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 
 	ETH_deport_agitators = {
 		icon = generic_decision
-		cost = 100
+
+		custom_cost_trigger = { command_power > 29 }
+		custom_cost_text = command_power_more_than_30
 
 		visible = {
 			has_idea = ETH_eritrean_federalisation_underway
@@ -787,28 +861,27 @@ ETH_eritrean_federalisation_category = {
 		available = {
 			has_completed_focus = ETH_eritrea_tackle_seperatists
 			custom_trigger_tooltip = {
-				tooltip = ETH_need_1_5_billion_TT
-				check_variable = { treasury > 1.50 }
+				tooltip = ETH_blocked_from_ERI_decisions_FED_TT
+				NOT = { has_country_flag = ETH_blocked_from_ERI_decisions_FLAG }
 			}
 		}
 
 		days_remove = 60
-		days_re_enable = 0
 		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ETH_deport_agitators"
-			set_temp_variable = { treasury_change = -1.50 }
-			modify_treasury_effect = yes
-			custom_effect_tooltip = ETH_bozos_up_2_5_TT2
-			add_to_variable = { ETH_crackdown_on_bozos2 = 2.50 }
-			clamp_variable = {
-				var = ETH_crackdown_on_bozos2
-				min = 0
-				max = 100
-			}
+			add_command_power = -30
+			set_temp_variable = { ETH_crackdown_change = 2.5 }
+			update_ETH_bozo_crackdown = yes
+			set_country_flag = ETH_federalising_decisions_FLAG
 		}
 
-		ai_will_do = { factor = 3 }
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ETH_deport_agitators"
+			clr_country_flag = ETH_federalising_decisions_FLAG
+		}
+
+		ai_will_do = { base = 3 }
 	}
 }
