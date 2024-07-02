@@ -99,7 +99,7 @@ MLW_MZUZU_motors_phase_4 = {
 	if = { limit = { country_exists = SNA } SNA = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SOM } SOM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SSU } SSU = { add_to_array = { MLW.MZUZU_markets = THIS } } }
-	if = { limit = { country_exists = STH } STH = { add_to_array = { MLW.MZUZU_markets = THIS } } }
+	if = { limit = { OR = { country_exists = STH MLW = { NOT = { has_country_flag = MLW_bought_st_helena } } } } STH = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SUD } SUD = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SWA } SWA = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SWS } SWS = { add_to_array = { MLW.MZUZU_markets = THIS } } }
@@ -165,7 +165,7 @@ MLW_MZUZU_motors_phase_5 = {
 	if = { limit = { country_exists = SNA } SNA = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SOM } SOM = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SSU } SSU = { add_to_array = { MLW.MZUZU_markets = THIS } } }
-	if = { limit = { country_exists = STH } STH = { add_to_array = { MLW.MZUZU_markets = THIS } } }
+	if = { limit = { OR = { country_exists = STH MLW = { NOT = { has_country_flag = MLW_bought_st_helena } } } } STH = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SUD } SUD = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SWA } SWA = { add_to_array = { MLW.MZUZU_markets = THIS } } }
 	if = { limit = { country_exists = SWS } SWS = { add_to_array = { MLW.MZUZU_markets = THIS } } }
@@ -303,9 +303,7 @@ MLW_MZUZU_lease_failsafe = {
 	}
 }
 
-
 # LETS DO SOME FACKIN MAFFS
-
 MLW_MZUZU_market_cap_change = {
 	for_each_scope_loop = {
 		array = MLW.MLW_MZ_exporters
@@ -432,3 +430,139 @@ MLW_MZUZU_export_failed = {
 		MLW_refresh_AIO = yes
 	}
 }
+
+# SADC TRADE EFFECTS
+# MLW_SADC_trade = {}
+
+MLW_SADC_change_goods_import = {
+	add_to_variable = { MLW_SADC_imports_stored = MLW_SADC_imports_change }
+	custom_effect_tooltip = MLW_SADC_change_goods_import_TT
+
+	MLW_refresh_AIO = yes
+}
+
+MLW_SADC_confirm_commercial_imports = {
+	add_to_variable = { MLW_SADC_consumer_goods_total = MLW_SADC_imports_stored }
+	custom_effect_tooltip = MLW_SADC_confirm_commercial_imports_TT
+	clear_variable = MLW_SADC_imports_stored
+}
+
+MLW_SADC_trade_agreement = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { MLW_SADC_consumer_goods_total > 0 }
+				check_variable = { MLW_SADC_luxury_goods_total > 0 }
+			}
+		}
+		set_variable = { MLW_SADC_trade_income = signed_trade_agreements }
+		# MAIN MATH
+		if = { limit = { has_country_flag = MLW_SADC_luxury_goods } multiply_variable = { MLW_SADC_trade_income = 0.1 } }
+		else = { multiply_variable = { MLW_SADC_trade_income = 0.05 } }
+		# ECONOMIC CYCLE MATH
+		if = { limit = { has_idea = depression } multiply_variable = { MLW_SADC_trade_income = 0.5 } }
+		else_if = { limit = { has_idea = recession } multiply_variable = { MLW_SADC_trade_income = 1 } }
+		else_if = { limit = { has_idea = stagnation } multiply_variable = { MLW_SADC_trade_income = 1.5 } }
+		else_if = { limit = { has_idea = stable_growth } multiply_variable = { MLW_SADC_trade_income = 2 } }
+		else_if = { limit = { has_idea = fast_growth } multiply_variable = { MLW_SADC_trade_income = 2.5 } }
+		else = { multiply_variable = { MLW_SADC_trade_income = 3 } }
+	}
+	else = { set_variable = { MLW_SADC_trade_income = 0 } }
+
+	force_update_dynamic_modifier = yes
+	hidden_effect = { ingame_update_setup = yes }
+}
+
+MLW_SADC_import_target_effect = {
+	set_variable = { ROOT.SADC_tag_selected = THIS.id }
+	custom_effect_tooltip = MLW_SADC_import_target_effect_TT
+	MLW_refresh_AIO = yes
+}
+
+MLW_SADC_trade_stockpile_change = {
+	set_temp_variable = { MLW_SADC_stockpile_change = signed_trade_agreements }
+	multiply_temp_variable = { MLW_SADC_stockpile_change = -1000 }
+	if = {
+		limit = { has_country_flag = MLW_SADC_luxury_goods }
+		add_to_variable = { MLW_SADC_luxury_goods_total = MLW_SADC_stockpile_change }
+	}
+	else = { add_to_variable = { MLW_SADC_consumer_goods_total = MLW_SADC_stockpile_change } }
+}
+
+# if = { limit = { has_dynamic_modifier = { modifier = SIN_singaporean_trade_strength } }
+# 	set_variable = { SIN_tariff_income = signed_trade_agreements }
+# 	multiply_variable = { SIN_tariff_income = 0.075 }
+# 	add_to_variable = { additional_income_rate = SIN_tariff_income }
+# }
+
+# MLW_SADC_weekly_effect = {}
+
+# MLW_SADC_import_commercial_cost = {
+# 	set_temp_variable = { MLW_SADC_import_consumer_price = 0.05 }
+# 	multiply_temp_variable = { MLW_SADC_import_consumer_price = THIS.opinion@ROOT }
+# 	add_to_variable = { MLW_SADC }
+# 	custom_effect_tooltip = MLW_SADC_import_commercial_cost_TT
+# }
+
+MLW_SADC_import_from_target = {
+	if = {
+		limit = {
+			var:SADC_tag_selected = {
+				has_opinion = { target = ROOT value > -26 }
+				has_opinion = { target = ROOT value < 1 }
+			}
+
+		}
+	}
+	else_if = {
+		limit = {
+			var:SADC_tag_selected = {
+				has_opinion = { target = ROOT value > -1 }
+				has_opinion = { target = ROOT value < 26 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:SADC_tag_selected = {
+				has_opinion = { target = ROOT value > 24 }
+				has_opinion = { target = ROOT value < 51 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:SADC_tag_selected = {
+				has_opinion = { target = ROOT value > 49 }
+				has_opinion = { target = ROOT value < 76 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:SADC_tag_selected = {
+				has_opinion = { target = ROOT value > 74 }
+			}
+		}
+	}
+}
+
+# every week that there is a variable in one of the selected goods
+# gain X amount of those resources, with the cost of each nation's imports
+# based off of the target's opinion of you
+#
+# if the opinion of a target is too low, they will not let you trade with them
+# -25 locks off luxury, -50 locks off commercial
+#
+# with an event you can send them "aid" in the form of prospectors and permit
+# funding, with prospectors you gain 1-10% of the new resources found for a year
+# this is locked off for as much time
+#
+# with permit funding you give them easier time constructing a random building and create
+# an investment of the same, unable to send event if at max investments used, has a chance to
+# increase corruption in the target dependent on your own corruption
+#
+# for each trade deal signed, removes 1k units and gives money back to malawi based on economic
+# cycle at current, possible to stockpile and switch trade type between commercial and luxury
+# items in GUI, once one type of good is used up, auto switches to the other, if there are no
+# goods to subtract, all additional money will stop, flagging the "no" symbol in the GUI
