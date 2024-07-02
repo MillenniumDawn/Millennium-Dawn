@@ -1354,6 +1354,119 @@ catdec_mdmosjap_JAP_war_strategies = {
 			factor = 100
 		}
 	}
+
+	JAP_dec_defense_rapid_mobilization = {
+		allowed = { original_tag = JAP }
+
+		visible = {
+			has_completed_focus = JAP_defense_flexibility
+		}
+		available = {
+			has_completed_focus = JAP_defense_flexibility
+		}
+
+		modifier = {
+			political_power_gain = -0.50
+			mobilization_speed = 0.20
+			training_time_factor = -0.30
+			experience_gain_army_unit_factor = 0.50
+			experience_gain_navy_unit_factor = 0.50
+			experience_gain_air_unit_factor = 0.50
+			personnel_cost_multiplier_modifier = 0.50
+		}
+
+		complete_effect = {
+			add_timed_idea = {
+				idea = JAP_mobilization_complication
+				days = 90
+			}
+		}
+
+		days_remove = 60
+		cost = 100
+
+		ai_will_do = { factor = 0 }
+	}
+
+	JAP_dec_defense_urgent_contracts = {
+		allowed = { original_tag = JAP }
+
+		visible = {
+			has_completed_focus = JAP_defense_self_sufficiency
+		}
+		available = {
+			has_completed_focus = JAP_defense_self_sufficiency
+		}
+
+		modifier = {
+			#TODO: calc 1% of GDP and feed into weekly treasury calc similar to faction subsidies, dont put it here
+			industrial_capacity_factory = 0.30
+			industrial_capacity_dockyard = 0.50
+			production_factory_efficiency_gain_factor = 0.25
+		}
+
+		complete_effect = {
+			every_owned_state = {
+				set_temp_variable = { temp_productivity_change = -0.050 }
+				flat_productivity_change_effect = yes
+			}
+		}
+
+		days_remove = 90
+		cost = 50
+
+		ai_will_do = { factor = 0 }
+	}
+
+	JAP_dec_defense_fuel_constraints = {
+		allowed = { original_tag = JAP }
+
+		visible = {
+			has_completed_focus = JAP_defense_self_sufficiency
+		}
+		available = {
+			has_completed_focus = JAP_defense_self_sufficiency
+			has_war = yes
+		}
+
+		modifier = {
+			non_electric_fuel_consumption_modifier = -0.30 #TODO: verify is this clamped in energy system?
+			stability_factor = -0.15
+		}
+
+		complete_effect = {
+			stability = -0.02
+		}
+
+		days_remove = 90
+		cost = 50
+
+		ai_will_do = { factor = 0 }
+	}
+
+	# For countries declaring war on peaceful JAP
+	JAP_dec_defense_compelled_peace = {
+		activation = {
+			has_country_flag = JAP_COMPELLED_PEACE
+		}
+		available = {
+			has_country_flag = JAP_COMPELLED_PEACE
+			OR = {
+				has_war_with = JAP
+				JAP = {
+					has_capitulated = yes
+				}
+			}
+		}
+
+		days_mission_timeout = 365
+
+		timeout_effect = {
+			country_event = Japan.100009202 # Quick Victory Slips Away
+		}
+
+		ai_will_do = { factor = 0 }
+	}
 }
 
 #----------------------------------------------------------------
