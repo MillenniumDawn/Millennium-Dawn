@@ -1447,14 +1447,54 @@ catdec_mdmosjap_JAP_war_strategies = {
 	# For countries declaring war on peaceful JAP
 	JAP_dec_defense_compelled_peace = {
 		activation = {
-			has_country_flag = JAP_COMPELLED_PEACE
-		}
-		available = {
-			has_country_flag = JAP_COMPELLED_PEACE
+			ROOT = {
+				has_variable = jap_compelled_peace
+			}
 			OR = {
-				has_war_with = JAP
+				NOT = {
+					has_war_with = JAP
+				}
 				JAP = {
 					has_capitulated = yes
+				}
+			}
+			OR = { # needs to satisfy one of these or theyll just get pulled back in if they WP
+				is_in_faction = no # isnt in faction
+				is_faction_leader = yes # is in faction and is faction leader
+				AND = { # is in faction, but faction leader wasnt called
+					is_in_faction = yes
+					NOT = {
+						faction_leader = {
+							has_war_with = JAP
+						}
+					}
+				}
+			}
+		}
+		available = {
+			ROOT = {
+				has_variable = jap_compelled_peace
+			}
+			OR = {
+				NOT = {
+					has_war_with = JAP
+				}
+				JAP = {
+					has_capitulated = yes
+				}
+			}
+			NOT = { # if theyll just get pulled back in if they white peace, exclude them from this and force complete
+				OR = {
+					is_in_faction = no # isnt in faction
+					is_faction_leader = yes # is in faction and is faction leader
+					AND = { # is in faction, but faction leader wasnt called
+						is_in_faction = yes
+						NOT = {
+							faction_leader = {
+								has_war_with = JAP
+							}
+						}
+					}
 				}
 			}
 		}

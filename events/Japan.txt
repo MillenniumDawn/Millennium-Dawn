@@ -16627,6 +16627,9 @@ country_event = {
 			#TODO: custom tooltip conditions for bonus not yet met
 		}
 		#TODO: custom tooltip bonus applied when manpower remains below 100,000
+		ai_chance = {
+			base = 0
+		}
 	}
 
 	# Maintain Constant Readiness
@@ -16636,6 +16639,9 @@ country_event = {
 		add_timed_idea = {
 			idea = JAP_readiness_drills
 			days = 365
+		}
+		ai_chance = {
+			base = 80
 		}
 	}
 }
@@ -16656,6 +16662,10 @@ country_event = {
 		add_war_support = 0.10
 		add_ideas = JAP_breakable
 		#TODO: custom tooltip: idea will be removed if JAP capitulates!
+
+		ai_chance = {
+			base = 90
+		}
 	}
 
 	# Offramp To Peace?
@@ -16679,6 +16689,13 @@ country_event = {
 					days = 1
 				}
 			}
+		}
+		ROOT = {
+			clear_variable = jap_compelled_peace
+		}
+
+		ai_chance = {
+			base = 10
 		}
 	}
 }
@@ -16736,15 +16753,266 @@ country_event = {
 				}
 			}
 		}
+		ROOT = {
+			clear_variable = jap_compelled_peace
+		}
+
+		ai_chance = {
+			base = 80
+		}
 	}
 
 	# Victory is at hand!
 	option = {
 		name = Japan.100009201.oB
 		log = "[GetDateText]: [This.GetName]: Japan.100009201.oB executed"
+		trigger = {
+			has_war_support > 0.3
+		}
+		add_to_variable = { ROOT.jap_compelled_peace = 1 } # war support penalty increases each time, 10%, 20%, 30%
+		set_temp_variable = { total_war_support_penalty = ROOT.jap_compelled_peace }
+		multiply_temp_variable = { total_war_support_penalty = 0.1 }
+		add_war_support = total_war_support_penalty
+		add_political_power = -50
+		activate_mission = JAP_dec_defense_compelled_peace
 
+		ai_chance = {
+			base = 10
+		}
 	}
 
+}
+
+#Disputed Islands Mediation: Conference Setup
+country_event = {
+	id = Japan.100009300
+	title = Japan.100009300.t
+	desc = Japan.100009300.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Send Invitations
+	option = {
+		name = Japan.100009300.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009300.oA executed"
+		country_event = {
+			id = Japan.100009305 #conference gate
+			days = 28
+		}
+		IND = { country_event = Japan.100009301 } #invitation to conference
+		MAY = { country_event = Japan.100009301 } #invitation to conference
+		VIE = { country_event = Japan.100009301 } #invitation to conference
+		PHI = { country_event = Japan.100009301 } #invitation to conference
+		KOR = { country_event = Japan.100009301 } #invitation to conference
+		TAI = { country_event = Japan.100009301 } #invitation to conference
+		CHI = { country_event = Japan.100009301 } #invitation to conference
+
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Send Invitations, with "incentive" (guarantees AI attendance if player didn't befriend everyone)
+	option = {
+		name = Japan.100009300.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009300.oB executed"
+		country_event = {
+			id = Japan.100009305 #conference gate
+			days = 28
+		}
+		increase_corruption = yes
+		IND = { country_event = Japan.100009302 } #invitation to conference
+		MAY = { country_event = Japan.100009302 } #invitation to conference
+		VIE = { country_event = Japan.100009302 } #invitation to conference
+		PHI = { country_event = Japan.100009302 } #invitation to conference
+		KOR = { country_event = Japan.100009302 } #invitation to conference
+		TAI = { country_event = Japan.100009302 } #invitation to conference
+		CHI = { country_event = Japan.100009302 } #invitation to conference
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#Disputed Islands Mediation: Invitation to Conference
+country_event = {
+	id = Japan.100009301
+	title = Japan.100009301.t
+	desc = Japan.100009301.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Accept
+	option = {
+		name = Japan.100009301.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009301.oA executed"
+		add_threat = -1.0
+		country_event = Japan.100009303 #accepts
+		JAP = {
+			add_to_array = {
+				array = jap_mediation_conference_attendees
+				value = ROOT.id
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0.1
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+		}
+	}
+
+	# Decline
+	option = {
+		name = Japan.100009301.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009301.oB executed"
+		add_political_power = 50
+		add_war_support = 0.03
+		country_event = Japan.100009304 #declines
+
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 20
+				has_opinion = {
+					target = FROM
+					value < -50
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+		}
+	}
+}
+
+#Disputed Islands Mediation: Invitation to Conference (Sweet Deal)
+country_event = {
+	id = Japan.100009302
+	title = Japan.100009302.t
+	desc = Japan.100009302.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Accept
+	option = {
+		name = Japan.100009302.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009302.oA executed"
+		add_political_power = 200
+		country_event = Japan.100009303 #accepts
+		JAP = {
+			add_to_array = {
+				array = jap_mediation_conference_attendees
+				value = ROOT.id
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Decline
+	option = {
+		name = Japan.100009302.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009302.oB executed"
+		add_war_support = 0.05
+		country_event = Japan.100009304 #declines
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Disputed Islands Mediation: <tag> Attends the Conference!
+country_event = {
+	id = Japan.100009303
+	title = Japan.100009303.t
+	desc = Japan.100009303.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Great
+	option = {
+		name = Japan.100009303.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009303.oA executed"
+		add_political_power = 10
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#Disputed Islands Mediation: <tag> Declines to Attend!
+country_event = {
+	id = Japan.100009304
+	title = Japan.100009304.t
+	desc = Japan.100009304.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Damn
+	option = {
+		name = Japan.100009304.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009304.oA executed"
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#Disputed Islands Mediation: Conference Gate
+#Gate, chooses the next event to serve until done
+country_event = {
+	id = Japan.100009305
+	hidden = yes
+
+	is_triggered_only = yes
+
+	# Accept
+	option = {
+		name = Japan.100009302.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009302.oA executed"
+		add_political_power = 200
+		country_event = Japan.100009303 #accepts
+		JAP = {
+			add_to_array = {
+				array = jap_mediation_conference_attendees
+				value = ROOT.id
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Decline
+	option = {
+		name = Japan.100009302.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009302.oB executed"
+		add_war_support = 0.05
+		country_event = Japan.100009304 #declines
+
+		ai_chance = {
+			base = 0
+		}
+	}
 }
 
 #----------------------------------------------------------------

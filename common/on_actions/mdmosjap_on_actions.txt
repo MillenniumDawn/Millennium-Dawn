@@ -379,7 +379,7 @@ on_actions = {
 		}
 	}
 
-	on_declare_war = {
+	on_war = {
 		effect = {
 			#If peaceful Japan is attacked, begin the punishment kickoff
 			if = {
@@ -389,16 +389,23 @@ on_actions = {
 						has_completed_focus = JAP_swiss_peace
 					}
 					ROOT = {
-						OR = {
-							has_country_flag = formed_neo_baathist_uar
-							has_country_flag = formed_baathist_uar
-							has_country_flag = UAR_created_arab_liberation_front
+						has_offensive_war_with = JAP
+						OR = { # try to limit this to people who can actually end the war if they WP
+							is_in_faction = no # isnt in faction
+							is_faction_leader = yes # is in faction and is faction leader
+							AND = { # is in faction, but faction leader wasnt called
+								is_in_faction = yes
+								NOT = {
+									faction_leader = {
+										has_war_with = JAP
+									}
+								}
+							}
 						}
 					}
 				}
-				set_country_flag = {
-					flag = JAP_COMPELLED_PEACE
-					value = 0
+				ROOT = {
+					set_variable = { jap_compelled_peace = 0 } #Tracks how many times country has refused peace
 				}
 				activate_mission = JAP_dec_defense_compelled_peace
 				country_event = {
