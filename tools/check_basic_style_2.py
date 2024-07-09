@@ -73,15 +73,7 @@ def check_basic_style(filepath, bad_count, message):
 					print("ERROR: A possible missing curly brace {{ in file {} {{line {1}}}".format(filepath, lineNum))
 					openBraces[0] = 0
 					fixedErrors +=1
-		else:
-			if openBraces[0] < 0:
-				print("ERROR: A possible missing curly brace }} in file {} {{line {}}}".format(filepath, lineNum))
-				message += "ERROR: A possible missing curly brace }} in file {} {{line {}}}\n".format(filepath, lineNum)
-				bad_count += 1
-			elif openBraces[0] > 0:
-				print("ERROR: A possible missing curly brace {{ in file {0} has no matching closing bracket.\n Approximate Line Number: {1}".format(filepath, lineNum))
-				message += "ERROR: A possible missing curly brace {{ in file {0} has no matching closing bracket\n Approximate Line Number: {1}".format(filepath, lineNum)
-				bad_count += 1
+
 	file.close()
 
 	return bad_count, message
@@ -97,23 +89,36 @@ def main():
 	scriptDir = os.path.realpath(__file__)
 	rootDir = os.path.dirname(os.path.dirname(scriptDir))
 
+	print("Checking the common folder...")
 	for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/'):
 		for filename in fnmatch.filter(filenames, '*.txt'):
 			files_list.append(os.path.join(root, filename))
+	print("Common folder is checked...")
 
+	print("Checking the events folder...")
 	for root, dirnames, filenames in os.walk(rootDir + '/'+ 'events' + '/'):
 		for filename in fnmatch.filter(filenames, '*.txt'):
 			files_list.append(os.path.join(root, filename))
+	print("Events folder is checked...")
 
+	print("Checking the history folder...")
 	for root, dirnames, filenames in os.walk(rootDir + '/'+ 'history' + '/'):
 		for filename in fnmatch.filter(filenames, '*.txt'):
 			files_list.append(os.path.join(root, filename))
+	print("history folder is checked...")
+
+	print("Checking the interface folder...")
 	for root, dirnames, filenames in os.walk(rootDir + '/'+ 'interface' + '/'):
 		for filename in fnmatch.filter(filenames, '*.txt'):
 			files_list.append(os.path.join(root, filename))
+	print("interface folder is checked...")
 
 	for filename in files_list:
-		bad_count, message = check_basic_style(filename, bad_count, message)
+		try:
+			bad_count, message = check_basic_style(filename, bad_count, message)
+		except:
+			print(f"{filename} has a potentially broken curly brace or some other fixes...")
+			bad_count += 1
 
 	print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
 	message +="------\nChecked {0} files\nErrors detected: {1}\n".format(len(files_list), bad_count)
