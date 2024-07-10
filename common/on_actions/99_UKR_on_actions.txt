@@ -1,0 +1,176 @@
+on_actions = {
+	on_weekly = {
+		effect = {
+			#ADDED SUBJECT IDEA
+			if = {
+				limit = {
+					OR = {
+						original_tag = DPR
+						original_tag = HPR
+						original_tag = CRM
+						original_tag = LRP
+						original_tag = VRP
+					}
+					has_autonomy_state = autonomy_republic_ukr
+					NOT = { has_idea = UKR_republic_ukr }
+				}
+				add_ideas = UKR_republic_ukr
+			}
+			UKR_random_events_ukraine_parliament = yes
+			#ADDED +1 FOR SUBJECTS NUMBER
+			if = {
+				limit = {
+					UKR_subjects_available = yes
+					NOT = { UKR = { has_idea = UKR_confederation } }
+				}
+				UKR = {	add_ideas = UKR_confederation }
+			}
+			#REMOVED -1 FOR SUBJECTS NUMBER
+			if = {
+				limit = {
+					UKR_subjects_disable = yes
+					UKR = { has_idea = UKR_confederation }
+				}
+				UKR = {	remove_ideas = UKR_confederation  }
+			}
+		}
+	}
+	on_monthly_UKR = {
+		effect = {
+			#SUBJECTS AUTORITY
+			if = {
+				limit = {
+					OR = {
+						original_tag = DPR
+						original_tag = HPR
+						original_tag = CRM
+						original_tag = LRP
+						original_tag = VRP
+					}
+					has_autonomy_state = autonomy_republic_ukr
+				}
+				set_temp_variable = { modify_subjectautoritet = 2 }
+				modify_subjectautoritet_support = yes
+			}
+			# Check for Elections
+			if = {
+				limit = {
+					check_variable = {
+						UKR_election_var > 0
+					}
+					NOT = {
+						has_country_flag = UKR_controlled_verkhovna
+					}
+				}
+				add_to_variable = { var = UKR_election_var value = -1 }
+				clamp_variable = { var = UKR_election_var min = 0 max = 48 }
+			}
+			if = {
+				limit = {
+					check_variable = {
+						UKR_election_var = 0
+					}
+				}
+				add_to_variable = { var = UKR_election_var value = 48 }
+				clamp_variable = { var = UKR_election_var min = 0 max = 48 }
+				country_event = {
+					id = ukraine_parliament.400
+					days = 2
+				}
+			}
+			if = {
+				limit = { has_war = yes }
+				set_temp_variable = { points = 1 }
+				if = {
+					limit = { num_of_military_factories > 25 }
+					set_temp_variable = { points = 25 }
+				}
+				else_if = {
+					limit = { num_of_military_factories > 20 }
+					set_temp_variable = { points = 20 }
+				}
+				else_if = {
+					limit = { num_of_military_factories > 15 }
+					set_temp_variable = { points = 15 }
+				}
+				else_if = {
+					limit = { num_of_military_factories > 10 }
+					set_temp_variable = { points = 10 }
+				}
+				else = {
+					set_temp_variable = { points = 5 }
+				}
+
+				if = {
+					limit = {
+						OR = {
+							has_idea = defence_02
+							has_idea = defence_03
+						}
+					}
+					multiply_temp_variable = { points = 1.2 }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_idea = defence_04
+							has_idea = defence_05
+						}
+					}
+					multiply_temp_variable = { points = 1.4 }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_idea = defence_06
+							has_idea = defence_07
+						}
+					}
+					multiply_temp_variable = { points = 1.6 }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_idea = defence_08
+							has_idea = defence_09
+						}
+					}
+					multiply_temp_variable = { points = 1.8 }
+				}
+
+				add_to_variable = { ukr_industry_points = points }
+			}
+
+			if = {
+				limit = {
+					has_completed_focus = UKR_hur_reform
+					has_war_with = SOV
+				}
+
+				set_temp_variable = { buf = 0 }
+
+				if = {
+					limit = { has_idea = police_05 }
+					set_temp_variable = { buf = 10 }
+				}
+				else_if = {
+					limit = { has_idea = police_04 }
+					set_temp_variable = { buf = 8 }
+				}
+				else_if = {
+					limit = { has_idea = police_04 }
+					set_temp_variable = { buf = 6 }
+				}
+				else_if = {
+					limit = { has_idea = police_04 }
+					set_temp_variable = { buf = 4 }
+				}
+				else = {
+					set_temp_variable = { buf = 2 }
+				}
+
+				add_to_variable = { hur_points = buf }
+			}
+		}
+	}
+}
