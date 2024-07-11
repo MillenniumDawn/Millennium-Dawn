@@ -16619,7 +16619,7 @@ country_event = {
 		set_country_flag = JAP_ARTICLE_NINE_CENTRAL_READINESS_FORCE
 		if = {
 			limit = {
-				has_army_manpower < 100000
+				has_army_manpower = { size < 100000 }
 			}
 			add_ideas = JAP_central_readiness_force
 		}
@@ -17013,9 +17013,7 @@ country_event = {
 #Gate, chooses the next event to serve until done
 country_event = {
 	id = Japan.100009310
-	title = Japan.100009310.t
-	desc = Japan.100009310.d
-	picture = GFX_JAP_diet_address
+	hidden = yes
 
 	is_triggered_only = yes
 
@@ -17044,7 +17042,10 @@ country_event = {
 						every_other_country = { #we only want OTHER tags that have claims, not the owner
 							limit = {
 								var:conference_target_state = {
-									is_claimed_by = PREV
+									OR = {
+										is_claimed_by = PREV
+										is_core_of = PREV
+									}
 								}
 							}
 							add_to_temp_array = { conference_current_claimants = THIS }
@@ -17055,28 +17056,33 @@ country_event = {
 				#select the first two non-owner claimants and discard the rest to keep the list reasonable
 				if = {
 					limit = {
-						check_temp_variable = { conference_current_claimants^num > 0 }
+						check_variable = { conference_current_claimants^num > 0 }
 					}
 					set_variable = { jap_mediation_conference_side1 = conference_current_claimants^0 }
 				}
 				if = {
 					limit = {
-						check_temp_variable = { conference_current_claimants^num > 1 }
+						check_variable = { conference_current_claimants^num > 1 }
 					}
 					set_variable = { jap_mediation_conference_side2 = conference_current_claimants^1 }
 				}
 			}
 			# the setup is complete, we can now serve the event
 			country_event = Japan.100009311 #Dispute Resolution Draft
-		}
 
-		remove_from_array = { #pop the first element in the conference list so the next cycle knows what to do
-			array = jap_mediation_conference_states
-			index = 0
+			remove_from_array = { #pop the first element in the conference list so the next cycle knows what to do
+				array = jap_mediation_conference_states
+				index = 0
+			}
+		}
+		else_if = { # spratlys not yet resolved
+
+		}
+		else = { # no more disputes - end conference
+
 		}
 	}
 }
-
 
 #Disputed Islands Mediation Main Sequence: Present Draft for <state name> Dispute Resolution (Japan)
 country_event = {
@@ -17092,9 +17098,30 @@ country_event = {
 		name = Japan.100009311.oA
 		log = "[GetDateText]: [This.GetName]: Japan.100009311.oA executed"
 		set_variable = { jap_mediation_conference_favored_candidate = jap_mediation_conference_side0 }
-		jap_mediation_conference_side0 = {
-			transfer_state = jap_mediation_conference_transfer_states^0
+		var:jap_mediation_conference_side0 = {
+			add_political_power = 10
 		}
+		if = {
+			limit = {
+				has_variable = jap_mediation_conference_side1
+			}
+			var:jap_mediation_conference_side1 = {
+				country_event = Japan.100009312 #loser compensation dialogue
+			}
+		}
+		if = {
+			limit = {
+				has_variable = jap_mediation_conference_side2
+			}
+			var:jap_mediation_conference_side2 = {
+				country_event = Japan.100009312 #loser compensation dialogue
+			}
+		}
+		country_event = {
+			id = Japan.100009310 #return to conference gate
+			days = 1
+		}
+
 		ai_chance = {
 			base = 10
 		}
@@ -17103,10 +17130,29 @@ country_event = {
 	option = {
 		name = Japan.100009311.oB
 		log = "[GetDateText]: [This.GetName]: Japan.100009311.oB executed"
-		set_variable = { jap_mediation_conference_favored_candidate = jap_mediation_conference_side1 }
-		jap_mediation_conference_side1 = {
-			transfer_state = jap_mediation_conference_transfer_states^0
+		trigger = {
+			has_variable = jap_mediation_conference_side1
 		}
+		set_variable = { jap_mediation_conference_favored_candidate = jap_mediation_conference_side1 }
+		var:jap_mediation_conference_side1 = {
+			add_political_power = 10
+		}
+		var:jap_mediation_conference_side0 = {
+			country_event = Japan.100009312 #loser compensation dialogue
+		}
+		if = {
+			limit = {
+				has_variable = jap_mediation_conference_side2
+			}
+			var:jap_mediation_conference_side2 = {
+				country_event = Japan.100009312 #loser compensation dialogue
+			}
+		}
+		country_event = {
+			id = Japan.100009310 #return to conference gate
+			days = 1
+		}
+
 		ai_chance = {
 			base = 10
 		}
@@ -17115,10 +17161,29 @@ country_event = {
 	option = {
 		name = Japan.100009311.oC
 		log = "[GetDateText]: [This.GetName]: Japan.100009311.oC executed"
-		set_variable = { jap_mediation_conference_favored_candidate = jap_mediation_conference_side2 }
-		jap_mediation_conference_side2 = {
-			transfer_state = jap_mediation_conference_transfer_states^0
+		trigger = {
+			has_variable = jap_mediation_conference_side2
 		}
+		set_variable = { jap_mediation_conference_favored_candidate = jap_mediation_conference_side2 }
+		var:jap_mediation_conference_side2 = {
+			add_political_power = 10
+		}
+		var:jap_mediation_conference_side0 = {
+			country_event = Japan.100009312 #loser compensation dialogue
+		}
+		if = {
+			limit = {
+				has_variable = jap_mediation_conference_side1
+			}
+			var:jap_mediation_conference_side1 = {
+				country_event = Japan.100009312 #loser compensation dialogue
+			}
+		}
+		country_event = {
+			id = Japan.100009310 #return to conference gate
+			days = 1
+		}
+
 		ai_chance = {
 			base = 10
 		}
@@ -17127,7 +17192,6 @@ country_event = {
 	option = {
 		name = Japan.100009311.oD
 		log = "[GetDateText]: [This.GetName]: Japan.100009311.oD executed"
-		set_variable = { jap_mediation_conference_favored_candidate = -1 }
 		trigger = { #can't abstain from own conflict
 			NOT = {
 				OR = {
@@ -17136,10 +17200,176 @@ country_event = {
 				}
 			}
 		}
+		set_variable = { jap_mediation_conference_favored_candidate = -1 }
+		country_event = {
+			id = Japan.100009310 #return to conference gate
+			days = 1
+		}
+
+
 		ai_chance = {
 			base = 10
 		}
 	}
+}
+
+#Disputed Islands Mediation Main Sequence: Choose Compensation (Loser)
+country_event = {
+	id = Japan.100009312
+	title = Japan.100009312.t
+	desc = Japan.100009312.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Financial Compensation
+	option = {
+		name = Japan.100009312.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009312.oA executed"
+		set_variable = { ROOT.jap_mediation_conference_side_demand = 0 }
+		var:JAP.jap_mediation_conference_favored_candidate = {
+			country_event = Japan.100009313 # compensate FROM in exchange for dropped claim?
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+	# Dual Citizenship For Residents
+	option = {
+		name = Japan.100009312.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009312.oB executed"
+		trigger = { #only makes sense if people from this tag actually live there
+			var:JAP.jap_mediation_conference_transfer_states^0 = {
+				state_population > 20000
+				is_core_of = ROOT
+			}
+		}
+		set_variable = { ROOT.jap_mediation_conference_side_demand = 1 }
+		var:JAP.jap_mediation_conference_favored_candidate = {
+			country_event = Japan.100009313 # compensate FROM in exchange for dropped claim?
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+	# 5 Year Favorable Trade Policy
+	option = {
+		name = Japan.100009312.oC
+		log = "[GetDateText]: [This.GetName]: Japan.100009312.oC executed"
+		set_variable = { ROOT.jap_mediation_conference_side_demand = 2 }
+		var:JAP.jap_mediation_conference_favored_candidate = {
+			country_event = Japan.100009313 # compensate FROM in exchange for dropped claim?
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+	# Political Favors
+	option = {
+		name = Japan.100009312.oD
+		log = "[GetDateText]: [This.GetName]: Japan.100009312.oD executed"
+		set_variable = { ROOT.jap_mediation_conference_side_demand = 3 }
+		var:JAP.jap_mediation_conference_favored_candidate = {
+			country_event = Japan.100009313 # compensate FROM in exchange for dropped claim?
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+	# Impossible
+	option = {
+		name = Japan.100009312.oD
+		log = "[GetDateText]: [This.GetName]: Japan.100009312.oD executed"
+		add_political_power = 50
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+
+		var:JAP.jap_mediation_conference_favored_candidate = {
+			country_event = Japan.100009314 # FROM refuse any deal to drop claim!
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#Disputed Islands Mediation Main Sequence: Choose Compensation (Loser)
+country_event = {
+	id = Japan.100009313
+	title = Japan.100009313.t
+	desc = Japan.100009313.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# We can accept this!
+	option = {
+		name = Japan.100009313.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009313.oA executed"
+		if = { # financial compensation
+			limit = {
+				check_variable = { FROM.jap_mediation_conference_side_demand = 0 }
+			}
+			set_temp_variable = { transfer_cost = 10 }
+			set_temp_variable = { transfer_state_population = JAP.jap_mediation_conference_transfer_states^0.state_population_k }
+			multiply_temp_variable = { transfer_state_population = 0.1 }
+			add_to_temp_variable = { transfer_cost = transfer_state_population }
+			set_temp_variable = { transfer_state_buildings = JAP.jap_mediation_conference_transfer_states^0.num_of_factories }
+			multiply_temp_variable = { transfer_state_buildings = 5 }
+			add_to_temp_variable = { transfer_cost = transfer_state_buildings }
+
+			FROM = {
+				set_temp_variable = { treasury_change = transfer_cost }
+				modify_treasury_effect = yes
+				var:JAP.jap_mediation_conference_transfer_states^0 = {
+					if = { #clear the loser's claims and cores
+						limit = {
+							is_claimed_by = PREV
+						}
+						remove_claim_by = PREV
+					}
+					if = {
+						limit = {
+							is_core_of = PREV
+						}
+						remove_core_of = PREV
+					}
+					if = { #if loser is the owner, transfer the state
+						limit = {
+							is_controlled_by = PREV
+						}
+						transfer_state_to = ROOT
+					}
+				}
+			}
+			set_temp_variable = { transfer_loss = transfer_cost }
+			multiply_temp_variable = { transfer_loss = -1 }
+			set_temp_variable = { treasury_change = transfer_loss }
+			modify_treasury_effect = yes
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+	# This is impossible!
+	option = {
+		name = Japan.100009313.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009313.oB executed"
+
+
+		ai_chance = {
+			base = 0
+		}
+	}
+
 }
 
 #----------------------------------------------------------------
