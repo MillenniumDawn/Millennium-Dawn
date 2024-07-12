@@ -335,7 +335,7 @@
 	NDefines.NMilitary.LEADER_EXPERIENCE_SCALE = 1.25 -- 1.0
 	NDefines.NMilitary.BASE_LEADER_TRAIT_GAIN_XP = 0.55 -- 0.45
 	NDefines.NMilitary.ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.175 -- 0.1
-	NDefines.NMilitary.TRAINING_ATTRITION = 0.0005				-- amount of extra attrition from being in training. Base value 0.05 Reduced to prevent training destroying all equipment
+	NDefines.NMilitary.TRAINING_ATTRITION = 0.0001				-- amount of extra attrition from being in training. Base value 0.05 Reduced to prevent training destroying all equipment
 	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased Max Experience cuz reasons
 	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
