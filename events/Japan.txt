@@ -16783,6 +16783,18 @@ country_event = {
 
 }
 
+#Disputed Islands Mediation
+# SCOPE OWNERSHIP
+# JAP:
+## jap_mediation_conference_attendees
+## jap_mediation_conference_favored_candidate
+## jap_mediation_conference_side0
+## jap_mediation_conference_side1
+## jap_mediation_conference_side2
+## jap_mediation_conference_transfer_states
+# LOSER:
+## jap_mediation_conference_side_demand
+#
 #Disputed Islands Mediation: Conference Setup
 country_event = {
 	id = Japan.100009300
@@ -16793,6 +16805,10 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
+		add_to_array = {
+			array = jap_mediation_conference_attendees
+			value = JAP
+		}
 		add_to_array = { # riau
 			array = jap_mediation_conference_states
 			value = 627
@@ -16882,7 +16898,7 @@ country_event = {
 			country_event = Japan.100009303 #accepts
 			add_to_array = {
 				array = jap_mediation_conference_attendees
-				value = ROOT.id
+				value = ROOT
 			}
 		}
 
@@ -16946,7 +16962,7 @@ country_event = {
 			country_event = Japan.100009303 #accepts
 			add_to_array = {
 				array = jap_mediation_conference_attendees
-				value = ROOT.id
+				value = ROOT
 			}
 		}
 
@@ -17013,7 +17029,9 @@ country_event = {
 #Gate, chooses the next event to serve until done
 country_event = {
 	id = Japan.100009310
-	hidden = yes
+	title = Japan.100009310.t
+	desc = Japan.100009310.d
+	picture = GFX_JAP_diet_address
 
 	is_triggered_only = yes
 
@@ -17032,43 +17050,48 @@ country_event = {
 				check_variable = { jap_mediation_conference_states^num > 0 }
 			}
 			set_temp_variable = { conference_target_state = jap_mediation_conference_states^0 }
-			if = {
-				#add any states for this round to the transfer states array
-				add_to_array = { jap_mediation_conference_transfer_states = conference_target_state }
-				#set the sides for this round of negotiation
-				var:conference_target_state = {
-					owner = {
-						set_temp_variable = { conference_side0 = THIS }
-						every_other_country = { #we only want OTHER tags that have claims, not the owner
-							limit = {
-								var:conference_target_state = {
-									OR = {
-										is_claimed_by = PREV
-										is_core_of = PREV
-									}
+			#add any states for this round to the transfer states array
+			add_to_array = { jap_mediation_conference_transfer_states = conference_target_state }
+			#set the sides for this round of negotiation
+			var:conference_target_state = {
+				owner = {
+					set_temp_variable = { conference_side0 = THIS }
+					every_other_country = { #we only want OTHER tags that have claims, not the owner
+						limit = {
+							var:conference_target_state = {
+								OR = {
+									is_claimed_by = PREV
+									is_core_of = PREV
 								}
 							}
-							add_to_temp_array = { conference_current_claimants = THIS }
+							is_in_array = {
+								array = JAP.jap_mediation_conference_attendees
+								value = THIS
+							}
 						}
+						add_to_temp_array = { conference_current_claimants = THIS }
 					}
-				}
-				set_variable = { jap_mediation_conference_side0 = conference_side0 }
-				#select the first two non-owner claimants and discard the rest to keep the list reasonable
-				if = {
-					limit = {
-						check_variable = { conference_current_claimants^num > 0 }
-					}
-					set_variable = { jap_mediation_conference_side1 = conference_current_claimants^0 }
-				}
-				if = {
-					limit = {
-						check_variable = { conference_current_claimants^num > 1 }
-					}
-					set_variable = { jap_mediation_conference_side2 = conference_current_claimants^1 }
 				}
 			}
-			# the setup is complete, we can now serve the event
-			country_event = Japan.100009311 #Dispute Resolution Draft
+			set_variable = { jap_mediation_conference_side0 = conference_side0 }
+			#select the first two non-owner claimants and discard the rest to keep the list reasonable
+			if = {
+				limit = {
+					check_variable = { conference_current_claimants^num > 1 }
+				}
+				set_variable = { jap_mediation_conference_side2 = conference_current_claimants^1 }
+			}
+			if = {
+				limit = {
+					check_variable = { conference_current_claimants^num > 0 }
+				}
+				set_variable = { jap_mediation_conference_side1 = conference_current_claimants^0 }
+				# if we have at least one opposing side attending, we can attempt to resolve
+				country_event = Japan.100009311 #Dispute Resolution Draft
+			}
+			else = {
+				#country_event = Japan.100009315 #Unilateral Statement
+			}
 
 			remove_from_array = { #pop the first element in the conference list so the next cycle knows what to do
 				array = jap_mediation_conference_states
@@ -17232,7 +17255,7 @@ country_event = {
 		}
 
 		ai_chance = {
-			base = 50
+			base = 0
 		}
 	}
 	# Dual Citizenship For Residents
@@ -17264,7 +17287,7 @@ country_event = {
 		}
 
 		ai_chance = {
-			base = 0
+			base = 50
 		}
 	}
 	# Political Favors
@@ -17289,6 +17312,7 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
 		add_relative_party_popularity = yes
+		add_war_support = 0.03
 
 		var:JAP.jap_mediation_conference_favored_candidate = {
 			country_event = Japan.100009314 # FROM refuse any deal to drop claim!
@@ -17300,7 +17324,7 @@ country_event = {
 	}
 }
 
-#Disputed Islands Mediation Main Sequence: Choose Compensation (Loser)
+#Disputed Islands Mediation Main Sequence: Consider Compensation (Winner)
 country_event = {
 	id = Japan.100009313
 	title = Japan.100009313.t
@@ -17354,6 +17378,73 @@ country_event = {
 			set_temp_variable = { treasury_change = transfer_loss }
 			modify_treasury_effect = yes
 		}
+		if = { # dual citizenship for residents
+			limit = {
+				check_variable = { FROM.jap_mediation_conference_side_demand = 1 }
+			}
+			set_temp_variable = { transfer_state_population = JAP.jap_mediation_conference_transfer_states^0.state_population_k }
+			multiply_temp_variable = { transfer_state_population = 0.5 }
+			FROM = {
+				capital_scope = {
+					add_manpower = transfer_state_population #the citizens "exist" in two countries at once
+				}
+				var:JAP.jap_mediation_conference_transfer_states^0 = {
+					if = { #clear the loser's claims and cores
+						limit = {
+							is_claimed_by = PREV
+						}
+						remove_claim_by = PREV
+					}
+					if = {
+						limit = {
+							is_core_of = PREV
+						}
+						remove_core_of = PREV
+					}
+					if = { #if loser is the owner, transfer the state
+						limit = {
+							is_controlled_by = PREV
+						}
+						transfer_state_to = ROOT
+					}
+				}
+			}
+		}
+		if = { # 5 year favorable trade policy #TODO: IT DOESNT WORK!!!! THE DECISION DOESNT AUTO ACTIVATE
+			limit = {
+				check_variable = { FROM.jap_mediation_conference_side_demand = 2 }
+			}
+			add_to_array = { jap_mediation_trade_policy_beneficiaries = FROM }
+			FROM = {
+				var:JAP.jap_mediation_conference_transfer_states^0 = {
+					if = { #clear the loser's claims and cores
+						limit = {
+							is_claimed_by = PREV
+						}
+						remove_claim_by = PREV
+					}
+					if = {
+						limit = {
+							is_core_of = PREV
+						}
+						remove_core_of = PREV
+					}
+					if = { #if loser is the owner, transfer the state
+						limit = {
+							is_controlled_by = PREV
+						}
+						transfer_state_to = ROOT
+					}
+				}
+			}
+		}
+
+		FROM = {
+			country_event = {
+				id = Japan.100009314
+				days = 1
+			}
+		}
 
 		ai_chance = {
 			base = 50
@@ -17371,6 +17462,35 @@ country_event = {
 	}
 
 }
+
+#Disputed Islands Mediation: <tag> Relinquishes Their Claim!
+country_event = {
+	id = Japan.100009314
+	title = Japan.100009314.t
+	desc = Japan.100009314.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Wonderful!
+	option = {
+		name = Japan.100009314.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009314.oA executed"
+		add_political_power = 50
+		if = { # 5 year favorable trade policy
+			limit = {
+				check_variable = { jap_mediation_conference_side_demand = 2 }
+			}
+			activate_targeted_decision = { target = FROM decision = JAP_dec_mediation_benefits }
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+
 
 #----------------------------------------------------------------
 #Events Triggered by Date
