@@ -51,6 +51,8 @@ CWTools_CI:
  rules:
   - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
     when: never
+  - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-cwtools-job/'
+    when: never
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: always
  script:
@@ -69,12 +71,15 @@ Styling:
  stage: styling
  image: xr09/python-requests
  interruptible: true
- needs: ["CodingStandards", "CWTools_CI"]
  rules:
   - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
     when: never
+  - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-cwtools-job/'
+    when: always
+    needs: ["CodingStandards"]
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: always
+    needs: ["CodingStandards", "CWTools_CI"]
  script:
   - python3 tools/check_basic_style_2.py $Bot_Token
 
@@ -85,6 +90,8 @@ FixingStyling:
  needs: ["Styling"]
  rules:
  - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
+   when: never
+ - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-fixing-styling/'
    when: never
  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
    when: on_failure

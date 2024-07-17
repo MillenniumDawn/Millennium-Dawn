@@ -8,24 +8,24 @@ focus_tree = {
 	# European Union Focuses
 	shared_focus = USoE001
 	shared_focus = POTEF001
-	continuous_focus_position = { x = 900 y = 1650 }
+	continuous_focus_position = { x = 200 y = 1850 }
 	focus = {
 		id = UKR_ukraine_elections
 		icon = ukraine_idelistic
 
 		x = 0
-		y = 15
+		y = 17
 		cost = 0.5
 
 		search_filters = { FOCUS_FILTER_STABILITY }
 
 		available = {
-			date > 2002.10.31
+			date > 2004.10.31
 		}
 
 		bypass = {
 			OR = {
-				date > 2002.10.31
+				date > 2004.10.31
 				has_completed_focus = UKR_lyvochkin
 				has_completed_focus = UKR_stay_for_fair_election
 			}
@@ -35,10 +35,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_ukraine_elections"
 			hidden_effect = {
 				if = {
-					limit = { UKR = { is_ai = yes } }
-					country_event = { id = ukraine_maidan.13 days = 1 }
+					limit = { 
+						NOT = { has_country_flag = ukr_ai_choose }
+						is_ai = yes 
+					}
+					set_country_flag = ukr_ai_choose
+					ukrane_choose_ai = yes
 				}
-
 			}
 		}
 
@@ -238,11 +241,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_seek_help_eastern_oligarch"
-			set_temp_variable = { percent_change = 5.03 }
+			set_temp_variable = { percent_change = 4.03 }
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = UKR }
 			change_influence_percentage = yes
-			set_temp_variable = { treasury_change = 3.5 }
+			set_temp_variable = { treasury_change = 13.5 }
 			modify_treasury_effect = yes
 			if = {
 				limit = {
@@ -253,11 +256,11 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_easterns = 4 }
+				set_temp_variable = { modify_easterns = 5 }
 				modify_easterns_support = yes
-				set_temp_variable = { modify_westerns = -4 }
+				set_temp_variable = { modify_westerns = -5 }
 				modify_westerns_support = yes
-				set_temp_variable = { modify_maidani = -1 }
+				set_temp_variable = { modify_maidani = -3 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -619,6 +622,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_deal_yushenko"
 			country_event = { id = ukraine_kuchma.5 }
 			custom_effect_tooltip = UKR_yusha_tt
+			if = {
+				limit = {
+					has_idea = UKR_yushenko_premier_idea
+				}
+				remove_ideas = UKR_yushenko_premier_idea
+			}
 		}
 
 		ai_will_do = {
@@ -678,6 +687,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_negotiate_orange_maidan"
 			country_event = { id = ukraine_kuchma.7 }
+			hidden_effect = {
+				if = {
+					limit = { 
+						NOT = { has_country_flag = ukr_ai_choose }
+						is_ai = yes 
+					}
+					set_country_flag = ukr_ai_choose
+					ukrane_choose_ai = yes
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 355
@@ -705,7 +724,19 @@ focus_tree = {
 			set_country_flag = UKR_yushenko_party
 			update_party_name = yes
 			country_event = { id = ukraine_kuchma.8 }
-				hidden_effect = {
+			if = {
+				limit = {
+					has_idea = UKR_yushenko_premier_idea
+				}
+				remove_ideas = UKR_yushenko_premier_idea
+			}
+			if = {
+				limit = {
+					has_idea = UKR_yanuk_premier_idea
+				}
+				remove_ideas = UKR_yanuk_premier_idea
+			}
+			hidden_effect = {
 				if = {
 					limit = { has_completed_focus = UKR_arrest_timoshenko }
 					country_event = { id = ukraine_kuchma.23 }
@@ -721,7 +752,14 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 100
+			modifier = {
+				has_country_leader = {
+					name = "Viktor Yanukovych"
+					ruling_only = yes
+				}
+				add = -800
+			}
 			modifier = {
 				has_completed_focus = UKR_gas_azvostal
 				add = 355
@@ -758,6 +796,18 @@ focus_tree = {
 			set_country_flag = UKR_yushenko_party
 			update_party_name = yes
 			country_event = { id = ukraine_kuchma.13 }
+			if = {
+				limit = {
+					has_idea = UKR_yushenko_premier_idea
+				}
+				remove_ideas = UKR_yushenko_premier_idea
+			}
+			if = {
+				limit = {
+					has_idea = UKR_yanuk_premier_idea
+				}
+				remove_ideas = UKR_yanuk_premier_idea
+			}
 			hidden_effect = {
 				if = {
 					limit = { has_completed_focus = UKR_arrest_timoshenko }
@@ -774,7 +824,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 100
 			modifier = {
 				has_global_flag = UKR_YANUK_PATH
 				add = 355
@@ -826,6 +876,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_yushenko_cabinet"
 			add_political_power = 150
+			add_ideas = UKR_yushenko_premier_idea
 			if = {
 				limit = {
 					NOT = {
@@ -1263,8 +1314,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_social_cut_down"
-			decrease_education_budget = yes
-			decrease_social_spending = yes
 			add_timed_idea = {
 				idea = UKR_wtf_bro
 				days = 360
@@ -1657,12 +1706,7 @@ focus_tree = {
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = UKR }
 			change_influence_percentage = yes
-			698 = {
-				add_extra_state_shared_building_slots = 1
-			}
-			699 = {
-				add_extra_state_shared_building_slots = 1
-			}
+			two_office_construction = yes
 		}
 
 		ai_will_do = {
@@ -1861,6 +1905,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_kosuik"
 			one_random_agriculture_district = yes
+			one_random_agriculture_district = yes
 			add_ideas = UKR_our_agricultrure
 			UKR_idea_kleptocratia_rise = yes
 		}
@@ -1922,6 +1967,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_yanuk_cabinet"
 			add_political_power = 150
+			add_ideas = UKR_yanuk_premier_idea
 			if = {
 				limit = {
 					NOT = {
@@ -2053,6 +2099,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_dorohy_avto"
 			UKR_idea_ukraine_infrastructure = yes
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
 			if = {
 				limit = {
 					OR = {
@@ -2891,6 +2939,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_crusade_against_inequality"
 			add_ideas = UKR_equal_rights_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -3063,6 +3113,8 @@ focus_tree = {
 				remove_idea = UKR_socialist_effort
 				add_idea = UKR_socialist_effort1
 			}
+			set_temp_variable = { temp_opinion = 2 }
+			change_labour_unions_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -3106,6 +3158,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_full_rabota"
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
 			swap_ideas = {
 				remove_idea = UKR_socialist_effort1
 				add_idea = UKR_socialist_effort2
@@ -3902,6 +3956,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_back_to_soviet_tracks"
 			add_ideas = UKR_inner_policy_spu
+			set_temp_variable = { temp_opinion = 10 }
+			change_communist_cadres_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -3991,6 +4047,8 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = -10 }
 			change_international_bankers_opinion = yes
 			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
 			two_random_industrial_complex = yes
 			one_random_arms_factory = yes
 			two_random_fossil_fuel_powerplant = yes
@@ -4347,6 +4405,8 @@ focus_tree = {
 				remove_idea = UKR_inner_policy_spu
 				add_idea = UKR_inner_policy_spu1
 			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_communist_cadres_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -4395,6 +4455,8 @@ focus_tree = {
 				remove_idea = UKR_inner_policy_spu1
 				add_idea = UKR_inner_policy_spu2
 			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_communist_cadres_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -4486,6 +4548,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_land_to_people"
 			UKR_idea_lands_reforms_plus = yes
 			one_random_agriculture_district = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -4621,6 +4685,8 @@ focus_tree = {
 				remove_idea = UKR_inner_policy_spu2
 				add_idea = UKR_inner_policy_spu3
 			}
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -4784,6 +4850,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_people_brotherhood"
 			add_ideas = UKR_brotherhood_people
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -4942,7 +5012,7 @@ focus_tree = {
 				SOV = { revoult_in_russia_from_commi_ukraine = yes }
 			}
 			custom_effect_tooltip = UKR_revoult_in_russia_tt
-			custom_effect_tooltip = UKR_gur_operation_russian_tt
+			custom_effect_tooltip = UKR_hur_operation_russian_tt
 		}
 
 		ai_will_do = {
@@ -5227,7 +5297,7 @@ focus_tree = {
 		icon = war_on_donbass_experience
 
 		x = -9
-		y = 10
+		y = 11
 		cost = 2
 
 		search_filters = { FOCUS_FILTER_UKRAINE_VSU }
@@ -5414,31 +5484,23 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_ter_oborona"
 			custom_effect_tooltip = UKR_tro_created_tt
 			add_ideas = UKR_teroborona
+			set_country_flag = TRO_Zapad_close
+			set_country_flag = TRO_South_close
+			set_country_flag = TRO_North_close
+			set_country_flag = TRO_East_close
 			division_template = {
-				name = "Bryhada TRO Corps"
+				name = "Bryhada TRO"
 				regiments = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
 					Arty_Bat = { x = 0 y = 3 }
-					L_Inf_Bat = { x = 1 y = 0 }
-					L_Inf_Bat = { x = 1 y = 1 }
-					L_Inf_Bat = { x = 1 y = 2 }
-					Arty_Bat = { x = 1 y = 3 }
-					L_Inf_Bat = { x = 2 y = 0 }
-					L_Inf_Bat = { x = 2 y = 1 }
-					L_Inf_Bat = { x = 2 y = 2 }
-					Arty_Bat = { x = 2 y = 3 }
 				}
 				support = {
 					L_Engi_Comp = { x = 0 y = 0 }
 					L_Recce_Comp = { x = 0 y = 1 }
-					SP_AA_Battery = { x = 0 y = 2 }
-					armor_Comp = { x = 0 y = 3 }
 				}
-				is_locked = yes
 			}
-			set_country_flag = TRO_founded
 		}
 
 		ai_will_do = {
@@ -5558,6 +5620,29 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = UKR_delta
+		icon = army_cyberwar
+
+		x = 0
+		y = 6
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 5
+
+		prerequisite = { focus = UKR_command_create }
+		search_filters = { FOCUS_FILTER_UKRAINE_VSU }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_delta"
+			UKR_idea_ukraine_army_reforms = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	focus = {
 		id = UKR_azov
 		icon = ukr_aziv
 
@@ -5582,6 +5667,7 @@ focus_tree = {
 			custom_effect_tooltip = UKR_azov_created_tt
 			UKR_idea_kleptocratia_rise = yes
 			hidden_effect = {
+				UKR_firtash_rise = yes
 				division_template = {
 					name = "Azov Brigade"
 					division_names_group = UKR_VOL_01
@@ -5956,14 +6042,77 @@ focus_tree = {
 			factor = 100
 		}
 	}
+	focus = {
+		id = UKR_oplit
+		icon = ukr_oplot
+
+		x = 7
+		y = 4
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 5
+
+		prerequisite = { focus = UKR_srdsc }
+		prerequisite = { focus = UKR_defend_our_sky }
+		search_filters = { FOCUS_FILTER_UKRAINE_VSU }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_oplitc"
+			set_temp_variable = { treasury_change = -6.00 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = GENERIC_develop_armor_prototypes
+				bonus = 0.5
+				uses = 2
+				category = CAT_armor
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	focus = {
+		id = UKR_sapsan
+		icon = ukr_sapsan
+
+		x = 7
+		y = 5
+		relative_position_id = UKR_war_on_donbass_experience
+		cost = 5
+
+		prerequisite = { focus = UKR_oplit }
+		search_filters = { FOCUS_FILTER_UKRAINE_VSU }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_sapsan"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = SOV_hypersonic_missiles
+				bonus = 0.75
+				uses = 1
+				category = CAT_bm
+			}
+			add_tech_bonus = {
+				name = SOV_hypersonic_missiles
+				bonus = 0.75
+				uses = 1
+				category = CAT_cm
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
 	#RUSSIAN-UKRAINE WAR TREE
 	### Start
 	focus = {
 		id = UKR_start_war_against_russia
 		icon = blr_anti_russian
 
-		x = -14
-		y = 5
+		x = -19
+		y = 8
 		cost = 1
 
 		search_filters = { FOCUS_FILTER_UKRAINE_VSU }
@@ -6012,6 +6161,25 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_inter_legion"
 			custom_effect_tooltip = UKR_inter_created_tt
 			add_ideas = UKR_inter_legion_idea
+			hidden_effect = { 
+				division_template = {
+					name = "International Legion"
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+						Special_Forces = { x = 1 y = 2 }
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+						L_Engi_Comp = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -6044,10 +6212,25 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_tro_expanded"
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
-			add_to_variable = { ukr_ter_obr_count = 2 }
 			swap_ideas = {
 				remove_idea = UKR_teroborona
 				add_idea = UKR_teroborona1
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 698 }
+				create_unit = {
+					division = "name = \"112th separate Territorial Defense Brigade\" division_template = \"Bryhada TRO\" start_experience_factor = 0.1"
+					owner = UKR
+				}
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 698 }
+				create_unit = {
+					division = "name = \"113th separate Territorial Defense Brigade\" division_template = \"Bryhada TRO\" start_experience_factor = 0.1"
+					owner = UKR
+				}
 			}
 		}
 
@@ -6088,7 +6271,7 @@ focus_tree = {
 	}
 	focus = {
 		id = UKR_hur_expanded
-		icon = ukr_gur_up
+		icon = ukr_hur_up
 
 		x = 2
 		y = 1
@@ -6099,7 +6282,7 @@ focus_tree = {
 
 		available = {
 			has_war_with = SOV
-			has_completed_focus = UKR_gur_battalions
+			has_completed_focus = UKR_hur_battalions
 			OR = {
 				has_government = democratic
 				nationalist_fascist_are_in_power = yes
@@ -6108,14 +6291,14 @@ focus_tree = {
 		}
 
 		bypass = {
-			has_idea = UKR_gur3
+			has_idea = UKR_hur3
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_hur_expanded"
 			swap_ideas = {
-				remove_idea = UKR_gur2
-				add_idea = UKR_gur3
+				remove_idea = UKR_hur2
+				add_idea = UKR_hur3
 			}
 		}
 		ai_will_do = {
@@ -6190,7 +6373,7 @@ focus_tree = {
 	}
 	focus = {
 		id = UKR_other_battaions_hur
-		icon = ukr_gur_up
+		icon = ukr_hur_up
 
 		x = -2
 		y = 4
@@ -6455,8 +6638,8 @@ focus_tree = {
 		id = UKR_start_war_against_poland
 		icon = ban_nazi_party
 
-		x = -21
-		y = 5
+		x = -26
+		y = 8
 		cost = 1
 
 		search_filters = { FOCUS_FILTER_UKRAINE_VSU }
@@ -6484,7 +6667,7 @@ focus_tree = {
 	}
 	focus = {
 		id = UKR_hur_expandeds
-		icon = ukr_gur_up
+		icon = ukr_hur_up
 
 		x = -1
 		y = 1
@@ -6496,7 +6679,7 @@ focus_tree = {
 
 		available = {
 			has_war_with = POL
-			has_completed_focus = UKR_gur_battalions
+			has_completed_focus = UKR_hur_battalions
 			OR = {
 				has_government = communism
 				nationalist_fascist_are_in_power = yes
@@ -6514,8 +6697,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_hur_expandeds"
 			swap_ideas = {
-				remove_idea = UKR_gur2
-				add_idea = UKR_gur3
+				remove_idea = UKR_hur2
+				add_idea = UKR_hur3
 			}
 		}
 
@@ -6551,7 +6734,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_start_the_kashubian_uprising"
-			custom_effect_tooltip = UKR_gur_operation_kashubia_tt
+			custom_effect_tooltip = UKR_hur_operation_kashubia_tt
 		}
 
 		ai_will_do = {
@@ -6584,7 +6767,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_silesian_rebellion"
-			custom_effect_tooltip = UKR_gur_operation_silesia_tt
+			custom_effect_tooltip = UKR_hur_operation_silesia_tt
 		}
 
 		ai_will_do = {
@@ -6751,6 +6934,7 @@ focus_tree = {
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = UKR }
 			change_influence_percentage = yes
+			add_ideas = UKR_rus_genshtab_idea
 		}
 
 		ai_will_do = {
@@ -6797,6 +6981,21 @@ focus_tree = {
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = UKR }
 			change_influence_percentage = yes
+			if = {
+				limit = {
+					has_idea = UKR_rus_genshtab_idea
+				}
+				swap_ideas = {
+					remove_idea = UKR_rus_genshtab_idea
+					add_idea = UKR_rus_genshtab_idea1
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { has_idea = UKR_rus_genshtab_idea }
+				}
+				add_ideas = UKR_rus_genshtab_idea
+			}
 		}
 
 		ai_will_do = {
@@ -7142,8 +7341,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_pivdenmash_udo"
-			set_temp_variable = { treasury_change = -3.5 }
+			set_temp_variable = { treasury_change = -12 }
 			modify_treasury_effect = yes
+			one_random_fossil_fuel_powerplant = yes
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
 			add_ideas = UKR_pivdenmash_idea
 		}
 
@@ -7181,6 +7389,409 @@ focus_tree = {
 					amount = 8
 				}
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_bronetank
+		icon = army_tank_industry
+
+		x = -8
+		y = 1
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_legacy_of_the_ukr_ind }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_bronetank }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_bronetank"
+			add_ideas = HPR_bronetank
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_avia_zavod
+		icon = economic_avia_industry
+
+		x = -6
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_bronetank }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_avia_zavod }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_avia_zavod"
+			add_ideas = HPR_avia_zavod
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_priborostroy
+		icon = hpr_shevchenko
+
+		x = -10
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_bronetank }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_priborostroy }
+		}
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_priborostroy"
+			add_ideas = HPR_priborostroy
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_agregat
+		icon = hpr_agregat
+
+		x = -8
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_bronetank }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_agregat }
+		}
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_agregat"
+			add_ideas = HPR_agregat
+			set_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_tractor
+		icon = hpr_htz
+
+		x = -9
+		y = 3
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_priborostroy }
+		prerequisite = { focus = UKR_agregat }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_tractor }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_tractor"
+			add_ideas = HPR_tractor
+			set_temp_variable = { treasury_change = -0.7 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_morozova
+		icon = industry_civilian
+
+		x = -7
+		y = 3
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_avia_zavod }
+		prerequisite = { focus = UKR_agregat }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_morozova }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_morozova"
+			add_ideas = HPR_morozova
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_specmachine
+		icon = hpr_spec_machine
+
+		x = -8
+		y = 4
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_tractor }
+		prerequisite = { focus = UKR_morozova }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_specmachine }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_specmachine"
+			add_ideas = HPR_specmachine
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_reborn_ser_and_molot
+		icon = industry_communism
+
+		x = -10
+		y = 4
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_tractor }
+		prerequisite = { focus = UKR_morozova }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_reborn_ser_and_molot }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_reborn_ser_and_molot"
+			696 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_malichev
+		icon = hpr_malichev
+
+		x = -6
+		y = 4
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_tractor }
+		prerequisite = { focus = UKR_morozova }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		bypass = {
+			HPR = { has_completed_focus = HPR_malichev }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_malichev"
+			add_ideas = HPR_malichev
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_concers
+		icon = army_tank_industry
+
+		x = -8
+		y = 5
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_specmachine }
+		prerequisite = { focus = UKR_reborn_ser_and_molot }
+		prerequisite = { focus = UKR_malichev }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			owns_state = 696
+			OR = {
+				has_idea = UKR_kleptocracy01
+				has_idea = UKR_kleptocracy02
+				has_idea = UKR_kleptocracy03
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: UKR_concers"
+			hidden_effect = {
+				remove_ideas = HPR_malichev
+				remove_ideas = HPR_specmachine
+				remove_ideas = HPR_morozova
+				remove_ideas = HPR_tractor
+				remove_ideas = HPR_priborostroy
+				remove_ideas = HPR_agregat
+				remove_ideas = HPR_bronetank
+				remove_ideas = HPR_avia_zavod
+			}
+			add_ideas = UKR_concern
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_tsnap
+		icon = ukr_tsnap
+
+		x = -4
+		y = 2
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_naftogaz }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_tsnap"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			add_ideas = UKR_tsnap_idea
 		}
 
 		ai_will_do = {
@@ -7421,6 +8032,26 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = UKR_monobank
+		icon = ukr_monobank
+		x = -3
+		y = 3
+		relative_position_id = UKR_legacy_of_the_ukr_ind
+		cost = 5
+
+		prerequisite = { focus = UKR_armor_kyv }
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_monobank"
+			one_office_construction = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
 		id = UKR_motor_sich
 		icon = ukr_motorsich
 
@@ -7511,8 +8142,8 @@ focus_tree = {
 		id = UKR_invest_in_ministry_of_infrastructure
 		icon = invest_in_ministry_of_infrastructure
 
-		x = -16
-		y = 2
+		x = -9
+		y = 7
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -7764,8 +8395,8 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = UKR_gur
-		icon = ukr_gur
+		id = UKR_hur
+		icon = ukr_hur
 
 		x = -4
 		y = 1
@@ -7776,8 +8407,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_UKRAINE_SECURITY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UKR_gur"
-			add_ideas = UKR_gur
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_hur"
+			add_ideas = UKR_hur
 		}
 
 		ai_will_do = {
@@ -7785,25 +8416,25 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = UKR_gur_reform
-		icon = ukr_gur_up
+		id = UKR_hur_reform
+		icon = ukr_hur_up
 
 		x = -3
 		y = 2
 		relative_position_id = UKR_security_start
 		cost = 5
 
-		prerequisite = { focus = UKR_gur }
+		prerequisite = { focus = UKR_hur }
 		prerequisite = { focus = UKR_border_guard }
 		search_filters = { FOCUS_FILTER_UKRAINE_SECURITY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UKR_gur_reform"
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_hur_reform"
 			swap_ideas = {
-				remove_idea = UKR_gur
-				add_idea = UKR_gur1
+				remove_idea = UKR_hur
+				add_idea = UKR_hur1
 			}
-			custom_effect_tooltip = UKR_gur_created_tt
+			custom_effect_tooltip = UKR_hur_created_tt
 		}
 
 		ai_will_do = {
@@ -7819,14 +8450,14 @@ focus_tree = {
 		relative_position_id = UKR_security_start
 		cost = 5
 
-		prerequisite = { focus = UKR_gur_reform }
+		prerequisite = { focus = UKR_hur_reform }
 		search_filters = { FOCUS_FILTER_UKRAINE_SECURITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_peacemakers"
 			swap_ideas = {
-				remove_idea = UKR_gur1
-				add_idea = UKR_gur2
+				remove_idea = UKR_hur1
+				add_idea = UKR_hur2
 			}
 		}
 
@@ -7835,8 +8466,8 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = UKR_gur_battalions
-		icon = ukr_gur_battalions
+		id = UKR_hur_battalions
+		icon = ukr_hur_battalions
 
 		x = -3
 		y = 4
@@ -7847,7 +8478,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_UKRAINE_SECURITY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UKR_gur_battalions"
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_hur_battalions"
 			division_template = {
 				name = "Polk HUR"
 				regiments = {
@@ -8272,7 +8903,7 @@ focus_tree = {
 				modify_easterns_support = yes
 				set_temp_variable = { modify_westerns = 7 }
 				modify_westerns_support = yes
-				set_temp_variable = { modify_maidani = -3 }
+				set_temp_variable = { modify_maidani = -5 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -8333,11 +8964,11 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_easterns = -6 }
+				set_temp_variable = { modify_easterns = -9 }
 				modify_easterns_support = yes
-				set_temp_variable = { modify_westerns = 6 }
+				set_temp_variable = { modify_westerns = 9 }
 				modify_westerns_support = yes
-				set_temp_variable = { modify_maidani = -2 }
+				set_temp_variable = { modify_maidani = -10 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -8500,7 +9131,7 @@ focus_tree = {
 				modify_easterns_support = yes
 				set_temp_variable = { modify_westerns = -5 }
 				modify_westerns_support = yes
-				set_temp_variable = { modify_maidani = -8 }
+				set_temp_variable = { modify_maidani = -12 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -8571,7 +9202,7 @@ focus_tree = {
 		id = UKR_Full_order_in_the_country
 		icon = UKR_Cossack_Republic
 
-		x = -5
+		x = -6
 		y = 6
 		relative_position_id = UKR_Ukraine_Always_Right
 		cost = 5
@@ -8619,7 +9250,7 @@ focus_tree = {
 		id = UKR_no_russian_language
 		icon = blr_denied_rus_language
 
-		x = -3
+		x = -4
 		y = 6
 		relative_position_id = UKR_Ukraine_Always_Right
 		cost = 5
@@ -8642,7 +9273,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -8 }
+				set_temp_variable = { modify_maidani = -11 }
 				modify_maidani_support = yes
 				set_temp_variable = { modify_easterns = -10 }
 				modify_easterns_support = yes
@@ -8802,16 +9433,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_UKRAINE_NAZIKI }
 
 		available = {
-			has_idea = UKR_nationalists_right_sector2
 			nationalist_fascist_are_in_power = yes
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_make_government_jobs_only_for_Ukrainians"
-			swap_ideas = {
-				remove_idea = UKR_nationalists_right_sector2
-				add_idea = UKR_nationalists_right_sector3
-			}
+			UKR_idea_nationalists_pravosek = yes
 			set_temp_variable = { percent_change = 7 }
 			change_domestic_influence_percentage = yes
 			if = {
@@ -8850,7 +9477,7 @@ focus_tree = {
 		relative_position_id = UKR_Ukraine_Always_Right
 		cost = 5
 
-		prerequisite = { focus = UKR_Full_order_in_the_country }
+		prerequisite = { focus = UKR_no_russian_language }
 		search_filters = { FOCUS_FILTER_UKRAINE_NAZIKI }
 
 		available = {
@@ -8876,10 +9503,7 @@ focus_tree = {
 					add_idea = UKR_idea_inner_army
 				}
 			}
-			swap_ideas = {
-				remove_idea = UKR_nationalists_right_sector
-				add_idea = UKR_nationalists_right_sector1
-			}
+			UKR_idea_nationalists_pravosek = yes
 		}
 
 		ai_will_do = {
@@ -8906,10 +9530,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_Night_of_the_Long_Knives"
-			swap_ideas = {
-				remove_idea = UKR_nationalists_right_sector1
-				add_idea = UKR_nationalists_right_sector2
-			}
+			UKR_idea_nationalists_pravosek = yes
 			add_popularity = {
 				ideology = communism
 				popularity = -0.25
@@ -8922,6 +9543,8 @@ focus_tree = {
 				ideology = neutrality
 				popularity = -0.15
 			}
+			set_temp_variable = { temp_opinion = -7 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -9030,6 +9653,8 @@ focus_tree = {
 				remove_idea = orthodox_christian
 				add_idea = UKR_idea_orthodox_chrisitan_church
 			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_priesthood_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -9076,6 +9701,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_reconcista"
 			add_ideas = UKR_nationalists_reconcista
 			add_country_leader_trait = islamophobe
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_priesthood_opinion = yes
 		}
 
 		ai_will_do = {
@@ -9102,6 +9729,27 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_arms_rebuild"
 			two_random_arms_factory = yes
+			one_random_fossil_fuel_powerplant = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			if = {
+				limit = {
+					has_idea = UKR_russian_dependent_military
+				}
+				remove_ideas = UKR_russian_dependent_military
+			}
+			else_if = {
+				limit = {
+					has_idea = UKR_russian_dependent_military1
+				}
+				remove_ideas = UKR_russian_dependent_military1
+			}
+			else_if = {
+				limit = {
+					has_idea = UKR_russian_dependent_military2
+				}
+				remove_ideas = UKR_russian_dependent_military2
+			}
 		}
 
 		ai_will_do = {
@@ -9139,6 +9787,8 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -5.5 }
 			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -9265,6 +9915,8 @@ focus_tree = {
 				remove_idea = UKR_nationalists_una_unso
 				add_idea = UKR_nationalists_una_unso1
 			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
 			add_ideas = faction_baltic_black_sea_union_member
 			create_faction = UKR_baltic_black_sea_union_faction
 			for_each_scope_loop = {
@@ -9526,7 +10178,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_caucasus_volunteers"
-			custom_effect_tooltip = UKR_gur_operation_caucas_volunteer_tt
+			custom_effect_tooltip = UKR_hur_operation_caucas_volunteer_tt
 		}
 
 		ai_will_do = {
@@ -9549,13 +10201,13 @@ focus_tree = {
 
 		available = {
 			nationalist_fascist_are_in_power = yes
-			has_completed_focus = UKR_gur_reform
+			has_completed_focus = UKR_hur_reform
 			NOT = { country_exists = DAG }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_dagestan_reb_prepare"
-			custom_effect_tooltip = UKR_gur_operation_dagestan_tt
+			custom_effect_tooltip = UKR_hur_operation_dagestan_tt
 		}
 
 		ai_will_do = {
@@ -9579,12 +10231,12 @@ focus_tree = {
 		available = {
 			nationalist_fascist_are_in_power = yes
 			NOT = { country_exists = CHE }
-			has_completed_focus = UKR_gur_reform
+			has_completed_focus = UKR_hur_reform
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_befriend_chechens"
-			custom_effect_tooltip = UKR_gur_operation_chechnya_tt
+			custom_effect_tooltip = UKR_hur_operation_chechnya_tt
 		}
 
 		ai_will_do = {
@@ -9625,9 +10277,9 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-					has_completed_focus = UKR_gur_reform
+					has_completed_focus = UKR_hur_reform
 				}
-				custom_effect_tooltip = UKR_gur_operation_belarus_tt
+				custom_effect_tooltip = UKR_hur_operation_belarus_tt
 			}
 		}
 
@@ -9707,9 +10359,9 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-					has_completed_focus = UKR_gur_reform
+					has_completed_focus = UKR_hur_reform
 				}
-				custom_effect_tooltip = UKR_gur_operation_poland_tt
+				custom_effect_tooltip = UKR_hur_operation_poland_tt
 			}
 		}
 
@@ -9770,7 +10422,7 @@ focus_tree = {
 		available = {
 			nationalist_fascist_are_in_power = yes
 			SOV = {	owns_state = 669 }
-			has_completed_focus = UKR_gur_reform
+			has_completed_focus = UKR_hur_reform
 			NOT = {	is_in_faction_with = SOV }
 		}
 
@@ -9780,7 +10432,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_Secretly_sending_militants_to_Kuban"
-			custom_effect_tooltip = UKR_gur_operation_crimea_tt
+			custom_effect_tooltip = UKR_hur_operation_crimea_tt
 		}
 
 		ai_will_do = {
@@ -9809,13 +10461,13 @@ focus_tree = {
 					owns_state = 1068
 				}
 			}
-			has_completed_focus = UKR_gur_reform
+			has_completed_focus = UKR_hur_reform
 			NOT = {	is_in_faction_with = SOV }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_Liberate_Green_Klin"
-			custom_effect_tooltip = UKR_gur_operation_vladivostok_tt
+			custom_effect_tooltip = UKR_hur_operation_vladivostok_tt
 		}
 
 		ai_will_do = {
@@ -9838,7 +10490,7 @@ focus_tree = {
 		available = {
 			nationalist_fascist_are_in_power = yes
 			SOV = {	owns_state = 668 }
-			has_completed_focus = UKR_gur_reform
+			has_completed_focus = UKR_hur_reform
 		}
 
 		bypass = {
@@ -9847,7 +10499,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_Agitation_of_radical_Ukrainians_in_Kuban"
-			custom_effect_tooltip = UKR_gur_operation_kuban_tt
+			custom_effect_tooltip = UKR_hur_operation_kuban_tt
 		}
 
 		ai_will_do = {
@@ -10057,6 +10709,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_Make_military_exercises_in_the_country_compulsory_for_all"
 			UKR_idea_ukraine_army_reforms = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -10103,6 +10757,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_To_arm_every_person_in_the_country"
 			UKR_idea_nationalists_upa = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -10151,6 +10807,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_Form_an_alliance_of_right-wing_youth"
 			UKR_idea_nationalists_upa = yes
 			add_political_power = 100
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
 		}
 
 		ai_will_do = {
@@ -10428,6 +11086,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_optimise_prior_loyals"
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -10439,7 +11099,7 @@ focus_tree = {
 				}
 				set_temp_variable = { modify_easterns = 5 }
 				modify_easterns_support = yes
-				set_temp_variable = { modify_maidani = -3 }
+				set_temp_variable = { modify_maidani = -6 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -10482,13 +11142,15 @@ focus_tree = {
 				}
 				set_temp_variable = { modify_westerns = 5 }
 				modify_westerns_support = yes
-				set_temp_variable = { modify_maidani = -3 }
+				set_temp_variable = { modify_maidani = -6 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
 				}
 				UKR_idea_kleptocratia_rise = yes
 			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -10514,6 +11176,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_meet_akhmetov"
 			country_event = { id = ukraine_regions.2 }
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -10548,7 +11212,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -3 }
+				set_temp_variable = { modify_maidani = -6 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -10649,6 +11313,8 @@ focus_tree = {
 					UKR_maidan_start_check = yes
 				}
 			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -10693,7 +11359,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -6 }
+				set_temp_variable = { modify_maidani = -8 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -10737,11 +11403,11 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_easterns = 5 }
+				set_temp_variable = { modify_easterns = 8 }
 				modify_easterns_support = yes
 				set_temp_variable = { modify_westerns = 5 }
 				modify_westerns_support = yes
-				set_temp_variable = { modify_maidani = -5 }
+				set_temp_variable = { modify_maidani = -6 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -10788,7 +11454,7 @@ focus_tree = {
 				modify_easterns_support = yes
 				set_temp_variable = { modify_westerns = -5 }
 				modify_westerns_support = yes
-				set_temp_variable = { modify_maidani = -4 }
+				set_temp_variable = { modify_maidani = -9 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -10901,7 +11567,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = 1 }
+				set_temp_variable = { modify_maidani = 2 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11133,7 +11799,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -5 }
+				set_temp_variable = { modify_maidani = -8 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11174,7 +11840,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -1 }
+				set_temp_variable = { modify_maidani = -4 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11218,7 +11884,7 @@ focus_tree = {
 				modify_westerns_support = yes
 				set_temp_variable = { modify_easterns = 3 }
 				modify_easterns_support = yes
-				set_temp_variable = { modify_maidani = -5 }
+				set_temp_variable = { modify_maidani = -6 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11258,7 +11924,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = 1 }
+				set_temp_variable = { modify_maidani = 2 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11290,6 +11956,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_anti_corrupt"
 			add_ideas = UKR_parti_regions_anti_corruption_commitie
 			add_political_power = 100
+			set_temp_variable = { temp_opinion = -3 }
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -11297,7 +11965,7 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = UKR_party_regions_commitie_economic
+		id = UKR_party_regions_committee_economic
 		icon = hryvna
 		x = -4
 		y = 4
@@ -11312,8 +11980,8 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_commitie_economic"
-			add_ideas = UKR_parti_regions_economic_commitie
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_committee_economic"
+			add_ideas = UKR_parti_regions_economic_committee
 		}
 
 		ai_will_do = {
@@ -11329,7 +11997,7 @@ focus_tree = {
 		relative_position_id = UKR_party_regions_start
 		cost = 5
 
-		prerequisite = { focus = UKR_party_regions_commitie_economic }
+		prerequisite = { focus = UKR_party_regions_committee_economic }
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS }
 
 		available = {
@@ -11354,7 +12022,7 @@ focus_tree = {
 		relative_position_id = UKR_party_regions_start
 		cost = 5
 
-		prerequisite = { focus = UKR_party_regions_commitie_economic }
+		prerequisite = { focus = UKR_party_regions_committee_economic }
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS }
 
 		available = {
@@ -11444,7 +12112,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -5 }
+				set_temp_variable = { modify_maidani = -8 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11490,7 +12158,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -8 }
+				set_temp_variable = { modify_maidani = -12 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11533,7 +12201,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -5 }
+				set_temp_variable = { modify_maidani = -8 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11621,7 +12289,7 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = UKR_party_regions_mezhigorie
+		id = UKR_party_regions_mezhyhirya
 		icon = straus_yanuk
 
 		x = 1
@@ -11638,7 +12306,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_mezhigorie"
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_party_regions_mezhyhirya"
 			country_event = { id = ukraine_regions.4 }
 		}
 
@@ -11678,7 +12346,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -5 }
+				set_temp_variable = { modify_maidani = -8 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11721,7 +12389,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = -7 }
+				set_temp_variable = { modify_maidani = -9 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11802,7 +12470,7 @@ focus_tree = {
 						}
 					}
 				}
-				set_temp_variable = { modify_maidani = 2 }
+				set_temp_variable = { modify_maidani = 4 }
 				modify_maidani_support = yes
 				hidden_effect = {
 					UKR_maidan_start_check = yes
@@ -11821,7 +12489,7 @@ focus_tree = {
 		x = -3
 		y = 10
 		relative_position_id = UKR_party_regions_start
-		cost = 5
+		cost = 3
 
 		prerequisite = { focus = UKR_party_regions_agreement_opposition }
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS }
@@ -11846,6 +12514,10 @@ focus_tree = {
 				hidden_effect = {
 					UKR_maidan_start_check = yes
 				}
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.06
 			}
 		}
 
@@ -11873,6 +12545,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_europe_negotiat"
 			country_event = { id = ukraine_regions.11 }
+			set_temp_variable = { temp_opinion = 2 }
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -11886,10 +12560,10 @@ focus_tree = {
 
 		x = -2
 		y = 1
-		relative_position_id = UKR_party_regions_mezhigorie
+		relative_position_id = UKR_party_regions_mezhyhirya
 		cost = 5
 
-		prerequisite = { focus = UKR_party_regions_mezhigorie }
+		prerequisite = { focus = UKR_party_regions_mezhyhirya }
 		prerequisite = { focus = UKR_party_regions_youth_region }
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS }
 
@@ -11927,10 +12601,10 @@ focus_tree = {
 
 		x = 5
 		y = 1
-		relative_position_id = UKR_party_regions_mezhigorie
+		relative_position_id = UKR_party_regions_mezhyhirya
 		cost = 3
 
-		prerequisite = { focus = UKR_party_regions_mezhigorie }
+		prerequisite = { focus = UKR_party_regions_mezhyhirya }
 		prerequisite = { focus = UKR_party_regions_youth_region }
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS }
 
@@ -12103,10 +12777,10 @@ focus_tree = {
 
 		x = 1
 		y = 1
-		relative_position_id = UKR_party_regions_mezhigorie
+		relative_position_id = UKR_party_regions_mezhyhirya
 		cost = 3
 
-		prerequisite = { focus = UKR_party_regions_mezhigorie }
+		prerequisite = { focus = UKR_party_regions_mezhyhirya }
 		search_filters = { FOCUS_FILTER_UKRAINE_REGIONS }
 
 		available = {
@@ -13252,6 +13926,8 @@ focus_tree = {
 			set_temp_variable = { temp_outlook_increase = 0.03 }
 			add_relative_party_popularity = yes
 			UKR_idea_kleptocratia_down = yes
+			set_temp_variable = { temp_opinion = -4 }
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -13280,6 +13956,8 @@ focus_tree = {
 				idea = UKR_our_ukraine_fight_with_corruption_idea
 				days = 370
 			}
+			set_temp_variable = { temp_opinion = -4 }
+			change_oligarchs_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -13435,6 +14113,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_increase_business_financing"
 			decrease_centralization = yes
 			one_office_construction = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -13536,6 +14216,62 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_democratic_constitution"
 			country_event = { id = ukraine_our_ukraine.3 days = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_our_ukraine_dia
+		icon = ukr_dia
+
+		x = -6
+		y = 9
+		relative_position_id = UKR_our_ukraine_start
+		cost = 5
+
+		prerequisite = { focus = UKR_our_ukraine_parliamentary_republic focus = UKR_our_ukraine_president_republic }
+		search_filters = { FOCUS_FILTER_UKRAINE_SERVANT }
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_dia"
+			add_ideas = UKR_zelya_dia
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	focus = {
+		id = UKR_our_ukraine_helsi
+		icon = ukr_helsi
+
+		x = 6
+		y = 9
+		relative_position_id = UKR_our_ukraine_start
+		cost = 5
+
+		prerequisite = { focus = UKR_our_ukraine_parliamentary_republic focus = UKR_our_ukraine_president_republic }
+		search_filters = { FOCUS_FILTER_UKRAINE_SERVANT }
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus UKR_our_ukraine_dia"
+			add_ideas = UKR_zelya_helsi
 		}
 
 		ai_will_do = {
@@ -13955,6 +14691,8 @@ focus_tree = {
 			ITA = {
 				country_event = ukraine_our_ukraine.4
 			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -14835,6 +15573,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_deoligarchisation"
 			UKR_idea_kleptocratia_down = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_oligarchs_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -15042,10 +15782,7 @@ focus_tree = {
 				limit = {
 					has_idea = UKR_russian_dependent_military
 				}
-				swap_ideas = {
-					remove_idea = UKR_russian_dependent_military
-					add_idea = UKR_russian_dependent_military1
-				}
+				remove_ideas = UKR_russian_dependent_military
 			}
 			else_if = {
 				limit = {
@@ -15870,6 +16607,8 @@ focus_tree = {
 			set_temp_variable = { modify_eurosceptic = -0.1 }
 			set_temp_variable = { modify_eurosceptic_target = ROOT }
 			eurosceptic_change = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -16000,6 +16739,8 @@ focus_tree = {
 			set_improved_trade_agreement = yes
 			set_temp_variable = { int_investment_change = 1 }
 			modify_international_investment_effect = yes
+			set_temp_variable = { temp_opinion = 3 }
+			change_international_bankers_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -16123,6 +16864,8 @@ focus_tree = {
 			CZE = { country_event = { id = ukraine_poroh.7 } }
 			HUN = { country_event = { id = ukraine_poroh.7 } }
 			SLV = { country_event = { id = ukraine_poroh.7 } }
+			set_temp_variable = { temp_opinion = 3 }
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -16150,6 +16893,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_reorient_market"
 			UKR_wve_rivlary_alignment_to_the_west = yes
 			add_ideas = UKR_west_investors
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -16259,6 +17004,8 @@ focus_tree = {
 			set_temp_variable = { tag_index = UKR }
 			set_temp_variable = { influence_target = CAN }
 			change_influence_percentage = yes
+			set_temp_variable = { temp_opinion = 1 }
+			change_international_bankers_opinion = yes
 		}
 
 		ai_will_do = {
@@ -16912,6 +17659,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_apply_to_eu_por"
 			UKR_idea_ukraine_eu_assosiated = yes
 			UKR_wve_rivlary_alignment_to_the_west = yes
+			add_political_power = 150
 		}
 
 		ai_will_do = {
@@ -17586,6 +18334,11 @@ focus_tree = {
 				remove_idea = UKR_vetrenko_iron_woman1
 				add_idea = UKR_vetrenko_iron_woman_soc
 			}
+			set_temp_variable = { temp_opinion = 7 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = 7 }
+			change_landowners_opinion = yes
+			UKR_idea_lands_reforms_plus = yes
 		}
 
 		ai_will_do = {
@@ -18151,6 +18904,10 @@ focus_tree = {
 				remove_idea = UKR_vetrenko_iron_woman_soc
 				add_idea = UKR_vetrenko_iron_woman_soc1
 			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
 		}
 
 		ai_will_do = {
@@ -18239,6 +18996,8 @@ focus_tree = {
 			two_random_arms_factory = yes
 			two_random_industrial_complex = yes
 			two_random_fossil_fuel_powerplant = yes
+			set_temp_variable = { temp_opinion = 3 }
+			change_labour_unions_opinion = yes
 			if = {
 				limit = {
 					NOT = {
@@ -18398,7 +19157,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 355
 		}
 	}
 
@@ -18806,6 +19565,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UKR_free_healthcare"
 			add_ideas = UKR_vetrenko_health_free_idea
+			set_temp_variable = { temp_opinion = 2 }
+			change_labour_unions_opinion = yes
 			if = {
 				limit = {
 					NOT = {
