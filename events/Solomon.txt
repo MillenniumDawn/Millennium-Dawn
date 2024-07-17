@@ -1,0 +1,221 @@
+# By Zei33
+
+# The Solomon Competition is a quest chain played out between Australia and China.
+# The Solomon Islands will request assistance throughout the game and each country
+# will have the opportunity to help and gain points. At around 2020, the country with
+# the most points will gain some sort of control over the Solomon Islands.
+# In the real world, China ends up signing a security pact with them, so something
+# in that vain.
+# The results of the competition will differ dramatically if Australia is moving
+# towards China instead of the USA.
+add_namespace = solomon_competition
+
+country_event = { # Solomon Islands Investment Request - Initial choice
+	id = solomon_competition.1
+	title = solomon_competition.1.t
+	desc = solomon_competition.1.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = solomon_competition.1.o1 # We'll help out
+		log = "[GetDateText]: [This.GetName]: solomon_competition.1.o1 executed"
+
+		if = {
+			limit = { original_tag = AST }
+			add_to_variable = { SOL.SOL_AST_support = 5 }
+			log = "[GetDateText]: Australia has agreed to help the Solomon Islands (Score [SOL.SOL_AST_support])"
+		}
+		else = {
+			add_to_variable = { SOL.SOL_CHI_support = 5 }
+			log = "[GetDateText]: China has agreed to help the Solomon Islands (Score [SOL.SOL_CHI_support])"
+		}
+
+		# Build industry in Solomon Islands at cost
+		set_temp_variable = { treasury_change = -12.5 }
+		modify_treasury_effect = yes
+		SOL = {
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			country_event = { id = solomon_competition.3 days = 1 } # Confirmation of investment
+			set_country_flag = SOL_industry_construction_built
+		}
+
+		# Give influence to investor
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = SOL.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 1
+
+			modifier = {
+				check_variable = { treasury < 12.49 }
+				factor = 0
+			}
+		}
+	}
+
+	option = {
+		name = solomon_competition.1.o2 # We're not interested
+		log = "[GetDateText]: [This.GetName]: solomon_competition.1.o2 executed"
+
+		# Approach the other guys
+		if = {
+			limit = { original_tag = AST }
+			CHI = {
+				country_event = { id = solomon_competition.2 days = 1 }
+			}
+		}
+		else = {
+			AST = {
+				country_event = { id = solomon_competition.2 days = 1 }
+			}
+		}
+
+		# Reduce the influence of the rejector
+		set_temp_variable = { percent_change = -2 }
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = SOL.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Solomon Islands Investment Request - Ask the other guys
+	id = solomon_competition.2
+	title = solomon_competition.2.t
+	desc = solomon_competition.2.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = solomon_competition.2.o1 # We'll help out
+		log = "[GetDateText]: [This.GetName]: solomon_competition.2.o1 executed"
+
+		if = {
+			limit = { original_tag = AST }
+			add_to_variable = { SOL.SOL_AST_support = 5 }
+			log = "[GetDateText]: Australia has agreed to help the Solomon Islands (Score [SOL.SOL_AST_support])"
+		}
+		else = {
+			add_to_variable = { SOL.SOL_CHI_support = 5 }
+			log = "[GetDateText]: China has agreed to help the Solomon Islands (Score [SOL.SOL_CHI_support])"
+		}
+
+		# Build industry in Solomon Islands at cost
+		set_temp_variable = { treasury_change = -12.5 }
+		modify_treasury_effect = yes
+		SOL = {
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			country_event = { id = solomon_competition.3 days = 1 }
+			set_country_flag = SOL_industry_construction_built
+		}
+
+		set_temp_variable = { percent_change = 5 } # Extra grateful
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = SOL.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 2 # More likely to accept after rejection by opponent.
+
+			modifier = {
+				check_variable = { treasury < 12.5 }
+				factor = 0
+			}
+		}
+	}
+
+	option = {
+		name = solomon_competition.2.o2 # We're not interested
+		log = "[GetDateText]: [This.GetName]: solomon_competition.2.o2 executed"
+
+		SOL = {
+			country_event = { id = solomon_competition.4 days = 1 }
+		}
+
+		# Reduce the influence of the rejector
+		set_temp_variable = { percent_change = -5 } # Extra disappointed
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = SOL.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Solomon Islands Investment Request - Someone agreed to help
+	id = solomon_competition.3
+	title = solomon_competition.3.t
+	desc = solomon_competition.3.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = solomon_competition.3.o1 # Great news!
+		log = "[GetDateText]: [This.GetName]: solomon_competition.3.o1 executed"
+
+		country_event = { id = solomon_competition.5 days = 300 } # Make next decision available
+
+		add_opinion_modifier = {
+			modifier = recently_invest
+			target = ROOT
+		}
+	}
+}
+
+country_event = { # Solomon Islands Investment Request - Nobody wants to help
+	id = solomon_competition.4
+	title = solomon_competition.4.t
+	desc = solomon_competition.4.d
+	picture = GFX_report_event_generic_1
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = solomon_competition.4.o1 # We've been abandoned...
+		log = "[GetDateText]: [This.GetName]: solomon_competition.4.o1 executed"
+
+		country_event = { id = solomon_competition.5 days = 300 }
+	}
+}
+
+country_event = { # Delay before second solomon_competition competition request becomes available
+	id = solomon_competition.5
+
+	hidden = yes
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		set_country_flag = solomon_competition_competition_second_stage
+		log = "[GetDateText]: [This.GetName]: solomon_competition.5 executed"
+	}
+}

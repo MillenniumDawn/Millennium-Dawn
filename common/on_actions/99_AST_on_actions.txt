@@ -1,17 +1,21 @@
+#By Zei33
 on_actions = {
-	on_monthly_AST = {
+	on_state_control_changed = {
 		effect = {
-			if = {
+			if = { # MH17 crash triggers soon after LPR/DPR breaks away from Ukraine.
 				limit = {
+					FROM = { original_tag = UKR }
+					ROOT = { has_war_with = FROM }
 					OR = {
-						country_exists = DPR
-						country_exists = LPR
+						FROM = { original_tag = DPR }
+						FROM = { original_tag = LPR }
 					}
 				}
 				country_event = { id = australia_md.25 days = 30 random_days = 90 }
 			}
 		}
 	}
+	on_monthly_AST = {}
 	on_yearly_AST = {
 		effect = {
 			random_list = {
@@ -26,6 +30,32 @@ on_actions = {
 					if {
 						limit = { NOT = { has_idea = AST_idea_national_bushfire_strategy } }
 						country_event = { id = australia_md.27 days = 285 random_days = 100 }
+					}
+				}
+			}
+		}
+	}
+	on_monthly_SOL = { # Solomon Islands Competition
+		effect = {
+			if = {
+				limit = { NOT = { has_country_flag = finished_solomon_competition } }
+				for_each_loop = {
+					array = influence_array
+					value = v
+					break = break
+					if = {
+						limit = { check_variable = { v = CHI } }
+						set_country_flag = solomon_competition_CHI_influence
+						clr_country_flag = solomon_competition_AST_influence
+						log = "[GetDateText]: [This.GetName] executed on_monthly_sol and current competition winner is China."
+						set_temp_variable = { break = 1 }
+					}
+					else_if = {
+						limit = { check_variable = { v = AST } }
+						set_country_flag = solomon_competition_AST_influence
+						clr_country_flag = solomon_competition_CHI_influence
+						log = "[GetDateText]: [This.GetName] executed on_monthly_sol and current competition winner is Australia."
+						set_temp_variable = { break = 1 }
 					}
 				}
 			}
