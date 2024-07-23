@@ -130,19 +130,19 @@ scripted_gui = {
 			parliament_button_click_enabled = {
 				OR = {
 					has_idea = EU_member
-					has_idea = EU_candidate
+					has_country_flag = EU_candidate
 				}
 			}
 			euro_voting_button_click_enabled = {
 				OR = {
 					has_idea = EU_member
-					has_idea = EU_candidate
+					has_country_flag = EU_candidate
 				}
 			}
 			fiscal_button_click_enabled = {
 				OR = {
 					has_idea = EU_member
-					has_idea = EU_candidate
+					has_country_flag = EU_candidate
 				}
 			}
 
@@ -1968,7 +1968,10 @@ scripted_gui = {
 							}
 						}
 					}
-					remove_ideas = Migrant_Crisis_Europe
+					if = {
+						limit = { has_global_flag = EUU_migrant_crisis_triggered }
+						remove_ideas = Migrant_Crisis_Europe
+					}
 					add_to_variable = { party_pop_array^20 = 0.05 }
 					add_popularity = { ideology = nationalist popularity = 0.05 }
 					recalculate_party = yes
@@ -1984,7 +1987,10 @@ scripted_gui = {
 							}
 						}
 					}
-					remove_ideas = Migrant_Crisis_Europe
+					if = {
+						limit = { has_global_flag = EUU_migrant_crisis_triggered }
+						remove_ideas = Migrant_Crisis_Europe
+					}
 				}
 				# focus_EU406
 				if = {
@@ -2539,13 +2545,7 @@ scripted_gui = {
 					EUXXX = "[EUXXX_EP_agenda]"
 					PG_X = "[PG_X_influence]"
 				}
-				hidden_effect = {
-					every_country = {
-						limit = { has_idea = EU_member }
-						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
-					}
-					set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 194 }
-				}
+				set_the_eu_parliament_delay = yes
 				update_eu_dirty_variable = yes
 			}
 			remove_vote_button_click = {
@@ -2567,12 +2567,7 @@ scripted_gui = {
 					EUXXX = "[EUXXX_EP_agenda]"
 					PG_X = "[PG_X_influence]"
 				}
-				hidden_effect = {
-					every_country = {
-						limit = { has_idea = EU_member }
-						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
-					}
-				}
+				set_the_eu_parliament_delay = yes
 				update_eu_dirty_variable = yes
 			}
 
@@ -2613,12 +2608,7 @@ scripted_gui = {
 					EUXXX = "[EUXXX_EP_agenda]"
 					PG_X = "[PG_X_influence]"
 				}
-				hidden_effect = {
-					every_country = {
-						limit = { has_idea = EU_member }
-						set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 180 }
-					}
-				}
+				set_the_eu_parliament_delay = yes
 				update_eu_dirty_variable = yes
 			}
 
@@ -3992,14 +3982,30 @@ scripted_gui = {
 
 			approve_IPA_button_click = {
 				ai_will_do = {
-					factor = 1
+					base = 10
 					modifier = {
-						factor = 0
+						factor = 1.5
 						any_of = {
 							array = global.EU_potential
+							value = v
+							index = i
+
 							var:global.EU_potential^i = {
 								has_country_flag = EU_candidate
 								NOT = { has_idea = EU_member }
+							}
+						}
+					}
+					modifier = {
+						factor = 0
+						all_of = {
+							array = global.EU_potential
+							value = v
+							index = i
+
+							var:global.EU_potential^i = {
+								has_country_flag = EU_candidate
+								has_idea = EU_member
 							}
 						}
 					}
@@ -4007,7 +4013,7 @@ scripted_gui = {
 			}
 			euroscepticism_country_button_click = {
 				ai_will_do = {
-					factor = 1
+					base = 10
 					modifier = {
 						add = -40
 						NOT = { gov_is_eurosceptical = yes }
@@ -4036,7 +4042,7 @@ scripted_gui = {
 			}
 			euroscepticism_euwide_button_click = {
 				ai_will_do = {
-					factor = 1
+					base = 10
 					modifier = {
 						add = -40
 						NOT = { gov_is_eurosceptical = yes }
@@ -5100,11 +5106,11 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 002 } }
 					has_political_power > 100
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_tt
-						check_variable = { global.EU_has_candiates > 0 }
+						tooltip = eu_candidates_tt
+						check_variable = { global.EU_has_candidates > 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5292,6 +5298,7 @@ scripted_gui = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
 					}
+					has_global_flag = EUU_migrant_crisis_triggered
 				}
 				else_if = {
 					limit = { check_variable = { v = 406 } }
@@ -5327,7 +5334,7 @@ scripted_gui = {
 					has_political_power > 300
 					date > 2002.1.1
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5344,7 +5351,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5360,7 +5367,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5376,7 +5383,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5392,7 +5399,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5408,7 +5415,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5424,7 +5431,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5440,7 +5447,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5456,7 +5463,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
@@ -5471,7 +5478,7 @@ scripted_gui = {
 						check_variable = { global.EU_expansion_check = 0 }
 					}
 					custom_trigger_tooltip = {
-						tooltip = eu_canidates_considering
+						tooltip = eu_candidates_considering
 						NOT = { has_global_flag = considering_current_canidates }
 					}
 				}
