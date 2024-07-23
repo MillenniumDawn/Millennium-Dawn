@@ -143,19 +143,19 @@ BOT_increase_desertification_rate = {
 		limit = {
 			check_variable = { kalahari_retreats > 4 }
 		}
-		custom_effect_tooltip = BOT_reduce_yearly_good_desertification_5
-		subtract_from_variable = { kalahari_retreats = 5 }
 		custom_effect_tooltip = BOT_increase_yearly_bad_desertification_5
 		add_to_variable = { kalahari_expands = 5 }
+		custom_effect_tooltip = BOT_reduce_yearly_good_desertification_5
+		subtract_from_variable = { kalahari_retreats = 5 }
 	}
 	else_if = {
 		limit = {
 			check_variable = { kalahari_steady > 4 }
 		}
-		custom_effect_tooltip = BOT_reduce_yearly_neutral_desertification_5
-		subtract_from_variable = { kalahari_steady = 5 }
 		custom_effect_tooltip = BOT_increase_yearly_bad_desertification_5
 		add_to_variable = { kalahari_expands = 5 }
+		custom_effect_tooltip = BOT_reduce_yearly_neutral_desertification_5
+		subtract_from_variable = { kalahari_steady = 5 }
 	}
 	else = {
 		add_political_power = -200
@@ -167,19 +167,19 @@ BOT_decrease_desertification_rate = {
 		limit = {
 			check_variable = { kalahari_steady < 30 }
 		}
-		custom_effect_tooltip = BOT_increase_yearly_neutral_desertification_5
-		add_to_variable = { kalahari_steady = 5 }
 		custom_effect_tooltip = BOT_decrease_yearly_bad_desertification_5
 		subtract_from_variable = { kalahari_expands = 5 }
+		custom_effect_tooltip = BOT_increase_yearly_neutral_desertification_5
+		add_to_variable = { kalahari_steady = 5 }
 	}
 	else_if = {
 		limit = {
 			check_variable = { kalahari_retreats < 70 }
 		}
-		custom_effect_tooltip = BOT_increase_yearly_good_desertification_5
-		add_to_variable = { kalahari_retreats = 5 }
 		custom_effect_tooltip = BOT_decrease_yearly_bad_desertification_5
 		subtract_from_variable = { kalahari_expands = 5 }
+		custom_effect_tooltip = BOT_increase_yearly_good_desertification_5
+		add_to_variable = { kalahari_retreats = 5 }
 	}
 	else = {
 		add_political_power = 200
@@ -333,4 +333,47 @@ BOT_boost_digkosi = {
 	add_to_variable = { party_pop_array^23 = 0.02 }
 	add_popularity = { ideology = nationalist popularity = 0.02 }
 	recalculate_party = yes
+}
+
+BOT_update_anti_poaching = {
+	#From internal security level
+	if = {
+		limit = { has_idea = police_01 }
+		set_variable = { chance_to_kill_poachers = 15 }
+	}
+	else_if = {
+		limit = { has_idea = police_02 }
+		set_variable = { chance_to_kill_poachers = 30 }
+	}
+	else_if = {
+		limit = { has_idea = police_03 }
+		set_variable = { chance_to_kill_poachers = 45 }
+	}
+	else_if = {
+		limit = { has_idea = police_04 }
+		set_variable = { chance_to_kill_poachers = 60 }
+	}
+	else_if = {
+		limit = { has_idea = police_05 }
+		set_variable = { chance_to_kill_poachers = 75 }
+	}
+	#From hiring extra security
+	if = {
+		limit = { has_decision = BOT_anti_poaching_extra_security }
+		add_to_variable = { chance_to_kill_poachers = 10 }
+	}
+
+	clamp_variable = { var = chance_to_kill_poachers max = 100 }
+	set_variable = { chance_to_not_kill_poachers = 100 }
+	subtract_from_variable = { chance_to_not_kill_poachers = chance_to_kill_poachers }
+
+	set_variable = { no_of_poachers_to_kill = 10 }
+	if = {
+		limit = { has_decision = BOT_anti_poaching_heavy_weapons }
+		add_to_variable = { no_of_poachers_to_kill = 5 }
+	}
+	if = {
+		limit = { has_idea = BOT_army_against_poaching }
+		add_to_variable = { no_of_poachers_to_kill = 5 }
+	}
 }
