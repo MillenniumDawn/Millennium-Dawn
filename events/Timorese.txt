@@ -19,7 +19,7 @@ country_event = {
 		name = Timor_news.1.o1
 		log = "[GetDateText]: [Root.GetName]: event Timor_news.1.o1"
 		ai_chance = {
-			factor = 1
+			base = 10
 		}
 	}
 }
@@ -28,13 +28,16 @@ country_event = { #UN Sets East Timor Election Date with Indonesian approval
 	id = Timor.26
 	title = Timor.26.t
 	desc = Timor.26.desc
-	picture = null
+	picture = timor_election
 
 	is_triggered_only = yes
 
 	immediate = {
-		TIM = {
-			country_event = { id = Timor.27 days = 123 }
+		hidden_effect = {
+			if = {
+				limit = { original_tag = TIM }
+				country_event = { id = Timor.27 days = 123 }
+			}
 		}
 	}
 
@@ -42,7 +45,6 @@ country_event = { #UN Sets East Timor Election Date with Indonesian approval
 		IND = { has_country_flag = gave_east_timor_permission }
 		OR = {
 			original_tag = AST
-			original_tag = IND
 			original_tag = TIM
 		}
 	}
@@ -52,19 +54,6 @@ country_event = { #UN Sets East Timor Election Date with Indonesian approval
 		if = {
 			limit = { original_tag = TIM }
 			add_stability = 0.05
-		}
-		else_if = {
-			limit = { original_tag = IND }
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.04
-			}
-			add_popularity = {
-				ideology = neutrality
-				popularity = 0.03
-			}
-			add_stability = -0.03
-			add_war_support = -0.05
 		}
 		else = {
 			add_popularity = {
@@ -76,7 +65,7 @@ country_event = { #UN Sets East Timor Election Date with Indonesian approval
 		ai_chance = {
 			base = 10
 		}
-		log = "[GetDateText]: [This.GetName]: Timor.24.o1 executed"
+		log = "[GetDateText]: [This.GetName]: Timor.26.o1 executed"
 	}
 }
 country_event = { #Actual first election for Timor-Leste
@@ -91,7 +80,7 @@ country_event = { #Actual first election for Timor-Leste
 	desc = {
 		text = Timor.27.desc.d1 #original
 	}
-	picture = null
+	picture = timor_election
 
 	is_triggered_only = yes #THE DESC WILL INCLUDE SOMETHING ABOUT "We are free! Now to legitimise our new government, we must choose a leader..."
 
@@ -110,6 +99,7 @@ country_event = { #Actual first election for Timor-Leste
 			add_popularity = { ideology = democratic popularity = 0.35 }
 		}
 		hidden_effect = {
+			add_ideas = TIM_Gusmao_Domination
 			clr_country_flag = TIM_ruled_by_UNTAET
 			drop_cosmetic_tag = yes
 			clear_array = ruling_party
@@ -131,6 +121,7 @@ country_event = { #Actual first election for Timor-Leste
 					western_socialism
 					military_career
 					guerrilla_leader
+					capable
 				}
 			}
 		}
@@ -142,6 +133,7 @@ country_event = { #Actual first election for Timor-Leste
 	}
 	option = {
 		name = Timor.27.o2 #Francisco Xavier do Amaral is our hero!
+		add_stability = 0.05
 		set_country_flag = set_socialism
 		if = {
 			limit = { has_country_flag = set_neutral_Social }
@@ -186,7 +178,6 @@ country_event = { #Indonesia denies us independence!
 	id = Timor.28
 	title = Timor.28.t
 	desc = Timor.28.desc #Something about an ultimatum
-	picture = null
 
 	is_triggered_only = yes
 
@@ -210,7 +201,6 @@ country_event = { #Australia abandons us
 	id = Timor.29
 	title = Timor.29.t
 	desc = Timor.29.desc #Include: We will be fighting Indonesia, a nation much larger than us, if we can hold off for long enough, Indonesia's reckless behaviour will draw international condemnation and they will be forced to back down
-	picture = null
 
 	is_triggered_only = yes
 
@@ -227,9 +217,9 @@ country_event = { #Australia abandons us
 		}
 		capital_scope = {
 			create_unit = {
-				division = "name = \"Kodam-II\" division_template = \"Kodam-II\" start_experience_factor = 1.0"
+				division = "name = \"Homeland Freedom Fighters\" division_template = \"FALINTIL\" start_experience_factor = 1.0"
 				owner = TIM
-				count = 2
+				count = 4
 			}
 		}
 		custom_effect_tooltip = Timor.29.tt.a #We will officially be at war with Indonesia effective immediately
@@ -254,7 +244,6 @@ country_event = { #East Timor Surrenders Peacefully!
 	id = Timor.30
 	title = Timor.30.t
 	desc = Timor.30.desc
-	picture = null
 
 	is_triggered_only = yes
 
@@ -268,7 +257,7 @@ country_event = { #East Timor Surrenders Peacefully!
 		log = "[GetDateText]: [This.GetName]: Timor.30.o1 executed"
 	}
 }
-country_event = { #The War is Over! (If East Timor wins the war with Indonesia) (for the war just steal Iraq-US war mechanic so the war doesn't go on forever)
+country_event = { #The War is Over! (If East Timor wins the war with Indonesia) (for the war I stole Droid's Iraq-US war mechanic so the war doesn't go on forever and so it is challenging for Indonesia)
 	id = Timor.31
 	title = Timor.31.t
 	desc = Timor.31.desc
@@ -297,21 +286,26 @@ country_event = { #Australia sends us aide!
 	id = Timor.32
 	title = Timor.32.t
 	desc = Timor.32.desc
-	picture = null
 
 	is_triggered_only = yes
 
 	option = {
 		name = Timor.32.o1 #We rip up Indonesia's ultimatum and send it back to them in pieces!
+		add_political_power = 100
+		add_war_support = 0.05
+		add_opinion_modifier = {
+			target = AST
+			modifier = diplomatic_support
+		}
 		hidden_effect = {
 			IND = { country_event = { id = Timor.34 days = 3 } }
 		}
 		add_ideas = TIM_Resistance_Movement
 		capital_scope = {
 			create_unit = {
-				division = "name = \"Kodam-II\" division_template = \"Kodam-II\" start_experience_factor = 1.0"
+				division = "name = \"Australian Intervention Forces\" division_template = \"Infantry Brigade\" start_experience_factor = 0.7"
 				owner = TIM
-				count = 4
+				count = 3
 			}
 		}
 		ai_chance = {
@@ -354,9 +348,7 @@ country_event = { #East Timor rejects us as their rightful rulers!
 		name = Timor.34.o1 #To war it is then!
 		add_stability = -0.03
 		add_war_support = 0.05
-		IND = {
-			declare_war_on = { target = TIM type = annex_everything }
-		}
+		declare_war_on = { target = TIM type = annex_everything }
 		custom_effect_tooltip = Timor.34.tt #If we don't put this uprising to rest in 120 days, we will draw international condemnation and have to pull out of East Timor or face grave consequences.
 		ai_chance = {
 			base = 10
@@ -368,7 +360,6 @@ country_event = { #East Timor takes over the rest of the island
 	id = Timor.35
 	title = Timor.35.t
 	desc = Timor.35.desc #We are getting our asses whooped...
-	picture = null
 
 	is_triggered_only = yes
 
@@ -402,7 +393,7 @@ country_event = { #Inconclusive Result in the War
 		}
 	}
 	option = {
-		name = Timor.36.o2 #I don't care about those silly westerners and their games!!!
+		name = Timor.36.o2 #I don't care about those westerners and their silly games!!!
 		add_stability = -0.10
 		add_war_support = 0.20
 		add_popularity = {
@@ -479,7 +470,6 @@ country_event = { #The US response to Indonesia not pulling out of East Timor af
 			ideology = democratic
 			popularity = -0.06
 		}
-		custom_effect_tooltip = Timor.36.tt.b #This will warrant an invasion from the West
 		ai_chance = {
 			base = 0
 		}
