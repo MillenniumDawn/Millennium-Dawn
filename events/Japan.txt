@@ -17039,6 +17039,7 @@ country_event = {
 		clear_variable = jap_mediation_conference_side0
 		clear_variable = jap_mediation_conference_side1
 		clear_variable = jap_mediation_conference_side2
+		clear_variable = jap_mediation_conference_favored_candidate
 		clear_array = jap_mediation_conference_transfer_states
 	}
 
@@ -17090,9 +17091,12 @@ country_event = {
 				country_event = Japan.100009311 #Dispute Resolution Draft
 			}
 			else = {
-				#country_event = Japan.100009315 #Unilateral Statement
+				remove_from_array = { #pop the first element in the conference list so the next cycle knows what to do
+					array = jap_mediation_conference_states
+					index = 0
+				}
+				country_event = Japan.100009310 #Return to gate
 			}
-
 			remove_from_array = { #pop the first element in the conference list so the next cycle knows what to do
 				array = jap_mediation_conference_states
 				index = 0
@@ -17218,8 +17222,9 @@ country_event = {
 		trigger = { #can't abstain from own conflict
 			NOT = {
 				OR = {
-					check_variable = { jap_mediation_conference_target_state = 4 } #senkaku
-					check_variable = { jap_mediation_conference_target_state = 5 } #liancourt
+					original_tag = jap_mediation_conference_side0
+					original_tag = jap_mediation_conference_side1
+					original_tag = jap_mediation_conference_side2
 				}
 			}
 		}
@@ -17288,19 +17293,6 @@ country_event = {
 
 		ai_chance = {
 			base = 50
-		}
-	}
-	# Political Favors
-	option = {
-		name = Japan.100009312.oD
-		log = "[GetDateText]: [This.GetName]: Japan.100009312.oD executed"
-		set_variable = { ROOT.jap_mediation_conference_side_demand = 3 }
-		var:JAP.jap_mediation_conference_favored_candidate = {
-			country_event = Japan.100009313 # compensate FROM in exchange for dropped claim?
-		}
-
-		ai_chance = {
-			base = 0
 		}
 	}
 	# Impossible
@@ -17438,10 +17430,22 @@ country_event = {
 				}
 			}
 		}
-
 		FROM = {
+			if = {
+				limit = {
+					NOT = {
+						original_tag = JAP
+					}
+				}
+				country_event = {
+					id = Japan.100009314 # TAG relinquishes claim
+					days = 1
+				}
+			}
+		}
+		JAP = {
 			country_event = {
-				id = Japan.100009314
+				id = Japan.100009314 # TAG relinquishes claim
 				days = 1
 			}
 		}
@@ -17454,7 +17458,25 @@ country_event = {
 	option = {
 		name = Japan.100009313.oB
 		log = "[GetDateText]: [This.GetName]: Japan.100009313.oB executed"
-
+		FROM = {
+			if = {
+				limit = {
+					NOT = {
+						original_tag = JAP
+					}
+				}
+				country_event = {
+					id = Japan.100009315 # TAG refuses to relinquish
+					days = 1
+				}
+			}
+		}
+		JAP = {
+			country_event = {
+				id = Japan.100009315 # TAG refuses to relinquish
+				days = 1
+			}
+		}
 
 		ai_chance = {
 			base = 0
@@ -17484,12 +17506,172 @@ country_event = {
 			activate_targeted_decision = { target = FROM decision = JAP_dec_mediation_benefits }
 		}
 
+		# clear variables and see if we are OK to go to the next stage in the conference
+		if = {
+			limit = {
+				original_tag = JAP.jap_mediation_conference_side0
+			}
+			JAP = {
+				clear_variable = jap_mediation_conference_side0
+			}
+		}
+		if = {
+			limit = {
+				original_tag = JAP.jap_mediation_conference_side1
+			}
+			JAP = {
+				clear_variable = jap_mediation_conference_side1
+			}
+		}
+		if = {
+			limit = {
+				original_tag = JAP.jap_mediation_conference_side2
+			}
+			JAP = {
+				clear_variable = jap_mediation_conference_side2
+			}
+		}
+		FROM = {
+			if = {
+				limit = {
+					original_tag = JAP.jap_mediation_conference_side0
+				}
+				JAP = {
+					clear_variable = jap_mediation_conference_side0
+				}
+			}
+			if = {
+				limit = {
+					original_tag = JAP.jap_mediation_conference_side1
+				}
+				JAP = {
+					clear_variable = jap_mediation_conference_side1
+				}
+			}
+			if = {
+				limit = {
+					original_tag = JAP.jap_mediation_conference_side2
+				}
+				JAP = {
+					clear_variable = jap_mediation_conference_side2
+				}
+			}
+		}
+		# I dont know if event effects in multiple countries create race conditions
+		#so lets just shove it to another event in JAP
+		JAP = {
+			country_event = Japan.100009316 # conference end gate
+		}
+
 		ai_chance = {
 			base = 10
 		}
 	}
 }
 
+#Disputed Islands Mediation: <tag> Refuses to Drop Their Claim!
+country_event = {
+	id = Japan.100009315
+	title = Japan.100009315.t
+	desc = Japan.100009315.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Tragic
+	option = {
+		name = Japan.100009315.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009315.oA executed"
+		# clear variables and see if we are OK to go to the next stage in the conference
+		if = {
+			limit = {
+				original_tag = JAP.jap_mediation_conference_side0
+			}
+			JAP = {
+				clear_variable = jap_mediation_conference_side0
+			}
+		}
+		if = {
+			limit = {
+				original_tag = JAP.jap_mediation_conference_side1
+			}
+			JAP = {
+				clear_variable = jap_mediation_conference_side1
+			}
+		}
+		if = {
+			limit = {
+				original_tag = JAP.jap_mediation_conference_side2
+			}
+			JAP = {
+				clear_variable = jap_mediation_conference_side2
+			}
+		}
+		FROM = {
+			if = {
+				limit = {
+					original_tag = JAP.jap_mediation_conference_side0
+				}
+				JAP = {
+					clear_variable = jap_mediation_conference_side0
+				}
+			}
+			if = {
+				limit = {
+					original_tag = JAP.jap_mediation_conference_side1
+				}
+				JAP = {
+					clear_variable = jap_mediation_conference_side1
+				}
+			}
+			if = {
+				limit = {
+					original_tag = JAP.jap_mediation_conference_side2
+				}
+				JAP = {
+					clear_variable = jap_mediation_conference_side2
+				}
+			}
+		}
+		# I dont know if event effects in multiple countries create race conditions
+		#so lets just shove it to another event in JAP
+		JAP = {
+			country_event = Japan.100009316 # conference end gate
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#Disputed Islands Mediation: End Gate
+country_event = {
+	id = Japan.100009316
+	title = Japan.100009316.t
+	desc = Japan.100009316.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	option = {
+		name = Japan.100009315.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009315.oA executed"
+		JAP = {
+			if = {
+				limit = {
+					NOT = {
+						has_variable = jap_mediation_conference_side0
+						has_variable = jap_mediation_conference_side1
+						has_variable = jap_mediation_conference_side2
+					}
+				country_event = Japan.100009310 # conference gate
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
 
 
 #----------------------------------------------------------------
