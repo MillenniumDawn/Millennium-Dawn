@@ -119,6 +119,143 @@ AST_Impose_Manufacturting_Tariffs_On_CHI1_dec = {
 
 AST_Citizen_Initiated_Referenda_cat = {
 
+
+AST_develop_Sangara_rubber_plantation = { #731
+
+		icon = rubber
+
+		allowed = {
+		OR = {
+		tag = PAP
+		tag = AST
+		}
+		}
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 731
+			}
+		}
+
+		available = {
+			has_completed_focus = 
+			has_tech = excavation1
+			num_of_civilian_factories_available_for_projects > 8
+			OR = {
+			owns_state = 731
+			controls_state = 731
+			AND = {
+			PAP = controls_state = 731
+			ROOT = { tag = AST }
+			}
+			}
+		}
+
+		visible = {
+			OR = {
+			owns_state = 731
+			controls_state = 731
+			AND = {
+			PAP = controls_state = 731
+			ROOT = { tag = AST }
+			}
+			}
+
+			731 = {
+				NOT = {
+					has_state_flag = {
+						flag = Sangara_rubber_developed
+						value = 4
+					}
+				}
+			}
+		}
+
+		cost = 25
+		days_remove = AST_develop_Sangara_rubber_plantation?30
+
+		modifier = {
+			civilian_factory_use = 6
+		}
+
+		remove_effect = {
+			PAP = {
+			add_opinion_modifier = {
+				target = AST
+				modifier = developed_sangara_mod
+			}
+			}
+			set_temp_variable = { treasury_change = -3.00 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = repeatable_decision_tt
+			add_to_variable = { var = AST_develop_Sangara_rubber_plantation_duration value = 30 }
+			731 = {
+				if = {
+					limit = {
+						NOT = {
+							has_state_flag = Sangara_rubber_developed
+						}
+					}
+					set_state_flag = {
+						flag = Sangara_rubber_developed
+						value = 1
+					}
+				}
+				else = {
+					modify_state_flag = {
+						flag = Sangara_rubber_developed
+						value = 1
+					}
+				}
+			}
+			731 = {
+				add_resource = {
+					type = rubber
+					amount = 12
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0.5
+			modifier = {
+				factor = 2 #1 was the default weight before
+				original_tag = AST
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					AND = { #Ultimatum decisions are available and we should prio them
+						original_tag = SOV
+						SOV_we_want_to_send_ultimatums = yes
+					}
+					AND = { #Too low MP we need to save PP for the laws
+						has_manpower < 10000
+						NOT = { has_idea = scraping_the_barrel }
+					}
+					has_political_power < 200
+				}
+			}
+			modifier = { #Running out of the stuff, need more!
+				factor = 5
+				has_resources_in_country = {
+					resource = rubber
+					amount < 1
+				}
+			}
+		}
+
+		complete_effect = {
+			if = {
+				limit = {
+					check_variable = { var = AST_develop_Sangara_rubber_plantation_duration value = 30 compare = less_than }
+				}
+				set_variable = { var = AST_develop_Sangara_rubber_plantation_duration value = 30 }
+			}
+		}
+	}
+
+
 AST_ANZAC_Commitments = {
 
 		allowed = {
@@ -167,7 +304,7 @@ AST_ANZAC_Commitments = {
 		}
 	}
 
-	
+
 
 
 

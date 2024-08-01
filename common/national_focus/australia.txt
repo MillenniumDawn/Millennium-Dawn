@@ -3477,7 +3477,7 @@ focus = {
         effect_tooltip = { }
         set_temp_variable = { treasury_change = -25.0 }
 			modify_treasury_effect = yes
-		
+		increase_economic_growth = yes
 			log = "[GetDateText]: [Root.GetName]: Focus AST_Invest_in_Australia"
 		add_ideas = AST_Invest_in_Australia_idea
 		if = {
@@ -4042,8 +4042,7 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
         completion_reward = {
-        
-		
+        increase_economic_growth = yes
 		
 		swap_ideas = {
     	remove_idea = AST_Fully_Invested_in_Australia_idea
@@ -4100,8 +4099,11 @@ focus = {
         prerequisite = { focus = AST_Import_Tariffs }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
+		
         completion_reward = {
+        custom_effect_tooltip = "Gas Royalties additional income: $[?additional_income_gas_royalties|+3]"
         add_ideas = AST_End_Royalty_Free_Gas_Exports_idea
+
 		decrease_corruption = yes
         effect_tooltip = {}
 	
@@ -4602,11 +4604,12 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
         completion_reward = {
+
        		swap_ideas = {
 				remove_idea = AST_idea_national_firearms_agreement
 				add_idea = AST_Firearms_Ownership_Rights_idea
 			}
-		
+			
         effect_tooltip = {}
 			log = "[GetDateText]: [Root.GetName]: Focus AST_Firearms_Ownership_Rights"
 		}
@@ -4685,18 +4688,42 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
         completion_reward = {
-       	set_temp_variable = { treasury_change = -9.00 }
+       	set_temp_variable = { treasury_change = -13.00 }
 			modify_treasury_effect = yes
 		swap_ideas = {
 				remove_idea = AST_Australian_Patriotism_idea
 				add_idea = AST_Veteran_Pension_Support_idea
 			}	
-		
+		increase_military_spending = yes
         effect_tooltip = {}
 			log = "[GetDateText]: [Root.GetName]: AST_Veteran_Pension_Support"
 		}
 		ai_will_do = { factor = 1 }
 	}
+
+	focus = {
+		id = AST_Ministry_of_Foreign_Affairs
+		icon = AST_Ministry_of_Foreign_Affairs
+
+		x = 32
+		y = 0
+        relative_position_id = AST_One_Nation
+        available = { 
+        }
+
+        cost = 7.19
+       
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		
+        completion_reward = {
+        increase_intervention_law_effect = yes
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_Campaigning_in_New_Zealand_for_Unity"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
 
 	focus = {
 		id = AST_Campaigning_in_New_Zealand_for_Unity
@@ -4705,12 +4732,19 @@ focus = {
 		x = 23
 		y = 1
         relative_position_id = AST_One_Nation
-        available = { has_completed_focus = AST_Citizen_Initiated_Referenda }
+        available = { 
+        NZL = { 
+        has_opinion = {
+					target = AST
+					value > 50
+				}
+			}
+        }
 
-        cost = 10
-        prerequisite = { focus = AST_One_Nation } 
+        cost = 5
+       
 		search_filters = { FOCUS_FILTER_POLITICAL }
-
+		prerequisite = { focus = AST_Ministry_of_Foreign_Affairs }
         completion_reward = {
        	set_temp_variable = { treasury_change = -5.00 }
 		modify_treasury_effect = yes
@@ -4746,8 +4780,11 @@ focus = {
 		x = 23
 		y = 2
         relative_position_id = AST_One_Nation
-        available = { NZL = { nationalist > 0.30 } }
-
+        available = { 
+        NZL = { nationalist > 0.30 }
+        has_completed_focus = AST_Citizen_Initiated_Referenda 
+        }
+        mutually_exclusive = { focus = AST_Joint_Forces_Training_Operations }
         cost = 10
         prerequisite = { focus = AST_Campaigning_in_New_Zealand_for_Unity } 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -4763,7 +4800,7 @@ focus = {
 			set_temp_variable = { temp_outlook_increase = 0.10 }
 			add_relative_party_popularity = yes
 			}
-        
+
         add_political_power = 75
         custom_effect_tooltip = "If New Zealand approves this will trigger an early election in New Zealand after 14 days."
        	set_temp_variable = { treasury_change = -5.00 }
@@ -4835,8 +4872,308 @@ focus = {
 		ai_will_do = { factor = 1 }
 	}
 
+	focus = {
+		id = AST_Rugby_World_Cup
+		icon = AST_Rugby_World_Cup
+		x = 27
+		y = 1
+        relative_position_id = AST_One_Nation
+        available = { date > 2000.11.01  }
+
+        
+        cost = 10
+        prerequisite = { focus = AST_Ministry_of_Foreign_Affairs }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
+        add_political_power = 25
+       	set_temp_variable = { treasury_change = -2.00 }
+		modify_treasury_effect = yes
+
+			country_event = { id = australia_md.70 days = 1 } #Rugby World Cup
+
+			
+
+		
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_Rugby_World_Cup"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+	
+
+	focus = {
+		id = AST_Joint_Forces_Training_Operations
+		icon = AST_Joint_Forces_Training_Operations
+		x = 27
+		y = 2
+        relative_position_id = AST_One_Nation
+
+        cost = 5
+        prerequisite = { focus = AST_Rugby_World_Cup} 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		mutually_exclusive = { focus = AST_Endorse_New_Zealand_Firsts_Referendum }
+        completion_reward = {
+        add_political_power = 50
+       
+		AST = { country_event = { id = australia_md.73 days = 1 } } #joint training expenditure option
+		NZL = { country_event = { id = australia_md.73 days = 1 } }  
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_Joint_Forces_Training_Operations"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+	focus = {
+		id = AST_Revive_our_ANZAC_Legacy
+		icon = AST_Revive_our_ANZAC_Legacy
+		x = 27
+		y = 3
+        relative_position_id = AST_One_Nation
+
+        cost = 10
+        prerequisite = { focus = AST_Joint_Forces_Training_Operations } 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
 
 
+        set_rule = { can_create_factions = yes }		
+			
+			if = {
+				limit = {
+					has_completed_focus = AST_Joint_Forces_Training_Operations
+					NZL = {
+						exists = yes
+						has_capitulated = no
+						is_puppet = no	
+					}
+				}
+				NZL = {
+					country_event = { id = australia_md.67 } #Ask NZL to join faction
+				}
+				}
+				else = {
+					country_event = { id = australia_md.66 } #Start faction without asking NZL
+				}
+			log = "[GetDateText]: [Root.GetName]: AST_Revive_our_ANZAC_Legacy"	
+			}
+		}
+	
+
+
+	focus = {
+		id = AST_Invest_in_New_Zealand
+		icon = AST_Invest_in_New_Zealand
+		x = 25
+		y = 4
+        relative_position_id = AST_One_Nation
+
+        available = { 
+        OR = {
+        NZL = { is_puppet_of = AST }
+        NZL = { 
+        has_opinion = {
+					target = AST
+					value > 50
+				}
+			}
+
+        AND = {
+        750 = { is_controlled_by = AST }
+        751 = { is_controlled_by = AST }
+        } 
+        }
+        }
+
+        
+        cost = 10
+        prerequisite = { focus = AST_Revive_our_ANZAC_Legacy focus = AST_The_Seventh_State  } 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
+
+        add_political_power = 125
+       	set_temp_variable = { treasury_change = -22.00 }
+		modify_treasury_effect = yes
+		NZL = {
+		set_temp_variable = { treasury_change = 10.00 }
+		modify_treasury_effect = yes
+		}
+		
+			750 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+				type = offices
+				level = 1
+				instant_build = yes
+				}
+			}
+
+			751 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+				}
+			}
+
+		
+		
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_Invest_in_New_Zealand"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+
+
+	focus = {
+		id = AST_test9
+		icon = AST_test9
+		x = 25
+		y = 5
+        relative_position_id = AST_One_Nation
+
+        available = { 
+			}
+
+        cost = 10
+        prerequisite = { focus = AST_Revive_our_ANZAC_Legacy focus = AST_The_Seventh_State  } 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
+
+        
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_Invest_in_New_Zealand"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+ 
+
+
+	focus = {
+		id = AST_The_Biak_Island_Massacre
+		icon = AST_The_Biak_Island_Massacre
+		x = 32
+		y = 1
+        relative_position_id = AST_One_Nation
+
+        available = {
+        date > 2001.11.11 
+			}
+
+        cost = 10
+        prerequisite = { focus = AST_Ministry_of_Foreign_Affairs  } 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
+
+        
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_The_Biak_Island_Massacre"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+	focus = {
+		id = AST_grow_Sangara_rubber_plantation
+		icon = AST_grow_Sangara_rubber_plantation
+		x = 32
+		y = 2
+        relative_position_id = AST_One_Nation
+
+        available = { 
+        PAP = { 
+        has_opinion = {
+					target = AST
+					value > 50
+				}
+			}
+        OR = {
+			owns_state = 731
+			controls_state = 731
+			AND = {
+			PAP = controls_state = 731
+			ROOT = { tag = AST }
+			}
+			}
+			}
+
+        cost = 10
+        prerequisite = { focus = AST_The_Biak_Island_Massacre  } 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
+        custom_effect_tooltip = "This will unlock Grow Sangara Rubber Plantation in decisions."
+        
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_The_Biak_Island_Massacre"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+	focus = {
+		id = AST_West_PNG_Wamena_Riots_Response
+		icon = AST_West_PNG_Wamena_Riots_Response
+		x = 30
+		y = 3
+        relative_position_id = AST_One_Nation
+
+        available = { 
+        date > 2001.11.11
+			}
+
+        cost = 10
+        prerequisite = { focus = AST_grow_Sangara_rubber_plantation  } 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
+
+        
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_The_Biak_Island_Massacre"
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+	
+
+	focus = {
+		id = AST_Papua_The_lost_Administrative_Region
+		icon = AST_Papua_The_lost_Administrative_Region
+		x = 30
+		y = 4
+        relative_position_id = AST_One_Nation
+
+        available = { 
+        date > 2001.11.11
+			}
+
+        cost = 10
+        prerequisite = { focus = AST_West_PNG_Wamena_Riots_Response  } 
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+        completion_reward = {
+
+        
+
+        effect_tooltip = {}
+			log = "[GetDateText]: [Root.GetName]: AST_The_Biak_Island_Massacre"
+		}
+		ai_will_do = { factor = 1 }
+	}
 
 #░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓███████▓▒░ ░▒▓██████▓▒░░▒▓██████████████▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
 #░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ 
@@ -10182,15 +10519,14 @@ focus = {
 
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_naval_helicopters"
-			navy_experience = 50
-			air_experience = 50
+			navy_experience = 20
+			one_random_arms_factory = yes
 			add_tech_bonus = {
 				name = Cat_HELI
 				bonus = 0.4
 				uses = 2
 				category = Cat_HELI
 			}
-			one_random_arms_factory = yes
 		}
 
 		ai_will_do = { factor = 1 }
@@ -10326,8 +10662,8 @@ focus = {
 
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus AST_Reorganize_the_Command_Structure"
-			add_command_power = 80
-			navy_experience = 100
+			add_command_power = 40
+			navy_experience = 50
 			swap_ideas = {
 				remove_idea = AST_the_royal_australian_navy
 				add_idea = AST_the_great_royal_australian_navy
