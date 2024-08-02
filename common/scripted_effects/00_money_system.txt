@@ -3302,6 +3302,7 @@ automated_debt_taker = { # Checks to see if treasury is negative at the same tim
 }
 
 update_state_variables = {
+	# Global State Variables
 	set_variable = { var = population_total value = 0 }
 	set_variable = { var = office_park_total value = 0 }
 	set_variable = { var = agriculture_district_total value = 0 }
@@ -3312,7 +3313,16 @@ update_state_variables = {
 	set_variable = { var = military_fac value = 0 }
 	set_variable = { var = dockyard_fac value = 0 }
 	set_variable = { var = fuel_silos value = 0 }
-	set_variable = { state_renewable_energy_var = 0 }
+	set_variable = { var = state_renewable_energy_var value = 0 }
+	set_variable = { var = minimum_renewable_energy_var value = 0 }
+	set_variable = { var = maximum_renewable_energy_var value = 1 }
+	set_variable = { var = hydroelectric_energy_generation value = 0 }
+	set_variable = { var = geothermal_energy_generation value = 0 }
+	set_variable = { var = number_of_fossil_pps value = 0 }
+	set_variable = { var = max_stored_energy value = 0 }
+	set_variable = { var = number_of_battery_parks value = 0 }
+	set_variable = { var = total_resource_amount value = 0 }
+	set_variable = { var = overall_productivity value = 0 }
 
 	# missile_silo
 	set_temp_variable = { num_missile_silo = 0 }
@@ -3324,15 +3334,6 @@ update_state_variables = {
 	set_temp_variable = { num_anti_air_building = 0 }
 	# missile_defense_station
 	set_temp_variable = { num_missile_defense_station = 0 }
-	#energy system stuff
-	set_variable = { hydroelectric_energy_generation = 0 }
-	set_variable = { geothermal_energy_generation = 0 }
-	set_variable = { number_of_fossil_pps = 0 }
-	set_variable = { max_stored_energy = 0 }
-	set_variable = { number_of_battery_parks = 0 }
-	#econ stuff
-	set_variable = { total_resource_amount = 0 }
-	set_variable = { overall_productivity = 0 }
 
 	hidden_effect = {
 		every_controlled_state = {
@@ -3358,16 +3359,28 @@ update_state_variables = {
 			add_to_variable = { PREV.number_of_fossil_pps = building_level@fossil_powerplant }
 			add_to_variable = { PREV.fuel_silos = building_level@fuel_silo }
 
-			set_temp_variable = { state_renewable_generation = building_level@synthetic_refinery }
-			multiply_temp_variable = { state_renewable_generation = 0.5 } #base power of a renewable building
-			multiply_temp_variable = { state_renewable_generation = renewable_energy_random_var } #set in on_weekly
+			# Calculate Renewble Infrastructure Information
+			if = { limit = { check_variable = { building_level@synthetic_refinery > 0 } }
+				set_temp_variable = { state_renewable_generation = building_level@synthetic_refinery }
+				multiply_temp_variable = { state_renewable_generation = 0.5 } #base power of a renewable building
+				set_temp_variable = { min_state_renewable_generation = state_renewable_generation }
+				set_temp_variable = { max_state_renewable_generation = state_renewable_generation }
 
-			# Renewable Energy Modifier
-			set_temp_variable = { state_renewable_generation_modifier = 1 }
-			add_to_temp_variable = { state_renewable_generation_modifier = THIS.modifier@state_renewable_energy_generation_modifier }
-			multiply_temp_variable = { state_renewable_generation = state_renewable_generation_modifier }
+				multiply_temp_variable = { state_renewable_generation = renewable_energy_random_var } #set in on_weekly
+				multiply_temp_variable = { min_state_renewable_generation = min_renewable_energy_var }
+				multiply_temp_variable = { max_state_renewable_generation = max_renewable_energy_var }
 
-			add_to_variable = { PREV.state_renewable_energy_var = state_renewable_generation }
+				# Renewable Energy Modifier
+				set_temp_variable = { state_renewable_generation_modifier = 1 }
+				add_to_temp_variable = { state_renewable_generation_modifier = THIS.modifier@state_renewable_energy_generation_modifier }
+				multiply_temp_variable = { state_renewable_generation = state_renewable_generation_modifier }
+				multiply_temp_variable = { min_state_renewable_generation = state_renewable_generation_modifier }
+				multiply_temp_variable = { max_state_renewable_generation = state_renewable_generation_modifier }
+
+				add_to_variable = { var = PREV.minimum_renewable_energy_var value = min_state_renewable_generation }
+				add_to_variable = { var = PREV.maximum_renewable_energy_var value = max_state_renewable_generation }
+				add_to_variable = { var = PREV.state_renewable_energy_var value = state_renewable_generation }
+			}
 
 			add_to_variable = { PREV.total_resource_amount = resource@oil }
 			add_to_variable = { PREV.total_resource_amount = resource@steel }
@@ -3386,6 +3399,8 @@ update_state_variables = {
 			add_to_variable = { PREV.overall_productivity = productivity_temp_state_var }
 		}
 	}
+
+	# Population Total
 	set_variable = { population_total_m = population_total }
 	multiply_variable = { population_total_m = 0.1 }
 
@@ -4255,12 +4270,12 @@ calculate_migration_mechanic_values = {
 
 	# -------------------- #
 	# Cleanup Variables
-	clear_variable = immigration_employment_factor_display
-	clear_variable = immigration_government_factor_display
-	clear_variable = neighbour_war_refugees_display
-	clear_variable = personal_war_refugees_display
-	clear_variable = net_immigration_rate
-	clear_variable = max_net_immigration_rate
+	set_variable = { net_immigration_rate = 0 }
+	set_variable = { max_net_immigration_rate = 0 }
+	set_variable = { personal_war_refugees_display = 0 }
+	set_variable = { neighbour_war_refugees_display = 0 }
+	set_variable = { immigration_government_factor_display = 0 }
+	set_variable = { immigration_employment_factor_display = 0 }
 
 	# Add the Dynamic Modifier If you don't have it
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = migration_rate_impact_effect } } }
