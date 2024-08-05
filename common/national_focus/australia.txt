@@ -4972,6 +4972,7 @@ focus = {
         relative_position_id = AST_One_Nation
 
         available = { 
+
         OR = {
         NZL = { is_puppet_of = AST }
         NZL = { 
@@ -5021,7 +5022,10 @@ focus = {
 				}
 			}
 
-		
+		set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
 		
 
         effect_tooltip = {}
@@ -5040,6 +5044,37 @@ focus = {
         relative_position_id = AST_One_Nation
 
         available = { 
+        western_autocrats_are_in_power = yes #pro western autocrats 0 party index
+        western_conservatism_are_in_power = yes #liberals 1
+       	western_liberals_are_in_power = yes #centre alliance 2
+		western_social_democrats_are_in_power = yes #labour party 3
+
+		emerging_communist_state_are_in_power = yes #communist party 4
+		emerging_anarchist_communism_in_power_or_coalition = yes # socialist Aliance 5
+		emerging_reactionaries_are_in_power = yes #katter 6
+		emerging_autocracy_are_in_power = yes #autocrats 7
+		
+		#moderate shiite revoultionary 8
+		#hardline shiite revoultionary 9
+
+		#pro establishment salafism 10
+		#Hizb ut-tahir 11
+
+		neutrality_neutral_muslim_brotherhood_are_in_power = yes #moderate islamists 12
+		neutrality_neutral_autocracy_are_in_power = yes #non aligned autocrats 13
+		neutrality_neutral_conservatism_are_in_power = yes #national party 14
+		neutrality_neutral_oligarch_are_in_power = yes #oligarchs 15
+		neutrality_neutral_libertarians_are_in_power = yes #lib dems 16
+		neutrality_neutral_green_are_in_power = yes #Australian greens 17
+        neutrality_neutral_social_are_in_power = yes #socialist democrat 18
+		neutrality_neutral_communism_are_in_power = yes # socialist equality party 19
+
+		nationalist_right_wing_populists_are_in_power = yes #One Nation 20 index
+		nationalist_fascist_are_in_power = yes #Australia First 21
+		nationalist_military_junta_are_in_power = yes #Australian Defense Force 22
+		nationalist_monarchists_are_in_power = yes # monarchists 23 index
+
+       	
 			}
 
         cost = 10
@@ -5047,6 +5082,7 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
         completion_reward = {
+
 
         set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
@@ -5606,20 +5642,45 @@ focus = {
 		y = 3
         relative_position_id = AST_One_Nation
         cost = 5
-        prerequisite = { focus = AST_Promote_Japanese_as_a_Second_Language }
+        prerequisite = { focus = AST_Whaling_in_our_Antarctic_Sea }
         mutually_exclusive = { focus = AST_JAEPA }
         available = { 
         #has gov dem or emerging
-        
+       	CHI = { has_completed_focus = CHI_Maintain_Historical_Enmity }
+       	OR= {
+       	western_liberals_are_in_power = yes #centre alliance 2
+		western_social_democrats_are_in_power = yes #labour party 3
+		emerging_communist_state_are_in_power = yes #communist party 4
+		emerging_anarchist_communism_in_power_or_coalition = yes # socialist Aliance 5
+		neutrality_neutral_muslim_brotherhood_are_in_power = yes #moderate islamists 12
+		neutrality_neutral_green_are_in_power = yes #Australian greens 17
+		}
         }
         
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
         completion_reward = {
-        set_temp_variable = { treasury_change = -8.00 }
-			modify_treasury_effect = yes
-       
+        add_popularity = {
+                ideology = democratic
+                popularity = -0.10
+            }
 
+            CHI = {
+            add_opinion_modifier = {
+				target = AST
+				modifier = supported_china_daiyou_mod
+			}
+			}
+
+			JAP = {
+			add_opinion_modifier = {
+				target = AST
+				modifier = supported_china_senkaku_mod
+			}
+			}
+
+        country_event = { id = australia_md.101 days = 0 } #choice to support china/japan
+        custom_effect_tooltip = "Unlocks Decision: Leverage the Support for China in Senkaku in The US-China Trade Tug-of-War."
         effect_tooltip = {}
 			log = "[GetDateText]: [Root.GetName]: AST_The_Senkaku_Daiyou_Islands"
 		}
@@ -5643,10 +5704,46 @@ focus = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
         completion_reward = {
-       
-        set_temp_variable = { treasury_change = -8.00 }
-			modify_treasury_effect = yes
-        
+       JAP = {
+			add_opinion_modifier = {
+				target = AST
+				modifier = old_wounds1_mod
+			}
+			}
+		AST = {
+			add_opinion_modifier = {
+				target = AST
+				modifier = not_forgotten1_mod
+			}
+			}
+
+			JAP = {
+			add_ai_strategy = {
+					type = befriend
+					id = AST
+					value = -5
+				}
+			}
+			AST = {
+			add_ai_strategy = {
+					type = befriend
+					id = JAP
+					value = -5
+				}
+			}
+			if = {
+			limit = {
+				OR = {
+				PAP = { is_puppet_of = AST }
+				PAP = { is_subject_of = AST }
+				PAP = { is_in_faction_with = AST }
+				}
+			}
+			PAP = { add_timed_idea = { idea = AST_incursion_JAP days = 720 } }
+			}
+
+        AST = { add_timed_idea = { idea = AST_incursion_JAP days = 720 } }
+		custom_effect_tooltip = "If [PAP.GetNameDefCap] is a subject of or allied with Australia they will receive the idea too."	
 
         effect_tooltip = {}
 			log = "[GetDateText]: [Root.GetName]: AST_The_Forgotten_Incursion"
@@ -5665,14 +5762,21 @@ focus = {
         prerequisite = { focus = AST_Promote_Japanese_as_a_Second_Language }
 
         available = { 
-        #has gov dem or emerging
-        
+        CHI = { has_war_with = JAP }
+        OR= {
+       	western_liberals_are_in_power = yes #centre alliance 2
+		western_social_democrats_are_in_power = yes #labour party 3
+		emerging_communist_state_are_in_power = yes #communist party 4
+		emerging_anarchist_communism_in_power_or_coalition = yes # socialist Aliance 5
+		neutrality_neutral_muslim_brotherhood_are_in_power = yes #moderate islamists 12
+		neutrality_neutral_green_are_in_power = yes #Australian greens 17
+		}
         }
         
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
         completion_reward = {
-       
+       	CHI = { country_event = { id = australia_md.102 days = 0 } } #ask China to join war against JAP
 			
 
         effect_tooltip = {}
