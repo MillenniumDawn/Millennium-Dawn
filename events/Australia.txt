@@ -4938,7 +4938,292 @@ country_event = {
 		trigger = {
 			tag = AST
 		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 25
+				 AST = {
+					has_opinion = {
+   					target = CHI
+    				value < 50
+    				}
+				}
+			}
+			modifier = {
+				factor = 100
+				 AST = { has_war_with = CHI }
+				}
+			}
 		AST = { country_event = { id = australia_md.103 days = 0 } }
 		log = "[GetDateText]: [This.GetName]: australia_md.103.o2 executed"
 	}
 }
+
+country_event = {
+	id = australia_md.104
+	title = australia_md.104.t # AST CHOICE - HELP IND/ACE
+	desc = australia_md.104.d
+	picture = GFX_report_event_FDR_speech
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = australia_md.104.o1 #SUPPORT IND
+		trigger = {
+			tag = AST
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				 AST = {
+					has_opinion = {
+   					target = IND
+    				value > 50
+    				}
+				}
+			}
+			modifier = {
+				add = 25
+				AST = {
+					OR = {
+					western_conservatism_are_in_power = yes #liberals 1
+       				emerging_reactionaries_are_in_power = yes #katter
+       				nationalist_right_wing_populists_are_in_power = yes #One Nation 20 index
+					nationalist_fascist_are_in_power = yes #Australia First 21
+					} 
+				}
+				}
+			modifier = {
+				add = -25
+				AST = {
+					OR = {
+					western_liberals_are_in_power = yes #centre alliance
+       				#western_social_democrats_are_in_power = yes #labour party 3
+					emerging_communist_state_are_in_power = yes #communist party 4
+					emerging_anarchist_communism_in_power_or_coalition = yes # socialist Aliance 5
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes #moderate islamists 12
+					neutrality_neutral_green_are_in_power = yes #Australian greens 17
+					} 
+				}
+				}	
+			}
+		AST = { set_country_flag = AST_joinCHIJAPwar_flag }
+		
+		IND = { country_event = { id = australia_md.105 days = 1 } }
+		log = "[GetDateText]: [This.GetName]: australia_md.104.o1 executed"
+	}
+	option = {
+		name = australia_md.104.o2 # SUPPORT ACE
+		trigger = {
+			tag = AST
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				 AST = {
+					has_opinion = {
+   					target = IND
+    				value > 50
+    				}
+				}
+			}
+			modifier = {
+				add = 25
+				AST = {
+					OR = {
+					western_conservatism_are_in_power = yes #liberals 1
+       				emerging_reactionaries_are_in_power = yes #katter
+       				nationalist_right_wing_populists_are_in_power = yes #One Nation 20 index
+					nationalist_fascist_are_in_power = yes #Australia First 21
+					} 
+				}
+				}
+			modifier = {
+				add = -25
+				AST = {
+					OR = {
+					western_liberals_are_in_power = yes #centre alliance
+       				western_social_democrats_are_in_power = yes #labour party 3
+					emerging_communist_state_are_in_power = yes #communist party 4
+					emerging_anarchist_communism_in_power_or_coalition = yes # socialist Aliance 5
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes #moderate islamists 12
+					neutrality_neutral_green_are_in_power = yes #Australian greens 17
+					} 
+				}
+				}	
+			}
+		ACE = { country_event = { id = australia_md.105 days = 1 } }
+		log = "[GetDateText]: [This.GetName]: australia_md.104.o2 executed"
+	}
+}
+
+country_event = {
+	id = australia_md.105
+	title = australia_md.105.t #IND / ACE CHOICE  -AST HELP 
+	desc = australia_md.105.d
+	picture = GFX_report_event_FDR_speech
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = australia_md.105.o1 #YES
+		trigger = {
+			OR = { 
+			tag = IND
+			tag = ACE
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 25
+				 ROOT = {
+					has_opinion = {
+   					target = AST
+    				value > 50
+    				}
+				}
+			}
+		}
+		AST = { has_country_flag = AST_joinCHIJAPwar_flag }
+		If = {
+			limit = {
+				ROOT = { 
+					tag = IND
+					}
+				}
+				add_ai_strategy = {
+					type = befriend
+					id = AST
+					value = 20
+				}
+				}
+		If = {
+			limit = {
+				ROOT = { 
+					tag = ACE
+					}
+				}
+				ACE = {
+					add_ai_strategy = {
+						type = befriend
+						id = AST
+						value = 25
+					}
+					add_ai_strategy = {
+						type = alliance
+						id = AST
+						value = 50
+					}
+				}
+			}	
+		AST = { add_ideas = AST_direct_support1 }
+		AST = { set_country_flag = helpyes@ROOT }
+		AST = { country_event = { id = australia_md.106 days = 0 } } #yes
+		log = "[GetDateText]: [This.GetName]: australia_md.105.o1 executed"
+	}
+	option = {
+		name = australia_md.105.o2 # NO
+		trigger = {
+			OR = { 
+			tag = IND
+			tag = ACE
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 25
+				 ROOT = {
+					has_opinion = {
+   					target = AST
+    				value < 50
+    				}
+				}
+			}
+			modifier = {
+				factor = 100
+				 ROOT = { has_war_with = AST }
+				}
+			}
+		AST = { set_country_flag = helpno }
+		AST = { country_event = { id = australia_md.107 days = 0 } } #no
+		log = "[GetDateText]: [This.GetName]: australia_md.105.o2 executed"
+	}
+}
+
+country_event = {
+	id = australia_md.106
+	title = australia_md.106.t #AST HELP - AST GETS IND / ACE CHOICE  
+	desc = australia_md.106.d
+	picture = GFX_report_event_FDR_speech
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = australia_md.106.o1 #YES
+		trigger = {
+			tag = AST
+			AST = { has_country_flag = helpyes@PREV }
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				add = 10
+				 AST = {
+					has_opinion = {
+   					target = PREV
+    				value > 50
+    				}
+				}
+			}
+		
+		AST = {
+			add_to_war = {
+    		targeted_alliance = CHI
+    		enemy = JAP
+    		hostility_reason = asked_to_join
+			}
+		}
+		
+		log = "[GetDateText]: [This.GetName]: australia_md.106.o1 executed"
+	}
+	option = {
+		name = australia_md.106.o2 # NO
+		trigger = {
+			tag = AST
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				 AST = {
+					has_opinion = {
+   					target = PREV
+    				value < 50
+    				}
+				}
+			}
+		log = "[GetDateText]: [This.GetName]: australia_md.106.o2 executed"
+	}
+}
+
+country_event = {
+	id = australia_md.107
+	title = australia_md.107.t #AST HELP - NO 
+	desc = australia_md.107.d
+	picture = GFX_report_event_FDR_speech
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = australia_md.107.o1 #no
+		trigger = {
+			tag = AST
+		}
+
+		log = "[GetDateText]: [This.GetName]: australia_md.106.o1 executed"
+		}
+	}
