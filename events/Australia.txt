@@ -5059,7 +5059,7 @@ country_event = {
 
 country_event = {
 	id = australia_md.105
-	title = australia_md.105.t #IND / ACE CHOICE  -AST HELP 
+	title = australia_md.105.t #IND / ACE CHOICE  -AST HELP  ##105//106//107 
 	desc = australia_md.105.d
 	picture = GFX_report_event_FDR_speech
 	
@@ -5082,6 +5082,12 @@ country_event = {
    					target = AST
     				value > 50
     				}
+				}
+			}
+			modifier = {
+				add = 10
+				 AST = {
+				has_country_flag = AST_IND_reperations_give
 				}
 			}
 		}
@@ -5142,11 +5148,17 @@ country_event = {
 				}
 			}
 			modifier = {
+				add = 10
+				 AST = {
+				has_country_flag = AST_IND_confront_australia #factors IND focus in
+				}
+			}
+			modifier = {
 				factor = 100
 				 ROOT = { has_war_with = AST }
 				}
 			}
-		AST = { set_country_flag = helpno }
+		AST = { set_country_flag = helpno@ROOT }
 		AST = { country_event = { id = australia_md.107 days = 0 } } #no
 		log = "[GetDateText]: [This.GetName]: australia_md.105.o2 executed"
 	}
@@ -5164,27 +5176,28 @@ country_event = {
 		name = australia_md.106.o1 #YES
 		trigger = {
 			tag = AST
-			AST = { has_country_flag = helpyes@PREV }
+			AST = { has_country_flag = helpyes@FROM } # @FROM WORKS HERE helpyesIND helpyesACE flags
 		}
 		ai_chance = {
-			base = 80
+			base = 70
 			modifier = {
 				add = 10
 				 AST = {
 					has_opinion = {
-   					target = PREV
+   					target = FROM
     				value > 50
     				}
 				}
 			}
-		
-		AST = {
-			add_to_war = {
-    		targeted_alliance = CHI
-    		enemy = JAP
-    		hostility_reason = asked_to_join
+			modifier = {
+				add = 10
+				AST = {
+					has_country_flag = AST_IND_confront_australia #indonesian focus taken into account
+					FROM = IND	
+				}
 			}
 		}
+			
 		
 		log = "[GetDateText]: [This.GetName]: australia_md.106.o1 executed"
 	}
@@ -5192,19 +5205,28 @@ country_event = {
 		name = australia_md.106.o2 # NO
 		trigger = {
 			tag = AST
+			AST = { has_country_flag = helpno@FROM } # @FROM WORKS HERE helpnoIND helpnoACE
 		}
 		ai_chance = {
-			base = 20
+			base = 30
 			modifier = {
 				add = 30
 				 AST = {
 					has_opinion = {
-   					target = PREV
+   					target = FROM
     				value < 50
     				}
 				}
 			}
-		log = "[GetDateText]: [This.GetName]: australia_md.107.o2 executed"
+			modifier = {
+				add = 10
+				 AST = {
+				has_country_flag = AST_IND_reperations_give #indonesian focus taken into account
+				FROM = IND	
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: australia_md.106.o2 executed"
 	}
 }
 
@@ -5222,7 +5244,7 @@ country_event = {
 			tag = AST
 		}
 
-		log = "[GetDateText]: [This.GetName]: australia_md.107.o1 executed"
+		log = "[GetDateText]: [This.GetName]: australia_md.107.o2 executed"
 		}
 	}
 
@@ -5249,7 +5271,7 @@ country_event = {
 			tag = IND
 		}
 
-		log = "[GetDateText]: [This.GetName]: australia_md.108.o1 executed"
+		log = "[GetDateText]: [This.GetName]: australia_md.108.o2 executed"
 		}
 	}
 
@@ -5262,20 +5284,157 @@ country_event = {
 	is_triggered_only = yes
 	
 	option = {
-		name = australia_md.109.o1 #AST
+		name = australia_md.109.o1 #ESCALATE TO WAR
 		trigger = {
 			tag = AST
 		}
+		ai_chance = {
+			base = 70
+			}
+		if = {
+			limit = {
+			AST = { has_country_flag = helpyesIND }
+			}
+			add_policial_power = 50
+			add_to_war = {
+    		targeted_alliance = IND
+    		enemy = ACE
+    		hostility_reason = asked_to_join
+			}
+			}
+
+			if = {
+			limit = {
+			AST = { has_country_flag = helpyesACE }
+			}
+			add_policial_power = 50
+			add_to_war = {
+    		targeted_alliance = ACE
+    		enemy = IND
+    		hostility_reason = asked_to_join
+			}
+			}
+
 
 		log = "[GetDateText]: [This.GetName]: australia_md.109.o1 executed"
 		}
 		option = {
-		name = australia_md.109.o2 # IND
+		name = australia_md.109.o2 # KEEP VOLUNTEER
+		trigger = {
+			tag = AST
+		}
+		ai_chance = {
+			base = 30
+			}
+		AST = { set_country_flag = VOL_WAR_DELAY } #unlocks decision
+		log = "[GetDateText]: [This.GetName]: australia_md.109.o2 executed"
+		}
+	}
+
+	country_event = {
+	id = australia_md.110
+	title = australia_md.110.t #WEST TIMOR RISES UP
+	desc = australia_md.110.d
+	picture = GFX_report_event_FDR_speech
+	
+	is_triggered_only = yes
+	immediate = {
+	1185 = { add_to_core = TIM }
+	1185 = { add_resistance = 30 }
+	}
+	option = {
+		name = australia_md.110.o1 #LET THEM HAVE IT
 		trigger = {
 			tag = IND
 		}
 
-		log = "[GetDateText]: [This.GetName]: australia_md.109.o1 executed"
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				 IND = { surrender_progress > 0.20 }	
+				}
+			modifier = {
+				add = 25
+				 IND = { surrender_progress > 0.5 }	
+				}	
+			}
+
+		IND = { remove_state_core = 1185 }
+		
+		1185 = { transfer_state_to = TIM }
+		add_stability = 0.05
+		add_war_support = 0.02
+		add_political_power = 100
+		AST = { country_event = { id = australia_md.111 } }
+		TIM = { country_event = { id = australia_md.111 } }
+		ACE = { country_event = { id = australia_md.111 } }
+		NZL = { country_event = { id = australia_md.111 } }
+		PAP = { country_event = { id = australia_md.111 } }
+		log = "[GetDateText]: [This.GetName]: australia_md.110.o1 executed"
+		}
+
+		option = {
+		name = australia_md.110.o2 #REFUSE
+		trigger = {
+			tag = IND
+			political_power > 124
+			surrender_progress < 0.75
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				 IND = { surrender_progress < 0.15 }	
+				}
+			modifier = {
+				add = -25
+				 IND = { surrender_progress > 0.20 }	
+				}
+			modifier = {
+				add = -25
+				 IND = { surrender_progress > 0.5 }	
+				}	
+			}
+		1185 = { add_resistance = 25 }
+		add_stability = -0.05
+		add_war_support = -0.04
+		add_political_power = -125
+		AST = { country_event = { id = australia_md.112 } }
+		TIM = { country_event = { id = australia_md.112 } }
+		ACE = { country_event = { id = australia_md.112 } }
+		log = "[GetDateText]: [This.GetName]: australia_md.110.o2 executed"
 		}
 	}
 
+	country_event = {
+	id = australia_md.111
+	title = australia_md.111.t #Indonesia gives up West Timor
+	desc = australia_md.111.d
+	picture = GFX_report_event_FDR_speech
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = australia_md.111.o1 
+		
+
+		log = "[GetDateText]: [This.GetName]: australia_md.111.o1 executed"
+		}
+	}
+
+	country_event = {
+	id = australia_md.112
+	title = australia_md.112.t #Indonesia Doesnt give up West Timor
+	desc = australia_md.112.d
+	picture = GFX_report_event_FDR_speech
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = australia_md.112.o1 
+		
+
+		log = "[GetDateText]: [This.GetName]: australia_md.112.o1 executed"
+		}
+	}
