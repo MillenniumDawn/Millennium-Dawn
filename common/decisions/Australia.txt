@@ -560,7 +560,100 @@ AST_Citizen_Initiated_Referenda_cat = {
 		}
 	}
 
-	AST_Recall_Volunteers = {
+	
+
+	AST_Recognise_ROC_dec = { 
+		allowed = {
+			original_tag = AST
+		}
+		visible = {
+			tag = AST
+		}
+		available = {
+		OR = {
+		NOT = { AST = { has_country_flag = Recognised_ROC } }
+		AND = {
+		TAI = { exists = yes }
+		AST = { NOT = { has_completed_focus = AST_Support_PRC_China } }
+		}
+		}
+		}
+
+		cost = 25
+		complete_effect = {
+		clr_country_flag = Recognised_PRC
+		set_country_flag = Recognised_ROC
+		AST = {
+			add_opinion_modifier = { modifier = recognize_taiwan_chi target = CHI }
+			remove_opinion_modifier = { modifier = recognize_china target = CHI }
+
+			add_opinion_modifier = { modifier = recognize_taiwan target = TAI }
+			remove_opinion_modifier = { modifier = revoked_recognize_taiwan target = TAI }
+
+		}
+		CHI = {
+			add_opinion_modifier = { modifier = recognize_taiwan_chi target = ROOT } 
+			remove_opinion_modifier = { modifier = recognize_china target = ROOT } 
+		}
+		
+		TAI = {
+			add_opinion_modifier = { modifier = recognize_taiwan target = ROOT } 
+			remove_opinion_modifier = { modifier = revoked_recognize_taiwan target = ROOT }
+			
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+		}
+		}
+
+		AST_Recognise_PRC_dec = {
+		allowed = {
+			original_tag = AST
+		}
+		visible = {
+			tag = AST
+		}
+		available = {
+		OR = {
+		NOT = { AST = { has_country_flag = Recognised_PRC } }
+		AND = {
+		CHI = { exists = yes }
+		AST = { NOT = { has_completed_focus = AST_Support_Taiwan_ROC } }
+		}
+		}
+		}
+
+		cost = 25
+		complete_effect = {
+		clr_country_flag = Recognised_ROC
+		set_country_flag = Recognised_PRC
+		AST = {
+			remove_opinion_modifier = { modifier = recognize_taiwan_chi target = CHI }
+			add_opinion_modifier = { modifier = recognize_china target = CHI }
+			
+			remove_opinion_modifier = { modifier = recognize_taiwan target = TAI }
+			add_opinion_modifier = { modifier = revoked_recognize_taiwan target = TAI }
+		}
+		CHI = {
+			remove_opinion_modifier = { modifier = recognize_taiwan_chi target = ROOT }
+			add_opinion_modifier = { modifier = recognize_china target = ROOT } 
+		}
+		
+		TAI = {
+			remove_opinion_modifier = { modifier = recognize_taiwan target = ROOT } 
+			add_opinion_modifier = { modifier = revoked_recognize_taiwan target = ROOT }
+			
+		}
+		
+		}
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	AST_Recall_Volunteers = {  #UNTESTED WIP
 		allowed = {
 			original_tag = AST
 		}
@@ -591,11 +684,28 @@ AST_Citizen_Initiated_Referenda_cat = {
 		}
 		cost = 25
 
+		available = {
+		AST = { has_country_flag = VOL_WAR_DELAY }
+		ACE = { has_war_with = IND }
+		AST = { NOT = { has_war_with = IND } }
+		AST = { NOT = { has_war_with = ACE } }
+		OR = {
+			IND = {
+			has_volunteers_amount_from = {
+    		tag = AST
+    		count > 1
+			}
+			}
+			ACE = {
+			has_volunteers_amount_from = {
+    		tag = AST
+    		count > 1
+			}
+			}
+			}
+		}
 		visible = {
-			ACE = { has_war_with = IND }
-			#AST = { has_country_flag = VOL_WAR_DELAY }
-			AST = { NOT = { has_war_with = IND } }
-			AST = { NOT = { has_war_with = ACE } }
+		ACE = { has_war_with = IND }
 		}
 
 		complete_effect = {
