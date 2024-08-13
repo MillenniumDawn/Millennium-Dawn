@@ -2,14 +2,20 @@
 #
 # NOTE: tactics must start with "tactic_" in their name to work with techs.
 ###############################################################################
-
-phases = { # phase = no is the standard phase - now recon combat phase, and standard = "main"
+# recon phase is phase = no
+# main phase is phase = main
+# recon phase simulates forces probing and trying to get into a specific phase
+# main phase is the actual joined battle phase, and is the full engagement
+phases = {
 	main
+	thunder_run #rapid breakthrough tank forces / mobile forces
+	deep_battle #large formations punching deep through enemy lines
 	close_combat
 	tactical_withdrawal
 	seize_bridge
 	hold_bridge
 	city_combat
+	insurgency #insurgency ops, reduce cbt width, reduce damage, ect
 }
 
 ### Recon tactics ###
@@ -314,6 +320,44 @@ tactic_recon_node_defense = {
 	defender = -0.05
 }
 
+tactic_recon_insurgency_attack = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = no
+	}
+
+	active = no
+
+	base = { factor = 4 }
+
+	picture = attack
+
+	attacker = -0.1
+	defender = -0.05
+	combat_width = -0.50
+	phase = insurgency
+}
+
+tactic_recon_insurgency_defender = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = no
+	}
+
+	active = no
+
+	base = { factor = 4 }
+
+	picture = attack
+
+	attacker = -0.1
+	defender = -0.05
+	combat_width = -0.50
+	phase = insurgency
+}
+
 #####################
 ### Basic Tactitcs###
 #####################
@@ -348,7 +392,7 @@ tactic_basic_defend = {
 	picture = defend
 
 	defender = 0.05
-	countered_by = tactic_insurgent_assault
+	#countered_by = tactic_insurgent_assault
 }
 
 tactic_counterattack = { # counters basic attack, assault
@@ -549,7 +593,11 @@ tactic_tactical_withdrawal = { #counters encirclement - starts tactical_withdraw
 	is_attacker = no
 	trigger = {
 		is_attacker = no
-		phase = main
+		OR = {
+			phase = main
+			phase = thunder_run
+			phase = deep_battle
+		}
 		OR = {
 			skill_advantage > 0
 			has_trait = trickster
@@ -568,7 +616,7 @@ tactic_tactical_withdrawal = { #counters encirclement - starts tactical_withdraw
 	defender = -0.05
 }
 
-city_attack_movement = { #counters encirclement - starts tactical_withdrawal phase
+city_attack_movement = { #counters encirclement - starts city_combat phase
 	is_attacker = yes
 	trigger = {
 		is_attacker = yes
@@ -594,6 +642,118 @@ city_attack_movement = { #counters encirclement - starts tactical_withdrawal pha
 
 	attacker = -0.05
 	defender = -0.05
+}
+
+tactic_thunder_run_breakthrough = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = main
+	}
+
+	#modify this to change chances of this occurning
+	base = { factor = 4 }
+
+	active = no
+	picture = attack
+
+	attacker = 0.15
+
+	phase = thunder_run
+}
+
+tactic_deep_battle_breakthrough = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = main
+	}
+
+	base = { factor = 4 }
+
+	active = no
+	picture = blitz
+
+	attacker = 0.10
+	attacker_movement_speed = 0.05
+
+	phase = deep_battle
+}
+
+tactic_insurgency_attacker = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = main
+	}
+
+	active = no
+
+	base = { factor = 4 }
+
+	picture = attack
+
+	attacker = -0.1
+	defender = -0.05
+	combat_width = -0.50
+	phase = insurgency
+}
+
+tactic_insurgency_defender = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = main
+	}
+
+	active = no
+
+	base = { factor = 4 }
+
+	picture = attack
+
+	attacker = -0.1
+	defender = -0.05
+	combat_width = -0.50
+	phase = insurgency
+}
+
+tactic_flexible_lines = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		OR = {
+			phase = main
+			phase = deep_battle
+			phase = thunder_run
+		}
+	}
+
+	active = no
+	base = { factor = 4 }
+
+	attacker = -0.05
+	defender = 0.15
+	combat_width = -0.05
+	attacker_movement_speed = -0.10
+}
+
+tactic_dedicated_emplacements = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		OR = {
+			phase = main
+			phase = deep_battle
+			phase = thunder_run
+		}
+	}
+
+	active = no
+	base = { factor = 4 }
+
+	attacker = -0.25
+	defender = 0.20
 }
 
 #close combat tactics here
@@ -743,6 +903,10 @@ tactic_tw_evade = {
 	base = { factor = 4 }
 	picture = tw_evade
 	display_phase = tactical_withdrawal
+
+	countered_by = tactic_tw_intercept
+
+	phase = no
 
 	combat_width = -0.25
 	attacker = -0.4
@@ -996,575 +1160,6 @@ tactic_defender_hb_skillful_defence = {
 ### Doctrines ###
 #################
 
-#Air Land Battle
-tactic_blitz = { #phase = main, counter = tactic_elastic_defense
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		hardness > 0.5
-		phase = main
-		OR = {
-			skill > 2
-			has_trait = panzer_leader
-			has_trait = armoured_cavalry_leader
-			skill_advantage > 1
-		}
-	}
-
-	active = no
-
-	base = { factor = 4 }
-	picture = blitz
-	countered_by = tactic_elastic_defense
-
-	attacker_movement_speed = 0.5
-	attacker = 0.15
-	defender = -0.15
-}
-
-#Grand Battle Plan - can also get massed_artillery in mass armored assult doctrine
-tactic_planned_attack = { #phase = main, no counter
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = thorough_planner
-		}
-	}
-	picture = tactic_planned_attack
-
-	attacker = 0.15
-	countered_by = tactic_mobile_defense
-}
-
-#mass armored assult
-tactic_relentless_assault = { #Deep battle attacker tactic
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = combined_arms_expert
-		}
-	}
-	picture = tactic_relentless_assault
-
-	attacker_movement_speed = 0.15
-	attacker = 0.2
-	defender = 0.05
-}
-
-tactic_barrage = { #aka massed artillery, phase = main, no counter
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = artillery_leader
-		}
-	}
-	picture = tactic_barrage
-
-	attacker = 0.1
-	defender = -0.2
-}
-
-#Infilitartion Assult - can also get massed_artillery in mass armored assult doctrine
-tactic_infantry_charge = { #aka infiltration assult, phase = main, no counter
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = infantry_expert
-		}
-	}
-	picture = tactic_infantry_charge
-
-	attacker = 0.1
-	defender = -0.05
-}
-
-tactic_elastic_defense = { #phase = main, no counter
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = main
-		OR = {
-			has_trait = defensive_doctrine
-			skill > 2
-		}
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = defensive_doctrine
-		}
-	}
-	picture = elastic_defence
-
-	attacker_movement_speed = -0.25
-	attacker = -0.15
-	defender = 0.10
-}
-
-tactic_danger_close_combat = {
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = close_combat
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = {
-		factor = 8
-		modifier = {
-			add = 2
-			has_trait = aggressive_assaulter
-		}
-		modifier = {
-			add = 2
-			has_trait = harsh_leader
-		}
-		modifier = {
-			add = 2
-			has_trait = infantry_leader
-		}
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = urban
-		}
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = supercity
-		}
-	}
-	picture = tactic_guerrilla_tactics
-
-	combat_width = -0.5
-	attacker = -0.7
-	defender = -0.6
-}
-
-tactic_tunnel_warfare = {
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = main
-		OR = {
-			not = { is_fighting_in_terrain = marsh }
-		}
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = urban
-		}
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = supercity
-		}
-	}
-	picture = tactic_guerrilla_tactics
-
-	countered_by = tactic_tunnel_rats
-
-	combat_width = -0.5
-	attacker = -0.7
-	defender = -0.6
-}
-
-tactic_guerrilla_tactics = {
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = main
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = {
-		factor = 8
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = urban
-		}
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = supercity
-		}
-	}
-	picture = tactic_guerrilla_tactics
-	combat_width = -0.5
-	attacker = -0.7
-	defender = -0.6
-	countered_by = tactic_cordon_and_search
-}
-
-tactic_insurgent_assault = {
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = {
-		factor = 8
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = urban
-		}
-		modifier = {
-			add = 4
-			is_fighting_in_terrain = supercity
-		}
-	}
-	picture = tactic_guerrilla_tactics
-
-	attacker = 0.25
-}
-
-Mimicking_operations_tactic = {
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = { factor = 4 }
-	picture = tactic_guerrilla_tactics
-	#countered_by = area_defense
-
-	attacker = 0.25
-}
-
-tactic_human_wave_tactics = { #People's army attacker tactic
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-		frontage_full = yes
-		has_reserves = yes
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = harsh_leader
-		}
-	}
-	picture = tactic_human_wave_tactics
-
-	combat_width = 0.5
-	attacker = 0.1
-	defender = 0.1
-	countered_by = tactic_rigid_defence
-}
-
-# tactic_banzai_charge = { #Special Japan attacker tactic
-# 	is_attacker = yes
-# 	trigger = {
-# 		tag = JAP
-# 		is_attacker = yes
-# 		phase = main
-# 	}
-
-# 	active = yes
-
-# 	countered_by = tactic_overwhelming_fire
-
-# 	base = { factor = 4 }
-# 	picture = tactic_banzai_charge
-
-# 	attacker_movement_speed = 0.1
-# 	attacker = 0.25
-# 	defender = 0.1
-# }
-
-tactic_unexpected_thrust = { #Mobile warfare attacker tactic
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = trickster
-		}
-	}
-	picture = tactic_unexpected_thrust
-
-	attacker_movement_speed = 0.15
-	attacker = 0.15
-}
-
-tactic_overwhelming_fire = { # Counters Banzai charge
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = main
-	}
-
-	active = no
-
-	base = {
-		factor = 2
-		modifier = {
-			add = 2
-			has_trait = artillery_expert
-		}
-	}
-	picture = tactic_overwhelming_fire
-
-	attacker = -0.1
-	defender = 0.1
-}
-
-tactic_tunnel_rats = {
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-		OR = {
-			not = { is_fighting_in_terrain = marsh }
-		}
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = { factor = 4 }
-	picture = tactic_guerrilla_tactics
-
-	combat_width = -0.5
-	attacker = -0.7
-	defender = -0.6
-}
-
-tactic_cordon_and_search = {
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-		OR = {
-			not = { is_fighting_in_terrain = marsh }
-		}
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = { factor = 4 }
-	picture = tactic_guerrilla_tactics
-
-	combat_width = -0.25
-	attacker = -0.3
-	defender = -0.2
-}
-
-Rhizome_Manoeuver = {
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-		OR = {
-			skill > 2
-			has_trait = trickster
-		}
-	}
-
-	active = no
-
-	base = { factor = 4 }
-	picture = tactic_guerrilla_tactics
-
-	attacker = 0.25
-}
-
-tactic_node_defense = {
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = main
-		OR = {
-			has_trait = defensive_doctrine
-			skill > 2
-		}
-	}
-
-	active = no
-
-	base = {
-		factor = 4
-		modifier = {
-			add = 2
-			has_trait = defensive_doctrine
-		}
-	}
-	picture = elastic_defence
-
-	attacker = -0.1
-	defender = 0.15
-	countered_by = tactic_barrage
-}
-
-tactic_rigid_defence = {
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = main
-	}
-
-	active = no
-
-	base = { factor = 4 }
-	picture = defend
-
-	defender = 0.2
-	countered_by = tactic_shock_and_awe
-}
-
-tactic_pincer_manouever = {
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		phase = main
-		OR = {
-			skill_advantage > 0
-			has_trait = panzer_leader
-			has_trait = armoured_cavalry_leader
-			has_trait = trickster
-		}
-	}
-
-	active = yes
-
-	base = { factor = 4 }
-	picture = encircle
-
-	attacker = 0.15
-	defender = 0.05
-	attacker_movement_speed = 0.2
-	countered_by = tactic_node_defense
-}
-
-tactic_shock_and_awe = {
-	is_attacker = yes
-	trigger = {
-		is_attacker = yes
-		frontage_full = yes
-		phase = main
-		OR = {
-			skill_advantage > 0
-			has_trait = panzer_leader
-			has_trait = armoured_cavalry_leader
-			has_trait = trickster
-		}
-	}
-
-	active = yes
-
-	base = { factor = 4 }
-	picture = breakthrough
-
-	attacker = 0.1
-	defender = -0.1
-	attacker_movement_speed = 0.1
-}
-
-tactic_mobile_defense = {
-	is_attacker = no
-	trigger = {
-		is_attacker = no
-		phase = main
-	}
-
-	active = no
-
-	base = { factor = 4 }
-	picture = backhand_blow
-
-	attacker = -0.15
-	defender = 0.1
-	attacker_movement_speed = -0.1
-}
-
 # city combat tactics
 tactic_city_attack = {
 	is_attacker = yes
@@ -1760,4 +1355,488 @@ tactic_city_crossfire_defense = {
 	countered_by = tactic_city_fixing_attack
 
 	defender = 0.1
+}
+
+# Thunder Run Tactics
+tactic_thunder_run = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = thunder_run
+	}
+
+	active = yes
+
+	base = { factor = 4 }
+	picture = attack
+	display_phase = thunder_run
+
+	countered_by = tactic_tactical_withdrawal
+
+	attacker = 0.25
+	defender = -0.15
+	combat_width = 0.50
+	attacker_movement_speed = 0.50
+}
+
+tactic_thunder_run_push = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = thunder_run
+	}
+
+	active = yes
+	picture = shock
+	display_phase = thunder_run
+
+	attacker = 0.15
+	combat_width = 0.10
+	attacker_movement_speed = 0.10
+}
+
+tactic_thunder_run_maneuver = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = thunder_run
+	}
+
+	active = yes
+	picture = flank
+	display_phase = thunder_run
+
+	attacker = 0.05
+	combat_width = 0.25
+	attacker_movement_speed = 0.20
+}
+
+tactic_thunder_run_retreat = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = thunder_run
+	}
+
+	picture = cc_defend
+	attacker = -0.05
+	defender = 0.15
+	attacker_movement_speed = 0.05
+
+	active = yes
+	display_phase = thunder_run
+}
+
+tactic_thunder_run_delay = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = thunder_run
+	}
+
+	active = yes
+	picture = defend
+	display_phase = thunder_run
+
+	defender = 0.10
+	attacker_movement_speed = -0.15
+}
+
+# Deep Battle
+tactic_deep_battle_push = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = deep_battle
+	}
+
+	active = yes
+	display_phase = deep_battle
+	picture = cc_attack
+
+	defender = -0.10
+	attacker = 0.10
+	attacker_movement_speed = 0.15
+	combat_width = 0.10
+
+	countered_by = tactic_deep_battle_hold
+}
+
+tactic_deep_battle_assault = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = deep_battle
+	}
+
+	active = no
+	display_phase = deep_battle
+	picture = breakthrough
+
+	attacker = 0.25
+	defender = -0.15
+
+	countered_by = tactic_deep_battle_counter_attack
+}
+
+tactic_deep_battle_encirclement = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = deep_battle
+	}
+
+	active = yes
+	picture = encircle
+
+	attacker = 0.15
+	defender = 0.10
+	combat_width = 0.50
+	attacker_movement_speed = 0.25
+
+	countered_by = tactic_tactical_withdrawal
+}
+
+tactic_deep_battle_rush = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = deep_battle
+	}
+
+	active = no
+	display_phase = deep_battle
+	picture = assault
+
+	attacker = 0.15
+	attacker_movement_speed = 0.40
+}
+
+tactic_deep_battle_retreat = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = deep_battle
+	}
+
+	active = yes
+	picture = ambush
+
+	attacker = -0.05
+	defender = 0.05
+	attacker_movement_speed = -0.25
+
+	countered_by = tactic_deep_battle_rush
+}
+
+tactic_deep_battle_hold = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = deep_battle
+	}
+
+	active = yes
+	display_phase = deep_battle
+
+	attacker = -0.1
+	defender = 0.25
+
+	countered_by = tactic_deep_battle_assault
+}
+
+tactic_deep_battle_counter_attack = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = deep_battle
+	}
+
+	active = yes
+	display_phase = deep_battle
+
+	defender = 0.25
+	combat_width = -0.25
+
+	countered_by = tactic_deep_battle_encirclement
+}
+
+# Insurgency
+
+tactic_insurgent_ied_strike = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+	attacker = 0.50
+	defender = -0.45
+	attacker_movement_speed = -0.65
+}
+
+tactic_insurgent_raid = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+
+	attacker = 0.35
+	defender = -0.15
+
+	countered_by = tactic_counter_foot_patrols
+}
+
+tactic_insurgent_vbied = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+	attacker = 0.75
+	defender = -0.50
+}
+
+tactic_insurgent_terror_strike = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+	attacker = 0.25
+	defender = -0.25
+}
+
+tactic_insurgent_base_attack = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = insurgency
+	}
+
+	active = yes
+	display_phase = insurgency
+
+	combat_width = -0.75
+
+	attacker = 0.15
+	defender = -0.15
+
+	countered_by = tactic_counter_perimeter_defence
+}
+
+tactic_insurgent_tunnel_strike = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+	attacker = 0.30
+	defender = -0.25
+}
+
+tactic_insurgent_tunnel_hiding = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+
+	countered_by = tactic_counter_tunnel_rats
+}
+
+tactic_insurgent_urban_hideouts = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+		OR = {
+			is_fighting_in_terrain = urban
+			is_fighting_in_terrain = supercity
+		}
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+	attacker = 0.50
+	defender = -0.75
+}
+
+tactic_insurgent_sniper_ops = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+	attacker = 0.25
+	defender = -0.35
+
+	countered_by = tactic_counter_cordon_search
+}
+
+tactic_insurgent_convoy_ambush = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = -0.75
+	attacker = -0.25
+	defender = 0.25
+	attacker_movement_speed = -0.75
+
+	countered_by = tactic_counter_react_to_contact
+}
+
+tactic_counter_ied = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	active = yes
+	display_phase = insurgency
+
+	attacker = -0.50
+	defender = -0.10
+}
+
+tactic_counter_foot_patrols = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	defender = 0.25
+
+	active = yes
+	display_phase = insurgency
+}
+
+tactic_counter_stronghold_raid = {
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = insurgency
+	}
+
+	attacker = 0.35
+	active = no
+
+	display_phase = insurgency
+}
+
+tactic_counter_cordon_search = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	defender = 0.25
+
+	active = no
+	display_phase = insurgency
+}
+
+tactic_counter_react_to_contact = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	defender = 0.35
+	attacker = -0.15
+
+	active = yes
+	display_phase = insurgency
+}
+
+tactic_counter_fireforce = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	active = no
+	display_phase = insurgency
+
+	combat_width = 0.50
+	attacker = -0.50
+	defender = 0.25
+
+	phase = main
+}
+
+tactic_counter_perimeter_defence = {
+	is_attacker = no
+	trigger = {
+		is_attacker = no
+		phase = insurgency
+	}
+
+	defender = 0.15
+
+	active = yes
+	display_phase = insurgency
+}
+
+tactic_counter_tunnel_rats = {
+	#limit this to counter insurgency op units only
+	is_attacker = yes
+	trigger = {
+		is_attacker = yes
+		phase = insurgency
+	}
+
+	active = yes
+	display_phase = insurgency
+
+	attacker = 0.15
+	defender = -0.30
 }
