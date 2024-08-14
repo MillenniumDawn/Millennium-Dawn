@@ -47,8 +47,8 @@
 	NDefines.NDiplomacy.REVOKE_GUARANTEE_COST = 30
 	NDefines.NDiplomacy.OPINION_PER_VOLUNTEER = 15
 	NDefines.NDiplomacy.MAX_OPINION_FROM_VOLUNTEERS = 45
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 2
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 10
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 3
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 20
 	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
 
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
