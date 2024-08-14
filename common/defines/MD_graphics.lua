@@ -4,7 +4,7 @@
 
 	NDefines.NMapIcons.STATES_PRIORITY_VICTORY_POINTS = 0
 
-	NDefines.NAirGfx.AIRPLANES_ANIMATION_GLOBAL_SPEED_PER_GAMESPEED = { 0.3, 0.35, 0.40, 0.45, 0.50, 0.55 } -- Speed factor for each game speed (begin with paused). Larger value = faster animation.
+	NDefines.NAirGfx.AIRPLANES_ANIMATION_GLOBAL_SPEED_PER_GAMESPEED = { 0.18, 0.2, 0.2, 0.20, 0.50, 0.85 } -- Speed factor for each game speed (begin with paused). Larger value = faster animation.
 	NDefines.NAirGfx.ROCKET_SPEED = 15.0							-- Speed of rockets launched from rocket sites
 	NDefines.NAirGfx.AIRPLANES_CURVE_POINT_DENSITY = 5.0 			-- Higher value = more midpoints in the flight path.
 	NDefines.NAirGfx.AIRPLANES_CURVE_MAX_EXTRAPOLATION = 30.0 		-- It's the limit value that avoid making gigantic curves that may happen when flight path is very long.
@@ -17,7 +17,7 @@
 	NDefines.NAirGfx.AIRPLANES_BANK_STRENGTH = 210.0 				-- Multiplier of how much the curve affects the wings banking. (angle limited by the following value)
 	NDefines.NAirGfx.AIRPLANES_BANK_ANGLE_LIMIT = 55.0 				-- Bank angle limit.
 	NDefines.NAirGfx.AIRPLANES_GROUND_COLLISION_OFFSET_Y = -5.0 		-- Lets the 3d airplanes disappear after going a bit under the ground.
-	NDefines.NAirGfx.AIRPLANES_1_FIGHTER_PATROL_ANIM = 1 			-- Number of fighters needed for a single instance of this animation
+	NDefines.NAirGfx.AIRPLANES_1_FIGHTER_PATROL_ANIM = 1			-- Number of fighters needed for a single instance of this animation
 	NDefines.NAirGfx.AIRPLANES_3_FIGHTER_PATROL_ANIM = 3			-- Number of fighters needed for a single instance of this animation
 	NDefines.NAirGfx.AIRPLANES_1_BOMBER_BOMBING_ANIM = 1 			-- Number of bombers needed for a single instance of this animation
 	NDefines.NAirGfx.AIRPLANES_3_BOMBER_BOMBING_ANIM = 3				-- Number of bombers needed for a single instance of this animation
@@ -33,21 +33,32 @@
 	NDefines.NAirGfx.FIGHTERS_DIVISION_FACTOR = 60					-- Number of missiles shown in a strategic region will be divided by this factor.
 	NDefines.NAirGfx.SCOUT_PLANE_DIVISION_FACTOR = 60				-- Number of missiles shown in a strategic region will be divided by this factor.
 	NDefines.NAirGfx.TRANSPORT_DIVISION_FACTOR = 60
-	NDefines.NAirGfx.MAX_MISSILE_BOMBING_SCENARIOS = 2				-- Max number of missile bombing scenarios in a strategic region.
-	NDefines.NAirGfx.MAX_PATROL_SCENARIOS = 2						-- Max number of patrol scenarios in a strategic region.
-	NDefines.NAirGfx.MAX_BOMBING_SCENARIOS = 2						-- Max number of bombings scenarios in a strategic region.
-	NDefines.NAirGfx.MAX_DOGFIGHTS_SCENARIOS = 2					-- Max number of dogfight scenarios in a strategic region.
-	NDefines.NAirGfx.MAX_TRANSPORT_SCENARIOS = 2					-- Max number of transport scenarios in a strategic region
-	NDefines.NAirGfx.MAX_TRAINING_SCENARIOS = 2						-- Max number of training scenarios in a strategic region
-	NDefines.NAirGfx.MAX_SCOUT_SCENARIOS = 2
+	NDefines.NAirGfx.MAX_MISSILE_BOMBING_SCENARIOS = 6				-- Max number of missile bombing scenarios in a strategic region.
+	NDefines.NAirGfx.MAX_PATROL_SCENARIOS = 4					-- Max number of patrol scenarios in a strategic region.
+	NDefines.NAirGfx.MAX_BOMBING_SCENARIOS = 4						-- Max number of bombings scenarios in a strategic region.
+	NDefines.NAirGfx.MAX_DOGFIGHTS_SCENARIOS = 4					-- Max number of dogfight scenarios in a strategic region.
+	NDefines.NAirGfx.MAX_TRANSPORT_SCENARIOS = 4					-- Max number of transport scenarios in a strategic region
+	NDefines.NAirGfx.MAX_TRAINING_SCENARIOS = 4						-- Max number of training scenarios in a strategic region
+	NDefines.NAirGfx.MAX_SCOUT_SCENARIOS = 1
 
 	NDefines.NGraphics.PROVINCE_NAME_DRAW_DISTANCE = 800.0
-	NDefines.NGraphics.DRAW_SHADOWS_CUTOFF = 200
-	NDefines.NGraphics.DRAW_SHADOWS_FADE_LENGTH = 80
+	NDefines.NGraphics.DRAW_SHADOWS_CUTOFF = 400
+	NDefines.NGraphics.DRAW_SHADOWS_FADE_LENGTH = 50
+	NDefines.NGraphics.DRAW_FOW_CUTOFF = 310
+	NDefines.NGraphics.DRAW_FOW_FADE_LENGTH = 220
+	
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 0
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_DIPLOMACY = 5
+	NDefines_Graphics.NGraphics.BORDER_WIDTH = 1.0
+	NDefines_Graphics.GRADIENT_BORDERS_THICKNESS_STATE = 5.0
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_FIELD_COUNTRY_LOW = 300.0 -- country area in sum of pixels ...
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_FIELD_COUNTRY_HIGH = 9000.0 -- ... the value is squared, so fe. country of size 100x100pix = 10000
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_COUNTRY_LOW = 6 -- thickness in pixels
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 17 -- Border thickness
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_STATE = 30
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_COUNTRY = 0.98
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_DIPLOMACY = 0.98
 
-	--GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 2.0, -- The center gradient is linear 1/255 per pixel for this many pixels --1
-	--GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 25.0, --25
-	NDefines.NGraphics.GRADIENT_BORDERS_THICKNESS_STATE = 50.0 --11
 	NDefines.NGraphics.GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_B = 15.0 --20
 	NDefines.NGraphics.GRADIENT_BORDERS_THICKNESS_STRATEGIC_REGIONS = 45.0 --150
 	NDefines.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_STRATEGIC_REGIONS = 0.999
