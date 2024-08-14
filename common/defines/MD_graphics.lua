@@ -42,22 +42,23 @@
 	NDefines.NAirGfx.MAX_SCOUT_SCENARIOS = 1
 
 	NDefines.NGraphics.PROVINCE_NAME_DRAW_DISTANCE = 800.0
-	NDefines.NGraphics.DRAW_SHADOWS_CUTOFF = 200
-	NDefines.NGraphics.DRAW_SHADOWS_FADE_LENGTH = 80
+	NDefines.NGraphics.DRAW_SHADOWS_CUTOFF = 400
+	NDefines.NGraphics.DRAW_SHADOWS_FADE_LENGTH = 50
+	NDefines.NGraphics.DRAW_FOW_CUTOFF = 310
+	NDefines.NGraphics.DRAW_FOW_FADE_LENGTH = 220
 	
 	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 0
 	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_DIPLOMACY = 5
 	NDefines_Graphics.NGraphics.BORDER_WIDTH = 1.0
 	NDefines_Graphics.GRADIENT_BORDERS_THICKNESS_STATE = 5.0
-	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_FIELD_COUNTRY_LOW = 0.0 -- country area in sum of pixels ...
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_FIELD_COUNTRY_LOW = 300.0 -- country area in sum of pixels ...
 	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_FIELD_COUNTRY_HIGH = 9000.0 -- ... the value is squared, so fe. country of size 100x100pix = 10000
-	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_COUNTRY_LOW = 5 -- thickness in pixels
-	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 5 -- Border thickness
-	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_STATE = 5
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_COUNTRY_LOW = 6 -- thickness in pixels
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 17 -- Border thickness
+	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_STATE = 30
 	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_COUNTRY = 0.98
 	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_DIPLOMACY = 0.98
 
-	--GRADIENT_BORDERS_THICKNESS_COUNTRY_HIGH = 25.0, --25
 	NDefines.NGraphics.GRADIENT_BORDERS_THICKNESS_SUPPLY_AREA_B = 15.0 --20
 	NDefines.NGraphics.GRADIENT_BORDERS_THICKNESS_STRATEGIC_REGIONS = 45.0 --150
 	NDefines.NGraphics.GRADIENT_BORDERS_OUTLINE_CUTOFF_STRATEGIC_REGIONS = 0.999
