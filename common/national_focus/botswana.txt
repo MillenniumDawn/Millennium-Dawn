@@ -9,6 +9,8 @@
 
 	continuous_focus_position = { x = 100 y = 1000 }
 
+	shared_focus = AFRICAN_UNION_shared_focus
+
 	#Military Branch
 	focus = {
 		id = BOT_military_reevaluation
@@ -47,6 +49,8 @@
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_develop_anti_poaching_tactics"
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
 			add_tech_bonus = {
 				name = BOT_develop_anti_poaching_tactics
 				bonus = 0.5
@@ -85,9 +89,13 @@
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_indian_military_cooperation"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = RAJ }
+			set_temp_variable = { influence_target = ROOT.id }
+			change_influence_percentage = yes
 			add_doctrine_cost_reduction = {
 				name = BOT_indian_military_cooperation
-				category = CAT_land_doctrine
+				category = CAT_defensive_doctrine
 				uses = 2
 				cost_reduction = 0.5
 			}
@@ -119,7 +127,7 @@
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_american_military_cooperation"
-			set_temp_variable = { percent_change = 2.75 }
+			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = USA }
 			set_temp_variable = { influence_target = ROOT.id }
 			change_influence_percentage = yes
@@ -127,7 +135,7 @@
 				name = BOT_american_military_cooperation
 				bonus = 0.5
 				uses = 2
-				category = CAT_land_doctrine
+				category = CAT_western
 			}
 			BOT_boost_BNF = yes
 		}
@@ -154,7 +162,7 @@
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_chinese_military_cooperation"
-			set_temp_variable = { percent_change = 2.75 }
+			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = CHI }
 			set_temp_variable = { influence_target = ROOT.id }
 			change_influence_percentage = yes
@@ -162,7 +170,7 @@
 				name = BOT_chinese_military_cooperation
 				bonus = 0.5
 				uses = 2
-				category = CAT_land_doctrine
+				category = CAT_eastern
 			}
 			BOT_boost_BPP = yes
 		}
@@ -194,7 +202,7 @@
 		x = -1
 		y = 2
 
-		cost = 8
+		cost = 7
 		bypass = {
 			OR = {
 				has_idea = partial_draft_army
@@ -252,7 +260,7 @@
 		x = 1
 		y = 2
 
-		cost = 8
+		cost = 7
 		bypass = {
 			OR = {
 				has_idea = volunteer_women
@@ -294,11 +302,12 @@
 		x = -2
 		y = 3
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_anti_poaching_army"
 			add_ideas = BOT_army_against_poaching
+			BOT_update_anti_poaching = yes
 			BOT_boost_BWF = yes
 		}
 
@@ -329,7 +338,7 @@
 		x = 0
 		y = 3
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_peacekeeping_army"
@@ -368,11 +377,10 @@
 		x = 2
 		y = 3
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_shift_to_traditional_military"
-			# add_ideas = BOT_professional_military
 			add_ideas = professional_officer_corps_spirit
 			BOT_boost_BPP = yes
 		}
@@ -435,7 +443,8 @@
 					amount = 10
 					producer = SWI
 				}
-			} else = {
+			}
+			else = {
 				add_equipment_to_stockpile = {
 					type = L_Strike_fighter2
 					amount = 10
@@ -486,7 +495,8 @@
 					amount = 5
 					producer = USA
 				}
-			} else = {
+			}
+			else = {
 				add_equipment_to_stockpile = {
 					type = transport_plane1
 					amount = 5
@@ -529,10 +539,53 @@
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = ROOT.id }
 			change_influence_percentage = yes
-			add_equipment_to_stockpile = {
-				type = attack_helicopter2
-				amount = 20
-				producer = SOV
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = {
+					type = attack_helicopter_hull_0
+					variant_name = "Mil Mi-24"
+					amount = 20
+					producer = SOV
+				}
+				if = {
+					limit = {
+						NOT = { has_tech = early_helicopter }
+					}
+					set_technology = {
+						early_helicopter = 1
+					}
+				}
+				if = {
+					limit = {
+						NOT = { has_tech = nsb_attack_helicopter_tech_1 }
+					}
+					set_technology = {
+						nsb_attack_helicopter_tech_1 = 1
+					}
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = attack_helicopter2
+					amount = 20
+					producer = SOV
+				}
+				if = {
+					limit = {
+						NOT = { has_tech = early_helicopter }
+					}
+					set_technology = {
+						early_helicopter = 1
+					}
+				}
+				if = {
+					limit = {
+						NOT = { has_tech = attack_helicopter1 }
+					}
+					set_technology = {
+						attack_helicopter1 = 1
+					}
+				}
 			}
 		}
 
@@ -550,7 +603,7 @@
 		x = 4
 		y = 4
 
-		cost = 10
+		cost = 7
 
 		available = {
 			OR = {
@@ -626,6 +679,8 @@
 					modifier = minor_border_dispute
 				}
 			}
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
 			288 = {
 				add_building_construction = {
 					type = bunker
@@ -819,7 +874,6 @@
 				target = NAM
 				generator = { 282 }
 			}
-			#WIP CHANGE STATES
 			hidden_effect = { every_country = { news_event = { id = Botswana_news_events.3 hours = 6 } } }
 		}
 
@@ -845,18 +899,35 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_replace_f4s"
 			custom_effect_tooltip = BOT_replace_f5s_tt
-			every_country = {
-				limit = {
-					OR = {
-						original_tag = SWE
-						original_tag = USA
-						original_tag = CHI
-						original_tag = ENG
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = SWE
+							original_tag = USA
+							original_tag = CHI
+							original_tag = ENG
+						}
+						has_design_based_on = small_plane_strike_airframe
 					}
-					has_tech = MR_Fighter3
 				}
+				ROOT = { country_event = Botswana_events.7 }
 			}
-			ROOT = { country_event = Botswana_events.1 }
+			else = {
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = SWE
+							original_tag = USA
+							original_tag = CHI
+							original_tag = ENG
+						}
+						has_tech = MR_Fighter3
+					}
+				}
+				ROOT = { country_event = Botswana_events.1 }
+			}
 		}
 
 		ai_will_do = {
@@ -933,7 +1004,7 @@
 		x = 7
 		y = 0
 
-		cost = 8
+		cost = 5
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_meet_with_chiefs"
@@ -961,7 +1032,7 @@
 		x = -1
 		y = 1
 
-		cost = 8
+		cost = 5
 
 		available = {
 			has_country_flag = mosadi_seboko_kgosi
@@ -1006,7 +1077,7 @@
 		x = 1
 		y = 1
 
-		cost = 8
+		cost = 5
 
 		available = {
 			has_country_flag = mosadi_seboko_kgosi
@@ -1044,7 +1115,7 @@
 		x = -2
 		y = 2
 
-		cost = 10
+		cost = 7
 
 		available = {
 			OR = {
@@ -1155,7 +1226,7 @@
 		x = 2
 		y = 2
 
-		cost = 10
+		cost = 7
 
 		available = {
 			OR = {
@@ -1208,7 +1279,7 @@
 		x = -2
 		y = 3
 
-		cost = 10
+		cost = 7
 
 		available = {
 			nationalist > 0.20
@@ -1300,7 +1371,7 @@
 		x = 0
 		y = 3
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INTERNAL_AFFAIRS }
 
 		completion_reward = {
@@ -1324,7 +1395,7 @@
 		x = 2
 		y = 3
 
-		cost = 10
+		cost = 7
 
 		available = {
 			has_idea = landowners
@@ -1364,7 +1435,7 @@
 		x = -1
 		y = 4
 
-		cost = 10
+		cost = 7
 
 		available = {
 			has_idea = BOT_ancestral_land_conflict
@@ -1402,7 +1473,7 @@
 		x = 1
 		y = 4
 
-		cost = 10
+		cost = 7
 
 		available = {
 			has_idea = BOT_ancestral_land_conflict
@@ -1447,7 +1518,7 @@
 		x = 1
 		y = 5
 
-		cost = 8
+		cost = 7
 		search_filters = { FOCUS_FILTER_ENVIRONMENT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_total_ban_on_hunting"
@@ -1547,7 +1618,7 @@
 		search_filters = { FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_invest_in_debswana"
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			add_resource = {
 				type = chromium
@@ -1683,8 +1754,15 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_work_with_CIC"
 			BOT_increase_desertification_rate = yes
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -2.25 }
 			modify_treasury_effect = yes
+			287 = {
+				add_building_construction = {
+					type = fossil_powerplant
+					level = 1
+					instant_build = yes
+				}
+			}
 			remove_ideas = BOT_coal_focused_energy
 			add_ideas = BOT_coal_focused_energy_self_sufficient
 			set_temp_variable = { percent_change = 5 }
@@ -1800,9 +1878,9 @@
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_ENVIRONMENT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_solar_panel_grid"
-			set_temp_variable = { treasury_change = -4.25 }
+			set_temp_variable = { treasury_change = -8.50 }
 			modify_treasury_effect = yes
-			288 = {
+			287 = {
 				add_building_construction = {
 					type = synthetic_refinery
 					level = 1
@@ -1810,8 +1888,6 @@
 				}
 			}
 			BOT_decrease_desertification_rate = yes
-			set_temp_variable = { treasury_change = -6 }
-			modify_treasury_effect = yes
 			remove_ideas = BOT_renewable_focused_energy
 			add_ideas = BOT_renewable_focused_energy_self_sufficient
 			set_temp_variable = { percent_change = 5 }
@@ -1843,7 +1919,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_kalahari_exploitation"
 			BOT_increase_desertification_rate = yes
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			add_resource = {
 				type = chromium
@@ -1951,7 +2027,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_ethanol_power_plant"
 			BOT_decrease_desertification_rate = yes
-			set_temp_variable = { treasury_change = -4.25 }
+			set_temp_variable = { treasury_change = -8.5 }
 			modify_treasury_effect = yes
 			287 = {
 				add_building_construction = {
@@ -2024,7 +2100,7 @@
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_kgalagadi_wind_park"
-			set_temp_variable = { treasury_change = -4.25 }
+			set_temp_variable = { treasury_change = -8.50 }
 			modify_treasury_effect = yes
 			287 = {
 				add_building_construction = {
@@ -2034,8 +2110,6 @@
 				}
 			}
 			BOT_decrease_desertification_rate = yes
-			set_temp_variable = { treasury_change = -6 }
-			modify_treasury_effect = yes
 			add_tech_bonus = {
 				name = BOT_tuli_wind_park
 				bonus = 0.5
@@ -2071,10 +2145,25 @@
 		x = -1
 		y = 1
 
-		cost = 8
+		cost = 10
 		search_filters = { FOCUS_FILTER_ENVIRONMENT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_increase_cattle_production"
+			set_temp_variable = { treasury_change = -3.75 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				limit = {
+					NOT = {
+						has_state_category = state_inhospitable
+						has_state_category = state_military_base
+					}
+				}
+				add_building_construction = {
+					type = agriculture_district
+					level = 1
+					instant_build = yes
+				}
+			}
 			BOT_increase_desertification_rate = yes
 		}
 
@@ -2115,7 +2204,7 @@
 		x = 1
 		y = 1
 
-		cost = 8
+		cost = 7
 		search_filters = { FOCUS_FILTER_ENVIRONMENT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_optimise_cattle_production"
@@ -2139,20 +2228,18 @@
 		x = -1
 		y = 2
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_INDUSTRY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_clear_way_for_new_farms"
 			BOT_increase_desertification_rate = yes
-			set_temp_variable = { treasury_change = -7.5 }
+			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
+			287 = {
+				add_extra_state_shared_building_slots = 1
+			}
 			288 = {
 				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
 			}
 		}
 
@@ -2173,7 +2260,7 @@
 		x = 1
 		y = 2
 
-		cost = 10
+		cost = 7
 
 		available = {
 			has_tech = gene_therapy
@@ -2183,11 +2270,11 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_refine_the_musi_breed"
 			BOT_decrease_desertification_rate = yes
-			287 = {
-				add_extra_state_shared_building_slots = 1
-			}
-			288 = {
-				add_extra_state_shared_building_slots = 1
+			add_tech_bonus = {
+				name = BOT_refine_the_musi_breed
+				bonus = 0.5
+				uses = 2
+				category = CAT_genes
 			}
 		}
 
@@ -2212,7 +2299,7 @@
 		x = 1
 		y = 3
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_biofuel_experimentation"
@@ -2245,16 +2332,9 @@
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_biofuel_experimentation"
-			set_temp_variable = { treasury_change = -8 }
+			set_temp_variable = { treasury_change = -8.50 }
 			modify_treasury_effect = yes
 			287 = {
-				add_building_construction = {
-					type = synthetic_refinery
-					level = 1
-					instant_build = yes
-				}
-			}
-			288 = {
 				add_building_construction = {
 					type = synthetic_refinery
 					level = 1
@@ -2282,7 +2362,7 @@
 		x = 1
 		y = 6
 
-		cost = 10
+		cost = 7
 
 		available = {
 			has_idea = BOT_zimbabwean_refugees
@@ -2329,7 +2409,7 @@
 		x = -6
 		y = 7
 
-		cost = 10
+		cost = 7
 
 		available = {
 			has_idea = industrial_conglomerates
@@ -2366,7 +2446,7 @@
 		x = -2
 		y = 7
 
-		cost = 10
+		cost = 7
 
 		available = {
 			has_idea = industrial_conglomerates
@@ -2410,7 +2490,7 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_form_cattle_communes"
-			set_temp_variable = { treasury_change = -7.5 }
+			set_temp_variable = { treasury_change = -3.75 }
 			modify_treasury_effect = yes
 			swap_ideas = {
 				add_idea = small_medium_business_owners
@@ -2421,7 +2501,7 @@
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
-					type = industrial_complex
+					type = agriculture_district
 					level = 1
 					instant_build = yes
 				}
@@ -2701,7 +2781,7 @@
 		x = 29
 		y = 0
 
-		cost = 10
+		cost = 5
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_political_effort"
@@ -2809,7 +2889,7 @@
 		x = -5
 		y = 3
 
-		cost = 8
+		cost = 10
 		search_filters = { FOCUS_FILTER_RESOURCE }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_indian_diamond_institute"
@@ -2901,7 +2981,7 @@
 		x = -3
 		y = 3
 
-		cost = 8
+		cost = 7
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_found_ilea"
@@ -3198,7 +3278,7 @@
 		x = 3
 		y = 1
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_extra_funding_to_schools"
@@ -3236,7 +3316,7 @@
 		x = 5
 		y = 1
 
-		cost = 10
+		cost = 7
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_introduce_school_fees"
@@ -3271,7 +3351,7 @@
 		x = 1
 		y = 2
 
-		cost = 8
+		cost = 7
 		search_filters = { FOCUS_FILTER_ENVIRONMENT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_expand_nature_reserves"
@@ -3303,7 +3383,7 @@
 		x = 3
 		y = 2
 
-		cost = 8
+		cost = 7
 		search_filters = { FOCUS_FILTER_ENVIRONMENT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_shrink_nature_reserves"
@@ -3337,7 +3417,7 @@
 		x = 5
 		y = 2
 
-		cost = 8
+		cost = 5
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_remove_death_penalty"
@@ -3380,7 +3460,7 @@
 		x = 7
 		y = 2
 
-		cost = 8
+		cost = 5
 		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_keep_death_penalty"
@@ -3417,7 +3497,7 @@
 		x = 3
 		y = 3
 
-		cost = 8
+		cost = 7
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_prioritise_industrial_courts"
@@ -3457,7 +3537,7 @@
 		x = 5
 		y = 3
 
-		cost = 8
+		cost = 7
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INTERNAL_AFFAIRS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOT_secure_workers_rights"
