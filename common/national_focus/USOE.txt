@@ -2149,6 +2149,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Strike_Fighter_Designs"
+			#TODO: Give the players a random design here
 			add_ideas = UOE_strike_fighter_designs
 			add_tech_bonus = {
 				bonus = 0.25
@@ -7331,7 +7332,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UOE_Stabilize,_Stabilize!"
+			log = "[GetDateText]: [Root.GetName]: Focus UOE_Stabilize_Stabilize!"
 			UOE_stabilize_eco_start = yes
 			UOE = {
 				country_event = UOEEvent.8
@@ -7960,12 +7961,16 @@ focus_tree = {
 
 		relative_position_id = UOE_The_Electrical_Problem
 
-		cost = 10
+		cost = 4
         prerequisite = { focus = UOE_The_Electrical_Problem }
 
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_The_Battery_Solution"
+
+			add_to_variable = { battery_park_construction_cost = -10 }
+			set_temp_variable = { temp_change = -0.10 }
+			UOE_pop_fuel_change = yes
 		}
 
 		ai_will_do = { factor = 1 }
@@ -7980,12 +7985,16 @@ focus_tree = {
 
 		relative_position_id = UOE_The_Electrical_Problem
 
-		cost = 10
+		cost = 8
         prerequisite = { focus = UOE_The_Electrical_Problem }
 
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Power_Transmission_Improvements"
+			set_temp_variable = { temp_change = -0.1 }
+			UOE_pop_energy_change = yes
+			set_temp_variable = { temp_change = -0.05 }
+			UOE_energy_use_change = yes
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8006,6 +8015,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Increase_Power_Production"
+			country_event = UOEEvent.12
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8026,6 +8036,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Civilian_Industrial_Expansion"
+			two_office_construction = yes
+			three_random_industrial_complex = yes
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8046,6 +8058,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Office_Space_Initative"
+			add_timed_idea = {
+				idea = UOE_office_const_boost
+				days = 365
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8066,6 +8082,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Expanded_Civilian_Markets"
+			add_timed_idea = {
+				idea = UOE_expand_civ_market
+				days = 365
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8087,6 +8107,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Increased_Migration_Incentives"
+			add_ideas = UOE_expanded_migration_incentives
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8107,6 +8128,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Further_Market_Spread"
+			add_ideas = UOE_spead_of_markets
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8127,6 +8149,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_International_Business_Support"
+			#modifier for investment likelihood here
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8147,6 +8170,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_The_European_Market"
+			add_ideas = UOE_growing_european_markets
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8167,6 +8191,21 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Grow_the_Working_Class"
+			every_owned_state = {
+				if = { limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
+					UOE = {
+						add_to_temp_array = { state_tracker = PREV }
+					}
+				}
+			}
+			for_each_loop = {
+				array = state_tracker
+				value = v
+				var:v = {
+					add_to_variable = { productivity_state_var = 0.5 }
+				}
+			}
+			custom_effect_tooltip = UOE_grow_more_small_stuff
 		}
 
 		ai_will_do = { factor = 1 }
