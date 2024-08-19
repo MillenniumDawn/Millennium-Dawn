@@ -9,7 +9,7 @@ tags={
 supported_version="1.14.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
-path="mod/Millennium_Dawn"
+path="C:/Users/mahol/HOI4Modding/Millennium_Dawn/"
 
 replace_path = "events"
 replace_path = "common/abilities"
