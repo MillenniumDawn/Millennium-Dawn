@@ -476,6 +476,11 @@ country_event = { # Violence erupts
 		name = solomon_competition.26.o1 # We need international assistance
 		log = "[GetDateText]: [This.GetName]: solomon_competition.26.o1 executed"
 
+		SOL = {
+			add_ideas = SOL_idea_rampant_ethnic_violence
+			add_ideas = SOL_idea_humanitarian_disaster
+		}
+
 		AST = {
 			country_event = { id = solomon_competition.27 days = 2 }
 		}
@@ -504,22 +509,23 @@ country_event = { # Operation RAMSI - Initial request
 		name = solomon_competition.27.o1 # Send our forces
 		log = "[GetDateText]: [This.GetName]: solomon_competition.27.o1 executed"
 
-		add_manpower = -2000
-		set_temp_variable = { treasury_change = -1 }
-        modify_treasury_effect = yes
-
 		if = {
 			limit = { original_tag = AST }
-			add_to_variable = { SOL.SOL_AST_support = 8 }
-			SOL = {
-				add_ideas = SOL_AST_idea_contained_ethnic_violence
-			}
+			set_country_flag = SOL_AST_operation_RAMSI # Progression occurs through focus tree
+
 			log = "[GetDateText]: Australia has agreed to help the Solomon Islands with Operation RAMSI (Competition Score [?SOL.SOL_AST_support])"
 		}
 		else = {
-			add_to_variable = { SOL.SOL_CHI_support = 8 }
+			add_to_variable = { SOL.SOL_CHI_support = 4 }
+			add_manpower = -2000
+			set_temp_variable = { treasury_change = -1 }
+       		modify_treasury_effect = yes
+			set_country_flag = SOL_CHI_operation_RAMSI
+			CHI = { # Since we can't add content to China for now, we just automatically progress China's participation.
+				country_event = { id = solomon_competition.30 days = 100 }
+			}
 			SOL = {
-				add_ideas = SOL_CHI_idea_contained_ethnic_violence
+				country_event = { id = solomon_competition.30 days = 100 }
 			}
 			log = "[GetDateText]: China has agreed to help the Solomon Islands with Operation RAMSI (Competition Score [?SOL.SOL_CHI_support])"
 		}
@@ -540,7 +546,7 @@ country_event = { # Operation RAMSI - Initial request
 		name = solomon_competition.27.o2 # Let's see how this plays out
 		log = "[GetDateText]: [This.GetName]: solomon_competition.27.o2 executed"
 
-		CHI = {
+		SOL = {
 			country_event = { id = solomon_competition.29 days = 1 }
 		}
 
@@ -592,8 +598,142 @@ country_event = { # Operation RAMSI - Rejected request
 			modifier = SOL_abandoned_us
 			target = CHI
 		}
+	}
+}
 
-		add_ideas = SOL_idea_rampant_ethnic_violence
-		add_ideas = SOL_idea_humanitarian_disaster
+country_event = {
+	id = solomon_competition.30 # Operation RAMSI - Foreign Forces Arrive
+	title = solomon_competition.30.t
+	desc = solomon_competition.30.d
+	picture = GFX_2021_solomon_intervention_police
+
+	is_triggered_only = yes
+
+	option = {
+		name = solomon_competition.30.o1 # A promising start
+		log = "[GetDateText]: [This.GetName]: solomon_competition.30.o1 executed"
+
+		if = {
+			limit = { tag = CHI }
+			SOL = {
+				remove_ideas = {
+					SOL_idea_rampant_ethnic_violence
+					SOL_idea_humanitarian_disaster
+				}
+				add_ideas = SOL_CHI_idea_contained_ethnic_violence
+				country_event = { id = solomon_competition.31 days = 100 }
+			}
+			country_event = { id = solomon_competition.31 days = 100 }
+		}
+	}
+}
+
+country_event = {
+	id = solomon_competition.31 # Operation RAMSI - Destroy the guns
+	title = solomon_competition.31.t
+	desc = solomon_competition.31.d
+	picture = GFX_2003_solomon_gun_burning
+
+	is_triggered_only = yes
+
+	option = {
+		name = solomon_competition.31.o1 # Destroy the guns
+		log = "[GetDateText]: [This.GetName]: solomon_competition.31.o1 executed"
+		trigger = {
+			NOT = { tag = SOL }
+		}
+		if = {
+			limit = { tag = CHI }
+			SOL = {
+				add_ideas = SOL_idea_disarmed_population
+				add_to_variable = { SOL.SOL_CHI_support = 2 }
+				country_event = { id = solomon_competition.32 days = 100 }
+			}
+			country_event = { id = solomon_competition.32 days = 100 }
+		}
+	}
+
+	option = {
+		name = solomon_competition.31.o2 # This was a good idea
+		log = "[GetDateText]: [This.GetName]: solomon_competition.31.o2 executed"
+		trigger = {
+			tag = SOL
+		}
+	}
+}
+
+country_event = {
+	id = solomon_competition.32 # Operation RAMSI - Restore the government
+	title = solomon_competition.32.t
+	desc = {
+		text = solomon_competition.32.d2 # China does it (Emerging shift)
+		trigger = {
+			CHI = { has_country_flag = SOL_CHI_operation_RAMSI }
+		}
+	}
+	desc = solomon_competition.32.d1 # Australia does it (Western shift)
+	picture = GFX_political_deal
+
+	is_triggered_only = yes
+
+	option = {
+		name = solomon_competition.32.o1 # Almost there
+		log = "[GetDateText]: [This.GetName]: solomon_competition.32.o1 executed"
+		trigger = {
+			tag = SOL.RAMSI_supporter
+		}
+
+		if = {
+			limit = { tag = CHI }
+			country_event = { id = solomon_competition.33 days = 100 }
+			SOL = {
+				add_to_variable = { SOL.SOL_CHI_support = 2 }
+				add_ideas = SOL_CHI_idea_reformed_government
+				remove_ideas = SOL_idea_contained_ethnic_violence
+				country_event = { id = solomon_competition.33 days = 100 }
+			}
+		}
+	}
+
+	option = {
+		name = solomon_competition.32.o2 # Good luck to them
+		log = "[GetDateText]: [This.GetName]: solomon_competition.32.o2 executed"
+		trigger = {
+			tag = CHI
+			NOT = { tag = SOL.RAMSI_supporter }
+		}
+	}
+
+	option = {
+		name = solomon_competition.32.o3 # Uh oh...
+		log = "[GetDateText]: [This.GetName]: solomon_competition.32.o3 executed"
+		trigger = {
+			tag = AST
+			NOT = { tag = SOL.RAMSI_supporter }
+		}
+	}
+
+	option = {
+		name = solomon_competition.32.o4 # Stability returns
+		log = "[GetDateText]: [This.GetName]: solomon_competition.32.o4 executed"
+		trigger = {
+			tag = SOL
+		}
+	}
+}
+
+country_event = {
+	id = solomon_competition.33 # Operation RAMSI - The Solomon Islands are saved
+	title = solomon_competition.33.t
+	desc = solomon_competition.33.d
+	picture = GFX_corvette
+
+	is_triggered_only = yes
+
+	option = {
+		name = solomon_competition.33.o1 # Mission accomplished
+		log = "[GetDateText]: [This.GetName]: solomon_competition.33.o1 executed"
+
+		manpower = 2000
 	}
 }
