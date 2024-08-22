@@ -80,17 +80,16 @@ ingame_update_setup = {
 	if = { limit = { is_ai = yes }
 		calculate_ai_taxes_desire = yes
 	}
-
-	#Visuals
-	update_display = yes
-	if = {
-		limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
-	}
-	if = { limit = { is_ai = no }
+	else = {
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
 		force_update_map_mode = { mapmode = productivity_map_mode }
+	}
+
+	#Visuals
+	update_display = yes
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
 	}
 
 	# Dirty UI
@@ -205,7 +204,7 @@ calculate_tax_gain = {
 	multiply_variable = { office_tax = 5 }
 
 	set_variable = { agriculture_district_tax = agriculture_district_total }
-	multiply_variable = { agriculture_district_tax = 2.65 }
+	multiply_variable = { agriculture_district_tax = 2.60 }
 
 	# Control factors
 	multiply_variable = { civil_fac_tax = @money_control_factor_scaling }
@@ -2111,14 +2110,14 @@ update_military_rate = {
 
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
-			multiply_temp_variable = { land_count = 1.45 }
-			multiply_temp_variable = { navy_count = 2.40 }
-			multiply_temp_variable = { airforce_count = 2.40 }
+			multiply_temp_variable = { land_count = 1.30 }
+			multiply_temp_variable = { navy_count = 2.0 }
+			multiply_temp_variable = { airforce_count = 2.0 }
 		}
 		else = {
 			multiply_temp_variable = { land_count = 1.15 }
-			multiply_temp_variable = { navy_count = 1.6 }
-			multiply_temp_variable = { airforce_count = 1.60 }
+			multiply_temp_variable = { navy_count = 1.45 }
+			multiply_temp_variable = { airforce_count = 1.45 }
 		}
 	}
 
@@ -3207,7 +3206,7 @@ update_display = {
 update_economic_cycle_cost = {
 	#Base on size of economy
 	set_variable = { econ_cycle_upg_cost = gdp_total }
-	multiply_variable = { econ_cycle_upg_cost = 0.075 } # 7.5% of GDP Total in billions
+	multiply_variable = { econ_cycle_upg_cost = 0.05 } # 5% of GDP Total in billions
 
 	#Additional additive modifiers
 	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
@@ -3371,6 +3370,7 @@ update_state_variables = {
 	set_variable = { var = total_resource_amount value = 0 }
 	set_variable = { var = overall_productivity value = 0 }
 
+
 	# missile_silo
 	set_temp_variable = { num_missile_silo = 0 }
 	# TEL_base
@@ -3460,6 +3460,31 @@ update_state_variables = {
 
 #Calculate GDP/C
 calculate_gdp = {
+	# Calculate Last Quarter's GDP
+	if = {
+		limit = {
+			NOT = { has_country_flag = calculated_quarterly_gdp }
+			OR = {
+				check_variable = { global.month = 3 }
+				check_variable = { global.month = 6 }
+				check_variable = { global.month = 9 }
+				check_variable = { global.month = 12 }
+			}
+		}
+		set_temp_variable = { last_quarter_gdp_total_temp = last_quarter_gdp_total }
+		set_temp_variable = { this_quarter_gdp_total_temp = gdp_total }
+
+		set_variable = { last_quarter_gdp_growth_rate = this_quarter_gdp_total_temp }
+		divide_variable = { last_quarter_gdp_growth_rate = last_quarter_gdp_total_temp }
+		add_to_variable = { last_quarter_gdp_growth_rate = -1 }
+		clamp_variable = { var = last_quarter_gdp_growth_rate min = -1 }
+
+		set_variable = { last_quarter_gdp_total = gdp_total }
+		add_to_array = { quarterly_gdp_growth_rate = last_quarter_gdp_growth_rate }
+		set_country_flag = { flag = calculated_quarterly_gdp days = 85 value = 1 }
+	}
+
+	# Reset the Gross Domestic Payment
 	set_variable = { var = gdp_total value = 0 }
 
 	# Calculates Unemployment
