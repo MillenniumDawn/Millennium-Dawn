@@ -1,27 +1,1991 @@
+### Libyan AI ##
+
+##Base Strategies ##
+#Gaddafi was a strong supporter of Mengiutu
+LBA_support_mengistu = {
+	allowed = {	original_tag = LBA }
+
+	enable = {
+		NOT = { has_war_with = ETH }
+		ETH = { has_country_leader = { name = "Mengistu Haile Mariam" ruling_only = yes } }
+		is_ruled_by_a_gaddafi = yes
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ETH" value = 50 }
+	ai_strategy = { type = support id = "ETH" value = 50 }
+}
+#Gaddafi is a long supporter of Palestine
+LBA_support_palestine = {
+	allowed = {	original_tag = LBA }
+
+	enable = {
+		NOT = { has_war_with = PAL }
+		NOT = { has_war_with = HAM }
+		is_ruled_by_a_gaddafi = yes
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "PAL" value = 50 }
+	ai_strategy = { type = support id = "PAL" value = 50 }
+	ai_strategy = { type = befriend id = "HAM" value = 50 }
+	ai_strategy = { type = support id = "HAM" value = 50 }
+}
+#Gaddafi hates Israel
+LBA_hate_israel = {
+	allowed = {	original_tag = LBA }
+
+	enable = {
+		NOT = { has_completed_focus = LBA_reconcile_with_israel }
+		NOT = { is_in_faction_with = ISR }
+		is_ruled_by_a_gaddafi = yes
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "ISR" value = 100 }
+	ai_strategy = { type = contain id = "ISR" value = 100 }
+}
+#Gaddafi supports Revolutionary Front
 LBA_support_afr = {
-	allowed = { tag = LBA has_start_date < 2001.1.1 }
+	allowed = { original_tag = LBA }
+
 	enable = {
 		NOT = { has_war_with = AFR }
+		is_ruled_by_a_gaddafi = yes
 	}
+
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = support id = "AFR" value = 50 }
 	ai_strategy = { type = befriend id = "AFR" value = 50 }
 }
+#Charles Taylor was trained by Libya
+LBA_support_taylor = {
+	allowed = { original_tag = LBA }
 
-LBA_support_afr = {
-	allowed = { tag = LBA has_start_date < 2001.1.1 }
+	enable = {
+		NOT = { has_war_with = LIB }
+		LIB = { has_country_leader = { name = "Charles Taylor" ruling_only = yes } }
+		is_ruled_by_a_gaddafi = yes
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "LIB" value = 100 }
+	ai_strategy = { type = befriend id = "LIB" value = 100 }
+}
+#Libya protects Sahrawi
+LBA_protect_sahrawi = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		NOT = { has_war_with = SHA }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "SHA" value = 50 }
+	ai_strategy = { type = befriend id = "SHA" value = 50 }
+	ai_strategy = { type = protect id = "SHA" value = 50 }
+}
+#Gaddafi has bad blood with NATO
+LBA_gaddafi_doesnt_like_nato = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = { has_idea = NATO_member }
+	}
+
+	enable_reverse = {
+		LBA = { is_ruled_by_a_gaddafi = yes }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+}
+#Libya was involved in Congo
+LBA_support_drc = {
+	allowed = { original_tag = LBA }
+
 	enable = {
 		NOT = { has_war_with = DRC }
-		DRC = { has_country_leader = { name = "Laurent-Désiré Kabila" } }
+		DRC = { has_country_leader = { name = "Laurent-Désiré Kabila" ruling_only = yes } }
+		is_ruled_by_a_gaddafi = yes
 	}
-	abort = {
-		OR = {
-			has_war_with = DRC
-			DRC = { NOT = { has_country_leader = { name = "Laurent-Désiré Kabila" } } }
-		}
-	}
+
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "DRC" value = 50 }
 	ai_strategy = { type = support id = "DRC" value = 50 }
+}
+
+## Party specific policies ##
+#Union for Homeland and NPDW are frenchaboos
+LBA_frenchaboos_activate = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		OR = {
+			western_conservatism_are_in_power = yes
+			western_liberals_are_in_power = yes
+		}
+		FRA = { has_government = democratic }
+		NOT = { has_war_with = FRA }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "FRA" value = 25 }
+}
+#LNDF is US based
+LBA_befriend_america = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		western_social_democrats_are_in_power = yes
+		USA = { has_government = democratic }
+		NOT = { has_war_with = USA }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "USA" value = 25 }
+}
+#Justice and Construction Party is Muslim Brotherhood
+LBA_brotherhood_relations = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = {
+			OR = {
+				is_arabic_nation = yes
+				is_middle_eastern_nation = yes
+			}
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			NOT = { has_war_with = LBA }
+		}
+	}
+
+	enable_reverse = {
+		LBA = { neutrality_neutral_muslim_brotherhood_are_in_power = yes }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LBA" value = 50 }
+}
+#Democratic party wants to repair relations with Israel
+LBA_brotherhood_relations = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		neutrality_neutral_libertarians_are_in_power = yes
+		NOT = { has_war_with = ISR }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ISR" value = 25 }
+}
+
+## Salafist Libya ##
+#LIFG is affiliated with Taliban
+LBA_friendly_with_taliban = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_old_taliban_friends
+		has_government = fascism
+		NOT = { has_war_with = TAL }
+		TAL = { has_government = fascism }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "TAL" value = 50 }
+	ai_strategy = { type = support id = "TAL" value = 50 }
+	ai_strategy = { type = befriend id = "TTP" value = 50 }
+	ai_strategy = { type = support id = "TTP" value = 50 }
+}
+LBA_friendly_with_taliban_backup = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_old_taliban_friends
+		has_government = fascism
+		NOT = { has_war_with = AFG }
+		AFG = { has_government = fascism }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "AFG" value = 50 }
+	ai_strategy = { type = support id = "AFG" value = 50 }
+}
+#Send fighters to other salafists
+LBA_send_mujahideen = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = {
+			salafist_caliphate_are_in_power = yes
+			NOT = { has_war_with = LBA }
+		}
+	}
+
+	enable_reverse = {
+		LBA = {
+			has_completed_focus = LBA_mujahideen_legion
+			has_government = fascism
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "LBA" value = 100 }
+	ai_strategy = { type = send_volunteers_desire id = "LBA" value = 100 }
+}
+#Be nicer to the Brotherhood
+LBA_befriend_brotherhood = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			NOT = { has_war_with = LBA }
+		}
+	}
+
+	enable_reverse = {
+		LBA = {
+			has_completed_focus = LBA_work_together_with_brotherhood
+			neutrality_neutral_muslim_brotherhood_are_in_coalition = yes
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LBA" value = 25 }
+}
+#Salafists hate western countries
+LBA_salafists_hate_western_countries = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = {
+			has_government = democratic
+			NOT = { is_in_faction_with = LBA }
+		}
+	}
+
+	enable_reverse = {
+		LBA = {
+			has_completed_focus = LBA_de_westernisation
+			has_government = fascism
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+}
+#Salafist anti-saudi coalition
+LBA_grand_mufti_anti_saudi = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = {
+			has_idea = idea_gcc_member_state
+			NOT = { original_tag = QAT }
+			NOT = { is_in_faction_with = LBA }
+		}
+	}
+
+	enable_reverse = {
+		LBA = {
+			has_completed_focus = LBA_anti_saudi_coalition
+			has_government = fascism
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+	ai_strategy = { type = contain id = "LBA" value = 25 }
+}
+#Salafist conquer Chad
+LBA_antagonize_chad = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_our_brothers_in_chad
+		has_government = fascism
+		CHA = { NOT = { has_government = fascism } }
+		NOT = {	CHA = { is_subject_of = ROOT } }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "CHA" value = 100 }
+}
+LBA_conquer_chad = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_topple_chad
+		CHA = {
+			NOT = { is_subject_of = ROOT }
+			any_owned_state = { is_claimed_by = ROOT }
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "CHA" value = 100 }
+}
+#Salafist conquer Niger
+LBA_antagonize_niger = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_our_brothers_in_niger
+		has_government = fascism
+		NGR = { NOT = { has_government = fascism } }
+		NOT = {	NGR = { is_subject_of = ROOT } }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "NGR" value = 100 }
+}
+LBA_conquer_niger = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_topple_niger
+		NGR = {
+			NOT = { is_subject_of = ROOT }
+			any_owned_state = { is_claimed_by = ROOT }
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "NGR" value = 100 }
+}
+#Salafists allied wih Boko Haram
+LBA_ally_boko_haram = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_ally_with_boko_haram
+		has_government = fascism
+		NGR = {
+			has_government = fascism
+			NOT = { has_war_with = LBA }
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = alliance id = "NIG" value = 100 }
+	ai_strategy = { type = befriend id = "NIG" value = 100 }
+	ai_strategy = { type = support id = "NIG" value = 100 }
+}
+#Salafist conquer Nigeria
+LBA_antagonize_nigeria = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_ally_with_boko_haram
+		has_government = fascism
+		NIG = { NOT = { has_government = fascism } }
+		NOT = {	NIG = { is_subject_of = ROOT } }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "NIG" value = 100 }
+}
+LBA_conquer_nigeria = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_invade_nigeria
+		NIG = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { has_government = fascism }
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "NIG" value = 100 }
+}
+#Salafist conquer Algeria
+LBA_antagonize_algeria = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_our_brothers_in_algeria
+		has_government = fascism
+		ALG = { NOT = { has_government = fascism } }
+		NOT = {	ALG = { is_subject_of = ROOT } }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "ALG" value = 100 }
+}
+LBA_conquer_algeria = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_topple_algeria
+		ALG = {
+			NOT = { is_subject_of = ROOT }
+			any_owned_state = { is_claimed_by = ROOT }
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "ALG" value = 100 }
+}
+#Salafist conquer Mali
+LBA_antagonize_mali = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_infiltrate_mali
+		has_government = fascism
+		MAL = { NOT = { has_government = fascism } }
+		NOT = {	MAL = { is_subject_of = ROOT } }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "MAL" value = 100 }
+}
+LBA_conquer_mali = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_infiltrate_mali
+		MAL = {
+			NOT = { is_subject_of = ROOT }
+			any_owned_state = { is_claimed_by = ROOT }
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "MAL" value = 100 }
+}
+#Salafist conquer Mauritania
+LBA_antagonize_mauritania = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_expand_to_mauritania
+		has_government = fascism
+		MAU = { NOT = { has_government = fascism } }
+		NOT = {	MAU = { is_subject_of = ROOT } }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "MAU" value = 100 }
+}
+LBA_conquer_mauritania = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_expand_to_mauritania
+		MAU = {
+			NOT = { is_subject_of = ROOT }
+			any_owned_state = { is_claimed_by = ROOT }
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "MAU" value = 100 }
+}
+#Salafist conquer Malta
+LBA_antagonize_malta = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_destroy_last_crusaders
+		has_government = fascism
+		NOT = {	MLT = { is_subject_of = ROOT } }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "MLT" value = 100 }
+}
+LBA_conquer_malta = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_destroy_last_crusaders
+		MLT = {
+			NOT = { is_subject_of = ROOT }
+			any_owned_state = { is_claimed_by = ROOT }
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "MLT" value = 100 }
+}
+
+## Ba'athists ##
+LBA_baathists_befriend_tunisia = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_tunisia
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = TUN }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "TUN" value = 25 }
+}
+LBA_baathists_befriend_algeria = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_algeria
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = ALG }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ALG" value = 25 }
+}
+LBA_baathists_befriend_mauritania = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_mauritania
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = MAU }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "MAU" value = 25 }
+}
+LBA_baathists_befriend_egypt = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_egypt
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = EGY }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "EGY" value = 25 }
+}
+LBA_baathists_befriend_jordan = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_levant
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = JOR }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "JOR" value = 25 }
+}
+LBA_baathists_befriend_palestine = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_levant
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = PAL }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "PAL" value = 25 }
+}
+LBA_baathists_befriend_iraq = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_iraq_kuwait
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = IRQ }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "IRQ" value = 25 }
+}
+LBA_baathists_befriend_bahrain = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_bahrain
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = BHR }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "BHR" value = 25 }
+}
+LBA_baathists_befriend_lebanon = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_lebanon
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = LEB }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LEB" value = 25 }
+}
+LBA_baathists_befriend_hezbollah = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_lebanon
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = HEZ }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "HEZ" value = 25 }
+}
+LBA_baathists_befriend_sudan = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_lebanon
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = SUD }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "SUD" value = 25 }
+}
+LBA_baathists_befriend_yemen = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_baathism_lebanon
+		OR = {
+			nationalist_fascists_are_in_power_or_coalition = yes
+			has_completed_focus = LBA_strive_for_uar
+		}
+		NOT = { has_war_with = YEM }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "YEM" value = 25 }
+}
+
+## Democratic paths ###
+#Democratic want to liberate TUA/TIE
+LBA_protect_tibesti_and_tuaregs = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_protect_toubou_and_tuaregs
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "TUA" value = 100 }
+	ai_strategy = { type = protect id = "TUA" value = 100 }
+	ai_strategy = { type = support id = "TUA" value = 100 }
+	ai_strategy = { type = befriend id = "TIE" value = 100 }
+	ai_strategy = { type = protect id = "TIE" value = 100 }
+	ai_strategy = { type = support id = "TIE" value = 100 }
+}
+LBA_antagonize_oppressors = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_protect_toubou_and_tuaregs
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "ALG" value = 50 }
+	ai_strategy = { type = antagonize id = "CHA" value = 50 }
+	ai_strategy = { type = antagonize id = "BFA" value = 50 }
+	ai_strategy = { type = antagonize id = "NGR" value = 50 }
+	ai_strategy = { type = antagonize id = "MAL" value = 50 }
+}
+#Monarchists are friendly with NATO
+LBA_senussi_like_nato = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = { has_idea = NATO_member }
+	}
+
+	enable_reverse = {
+		LBA = {
+			has_completed_focus = LBA_approach_nato
+			nationalist_monarchists_are_in_power = yes
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LBA" value = 50 }
+	ai_strategy = { type = alliance id = "LBA" value = 50 }
+}
+#Monarchists hate Islamists
+LBA_senussi_hate_islamists = {
+	allowed = { original_tag = LBA }
+
+	reversed = yes
+
+	enable = {
+		ROOT = { has_government = fascism }
+	}
+
+	enable_reverse = {
+		LBA = {
+			has_completed_focus = LBA_oef_trans_sahara
+			nationalist_monarchists_are_in_power = yes
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 100 }
+}
+
+## From UN sanctions ##
+#We are friendly with the Taliban
+LBA_be_friendly_with_taliban = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_meeting_with_taliban
+		NOT = { has_war_with = TAL }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "TAL" value = 25 }
+}
+LBA_be_friendly_with_taliban_backup = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_meeting_with_taliban
+		AFG = { has_government = fascism }
+		NOT = { has_war_with = AFG }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "AFG" value = 25 }
+}
+#We are friendly with the Hezbollah
+LBA_be_friendly_with_taliban = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_meet_hezbollah
+		NOT = { has_war_with = HEZ }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "HEZ" value = 25 }
+}
+
+## Foreign Politics Branch ###
+#Libya has closened ties to Sahrawi
+LBA_closer_to_sahrawi = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_close_ties_sahrawi
+		NOT = { has_war_with = SHA }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "SHA" value = 50 }
+	ai_strategy = { type = befriend id = "SHA" value = 50 }
+	ai_strategy = { type = protect id = "SHA" value = 50 }
+}
+#Libya befriended Algeria
+LBA_befriend_algeria = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_support_algeria
+		NOT = { has_war_with = ALG }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ALG" value = 25 }
+}
+#Libya switched to supporting Morocco
+LBA_abandon_sahrawi = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_switch_to_morocco
+		NOT = { has_war_with = MOR }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "MOR" value = 50 }
+}
+#Libya condemns Spanish colonialism
+LBA_antagonize_spain = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_condemn_spanish_colonialism
+		NOT = { is_in_faction_with = SPR }
+		SPR = {
+			owns_state = 632
+			owns_state = 495
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "SPR" value = 50 }
+	ai_strategy = { type = support id = "MOR" value = 50 }
+	ai_strategy = { type = alliance id = "MOR" value = 50 }
+}
+#Libya befriended Mauritania
+LBA_befriend_mauritania = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_influence_mauritania
+		NOT = { has_war_with = MAU }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "MAU" value = 25 }
+}
+#Libya befriended Malta
+LBA_befriend_malta = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_influence_malta
+		NOT = { has_war_with = MLT }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "MLT" value = 25 }
+}
+#Libya befriended Italy
+LBA_befriend_italy = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_italian_trade
+		NOT = { has_war_with = ITA }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ITA" value = 25 }
+}
+#Libya conquer Malta
+LBA_conquer_malta = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_protect_malta
+		NOT = { is_in_faction_with = MLT }
+		MLT = { NOT = { is_subject_of = ROOT } }
+		NOT = { owns_state = 85 }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "MLT" value = 100 }
+}
+#Libya conquer Crete
+LBA_conquer_crete = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_protect_crete
+		NOT = { is_in_faction_with = CRE }
+		NOT = { is_in_faction_with = GRE }
+		CRE = { NOT = { is_subject_of = ROOT } }
+		GRE = { NOT = { is_subject_of = ROOT } }
+		NOT = { owns_state = 144 }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "CRE" value = 100 }
+	ai_strategy = { type = conquer id = "GRE" value = 100 }
+}
+#Libya befriended Hamas
+LBA_befriend_hamas = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_approach_hamas
+		NOT = { has_war_with = HAM }
+		NOT = { has_war_with = PAL }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "HAM" value = 50 }
+	ai_strategy = { type = befriend id = "PAL" value = 50 }
+}
+#Libya is sending soldiers to Hamas
+LBA_support_hamas = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_send_fighters_to_hamas
+		NOT = { has_war_with = HAM }
+		NOT = { has_war_with = PAL }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "HAM" value = 50 }
+	ai_strategy = { type = support id = "PAL" value = 50 }
+	ai_strategy = { type = send_volunteers_desire id = "HAM" value = 50 }
+	ai_strategy = { type = send_volunteers_desire id = "PAL" value = 50 }
+}
+#Israelis and Palestinians are idiots
+LBA_antagonize_hamas_israel = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_all_are_idiots
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "HAM" value = 25 }
+	ai_strategy = { type = antagonize id = "PAL" value = 25 }
+	ai_strategy = { type = antagonize id = "ISR" value = 25 }
+}
+#We want Israel
+LBA_conquer_israel = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_claim_jerusalem_for_arabs
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "HAM" value = 50 }
+	ai_strategy = { type = conquer id = "PAL" value = 50 }
+	ai_strategy = { type = conquer id = "ISR" value = 50 }
+}
+#Libya befriended Israel
+LBA_befriend_israel = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_reconcile_with_israel
+		NOT = { has_war_with = ISR }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ISR" value = 50 }
+}
+#Rivalry with Chad
+LBA_libyan_chad_rivalry = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_rivalry_with_chad
+		NOT = { is_in_faction_with = CHA }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "CHA" value = 50 }
+}
+#Libya befriended Chad
+LBA_befriend_chad = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_reconcile_with_chad
+		NOT = { has_war_with = CHA }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "CHA" value = 50 }
+}
+#Libya befriended Darfur
+LBA_befriend_darfur = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_support_darfur
+		NOT = { has_war_with = DAR }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "DAR" value = 25 }
+}
+#Libya arm Darfur
+LBA_arm_darfur = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_support_darfur
+		has_completed_focus = LBA_send_mercenaries
+		NOT = { has_war_with = DAR }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "DAR" value = 50 }
+}
+#Libya befriended Sudan
+LBA_befriend_sudan = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_support_sudan
+		NOT = { has_war_with = SUD }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "SUD" value = 25 }
+}
+#Libya arm Sudan
+LBA_arm_sudan = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_support_sudan
+		has_completed_focus = LBA_send_mercenaries
+		NOT = { has_war_with = SUD }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "SUD" value = 50 }
+}
+#Libya befriended South Sudan
+LBA_befriend_sudan = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_support_south_sudan
+		NOT = { has_war_with = SSU }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "SSU" value = 25 }
+}
+#Libya arm South Sudan
+LBA_arm_south_sudan = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_support_south_sudan
+		has_completed_focus = LBA_send_mercenaries
+		NOT = { has_war_with = SSU }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "SSU" value = 50 }
+}
+
+## Gaddafi's Dream Branch
+#Libya good friends with Algeria
+LBA_good_friends_with_algeria = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_approach_algeria
+		NOT = { has_war_with = ALG }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ALG" value = 25 }
+}
+#Libya befriended Egypt
+LBA_befriend_egypt = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_approach_egypt
+		NOT = { has_war_with = EGY }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "EGY" value = 25 }
+}
+#Libya befriended Eritrea
+LBA_befriend_eritrea = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_approach_eritrea
+		NOT = { has_war_with = ERI }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ERI" value = 25 }
+}
+#Conquer Guinea
+LBA_conquer_guinea = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_spread_fire_to_guinea
+		GUI = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = GUI
+			any_subject_country = {
+				is_neighbor_of = GUI
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "GUI" value = 100 }
+}
+#Conquer Ivory Coast
+LBA_conquer_ivory_coast = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_spread_fire_to_ivory_coast
+		CDI = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = CDI
+			any_subject_country = {
+				is_neighbor_of = CDI
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "CDI" value = 100 }
+}
+#Conquer Congo
+LBA_conquer_congo = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_incursion_to_rep_congo
+		CNG = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = CNG
+			any_subject_country = {
+				is_neighbor_of = CNG
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "CNG" value = 100 }
+}
+#Conquer Congo DR
+LBA_conquer_congo_DR_government = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_incursion_to_drc
+		DRC = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = DRC
+			any_subject_country = {
+				is_neighbor_of = DRC
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "DRC" value = 100 }
+}
+LBA_conquer_congo_DR_MLC = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_incursion_to_drc
+		MLC = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = MLC
+			any_subject_country = {
+				is_neighbor_of = MLC
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "MLC" value = 100 }
+}
+LBA_conquer_congo_DR_RCD = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_incursion_to_drc
+		RCD = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = RCD
+			any_subject_country = {
+				is_neighbor_of = RCD
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "RCD" value = 100 }
+}
+#Conquer Horn of Africa
+LBA_conquer_horn_of_africa_SML = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		SML = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = SML
+			any_subject_country = {
+				is_neighbor_of = SML
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "SML" value = 100 }
+}
+LBA_conquer_horn_of_africa_PUN = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		PUN = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = PUN
+			any_subject_country = {
+				is_neighbor_of = PUN
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "PUN" value = 100 }
+}
+LBA_conquer_horn_of_africa_ETH = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		ETH = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = ETH
+			any_subject_country = {
+				is_neighbor_of = ETH
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "ETH" value = 100 }
+}
+LBA_conquer_horn_of_africa_SOM = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		SOM = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = SOM
+			any_subject_country = {
+				is_neighbor_of = SOM
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "SOM" value = 100 }
+}
+LBA_conquer_horn_of_africa_SNA = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		SNA = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = SNA
+			any_subject_country = {
+				is_neighbor_of = SNA
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "SNA" value = 100 }
+}
+LBA_conquer_horn_of_africa_SNA = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		SHB = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = SHB
+			any_subject_country = {
+				is_neighbor_of = SHB
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "SHB" value = 100 }
+}
+LBA_conquer_horn_of_africa_SWS = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		SWS = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = SWS
+			any_subject_country = {
+				is_neighbor_of = SWS
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "SWS" value = 100 }
+}
+LBA_conquer_horn_of_africa_JUB = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_intervene_for_stability
+		JUB = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = JUB
+			any_subject_country = {
+				is_neighbor_of = JUB
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "JUB" value = 100 }
+}
+#Libya befriended Qatar
+LBA_befriend_qatar = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_contact_qatar
+		NOT = { has_war_with = QAT }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "QAT" value = 25 }
+}
+#Conquer Saudi Arabia
+LBA_conquer_saudi_arabia = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_overthrow_saudis
+		SAU = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = SAU
+			any_subject_country = {
+				is_neighbor_of = SAU
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "SAU" value = 100 }
+}
+#Conquer Kuwait
+LBA_conquer_kuwait = {
+	allowed = { original_tag = LBA }
+
+	enable = {
+		has_completed_focus = LBA_overthrow_kuwaitis
+		KUW = {
+			NOT = { is_subject_of = ROOT }
+			NOT = { is_in_faction_with = ROOT }
+		}
+		OR = {
+			is_neighbor_of = KUW
+			any_subject_country = {
+				is_neighbor_of = KUW
+			}
+		}
+		NOT = {
+			any_neighbor_country = {
+				has_war_with = ROOT
+				has_capitulated = no
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "KUW" value = 100 }
+}
+
+### Other country AI in regards to Libya ###
+
+#Western countries are worried about Gaddafi
+LBA_western_countries_sanction = {
+	allowed = {
+		OR = {
+			original_tag = FRA
+			original_tag = ENG
+			original_tag = USA
+			original_tag = ITA
+		}
+	}
+
+	enable = {
+		LBA = { has_idea = international_sanctions }
+		has_government = democratic
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+	ai_strategy = { type = contain id = "LBA" value = 50 }
+
+}
+#France is worried about salafists
+FRA_antagonize_libyan_salafists = {
+	allowed = {
+		original_tag = FRA
+	}
+
+	enable = {
+		has_government = democratic
+		LBA = {
+			OR = {
+				AND = {
+					has_completed_focus = LBA_join_sahel_war
+					has_government = fascism
+				}
+				has_completed_focus = LBA_start_building_reactor
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+
+}
+FRA_contain_libyan_salafists = {
+	allowed = {
+		original_tag = FRA
+	}
+
+	enable = {
+		has_government = democratic
+		LBA = {
+			has_completed_focus = LBA_join_sahel_war
+			has_government = fascism
+			has_added_tension_amount > 5
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = contain id = "LBA" value = 50 }
+
+}
+FRA_intervene_libyan_salafists = {
+	allowed = {
+		original_tag = FRA
+	}
+
+	enable = {
+		has_government = democratic
+		LBA = {
+			has_completed_focus = LBA_join_sahel_war
+			has_government = fascism
+			has_added_tension_amount > 10
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "LBA" value = 50 }
+
+}
+#Sahel countries are worried about expansionist Libya
+Sahel_antagonize_libyan_salafists = {
+	allowed = {
+		OR = {
+			original_tag = ALG
+			original_tag = CHA
+			original_tag = NGR
+			original_tag = NIG
+			original_tag = MAL
+			original_tag = MAU
+		}
+	}
+
+	enable = {
+		NOT = { has_government = fascism }
+		LBA = {
+			has_completed_focus = LBA_join_sahel_war
+			has_government = fascism
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+	ai_strategy = { type = contain id = "LBA" value = 50 }
+
+}
+#Libya supports terrorism - USA
+USA_libya_supports_terrorists = {
+	allowed = {
+		original_tag = USA
+	}
+
+	enable = {
+		has_government = democratic
+		has_country_flag = war_on_terror_speech
+		LBA = {
+			has_completed_focus = LBA_house_terrorists
+			NOT = { is_in_faction_with = ROOT }
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+	ai_strategy = { type = contain id = "LBA" value = 50 }
+
+}
+#Libya has WMDS - USA
+USA_disarm_libyan_wmds = {
+	allowed = {
+		original_tag = USA
+	}
+
+	enable = {
+		has_government = democratic
+		has_country_flag = war_on_terror_speech
+		LBA = {
+			has_completed_focus = LBA_start_building_reactor
+			NOT = { is_in_faction_with = ROOT }
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "LBA" value = 50 }
+
+}
+#Libya joined the USAID
+USA_libya_is_on_usaid = {
+	allowed = {
+		original_tag = USA
+	}
+
+	enable = {
+		has_government = democratic
+		LBA = {	has_idea = USA_usaid }
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LBA" value = 15 }
+
+}
+#Libya supports terrorism - ENG
+ENG_libya_supports_terrorists = {
+	allowed = {
+		original_tag = ENG
+	}
+
+	enable = {
+		has_government = democratic
+		LBA = {
+			has_completed_focus = LBA_celebrate_lockerbie_bombers
+			NOT = { is_in_faction_with = ROOT }
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "LBA" value = 50 }
+
+}
+#Libya compensated Lockerbie bombings
+ENG_monetary_compensation_from_libya = {
+	allowed = {
+		original_tag = ENG
+	}
+
+	enable = {
+		LBA = {
+			has_completed_focus = LBA_compensation_to_lockerbie_victims
+			NOT = { has_war_with = ROOT }
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LBA" value = 15 }
+
+}
+
+#NATO participate in civil war
+LBA_nato_intervention = {
+	allowed = {
+		is_european_nation = yes
+	}
+
+	enable = {
+		has_country_flag = intervene_in_libya
+		LRB = {
+			OR = {
+				has_government = democratic
+				has_government = neutrality
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = support id = "LRB" value = 200 }
+
+}
+
+#Casablanca Accords Western Sahara task force
+LBA_western_sahara_task_force = {
+	allowed = {
+		OR = {
+			original_tag = ALG
+			original_tag = MOR
+			original_tag = SHA
+			original_tag = MAU
+		}
+	}
+
+	enable = {
+		has_country_flag = LBA_casablanca_acccords_temp_alliance
+	}
+
+	abort = {
+		OR = {
+			AND = {
+				LBA = { has_country_flag = libya_western_sahara_peace_plan_annexation }
+				MOR = { owns_state = 372 }
+				MOR = { owns_state = 373 }
+			}
+			AND = {
+				LBA = { has_country_flag = libya_western_sahara_peace_plan_independence }
+				SHA = { owns_state = 372 }
+				SHA = { owns_state = 373 }
+			}
+			AND = {
+				LBA = { has_country_flag = libya_western_sahara_peace_plan_mauritania }
+				MAU = { owns_state = 372 }
+				MAU = { owns_state = 373 }
+			}
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = alliance id = "LBA" value = 200 }
+
 }

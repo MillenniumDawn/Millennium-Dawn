@@ -42,156 +42,32 @@ BOT_anti_poaching_decisions = {
 		}
 	}
 
-	BOT_anti_poaching_raid = {
-
-		icon = generic_arrest
-
-		available = {
-			always = yes
-		}
-
-		custom_cost_trigger = {
-			command_power > 20
-		}
-
-		custom_cost_text = command_power_more_than_20
-
-		days_remove = 15
-
-		fixed_random_seed = no
-
-		complete_effect = {
-			hidden_effect = { add_command_power = -20 }
-		}
-
-		remove_effect = {
-			random_list = {
-				15 = {
-					modifier = {
-						add = 15
-						has_idea = police_02
-					}
-					modifier = {
-						add = 30
-						has_idea = police_03
-					}
-					modifier = {
-						add = 45
-						has_idea = police_04
-					}
-					modifier = {
-						add = 60
-						has_idea = police_05
-					}
-					modifier = {
-						add = 10
-						has_decision = BOT_anti_poaching_extra_security
-					}
-					set_temp_variable = { poachers_killed = 10 }
-					if = {
-						limit = { has_idea = BOT_army_against_poaching }
-						add_to_temp_variable = { poachers_killed = 5 }
-					}
-					if = {
-						limit = { has_decision = BOT_anti_poaching_heavy_weapons }
-						add_to_temp_variable = { poachers_killed = 5 }
-					}
-					custom_effect_tooltip = BOT_anti_poaching_raid_succesful
-					subtract_from_variable = { no_of_poachers = poachers_killed }
-				}
-				65 = {
-					modifier = {
-						add = -10
-						has_idea = police_02
-					}
-					modifier = {
-						add = -20
-						has_idea = police_03
-					}
-					modifier = {
-						add = -35
-						has_idea = police_04
-					}
-					modifier = {
-						add = -45
-						has_idea = police_05
-					}
-					modifier = {
-						add = -10
-						has_decision = BOT_anti_poaching_extra_security
-					}
-					set_temp_variable = { poachers_killed = 2 }
-					if = {
-						limit = { has_idea = BOT_army_against_poaching }
-						add_to_temp_variable = { poachers_killed = 2 }
-					}
-					if = {
-						limit = { has_decision = BOT_anti_poaching_heavy_weapons }
-						add_to_temp_variable = { poachers_killed = 2 }
-					}
-					custom_effect_tooltip = BOT_anti_poaching_raid_normal
-					subtract_from_variable = { no_of_poachers = poachers_killed }
-				}
-				20 = {
-					modifier = {
-						add = -5
-						has_idea = police_02
-					}
-					modifier = {
-						add = -10
-						has_idea = police_03
-					}
-					modifier = {
-						add = -10
-						has_idea = police_04
-					}
-					modifier = {
-						add = -15
-						has_idea = police_05
-					}
-					set_temp_variable = { poachers_killed = -10 }
-					if = {
-						limit = { has_idea = BOT_army_against_poaching }
-						add_to_temp_variable = { poachers_killed = 5 }
-					}
-					custom_effect_tooltip = BOT_anti_poaching_raid_failure
-					add_manpower = poachers_killed
-					set_temp_variable = { arg_popularity = -0.02 }
-					add_ruling_outlook_popularity = yes
-				}
-			}
-			clamp_variable = { var = no_of_poachers min = 0 }
-		}
-
-		#Only do when at least medium threat
-		ai_will_do = {
-			factor = 100
-			modifier = {
-				factor = 0
-				check_variable = { no_of_poachers < 50 }
-			}
-			modifier = {
-				factor = 2
-				check_variable = { no_of_poachers > 150 }
-			}
-		}
-
-	}
-
 	BOT_anti_poaching_extra_security = {
 
 		icon = generic_police_action
 
 		available = {
-			always = yes
+			command_power > 20
 		}
 
 		cost = 25
 
 		days_remove = 90
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete BOT_anti_poaching_extra_security"
+			add_to_variable = { chance_to_kill_poachers = 10 }
+			add_command_power = -20
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BOT_anti_poaching_extra_security"
+			subtract_from_variable = { chance_to_kill_poachers = 10 }
+		}
+
 		modifier = {
 			police_cost_multiplier_modifier = 0.50
+			custom_modifier_tooltip = BOT_anti_poaching_extra_security_tt
 		}
 
 		#Only do when at least medium threat
@@ -214,15 +90,27 @@ BOT_anti_poaching_decisions = {
 		icon = generic_assassination
 
 		available = {
-			always = yes
+			command_power > 20
 		}
 
 		cost = 25
 
 		days_remove = 90
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete BOT_anti_poaching_heavy_weapons"
+			add_to_variable = { no_of_poachers_to_kill = 5 }
+			add_command_power = -20
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BOT_anti_poaching_heavy_weapons"
+			subtract_from_variable = { no_of_poachers_to_kill = 5 }
+		}
+
 		modifier = {
 			police_cost_multiplier_modifier = 0.50
+			custom_modifier_tooltip = BOT_anti_poaching_heavy_weapons_tt
 		}
 
 		#Only do when at least medium threat
@@ -260,11 +148,11 @@ BOT_anti_poaching_decisions = {
 
 		remove_effect = {
 			random_list = {
-				50 = {
+				75 = {
 					country_event = { id = Botswana_events.5 }
 					custom_effect_tooltip = BOT_anti_poaching_dehorn_rhinos_tt
 				}
-				50 = {
+				25 = {
 					country_event = { id = Botswana_events.6 }
 				}
 			}

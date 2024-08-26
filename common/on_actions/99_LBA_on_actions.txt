@@ -1,0 +1,469 @@
+on_actions = {
+
+	on_startup = {
+		effect = {
+			LBA = { update_gaddafi_family_ideas = yes }
+		}
+	}
+
+	on_monthly_LBA = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { has_country_flag = LBA_fall_of_gaddafi }
+					is_ruled_by_a_gaddafi = yes
+				}
+				add_to_variable = { gaddafi_family_instability = gaddafi_family_instability_decay }
+				clamp_variable = { var = gaddafi_family_instability min = 0 }
+				set_variable = { gaddafi_family_stability_effect = gaddafi_family_instability }
+				multiply_variable = { gaddafi_family_stability_effect = -0.005 }
+				force_update_dynamic_modifier = yes
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = LBA_fall_of_gaddafi }
+					is_ruled_by_a_gaddafi = yes
+				}
+				update_gaddafi_family_ideas = yes
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = LBA_gaddafi_cleanup }
+					is_ruled_by_a_gaddafi = no
+					OR = {
+						has_idea = LBA_head_of_gptc_idea_version
+						has_idea = LBA_uninterested_in_politics_idea_version
+						has_idea = LBA_master_maneuverer_idea_version
+						has_idea = LBA_vain_football_star_idea_version
+						has_idea = LBA_substance_abuser_idea_version
+						has_idea = LBA_77th_tank_battalion_idea_version
+						has_idea = LBA_suspected_revolutionary_idea_version
+						has_idea = LBA_playboy_lifestyle_idea_version
+						has_idea = LBA_king_of_coke_idea_version
+						has_idea = LBA_bachelor_of_marine_navigation_idea_version
+						has_idea = LBA_master_of_shipping_economics_and_logistics_idea_version
+						has_idea = LBA_graduate_of_kuznetsov_idea_version
+						has_idea = LBA_national_security_advisor_idea_version
+						has_idea = LBA_scholarly_challenged_idea_version
+						has_idea = LBA_claudia_schiffer_of_north_africa_idea_version
+					}
+				}
+				hidden_effect = {
+					remove_ideas = LBA_head_of_gptc_idea_version
+					remove_ideas = LBA_uninterested_in_politics_idea_version
+					remove_ideas = LBA_master_maneuverer_idea_version
+					remove_ideas = LBA_vain_football_star_idea_version
+					remove_ideas = LBA_substance_abuser_idea_version
+					remove_ideas = LBA_77th_tank_battalion_idea_version
+					remove_ideas = LBA_suspected_revolutionary_idea_version
+					remove_ideas = LBA_playboy_lifestyle_idea_version
+					remove_ideas = LBA_king_of_coke_idea_version
+					remove_ideas = LBA_bachelor_of_marine_navigation_idea_version
+					remove_ideas = LBA_master_of_shipping_economics_and_logistics_idea_version
+					remove_ideas = LBA_graduate_of_kuznetsov_idea_version
+					remove_ideas = LBA_national_security_advisor_idea_version
+					remove_ideas = LBA_scholarly_challenged_idea_version
+					remove_ideas = LBA_claudia_schiffer_of_north_africa_idea_version
+					set_country_flag = LBA_gaddafi_cleanup
+					if = {
+						limit = {
+							NOT = { has_country_flag = LBA_democratic_reform }
+							NOT = { has_country_flag = LBA_fall_of_gaddafi }
+						}
+						set_country_flag = LBA_fall_of_gaddafi
+					}
+				}
+			}
+		}
+	}
+
+	on_declare_war = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = LBA }
+					ROOT = { has_completed_focus = LBA_utilise_toubou }
+					FROM = { original_tag = CHA }
+					NOT = { country_exists = TIE }
+				}
+				FROM = {
+					country_event = { id = LibyaFocus.75 }
+				}
+			}
+			#Civil war moving of variables
+			if = {
+				limit = {
+					ROOT = { original_tag = LBA }
+					FROM = { original_tag = LBA }
+				}
+				ROOT = {
+					#Oil nationalisation
+					set_variable = { lba_oil_nationalisation = FROM.lba_oil_nationalisation }
+					set_variable = { oil_nationalisation_resource_effect = lba_oil_nationalisation }
+					set_variable = { lba_oil_nationalisation_temp = lba_oil_nationalisation }
+					multiply_variable = { lba_oil_nationalisation_temp = -1 }
+					set_variable = { oil_nationalisation_productivity_effect = lba_oil_nationalisation_temp }
+					add_dynamic_modifier = { modifier = libya_oil_nationalisation_dynamic_modifier }
+					clear_variable = lba_oil_nationalisation_temp
+
+					set_variable = { tripolitania_loyalty = FROM.tripolitania_loyalty }
+					set_variable = { cyrenaica_loyalty = FROM.cyrenaica_loyalty }
+					set_variable = { fezzan_loyalty = FROM.fezzan_loyalty }
+					every_owned_state = { add_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier } }
+				}
+			}
+		}
+	}
+
+	on_civil_war_end = {
+		effect = {
+			ROOT = {
+				if = {
+					limit = {
+						original_tag = LBA
+						has_cosmetic_tag = GNA_NTC
+					}
+					drop_cosmetic_tag = yes
+				}
+				if = {
+					limit = {
+						original_tag = LBA
+						has_country_flag = LBA_this_is_libyan_rebels
+					}
+					clr_country_flag = LBA_this_is_libyan_rebels
+				}
+				if = {
+					limit = {
+						has_global_flag = first_libyan_civil_war
+					}
+					hidden_effect = { news_event = { id = LibyaFocusNews.15 hours = 6 } }
+				}
+			}
+		}
+	}
+
+	on_monthly_LBA = {
+		random_events = {
+			6000 = 0
+
+			#Random Events
+			100 = LibyaRandomEvents.2	#Anti-Black riots
+			100 = LibyaRandomEvents.3	#Marsa Brega plane crash
+			50 = LibyaRandomEvents.5	#Olomby wins Premier Club
+			100 = LibyaRandomEvents.6	#Employ Shukri Ghanem
+			100 = LibyaRandomEvents.7	#Centrifuge source found
+			100 = LibyaRandomEvents.8	#Prime Minister blurts out
+			100 = LibyaRandomEvents.9	#Nuclear material relinquished
+			100 = LibyaRandomEvents.10	#HIV nurses sentenced to death
+			100 = LibyaRandomEvents.13	#Employ Baghdadi Mahmudi
+			200 = LibyaRandomEvents.14	#Libya removed from terrorism list
+			100 = LibyaRandomEvents.15	#Somalia accuses Libya of supporting ICU
+			100 = LibyaRandomEvents.16	#African Union meeting
+			100 = LibyaRandomEvents.17	#French President visits Libya
+			100 = LibyaRandomEvents.18	#Buy weapons from France
+			100 = LibyaRandomEvents.19	#Libya granted UN security council seat
+			100 = LibyaRandomEvents.20	#LIFG base raided
+			100 = LibyaRandomEvents.21	#LIFG attacks checkpoint
+			100 = LibyaRandomEvents.22	#LIFG attacks police station
+			100 = LibyaRandomEvents.23	#LIFG occupies military base
+			50 = LibyaRandomEvents.24	#LIFG assassinates head of state
+			100 = LibyaRandomEvents.25	#LIFG fighters return from exile
+			100 = LibyaRandomEvents.26	#Lessons from Afghanistan veterans
+			100 = LibyaRandomEvents.27	#Old guard soldiers
+			100 = LibyaRandomEvents.28	#Theological debate between Brotherhood and Salafists
+			100 = LibyaRandomEvents.29	#Fatwa against women
+			100 = LibyaRandomEvents.30	#Fatwa against enemies of the state
+			100 = LibyaRandomEvents.31	#Protest against Saudi Arabia
+			100 = LibyaRandomEvents.32	#Grand Mufti allows suicide bombings
+			100 = LibyaRandomEvents.33	#Jihadist volunteers
+			100 = LibyaRandomEvents.34	#People escape violence
+			100 = LibyaRandomEvents.35	#Teacher's protest against biased education
+			100 = LibyaRandomEvents.36	#Women protest the government
+			100 = LibyaRandomEvents.37	#Women support the government
+			100 = LibyaRandomEvents.38	#Ba'athist support abroad
+			100 = LibyaRandomEvents.39	#Ba'athist resistance abroad
+			100 = LibyaRandomEvents.40	#Green Book Club - Good
+			100 = LibyaRandomEvents.41	#Qoran Club - Bad
+			100 = LibyaRandomEvents.42	#Green Book Club - Bad
+			100 = LibyaRandomEvents.43	#Qoran Club - Good
+			100 = LibyaRandomEvents.44	#Revolutionary committee discovers dissident
+			100 = LibyaRandomEvents.45	#Revolutionary committee misses dissident
+			130 = LibyaRandomEvents.46	#People's Congress discovers revolutionary
+			70 = LibyaRandomEvents.47	#People's Congress misses revolutionary
+			100 = LibyaRandomEvents.48	#Old politician stuck in the past
+			100 = LibyaRandomEvents.49	#Old politician praised government
+			100 = LibyaRandomEvents.50	#Royal spending spree
+			100 = LibyaRandomEvents.51	#Royal invests money
+			100 = LibyaRandomEvents.52	#Confiscated money missing
+			100 = LibyaRandomEvents.53	#Confiscated money found
+			100 = LibyaRandomEvents.54	#Foreign special forces kill jihadist
+			100 = LibyaRandomEvents.55	#Foreign special forces defeated
+			100 = LibyaRandomEvents.56	#Economic ties increase growth
+			100 = LibyaRandomEvents.57	#Economic ties decrease growth
+			100 = LibyaRandomEvents.58	#Mercenaries accused of war crimes
+			100 = LibyaRandomEvents.59	#Mercenaries bring home experience
+			100 = LibyaRandomEvents.60	#Army wants weapons
+			100 = LibyaRandomEvents.61	#Guard Corps wants recruits
+			100 = LibyaRandomEvents.62	#Oil fields sold
+			100 = LibyaRandomEvents.63	#Oil fields bought
+			200 = LibyaRandomEvents.64	#Food shortage
+			100 = LibyaRandomEvents.65	#Whistle Stop Tour
+			100 = LibyaRandomEvents.66	#Train derailing
+
+			#Breakup events
+			1000 = LibyaRandomEvents.67	#Toubou revolt
+			1000 = LibyaRandomEvents.68	#Tuareg revolt
+
+			#Tribal Events
+			150 = LibyaTribes.1		#Young army officer ready for promotion
+			150 = LibyaTribes.2		#Young navy officer ready for promotion
+			150 = LibyaTribes.3		#Young air force officer ready for promotion
+			150 = LibyaTribes.4		#New thesis from university
+			150 = LibyaTribes.5		#Economist offers solution
+			150 = LibyaTribes.6		#Local politician suggests reforms
+			150 = LibyaTribes.7		#Tribal elder suspected of treason
+			150 = LibyaTribes.8		#A large donation
+			150 = LibyaTribes.9		#Oil company occupying tribal land
+			150 = LibyaTribes.10	#Preacher dismisses tribal practices
+			150 = LibyaTribes.11	#Abuse in the military
+			150 = LibyaTribes.12	#Pastorals cross the border
+			150 = LibyaTribes.13	#Farm raid
+			150 = LibyaTribes.14	#Water dispute
+			150 = LibyaTribes.15	#Local politician
+			150 = LibyaTribes.16	#Distribution of oil money
+
+			#Family
+			50 = LibyaFamily.2		#Internet Blackout
+			50 = LibyaFamily.3		#Fight over Coca-Cola
+			50 = LibyaFamily.4		#Muhammad Gaddafi criticises government
+			50 = LibyaFamily.17		#Saif al-Islam wins prize
+			50 = LibyaFamily.18		#Saif al-Islam received PhD
+			50 = LibyaFamily.19		#Saif al-Islam calls for reform
+			50 = LibyaFamily.20		#Saif al-Islam charity work
+			10 = LibyaFamily.21		#Hunting accident
+			50 = LibyaFamily.25		#Football riots
+			10 = LibyaFamily.26		#Al-Saadi overdoses
+			50 = LibyaFamily.30		#Al-Saadi shames his family
+			50 = LibyaFamily.31		#Mutassim oversteps his boundaries
+			50 = LibyaFamily.35		#Mutassim extends Egyptian influence
+			10 = LibyaFamily.36		#Muhammad Gaddafi leaves for good
+			10 = LibyaFamily.37		#Mutassim Gaddafi murdered
+			50 = LibyaFamily.38		#Hannibal Gaddafi arrested
+			10 = LibyaFamily.39		#Hannibal Gaddafi drowns
+			50 = LibyaFamily.40		#Ayesha Gaddafi named UN goodwill ambassador
+			50 = LibyaFamily.44		#Ayesha Gaddafi criticises status of women
+			10 = LibyaFamily.45		#Ayesha Gaddafi dies in childbirth
+			50 = LibyaFamily.46		#Saif al-Arab suspected of planned acid attack
+			50 = LibyaFamily.47		#Saif al-Arab suspected of arms smuggling
+			50 = LibyaFamily.48		#Saif al-Arab's Ferrari is impounded
+			10 = LibyaFamily.49		#Saif al-Arab dies in prison
+			10 = LibyaFamily.51		#Khamis' helicopter crashes
+
+		}
+	}
+
+	on_weekly = {
+		random_events = {
+			3000 = 0
+
+			100 = LibyaCivilWar.1 #Libyan National Democratic Front expands in Libya
+			100 = LibyaCivilWar.2 #Libyan Communist Party starts operations
+			100 = LibyaCivilWar.3 #Soldiers defect to LIFG
+			100 = LibyaCivilWar.4 #NFSL calls for unity among rebels
+			100 = LibyaCivilWar.5 #Baathists call for democracy
+			100 = LibyaCivilWar.6 #Army ignores protesters
+			100 = LibyaCivilWar.7 #Revolutionary Guard Corps ignores protestors
+			100 = LibyaCivilWar.8 #Royal family campaigns against Gaddafi
+			100 = LibyaCivilWar.9 #Government minister resigns
+			100 = LibyaCivilWar.10 #Ambassador resigns
+			100 = LibyaCivilWar.11 #Military unit defects
+			100 = LibyaCivilWar.12 #Rebels raid military stockpile
+			100 = LibyaCivilWar.13 #Pilots abandon the country
+			100 = LibyaCivilWar.14 #Sailors abandon the country
+		}
+	}
+
+	on_unit_leader_created = {
+		effect = {
+			if = {
+				limit = { FROM = { original_tag = LBA } }
+				character = {
+					ROOT = {
+						random_list = {
+							50 = {
+								modifier = {
+									factor = 0
+									country_exists = TRP
+								}
+								add_unit_leader_trait = LBA_unit_leader_trait_tripolitania
+							}
+							25 = {
+								modifier = {
+									factor = 0
+									country_exists = CYR
+								}
+								add_unit_leader_trait = LBA_unit_leader_trait_cyrenaica
+							}
+							15 = {
+								modifier = {
+									factor = 0
+									country_exists = FEZ
+								}
+								add_unit_leader_trait = LBA_unit_leader_trait_fezzan
+							}
+							5 = {
+								modifier = {
+									factor = 0
+									country_exists = TUA
+								}
+								add_unit_leader_trait = LBA_unit_leader_trait_tuareg
+							}
+							5 = {
+								modifier = {
+									factor = 0
+									country_exists = TIE
+								}
+								add_unit_leader_trait = LBA_unit_leader_trait_toubou
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	on_state_control_changed = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = LBA }
+					ROOT = { has_war_with = FROM }
+					OR = {
+						ROOT = { original_tag = LBA }
+						ROOT = { original_tag = TRP }
+						ROOT = { original_tag = CYR }
+						ROOT = { original_tag = FEZ }
+					}
+				}
+				random = {
+					chance = 5
+					random_list = {
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = muhammad_muammar_gaddafi_exile
+									has_country_flag = muhammad_muammar_gaddafi_dead
+									has_country_leader = {
+										name = "Muhammad Muammar Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_muhammad_muammar_gaddafi
+						}
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = saif_al_islam_gaddafi_exile
+									has_country_flag = saif_al_islam_gaddafi_dead
+									has_country_leader = {
+										name = "Saif al-Islam Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_saif_al_islam_gaddafi
+						}
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = al_saadi_gaddafi_exile
+									has_country_flag = al_saadi_gaddafi_dead
+									has_country_leader = {
+										name = "Al-Saadi Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_al_saadi_gaddafi
+						}
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = mutassim_gaddafi_exile
+									has_country_flag = mutassim_gaddafi_dead
+									has_country_leader = {
+										name = "Mutassim Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_mutassim_gaddafi
+						}
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = hannibal_gaddafi_exile
+									has_country_flag = hannibal_gaddafi_dead
+									has_country_leader = {
+										name = "Hannibal Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_hannibal_gaddafi
+						}
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = ayesha_gaddafi_exile
+									has_country_flag = ayesha_gaddafi_dead
+									has_country_leader = {
+										name = "Ayesha Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_ayesha_gaddafi
+						}
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = saif_al_arab_gaddafi_exile
+									has_country_flag = saif_al_arab_gaddafi_dead
+									has_country_leader = {
+										name = "Saif al-Arab Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_saif_al_arab_gaddafi
+						}
+						10 = {
+							modifier = {
+								factor = 0
+								OR = {
+									has_country_flag = khamis_gaddafi_exile
+									has_country_flag = khamis_gaddafi_dead
+									has_country_leader = {
+										name = "Khamis Gaddafi"
+										ruling_only = yes
+									}
+								}
+							}
+							set_country_flag = kill_khamis_gaddafi
+						}
+					}
+					country_event = { id = LibyaFamily.52 hours = 6 }
+				}
+			}
+		}
+	}
+}
