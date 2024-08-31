@@ -10470,7 +10470,7 @@ focus_tree = {
 	# Moroccan Economy
 	focus = {
 		id = MOR_the_moroccan_economy
-		icon = x
+		icon = industry3
 
 		x = 110
 		y = 12
@@ -10479,13 +10479,12 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { }
-		# bypass = { }
-		# cancel = { }
+		available = {
+			is_subject = no
+		}
 
-		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_dieu_la_patrie_le_roi"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_moroccan_economy"
 			add_political_power = 100
 			add_stability = 0.05
 		}
@@ -10497,7 +10496,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_bounty_of_the_mountains
-		icon = x
+		icon = PB_Generic_Mining_Industry
 
 		x = -18
 		y = 1
@@ -10508,13 +10507,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		prerequisite = { focus = MOR_the_moroccan_economy }
 
-		available = { }
-		# bypass = { }
-		# cancel = { }
+		available = {
+			is_subject = no
+		}
 
-		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_bounty_of_the_mountains"
+			add_ideas = MOR_the_bounty_of_the_mountains
 		}
 
 		ai_will_do = {
@@ -10524,7 +10523,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_exploit_gold_reserves
-		icon = x
+		icon = gold_standard
 
 		x = -19
 		y = 2
@@ -10541,17 +10540,53 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_exploit_gold_reserves"
+			# TODO: Add a check here that if you are a more authoritarian Monarch you gain some for your personal use
+			# TODO: Change this to the most appropriate state
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_country_flag = MOR_aggressive_resource_exploitation }
+				add_resource = {
+					type = chromium
+					amount = 14
+					state = 1176
+				}
+				add_stability = -0.02
+			}
+			else_if = {
+				limit = { has_country_flag = MOR_corrupted_aggressive_resource_exploitation }
+				add_resource = {
+					type = chromium
+					amount = 14
+					state = 1176
+				}
+			}
+			else = {
+				add_resource = {
+					type = chromium
+					amount = 8
+					state = 1176
+				}
+			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { resource_consumed@chromium > resource_produced@chromium }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate > 10.99 }
+			}
 		}
 	}
 
 	focus = {
 		id = MOR_exploit_iron_reserves
-		icon = x
+		icon = resource_extraction
 
 		x = -17
 		y = 2
@@ -10562,23 +10597,58 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		prerequisite = { focus = MOR_the_bounty_of_the_mountains }
 
-		available = { }
-		# bypass = { }
-		# cancel = { }
+		available = {
+			is_subject = no
+			has_full_control_of_state = 1176
+		}
 
-		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_exploit_iron_reserves"
+			# TODO: Change this to the most appropriate state
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_country_flag = MOR_aggressive_resource_exploitation }
+				add_resource = {
+					type = steel
+					amount = 14
+					state = 1176
+				}
+				add_stability = -0.02
+			}
+			else_if = {
+				limit = { has_country_flag = MOR_corrupted_aggressive_resource_exploitation }
+				add_resource = {
+					type = steel
+					amount = 14
+					state = 1176
+				}
+			}
+			else = {
+				add_resource = {
+					type = steel
+					amount = 8
+					state = 1176
+				}
+			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { resource_consumed@steel > resource_produced@steel }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate > 10.99 }
+			}
 		}
 	}
 
 	focus = {
 		id = MOR_cooper_mines_and_cooper_times
-		icon = x
+		icon = raw_materials
 
 		x = -19
 		y = 3
@@ -10590,22 +10660,53 @@ focus_tree = {
 		prerequisite = { focus = MOR_exploit_gold_reserves }
 
 		available = { }
-		# bypass = { }
-		# cancel = { }
 
-		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_cooper_mines_and_cooper_times"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_country_flag = MOR_aggressive_resource_exploitation }
+				add_resource = {
+					type = tungsten
+					amount = 14
+					state = 1176
+				}
+				add_stability = -0.02
+			}
+			else_if = {
+				limit = { has_country_flag = MOR_corrupted_aggressive_resource_exploitation }
+				add_resource = {
+					type = tungsten
+					amount = 14
+					state = 1176
+				}
+			}
+			else = {
+				add_resource = {
+					type = tungsten
+					amount = 8
+					state = 1176
+				}
+			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { resource_consumed@tungsten > resource_produced@tungsten }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate > 10.99 }
+			}
 		}
 	}
 
 	focus = {
 		id = MOR_cobalt_mining
-		icon = x
+		icon = steel_production
 
 		x = -17
 		y = 3
@@ -10622,7 +10723,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_cobalt_mining"
 		}
 
 		ai_will_do = {
@@ -10632,7 +10733,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_steel_mills
-		icon = x
+		icon = steel_production2
 
 		x = -18
 		y = 4
@@ -10650,7 +10751,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_steel_mills"
 		}
 
 		ai_will_do = {
@@ -10677,7 +10778,11 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_industrialized_resource_refining"
+			swap_ideas = {
+				remove_idea = MOR_the_bounty_of_the_mountains
+				add_idea = MOR_the_bounty_of_the_mountains
+			}
 		}
 
 		ai_will_do = {
@@ -10705,7 +10810,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_export_galvanized_steel"
 		}
 
 		ai_will_do = {
@@ -10715,7 +10820,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_moroccan_manufacturing
-		icon = x
+		icon = industry2
 
 		x = -13
 		y = 1
@@ -10732,7 +10837,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_moroccan_manufacturing"
 		}
 
 		ai_will_do = {
@@ -10759,7 +10864,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_textile_investments"
 		}
 
 		ai_will_do = {
@@ -10769,7 +10874,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_expansion_of_construction_sector
-		icon = x
+		icon = construction_buldozer
 
 		x = -13
 		y = 2
@@ -10786,7 +10891,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_expansion_of_construction_sector"
 		}
 
 		ai_will_do = {
@@ -10813,7 +10918,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_automotive_industries"
 		}
 
 		ai_will_do = {
@@ -10840,7 +10945,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_canneries"
 		}
 
 		ai_will_do = {
@@ -10867,7 +10972,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_petroleum_refining"
 		}
 
 		ai_will_do = {
@@ -10894,7 +10999,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_foreign_automotive_industries"
 		}
 
 		ai_will_do = {
@@ -10921,7 +11026,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_handcrafts_and_accessories"
 		}
 
 		ai_will_do = {
@@ -10948,7 +11053,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_iron_and_steel_refining"
 		}
 
 		ai_will_do = {
@@ -10975,7 +11080,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_tractor_assemblies"
 		}
 
 		ai_will_do = {
@@ -11004,7 +11109,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_heavy_industrial_expansions"
 		}
 
 		ai_will_do = {
@@ -11033,7 +11138,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_electronic_intermediate_goods"
 		}
 
 		ai_will_do = {
@@ -11043,7 +11148,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_pension_fund
-		icon = x
+		icon = pensions_increase
 
 		x = -11
 		y = 1
@@ -11060,7 +11165,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_pension_fund"
 		}
 
 		ai_will_do = {
@@ -11070,7 +11175,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_a_new_morocco
-		icon = x
+		icon = BRA_renewable_energy_funds
 
 		x = -9
 		y = 1
@@ -11087,7 +11192,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_a_new_morocco"
 		}
 
 		ai_will_do = {
@@ -11097,7 +11202,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_solar_farms_sahara
-		icon = x
+		icon = generic_solar
 
 		x = -9
 		y = 2
@@ -11114,7 +11219,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_solar_farms_sahara"
 		}
 
 		ai_will_do = {
@@ -11124,7 +11229,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_wind_farms_atlantic_coast
-		icon = x
+		icon = windmills
 
 		x = -9
 		y = 3
@@ -11141,7 +11246,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_wind_farms_atlantic_coast"
 		}
 
 		ai_will_do = {
@@ -11151,7 +11256,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_black_gold
-		icon = x
+		icon = oil
 
 		x = -7
 		y = 1
@@ -11168,7 +11273,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_black_gold"
 		}
 
 		ai_will_do = {
@@ -11178,7 +11283,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_exploit_the_reserves
-		icon = x
+		icon = maghreb_oil
 
 		x = -7
 		y = 2
@@ -11195,7 +11300,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_exploit_the_reserves"
 		}
 
 		ai_will_do = {
@@ -11205,7 +11310,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_expanded_fossil_fuel_industries
-		icon = x
+		icon = oil_production2
 
 		x = -7
 		y = 3
@@ -11222,7 +11327,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_expanded_fossil_fuel_industries"
 		}
 
 		ai_will_do = {
@@ -11250,7 +11355,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_geothermal_exploitation"
 		}
 
 		ai_will_do = {
@@ -11278,7 +11383,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_reinforced_energy_grid"
 		}
 
 		ai_will_do = {
@@ -11288,7 +11393,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_fezzian_atom
-		icon = x
+		icon = nukes_in_production
 
 		x = -8
 		y = 5
@@ -11305,7 +11410,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_fezzian_atom"
 		}
 
 		ai_will_do = {
@@ -11333,7 +11438,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_bounty_of_atlas"
 		}
 
 		ai_will_do = {
@@ -11343,7 +11448,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_a_nuclear_morocco
-		icon = x
+		icon = nuclear_energy
 
 		x = -8
 		y = 6
@@ -11360,7 +11465,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_a_nuclear_morocco"
 		}
 
 		ai_will_do = {
@@ -11370,7 +11475,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_agricultural_side
-		icon = x
+		icon = farming_sector
 
 		x = -3
 		y = 1
@@ -11387,7 +11492,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_agricultural_side"
 		}
 
 		ai_will_do = {
@@ -11414,7 +11519,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_hashish_industry"
 		}
 
 		ai_will_do = {
@@ -11424,7 +11529,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_trade_imbalance
-		icon = x
+		icon = focus_trade_republic
 
 		x = 1
 		y = 1
@@ -11505,7 +11610,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_moroccan_national_debt
-		icon = x
+		icon = money_on_fire
 
 		x = 9
 		y = 1
@@ -11532,7 +11637,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_attract_foreign_investors
-		icon = x
+		icon = classic_liberal_economy
 
 		x = 11
 		y = 1
@@ -11559,7 +11664,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_financial_sector
-		icon = x
+		icon = generic_banks
 
 		x = 13
 		y = 1
@@ -11586,7 +11691,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_maghrebi_breadbasket
-		icon = x
+		icon = focus_generic_agricultural_subsidies
 
 		x = -3
 		y = 2
@@ -11631,7 +11736,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_legalization_of_cannabis"
 		}
 
 		ai_will_do = {
@@ -11641,7 +11746,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_solve_the_imbalance
-		icon = x
+		icon = focus_trade_republic
 
 		x = 1
 		y = 2
@@ -11668,7 +11773,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_maghrebi_silicon_valley
-		icon = x
+		icon = economic_it
 
 		x = 4
 		y = 2
@@ -11723,7 +11828,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_improve_our_credit_rating
-		icon = x
+		icon = liberalization_policies
 
 		x = 9
 		y = 2
@@ -11750,7 +11855,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_autonomy_of_bank_al_maghrib
-		icon = x
+		icon = radical_tax_reform
 
 		x = 12
 		y = 2
@@ -11777,7 +11882,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_life_insurance_and_larache
-		icon = x
+		icon = gen_coins_n
 
 		x = 14
 		y = 2
@@ -11804,7 +11909,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_wine_industries
-		icon = x
+		icon = vineyard
 
 		x = -4
 		y = 3
@@ -11821,7 +11926,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_wine_industries"
 		}
 
 		ai_will_do = {
@@ -11831,7 +11936,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_solidification_of_food_trade
-		icon = x
+		icon = Generic_Veggies
 
 		x = -2
 		y = 3
@@ -11849,7 +11954,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_solidification_of_food_trade"
 		}
 
 		ai_will_do = {
@@ -11859,7 +11964,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_trade_agreement_discussions
-		icon = x
+		icon = ExpandTrade
 
 		x = 0
 		y = 3
@@ -11943,7 +12048,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_casablanca_stock_exchange
-		icon = x
+		icon = goal_JAP_valueup
 
 		x = 9
 		y = 3
@@ -11971,7 +12076,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_further_autonomy_of_the_bank_al_maghrib
-		icon = x
+		icon = generic_bank
 
 		x = 11
 		y = 3
@@ -12000,7 +12105,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_treasury_bond_issuance
-		icon = x
+		icon = Generic_Loadsamoney
 
 		x = 13
 		y = 3
@@ -12029,7 +12134,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_state_wide_financial_regulations
-		icon = x
+		icon = MEX_Social_investments
 
 		x = 15
 		y = 3
@@ -12075,7 +12180,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_gharib_plain_investments"
 		}
 
 		ai_will_do = {
@@ -12196,7 +12301,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_expand_the_market_capitalization_rate
-		icon = x
+		icon = economic_prosperity
 
 		x = 9
 		y = 4
@@ -12223,7 +12328,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_independent_banking
-		icon = x
+		icon = economic_prosperity
 
 		x = 12
 		y = 4
@@ -12251,7 +12356,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_new_bankers_of_africa
-		icon = x
+		icon = BRA_simplify_the_tax_system
 
 		x = 14
 		y = 4
@@ -12296,7 +12401,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_fisheries_of_tangier"
 		}
 
 		ai_will_do = {
@@ -12417,7 +12522,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_the_private_lending_dilemma
-		icon = x
+		icon = union_negotiations
 
 		x = 10
 		y = 5
@@ -12446,7 +12551,7 @@ focus_tree = {
 
 	focus = {
 		id = MOR_cradle_of_the_maghreb
-		icon = x
+		icon = sing_on_rise
 
 		x = 13
 		y = 5
@@ -12492,7 +12597,7 @@ focus_tree = {
 
 		# select_effect = { }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus MOR_the_democratic_way"
+			log = "[GetDateText]: [Root.GetName]: Focus MOR_expansion_of_phosphate_production"
 		}
 
 		ai_will_do = {
