@@ -738,6 +738,98 @@ country_event = {
 	}
 }
 
+# Random events that can pop up mid operation
+# Soldiers troops low on supply
+country_event = {
+	id = TUR_pkk.200
+	title = TUR_pkk.200.t
+	desc = TUR_pkk.200.d
+	picture = GFX_TUR_PKK_generic2
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event TUR_pkk.200" }
+
+	# Airlift them whatever they need
+	option = {
+		name = TUR_pkk.200.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.a executed"
+		air_experience = -15
+		custom_effect_tooltip = TUR_AIR_LOSS_TT
+		hidden_effect = {
+			random_list = {
+				50 = {
+					if = {
+						limit = { has_dlc = "By Blood Alone" }
+						add_equipment_to_stockpile = {
+							type = large_plane_air_transport_airframe_1
+							variant_name = "C-130 Hercules"
+							amount = -1
+							producer = USA
+						}
+					}
+					else = {
+						add_equipment_to_stockpile = {
+							type = transport_plane1
+							amount = -1
+							producer = USA
+						}
+					}
+				}
+				50 = {}
+			}
+		}
+		newline = yes
+		add_equipment_to_stockpile = { type = infantry_weapons amount = -500 producer = TUR }
+		add_equipment_to_stockpile = { type = util_vehicle_equipment amount = -75 producer = TUR }
+		newline = yes
+		add_timed_idea = {
+			idea = TUR_supply_distruption
+			days = 180
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Ask locals to transport some equipment
+	option = {
+		name = TUR_pkk.200.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.b executed"
+		add_equipment_to_stockpile = { type = infantry_weapons amount = -500 producer = TUR }
+		add_equipment_to_stockpile = { type = util_vehicle_equipment amount = -75 producer = TUR }
+		custom_effect_tooltip = TUR_2X_LOSS_TT
+		hidden_effect = {
+			random_list = {
+				50 = {
+					add_equipment_to_stockpile = { type = infantry_weapons amount = -500 producer = TUR }
+					add_equipment_to_stockpile = { type = util_vehicle_equipment amount = -75 producer = TUR }
+				}
+				50 = {
+					# Nothing happens
+				}
+			}
+		}
+		newline = yes
+		add_timed_idea = {
+			idea = TUR_supply_distruption
+			days = 90
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Use what you have!
+	option = {
+		name = TUR_pkk.200.c
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.c executed"
+		custom_effect_tooltip = TUR_lower_effectiveness_10_TT
+		add_to_variable = { var = TUR_current_effectiveness value = -10 }
+		clamp_variable = { var = TUR_current_effectiveness min = 0 max = 100 }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
 #Calling out Özakan - Özakan forms a new party
 country_event = {
 	id = Turkey.1
@@ -4137,7 +4229,6 @@ country_event = { #Turkey how should we move in on Abdul Mustafa?
 		}
 		ai_chance = { factor = 0 }
 	}
-	#
 	option = { #Actually, this is probably a bad idea..
 		name = TurkeyFocusEvents.58.c
 		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.58.c executed"
@@ -4145,7 +4236,6 @@ country_event = { #Turkey how should we move in on Abdul Mustafa?
 		ai_chance = { factor = 0 }
 	}
 }
-#
 country_event = { #Mustafa assasinated
 	id = TurkeyFocusEvents.59
 	immediate = { log = "[GetDateText]: [Root.GetName]: event TurkeyFocusEvents.59" }
