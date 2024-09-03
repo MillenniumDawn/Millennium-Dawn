@@ -5597,4 +5597,97 @@ generic_coalition_politics_desicions = {
 			}
 		}
 	}
+
+	# NATO Major Non-Nato Ally
+	NATO_apply_to_become_major_non_nato_ally = {
+		icon = GFX_decision_generic_leave_nato
+
+		available = {
+			NOT = { has_idea = Major_Non_NATO_Ally }
+			if = {
+				limit = {
+					country_exists = USA
+					USA = { has_idea = NATO_member }
+					USA = { is_faction_leader = yes }
+				}
+				USA = {
+					has_opinion = { target = ROOT value > 100 }
+				}
+			}
+			else = {
+				any_country = {
+					has_idea = NATO_member
+					is_faction_leader = yes
+
+					has_opinion = { target = ROOT value > 100 }
+				}
+			}
+		}
+
+		visible = {
+			NOT = { has_global_flag = GAME_RULE_nato_disabled }
+			NOT = { has_idea = Major_Non_NATO_Ally }
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision denounce_Status_As_Major_Non_NATO_Ally"
+			add_ideas = Major_Non_NATO_Ally
+			set_country_flag = Major_Non_NATO_Ally
+			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
+
+			#news_event = { id = NATO.6 hours = 6 }
+
+			# Remove opinion modifiers.
+			every_other_country = {
+				limit = {
+					has_idea = NATO_member
+				}
+
+				add_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
+				reverse_add_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
+			}
+		}
+	}
+
+	denounce_Status_As_Major_Non_NATO_Ally = {
+		icon = GFX_decision_generic_leave_nato
+
+		available = {
+			has_idea = Major_Non_NATO_Ally
+		}
+
+		visible = {
+			NOT = { has_global_flag = GAME_RULE_nato_disabled }
+			has_idea = Major_Non_NATO_Ally
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision denounce_Status_As_Major_Non_NATO_Ally"
+			remove_ideas = Major_Non_NATO_Ally
+			clr_country_flag = Major_Non_NATO_Ally
+			remove_from_tech_sharing_group = Major_Non_NATO_Ally_Share
+
+			USA = {
+				add_opinion_modifier = { target = PREV modifier = left_alliance }
+			}
+
+			#news_event = { id = NATO.6 hours = 6 }
+
+			# Remove opinion modifiers.
+			every_other_country = {
+				limit = {
+					has_opinion_modifier = Major_Non_NATO_Ally
+				}
+
+				remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
+				hidden_effect = {
+					PREV = { remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally } }
+				}
+			}
+		}
+	}
 }
