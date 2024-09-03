@@ -763,13 +763,11 @@ TUR_domestic_politics_category = {
 						elections_allowed = no
 					}
 				}
-				#
 				start_civil_war = {
 					ideology = democratic
 					size = 0.35
 					keep_political_leader = yes
 					keep_political_party_members = yes
-					#
 					set_temp_variable = { party_index = 1 }
 					set_temp_variable = { party_popularity_increase = 0.45 }
 					set_temp_variable = { temp_outlook_increase = 0.45 }
@@ -869,6 +867,12 @@ TUR_pkk_insurgency_category = {
 				is_owned_and_controlled_by = TUR
 			}
 		}
+		available = {
+			# 935 = {
+			# 	resistance < 1
+			# 	compliance > 94
+			# }
+		}
 		highlight_states = {
 			highlight_state_targets = {
 				state = 935
@@ -876,13 +880,17 @@ TUR_pkk_insurgency_category = {
 		}
 		days_remove = 14
 		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_commence_operations_in_van"
+			set_country_flag = TUR_VAN_SELECTED_OP
+			set_country_flag = TUR_OP_BEGAN
+		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_commence_operations_in_van"
 			custom_effect_tooltip = TUR_PKK_COMMENCE_VAN_TT
 			custom_effect_tooltip = TUR_SELECT_VAN_TT
-			set_country_flag = TUR_VAN_SELECTED_OP
-			add_to_variable = { var = TUR_VAN_BASE_MANPOWER value = 2000 }
-			clamp_variable = { var = TUR_VAN_BASE_MANPOWER min = 0 max = 2000 }
+			add_to_variable = { var = TUR_PKK_BASE_MANPOWER value = 2000 }
+			clamp_variable = { var = TUR_PKK_BASE_MANPOWER min = 0 max = 2000 }
 		}
 
 		ai_will_do = {
@@ -891,63 +899,108 @@ TUR_pkk_insurgency_category = {
 	}
 
 	TUR_van_pre_op_preparations = {
-		icon = GFX_decision_generic_army_support
 		visible = {
 			935 = {
 				is_owned_and_controlled_by = TUR
 			}
 		}
-		available = {
-		
+		visible = {
+			#has_country_flag = TUR_VAN_SELECTED_OP
 		}
 		highlight_states = {
 			highlight_state_targets = {
 				state = 935
 			}
 		}
-		days_remove = 14
+		days_remove = 0
 		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_van_pre_op_preparations"
-			if = {
-				limit = {
-					935 = {
-						radar_station > 0
-					}
-				}
-				# REPLACE WITH EFFECTIVENESS ATTACK
+			TUR_check_effectiveness_van = yes
+			custom_effect_tooltip = TUR_effectiveness_TT
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_train_units = {
+		icon = GFX_decision_generic_speech
+		visible = {
+			935 = {
+				is_owned_and_controlled_by = TUR
 			}
-			else_if = {
-				limit = {
-					935 = {
-						radar_station > 1
-					}
-				}
-				# REPLACE WITH EFFECTIVENESS ATTACK
+		}
+		highlight_states = {
+			highlight_state_targets = {
+				state = 935
 			}
-			else_if = {
-				limit = {
-					935 = {
-						radar_station > 2
-					}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_effectiveness_req_TT
+				check_variable = {
+					TUR_current_effectiveness < 81
 				}
-				# REPLACE WITH EFFECTIVENESS ATTACK
 			}
-			else_if = {
-				limit = {
-					935 = {
-						radar_station > 3
-					}
-				}
-				# REPLACE WITH EFFECTIVENESS ATTACK
+		}
+		custom_cost_trigger = {
+			has_army_experience > 34
+		}
+		custom_cost_text = army_xp_35
+		days_remove = 0
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_train_units"
+			hidden_effect = {
+				army_experience = -35
 			}
-			else_if = {
-				limit = {
-					935 = {
-						radar_station > 4
-					}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_train_units"
+			add_to_variable = { var = TUR_current_effectiveness value = 10 }
+			clamp_variable = { var = TUR_current_effectiveness min = 0 max = 100 }
+			add_command_power = -20
+			add_political_power = -150
+			custom_effect_tooltip = TUR_20_effectiveness_TT
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_van_pre_op_strike = {
+		icon = GFX_decision_generic_police_action
+		visible = {
+			935 = {
+				is_owned_and_controlled_by = TUR
+			}
+		}
+		highlight_states = {
+			highlight_state_targets = {
+				state = 935
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_effectiveness_req2_TT
+				check_variable = {
+					TUR_current_effectiveness > 9
 				}
-				# REPLACE WITH EFFECTIVENESS ATTACK
+			}
+		}
+		custom_cost_trigger = {
+			has_army_experience > 34
+		}
+		custom_cost_text = army_xp_35
+		days_remove = 14
+		fire_only_once = yes
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_train_units"
+			country_event = {
+				id = TUR_pkk.100
 			}
 		}
 
