@@ -738,7 +738,8 @@ country_event = {
 	}
 }
 
-# Random events that can pop up mid operation
+# Random events that can pop up until operation ends
+# Event Chain 1/6
 # Soldiers troops low on supply
 country_event = {
 	id = TUR_pkk.200
@@ -829,6 +830,328 @@ country_event = {
 		}
 	}
 }
+# PKK entrench themselves in residential area
+country_event = {
+	id = TUR_pkk.201
+	title = TUR_pkk.201.t
+	desc = TUR_pkk.201.d
+	picture = GFX_TUR_PKK_generic
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event TUR_pkk.201" }
+
+	# Commandos
+	option = {
+		name = TUR_pkk.201.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.201.a executed"
+		add_tech_bonus = {
+			name = CAT_missile
+			ahead_reduction = 1
+			bonus = 1
+			uses = 1
+			category = CAT_special_forces
+		}
+		newline = yes
+		add_doctrine_cost_reduction = {
+			name = CAT_land_doctrine
+			cost_reduction = 1
+			uses = 1
+			category = CAT_land_doctrine
+		}
+		newline = yes
+		army_experience = -50
+		add_command_power = -50
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Night Attack
+	option = {
+		name = TUR_pkk.201.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.b executed"
+		add_tech_bonus = {
+			name = CAT_missile
+			ahead_reduction = 1
+			bonus = 0.5
+			uses = 1
+			category = CAT_nvg
+		}
+		newline = yes
+		add_tech_bonus = {
+			name = CAT_missile
+			ahead_reduction = 1
+			uses = 1
+			category = CAT_cnc
+		}
+		newline = yes
+		add_equipment_to_stockpile = { type = infantry_weapons amount = -900 producer = TUR }
+		add_equipment_to_stockpile = { type = cnc_equipment amount = -575 producer = TUR }
+		add_equipment_to_stockpile = { type = util_vehicle_equipment amount = -175 producer = TUR }
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Just attack
+	option = {
+		name = TUR_pkk.201.c
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.c executed"
+		if = {
+			limit = {
+				has_country_flag = TUR_VAN_SELECTED_OP
+			}
+			935 = {
+				damage_building = {
+					type = infrastructure
+					damage = 1.0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 1.0
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = TUR_DIYARBAKIR_SELECTED_OP
+			}
+			162 = {
+				damage_building = {
+					type = infrastructure
+					damage = 1.0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 1.0
+				}
+			}
+		}
+		newline = yes
+		add_manpower = -700
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = TUR_pkk.202
+	title = TUR_pkk.202.t
+	desc = TUR_pkk.202.d
+	picture = GFX_TUR_attack_PKK2
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event TUR_pkk.201" }
+
+	# Attack
+	option = {
+		name = TUR_pkk.202.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.201.a executed"
+		add_equipment_to_stockpile = { type = infantry_weapons amount = -1000 producer = TUR }
+		add_equipment_to_stockpile = { type = util_vehicle_equipment amount = -275 producer = TUR }
+		newline = yes
+		random_army_leader = {
+			add_skill_level = 1
+			add_attack = 1
+		}
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Defend
+	option = {
+		name = TUR_pkk.202.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.b executed"
+		if = {
+			limit = {
+				has_country_flag = TUR_VAN_SELECTED_OP
+			}
+			935 = {
+				damage_building = {
+					type = infrastructure
+					damage = 3.0
+				}
+				damage_building = {
+					type = offices
+					damage = 3.0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 3.0
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = TUR_DIYARBAKIR_SELECTED_OP
+			}
+			162 = {
+				damage_building = {
+					type = infrastructure
+					damage = 3.0
+				}
+				damage_building = {
+					type = offices
+					damage = 3.0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 3.0
+				}
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.025 }
+		set_temp_variable = { temp_outlook_increase = -0.025 }
+		add_relative_party_popularity = yes
+		newline = yes
+		random_army_leader = {
+			add_skill_level = 1
+			add_defense = 1
+		}
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Run
+	option = {
+		name = TUR_pkk.202.c
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.c executed"
+		add_timed_idea = {
+			idea = TUR_scorched_earth_tactics
+			days = 180
+		}
+		add_stability = -0.05
+		newline = yes
+		random_army_leader = {
+			add_skill_level = 2
+			add_planning = 1
+			add_logistics = 1
+		}
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = TUR_pkk.202
+	title = TUR_pkk.202.t
+	desc = TUR_pkk.202.d
+	picture = GFX_TUR_attack_PKK2
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event TUR_pkk.201" }
+
+	# Attack
+	option = {
+		name = TUR_pkk.202.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.201.a executed"
+		add_equipment_to_stockpile = { type = infantry_weapons amount = -1000 producer = TUR }
+		add_equipment_to_stockpile = { type = util_vehicle_equipment amount = -275 producer = TUR }
+		newline = yes
+		random_army_leader = {
+			add_skill_level = 1
+			add_attack = 1
+		}
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Defend
+	option = {
+		name = TUR_pkk.202.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.b executed"
+		if = {
+			limit = {
+				has_country_flag = TUR_VAN_SELECTED_OP
+			}
+			935 = {
+				damage_building = {
+					type = infrastructure
+					damage = 3.0
+				}
+				damage_building = {
+					type = offices
+					damage = 3.0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 3.0
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = TUR_DIYARBAKIR_SELECTED_OP
+			}
+			162 = {
+				damage_building = {
+					type = infrastructure
+					damage = 3.0
+				}
+				damage_building = {
+					type = offices
+					damage = 3.0
+				}
+				damage_building = {
+					type = industrial_complex
+					damage = 3.0
+				}
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.025 }
+		set_temp_variable = { temp_outlook_increase = -0.025 }
+		add_relative_party_popularity = yes
+		newline = yes
+		random_army_leader = {
+			add_skill_level = 1
+			add_defense = 1
+		}
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Run
+	option = {
+		name = TUR_pkk.202.c
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.200.c executed"
+		add_timed_idea = {
+			idea = TUR_scorched_earth_tactics
+			days = 180
+		}
+		add_stability = -0.05
+		newline = yes
+		random_army_leader = {
+			add_skill_level = 2
+			add_planning = 1
+			add_logistics = 1
+		}
+		newline = yes
+		TUR_PKK_STRIKE = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+
 
 #Calling out Özakan - Özakan forms a new party
 country_event = {
