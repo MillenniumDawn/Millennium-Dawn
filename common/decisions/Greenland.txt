@@ -1,0 +1,229 @@
+GRN_visit_greenland = {
+
+	GRN_TV_campain = {
+		icon = decision
+		available = {
+			tag = GRN
+		}
+		fire_only_once = no
+		cost = 15
+		days_remove = 1
+		fixed_random_seed = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRN_TV_campain"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.003 }
+			modify_treasury_effect = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision GRN_TV_campain executed"
+			# custom_effect_tooltip = GRN_TV_campain_tt
+			add_tech_bonus = {
+				name = GENERIC_uniform_improvements
+				uses = 1
+				ahead_reduction = 1.50
+				bonus = 0.835
+				technology = body_armor_1980
+				technology = body_armor_2000
+				technology = body_armor_2010
+				technology = body_armor_2030
+				technology = camouflage
+				technology = camouflage2
+				technology = camouflage3
+				technology = camouflage4
+				technology = camouflage5
+			}
+			hidden_effect = {
+				random_list = {
+					20 = {
+						set_temp_variable = { treasury_change = gdp_total }
+						multiply_temp_variable = { treasury_change = 0.005 }
+						modify_treasury_effect = yes
+					}
+					20 = {
+						set_temp_variable = { treasury_change = gdp_total }
+						multiply_temp_variable = { treasury_change = 0.004 }
+						modify_treasury_effect = yes
+					}
+					40 = {
+						set_temp_variable = { treasury_change = gdp_total }
+						multiply_temp_variable = { treasury_change = 0.003 }
+						modify_treasury_effect = yes
+					}
+					20 = {
+						set_temp_variable = { treasury_change = gdp_total }
+						multiply_temp_variable = { treasury_change = 0.001 }
+						modify_treasury_effect = yes
+					}
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+}
+
+GRN_Agro_mech = {
+
+	GRN_Pomegranate_invesment1 = {
+		allowed = {
+			original_tag = GRN
+		}
+
+		available = {
+			state_population_k > 15
+		}
+		cost = 1
+
+		days_remove = 1
+		days_re_enable = 1
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRN_Pomegranate_invesment1"
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRN_Pomegranate_invesment1"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.10  }
+			modify_treasury_effect = yes
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = population_total }
+				multiply_temp_variable = { treasury_change = 0.02  }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+
+	GRN_Pomegranate_invesment1_collect = {
+	 	is_good = yes
+		cost = 3
+	 	days_mission_timeout = 15
+		days_remove = 1
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRN_Pomegranate_invesment1_collect"
+			set_temp_variable = { treasury_change = population_total }
+			multiply_temp_variable = { treasury_change = 0.02  }
+			modify_treasury_effect = yes
+		}
+			
+	}
+
+}
+
+GRN_State_Map_Recovery = {
+	
+	GRN_rebulding_strate_post_war = {
+		name = GRN_restore_war_ravaged_local_homes_and_dwellings
+		icon = generic_construction
+		allowed = {
+			original_tag = GRN
+		}
+		visible = {
+			FROM = { has_dynamic_modifier = {  modifier = GRN_war_scarred_land scope = GRN } }
+		}
+		available = {
+			FROM = {
+				is_core_of = ROOT
+				has_dynamic_modifier = {  modifier = GRN_war_scarred_land scope = GRN }
+			}
+		}
+		state_target = yes
+		on_map_mode = map_only
+		#targets = {  }
+		target_array = controlled_states
+		target_trigger = {
+			#has_completed_focus = A
+			FROM = {
+				OR = { is_core_of = GRN is_core_of = TAL }
+				OR = {
+					is_owned_by = ROOT
+					NOT = {
+						#blacklisted states
+						state = 1
+					}
+				}
+			}
+		}
+		days_remove = 60
+		custom_cost_trigger = {
+			num_of_civilian_factories_available_for_projects > 0
+		}
+		custom_cost_text = decision_cost_civ_factory_1
+		modifier = {
+			civilian_factory_use = 1
+		}
+		visible = {
+			tag = GRN
+			#has_completed_focus = A
+			always = yes
+		}
+		complete_effect = { }
+		remove_effect = {
+			FROM = {
+				remove_dynamic_modifier = { modifier = GRN_war_scarred_land scope = GRN } 
+			}
+		}
+	}
+	GRN_National_development_credit_fund = {
+		#name = GRN_National_development_credit_fund
+		icon = POL_looming_peasants_strike
+		allowed = {
+			original_tag = GRN
+		}
+		visible = {
+			has_completed_focus = GRN_Da_Afghanistan_Bank_reinforcement
+		}
+		available = {
+			has_completed_focus = GRN_Da_Afghanistan_Bank_reinforcement
+			FROM = { OR = { is_core_of = GRN is_core_of = TAL } }
+			FROM = {
+				OR = {
+					is_island_state = yes
+					is_core_of = ROOT
+				}
+				hidden_trigger = { NOT = { has_state_flag = GRN_National_development_credit_fund_spent } }
+			}
+		}
+		state_target = yes
+		on_map_mode = map_only
+		#targets = {  }
+		target_array = controlled_states
+		target_trigger = {
+			#has_completed_focus = A
+			FROM = {
+				OR = { is_core_of = GRN is_core_of = TAL }
+				OR = {
+					is_owned_by = ROOT
+					NOT = {
+						#blacklisted states
+						state = 1
+					}
+				}
+			}
+		}
+		#cost = 50
+		days_remove = 60
+		custom_cost_text = cost_2_0
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.99 }
+		}
+		visible = {
+			tag = GRN
+			#has_completed_focus = A
+			always = yes
+		}
+		complete_effect = { }
+		remove_effect = {
+			FROM = {
+				set_state_flag = GRN_National_development_credit_fund_spent
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+	}
+	
+}
