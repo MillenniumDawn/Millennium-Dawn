@@ -998,10 +998,10 @@ TUR_pkk_insurgency_category = {
 			}
 		}
 		available = {
-			# 935 = {
-			# 	resistance < 1
-			# 	compliance > 94
-			# }
+			935 = {
+			 	resistance < 1
+				compliance > 94
+			}
 		}
 		highlight_states = {
 			highlight_state_targets = {
@@ -1035,7 +1035,7 @@ TUR_pkk_insurgency_category = {
 			}
 		}
 		visible = {
-			#has_country_flag = TUR_VAN_SELECTED_OP
+			has_country_flag = TUR_VAN_SELECTED_OP
 		}
 		highlight_states = {
 			highlight_state_targets = {
@@ -1061,6 +1061,7 @@ TUR_pkk_insurgency_category = {
 			935 = {
 				is_owned_and_controlled_by = TUR
 			}
+			has_country_flag = TUR_VAN_SELECTED_OP
 		}
 		highlight_states = {
 			highlight_state_targets = {
@@ -1107,6 +1108,7 @@ TUR_pkk_insurgency_category = {
 			935 = {
 				is_owned_and_controlled_by = TUR
 			}
+			has_country_flag = TUR_VAN_SELECTED_OP
 		}
 		highlight_states = {
 			highlight_state_targets = {
@@ -1128,10 +1130,76 @@ TUR_pkk_insurgency_category = {
 		days_remove = 14
 		fire_only_once = yes
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_train_units"
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_van_pre_op_strike"
+			set_country_flag = TUR_did_prestrike_VAN
 			country_event = {
 				id = TUR_pkk.100
 			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	TUR_launch_attack_PKK_VAN = {
+		icon = GFX_decision_generic_prepare_civil_war
+		visible = {
+			935 = {
+				is_owned_and_controlled_by = TUR
+			}
+			has_country_flag = TUR_did_prestrike_VAN
+		}
+		highlight_states = {
+			highlight_state_targets = {
+				state = 935
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_effectiveness_req2_TT
+				check_variable = {
+					TUR_current_effectiveness > 9
+				}
+			}
+		}
+		custom_cost_trigger = {
+			command_power > 30
+		}
+
+		custom_cost_text = command_power_more_than_30
+		days_remove = 50
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_launch_attack_PKK_VAN"
+			hidden_effect = {
+				if = {
+					limit = {
+						NOT = {
+							has_country_flag = TUR_attacked_van_flag
+						}
+					}
+					set_country_flag = TUR_attacked_van_flag
+					random_list = {
+						25 = {
+							country_event = {
+								id = TUR_pkk.200
+								days = 20
+							}
+						}
+						25 = {
+							country_event = {
+								id = TUR_pkk.205
+								days = 20
+							}
+						}
+					}
+				}
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_launch_attack_PKK"
+			TUR_PKK_STRIKE_moderate = yes
 		}
 
 		ai_will_do = {
