@@ -459,96 +459,412 @@
 				}
 			}
 		}
-	# LAKE WARS
-		# MLW_lake_wars_peace_efforts = {
-		# 	# TANZANIAN PEACE EFFORTS
-		# 		MLW_TNZ_free_movement = {
-		# 			icon = decision
-		# 			fire_only_once = yes
-		# 			# visible = { has_completed_focus = MLW_TNZ_formal_borders }
-		# 			# available = { MLW_not_doing_lake_peace_stuff = yes }
-		# 			cost = 75
-		# 			days_remove = 28
-		# 			complete_effect = {
-		# 				set_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 				custom_effect_tooltip = MLW_lake_wars_begin_peace_efforts
-		# 				give_military_access = TNZ
-		# 			}
-		# 			remove_effect = {
-		# 				# TNZ = { country_event = MLW_Trade_TNZ.1 }
-		# 				set_country_flag = MLW_attempted_to_get_freedom_of_movement
-		# 				clr_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 			}
-		# 		}
-		# 		MLW_TNZ_free_trade = {
-		# 			icon = decision
-		# 			fire_only_once = yes
-		# 			# visible = { has_completed_focus = MLW_TNZ_formal_borders }
-		# 			# available = { MLW_not_doing_lake_peace_stuff = yes }
-		# 			cost = 125
-		# 			days_remove = 42
-		# 			complete_effect = {
-		# 				set_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 				custom_effect_tooltip = MLW_lake_wars_begin_peace_efforts
-		# 			}
-		# 			remove_effect = {
-		# 				# TNZ = { country_event = MLW_Trade_TNZ.2 }
-		# 				set_country_flag = MLW_attempted_to_get_free_trade
-		# 				clr_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 			}
-		# 		}
-		# 	# MOZAMBICAN PEACE EFFORTS
-		# 		MLW_MOZ_free_movement = {
-		# 			icon = decision
-		# 			fire_only_once = yes
-		# 			# visible = { has_completed_focus = MLW_MOZ_settle_the_debate }
-		# 			# available = { MLW_not_doing_lake_peace_stuff = yes }
-		# 			cost = 75
-		# 			days_remove = 28
-		# 			complete_effect = {
-		# 				set_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 				custom_effect_tooltip = MLW_lake_wars_begin_peace_efforts
-		# 				give_military_access = MOZ
-		# 			}
-		# 			remove_effect = {
-		# 				# MOZ = { country_event = MLW_Trade_MOZ.3 }
-		# 				unlock_decision_tooltip = MLW_MOZ_sell_the_islands
-		# 				clr_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 			}
-		# 		}
-		# 		MLW_MOZ_free_trade = {
-		# 			icon = decision
-		# 			fire_only_once = yes
-		# 			# visible = { has_completed_focus = MLW_MOZ_settle_the_debate }
-		# 			# available = { MLW_not_doing_lake_peace_stuff = yes }
-		# 			cost = 125
-		# 			days_remove = 42
-		# 			complete_effect = {
-		# 				set_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 				custom_effect_tooltip = MLW_lake_wars_begin_peace_efforts
-		# 			}
-		# 			remove_effect = {
-		# 				# MOZ = { country_event = MLW_Trade_MOZ.4 }
-		# 				clr_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 			}
-		# 		}
-		# 		MLW_MOZ_sell_the_islands = {
-		# 			icon = decision
-		# 			fire_only_once = yes
-		# 			# visible = { has_completed_focus = MLW_MOZ_settle_the_debate }
-		# 			# available = { MLW_not_doing_lake_peace_stuff = yes }
-		# 			cost = 50
-		# 			days_remove = 21
-		# 			complete_effect = {
-		# 				set_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 				custom_effect_tooltip = MLW_lake_wars_begin_peace_efforts
-		# 			}
-		# 			remove_effect = {
-		# 				# MOZ = { country_event = MLW_Trade_MOZ.5 }
-		# 				clr_country_flag = MLW_lake_wars_peace_efforts_ongoing
-		# 			}
-		# 		}
-		# }
+	# LAKE WARS # fix
+		MLW_lake_wars = {
+			# DIPLOMATIC ACTION # fix
+			MLW_LW_shared_border_corrections = { # fix
+				icon = decision
+				visible = {
+					# fix
+					#
+					# need to make this only possible in mbeya and west niassa
+					# if already gotten the country flags for these states
+					# not visible
+				}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					set_country_flag = MLW_LW_diplomatic_FLAG
+					if = {
+						limit = { check_variable = { var:MLW_LW_state_selected = 1045 } }
+						TNZ = { country_event = MLW_FOPOL_LW.1 }
+					}
+					if = {
+						limit = { check_variable = { var:MLW_LW_state_selected = 1049 } }
+						MOZ = { country_event = MLW_FOPOL_LW.1 }
+					}
+				}
+				remove_effect = {
+					clr_country_flag = MLW_LW_diplomatic_FLAG
+				}
+			}
+			MLW_LW_city_twinning = { # fix
+				icon = decision
+				visible = {}
+				available = {
+					# fix
+					#
+					# needs to only be possible once per state
+				}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					set_temp_variable = { treasury_change = -2 }
+					modify_treasury_effect = yes
+					# fix
+					#
+					# figure out way to do conditional influences based on the state
+				}
+				remove_effect = {
+				}
+			}
+			MLW_LW_encourage_immigration = { # fix
+				icon = decision
+				visible = {
+					# fix
+					#
+					# only visible after city twinning decision is taken
+				}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# make immigration more likely to both countries, MLW by 2%, target by 1%
+				}
+				remove_effect = {
+				}
+			}
+			MLW_LW_special_economic_zones = { # fix
+				icon = decision
+				visible = {}
+				available = {
+					# fix
+					#
+					# available after signing a trade deal with the target nation
+				}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# making SEZ in regions allows for SADC/mzuzu motors to make 3% more per region, if all 4 regions are
+					# with SEZs, increases total to 15% additional income
+				}
+				remove_effect = {
+				}
+			}
+			MLW_LW_influence_local_politics = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					set_temp_variable = { treasury_change = -4 }
+					modify_treasury_effect = yes
+					# fix
+					#
+					# spend influence in target to gain favourable relations with target, chance to increase corruption in
+					# target, once micro corruption is don, change to this system instead
+				}
+				remove_effect = {
+				}
+			}
+			MLW_LW_formal_annexation = { # fix
+				icon = decision
+				visible = {}
+				available = {
+					# fix
+					#
+					# available at level 10 diplomacy
+				}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# gives event to target country to buy the state, unlikely to reject state purchase, if they do, AI only wants more
+					# money, unlocks annexation decisions for the state
+				}
+				remove_effect = {
+				}
+			}
+			# DIPLOMATIC ANNEXATION # fix
+			MLW_LW_replace_the_courts = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 20%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_readjust_tax_codes = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 10%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_issuing_ids = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 10%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_dual_nationalities = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 20%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_finalise_annexation_treaties = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# turn target state into core
+				}
+				remove_effect = {}
+			}
+			# HOSTILE ACTIONS # fix
+			MLW_LW_hybrid_warfare = { # fix
+				icon = decision
+				visible = {
+					# fix
+					#
+					# only possible to view if state directly borders one of yours
+				}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					set_temp_variable = { MLW_LW_progress_change = 1 }
+					MLW_LW_update_militaristic_progress = yes
+					# fix
+					#
+					# make this a targeted modifier change to whoever the state belongs to
+					# more breakthrough to signify sleeper cells in the area
+				}
+				remove_effect = {}
+			}
+			MLW_LW_destabilisation_methods = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# with influence, increase amount of misinfo in the target, weakening their war support with the lake wars DM
+				}
+				remove_effect = {}
+			}
+			MLW_LW_terror_bombings = { # fix
+				icon = decision
+				visible = {}
+				available = {
+					# fix
+					#
+					# need to have high enough militaristic progress (level 5 and up)
+				}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# needs to be random chance of bombing campaign failing to increase militarism, will take stability with each attack
+				}
+				remove_effect = {}
+			}
+			MLW_LW_smuggling_tunnels = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# if SEZ is in place in state, double the amount of money brought in from each smuggling run
+				}
+				remove_effect = {}
+			}
+			MLW_LW_dumping_toxic_waste = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# harms all lake nations' opinions of you, harms your own country's attempt to clean the lake
+					# making it twice as difficult as before, if both nations are targeted, lake becomes 3 times
+					# as difficult to clean up
+					#
+					# if the cleanup has already been done, will need to reclean the lake
+				}
+				remove_effect = {}
+			}
+			MLW_LW_launch_assault = { # fix
+				icon = decision
+				visible = {
+					# fix
+					#
+					# needs to only be visible for bordering state
+				}
+				available = {
+					# fix
+					#
+					# available at level 10 military
+				}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# launches border skirmish in targeted state, if hybrid warfare has been completed in the state, troops are more
+					# effective
+					#
+					# need to be victorious once in order to gain state from target, upon occupation, unlocks conquest annexation
+					# decisions for the state
+				}
+				remove_effect = {}
+			}
+			# CONQUEST ANNEXATION
+			MLW_LW_root_out_rebels = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 15%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_expose_quislings = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 10%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_armed_tax_men = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 5%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_confiscate_ids = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# increase annexation progress by 10%
+				}
+				remove_effect = {}
+			}
+			MLW_LW_pacify_wilderness = { # fix
+				icon = decision
+				visible = {}
+				available = {}
+
+				cost = 50
+
+				days_remove = 30
+				complete_effect = {
+					# fix
+					#
+					# turn target state into core
+				}
+				remove_effect = {}
+			}
+		}
 		# MLW_lake_wars_border_conflict = {
 		# 	# MBEYA ATTACKS #
 		# 		# ATTACK FROM NORTH MALAWI #
