@@ -1,5 +1,4 @@
 # Author(s): AngriestBird, Hiddengearz, Chondrite
-
 # Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
 
 # Country:
@@ -11,7 +10,6 @@
 # variables saved for each project id (not in arrays) : 0 - 14 = project ids, -1 = gui
 #
 # project_target_country^id
-# project_assigned_factories^id
 # project_build_amount^id
 # project_building_type^id
 # project_construction_duration^id
@@ -282,9 +280,7 @@ get_building_construction_values = {
 get_available_project = {
 	for_each_loop = {
 		array = project_array
-		if = {
-			limit = { check_variable = { v = 0 } }
-
+		if = { limit = { check_variable = { v = 0 } }
 			set_variable = { new_project = i }
 			set_temp_variable = { break = 1 }
 		}
@@ -298,10 +294,10 @@ add_finished_buildings = {
 	multiply_temp_variable = { var_cost = -1 }
 	divide_temp_variable = { var = var_cost value = ROOT.project_build_amount^ROOT.project }
 
+	# Buildings to Add
 	if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 1 } }
 		add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
 		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
-
 	}
 	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 2 } }
 		add_building_construction = { type = arms_factory level = 1 instant_build = yes }
@@ -462,6 +458,11 @@ init_project = {
 			set_temp_variable = { target_state_internet_station_speed = building_level@internet_station }
 			multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
 			add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
+
+			if = {
+				limit = { has_state_flag = currently_encouraged_investments }
+				add_to_temp_variable = { local_state_modifier = 0.15 }
+			}
 		}
 		add_to_temp_variable = { construction_speed = local_state_modifier }
 
@@ -1252,4 +1253,123 @@ initialize_end_project_decisions = {
 		set_variable = { project_array^project = 1 }
 		country_event = { id = AC_event.314 }
 	}
+}
+
+# Owned Development GUI
+state_owned_concurrent_investment_limit_implement = {
+	set_temp_variable = { test_string = global.date }
+	add_to_temp_variable = { test_string = 2.88 } # 120 Days. An in-game hour equates to 0.001 Hours
+
+	# Add the Flag
+	set_temp_variable = { b = 0 }
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			NOT = { has_country_flag = state_owned_investments_project_one }
+		}
+		set_country_flag = { flag = state_owned_investments_project_one value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_one_state = PREV.id }
+		set_variable = { state_owned_investments_project_one_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			NOT = { has_country_flag = state_owned_investments_project_two }
+		}
+		set_country_flag = { flag = state_owned_investments_project_two value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_two_state = PREV.id }
+		set_variable = { state_owned_investments_project_two_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			OR = {
+				has_idea = superpower
+				has_idea = great_power
+				has_idea = large_power
+				has_idea = regional_power
+			}
+			NOT = { has_country_flag = state_owned_investments_project_three }
+		}
+		set_country_flag = { flag = state_owned_investments_project_three value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_three_state = PREV.id }
+		set_variable = { state_owned_investments_project_three_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			OR = {
+				has_idea = superpower
+				has_idea = great_power
+				has_idea = large_power
+			}
+			NOT = { has_country_flag = state_owned_investments_project_four }
+		}
+		set_country_flag = { flag = state_owned_investments_project_four value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_four_state = PREV.id }
+		set_variable = { state_owned_investments_project_four_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			OR = {
+				has_idea = superpower
+				has_idea = great_power
+			}
+			NOT = { has_country_flag = state_owned_investments_project_five }
+		}
+		set_country_flag = { flag = state_owned_investments_project_five value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_five_state = PREV.id }
+		set_variable = { state_owned_investments_project_five_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			has_idea = superpower
+			NOT = { has_country_flag = state_owned_investments_project_six }
+		}
+		set_country_flag = { flag = state_owned_investments_project_six value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_six_state = PREV.id }
+		set_variable = { state_owned_investments_project_six_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+}
+
+# Effect: calculate_internal_investments_costs
+# Purpose: Calculates the internal investments political power costs as well as the amount of money it costs.
+# also sets the flag limits.
+calculate_internal_investments_costs = {
+	ROOT = {
+		set_temp_variable = { pp_cost = pp_cost_temp }
+
+		set_temp_variable = { pp_cost_modifier = 1 }
+		add_to_temp_variable = { pp_cost_modifier = modifier@internal_investments_pp_cost_modifier }
+
+		multiply_temp_variable = { pp_cost = pp_cost_modifier }
+		clamp_temp_variable = { var = pp_cost min = 25 }
+		multiply_temp_variable = { pp_cost = -1 }
+		add_political_power = pp_cost
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = ii_cost }
+
+		set_temp_variable = { ii_cost_modifier = 1 }
+		add_to_temp_variable = { ii_cost_modifier = modifier@internal_investments_money_cost_modifier }
+
+		set_temp_variable = { min_ii_cost = gdp_total }
+		multiply_temp_variable = { min_ii_cost = 0.001 }
+
+		multiply_temp_variable = { treasury_change = ii_cost_modifier }
+		clamp_temp_variable = { var = treasury_change min = min_ii_cost }
+		multiply_temp_variable = { treasury_change = -1 }
+
+		modify_treasury_effect = yes
+		state_owned_concurrent_investment_limit_implement = yes
+	}
+	refresh_gui = yes
 }
