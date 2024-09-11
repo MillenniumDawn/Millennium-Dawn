@@ -698,7 +698,7 @@ AI_get_fossil_powerplant_score = {
 
 		# Increase Section
 
-		# Increases score the more the target country is energy deficient in terms of percentage of produciton to consumption
+		# Increases score the more the target country is energy deficient in terms of percentage of production to consumption
 		CONTROLLER = {
 			set_temp_variable = { energy_balance_ratio = energy_sum }
 			divide_temp_variable = { energy_balance_ratio = energy_consumption }
@@ -721,6 +721,20 @@ AI_get_fossil_powerplant_score = {
 		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
 			add_to_temp_variable = { v1 = 40 }
 		}
+		if = { limit = { CONTROLLER = { has_idea = heavy_power_restrictions_spirit } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { has_idea = some_power_restrictions_spirit } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+
+		# Being retarded with your power
+		if = { limit = { CONTROLLER = { has_idea = heavy_additional_consumption_spirit } }
+			add_to_temp_variable = { v1 = -25 }
+		}
+		if = { limit = { CONTROLLER = { has_idea = some_additional_consumption_spirit } }
+			add_to_temp_variable = { v1 = -15 }
+		}
 
 		add_to_temp_variable = { AI_score = v1 }
 
@@ -742,6 +756,10 @@ AI_edge_case_calculations = {
 	}
 	if = { limit = { check_variable = { THIS.state_population_k < 60 } }
 		subtract_from_temp_variable = { AI_score = 80 } # 50 before change due to below
+	}
+
+	if = { limit = { has_state_flag = currently_encouraged_investments }
+		add_to_temp_variable = { AI_score = 20 }
 	}
 }
 

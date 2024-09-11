@@ -583,4 +583,314 @@ scripted_gui = {
 			}
 		}
 	}
+
+	# Owned State Investment Menu
+	show_owned_state_investment_menu = {
+		context_type = selected_state_context
+		window_name = "show_owned_state_investment_menu"
+
+		parent_window_token = selected_state_view
+
+		dirty = global.refresh_gui
+
+		visible = {
+			OR = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+			}
+			ROOT = { has_country_flag = AC_hide_owned_investment_window }
+		}
+
+		effects = {
+			show_owned_state_investment_button_click = {
+				ROOT = { clr_country_flag = AC_hide_owned_investment_window }
+				refresh_gui = yes
+			}
+		}
+	}
+
+	owned_state_investment_menu = {
+		context_type = selected_state_context
+		window_name = "owned_state_investment_menu"
+		parent_window_token = selected_state_view
+
+		dirty = global.refresh_gui
+
+		visible = {
+			OR = {
+				is_owned_by = ROOT
+				is_controlled_by = ROOT
+			}
+			ROOT = { NOT = { has_country_flag = AC_hide_owned_investment_window } }
+		}
+
+		triggers = {
+			# Stated Owned Investment Projects
+			encourage_investments_in_state_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = currently_encouraged_investments }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			encourage_productivity_in_state_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = encourage_productivity_in_state }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			expand_local_building_capacity_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = expand_local_building_capacity }
+				NOT = { has_state_flag= block_future_expand_local_building_capacity }
+
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			expand_local_renewable_capacity_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = expand_local_renewable_capacity }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			expand_local_infrastructure_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = expand_local_infrastructure }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			expand_local_military_infrastructure_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = expand_local_military_infrastructure }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			expand_local_energy_infrastructure_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = expand_local_energy_infrastructure }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			build_forward_logistics_base_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = build_forward_logistics_base }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			improve_rebuilding_efforts_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = improve_rebuilding_efforts }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			hire_extra_primary_sector_workers_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = hire_extra_primary_sector_workers }
+				ROOT = {
+					has_political_power > 100
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+		}
+
+		effects = {
+			# Hides Investment Window
+			hide_owned_state_investment_button_click = {
+				# ROOT is the investor nation
+				ROOT = { set_country_flag = AC_hide_owned_investment_window }
+				refresh_gui = yes
+			}
+
+			# State Options
+			encourage_investments_in_state_click = {
+				custom_effect_tooltip = encourage_investments_in_state_click_tt
+				set_state_flag = { flag = currently_encouraged_investments value = 1 days = 120 }
+
+				set_temp_variable = { ii_cost = 0.007 }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+			}
+
+			encourage_productivity_in_state_click = {
+				custom_effect_tooltip = encourage_productivity_in_state_click_tt
+				set_state_flag = { flag = encourage_productivity_in_state value = 1 days = 120 }
+
+				set_temp_variable = { ii_cost = 0.012 }
+
+				# Millions of People
+				set_temp_variable = { var = temp_pop value = state_population_k } #in thousands
+				multiply_temp_variable = { var = temp_pop value = 0.01 } # 100 in hundred thousands
+				multiply_temp_variable = { var = temp_pop value = 0.01 }
+
+				# Scale Against Population
+				multiply_temp_variable = { ii_cost = temp_pop }
+
+				set_temp_variable = { pp_cost_temp = 150 }
+				calculate_internal_investments_costs = yes
+			}
+
+			expand_local_building_capacity_click = {
+				custom_effect_tooltip = expand_local_building_capacity_click_tt
+				set_state_flag = { flag = expand_local_building_capacity value = 1 days = 120 }
+				add_extra_state_shared_building_slots = 1
+
+
+				set_temp_variable = { ii_cost = 0.01 }
+				set_temp_variable = { ii_cost_multiplier = expanded_building_slot_times }
+				add_to_temp_variable = { ii_cost_multiplier = 1}
+
+				multiply_temp_variable = { ii_cost = ii_cost_multiplier }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+
+				add_to_variable = { expanded_building_slot_times = 1 }
+				if = {
+					limit = { check_variable = { expanded_building_slot_times = 5 } }
+					set_state_flag = block_future_expand_local_building_capacity
+				}
+			}
+
+			expand_local_renewable_capacity_click = {
+				custom_effect_tooltip = expand_local_renewable_capacity_click_tt
+				set_state_flag = { flag = expand_local_renewable_capacity value = 1 days = 120 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_local_renewable_capacity_modifier
+					days = 120
+				}
+				set_temp_variable = { ii_cost = 0.004 }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+
+				ROOT = {
+					set_temp_variable = { temp_opinion = -3 }
+					change_fossil_fuel_industry_opinion = yes
+				}
+			}
+
+			expand_local_infrastructure_click = {
+				custom_effect_tooltip = expand_local_renewable_capacity_click_tt
+				set_state_flag = { flag = expand_local_infrastructure value = 1 days = 120 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_local_infrastructure_modifier
+					days = 120
+				}
+				set_temp_variable = { ii_cost = 0.004 }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+			}
+
+			expand_local_military_infrastructure_click = {
+				custom_effect_tooltip = expand_local_military_infrastructure_click_tt
+				set_state_flag = { flag = expand_local_military_infrastructure value = 1 days = 120 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_local_military_infrastructure_modifier
+					days = 120
+				}
+				set_temp_variable = { ii_cost = 0.004 }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+
+				ROOT = {
+					set_temp_variable = { temp_opinion = 5 }
+					change_the_military_opinion = yes
+					change_intelligence_community_opinion = yes
+					change_vevak_opinion = yes
+				}
+			}
+
+			expand_local_energy_infrastructure_click = {
+				custom_effect_tooltip = expand_local_energy_infrastructure_click_tt
+				set_state_flag = { flag = expand_local_energy_infrastructure value = 1 days = 120 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_local_energy_infrastructure_modifier
+					days = 120
+				}
+				set_temp_variable = { ii_cost = 0.005 }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+
+				ROOT = {
+					set_temp_variable = { temp_opinion = 5 }
+					change_fossil_fuel_industry_opinion = yes
+				}
+			}
+
+			build_forward_logistics_base_click = {
+				custom_effect_tooltip = build_forward_logistics_base_click_tt
+				set_state_flag = { flag = build_forward_logistics_base value = 1 days = 120 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_build_forward_logistics_base_modifier
+					days = 120
+				}
+				set_temp_variable = { ii_cost = 0.006 }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+			}
+
+			improve_rebuilding_efforts_click = {
+				custom_effect_tooltip = improve_rebuilding_efforts_click_tt
+				set_state_flag = { flag = improve_rebuilding_efforts value = 1 days = 120 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_improve_rebuilding_efforts_modifier
+					days = 120
+				}
+
+				set_temp_variable = { ii_cost = 0.006 }
+				set_temp_variable = { var = temp_pop value = state_population_k } #in thousands
+				multiply_temp_variable = { var = temp_pop value = 0.01 } # 100 in hundred thousands
+				multiply_temp_variable = { var = temp_pop value = 0.01 }
+
+				# Scale Against Population
+				multiply_temp_variable = { ii_cost = temp_pop }
+
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+			}
+
+			hire_extra_primary_sector_workers_click = {
+				custom_effect_tooltip = hire_extra_primary_sector_workers_click_tt
+				set_state_flag = { flag = hire_extra_primary_sector_workers value = 1 days = 120 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_hire_extra_primary_sector_workers_modifier
+					days = 120
+				}
+				set_temp_variable = { ii_cost = 0.008 }
+				set_temp_variable = { pp_cost_temp = 100 }
+				calculate_internal_investments_costs = yes
+			}
+		}
+	}
 }
