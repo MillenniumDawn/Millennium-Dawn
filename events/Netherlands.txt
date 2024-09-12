@@ -1487,4 +1487,139 @@ country_event = {
 		}
     }
 }
+# Focus reward triggers this event for the Netherlands
+country_event = {
+    id = HOL_Benelux_Air.30
+    title = HOL_Benelux_Air.30.t
+    desc = HOL_Benelux_Air.30.d
+    picture = GFX_report_event_generic_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_Benelux_Air.30.a
+        log = "[GetDateText]: [This.GetName]: HOL_Benelux_Air.30.a executed"
+        set_temp_variable = { treasury_change = -15 }
+        modify_treasury_effect = yes
+        add_equipment_to_stockpile = {
+            type = transport_plane
+            amount = 50
+        }
+        set_global_flag = NLD_accepts_mrtt # Netherlands accepts the deal
+        hidden_effect = {
+            country_event = { id = HOL_Benelux_Air.31 days = 1 } # Belgium receives the proposal
+        }
+    }
+    option = {
+        name = HOL_Benelux_Air.30.b
+        log = "[GetDateText]: [This.GetName]: HOL_Benelux_Air.30.b executed"
+        hidden_effect = {
+            country_event = { id = HOL_Benelux_Air.31 days = 1 } # Move on to Belgium
+        }
+    }
+}
+
+
+# Belgium Receives the Airbus MRTT Proposal
+country_event = {
+    id = HOL_Benelux_Air.31
+    title = HOL_Benelux_Air.31.t
+    desc = HOL_Benelux_Air.31.d
+    picture = GFX_report_event_generic_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_Benelux_Air.31.a
+        log = "[GetDateText]: [This.GetName]: HOL_Benelux_Air.31.a executed"
+        set_temp_variable = { treasury_change = -15 }
+        modify_treasury_effect = yes
+        add_equipment_to_stockpile = {
+            type = transport_plane
+            amount = 50
+        }
+        set_global_flag = BEL_accepts_mrtt # Belgium accepts the deal
+        hidden_effect = {
+            country_event = { id = HOL_Benelux_Air.32 days = 1 } # Luxembourg receives the proposal
+        }
+    }
+    option = {
+        name = HOL_Benelux_Air.31.b
+        log = "[GetDateText]: [This.GetName]: HOL_Benelux_Air.31.b executed"
+        hidden_effect = {
+            country_event = { id = HOL_Benelux_Air.32 days = 1 } # Move on to Luxembourg
+        }
+    }
+}
+
+
+# Luxembourg Receives the Airbus MRTT Proposal
+country_event = {
+    id = HOL_Benelux_Air.32
+    title = HOL_Benelux_Air.32.t
+    desc = HOL_Benelux_Air.32.d
+    picture = GFX_report_event_generic_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_Benelux_Air.32.a
+        log = "[GetDateText]: [This.GetName]: HOL_Benelux_Air.32.a executed"
+        set_temp_variable = { treasury_change = -15 }
+        modify_treasury_effect = yes
+        add_equipment_to_stockpile = {
+            type = transport_plane
+            amount = 50
+        }
+        set_global_flag = LUX_accepts_mrtt # Luxembourg accepts the deal
+        hidden_effect = {
+            country_event = { id = HOL_Benelux_Air.33 days = 1 } # Trigger cashback adjustment
+        }
+    }
+    option = {
+        name = HOL_Benelux_Air.32.b
+        log = "[GetDateText]: [This.GetName]: HOL_Benelux_Air.32.b executed"
+        hidden_effect = {
+            country_event = { id = HOL_Benelux_Air.33 days = 1 } # Trigger cashback adjustment
+        }
+    }
+}
+
+
+# Cashback Adjustment (Refund) Based on Participants
+country_event = {
+    id = HOL_Benelux_Air.33
+    title = HOL_Benelux_Air.33.t
+    desc = HOL_Benelux_Air.33.d
+    picture = GFX_report_event_generic_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_Benelux_Air.33.a
+        log = "[GetDateText]: [This.GetName]: HOL_Benelux_Air.33.a executed"
+        hidden_effect = {
+            if = {
+                limit = {
+                    has_global_flag = NLD_accepts_mrtt
+                    has_global_flag = BEL_accepts_mrtt
+                    has_global_flag = LUX_accepts_mrtt
+                }
+				set_temp_variable = { treasury_change = 7.5 }
+				modify_treasury_effect = yes
+            }
+            else_if = {
+                limit = {
+                    OR = {
+                        AND = { has_global_flag = NLD_accepts_mrtt has_global_flag = BEL_accepts_mrtt }
+                        AND = { has_global_flag = NLD_accepts_mrtt has_global_flag = LUX_accepts_mrtt }
+                        AND = { has_global_flag = BEL_accepts_mrtt has_global_flag = LUX_accepts_mrtt }
+                    }
+                }
+				set_temp_variable = { treasury_change = 4.5 }
+				modify_treasury_effect = yes
+            }
+        }
+    }
+}
 
