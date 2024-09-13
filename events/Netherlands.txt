@@ -5,7 +5,8 @@ add_namespace = HOL.DSM
 add_namespace = HOL_Railway_Developments
 add_namespace = HOL_Defense_Investment
 add_namespace = HOL_Benelux
-namespace = HOL_JSF
+add_namespace = HOL_FAD
+add_namespace = HOL_JSF
 
 country_event = {
 	id = HOL.Railway_Developments.1 #HSL-Zuid Amsterdam - Brussels
@@ -1650,8 +1651,6 @@ country_event = {
         }
     }
 }
-namespace = HOL_JSF
-
 country_event = {
     id = HOL_JSF_Grant_F35C
     title = HOL_JSF_Grant_F35C.t
@@ -1676,7 +1675,331 @@ country_event = {
         }
     }
 }
+# Event 1: Netherlands Proposes Collaboration to Germany
+country_event = {
+    id = HOL_FAD.01
+    title = HOL_FAD.01.t
+    desc = HOL_FAD.01.d
+    picture = GFX_report_event_germany_air
 
+    is_triggered_only = yes
 
+    option = {
+        name = HOL_FAD.01.a # Germany agrees to the collaboration
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.01.a executed"
 
+        hidden_effect = {
+            GER = { set_technology = { FAD_access_tech = 1 } }
+            HOL = { set_technology = { FAD_access_tech = 1 } }
 
+            # Add two ships with 33% progress to both countries
+            GER = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 2
+                    progress = 0.33
+                    variant_name = "Future Air Defender"
+                }
+            }
+            HOL = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 2
+                    progress = 0.33
+                    variant_name = "Future Air Defender"
+                }
+            }
+        }
+
+        country_event = { id = HOL_FAD.02 days = 30 } # Trigger the cost increase event
+    }
+
+    option = {
+        name = HOL_FAD.01.b # Germany declines the collaboration
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.01.b executed"
+
+        country_event = { id = HOL_FAD.01_NL days = 1 } # Netherlands decides next steps
+    }
+}
+
+# Event 1.1: Netherlands' Decision After Germany Declines
+country_event = {
+    id = HOL_FAD.01_NL
+    title = HOL_FAD.01_NL.t
+    desc = HOL_FAD.01_NL.d
+    picture = GFX_report_event_netherlands_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.01_NL.a # Scrap the project
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.01_NL.a executed"
+    }
+
+    option = {
+        name = HOL_FAD.01_NL.b # Invest more and start building two ships
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.01_NL.b executed"
+
+        hidden_effect = {
+            HOL = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 2
+                    progress = 0.33
+                    variant_name = "Future Air Defender"
+                }
+            }
+        }
+    }
+}
+
+# Event 2: Program Gets More Expensive (Germany's Decision)
+country_event = {
+    id = HOL_FAD.02
+    title = HOL_FAD.02.t
+    desc = HOL_FAD.02.d
+    picture = GFX_report_event_germany_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.02.a # Germany invests more and gets another ship
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.02.a executed"
+
+        hidden_effect = {
+            GER = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 1
+                    progress = 0.33
+                    variant_name = "Future Air Defender"
+                }
+            }
+        }
+    }
+
+    option = {
+        name = HOL_FAD.02.b # Germany quits the project
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.02.b executed"
+
+        hidden_effect = {
+            GER = { set_technology = { FAD_access_tech = 0 } }
+        }
+
+        country_event = { id = HOL_FAD.03 days = 1 } # Netherlands' decision after Germany quits
+    }
+}
+
+# Event 3: Netherlands Seeks New Partners After Germany Quits
+country_event = {
+    id = HOL_FAD.03
+    title = HOL_FAD.03.t
+    desc = HOL_FAD.03.d
+    picture = GFX_report_event_netherlands_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.03.a # Scrap the project
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.03.a executed"
+
+        # Only the Netherlands loses the technology if they scrap the project
+        hidden_effect = {
+            HOL = { set_technology = { FAD_access_tech = 0 } }
+        }
+    }
+
+    option = {
+        name = HOL_FAD.03.b # Search for new partners in Scandinavia
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.03.b executed"
+
+        hidden_effect = {
+            SWE = { country_event = { id = HOL_FAD.04_SWE days = 7 } }
+            DEN = { country_event = { id = HOL_FAD.04_DEN days = 7 } }
+            NOR = { country_event = { id = HOL_FAD.04_NOR days = 7 } }
+        }
+    }
+}
+
+# Event 4: Sweden's Decision
+country_event = {
+    id = HOL_FAD.04_SWE
+    title = HOL_FAD.04_SWE.t
+    desc = HOL_FAD.04_SWE.d
+    picture = GFX_report_event_generic_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.04_SWE.a # Sweden agrees to collaborate
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_SWE.a executed"
+
+        hidden_effect = {
+            SWE = { set_technology = { FAD_access_tech = 1 } }
+            HOL = { set_technology = { FAD_access_tech = 1 } }
+
+            SWE = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 2
+                    progress = 0.40
+                    variant_name = "Future Air Defender"
+                }
+            }
+            HOL = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 1
+                    progress = 0.40
+                    variant_name = "Future Air Defender"
+                }
+            }
+        }
+
+        country_event = { id = HOL_FAD.04_NL_SWE days = 1 } # Notify the Netherlands
+    }
+
+    option = {
+        name = HOL_FAD.04_SWE.b # Sweden declines the project
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_SWE.b executed"
+
+        country_event = { id = HOL_FAD.04_NL_SWE days = 1 } # Notify the Netherlands
+    }
+}
+
+# Event 4: Denmark's Decision
+country_event = {
+    id = HOL_FAD.04_DEN
+    title = HOL_FAD.04_DEN.t
+    desc = HOL_FAD.04_DEN.d
+    picture = GFX_report_event_generic_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.04_DEN.a # Denmark agrees to collaborate
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_DEN.a executed"
+
+        hidden_effect = {
+            DEN = { set_technology = { FAD_access_tech = 1 } }
+            HOL = { set_technology = { FAD_access_tech = 1 } }
+
+            DEN = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 2
+                    progress = 0.40
+                    variant_name = "Future Air Defender"
+                }
+            }
+            HOL = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 1
+                    progress = 0.40
+                    variant_name = "Future Air Defender"
+                }
+            }
+        }
+
+        country_event = { id = HOL_FAD.04_NL_DEN days = 1 } # Notify the Netherlands
+    }
+
+    option = {
+        name = HOL_FAD.04_DEN.b # Denmark declines the project
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_DEN.b executed"
+
+        country_event = { id = HOL_FAD.04_NL_DEN days = 1 } # Notify the Netherlands
+    }
+}
+
+# Event 4: Norway's Decision
+country_event = {
+    id = HOL_FAD.04_NOR
+    title = HOL_FAD.04_NOR.t
+    desc = HOL_FAD.04_NOR.d
+    picture = GFX_report_event_generic_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.04_NOR.a # Norway agrees to collaborate
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_NOR.a executed"
+
+        hidden_effect = {
+            NOR = { set_technology = { FAD_access_tech = 1 } }
+            HOL = { set_technology = { FAD_access_tech = 1 } }
+
+            NOR = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 2
+                    progress = 0.40
+                    variant_name = "Future Air Defender"
+                }
+            }
+            HOL = {
+                add_equipment_production = {
+                    type = frigate_hull_5
+                    amount = 1
+                    progress = 0.40
+                    variant_name = "Future Air Defender"
+                }
+            }
+        }
+
+        country_event = { id = HOL_FAD.04_NL_NOR days = 1 } # Notify the Netherlands
+    }
+
+    option = {
+        name = HOL_FAD.04_NOR.b # Norway declines the project
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_NOR.b executed"
+
+        country_event = { id = HOL_FAD.04_NL_NOR days = 1 } # Notify the Netherlands
+    }
+}
+
+# Notify Netherlands of Sweden's Decision
+country_event = {
+    id = HOL_FAD.04_NL_SWE
+    title = HOL_FAD.04_NL_SWE.t
+    desc = HOL_FAD.04_NL_SWE.d
+    picture = GFX_report_event_netherlands_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.04_NL_SWE.a
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_NL_SWE.a executed"
+    }
+}
+
+# Notify Netherlands of Denmark's Decision
+country_event = {
+    id = HOL_FAD.04_NL_DEN
+    title = HOL_FAD.04_NL_DEN.t
+    desc = HOL_FAD.04_NL_DEN.d
+    picture = GFX_report_event_netherlands_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.04_NL_DEN.a
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_NL_DEN.a executed"
+    }
+}
+
+# Notify Netherlands of Norway's Decision
+country_event = {
+    id = HOL_FAD.04_NL_NOR
+    title = HOL_FAD.04_NL_NOR.t
+    desc = HOL_FAD.04_NL_NOR.d
+    picture = GFX_report_event_netherlands_air
+
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_FAD.04_NL_NOR.a
+        log = "[GetDateText]: [This.GetName]: HOL_FAD.04_NL_NOR.a executed"
+    }
+}
