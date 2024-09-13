@@ -99,6 +99,7 @@ ingame_update_setup = {
 	else = {
 		add_to_variable = { global.update_monie_ui = 1 }
 	}
+	refresh_gui = yes
 }
 
 # calculate_tax_rate
@@ -4076,6 +4077,7 @@ productivity_growth_display_effect = {
 			limit = {
 				check_variable = { state_productivity_growth_scaled > 0 }
 			}
+			# Initial Calculation
 			set_temp_variable = { productivity_catch_up = global.average_world_productivity }
 			divide_temp_variable = { productivity_catch_up = productivity_state_var }
 			add_to_temp_variable = { productivity_catch_up = -1 }
@@ -4085,6 +4087,8 @@ productivity_growth_display_effect = {
 			set_temp_variable = { state_productivity_growth_multiplier = 1 }
 			add_to_temp_variable = { state_productivity_growth_multiplier = modifier@state_productivity_growth_modifier }
 			set_temp_variable = { current_state = THIS.id }
+
+			# Railway Infrastructure Productivity Bonus
 			if = { limit = { has_railway_level = { state = current_state level = 1 } }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.04 }
 			}
@@ -4103,6 +4107,12 @@ productivity_growth_display_effect = {
 			else_if = { limit = { has_railway_level = { state = current_state level = 6 } }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.24 }
 			}
+
+			# Encourage Productivity from State Owned Investments
+			if = { limit = { has_state_flag = encourage_productivity_in_state_click }
+				add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
+			}
+
 			multiply_variable = { state_productivity_growth_scaled = state_productivity_growth_multiplier }
 		}
 		else = {
