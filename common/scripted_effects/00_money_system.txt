@@ -99,6 +99,7 @@ ingame_update_setup = {
 	else = {
 		add_to_variable = { global.update_monie_ui = 1 }
 	}
+	refresh_gui = yes
 }
 
 # calculate_tax_rate
@@ -531,6 +532,13 @@ calculate_additional_income_rate = {
 		multiply_variable = { additional_income_overlord_subsidies = 0.01 }
 		multiply_variable = { additional_income_overlord_subsidies = 0.5 }
 		add_to_variable = { additional_income_rate = additional_income_overlord_subsidies }
+	}
+	# Imposing Taxation on Religious Institutions
+	if = { limit = { has_idea = internal_factions_taxing_religious_institutions }
+		set_variable = { additional_income_taxing_religious_institutions = gdp_total }
+		multiply_variable = { additional_income_taxing_religious_institutions = 0.02 }
+		multiply_variable = { additional_income_taxing_religious_institutions = 0.5 }
+		add_to_variable = { additional_income_rate = additional_income_taxing_religious_institutions }
 	}
 
 	# Country Specific Income
@@ -2621,7 +2629,30 @@ calculate_additional_expense_rate = {
 		add_to_temp_variable = { lease_civilian_factories_cost = lease_civilian_factories_base_cost }
 		multiply_temp_variable = { lease_civilian_factories_cost = leased_civilian_factories }
 		divide_temp_variable = { lease_civilian_factories_cost = leased_factories }
+		set_variable = { lease_civilian_factories_cost_display = lease_civilian_factories_cost }
 		add_to_variable = { additional_expenses_rate = lease_civilian_factories_cost }
+	}
+	if = { limit = { check_variable = { leased_military_factories > 0 } }
+		set_temp_variable = { lease_military_factories_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_military_factories_cost = gdp_per_capita_leasing_multiplier }
+		set_temp_variable = { lease_military_factories_base_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_military_factories_base_cost = 0.1 }
+		add_to_temp_variable = { lease_military_factories_cost = lease_military_factories_base_cost }
+		multiply_temp_variable = { lease_military_factories_cost = leased_military_factories }
+		divide_temp_variable = { lease_military_factories_cost = leased_factories }
+		set_variable = { lease_military_factories_cost_display = lease_military_factories_cost }
+		add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
+	}
+	if = { limit = { check_variable = { leased_dockyards > 0 } }
+		set_temp_variable = { lease_naval_factories_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_naval_factories_cost = gdp_per_capita_leasing_multiplier }
+		set_temp_variable = { lease_naval_factories_base_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_naval_factories_base_cost = 0.1 }
+		add_to_temp_variable = { lease_naval_factories_cost = lease_naval_factories_base_cost }
+		multiply_temp_variable = { lease_naval_factories_cost = leased_dockyards }
+		divide_temp_variable = { lease_naval_factories_cost = leased_factories }
+		set_variable = { lease_naval_factories_cost_display = lease_naval_factories_cost }
+		add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 	}
 	if = { limit = { check_variable = { market_purchase_factories > 0 } }
 		#start the math
@@ -2732,26 +2763,6 @@ calculate_additional_expense_rate = {
 		#assign the final cost
 		add_to_variable = { additional_expenses_rate = market_purchase_factories_cost }
 		set_variable = { market_purchase_factories_cost_track = market_purchase_factories_cost }
-	}
-	if = { limit = { check_variable = { leased_military_factories > 0 } }
-		set_temp_variable = { lease_military_factories_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_military_factories_cost = gdp_per_capita_leasing_multiplier }
-		set_temp_variable = { lease_military_factories_base_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_military_factories_base_cost = 0.1 }
-		add_to_temp_variable = { lease_military_factories_cost = lease_military_factories_base_cost }
-		multiply_temp_variable = { lease_military_factories_cost = leased_military_factories }
-		divide_temp_variable = { lease_military_factories_cost = leased_factories }
-		add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
-	}
-	if = { limit = { check_variable = { leased_dockyards > 0 } }
-		set_temp_variable = { lease_naval_factories_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_naval_factories_cost = gdp_per_capita_leasing_multiplier }
-		set_temp_variable = { lease_naval_factories_base_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_naval_factories_base_cost = 0.1 }
-		add_to_temp_variable = { lease_naval_factories_cost = lease_naval_factories_base_cost }
-		multiply_temp_variable = { lease_naval_factories_cost = leased_dockyards }
-		divide_temp_variable = { lease_naval_factories_cost = leased_factories }
-		add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 	}
 	if = {
 		limit = {
@@ -3037,12 +3048,12 @@ calculate_int_investments_rate = {
 #Calculates income from resources
 calculate_resource_sale_rate = {
 	#Set the base price for single unit of resource, this is the relative price between resources
-	set_temp_variable = { oil_price = 5 }	#Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
-	set_temp_variable = { steel_price = 0.01 }	#Based on steel price
-	set_temp_variable = { aluminium_price = 0.12 }	#Based on aluminium price
-	set_temp_variable = { tungsten_price = 0.2 }	#Based on copper price
-	set_temp_variable = { chromium_price = 0.06 }	#Based on gold price
-	set_temp_variable = { rubber_price = 0.02 }	#Based on rubber price
+	set_temp_variable = { oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_temp_variable = { steel_price = 0.024 } #Based on steel price
+	set_temp_variable = { aluminium_price = 0.21 }	#Based on aluminium price
+	set_temp_variable = { tungsten_price = 0.28 }	#Based on copper price
+	set_temp_variable = { chromium_price = 0.18 }	#Based on gold price
+	set_temp_variable = { rubber_price = 0.09 }	#Based on rubber price
 
 	#resource_exported = total amount of resources put to market
 	set_variable = { oil_exports = resource_exported@oil }
@@ -3173,13 +3184,13 @@ update_display = {
 	set_variable = { budget_array^7 = additional_expenses_rate }
 	set_variable = { budget_array^8 = border_control_gain }
 
-	find_highest_in_array = {
-		array = budget_array
-		value = value_highest_cost_temp
-		index = index_highest_cost_temp
-	}
 	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Highest Economic Expenditure: Index: [?i] Value: [?v]: Treasury Rate: [?THIS.treasury_rate]"
+		find_highest_in_array = {
+			array = budget_array
+			value = value_highest_cost_temp
+			index = index_highest_cost_temp
+		}
+		log = "[GetDateText]: [THIS.GetName]: Highest Economic Expenditure: Index: [?index_highest_cost_temp] Value: [?value_highest_cost_temp]: Treasury Rate: [?THIS.treasury_rate]"
 	}
 
 	set_variable = { display_income = tax_gain }
@@ -4066,6 +4077,7 @@ productivity_growth_display_effect = {
 			limit = {
 				check_variable = { state_productivity_growth_scaled > 0 }
 			}
+			# Initial Calculation
 			set_temp_variable = { productivity_catch_up = global.average_world_productivity }
 			divide_temp_variable = { productivity_catch_up = productivity_state_var }
 			add_to_temp_variable = { productivity_catch_up = -1 }
@@ -4075,6 +4087,8 @@ productivity_growth_display_effect = {
 			set_temp_variable = { state_productivity_growth_multiplier = 1 }
 			add_to_temp_variable = { state_productivity_growth_multiplier = modifier@state_productivity_growth_modifier }
 			set_temp_variable = { current_state = THIS.id }
+
+			# Railway Infrastructure Productivity Bonus
 			if = { limit = { has_railway_level = { state = current_state level = 1 } }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.04 }
 			}
@@ -4093,6 +4107,12 @@ productivity_growth_display_effect = {
 			else_if = { limit = { has_railway_level = { state = current_state level = 6 } }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.24 }
 			}
+
+			# Encourage Productivity from State Owned Investments
+			if = { limit = { has_state_flag = encourage_productivity_in_state_click }
+				add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
+			}
+
 			multiply_variable = { state_productivity_growth_scaled = state_productivity_growth_multiplier }
 		}
 		else = {
