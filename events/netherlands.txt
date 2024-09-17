@@ -2171,7 +2171,7 @@ country_event = {
     id = HOL_destroyer_research.01
     title = HOL_destroyer_research.01.t
     desc = HOL_destroyer_research.01.d
-    picture = GFX_report_event_generic_navy
+    picture = x
     is_triggered_only = yes
 
     option = {
@@ -2199,192 +2199,371 @@ country_event = {
     id = HOL_marines_relocation.01
     title = HOL_marines_relocation.01.t
     desc = HOL_marines_relocation.01.d
-    picture = GFX_report_event_generic_military
+    picture = x
     is_triggered_only = yes
 
     option = {
         name = HOL_marines_relocation.01.a  # Support the Move
-        add_stability = -0.05
-        add_popularity = {
-            ideology = d
-            popularity = 0.05
+        swap_ideas = {
+            remove_idea = HOL_Marine_Moving
+            add_idea = HOL_Marine_Debate  # Debate begins
         }
-        marine_training_efficiency_factor = 0.10
-        country_event = { id = HOL_marines_relocation.02A days = 1 }  # Trigger Political Debate
+		set_temp_variable = { treasury_change = gdp_per_capita }
+		multiply_temp_variable = { treasury_change = -0.08 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
+        country_event = { id = HOL_marines_relocation.02A days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.01.b  # Reevaluate the Plan
-        add_stability = 0.10
-        add_popularity = {
-            ideology = neutrality
-            popularity = -0.05
+        swap_ideas = {
+            remove_idea = HOL_Marine_Moving
+            add_idea = HOL_Marine_Debate
         }
-        marine_training_efficiency_factor = -0.05
-        country_event = { id = HOL_marines_relocation.02B days = 1 }  # Trigger Public Inquiry
+        add_stability = 0.08  # Government stability increases slightly
+		set_temp_variable = { treasury_change = gdp_per_capita }
+		multiply_temp_variable = { treasury_change = -0.04 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = -2 }
+		change_the_military_opinion = yes
+        country_event = { id = HOL_marines_relocation.02B days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.01.c  # Cancel the Move
-        add_stability = 0.10
-        marine_training_efficiency_factor = -0.10
-        add_popularity = {
-            ideology = neutrality
-            popularity = 0.10
-        }
-        # End of Event Chain
+		remove_ideas = HOL_Marine_Moving
+		add_timed_idea = {
+			idea = HOL_Marine_Relocation_Cancelled
+			days = 365
+		}
+        add_stability = 0.05  # Gain stability from cancellation
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_military_opinion = yes
     }
 }
 country_event = {
     id = HOL_marines_relocation.02A
     title = HOL_marines_relocation.02A.t
     desc = HOL_marines_relocation.02A.d
-    picture = GFX_report_event_generic_military
+    picture = x
     is_triggered_only = yes
 
     option = {
         name = HOL_marines_relocation.02A.a  # Push Forward
-        marine_training_efficiency_factor = 0.05
-        add_stability = -0.05
-        country_event = { id = HOL_marines_relocation.03A days = 1 }  # Trigger Public Reaction
+        swap_ideas = {
+            remove_idea = HOL_Marine_Debate
+            add_idea = HOL_Marine_Public_Support  # Public support increases
+        }
+		set_temp_variable = { treasury_change = gdp_per_capita }
+		multiply_temp_variable = { treasury_change = -0.08 }
+		modify_treasury_effect = yes
+        country_event = { id = HOL_marines_relocation.03A days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.02A.b  # Seek Compromise
-        add_stability = 0.05
-        add_popularity = {
-            ideology = neutrality
-            popularity = 0.05
+        swap_ideas = {
+            remove_idea = HOL_Marine_Debate
+            add_idea = HOL_Marine_Public_Support  # Compromise gains public support
         }
-        country_event = { id = HOL_marines_relocation.03B days = 1 }  # Trigger Compromise Plan
+		set_temp_variable = { treasury_change = gdp_per_capita }
+		multiply_temp_variable = { treasury_change = -0.08 }
+		modify_treasury_effect = yes
+        add_stability = 0.05
+        country_event = { id = HOL_marines_relocation.03B days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.02A.c  # Halt the Plans
-        marine_training_efficiency_factor = -0.10
+		remove_ideas = HOL_Marine_Debate
+		add_timed_idea = {
+			idea = HOL_Marine_Relocation_Cancelled
+			days = 365
+		}
         add_stability = 0.10
-        # End of Event Chain
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_military_opinion = yes
     }
 }
 country_event = {
     id = HOL_marines_relocation.02B
     title = HOL_marines_relocation.02B.t
     desc = HOL_marines_relocation.02B.d
-    picture = GFX_report_event_generic_politics
+    picture = x
     is_triggered_only = yes
 
     option = {
         name = HOL_marines_relocation.02B.a  # Continue the Inquiry
-        add_popularity = {
-            ideology = neutrality
-            popularity = 0.05
+        swap_ideas = {
+            remove_idea = HOL_Marine_Debate
+            add_idea = HOL_Marine_Public_Support  # Public support continues
         }
-        country_event = { id = HOL_marines_relocation.03C days = 1 }  # Trigger Inquiry Results
+        country_event = { id = HOL_marines_relocation.03C days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.02B.b  # Halt the Inquiry
-        add_popularity = {
-            ideology = neutrality
-            popularity = -0.10
-        }
-        marine_training_efficiency_factor = 0.05
-        country_event = { id = HOL_marines_relocation.03D days = 1 }  # Trigger Emergency Debate
+		remove_ideas = HOL_Marine_Debate
+		add_timed_idea = {
+			idea = HOL_Marine_Relocation_Cancelled
+			days = 365
+		}
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_military_opinion = yes
     }
 }
 country_event = {
     id = HOL_marines_relocation.03A
     title = HOL_marines_relocation.03A.t
     desc = HOL_marines_relocation.03A.d
-    picture = GFX_report_event_generic_crowd
+    picture = x
     is_triggered_only = yes
 
     option = {
         name = HOL_marines_relocation.03A.a  # Engage with Local Communities
-        add_stability = -0.05
-        add_popularity = {
-            ideology = neutrality
-            popularity = 0.05
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Local_Communities_Support  # Local support grows
         }
-        country_event = { id = HOL_marines_relocation.04A days = 1 }  # Trigger Community Dialogue
+        country_event = { id = HOL_marines_relocation.04A days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.03A.b  # Launch an Information Campaign
-        add_stability = -0.10
-        add_popularity = {
-            ideology = neutrality
-            popularity = 0.10
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Marine_Public_Support  # Information campaign boosts support
         }
-        country_event = { id = HOL_marines_relocation.04B days = 1 }  # Trigger Information Campaign
+        add_stability = -0.05
+        country_event = { id = HOL_marines_relocation.04B days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.03A.c  # Ignore Public Opinion
-        marine_training_efficiency_factor = 0.05
-        add_stability = -0.10
-        country_event = { id = HOL_marines_relocation.04C days = 1 }  # Trigger Economic Impact
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Marine_Moved  # Full relocation proceeds
+        }
     }
 }
 country_event = {
     id = HOL_marines_relocation.03B
     title = HOL_marines_relocation.03B.t
     desc = HOL_marines_relocation.03B.d
-    picture = GFX_report_event_generic_politics
+    picture = x
     is_triggered_only = yes
 
     option = {
         name = HOL_marines_relocation.03B.a  # Approve the Compromise
-        marine_training_efficiency_factor = 0.05
-        add_stability = 0.05
-        country_event = { id = HOL_marines_relocation.04D days = 1 }  # Trigger Economic Impact
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Local_Communities_Support  # Public and local support through compromise
+        }
+        country_event = { id = HOL_marines_relocation.04D days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.03B.b  # Further Review Needed
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Marine_Debate  # Further review delays the decision
+        }
         add_stability = 0.10
-        marine_training_efficiency_factor = -0.05
-        country_event = { id = HOL_marines_relocation.04E days = 1 }  # Trigger Extended Review
+        country_event = { id = HOL_marines_relocation.04E days = 180 }  # Trigger next event in 180 days
     }
 
     option = {
         name = HOL_marines_relocation.03B.c  # Reject the Compromise
-        add_stability = -0.05
-        marine_training_efficiency_factor = -0.05
-        country_event = { id = HOL_marines_relocation.04F days = 1 }  # Trigger New Plan Development
+		remove_ideas = HOL_Marine_Public_Support
+		add_timed_idea = {
+			idea = HOL_Marine_Relocation_Cancelled
+			days = 365
+		}
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_military_opinion = yes
     }
 }
 country_event = {
     id = HOL_marines_relocation.03C
     title = HOL_marines_relocation.03C.t
     desc = HOL_marines_relocation.03C.d
-    picture = GFX_report_event_generic_navy
+    picture = x
     is_triggered_only = yes
 
     option = {
         name = HOL_marines_relocation.03C.a  # Approve the Relocation
-        marine_training_efficiency_factor = 0.10
-        add_popularity = {
-            ideology = neutrality
-            popularity = 0.05
+        swap_ideas = {
+            remove_idea = HOL_Marine_Debate
+            add_idea = HOL_Marine_Public_Support  # Inquiry supports relocation
         }
-        country_event = { id = HOL_marines_relocation.04G days = 1 }  # Trigger Economic Impact
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Final decision
     }
 
     option = {
         name = HOL_marines_relocation.03C.b  # Modify the Plan
-        add_stability = 0.05
-        marine_training_efficiency_factor = 0.05
-        add_popularity = {
-            ideology = neutrality
-            popularity = 0.05
+        swap_ideas = {
+            remove_idea = HOL_Marine_Debate
+            add_idea = HOL_Marine_Modified  # Modify the relocation plan based on inquiry results
         }
-        country_event = { id = HOL_marines_relocation.04H days = 1 }  # Trigger Adjusted Plan Implementation
+        add_stability = 0.05
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Final decision
     }
 
     option = {
         name = HOL_marines_relocation.03C.c  # Cancel the Relocation
-        add_stability = 0.10
-        marine_training_efficiency_factor = -0.10
+            remove_ideas = HOL_Marine_Debate
+			add_timed_idea = {
+				idea = HOL_Marine_Relocation_Cancelled
+				days = 365
+			}
+			add_political_power = -50
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
+       		add_stability = 0.05
     }
 }
+
+country_event = {
+    id = HOL_marines_relocation.04A
+    title = HOL_marines_relocation.04A.t
+    desc = HOL_marines_relocation.04A.d
+    picture = x
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_marines_relocation.04A.a  # Increase Community Support
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Local_Communities_Support  # Local support for relocation grows
+        }
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Trigger next event in 180 days
+    }
+
+    option = {
+        name = HOL_marines_relocation.04A.b  # Focus on Transparency
+        add_stability = 0.05  # Focus on transparency improves stability
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Trigger next event in 180 days
+    }
+}
+country_event = {
+    id = HOL_marines_relocation.04B
+    title = HOL_marines_relocation.04B.t
+    desc = HOL_marines_relocation.04B.d
+    picture = x
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_marines_relocation.04B.a  # Expand the Campaign
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Local_Communities_Support  # National support expands
+        }
+        add_stability = -0.05  # Lose stability for broader campaign efforts
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Final Decision in 180 days
+    }
+
+    option = {
+        name = HOL_marines_relocation.04B.b  # Target Key Demographics
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Local_Communities_Support  # Targeted approach to increase support
+        }
+        add_stability = 0.05
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Final Decision in 180 days
+    }
+}
+country_event = {
+    id = HOL_marines_relocation.04D
+    title = HOL_marines_relocation.04D.t
+    desc = HOL_marines_relocation.04D.d
+    picture = x
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_marines_relocation.04D.a  # Approve the Compromise
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Local_Communities_Support  # Community benefits from compromise plan
+        }
+        add_stability = -0.05  # Slight instability from the compromise
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Final decision
+    }
+
+    option = {
+        name = HOL_marines_relocation.04D.b  # Further Review Needed
+        swap_ideas = {
+            remove_idea = HOL_Marine_Public_Support
+            add_idea = HOL_Marine_Debate  # Continue the debate for further review
+        }
+        add_stability = 0.10
+        country_event = { id = HOL_marines_relocation.04E days = 180 }  # Extended review event
+    }
+}
+country_event = {
+    id = HOL_marines_relocation.04E
+    title = HOL_marines_relocation.04E.t
+    desc = HOL_marines_relocation.04E.d
+    picture = x
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_marines_relocation.04E.a  # Proceed with the Compromise
+        swap_ideas = {
+            remove_idea = HOL_Marine_Debate
+            add_idea = HOL_Marine_Modified  # Proceed with modified relocation plan
+        }
+        add_stability = 0.05
+        country_event = { id = HOL_marines_relocation.05A days = 180 }  # Final decision
+    }
+}
+
+country_event = {
+    id = HOL_marines_relocation.05A
+    title = HOL_marines_relocation.05A.t
+    desc = HOL_marines_relocation.05A.d
+    picture = x
+    is_triggered_only = yes
+
+    option = {
+        name = HOL_marines_relocation.05A.a  # Approve the Relocation
+        swap_ideas = {
+            remove_idea = HOL_Local_Communities_Support
+            add_idea = HOL_Marine_Moved  # Relocation is successfully completed
+        }
+        add_stability = -0.05
+    }
+
+    option = {
+        name = HOL_marines_relocation.05A.b  # Modify the Plan
+        swap_ideas = {
+            remove_idea = HOL_Local_Communities_Support
+            add_idea = HOL_Marine_Modified  # Relocation with modifications
+        }
+        add_stability = 0.05
+    }
+
+    option = {
+        name = HOL_marines_relocation.05A.c  # Cancel the Relocation
+		remove_ideas = HOL_Local_Communities_Support
+		add_timed_idea = {
+			idea = HOL_Marine_Relocation_Cancelled
+			days = 365
+		}
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_military_opinion = yes
+        add_stability = 0.10
+    }
+}
+
+
+
+
+
+
