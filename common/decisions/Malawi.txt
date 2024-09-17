@@ -723,7 +723,7 @@
 					clr_country_flag = MLW_LW_diplomatic_FLAG
 				}
 			}
-			MLW_LW_formal_annexation = { # fix
+			MLW_LW_formal_annexation = {
 				icon = decision
 				visible = {}
 				available = { MLW_LW_10_diplo_check = yes }
@@ -733,19 +733,103 @@
 				days_remove = 30
 				complete_effect = {
 					set_country_flag = MLW_LW_diplomatic_FLAG
-					# fix
-					#
-					# gives event to target country to buy the state, unlikely to reject state purchase, if they do, AI only wants more
-					# money, unlocks annexation decisions for the state
+					if = {
+						limit = { MLW_LW_MBEYA = yes }
+						set_country_flag = MLW_LW_MBEYA_purchase_FLAG
+					}
+					if = {
+						limit = { MLW_LW_NJOMBE = yes }
+						set_country_flag = MLW_LW_NJOMBE_purchase_FLAG
+					}
+					if = {
+						limit = { MLW_LW_WESTRUVUMA = yes }
+						set_country_flag = MLW_LW_WESTRUVUMA_purchase_FLAG
+					}
+					if = {
+						limit = { MLW_LW_WESTNIASSA = yes }
+						set_country_flag = MLW_LW_WESTNIASSA_purchase_FLAG
+					}
 				}
 				remove_effect = {
+					if = {
+						limit = {
+							NOT = {
+								OR = {
+									has_country_flag = MLW_LW_MBEYA_purchase_FLAG
+									has_country_flag = MLW_LW_NJOMBE_purchase_FLAG
+									has_country_flag = MLW_LW_WESTRUVUMA_purchase_FLAG
+									has_country_flag = MLW_LW_WESTNIASSA_purchase_FLAG
+								}
+							}
+						}
+						if = {
+							limit = {
+								OR = {
+									MLW_LW_MBEYA = yes
+									MLW_LW_NJOMBE = yes
+									MLW_LW_WESTRUVUMA = yes
+								}
+							}
+							custom_effect_tooltip = MLW_LW_formal_annexation_TNZ_TT
+							newline = yes
+							set_temp_variable = { accept_tag = TNZ }
+							if_they_accept_tooltip = yes
+							newline = yes
+							effect_tooltip = {
+								if = {
+									limit = { MLW_LW_MBEYA = yes }
+									1045 = { transfer_state_to = MLW }
+								}
+								if = {
+									limit = { MLW_LW_NJOMBE = yes }
+									1046 = { transfer_state_to = MLW }
+								}
+								if = {
+									limit = { MLW_LW_WESTRUVUMA = yes }
+									1047 = { transfer_state_to = MLW }
+								}
+							}
+						}
+						if = {
+							limit = { MLW_LW_WESTNIASSA = yes }
+							custom_effect_tooltip = MLW_LW_formal_annexation_MOZ_TT
+							newline = yes
+							set_temp_variable = { accept_tag = MOZ }
+							if_they_accept_tooltip = yes
+							newline = yes
+							effect_tooltip = {
+								if = {
+									limit = { MLW_LW_WESTNIASSA = yes }
+									1049 = { transfer_state_to = MLW }
+								}
+							}
+						}
+					}
+					if = {
+						limit = { has_country_flag = MLW_LW_MBEYA_purchase_FLAG }
+						TNZ = { country_event = MLW_FOPOL_LW.2 }
+					}
+					if = {
+						limit = { has_country_flag = MLW_LW_NJOMBE_purchase_FLAG }
+						TNZ = { country_event = MLW_FOPOL_LW.2 }
+					}
+					if = {
+						limit = { has_country_flag = MLW_LW_WESTRUVUMA_purchase_FLAG }
+						TNZ = { country_event = MLW_FOPOL_LW.2 }
+					}
+					if = {
+						limit = { has_country_flag = MLW_LW_WESTNIASSA_purchase_FLAG }
+						MOZ = { country_event = MLW_FOPOL_LW.2 }
+					}
+					newline = yes
+					MLW_LW_diplomatic_annexation_checker = yes
 					clr_country_flag = MLW_LW_diplomatic_FLAG
 				}
 			}
 			# DIPLOMATIC ANNEXATION # fix
 			# MLW_LW_replace_the_courts = { # fix
 			# 	icon = decision
-			# 	visible = {}
+			# 	visible = { has_country_flag = MLW_LW_diplomatic_annexation_FLAG }
 			# 	available = {}
 
 			# 	cost = 50
@@ -760,7 +844,7 @@
 			# }
 			# MLW_LW_readjust_tax_codes = { # fix
 			# 	icon = decision
-			# 	visible = {}
+			# 	visible = { has_country_flag = MLW_LW_diplomatic_annexation_FLAG }
 			# 	available = {}
 
 			# 	cost = 50
@@ -775,7 +859,7 @@
 			# }
 			# MLW_LW_issuing_ids = { # fix
 			# 	icon = decision
-			# 	visible = {}
+			# 	visible = { has_country_flag = MLW_LW_diplomatic_annexation_FLAG }
 			# 	available = {}
 
 			# 	cost = 50
@@ -790,7 +874,7 @@
 			# }
 			# MLW_LW_dual_nationalities = { # fix
 			# 	icon = decision
-			# 	visible = {}
+			# 	visible = { has_country_flag = MLW_LW_diplomatic_annexation_FLAG }
 			# 	available = {}
 
 			# 	cost = 50
@@ -805,7 +889,7 @@
 			# }
 			# MLW_LW_finalise_annexation_treaties = { # fix
 			# 	icon = decision
-			# 	visible = {}
+			# 	visible = { has_country_flag = MLW_LW_diplomatic_annexation_FLAG }
 			# 	available = {}
 
 			# 	cost = 50
@@ -821,12 +905,8 @@
 			# HOSTILE ACTIONS # fix
 			MLW_LW_hybrid_warfare = { # fix
 				icon = decision
-				visible = {
-					# fix
-					#
-					# only possible to view if state directly borders one of yours
-				}
-				available = {}
+				visible = { MLW_LW_bordering_state_visible_check = yes }
+				available = { MLW_LW_hybrid_warfare_available_check = yes }
 
 				cost = 50
 
@@ -834,10 +914,28 @@
 				complete_effect = {
 					set_temp_variable = { MLW_LW_progress_change = 1 }
 					MLW_LW_update_militaristic_progress = yes
+					if = {
+						limit = {
+							OR = {
+								MLW_LW_MBEYA = yes
+								MLW_LW_NJOMBE = yes
+								MLW_LW_WESTRUVUMA = yes
+							}
+						}
+						TNZ = { country_event = MLW_FOPOL.4 }
+					}
+					if = {
+						limit = { MLW_LW_WESTNIASSA = yes }
+						MOZ = { country_event = MLW_FOPOL_LW.4 }
+					}
 					# fix
 					#
 					# make this a targeted modifier change to whoever the state belongs to
 					# more breakthrough to signify sleeper cells in the area
+					#
+					# timed idea for the target of super high migration, same but inverse for malawi
+					# if taken the acceptance of refugees from DRC conflict, increase effectiveness of
+					# focus (more migrants to target, more emmigration from self)
 				}
 				remove_effect = {}
 			}
@@ -850,9 +948,25 @@
 
 				days_remove = 30
 				complete_effect = {
+					if = {
+						limit = {
+							OR = {
+								MLW_LW_MBEYA = yes
+								MLW_LW_NJOMBE = yes
+								MLW_LW_WESTRUVUMA = yes
+							}
+						}
+						TNZ = { country_event = MLW_FOPOL.5 }
+					}
+					if = {
+						limit = { MLW_LW_WESTNIASSA = yes }
+						MOZ = { country_event = MLW_FOPOL_LW.5 }
+					}
 					# fix
 					#
 					# with influence, increase amount of misinfo in the target, weakening their war support with the lake wars DM
+					#
+					# timed idea for reduction of war support with a slight debuff generally
 				}
 				remove_effect = {}
 			}
@@ -912,9 +1026,7 @@
 			MLW_LW_launch_assault = { # fix
 				icon = decision
 				visible = {
-					# fix
-					#
-					# needs to only be visible for bordering state
+					# MLW_LW_bordering_state_visible_check = yes
 				}
 				available = {
 					# fix
@@ -926,6 +1038,16 @@
 
 				days_remove = 30
 				complete_effect = {
+					if = {
+						limit = { MLW_LW_MBEYA = yes }
+						will_lead_to_war_with = TNZ
+						if = {
+							limit = {
+								owns_state = 259
+								NOT = { owns_state = 1046 }
+							}
+						}
+					}
 					# fix
 					#
 					# launches border skirmish in targeted state, if hybrid warfare has been completed in the state, troops are more
@@ -934,7 +1056,212 @@
 					# need to be victorious once in order to gain state from target, upon occupation, unlocks conquest annexation
 					# decisions for the state
 				}
-				remove_effect = {}
+				remove_effect = {
+					if = {
+						limit = { MLW_LW_MBEYA = yes }
+						if = { # FROM NORTH MALAWI
+							limit = {
+								OR = {
+									AND = {
+										owns_state = 259
+										NOT = { owns_state = 1046 }
+									}
+									has_country_flag = MLW_LW_assault_launched_from_NORTH_MALAWI
+								}
+							}
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 259
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.10
+									on_lose = MLW_FOPOL_LWBW.11
+									on_cancel = MLW_FOPOL_LWBW.1
+								}
+								defender = {
+									state = 1045
+									num_provinces = 2
+									on_win = MLW_FOPOL_LWBW.10
+									on_lose = MLW_FOPOL_LWBW.11
+									on_cancel = MLW_FOPOL_LWBW.1
+								}
+							}
+						}
+						if = { # FROM NJOMBE
+							limit = { has_country_flag = MLW_LW_assault_launched_from_NJOMBE }
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 1046
+									num_provinces = 2
+									on_win = MLW_FOPOL_LWBW.20
+									on_lose = MLW_FOPOL_LWBW.21
+									on_cancel = MLW_FOPOL_LWBW.2
+								}
+								defender = {
+									state = 1045
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.20
+									on_lose = MLW_FOPOL_LWBW.21
+									on_cancel = MLW_FOPOL_LWBW.2
+								}
+							}
+						}
+					}
+					if = {
+						limit = { MLW_LW_NJOMBE = yes }
+						if = { # FROM MBEYA
+							limit = {
+								OR = {
+									AND = {
+										owns_state = 1045
+										NOT = { owns_state = 1047 }
+									}
+									has_country_flag = MLW_LW_assault_launched_from_MBEYA
+								}
+							}
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 1045
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.30
+									on_lose = MLW_FOPOL_LWBW.31
+									on_cancel = MLW_FOPOL_LWBW.3
+								}
+								defender = {
+									state = 1046
+									num_provinces = 2
+									on_win = MLW_FOPOL_LWBW.30
+									on_lose = MLW_FOPOL_LWBW.31
+									on_cancel = MLW_FOPOL_LWBW.3
+								}
+							}
+						}
+						if = { # FROM WEST RUVUMA
+							limit = { has_country_flag = MLW_LW_assault_launched_from_WEST_RUVUMA }
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 1047
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.40
+									on_lose = MLW_FOPOL_LWBW.41
+									on_cancel = MLW_FOPOL_LWBW.4
+								}
+								defender = {
+									state = 1046
+									num_provinces = 2
+									on_win = MLW_FOPOL_LWBW.40
+									on_lose = MLW_FOPOL_LWBW.41
+									on_cancel = MLW_FOPOL_LWBW.4
+								}
+							}
+						}
+					}
+					if = {
+						limit = { MLW_LW_WESTRUVUMA = yes }
+						if = { # FROM NJOMBE
+							limit = {
+								OR = {
+									AND = {
+										owns_state = 1046
+										NOT = { owns_state = 1049 }
+									}
+									has_country_flag = MLW_LW_assault_launched_from_NJOMBE
+								}
+							}
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 1046
+									num_provinces = 2
+									on_win = MLW_FOPOL_LWBW.50
+									on_lose = MLW_FOPOL_LWBW.51
+									on_cancel = MLW_FOPOL_LWBW.5
+								}
+								defender = {
+									state = 1047
+									num_provinces = 2
+									on_win = MLW_FOPOL_LWBW.50
+									on_lose = MLW_FOPOL_LWBW.51
+									on_cancel = MLW_FOPOL_LWBW.5
+								}
+							}
+						}
+						if = { # FROM WEST NIASSA
+							limit = { has_country_flag = MLW_LW_assault_launched_from_WEST_NIASSA }
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 1049
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.60
+									on_lose = MLW_FOPOL_LWBW.61
+									on_cancel = MLW_FOPOL_LWBW.6
+								}
+								defender = {
+									state = 1047
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.60
+									on_lose = MLW_FOPOL_LWBW.61
+									on_cancel = MLW_FOPOL_LWBW.6
+								}
+							}
+						}
+					}
+					if = {
+						limit = { MLW_LW_WESTNIASS = yes }
+						if = { # FROM SOUTH MALAWI
+							limit = {
+								OR = {
+									AND = {
+										owns_state = 260
+										NOT = { owns_state = 1047 }
+									}
+									has_country_flag = MLW_LW_assault_launched_from_SOUTH_MALAWI
+								}
+							}
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 260
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.70
+									on_lose = MLW_FOPOL_LWBW.71
+									on_cancel = MLW_FOPOL_LWBW.7
+								}
+								defender = {
+									state = 1049
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.70
+									on_lose = MLW_FOPOL_LWBW.71
+									on_cancel = MLW_FOPOL_LWBW.7
+								}
+							}
+						}
+						if = { # FROM WEST RUVUMA
+							limit = { has_country_flag = MLW_LW_assault_launched_from_WEST_RUVUMA }
+							start_border_war = {
+								change_state_after_war = no
+								attacker = {
+									state = 1047
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.80
+									on_lose = MLW_FOPOL_LWBW.81
+									on_cancel = MLW_FOPOL_LWBW.8
+								}
+								defender = {
+									state = 1049
+									num_provinces = 1
+									on_win = MLW_FOPOL_LWBW.80
+									on_lose = MLW_FOPOL_LWBW.81
+									on_cancel = MLW_FOPOL_LWBW.8
+								}
+							}
+						}
+					}
+				}
 			}
 			# CONQUEST ANNEXATION
 			# MLW_LW_root_out_rebels = { # fix
@@ -1014,62 +1341,6 @@
 			# }
 		}
 		# MLW_lake_wars_border_conflict = {
-		# 	# MBEYA ATTACKS #
-		# 		# ATTACK FROM NORTH MALAWI #
-		# 			MLW_LW_from_NM_to_MB = {
-		# 				icon = decision
-		# 				visible = {
-		# 					# has_completed_focus = MLW_TNZ_nyaja_malawi
-		# 					NOT = { has_country_flag = MLW_LW_given_up_on_MB_from_NM }
-		# 				}
-		# 				available = { owns_state = 259 }
-		# 				cost = 5
-		# 				complete_effect = {
-		# 					# start_border_war = {
-		# 					# 	change_state_after_war = no
-		# 					# 	attacker = {
-		# 					# 		state = 259
-		# 					# 		num_provinces = 1
-		# 					# 		on_win = MalawiLakeWars.1
-		# 					# 		on_lose = MalawiLakeWars.10
-		# 					# 		on_cancel = MalawiLakeWars.100
-		# 					# 	}
-		# 					# 	defender = {
-		# 					# 		state = 1045
-		# 					# 		num_provinces = 2
-		# 					# 		on_win = MalawiLakeWars.9
-		# 					# 		on_lose = MalawiLakeWars.90
-		# 					# 		on_cancel = MalawiLakeWars.900
-		# 					# 	}
-		# 					# }
-		# 				}
-		# 			}
-		# 		# ATTACK FROM NJOMBE #
-		# 			MLW_LW_from_NJ_to_MB = {
-		# 				icon = decision
-		# 				# visible = { has_completed_focus = MLW_TNZ_nyaja_malawi }
-		# 				available = { owns_state = 1046 }
-		# 				cost = 5
-		# 				complete_effect = {
-		# 					# start_border_war = {
-		# 					# 	change_state_after_war = no
-		# 					# 	attacker = {
-		# 					# 		state = 1046
-		# 					# 		num_provinces = 2
-		# 					# 		on_win = MalawiLakeWars.2
-		# 					# 		on_lose = MalawiLakeWars.20
-		# 					# 		on_cancel = MalawiLakeWars.200
-		# 					# 	}
-		# 					# 	defender = {
-		# 					# 		state = 1045
-		# 					# 		num_provinces = 1
-		# 					# 		on_win = MalawiLakeWars.11
-		# 					# 		on_lose = MalawiLakeWars.110
-		# 					# 		on_cancel = MalawiLakeWars.1100
-		# 					# 	}
-		# 					# }
-		# 				}
-		# 			}
 		# 	# NJOMBE ATTACKS #
 		# 		# ATTACK FROM MBEYA #
 		# 			MLW_LW_from_MB_to_NJ = {
