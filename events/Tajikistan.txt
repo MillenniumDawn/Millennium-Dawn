@@ -1,6 +1,7 @@
 add_namespace = tajik_focus
 add_namespace = tajik_radicalism
 add_namespace = iranic_confederation
+add_namespace = pamir_conflict
 
 country_event = {
 	id = tajik_focus.1 # Dress code event
@@ -1092,8 +1093,10 @@ country_event = {
 				id = iranic_confederation.2
 			}
 		}
-		add_to_variable = { var = iranic_states value = 1 }
-		clamp_variable = { var = iranic_states min = 0 max = 100 }
+		FROM = {
+			add_to_variable = { var = iranic_states value = 1 }
+			clamp_variable = { var = iranic_states min = 0 max = 100 }
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1103,6 +1106,7 @@ country_event = {
 		name = iranic_confederation.1.b
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.1.b executed"
 		set_country_flag = rejected_iranic_confederation_member
+		set_country_flag = is_IRAN
 		FROM = {
 			country_event = {
 				id = iranic_confederation.3
@@ -1166,22 +1170,85 @@ country_event = {
 	option = { # Iran
 		name = iranic_confederation.4.a
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.4.a executed"
+		trigger = {
+			ROOT = {
+				NOT = {
+					original_tag = PER
+				}
+			}
+			PER = {
+				has_country_flag = iranic_confederation_member
+			}
+		}
+		PER = {
+			add_to_variable = { var = iranic_states_vote value = 1 }
+			clamp_variable = { var = iranic_states_vote min = 0 max = 100 }
+		}
+		IRN_event = yes
 		ai_chance = {
-			base = 1
+			base = 5
+			modifier = {
+				PER = {
+					is_ai = no
+				}
+				add = 50
+			}
 		}
 	}
 	option = { # Afghanistan
 		name = iranic_confederation.4.b
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.4.b executed"
+		trigger = {
+			ROOT = {
+				NOT = {
+					original_tag = AFG
+				}
+			}
+			AFG = {
+				has_country_flag = iranic_confederation_member
+			}
+		}
+		AFG = {
+			add_to_variable = { var = iranic_states_vote value = 1 }
+			clamp_variable = { var = iranic_states_vote min = 0 max = 100 }
+		}
+		IRN_event = yes
 		ai_chance = {
 			base = 1
+			modifier = {
+				AFG = {
+					is_ai = no
+				}
+				add = 50
+			}
 		}
 	}
 	option = { # Tajikistan
 		name = iranic_confederation.4.c
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.4.c executed"
+		trigger = {
+			ROOT = {
+				NOT = {
+					original_tag = TAJ
+				}
+			}
+			TAJ = {
+				has_country_flag = iranic_confederation_member
+			}
+		}
+		TAJ = {
+			add_to_variable = { var = iranic_states_vote value = 1 }
+			clamp_variable = { var = iranic_states_vote min = 0 max = 100 }
+		}
+		IRN_event = yes
 		ai_chance = {
 			base = 1
+			modifier = {
+				TAJ = {
+					is_ai = no
+				}
+				add = 50
+			}
 		}
 	}
 	option = { # Kurdistan
@@ -1197,13 +1264,817 @@ country_event = {
 				has_country_flag = iranic_confederation_member
 			}
 		}
+		KUR = {
+			add_to_variable = { var = iranic_states_vote value = 1 }
+			clamp_variable = { var = iranic_states_vote min = 0 max = 100 }
+		}
+		IRN_event = yes
 		ai_chance = {
 			base = 1
+			modifier = {
+				KUR = {
+					is_ai = no
+				}
+				add = 50
+			}
 		}
 	}
 	option = { # South Ossetia
 		name = iranic_confederation.4.f
 		log = "[GetDateText]: [This.GetName]: iranic_confederation.4.f executed"
+		trigger = {
+			ROOT = {
+				NOT = {
+					original_tag = SOO
+				}
+			}
+			SOO = {
+				has_country_flag = iranic_confederation_member
+			}
+		}
+		SOO = {
+			add_to_variable = { var = iranic_states_vote value = 1 }
+			clamp_variable = { var = iranic_states_vote min = 0 max = 100 }
+		}
+		IRN_event = yes
+		ai_chance = {
+			base = 1
+			modifier = {
+				SOO = {
+					is_ai = no
+				}
+				add = 50
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.5 # Confederation Leader
+	title = iranic_confederation.5.t
+	desc = iranic_confederation.5.d
+
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = { # Iran
+		name = iranic_confederation.5.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.5.a executed"
+		trigger = {
+			PER = {
+				check_variable = {
+					iranic_states_vote > 1
+				}
+			}
+		}
+		PER = { set_country_flag = iranic_confederation_leader }
+		hidden_effect = {
+			if = {
+				limit = {
+					TAJ = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				TAJ = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					AFG = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				AFG = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				KUR = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					SOO = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				SOO = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				is_ai = no
+				add = 50
+			}
+		}
+	}
+	option = { # Afghanistan
+		name = iranic_confederation.5.b
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.5.b executed"
+		trigger = {
+			AFG = {
+				check_variable = {
+					iranic_states_vote > 1
+				}
+			}
+		}
+		AFG = { set_country_flag = iranic_confederation_leader }
+		hidden_effect = {
+			if = {
+				limit = {
+					TAJ = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				TAJ = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				PER = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				KUR = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					SOO = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				SOO = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				is_ai = no
+				add = 50
+			}
+		}
+	}
+	option = { # Tajikistan
+		name = iranic_confederation.5.c
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.5.c executed"
+		trigger = {
+			TAJ = {
+				check_variable = {
+					iranic_states_vote > 1
+				}
+			}
+		}
+		TAJ = { set_country_flag = iranic_confederation_leader }
+		hidden_effect = {
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				PER = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					AFG = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				AFG = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				KUR = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					SOO = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				SOO = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				is_ai = no
+				add = 50
+			}
+		}
+	}
+	option = { # Kurdistan
+		name = iranic_confederation.5.e
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.5.e executed"
+		trigger = {
+			KUR = {
+				check_variable = {
+					iranic_states_vote > 1
+				}
+			}
+		}
+		KUR = { set_country_flag = iranic_confederation_leader }
+		hidden_effect = {
+			if = {
+				limit = {
+					TAJ = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				TAJ = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					AFG = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				AFG = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				PER = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					SOO = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				SOO = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				is_ai = no
+				add = 50
+			}
+		}
+	}
+	option = { # South Ossetia
+		name = iranic_confederation.5.f
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.5.f executed"
+		trigger = {
+			SOO = {
+				check_variable = {
+					iranic_states_vote > 1
+				}
+			}
+		}
+		SOO = { set_country_flag = iranic_confederation_leader }
+		hidden_effect = {
+			if = {
+				limit = {
+					TAJ = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				TAJ = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					AFG = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				AFG = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				KUR = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = iranic_confederation_member
+					}
+				}
+				PER = { every_owned_state = { set_state_flag = IRN_iranic_confederation } }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				is_ai = no
+				add = 50
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.6
+	title = iranic_confederation.6.t
+	desc = iranic_confederation.6.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.6.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.6.a executed"
+		FROM = {
+			set_country_flag = TAJ_phase_3
+			set_autonomy = {
+				target = ROOT
+				autonomy_state = autonomy_irn_province
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.7
+	title = iranic_confederation.7.t
+	desc = iranic_confederation.7.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.7.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.7.a executed"
+		ROOT = {
+			every_country = {
+				limit = {
+					has_country_flag = iranic_confederation_member
+				}
+				transfer_units_fraction = {
+					target = FROM
+					size = 1.0
+					stockpile_ratio = 1.0
+					army_ratio = 1.0
+					navy_ratio = 1.0
+					air_ratio = 1.0
+				}
+			}
+			every_state = {
+				limit = {
+					has_state_flag = IRN_iranic_confederation
+				}
+				add_core_of = FROM
+				transfer_state_to = FROM
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.8
+	title = iranic_confederation.8.t
+	desc = iranic_confederation.8.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.8.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.8.a executed"
+		add_stability = 0.03
+		hidden_effect = {
+			IRN_vote = yes
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Flavor
+# Select new capital
+country_event = {
+	id = iranic_confederation.9
+	title = iranic_confederation.9.t
+	desc = iranic_confederation.9.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.9.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.9.a executed"
+		trigger = {
+			976 = {
+				is_owned_and_controlled_by = ROOT
+			}
+		}
+		set_capital = {
+			state = 976
+		}
+		add_victory_points = {
+			province = 8074
+			value = 10
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranic_confederation.9.b
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.9.b executed"
+		trigger = {
+			409 = {
+				is_owned_and_controlled_by = ROOT
+			}
+		}
+		set_capital = {
+			state = 409
+		}
+		add_victory_points = {
+			province = 4893
+			value = 10
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranic_confederation.9.c
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.9.c executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.10
+	title = iranic_confederation.10.t
+	desc = iranic_confederation.10.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.10.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.10.a executed"
+		416 = {
+			add_core_of = FROM
+		}
+		417 = {
+			add_core_of = FROM
+		}
+		FROM = {
+			country_event = {
+				id = iranic_confederation.11
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranic_confederation.10.b
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.10.b executed"
+		416 = {
+			transfer_state_to = FROM
+			add_core_of = FROM
+		}
+		417 = {
+			transfer_state_to = FROM
+			add_core_of = FROM
+		}
+		FROM = {
+			country_event = {
+				id = iranic_confederation.12
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.11
+	title = iranic_confederation.11.t
+	desc = iranic_confederation.11.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.11.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.11.a executed"
+		create_wargoal = {
+			target = PAK
+			type = take_core_state
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.12
+	title = iranic_confederation.12.t
+	desc = iranic_confederation.12.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.12.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.12.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.15
+	title = iranic_confederation.15.t
+	desc = iranic_confederation.15.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.15.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.15.a executed"
+		162 = {
+			add_core_of = FROM
+		}
+		935 = {
+			add_core_of = FROM
+		}
+		FROM = {
+			country_event = {
+				id = iranic_confederation.16
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranic_confederation.15.b
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.15.b executed"
+		162 = {
+			transfer_state_to = FROM
+			add_core_of = FROM
+		}
+		935 = {
+			transfer_state_to = FROM
+			add_core_of = FROM
+		}
+		FROM = {
+			country_event = {
+				id = iranic_confederation.17
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.16
+	title = iranic_confederation.16.t
+	desc = iranic_confederation.16.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.16.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.16.a executed"
+		create_wargoal = {
+			target = TUR
+			type = take_core_state
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.17
+	title = iranic_confederation.17.t
+	desc = iranic_confederation.17.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.17.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.17.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.18
+	title = iranic_confederation.18.t
+	desc = iranic_confederation.18.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.18.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.18.a executed"
+		FROM = {
+			country_event = {
+				id = iranic_confederation.20
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranic_confederation.18.b
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.18.b executed"
+		FROM = {
+			set_autonomy = {
+				target = ROOT
+				autonomy_state = autonomy_irn_province
+			}
+		}
+		FROM = {
+			country_event = {
+				id = iranic_confederation.19
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.19
+	title = iranic_confederation.19.t
+	desc = iranic_confederation.19.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.19.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.19.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranic_confederation.20
+	title = iranic_confederation.20.t
+	desc = iranic_confederation.20.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranic_confederation.20.a
+		log = "[GetDateText]: [This.GetName]: iranic_confederation.20.a executed"
+		create_wargoal = {
+			target = FROM
+			type = puppet_wargoal_focus
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Victory in Batken
+country_event = {
+	id = pamir_conflict.1
+	title = pamir_conflict.1.t
+	desc = pamir_conflict.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = pamir_conflict.1.a
+		log = "[GetDateText]: [This.GetName]: pamir_conflict.1.a executed"
+		if = {
+			limit = {
+				ROOT = {
+					original_tag = TAJ
+				}
+			}
+			1170 = {
+				transfer_state_to = TAJ
+			}
+		}
+		if = {
+			limit = {
+				ROOT = {
+					original_tag = UZB
+				}
+			}
+			1170 = {
+				transfer_state_to = UZB
+			}
+		}
+		if = {
+			limit = {
+				ROOT = {
+					original_tag = KYR
+				}
+			}
+			1170 = {
+				transfer_state_to = KYR
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = pamir_conflict.2
+	title = pamir_conflict.2.t
+	desc = pamir_conflict.2.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = pamir_conflict.2.a
+		log = "[GetDateText]: [This.GetName]: pamir_conflict.2.a executed"
+		add_stability = -0.02
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = pamir_conflict.3
+	title = pamir_conflict.3.t
+	desc = pamir_conflict.3.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = pamir_conflict.3.a
+		log = "[GetDateText]: [This.GetName]: pamir_conflict.3.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = pamir_conflict.4
+	title = pamir_conflict.4.t
+	desc = pamir_conflict.4.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = pamir_conflict.4.a
+		log = "[GetDateText]: [This.GetName]: pamir_conflict.4.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = pamir_conflict.5
+	title = pamir_conflict.5.t
+	desc = pamir_conflict.5.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = pamir_conflict.5.a
+		log = "[GetDateText]: [This.GetName]: pamir_conflict.5.a executed"
+
 		ai_chance = {
 			base = 1
 		}
