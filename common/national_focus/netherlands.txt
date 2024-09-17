@@ -4396,7 +4396,7 @@ focus_tree = {
 	}
 	focus = {
 		id = HOL_World_Reaching_Navy
-		icon = navy3
+		icon = x
 
 		x = -4
 		y = 1
@@ -4962,7 +4962,7 @@ focus_tree = {
 	}
 	focus = {
 		id = HOL_European_Navy
-		icon = navy
+		icon = x
 
 		x = 5
 		y = 1
@@ -4999,7 +4999,7 @@ focus_tree = {
 	}
 	focus = {
 		id = HOL_Goalkeeper_Modernization
-		icon = navy
+		icon = x
 
 		x = -2
 		y = 1
@@ -5012,6 +5012,29 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Goalkeeper_Modernization"
+			if = {
+				limit = { has_tech = tech_fire_control_2  }
+				add_tech_bonus = {
+					name = HOL_Goalkeeper_Modernization
+					uses = 1
+					bonus = 0.25
+					category = CAT_naval_electronics
+				}
+			}
+			else = {
+				set_technology = { tech_fire_control_2 = 1 }
+			}
+			if = {
+				limit = { has_dlc = "Arms Against Tyranny" }
+				mio:HOL_Thales_equipment_manufacturer = {
+					add_mio_funds = 500
+				}
+			}
+			set_temp_variable = { temp_opinion = 2 }
+			change_the_military_opinion = yes
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.09 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -5020,7 +5043,7 @@ focus_tree = {
 	}
 	focus = {
 		id = HOL_SMARTL_Radar_Construction
-		icon = navy
+		icon = radar2
 
 		x = 0
 		y = 1
@@ -5033,6 +5056,39 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_SMARTL_Radar_Construction"
+			if = {
+				limit = { has_tech = tech_combat_radar_3  }
+				add_tech_bonus = {
+					name = HOL_SMARTL_Radar_Construction
+					uses = 1
+					bonus = 0.25
+					technology = tech_combat_radar_4
+				}
+			}
+			else = {
+				set_technology = { tech_combat_radar_3 = 1 }
+			}
+			46 = {
+				add_building_construction = {
+					type = radar_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			49 = {
+				add_building_construction = {
+					type = radar_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { temp_opinion = 2 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 2 }
+			change_maritime_industry_opinion = yes
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -5041,7 +5097,7 @@ focus_tree = {
 	}
 	focus = {
 		id = HOL_Hollandklasse_Frigate
-		icon = navy
+		icon = generic_ship2
 
 		x = -1
 		y = 2
@@ -5054,6 +5110,44 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Hollandklasse_Frigate"
+			if = {
+				limit = { has_dlc = "Man the Guns" }
+				create_equipment_variant = {
+					name = "Hollandklasse"
+					type = frigate_hull_4
+					parent_version = 3
+					modules = {
+						fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
+						fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+						fixed_ship_radar_slot = module_sonar_4
+						fixed_ship_auxillary_slot_2 = module_vls_sam_2
+						fixed_ship_auxillary_slot_1 = module_vls_lam_2
+						fixed_ship_auxillary_slot = module_chain_gun
+						fixed_ship_battery_slot = module_76mm_gun_3
+						front_1_custom_slot = module_asm_2
+						rear_1_custom_slot = module_light_helipad_1
+					}
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					type = missile_frigate_4
+					name = "Hollandklasse"
+					upgrades = {
+						ship_reliability_upgrade = 2
+						ship_anti_air_upgrade = 3
+						ship_engine_upgrade = 2
+					}
+				}
+			}
+			custom_effect_tooltip = HOL_Hollandklasse_Frigate_tt
+			set_temp_variable = { temp_opinion = 2 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 2 }
+			change_maritime_industry_opinion = yes
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -5062,7 +5156,7 @@ focus_tree = {
 	}
 	focus = {
 		id = HOL_Vrouwenklasse_Destroyer
-		icon = navy
+		icon = navy2
 
 		x = -3
 		y = 2
@@ -5074,10 +5168,43 @@ focus_tree = {
 		prerequisite = { focus = HOL_Goalkeeper_Modernization }
 		prerequisite = { focus = HOL_Return_Of_Destroyers }
 		prerequisite = { focus = HOL_SMARTL_Radar_Construction }
-
+		available = {
+			if = {
+				limit = { has_dlc = "Man the Guns" }
+				if = {
+					limit = { has_tech = destroyer_hull_3 }
+				}
+				else = {
+					has_tech = missile_destroyer_3
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Vrouwenklasse_Destroyer"
+			if = {
+				limit = { has_dlc = "Man the Guns" }
+				add_equipment_production = {
+					equipment = {
+						type = frigate_hull_4
+						version_name = "Vrouwenklasse"
+					}
+					industrial_manufacturer = mio:HOL_Damen_naval_equipment_organisation
+					amount = 4
+					progress = 0.15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+					type = missile_frigate_4
+					version_name = "Vrouwenklasse"
+					}
+				}
+			}
+			BEL = {
+				country_event = HOL_Vrouwenklasse_Frigate_Belgium
+			}
 		}
 
 		ai_will_do = {
