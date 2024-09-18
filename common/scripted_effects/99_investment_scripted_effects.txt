@@ -1,0 +1,1375 @@
+# Author(s): AngriestBird, Hiddengearz, Chondrite
+# Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
+
+# Country:
+# var: active_projects - number of active projects
+# array: project_array : fixed array that contains projects
+# index: project id
+# value: 0 = available, <0 = reserved (target state id), 1 = to be reset
+#
+# variables saved for each project id (not in arrays) : 0 - 14 = project ids, -1 = gui
+#
+# project_target_country^id
+# project_build_amount^id
+# project_building_type^id
+# project_construction_duration^id
+# project_total_construction_duration_display^id
+
+# State:
+# array: AC_projects_in_state : every country id that owns a project in this state
+# var: AC_project_target_state_TAG : project id of TAG in this state
+
+# Rewrite of the Former System
+# Combined AC_update_build_time and AC_update_build_cost
+# Should be set for easier maintenance
+
+# Called in the on_startup
+# init_investment_system simply initializes the variable.
+# This is used only ONCE as it sets global variables.
+# Please do not trigger this more than once.
+init_investment_system = {
+	### BUILDING CONSTRUCTION COST
+	# Balance Change: Building construction cost speed 25%
+	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 47500 }
+	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 52500 }
+	set_variable = { global.BUILD_CONST_COST_DOCKYARD = 47500 }
+	set_variable = { global.BUILD_CONST_COST_INFRASTRUCTURE = 14500 }
+	set_variable = { global.BUILD_CONST_COST_OFFICES = 50000 }
+	set_variable = { global.BUILD_CONST_COST_ANTIAIR = 15000 }
+	set_variable = { global.BUILD_CONST_COST_RADAR = 8000 }
+	set_variable = { global.BUILD_CONST_COST_AIRBASE = 4000 }
+	set_variable = { global.BUILD_CONST_COST_FUEL_SILO = 15000 }
+	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 9000 }
+	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
+	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 16500 }
+	set_variable = { global.BUILD_CONST_COST_NUCLEAR_REACTOR = 62500 }
+	set_variable = { global.BUILD_CONST_COST_AGRICULTURE_DISTRICT = 22500 }
+
+	### BUILDING MONETARY COST
+	# Balance Change: Cost increased by 60% from standardization
+	set_variable = { global.BUILD_COST_CIVILIAN_FACTORY = 12 }
+	set_variable = { global.BUILD_COST_MILITARY_FACTORY = 12.50 }
+	set_variable = { global.BUILD_COST_DOCKYARD = 12 }
+	set_variable = { global.BUILD_COST_INFRASTRUCTURE = 5.5 }
+	set_variable = { global.BUILD_COST_OFFICES = 20 }
+	set_variable = { global.BUILD_COST_ANTIAIR = 5.50 }
+	set_variable = { global.BUILD_COST_RADAR = 4.50 }
+	set_variable = { global.BUILD_COST_AIRBASE = 5.25 }
+	set_variable = { global.BUILD_COST_FUEL_SILO = 5.25 }
+	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
+	set_variable = { global.BUILD_COST_REFINERY = 13.60 }
+	set_variable = { global.BUILD_COST_FOSSIL_POWERPLANT = 5.2 }
+	set_variable = { global.BUILD_COST_NUCLEAR_REACTOR = 14.4 }
+	set_variable = { global.BUILD_COST_AGRICULTURE_DISTRICT = 5.8 }
+
+	every_country = {
+		set_variable = { project_build_amount^-1 = 1 }
+		set_variable = { constructable_buildings = 1 }
+		set_country_flag = AC_hide_investment_window
+
+		resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
+	}
+}
+
+# Called in the spawning of a new nation in-game
+# Purely used to update the variables of a nation if you are trying to play as a releasable
+ingame_init_investment_system = {
+	set_variable = { project_build_amount^-1 = 1 }
+	set_variable = { constructable_buildings = 1 }
+	set_country_flag = AC_hide_investment_window
+
+	resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
+}
+
+# Function: refresh_gui
+# Purpose: Refreshes the investment GUI
+refresh_gui = {
+	if = { limit = { check_variable = { global.refresh_gui = 5000 } }
+		set_variable = { global.refresh_gui = 1 }
+	}
+	else = {
+		add_to_variable = { global.refresh_gui = 1 }
+	}
+}
+
+# Function: updates_gui
+# Purpose: fires within the state scope and is used to "update" the display variables in the GUI for investments
+update_gui = {
+	project_monetary_cost_calculation = yes
+
+	set_variable = { project_type = -1 }
+	set_variable = { project = -1 }
+	PREV = { init_project = yes }
+	set_variable = { ROOT.gui_updated = PREV.id }
+	clear_variable = project_type
+	clear_variable = project
+}
+
+
+# Function: project_monetary_cost_calculation
+# Purpose: Calculates the treasury cost for the investment project
+project_monetary_cost_calculation = {
+	if = { limit = { check_variable = { project_building_type^-1 = 1 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_CIVILIAN_FACTORY }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 2 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_MILITARY_FACTORY }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 3 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_DOCKYARD }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_INFRASTRUCTURE }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_OFFICES }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 6 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_ANTIAIR }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_RADAR }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 8 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_AIRBASE }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FUEL_SILO }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_INTERNET_STATION }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_REFINERY }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 12 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FOSSIL_POWERPLANT }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 13 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_NUCLEAR_REACTOR }
+	}
+	else_if = { limit = { check_variable = { project_building_type^-1 = 14 } }
+		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_AGRICULTURE_DISTRICT }
+	}
+
+	# AC Build Cost Modifiers
+	set_temp_variable = { AC_cost_modifier = 1 }
+	PREV = {
+		CONTROLLER = {
+			add_to_temp_variable = { AC_cost_modifier = THIS.modifier@receiving_investment_cost_modifier }
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = ECB_president }
+				}
+				add_to_temp_variable = { AC_cost_modifier = -0.15 }
+			}
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = EU_finance_minister }
+				}
+				add_to_temp_variable = { AC_cost_modifier = -0.05 }
+			}
+			if = {
+				limit = {
+					has_idea = FRA_idea_development_investment
+					PREV.PREV = { original_tag = FRA }
+				}
+				add_to_temp_variable = { AC_cost_modifier = -0.05 }
+			}
+			if = {
+				limit = {
+					PREV.PREV = {
+						has_country_flag = mutual_investment_treaty_@ROOT
+					}
+				}
+				add_to_temp_variable = { AC_cost_modifier = -0.05 }
+			}
+		}
+	}
+	add_to_temp_variable = { AC_cost_modifier = ROOT.modifier@investment_cost_modifier }
+
+	# 50% more expensive for communists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 19 }
+			}
+		}
+		add_to_temp_variable = { AC_cost_modifier = 0.5 }
+	}
+
+	# Calculates modified Build Cost
+	set_variable = { displayable_monetary_cost_modifier = AC_cost_modifier }
+	multiply_variable = { var = project_monetary_cost^-1 value = AC_cost_modifier }
+	multiply_variable = { var = project_monetary_cost^-1 value = project_build_amount^-1 }
+	set_variable = { project_monetary_cost_effect = project_monetary_cost^-1 }
+	multiply_variable = { project_monetary_cost_effect = -1 }
+}
+
+# get_building_construction_values
+# method for handling the cost and construction_speed of any given project.
+get_building_construction_values = {
+	set_temp_variable = { construction_speed = 1 }
+	if = { limit = { check_variable = { project_building_type^project_type = 1 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_CIVILIAN_FACTORY }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_industrial_complex_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 2 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_MILITARY_FACTORY }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_arms_factory_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 3 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_DOCKYARD }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_dockyard_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 4 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_INFRASTRUCTURE }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_infrastructure_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 5 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_OFFICES }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_offices_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 6 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_ANTIAIR }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_anti_air_building_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 7 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_RADAR }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_radar_station_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 8 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_AIRBASE }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_air_base_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 9 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FUEL_SILO }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_fuel_silo_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 10 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_INTERNET_STATION }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_internet_station_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 11 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_REFINERY }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 12 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FOSSIL_POWERPLANT }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_synthetic_refinery_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 13 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_NUCLEAR_REACTOR }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_nuclear_reactor_factor }
+	}
+	else_if = { limit = { check_variable = { project_building_type^project_type = 14 } }
+		set_temp_variable = { building_cost = global.BUILD_CONST_COST_AGRICULTURE_DISTRICT }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_agriculture_district_factor }
+	}
+
+	add_to_temp_variable = { var = construction_speed value = -0.35 }
+	add_to_temp_variable = { var = construction_speed value = modifier@production_speed_buildings_factor }
+	clamp_temp_variable = { var = construction_speed min = 0 }
+}
+
+# Function: get_available_project
+# Purpose: get_available_project searches through the project_array (group of projects) to determine whether a project exists or is available
+get_available_project = {
+	for_each_loop = {
+		array = project_array
+		if = { limit = { check_variable = { v = 0 } }
+			set_variable = { new_project = i }
+			set_temp_variable = { break = 1 }
+		}
+	}
+}
+
+# Function: add_finished_buildings
+# Purpose: The function here adds the completed buildings from a project
+add_finished_buildings = {
+	set_temp_variable = { var_cost = ROOT.project_monetary_cost^ROOT.project }
+	multiply_temp_variable = { var_cost = -1 }
+	divide_temp_variable = { var = var_cost value = ROOT.project_build_amount^ROOT.project }
+
+	# Buildings to Add
+	if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 1 } }
+		add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 2 } }
+		add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 3 } }
+		add_building_construction = { type = dockyard level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 4 } }
+		add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 5 } }
+		add_building_construction = { type = offices level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 6 } }
+		add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 7 } }
+		add_building_construction = { type = radar_station level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 8 } }
+		add_building_construction = { type = air_base level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 9 } }
+		add_building_construction = { type = fuel_silo level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 10 } }
+		add_building_construction = { type = internet_station level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 11 } }
+		add_building_construction = { type = synthetic_refinery level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 12 } }
+		add_building_construction = { type = fossil_powerplant level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 13 } }
+		add_building_construction = { type = nuclear_reactor level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+	else_if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 14 } }
+		add_building_construction = { type = agriculture_district level = 1 instant_build = yes }
+		add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
+	}
+}
+
+# TODO: Try to remove this if I can
+# Function: calculate_ai_construction_speed
+# Purpose: calculate the AI construction speed for display purposes within the event
+calculate_ai_construction_speed = {
+	# Retrieve the Construction Values here and then calculate whether they're valid
+	get_building_construction_values = yes
+
+	set_temp_variable = { local_state_modifier = 0 }
+	var:AI_best_target = {
+		# Infrastructure
+		set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
+		multiply_temp_variable = { target_state_infra_speed = 0.15 }
+		add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
+
+		# Internet Station
+		set_temp_variable = { target_state_internet_station_speed = building_level@internet_station }
+		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
+	}
+	add_to_temp_variable = { construction_speed = local_state_modifier }
+
+	# Calculate the net modifier from the investment duration modifier and receiving_duration_investment_modifier
+	set_temp_variable = { receiving_investment_duration_temp = 0 }
+	var:AI_best_target = {
+		CONTROLLER = {
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = ECB_president }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+			}
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = EU_finance_minister }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
+			if = {
+				limit = {
+					has_idea = FRA_idea_development_investment
+					PREV.PREV = { original_tag = FRA }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
+			if = {
+				limit = {
+					PREV.PREV = {
+						has_country_flag = mutual_investment_treaty_@PREV
+					}
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+		}
+	}
+	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
+	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
+		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+	else = {
+		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+
+	# Total Factory Output
+	# Assume the maximum of
+	# 5 x 15 Civilian Industry Devoted to a single construction
+	multiply_temp_variable = { construction_speed = 75 }
+
+	# Days to build
+	# total building_cost which can be found in common/buildings/00_building.txt
+	if = { limit = { check_variable = { construction_speed > 0 } }
+		divide_temp_variable = { building_cost = construction_speed }
+	}
+
+	# Sets and round build cost to whole number increments
+	set_variable = { project_construction_duration^-1 = building_cost }
+	round_variable = project_construction_duration^-1
+
+	# For Offer
+	set_variable = { project_construction_duration^-2 = project_construction_duration^-1 }
+}
+
+# Function: init_project
+# Purpose: The following function initializes the project variables that are used in properly calculating the investments
+# Sample Day Equation for Civilian Industry:
+# building_cost / ( modifier@production_speed_industrial_complex_factor + -0.25 + modifier@production_speed_buildings_factor + local_state_modifier + receiving_investment_duration_temp)
+init_project = {
+	ROOT = {
+		# Retrieve the Construction Values here and then calculate whether they're valid
+		get_building_construction_values = yes
+
+		set_temp_variable = { local_state_modifier = 0 }
+		PREV = {
+			# Infrastructure
+			set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
+			multiply_temp_variable = { target_state_infra_speed = 0.15 }
+			add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
+
+			# Internet Station
+			set_temp_variable = { target_state_internet_station_speed = building_level@internet_station }
+			multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+			add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
+
+			if = {
+				limit = { has_state_flag = currently_encouraged_investments }
+				add_to_temp_variable = { local_state_modifier = 0.15 }
+			}
+		}
+		add_to_temp_variable = { construction_speed = local_state_modifier }
+
+		# Calculate the net modifier from the investment duration modifier and receiving_duration_investment_modifier
+		set_temp_variable = { receiving_investment_duration_temp = 0 }
+		PREV = {
+			CONTROLLER = {
+				if = {
+					limit = {
+						is_in_array = { global.EU_member = THIS.id }
+						ROOT = { has_idea = ECB_president }
+					}
+					add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+				}
+				if = {
+					limit = {
+						is_in_array = { global.EU_member = THIS.id }
+						ROOT = { has_idea = EU_finance_minister }
+					}
+					add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+				}
+				if = {
+					limit = {
+						has_idea = FRA_idea_development_investment
+						ROOT = { original_tag = FRA }
+					}
+					add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+				}
+				if = {
+					limit = {
+						has_country_flag = mutual_investment_treaty_@ROOT
+					}
+					add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+			}
+		}
+		add_to_temp_variable = { receiving_investment_duration_temp = ROOT.modifier@investment_duration_modifier }
+		clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+		if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
+			add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		}
+		else = {
+			subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+		}
+
+		# Displayed Construction Modifier
+		# 200% means you produce the building at 2x the speed in this case
+		set_variable = { displayable_construction_modifier = construction_speed }
+
+		# Total Factory Output
+		# Assume the maximum of industry-assigned
+		# 5 x 15 Civilian Industry Devoted to a single construction
+		multiply_temp_variable = { construction_speed = 75 }
+
+		# Days to build
+		# total building_cost which can be found in common/buildings/00_building.txt
+		if = { limit = { check_variable = { construction_speed > 0 } }
+			divide_temp_variable = { building_cost = construction_speed }
+		}
+
+		# Sets and round build cost to whole number increments
+		set_variable = { project_construction_duration^project = building_cost }
+		round_variable = project_construction_duration^project
+
+		# Decision tooltip for total time to build
+		set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
+		multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
+
+		# For Offer
+		set_variable = { project_construction_duration^-2 = project_construction_duration^project }
+	}
+}
+
+# Function: init_project_two
+# Purpose: same purpose as init_project
+init_project_two = {
+	# Retrieve the Construction Values here and then calculate whether they're valid
+	get_building_construction_values = yes
+
+	set_temp_variable = { local_state_modifier = 0 }
+	var:AC_state_target = {
+		# Infrastructure
+		set_temp_variable = { target_state_infra_speed = building_level@infrastructure }
+		multiply_temp_variable = { target_state_infra_speed = 0.15 }
+		add_to_temp_variable = { local_state_modifier = target_state_infra_speed }
+
+		# Internet Station
+		set_temp_variable = { target_state_internet_station_speed = building_level@internet_station }
+		multiply_temp_variable = { target_state_internet_station_speed = 0.05 }
+		add_to_temp_variable = { local_state_modifier = target_state_internet_station_speed }
+	}
+	add_to_temp_variable = { construction_speed = local_state_modifier }
+
+	# Duration Multiplier
+	set_temp_variable = { receiving_investment_duration_temp = 0 }
+	PREV = {
+		CONTROLLER = {
+			# Custom modifier for the ECB President
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = ECB_president }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+			}
+			if = {
+				limit = {
+					is_in_array = { global.EU_member = THIS.id }
+					PREV.PREV = { has_idea = EU_finance_minister }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
+			if = {
+				limit = {
+					has_idea = FRA_idea_development_investment
+					PREV.PREV = { original_tag = FRA }
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
+			if = {
+				limit = {
+					PREV.PREV = {
+						has_country_flag = mutual_investment_treaty_@PREV
+					}
+				}
+				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+		}
+	}
+	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
+	# Clamp to absolute -100%
+	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
+	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } } # Ensures we add the value if it's positive so we don't get weirdness
+		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+	else = {
+		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	}
+
+
+	# Total Factory Output
+	# Assume the maximum of
+	# 5 x 15 Civilian Industry Devoted to a single construction
+	multiply_temp_variable = { construction_speed = 75 }
+
+	# Days to build
+	if = { limit = { check_variable = { construction_speed > 0 } }
+		divide_temp_variable = { building_cost = construction_speed }
+	}
+
+	# Sets and round build cost to whole number increments
+	set_variable = { project_construction_duration^project = building_cost }
+	round_variable = project_construction_duration^project
+
+	# Decision tooltip for total time to build
+	set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
+	multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
+
+	# For Offer
+	set_variable = { project_construction_duration^-2 = project_construction_duration^project }
+}
+
+# - Used in the AC_event.10 to AC Event Master Event
+# Purpose: It properly calculates the section
+start_project_two = {
+	# Get available project
+	get_available_project = yes
+
+	# new_project sets the correct index for the new project
+	if = { limit = { has_variable = new_project }
+
+		# Initializes the Project
+		set_variable = { project = new_project }
+		set_variable = { project_type = -1 }
+
+		init_project_two = yes
+
+		# Should scope to the actual project
+		var:AC_state_target = {
+			add_to_array = { projects_in_state = PREV.id } #Should be FROM
+			# Create a new array for this
+			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
+			set_variable = { project_target_state_@PREV = PREV.project }
+			# Sets the starting nation
+			set_variable = { PREV.project_array^PREV.project = THIS.id }
+			CONTROLLER = {
+				set_variable = { PREV.PREV.project_target_country^PREV.PREV.project = THIS.id }
+			}
+		}
+
+		# Active Project Variables
+		set_variable = { project_build_amount^project = project_build_amount^-1 }
+		set_variable = { project_building_type^project = project_building_type^-1 }
+		set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
+
+		# Activate Project
+		add_to_variable = { treasury = project_monetary_cost_effect } # Project Monetary Cost Effect is -1
+		set_temp_variable = { temp_calculator = project_monetary_cost_effect }
+		multiply_temp_variable = { temp_calculator = -1 }
+		add_to_variable = { int_investments = temp_calculator }
+		add_to_variable = { active_projects = 1 }
+
+		# Initializes the target decisions for the investment project
+		initialize_start_project_decisions = yes
+
+		clear_variable = project
+		clear_variable = project_type
+		clear_variable = new_project
+	}
+
+	refresh_gui = yes
+}
+
+# Either FROM or Country
+start_project = {
+	# Get available project
+	ROOT = { get_available_project = yes }
+
+	# new_project sets the correct index for the new project
+	if = { limit = { ROOT = { has_variable = new_project } }
+
+		ROOT = {
+			# Initializes the Project
+			set_variable = { project = new_project }
+			set_variable = { project_type = -1 }
+		}
+
+		init_project = yes
+
+		# Should scope to the actual project
+		var:ROOT.AC_state_target = {
+			add_to_array = { projects_in_state = ROOT.id } #Should be FROM
+			# Create a new array for this
+			add_to_array = { project_type_in_state = ROOT.project_building_type^-1 }
+			set_variable = { project_target_state_@ROOT = ROOT.project }
+			# Sets the starting nation
+			set_variable = { ROOT.project_array^ROOT.project = THIS.id }
+			CONTROLLER = { set_variable = { ROOT.project_target_country^ROOT.project = THIS.id } }
+		}
+
+		ROOT = {
+			# Active Project Variables
+			set_variable = { project_build_amount^project = project_build_amount^-1 }
+			set_variable = { project_building_type^project = project_building_type^-1 }
+			set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
+
+			# Activate Project
+			add_to_variable = { treasury = project_monetary_cost_effect } # Project Monetary Cost Effect is -1
+			set_temp_variable = { temp_calculator = project_monetary_cost_effect }
+			multiply_temp_variable = { temp_calculator = -1 }
+			add_to_variable = { int_investments = temp_calculator }
+			add_to_variable = { active_projects = 1 }
+
+			# Initializes the target decisions for the investment project
+			initialize_start_project_decisions = yes
+
+			clear_variable = project
+			clear_variable = project_type
+			clear_variable = new_project
+		}
+	}
+
+	refresh_gui = yes
+}
+
+complete_project = {
+	if = { limit = { check_variable = { project_array^project < 0 } }
+
+		set_variable = { project_type = project }
+
+		# State in the project:
+		# project_array^project represents the actual project
+		var:project_array^project = {
+			if = { limit = { investment_building_slot_available = yes }
+
+				add_finished_buildings = yes
+				# Opinion Bonus Towards Builder
+				CONTROLLER = { add_opinion_modifier = { target = ROOT modifier = AC_construction_opinion4 } }
+
+				# Reactivate Project if there is a queue
+				ROOT = {
+					if = {
+						limit = {
+							check_variable = { project_build_amount^project > 1 }
+							PREV = { investment_building_slot_available = yes }
+						}
+
+						subtract_from_variable = { project_build_amount^project = 1 }
+
+						PREV = { init_project = yes }
+
+						initialize_complete_project_decisions = yes
+					}
+					else = {
+						end_project = yes
+					}
+				}
+			}
+			else = { ROOT = { end_project = yes } }
+		}
+	}
+
+	clear_variable = project
+	clear_variable = project_type
+
+	refresh_gui = yes
+}
+
+end_project = {
+	if = { limit = { check_variable = { project_array^project < 0 } }
+
+		var:project_array^project = {
+			clear_variable = project_target_state_@PREV
+			for_each_loop = {
+				value = v
+				index = i
+				array = projects_in_state
+				if = { limit = { check_variable = { v = PREV.id } }
+					remove_from_array = { array = projects_in_state value = PREV.id }
+					# Should clear the array
+					remove_from_array = { array = project_type_in_state index = i }
+				}
+			}
+
+			set_temp_variable = { tag_index = THIS.id }
+		}
+
+		# Refund Remaining Cash if the project is unfinished
+		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
+			add_to_variable = { var = treasury value = project_monetary_cost^project }
+			if = { limit = { check_variable = { int_investments > project_monetary_cost^project } }
+				subtract_from_variable = { var = int_investments value = project_monetary_cost^project }
+				clamp_variable = { var = int_investments min = 0 }
+			}
+			else = {
+				subtract_from_variable = { var = treasury value = project_monetary_cost^project }
+			}
+			set_temp_variable = { return_to_sender = project_monetary_cost^project }
+			multiply_temp_variable = { return_to_sender = 0.10 }
+			var:project_array^project = {
+				CONTROLLER = { add_to_variable = { var = treasury value = return_to_sender } }
+			}
+		}
+
+		initialize_end_project_decisions = yes
+
+		# Clear Utility
+		clear_variable = project_build_amount^project
+		clear_variable = project_building_type^project
+		clear_variable = project_construction_duration^project
+		clear_variable = project_total_construction_duration_display^project
+		clear_variable = project_target_country^project
+		clear_variable = project_monetary_cost^project
+	}
+
+	clear_variable = project
+
+	refresh_gui = yes
+}
+
+initialize_start_project_decisions = {
+	if = { limit = { check_variable = { project = 0 } }
+		activate_decision = AC_project_0_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_0_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 1 } }
+		activate_decision = AC_project_1_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_1_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 2 } }
+		activate_decision = AC_project_2_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_2_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 3 } }
+		activate_decision = AC_project_3_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_3_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 4 } }
+		activate_decision = AC_project_4_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_4_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 5 } }
+		activate_decision = AC_project_5_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_5_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 6 } }
+		activate_decision = AC_project_6_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_6_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 7 } }
+		activate_decision = AC_project_7_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_7_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 8 } }
+		activate_decision = AC_project_8_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_8_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 9 } }
+		activate_decision = AC_project_9_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_9_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 10 } }
+		activate_decision = AC_project_10_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_10_target_decision }
+		}
+
+	}
+	else_if = { limit = { check_variable = { project = 11 } }
+		activate_decision = AC_project_11_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_11_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 12 } }
+		activate_decision = AC_project_12_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_12_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 13 } }
+		activate_decision = AC_project_13_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_13_target_decision }
+		}
+	}
+	else_if = { limit = { check_variable = { project = 14 } }
+		activate_decision = AC_project_14_decision
+
+		var:project_target_country^project = {
+			set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
+			activate_targeted_decision = { target = PREV decision = AC_project_14_target_decision }
+		}
+	}
+}
+
+initialize_complete_project_decisions = {
+	if = { limit = { check_variable = { ROOT.project = 0 } }
+		activate_decision = AC_project_0_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_0_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_0_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 1 } }
+		activate_decision = AC_project_1_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_1_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_1_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 2 } }
+		activate_decision = AC_project_2_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_2_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_2_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 3 } }
+		activate_decision = AC_project_3_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_3_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_3_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 4 } }
+		activate_decision = AC_project_4_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_4_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_4_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 5 } }
+		activate_decision = AC_project_5_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_5_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_5_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 6 } }
+		activate_decision = AC_project_6_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_6_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_6_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 7 } }
+		activate_decision = AC_project_7_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_7_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_7_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 8 } }
+		activate_decision = AC_project_8_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_8_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_8_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 9 } }
+		activate_decision = AC_project_9_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_9_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_9_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 10 } }
+		activate_decision = AC_project_10_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_10_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_10_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 11 } }
+		activate_decision = AC_project_11_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_11_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_11_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 12 } }
+		activate_decision = AC_project_12_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_12_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_12_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 13 } }
+		activate_decision = AC_project_13_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_13_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_13_target_decision }
+			}
+		}
+	}
+	else_if = { limit = { check_variable = { ROOT.project = 14 } }
+		activate_decision = AC_project_14_decision
+
+		PREV = {
+			CONTROLLER = {
+				set_variable = { project_target_construction_duration = ROOT.project_construction_duration^ROOT.project }
+				remove_targeted_decision = { target = ROOT decision = AC_project_14_target_decision }
+				activate_targeted_decision = { target = ROOT decision = AC_project_14_target_decision }
+			}
+		}
+	}
+}
+
+initialize_end_project_decisions = {
+	if = { limit = { check_variable = { project = 0 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_0_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.30 }
+	}
+	else_if = { limit = { check_variable = { project = 1 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_1_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.31 }
+	}
+	else_if = { limit = { check_variable = { project = 2 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_2_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.32 }
+	}
+	else_if = { limit = { check_variable = { project = 3 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_3_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.33 }
+	}
+	else_if = { limit = { check_variable = { project = 4 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_4_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.34 }
+	}
+	else_if = { limit = { check_variable = { project = 5 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_5_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.35 }
+	}
+	else_if = { limit = { check_variable = { project = 6 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_6_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.36 }
+	}
+	else_if = { limit = { check_variable = { project = 7 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_7_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.37 }
+	}
+	else_if = { limit = { check_variable = { project = 8 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_8_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.38 }
+	}
+	else_if = { limit = { check_variable = { project = 9 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_9_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.39 }
+	}
+	else_if = { limit = { check_variable = { project = 10 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_10_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.310 }
+	}
+	else_if = { limit = { check_variable = { project = 11 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_11_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.311 }
+	}
+	else_if = { limit = { check_variable = { project = 12 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_12_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.312 }
+	}
+	else_if = { limit = { check_variable = { project = 13 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_13_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.313 }
+	}
+	else_if = { limit = { check_variable = { project = 14 } }
+		var:project_target_country^project = {
+			clear_variable = project_target_construction_duration
+			remove_targeted_decision = { target = PREV decision = AC_project_14_target_decision }
+		}
+
+		set_variable = { project_array^project = 1 }
+		country_event = { id = AC_event.314 }
+	}
+}
+
+# Owned Development GUI
+state_owned_concurrent_investment_limit_implement = {
+	set_temp_variable = { test_string = global.date }
+	add_to_temp_variable = { test_string = 2.88 } # 120 Days. An in-game hour equates to 0.001 Hours
+
+	# Add the Flag
+	set_temp_variable = { b = 0 }
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			NOT = { has_country_flag = state_owned_investments_project_one }
+		}
+		set_country_flag = { flag = state_owned_investments_project_one value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_one_state = PREV.id }
+		set_variable = { state_owned_investments_project_one_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			NOT = { has_country_flag = state_owned_investments_project_two }
+		}
+		set_country_flag = { flag = state_owned_investments_project_two value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_two_state = PREV.id }
+		set_variable = { state_owned_investments_project_two_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			OR = {
+				has_idea = superpower
+				has_idea = great_power
+				has_idea = large_power
+				has_idea = regional_power
+			}
+			NOT = { has_country_flag = state_owned_investments_project_three }
+		}
+		set_country_flag = { flag = state_owned_investments_project_three value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_three_state = PREV.id }
+		set_variable = { state_owned_investments_project_three_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			OR = {
+				has_idea = superpower
+				has_idea = great_power
+				has_idea = large_power
+			}
+			NOT = { has_country_flag = state_owned_investments_project_four }
+		}
+		set_country_flag = { flag = state_owned_investments_project_four value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_four_state = PREV.id }
+		set_variable = { state_owned_investments_project_four_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			OR = {
+				has_idea = superpower
+				has_idea = great_power
+			}
+			NOT = { has_country_flag = state_owned_investments_project_five }
+		}
+		set_country_flag = { flag = state_owned_investments_project_five value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_five_state = PREV.id }
+		set_variable = { state_owned_investments_project_five_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+	if = {
+		limit = {
+			check_variable = { b = 0 }
+			has_idea = superpower
+			NOT = { has_country_flag = state_owned_investments_project_six }
+		}
+		set_country_flag = { flag = state_owned_investments_project_six value = 1 days = 120 }
+		set_variable = { state_owned_investments_project_six_state = PREV.id }
+		set_variable = { state_owned_investments_project_six_expiration_date = test_string }
+		set_temp_variable = { b = 1 }
+	}
+}
+
+# Effect: calculate_internal_investments_costs
+# Purpose: Calculates the internal investments political power costs as well as the amount of money it costs.
+# also sets the flag limits.
+calculate_internal_investments_costs = {
+	ROOT = {
+		set_temp_variable = { pp_cost = pp_cost_temp }
+
+		set_temp_variable = { pp_cost_modifier = 1 }
+		add_to_temp_variable = { pp_cost_modifier = modifier@internal_investments_pp_cost_modifier }
+
+		multiply_temp_variable = { pp_cost = pp_cost_modifier }
+		clamp_temp_variable = { var = pp_cost min = 25 }
+		multiply_temp_variable = { pp_cost = -1 }
+		add_political_power = pp_cost
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = ii_cost }
+
+		set_temp_variable = { ii_cost_modifier = 1 }
+		add_to_temp_variable = { ii_cost_modifier = modifier@internal_investments_money_cost_modifier }
+
+		set_temp_variable = { min_ii_cost = gdp_total }
+		multiply_temp_variable = { min_ii_cost = 0.001 }
+
+		multiply_temp_variable = { treasury_change = ii_cost_modifier }
+		clamp_temp_variable = { var = treasury_change min = min_ii_cost }
+		multiply_temp_variable = { treasury_change = -1 }
+
+		modify_treasury_effect = yes
+		state_owned_concurrent_investment_limit_implement = yes
+	}
+	refresh_gui = yes
+}
