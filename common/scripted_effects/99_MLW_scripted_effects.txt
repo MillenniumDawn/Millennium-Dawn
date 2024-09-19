@@ -1,7 +1,8 @@
 # move this later
 if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 
-
+# use MLW_refresh_money_display when making scripted effects with money involved, income or expenses and set up similar to money scripted
+# this is to keep the money scripted effect cleaner with less merge conflicts possible
 
 # DYNAMIC MODIFIER SCRIPTED EFFECTS
 	# MULTIPURPOSE DM EFFECTS
@@ -17,6 +18,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 		update_MLW_oil_upkeep = {
 			custom_effect_tooltip = update_MLW_oil_upkeep_TT
 			add_to_variable = { MLW_oil_upkeep_costs = DM_additional_money_change }
+			MLW_refresh_money_display = yes
 		}
 	# FOREIGN POLICY EFFECTS
 		# GCC EFFECTS
@@ -328,6 +330,100 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 				custom_effect_tooltip = MLW_LW_militaristic_annexation_checker_TT
 			}
 		}
+
+		MLW_LW_assault_from_NORTH_MALAWI = {
+			custom_effect_tooltip = MLW_LW_assault_from_NORTH_MALAWI_TT
+			set_country_flag = MLW_LW_assault_launched_from_NORTH_MALAWI
+		}
+		MLW_LW_assault_from_NJOMBE = {
+			custom_effect_tooltip = MLW_LW_assault_from_NJOMBE_TT
+			set_country_flag = MLW_LW_assault_launched_from_NJOMBE
+		}
+		MLW_LW_assault_from_MBEYA = {
+			custom_effect_tooltip = MLW_LW_assault_from_MBEYA_TT
+			set_country_flag = MLW_LW_assault_launched_from_MBEYA
+		}
+		MLW_LW_assault_from_WEST_RUVUMA = {
+			custom_effect_tooltip = MLW_LW_assault_from_WEST_RUVUMA_TT
+			set_country_flag = MLW_LW_assault_launched_from_WEST_RUVUMA
+		}
+		MLW_LW_assault_from_WEST_NIASSA = {
+			custom_effect_tooltip = MLW_LW_assault_from_WEST_NIASSA_TT
+			set_country_flag = MLW_LW_assault_launched_from_WEST_NIASSA
+		}
+		MLW_LW_assault_from_SOUTH_MALAWI = {
+			custom_effect_tooltip = MLW_LW_assault_from_SOUTH_MALAWI_TT
+			set_country_flag = MLW_LW_assault_launched_from_SOUTH_MALAWI
+		}
+
+		MLW_LW_hybrid_warfare_refugee_math = {
+			set_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 1 }
+			if = { # DRC CHECK
+				limit = { has_country_flag = MLW_UDF_DRC_refugee_visa_ACTIVE }
+				if = { # DRC HIGH LEVEL
+					limit = { has_country_flag = MLW_second_congolese_war_refugee_level_DRC }
+					add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.5 }
+				}
+				else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.2 } }
+			}
+			if = { # RWA CHECK
+				limit = { has_country_flag = MLW_UDF_RWA_refugee_visa_ACTIVE }
+				if = { # RWA HIGH LEVEL
+					limit = { has_country_flag = MLW_second_congolese_war_refugee_level_RWA }
+					add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.2 }
+				}
+				else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.1 } }
+			}
+			if = { # BUR CHECK
+				limit = { has_country_flag = MLW_UDF_BUR_refugee_visa_ACTIVE }
+				if = { # BUR HIGH LEVEL
+					limit = { has_country_flag = MLW_second_congolese_war_refugee_level_BUR }
+					add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.1 }
+				}
+				else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.05 } }
+			}
+		}
+
+		MLW_LW_hybrid_warfare_math = {
+			clear_variable = MLW_LW_defence_VAR
+			MLW_LW_hybrid_warfare_refugee_math = yes
+			if = {
+				limit = { MLW_LW_MBEYA = yes }
+				# defence math
+				set_temp_variable = { DM_defence_change = 1045.MLW_LW_hybrid_warfare } # 5 - 5 times decision taken
+				multiply_temp_variable = { DM_defence_change = 6 } # 30 - multiplied by 6
+				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP } # 1.8 - max modifier with refugee math
+				multiply_temp_variable = { DM_defence_change = -1 } # inverted to give debuff
+				set_variable = { MLW_LW_defence_VAR = DM_defence_change } # -54%
+			}
+			if = {
+				limit = { MLW_LW_NJOMBE = yes }
+				set_temp_variable = { DM_defence_change = 1046.MLW_LW_hybrid_warfare }
+				multiply_temp_variable = { DM_defence_change = 6 }
+				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
+				multiply_temp_variable = { DM_defence_change = -1 }
+				set_variable = { MLW_LW_defence_VAR = DM_defence_change }
+			}
+			if = {
+				limit = { MLW_LW_WESTRUVUMA = yes }
+				set_temp_variable = { DM_defence_change = 1047.MLW_LW_hybrid_warfare }
+				multiply_temp_variable = { DM_defence_change = 6 }
+				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
+				multiply_temp_variable = { DM_defence_change = -1 }
+				set_variable = { MLW_LW_defence_VAR = DM_core_defence_change }
+			}
+			if = {
+				limit = { MLW_LW_WESTNIASSA = yes }
+				set_temp_variable = { DM_defence_change = 1049.MLW_LW_hybrid_warfare }
+				multiply_temp_variable = { DM_defence_change = 6 }
+				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
+				multiply_temp_variable = { DM_defence_change = -1 }
+				set_variable = { MLW_LW_defence_VAR = DM_defence_change }
+			}
+		}
+
+
+
 		# SOUTH AFRICA EFFECTS
 			MLW_SAF_dynamic_modifier_check_for_SAF = {
 				if = { limit = { NOT = { has_dynamic_modifier = { modifier = MLW_SAF_DM } } } add_dynamic_modifier = { modifier = MLW_SAF_DM } }
@@ -543,7 +639,292 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 				add_to_variable = { MLW_state_productivity_LOGGING = DM_state_productivity_change }
 			}
 		#
-	#
+	# POLITICAL PARTY EFFECTS
+		# UDF EFFECTS
+			MLW_chief_dice_roll = {
+				hidden_effect = {
+					random_list = {
+						40 = { set_country_flag = MLW_chiefs_request_money }
+						40 = { set_country_flag = MLW_chiefs_request_political_concessions }
+						20 = { set_country_flag = MLW_chiefs_request_nepotism }
+					}
+				}
+			}
+			MLW_congo_war_check_to_add_refugees_CONGO = {
+				if = {
+					limit = { DRC = { exists = yes } }
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = DRC
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					DRC = {
+						add_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+				if = {
+					limit = { MLC = { exists = yes } }
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = MLC
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					MLC = {
+						add_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+				if = {
+					limit = { RCD = { exists = yes } }
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = RCD
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					RCD = {
+						add_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+			}
+			MLW_congo_war_check_to_add_refugees_RWANDA = {
+				if = {
+					limit = { RWA = { exists = yes } }
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = RWA
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					RWA = {
+						add_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+			}
+			MLW_congo_war_check_to_add_refugees_BURUNDI = {
+				if = {
+					limit = { BUR = { exists = yes } }
+					hidden_effect = {
+						add_opinion_modifier = {
+							target = BUR
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					BUR = {
+						add_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+			}
+			MLW_congo_war_check_to_remove_refugees_CONGO = {
+				if = {
+					limit = {
+						DRC = {
+							exists = yes
+							has_opinion_modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					hidden_effect = {
+						remove_opinion_modifier = {
+							target = DRC
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					DRC = {
+						remove_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+				if = {
+					limit = {
+						MLC = {
+							exists = yes
+							has_opinion_modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					hidden_effect = {
+						remove_opinion_modifier = {
+							target = MLC
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					MLC = {
+						remove_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+				if = {
+					limit = {
+						RCD = {
+							exists = yes
+							has_opinion_modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					hidden_effect = {
+						remove_opinion_modifier = {
+							target = RCD
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					RCD = {
+						remove_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+			}
+			MLW_congo_war_check_to_remove_refugees_RWANDA = {
+				if = {
+					limit = {
+						RWA = {
+							exists = yes
+							has_opinion_modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					hidden_effect = {
+						remove_opinion_modifier = {
+							target = RWA
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					RWA = {
+						remove_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+			}
+			MLW_congo_war_check_to_remove_refugees_BURUNDI = {
+				if = {
+					limit = {
+						BUR = {
+							exists = yes
+							has_opinion_modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					hidden_effect = {
+						remove_opinion_modifier = {
+							target = BUR
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+					BUR = {
+						remove_opinion_modifier = {
+							target = MLW
+							modifier = AFRICA_accepting_of_refugees
+						}
+					}
+				}
+			}
+			update_MLW_UDF_centralisation_cost = {
+				custom_effect_tooltip = MLW_UDF_bureau_cost_TT
+				add_to_variable = { MLW_UDF_bureau_cost = DM_bureau_cost_change }
+			}
+			update_MLW_UDF_construction_speed = {
+				custom_effect_tooltip = MLW_UDF_construction_speed_TT
+				add_to_variable = { MLW_UDF_construction_speed = DM_construction_speed_change }
+			}
+			update_MLW_UDF_corp_tax_income = {
+				custom_effect_tooltip = MLW_UDF_corp_tax_income_TT
+				add_to_variable = { MLW_UDF_corp_tax_income = DM_corp_tax_income_change }
+			}
+			update_MLW_UDF_education_cost = {
+				custom_effect_tooltip = MLW_UDF_education_cost_TT
+				add_to_variable = { MLW_UDF_education_cost = DM_edu_cost_change }
+			}
+			update_MLW_UDF_factory_efficiency = { # fix
+				custom_effect_tooltip = MLW_UDF_factory_efficiency_TT
+				add_to_variable = { MLW_UDF_factory_efficiency = DM_factory_efficiency_change }
+			}
+			update_MLW_UDF_health_cost = {
+				custom_effect_tooltip = MLW_UDF_health_cost_TT
+				add_to_variable = { MLW_UDF_health_cost = DM_health_cost_change }
+			}
+			update_MLW_UDF_migration_rate = {
+				custom_effect_tooltip = MLW_UDF_migration_rate_TT
+				add_to_variable = { MLW_UDF_migration_rate = DM_migration_rate_change }
+			}
+			update_MLW_UDF_police_cost = {
+				custom_effect_tooltip = MLW_UDF_police_cost_TT
+				add_to_variable = { MLW_UDF_police_cost = DM_police_cost_change }
+			}
+			update_MLW_UDF_policies_expenses = {
+				custom_effect_tooltip = MLW_UDF_expenses_TT
+				add_to_variable = { MLW_UDF_policies_additional_money_cost = DM_additional_money_change }
+				MLW_refresh_money_display = yes
+			}
+			update_MLW_UDF_policies_income = {
+				custom_effect_tooltip = MLW_UDF_income_TT
+				add_to_variable = { MLW_UDF_policies_additional_money_return = DM_additional_money_change }
+				MLW_refresh_money_display = yes
+			}
+			update_MLW_UDF_pop_tax_income = {
+				custom_effect_tooltip = MLW_UDF_pop_tax_income_TT
+				add_to_variable = { MLW_UDF_pop_tax_income = DM_pop_tax_income_change }
+			}
+			update_MLW_UDF_population_growth = {
+				custom_effect_tooltip = MLW_UDF_population_growth_TT
+				add_to_variable = { MLW_UDF_population_growth = DM_pop_growth_change }
+			}
+			update_MLW_UDF_pp_gain = { # fix
+				custom_effect_tooltip = MLW_UDF_pp_gain_TT
+				add_to_variable = { MLW_UDF_PP_gain = DM_political_power_gain_change }
+			}
+			update_MLW_UDF_research_speed = {
+				custom_effect_tooltip = MLW_UDF_research_speed_TT
+				add_to_variable = { MLW_UDF_research_speed = DM_research_speed_change }
+			}
+			update_MLW_UDF_social_cost = {
+				custom_effect_tooltip = MLW_UDF_social_cost_TT
+				add_to_variable = { MLW_UDF_social_cost = DM_social_cost_change }
+			}
+			update_MLW_UDF_stability = {
+				custom_effect_tooltip = MLW_UDF_stability_TT
+				add_to_variable = { MLW_UDF_stability = DM_stability_change }
+			}
+			update_MLW_UDF_western_propaganda = {
+				custom_effect_tooltip = MLW_UDF_propaganda_TT
+				add_to_variable = { MLW_UDF_policies_western_propaganda = DM_western_campaign_cost_change }
+			}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	# ECONOMY EFFECTS
 		MLW_economy_go_forwards = {
@@ -653,7 +1034,40 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 
 # GUI STUFF
 
-
+MLW_refresh_money_display = {
+	# INCOMES
+		set_variable = { MLW_total_income = 0 }
+		if = { # UDF POLICY INCOMES
+			limit = { check_variable = { MLW_UDF_policies_additional_income > 0 } }
+			add_to_variable = { MLW_total_income = MLW_UDF_policies_additional_income }
+		}
+		if = { # MZUZU MOTORS
+			limit = { check_variable = { MLW_MZ_weekly_income > 0 } }
+			add_to_variable = { MLW_total_income = MLW_MZ_weekly_income }
+		}
+		if = { # SADC TRADE INCOME
+			limit = { check_variable = { MLW_SADC_trade_income > 0 } }
+			add_to_variable = { MLW_total_income = MLW_SADC_trade_income }
+		}
+	# EXPENSES
+		set_variable = { MLW_total_expenses = 0 }
+		if = { # UDF POLICY EXPENSES
+			limit = { check_variable = { MLW_UDF_policies_additional_expenses > 0 } }
+			add_to_variable = { MLW_total_expenses = MLW_UDF_policies_additional_expenses }
+		}
+		if = { # MZUZU MOTORS
+			limit = { check_variable = { MLW_MZ_weekly_expenses > 0 } }
+			add_to_variable = { MLW_total_expenses = MLW_MZ_weekly_expenses }
+		}
+		if = { # SADC TRADE INCOME
+			limit = { check_variable = { MLW_SADC_trade_expense > 0 } }
+			add_to_variable = { MLW_total_expenses = MLW_SADC_trade_expense }
+		}
+		if = { # OIL UPKEEP COSTS
+			limit = { check_variable = { MLW_oil_upkeep_costs > 0 } }
+			add_to_variable = { MLW_total_expenses = MLW_oil_upkeep_costs }
+		}
+}
 
 MLW_refresh_AIO = {
 	if = { limit = { check_variable = { MLW.refresh_AIO = 5000 } } set_variable = { MLW.refresh_AIO = 1 } }

@@ -903,7 +903,7 @@
 			# 	remove_effect = {}
 			# }
 			# HOSTILE ACTIONS # fix
-			MLW_LW_hybrid_warfare = { # fix
+			MLW_LW_hybrid_warfare = {
 				icon = decision
 				visible = { MLW_LW_bordering_state_visible_check = yes }
 				available = { MLW_LW_hybrid_warfare_available_check = yes }
@@ -922,32 +922,48 @@
 								MLW_LW_WESTRUVUMA = yes
 							}
 						}
-						TNZ = { country_event = MLW_FOPOL.4 }
+						if = {
+							limit = { MLW_LW_MBEYA = yes }
+							1045 = { add_to_variable = { MLW_LW_hybrid_warfare = 1 } }
+						}
+						if = {
+							limit = { MLW_LW_NJOMBE = yes }
+							1046 = { add_to_variable = { MLW_LW_hybrid_warfare = 1 } }
+						}
+						if = {
+							limit = { MLW_LW_WESTRUVUMA = yes }
+							1047 = { add_to_variable = { MLW_LW_hybrid_warfare = 1 } }
+						}
+						TNZ = { country_event = MLW_FOPOL_LW.4 }
 					}
 					if = {
 						limit = { MLW_LW_WESTNIASSA = yes }
+						1049 = { add_to_variable = { MLW_LW_hybrid_warfare = 1 } }
 						MOZ = { country_event = MLW_FOPOL_LW.4 }
 					}
-					# fix
-					#
-					# make this a targeted modifier change to whoever the state belongs to
-					# more breakthrough to signify sleeper cells in the area
-					#
-					# timed idea for the target of super high migration, same but inverse for malawi
-					# if taken the acceptance of refugees from DRC conflict, increase effectiveness of
-					# focus (more migrants to target, more emmigration from self)
+					add_timed_idea = {
+						idea = MLW_LW_migrants_leaving
+						days = 60
+					}
 				}
 				remove_effect = {}
 			}
 			MLW_LW_destabilisation_methods = { # fix
 				icon = decision
 				visible = {}
-				available = {}
+				available = {
+					# fix
+					#
+					# need to make this available with influence in the country
+				}
 
 				cost = 50
 
 				days_remove = 30
 				complete_effect = {
+					# fix
+					#
+					# need to make this cost influence
 					if = {
 						limit = {
 							OR = {
@@ -956,17 +972,24 @@
 								MLW_LW_WESTRUVUMA = yes
 							}
 						}
-						TNZ = { country_event = MLW_FOPOL.5 }
+						TNZ = {
+							country_event = MLW_FOPOL_LW.5
+							add_timed_idea = {
+								idea = MLW_LW_misinformation_campaigns
+								days = 35
+							}
+						}
 					}
 					if = {
 						limit = { MLW_LW_WESTNIASSA = yes }
-						MOZ = { country_event = MLW_FOPOL_LW.5 }
+						MOZ = {
+							country_event = MLW_FOPOL_LW.5
+							add_timed_idea = {
+								idea = MLW_LW_misinformation_campaigns
+								days = 35
+							}
+						}
 					}
-					# fix
-					#
-					# with influence, increase amount of misinfo in the target, weakening their war support with the lake wars DM
-					#
-					# timed idea for reduction of war support with a slight debuff generally
 				}
 				remove_effect = {}
 			}
@@ -1025,50 +1048,123 @@
 			}
 			MLW_LW_launch_assault = { # fix
 				icon = decision
-				visible = {
-					# MLW_LW_bordering_state_visible_check = yes
-				}
-				available = {
-					# fix
-					#
-					# available at level 10 military
-				}
+				visible = { MLW_LW_bordering_state_visible_check = yes }
+				available = { MLW_LW_10_military_check = yes }
 
 				cost = 50
 
+				# not sure how to make this do the proper "warn" for taking decisions
+				# because these aren't regular nor are they targeted, bird fix my ai
+
 				days_remove = 30
-				complete_effect = {
-					if = {
+				complete_effect = { # fix
+					if = { # MBEYA
 						limit = { MLW_LW_MBEYA = yes }
-						will_lead_to_war_with = TNZ
+						if = {
+							limit = {
+								owns_state = 259
+								owns_state = 1046
+							}
+							country_event = MLW_FOPOL_LW.8
+						}
 						if = {
 							limit = {
 								owns_state = 259
 								NOT = { owns_state = 1046 }
 							}
+							MLW_LW_assault_from_NORTH_MALAWI = yes
+						}
+						if = {
+							limit = {
+								NOT = { owns_state = 259 }
+								owns_state = 1046
+							}
+							MLW_LW_assault_from_NJOMBE = yes
 						}
 					}
+					if = { # NJOMBE
+						limit = { MLW_LW_NJOMBE = yes }
+						if = {
+							limit = {
+								owns_state = 1045
+								owns_state = 1047
+							}
+							country_event = MLW_FOPOL_LW.9
+						}
+						if = {
+							limit = {
+								owns_state = 1045
+								NOT = { owns_state = 1047 }
+							}
+							MLW_LW_assault_from_MBEYA = yes
+						}
+						if = {
+							limit = {
+								NOT = { owns_state = 1045 }
+								owns_state = 1047
+							}
+							MLW_LW_assault_from_WEST_RUVUMA = yes
+						}
+					}
+					if = { # WEST RUVUMA
+						limit = { MLW_LW_WESTRUVUMA = yes }
+						if = {
+							limit = {
+								owns_state = 1046
+								owns_state = 1049
+							}
+							country_event = MLW_FOPOL_LW.12
+						}
+						if = {
+							limit = {
+								owns_state = 1046
+								NOT = { owns_state = 1049 }
+							}
+							MLW_LW_assault_from_NJOMBE = yes
+						}
+						if = {
+							limit = {
+								NOT = { owns_state = 1046 }
+								owns_state = 1049
+							}
+							MLW_LW_assault_from_WEST_NIASSA = yes
+						}
+					}
+					if = { # WEST NIASSA
+						limit = { MLW_LW_WESTNIASSA = yes }
+						if = {
+							limit = {
+								owns_state = 260
+								owns_state = 1047
+							}
+							country_event = MLW_FOPOL_LW.13
+						}
+						if = {
+							limit = {
+								owns_state = 260
+								NOT = { owns_state = 1047 }
+							}
+							MLW_LW_assault_from_SOUTH_MALAWI = yes
+						}
+						if = {
+							limit = {
+								NOT = { owns_state = 260 }
+								owns_state = 1047
+							}
+							MLW_LW_assault_from_WEST_RUVUMA = yes
+						}
+					}
+					MLW_LW_hybrid_warfare_math = yes
 					# fix
-					#
-					# launches border skirmish in targeted state, if hybrid warfare has been completed in the state, troops are more
-					# effective
 					#
 					# need to be victorious once in order to gain state from target, upon occupation, unlocks conquest annexation
 					# decisions for the state
 				}
 				remove_effect = {
-					if = {
+					if = { # MBEYA - 1045
 						limit = { MLW_LW_MBEYA = yes }
-						if = { # FROM NORTH MALAWI
-							limit = {
-								OR = {
-									AND = {
-										owns_state = 259
-										NOT = { owns_state = 1046 }
-									}
-									has_country_flag = MLW_LW_assault_launched_from_NORTH_MALAWI
-								}
-							}
+						if = { # FROM NORTH MALAWI - 259
+							limit = { has_country_flag = MLW_LW_assault_launched_from_NORTH_MALAWI }
 							start_border_war = {
 								change_state_after_war = no
 								attacker = {
@@ -1086,8 +1182,13 @@
 									on_cancel = MLW_FOPOL_LWBW.1
 								}
 							}
+							set_border_war_data = {
+								attacker = 259
+								defender = 1045
+								defender_modifier = MLW_LW_defence_VAR
+							}
 						}
-						if = { # FROM NJOMBE
+						if = { # FROM NJOMBE - 1046
 							limit = { has_country_flag = MLW_LW_assault_launched_from_NJOMBE }
 							start_border_war = {
 								change_state_after_war = no
@@ -1106,20 +1207,17 @@
 									on_cancel = MLW_FOPOL_LWBW.2
 								}
 							}
+							set_border_war_data = {
+								attacker = 1046
+								defender = 1045
+								defender_modifier = MLW_LW_defence_VAR
+							}
 						}
 					}
-					if = {
+					if = { # NJOMBE - 1046
 						limit = { MLW_LW_NJOMBE = yes }
-						if = { # FROM MBEYA
-							limit = {
-								OR = {
-									AND = {
-										owns_state = 1045
-										NOT = { owns_state = 1047 }
-									}
-									has_country_flag = MLW_LW_assault_launched_from_MBEYA
-								}
-							}
+						if = { # FROM MBEYA - 1045
+							limit = { has_country_flag = MLW_LW_assault_launched_from_MBEYA }
 							start_border_war = {
 								change_state_after_war = no
 								attacker = {
@@ -1137,8 +1235,13 @@
 									on_cancel = MLW_FOPOL_LWBW.3
 								}
 							}
+							set_border_war_data = {
+								attacker = 1045
+								defender = 1046
+								defender_modifier = MLW_LW_defence_VAR
+							}
 						}
-						if = { # FROM WEST RUVUMA
+						if = { # FROM WEST RUVUMA - 1047
 							limit = { has_country_flag = MLW_LW_assault_launched_from_WEST_RUVUMA }
 							start_border_war = {
 								change_state_after_war = no
@@ -1157,20 +1260,17 @@
 									on_cancel = MLW_FOPOL_LWBW.4
 								}
 							}
+							set_border_war_data = {
+								attacker = 1047
+								defender = 1046
+								defender_modifier = MLW_LW_defence_VAR
+							}
 						}
 					}
-					if = {
+					if = { # WEST RUVUMA - 1047
 						limit = { MLW_LW_WESTRUVUMA = yes }
-						if = { # FROM NJOMBE
-							limit = {
-								OR = {
-									AND = {
-										owns_state = 1046
-										NOT = { owns_state = 1049 }
-									}
-									has_country_flag = MLW_LW_assault_launched_from_NJOMBE
-								}
-							}
+						if = { # FROM NJOMBE - 1046
+							limit = { has_country_flag = MLW_LW_assault_launched_from_NJOMBE }
 							start_border_war = {
 								change_state_after_war = no
 								attacker = {
@@ -1188,8 +1288,13 @@
 									on_cancel = MLW_FOPOL_LWBW.5
 								}
 							}
+							set_border_war_data = {
+								attacker = 1046
+								defender = 1047
+								defender_modifier = MLW_LW_defence_VAR
+							}
 						}
-						if = { # FROM WEST NIASSA
+						if = { # FROM WEST NIASSA - 1049
 							limit = { has_country_flag = MLW_LW_assault_launched_from_WEST_NIASSA }
 							start_border_war = {
 								change_state_after_war = no
@@ -1208,20 +1313,17 @@
 									on_cancel = MLW_FOPOL_LWBW.6
 								}
 							}
+							set_border_war_data = {
+								attacker = 1049
+								defender = 1047
+								defender_modifier = MLW_LW_defence_VAR
+							}
 						}
 					}
-					if = {
-						limit = { MLW_LW_WESTNIASS = yes }
-						if = { # FROM SOUTH MALAWI
-							limit = {
-								OR = {
-									AND = {
-										owns_state = 260
-										NOT = { owns_state = 1047 }
-									}
-									has_country_flag = MLW_LW_assault_launched_from_SOUTH_MALAWI
-								}
-							}
+					if = { # WEST NIASSA - 1049
+						limit = { MLW_LW_WESTNIASSA = yes }
+						if = { # FROM SOUTH MALAWI - 260
+							limit = { has_country_flag = MLW_LW_assault_launched_from_SOUTH_MALAWI }
 							start_border_war = {
 								change_state_after_war = no
 								attacker = {
@@ -1239,8 +1341,13 @@
 									on_cancel = MLW_FOPOL_LWBW.7
 								}
 							}
+							set_border_war_data = {
+								attacker = 260
+								defender = 1049
+								defender_modifier = MLW_LW_defence_VAR
+							}
 						}
-						if = { # FROM WEST RUVUMA
+						if = { # FROM WEST RUVUMA - 1047
 							limit = { has_country_flag = MLW_LW_assault_launched_from_WEST_RUVUMA }
 							start_border_war = {
 								change_state_after_war = no
@@ -1258,6 +1365,11 @@
 									on_lose = MLW_FOPOL_LWBW.81
 									on_cancel = MLW_FOPOL_LWBW.8
 								}
+							}
+							set_border_war_data = {
+								attacker = 1049
+								defender = 1047
+								defender_modifier = MLW_LW_defence_VAR
 							}
 						}
 					}
@@ -8051,7 +8163,7 @@
 		# 		visible = { NOT = { has_country_flag = MLW_viewing_UDF_policies } }
 		# 		available = {
 		# 			OR = {
-		# 				has_any_policy_enacted_from_UDF = yes
+		# 				MLW_has_any_policy_enacted_from_UDF = yes
 		# 				is_debug = yes
 		# 			}
 		# 		}
@@ -9038,127 +9150,147 @@
 		# 			}
 
 		# }
-		# MLW_privatisation_decision_CAT = {
-		# 	MLW_UDF_privatisation_IND = {
-		# 		icon = decision
-		# 		visible = { has_completed_focus = MLW_UDF_privatisation }
-		# 		available = {
-		# 			MLW_privatisation_interest_rate = yes
-		# 			MLW_privatisation_treasury_contents = yes
-		# 			industrial_complex > 1
-		# 			MLW_privatisation_underway = yes
-		# 		}
-		# 		cost = 25
-		# 		days_remove = 180
-		# 		complete_effect = {
-		# 			set_country_flag = {
-		# 				flag = MLW_privatisation_underway_flag
-		# 				value = 1
-		# 				days = 180
-		# 			}
-		# 		}
-		# 		remove_effect = {
-		# 			random_owned_state = {
-		# 				limit = { industrial_complex > 0 }
-		# 				remove_building = {
-		# 					type = industrial_complex
-		# 					level = 1
-		# 				}
-		# 				set_temp_variable = { treasury_change = 11.25 }
-		# 				modify_treasury_effect = yes
-		# 			}
-		# 		}
-		# 	}
-		# 	MLW_UDF_privatisation_MIL = {
-		# 		icon = decision
-		# 		visible = { has_completed_focus = MLW_UDF_privatisation }
-		# 		available = {
-		# 			MLW_privatisation_interest_rate = yes
-		# 			MLW_privatisation_treasury_contents = yes
-		# 			arms_factory > 1
-		# 			MLW_privatisation_underway = yes
-		# 		}
-		# 		cost = 25
-		# 		days_remove = 180
-		# 		complete_effect = {
-		# 			set_country_flag = {
-		# 				flag = MLW_privatisation_underway_flag
-		# 				value = 1
-		# 				days = 180
-		# 			}
-		# 		}
-		# 		remove_effect = {
-		# 			random_owned_state = {
-		# 				limit = { arms_factory > 0 }
-		# 				remove_building = {
-		# 					type = arms_factory
-		# 					level = 1
-		# 				}
-		# 				set_temp_variable = { treasury_change = 11.25 }
-		# 				modify_treasury_effect = yes
-		# 			}
-		# 		}
-		# 	}
-		# 	MLW_UDF_privatisation_DOC = {
-		# 		icon = decision
-		# 		visible = { has_completed_focus = MLW_UDF_privatisation }
-		# 		available = {
-		# 			MLW_privatisation_interest_rate = yes
-		# 			MLW_privatisation_treasury_contents = yes
-		# 			dockyard > 1
-		# 			MLW_privatisation_underway = yes
-		# 		}
-		# 		cost = 25
-		# 		days_remove = 180
-		# 		complete_effect = {
-		# 			set_country_flag = {
-		# 				flag = MLW_privatisation_underway_flag
-		# 				value = 1
-		# 				days = 180
-		# 			}
-		# 		}
-		# 		remove_effect = {
-		# 			random_owned_state = {
-		# 				limit = { dockyard > 0 }
-		# 				remove_building = {
-		# 					type = dockyard
-		# 					level = 1
-		# 				}
-		# 				set_temp_variable = { treasury_change = 11.25 }
-		# 				modify_treasury_effect = yes
-		# 			}
-		# 		}
-		# 	}
-		# 	MLW_UDF_privatisation_OFF = {
-		# 		icon = decision
-		# 		visible = { has_completed_focus = MLW_UDF_privatisation }
-		# 		available = {
-		# 			MLW_privatisation_interest_rate = yes
-		# 			MLW_privatisation_treasury_contents = yes
-		# 			offices > 1
-		# 			MLW_privatisation_underway = yes
-		# 		}
-		# 		cost = 25
-		# 		days_remove = 180
-		# 		complete_effect = {
-		# 			set_country_flag = {
-		# 				flag = MLW_privatisation_underway_flag
-		# 				value = 1
-		# 				days = 180
-		# 			}
-		# 		}
-		# 		remove_effect = {
-		# 			random_owned_state = {
-		# 				limit = { offices > 0 }
-		# 				remove_building = {
-		# 					type = offices
-		# 					level = 1
-		# 				}
-		# 				set_temp_variable = { treasury_change = 18 }
-		# 				modify_treasury_effect = yes
-		# 			}
-		# 		}
-		# 	}
-		# }
+		MLW_privatisation_decision_CAT = {
+			MLW_UDF_privatisation_IND = {
+				icon = decision
+				visible = {
+					OR = {
+						has_completed_focus = MLW_UDF_privatisation
+						is_debug = yes
+					}
+				}
+				available = {
+					MLW_privatisation_interest_rate = yes
+					MLW_privatisation_treasury_contents = yes
+					industrial_complex > 1
+					MLW_privatisation_underway = yes
+				}
+				cost = 25
+				days_remove = 180
+				complete_effect = {
+					set_country_flag = {
+						flag = MLW_privatisation_underway_flag
+						value = 1
+						days = 180
+					}
+				}
+				remove_effect = {
+					random_owned_state = {
+						limit = { industrial_complex > 0 }
+						remove_building = {
+							type = industrial_complex
+							level = 1
+						}
+						set_temp_variable = { treasury_change = 11.25 }
+						modify_treasury_effect = yes
+					}
+				}
+			}
+			MLW_UDF_privatisation_MIL = {
+				icon = decision
+				visible = {
+					OR = {
+						has_completed_focus = MLW_UDF_privatisation
+						is_debug = yes
+					}
+				}
+				available = {
+					MLW_privatisation_interest_rate = yes
+					MLW_privatisation_treasury_contents = yes
+					arms_factory > 1
+					MLW_privatisation_underway = yes
+				}
+				cost = 25
+				days_remove = 180
+				complete_effect = {
+					set_country_flag = {
+						flag = MLW_privatisation_underway_flag
+						value = 1
+						days = 180
+					}
+				}
+				remove_effect = {
+					random_owned_state = {
+						limit = { arms_factory > 0 }
+						remove_building = {
+							type = arms_factory
+							level = 1
+						}
+						set_temp_variable = { treasury_change = 11.25 }
+						modify_treasury_effect = yes
+					}
+				}
+			}
+			MLW_UDF_privatisation_DOC = {
+				icon = decision
+				visible = {
+					OR = {
+						has_completed_focus = MLW_UDF_privatisation
+						is_debug = yes
+					}
+				}
+				available = {
+					MLW_privatisation_interest_rate = yes
+					MLW_privatisation_treasury_contents = yes
+					dockyard > 1
+					MLW_privatisation_underway = yes
+				}
+				cost = 25
+				days_remove = 180
+				complete_effect = {
+					set_country_flag = {
+						flag = MLW_privatisation_underway_flag
+						value = 1
+						days = 180
+					}
+				}
+				remove_effect = {
+					random_owned_state = {
+						limit = { dockyard > 0 }
+						remove_building = {
+							type = dockyard
+							level = 1
+						}
+						set_temp_variable = { treasury_change = 11.25 }
+						modify_treasury_effect = yes
+					}
+				}
+			}
+			MLW_UDF_privatisation_OFF = {
+				icon = decision
+				visible = {
+					OR = {
+						has_completed_focus = MLW_UDF_privatisation
+						is_debug = yes
+					}
+				}
+				available = {
+					MLW_privatisation_interest_rate = yes
+					MLW_privatisation_treasury_contents = yes
+					offices > 1
+					MLW_privatisation_underway = yes
+				}
+				cost = 25
+				days_remove = 180
+				complete_effect = {
+					set_country_flag = {
+						flag = MLW_privatisation_underway_flag
+						value = 1
+						days = 180
+					}
+				}
+				remove_effect = {
+					random_owned_state = {
+						limit = { offices > 0 }
+						remove_building = {
+							type = offices
+							level = 1
+						}
+						set_temp_variable = { treasury_change = 18 }
+						modify_treasury_effect = yes
+					}
+				}
+			}
+		}
 	#
 #
