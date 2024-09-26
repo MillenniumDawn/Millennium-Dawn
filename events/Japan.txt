@@ -12204,6 +12204,10 @@ country_event = {
 		}
 	}
 
+	immediate = {
+		set_country_flag = JAP_NKO_CONF_ONGOING
+	}
+
 	#Focus on Abduction
 	option = {
 		ai_chance = {
@@ -12511,10 +12515,10 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan.100010006.oD"
 		NKO = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
-			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 		JAP = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 	}
 }
@@ -12559,6 +12563,9 @@ country_event = {
 		}
 		name = Japan.100010007.oA
 		log = "[GetDateText]: [Root.GetName]: Japan.100010007.oA"
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_SUCCESS
+		}
 		#TODO: news event Uneasy Agreement
 	}
 
@@ -12571,10 +12578,10 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan.100010007.oB"
 		NKO = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
-			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 		JAP = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 	}
 }
@@ -12604,6 +12611,9 @@ country_event = {
 		}
 		name = Japan.100010008.oA
 		log = "[GetDateText]: [Root.GetName]: Japan.100010008.oA"
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_SUCCESS
+		}
 		#TODO: event three friends (KOR and NKO will get bonus incentives to take Unity Government, JAP will get to suggest who annexes who)
 	}
 
@@ -12616,10 +12626,10 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan.100010008.oB"
 		NKO = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
-			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 		JAP = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 	}
 }
@@ -12649,6 +12659,9 @@ country_event = {
 		}
 		name = Japan.100010009.oA
 		log = "[GetDateText]: [Root.GetName]: Japan.100010009.oA"
+		JAP = {
+			set_country_flag = JAP_NKO_CONF_SUCCESS
+		}
 		#TODO: event peculiar inversion (NKO will get bonuses to north-led unification, and biases towards taking liberal struggle for power)
 	}
 
@@ -12661,10 +12674,10 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Japan.100010009.oB"
 		NKO = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
-			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 		JAP = {
 			set_country_flag = JAP_NKO_CONF_FAILURE
+			country_event = { id = Japan.100010010 days = 1 } # Visit is a Failure
 		}
 	}
 }
@@ -12684,6 +12697,10 @@ country_event = {
 		NKO = {
 			has_war = no
 		}
+	}
+
+	immediate = {
+		clr_country_flag = JAP_NKO_CONF_ONGOING
 	}
 
 	#Pivot towards KOR
@@ -17703,8 +17720,17 @@ country_event = {
 			has_country_leader = { name = "Kim Jong-il" }
 		}
 		JAP = {
-			NOT = { has_completed_focus = JAP_north_korea_relations }
+			NOT = {
+				OR = { # don't do this if the pyongyang conference has a chance to mend relations
+					has_country_flag = JAP_NKO_CONF_ONGOING
+					has_country_flag = JAP_NKO_CONF_SUCCESS
+				}
+			}
 		}
+	}
+
+	immediate = {
+		set_country_flag = JAP_AMAMIOSHIMA
 	}
 
 	option = {
@@ -18542,24 +18568,44 @@ country_event = {
 	}
 }
 
-
 #Anti-Terrorism Special Measures Law (or, Maritime Security Act)
 country_event = {
 	id = Japan.100005200
-	title = Japan.100005200.t
-	desc = Japan.100005200.d
+	title = {
+		text = Japan.100005200.t.a
+		trigger = {
+			USA = { has_country_flag = USA_911_happened }
+		}
+	}
+	title = {
+		text = Japan.100005200.t.b #Maritime Security Act
+	}
+	desc = {
+		text = Japan.100005200.d.a
+		trigger = {
+			USA = { has_country_flag = USA_911_happened }
+		}
+	}
+	desc = {
+		text = Japan.100005200.d.b # Maritime Security Act
+	}
 	picture = GFX_JAP_diet_address
 
 	fire_only_once = yes
 	is_triggered_only = yes
 
-	#Support International Vessels Fighting Terrorism
+	#Support International Vessels
 	option = {
 		name = Japan.100005200.oA
 		log = "[GetDateText]: [Root.GetName]: Japan.100005200.oA"
+		add_political_power = -50
+		navy_experience = 25
 		add_popularity = {
 			ideology = democratic
 			popularity = 0.03
+		}
+		hidden_effect = {
+			country_event = { id = mdmosjap_EDT.131222001 days = 14 random_days = 14 } # trigger Amami-Oshima naval event early
 		}
 
 		ai_chance = {
@@ -18571,6 +18617,14 @@ country_event = {
 	option = {
 		name = Japan.100005200.oB
 		log = "[GetDateText]: [Root.GetName]: Japan.100005200.oB"
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = JAP_AMAMIOSHIMA
+				}
+			}
+			add_political_power = 50
+		}
 		add_popularity = {
 			ideology = neutrality
 			popularity = 0.05
@@ -18581,17 +18635,414 @@ country_event = {
 		}
 	}
 
-	#Step up Naval Patrols
+	#Step Up Local Naval Patrols
 	option = {
 		name = Japan.100005200.oC
 		log = "[GetDateText]: [Root.GetName]: Japan.100005200.oC"
+		trigger = { # only if the skirmish with NKO hasn't happened yet- otherwise why would there NOT be more naval patrols already?
+			NOT = {
+				has_country_flag = JAP_AMAMIOSHIMA
+			}
+		}
+
 		add_popularity = {
 			ideology = nationalist
 			popularity = 0.05
 		}
+		navy_experience = 15
+		hidden_effect = {
+			country_event = { id = mdmosjap_EDT.131222001 random_days = 7 } # trigger Amami-Oshima naval event early
+		}
 
 		ai_chance = {
 			base = 10
+		}
+	}
+}
+
+#Status of USFJ
+country_event = {
+	id = Japan.100005201
+	title = Japan.100005201.t
+	desc = Japan.100005201.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Maintain Partnership
+	option = {
+		name = Japan.100005201.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005201.oA"
+		if = {
+			limit = {
+				NOT = {
+					has_government = nationalist
+				}
+			}
+			add_political_power = 50
+		}
+
+		# add guarantee (visual only) if it has already vanished
+		if = {
+			limit = {
+				NOT = {
+					is_guaranteed_by = USA
+				}
+			}
+			effect_tooltip = {
+				USA = {
+					give_guarantee = JAP
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	#Insist on Equal Partnership
+	option = {
+		name = Japan.100005201.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100005201.oB"
+		if = {
+			limit = {
+				NOT = {
+					jap_ruling_party_is_america_pro = yes
+				}
+			}
+			add_political_power = 50
+		}
+		set_temp_variable = { percent_change = 5 }
+		change_domestic_influence_percentage = yes
+		add_popularity = {
+			ideology = democratic
+			popularity = -0.1
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#Japan Affirms Defense Ties
+country_event = {
+	id = Japan.100005202
+	title = Japan.100005202.t
+	desc = Japan.100005202.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Good
+	option = {
+		name = Japan.100005202.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005202.oA"
+		add_political_power = 50
+		set_country_flag = JAP_GUARANTEE_FROM_USA
+
+		# add guarantee if its disappeared for some reason
+		if = {
+			limit = {
+				NOT = {
+					is_guaranteed_by = USA
+				}
+			}
+			effect_tooltip = {
+				USA = {
+					give_guarantee = JAP
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+}
+
+#Increasing Opposition to USFJ
+country_event = {
+	id = Japan.100005203
+	title = Japan.100005203.t
+	desc = Japan.100005203.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Concerning
+	option = {
+		name = Japan.100005203.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005203.oA"
+		add_political_power = 50
+
+
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+}
+
+#Reasserting Security Agreement with Japan
+country_event = {
+	id = Japan.100005204
+	title = Japan.100005204.t
+	desc = Japan.100005204.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Renew Agreement
+	option = {
+		name = Japan.100005204.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005204.oA"
+		give_guarantee = JAP
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	#Japan Is On Her Own
+	option = {
+		name = Japan.100005204.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100005204.oB"
+		clr_country_flag = JAP_GUARANTEE_FROM_USA
+		if = {
+			limit = {
+				JAP = {
+					jap_ruling_party_is_america_pro = yes
+				}
+			}
+			add_political_power = -150
+		}
+		set_country_flag = JAP_USA_BROKE_SECURITY_DEAL
+		reverse_opinion_modifier = { target = FROM modifier = left_alliance }
+		JAP = {
+			country_event = Japan.100005205 #USA Backs Away From Security Agreement
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+
+}
+
+#USA Backs Away From Security Agreement
+country_event = {
+	id = Japan.100005205
+	title = Japan.100005205.t
+	desc = Japan.100005205.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Outrageous!
+	option = {
+		name = Japan.100005205.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005205.oA"
+		add_war_support = 0.05
+		if = {
+			limit = {
+				jap_ruling_party_is_america_pro = yes
+			}
+			add_political_power = -150
+		}
+		#TODO: custom tooltip: Will make later negotiations to return base more successful
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	#They must transfer their military bases
+	option = {
+		name = Japan.100005205.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100005205.oB"
+		#TODO: trigger: USA owns okinawa base
+		if = {
+			limit = {
+				NOT = {
+					jap_ruling_party_is_america_pro = yes
+				}
+			}
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			add_relative_party_popularity = yes
+		}
+		#TODO: custom tooltip: May sour relations!
+
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+}
+
+# OKINAWA BASE CHAIN
+#Japan Requests Final Decommission of Okinawa Bases (USA)
+country_event = {
+	id = Japan.100005210
+	title = Japan.100005210.t
+	desc = Japan.100005210.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Begin the process
+	option = {
+		name = Japan.100005210.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005210.oA"
+		if = { # easier for public to accept if busy at home
+			limit = {
+				has_global_flag = usa_great_fiancial_crisis
+			}
+			add_stability = 0.05
+			add_political_power = -50
+		} else = {
+			add_political_power = -150
+		}
+		reverse_add_opinion_modifier = {
+			target = JAP
+			modifier = pro_american
+		}
+
+		JAP = {
+			country_event = { id = Japan.100005211 hours = 12 random_hours = 24 } #USA Agrees To Hand Over Bases
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	#Refuse
+	option = {
+		name = Japan.100005210.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100005210.oB"
+		add_political_power = 250
+		add_war_support = 0.05
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		reverse_add_opinion_modifier = {
+			target = JAP
+			modifier = trespassing
+		}
+
+		JAP = {
+			country_event = { id = Japan.100005212 hours = 12 random_hours = 24 } #USA Refuses To Hand Over Bases
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+#USA Agrees To Hand Over Bases!
+country_event = {
+	id = Japan.100005211
+	title = Japan.100005211.t
+	desc = Japan.100005211.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Great!
+	option = {
+		name = Japan.100005211.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005211.oA"
+		#TODO: transfer state id, rename to Ginowan City
+		add_stability = 0.05
+		add_political_power = 100
+		#TODO: productivity in Okinawa -300 (blow to economy from Marines leaving)
+
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+#USA Refuses To Hand Over Bases!
+country_event = {
+	id = Japan.100005212
+	title = Japan.100005212.t
+	desc = Japan.100005212.d
+	picture = GFX_JAP_diet_address
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#Wait It Out
+	option = {
+		name = Japan.100005212.oA
+		log = "[GetDateText]: [Root.GetName]: Japan.100005212.oA"
+		add_political_power = -100
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
+		#TODO: custom tooltip: the situation will develop over the next couple years
+		hidden_effect = {
+
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	#Blockade Them!
+	option = {
+		name = Japan.100005212.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100005212.oB"
+		add_stability = -0.05
+		add_threat = 0.03
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	#Call on the Chinese!
+	option = {
+		name = Japan.100005212.oB
+		log = "[GetDateText]: [Root.GetName]: Japan.100005212.oB"
+		trigger = {
+			CHI = {
+				is_subject = no
+			}
+		}
+		if = {
+			limit = {
+				has_government = nationalist
+			}
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			add_political_power = -50
+		}
+
+		ai_chance = {
+			base = 50
 		}
 	}
 }
