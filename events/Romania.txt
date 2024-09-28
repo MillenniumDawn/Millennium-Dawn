@@ -1,0 +1,1895 @@
+add_namespace = romania_misc
+add_namespace = romania_elections
+add_namespace = romania_news
+add_namespace = romania_politics
+
+country_event = { #Romanian Elections event
+	id = romania_elections.1
+	title = romania_elections.1.t
+	picture = GFX_romania_elections
+
+	desc = {
+		trigger = {
+			check_variable = { largest_party = 3 }
+		}
+		text = romania_elections.1.d1
+	}
+	desc = {
+		trigger = {
+			check_variable = { largest_party = 20 }
+		}
+		text = romania_elections.1.d2
+	}
+	desc = {
+		trigger = {
+			check_variable = { largest_party = 1 }
+		}
+		text = romania_elections.1.d3
+	}
+	desc = {
+		trigger = {
+			check_variable = { largest_party = 2 }
+		}
+		text = romania_elections.1.d4
+	}
+	desc = {
+		trigger = {
+			check_variable = { largest_party = 18 }
+		}
+		text = romania_elections.1.d5
+	}
+	desc = {
+		trigger = {
+			check_variable = { largest_party = 14 }
+		}
+		text = romania_elections.1.d6
+	}
+	desc = {
+		trigger = {
+			NOT = { check_variable = { largest_party = 1 } }
+			NOT = { check_variable = { largest_party = 3 } }
+			NOT = { check_variable = { largest_party = 2 } }
+			NOT = { check_variable = { largest_party = 14 } }
+			NOT = { check_variable = { largest_party = 18 } }
+			NOT = { check_variable = { largest_party = 20 } }
+		}
+		text = romania_elections.1.d7
+	}
+
+	is_triggered_only = yes
+	trigger = {
+		tag = ROM
+		has_country_flag = generic_election_killswitch
+	}
+	immediate = {
+		set_variable = { largest_party = -1 }
+		find_highest_in_array = {
+			array = party_pop_array
+			value = value
+			index = index
+		}
+		# Value
+		set_variable = { largest_party = index }
+		set_variable = { largest_party_val = value }
+
+		log = "Largest Party: [?largest_party] and Largest Party Value: [?largest_party_val]"
+
+		# Checks if the CDR has been reformed
+		if = { limit = { has_country_flag = ROM_cdr_reformed }
+			set_variable = { rom_cdr_coalition = party_pop_array^2 }
+			add_to_variable = { rom_cdr_coalition = party_pop_array^1 }
+
+			if = {
+				limit = {
+					check_variable = {
+						var = rom_cdr_coalition
+						value = largest_party_val
+						compare = greater_than_or_equals
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = stolojan_nominated
+					}
+					set_variable = { largest_party = 2 } # Sets Largest Party to the PNL
+				}
+				else_if = {
+					limit = {
+						has_country_flag = isarescu_nominated
+					}
+					set_variable = { largest_party = 1 } # Sets Largest Party to the PNT
+				}
+			}
+		}
+
+		# Checks if the DA alliance has formed
+		if = {
+			limit = {
+				has_country_flag = da_alliance_formed
+			}
+			set_variable = { rom_da_alliance = party_pop_array^2 }
+			add_to_variable = { rom_da_alliance = party_pop_array^14 }
+
+			if = {
+				limit = {
+					check_variable = {
+						var = rom_da_alliance
+						value = largest_party_val
+						compare = greater_than_or_equals
+					}
+				}
+				set_variable = { largest_party = 14 } # Sets Largest Party to the PD
+			}
+		}
+		if = {
+			limit = {
+				date < 2001.1.1
+			}
+			set_variable = { rom_pd_coalition = party_pop_array^14 }
+		    add_to_variable = { rom_pd_coalition = party_pop_array^18 }
+			if = {
+				limit = {
+					check_variable = {
+						var = rom_pd_coalition
+						value = largest_party_val
+						compare = greater_than_or_equals
+					}
+				}
+				set_variable = { largest_party = 18 } # Sets Largest Party to the PD's social democratic wing
+			}
+		}
+	}
+
+	option = { #PSD wins
+		name = romania_elections.1.a
+		log = "[GetDateText]: [This.GetName]: romania_elections.1.a executed"
+		trigger = {
+			check_variable = { largest_party = 3 }
+		}
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		if = { #makes sure Iliescu doesen't get re-elected in 2004
+			limit = {
+				date > 2001.1.1
+				has_country_leader = {
+					name = "Ion Iliescu"
+					ruling_only = yes
+				}
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					western_social_democrats_are_in_power = yes
+				}
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 3 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			add_political_power = 50
+			add_stability = 0.05
+		}
+		else_if = {
+			limit = {
+				western_social_democrats_are_in_power = yes
+			}
+			add_political_power = 50
+			add_stability = 0.05
+		}
+		clr_country_flag = ROM_2000_elections
+		clr_country_flag = ROM_cdr_reformed
+		clr_country_flag = da_alliance_formed
+	}
+	option = { #Tudor wins
+		name = romania_elections.1.b
+		log = "[GetDateText]: [This.GetName]: romania_elections.1.b executed"
+		trigger = {
+			check_variable = { largest_party = 20 }
+		}
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					nationalist_right_wing_populists_are_in_power = yes
+				}
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 20 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+				}
+			}
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		else_if = {
+			limit = {
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+			add_political_power = 50
+			add_stability = 0.05
+		}
+		clr_country_flag = ROM_2000_elections
+		clr_country_flag = ROM_cdr_reformed
+		clr_country_flag = da_alliance_formed
+	}
+	option = { #stolojan wins
+		name = romania_elections.1.c
+		log = "[GetDateText]: [This.GetName]: romania_elections.1.c executed"
+		trigger = { check_variable = { largest_party = 2 } }
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					western_liberals_are_in_power = yes
+				}
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 2 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		else_if = {
+			limit = {
+				western_liberals_are_in_power = yes
+			}
+			add_political_power = 50
+			add_stability = 0.05
+		}
+		if = {
+			limit = {
+				has_country_flag = ROM_cdr_reformed
+			}
+			hidden_effect = {
+				set_temp_variable = { add_col_one = 1 }
+			    add_coalition_members_effect = yes
+                set_temp_variable = { party_index = 1 }
+			    set_temp_variable = { party_popularity_increase = 0.05 }
+			    set_temp_variable = { temp_outlook_increase = 0.05 }
+			    add_relative_party_popularity = yes
+			}
+		}
+		clr_country_flag = ROM_2000_elections
+		clr_country_flag = da_alliance_formed
+	}
+	option = { #PD-leftists wins
+		name = romania_elections.1.f
+		log = "[GetDateText]: [This.GetName]: romania_elections.1.f executed"
+		trigger = { check_variable = { largest_party = 18 } }
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					neutrality_neutral_social_are_in_power = yes
+				}
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 18 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		else_if = {
+			limit = {
+				neutrality_neutral_social_are_in_power = yes
+			}
+			add_political_power = 50
+			add_stability = 0.05
+		}
+		if = {
+			limit = {
+				date < 2001.1.1
+			}
+			hidden_effect = {
+				set_temp_variable = { add_col_one = 14 }
+			    add_coalition_members_effect = yes
+                set_temp_variable = { party_index = 14 }
+			    set_temp_variable = { party_popularity_increase = 0.05 }
+			    set_temp_variable = { temp_outlook_increase = 0.05 }
+			    add_relative_party_popularity = yes
+			}
+		}
+		clr_country_flag = ROM_2000_elections
+		clr_country_flag = ROM_cdr_reformed
+		clr_country_flag = da_alliance_formed
+	}
+	option = { #isarescu wins
+		name = romania_elections.1.e
+		log = "[GetDateText]: [This.GetName]: romania_elections.1.e executed"
+		trigger = { check_variable = { largest_party = 1 } }
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					western_conservatism_are_in_power = yes
+				}
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 1 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+				}
+			}
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		else_if = {
+			limit = {
+				western_conservatism_are_in_power = yes
+			}
+			add_political_power = 50
+			add_stability = 0.05
+		}
+		if = {
+			limit = {
+				has_country_flag = ROM_cdr_reformed
+			}
+			hidden_effect = {
+				set_temp_variable = { add_col_one = 2 }
+			    add_coalition_members_effect = yes
+                set_temp_variable = { party_index = 2 }
+			    set_temp_variable = { party_popularity_increase = 0.05 }
+			    set_temp_variable = { temp_outlook_increase = 0.05 }
+			    add_relative_party_popularity = yes
+			}
+		}
+		clr_country_flag = ROM_2000_elections
+		clr_country_flag = da_alliance_formed
+	}
+	option = { #PD-conservatives win
+		name = romania_elections.1.u
+		log = "[GetDateText]: [This.GetName]: romania_elections.1.u executed"
+		trigger = { check_variable = { largest_party = 14 } }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					neutrality_neutral_conservatism_are_in_power = yes
+				}
+			}
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 14 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				meta_effect = {
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				}
+				set_leader = yes
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+				}
+			}
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		else_if = {
+			limit = {
+				neutrality_neutral_conservatism_are_in_power = yes
+			}
+			add_political_power = 50
+			add_stability = 0.05
+		}
+		if = {
+			limit = {
+				has_country_flag = da_alliance_formed
+			}
+			hidden_effect = {
+				set_temp_variable = { add_col_one = 2 }
+			    add_coalition_members_effect = yes
+                set_temp_variable = { party_index = 2 }
+			    set_temp_variable = { party_popularity_increase = 0.05 }
+			    set_temp_variable = { temp_outlook_increase = 0.05 }
+			    add_relative_party_popularity = yes
+			}
+		}
+		clr_country_flag = ROM_2000_elections
+		clr_country_flag = ROM_cdr_reformed
+		clr_country_flag = da_alliance_formed
+	}
+	option = {
+		name = romania_elections.1.s
+		log = "[GetDateText]: [This.GetName]: romania_elections.1.s executed"
+		trigger = {
+			NOT = { check_variable = { largest_party = 1 } }
+			NOT = { check_variable = { largest_party = 3 } }
+			NOT = { check_variable = { largest_party = 2 } }
+			NOT = { check_variable = { largest_party = 14 } }
+			NOT = { check_variable = { largest_party = 18 } }
+			NOT = { check_variable = { largest_party = 20 } }
+		}
+		add_to_variable = { current_term = 1 }
+		if = {
+			limit = {
+				check_variable = { term_limit > 0 } #make sure term limits are a thing
+				check_variable = { current_term > term_limit }
+			}
+			hidden_effect = {
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+		}
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = largest_party }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+		}
+		if = { limit = { check_variable = { largest_party < 4 } }
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { largest_party > 3 }
+				check_variable = { largest_party < 11 }
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { largest_party > 9 }
+				check_variable = { largest_party < 12 }
+			}
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { largest_party > 11 }
+				check_variable = { largest_party < 20 }
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+		else_if = { limit = { check_variable = { largest_party > 19 } }
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = yes
+			}
+		}
+		clr_country_flag = ROM_2000_elections
+		clr_country_flag = rom_cdr_coalition
+		clr_country_flag = da_alliance_formed
+	}
+}
+country_event = { #the question of the CDR
+	id = romania_politics.1
+	title = romania_politics.1.t
+	desc = romania_politics.1.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	option = { #We shall renegotiate the coalition
+		name = romania_politics.1.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.1.a executed"
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = ROM_cdr_reformed_tt
+		hidden_effect={
+			country_event = { id = romania_politics.2 days = 10 }
+		}
+		set_country_flag = ROM_cdr_reformed
+	}
+	option = { #we can't with them!
+		name = romania_politics.1.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.1.b executed"
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+	}
+}
+country_event = { #CDR presidential canditate Nomination
+	id = romania_politics.2
+	title = romania_politics.2.t
+	desc = romania_politics.2.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	option = { #Stolojan
+		name = romania_politics.2.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.2.a executed"
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		set_country_flag = stolojan_nominated
+	}
+	option = { #Isarescu
+		name = romania_politics.2.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.2.b executed"
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		set_country_flag = isarescu_nominated
+	}
+}
+country_event = { #panait investigation
+	id = romania_politics.3
+	title = romania_politics.3.t
+	desc = romania_politics.3.d
+	picture = GFX_panait_case
+
+	is_triggered_only = yes
+
+	option = { #silence him
+		name = romania_politics.3.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.3.a executed"
+		ai_chance = {
+			factor = 80
+		}
+		hidden_effect = {
+            country_event = { id = romania_politics.4 days = 37 }
+		}
+	}
+	option = { #he is not threat
+		name = romania_politics.3.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.3.b executed"
+		ai_chance = {
+			factor = 40
+		}
+		hidden_effect = {
+            country_event = { id = romania_politics.5 days = 37 }
+		}
+	}
+}
+country_event = { #panait commits suicide
+	id = romania_politics.4
+	title = romania_politics.4.t
+	desc = romania_politics.4.d
+	picture = GFX_panait_case
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.4.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.4.a executed"
+		add_stability = -0.05
+	}
+}
+country_event = { #panait publishes his investigation
+	id = romania_politics.5
+	title = romania_politics.5.t
+	desc = romania_politics.5.d
+	picture = GFX_panait_case
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.5.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.5.a executed"
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+	}
+}
+country_event = { #referendum on the monarchy announced
+	id = romania_politics.6
+	title = romania_politics.6.t
+	desc = romania_politics.6.d
+	picture = GFX_romanian_crown
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.6.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.6.a executed"
+		set_variable = {
+			var = monarchist_support
+			value = 10
+		}
+		set_variable = {
+			var = republican_support
+			value = 25
+		}
+		unlock_decision_category_tooltip = ROM_monarchy_referendum
+		set_country_flag = rom_referendum
+	}
+}
+country_event = { #Republican Elements Discredited
+	id = romania_politics.7
+	title = romania_politics.7.t
+	desc = romania_politics.7.d
+	picture = GFX_politics_protest
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.7.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.7.a executed"
+		add_to_variable = {
+			var = monarchist_support
+			value = 5
+		}
+		custom_effect_tooltip = monarchist_support_5_tooltip
+	}
+}
+country_event = { #attacks on republicans backfire
+	id = romania_politics.8
+	title = romania_politics.8.t
+	desc = romania_politics.8.d
+	picture = GFX_politics_protest
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.8.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.8.a executed"
+		add_to_variable = {
+			var = republican_support
+			value = 5
+		}
+		custom_effect_tooltip = republican_support_5_tooltip
+	}
+}
+country_event = { #referendum results
+	id = romania_politics.9
+	title = romania_politics.9.t
+	desc = romania_politics.9.d
+	picture = GFX_romania_elections
+
+	is_triggered_only = yes
+
+	option = {
+		trigger = { check_variable = { monarchist_support > republican_support } }
+		name = romania_politics.9.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.9.a executed"
+		set_country_flag = referendum_concluded
+		clr_country_flag = rom_referendum
+		clr_country_flag = ROM_cdr_reformed
+		complete_national_focus = ROM_referendum_concludes
+		complete_national_focus = ROM_monarchist_victory
+		set_temp_variable = { rul_party_temp = 0 }
+        change_ruling_party_effect = yes
+        set_politics = {
+            ruling_party = democratic
+            elections_allowed = no
+        }
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable = { party_popularity_increase = 0.25 }
+		set_temp_variable = { temp_outlook_increase = 0.25 }
+		add_relative_party_popularity = yes
+	}
+	option = {
+		name = romania_politics.9.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.9.b executed"
+		trigger = { check_variable = { republican_support > monarchist_support } }
+		set_country_flag = referendum_concluded
+		clr_country_flag = rom_referendum
+		clr_country_flag = ROM_cdr_reformed
+		complete_national_focus = ROM_referendum_concludes
+		complete_national_focus = ROM_republican_victory
+		add_ideas = ROM_monarchist_backlash
+	}
+}
+country_event = { #Romania Invites us to the Balkan Economic Union
+	id = romania_politics.10
+	title = romania_politics.10.t
+	desc = romania_politics.10.d
+	picture = GFX_stock_market
+
+	is_triggered_only = yes
+
+	option = { #yes
+		name = romania_politics.10.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.10.a executed"
+		add_ideas = ROM_balkan_economic_union_idea
+		ROM = {country_event = romania_politics.12}
+	}
+	option = { #no
+		name = romania_politics.10.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.10.b executed"
+		ROM = {country_event = romania_politics.11}
+	}
+}
+country_event = { #country rejects
+	id = romania_politics.11
+	title = romania_politics.11.t
+	desc = romania_politics.11.d
+	picture = GFX_stock_market
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.11.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.11.a executed"
+	}
+}
+country_event = { #country accepts
+	id = romania_politics.12
+	title = romania_politics.12.t
+	desc = romania_politics.12.d
+	picture = GFX_stock_market
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.12.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.12.a executed"
+	}
+}
+country_event = { #Settling the succession issue
+	id = romania_politics.13
+	title = romania_politics.13.t
+	desc = romania_politics.13.d
+	picture = GFX_romanian_crown
+
+	is_triggered_only = yes
+
+	option = { #margareta
+		name = romania_politics.13.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.13.a executed"
+		set_country_flag = margareta_successor
+	}
+	option = { #nicholas
+		name = romania_politics.13.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.13.b executed"
+		set_country_flag = nicholas_successor
+	}
+}
+country_event = { #Romania proposes integration (gagauzia)
+	id = romania_politics.14
+	title = romania_politics.14.t
+	desc = romania_politics.14.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	option = { #for a new start
+		name = romania_politics.14.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.14.a executed"
+		hidden_effect={
+			ROM = {
+				annex_country = {
+					target = GGZ
+					transfer_troops = yes
+				}
+			}
+		}
+	}
+	option = { #never
+		name = romania_politics.14.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.14.b executed"
+		ROM = {country_event = romania_politics.15}
+	}
+}
+country_event = { #Gagauzia refuses integration
+	id = romania_politics.15
+	title = romania_politics.15.t
+	desc = romania_politics.15.d
+	picture = GFX_handshake_black
+
+	is_triggered_only = yes
+
+	option = { #recognize their independence
+		name = romania_politics.15.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.15.a executed"
+		add_opinion_modifier = {
+			target = GGZ
+			modifier = recognises_us
+		}
+	}
+	option = { #we won't allow this
+		name = romania_politics.15.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.15.b executed"
+		create_wargoal = {
+			type = annex_everything
+			target = GGZ
+		}
+	}
+}
+country_event = { #Romania Demands the Return of Budjak and Bucovina
+	id = romania_politics.16
+	title = romania_politics.16.t
+	desc = romania_politics.16.d
+	picture = GFX_ROM_generic
+
+	is_triggered_only = yes
+
+	option = { #we want no war
+		name = romania_politics.16.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.16.a executed"
+		every_state = {
+			limit = {
+				AND = {
+					is_core_of = ROM
+					is_owned_by = UKR
+				}
+			}
+			transfer_state_to = ROM
+		}
+	}
+	option = { #slava ukraini
+		name = romania_politics.16.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.16.b executed"
+		ROM = {country_event = romania_politics.17}
+	}
+}
+country_event = { #Ukraine refuses
+	id = romania_politics.17
+	title = romania_politics.17.t
+	desc = romania_politics.17.d
+	picture = GFX_UKR_generic
+
+	is_triggered_only = yes
+
+	option = { #to war then
+		name = romania_politics.17.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.17.a executed"
+		create_wargoal = {
+			type = annex_everything
+			target = UKR
+		}
+	}
+}
+country_event = { #march on bucharest
+	id = romania_politics.18
+	title = romania_politics.18.t
+	picture = GFX_politics_far_right
+	is_triggered_only = yes
+
+	desc = {
+		text = romania_politics.18.d.a
+		trigger = {
+			power_balance_value = {
+				id = vadim_people_balance
+				value < -0.6
+			}
+		}
+	}
+	desc = {
+		text = romania_politics.18.d.b
+		trigger = {
+			power_balance_value = {
+				id = vadim_people_balance
+				value > -0.6
+			}
+		}
+	}
+	option = { #march succeeds
+		name = romania_politics.18.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.18.a executed"
+		trigger = {
+			power_balance_value = {
+				id = vadim_people_balance
+				value < -0.6
+			}
+		}
+		hidden_effect = {
+			set_country_flag = do_not_retire
+		    set_politics = {
+			    ruling_party = nationalist
+			    elections_allowed = no
+		    }
+		    clr_country_flag = do_not_retire
+		}
+		complete_national_focus = ROM_terror_in_bucharest
+	}
+	option = { #epic fail
+		name = romania_politics.18.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.18.b executed"
+		trigger = {
+			power_balance_value = {
+				id = vadim_people_balance
+				value > -0.6
+			}
+		}
+		add_stability = -0.25
+		add_political_power = -250
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = -0.15 }
+		set_temp_variable = { temp_outlook_increase = -0.15 }
+		hidden_effect = {
+            country_event = { id = romania_politics.21 days = 5 }
+		}
+	}
+}
+
+country_event = { #DA Alliance formed
+	id = romania_politics.19
+	title = romania_politics.19.t
+	desc = romania_politics.19.d
+	picture = GFX_basescu_and_calin
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.19.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.19.a executed"
+		set_country_flag = da_alliance_formed
+		set_temp_variable = { party_index = 14 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+	}
+}
+country_event = { #death of king michael
+	id = romania_politics.20
+	title = romania_politics.20.t
+	picture = GFX_death_of_king_michael
+	is_triggered_only = yes
+	desc = {
+		text = romania_politics.20.d.a
+		trigger = {
+			western_autocrats_are_in_power = yes
+		}
+	}
+	desc = {
+		text = romania_politics.20.d.b
+		trigger = {
+			NOT = {
+				has_completed_focus = ROM_michael_returns
+			}
+		}
+	}
+	option = {
+		name = romania_politics.20.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.20.a executed"
+		trigger = {
+			has_country_flag = nicholas_successor
+		}
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		create_country_leader = {
+			name = "Nicholas I"
+			picture = "prince_nicholas.dds"
+			ideology = Western_Autocracy
+			traits = {
+				western_Western_Autocracy
+				humble
+				likeable
+			}
+		}
+		complete_national_focus = ROM_death_of_the_king
+	}
+	option = {
+		name = romania_politics.20.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.20.b executed"
+		trigger = {
+			has_country_flag = margareta_successor
+		}
+		set_temp_variable = { party_index = 0 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		create_country_leader = {
+			name = "Margareta I"
+			picture = "margareta.dds"
+			ideology = Western_Autocracy
+			traits = {
+				western_Western_Autocracy
+				zealous
+				greedy
+			}
+		}
+		complete_national_focus = ROM_death_of_the_king
+	}
+	option = {
+		name = romania_politics.20.c
+		log = "[GetDateText]: [This.GetName]: romania_politics.20.c executed"
+		trigger = {
+			western_autocrats_are_in_power = yes
+			NOT = {
+				has_completed_focus = ROM_resolve_succession
+			}
+		}
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.25 }
+		set_temp_variable = { temp_outlook_increase = 0.25 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 23 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+		}
+		complete_national_focus = ROM_death_of_the_king
+	}
+	option = {
+		name = romania_politics.20.d
+		log = "[GetDateText]: [This.GetName]: romania_politics.20.d executed"
+		trigger = {
+			NOT = {
+				has_completed_focus = ROM_michael_returns
+			}
+		}
+	}
+}
+country_event = { ##protesters demand vadims resignation
+	id = romania_politics.21
+	title = romania_politics.21.t
+	desc = romania_politics.21.d
+	picture = GFX_collectiv_protests
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.21.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.21.a executed"
+		custom_effect_tooltip = ROM_vadim_fall_tt
+		add_timed_idea = {
+			idea = ROM_vadim_fallout
+			days = 550
+		}
+		create_country_leader = {
+			name = "Interim Government"
+			picture = "romanian_parliament.dds"
+			ideology = Nat_Populism
+			traits = {
+				nationalist_Nat_Populism
+				transitional_government
+			}
+		}
+		hidden_effect = {
+            country_event = { id = romania_elections.1 days = 30 }
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = -0.25 }
+			set_temp_variable = { temp_outlook_increase = -0.25 }
+			add_relative_party_popularity = yes
+			country_event = { id = romania_politics.61 days = 60 }
+		}
+	}
+	option = { #no i will stay till the end
+		name = romania_politics.21.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.21.b executed"
+		hidden_effect = {
+            country_event = { id = romania_politics.22 days = 5 }
+		}
+	}
+}
+country_event = { #Transylvania secedes
+	id = romania_politics.22
+	title = romania_politics.22.t
+	desc = romania_politics.22.d
+	picture = GFX_TRA_generic
+
+	is_triggered_only = yes
+
+	option = { #fuck
+		name = romania_politics.22.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.22.a executed"
+		hidden_effect = {
+            TRA = {
+				transfer_state = 910
+				transfer_state = 151
+				transfer_state = 909
+			}
+			910 = {
+				add_core_of = TRA
+			}
+			151 = {
+				add_core_of = TRA
+			}
+			909 = {
+				add_core_of = TRA
+			}
+			country_event = { id = romania_politics.23 days = 5 }
+		}
+	}
+	option = { #play as TRA
+		name = romania_politics.22.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.22.b executed"
+		hidden_effect = {
+            TRA = {
+				transfer_state = 910
+				transfer_state = 151
+				transfer_state = 909
+				change_tag_from = ROM
+			}
+			910 = {
+				add_core_of = TRA
+			}
+			151 = {
+				add_core_of = TRA
+			}
+			909 = {
+				add_core_of = TRA
+			}
+			country_event = { id = romania_politics.23 days = 5 }
+		}
+	}
+}
+country_event = { #military removes vadim,romania disintegrates
+	id = romania_politics.23
+	title = romania_politics.23.t
+	desc = romania_politics.23.d
+	picture = event_pmcs
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.23.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.23.a executed"
+		hidden_effect = {
+			WLC = {
+				annex_country = {
+					target = ROM
+					transfer_troops = yes
+				}
+				change_tag_from = ROM
+			}
+			284 = {
+				add_core_of = WLC
+			}
+			150 = {
+				add_core_of = WLC
+			}
+			152 = {
+				add_core_of = WLC
+			}
+			every_state = {
+				limit = {
+					is_core_of = ROM
+				}
+				remove_core_of = ROM
+			}
+		}
+		custom_effect_tooltip = ROM_collapse_tt
+	}
+}
+country_event = { #death of vadim
+	id = romania_politics.24
+	title = romania_politics.24.t
+	picture = GFX_vadim_death
+
+	is_triggered_only = yes
+	desc = {
+		text = romania_politics.24.d.a
+		trigger = {
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+	}
+	desc = {
+		text = romania_politics.24.d.b
+		trigger = {
+			NOT = {
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
+	}
+	option = { #vadims daughter
+		name = romania_politics.24.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.24.a executed"
+		trigger = {
+			check_variable = { party_pop_elect_array^20 > party_pop_elect_array^21 }
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		create_country_leader = {
+			name = "Lidia Vadim Tudor"
+			picture = "Lidia_Vadim_Tudor.dds"
+			ideology = Nat_Populism
+			traits = {
+				nationalist_Nat_Populism
+				inexperienced
+				stubborn
+			}
+		}
+	}
+	option = { #noua dreapta
+		name = romania_politics.24.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.24.b executed"
+		trigger = {
+			check_variable = { party_pop_elect_array^21 > party_pop_elect_array^20 }
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = 0.25 }
+		set_temp_variable = { temp_outlook_increase = 0.25 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 21 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+		}
+	}
+	option = {
+		name = romania_politics.24.c
+		log = "[GetDateText]: [This.GetName]: romania_politics.24.c executed"
+		trigger = {
+			NOT = {
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+		}
+	}
+}
+country_event = { #Romania-Bulgaria Union
+	id = romania_politics.50
+	title = romania_politics.50.t
+	desc = romania_politics.50.d
+	picture = d
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.50.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.50.a executed"
+		set_country_flag = rom_bunion
+		set_cosmetic_tag = ROM_bunion_democratic
+		153 = { add_core_of = ROM }
+		154 = { add_core_of =  ROM }
+		996 = { add_core_of = ROM }
+		974 = { add_claim_by = ROM }
+		136 = { add_claim_by = ROM }
+		135 = { add_claim_by = ROM }
+	}
+}
+country_event = { #Bessarabia name change
+	id = romania_politics.51
+	title = romania_politics.51.t
+	desc = romania_politics.51.d
+	picture = d
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.51.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.51.a executed"
+		set_province_name = { id = 3704 name = "Ismail"}
+		set_province_name = { id = 6727 name = "Cetatea Alba"}
+		set_province_name = { id = 9548 name = "Cernauti"}
+		set_province_name = { id = 3407 name = "Chelmenti"}
+		set_country_flag = rom_pmr_name_change
+	}
+}
+country_event = { #Constantinescu resigns
+	id = romania_politics.52
+	title = romania_politics.52.t
+	desc = romania_politics.52.d
+	picture = GFX_constantinescu_speech
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.52.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.52.a executed"
+		custom_effect_tooltip = ROM_constantinescu_tt
+	}
+}
+
+country_event = { #King of Hearts
+	id = romania_politics.53
+	title = romania_politics.53.t
+	desc = romania_politics.53.d
+	picture = GFX_nicholas_meeting_people
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.53.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.53.a executed"
+		custom_effect_tooltip = ROM_thankyou_tt
+	}
+}
+
+country_event = { #Meeting with Duda
+	id = romania_politics.54
+	title = romania_politics.54.t
+	desc = romania_politics.54.d
+	picture = GFX_romanian_crown
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.54.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.54.a executed"
+		set_country_flag = duda_divorcelol
+	}
+	option = {
+		name = romania_politics.54.b
+		log = "[GetDateText]: [This.GetName]: romania_politics.54.b executed"
+		set_country_flag = duda_remains
+	}
+}
+
+country_event = { #Queen of Spades
+	id = romania_politics.55
+	title = romania_politics.55.t
+	picture = d
+	is_triggered_only = yes
+	desc = {
+		text = romania_politics.55.d.a
+		trigger = {
+			has_country_flag = duda_divorcelol
+		}
+	}
+	desc = {
+		text = romania_politics.55.d.b
+		trigger = {
+			has_country_flag = duda_remains
+		}
+	}
+	option = {
+		name = romania_politics.55.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.55.a executed"
+		custom_effect_tooltip = ROM_thankyou_tt
+	}
+}
+
+country_event = { #Pauls Constitution 1
+	id = romania_politics.56
+	title = romania_politics.56.t
+	desc = romania_politics.56.d
+	picture = d
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.56.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.56.a executed"
+		hidden_effect = {
+			country_event = { id = romania_politics.57 days = 6 }
+		}
+	}
+}
+
+country_event = { #Pauls Constitution 2
+	id = romania_politics.57
+	title = romania_politics.57.t
+	desc = romania_politics.57.d
+	picture = d
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.57.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.57.a executed"
+		hidden_effect = {
+			country_event = { id = romania_politics.58 days = 6 }
+		}
+	}
+}
+
+country_event = { #Pauls Constitution 3
+	id = romania_politics.58
+	title = romania_politics.58.t
+	desc = romania_politics.58.d
+	picture = d
+	is_triggered_only =  yes
+
+	option = {
+		name = romania_politics.58.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.58.a executed"
+		hidden_effect = {
+			country_event = { id = romania_politics.59 days = 6 }
+		}
+	}
+}
+country_event = { #Pauls Constitution Referendum
+	id = romania_politics.59
+	title = romania_politics.59.t
+	desc = romania_politics.59.d
+	picture = d
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.59.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.59.a executed"
+		add_stability = 0.05
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		swap_ideas = {
+			remove_idea = ROM_restored_1923_constitution add_idea = ROM_pauls_constitution
+		}
+		hidden_effect = {
+			country_event = { id = romania_politics.60 days = 20 }
+		}
+	}
+}
+country_event = { #The Usurper
+	id = romania_politics.60
+	title = romania_politics.60.t
+	desc = romania_politics.60.d
+	picture = d
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.60.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.60.a executed"
+		custom_effect_tooltip = ROM_thankyou2_tt
+	}
+}
+
+country_event = { #Vadim gets clapped
+	id = romania_politics.61
+	title = romania_politics.61.t
+	desc = romania_politics.61.d
+	picture = d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = romania_politics.61.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.61.a executed"
+	}
+}
+
+country_event = { #Hohenzollern Reunion
+	id = romania_politics.62
+	title = romania_politics.62.t
+	desc = romania_politics.62.d
+	picture = d
+	is_triggered_only = yes
+
+	option = {
+		name = romania_politics.62.a
+		log = "[GetDateText]: [This.GetName]: romania_politics.62.a executed"
+		custom_effect_tooltip = ROM_hohre_tt
+		set_country_flag = rom_hohenzollerns
+	}
+}
+country_event = { #baia mare spill
+	id = romania_misc.1
+	title = romania_misc.1.t
+	desc = romania_misc.1.d
+	picture = GFX_cyanide_spill
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.1.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.1.a executed"
+		add_stability = -0.05
+	}
+}
+
+country_event = { #Ion Gheorghe Maurer dies
+	id = romania_misc.2
+	title = romania_misc.2.t
+	desc = romania_misc.2.d
+	picture = GFX_ion_maurer_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.2.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.2.a executed"
+	}
+}
+
+country_event = { #Dem Radulescu Dies
+	id = romania_misc.3
+	title = romania_misc.3.t
+	desc = romania_misc.3.d
+	picture = GFX_dem_radelescu_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.3.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.3.a executed"
+	}
+}
+
+###2001###
+
+country_event = { #The President of the Constitutional Court (Lucian Mihai) resigns
+	id = romania_misc.4
+	title = romania_misc.4.t
+	desc = romania_misc.4.d
+	picture = GFX_romanian_court
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.4.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.4.a executed"
+	}
+}
+
+country_event = { #The Vulcan Mine Tragedy
+	id = romania_misc.5
+	title = romania_misc.5.t
+	desc = romania_misc.5.d
+	picture = GFX_vulcan_mine_tragedy
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.5.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.5.a executed"
+	}
+}
+
+country_event = { #Vadim is stripped of political immunity
+	id = romania_misc.6
+	title = romania_misc.6.t
+	desc = romania_misc.6.d
+	picture = GFX_court
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.6.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.6.a executed"
+	}
+}
+
+###2002###
+
+country_event = { #Filantropica is released
+	id = romania_misc.7
+	title = romania_misc.7.t
+	desc = romania_misc.7.d
+	picture = GFX_philantropica_release
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.7.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.7.a executed"
+	}
+}
+
+###2003###
+
+country_event = { #The remains of Carol II are repatriated
+	id = romania_misc.8
+	title = romania_misc.8.t
+	desc = romania_misc.8.d
+	picture = GFX_carol_ii_remains
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.8.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.8.a executed"
+	}
+}
+
+country_event = { #Elisabeta Rizea dies
+	id = romania_misc.9
+	title = romania_misc.9.t
+	desc = romania_misc.9.d
+	picture = GFX_elisabeta_rizea_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.9.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.9.a executed"
+	}
+}
+
+###2009###
+
+country_event = { #Mircea Stanescu commits suicide
+	id = romania_misc.10
+	title = romania_misc.10.t
+	desc = romania_misc.10.d
+	picture = GFX_stanescu_suicide
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.10.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.10.a executed"
+	}
+}
+
+country_event = { #Start of the Avdhela Project
+	id = romania_misc.11
+	title = romania_misc.11.t
+	desc = romania_misc.11.d
+	picture = GFX_avdhela_project
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.11.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.11.a executed"
+	}
+}
+
+country_event = { #Gheorghe Dinica dies
+	id = romania_misc.12
+	title = romania_misc.12.t
+	desc = romania_misc.12.d
+	picture = GFX_dinica_death
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.12.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.12.a executed"
+	}
+}
+
+###2012###
+
+country_event = { #Sighet Explosions
+	id = romania_misc.13
+	title = romania_misc.13.t
+	desc = romania_misc.13.d
+	picture = GFX_sighet_explosions
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.13.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.13.a executed"
+	}
+}
+
+country_event = { #Bucharest Massacre
+	id = romania_misc.14
+	title = romania_misc.14.t
+	desc = romania_misc.14.d
+	picture = GFX_bucharest_mascare
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.14.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.14.a executed"
+	}
+}
+
+country_event = { #Devastating Wildfires
+	id = romania_misc.15
+	title = romania_misc.15.t
+	desc = romania_misc.15.d
+	picture = GFX_romania_fires
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.15.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.15.a executed"
+	}
+}
+
+country_event = { #Pasajul Lujerului Accident
+	id = romania_misc.16
+	title = romania_misc.16.t
+	desc = romania_misc.16.d
+	picture = GFX_pasajul_lujerului_accident
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.16.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.16.a executed"
+	}
+}
+
+country_event = { #Adrian Nastase attempts suicide
+	id = romania_misc.17
+	title = romania_misc.17.t
+	desc = romania_misc.17.d
+	picture = GFX_nastase_suicide
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.17.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.17.a executed"
+	}
+}
+
+###2019###
+country_event = { #Pope's visit to Romania
+	id = romania_misc.18
+	title = romania_misc.18.t
+	desc = romania_misc.18.d
+	picture = GFX_pope_visits_romania
+
+	is_triggered_only = yes
+
+	option = {
+		name = romania_misc.18.a
+		log = "[GetDateText]: [This.GetName]: romania_misc.18.a executed"
+	}
+}
