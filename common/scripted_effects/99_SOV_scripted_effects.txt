@@ -263,6 +263,64 @@ SOV_disorg_army_script = {
 		add_ideas = SOV_disorg_in_army_idea
 	}
 }
+SOV_wagner_national_spirit_script = {
+	if = {
+		limit = { has_idea = SOV_wagner_pmc_idea7 }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea7
+			add_idea = SOV_wagner_pmc_idea8
+		}
+	}
+	else_if = {
+		limit = { has_idea = SOV_wagner_pmc_idea6 }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea6
+			add_idea = SOV_wagner_pmc_idea7
+		}
+	}
+	else_if = {
+		limit = { has_idea = SOV_wagner_pmc_idea5 }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea5
+			add_idea = SOV_wagner_pmc_idea6
+		}
+	}
+	else_if = {
+		limit = { has_idea = SOV_wagner_pmc_idea4 }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea4
+			add_idea = SOV_wagner_pmc_idea5
+		}
+	}
+	else_if = {
+		limit = { has_idea = SOV_wagner_pmc_idea3 }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea3
+			add_idea = SOV_wagner_pmc_idea4
+		}
+	}
+	else_if = {
+		limit = { has_idea = SOV_wagner_pmc_idea2 }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea2
+			add_idea = SOV_wagner_pmc_idea3
+		}
+	}
+	else_if = {
+		limit = { has_idea = SOV_wagner_pmc_idea1 }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea1
+			add_idea = SOV_wagner_pmc_idea2
+		}
+	}
+	else_if = {
+		limit = { has_idea = SOV_wagner_pmc_idea }
+		swap_ideas = {
+			remove_idea = SOV_wagner_pmc_idea
+			add_idea = SOV_wagner_pmc_idea1
+		}
+	}
+}
 ###########REFERENDUM OF INDEPENDENCE(LIBERAL RUSSIA)###########
 russian_referendum_federation = {
 	if = {
@@ -2575,6 +2633,87 @@ russian_udmurtia_annex = {
 			country_event = { id = subject_rus.126 }
 		}
 		UDM = { 
+			set_temp_variable = { modify_subjectinped = -25 }
+			modify_subjectinped_support = yes
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+	}
+}
+###########DELETE NATIONAL REPUBLICS - KUBAN###########
+russian_kuban_annex = {
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					country_exists = KUB
+					KUB = {
+						is_subject_of = SOV
+					}
+				}
+				SOV = {
+					owns_state = 668
+					owns_state = 1140
+				}
+			}
+			KUB = {
+				NOT = { has_country_flag = SUB_subject_rebeliion_flag }
+				NOT = { has_country_flag = SUB_subject_destroy_flag }
+				check_variable = { KUB.subjectinped < 55 }
+			}
+		}
+		add_political_power = -150
+		add_stability = -0.05
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.08 }
+		set_temp_variable = { temp_outlook_increase = -0.08 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			annex_country = { target = KUB transfer_troops = yes }
+			add_to_variable = { treasury = KUB.treasury }
+			add_to_variable = { debt = KUB.debt }
+			add_to_variable = { int_investments = KUB.int_investments }
+		}
+		KUB = { 
+			every_core_state = { remove_core_of = KUB }
+			set_country_flag = SUB_subject_rebeliion_flag 
+			set_country_flag = SUB_subject_destroy_flag
+		}
+	}
+	else_if = {
+		limit = {
+			KUB = {
+				NOT = { has_country_flag = SUB_subject_rebeliion_flag }
+				NOT = { has_country_flag = SUB_subject_destroy_flag }
+				check_variable = { KUB.subjectinped > 55 }
+			}
+			NOT = { country_exists = KUB }
+		}
+		if = {
+			limit = {
+				country_exists = KUB
+				KUB = {
+					is_subject_of = SOV
+				}
+			}
+			country_event = { id = subject_rus.126 }
+			SOV = {
+				set_autonomy = {
+					target = KUB
+					autonomy_state = autonomy_free
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				SOV = {
+					owns_state = 668
+					owns_state = 1140
+				}
+			}
+			release = KUB
+			country_event = { id = subject_rus.126 }
+		}
+		KUB = { 
 			set_temp_variable = { modify_subjectinped = -25 }
 			modify_subjectinped_support = yes
 			set_country_flag = SUB_subject_rebeliion_flag 
@@ -6030,8 +6169,10 @@ wagner_create_tank_brigade = {
 		set_temp_variable = { temp_outlook_increase = 0.01 }
 		add_relative_party_popularity = yes
 	}
-	set_temp_variable = { modify_wagnerbund = 2 }
-	modify_wagnerbund_support = yes
+	SOV = {
+		set_temp_variable = { modify_wagnerbund = 1 }
+		modify_wagnerbund_support = yes
+	}
 	hidden_effect = {
 		if = {
 			limit = {
@@ -6064,7 +6205,7 @@ wagner_create_tank_brigade = {
 		spawn_tank_wagner = yes
 	set_temp_variable = { modify_wagnerarmy = 1 }
 	modify_wagnerarmy_support = yes
-	wagner_bunt_check = yes
+	
 	add_equipment_to_stockpile = {
 		type = infantry_weapons2
 		amount = -3000
@@ -6108,12 +6249,14 @@ wagner_create_new_brigade = {
 	set_temp_variable = { temp_outlook_increase = 0.01 }
 	add_relative_party_popularity = yes
 	}
-	set_temp_variable = { modify_wagnerbund = 1 }
-	modify_wagnerbund_support = yes
+	SOV = {
+		set_temp_variable = { modify_wagnerbund = 1 }
+		modify_wagnerbund_support = yes
+	}
 	hidden_effect = {
 		set_temp_variable = { modify_wagnerarmy = 1 }
 		modify_wagnerarmy_support = yes
-		wagner_bunt_check = yes
+		
 		add_equipment_to_stockpile = {
 			type = infantry_weapons2
 			amount = -3000
@@ -6174,12 +6317,13 @@ wagner_create_second_brigade = {
 	modify_treasury_effect = yes
 	set_country_flag = SOV_second_formed
 	custom_effect_tooltip = BLR_wagner_recruit_TT
-	set_temp_variable = { modify_wagnerbund = 1 }
-	modify_wagnerbund_support = yes
+	SOV = {
+		set_temp_variable = { modify_wagnerbund = 1 }
+		modify_wagnerbund_support = yes
+	}
 	hidden_effect = {
 		set_temp_variable = { modify_wagnerarmy = 1 }
 		modify_wagnerarmy_support = yes
-		wagner_bunt_check = yes
 		division_template = {
 			name = "Wagner Light Unit"
 			is_locked = yes
@@ -6212,8 +6356,10 @@ wagner_create_first_brigade = {
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
 	custom_effect_tooltip = BLR_wagner_recruit_TT
-	set_temp_variable = { modify_wagnerbund = 1 }
-	modify_wagnerbund_support = yes
+	SOV = {
+		set_temp_variable = { modify_wagnerbund = 1 }
+		modify_wagnerbund_support = yes
+	}
 	hidden_effect = {
 		set_temp_variable = { modify_wagnerarmy = 1 }
 		modify_wagnerarmy_support = yes
