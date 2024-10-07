@@ -10,8 +10,9 @@ __version__ = 1.0
 
 # Function: check_basic_style
 # Purpose: Validates files to ensure the basic stylization of MD is ensured.
-def check_basic_style(filepath, bad_count, message):
+def check_basic_style(filepath, bad_count, warningErrors, message):
 	fixedErrors = 0
+	warningErrors = 0
 	with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
 		content = file.readlines()
 		lineNum = 0
@@ -33,7 +34,7 @@ def check_basic_style(filepath, bad_count, message):
 							if hasNoSpace: #If regex finds open braces not styled correctly
 								print("WARNING: Missing a space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
 								fixedErrors += 1
-
+								warningErrors += 1
 				if "}" in line: #if there is an close brace in this line
 					hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before {
 					if not hasComment: #if the line doesn't have a comment before the open brace
@@ -47,12 +48,14 @@ def check_basic_style(filepath, bad_count, message):
 							if hasNoSpace: #If regex finds open braces not styled correctly
 								print("WARNING: Missing a space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
 								fixedErrors += 1
+								warningErrors += 1
 				if "\"" in line: #if the line has a qoute
 					if (line.count('\"') % 2) !=0: #if there are an odd number of qoutes on this line
 						hasComment = re.search(r'#.*[\"]+', line, re.M | re.I)  # If comment at the start or before "
 						if not hasComment: #if there is no comment before the qoute
 							print("WARNING: Missing a quotation sign at {0} Line number: {1}".format(filepath,lineNum))
 							fixedErrors += 1
+							warningErrors += 1
 
 				if "=" in line: #if the line has an equal sign
 					equalSign = 0
@@ -63,12 +66,15 @@ def check_basic_style(filepath, bad_count, message):
 						print("WARNING: Two spaces before or after an equal sign at {0} Line number: {1}".format(filepath, lineNum))
 						equalSign = equalSign - line.count('  =') - line.count('=  ')
 						fixedErrors += 1
+						warningErrors += 1
 					if equalSign != 0: #if there are equal signs that aren't used correctly
 						print("WARNING: Missing a space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
 						fixedErrors += 1
+						warningErrors += 1
 				if "    " in line: #if 4 spaces in the line
 					print("WARNING: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNum))
 					fixedErrors += 1
+					warningErrors += 1
 				if openBraces[0] <= -1:
 					print("ERROR: A possible missing curly brace {{ in file {} {{line {1}}}".format(filepath, lineNum))
 					openBraces[0] = 0
@@ -76,7 +82,7 @@ def check_basic_style(filepath, bad_count, message):
 
 	file.close()
 
-	return bad_count, message
+	return bad_count, warningErrors, message
 
 
 def main():
@@ -84,6 +90,7 @@ def main():
 	message = "Validating Basic Style - Secondary Check\n"
 	files_list = []
 	bad_count = 0
+	warningErrors = 0
 
 	# Allow running from root directory as well as from inside the tools directory
 	scriptDir = os.path.realpath(__file__)
@@ -115,19 +122,19 @@ def main():
 
 	for filename in files_list:
 		try:
-			bad_count, message = check_basic_style(filename, bad_count, message)
+			bad_count, warningErrors, message = check_basic_style(filename, bad_count, warningErrors, message)
 		except:
 			print(f"{filename} has a potentially broken curly brace or some other fixes...")
 			bad_count += 1
 
-	print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
-	message +="------\nChecked {0} files\nErrors detected: {1}\n".format(len(files_list), bad_count)
-	if (bad_count == 0):
+	print("------\nChecked {0} files\nErrors detected: {1}\nWarning Detected: {2}".format(len(files_list), bad_count, warningErrors))
+	message = message + "------\nChecked {0} files\nErrors detected: {1}\nWarnings Detected: {2}".format(len(files_list), bad_count, warningErrors)
+	if (bad_count == 0) and (warningErrors <= 4):
 		print("File validation PASSED")
-		message +="File validation PASSED\n"
+		message = message + "File validation PASSED\n"
 		postResults = False
 	else:
-		message +="File validation FAILED\n"
+		message = message + "File validation FAILED\n Please fix all errors or warnings."
 		postResults = True
 
 	print ('The script took {0} second!'.format(time.time() - startTime))
@@ -145,7 +152,6 @@ def main():
 					"https://gitlab.com/api/v4/projects/" + projectId + "/merge_requests/" + mergeRequestId + "/discussions",
 					data=payload, headers=headers)
 				print("Posted results to merge request")
-
 			else:
 				commitID = os.environ['CI_COMMIT_SHA'];
 				r = requests.post(

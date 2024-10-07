@@ -2,10 +2,6 @@ on_actions = {
 	on_weekly_PER = {
 		effect = {
 			if = {
-				limit = { country_exists = PER }
-				PER_random_events_majlis = yes
-			}
-			if = {
 				limit = {
 					country_exists = PER
 					has_country_flag = PER_artesh_coup
@@ -15,15 +11,6 @@ on_actions = {
 				}
 				PER_random_events_insurgents = yes
 			}
-			if = {	#Capping maximum majlis support at 290
-				limit = { check_variable = { PER_majlis_support > 290 } }
-				set_variable = { PER_majlis_support = 290 }
-			}
-			if = {	#Capping minimum majlis support to 0
-				limit = { check_variable = { PER_majlis_support < 0 } }
-				set_variable = { PER_majlis_support = 0 }
-			}
-			#
 			if = {	#Capping maximum IRGC strength at 100
 				limit = { check_variable = { PER_insurgent_strength > 100 } }
 				set_variable = { PER_insurgent_strength = 100 }
@@ -32,7 +19,6 @@ on_actions = {
 				limit = { check_variable = { PER_insurgent_strength < 0 } }
 				set_variable = { PER_insurgent_strength = 0 }
 			}
-			##
 			if = { #IRGC insurgency
 				limit = {
 					check_variable = { PER_insurgent_strength > 99 }
@@ -43,53 +29,65 @@ on_actions = {
 					}
 				}
 			}
-			#
 		}
 	}
 	on_monthly_PER = {
 		effect = {
+			# For Election
 			if = {
 				limit = {
-					has_country_flag = PER_starting_the_revolution_2
 					NOT = {
-						check_variable = { revolutionary_recovery_status = 0 }
+						has_country_flag = in_civil_war_iran
+					}
+					check_variable = {
+						PER_election_var > 0
 					}
 				}
-				random_list = {
-					25 = {
-						country_event = {
-							id = PER_civilwar.5
-							days = 15
-						}
+				add_to_variable = { var = PER_election_var value = -1 }
+				clamp_variable = { var = PER_election_var min = 0 max = 48 }
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = in_civil_war_iran
 					}
-					25 = {
-						country_event = {
-							id = PER_civilwar.6
-							days = 10
-						}
+					check_variable = {
+						PER_election_var = 0
 					}
-					25 = {
-						country_event = {
-							id = PER_civilwar.7
-							days = 25
-						}
-					}
-					25 = {
-						country_event = {
-							id = PER_civilwar.8
-							days = 4
-						}
-					}
+				}
+				add_to_variable = { var = PER_election_var value = 48 }
+				clamp_variable = { var = PER_election_var min = 0 max = 48 }
+				country_event = {
+					id = PER_majlis.1
+					days = 18
 				}
 			}
 			if = {
 				limit = {
-					has_country_flag = PER_starting_the_revolution
-					check_variable = { revolutionary_recovery_status < 0 }
+					NOT = {
+						has_country_flag = in_civil_war_iran
+					}
+					check_variable = {
+						PER_election_var > 0
+					}
 				}
-				clr_country_flag = PER_persian_revolution
-				clr_country_flag = PER_hide_focus_branches
-				complete_national_focus = PER_the_third_development_plan
+				add_to_variable = { var = PER_session_var value = -1 }
+				clamp_variable = { var = PER_session_var min = 0 max = 48 }
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = in_civil_war_iran
+					}
+					check_variable = {
+						PER_session_var = 0
+					}
+				}
+				add_to_variable = { var = PER_session_var value = 18 }
+				clamp_variable = { var = PER_session_var min = 0 max = 48 }
+				country_event = {
+					id = PER_majlis.2
+				}
 			}
 		}
 	}

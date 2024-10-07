@@ -33,7 +33,9 @@ stages:
 # CodingStandards Section
 CodingStandards:
  stage: codingstandards
- image: xr09/python-requests
+ image:
+  name: broadinstitute/python-requests
+  entrypoint: [""]
  interruptible: true
  rules:
   - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
@@ -41,7 +43,7 @@ CodingStandards:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: always
  script:
-  - python3 tools/coding_standards.py $Bot_Token
+  - python tools/coding_standards.py $Bot_Token
 
 CWTools_CI:
  stage: codingstandards
@@ -69,7 +71,9 @@ CWTools_CI:
 # Stylization Section
 Styling:
  stage: styling
- image: xr09/python-requests
+ image:
+  name: broadinstitute/python-requests
+  entrypoint: [""]
  interruptible: true
  rules:
   - if: '$CI_MERGE_REQUEST_LABELS =~ /skip-coding-pipeline/'
@@ -81,11 +85,13 @@ Styling:
     when: always
     needs: ["CodingStandards", "CWTools_CI"]
  script:
-  - python3 tools/check_basic_style_2.py $Bot_Token
+  - python tools/check_basic_style_2.py $Bot_Token
 
 FixingStyling:
  stage: correctstyling
- image: xr09/python-requests
+ image:
+  name: broadinstitute/python-requests
+  entrypoint: [""]
  interruptible: true
  needs: ["Styling"]
  rules:
@@ -96,7 +102,8 @@ FixingStyling:
  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
    when: on_failure
  script:
-  - python3 tools/fix_styling.py $Bot_Token
+  - apt-get install -y git
+  - python tools/fix_styling.py $Bot_Token
  after_script:
   - git config --global user.email "millenniumdawnmod@gmail.com"
   - git config --global user.name "millennium_dawn_cwtools"
@@ -105,8 +112,8 @@ FixingStyling:
   - git add -A
   - git commit -m 'Fixed Styling for you'
   - git push -u origin HEAD:$CI_COMMIT_REF_NAME
-  - python3 tools/check_basic_style.py $Bot_Token
-  - python3 tools/check_basic_style_2.py $Bot_Token
+  - python tools/check_basic_style.py $Bot_Token
+  - python tools/check_basic_style_2.py $Bot_Token
 
 # This section is purely to create a releasable off the most recent commit on this tag. This should allow me to save some time in creating releasable assets.
 create_releaseable:

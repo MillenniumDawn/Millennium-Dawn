@@ -2,6 +2,7 @@ decision_category_internal_factions = {
 	# Farmers
 	reduce_taxes_farmer_mission = {
 		activation = { always = no }
+		icon = GFX_decisions_tax_down_button
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = reduce_taxes_farmer_mission_tt
@@ -28,7 +29,7 @@ decision_category_internal_factions = {
 	}
 
 	agricultural_district_tax_credits_decision = {
-		icon = generic
+		icon = GFX_decisions_tax_down_button
 		visible = {
 			has_idea = farmers
 			check_variable = { agriculture_district_total > 0 }
@@ -52,7 +53,7 @@ decision_category_internal_factions = {
 
 	# Labour Unions
 	tax_labour_unions_decision = {
-		icon = generic
+		icon = GFX_decisions_tax_up_button
 		visible = {
 			has_idea = labour_unions
 		}
@@ -68,9 +69,18 @@ decision_category_internal_factions = {
 			consumer_goods_factor = -0.10
 			population_tax_income_multiplier_modifier = 0.05
 		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				ai_has_high_deficit = yes
+			}
+		}
 	}
+
 	raise_wages_labour_unions_decision = {
-		icon = generic
+		icon = GFX_decisions_wages_up_button
 		visible = {
 			has_idea = labour_unions
 		}
@@ -79,7 +89,7 @@ decision_category_internal_factions = {
 		cost = 50
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: decision remove raise_wages_labour_unions_decision"
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_labour_unions_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_small_medium_business_owners_opinion = yes
@@ -92,7 +102,7 @@ decision_category_internal_factions = {
 
 	# The Military
 	allow_foreign_nationals_military_decision = {
-		icon = generic
+		icon = GFX_decisions_foreign_military_button
 		visible = {
 			has_idea = the_military
 			NOT = { has_idea = internal_factions_allowed_foreign_nationals_military }
@@ -110,7 +120,7 @@ decision_category_internal_factions = {
 		}
 	}
 	repeal_foreign_nationals_military_decision = {
-		icon = generic
+		icon = GFX_decisions_foreign_military_button
 		visible = {
 			has_idea = the_military
 			has_idea = internal_factions_allowed_foreign_nationals_military
@@ -125,6 +135,164 @@ decision_category_internal_factions = {
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 			remove_ideas = internal_factions_allowed_foreign_nationals_military
+		}
+	}
+
+	# Fossil Fuel Industry/Oligarchs/Landowners
+	encourage_additional_resource_production_decision = {
+		icon = GFX_decision_bancru_ask_button
+		visible = {
+			OR = {
+				has_idea = fossil_fuel_industry
+				has_idea = oligarchs
+				has_idea = landowners
+				has_idea = labour_unions
+			}
+		}
+
+		days_remove = 90
+		days_re_enable = 90
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision encourage_additional_resource_production_decision"
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+			change_landowners_opinion = yes
+			change_oligarchs_opinion = yes
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		modifier = {
+			corporate_tax_income_multiplier_modifier = -0.05
+			local_resources_factor = 0.15
+		}
+	}
+
+	# International Bankers/Landowners/Oligarchs
+	cut_taxes_on_the_rich_decision = {
+		icon = GFX_decisions_tax_down_button
+		visible = {
+			OR = {
+				has_idea = international_bankers
+				has_idea = landowners
+				has_idea = oligarchs
+			}
+		}
+
+		days_remove = 75
+		days_re_enable = 75
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision cut_taxes_on_the_rich_decision"
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+			change_oligarchs_opinion = yes
+			change_international_bankers_opinion = yes
+		}
+
+		modifier = {
+			population_tax_income_multiplier_modifier = -0.05
+		}
+	}
+
+	# The Clergy/The Ulema/Wahabi Ulema/The Priesthood
+	encourage_religion_in_the_government_decision = {
+		icon = GFX_decisions_religion_government_button
+		visible = {
+			OR = {
+				has_idea = the_ulema
+				has_idea = the_clergy
+				has_idea = wahabi_ulema
+				has_idea = the_priesthood
+			}
+		}
+		days_re_enable = 160
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision encourage_religion_in_the_government_decision"
+			set_temp_variable = { arg_popularity = 0.05 }
+			add_ruling_outlook_popularity = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_priesthood_opinion = yes
+			change_the_clergy_opinion = yes
+			change_the_ulema_opinion = yes
+			change_the_wahabi_ulema_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				OR = {
+					check_variable = { the_priesthood_opinion < 60 }
+					check_variable = { the_clergy_opinion < 60 }
+					check_variable = { the_ulema_opinion < 60 }
+					check_variable = { wahabi_ulema_opinion < 60 }
+				}
+			}
+		}
+	}
+
+	impose_taxes_on_religious_institutions_decision = {
+		icon = GFX_decision_bancru_ask_button
+		visible = {
+			OR = {
+				has_idea = the_ulema
+				has_idea = the_clergy
+				has_idea = wahabi_ulema
+				has_idea = the_priesthood
+			}
+			NOT = { has_idea = internal_factions_taxing_religious_institutions }
+		}
+
+		days_remove = 90
+		days_re_enable = 90
+		cost = 100
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision remove impose_taxes_on_religious_institutions_decision"
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
+			change_the_donju_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_priesthood_opinion = yes
+			change_the_clergy_opinion = yes
+			change_the_ulema_opinion = yes
+			change_the_wahabi_ulema_opinion = yes
+			add_ideas = internal_factions_taxing_religious_institutions
+		}
+	}
+
+	repeal_taxes_on_religious_institutions_decision = {
+		icon = GFX_decision_bancru_ask_button
+		visible = {
+			OR = {
+				has_idea = the_ulema
+				has_idea = the_clergy
+				has_idea = wahabi_ulema
+				has_idea = the_priesthood
+			}
+			has_idea = internal_factions_taxing_religious_institutions
+		}
+
+		days_remove = 90
+		days_re_enable = 90
+		cost = 100
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision remove repeal_taxes_on_religious_institutions_decision"
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
+			change_the_donju_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_priesthood_opinion = yes
+			change_the_clergy_opinion = yes
+			change_the_ulema_opinion = yes
+			change_the_wahabi_ulema_opinion = yes
+			remove_ideas = internal_factions_taxing_religious_institutions
 		}
 	}
 }
