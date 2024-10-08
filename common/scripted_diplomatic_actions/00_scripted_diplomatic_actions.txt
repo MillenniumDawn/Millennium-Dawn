@@ -466,9 +466,7 @@ scripted_diplomatic_actions = {
 			set_variable = { ROOT.assuming_debt_value = THIS.debt }
 			multiply_variable = { ROOT.assuming_debt_value = 0.25 }
 
-			ROOT = {
-				set_variable = { pending_assume_debt_offer = PREV.id }
-			}
+			ROOT = { set_variable = { pending_assume_debt_offer = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect diplo_action_assume_debt"
@@ -752,10 +750,6 @@ scripted_diplomatic_actions = {
 				}
 			}
 			modifier = {
-				factor = 0
-				ROOT = { check_variable = { interest_rate < 10 } }
-			}
-			modifier = {
 				factor = 1.10
 				ROOT = { has_political_power > 499 }
 			}
@@ -777,16 +771,10 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				factor = 0
-				ROOT = { has_political_power < 250 }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { check_variable = { interest_rate > 8 } }
-			}
-			modifier = {
-				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_assume_debt_offer = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_assume_debt_offer = 0 } } }
+					ROOT = { check_variable = { interest_rate > 8 } }
+					ROOT = { has_political_power < 250 }
 				}
 			}
 		}
@@ -1170,6 +1158,208 @@ scripted_diplomatic_actions = {
 				factor = 0
 				ROOT = { check_variable = { interest_rate > 8 } }
 			}
+		}
+	}
+
+	propose_subsidies_to_subject = {
+		allowed = { always = yes }
+		visible = {
+			is_subject = yes
+			is_subject_of = ROOT
+			NOT = { has_country_flag = overlord_is_subsidizing_us_@ROOT }
+		}
+		selectable = {
+			is_subject_of = ROOT
+			NOT = { has_war_with = ROOT }
+			has_opinion = { target = ROOT value > 25 }
+		}
+
+		cost = 50
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		icon = 19 # TODO: Add a new icon for this
+		send_description = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT
+
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_subsidies_to_subject"
+			ROOT = { set_variable = { pending_overlord_subsidization_offer = PREV.id } }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_subsidies_to_subject"
+			THIS = {
+				set_country_flag = overlord_is_subsidizing_us_@ROOT
+				set_country_flag = overlord_subsidies
+				add_ideas = idea_overlord_subsidies
+				ROOT = {
+					clear_variable = pending_overlord_subsidization_offer
+					set_country_flag = overlord_is_subsidizing_us_@PREV
+					add_to_array = { subject_subsidization = PREV.id }
+				}
+			}
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect propose_subsidies_to_subject"
+			ROOT = { clear_variable = pending_overlord_subsidization_offer }
+		}
+
+		accept_title = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_ACCEPT
+		accept_description = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_ACCEPT_DESC
+		reject_title = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_REJECT
+		reject_description = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_REJECT_DESC
+
+		ai_acceptance = {
+			base_propose_subsidies_to_subject_condition = {
+				base = -15
+			}
+			condition_high_interest_rate = {
+				base = 0
+				modifier = {
+					add = 5
+					check_variable = { interest_rate > 4.99 }
+				}
+				modifier = {
+					add = 5
+					check_variable = { interest_rate > 7.99 }
+				}
+				modifier = {
+					add = 5
+					check_variable = { interest_rate > 9.99 }
+				}
+				modifier = {
+					add = 5
+					check_variable = { interest_rate > 12.99 }
+				}
+				modifier = {
+					add = 5
+					check_variable = { interest_rate > 14.99 }
+				}
+			}
+			condition_three = {
+				base = 0
+				modifier = {
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.05 }
+					check_variable = { opinion_calculator > -60 }
+					add = opinion_calculator
+				}
+			}
+		}
+
+		ai_desire = {
+			base = 25
+			modifier = {
+				add = 10
+				ROOT = { check_variable = { treasury_rate > 3.00 } }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { check_variable = { interest_rate > 12.99 } }
+			}
+		}
+	}
+
+	cancel_subsidies_to_subject = {
+		allowed = { always = yes }
+		visible = {
+			has_country_flag = overlord_is_subsidizing_us_@ROOT
+		}
+		selectable = {
+			OR = {
+				THIS = { is_subject_of = ROOT }
+				ROOT = { OVERLORD = { tag = PREV.PREV } }
+			}
+		}
+
+		cost = 50
+		can_be_sent = { always = yes }
+		show_acceptance_on_action_button = no
+		requires_acceptance = no
+		icon = 19 # TODO: Need to make a new icon
+		send_description = DIPLO_ACTION_CANCEL_OVERLORD_SUBSIDIES
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action cancel_subsidies_to_subject"
+			THIS = {
+				clr_country_flag = overlord_is_subsidizing_us_@ROOT
+				clr_country_flag = overlord_subsidies
+				remove_ideas = idea_overlord_subsidies
+				ROOT = {
+					clr_country_flag = overlord_is_subsidizing_us_@PREV
+					remove_from_array = { subject_subsidization = PREV.id }
+				}
+			}
+		}
+
+		ai_acceptance = {
+			base_mutual_investment_treaty_condition = {
+				base = -14
+			}
+			condition_two = {
+				base = 0
+				modifier = {
+					add = 5
+					is_same_government_THIS_ROOT = yes
+				}
+				modifier = {
+					add = -50
+					THIS = { has_government = nationalist }
+				}
+			}
+			condition_three = {
+				base = 0
+				modifier = {
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.05 }
+					check_variable = { opinion_calculator > -60 }
+					add = opinion_calculator
+				}
+			}
+			condition_four = {
+				base = 0
+				modifier = {
+					ROOT = { has_idea = NATO_member }
+					THIS = { has_idea = NATO_member }
+					add = 10
+				}
+			}
+			condition_five = {
+				base = 0
+				modifier = {
+					THIS = {
+						OR = {
+							has_idea = EU_member
+							tag = SWI
+						}
+					}
+					ROOT = { has_idea = EU_member }
+					add = 15
+				}
+			}
+			condition_six = {
+				base = 0
+				modifier = {
+					ROOT = { is_in_faction_with = PREV }
+					add = 10
+				}
+			}
+			condition_seven = {
+				base = 0
+				modifier = {
+					add = 10
+					is_subject_of = ROOT
+				}
+			}
+			condition_eight = {
+				base = 0
+				modifier = {
+					add = 10
+					is_influencer = yes
+				}
+			}
+		}
+
+		ai_desire = {
+			base = 25
 		}
 	}
 }

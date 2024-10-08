@@ -957,7 +957,6 @@ SPR_the_regions_of_spain = {
 
 SPR_monarchist_spain = {
 	SPR_spawn_new_guardia_real_decision = {
-		allowed = { original_tag = SPR }
 		visible = {
 			OR = {
 				nationalist_monarchists_are_in_power = yes
@@ -1303,7 +1302,10 @@ SPR_monarchist_spain = {
 SPR_political_policy_category = {
 	SPR_file_a_motion_of_no_confidence = {
 		allowed = { original_tag = SPR }
-		visible = { has_completed_focus = SPR_the_republic }
+		visible = {
+			has_completed_focus = SPR_the_republic
+			has_elections = yes
+		}
 
 		available = {
 			NOT = { has_country_flag = SPR_filed_a_motion_of_no_confidence }
@@ -1362,6 +1364,7 @@ SPR_political_policy_category = {
 				}
 				nationalist_right_wing_populists_are_in_power_or_coalition = yes
 			}
+			has_idea = labour_unions
 			has_completed_focus = SPR_a_party_with_a_union
 		}
 
@@ -1447,10 +1450,16 @@ SPR_political_policy_category = {
 		cost = 75
 
 		days_remove = 30
-		days_re_enable = 30
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_encourage_communist_neighbors_decision"
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
+		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SPR_encourage_communist_neighbors_decision"
+			log = "[GetDateText]: [Root.GetName]: Decision remove SPR_encourage_communist_neighbors_decision"
 			every_neighbor_country = {
 				limit = {
 					NOT = {
@@ -1873,7 +1882,7 @@ SPR_political_policy_category = {
 			NOT = {
 				OR = {
 					has_idea = SPR_keynesian_economic_idea
-					has_idea = SPR_decommdify_the_basics_idea
+					has_idea = SPR_decommodify_the_basics_idea
 				}
 			}
 		}
@@ -1894,10 +1903,10 @@ SPR_political_policy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_socialism_policy_replacer_decision"
 			if = {
 				limit = {
-					NOT = { has_idea = SPR_decommdify_the_basics_idea }
+					NOT = { has_idea = SPR_decommodify_the_basics_idea }
 					has_completed_focus = SPR_decommodify_the_basics
 				}
-				add_ideas = SPR_decommdify_the_basics_idea
+				add_ideas = SPR_decommodify_the_basics_idea
 			}
 			if = {
 				limit = {
@@ -2109,7 +2118,6 @@ SPR_political_policy_category = {
 
 SPR_foreign_recruitment = {
 	SPR_spawn_new_foreign_legion_decision = {
-		allowed = { original_tag = SPR }
 		visible = { has_completed_focus = SPR_the_foreign_legion }
 
 		available = {
@@ -2117,6 +2125,7 @@ SPR_foreign_recruitment = {
 				tooltip = SPR_deployed_legion_tt
 				check_variable = { SPR_deployed_legions < SPR_legion_cap }
 			}
+			NOT = { has_decision = SPR_reform_the_spanish_foreign_legion_decision }
 		}
 
 		days_remove = 90
@@ -2126,20 +2135,121 @@ SPR_foreign_recruitment = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_spawn_foreign_legion_decision"
-			94 = {
+			add_to_variable = { SPR.SPR_deployed_legions = 1 }
+			if = {
+				limit = { has_country_flag = SPR_reformed_the_new_foreign_legion }
+				94 = {
+					create_unit = {
+						division = "name = \"Expanded Foreign Legion Tercio\" division_template = \"Expanded Foreign Legion Tercio\" start_experience_factor = 0.80"
+						owner = SPR
+						prioritize_location = 12038
+						count = 1
+					}
+				}
+			}
+			else = {
+				94 = {
+					create_unit = {
+						division = "name = \"Foreign Legion Tercio\" division_template = \"Foreign Legion Tercio\" start_experience_factor = 0.5"
+						owner = SPR
+						prioritize_location = 12038
+						count = 1
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
+		}
+	}
+
+	SPR_reform_the_spanish_foreign_legion_decision = {
+		visible = {
+			has_completed_focus = SPR_expand_the_foreign_legion
+			NOT = { has_country_flag = SPR_reformed_the_new_foreign_legion }
+		}
+
+		available = {
+			has_army_manpower = { size > 149999 }
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			NOT = { has_decision = SPR_spawn_new_foreign_legion_decision }
+		}
+
+		days_remove = 365
+
+		cost = 150
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_spawn_foreign_legion_decision"
+			set_country_flag = SPR_reformed_the_new_foreign_legion
+			delete_unit_template_and_units = {
+				division_template = "Foreign Legion Tercio"
+				disband = yes
+			}
+			SPR = {
+				division_template = {
+					name = "Expanded Foreign Legion Tercio"
+					is_locked = yes
+					regiments = {
+						L_arm_Bat = { x = 0 y = 0 }
+						Mech_Inf_Bat = { x = 0 y = 1 }
+						Mech_Inf_Bat = { x = 0 y = 2 }
+						Mot_Inf_Bat = { x = 1 y = 0 }
+						Arty_Bat = { x = 2 y = 0 }
+						L_arm_Bat = { x = 3 y = 0 }
+						Mech_Inf_Bat = { x = 3 y = 1 }
+						Mech_Inf_Bat = { x = 3 y = 2 }
+					}
+
+					support = {
+						Arty_Battery = { x = 0 y = 0 }
+						H_Engi_Comp = { x = 0 y = 1 }
+						armor_Recce_Comp = { x = 0 y = 2 }
+						combat_service_support_company = { x = 0 y = 3 }
+					}
+				}
+			}
+			93 = {
 				create_unit = {
-					division = " name = \"Foreign Legion Tercio\" division_template = \"Foreign Legion Tercio\" start_experience_factor = 0.5"
+					division = "name = \"Tercio 'Don Juan José de Austria' No. 3 of the Legion\" division_template = \"Expanded Foreign Legion Tercio\" start_experience_factor = 0.95"
+					owner = SPR
+					prioritize_location = 10009
+				}
+				create_unit = {
+					division = "name = \"Tercio 'Alejandro Farnesio' No. 4 of the Legion\" division_template = \"Expanded Foreign Legion Tercio\" start_experience_factor = 0.95"
 					owner = SPR
 					prioritize_location = 12038
 				}
+				create_unit = {
+					division = "name = \"Tercio 'Gonzalo Fernández de Córdoba' No. 5 of the Legion\" division_template = \"Expanded Foreign Legion Tercio\" start_experience_factor = 0.95"
+					owner = SPR
+					prioritize_location = 12038
+				}
+				create_unit = {
+					division = "name = \"Tercio 'Inés Suárez' No. 6 of the Legion\" division_template = \"Expanded Foreign Legion Tercio\" start_experience_factor = 0.95"
+					owner = SPR
+					prioritize_location = 7183
+				}
+			}
 
-				add_to_variable = { SPR_deployed_legions = 1 }
+			set_variable = { SPR.SPR_deployed_legions = 4 }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				has_government = nationalist
 			}
 		}
 	}
 
 	SPR_spawn_new_regulares_decision = {
-		allowed = { original_tag = SPR }
 		visible = {
 			has_completed_focus = SPR_expand_the_regulares
 		}
@@ -2177,6 +2287,14 @@ SPR_foreign_recruitment = {
 				}
 
 				add_to_variable = { SPR_deployed_regulares = 1 }
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				has_government = nationalist
 			}
 		}
 	}

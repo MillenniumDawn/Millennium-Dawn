@@ -1,12 +1,4 @@
-############################################################################################################
-#	AC mod - scripted triggers
-############################################################################################################
-#Written by hiddengearz
-#Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
-#This reworked system allows you to have 5 of each project active per country.
-#So you can have 5 CIC projects, 5 INF projects, 5 MIC projects etc in every country in the game
-#There are 8 project types * 5 of each allowed per country = 40 investments possible in one country * 210 countries the player can invest in = 8400 possibile investments for the player
-#Now if the AI also does the same that's 210 * 8400 = 1,764,000 possible investments possible
+# Author(s): AngriestBird, Konki (original creator of AC construction)
 
 # AC_building_infra_available
 # Method for handling the infrastructure
@@ -37,8 +29,11 @@ AC_building_infra_available = {
 # Method for handling whether or not there is space for a sam-site
 AC_building_airbase_available = {
 	ROOT = {
-		# Investor has Military-Industrial Complex
-		has_idea = defense_industry
+		# Investor has Military-Industrial Complex/The Military
+		OR = {
+			has_idea = defense_industry
+			has_idea = the_military
+		}
 		# Check to see if project_build_amount > 1
 		if = { limit = { check_variable = { project_build_amount^-1 = 1 } }
 			PREV = { free_building_slots = { building = air_base size > 0 include_locked = no } }
@@ -77,8 +72,11 @@ AC_building_airbase_available = {
 # Method for handling
 AC_building_antiair_available = {
 	ROOT = {
-		# Investor has Military-Industrial Complex
-		has_idea = defense_industry
+		# Investor has Military-Industrial Complex/The Military
+		OR = {
+			has_idea = defense_industry
+			has_idea = the_military
+		}
 		# Check to see if project_build_amount > 1
 		if = { limit = { check_variable = { project_build_amount^-1 = 1 } }
 			PREV = { free_building_slots = { building = anti_air_building size > 0 include_locked = no } }
@@ -102,8 +100,13 @@ AC_building_antiair_available = {
 }
 
 AC_building_radar_available = {
-	#Investor has Military Industrial Complex
-	ROOT = { has_idea = defense_industry }
+	#Investor has Military Industrial Complex/The Military
+	ROOT = {
+		OR = {
+			has_idea = defense_industry
+			has_idea = the_military
+		}
+	}
 
 	if = { limit = { ROOT = { has_tech = radar check_variable = { project_build_amount^-1 = 1 } } }
 		radar_station < 6
@@ -530,5 +533,64 @@ AI_no_investment_in_these_states = {
 	NOT = {
 		has_state_category = state_inhospitable # Ignores any nation in the Sahara
 		check_variable = { THIS.state_population_k < 50 }
+	}
+}
+
+
+# State Owned Investments
+check_for_investment_project_limits = {
+	custom_trigger_tooltip = {
+		ROOT = {
+			if = {
+				limit = { has_idea = superpower }
+				count_triggers = {
+					amount = 1
+					NOT = { has_country_flag = state_owned_investments_project_one }
+					NOT = { has_country_flag = state_owned_investments_project_two }
+					NOT = { has_country_flag = state_owned_investments_project_three }
+					NOT = { has_country_flag = state_owned_investments_project_four }
+					NOT = { has_country_flag = state_owned_investments_project_five }
+					NOT = { has_country_flag = state_owned_investments_project_six }
+				}
+			}
+			else_if = {
+				limit = { has_idea = great_power }
+				count_triggers = {
+					amount = 1
+					NOT = { has_country_flag = state_owned_investments_project_one }
+					NOT = { has_country_flag = state_owned_investments_project_two }
+					NOT = { has_country_flag = state_owned_investments_project_three }
+					NOT = { has_country_flag = state_owned_investments_project_four }
+					NOT = { has_country_flag = state_owned_investments_project_five }
+				}
+			}
+			else_if = {
+				limit = { has_idea = large_power }
+				count_triggers = {
+					amount = 1
+					NOT = { has_country_flag = state_owned_investments_project_one }
+					NOT = { has_country_flag = state_owned_investments_project_two }
+					NOT = { has_country_flag = state_owned_investments_project_three }
+					NOT = { has_country_flag = state_owned_investments_project_four }
+				}
+			}
+			else_if = {
+				limit = { has_idea = regional_power }
+				count_triggers = {
+					amount = 1
+					NOT = { has_country_flag = state_owned_investments_project_one }
+					NOT = { has_country_flag = state_owned_investments_project_two }
+					NOT = { has_country_flag = state_owned_investments_project_three }
+				}
+			}
+			else = {
+				count_triggers = {
+					amount = 1
+					NOT = { has_country_flag = state_owned_investments_project_one }
+					NOT = { has_country_flag = state_owned_investments_project_two }
+				}
+			}
+		}
+		tooltip = check_for_investment_project_limits_tt
 	}
 }

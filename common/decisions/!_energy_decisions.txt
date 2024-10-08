@@ -57,6 +57,37 @@ decision_category_energy = {
 		}
 	}
 
+	auto_accept_all_reactor_grade_purchases = {
+		icon = GFX_decision_energy_buycancel_button
+		allowed = { always = yes }
+
+		visible = {
+			NOT = { has_country_flag = auto_accept_all_purchases }
+			has_enrichment_facilities = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision auto_accept_all_reactor_grade_purchases"
+			set_country_flag = auto_accept_all_purchases
+		}
+	}
+
+	stop_auto_accept_all_reactor_grade_purchases = {
+		icon = GFX_decision_energy_buycancel_button
+		allowed = { always = yes }
+
+		visible = {
+			has_country_flag = auto_accept_all_purchases
+			has_enrichment_facilities = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision stop_auto_accept_all_reactor_grade_purchases"
+			clr_country_flag = auto_accept_all_purchases
+		}
+	}
+
+
 	energy_buy_reactor_grade_material = {
 		icon = GFX_decision_energy_buy_button
 		allowed = { always = yes }
@@ -89,8 +120,24 @@ decision_category_energy = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_buy_reactor_grade_material"
 			FROM = {
 				set_country_flag = currently_considering_an_offer
-				set_variable = { purchaser_tag_reactor = PREV.id }
-				country_event = energy.1
+				set_temp_variable = { temp_purchase_tag = PREV.id }
+				if = {
+					limit = { NOT = { has_country_flag = auto_accept_all_purchases } }
+					set_variable = { purchaser_tag_reactor = temp_purchase_tag }
+					country_event = energy.1
+				}
+				else = {
+					set_temp_variable = { change_resource = -500 }
+					change_reactor_grade_material_effect = yes
+					set_temp_variable = { treasury_change = 2 }
+					modify_treasury_effect = yes
+					var:temp_purchase_tag = {
+						set_temp_variable = { change_resource = 500 }
+						change_reactor_grade_material_effect = yes
+						set_temp_variable = { treasury_change = -2 }
+						modify_treasury_effect = yes
+					}
+				}
 			}
 		}
 

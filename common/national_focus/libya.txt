@@ -6158,7 +6158,7 @@ focus_tree = {
 	}
 	focus = {
 		id = LBA_shift_to_military
-		icon = Generic_Low_Morale
+		icon = Generic_Morale_Bonus_Focus
 		cost = 7
 		prerequisite = {
 			focus = LBA_shuffle_officers
@@ -7696,10 +7696,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_expand_tourism"
+			set_country_flag = LBA_disable_tourism_debuff
 			swap_ideas = {
 				remove_idea = LBA_increased_tourism_1
 				add_idea = LBA_increased_tourism_2
 			}
+			clr_country_flag = LBA_disable_tourism_debuff
 		}
 
 	}
@@ -9070,7 +9072,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_remove_sanctions"
-			random_country = {
+			random_other_country = {
 				limit = {
 					OR = {
 						has_idea = regional_power
@@ -11108,6 +11110,9 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = LBA_support_sudan
 		}
+		mutually_exclusive = {
+			focus = LBA_support_south_sudan
+		}
 		x = 12
 		y = 2
 		relative_position_id = LBA_neighbourly_politics
@@ -11117,7 +11122,9 @@ focus_tree = {
 		}
 
 		available = {
+			country_exists = DAR
 			NOT = { SUD = { is_subject_of = ROOT } }
+			NOT = { SSU = { is_subject_of = ROOT } }
 		}
 
 		bypass = {
@@ -11159,6 +11166,9 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = LBA_support_darfur
 		}
+		mutually_exclusive = {
+			focus = LBA_support_south_sudan
+		}
 		x = 14
 		y = 2
 		relative_position_id = LBA_neighbourly_politics
@@ -11168,7 +11178,9 @@ focus_tree = {
 		}
 
 		available = {
+			country_exists = SUD
 			NOT = { DAR = { is_subject_of = ROOT } }
+			NOT = { SSU = { is_subject_of = ROOT } }
 		}
 
 		bypass = {
@@ -11197,19 +11209,89 @@ focus_tree = {
 
 	}
 	focus = {
+		id = LBA_support_south_sudan
+		icon = align_to_south_sudan
+		cost = 7
+		prerequisite = {
+			focus = LBA_southern_focus
+		}
+		mutually_exclusive = {
+			focus = LBA_support_darfur
+		}
+		mutually_exclusive = {
+			focus = LBA_support_sudan
+		}
+		x = 16
+		y = 2
+		relative_position_id = LBA_neighbourly_politics
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE
+		}
+
+		available = {
+			country_exists = SSU
+			NOT = { DAR = { is_subject_of = ROOT } }
+			NOT = { SUD = { is_subject_of = ROOT } }
+		}
+
+		bypass = {
+			SSU = { is_subject_of = ROOT }
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_support_south_sudan"
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = SSU }
+			set_temp_variable = { percent_change = 4 }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = SSU
+				modifier = declaration_of_friendship
+			}
+			reverse_add_opinion_modifier = {
+				target = SSU
+				modifier = declaration_of_friendship
+			}
+		}
+
+	}
+	focus = {
 		id = LBA_send_mercenaries
 		icon = Generic_Partisan
 		cost = 5
 		prerequisite = {
 			focus = LBA_support_darfur
 			focus = LBA_support_sudan
+			focus = LBA_support_south_sudan
 		}
-		x = 13
+		x = 14
 		y = 3
 		relative_position_id = LBA_neighbourly_politics
 
 		search_filters = {
 			FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE
+		}
+
+		available = {
+			OR = {
+				AND = {
+					has_completed_focus = LBA_support_darfur
+					country_exists = DAR
+				}
+				AND = {
+					has_completed_focus = LBA_support_sudan
+					country_exists = SUD
+				}
+				AND = {
+					has_completed_focus = LBA_support_south_sudan
+					country_exists = SSU
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -11225,20 +11307,12 @@ focus_tree = {
 				limit = {
 					NOT = { has_completed_focus = LBA_support_darfur }
 					NOT = { has_completed_focus = LBA_support_sudan }
+					NOT = { has_completed_focus = LBA_support_south_sudan }
 				}
 				custom_effect_tooltip = LBA_send_mercenaries_tt_1
 				effect_tooltip = {
-					if = {
-						limit = { NOT = { country_exists = DAR } }
-						SUD = { release = DAR }
-						DAR = {
-							declare_war_on = {
-								target = SUD
-								type = annex_everything
-							}
-						}
-					}
 					DAR = {
+						add_stability = 0.05
 						capital_scope = {
 							create_unit = {
 								division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
@@ -11268,33 +11342,31 @@ focus_tree = {
 					set_temp_variable = { percent_change = 5 }
 					change_influence_percentage = yes
 				}
+				newline = yes
+				custom_effect_tooltip = LBA_send_mercenaries_tt_3
+				effect_tooltip = {
+					SSU = {
+						add_stability = 0.05
+						capital_scope = {
+							create_unit = {
+								division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
+								owner = SSU
+							}
+						}
+					}
+					set_temp_variable = { tag_index = ROOT }
+					set_temp_variable = { influence_target = SSU }
+					set_temp_variable = { percent_change = 5 }
+					change_influence_percentage = yes
+				}
 			}
 			else = {
 				if = {
 					limit = { has_completed_focus = LBA_support_darfur }
-					if = {
-						limit = { NOT = { country_exists = DAR } }
-						SUD = { country_event = { id = LibyaFocus.76 hours = 3 } }
-						effect_tooltip = {
-							SUD = { release = DAR }
-							DAR = {
-								declare_war_on = {
-									target = SUD
-									type = annex_everything
-								}
-							}
-							DAR = {
-								capital_scope = {
-									create_unit = {
-										division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
-										owner = DAR
-									}
-								}
-							}
-						}
-					}
-					else = {
+					DAR = { country_event = { id = LibyaFocus.77 hours = 3 } }
+					effect_tooltip = {
 						DAR = {
+							add_stability = 0.05
 							capital_scope = {
 								create_unit = {
 									division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
@@ -11308,7 +11380,8 @@ focus_tree = {
 					set_temp_variable = { percent_change = 5 }
 					change_influence_percentage = yes
 				}
-				else = {
+				else_if = {
+					limit = { has_completed_focus = LBA_support_sudan }
 					SUD = { country_event = { id = LibyaFocus.77 hours = 3 } }
 					effect_tooltip = {
 						SUD = {
@@ -11323,6 +11396,24 @@ focus_tree = {
 					}
 					set_temp_variable = { tag_index = ROOT }
 					set_temp_variable = { influence_target = SUD }
+					set_temp_variable = { percent_change = 5 }
+					change_influence_percentage = yes
+				}
+				else = {
+					SSU = { country_event = { id = LibyaFocus.77 hours = 3 } }
+					effect_tooltip = {
+						SSU = {
+							add_stability = 0.05
+							capital_scope = {
+								create_unit = {
+									division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
+									owner = SSU
+								}
+							}
+						}
+					}
+					set_temp_variable = { tag_index = ROOT }
+					set_temp_variable = { influence_target = SSU }
 					set_temp_variable = { percent_change = 5 }
 					change_influence_percentage = yes
 				}
@@ -12426,7 +12517,7 @@ focus_tree = {
 
 		available = {
 			CAR = { is_subject_of = ROOT }
-			OR= {
+			OR = {
 				country_exists = DRC
 				country_exists = MLC
 				country_exists = RCD
@@ -12623,7 +12714,7 @@ focus_tree = {
 					}
 					country_event = { id = LibyaFocus.85 hours = 6 }
 				}
-				ETH = { country_event = { id = LibyaFocus.85 hours = 6 }}
+				ETH = { country_event = { id = LibyaFocus.85 hours = 6 } }
 			}
 		}
 
@@ -13092,8 +13183,6 @@ focus_tree = {
 		cost = 7
 		prerequisite = {
 			focus = LBA_influence_yemen
-		}
-		prerequisite = {
 			focus = LBA_infiltrate_kuwait
 		}
 		x = 7
