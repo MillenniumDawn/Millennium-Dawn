@@ -7802,9 +7802,12 @@ country_event = { #Weizsäcker meets
 	option = { #ok
 		name = Germany.586.a
 		log = "[GetDateText]: [This.GetName]: Germany.586.a executed"
-		country_event = { id = germany.587 days = 150 }
-		country_event = { id = Germany_Mech.27 days = 680 }
-		country_event = { id = Germany_Mech.29 days = 2214 }
+		hidden_effect = {
+			country_event = { id = germany.587 days = 150 }
+			country_event = { id = Germany_Mech.27 days = 680 }
+			country_event = { id = Germany_Mech.29 days = 2214 }
+		}
+		
 		add_Ideas = GER_Idea_Weizsackerkommission
 	}
 }
@@ -7997,7 +8000,7 @@ country_event = { #tag der offenen Kaserne
 	option = {	# make it a family friendly celebration
 		name = Germany.600.c
 		log = "[GetDateText]: [This.GetName]: Germany.589.a executed"
-		set_temp_variable = { modify_Officer_anger = 0 }
+		set_temp_variable = { modify_Officer_anger = -2 }
 			GER_modify_Officer_anger = yes
 		set_temp_variable = { modify_Troop_anger = -5 }
 			GER_modify_Troop_anger = yes
@@ -10207,6 +10210,97 @@ country_event = {
 		}
 	}
 }
+
+country_event = {  
+	id = Germany_Mech.70
+	title = Germany_Mech.70.t
+	desc = Germany_Mech.70.d
+	picture = GFX_generic_factory
+
+	is_triggered_only = yes
+
+	immediate = {
+	}
+
+	# Option A: Condemn this behavior (verurteilt dieses Verhalten)
+	option = { 
+		name = Germany_Mech.70.a
+		log = "[GetDateText]: [This.GetName]: Germany_Mech.70.a executed"
+		custom_effect_tooltip = Germany_Mech.70_A
+		set_temp_variable = { temp_opinion = -5 }
+			change_industrial_conglomerates_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+		add_stability = -0.03
+		GER = {
+			random_owned_state = {
+				limit = {
+					industrial_complex > 3
+				}
+				remove_building = {
+						type = industrial_complex
+						level = 1
+				} 
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Option B: Offer subsidies to retain the companies 
+	option = { 
+		name = Germany_Mech.70.b
+		log = "[GetDateText]: [This.GetName]: Germany_Mech.70.b executed"
+		custom_effect_tooltip = Germany_Mech.70_B
+		set_temp_variable = { temp_opinion = 5 }
+			change_industrial_conglomerates_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+		GER = {
+			set_temp_variable = { debt_change = GER.gdp_per_capita }
+				multiply_temp_variable = { debt_change = 0.21 }
+				modify_debt_effect = yes
+		}
+		add_stability = +0.02
+		add_political_power = -50
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Option C: Nationalize the company (enteignet die Firma)
+	option = { 
+		name = Germany_Mech.70.c
+		log = "[GetDateText]: [This.GetName]: Germany_Mech.70.c executed"
+		custom_effect_tooltip = Germany_Mech.70_C
+		# Economic consequences of nationalizing industries
+		set_temp_variable = { temp_opinion = -20 }
+			change_industrial_conglomerates_opinion = yes
+		set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		GER = {
+			random_owned_state = {
+				limit = {
+					industrial_complex > 3
+				}
+				remove_building = {
+						type = industrial_complex
+						level = 1
+				} 
+			}
+		}
+		add_stability = -0.05 # Loss of stability due to radical action
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.06 }
+			modify_treasury_effect = yes
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+
 
 
 #Manichl
