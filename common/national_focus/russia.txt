@@ -2684,63 +2684,15 @@ focus_tree = {
 			multiply_temp_variable = { base_change = num_faction_members }
 			set_temp_variable = { treasury_change = base_change }
 			modify_treasury_effect = yes
-			random_owned_controlled_state = {
-				if = {
-					limit = {
-						free_building_slots = {
-							building = industrial_complex
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = industrial_complex
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
+			one_random_industrial_complex = yes
 			every_other_country = {
 				limit = { is_in_faction_with = SOV }
 				set_temp_variable = { percent_change = 5 }
 				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
-				random_owned_controlled_state = {
-					if = {
-						limit = {
-							free_building_slots = {
-								building = industrial_complex
-								size > 0
-								include_locked = yes
-							}
-						}
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = industrial_complex
-							level = 1
-							instant_build = yes
-						}
-					}
-				}
-				random_owned_controlled_state = {
-					if = {
-						limit = {
-							free_building_slots = {
-								building = arms_factory
-								size > 0
-								include_locked = yes
-							}
-						}
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = arms_factory
-							level = 1
-							instant_build = yes
-						}
-					}
-				}
+				one_random_industrial_complex = yes
+				one_random_arms_factory = yes
 				set_temp_variable = { treasury_change = -7.5 }
 				modify_treasury_effect = yes
 			}
@@ -4046,99 +3998,45 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_m12"
 			set_temp_variable = { treasury_change = -21 }
 			652 = { #Moscow
-			if = {
-				limit = {
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
 			}
 			}
 			651 = { #Yaroslavl
-			if = {
-				limit = {
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
 			}
 			}
 			660 = { #Moscow
-			if = {
-				limit = {
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
 			}
 			}
 			661 = { #Tatarstan
-			if = {
-				limit = {
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
 			}
 			}
 			664 = { #Bashkirya
-			if = {
-				limit = {
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
 			}
 			}
 			676 = { #Ural
-			if = {
-				limit = {
-					free_building_slots = {
-						building = infrastructure
-						size > 0
-						include_locked = yes
-					}
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
 			}
 			}
 		}
@@ -4896,18 +4794,22 @@ focus_tree = {
 				target = USA
 				type = puppet_wargoal_focus
 			}
-			every_country = {
+			every_other_country = {
 				limit = { has_idea = EU_member }
-					SOV = {
-						create_wargoal = {
-							target = PREV
-							type = puppet_wargoal_focus
-						}
+				SOV = {
+					create_wargoal = {
+						target = PREV
+						type = puppet_wargoal_focus
 					}
+				}
 			}
 		}
 		ai_will_do = {
 			base = 50
+			modifier = {
+				has_war = yes
+				factor = 0
+			}
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -7919,6 +7821,7 @@ focus_tree = {
 			custom_effect_tooltip = SOV_rus_empire_outer_start_tt
 			set_country_flag = SOV_rusempire_destroy_close
 			set_country_flag = SOV_rusempire_governorates_close
+			set_country_flag = SOV_rusempire_internal_close
 			add_power_balance_value = {
 				id = SOV_west_east_bop
 				value = 0.20
@@ -10817,6 +10720,7 @@ focus_tree = {
 			increase_centralization = yes
 			set_capital = { state = 644 }
 			add_political_power = 90
+			set_country_flag = SOV_moscow_no_more
 		}
 		
 		ai_will_do = {
@@ -23536,35 +23440,15 @@ focus_tree = {
 		cost = 5
 		prerequisite = { focus = SOV_decree_no_585 }
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
-		bypass = {
-			691 = {
-				free_building_slots = {
-					building = infrastructure
-					size < 1
-					include_locked = yes
-				}
-			}
-		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_sakhalin_railway"
-			if = {
-				limit = {
-					691 = { #Sakhalin
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-				}
-				set_temp_variable = { treasury_change = -7 }
-				modify_treasury_effect = yes
-				691 = {
-					add_building_construction = {
-						type = infrastructure
-						level = 2
-						instant_build = yes
-					}
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+			691 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
 				}
 			}
 		}
@@ -23584,212 +23468,95 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -45.50 }
 			modify_treasury_effect = yes
 			652 = { #Moscow
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			651 = { #Yaroslavl
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			660 = { #Nizhny Novgorod
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			661 = { #Tatarstan
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			658 = { #Perm
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			676 = { #Sverdlovsk
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			677 = { #Tyumen
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			680 = { #Novosibirsk
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			682 = { #Krasnoyarsk
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			685 = { #Irkutsk
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			687 = { #Khabarovsk
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			686 = { #Buryatia
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 			692 = { #Vladivostok
-				if = {
-					limit = {
-						free_building_slots = {
-							building = infrastructure
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_building_construction = {
-						type = infrastructure
-						level = 1
-						instant_build = yes
-					}
-				}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
 			}
 		}
 		ai_will_do = { base = 1 }
