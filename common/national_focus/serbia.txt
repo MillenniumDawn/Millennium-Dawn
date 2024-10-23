@@ -48,6 +48,32 @@ focus_tree = {
 						days = 1
 					}
 				}
+				if = {
+					limit = {
+						SER = {
+							NOT = {
+								OR = {
+									has_global_flag = SER_MILOCEVIC_NATI_FOCUS_PATH
+									has_global_flag = SER_MILOCEVIC_COMMI_FOCUS_PATH
+									has_global_flag = SER_MILOCEVIC_FEDERATION_FOCUS_PATH
+								}
+							}
+							is_ai = yes
+							NOT = { has_country_flag = SER_zover }
+						}
+					}
+					random_list = {
+						50 = {
+							country_event = {
+								id = SerbiaFocus.113
+								days = 1
+							}
+						}
+						50 = {
+							add_political_power = 50
+						}
+					}
+				}
 			}
 		}
 
@@ -4780,19 +4806,21 @@ focus_tree = {
 			base = 1
 		}
 	}
+
 	focus = {
 		id = SER_Propose_Open_Balkan_Initiative
 		icon = open_balkan
 
 		x = 1
 		y = 7
+		relative_position_id = SER_national_assembly
+
 		cost = 5
-		prerequisite = {
-			focus = SER_free_at_last
-		}
-		prerequisite = {
-			focus = SER_crush_the_old_system
-		}
+
+		prerequisite = { focus = SER_free_at_last }
+		prerequisite = { focus = SER_crush_the_old_system }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
 		available = {
 			OR = {
 				country_exists = FYR
@@ -4809,8 +4837,7 @@ focus_tree = {
 			}
 			has_government = democratic
 		}
-		relative_position_id = SER_national_assembly
-		search_filters = { FOCUS_FILTER_POLITICAL }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SER_Propose_Open_Balkan_Initiative"
 			increase_exports = yes
@@ -4833,6 +4860,7 @@ focus_tree = {
 				}
 			}
 		}
+
 		ai_will_do = {
 			base = 1
 		}
@@ -8289,10 +8317,19 @@ focus_tree = {
 	focus = {
 		id = SER_free_at_last
 		icon = deal_with_serbia_map
-		prerequisite = {
-			focus = SER_begin_the_recognition_process
-		}
+
+		x = 0
+		y = 2
+		relative_position_id = SER_involve_un
+
+		cost = 5
+
+		prerequisite = { focus = SER_begin_the_recognition_process }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
 		available = {
+			NOT = { country_exists = MNT }
+			has_full_control_of_state = 134
 			NOT = {
 				OR = {
 					has_country_leader = { name = "Slobodan Milošević" ruling_only = yes }
@@ -8301,11 +8338,13 @@ focus_tree = {
 				}
 			}
 		}
-		x = 0
-		y = 2
-		cost = 5
-		relative_position_id = SER_involve_un
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		bypass = {
+			OR = {
+				country_exists = MNT
+				MNT = { has_full_control_of_state = 134 }
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SER_free_at_last"
 			set_cosmetic_tag = SER_serbia_tag

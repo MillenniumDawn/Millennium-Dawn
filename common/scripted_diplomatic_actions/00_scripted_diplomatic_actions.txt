@@ -466,9 +466,7 @@ scripted_diplomatic_actions = {
 			set_variable = { ROOT.assuming_debt_value = THIS.debt }
 			multiply_variable = { ROOT.assuming_debt_value = 0.25 }
 
-			ROOT = {
-				set_variable = { pending_assume_debt_offer = PREV.id }
-			}
+			ROOT = { set_variable = { pending_assume_debt_offer = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect diplo_action_assume_debt"
@@ -752,10 +750,6 @@ scripted_diplomatic_actions = {
 				}
 			}
 			modifier = {
-				factor = 0
-				ROOT = { check_variable = { interest_rate < 10 } }
-			}
-			modifier = {
 				factor = 1.10
 				ROOT = { has_political_power > 499 }
 			}
@@ -777,16 +771,10 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				factor = 0
-				ROOT = { has_political_power < 250 }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { check_variable = { interest_rate > 8 } }
-			}
-			modifier = {
-				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_assume_debt_offer = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_assume_debt_offer = 0 } } }
+					ROOT = { check_variable = { interest_rate > 8 } }
+					ROOT = { has_political_power < 250 }
 				}
 			}
 		}
@@ -1108,7 +1096,7 @@ scripted_diplomatic_actions = {
 				set_temp_variable = { remove_nation = THIS.id }
 				change_permanent_investment_target = yes
 				ROOT = {
-					clr_country_flag = mutual_investment_treaty_@ROOT
+					clr_country_flag = mutual_investment_treaty_@PREV
 					remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
 					remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
 					set_temp_variable = { target_nation = THIS.id }
@@ -1173,6 +1161,7 @@ scripted_diplomatic_actions = {
 		}
 	}
 
+	# Overlord Subsidies
 	propose_subsidies_to_subject = {
 		allowed = { always = yes }
 		visible = {
@@ -1202,10 +1191,12 @@ scripted_diplomatic_actions = {
 				set_country_flag = overlord_is_subsidizing_us_@ROOT
 				set_country_flag = overlord_subsidies
 				add_ideas = idea_overlord_subsidies
+				ingame_update_setup = yes
 				ROOT = {
 					clear_variable = pending_overlord_subsidization_offer
 					set_country_flag = overlord_is_subsidizing_us_@PREV
 					add_to_array = { subject_subsidization = PREV.id }
+					ingame_update_setup = yes
 				}
 			}
 		}
@@ -1267,6 +1258,14 @@ scripted_diplomatic_actions = {
 				factor = 0
 				ROOT = { check_variable = { interest_rate > 12.99 } }
 			}
+			modifier = {
+				factor = 0
+				ROOT = { has_country_flag = canceled_overlord_subsidies_@PREV }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { NOT = { check_variable = { pending_overlord_subsidization_offer = 0 } } }
+			}
 		}
 	}
 
@@ -1291,13 +1290,36 @@ scripted_diplomatic_actions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action cancel_subsidies_to_subject"
-			THIS = {
-				clr_country_flag = overlord_is_subsidizing_us_@ROOT
-				clr_country_flag = overlord_subsidies
-				remove_ideas = idea_overlord_subsidies
-				ROOT = {
-					clr_country_flag = overlord_is_subsidizing_us_@PREV
-					remove_from_array = { subject_subsidization = PREV.id }
+			if = {
+				limit = { ROOT = { has_country_flag = overlord_subsidies } }
+				THIS = {
+					set_country_flag = { flag = canceled_overlord_subsidies_@ROOT value = 1 days = 30 }
+					clr_country_flag = overlord_is_subsidizing_us_@ROOT
+					remove_from_array = { subject_subsidization = ROOT.id }
+					ingame_update_setup = yes
+					ROOT = {
+						set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
+						# Clear the data
+						clr_country_flag = overlord_is_subsidizing_us_@PREV
+						clr_country_flag = overlord_subsidies
+						remove_ideas = idea_overlord_subsidies
+						ingame_update_setup = yes
+					}
+				}
+			}
+			else = {
+				THIS = {
+					set_country_flag = { flag = canceled_overlord_subsidies_@ROOT value = 1 days = 30 }
+					clr_country_flag = overlord_is_subsidizing_us_@ROOT
+					clr_country_flag = overlord_subsidies
+					remove_ideas = idea_overlord_subsidies
+					ingame_update_setup = yes
+					ROOT = {
+						set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
+						clr_country_flag = overlord_is_subsidizing_us_@PREV
+						remove_from_array = { subject_subsidization = PREV.id }
+						ingame_update_setup = yes
+					}
 				}
 			}
 		}
@@ -1371,7 +1393,17 @@ scripted_diplomatic_actions = {
 		}
 
 		ai_desire = {
-			base = 25
+			base = 5
+			modifier = {
+				add = 25
+				is_subject = no
+				check_variable = { interest_rate > 8.99 }
+			}
+			modifier = {
+				add = 25
+				is_subject = no
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 }
