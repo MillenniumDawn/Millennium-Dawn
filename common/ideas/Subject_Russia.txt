@@ -35,11 +35,11 @@ ideas = {
 				fascism_drift = -0.15
 			}
 			on_remove = {
-				clr_country_flag = SOV_subject_state
-				clr_country_flag = SOV_subject_republic
-				clr_country_flag = SOV_subject_kray
-				clr_country_flag = SOV_subject_oblast
-				clr_country_flag = SOV_subject_okrug
+				clr_country_flag = SOV_subject_agree
+				SOV = {
+					set_temp_variable = { modify_subjectnalogs = -3 }
+					modify_subjectnalogs_support = yes
+				}
 			}
 		}
 		#######Military Campaign in Iraq#######
@@ -109,7 +109,7 @@ ideas = {
 		#######Debuff for Annex Subject#######
 		SUB_annex_debuff = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_annex_debuff" }
-			picture = sub_political_influence_idea
+			picture = sub_debuff_idea
 			allowed_civil_war = { always = yes }
 			modifier = {
 				bureaucracy_cost_multiplier_modifier = 0.25
@@ -120,8 +120,13 @@ ideas = {
 		#######Debuff for Federalization#######
 		SUB_confederation = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_confederation" }
-			picture = sub_political_influence_idea
+			picture = sub_federalism_idea
 			allowed_civil_war = { always = yes }
+			cancel = {
+				NOT = {
+					SUB_subjects_availables = yes
+				}
+			}
 			modifier = {
 				political_power_gain = -0.07
 				stability_factor = -0.08
@@ -136,10 +141,30 @@ ideas = {
 				industry_free_repair_factor = 0.05
 			}
 		}
+		#Smallish Taxes
+		SUB_smallish_taxes = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_smallish_taxes" }
+			picture = sub_taxes_idea
+			allowed_civil_war = { always = yes }
+			cancel = {
+				NOT = {
+					is_subject_of = SOV
+				}
+			}
+			modifier = {
+				custom_modifier_tooltip = SUB_smallish_taxes_tt
+			}
+			on_remove = {
+				SOV = {
+					set_temp_variable = { modify_subjectnalogs = -0.5 }
+					modify_subjectnalogs_support = yes
+				}
+			}
+		}
 		#Small Taxes
 		SUB_small_taxes = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_small_taxes" }
-			picture = sub_political_influence_idea
+			picture = sub_taxes_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
 				NOT = {
@@ -151,7 +176,7 @@ ideas = {
 			}
 			on_remove = {
 				SOV = {
-					set_temp_variable = { modify_subjectnalogs = -3 }
+					set_temp_variable = { modify_subjectnalogs = -1.5 }
 					modify_subjectnalogs_support = yes
 				}
 			}
@@ -159,7 +184,7 @@ ideas = {
 		#Medium Taxes
 		SUB_medium_taxes = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_medium_taxes" }
-			picture = sub_political_influence_idea
+			picture = sub_taxes_idea
 			allowed_civil_war = { always = yes }
 			name = SUB_small_taxes
 			cancel = {
@@ -172,7 +197,7 @@ ideas = {
 			}
 			on_remove = {
 				SOV = {
-					set_temp_variable = { modify_subjectnalogs = -5 }
+					set_temp_variable = { modify_subjectnalogs = -3 }
 					modify_subjectnalogs_support = yes
 				}
 			}
@@ -180,7 +205,7 @@ ideas = {
 		#Hard Taxes
 		SUB_hard_taxes = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_hard_taxes" }
-			picture = sub_political_influence_idea
+			picture = sub_taxes_idea
 			allowed_civil_war = { always = yes }
 			name = SUB_small_taxes
 			cancel = {
@@ -193,7 +218,7 @@ ideas = {
 			}
 			on_remove = {
 				SOV = {
-					set_temp_variable = { modify_subjectnalogs = -8 }
+					set_temp_variable = { modify_subjectnalogs = -5 }
 					modify_subjectnalogs_support = yes
 				}
 			}
@@ -355,6 +380,35 @@ ideas = {
 				}
 			}
 		}
+	SUB_wagner_pmc_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea SUB_wagner_pmc_idea" }
+		allowed = {
+			original_tag = SOV
+		}
+		picture = wagner_armies
+		cancel = {
+			NOT = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+				SOV = { has_country_flag = SOV_wagner_rebeliion_flag } 
+			}
+		}
+		on_remove = {
+			delete_unit_template_and_units = {
+				division_template = "Rosgvardia"
+				disband = yes
+			}
+		}
+		modifier = {
+			special_forces_training_time_factor = -0.10
+			training_time_factor = 0.03
+			army_org_factor = 0.03
+		}
+	}
 		SUB_full_ratnik_conversion = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add idea SUB_full_ratnik_conversion" }
 			picture = ratnik
@@ -2109,8 +2163,8 @@ ideas = {
 			consumer_goods_factor = -0.02
 		}
 	}
-	SUB_depolitisation_of_oligarchs = {
-		on_add = { log = "[GetDateText]: [Root.GetName]: add idea SUB_depolitisation_of_oligarchs" }
+	SUB_depoliticisation_of_oligarchs = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea SUB_depoliticisation_of_oligarchs" }
 		picture = SOV_Politisation_of_oligarchs
 		cancel = {
 			NOT = {
@@ -2953,8 +3007,8 @@ ideas = {
 		}
 	}
 	#######CHECHNYA#######
-	CHE_russian_unstability = {
-		on_add = { log = "[GetDateText]: [Root.GetName]: add idea CHE_russian_unstability" }
+	CHE_russian_instability = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea CHE_russian_instability" }
 		removal_cost = -1
 		picture = down_with_the_bear_che
 		cancel = {
@@ -5123,6 +5177,1508 @@ ideas = {
 			political_power_gain = 0.20
 			democratic_drift = 0.04
 			stability_factor = 0.05
+		}
+	}
+	#######URAL MAIN#######
+	#######Ural Spirit idea#######
+	URA_uralian_spirit_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_uralian_spirit_idea" }
+		picture = ura_ural_spirit_idea
+		modifier = {
+			political_power_factor = 0.04
+			democratic_drift = 0.02
+			nationalist_drift = 0.01
+			communism_drift = -0.02
+			drift_defence_factor = 0.10
+			army_core_defence_factor = 0.01
+		}
+	}
+	URA_uralian_spirit_idea1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_uralian_spirit_idea1" }
+		picture = ura_ural_spirit_idea
+		name = URA_uralian_spirit_idea
+		modifier = {
+			political_power_factor = 0.06
+			democratic_drift = 0.03
+			nationalist_drift = 0.02
+			communism_drift = -0.04
+			drift_defence_factor = 0.15
+			army_core_defence_factor = 0.03
+		}
+	}
+	URA_uralian_spirit_idea2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_uralian_spirit_idea2" }
+		picture = ura_ural_spirit_idea
+		name = URA_uralian_spirit_idea
+		modifier = {
+			political_power_factor = 0.07
+			democratic_drift = 0.04
+			nationalist_drift = 0.03
+			communism_drift = -0.05
+			drift_defence_factor = 0.18
+			army_core_defence_factor = 0.05
+		}
+	}
+	URA_uralian_spirit_idea3 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_uralian_spirit_idea3" }
+		picture = ura_ural_spirit_idea
+		name = URA_uralian_spirit_idea
+		modifier = {
+			political_power_factor = 0.09
+			democratic_drift = 0.06
+			nationalist_drift = 0.04
+			communism_drift = -0.07
+			drift_defence_factor = 0.21
+			army_core_defence_factor = 0.07
+		}
+	}
+	#######Mayor Chernetskyi idea#######
+	URA_ekb_mayor_chernetskyi = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_ekb_mayor_chernetskyi" }
+		picture = ura_mayor_chernetsky_idea
+		allowed_civil_war = { always = yes }
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			democratic_drift = 0.01
+			nationalist_drift = 0.01
+			production_speed_industrial_complex_factor = 0.03
+			corporate_tax_income_multiplier_modifier = 0.03
+		}
+	}
+	URA_ekb_mayor_chernetskyi1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_ekb_mayor_chernetskyi1" }
+		picture = ura_mayor_chernetsky_idea
+		allowed_civil_war = { always = yes }
+		name = URA_ekb_mayor_chernetskyi
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			democratic_drift = 0.03
+			nationalist_drift = 0.03
+			production_speed_industrial_complex_factor = 0.03
+			corporate_tax_income_multiplier_modifier = 0.03
+			stability_factor = -0.05
+		}
+	}
+	#######Ekb vs Oblast idea#######
+	URA_conflict_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_conflict_idea" }
+		picture = ura_major_vs_oblast_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			political_power_factor = -0.02
+			stability_factor = -0.02
+		}
+	}
+	#######Bandits idea#######
+	URA_local_bandits = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_local_bandits" }
+		picture = ura_bandits_idea
+		allowed_civil_war = { always = yes }
+		modifier = {
+			drift_defence_factor = 0.12
+			stability_factor = -0.07
+			corporate_tax_income_multiplier_modifier = -0.08
+		}
+	}
+	#######Reform Army#######
+	URA_reform_army = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_reform_army" }
+		allowed = { always = no }
+		picture = bad_army_idea
+		modifier = {
+			army_attack_factor = -0.30
+			army_defence_factor = -0.30
+			experience_gain_army_factor = -0.48
+			dig_in_speed_factor = -0.15
+			army_personnel_cost_multiplier_modifier = 0.05
+		}
+	}
+	URA_reform_army1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_reform_army1" }
+		allowed = { always = no }
+		picture = bad_army_idea
+		modifier = {
+			army_attack_factor = -0.20
+			army_defence_factor = -0.20
+			experience_gain_army_factor = -0.38
+			dig_in_speed_factor = -0.12
+			army_personnel_cost_multiplier_modifier = 0.08
+		}
+	}
+	URA_reform_army2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_reform_army2" }
+		allowed = { always = no }
+		picture = bad_army_idea
+		name = URA_reform_army1
+		modifier = {
+			army_attack_factor = -0.10
+			army_defence_factor = -0.10
+			experience_gain_army_factor = -0.25
+			dig_in_speed_factor = -0.07
+			army_personnel_cost_multiplier_modifier = 0.10
+		}
+	}
+	URA_reform_army3 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_reform_army3" }
+		allowed = { always = no }
+		picture = bad_army_idea
+		name = URA_reform_army1
+		modifier = {
+			army_attack_factor = -0.05
+			army_defence_factor = -0.05
+			experience_gain_army_factor = -0.15
+			dig_in_speed_factor = -0.037
+			army_personnel_cost_multiplier_modifier = 0.12
+		}
+	}
+	############RUSSIA DEPENDENT MILITARY IDEAS############
+	URA_russian_dependent_military = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_russian_dependent_military" }
+		picture = sov_outdated_army_idea
+
+		modifier = {
+			army_personnel_cost_multiplier_modifier = -0.15
+			experience_gain_army_factor = -0.15
+			training_time_factor = 0.1
+			land_equipment_upgrade_xp_cost = 0.15
+		}
+	}
+	URA_russian_dependent_military1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_russian_dependent_military1" }
+		picture = sov_outdated_army_idea
+		name = URA_russian_dependent_military
+		modifier = {
+			army_personnel_cost_multiplier_modifier = -0.25
+			experience_gain_army_factor = -0.25
+			training_time_factor = 0.15
+			land_equipment_upgrade_xp_cost = 0.20
+		}
+	}
+	URA_russian_dependent_military2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_russian_dependent_military1" }
+		picture = sov_outdated_army_idea
+		name = URA_russian_dependent_military
+		modifier = {
+			army_personnel_cost_multiplier_modifier = -0.40
+			experience_gain_army_factor = -0.35
+			training_time_factor = 0.25
+			land_equipment_upgrade_xp_cost = 0.30
+		}
+	}
+	#######ECONOMIC URAL#######
+	URA_ugmk_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ugmk_idea" }
+		picture = ura_ugmk_ideas
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			local_resources_factor = 0.05
+			corporate_tax_income_multiplier_modifier = 0.03
+		}
+	}
+	URA_ugmk_idea1 = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ugmk_idea1" }
+		picture = ura_ugmk_ideas
+		name = URA_ugmk_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			local_resources_factor = 0.07
+			corporate_tax_income_multiplier_modifier = 0.05
+		}
+	}
+	URA_ugmk_idea2 = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ugmk_idea2" }
+		picture = ura_ugmk_ideas
+		name = URA_ugmk_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			local_resources_factor = 0.09
+			corporate_tax_income_multiplier_modifier = 0.07
+		}
+	}
+	URA_ugmk_idea3 = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ugmk_idea3" }
+		picture = ura_ugmk_ideas
+		name = URA_ugmk_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			local_resources_factor = 0.11
+			corporate_tax_income_multiplier_modifier = 0.09
+		}
+	}
+	URA_ugmk_idea4 = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ugmk_idea3" }
+		picture = ura_ugmk_ideas
+		name = URA_ugmk_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			local_resources_factor = 0.11
+			corporate_tax_income_multiplier_modifier = 0.09
+			research_speed_factor = 0.05
+		}
+	}
+	URA_ugmk_idea4_export = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ugmk_idea3" }
+		picture = ura_ugmk_ideas
+		modifier = {
+			local_resources_factor = 0.05
+			corporate_tax_income_multiplier_modifier = 0.04
+			research_speed_factor = 0.02
+		}
+	}
+	URA_ugz_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ugz_idea" }
+		picture = sov_uvz
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		equipment_bonus = {
+			mbt_hull = {
+				build_cost_ic = -0.05 instant = yes
+			}
+			apc_hull = {
+				build_cost_ic = -0.058 instant = yes
+			}
+		}
+	}
+	URA_avia_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_avia_idea" }
+		picture = ura_uzga_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		equipment_bonus = {
+			strategic_bomber_equipment = {
+				build_cost_ic = -0.05 instant = yes
+			}
+		}
+	}
+	URA_ekb_concern_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ekb_concern_idea" }
+		picture = ura_ural_industry
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			local_resources_factor = 0.15
+			corporate_tax_income_multiplier_modifier = 0.12
+			energy_gain_multiplier = 0.08
+		}
+		equipment_bonus = {
+			mbt_hull = {
+				build_cost_ic = -0.08 instant = yes
+			}
+			apc_hull = {
+				build_cost_ic = -0.08 instant = yes
+			}
+			strategic_bomber_equipment = {
+				build_cost_ic = -0.08 instant = yes
+			}
+		}
+	}
+	URA_ekb_concern_idea_other = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ekb_concern_idea_other" }
+		picture = ura_ural_industry
+		modifier = {
+			local_resources_factor = 0.07
+			corporate_tax_income_multiplier_modifier = 0.04
+			energy_gain_multiplier = 0.04
+		}
+		cancel = {
+			OR = {
+				NOT = {
+					country_exists = URA
+				}
+				has_war_with = URA
+			}
+		}
+		equipment_bonus = {
+			mbt_hull = {
+				build_cost_ic = -0.03 instant = yes
+			}
+			apc_hull = {
+				build_cost_ic = -0.03 instant = yes
+			}
+			strategic_bomber_equipment = {
+				build_cost_ic = -0.03 instant = yes
+			}
+		}
+	}
+	URA_ekb_concern_idea_other1 = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_ekb_concern_idea_other1" }
+		picture = ura_ural_industry
+		name = URA_ekb_concern_idea_other
+		modifier = {
+			local_resources_factor = 0.07
+			corporate_tax_income_multiplier_modifier = 0.04
+			energy_gain_multiplier = 0.04
+		}
+		cancel = {
+			SOV = {
+				NOT = { owns_state = 676 }
+			}
+		}
+		equipment_bonus = {
+			mbt_hull = {
+				build_cost_ic = -0.03 instant = yes
+			}
+			apc_hull = {
+				build_cost_ic = -0.03 instant = yes
+			}
+			strategic_bomber_equipment = {
+				build_cost_ic = -0.03 instant = yes
+			}
+		}
+	}
+	URA_kurgan_concern_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_kurgan_concern_idea" }
+		picture = ura_kurgan_idea
+		cancel = {
+			NOT = { owns_state = 1071 }
+		}
+		modifier = {
+			corporate_tax_income_multiplier_modifier = 0.05
+		}
+		equipment_bonus = {
+			ifv_hull = {
+				build_cost_ic = -0.06 instant = yes
+			}
+			util_vehicle_equipment = {
+				instant = yes
+				build_cost_ic = -0.06
+			}
+		}
+	}
+	URA_zlatoust_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_zlatoust_idea" }
+		picture = ura_zlatoust_idea
+		cancel = {
+			NOT = { owns_state = 675 }
+		}
+		modifier = {
+			slbm_production_speed_modifier = 0.03
+		}
+	}
+	URA_chelyaba_trackor_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_chelyaba_trackor_idea" }
+		picture = motorized_focus
+		cancel = {
+			NOT = { owns_state = 675 }
+		}
+		equipment_bonus = {
+			util_vehicle_equipment = {
+				instant = yes
+				build_cost_ic = -0.04
+			}
+		}
+	}
+	URA_chelyaba_concern_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_chelyaba_concern_idea" }
+		picture = ura_chelyabinsk_idea
+		cancel = {
+			NOT = { owns_state = 675 }
+		}
+		modifier = {
+			local_resources_factor = 0.04
+			corporate_tax_income_multiplier_modifier = 0.05
+			slbm_production_speed_modifier = 0.05
+		}
+		equipment_bonus = {
+			util_vehicle_equipment = {
+				instant = yes
+				build_cost_ic = -0.08
+			}
+		}
+	}
+	#######TRANSFORMATION URAL#######
+	URA_ural_expo_arms_idea = {
+		on_add = {
+			log = "[GetDateText]: [Root.GetName]: add idea URA_ural_expo_arms_idea"
+			set_temp_variable = { temp_opinion = 8 }
+			change_the_military_opinion = yes
+		}
+		picture = sub_political_influence_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		on_remove = {
+			set_temp_variable = { temp_opinion = -8 }
+			change_the_military_opinion = yes
+		}
+		modifier = {
+			production_speed_arms_factory_factor = 0.03
+			research_speed_factor = 0.01
+		}
+	}
+	URA_our_import_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_our_import_idea" }
+		allowed = { always = no }
+		picture = sub_political_influence_idea
+		modifier = {
+			production_factory_max_efficiency_factor = 0.2
+			production_speed_industrial_complex_factor = 0.2
+			consumer_goods_factor = -0.15
+		}
+	}
+	URA_ter_orobona = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_ter_orobona" }
+		allowed = {	always = no	}
+		allowed_civil_war = { always = yes }
+		removal_cost = -1
+		picture = ura_teroborona_idea
+		modifier = {
+			mobilization_speed = 0.04
+			army_core_defence_factor = 0.03
+			war_support_factor = 0.01
+			training_time_army_factor = -0.02
+		}
+	}
+	URA_arms_force = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_arms_force" }
+		allowed = { always = no }
+		picture = ura_army_idea
+		modifier = {
+			army_defence_factor = 0.05
+			experience_gain_army = 0.03
+			land_reinforce_rate = 0.01
+			conscription = 0.03
+			war_support_factor = 0.02
+			training_time_army_factor = -0.04
+		}
+	}
+	URA_grea_ural_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_grea_ural_idea" }
+		picture = ura_great_ural_idea
+		cancel = {
+			NOT = { has_government = nationalist }
+		}
+		removal_cost = -1
+		modifier = {
+			army_morale_factor = 0.05
+			political_power_gain = 0.20
+			democratic_drift = 0.04
+			nationalist_drift = 0.04
+			stability_factor = 0.10
+		}
+	}
+	#######EDRO URAL#######
+	URA_eltsyn_centr_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_eltsyn_centr_idea" }
+		picture = ura_yeltsin_centr_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			democratic_drift = 0.03
+		}
+	}
+	URA_transport_reform_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_transport_reform_idea" }
+		picture = ura_transport_reform
+		cancel = {
+			NOT = { emerging_reactionaries_are_in_power = yes }
+		}
+		modifier = {
+			stability_factor = -0.07
+			population_tax_income_multiplier_modifier = 0.05
+			civilian_factories_productivity = -0.04
+			bureaucracy_cost_multiplier_modifier = -0.03
+		}
+	}
+	URA_titanium_valley_idea = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_titanium_valley_idea" }
+		picture = ura_titanium_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			production_speed_buildings_factor = 0.06
+			local_resources_factor = 0.10
+		}
+	}
+	URA_titanium_valley_idea1 = {
+		on_add = {	log = "[GetDateText]: [Root.GetName]: add idea URA_titanium_valley_idea1" }
+		picture = ura_titanium_idea
+		name = URA_titanium_valley_idea
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			production_speed_buildings_factor = 0.08
+			local_resources_factor = 0.10
+		}
+		equipment_bonus = {
+			fighter = {
+				build_cost_ic = -0.07 instant = yes
+			}
+		}
+	}
+	#######RNE URAL#######
+	URA_rne_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.01
+		}
+	}
+	URA_rne_idea1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea1" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		name = URA_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.02
+			stability_factor = 0.05
+			political_power_factor = 0.03
+		}
+	}
+	URA_rne_idea2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea1" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		name = URA_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.04
+			stability_factor = 0.03
+			political_power_factor = 0.05
+			democratic_drift = -0.03
+			communism_drift = -0.03
+			neutrality_drift = -0.03
+		}
+	}
+	URA_rne_idea3 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea3" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		name = URA_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.03
+			stability_factor = 0.07
+			political_power_factor = 0.07
+			democratic_drift = -0.04
+			communism_drift = -0.04
+			neutrality_drift = -0.04
+		}
+	}
+	URA_rne_idea4 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea4" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		name = URA_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.04
+			stability_factor = 0.07
+			political_power_factor = 0.07
+			democratic_drift = -0.04
+			communism_drift = -0.04
+			neutrality_drift = -0.04
+		}
+		targeted_modifier = {
+			tag = ISR
+			attack_bonus_against = 0.06
+		}
+		targeted_modifier = {
+			tag = USA
+			attack_bonus_against = 0.06
+		}
+	}
+	URA_rne_idea5 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea5" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		name = URA_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.06
+			stability_factor = 0.05
+			political_power_factor = 0.09
+			democratic_drift = -0.04
+			communism_drift = -0.09
+			neutrality_drift = -0.04
+		}
+		targeted_modifier = {
+			tag = ISR
+			attack_bonus_against = 0.06
+		}
+		targeted_modifier = {
+			tag = USA
+			attack_bonus_against = 0.06
+		}
+	}
+	URA_rne_idea6 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea6" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		name = URA_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.08
+			stability_factor = 0.15
+			political_power_factor = 0.15
+			social_cost_multiplier_modifier = -0.05
+			health_cost_multiplier_modifier = -0.05
+			education_cost_multiplier_modifier = -0.05
+			democratic_drift = -0.04
+			communism_drift = -0.09
+			neutrality_drift = -0.04
+		}
+		targeted_modifier = {
+			tag = ISR
+			attack_bonus_against = 0.06
+		}
+		targeted_modifier = {
+			tag = USA
+			attack_bonus_against = 0.06
+		}
+	}
+	URA_rne_idea7 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_idea7" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_idea
+		name = URA_rne_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			nationalist_drift = 0.10
+			stability_factor = 0.20
+			political_power_factor = 0.17
+			social_cost_multiplier_modifier = -0.12
+			health_cost_multiplier_modifier = -0.12
+			education_cost_multiplier_modifier = -0.12
+			democratic_drift = -0.06
+			communism_drift = -0.09
+			neutrality_drift = -0.06
+		}
+		targeted_modifier = {
+			tag = ISR
+			attack_bonus_against = 0.06
+		}
+		targeted_modifier = {
+			tag = USA
+			attack_bonus_against = 0.06
+		}
+	}
+	URA_rne_russian_dictatorship_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_russian_dictatorship_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_dictator_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			foreign_influence_modifier = 0.15
+			foreign_influence_defense_modifier = 0.05
+			justify_war_goal_time = -0.15
+			personnel_cost_multiplier_modifier = 0.05
+			global_building_slots_factor = 0.05
+		}
+	}
+	URA_rne_education_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_education_idea" }
+		allowed_civil_war = { always = yes }
+		picture = jihad_of_education
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			stability_factor = 0.05
+			research_speed_factor = 0.10
+			education_cost_multiplier_modifier = -0.08
+		}
+	}
+	URA_rne_paramilitary_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_paramilitary_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_military_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			mobilization_speed = 0.02
+			army_core_attack_factor = 0.01
+			army_core_defence_factor = 0.01
+			war_support_factor = 0.01
+			training_time_army_factor = -0.01
+		}
+	}
+	URA_rne_youth_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_youth_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rne_molodej_idea
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			conscription_factor = 0.075
+			war_support_factor = 0.05
+			nationalist_outlook_campaign_cost_modifier = -0.15
+		}
+	}
+	URA_rne_security_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_security_idea" }
+		allowed_civil_war = { always = yes }
+		picture = spy_political
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			encryption_factor = 0.35
+			foreign_influence_defense_modifier = 0.10
+		}
+	}
+	URA_rne_protect_russians_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_protect_russians_idea" }
+		allowed_civil_war = { always = yes }
+		picture = idea_SOV_fascist_womens_movement
+		cancel = {
+			NOT = { nationalist_fascist_are_in_power = yes }
+		}
+		modifier = {
+			send_volunteer_divisions_required = -0.25
+			send_volunteer_size = 1
+			send_volunteers_tension = -0.15
+		}
+	}
+	URA_rne_volunteers_battalion_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_rne_volunteers_battalion_idea" }
+		allowed_civil_war = { always = yes }
+		picture = idea_intervention_regional_interventionism_idea
+		cancel = {
+			NOT = { has_war_with = SOV }
+		}
+		modifier = {
+			war_support_factor = 0.02
+		}
+		on_remove = {
+			delete_unit_template_and_units = {
+				division_template = "Volunteer Battalion"
+				disband = yes
+			}
+		}
+	}
+	#######DEMOCRATIC URAL#######
+	URA_democratic_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_idea" }
+		allowed_civil_war = { always = yes }
+		picture = democracy
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			political_power_factor = 0.02
+			democratic_drift = 0.01
+		}
+	}
+	URA_democratic_idea1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_idea1" }
+		allowed_civil_war = { always = yes }
+		picture = democracy
+		name = URA_democratic_idea
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			political_power_factor = 0.04
+			democratic_drift = 0.03
+		}
+	}
+	URA_democratic_idea2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_idea2" }
+		allowed_civil_war = { always = yes }
+		picture = democracy
+		name = URA_democratic_idea
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			political_power_factor = 0.06
+			democratic_drift = 0.05
+			bureaucracy_cost_multiplier_modifier = -0.15
+		}
+	}
+	URA_democratic_idea3 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_idea3" }
+		allowed_civil_war = { always = yes }
+		picture = democracy
+		name = URA_democratic_idea
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			political_power_factor = 0.08
+			democratic_drift = 0.07
+			bureaucracy_cost_multiplier_modifier = -0.15
+			education_cost_multiplier_modifier = -0.15
+			health_cost_multiplier_modifier = -0.15
+			social_cost_multiplier_modifier = -0.15
+			consumer_goods_factor = -0.10
+			production_speed_buildings_factor = 0.15
+			industry_free_repair_factor = 0.15
+		}
+	}
+	URA_democratic_idea4 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_idea4" }
+		allowed_civil_war = { always = yes }
+		picture = democracy
+		name = URA_democratic_idea
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			political_power_factor = 0.10
+			democratic_drift = 0.09
+			bureaucracy_cost_multiplier_modifier = -0.15
+			education_cost_multiplier_modifier = -0.15
+			health_cost_multiplier_modifier = -0.15
+			social_cost_multiplier_modifier = -0.15
+			consumer_goods_factor = -0.10
+			production_speed_buildings_factor = 0.15
+			industry_free_repair_factor = 0.15
+			corruption_cost_factor = -0.15
+			police_cost_multiplier_modifier = 0.08
+		}
+	}
+	URA_democratic_idea5 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_idea5" }
+		allowed_civil_war = { always = yes }
+		picture = democracy
+		name = URA_democratic_idea
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			political_power_factor = 0.13
+			democratic_drift = 0.11
+			bureaucracy_cost_multiplier_modifier = -0.10
+			education_cost_multiplier_modifier = -0.15
+			health_cost_multiplier_modifier = -0.15
+			social_cost_multiplier_modifier = -0.15
+			consumer_goods_factor = -0.10
+			production_speed_buildings_factor = 0.15
+			industry_free_repair_factor = 0.15
+			corruption_cost_factor = -0.15
+			police_cost_multiplier_modifier = 0.08
+			drift_defence_factor = -0.10
+		}
+	}
+	URA_democratic_idea6 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_idea6" }
+		allowed_civil_war = { always = yes }
+		picture = democracy
+		name = URA_democratic_idea
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			political_power_factor = 0.17
+			democratic_drift = 0.15
+			bureaucracy_cost_multiplier_modifier = -0.10
+			education_cost_multiplier_modifier = -0.15
+			health_cost_multiplier_modifier = -0.15
+			social_cost_multiplier_modifier = -0.15
+			consumer_goods_factor = -0.15
+			production_speed_buildings_factor = 0.15
+			industry_free_repair_factor = 0.15
+			corruption_cost_factor = -0.20
+			police_cost_multiplier_modifier = 0.08
+			drift_defence_factor = -0.15
+		}
+	}
+	URA_democratic_state_security_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_state_security_idea" }
+		picture = police_02_idea
+		allowed_civil_war = { always = yes }
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			resistance_growth = -0.15
+			foreign_subversive_activites = -0.25
+			police_cost_multiplier_modifier = 0.05
+		}
+	}
+	URA_democratic_internal_affairs_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_democratic_internal_affairs_idea" }
+		picture = roit_police_idea
+		allowed_civil_war = { always = yes }
+		cancel = {
+			NOT = { has_government = democratic }
+		}
+		modifier = {
+			enemy_operative_capture_chance_factor = 0.15
+			resistance_damage_to_garrison = -0.15
+			police_cost_multiplier_modifier = 0.04
+		}
+	}
+	URA_idea_eu_member_associate = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_idea_eu_member_associate" }
+		picture = EU_Roundel
+		cancel = {
+			has_government = communism
+		}
+		modifier = {
+			political_power_factor = -0.1
+			war_support_factor = -0.025
+			trade_opinion_factor = 0.05
+			stability_factor = 0.015
+			consumer_goods_factor = -0.015
+		}
+	}
+	#######COMMI URAL#######
+	URA_commies_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_commies_idea" }
+		allowed_civil_war = { always = yes }
+		picture = communism9
+		cancel = {
+			NOT = { emerging_communist_state_are_in_power = yes }
+		}
+		modifier = {
+			political_power_factor = 0.02
+			communism_drift = 0.01
+		}
+	}
+	URA_commies_idea1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_commies_idea1" }
+		allowed_civil_war = { always = yes }
+		picture = communism9
+		name = URA_commies_idea
+		cancel = {
+			NOT = { emerging_communist_state_are_in_power = yes }
+		}
+		modifier = {
+			political_power_factor = 0.04
+			communism_drift = 0.03
+		}
+	}
+	URA_commies_idea2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_commies_idea2" }
+		allowed_civil_war = { always = yes }
+		picture = communism9
+		name = URA_commies_idea
+		cancel = {
+			NOT = { emerging_communist_state_are_in_power = yes }
+		}
+		modifier = {
+			political_power_factor = 0.05
+			communism_drift = 0.05
+			drift_defence_factor = 0.10
+		}
+	}
+	URA_commies_idea3 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_commies_idea3" }
+		allowed_civil_war = { always = yes }
+		picture = communism9
+		name = URA_commies_idea
+		cancel = {
+			NOT = { emerging_communist_state_are_in_power = yes }
+		}
+		modifier = {
+			monthly_population = 0.01
+			political_power_factor = 0.07
+			communism_drift = 0.08
+			drift_defence_factor = 0.13
+		}
+	}
+	URA_intertanional_brigade_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_intertanional_brigade_idea" }
+		allowed = {
+			always = no
+		}
+		cancel = {
+			NOT = {
+				emerging_communist_state_are_in_power = yes
+			}
+		}
+		picture = idea_intervention_neo_imperialism_idea
+		modifier = {
+			send_volunteer_divisions_required = -0.25
+			send_volunteer_size = 1
+			send_volunteers_tension = -0.15
+		}
+	}
+	URA_military_univer_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_military_univer" }
+		removal_cost = -1
+		picture = officer_basic_training_idea
+		modifier = {
+			experience_gain_army_factor = 0.10
+			special_forces_training_time_factor = -0.15
+		}
+	}
+	URA_red_army_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_red_army_idea" }
+		allowed = {
+			always = no
+		}
+		cancel = {
+			NOT = {
+				emerging_communist_state_are_in_power = yes
+			}
+		}
+		picture = ura_red_army_idea
+		modifier = {
+			conscription = 0.01
+			justify_war_goal_time = -0.25
+			offensive_war_stability_factor = 0.05
+			training_time_army_factor = -0.2
+		}
+	}
+	URA_kgb_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_kgb_idea" }
+		allowed_civil_war = { always = yes }
+		picture = blr_kgb_org
+		modifier = {
+			encryption_factor = 0.25
+			foreign_influence_defense_modifier = 0.08
+		}
+	}
+	URA_five_year_plans = {
+		picture = blr_communist_economy_org
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_five_year_plans" }
+		cancel = {
+			NOT = {
+				emerging_communist_state_are_in_power = yes
+			}
+		}
+		modifier = {
+			consumer_goods_factor = -0.05
+			production_speed_buildings_factor = 0.25
+		}
+	}
+	URA_new_roads = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_new_roads" }
+		allowed = { always = no }
+		picture = GENERIC_public_works
+		modifier = {
+			repair_speed_infrastructure_factor = 0.15
+			production_speed_infrastructure_factor = 0.15
+			research_speed_factor = 0.03
+		}
+	}
+	URA_invest_univer = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_invest_univer" }
+		picture = scientists_defect
+		allowed_civil_war = { always = yes }
+		modifier = {
+			political_power_gain = 0.01
+			research_speed_factor = 0.05
+			education_cost_multiplier_modifier = 0.07
+		}
+	}
+	URA_marxist_reeducation_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_marxist_reeducation_idea" }
+		picture = shared_research
+		cancel = {
+			NOT = {
+				emerging_communist_state_are_in_power = yes
+			}
+		}
+		modifier = {
+			education_cost_multiplier_modifier = 0.17
+			political_power_factor = 0.10
+			communism_drift = 0.05
+			neutrality_drift = 0.05
+		}
+	}
+	#######MONARCHY URAL#######
+	URA_romanov_empire = {
+		allowed = { always = no }
+		allowed_civil_war = { always = yes }
+		picture = ura_romanov_empire
+		cancel = {
+			OR = {
+				NOT = {
+					country_exists = URA
+				}
+				has_war_with = URA
+			}
+		}
+		on_add = {
+			log = "[GetDateText]: [Root.GetName]: add idea URA_romanov_empire"
+		}
+	}
+	URA_russian_vatican_support = {
+		allowed = { always = no }
+		allowed_civil_war = { always = yes }
+		picture = orthodox
+		on_add = {
+			log = "[GetDateText]: [Root.GetName]: add idea URA_russian_vatican_support"
+		}
+		cancel = {
+			NOT = { owns_state = 676 }
+		}
+		modifier = {
+			nationalist_drift = 0.03
+			political_power_factor = 0.10
+			stability_factor = 0.01
+		}
+	}
+	URA_monarchy_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_monarchy_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			political_power_factor = 0.02
+			nationalist_drift = 0.01
+		}
+	}
+	URA_monarchy_idea1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_idea1" }
+		allowed_civil_war = { always = yes }
+		picture = ura_monarchy_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		name = URA_monarchy_idea
+		modifier = {
+			political_power_factor = 0.04
+			nationalist_drift = 0.03
+			communism_drift = -0.03
+		}
+	}
+	URA_monarchy_idea2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_idea2" }
+		allowed_civil_war = { always = yes }
+		picture = ura_monarchy_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		name = URA_monarchy_idea
+		modifier = {
+			political_power_factor = 0.06
+			nationalist_drift = 0.05
+			communism_drift = -0.03
+			drift_defence_factor = 0.07
+		}
+	}
+	URA_monarchy_idea3 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_idea3" }
+		allowed_civil_war = { always = yes }
+		picture = ura_monarchy_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		name = URA_monarchy_idea
+		modifier = {
+			political_power_factor = 0.09
+			nationalist_drift = 0.08
+			communism_drift = -0.07
+			drift_defence_factor = 0.15
+		}
+	}
+	URA_monarchy_idea4 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_idea4" }
+		allowed_civil_war = { always = yes }
+		picture = ura_monarchy_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		name = URA_monarchy_idea
+		modifier = {
+			political_power_factor = 0.12
+			nationalist_drift = 0.10
+			communism_drift = -0.07
+			drift_defence_factor = 0.15
+			monthly_population = 0.05
+			conscription_factor = 0.05
+		}
+	}
+	URA_monarchy_royal_leib_guard_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_rovs_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_leib_guard_iIdea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			modifier_army_sub_unit_Special_Forces_attack_factor = 0.05
+			modifier_army_sub_unit_Special_Forces_defence_factor = 0.05
+			modifier_army_sub_unit_Special_Forces_speed_factor = 0.05
+			army_morale_factor = 0.075
+			army_org_factor = 0.075
+			nationalist_drift = 0.02
+		}
+	}
+	URA_monarchy_rovs_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_rovs_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_rovs_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			mobilization_speed = 0.04
+			army_core_attack_factor = 0.02
+			army_org_factor = 0.06
+			army_core_defence_factor = 0.03
+			war_support_factor = 0.01
+			training_time_army_factor = -0.02
+		}
+	}
+	URA_monarchy_kazachestvo_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_kazachestvo_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_cossaks_idea
+		cancel = {
+			emerging_communist_state_are_in_power = yes
+		}
+		modifier = {
+			drift_defence_factor = 0.05
+			army_core_defence_factor = 0.03
+			army_attack_factor = 0.05
+		}
+	}
+	URA_monarchy_anti_mafia_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_anti_mafia_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ser_corruption_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			corruption_cost_factor = -0.15
+		}
+	}
+	URA_monarchy_luxury_tax_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_luxury_tax_idea" }
+		allowed_civil_war = { always = yes }
+		picture = gold
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			tax_gain_multiplier_modifier = 0.03
+		}
+	}
+	URA_monarchy_senate_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_senate_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_senat_idea
+		modifier = {
+			political_power_factor = 0.02
+			bureaucracy_cost_multiplier_modifier = -0.05
+			stability_factor = 0.03
+		}
+	}
+	URA_monarchy_emperess_maria_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_emperess_maria_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_zdravnica_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			social_cost_multiplier_modifier = 0.06
+			health_cost_multiplier_modifier = 0.06
+			stability_factor = 0.03
+			production_speed_buildings_factor = 0.04
+		}
+	}
+	URA_monarchy_education_reform_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_education_reform_idea" }
+		allowed_civil_war = { always = yes }
+		picture = edu_05_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			education_cost_multiplier_modifier = -0.07
+			research_speed_factor = -0.05
+			political_power_factor = 0.05
+			stability_factor = 0.02
+			drift_defence_factor = 0.07
+			foreign_influence_defense_modifier = 0.07
+		}
+	}
+	URA_monarchy_ark_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_monarchy_ark_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_ark_idea
+		cancel = {
+			NOT = { nationalist_monarchists_are_in_power = yes }
+		}
+		modifier = {
+			monthly_population = 0.01
+			conscription_factor = 0.01
+		}
+	}
+	#######ROIZMAN URAL#######
+	URA_roizman_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_roizman_idea" }
+		allowed_civil_war = { always = yes }
+		picture = ura_roizman_idea
+		cancel = {
+			NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+		}
+		modifier = {
+			political_power_factor = 0.01
+			monthly_population = 0.01
+			conscription_factor = 0.01
+			health_cost_multiplier_modifier = 0.05
+			
+		}
+	}
+	URA_roizman_idea1 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_roizman_idea1" }
+		allowed_civil_war = { always = yes }
+		picture = ura_roizman_idea
+		cancel = {
+			NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+		}
+		name = URA_roizman_idea
+		modifier = {
+			political_power_factor = 0.02
+			monthly_population = 0.01
+			conscription_factor = 0.01
+			health_cost_multiplier_modifier = 0.05
+			neutrality_drift = 0.02
+			bureaucracy_cost_factor = 0.05
+		}
+	}
+	URA_roizman_idea2 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_roizman_idea2" }
+		allowed_civil_war = { always = yes }
+		picture = ura_roizman_idea
+		cancel = {
+			NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+		}
+		name = URA_roizman_idea
+		modifier = {
+			political_power_factor = 0.04
+			monthly_population = 0.01
+			conscription_factor = 0.01
+			health_cost_multiplier_modifier = 0.05
+			neutrality_drift = 0.04
+			bureaucracy_cost_factor = 0.05
+		}
+	}
+	URA_roizman_idea3 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_roizman_idea3" }
+		allowed_civil_war = { always = yes }
+		picture = ura_roizman_idea
+		cancel = {
+			NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+		}
+		name = URA_roizman_idea
+		modifier = {
+			political_power_factor = 0.06
+			monthly_population = 0.01
+			conscription_factor = 0.01
+			health_cost_multiplier_modifier = 0.05
+			neutrality_drift = 0.06
+			bureaucracy_cost_factor = 0.05
+			drift_defence_factor = -0.10
+		}
+	}
+	URA_roizman_idea4 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_roizman_idea4" }
+		allowed_civil_war = { always = yes }
+		picture = ura_roizman_idea
+		cancel = {
+			NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+		}
+		name = URA_roizman_idea
+		modifier = {
+			political_power_factor = 0.08
+			monthly_population = 0.01
+			conscription_factor = 0.01
+			health_cost_multiplier_modifier = 0.05
+			neutrality_drift = 0.07
+			bureaucracy_cost_factor = 0.05
+			drift_defence_factor = -0.10
+			communism_drift = -0.05
+		}
+	}
+	URA_roizman_idea5 = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add URA_roizman_idea5" }
+		allowed_civil_war = { always = yes }
+		picture = ura_roizman_idea
+		cancel = {
+			NOT = { neutrality_neutral_libertarians_are_in_power = yes }
+		}
+		name = URA_roizman_idea
+		modifier = {
+			political_power_factor = 0.09
+			monthly_population = 0.01
+			conscription_factor = 0.01
+			health_cost_multiplier_modifier = 0.05
+			neutrality_drift = 0.08
+			bureaucracy_cost_factor = 0.05
+			drift_defence_factor = -0.10
+			communism_drift = -0.05
+			democratic_drift = -0.05
+		}
+	}
+	URA_dick_shot_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_dick_shot_idea" }
+		allowed = { always = no }
+		picture = health_06_idea
+		modifier = {
+			stability_factor = 0.05
+			monthly_population = 0.02
+			conscription_factor = 0.02
+			health_cost_multiplier_modifier = 0.02
+			social_cost_multiplier_modifier = 0.03
+		}
+	}
+	URA_increased_masks_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_increased_masks_idea" }
+		allowed = { always = no }
+		picture = police_05_idea
+		modifier = {
+			police_cost_multiplier_modifier = 0.05
+			stability_factor = 0.05
+		}
+	}	
+	URA_anti_lgbtqa_stance_idea = {
+		on_add = { log = "[GetDateText]: [Root.GetName]: add idea URA_anti_lgbtqa_stance_idea" }
+		allowed = { always = no }
+		picture = anti_lgbt
+
+		modifier = {
+			political_power_factor = 0.05
+			democratic_drift = -0.02
+			nationalist_drift = 0.02
+			stability_factor = -0.10
 		}
 	}
 }

@@ -80,17 +80,16 @@ ingame_update_setup = {
 	if = { limit = { is_ai = yes }
 		calculate_ai_taxes_desire = yes
 	}
-
-	#Visuals
-	update_display = yes
-	if = {
-		limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
-	}
-	if = { limit = { is_ai = no }
+	else = {
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
 		force_update_map_mode = { mapmode = productivity_map_mode }
+	}
+
+	#Visuals
+	update_display = yes
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
 	}
 
 	# Dirty UI
@@ -100,6 +99,7 @@ ingame_update_setup = {
 	else = {
 		add_to_variable = { global.update_monie_ui = 1 }
 	}
+	refresh_gui = yes
 }
 
 # calculate_tax_rate
@@ -205,7 +205,7 @@ calculate_tax_gain = {
 	multiply_variable = { office_tax = 5 }
 
 	set_variable = { agriculture_district_tax = agriculture_district_total }
-	multiply_variable = { agriculture_district_tax = 2.65 }
+	multiply_variable = { agriculture_district_tax = 2.60 }
 
 	# Control factors
 	multiply_variable = { civil_fac_tax = @money_control_factor_scaling }
@@ -533,6 +533,13 @@ calculate_additional_income_rate = {
 		multiply_variable = { additional_income_overlord_subsidies = 0.5 }
 		add_to_variable = { additional_income_rate = additional_income_overlord_subsidies }
 	}
+	# Imposing Taxation on Religious Institutions
+	if = { limit = { has_idea = internal_factions_taxing_religious_institutions }
+		set_variable = { additional_income_taxing_religious_institutions = gdp_total }
+		multiply_variable = { additional_income_taxing_religious_institutions = 0.02 }
+		multiply_variable = { additional_income_taxing_religious_institutions = 0.5 }
+		add_to_variable = { additional_income_rate = additional_income_taxing_religious_institutions }
+	}
 
 	# Country Specific Income
 	##Abkhazia
@@ -557,7 +564,7 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_AFG_idea_Opium_Economy = population_total }
 			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.1 }	#Millions of people
 			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.15 } #per million
-			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.50 }	#weekly
+			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.25 }	#weekly
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_Economy }
 		}
 		if = {
@@ -565,7 +572,7 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_AFG_idea_Opium_barons = population_total }
 			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.1 }	#Millions of people
 			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.25 } #per million
-			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.50 }	#weekly
+			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.25 }	#weekly
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_barons }
 		}
 		if = {
@@ -573,8 +580,29 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = population_total }
 			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.1 }	#Millions of people
 			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.35 } #per million
-			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.50 }	#weekly
+			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.25 }	#weekly
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_state_sponsored_opium_industry }
+		}
+		if = {
+			limit = { has_idea = AFG_agro_income1 }
+			set_variable = { additional_income_AFG_argro_modernisation = 0.12 }
+			add_to_variable = { additional_income_rate = additional_income_AFG_argro_modernisation }
+		}
+		if = {
+			limit = { has_idea = AFG_western_klep1 }
+			set_variable = { additional_income_AFG_western_klep1 = 0.18 }
+			add_to_variable = { additional_income_rate = additional_income_AFG_western_klep1 }
+		}
+		if = {
+			limit = { has_idea = AFG_Tolls_income1 }
+			set_variable = { additional_income_AFG_Tolls_income1 = 0 }
+			add_to_variable = { additional_income_AFG_Tolls_income1 = AFG_Bactria_earnings_tollage }
+			add_to_variable = { additional_income_AFG_Tolls_income1 = AFG_Badakshan_earnings_tollage }
+			add_to_variable = { additional_income_AFG_Tolls_income1 = AFG_Hindu_Kush_earnings_tollage }
+			add_to_variable = { additional_income_AFG_Tolls_income1 = AFG_Sistan_earnings_tollage }
+			add_to_variable = { additional_income_AFG_Tolls_income1 = AFG_Herat_earnings_tollage }
+			add_to_variable = { additional_income_AFG_Tolls_income1 = AFG_Hazarajat_earnings_tollage }
+			add_to_variable = { additional_income_rate = additional_income_AFG_Tolls_income1 }
 		}
 	}
 	if = {
@@ -965,7 +993,35 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_UKR_russian_gas_cheaper_sov = 0.100 }
 			add_to_variable = { additional_income_rate = additional_income_UKR_russian_gas_cheaper_sov }
 		}
-
+		if = {
+			limit = { has_idea = SOV_jirik_unloyal_party_idea2 }
+			set_variable = { additional_income_SOV_jirik_unloyal_party_idea2 = 0.300 }
+			add_to_variable = { additional_income_rate = additional_income_SOV_jirik_unloyal_party_idea2 }
+		}
+		if = {
+			limit = { has_idea = SOV_jirik_unloyal_party_idea3 }
+			set_variable = { additional_income_SOV_jirik_unloyal_party_idea3 = 0.300 }
+			add_to_variable = { additional_income_rate = additional_income_SOV_jirik_unloyal_party_idea3 }
+		}
+		if = {
+			limit = { has_idea = SOV_otkos_army_idea }
+			set_variable = { additional_income_SOV_otkos_army_idea = 0.150 }
+			add_to_variable = { additional_income_rate = additional_income_SOV_otkos_army_idea }
+		}
+	}
+	# Wagner
+	if = {
+		limit = { original_tag = WAG }
+		if = {
+			limit = { has_idea = SOV_prigoba_stroy_idea }
+			set_variable = { additional_income_SOV_prigoba_stroy_idea_gain = 0.080 }
+			add_to_variable = { additional_income_rate = additional_income_SOV_prigoba_stroy_idea_gain }
+		}
+		if = {
+			limit = { has_idea = SOV_prigoba_eda_idea }
+			set_variable = { additional_income_SOV_prigoba_eda_idea_gain = 0.075 }
+			add_to_variable = { additional_income_rate = additional_income_SOV_prigoba_eda_idea_gain }
+		}
 	}
 	# DPR
 	if = {
@@ -2103,14 +2159,14 @@ update_military_rate = {
 
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
-			multiply_temp_variable = { land_count = 1.45 }
-			multiply_temp_variable = { navy_count = 2.40 }
-			multiply_temp_variable = { airforce_count = 2.40 }
+			multiply_temp_variable = { land_count = 1.30 }
+			multiply_temp_variable = { navy_count = 2.0 }
+			multiply_temp_variable = { airforce_count = 2.0 }
 		}
 		else = {
 			multiply_temp_variable = { land_count = 1.15 }
-			multiply_temp_variable = { navy_count = 1.6 }
-			multiply_temp_variable = { airforce_count = 1.60 }
+			multiply_temp_variable = { navy_count = 1.45 }
+			multiply_temp_variable = { airforce_count = 1.45 }
 		}
 	}
 
@@ -2622,7 +2678,30 @@ calculate_additional_expense_rate = {
 		add_to_temp_variable = { lease_civilian_factories_cost = lease_civilian_factories_base_cost }
 		multiply_temp_variable = { lease_civilian_factories_cost = leased_civilian_factories }
 		divide_temp_variable = { lease_civilian_factories_cost = leased_factories }
+		set_variable = { lease_civilian_factories_cost_display = lease_civilian_factories_cost }
 		add_to_variable = { additional_expenses_rate = lease_civilian_factories_cost }
+	}
+	if = { limit = { check_variable = { leased_military_factories > 0 } }
+		set_temp_variable = { lease_military_factories_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_military_factories_cost = gdp_per_capita_leasing_multiplier }
+		set_temp_variable = { lease_military_factories_base_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_military_factories_base_cost = 0.1 }
+		add_to_temp_variable = { lease_military_factories_cost = lease_military_factories_base_cost }
+		multiply_temp_variable = { lease_military_factories_cost = leased_military_factories }
+		divide_temp_variable = { lease_military_factories_cost = leased_factories }
+		set_variable = { lease_military_factories_cost_display = lease_military_factories_cost }
+		add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
+	}
+	if = { limit = { check_variable = { leased_dockyards > 0 } }
+		set_temp_variable = { lease_naval_factories_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_naval_factories_cost = gdp_per_capita_leasing_multiplier }
+		set_temp_variable = { lease_naval_factories_base_cost = lease_factories_cumulative_cost }
+		multiply_temp_variable = { lease_naval_factories_base_cost = 0.1 }
+		add_to_temp_variable = { lease_naval_factories_cost = lease_naval_factories_base_cost }
+		multiply_temp_variable = { lease_naval_factories_cost = leased_dockyards }
+		divide_temp_variable = { lease_naval_factories_cost = leased_factories }
+		set_variable = { lease_naval_factories_cost_display = lease_naval_factories_cost }
+		add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 	}
 	if = { limit = { check_variable = { market_purchase_factories > 0 } }
 		#start the math
@@ -2734,26 +2813,6 @@ calculate_additional_expense_rate = {
 		add_to_variable = { additional_expenses_rate = market_purchase_factories_cost }
 		set_variable = { market_purchase_factories_cost_track = market_purchase_factories_cost }
 	}
-	if = { limit = { check_variable = { leased_military_factories > 0 } }
-		set_temp_variable = { lease_military_factories_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_military_factories_cost = gdp_per_capita_leasing_multiplier }
-		set_temp_variable = { lease_military_factories_base_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_military_factories_base_cost = 0.1 }
-		add_to_temp_variable = { lease_military_factories_cost = lease_military_factories_base_cost }
-		multiply_temp_variable = { lease_military_factories_cost = leased_military_factories }
-		divide_temp_variable = { lease_military_factories_cost = leased_factories }
-		add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
-	}
-	if = { limit = { check_variable = { leased_dockyards > 0 } }
-		set_temp_variable = { lease_naval_factories_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_naval_factories_cost = gdp_per_capita_leasing_multiplier }
-		set_temp_variable = { lease_naval_factories_base_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_naval_factories_base_cost = 0.1 }
-		add_to_temp_variable = { lease_naval_factories_cost = lease_naval_factories_base_cost }
-		multiply_temp_variable = { lease_naval_factories_cost = leased_dockyards }
-		divide_temp_variable = { lease_naval_factories_cost = leased_factories }
-		add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
-	}
 	if = {
 		limit = {
 			OR = {
@@ -2807,6 +2866,7 @@ calculate_additional_expense_rate = {
 		limit = { tag = CAN }
 		add_to_variable = { additional_expenses_rate = CAN_subsidy_total }
 	}
+	# Syrian Stuff
 	# Syria
 	if = {
 		limit = { original_tag = SYR }
@@ -2835,12 +2895,76 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_syria_agricultural_subsidies }
 		}
 		if = {
+			limit = {
+				OR = {
+					has_idea = syrian_digital_investment1
+					has_idea = syrian_digital_investment2
+					has_idea = syrian_digital_investment3
+					has_idea = syrian_digital_investment4
+					has_idea = syrian_digital_investment5
+				}
+			}
+			set_variable = { additional_expense_syria_digital_investments = gdp_total }
+			if = {
+				limit = { has_idea = syrian_digital_investment1 }
+				multiply_variable = { additional_expense_syria_digital_investments = 0.002 }
+			}
+			if = {
+				limit = { has_idea = syrian_digital_investment2 }
+				multiply_variable = { additional_expense_syria_digital_investments = 0.004 }
+			}
+			if = {
+				limit = { has_idea = syrian_digital_investment3 }
+				multiply_variable = { additional_expense_syria_digital_investments = 0.006 }
+			}
+			if = {
+				limit = { has_idea = syrian_digital_investment4 }
+				multiply_variable = { additional_expense_syria_digital_investments = 0.008 }
+			}
+			if = {
+				limit = { has_idea = syrian_digital_investment5 }
+				multiply_variable = { additional_expense_syria_digital_investments = 0.01 }
+			}
+			multiply_variable = { additional_expense_syria_digital_investments = 0.2 }
+			add_to_variable = { additional_expenses_rate = additional_expense_syria_digital_investments }
+		}
+		if = {
 			limit = { has_dynamic_modifier = { modifier = occupation_of_lebanon_dynamic_modifier } }
 			set_variable = { additional_expense_occupation_of_lebanon = 0.25 }
 			add_to_variable = { additional_expenses_rate = additional_expense_occupation_of_lebanon }
 		}
+		if = {
+			limit = { has_idea = subsidized_counter_terror_operations }
+			set_variable = { additional_expense_subsidized_counter_terror_operations = gdp_total_display }
+			multiply_variable = { additional_expense_subsidized_counter_terror_operations = 0.006 }
+			add_to_variable = { additional_expenses_rate = additional_expense_subsidized_counter_terror_operations }
+		}
+		if = {
+			limit = { has_idea = idea_syrian_development_projects }
+			set_variable = { additional_expense_syrian_development_projects = gdp_total_display }
+			multiply_variable = { additional_expense_syrian_development_projects = 0.005 }
+			add_to_variable = { additional_expenses_rate = additional_expense_subsidized_counter_terror_operations }
+		}
+		if = {
+			limit = { has_idea = syria_bakdash }
+			set_variable = { syria_bakdash_income = 0.08 }
+			add_to_variable = { additional_income_rate = syria_bakdash_income }
+		}
 	}
 	# Qatar
+	if = {
+		limit = { tag = ROM }
+		if = {
+			limit = { has_idea = ROM_economy_of_the_new_century3 }
+			set_variable = { additional_expense_pnt_liberal_economy = 0.05 }
+			add_to_variable = { additional_expenses_rate = additional_expense_pnt_liberal_economy }
+		}
+		if = {
+			limit = { has_idea = ROM_rural_infrastructure_renewal }
+			set_variable = { additional_expense_pnt_infrastructure_project = 0.05 }
+			add_to_variable = { additional_expenses_rate = additional_expense_pnt_infrastructure_project }
+		}
+	}
 	if = {
 		limit = { original_tag = QAT }
 		if = {
@@ -3004,6 +3128,18 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = FRA.FRA_nepad_sponsor_weekly_cost }
 		}
 	}
+	# Czech Republic
+	if = {
+		limit = { original_tag = CZE }
+		if = {
+			limit = {
+				has_completed_focus = CZE_keynesianism
+			}
+			set_variable = { CZE_increased_state_expenditure = gdp_total }
+			multiply_variable = { CZE_increased_state_expenditure = CZE.CZE_increased_state_expenditure_multiplier }
+			add_to_variable = { additional_expenses_rate = CZE_increased_state_expenditure }
+		}
+	}
 }
 
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
@@ -3038,12 +3174,12 @@ calculate_int_investments_rate = {
 #Calculates income from resources
 calculate_resource_sale_rate = {
 	#Set the base price for single unit of resource, this is the relative price between resources
-	set_temp_variable = { oil_price = 5 }	#Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
-	set_temp_variable = { steel_price = 0.01 }	#Based on steel price
-	set_temp_variable = { aluminium_price = 0.12 }	#Based on aluminium price
-	set_temp_variable = { tungsten_price = 0.2 }	#Based on copper price
-	set_temp_variable = { chromium_price = 0.06 }	#Based on gold price
-	set_temp_variable = { rubber_price = 0.02 }	#Based on rubber price
+	set_temp_variable = { oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_temp_variable = { steel_price = 0.024 } #Based on steel price
+	set_temp_variable = { aluminium_price = 0.21 }	#Based on aluminium price
+	set_temp_variable = { tungsten_price = 0.28 }	#Based on copper price
+	set_temp_variable = { chromium_price = 0.18 }	#Based on gold price
+	set_temp_variable = { rubber_price = 0.09 }	#Based on rubber price
 
 	#resource_exported = total amount of resources put to market
 	set_variable = { oil_exports = resource_exported@oil }
@@ -3174,13 +3310,13 @@ update_display = {
 	set_variable = { budget_array^7 = additional_expenses_rate }
 	set_variable = { budget_array^8 = border_control_gain }
 
-	find_highest_in_array = {
-		array = budget_array
-		value = value_highest_cost_temp
-		index = index_highest_cost_temp
-	}
 	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Highest Economic Expenditure: Index: [?i] Value: [?v]: Treasury Rate: [?THIS.treasury_rate]"
+		find_highest_in_array = {
+			array = budget_array
+			value = value_highest_cost_temp
+			index = index_highest_cost_temp
+		}
+		log = "[GetDateText]: [THIS.GetName]: Highest Economic Expenditure: Index: [?index_highest_cost_temp] Value: [?value_highest_cost_temp]: Treasury Rate: [?THIS.treasury_rate]"
 	}
 
 	set_variable = { display_income = tax_gain }
@@ -3199,7 +3335,7 @@ update_display = {
 update_economic_cycle_cost = {
 	#Base on size of economy
 	set_variable = { econ_cycle_upg_cost = gdp_total }
-	multiply_variable = { econ_cycle_upg_cost = 0.075 } # 7.5% of GDP Total in billions
+	multiply_variable = { econ_cycle_upg_cost = 0.05 } # 5% of GDP Total in billions
 
 	#Additional additive modifiers
 	set_temp_variable = { econ_cycle_upg_cost_multiplier = 1 }
@@ -3363,6 +3499,7 @@ update_state_variables = {
 	set_variable = { var = total_resource_amount value = 0 }
 	set_variable = { var = overall_productivity value = 0 }
 
+
 	# missile_silo
 	set_temp_variable = { num_missile_silo = 0 }
 	# TEL_base
@@ -3452,6 +3589,31 @@ update_state_variables = {
 
 #Calculate GDP/C
 calculate_gdp = {
+	# Calculate Last Quarter's GDP
+	if = {
+		limit = {
+			NOT = { has_country_flag = calculated_quarterly_gdp }
+			OR = {
+				check_variable = { global.month = 3 }
+				check_variable = { global.month = 6 }
+				check_variable = { global.month = 9 }
+				check_variable = { global.month = 12 }
+			}
+		}
+		set_temp_variable = { last_quarter_gdp_total_temp = last_quarter_gdp_total }
+		set_temp_variable = { this_quarter_gdp_total_temp = gdp_total }
+
+		set_variable = { last_quarter_gdp_growth_rate = this_quarter_gdp_total_temp }
+		divide_variable = { last_quarter_gdp_growth_rate = last_quarter_gdp_total_temp }
+		add_to_variable = { last_quarter_gdp_growth_rate = -1 }
+		clamp_variable = { var = last_quarter_gdp_growth_rate min = -1 }
+
+		set_variable = { last_quarter_gdp_total = gdp_total }
+		add_to_array = { quarterly_gdp_growth_rate = last_quarter_gdp_growth_rate }
+		set_country_flag = { flag = calculated_quarterly_gdp days = 85 value = 1 }
+	}
+
+	# Reset the Gross Domestic Payment
 	set_variable = { var = gdp_total value = 0 }
 
 	# Calculates Unemployment
@@ -4041,6 +4203,7 @@ productivity_growth_display_effect = {
 			limit = {
 				check_variable = { state_productivity_growth_scaled > 0 }
 			}
+			# Initial Calculation
 			set_temp_variable = { productivity_catch_up = global.average_world_productivity }
 			divide_temp_variable = { productivity_catch_up = productivity_state_var }
 			add_to_temp_variable = { productivity_catch_up = -1 }
@@ -4050,6 +4213,8 @@ productivity_growth_display_effect = {
 			set_temp_variable = { state_productivity_growth_multiplier = 1 }
 			add_to_temp_variable = { state_productivity_growth_multiplier = modifier@state_productivity_growth_modifier }
 			set_temp_variable = { current_state = THIS.id }
+
+			# Railway Infrastructure Productivity Bonus
 			if = { limit = { has_railway_level = { state = current_state level = 1 } }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.04 }
 			}
@@ -4068,6 +4233,12 @@ productivity_growth_display_effect = {
 			else_if = { limit = { has_railway_level = { state = current_state level = 6 } }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.24 }
 			}
+
+			# Encourage Productivity from State Owned Investments
+			if = { limit = { has_state_flag = encourage_productivity_in_state_click }
+				add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
+			}
+
 			multiply_variable = { state_productivity_growth_scaled = state_productivity_growth_multiplier }
 		}
 		else = {
