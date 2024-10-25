@@ -58,8 +58,61 @@ bankruptcy_decisions = {
 
 	}
 
+	bankruptcy_cheap_loans_from_african_investment_fund = {
+		icon = GFX_decision_bancru_ask_button
+
+		visible = {
+			is_african_nation = yes
+		}
+
+		available = {
+			is_full_state = yes
+			has_added_tension_amount < 5
+			has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
+			custom_trigger_tooltip = {
+				tooltip = interest_rate_lower_than_15
+				check_variable = { interest_rate < 15 }
+			}
+		}
+
+		modifier = {
+			interest_rate_multiplier_modifier = -3
+		}
+
+		days_remove = 360
+
+		days_re_enable = 180
+
+		complete_effect = {
+			if = { limit = { is_ai = yes }
+				add_political_power = -25
+			}
+			else = {
+				add_political_power = -50
+			}
+			set_temp_variable = { debt_addition = debt }
+			multiply_temp_variable = { debt_addition = 0.05 }
+			round_temp_variable = debt_addition
+			add_to_variable = { debt = debt_addition }
+			custom_effect_tooltip = cheap_loans_from_amf_tt
+			ingame_update_setup = yes
+		}
+
+		ai_will_do = {
+			factor = 1100
+			modifier = {
+				factor = 0
+				has_political_power < 0
+			}
+		}
+
+	}
+
 	bankruptcy_seek_bailout_from_biggest_influencer = {
 		icon = GFX_decision_bancru_ask_button
+		visible = {
+			check_variable = { influence_array^0 > 0 }
+		}
 		available = {
 			is_subject = no
 			custom_trigger_tooltip = {
@@ -119,6 +172,9 @@ bankruptcy_decisions = {
 
 	bankruptcy_seek_bailout_from_second_biggest_influencer = {
 		icon = GFX_decision_bancru_ask_button
+		visible = {
+			check_variable = { influence_array^0 > 0 }
+		}
 		available = {
 			is_subject = no
 			custom_trigger_tooltip = {
@@ -718,6 +774,71 @@ bankruptcy_decisions = {
 		}
 		ai_will_do = {
 			factor = 900
+			modifier = {
+				factor = 0
+				check_variable = { interest_rate < 15 }
+			}
+			modifier = {
+				factor = 0
+				has_political_power < 0
+			}
+		}
+	}
+
+	bankruptcy_seek_bailout_from_african_monetary_fund = {
+		icon = GFX_decision_bancru_ask_button
+		visible = {
+			is_african_nation = yes
+		}
+		available = {
+			is_full_state = yes
+			has_added_tension_amount < 5
+			has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
+			if = {
+				limit = { is_ai = no }
+				custom_trigger_tooltip = {
+					tooltip = treasury_less_than_5
+					check_variable = { treasury < 5 }
+				}
+			}
+			if = { limit = { tag = ETH }
+				NOT = { has_idea = ETH_idea_refactored_debt }
+			}
+			NOT = { has_decision = bankruptcy_seek_bailout_from_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_second_biggest_influencer }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_neighbour }
+			NOT = { has_decision = bankruptcy_seek_bailout_from_overlord }
+		}
+		fixed_random_seed = no
+		days_re_enable = 360
+		days_remove = 7
+		complete_effect = {
+			add_political_power = -100
+			set_temp_variable = { debt_bailout_temp = debt }
+			multiply_temp_variable = { debt_bailout_temp = -0.10 }
+			clamp_temp_variable = { var = debt_bailout_temp max = -1 }
+			set_temp_variable = { debt_change = debt_bailout_temp }
+			modify_debt_effect = yes
+			custom_effect_tooltip = bankruptcy_seek_bailout_from_amf_tt
+			random_other_country = {
+				limit = {
+					is_african_nation = yes
+					has_idea = AU_member
+					OR = {
+						has_idea = regional_power
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = superpower
+					}
+				}
+				set_temp_variable = { tag_index = THIS }
+			}
+			set_temp_variable = { influence_target = ROOT }
+			set_temp_variable = { percent_change = 10 }
+			change_influence_percentage = yes
+		}
+		ai_will_do = {
+			factor = 950
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate < 15 }

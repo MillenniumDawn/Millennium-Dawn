@@ -29,13 +29,7 @@ SOV_use_decisions = {
 	allowed = { original_tag = SOV }
 	enable = { always = yes }
 	abort_when_not_enabled = yes
-	ai_strategy = { type = pp_spend_priority id = decision value = 30000 }
-}
-SOV_debuff_decisions = {
-	allowed = { original_tag = SOV }
-	enable = { NOT = { country_exists = BLR } }
-	abort_when_not_enabled = yes
-	ai_strategy = { type = pp_spend_priority id = decision value = -30000 }
+	ai_strategy = { type = pp_spend_priority id = decision value = 40000 }
 }
 #Political
 SOV_recognize_ABK = {
@@ -45,16 +39,6 @@ SOV_recognize_ABK = {
 
 	ai_strategy = { type = befriend id = "ABK" value = 50 }
 	ai_strategy = { type = influence id = "ABK" value = 50 }
-}
-SOV_support_HOR = {
-	allowed = { original_tag = SOV }
-	enable = { country_exists = HOR }
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = befriend id = "HOR" value = 50 }
-	ai_strategy = { type = protect id = "HOR" value = 50 }
-	ai_strategy = { type = influence id = "HOR" value = 50 }
-	ai_strategy = { type = support id = "HOR" value = 50 }
 }
 SOV_dislike_GEO = {
 	allowed = { original_tag = SOV }
@@ -67,15 +51,64 @@ SOV_dislike_GEO = {
 	ai_strategy = { type = protect id = "SOO" value = 50 }
 	ai_strategy = { type = protect id = "ABK" value = 50 }
 }
-SOV_influence_UKR = {
+SOV_attack_UKR = {
 	allowed = { original_tag = SOV }
 	enable = {
+		SOV = {
+			NOT = {
+				has_government = democratic
+			}
+		}
 		NOT = { is_in_faction_with = UKR }
+		UKR = { nationalist_fascist_are_in_power = yes }
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = contain id = "UKR" value = 50 }
-	ai_strategy = { type = antagonize id = "UKR" value = 25 }
+	ai_strategy = { type = contain id = "UKR" value = 220 }
+	ai_strategy = { type = antagonize id = "UKR" value = 225 }
+}
+SOV_help_UKR = {
+	allowed = { original_tag = SOV }
+	enable = {
+		NOT = { has_war_with = UKR }
+		SOV = {
+			NOT = {
+				has_government = democratic
+			}
+		}
+		UKR = {
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				AND = {
+					has_country_flag = UKR_vitrenko_power
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "UKR" value = 100 }
+	ai_strategy = { type = support id = "UKR" value = 200 }
+	ai_strategy = { type = send_volunteers_desire id = "UKR" value = 1000 }
+}
+SOV_help_commi_ukr = {
+	allowed = { original_tag = SOV }
+	enable = {
+		NOT = { has_war_with = UKR }
+		SOV = { emerging_communist_state_are_in_power = yes }
+		UKR = {
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_social_are_in_power = yes
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "UKR" value = 100 }
+	ai_strategy = { type = support id = "UKR" value = 200 }
+	ai_strategy = { type = send_volunteers_desire id = "UKR" value = 1000 }
 }
 SOV_influence_DPR = {
 	allowed = { original_tag = SOV }
@@ -283,12 +316,110 @@ SOV_defeat_the_blockade = {
 		subtract_fronts_from_need = no
 	}
 }
+###JIRIK POLICY
+SOV_help_iraq_nationalist_war_jirik = {
+	allowed = { original_tag = SOV }
+	enable = {
+		OR = {
+			nationalist_monarchists_are_in_power = yes
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		country_exists = IRQ
+		IRQ = { 
+			has_idea = SOV_IRQ_base
+		}
+	}
+	abort_when_not_enabled = yes
 
-### Hippie :)
-# Belarus
+	ai_strategy = { type = send_volunteers_desire id = "IRQ" value = 500 }
+}
+SOV_help_lybia_gaddafi_war_jirik = {
+	allowed = { original_tag = SOV }
+	enable = {
+		OR = {
+			nationalist_monarchists_are_in_power = yes
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		country_exists = LBA
+		LBA = { 
+			has_idea = SOV_LBA_base
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "LBA" value = 500 }
+}
+SOV_help_armenia_nationalist_war_with_aze_or_tur_jirik = {
+	allowed = { original_tag = SOV }
+	enable = {
+		OR = {
+			nationalist_monarchists_are_in_power = yes
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		country_exists = ARM
+		ARM = { 
+			OR = {
+				has_war_with = AZE
+				has_war_with = TUR
+			}
+			NOT = { has_war_with = SOV }
+			has_government = nationalist
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "ARM" value = 150 }
+	ai_strategy = { type = support id = "ARM" value = 100 }
+	ai_strategy = { type = send_volunteers_desire id = "ARM" value = 300 }
+}
+SOV_help_greece_nationalist_war_with_tur_jirik = {
+	allowed = { original_tag = SOV }
+	enable = {
+		OR = {
+			nationalist_monarchists_are_in_power = yes
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		country_exists = GRE
+		GRE = { 
+			has_war_with = TUR
+			NOT = { has_war_with = SOV }
+			has_government = nationalist
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "GRE" value = 150 }
+	ai_strategy = { type = support id = "GRE" value = 100 }
+	ai_strategy = { type = send_volunteers_desire id = "GRE" value = 200 }
+}
+SOV_help_serbia_not_liberals_war_with_jirik = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = no
+		OR = {
+			nationalist_monarchists_are_in_power = yes
+			nationalist_right_wing_populists_are_in_power = yes
+		}
+		country_exists = SER
+		SER = { 
+			has_war = yes
+			NOT = { has_war_with = SOV }
+			NOT = { has_government = democratic }
+			NOT = { has_government = neutrality }
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "SER" value = 150 }
+	ai_strategy = { type = support id = "SER" value = 100 }
+	ai_strategy = { type = send_volunteers_desire id = "SER" value = 200 }
+}
+###DONT ATTACK
+#Belarus
 SOV_cancel_war_BLR = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		BLR = {
 			country_exists = BLR
@@ -316,6 +447,7 @@ SOV_cancel_war_BLR = {
 SOV_cancel_war_UKR = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		UKR = {
 			country_exists = UKR
@@ -338,10 +470,11 @@ SOV_cancel_war_UKR = {
 		value = -4000
 	}
 }
-# Estonia
+#Estonia
 SOV_cancel_war_EST = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		EST = {
 			country_exists = EST
@@ -369,6 +502,7 @@ SOV_cancel_war_EST = {
 SOV_cancel_war_LAT = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		LAT = {
 			country_exists = LAT
@@ -392,11 +526,11 @@ SOV_cancel_war_LAT = {
 		value = -4000
 	}
 }
-
 #Litva
 SOV_cancel_war_LIT = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		LIT = {
 			country_exists = LIT
@@ -420,11 +554,150 @@ SOV_cancel_war_LIT = {
 		value = -4000
 	}
 }
+#Poland
+SOV_cancel_war_POL = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		POL = {
+			country_exists = POL
+			OR = {
+				strength_ratio = {
+					tag = POL
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+				is_in_faction_with = GER
+				is_in_faction_with = USA
+			}
+		}
+	}
+	abort_when_not_enabled = yes
 
+	ai_strategy = {
+		type = declare_war
+		id = POL
+		value = -4000
+	}
+}
+#Turkey
+SOV_cancel_war_TUR = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		TUR = {
+			country_exists = TUR
+			OR = {
+				strength_ratio = {
+					tag = TUR
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+				is_in_faction_with = GER
+				is_in_faction_with = USA
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = TUR
+		value = -4000
+	}
+}
+#Germany
+SOV_cancel_war_GER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		GER = {
+			country_exists = GER
+			OR = {
+				strength_ratio = {
+					tag = GER
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+				is_in_faction_with = USA
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = GER
+		value = -4000
+	}
+}
+#England
+SOV_cancel_war_ENG = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		ENG = {
+			country_exists = ENG
+			OR = {
+				strength_ratio = {
+					tag = ENG
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+				is_in_faction_with = USA
+				is_in_faction_with = GER
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = ENG
+		value = -4000
+	}
+}
+#France
+SOV_cancel_war_FRA = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		FRA = {
+			country_exists = FRA
+			OR = {
+				strength_ratio = {
+					tag = FRA
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+				is_in_faction_with = USA
+				is_in_faction_with = GER
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = FRA
+		value = -4000
+	}
+}
 #Azerbaijan
 SOV_cancel_war_AZE = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		AZE = {
 			country_exists = AZE
@@ -445,11 +718,40 @@ SOV_cancel_war_AZE = {
 		value = -4000
 	}
 }
+#Japan
+SOV_cancel_war_JAP = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		JAP = {
+			country_exists = JAP
+			OR = {
+				strength_ratio = {
+					tag = JAP
+					ratio > 1
+				}
+				is_guaranteed_by = USA
+				has_idea = NATO_member
+				has_idea = EU_member
+				is_in_faction_with = GER
+				is_in_faction_with = USA
+			}
+		}
+	}
+	abort_when_not_enabled = yes
 
+	ai_strategy = {
+		type = declare_war
+		id = JAP
+		value = -4000
+	}
+}
 #Kazakhstan
 SOV_cancel_war_KAZ = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		KAZ = {
 			country_exists = KAZ
@@ -470,12 +772,12 @@ SOV_cancel_war_KAZ = {
 		value = -4000
 	}
 }
-
 #Uzbekistan
 SOV_cancel_war_UZB = {
 	allowed = { original_tag = SOV }
 	enable = {
-		date < 2012.1.1
+		has_war = yes
+		date < 2016.1.1
 		UZB = {
 			country_exists = UZB
 			OR = {
@@ -495,12 +797,12 @@ SOV_cancel_war_UZB = {
 		value = -4000
 	}
 }
-
 #Turkmenistan
 SOV_cancel_war_TRK = {
 	allowed = { original_tag = SOV }
 	enable = {
-		date < 2012.1.1
+		has_war = yes
+		date < 2016.1.1
 		TRK = {
 			country_exists = TRK
 			OR = {
@@ -520,12 +822,12 @@ SOV_cancel_war_TRK = {
 		value = -4000
 	}
 }
-
 #Tajikistan
 SOV_cancel_war_TAJ = {
 	allowed = { original_tag = SOV }
 	enable = {
-		date < 2012.1.1
+		has_war = yes
+		date < 2016.1.1
 		TAJ = {
 			country_exists = TAJ
 			OR = {
@@ -545,12 +847,12 @@ SOV_cancel_war_TAJ = {
 		value = -4000
 	}
 }
-
 #Kyrgyzstan
 SOV_cancel_war_KYR = {
 	allowed = { original_tag = SOV }
 	enable = {
-		date < 2012.1.1
+		has_war = yes
+		date < 2016.1.1
 		KYR = {
 			country_exists = KYR
 			OR = {
@@ -570,12 +872,12 @@ SOV_cancel_war_KYR = {
 		value = -4000
 	}
 }
-
 #North Korea
 SOV_cancel_war_NKO = {
 	allowed = { original_tag = SOV }
 	enable = {
-		date < 2012.1.1
+		has_war = yes
+		date < 2016.1.1
 		NKO = {
 			country_exists = NKO
 			OR = {
@@ -595,11 +897,11 @@ SOV_cancel_war_NKO = {
 		value = -4000
 	}
 }
-
 #Malta
 SOV_cancel_war_MLT = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		MLT = {
 			country_exists = MLT
@@ -627,6 +929,7 @@ SOV_cancel_war_MLT = {
 SOV_cancel_war_BUL = {
 	allowed = { original_tag = SOV }
 	enable = {
+		has_war = yes
 		date < 2016.1.1
 		BUL = {
 			country_exists = BUL
@@ -647,6 +950,149 @@ SOV_cancel_war_BUL = {
 	ai_strategy = {
 		type = declare_war
 		id = BUL
+		value = -4000
+	}
+}
+#Romania
+SOV_cancel_war_ROM = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		ROM = {
+			country_exists = ROM
+			OR = {
+				strength_ratio = {
+					tag = ROM
+					ratio > 1
+				}
+				has_idea = NATO_member
+				has_idea = EU_member
+				is_in_faction_with = GER
+				is_in_faction_with = USA
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = ROM
+		value = -4000
+	}
+}
+#Israel War cancel
+SOV_cancel_war_ISR = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		ISR = {
+			OR = {
+				NOT = {
+					is_neighbor_of = SOV
+				}
+				NOT = {
+					SYR = {
+						is_subject_of = SOV
+					}
+				}
+			}
+			country_exists = ISR
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = ISR
+		value = -4000
+	}
+}
+#Egypt War cancel
+SOV_cancel_war_EGY = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		EGY = {
+			OR = {
+				NOT = {
+					is_neighbor_of = SOV
+				}
+				NOT = {
+					ISR = {
+						is_subject_of = SOV
+					}
+				}
+			}
+			country_exists = EGY
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = EGY
+		value = -4000
+	}
+}
+#Yugoslavia Dept War Cancel
+SOV_cancel_war_SER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		SER = {
+			NOT = {
+				is_neighbor_of = SOV
+			}
+			country_exists = SER
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = SER
+		value = -4000
+	}
+}
+#Greece Dept War Cancel
+SOV_cancel_war_GRE = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		GRE = {
+			NOT = {
+				is_neighbor_of = SOV
+			}
+			country_exists = GRE
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = declare_war
+		id = GRE
+		value = -4000
+	}
+}
+#USA
+SOV_cancel_war_USA = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_war = yes
+		date < 2016.1.1
+		USA = {
+			country_exists = USA
+			strength_ratio = {
+				tag = USA
+				ratio > 1
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = {
+		type = declare_war
+		id = USA
 		value = -4000
 	}
 }
@@ -1058,4 +1504,116 @@ SOV_RSK_WAR = {
 	abort_when_not_enabled = yes
 	ai_strategy = { type = send_volunteers_desire id = "RSK" value = 1000 }
 	ai_strategy = { type = send_lend_lease_desire id = "RSK" value = 400 }
+}
+
+SOV_do_not_declare_war_if_at_war_with_nato_eu = {
+	allowed = { original_tag = SOV }
+	enable = {
+		any_enemy_country = {
+			OR = {
+				has_idea = NATO_member
+				has_idea = EU_member
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = "FIN" value = -200 }
+	ai_strategy = { type = declare_war id = "NOR" value = -200 }
+	ai_strategy = { type = declare_war id = "SWE" value = -200 }
+	ai_strategy = { type = declare_war id = "EST" value = -200 }
+	ai_strategy = { type = declare_war id = "LIT" value = -200 }
+	ai_strategy = { type = declare_war id = "LAT" value = -200 }
+	ai_strategy = { type = declare_war id = "BLR" value = -200 }
+	ai_strategy = { type = declare_war id = "POL" value = -200 }
+	ai_strategy = { type = declare_war id = "ROM" value = -200 }
+	ai_strategy = { type = declare_war id = "UKR" value = -200 }
+	ai_strategy = { type = declare_war id = "GEO" value = -200 }
+	ai_strategy = { type = declare_war id = "SOO" value = -200 }
+	ai_strategy = { type = declare_war id = "ABK" value = -200 }
+	ai_strategy = { type = declare_war id = "ARM" value = -200 }
+	ai_strategy = { type = declare_war id = "AZE" value = -200 }
+	ai_strategy = { type = declare_war id = "TUR" value = -200 }
+	ai_strategy = { type = declare_war id = "GRE" value = -200 }
+	ai_strategy = { type = declare_war id = "CRO" value = -200 }
+	ai_strategy = { type = declare_war id = "GER" value = -200 }
+	ai_strategy = { type = declare_war id = "SLV" value = -200 }
+	ai_strategy = { type = declare_war id = "MLV" value = -200 }
+	ai_strategy = { type = declare_war id = "CYP" value = -200 }
+	ai_strategy = { type = declare_war id = "BOS" value = -200 }
+	ai_strategy = { type = declare_war id = "SER" value = -200 }
+	ai_strategy = { type = declare_war id = "KOS" value = -200 }
+	ai_strategy = { type = declare_war id = "SWI" value = -200 }
+	ai_strategy = { type = declare_war id = "FRA" value = -200 }
+	ai_strategy = { type = declare_war id = "ENG" value = -200 }
+	ai_strategy = { type = declare_war id = "ITA" value = -200 }
+	ai_strategy = { type = declare_war id = "SPR" value = -200 }
+	ai_strategy = { type = declare_war id = "CHI" value = -200 }
+	ai_strategy = { type = declare_war id = "PER" value = -200 }
+}
+#CIVIL WAR IN AMERICA - RUSSIA
+SOV_alaska_help = {
+	allowed = { original_tag = SOV }
+	enable = {
+		original_tag = SOV
+		country_exists = ASK
+		SOV = {
+			has_war = no
+			OR = {
+				has_government = nationalist
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = send_volunteers_desire id = "ASK" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "ASK" value = 400 }
+}
+SOV_texas_help = {
+	allowed = { original_tag = SOV }
+	enable = {
+		original_tag = SOV
+		country_exists = TEX
+		SOV = {
+			has_war = no
+			OR = {
+				has_government = nationalist
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = send_volunteers_desire id = "TEX" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "TEX" value = 400 }
+}
+SOV_free_states_america_help = {
+	allowed = { original_tag = SOV }
+	enable = {
+		original_tag = SOV
+		country_exists = USB
+		SOV = {
+			has_war = no
+			has_government = democratic
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = send_volunteers_desire id = "USB" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "USB" value = 400 }
+}
+SOV_confederate_states_america_help = {
+	allowed = { original_tag = SOV }
+	enable = {
+		original_tag = SOV
+		country_exists = CSA
+		SOV = {
+			has_war = no
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = send_volunteers_desire id = "CSA" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "CSA" value = 400 }
 }

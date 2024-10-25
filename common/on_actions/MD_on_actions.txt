@@ -262,12 +262,8 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					ROOT = {
-						original_tag = ARM
-					}
-					FROM = {
-						original_tag = GEO
-					}
+					ROOT = { original_tag = ARM }
+					FROM = { original_tag = GEO }
 				}
 				ROOT = {
 					add_ideas = ARM_GEO_religion_problem
@@ -276,12 +272,8 @@ on_actions = {
 			}
 			if = {
 				limit = {
-					ROOT = {
-						original_tag = ARM
-					}
-					FROM = {
-						original_tag = AZE
-					}
+					ROOT = { original_tag = ARM }
+					FROM = { original_tag = AZE }
 				}
 				ROOT = {
 					add_ideas = ARM_AZE_small_people
@@ -289,14 +281,9 @@ on_actions = {
 			}
 			if = {
 				limit = {
-					ROOT = {
-						original_tag = CAN
-					}
-					FROM = {
-						original_tag = QUE
-					}
+					ROOT = { original_tag = CAN }
+					FROM = { original_tag = QUE }
 				}
-
 				# return cores to CAN
 				760 = { add_core_of = CAN }
 				761 = { add_core_of = CAN }
@@ -333,6 +320,34 @@ on_actions = {
 					}
 				}
 			}
+
+			EDU_learn_to_annex_your_neighbours = yes # LITERACY RATE STUFF
+
+			# Grab your Nuclear Reactor Enrichment Facilities
+			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
+
+			# Cleanup Auto-Influence Arrays
+			if = { limit = { ROOT = { is_ai = no } }
+				ROOT = {
+					for_each_loop = {
+						array = auto_influence_array
+						index = i
+						value = v
+
+						# Clears Auto Influencer Who No Longer Exists
+						if = { limit = { var:auto_influence_array^i = { exists = no } }
+							log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
+							var:auto_influence_array^i = {
+								ROOT = {
+									remove_auto_influencer_request = yes
+									update_auto_influence_array = yes
+									update_dirty_influence_var = yes
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -349,6 +364,55 @@ on_actions = {
 				}
 				ROOT = {
 					add_ideas = ARM_turkish_peasants
+				}
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = USA }
+					FROM = {
+						original_tag = IRQ
+						is_subject_of = USA
+					}
+				}
+				set_global_flag = success_of_operation_iraqi_freedom
+			}
+			if = {
+				limit = {
+					IRQ = { has_completed_focus = IRQ_king_of_the_animal_kingdom }
+					ROOT = { original_tag = SAU }
+				}
+				SAU = {
+					release = ARA
+					if = {
+						limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
+						set_autonomy = {
+							target = ARA
+							autonomy_state = autonomy_puppet_state_colored
+						}
+					}
+					else = {
+						set_autonomy = {
+							target = ARA
+							autonomy_state = autonomy_puppet_state
+						}
+					}
+				}
+
+
+				# Achievements
+				if = {
+					limit = {
+						ROOT = { original_tag = LBA }
+						FROM = { original_tag = EGY }
+					}
+					ROOT = { set_country_flag = ribbon_libya_victory_over_egypt }
+				}
+				if = {
+					limit = {
+						ROOT = { original_tag = LBA }
+						FROM = { original_tag = CHA }
+					}
+					ROOT = { set_country_flag = ribbon_libya_victory_over_chad }
 				}
 			}
 		}
@@ -381,9 +445,10 @@ on_actions = {
 				set_power_ranking_ideas_for_every_country = yes
 
 				# Trigger Events for this year
-				if = {
-					limit = { check_variable = { global.month = 1 } }
-					log = "[GetDateText]: [THIS.GetName]: Run the On Yearly Monthly Check"
+				if = { limit = { check_variable = { global.month = 1 } }
+					if = { limit = { is_debug = yes }
+						log = "[GetDateText]: [THIS.GetName]: Run the On Yearly Monthly Check"
+					}
 
 					every_country = {
 						if = {
@@ -562,7 +627,7 @@ on_actions = {
 							}
 						}
 						set_temp_variable = { population_refugees = population_total }
-						multiply_temp_variable = { population_refugees = 0.01 }
+						multiply_temp_variable = { population_refugees = 0.025 }
 						add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
 					}
 
@@ -600,7 +665,9 @@ on_actions = {
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
-				log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+				}
 			}
 			productivity_growth_effect = yes
 

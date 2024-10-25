@@ -846,6 +846,8 @@ scripted_gui = {
 					has_country_flag = counterterror_open
 				}
 			}
+
+			# Counter Terror
 			ct_region_asia_button_visible = {
 				OR = {
 					is_ai = yes
@@ -925,10 +927,6 @@ scripted_gui = {
 					NOT = { has_country_flag = funding_derad }
 				}
 				has_idea = youth_radicalization
-				NOT = {
-					has_idea = paralyzing_corruption
-					has_idea = crippling_corruption
-				}
 
 				has_political_power > 25
 			}
@@ -973,11 +971,6 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = conduct_raid_tt
 					NOT = { has_country_flag = conducting_raid }
-				}
-				OR = {
-					has_idea = police_03
-					has_idea = police_04
-					has_idea = police_05
 				}
 				custom_trigger_tooltip = {
 					tooltip = low_threat_higher_tt
@@ -1433,11 +1426,7 @@ scripted_gui = {
 						modifier = recognises_us
 					}
 					news_event = { id = recognition.2 }
-				}
-
-				add_to_variable = {
-					var = var:open_state.Granted_Recognition
-					value = 1
+					add_to_variable = { Granted_Recognition = 1 }
 				}
 				update_international_system_gui = yes
 			}
@@ -1758,7 +1747,7 @@ scripted_gui = {
 				add_manpower = 150
 				meta_effect = {
 					text = {
-						clr_country_flag = military_advisors_@FROM
+						clr_country_flag = military_advisors_[ctnation]
 					}
 					ctnation = "[?var:ct_state_selected.GetTag]"
 				}
@@ -2362,15 +2351,40 @@ scripted_gui = {
 					}
 				}
 
+				if = {
+					limit = {
+						NOT = { tag = USA }
+						has_country_flag = blackwater_sel
+					}
+					USA = { has_opinion = { target = ROOT value > 0 } }
+				}
+				else_if = {
+					limit = {
+						NOT = { tag = ENG }
+						has_country_flag = aegis_sel
+					}
+					ENG = { has_opinion = { target = ROOT value > 0 } }
+				}
+				else_if = {
+					limit = {
+						NOT = { tag = USA }
+						has_country_flag = constellis_sel
+					}
+					USA = { has_opinion = { target = ROOT value > 0 } }
+				}
+				else_if = {
+					limit = {
+						NOT = { tag = SOV }
+						has_country_flag = wagner_sel
+					}
+					SOV = { has_opinion = { target = ROOT value > 0 } }
+				}
+
 				meta_trigger = {
 					text = {
 						custom_trigger_tooltip = {
 							tooltip = pmc_upgrade_tt
 							check_variable = { global.merc_upgrade^[compcheck] > [upchk] }
-						}
-						if = {
-							limit = { NOT = { tag = USA } }
-							USA = { has_opinion = { target = ROOT value > 0 } }
 						}
 						set_temp_variable = { sum = global.merc_deploy_cost^1 }
 						add_to_temp_variable = { sum = global.merc_deployed^[compcheck] }
@@ -2707,13 +2721,6 @@ scripted_gui = {
 
 		}
 
-		visible = {
-			OR = {
-				is_ai = yes
-				has_country_flag = pmc_menu_open
-			}
-		}
-
 		triggers = {
 			name_of_pmc_companies_button_click_enabled = {
 				if = { limit = { check_variable = { v = 001 } }
@@ -2721,17 +2728,22 @@ scripted_gui = {
 						USA = { has_opinion = { target = ROOT value > 0 } }
 						tag = USA
 					}
+					NOT = { has_global_flag = constellis_pmc_formed }
 				}
-				if = { limit = { check_variable = { v = 002 } }
+				else_if = { limit = { check_variable = { v = 002 } }
 					OR = {
 						ENG = { has_opinion = { target = ROOT value > 0 } }
 						tag = ENG
 					}
 				}
-				if = { limit = { check_variable = { v = 003 } }
-					always = yes
+				else_if = { limit = { check_variable = { v = 003 } }
+					OR = {
+						USA = { has_opinion = { target = ROOT value > 0 } }
+						tag = USA
+					}
+					has_global_flag = constellis_pmc_formed
 				}
-				if = { limit = { check_variable = { v = 004 } }
+				else_if = { limit = { check_variable = { v = 004 } }
 					SOV = {
 						has_completed_focus = SOV_slavic_corps
 						NOT = { has_country_flag = SOV_wagner_rebeliion_flag }
@@ -2745,8 +2757,8 @@ scripted_gui = {
 						NOT = { SOV = { has_country_flag = banned_pmc_operations } }
 					}
 				}
-				if = { limit = { check_variable = { v = 005 } }
-					NOT = {	has_war_with = USA }
+				else_if = { limit = { check_variable = { v = 005 } }
+					NOT = { has_war_with = USA }
 					OR = {
 						USA = { has_opinion = { target = ROOT value > 10 } }
 						tag = USA
@@ -2756,175 +2768,251 @@ scripted_gui = {
 						USA = { NOT = { has_country_flag = mpri_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 006 } }
-					country_exists = TUR
-					NOT = { tag = TUR }
-					NOT = {	has_war_with = TUR }
-					TUR = { has_opinion = { target = ROOT value > 10 } }
+				else_if = { limit = { check_variable = { v = 006 } }
+					if = { limit = { NOT = { tag = TUR } }
+						country_exists = TUR
+						NOT = { has_war_with = TUR }
+						TUR = { has_opinion = { target = ROOT value > 10 } }
+					}
+					else = {
+						original_tag = TUR
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_sadat_TT
 						TUR = { NOT = { has_country_flag = sadat_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 007 } }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 10 } }
+				else_if = { limit = { check_variable = { v = 007 } }
+					if = { limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = {	has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 10 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_rsb_TT
 						SOV = { NOT = { has_country_flag = rsb_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 008 } }
-					NOT = { tag = ENG }
-					country_exists = ENG
-					NOT = {	has_war_with = ENG }
-					ENG = { has_opinion = { target = ROOT value > 10 } }
+				else_if = { limit = { check_variable = { v = 008 } }
+					if = { limit = { NOT = { tag = ENG } }
+						country_exists = ENG
+						NOT = { has_war_with = ENG }
+						ENG = { has_opinion = { target = ROOT value > 10 } }
+					}
+					else = {
+						original_tag = ENG
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_sadline_TT
 						ENG = { NOT = { has_country_flag = sadline_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 009 } }
-					NOT = { tag = USA }
-					country_exists = USA
-					NOT = {	has_war_with = USA }
-					USA = { has_opinion = { target = ROOT value > 10 } }
+				else_if = { limit = { check_variable = { v = 009 } }
+					if = { limit = { NOT = { tag = USA } }
+						country_exists = USA
+						NOT = { has_war_with = USA }
+						USA = { has_opinion = { target = ROOT value > 10 } }
+					}
+					else = {
+						original_tag = USA
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_kbr_TT
 						USA = { NOT = { has_country_flag = kbr_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 010 } }
-					NOT = { tag = ISR }
-					country_exists = ISR
-					NOT = {	has_war_with = ISR }
-					ISR = { has_opinion = { target = ROOT value > 20 } }
+				else_if = { limit = { check_variable = { v = 010 } }
+					if = { limit = { NOT = { tag = ISR } }
+						country_exists = ISR
+						NOT = { has_war_with = ISR }
+						ISR = { has_opinion = { target = ROOT value > 10 } }
+					}
+					else = {
+						original_tag = ISR
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_nirtal_TT
 						ISR = { NOT = { has_country_flag = nirtal_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 011 } }
-					NOT = { tag = USA }
-					country_exists = USA
-					NOT = {	has_war_with = USA }
+				else_if = { limit = { check_variable = { v = 011 } }
+					if = { limit = { NOT = { tag = USA tag = ENG } }
+						country_exists = USA
+						country_exists = ENG
+						NOT = { has_war_with = USA }
+						NOT = { has_war_with = ENG }
+						USA = { has_opinion = { target = ROOT value > 10 } }
+						ENG = { has_opinion = { target = ROOT value > 10 } }
+					}
+					else = {
+						if = { limit = { original_tag = USA }
+							country_exists = ENG
+							NOT = { has_war_with = ENG }
+							ENG = { has_opinion = { target = ROOT value > 10 } }
+						}
+						else = {
+							country_exists = USA
+							NOT = { has_war_with = USA }
+							USA = { has_opinion = { target = ROOT value > 10 } }
+						}
+					}
 					has_war = yes
-					USA = { has_opinion = { target = ROOT value > 10 } }
-					ENG = { has_opinion = { target = ROOT value > 10 } }
 					custom_trigger_tooltip = {
 						tooltip = pmc_halo_TT
 						USA = { NOT = { has_country_flag = halo_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 012 } }
-					NOT = { tag = FRA }
-					country_exists = FRA
-					NOT = {	has_war_with = FRA }
+				else_if = { limit = { check_variable = { v = 012 } }
+					if = { limit = { NOT = { tag = FRA } }
+						country_exists = FRA
+						NOT = { has_war_with = FRA }
+						FRA = { has_opinion = { target = ROOT value > 14 } }
+					}
+					else = {
+						original_tag = FRA
+					}
 					has_war = yes
-					FRA = { has_opinion = { target = ROOT value > 15 } }
 					custom_trigger_tooltip = {
 						tooltip = pmc_dci_TT
 						FRA = { NOT = { has_country_flag = dci_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 013 } }
-					NOT = { tag = CAN }
-					country_exists = CAN
-					NOT = {	has_war_with = CAN }
-					CAN = { has_opinion = { target = ROOT value > 15 } }
+				else_if = { limit = { check_variable = { v = 013 } }
+					if = { limit = { NOT = { tag = CAN } }
+						country_exists = CAN
+						NOT = { has_war_with = CAN }
+						CAN = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = CAN
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_garda_TT
 						CAN = { NOT = { has_country_flag = garda_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 014 } }
-					NOT = { tag = POL }
-					country_exists = POL
-					NOT = {	has_war_with = POL }
-					POL = { has_opinion = { target = ROOT value > 10 } }
+				else_if = { limit = { check_variable = { v = 014 } }
+					if = { limit = { NOT = { tag = POL } }
+						country_exists = POL
+						NOT = { has_war_with = POL }
+						POL = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = POL
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_eu_TT
 						POL = { NOT = { has_country_flag = eu_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 015 } }
-					country_exists = GER
-					NOT = { tag = GER }
-					NOT = {	has_war_with = GER }
-					GER = { has_opinion = { target = ROOT value > 10 } }
+				else_if = { limit = { check_variable = { v = 015 } }
+					if = { limit = { NOT = { tag = GER } }
+						country_exists = GER
+						NOT = { has_war_with = GER }
+						GER = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = GER
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_itt_TT
 						GER = { NOT = { has_country_flag = itt_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 016 } }
+				else_if = { limit = { check_variable = { v = 016 } }
 					date > 2007.1.1
-					country_exists = GER
-					NOT = {	has_war_with = GER }
-					GER = { has_opinion = { target = ROOT value > 10 } }
+					if = { limit = { NOT = { tag = GER } }
+						country_exists = GER
+						NOT = { has_war_with = GER }
+						GER = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = GER
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_asgard_TT
 						GER = { NOT = { has_country_flag = asgrad_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 017 } }
+				else_if = { limit = { check_variable = { v = 017 } }
 					EGY = { has_country_flag = sinai_create }
-					NOT = { tag = EGY }
-					country_exists = EGY
-					NOT = {	has_war_with = EGY }
-					EGY = { has_opinion = { target = ROOT value > 15 } }
+					if = { limit = { NOT = { tag = EGY } }
+						country_exists = EGY
+						NOT = { has_war_with = EGY }
+						EGY = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = EGY
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_sinai_TT
 						EGY = { NOT = { has_country_flag = sinai_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 018 } }
+				else_if = { limit = { check_variable = { v = 018 } }
 					BLR = { has_country_flag = gard_create }
-					NOT = { tag = BLR }
-					country_exists = BLR
-					NOT = {	has_war_with = BLR }
-					BLR = { has_opinion = { target = ROOT value > 15 } }
+					if = { limit = { NOT = { tag = BLR } }
+						country_exists = BLR
+						NOT = { has_war_with = BLR }
+						BLR = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = BLR
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_gard_TT
 						BLR = { NOT = { has_country_flag = gard_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 019 } }
+				else_if = { limit = { check_variable = { v = 019 } }
 					SOV = { has_country_flag = patriot_create }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 20 } }
+					if = { limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = { has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_patriot_TT
 						SOV = { NOT = { has_country_flag = patriot_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 020 } }
+				else_if = { limit = { check_variable = { v = 020 } }
 					CHI = { has_country_flag = dewe_create }
-					NOT = { tag = CHI }
-					country_exists = CHI
-					NOT = {	has_war_with = CHI }
-					CHI = { has_opinion = { target = ROOT value > 15 } }
+					if = { limit = { NOT = { tag = CHI } }
+						country_exists = CHI
+						NOT = { has_war_with = CHI }
+						CHI = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = CHI
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_dewe_TT
 						CHI = { NOT = { has_country_flag = dewe_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 021 } }
+				else_if = { limit = { check_variable = { v = 021 } }
 					CHI = { has_country_flag = over_create }
-					NOT = { tag = CHI }
-					country_exists = CHI
-					NOT = {	has_war_with = CHI }
-					CHI = { has_opinion = { target = ROOT value > 15 } }
+					if = { limit = { NOT = { tag = CHI } }
+						country_exists = CHI
+						NOT = { has_war_with = CHI }
+						CHI = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = CHI
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_over_TT
 						CHI = { NOT = { has_country_flag = over_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 022 } }
+				else_if = { limit = { check_variable = { v = 022 } }
 					CHI = { has_country_flag = front_create }
 					NOT = { tag = CHI }
 					country_exists = CHI
@@ -2935,95 +3023,129 @@ scripted_gui = {
 						CHI = { NOT = { has_country_flag = front_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 023 } }
+				else_if = { limit = { check_variable = { v = 023 } }
 					SOV = { has_country_flag = redut_create }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 20 } }
+					if = { limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = { has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_redut_TT
 						SOV = { NOT = { has_country_flag = redut_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 024 } }
+				else_if = { limit = { check_variable = { v = 024 } }
 					SOV = { has_country_flag = gazprom_create }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 20 } }
+					if = { limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = { has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_gazprom_TT
 						SOV = { NOT = { has_country_flag = gazprom_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 025 } }
+				else_if = { limit = { check_variable = { v = 025 } }
 					EST = { has_country_flag = iron_create }
-					NOT = { tag = EST }
-					country_exists = EST
-					NOT = {	has_war_with = EST }
-					EST = { has_opinion = { target = ROOT value > 20 } }
+					if = { limit = { NOT = { tag = EST } }
+						country_exists = EST
+						NOT = { has_war_with = EST }
+						EST = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = EST
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_iron_TT
 						EST = { NOT = { has_country_flag = iron_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 026 } }
+				else_if = { limit = { check_variable = { v = 026 } }
 					PMR = { has_country_flag = sheriff_create }
-					NOT = { tag = PMR }
-					country_exists = PMR
-					NOT = {	has_war_with = PMR }
-					PMR = { has_opinion = { target = ROOT value > 10 } }
+					if = { limit = { NOT = { tag = PMR } }
+						country_exists = PMR
+						NOT = { has_war_with = PMR }
+						PMR = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = PMR
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_sheriff_TT
 						PMR = { NOT = { has_country_flag = sheriff_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 027 } }
+				else_if = { limit = { check_variable = { v = 027 } }
 					SOV = { has_country_flag = lukoil_create }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 20 } }
+					if = {
+						limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = { has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_lukoil_TT
 						SOV = { NOT = { has_country_flag = lukoil_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 028 } }
+				else_if = { limit = { check_variable = { v = 028 } }
 					SOV = { has_country_flag = rosneft_create }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 20 } }
+					if = {
+						limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = {	has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_rosneft_TT
 						SOV = { NOT = { has_country_flag = rosneft_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 029 } }
+				else_if = { limit = { check_variable = { v = 029 } }
 					SOV = { has_country_flag = sberbank_create }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 20 } }
+					if = { limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = {	has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_sberbank_TT
 						SOV = { NOT = { has_country_flag = sberbank_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 030 } }
+				else_if = { limit = { check_variable = { v = 030 } }
 					SOV = { has_country_flag = vtb_create }
-					NOT = { tag = SOV }
-					country_exists = SOV
-					NOT = {	has_war_with = SOV }
-					SOV = { has_opinion = { target = ROOT value > 20 } }
+					if = { limit = { NOT = { tag = SOV } }
+						country_exists = SOV
+						NOT = { has_war_with = SOV }
+						SOV = { has_opinion = { target = ROOT value > 20 } }
+					}
+					else = {
+						original_tag = SOV
+					}
 					custom_trigger_tooltip = {
 						tooltip = pmc_vtb_TT
 						SOV = { NOT = { has_country_flag = vtb_yes } }
 					}
 				}
-				if = { limit = { check_variable = { v = 031 } }
+				else_if = { limit = { check_variable = { v = 031 } }
 					check_variable = { global.merc_upgrade^4 > -1 }
 					set_temp_variable = { sum = global.merc_deploy_cost^0 }
 					add_to_temp_variable = { sum = global.merc_deployed^4 }
@@ -3195,8 +3317,11 @@ scripted_gui = {
 					}
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
-					hidden_effect = {
-						ENG = { country_event = pmc_events.3 }
+					if = {
+						limit = { NOT = { original_tag = ENG } }
+						hidden_effect = {
+							ENG = { country_event = pmc_events.3 }
+						}
 					}
 					ENG = { set_country_flag = sadline_yes }
 					activate_mission = pmc_sadline
@@ -3226,8 +3351,11 @@ scripted_gui = {
 					}
 					set_temp_variable = { treasury_change = -3.5 }
 					modify_treasury_effect = yes
-					hidden_effect = {
-						USA = { country_event = pmc_events.4 }
+					if = {
+						limit = { NOT = { original_tag = USA } }
+						hidden_effect = {
+							USA = { country_event = pmc_events.4 }
+						}
 					}
 					USA = { set_country_flag = kbr_yes }
 					activate_mission = pmc_kbr
@@ -3362,8 +3490,11 @@ scripted_gui = {
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					CAN = { set_country_flag = garda_yes }
-					hidden_effect = {
-						CAN = { country_event = pmc_events.3 }
+					if = {
+						limit = { NOT = { original_tag = CAN } }
+						hidden_effect = {
+							CAN = { country_event = pmc_events.3 }
+						}
 					}
 					activate_mission = pmc_garda
 				}
@@ -3504,8 +3635,11 @@ scripted_gui = {
 					}
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
-					hidden_effect = {
-						EGY = { country_event = pmc_events.3 }
+					if = {
+						limit = { NOT = { original_tag = EGY } }
+						hidden_effect = {
+							EGY = { country_event = pmc_events.3 }
+						}
 					}
 					EGY = { set_country_flag = sinai_yes }
 					activate_mission = pmc_sinai
@@ -3541,8 +3675,11 @@ scripted_gui = {
 					}
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
-					hidden_effect = {
-						BLR = { country_event = pmc_events.3 }
+					if = {
+						limit = { NOT = { original_tag = BLR } }
+						hidden_effect = {
+							BLR = { country_event = pmc_events.3 }
+						}
 					}
 					BLR = { set_country_flag = gard_yes }
 					activate_mission = pmc_gard
@@ -3649,8 +3786,11 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						CHI = { country_event = pmc_events.3 }
+					if = {
+						limit = { NOT = { original_tag = CHI } }
+						hidden_effect = {
+							CHI = { country_event = pmc_events.3 }
+						}
 					}
 					CHI = { set_country_flag = over_yes }
 					activate_mission = pmc_over

@@ -1,7 +1,370 @@
+
+Afghanistan_domestic_decisions = {
+	#might turn back on
+	AFG_first_election = {
+		visible = {
+			NOT = { has_country_flag = AFG_Election_over }
+			has_war = no
+			always = no
+		}
+
+		Cost = 50
+
+		icon = GFX_decision_eng_trade_unions_support
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_first_election"
+			AFG = { country_event = AfghanistanPolicalEvents.4 }
+			set_country_flag = AFG_Election_over
+			set_country_flag = {
+				flag = flag_time_afghanistan
+				days = 200
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	#might turn back on
+	AFG_Second_election = {
+		available = {
+			has_country_flag = AFG_Election_over
+			NOT = { has_country_flag = AFG_Election_over2 }
+		}
+
+		visible = {
+			always = no
+			has_country_flag = AFG_Election_over
+			has_war = no
+			NOT = { has_country_flag = AFG_Election_over2 }
+			NOT = { has_country_flag = flag_time_afghanistan }
+		}
+
+		Cost = 150
+
+		icon = GFX_decision_eng_trade_unions_support
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Second_election"
+			AFG = { country_event = AfghanistanPolicalEvents.5 }
+			set_country_flag = AFG_Election_over2
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	#Import Westernism
+	AFG_import_westernism = {
+		icon = GFX_decision_eng_trade_unions_support
+
+		visible = {
+			has_completed_focus = AFG_Atlanticism
+			NOT = {
+				has_country_flag = AFG_import_westernism
+			}
+		}
+
+		days_remove = 10
+		Cost = 15
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_import_westernism"
+			set_country_flag = AFG_import_westernism
+			add_stability = 0.05
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+
+	}
+
+	#Join Nato Operations/Wars
+	AFG_Join_nato_war = {
+		icon = GFX_decision_eng_trade_unions_support
+		available = {
+			USA = {
+				is_faction_leader = yes
+				has_idea = NATO_member
+				is_subject = no
+				NOT = {
+					has_idea = intervention_isolation
+				}
+				NOT = {
+					has_war_with = AFG
+					any_allied_country = {
+						has_war_with = AFG
+					}
+				}
+				any_enemy_country = {
+					NOT = {
+						has_war_with = ROOT
+					}
+				}
+			}
+		}
+		visible = {
+			has_completed_focus = AFG_Atlanticism
+		}
+
+		Cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Join_nato_war"
+			hidden_effect = {
+				if = {
+					limit = {
+						USA = {
+							is_faction_leader = yes
+							has_idea = NATO_member
+							is_subject = no
+							NOT = {
+								has_idea = intervention_isolation
+							}
+							NOT = {
+								has_war_with = AFG
+								any_allied_country = {
+									has_war_with = AFG
+								}
+							}
+						}
+					}
+					USA = {
+						random_enemy_country = {
+							limit = {
+								NOT = {
+									has_war_with = ROOT
+								}
+							}
+							ROOT = {
+								add_to_war = {
+									targeted_alliance = PREV.PREV
+									enemy = PREV
+									hostility_reason = asked_to_join
+								}
+							}
+						}
+					}
+				}
+			}
+			USA = {
+				random_enemy_country = {
+					limit = {
+						NOT = {
+							has_war_with = ROOT
+						}
+					}
+					ROOT = {
+						add_to_war = {
+							targeted_alliance = PREV.PREV
+							enemy = PREV
+							hostility_reason = asked_to_join
+						}
+					}
+				}
+			}
+			custom_effect_tooltip = AFG_joins_Nato_in_any_war
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	#Join Nato Fairly hard to get
+	AFG_Request_nato_membership = {
+		icon = GFX_decision_eng_trade_unions_support
+		available = {
+			has_idea = Major_non_NATO_Ally
+			var:influence_array^0 = {
+				has_idea = NATO_member
+				has_government = democratic
+			}
+			any_enemy_country = {
+				OR = {
+					has_war_with = USA
+				}
+			}
+			USA = {
+				has_idea = NATO_member
+			}
+		}
+		visible = {
+			has_completed_focus = AFG_Atlanticism
+			has_idea = Major_non_NATO_Ally
+			NOT = { has_idea = NATO_member }
+		}
+
+		Cost = 25
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Request_nato_membership"
+			NATO_join_via_event = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+
+	}
+
+	#Invite Admad Wali Massoud
+	AFG_Invite_Nahzat_e_Melli_ye_into_government = {
+		available = {
+			neutrality_neutral_conservatism_are_in_power = yes
+		}
+		visible = {
+			has_completed_focus = AFG_Counite_Masouds_works
+			NOT = {
+				has_country_flag = AFG_Invite_Nahzat_e_Melli_ye_into_government
+				has_country_leader = {
+					name = "Ahmad Wali Massoud"
+					ruling_only = yes
+				}
+			}
+		}
+		Cost = 50
+		icon = GFX_decision_eng_trade_unions_support
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Invite_Nahzat_e_Melli_ye_into_government"
+			set_country_flag = AFG_Invite_Nahzat_e_Melli_ye_into_government
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+
+	}
+
+	AFG_atta_installs_leadership = {
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = AFG_jamiat_e_islami_in_power
+				is_in_array = {
+					array = ruling_party
+					value = 12
+				}
+			}
+			NOT = {
+				has_country_leader = {
+					name = "Atta Muhammad Nur"
+					ruling_only = yes
+				}
+			}
+		}
+		visible = {
+			has_completed_focus = AFG_Second_Man_of_the_State
+			custom_trigger_tooltip = {
+				tooltip = AFG_jamiat_e_islami_in_power
+				is_in_array = {
+					array = ruling_party
+					value = 12
+				}
+			}
+			NOT = {
+				has_country_flag = AFG_ATTA_leadership
+				has_country_leader = {
+					name = "Atta Muhammad Nur"
+					ruling_only = yes
+				}
+			}
+		}
+		Cost = 50
+		icon = GFX_decision_eng_trade_unions_support
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_atta_installs_leadership"
+			set_country_flag = massoud_running
+			set_country_flag = abdullah_running
+			set_country_flag = AFG_ATTA_leadership
+			set_variable = { var = Neutral_Muslim_Brotherhood_leader value = 4  }
+			hidden_effect = { kill_country_leader = yes }
+			create_country_leader = {
+				name = "Atta Muhammad Nur"
+				picture = "Atta_Muhammad_Nur.dds"
+				ideology = Neutral_Muslim_Brotherhood
+				traits = {
+					military_career
+					neutrality_Neutral_Muslim_Brotherhood
+					greedy
+					ruthless
+					afghanistan_king_of_the_north
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+	}
+}
+
+AFG_Northern_alliance_taloqan_siege = {
+	AFG_Taloqan_siege_mission = { #taliban dont manage to take the citiy
+		fire_only_once = no
+		days_re_enable = 5
+		activation = {
+			410 = {
+				has_dynamic_modifier = {
+					modifier = AFG_Taliban_assault_on_Taloqan scope = TAL
+				}
+			}
+		}
+		allowed = {
+			original_tag = AFG
+		}
+		available = {
+			410 = {
+				has_dynamic_modifier = {
+					modifier = AFG_Taliban_assault_on_Taloqan scope = TAL
+				}
+			}
+			TAL = { controls_province = 12314 }
+		}
+		icon = FIN_stop_motti_tactics
+		days_mission_timeout = 248
+		is_good = yes
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Taloqan_siege_mission"
+			AFG = { country_event = { id = Afghanistan.31 } }
+			set_country_flag = AFG_holds_Taloqan
+			effect_tooltip = {
+				newline = yes
+				custom_effect_tooltip = AFG_effect_if_they_accept3TT
+				add_war_support = 0.15
+				custom_effect_tooltip = AFG_enhance_leader_protection_tt
+				newline = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Taloqan_siege_mission"
+
+			#show_ideas_tooltip = AFG_Taloqan_not_one_step_back
+			AFG = { country_event = { id = Afghanistan.32 } }
+			#custom_effect_tooltip = AFG_taloqan_text1
+			custom_effect_tooltip = AFG_effect_if_they_accept3TT
+			effect_tooltip = {
+				add_war_support = -0.08
+			}
+			show_ideas_tooltip = AFG_civilian_exodus_Taloqan
+
+		}
+
+	}
+}
 Afghanistan_pashtunistan_decisions = {
 
 	claim_pashtunistan = {
-
 		visible = {
 			PAK = { has_civil_war = yes }
 			any_country_with_original_tag = {
@@ -22,6 +385,7 @@ Afghanistan_pashtunistan_decisions = {
 		}
 
 		available = {
+			NOT = { country_exists = TAL }
 			PAK = { has_civil_war = yes }
 			custom_trigger_tooltip = {
 				tooltip = TT_AFG_NOT_FACTION_WITH_PAK
@@ -42,6 +406,7 @@ Afghanistan_pashtunistan_decisions = {
 			add_state_claim = 418
 			add_state_claim = 419
 			add_state_claim = 594
+			add_state_claim = 1171
 			hidden_effect = { news_event = { id = AfghanistanNews.2 hours = 6 } }
 			set_country_flag = AFG_claimed_pashtunistan
 		}
@@ -82,13 +447,14 @@ Afghanistan_pashtunistan_decisions = {
 	}
 
 	claim_baluchistan = {
-
+		icon = GFX_decision_generic_nationalism
 		visible = {
 			OR = {
 				417 = { is_claimed_by = ROOT }
 				418 = { is_claimed_by = ROOT }
 				419 = { is_claimed_by = ROOT }
 				594 = { is_claimed_by = ROOT }
+				1171 = { is_claimed_by = ROOT }
 			}
 			NOT = {
 				416 = { is_claimed_by = ROOT }
@@ -96,6 +462,7 @@ Afghanistan_pashtunistan_decisions = {
 		}
 
 		available = {
+			NOT = { country_exists = TAL }
 			any_country_with_original_tag = {
 				original_tag_to_check = PAK
 				owns_state = 416
@@ -148,6 +515,7 @@ Afghanistan_pashtunistan_decisions = {
 		}
 
 		available = {
+			NOT = { country_exists = TAL }
 			PAK = { has_civil_war = yes }
 			NOT = { has_border_war = yes }
 			417 = {
@@ -442,7 +810,7 @@ Afghanistan_pashtunistan_decisions = {
 	}
 
 	afg_invade_pakistan = {
-
+		icon = GFX_decision_generic_operation
 		visible = {
 			OR = {
 				417 = { is_claimed_by = ROOT }
@@ -459,6 +827,7 @@ Afghanistan_pashtunistan_decisions = {
 		}
 
 		available = {
+			NOT = { country_exists = TAL }
 			PAK = { has_civil_war = yes }
 			NOT = { has_border_war = yes }
 		}
@@ -558,6 +927,7 @@ Afghanistan_pashtunistan_decisions = {
 			add_state_core = 418
 			add_state_core = 419
 			add_state_core = 594
+			add_state_core = 1171
 		}
 
 	}
@@ -602,6 +972,153 @@ Afghanistan_pashtunistan_decisions = {
 
 	}
 
+}
+AFG_Agro_mech = {
+	AFG_Pomegranate_invesment1 = {
+		allowed = {
+			original_tag = AFG
+		}
+		visible = {
+			has_war = no
+			NOT = {
+				has_country_flag = AFG_AFG_Pomegranate_invesment1_complete
+			}
+		}
+
+		available = {
+			has_war = no
+			#state_population_k > 15
+		}
+		cost = 15
+
+		days_remove = 1
+		days_re_enable = 40
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Pomegranate_invesment1"
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Pomegranate_invesment1"
+			hidden_effect = {
+				set_country_flag = AFG_AFG_Pomegranate_invesment1_complete
+				activate_mission = AFG_Pomegranate_invesment1_collect
+			}
+			custom_effect_tooltip = AFG_Pomegranate_invesment_TT
+			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.10  }
+			modify_treasury_effect = yes
+			newline = yes
+			custom_effect_tooltip = AFG_Effect_Post_sales_TT
+			custom_effect_tooltip = AFG_AFG_Pomegranate_invesment_Pop_TT
+			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = population_total }
+				multiply_temp_variable = { treasury_change = 0.02  }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+	AFG_Pomegranate_invesment1_collect = {
+	 	available = {
+	 		has_country_flag = AFG_AFG_Pomegranate_invesment1_complete
+	 	}
+		activation = {
+	 		always = no
+	 	}
+	 	is_good = yes
+		cost = 3
+	 	days_mission_timeout = 15
+		days_remove = 1
+		selectable_mission = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Pomegranate_invesment1_collect"
+			clr_country_flag = AFG_AFG_Pomegranate_invesment1_complete
+			custom_effect_tooltip = AFG_AFG_Pomegranate_invesment_Pop_TT
+			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			set_temp_variable = { treasury_change = population_total }
+			multiply_temp_variable = { treasury_change = 0.02  }
+			modify_treasury_effect = yes
+		}
+
+	}
+	#Attach Amount to a Varible Sheep - 4 focus Content
+
+	AFG_Almond_invesment1 = {
+		allowed = {
+			original_tag = AFG
+		}
+		visible = {
+			has_war = no
+			NOT = {
+				has_country_flag = AFG_AFG_Almond_invesment1_complete
+			}
+		}
+
+		available = {
+			#state_population_k > 15
+		}
+		cost = 10
+
+		days_remove = 1
+		days_re_enable = 1
+		highlight_states = {
+			#highlight_state_targets = { state = 410 }
+			highlight_provinces = { 1962 213 321 232 }
+			highlight_color_while_active = 3
+
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Almond_invesment1"
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Almond_invesment1"
+			hidden_effect = {
+				set_country_flag = AFG_AFG_Almond_invesment1_complete
+				activate_mission = AFG_Almond_invesment1_collect
+			}
+			custom_effect_tooltip = AFG_Almond_invesment_TT
+			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.05  }
+			modify_treasury_effect = yes
+			newline = yes
+			custom_effect_tooltip = AFG_Effect_Post_sales_TT
+			custom_effect_tooltip = AFG_AFG_Almond_invesment_Pop_TT
+			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = population_total }
+				multiply_temp_variable = { treasury_change = 0.1 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+	AFG_Almond_invesment1_collect = {
+	 	available = {
+	 		has_country_flag = AFG_AFG_Almond_invesment1_complete
+	 	}
+		activation = {
+	 		always = no
+	 	}
+	 	is_good = yes
+		cost = 5
+	 	days_mission_timeout = 20
+		days_remove = 1
+		selectable_mission = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_Almond_invesment1_collect"
+			clr_country_flag = AFG_AFG_Almond_invesment1_complete
+			custom_effect_tooltip = AFG_AFG_Almond_invesment_Pop_TT
+			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			set_temp_variable = { treasury_change = population_total }
+			multiply_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
+		}
+
+	}
 }
 
 Taliban_insurgency_category = {
@@ -794,16 +1311,28 @@ Taliban_insurgency_category = {
 
 		highlight_states = {
 			highlight_provinces = {
+				14690
 				2101
 				4949
 				5020
+				14688
 				5064
+				14690
 				8090
+				14688
 				5082
+				14687
+				14686
+				14684
+				14129
 				6114
+				14687
+				14686
 				12831
 				10826
+				14684
 				6209
+				14129
 				7519
 			}
 		}
@@ -821,18 +1350,32 @@ Taliban_insurgency_category = {
 				controls_province = 2101
 				controls_province = 4949
 				controls_province = 5020
-				controls_province = 5064
+				controls_province = 14690
 				controls_province = 8090
+				controls_province = 14688
 				controls_province = 5082
 				controls_province = 6114
+				controls_province = 14687
+				controls_province = 14686
 				controls_province = 12831
 				controls_province = 10826
+				controls_province = 14684
 				controls_province = 6209
+				controls_province = 14129
 				controls_province = 7519
 			}
 			custom_trigger_tooltip = {
 				tooltip = AFG_pakistan_border_less_than_three_fort_tt
 				OR = {
+					1154 = {
+						any_province_building_level = {
+							province = {
+								id = 10826
+							}
+							building = bunker
+							level < 1
+						}
+					}
 					411 = {
 						any_province_building_level = {
 							province = {
@@ -841,33 +1384,63 @@ Taliban_insurgency_category = {
 								id = 10826
 							}
 							building = bunker
-							level < 3
+							level < 1
 						}
 					}
 					414 = {
 						any_province_building_level = {
 							province = {
 								id = 12831
+								id = 14686
+								id = 14687
 								id = 6114
 								id = 5082
+								id = 14688
 								id = 8090
 							}
 							building = bunker
-							level < 3
+							level < 1
 						}
 					}
 					415 = {
 						any_province_building_level = {
 							province = {
-								id = 5064
-								id = 5020
-								id = 4949
-								id = 2101
+								id = 14690
 							}
 							building = bunker
 							level < 3
 						}
 					}
+					1152 = {
+						any_province_building_level = {
+							province = {
+								id = 2101
+								id = 4949
+								id = 5020
+							}
+							building = bunker
+							level < 1
+						}
+					}
+					1153 = {
+						any_province_building_level = {
+							province = {
+								id = 14684
+							}
+							building = bunker
+							level < 3
+						}
+					}
+					1154 = {
+						any_province_building_level = {
+							province = {
+								id = 10826
+							}
+							building = bunker
+							level < 3
+						}
+					}
+					
 				}
 			}
 			industrial_complex > 1
@@ -893,8 +1466,11 @@ Taliban_insurgency_category = {
 						any_province_building_level = {
 							province = {
 								id = 12831
+								id = 14686
+								id = 14687
 								id = 6114
 								id = 5082
+								id = 14688
 								id = 8090
 							}
 							building = bunker
@@ -910,8 +1486,11 @@ Taliban_insurgency_category = {
 							instant_build = yes
 							province = {
 								id = 12831
+								id = 14686
+								id = 14687
 								id = 6114
 								id = 5082
+								id = 14688
 								id = 8090
 							}
 						}
@@ -924,10 +1503,7 @@ Taliban_insurgency_category = {
 					415 = {
 						any_province_building_level = {
 							province = {
-								id = 5064
-								id = 5020
-								id = 4949
-								id = 2101
+								id = 14690
 							}
 							building = bunker
 							level < 3
@@ -941,10 +1517,7 @@ Taliban_insurgency_category = {
 							level = 1
 							instant_build = yes
 							province = {
-								id = 5064
-								id = 5020
-								id = 4949
-								id = 2101
+								id = 14690
 							}
 						}
 					}
@@ -958,7 +1531,7 @@ Taliban_insurgency_category = {
 							province = {
 								id = 7519
 								id = 6209
-								id = 10826
+								id = 14129
 							}
 							building = bunker
 							level < 3
@@ -974,6 +1547,88 @@ Taliban_insurgency_category = {
 							province = {
 								id = 7519
 								id = 6209
+								id = 14129
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = AFG_fence_along_northern_afghanistan_border_tt
+			}
+			else_if = {
+				limit = {
+					1152 = {
+						any_province_building_level = {
+							province = {
+								id = 2101
+								id = 4949
+								id = 5020
+							}
+							building = bunker
+							level < 3
+						}
+					}
+				}
+				hidden_effect = {
+					1152 = {
+						add_building_construction = {
+							type = bunker
+							level = 1
+							instant_build = yes
+							province = {
+								id = 2101
+								id = 4949
+								id = 5020
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = AFG_fence_along_northern_afghanistan_border_tt
+			}
+			else_if = {
+				limit = {
+					1153 = {
+						any_province_building_level = {
+							province = {
+								id = 14684
+							}
+							building = bunker
+							level < 3
+						}
+					}
+				}
+				hidden_effect = {
+					1153 = {
+						add_building_construction = {
+							type = bunker
+							level = 1
+							instant_build = yes
+							province = {
+								id = 14684
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = AFG_fence_along_northern_afghanistan_border_tt
+			}
+			else_if = {
+				limit = {
+					1154 = {
+						any_province_building_level = {
+							province = {
+								id = 10826
+							}
+							building = bunker
+							level < 3
+						}
+					}
+				}
+				hidden_effect = {
+					1154 = {
+						add_building_construction = {
+							type = bunker
+							level = 1
+							instant_build = yes
+							province = {
 								id = 10826
 							}
 						}
@@ -1658,7 +2313,7 @@ Taliban_insurgency_category = {
 							province = {
 								id = 7519
 								id = 6209
-								id = 10826
+								id = 14129
 							}
 							building = bunker
 							level > 2
@@ -1668,8 +2323,11 @@ Taliban_insurgency_category = {
 						any_province_building_level = {
 							province = {
 								id = 12831
+								id = 14686
+								id = 14687
 								id = 6114
 								id = 5082
+								id = 14688
 								id = 8090
 							}
 							building = bunker
@@ -1679,10 +2337,36 @@ Taliban_insurgency_category = {
 					415 = {
 						any_province_building_level = {
 							province = {
-								id = 5064
-								id = 5020
-								id = 4949
+								id = 14690
+							}
+							building = bunker
+							level > 2
+						}
+					}
+					1152 = {
+						any_province_building_level = {
+							province = {
 								id = 2101
+								id = 4949
+								id = 5020
+							}
+							building = bunker
+							level > 2
+						}
+					}
+					1153 = {
+						any_province_building_level = {
+							province = {
+								id = 14684
+							}
+							building = bunker
+							level > 2
+						}
+					}
+					1154 = {
+						any_province_building_level = {
+							province = {
+								id = 10826
 							}
 							building = bunker
 							level > 2
@@ -1699,16 +2383,28 @@ Taliban_insurgency_category = {
 				}
 			}
 			divisions_in_state = {
-				size > 4
+				size > 2
 				state = 414
 			}
 			divisions_in_state = {
-				size > 4
+				size > 2
 				state = 415
 			}
 			divisions_in_state = {
-				size > 4
+				size > 2
 				state = 411
+			}
+			divisions_in_state = {
+				size > 1
+				state = 1152
+			}
+			divisions_in_state = {
+				size > 1
+				state = 1153
+			}
+			divisions_in_state = {
+				size > 1
+				state = 1154
 			}
 		}
 

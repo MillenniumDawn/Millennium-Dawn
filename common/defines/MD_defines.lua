@@ -47,8 +47,8 @@
 	NDefines.NDiplomacy.REVOKE_GUARANTEE_COST = 30
 	NDefines.NDiplomacy.OPINION_PER_VOLUNTEER = 15
 	NDefines.NDiplomacy.MAX_OPINION_FROM_VOLUNTEERS = 45
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 2
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 10
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 3
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 20
 	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
 
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
@@ -88,8 +88,8 @@
 	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_MIN = 1.15								-- (1.15 in vanilla) Minimum cost factor for each turn a bid has been uncontested on the state.
 	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_MAX = 1.60								-- (1.60 in vanilla) Maximum cost factor for each turn a bid has been uncontested on the state.
 	NDefines.NDiplomacy.PEACE_COST_FACTOR_UNCONTESTED_BID_STEP = 0.15								-- (0.15 in vanilla) Uncontested cost factor will increase by this much each turn.
-	NDefines.NDiplomacy.PEACE_COST_FACTOR_CAPITAL_SHIP_IC = 0.005									-- (0.005 in vanilla) In peace conference, cost for taking one capital ship per IC
-	NDefines.NDiplomacy.PEACE_COST_FACTOR_SCREENING_SHIP_IC = 0.005								-- (0.005 in vanilla) In peace conference, cost for taking a part of the screening ships per IC
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_CAPITAL_SHIP_IC = 0.002									-- (0.005 in vanilla) In peace conference, cost for taking one capital ship per IC
+	NDefines.NDiplomacy.PEACE_COST_FACTOR_SCREENING_SHIP_IC = 0.001								-- (0.005 in vanilla) In peace conference, cost for taking a part of the screening ships per IC
 	NDefines.NDiplomacy.PEACE_INCREASE_COST_FACTOR_PER_MISSING_PERCENT_FOR_CAPITULATION = 0.002	-- (0.002 in vanilla) increase factor if loser has not capitulated, for every percent between surrender level and BASE_SURRENDER_LEVEL
 	-- peace action taker has a discount if they occupy the state depending on compliance
 	-- it's a table where first value is the compliance level, and the second the factor
@@ -251,8 +251,8 @@
 	NDefines.NMilitary.LAND_COMBAT_COLLATERAL_FACTOR = 0.05 -- 0.005
 	NDefines.NMilitary.LAND_COMBAT_FORT_DAMAGE_CHANCE = 15
 	NDefines.NMilitary.ATTRITION_DAMAGE_ORG = 0.04 -- 0.08
-	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.025 -- 0.1
-	NDefines.NMilitary.ATTRITION_EQUIPMENT_PER_TYPE_LOSS_CHANCE = 0.025 -- 0.1
+	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.005 -- 0.1
+	NDefines.NMilitary.ATTRITION_EQUIPMENT_PER_TYPE_LOSS_CHANCE = 0.005 -- 0.1
 	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50 -- 60
 	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = -0.40 -- 0.33 (not negative)
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 24 -- 24
@@ -335,7 +335,7 @@
 	NDefines.NMilitary.LEADER_EXPERIENCE_SCALE = 1.25 -- 1.0
 	NDefines.NMilitary.BASE_LEADER_TRAIT_GAIN_XP = 0.55 -- 0.45
 	NDefines.NMilitary.ARMY_LEADER_XP_GAIN_PER_UNIT_IN_COMBAT = 0.175 -- 0.1
-	NDefines.NMilitary.TRAINING_ATTRITION = 0.05 -- 0.05
+	NDefines.NMilitary.TRAINING_ATTRITION = 0.0001				-- amount of extra attrition from being in training. Base value 0.05 Reduced to prevent training destroying all equipment
 	NDefines.NMilitary.MAX_ARMY_EXPERIENCE = 1000 --500 --Increased Max Experience cuz reasons
 	NDefines.NMilitary.MAX_AIR_EXPERIENCE = 1000 --500
 	NDefines.NMilitary.MAX_NAVY_EXPERIENCE = 1000 --500
@@ -666,10 +666,6 @@
 	NDefines.NAI.DIPLOMACY_IMPROVE_RELATION_COST_FACTOR = 10.0 -- 5
 	NDefines.NAI.DIPLOMACY_ACCEPT_VOLUNTEERS_BASE = 75 -- 50
 	NDefines.NAI.DIPLOMACY_ACCEPT_ATTACHE_BASE = 75 -- 50
-	NDefines.NAI.RESEARCH_DAYS_BETWEEN_WEIGHT_UPDATE = 40 -- 7
-	NDefines.NAI.RESEARCH_NEW_WEIGHT_FACTOR = 0.5 -- 0.3
-	NDefines.NAI.MAX_AHEAD_RESEARCH_PENALTY = 4 -- 2 --Buffing to double so it penalizes more
-	NDefines.NAI.RESEARCH_BASE_DAYS = 750 -- 60 -- Reduced by around a year.
 	NDefines.NAI.MIN_DELIVERED_TRADE_FRACTION = 0.6 -- 0.8
 	NDefines.NAI.PRODUCTION_UNAVAILABLE_RESORCE_FACTORY_FACTOR = 0.4 -- 0.75
 	NDefines.NAI.MAX_VOLUNTEER_ARMY_FRACTION = 0.5			-- 0.25
@@ -863,18 +859,15 @@
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories
 	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of mil factories
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
-	-- NDefines.NAI.MIN_NAVAL_MISSION_PRIO_TO_ASSIGN = {  -- priorities for regions to get assigned to a mission
-	--	0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
-	--	250, -- PATROL
-	--	100, -- STRIKE FORCE
-	--	100, -- CONVOY RAIDING
-	--	150, -- CONVOY ESCORT
-	--	50, -- MINES PLANTING
-	--	50, -- MINES SWEEPING
-	--	200, -- TRAIN
-	--	0, -- RESERVE_FLEET
-	--	100, -- NAVAL INVASION SUPPORT
-	-- }
+
+	-- AI Research Stuff
+	NDefines.NAI.RESEARCH_WEIGHT_TRUNCATION_THRESHOLD = 0.5 -- Reduced this from 0.75
+	NDefines.NAI.RESEARCH_DAYS_BETWEEN_WEIGHT_UPDATE = 20 -- 7
+	NDefines.NAI.MAX_AHEAD_RESEARCH_PENALTY = 4 -- 2 --Buffing to double so it penalizes more
+	NDefines.NAI.RESEARCH_BASE_DAYS = 350 -- 60
+	NDefines.NAI.RESEARCH_YEARS_BEHIND_FACTOR = 0.30 -- Try to stay on the cutting edge where possible
+	NDefines.NAI.RESEARCH_NEEDS_FACTOR = 0.05
+	NDefines.NAI.RESEARCH_LENGTH_FACTOR = 2.5
 
 	-- Peace deal AI stuff
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.7			-- 0.5 in vanilla
@@ -904,8 +897,8 @@
 	NDefines.NOperatives.MAX_OPERATIVE_SLOT_FROM_AGENCY_UPGRADES = 4					-- (normaly 1) max operative slots gained from upgrades
 	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_WRONG_CONTROLLER = -9.9				-- (normaly -10.0) Amount of network strength lost in a state when it does not have the right controller anymore
 	NDefines.NOperatives.INTEL_NETWORK_GAIN_RATE_ON_OUT_OF_RANGE = -1.57				-- (normaly -1.75) Amount of network strength lost in a state that has the right controller but is out of range of any operative
-				--may come back to below, but makes much more of a diffrence than i thaught
-			--NDefines.NOperatives.INTEL_NETWORK_MIN_VP_TO_TARGET = 10,					-- (normaly 15) The minimum value of the highest VP in a state to consider the state as a valid target to start building an intel network
+	--may come back to below, but makes much more of a diffrence than i thaught
+	--NDefines.NOperatives.INTEL_NETWORK_MIN_VP_TO_TARGET = 10,					-- (normaly 15) The minimum value of the highest VP in a state to consider the state as a valid target to start building an intel network
 	NDefines.NOperatives.INTEL_NETWORK_OPERATIVE_GAIN_STACKING_FACTOR = 0.6				-- (normaly 0.5) When multiple operative are present in the same location, this factor is applied for each operative with a lower gain than the max. So if operatives have the gain [ 3, 1, 2 ] in the same location, it is sorted to [ 1, 2, 3 ] then converted to [ 1*D^2, 2*D^1, 3 ], with D being this define, so if D=0.5 we have [ 0.25, 1, 3 ] and the final gain from operative at this location will be 4.25. Putting this define to 0 is equivalent to considering the maximum value only.
 
 	NDefines.NOperatives.QUIET_INTEL_NETWORK_DAILY_XP_GAIN = 0.112						-- (normaly 0.0)

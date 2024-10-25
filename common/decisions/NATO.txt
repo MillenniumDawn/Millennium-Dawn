@@ -1,12 +1,6 @@
 NATO_decisions = {
-
 	leave_NATO = {
-
 		icon = GFX_decision_generic_leave_nato
-
-		available = {
-			has_idea = NATO_member
-		}
 
 		visible = {
 			has_idea = NATO_member
@@ -110,6 +104,15 @@ NATO_decisions = {
 				}
 			}
 			modifier = {
+				factor = 0
+				original_tag = CZE
+				AND = {
+					has_government = nationalist
+					nationalist_military_junta_are_in_power = yes
+					is_historical_focus_on = yes
+				}
+			}
+			modifier = {
 				add = 1000
 				original_tag = DEN
 				NOT = { has_government = neutrality }
@@ -147,45 +150,6 @@ NATO_decisions = {
 		}
 	}
 
-	denounce_Status_As_Major_Non_NATO_Ally = {
-		icon = GFX_decision_generic_leave_nato
-
-		available = {
-			has_idea = Major_Non_NATO_Ally
-		}
-
-		visible = {
-			has_idea = Major_Non_NATO_Ally
-		}
-
-		cost = 100
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision denounce_Status_As_Major_Non_NATO_Ally"
-			remove_ideas = Major_Non_NATO_Ally
-			clr_country_flag = Major_Non_NATO_Ally
-			remove_from_tech_sharing_group = Major_Non_NATO_Ally_Share
-
-			USA = {
-				add_opinion_modifier = { target = PREV modifier = left_alliance }
-			}
-
-			#news_event = { id = NATO.6 hours = 6 }
-
-			# Remove opinion modifiers.
-			every_other_country = {
-				limit = {
-					has_opinion_modifier = Major_Non_NATO_Ally
-				}
-
-				remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
-				hidden_effect = {
-					PREV = { remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally } }
-				}
-			}
-		}
-	}
-
 	become_NATO_aspirant = {
 
 		icon = GFX_decision_generic_join_nato
@@ -201,7 +165,7 @@ NATO_decisions = {
 			NOT = { has_country_flag = collapsed_nation }
 		}
 
-		cost = 250
+		cost = 150
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision become_NATO_aspirant"
@@ -216,13 +180,38 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 1
 			modifier = {
-				add = 10
-				has_opinion = { target = USA value > 150 }
+				add = 350
+				OR = {
+					AND = {
+						has_opinion = { target = USA value > 150 }
+						USA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = FRA value > 150 }
+						FRA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = GER value > 150 }
+						GER = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = ENG value > 150 }
+						ENG = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = SPR value > 150 }
+						SPR = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = ITA value > 150 }
+						ITA = { has_idea = NATO_member }
+					}
+				}
 			}
 			modifier = {
-				add = 100
+				add = 350
 				OR = {
 					original_tag = LAT
 					original_tag = LIT
@@ -239,13 +228,12 @@ NATO_decisions = {
 				OR = {
 					AND = {
 						date > 2003.1.1
-						is_historical_focus_on = yes
 					}
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 100
+				add = 350
 				OR = {
 					original_tag = ALB
 					original_tag = CRO
@@ -257,13 +245,12 @@ NATO_decisions = {
 				OR = {
 					AND = {
 						date > 2008.1.1
-						is_historical_focus_on = yes
 					}
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 100
+				add = 350
 				original_tag = MNT
 				OR = {
 					has_government = democratic
@@ -272,13 +259,12 @@ NATO_decisions = {
 				OR = {
 					AND = {
 						date > 2016.1.1
-						is_historical_focus_on = yes
 					}
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 100
+				add = 350
 				original_tag = FYR
 				OR = {
 					has_government = democratic
@@ -287,7 +273,6 @@ NATO_decisions = {
 				OR = {
 					AND = {
 						date > 2018.1.1
-						is_historical_focus_on = yes
 					}
 					SOV = { has_added_tension_amount > 5 }
 				}
@@ -303,9 +288,25 @@ NATO_decisions = {
 					SOV = { has_war_with = UKR }
 				}
 			}
+			modifier = {
+				factor = 2.5
+				# Russia is at war with European democratic nations
+				SOV = { NOT = { has_government = democratic } }
+				OR = {
+					SOV = { has_war_with = UKR }
+					SOV = { has_war_with = FIN }
+					SOV = { has_war_with = LIT }
+					SOV = { has_war_with = LAT }
+					SOV = { has_war_with = EST }
+					SOV = { has_war_with = GEO }
+					SOV = { has_war_with = BLR }
+					SOV = { has_war_with = ABK }
+					SOV = { has_war_with = SOO }
+				}
+			}
 			# Hardcoded Section to Ensure they join
 			modifier = {
-				factor = 100
+				add = 350
 				OR = {
 					original_tag = LAT
 					original_tag = LIT
@@ -323,7 +324,31 @@ NATO_decisions = {
 					has_government = democratic
 					has_government = neutrality
 				}
-				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 50
+				var:influence_array^0 = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				add = 15
+				var:influence_array^1 = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				add = 50
+				var:influence_array^2 = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				factor = 50
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
 			}
 		}
 	}
@@ -378,9 +403,30 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 			modifier = {
-				factor = 100
+				add = 350
+				OR = {
+					AND = {
+						has_opinion = { target = USA value > 150 }
+						USA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = FRA value > 150 }
+						FRA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = GER value > 150 }
+						GER = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = ENG value > 150 }
+						ENG = { has_idea = NATO_member }
+					}
+				}
+			}
+			modifier = {
+				factor = 350
 				OR = {
 					original_tag = LAT
 					original_tag = LIT
@@ -426,25 +472,10 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			factor = 1000
+			base = 1000
 			modifier = {
 				add = 100
 				SOV = { has_added_tension_amount > 5 }
-			}
-			modifier = {
-				factor = 0
-				is_historical_focus_on = no
-				has_opinion = { target = FROM value < 50 }
-			}
-			modifier = {
-				factor = 2
-				has_opinion = { target = FROM value > 49 }
-			}
-			modifier = {
-				factor = 5
-				FROM = {
-					is_top3_twenty_influencer = yes
-				}
 			}
 			# Historical AI
 			modifier = {
@@ -518,9 +549,9 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 			modifier = {
-				factor = 5
+				factor = 350
 				OR = {
 					AND = {
 						date > 2003.1.1
@@ -539,7 +570,7 @@ NATO_decisions = {
 				}
 			}
 			modifier = {
-				factor = 5
+				factor = 350
 				OR = {
 					AND = {
 						date > 2008.1.1
@@ -553,7 +584,7 @@ NATO_decisions = {
 				}
 			}
 			modifier = {
-				factor = 5
+				factor = 350
 				OR = {
 					AND = {
 						date > 2016.1.1
@@ -614,6 +645,9 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision show_non_ratified_countries"
 			NATO_show_non_ratified_countries = yes
 		}
+		ai_will_do = {
+			factor = 355
+		}
 	}
 
 	nato_enhance_forward_presence_brigade = {
@@ -637,6 +671,9 @@ NATO_decisions = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.2 days = 1 }
+		}
+		ai_will_do = {
+			factor = 355
 		}
 	}
 
@@ -662,6 +699,9 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.4 days = 1 }
 		}
+		ai_will_do = {
+			factor = 355
+		}
 	}
 
 	nato_join_Nato_Nuclear_Sharing = {
@@ -677,32 +717,42 @@ NATO_decisions = {
 		visible = {
 			USA = { has_idea = NATO_member }
 			has_idea = NATO_member
+			NOT = { has_idea = NATO_idea_Nuclear_sharing_Groupe }
 			NOT = { original_tag = ENG }
 			NOT = { original_tag = FRA }
-			NOT = { has_idea = NATO_idea_Nuclear_sharing_Groupe }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_Nuclear_Sharing"
-			if = { limit = { NOT = { original_tag = USA } }
-				USA = {
-					add_opinion_modifier = {
-						target = Root
-						modifier = pro_american
-					}
+			USA = {
+				add_opinion_modifier = {
+					target = Root
+					modifier = pro_american
 				}
 			}
 			hidden_effect = {
-				add_popularity = { ideology = neutrality popularity = 0.05 }
-				add_popularity = { ideology = communism popularity = 0.05 }
-				add_popularity = { ideology = nationalist popularity = 0.05 }
-				recalculate_party = yes
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.05
+				}
 			}
 		}
 
 		remove_effect = {
 			add_ideas = NATO_idea_Nuclear_sharing_Groupe
 		}
+		ai_will_do = {
+			factor = 355
+		}
 	}
+
 	Nato_Nuclear_Sharing = {
 		cost = 50
 		days_remove = 365
@@ -725,24 +775,23 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_Nuclear_Sharing"
 			custom_effect_tooltip = Nato_Nuclear_Sharing_I_TT
 			hidden_effect = {
-
-			set_temp_variable = { nuclear_warhead_index = 4 }
-			set_temp_variable = { nuclear_warhead_count = 20 }
-			modify_nuclear_warhead_inventory_count = yes
-			clr_country_flag = GER_no_nuclear
-			set_country_flag = NPROG_completed
-			set_temp_variable = { missile_type = 4 }
-			set_temp_variable = { missile_index = 41 }
-			set_temp_variable = { missile_count = 20 }
-			modify_missile_inventory_count = yes
-			add_popularity = {
-				ideology = democratic
-				popularity = 0.05
-			}
-			add_popularity = {
-				ideology = neutrality
-				popularity = 0.05
-			}
+				set_temp_variable = { nuclear_warhead_index = 4 }
+				set_temp_variable = { nuclear_warhead_count = 20 }
+				modify_nuclear_warhead_inventory_count = yes
+				clr_country_flag = GER_no_nuclear
+				set_country_flag = NPROG_completed
+				set_temp_variable = { missile_type = 4 }
+				set_temp_variable = { missile_index = 41 }
+				set_temp_variable = { missile_count = 20 }
+				modify_missile_inventory_count = yes
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = neutrality
+					popularity = 0.05
+				}
 				USA = {
 					set_temp_variable = { nuclear_warhead_index = 4 }
 					set_temp_variable = { nuclear_warhead_count = -20 }
@@ -750,20 +799,23 @@ NATO_decisions = {
 				}
 			}
 		}
-			remove_effect = {
-				custom_effect_tooltip = Nato_Nuclear_Sharing_II_TT
-				hidden_effect = {
+		remove_effect = {
+			custom_effect_tooltip = Nato_Nuclear_Sharing_II_TT
+			hidden_effect = {
 				set_temp_variable = { nuclear_warhead_index = 4 }
 				set_temp_variable = { nuclear_warhead_count = -20 }
 				modify_nuclear_warhead_inventory_count = yes
 				set_country_flag = GER_no_nuclear
 				clr_country_flag = NPROG_completed
-			USA = {
-				set_temp_variable = { nuclear_warhead_index = 4 }
-				set_temp_variable = { nuclear_warhead_count = 20 }
-				modify_nuclear_warhead_inventory_count = yes
+				USA = {
+					set_temp_variable = { nuclear_warhead_index = 4 }
+					set_temp_variable = { nuclear_warhead_count = 20 }
+					modify_nuclear_warhead_inventory_count = yes
 				}
 			}
+		}
+		ai_will_do = {
+			factor = 355
 		}
 	}
 
@@ -792,27 +844,919 @@ NATO_decisions = {
 				remove_opinion_modifier = {
 					target = Root
 					modifier = pro_american
-
 				}
 			}
-		hidden_effect = {
+			hidden_effect = {
+				add_popularity = {
+					ideology = communism
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = nationalist
+					popularity = 0.05
+				}
+				add_popularity = {
+					ideology = democratic
+					popularity = -0.05
+				}
+			}
+		}
+		remove_effect = {
+			remove_ideas = NATO_idea_Nuclear_sharing_Groupe
+		}
+		ai_will_do = {
+			factor = 355
+		}
+	}
+}
 
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
+NATO_ukraine_help = {
+	send_money_to_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 90
+		custom_cost_trigger = {
+			check_variable = { treasury > 9.9 }
+		}
+		custom_cost_text = cost_10_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_money_to_ukraine"
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			UKR = {
+				set_temp_variable = { treasury_change = 10 }
+				modify_treasury_effect = yes
+				country_event = ukraine_nato_help.1
 			}
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.05
-			}
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.05
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
 			}
 		}
 	}
+
+	send_light_equipment = {
+		icon = GFX_decision_generic_prepare_civil_war
+		fire_only_once = no
+		days_re_enable = 90
+		days_remove = 30
+
+		available = {
+			has_equipment = { Inf_equipment > 1999 }
+			has_equipment = { cnc_equipment > 299 }
+			has_equipment = { L_AT_Equipment > 99 }
+			has_equipment = { AA_Equipment > 99 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_light_equipment"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+		}
+
 		remove_effect = {
-			remove_ideas = NATO_idea_Nuclear_sharing_Groupe
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = -2000
+			}
+			add_equipment_to_stockpile = {
+				type = cnc_equipment
+				amount = -300
+			}
+			add_equipment_to_stockpile = {
+				type = L_AT_Equipment
+				amount = -100
+			}
+			add_equipment_to_stockpile = {
+				type = AA_Equipment
+				amount = -100
+			}
+
+			UKR = {
+				country_event = ukraine_nato_help.2
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = 2000
+					producer = PREV
+				}
+				add_equipment_to_stockpile = {
+					type = cnc_equipment
+					amount = 300
+					producer = PREV
+				}
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment
+					amount = 100
+					producer = PREV
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment
+					amount = 100
+					producer = PREV
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	send_medium_equipment = {
+		icon = GFX_decision_generic_prepare_civil_war
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+
+		available = {
+			has_equipment = { util_vehicle_equipment > 149 }
+			has_equipment = { H_AT_Equipment > 99 }
+			has_equipment = { artillery_equipment > 99 }
+			has_equipment = { apc_hull > 99 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_medium_equipment"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = util_vehicle_equipment
+				amount = -150
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				type = H_AT_Equipment
+				amount = -100
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				type = artillery_equipment
+				amount = -100
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				type = apc_hull
+				amount = -100
+				producer = PREV
+			}
+
+			UKR = {
+				country_event = ukraine_nato_help.3
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment
+					amount = 150
+				}
+				add_equipment_to_stockpile = {
+					type = H_AT_Equipment
+					amount = 100
+				}
+				add_equipment_to_stockpile = {
+					type = artillery_equipment
+					amount = 100
+				}
+				add_equipment_to_stockpile = {
+					type = apc_hull
+					amount = 100
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	send_heavy_equipment = {
+		icon = GFX_decision_generic_prepare_civil_war
+		fire_only_once = no
+		days_re_enable = 150
+		days_remove = 90
+
+		available = {
+			has_equipment = { ifv_hull > 149 }
+			has_equipment = { mbt_hull > 99 }
+			has_equipment = { spart_hull > 49 }
+			has_equipment = { spaa_hull > 19 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_heavy_equipment"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = ifv_hull
+				amount = -150
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				type = mbt_hull
+				amount = -100
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				type = spart_hull
+				amount = -50
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				type = spaa_hull
+				amount = -20
+				producer = PREV
+			}
+
+			UKR = {
+				country_event = ukraine_nato_help.4
+				add_equipment_to_stockpile = {
+					type = ifv_hull
+					amount = 150
+				}
+				add_equipment_to_stockpile = {
+					type = mbt_hull
+					amount = 100
+				}
+				add_equipment_to_stockpile = {
+					type = spart_hull
+					amount = 50
+				}
+				add_equipment_to_stockpile = {
+					type = spaa_hull
+					amount = 20
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	send_mr_planes_equipment_nonbba = {
+		icon = GFX_decision_generic_prepare_civil_war
+		fire_only_once = no
+		days_re_enable = 150
+		days_remove = 90
+
+		available = {
+			has_equipment = { MR_Fighter_equipment > 50 }
+		}
+
+		visible = {
+			NOT = { has_dlc = "By Blood Alone" }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_mr_planes_equipment_nonbba"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = MR_Fighter_equipment
+				amount = -50
+			}
+
+			UKR = {
+				country_event = ukraine_nato_help.11
+				add_equipment_to_stockpile = {
+					type = MR_Fighter2
+					amount = 50
+					producer = USA
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	send_strike_planes_equipment_nonbba = {
+		icon = GFX_decision_generic_prepare_civil_war
+		fire_only_once = no
+		days_re_enable = 150
+		days_remove = 90
+
+		available = {
+			has_equipment = { MR_Fighter_equipment > 50 }
+		}
+
+		visible = {
+			NOT = { has_dlc = "By Blood Alone" }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_strike_planes_equipment_nonbba"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = L_Strike_fighter_equipment
+				amount = -50
+			}
+
+			UKR = {
+				country_event = ukraine_nato_help.12
+				add_equipment_to_stockpile = {
+					type = L_Strike_fighter2
+					amount = 50
+					producer = USA
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	send_mr_planes_equipment_bba = {
+		icon = GFX_decision_generic_prepare_civil_war
+		fire_only_once = no
+		days_re_enable = 150
+		days_remove = 90
+
+		available = {
+			has_equipment = { medium_plane_fighter_airframe > 50 }
+		}
+
+		visible = {
+			has_dlc = "By Blood Alone"
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_mr_planes_equipment_bba"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = medium_plane_fighter_airframe
+				amount = -50
+			}
+
+			UKR = {
+				country_event = ukraine_nato_help.11
+				add_equipment_to_stockpile = {
+					variant_name = "F-15C Eagle"
+					type = medium_plane_fighter_airframe_2
+					amount = 50
+					producer = USA
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	send_strike_planes_equipment_bba = {
+		icon = GFX_decision_generic_prepare_civil_war
+		fire_only_once = no
+		days_re_enable = 150
+		days_remove = 90
+
+		available = {
+			has_equipment = { small_plane_strike_airframe > 50 }
+		}
+
+		visible = {
+			has_dlc = "By Blood Alone"
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision send_strike_planes_equipment_bba"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+		}
+
+		remove_effect = {
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe
+				amount = -50
+			}
+
+			UKR = {
+				country_event = ukraine_nato_help.12
+				add_equipment_to_stockpile = {
+					variant_name = "F-16C Fighting Falcon"
+					type = small_plane_strike_airframe_2
+					amount = 50
+					producer = USA
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	order_guns_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.4 }
+		}
+		custom_cost_text = cost_3_5
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_guns_for_ukraine"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.5
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = Inf_equipment
+					amount = 1000
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					has_equipment = { Inf_equipment < 5000 }
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
+		}
+	}
+
+	order_cnc_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.4 }
+		}
+		custom_cost_text = cost_3_5
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_cnc_for_ukraine"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.6
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = cnc_equipment
+					amount = 300
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					has_equipment = { cnc_equipment < 1000 }
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
+		}
+	}
+
+	order_at_aa_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 4.9 }
+		}
+		custom_cost_text = cost_5_0
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_at_aa_for_ukraine"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.7
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = L_AT_Equipment
+					amount = 200
+				}
+				add_equipment_to_stockpile = {
+					type = AA_Equipment
+					amount = 200
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					OR = {
+						has_equipment = { L_AT_Equipment < 800 }
+						has_equipment = { AA_Equipment < 800 }
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
+		}
+	}
+
+	order_util_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.4 }
+		}
+		custom_cost_text = cost_3_5
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_util_for_ukraine"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.8
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment
+					amount = 80
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					has_equipment = { util_vehicle_equipment < 400 }
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
+		}
+	}
+
+	order_apc_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.4 }
+		}
+		custom_cost_text = cost_3_5
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_guns_for_ukraine"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.9
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = apc_hull
+					amount = 50
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					has_equipment = { apc_hull < 400 }
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
+		}
+	}
+
+	order_ifv_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 4.9 }
+		}
+		custom_cost_text = cost_5_0
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_ifv_for_ukraine"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.10
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = ifv_hull
+					amount = 50
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					has_equipment = { ifv_hull < 500 }
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
+		}
+	}
+
+	order_spart_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.4 }
+		}
+		custom_cost_text = cost_3_5
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_spart_for_ukraine"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.13
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = spart_hull
+					amount = 25
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					has_equipment = { spart_hull < 350 }
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
+		}
+	}
+
+	order_mbt_for_ukraine = {
+		icon = GFX_decision_attract_foreign_investor
+		fire_only_once = no
+		days_re_enable = 120
+		days_remove = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 7.4 }
+		}
+		custom_cost_text = cost_7_5
+
+		available = {
+			NOT = { has_idea = NATO_ukraine_help }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision order_mbt_for_ukraine"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = UKR.id }
+			change_influence_percentage = yes
+			add_timed_idea = {
+				idea = NATO_ukraine_help
+				days = 60
+			}
+			UKR = {
+				country_event = ukraine_nato_help.14
+			}
+		}
+
+		remove_effect = {
+			UKR = {
+				add_equipment_to_stockpile = {
+					type = mbt_hull
+					amount = 50
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 5
+				UKR = {
+					has_equipment = { mbt_hull < 400 }
+				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 1 }
+			}
 		}
 	}
 }

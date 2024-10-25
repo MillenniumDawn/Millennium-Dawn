@@ -1,104 +1,6 @@
 # Author(s): Deflinok
 add_namespace = subject_rus
-#Subject In Sovfed
-country_event = {
-	id = subject_rus.1
-	title = subject_rus.1.t
-	desc = subject_rus.1.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = subject_rus.1.a
-		log = "[GetDateText]: [This.GetName]: subject_rus.1.a executed"
-		SOV = { set_temp_variable = { modify_subjectnumber = 1 } }
-	}
-}
-#Subject In Sovfed
-country_event = {
-	id = subject_rus.2
-	title = subject_rus.2.t
-	desc = subject_rus.2.d
-	picture = GFX_sovfed
-	is_triggered_only = yes
-
-	option = {
-		name = subject_rus.2.a
-		log = "[GetDateText]: [This.GetName]: subject_rus.2.a executed"
-		add_ideas = SUB_invervention_rus
-		clear_variable = SOV.subjectvote
-		clear_variable = SOV.subjectnevote
-	}
-}
-#Subject Voted for Military Doctrine
-country_event = {
-	id = subject_rus.3
-	title = subject_rus.3.t
-	desc = subject_rus.3.d
-	timeout_days = 2
-	picture = GFX_sovfed
-	is_triggered_only = yes
-
-	option = {
-		name = subject_rus.3.a
-		log = "[GetDateText]: [This.GetName]: subject_rus.3.a executed"
-		SOV = {
-			set_temp_variable = { modify_subjectvote = 1 }
-			modify_subjectvote_support = yes
-		}
-		ai_chance = {
-			base = 70
-		}
-	}
-	option = {
-		name = subject_rus.3.b
-		log = "[GetDateText]: [This.GetName]: subject_rus.3.b executed"
-		SOV = {
-			set_temp_variable = { modify_subjectnevote = 1 }
-			modify_subjectnevote_support = yes
-		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				tag = CHE
-				add = -50
-			}
-		}
-	}
-}
-#Subject Voted for Military Doctrine - Result
-country_event = {
-	id = subject_rus.4
-	title = subject_rus.4.t
-	desc = subject_rus.4.d
-	picture = GFX_sovfed
-	is_triggered_only = yes
-
-	option = {
-		name = subject_rus.4.a
-		log = "[GetDateText]: [This.GetName]: subject_rus.4.a executed"
-		if = {
-			limit = { check_variable = { SOV.subjectnevote < SOV.subjectvote } }
-			set_country_flag = subject_aggresive_policy
-			set_country_flag = SOV_campaign_war_net
-			every_other_country = {
-			limit = {
-				has_autonomy_state = autonomy_republic_rf
-				NOT = { has_idea = SUB_invervention_rus }
-			}
-			country_event = { id = subject_rus.2 days = 1 }
-			}
-		}
-		if = {
-			limit = { check_variable = { SOV.subjectnevote > SOV.subjectvote } }
-			custom_effect_tooltip = subject_nevotecampaign_tt
-		}
-		if = {
-			limit = { check_variable = { SOV.subjectnevote = SOV.subjectvote } }
-			custom_effect_tooltip = subject_nevotecampaign_tt
-		}
-	}
-}
+add_namespace = ural_event
 #Bashkiriya AES
 country_event = {
 	id = subject_rus.5
@@ -261,6 +163,8 @@ country_event = {
 		set_cosmetic_tag = BSH_IDL
 		set_temp_variable = { modify_subjectavtoritet = 2 }
 		modify_subjectavtoritet_support = yes
+		set_temp_variable = { modify_subjectinped = -45 }
+		modify_subjectinped_support = yes
 		TAT = {
 			every_core_state = { add_core_of = BSH }
 			every_unit_leader = {
@@ -316,7 +220,7 @@ country_event = {
 	id = subject_rus.13
 	title = subject_rus.13.t
 	desc = subject_rus.13.d
-	picture = GFX_sovfed
+	picture = GFX_subject_subsidies
 	is_triggered_only = yes
 	option = {
 		name = subject_rus.13.a
@@ -331,7 +235,7 @@ country_event = {
 		add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
 		ai_chance = {
-			base = 50
+			base = 100
 		}
 	}
 	option = {
@@ -345,7 +249,7 @@ country_event = {
 		set_temp_variable = { influence_target = FROM }
 		change_influence_percentage = yes
 		ai_chance = {
-			base = 50
+			base = 0
 		}
 	}
 }
@@ -355,7 +259,7 @@ country_event = {
 	title = subject_rus.14.t
 	desc = subject_rus.14.d
 	timeout_days = 2
-	picture = GFX_sovfed
+	picture = GFX_subject_subsidies
 	is_triggered_only = yes
 
 	option = {
@@ -368,9 +272,40 @@ country_event = {
 		if = {
 			limit = {
 				ROOT = {
+					OR = {
+						tag = CHE
+						tag = BSH
+						tag = KBK
+						tag = TAT
+						tag = TUV
+						tag = YAK
+						tag = BRY
+						tag = KOM
+						tag = ALT
+						tag = KHS
+						tag = KAE
+						tag = CKK
+						tag = YAM
+						tag = NEE
+						tag = KCC
+						tag = ING
+						tag = ADY
+						tag = DAG
+						tag = KLM
+						tag = FIN
+						tag = CHU
+						tag = MEL
+						tag = MOV
+						tag = UDM
+						
+					}
 					NOT = { has_country_flag = SUB_subject_rebeliion_flag }
-					is_subject_of = SOV
-					has_autonomy_state = autonomy_republic_rf
+					OR = {
+						has_autonomy_state = autonomy_republic_rf
+						has_autonomy_state = autonomy_kray_rf
+						has_autonomy_state = autonomy_oblast_rf
+						has_autonomy_state = autonomy_okrug_rf
+					}
 				}
 			}
 			set_temp_variable = { modify_subjectinped = -5 }
@@ -386,7 +321,7 @@ country_event = {
 	id = subject_rus.15
 	title = subject_rus.15.t
 	desc = subject_rus.15.d
-	picture = GFX_sovfed
+	picture = GFX_subject_subsidies
 	is_triggered_only = yes
 
 	option = {
@@ -398,8 +333,39 @@ country_event = {
 			limit = {
 				ROOT = {
 					NOT = { has_country_flag = SUB_subject_rebeliion_flag }
-					is_subject_of = SOV
-					has_autonomy_state = autonomy_republic_rf
+					OR = {
+						tag = CHE
+						tag = BSH
+						tag = KBK
+						tag = TAT
+						tag = TUV
+						tag = YAK
+						tag = BRY
+						tag = KOM
+						tag = ALT
+						tag = KHS
+						tag = KAE
+						tag = CKK
+						tag = YAM
+						tag = NEE
+						tag = KCC
+						tag = ING
+						tag = ADY
+						tag = DAG
+						tag = KLM
+						tag = FIN
+						tag = CHU
+						tag = MEL
+						tag = MOV
+						tag = UDM
+						
+					}
+					OR = {
+						has_autonomy_state = autonomy_republic_rf
+						has_autonomy_state = autonomy_kray_rf
+						has_autonomy_state = autonomy_oblast_rf
+						has_autonomy_state = autonomy_okrug_rf
+					}
 				}
 			}
 			set_temp_variable = { modify_subjectinped = 5 }
@@ -520,6 +486,8 @@ country_event = {
 		set_cosmetic_tag = BSH_IDL
 		set_temp_variable = { modify_subjectavtoritet = 2 }
 		modify_subjectavtoritet_support = yes
+		set_temp_variable = { modify_subjectinped = -45 }
+		modify_subjectinped_support = yes
 		BSH = {
 			every_core_state = { add_core_of = TAT }
 			every_unit_leader = {
@@ -576,6 +544,7 @@ country_event = {
 	title = subject_rus.22.t
 	desc = subject_rus.22.d
 	is_triggered_only = yes
+	picture = GFX_subject_tatneft
 	option = {
 		name = subject_rus.22.a
 		log = "[GetDateText]: [This.GetName]: subject_rus.22.a executed"
@@ -617,6 +586,7 @@ country_event = {
 	title = subject_rus.23.t
 	desc = subject_rus.23.d
 	is_triggered_only = yes
+	picture = GFX_subject_tatneft
 	option = {
 		name = subject_rus.23.a
 		log = "[GetDateText]: [This.GetName]: subject_rus.23.a executed"
@@ -635,7 +605,7 @@ country_event = {
 	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.24" }
 	title = subject_rus.24.t
 	desc = subject_rus.24.d
-	picture = GFX_SOV_generic
+	picture = GFX_subject_separatism
 	fire_only_once = yes
 	is_triggered_only = yes
 
@@ -656,33 +626,81 @@ country_event = {
 		}
 	}
 }
-#Tatarstan Separatism
+#Republic Separatism
 country_event = {
 	id = subject_rus.25
 	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.25" }
 	title = subject_rus.25.t
 	desc = subject_rus.25.d
-	picture = GFX_SOV_generic
+	picture = GFX_subject_separatism
 
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {	#War
 		name = subject_rus.25.a
 		log = "[GetDateText]: [This.GetName]: subject_rus.25.a executed"
+		SOV = {
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_free
+			}
+		}
+		FROM = {
+			set_country_flag = SUB_subject_rebeliion_flag
+			clr_country_flag = SOV_subject_agree
+		}
 		declare_war_on = {
-			target = TAT
+			target = FROM
 			type = annex_everything
 		}
 		ai_chance = {
-			base = 100
+			base = 30
 		}
 	}
-	option = {	#Net
+	option = {	#Status
 		name = subject_rus.25.a
 		log = "[GetDateText]: [This.GetName]: subject_rus.25.b executed"
+		trigger = {
+			FROM = {
+				OR = {
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		add_political_power = -150
+		FROM = {
+			country_event = { id = subject_rus.94 }
+			set_temp_variable = { modify_subjectinped = -55 }
+			modify_subjectinped_support = yes
+		}
 		ai_chance = {
-			base = 0
+			base = 30
+		}
+	}
+	option = {	#Money
+		name = subject_rus.25.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.25.c executed"
+		trigger = {
+			FROM = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		set_temp_variable = { treasury_change = -17.5 }
+		modify_treasury_effect = yes
+		FROM = {
+			country_event = { id = subject_rus.95 }
+			set_temp_variable = { modify_subjectinped = -35 }
+			modify_subjectinped_support = yes
+		}
+		ai_chance = {
+			base = 30
 		}
 	}
 }
@@ -921,32 +939,6 @@ country_event = {
 		}
 	}
 }
-#Subject Country Flag
-country_event = {
-	id = subject_rus.36
-	title = subject_rus.36.t
-	desc = subject_rus.36.d
-	is_triggered_only = yes
-	picture = GFX_sovfed
-	option = {
-		name = subject_rus.36.a
-		log = "[GetDateText]: [This.GetName]: subject_rus.36.a executed"
-
-	}
-}
-#Subject Country Flag loose
-country_event = {
-	id = subject_rus.37
-	title = subject_rus.37.t
-	desc = subject_rus.37.d
-	is_triggered_only = yes
-	picture = GFX_sovfed
-	option = {
-		name = subject_rus.37.a
-		log = "[GetDateText]: [This.GetName]: subject_rus.37.a executed"
-
-	}
-}
 #Buildings
 country_event = {
 	id = subject_rus.38
@@ -962,10 +954,12 @@ country_event = {
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = FROM }
 		change_influence_percentage = yes
+		set_temp_variable = { treasury_change = -7 }
+		modify_treasury_effect = yes
 		add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
 		ai_chance = {
-			base = 50
+			base = 70
 		}
 	}
 	option = {
@@ -979,7 +973,7 @@ country_event = {
 		set_temp_variable = { influence_target = FROM }
 		change_influence_percentage = yes
 		ai_chance = {
-			base = 50
+			base = 30
 		}
 	}
 }
@@ -991,32 +985,60 @@ country_event = {
 	timeout_days = 2
 	picture = GFX_sovfed
 	is_triggered_only = yes
-
 	option = {
 		name = subject_rus.39.a
 		log = "[GetDateText]: [This.GetName]: subject_rus.39.a executed"
 		set_temp_variable = { modify_subjectavtoritet = -38 }
 		modify_subjectavtoritet_support = yes
-		one_random_industrial_complex = yes
-		one_random_fossil_fuel_powerplant = yes
+		random_owned_controlled_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
 		if = {
 			limit = {
 				ROOT = {
 					OR = {
-						tag = BSH
-						tag = TAT
 						tag = CHE
+						tag = BSH
+						tag = KBK
+						tag = TAT
+						tag = TUV
+						tag = YAK
+						tag = BRY
+						tag = KOM
+						tag = ALT
+						tag = KHS
+						tag = KAE
+						tag = CKK
+						tag = YAM
+						tag = NEE
+						tag = KCC
+						tag = ING
+						tag = ADY
+						tag = DAG
+						tag = KLM
+						tag = FIN
+						tag = CHU
+						tag = MEL
+						tag = MOV
+						tag = UDM
+						
 					}
 					NOT = { has_country_flag = SUB_subject_rebeliion_flag }
-					is_subject_of = SOV
-					has_autonomy_state = autonomy_republic_rf
+					OR = {
+						has_autonomy_state = autonomy_republic_rf
+						has_autonomy_state = autonomy_kray_rf
+						has_autonomy_state = autonomy_oblast_rf
+						has_autonomy_state = autonomy_okrug_rf
+					}
 				}
 			}
 			set_temp_variable = { modify_subjectinped = -10 }
 			modify_subjectinped_support = yes
-		}
-		ai_chance = {
-			base = 100
 		}
 	}
 }
@@ -1036,14 +1058,40 @@ country_event = {
 		if = {
 			limit = {
 				ROOT = {
-					OR = {
-						tag = BSH
-						tag = TAT
-						tag = CHE
-					}
 					NOT = { has_country_flag = SUB_subject_rebeliion_flag }
-					is_subject_of = SOV
-					has_autonomy_state = autonomy_republic_rf
+					OR = {
+						tag = CHE
+						tag = BSH
+						tag = KBK
+						tag = TAT
+						tag = TUV
+						tag = YAK
+						tag = BRY
+						tag = KOM
+						tag = ALT
+						tag = KHS
+						tag = KAE
+						tag = CKK
+						tag = YAM
+						tag = NEE
+						tag = KCC
+						tag = ING
+						tag = ADY
+						tag = DAG
+						tag = KLM
+						tag = FIN
+						tag = CHU
+						tag = MEL
+						tag = MOV
+						tag = UDM
+						
+					}
+					OR = {
+						has_autonomy_state = autonomy_republic_rf
+						has_autonomy_state = autonomy_kray_rf
+						has_autonomy_state = autonomy_oblast_rf
+						has_autonomy_state = autonomy_okrug_rf
+					}
 				}
 			}
 			set_temp_variable = { modify_subjectinped = 10 }
@@ -1081,7 +1129,7 @@ country_event = {
 	}
 }
 
-#Start rebellion
+#Attack Moldova choose(PMR)
 country_event = {
 	id = subject_rus.42
 	title = subject_rus.42.t
@@ -1189,7 +1237,7 @@ country_event = {
 	id = subject_rus.45
 	title = subject_rus.45.t
 	desc = subject_rus.45.d
-	picture = GFX_sovfed
+	picture = GFX_subject_subsidies
 	is_triggered_only = yes
 	option = {
 		name = subject_rus.45.a
@@ -1204,7 +1252,7 @@ country_event = {
 		add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
 		ai_chance = {
-			base = 50
+			base = 90
 		}
 	}
 	option = {
@@ -1218,7 +1266,7 @@ country_event = {
 		set_temp_variable = { influence_target = FROM }
 		change_influence_percentage = yes
 		ai_chance = {
-			base = 50
+			base = 10
 		}
 	}
 }
@@ -1228,7 +1276,7 @@ country_event = {
 	title = subject_rus.46.t
 	desc = subject_rus.46.d
 	timeout_days = 2
-	picture = GFX_sovfed
+	picture = GFX_subject_subsidies
 	is_triggered_only = yes
 
 	option = {
@@ -1242,15 +1290,43 @@ country_event = {
 			limit = {
 				ROOT = {
 					NOT = { has_country_flag = SUB_subject_rebeliion_flag }
-					is_subject_of = SOV
-					has_autonomy_state = autonomy_republic_rf
+					OR = {
+						tag = CHE
+						tag = BSH
+						tag = KBK
+						tag = TAT
+						tag = TUV
+						tag = YAK
+						tag = BRY
+						tag = KOM
+						tag = ALT
+						tag = KHS
+						tag = KAE
+						tag = CKK
+						tag = YAM
+						tag = NEE
+						tag = KCC
+						tag = ING
+						tag = ADY
+						tag = DAG
+						tag = KLM
+						tag = FIN
+						tag = CHU
+						tag = MEL
+						tag = MOV
+						tag = UDM
+						
+					}
+					OR = {
+						has_autonomy_state = autonomy_republic_rf
+						has_autonomy_state = autonomy_kray_rf
+						has_autonomy_state = autonomy_oblast_rf
+						has_autonomy_state = autonomy_okrug_rf
+					}
 				}
 			}
 			set_temp_variable = { modify_subjectinped = -5 }
 			modify_subjectinped_support = yes
-		}
-		ai_chance = {
-			base = 100
 		}
 	}
 }
@@ -1259,7 +1335,7 @@ country_event = {
 	id = subject_rus.47
 	title = subject_rus.47.t
 	desc = subject_rus.47.d
-	picture = GFX_sovfed
+	picture = GFX_subject_subsidies
 	is_triggered_only = yes
 
 	option = {
@@ -1271,8 +1347,39 @@ country_event = {
 			limit = {
 				ROOT = {
 					NOT = { has_country_flag = SUB_subject_rebeliion_flag }
-					is_subject_of = SOV
-					has_autonomy_state = autonomy_republic_rf
+					OR = {
+						tag = CHE
+						tag = BSH
+						tag = KBK
+						tag = TAT
+						tag = TUV
+						tag = YAK
+						tag = BRY
+						tag = KOM
+						tag = ALT
+						tag = KHS
+						tag = KAE
+						tag = CKK
+						tag = YAM
+						tag = NEE
+						tag = KCC
+						tag = ING
+						tag = ADY
+						tag = DAG
+						tag = KLM
+						tag = FIN
+						tag = CHU
+						tag = MEL
+						tag = MOV
+						tag = UDM
+						
+					}
+					OR = {
+						has_autonomy_state = autonomy_republic_rf
+						has_autonomy_state = autonomy_kray_rf
+						has_autonomy_state = autonomy_oblast_rf
+						has_autonomy_state = autonomy_okrug_rf
+					}
 				}
 			}
 			set_temp_variable = { modify_subjectinped = 5 }
@@ -1427,12 +1534,32 @@ country_event = {
 		name = subject_rus.51.a
 		log = "[GetDateText]: [This.GetName]: subject_rus.51.a executed"
 		TAT = { country_event = { id = subject_rus.52 days = 1 } }
-		add_timed_idea = {
-			idea = TAT_agro_export
-			days = 450
-		}
-		set_temp_variable = { treasury_change = -5 }
+		set_temp_variable = { treasury_change = -2.25 }
 		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = agriculture_district
+					size > 0
+					include_locked = yes
+				}
+				OR = {
+					is_in_home_area = yes
+					NOT = {
+						owner = {
+							any_owned_state = {
+								free_building_slots = {
+									building = agriculture_district
+									size > 0
+									include_locked = yes
+								}
+								is_in_home_area = yes
+							}
+						}
+					}
+				}
+			}
+		}
 		add_opinion_modifier = {
 			target = SOV
 			modifier = large_commercial_relations
@@ -1454,7 +1581,7 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 20
+			base = 50
 			modifier = {
 				factor = 20
 				is_top5_influencer = yes
@@ -1474,7 +1601,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: subject_rus.51.b executed"
 		TAT = { country_event = { id = subject_rus.53 days = 1 } }
 		ai_chance = {
-			base = 20
+			base = 50
 			modifier = {
 				factor = 20
 				NOT = { is_influencer = yes }
@@ -1499,7 +1626,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: subject_rus.52.a executed"
 		set_temp_variable = { modify_subjectavtoritet = 10 }
 		modify_subjectavtoritet_support = yes
-		set_temp_variable = { treasury_change = 5 }
+		set_temp_variable = { treasury_change = 3.5 }
 		modify_treasury_effect = yes
 	}
 }
@@ -1529,12 +1656,32 @@ country_event = {
 		name = subject_rus.54.a
 		log = "[GetDateText]: [This.GetName]: subject_rus.54.a executed"
 		BSH = { country_event = { id = subject_rus.55 days = 1 } }
-		add_timed_idea = {
-			idea = BSH_agro_export
-			days = 450
-		}
-		set_temp_variable = { treasury_change = -5 }
+		set_temp_variable = { treasury_change = -2.25 }
 		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			limit = {
+				free_building_slots = {
+					building = agriculture_district
+					size > 0
+					include_locked = yes
+				}
+				OR = {
+					is_in_home_area = yes
+					NOT = {
+						owner = {
+							any_owned_state = {
+								free_building_slots = {
+									building = agriculture_district
+									size > 0
+									include_locked = yes
+								}
+								is_in_home_area = yes
+							}
+						}
+					}
+				}
+			}
+		}
 		add_opinion_modifier = {
 			target = SOV
 			modifier = large_commercial_relations
@@ -1556,7 +1703,7 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 20
+			base = 50
 			modifier = {
 				factor = 20
 				is_top5_influencer = yes
@@ -1576,7 +1723,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: subject_rus.54.b executed"
 		BSH = { country_event = { id = subject_rus.56 days = 1 } }
 		ai_chance = {
-			base = 20
+			base = 50
 			modifier = {
 				factor = 20
 				NOT = { is_influencer = yes }
@@ -1601,7 +1748,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: subject_rus.55.a executed"
 		set_temp_variable = { modify_subjectavtoritet = 10 }
 		modify_subjectavtoritet_support = yes
-		set_temp_variable = { treasury_change = 5 }
+		set_temp_variable = { treasury_change = 3.5 }
 		modify_treasury_effect = yes
 	}
 }
@@ -1658,7 +1805,7 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 20
+			base = 50
 			modifier = {
 				factor = 20
 				is_top5_influencer = yes
@@ -1678,7 +1825,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: subject_rus.57.b executed"
 		KHM = { country_event = { id = subject_rus.59 days = 1 } }
 		ai_chance = {
-			base = 20
+			base = 50
 			modifier = {
 				factor = 20
 				NOT = { is_influencer = yes }
@@ -1835,7 +1982,7 @@ country_event = {
 	}
 	option = {
 		name = subject_rus.63.b
-		log = "[GetDateText]: [This.GetName]: subject_rus.603.b executed"
+		log = "[GetDateText]: [This.GetName]: subject_rus.63.b executed"
 		FROM = { country_event = { id = subject_rus.65 days = 1 } }
 		add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
 		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
@@ -1894,6 +2041,1615 @@ country_event = {
 		modify_subjectavtoritet_support = yes
 	}
 }
+#Change Status Subject
+country_event = {
+	id = subject_rus.66
+	title = subject_rus.66.t
+	desc = subject_rus.66.d
+	picture = GFX_subject_status
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.66.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.66.a executed"
+		FROM = { country_event = { id = subject_rus.67 days = 1 } }
+		add_political_power = -100
+		add_stability = 0.05
+		set_temp_variable = { percent_change = 4.3 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		ai_chance = {
+			base = 70
+			modifier = {
+				factor = 20
+				is_top5_influencer = yes
+			}
+			modifier = {
+				factor = 20
+				is_top3_influencer = yes
+			}
+			modifier = {
+				factor = 20
+				has_opinion = { target = ROOT value > 50 }
+			}
+		}
+	}
+	option = {
+		name = subject_rus.66.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.66.b executed"
+		FROM = { country_event = { id = subject_rus.68 days = 1 } }
+		add_stability = -0.03
+		add_political_power = 125
+		set_temp_variable = { percent_change = -3.3 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 20
+				NOT = { is_influencer = yes }
+			}
+			modifier = {
+				factor = 20
+				has_opinion = { target = ROOT value < 50 }
+			}
+		}
+	}
+}
+#Change status - Russia Agree
+country_event = {
+	id = subject_rus.67
+	title = subject_rus.67.t
+	desc = subject_rus.67.d
+	timeout_days = 2
+	picture = GFX_subject_status
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.67.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.67.a executed"
+		SUB_change_status_subject = yes
+		add_political_power = 100
+		set_temp_variable = { modify_subjectavtoritet = -45 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#Change status - Russia Disagree
+country_event = {
+	id = subject_rus.68
+	title = subject_rus.68.t
+	desc = subject_rus.68.d
+	timeout_days = 2
+	picture = GFX_subject_status
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.68.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.68.a executed"
+		set_temp_variable = { modify_subjectavtoritet = -26 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#SEPARATISM TATARSTAN
+country_event = {
+	id = subject_rus.69
+	title = subject_rus.69.t
+	desc = subject_rus.69.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.69.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.69.a executed"
+		add_stability = 0.03
+		release = TAT
+		TAT = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = TAT
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		TAT = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.69.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.69.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = TAT
+		SOV = {
+			set_autonomy = {
+				target = TAT
+				autonomy_state = autonomy_free
+			}
+		}
+		TAT = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM BASHKORTOSTAN
+country_event = {
+	id = subject_rus.70
+	title = subject_rus.70.t
+	desc = subject_rus.70.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.70.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.70.a executed"
+		add_stability = 0.03
+		release = BSH
+		BSH = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = BSH
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		BSH = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.70.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.70.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+			release = BSH
+			SOV = {
+				set_autonomy = {
+					target = BSH
+					autonomy_state = autonomy_free
+				}
+			}
+			BSH = { set_country_flag = SUB_subject_rebeliion_flag }
+		}
+	}
+}
+#SEPARATISM CHECHNYA
+country_event = {
+	id = subject_rus.71
+	title = subject_rus.71.t
+	desc = subject_rus.71.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.71.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.71.a executed"
+		add_stability = 0.03
+		release = CHE
+		CHE = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = CHE
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		CHE = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.71.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.71.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = CHE
+		SOV = {
+			set_autonomy = {
+				target = CHE
+				autonomy_state = autonomy_free
+			}
+		}
+		CHE = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM INGUSHETIA
+country_event = {
+	id = subject_rus.72
+	title = subject_rus.72.t
+	desc = subject_rus.72.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.72.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.72.a executed"
+		add_stability = 0.03
+		release = ING
+		ING = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = ING
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		ING = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.72.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.72.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = ING
+		SOV = {
+			set_autonomy = {
+				target = ING
+				autonomy_state = autonomy_free
+			}
+		}
+		ING = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM KABARDINO-BALKARIA
+country_event = {
+	id = subject_rus.73
+	title = subject_rus.73.t
+	desc = subject_rus.73.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.73.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.73.a executed"
+		add_stability = 0.03
+		release = KBK
+		KBK = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = KBK
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		KBK = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.73.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.73.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = KBK
+		SOV = {
+			set_autonomy = {
+				target = KBK
+				autonomy_state = autonomy_free
+			}
+		}
+		KBK = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM KARACHAEVO-CHERKESSIYA
+country_event = {
+	id = subject_rus.74
+	title = subject_rus.74.t
+	desc = subject_rus.74.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.74.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.74.a executed"
+		add_stability = 0.03
+		release = KCC
+		KCC = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = KCC
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		KCC = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.74.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.74.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = KCC
+		SOV = {
+			set_autonomy = {
+				target = KCC
+				autonomy_state = autonomy_free
+			}
+		}
+		KCC = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM ADYGEA
+country_event = {
+	id = subject_rus.75
+	title = subject_rus.75.t
+	desc = subject_rus.75.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.75.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.75.a executed"
+		add_stability = 0.03
+		release = ADY
+		ADY = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = ADY
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		ADY = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.75.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.75.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = ADY
+		SOV = {
+			set_autonomy = {
+				target = ADY
+				autonomy_state = autonomy_free
+			}
+		}
+		ADY = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM DAGESTAN
+country_event = {
+	id = subject_rus.76
+	title = subject_rus.76.t
+	desc = subject_rus.76.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.76.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.76.a executed"
+		add_stability = 0.03
+		release = DAG
+		DAG = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = DAG
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		DAG = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.76.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.76.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = DAG
+		SOV = {
+			set_autonomy = {
+				target = DAG
+				autonomy_state = autonomy_free
+			}
+		}
+		DAG = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM KALMIKYA
+country_event = {
+	id = subject_rus.77
+	title = subject_rus.77.t
+	desc = subject_rus.77.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.77.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.77.a executed"
+		add_stability = 0.03
+		release = KLM
+		KLM = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = KLM
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		KLM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.77.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.77.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = KLM
+		SOV = {
+			set_autonomy = {
+				target = KLM
+				autonomy_state = autonomy_free
+			}
+		}
+		KLM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM MARI EL
+country_event = {
+	id = subject_rus.78
+	title = subject_rus.78.t
+	desc = subject_rus.78.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.78.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.78.a executed"
+		add_stability = 0.03
+		release = MEL
+		MEL = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = MEL
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		MEL = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.78.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.78.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = MEL
+		SOV = {
+			set_autonomy = {
+				target = MEL
+				autonomy_state = autonomy_free
+			}
+		}
+		MEL = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM CHUVASHIA
+country_event = {
+	id = subject_rus.79
+	title = subject_rus.79.t
+	desc = subject_rus.79.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.79.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.79.a executed"
+		add_stability = 0.03
+		release = CHU
+		CHU = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = CHU
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		CHU = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.79.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.79.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = CHU
+		SOV = {
+			set_autonomy = {
+				target = CHU
+				autonomy_state = autonomy_free
+			}
+		}
+		CHU = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM MORDOVIA
+country_event = {
+	id = subject_rus.80
+	title = subject_rus.80.t
+	desc = subject_rus.80.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.80.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.80.a executed"
+		add_stability = 0.03
+		release = MOV
+		MOV = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = MOV
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		MOV = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.80.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.80.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = MOV
+		SOV = {
+			set_autonomy = {
+				target = MOV
+				autonomy_state = autonomy_free
+			}
+		}
+		MOV = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM UDMURTIA
+country_event = {
+	id = subject_rus.81
+	title = subject_rus.81.t
+	desc = subject_rus.81.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.81.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.81.a executed"
+		add_stability = 0.03
+		release = UDM
+		UDM = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = UDM
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		UDM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.81.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.81.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = UDM
+		SOV = {
+			set_autonomy = {
+				target = UDM
+				autonomy_state = autonomy_free
+			}
+		}
+		UDM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM KARELIA
+country_event = {
+	id = subject_rus.82
+	title = subject_rus.82.t
+	desc = subject_rus.82.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.82.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.82.a executed"
+		add_stability = 0.03
+		release = KAE
+		KAE = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = KAE
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		KAE = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.82.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.82.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = KAE
+		SOV = {
+			set_autonomy = {
+				target = KAE
+				autonomy_state = autonomy_free
+			}
+		}
+		KAE = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM KOMI
+country_event = {
+	id = subject_rus.83
+	title = subject_rus.83.t
+	desc = subject_rus.83.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.83.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.83.a executed"
+		add_stability = 0.03
+		release = KOM
+		KOM = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = KOM
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		KOM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.83.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.83.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = KOM
+		SOV = {
+			set_autonomy = {
+				target = KOM
+				autonomy_state = autonomy_free
+			}
+		}
+		KOM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM NENETS
+country_event = {
+	id = subject_rus.84
+	title = subject_rus.84.t
+	desc = subject_rus.84.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.84.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.84.a executed"
+		add_stability = 0.03
+		release = NEE
+		NEE = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_okrug
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = NEE
+				autonomy_state = autonomy_okrug_rf
+			}
+		}
+		NEE = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.84.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.84.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = NEE
+		SOV = {
+			set_autonomy = {
+				target = NEE
+				autonomy_state = autonomy_free
+			}
+		}
+		NEE = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM TUVA
+country_event = {
+	id = subject_rus.85
+	title = subject_rus.85.t
+	desc = subject_rus.85.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.85.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.85.a executed"
+		add_stability = 0.03
+		release = TUV
+		TUV = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = TUV
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		TUV = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.85.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.85.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = TUV
+		SOV = {
+			set_autonomy = {
+				target = TUV
+				autonomy_state = autonomy_free
+			}
+		}
+		TUV = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM KHAKASSIA
+country_event = {
+	id = subject_rus.86
+	title = subject_rus.86.t
+	desc = subject_rus.86.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.86.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.86.a executed"
+		add_stability = 0.03
+		release = KHS
+		KHS = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = KHS
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		KHS = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.86.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.86.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = KHS
+		SOV = {
+			set_autonomy = {
+				target = KHS
+				autonomy_state = autonomy_free
+			}
+		}
+		KHS = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM BURYATIA
+country_event = {
+	id = subject_rus.87
+	title = subject_rus.87.t
+	desc = subject_rus.87.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.87.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.87.a executed"
+		add_stability = 0.03
+		release = BRY
+		BRY = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = BRY
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		BRY = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.87.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.87.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = BRY
+		SOV = {
+			set_autonomy = {
+				target = BRY
+				autonomy_state = autonomy_free
+			}
+		}
+		BRY = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM YAKUTIA
+country_event = {
+	id = subject_rus.88
+	title = subject_rus.88.t
+	desc = subject_rus.88.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.88.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.88.a executed"
+		add_stability = 0.03
+		release = YAK
+		YAK = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = YAK
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		YAK = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.88.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.88.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = YAK
+		SOV = {
+			set_autonomy = {
+				target = YAK
+				autonomy_state = autonomy_free
+			}
+		}
+		YAK = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM ALTAI
+country_event = {
+	id = subject_rus.89
+	title = subject_rus.89.t
+	desc = subject_rus.89.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.89.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.89.a executed"
+		add_stability = 0.03
+		release = ALT
+		ALT = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = ALT
+				autonomy_state = autonomy_republic_rf
+			}
+		}
+		ALT = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.89.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.89.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = ALT
+		SOV = {
+			set_autonomy = {
+				target = ALT
+				autonomy_state = autonomy_free
+			}
+		}
+		ALT = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#YUGRA RELEASE
+country_event = {
+	id = subject_rus.90
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.90" }
+	title = subject_rus.90.t
+	desc = subject_rus.90.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.90.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.90.a executed"
+		ai_chance = {
+			base = 10
+		}
+		trigger = {
+			KHM = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		SOV = { add_state_core = 678 }
+		annex_country = { target = KHM transfer_troops = yes }
+		add_political_power = -100
+	}
+	option = {
+		name = subject_rus.90.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.90.b executed"
+		ai_chance = {
+			base = 90
+		}
+		trigger = {
+			SOV = { owns_state = 678 }
+		}
+		KHM = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_okrug
+		}
+		set_autonomy = {
+			target = KHM
+			autonomy_state = autonomy_okrug_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			KHM = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		KHM = { transfer_state = 678 }
+		KHM = { add_state_core = 678 }
+		SOV = { add_state_core = 678 }
+	}
+	option = {
+		name = subject_rus.90.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.90.c executed"
+		ai_chance = {
+			base = 0
+		}
+		trigger = {
+			SOV = { owns_state = 678 }
+		}
+		add_political_power = -100
+		KHM = { transfer_state = 678 }
+		KHM = { add_state_core = 678 }
+		SOV = { add_state_core = 678 }
+		KHM = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_okrug
+		}
+		set_autonomy = {
+			target = KHM
+			autonomy_state = autonomy_okrug_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			KHM = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		KHM = {
+			change_tag_from = SOV
+		}
+	}
+}
+#TATARSTAN RELEASE
+country_event = {
+	id = subject_rus.91
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.91" }
+	title = subject_rus.91.t
+	desc = subject_rus.91.d
+	picture = GFX_subject_tatarstan
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.91.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.91.a executed"
+		ai_chance = {
+			base = 10
+		}
+		trigger = {
+			TAT = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		SOV = { add_state_core = 661 }
+		annex_country = { target = TAT transfer_troops = yes }
+		add_political_power = -100
+	}
+	option = {
+		name = subject_rus.91.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.91.b executed"
+		ai_chance = {
+			base = 90
+		}
+		trigger = {
+			SOV = { owns_state = 661 }
+		}
+		TAT = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+		}
+		set_autonomy = {
+			target = TAT
+			autonomy_state = autonomy_republic_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			TAT = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		TAT = { transfer_state = 661 }
+		TAT = { add_state_core = 661 }
+		SOV = { add_state_core = 661 }
+	}
+	option = {
+		name = subject_rus.91.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.91.c executed"
+		ai_chance = {
+			base = 0
+		}
+		trigger = {
+			SOV = { owns_state = 661 }
+		}
+		add_political_power = -100
+		TAT = { transfer_state = 661 }
+		TAT = { add_state_core = 661 }
+		SOV = { add_state_core = 661 }
+		TAT = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+		}
+		set_autonomy = {
+			target = TAT
+			autonomy_state = autonomy_republic_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			TAT = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		TAT = {
+			change_tag_from = SOV
+		}
+	}
+}
+#BASHORTOSTAN RELEASE
+country_event = {
+	id = subject_rus.92
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.92" }
+	title = subject_rus.92.t
+	desc = subject_rus.92.d
+	picture = GFX_subject_bashkirya
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.92.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.92.a executed"
+		ai_chance = {
+			base = 10
+		}
+		trigger = {
+			BSH = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		SOV = { add_state_core = 664 }
+		annex_country = { target = BSH transfer_troops = yes }
+		add_political_power = -100
+	}
+	option = {
+		name = subject_rus.92.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.92.b executed"
+		ai_chance = {
+			base = 90
+		}
+		trigger = {
+			SOV = { owns_state = 664 }
+		}
+		BSH = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+		}
+		set_autonomy = {
+			target = BSH
+			autonomy_state = autonomy_republic_rf
+		}
+		BSH = { transfer_state = 664 }
+		BSH = { add_state_core = 664 }
+		SOV = { add_state_core = 664 }
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			BSH = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+	}
+	option = {
+		name = subject_rus.92.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.92.c executed"
+		ai_chance = {
+			base = 0
+		}
+		trigger = {
+			SOV = { owns_state = 664 }
+		}
+		add_political_power = -100
+		BSH = { transfer_state = 664 }
+		BSH = { add_state_core = 664 }
+		SOV = { add_state_core = 664 }
+		BSH = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+		}
+		set_autonomy = {
+			target = BSH
+			autonomy_state = autonomy_republic_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			BSH = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		BSH = {
+			change_tag_from = SOV
+		}
+	}
+}
+#CRIMEA RELEASE
+country_event = {
+	id = subject_rus.93
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.92" }
+	title = subject_rus.93.t
+	desc = subject_rus.93.d
+	picture = GFX_subject_crimea
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.92.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.92.a executed"
+		ai_chance = {
+			base = 10
+		}
+		trigger = {
+			CRM = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		annex_country = { target = CRM transfer_troops = yes }
+		add_political_power = -100
+	}
+	option = {
+		name = subject_rus.93.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.92.b executed"
+		ai_chance = {
+			base = 90
+		}
+		trigger = {
+			SOV = { owns_state = 669 }
+		}
+		CRM = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+		}
+		set_autonomy = {
+			target = CRM
+			autonomy_state = autonomy_republic_rf
+		}
+		CRM = { transfer_state = 669 }
+		CRM = { add_state_core = 669 }
+		CRM = { transfer_state = 1112 }
+		CRM = { add_state_core = 1112 }
+		SOV = { add_state_core = 669 }
+		SOV = { add_state_core = 1112 }
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			CRM = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+	}
+	option = {
+		name = subject_rus.93.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.92.c executed"
+		ai_chance = {
+			base = 0
+		}
+		trigger = {
+			SOV = { owns_state = 669 }
+		}
+		add_political_power = -100
+		CRM = { transfer_state = 669 }
+		CRM = { add_state_core = 669 }
+		CRM = { transfer_state = 1112 }
+		CRM = { add_state_core = 1112 }
+		SOV = { add_state_core = 669 }
+		SOV = { add_state_core = 1112 }
+		CRM = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_republic
+		}
+		set_autonomy = {
+			target = CRM
+			autonomy_state = autonomy_republic_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			CRM = { 
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		CRM = {
+			change_tag_from = SOV
+		}
+	}
+}
+#They Agree our demands(Status)
+country_event = {
+	id = subject_rus.94
+	title = subject_rus.94.t
+	desc = subject_rus.94.d
+	picture = GFX_subject_status
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.94.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.94.a executed"
+		SUB_change_status_subject = yes
+		add_political_power = 150
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = subject_rus.94.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.94.a executed"
+		SOV = {
+			SUB_separatism_plus_subject = yes
+			set_autonomy = {
+				target = ROOT
+				autonomy_state = autonomy_free
+			}
+			country_event = { id = subject_rus.96 }
+		}
+		set_country_flag = SUB_subject_rebeliion_flag
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#They Agree our demands(Money)
+country_event = {
+	id = subject_rus.95
+	title = subject_rus.95.t
+	desc = subject_rus.95.d
+	is_triggered_only = yes
+	picture = GFX_subject_subsidies
+	option = {
+		name = subject_rus.95.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.95.a executed"
+		set_temp_variable = { treasury_change = 17.5 }
+		modify_treasury_effect = yes
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = subject_rus.95.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.95.a executed"
+		SOV = {
+			SUB_separatism_plus_subject = yes
+			set_autonomy = {
+				target = ROOT
+				autonomy_state = autonomy_free
+			}
+			country_event = { id = subject_rus.96 }
+		}
+		set_country_flag = SUB_subject_rebeliion_flag
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Subject Ahuel
+country_event = {
+	id = subject_rus.96
+	title = subject_rus.96.t
+	desc = subject_rus.96.d
+	is_triggered_only = yes
+	picture = GFX_subject_separatism
+	option = {
+		name = subject_rus.96.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.96.a executed"
+		declare_war_on = {
+			target = FROM
+			type = annex_everything
+		}
+		ai_chance = {
+			base = 99
+		}
+	}
+	option = {
+		name = subject_rus.96.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.96.b executed"
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+#Subject Subsidies
+country_event = {
+	id = subject_rus.97
+	title = subject_rus.97.t
+	desc = subject_rus.97.d
+	is_triggered_only = yes
+	picture = GFX_subject_subsidies
+	option = {
+		name = subject_rus.97.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.97.a executed"
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		SUB_subsidies_1_billion = yes
+		ai_chance = {
+			base = 99
+		}
+	}
+	option = {
+		name = subject_rus.97.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.97.b executed"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		SUB_subsidies_5_billion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = subject_rus.97.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.97.c executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		SUB_subsidies_10_billion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+#SEPARATISM YUGRA
+country_event = {
+	id = subject_rus.98
+	title = subject_rus.98.t
+	desc = subject_rus.98.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.98.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.98.a executed"
+		add_stability = 0.03
+		release = KHM
+		KHM = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_okrug
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = KHM
+				autonomy_state = autonomy_okrug_rf
+			}
+		}
+		KHM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.98.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.98.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = KHM
+		SOV = {
+			set_autonomy = {
+				target = KHM
+				autonomy_state = autonomy_free
+			}
+		}
+		KHM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
+#SEPARATISM YAMAL
+country_event = {
+	id = subject_rus.99
+	title = subject_rus.99.t
+	desc = subject_rus.99.d
+	timeout_days = 2
+	picture = GFX_subject_separatism
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = subject_rus.99.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.99.a executed"
+		add_stability = 0.03
+		release = YAM
+		YAM = { 
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_okrug
+			set_country_flag = SUB_subject_rebeliion_flag 
+		}
+		SOV = {
+			set_autonomy = {
+				target = YAM
+				autonomy_state = autonomy_okrug_rf
+			}
+		}
+		YAM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	option = {
+		name = subject_rus.99.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.99.a executed"
+		custom_effect_tooltip = SUB_separ_tt
+		hidden_effect = {
+		release = YAM
+		SOV = {
+			set_autonomy = {
+				target = YAM
+				autonomy_state = autonomy_free
+			}
+		}
+		YAM = { set_country_flag = SUB_subject_rebeliion_flag }
+	}
+	}
+}
 #Subject try economic stability(ONLY FOR AI)
 country_event = {
 	id = subject_rus.100
@@ -1907,5 +3663,3239 @@ country_event = {
 		modify_corporate_tax_rate_effect = yes
 		set_temp_variable = { pop_change = 35 }
 		modify_population_tax_rate_effect = yes
+		set_country_flag = sov_subject_free_all
 	}
 }
+#Subject Caucas Nalogs Up(1)
+country_event = {
+	id = subject_rus.101
+	title = subject_rus.101.t
+	desc = subject_rus.101.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.101.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.101.a executed"
+		trigger = {
+			CHE = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		CHE = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.101.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.101.b executed"
+		trigger = {
+			ING = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		ING = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.101.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.101.c executed"
+		trigger = {
+			DAG = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		DAG = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.101.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.101.f executed"
+		country_event = { id = subject_rus.102 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Caucas Nalogs Up(2)
+country_event = {
+	id = subject_rus.102
+	title = subject_rus.102.t
+	desc = subject_rus.102.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.102.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.102.a executed"
+		trigger = {
+			KBK = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KBK = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.102.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.102.b executed"
+		trigger = {
+			ADY = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		ADY = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.102.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.102.c executed"
+		trigger = {
+			KCC = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KCC = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.102.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.102.f executed"
+		country_event = { id = subject_rus.101 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Siberia Nalogs Up(1)
+country_event = {
+	id = subject_rus.103
+	title = subject_rus.103.t
+	desc = subject_rus.103.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.103.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.103.a executed"
+		trigger = {
+			KOM = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KOM = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.103.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.103.b executed"
+		trigger = {
+			NEE = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		NEE = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.103.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.103.c executed"
+		trigger = {
+			TUV = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		TUV = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.103.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.103.f executed"
+		country_event = { id = subject_rus.104 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Siberia Nalogs Up(2)
+country_event = {
+	id = subject_rus.104
+	title = subject_rus.104.t
+	desc = subject_rus.104.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.104.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.104.a executed"
+		trigger = {
+			KHS = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KHS = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.104.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.104.b executed"
+		trigger = {
+			BRY = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		BRY = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.104.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.104.c executed"
+		trigger = {
+			YAK = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		YAK = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.104.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.104.f executed"
+		country_event = { id = subject_rus.105 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Siberia Nalogs Up(3)
+country_event = {
+	id = subject_rus.105
+	title = subject_rus.105.t
+	desc = subject_rus.105.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.105.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.105.a executed"
+		trigger = {
+			ALT = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		ALT = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.105.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.105.b executed"
+		trigger = {
+			KHM = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KHM = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.105.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.105.c executed"
+		country_event = { id = subject_rus.104 }
+	}
+	option = {
+		name = subject_rus.105.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.105.f executed"
+		country_event = { id = subject_rus.103 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Volga Nalogs Up(1)
+country_event = {
+	id = subject_rus.106
+	title = subject_rus.106.t
+	desc = subject_rus.106.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.106.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.106.a executed"
+		trigger = {
+			TAT = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		TAT = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.106.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.106.b executed"
+		trigger = {
+			BSH = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		BSH = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.106.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.106.c executed"
+		trigger = {
+			MEL = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		MEL = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.106.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.106.f executed"
+		country_event = { id = subject_rus.107 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Volga Nalogs Up(2)
+country_event = {
+	id = subject_rus.107
+	title = subject_rus.107.t
+	desc = subject_rus.107.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.107.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.107.a executed"
+		trigger = {
+			MOV = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		MOV = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.107.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.107.b executed"
+		trigger = {
+			UDM = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		UDM = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.107.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.107.c executed"
+		trigger = {
+			CHU = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		CHU = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.107.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.107.f executed"
+		country_event = { id = subject_rus.106 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Other Nalogs Up(1)
+country_event = {
+	id = subject_rus.108
+	title = subject_rus.108.t
+	desc = subject_rus.108.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.108.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.a executed"
+		trigger = {
+			KLM = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KLM = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.108.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.b executed"
+		trigger = {
+			KAE = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KAE = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.108.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.c executed"
+		country_event = { id = subject_rus.124 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Moscow New Major
+country_event = {
+	id = subject_rus.109
+	title = subject_rus.109.t
+	desc = subject_rus.109.d
+	is_triggered_only = yes
+	picture = GFX_subject_moscow
+	option = {
+		name = subject_rus.109.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.109.a executed"
+		swap_ideas = {
+			remove_idea = SUB_moscow_lujkov
+			add_idea = SUB_moscow_sobyanin_edro
+		}
+		set_country_flag = SUB_moscow_election
+	}
+	option = {
+		name = subject_rus.109.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.109.b executed"
+		swap_ideas = {
+			remove_idea = SUB_moscow_lujkov
+			add_idea = SUB_moscow_degtyarev_ldpr
+		}
+		set_country_flag = SUB_moscow_election
+	}
+	option = {
+		name = subject_rus.109.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.109.b executed"
+		trigger = {
+			NOT = { has_country_leader = { name = "Alexei Navalny" ruling_only = yes } }
+		}
+		swap_ideas = {
+			remove_idea = SUB_moscow_lujkov
+			add_idea = SUB_moscow_navalny_parnas
+		}
+		set_country_flag = SUB_moscow_election
+	}
+	option = {
+		name = subject_rus.109.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.109.c executed"
+		country_event = { id = subject_rus.110 }
+	}
+}
+#Moscow New Major
+country_event = {
+	id = subject_rus.110
+	title = subject_rus.110.t
+	desc = subject_rus.110.d
+	is_triggered_only = yes
+	picture = GFX_subject_moscow
+	option = {
+		name = subject_rus.110.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.110.a executed"
+		swap_ideas = {
+			remove_idea = SUB_moscow_lujkov
+			add_idea = SUB_moscow_mitrohin_yablo
+		}
+		set_country_flag = SUB_moscow_election
+	}
+	option = {
+		name = subject_rus.110.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.110.b executed"
+		swap_ideas = {
+			remove_idea = SUB_moscow_lujkov
+			add_idea = SUB_moscow_melnikov_cprf
+		}
+		set_country_flag = SUB_moscow_election
+	}
+	option = {
+		name = subject_rus.110.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.110.c executed"
+		country_event = { id = subject_rus.109 }
+	}
+}
+#Subject Caucas Nalogs Fall(1)
+country_event = {
+	id = subject_rus.111
+	title = subject_rus.111.t
+	desc = subject_rus.111.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.111.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.111.a executed"
+		trigger = {
+			CHE = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		CHE = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.111.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.111.b executed"
+		trigger = {
+			ING = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		ING = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.111.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.111.c executed"
+		trigger = {
+			DAG = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		DAG = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.111.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.111.f executed"
+		country_event = { id = subject_rus.112 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Caucas Nalogs Up(2)
+country_event = {
+	id = subject_rus.112
+	title = subject_rus.112.t
+	desc = subject_rus.112.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.112.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.112.a executed"
+		trigger = {
+			KBK = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KBK = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.112.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.112.b executed"
+		trigger = {
+			ADY = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		ADY = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.112.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.112.c executed"
+		trigger = {
+			KCC = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KCC = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.112.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.112.f executed"
+		country_event = { id = subject_rus.112 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Siberia Nalogs Up(1)
+country_event = {
+	id = subject_rus.113
+	title = subject_rus.113.t
+	desc = subject_rus.113.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.113.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.113.a executed"
+		trigger = {
+			KOM = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KOM = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.113.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.113.b executed"
+		trigger = {
+			NEE = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		NEE = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.113.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.113.c executed"
+		trigger = {
+			TUV = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		TUV = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.113.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.113.f executed"
+		country_event = { id = subject_rus.114 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Siberia Nalogs Up(2)
+country_event = {
+	id = subject_rus.114
+	title = subject_rus.114.t
+	desc = subject_rus.114.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.114.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.114.a executed"
+		trigger = {
+			KHS = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KHS = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.114.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.114.b executed"
+		trigger = {
+			BRY = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		BRY = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.114.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.114.c executed"
+		trigger = {
+			YAK = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		YAK = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.114.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.114.f executed"
+		country_event = { id = subject_rus.114 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Siberia Nalogs Up(3)
+country_event = {
+	id = subject_rus.115
+	title = subject_rus.115.t
+	desc = subject_rus.115.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.115.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.115.a executed"
+		trigger = {
+			ALT = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		ALT = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.115.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.115.b executed"
+		trigger = {
+			KHM = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KHM = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.115.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.115.c executed"
+		country_event = { id = subject_rus.114 }
+	}
+	option = {
+		name = subject_rus.115.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.115.f executed"
+		country_event = { id = subject_rus.113 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Volga Nalogs Up(1)
+country_event = {
+	id = subject_rus.116
+	title = subject_rus.116.t
+	desc = subject_rus.116.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.116.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.116.a executed"
+		trigger = {
+			TAT = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		TAT = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.116.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.116.b executed"
+		trigger = {
+			BSH = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		BSH = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.116.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.116.c executed"
+		trigger = {
+			MEL = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		MEL = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.116.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.116.f executed"
+		country_event = { id = subject_rus.117 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Volga Nalogs Up(2)
+country_event = {
+	id = subject_rus.117
+	title = subject_rus.117.t
+	desc = subject_rus.117.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.117.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.117.a executed"
+		trigger = {
+			MOV = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		MOV = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.117.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.117.b executed"
+		trigger = {
+			UDM = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		UDM = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.117.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.117.c executed"
+		trigger = {
+			CHU = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		CHU = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.117.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.117.f executed"
+		country_event = { id = subject_rus.116 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Other Nalogs Fall(1)
+country_event = {
+	id = subject_rus.118
+	title = subject_rus.118.t
+	desc = subject_rus.118.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.118.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.118.a executed"
+		trigger = {
+			KLM = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KLM = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.118.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.118.b executed"
+		trigger = {
+			KAE = {
+				NOT = { has_idea = SUB_small_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KAE = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.118.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.118.c executed"
+		country_event = { id = subject_rus.125 }
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#KUBAN Federalisation
+country_event = {
+	id = subject_rus.119
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.119" }
+	title = subject_rus.119.t
+	desc = subject_rus.119.d
+	is_triggered_only = yes
+	picture = GFX_subject_kuban
+	option = {
+		name = subject_rus.119.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.119.a executed"
+		ai_chance = {
+			base = 10
+		}
+		trigger = {
+			KUB = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		SOV = { add_state_core = 668 }
+		SOV = { add_state_core = 1140 }
+		annex_country = { target = KUB transfer_troops = yes }
+		add_political_power = -100
+	}
+	option = {
+		name = subject_rus.119.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.119.b executed"
+		ai_chance = {
+			base = 90
+		}
+		trigger = {
+			SOV = { owns_state = 668 }
+			SOV = { owns_state = 1140 }
+		}
+		KUB = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_kray
+		}
+		set_autonomy = {
+			target = KUB
+			autonomy_state = autonomy_kray_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			set_temp_variable = { percent_change = 25 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = KUB }
+			change_influence_percentage = yes
+			KUB = {
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		KUB = { transfer_state = 668 }
+		KUB = { transfer_state = 1140 }
+		KUB = { add_state_core = 668 }
+		KUB = { 
+			set_cosmetic_tag = KUB_kuban_kray
+			clr_country_flag = dynamic_flag
+			add_state_core = 1140 
+		}
+		SOV = { add_state_core = 668 }
+		SOV = { add_state_core = 1140 }
+	}
+	option = {
+		name = subject_rus.119.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.119.c executed"
+		ai_chance = {
+			base = 0
+		}
+		trigger = {
+			SOV = { owns_state = 668 }
+			SOV = { owns_state = 1140 }
+		}
+		add_political_power = -100
+		KUB = { transfer_state = 668 }
+		KUB = { add_state_core = 668 }
+		KUB = { transfer_state = 1140 }
+		KUB = { add_state_core = 1140 }
+		SOV = { add_state_core = 668 }
+		SOV = { add_state_core = 1140 }
+		KUB = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_kray
+		}
+		set_autonomy = {
+			target = KUB
+			autonomy_state = autonomy_kray_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			set_temp_variable = { percent_change = 25 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = KUB }
+			change_influence_percentage = yes
+			KUB = {
+				add_ideas = SUB_small_taxes
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		KUB = {
+			change_tag_from = SOV
+			set_cosmetic_tag = KUB_kuban_kray
+			clr_country_flag = dynamic_flag
+		}
+	}
+}
+#Ural Federalisation
+country_event = {
+	id = subject_rus.120
+	immediate = { log = "[GetDateText]: [Root.GetName]: event subject_rus.120" }
+	title = subject_rus.120.t
+	desc = subject_rus.120.d
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = subject_rus.120.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.120.a executed"
+		ai_chance = {
+			base = 10
+		}
+		trigger = {
+			URA = {
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		SOV = { add_state_core = 676 }
+		annex_country = { target = URA transfer_troops = yes }
+		add_political_power = -100
+	}
+	option = {
+		name = subject_rus.120.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.120.b executed"
+		ai_chance = {
+			base = 90
+		}
+		trigger = {
+			SOV = { owns_state = 676 }
+		}
+		URA = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_oblast
+			transfer_state = 676
+			add_state_core = 676
+		}
+		set_autonomy = {
+			target = URA
+			autonomy_state = autonomy_oblast_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			URA = {
+				add_ideas = SUB_small_taxes
+				add_ideas = CHE_republic_rf
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 20 } } }
+					hidden_effect = {
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 20 }
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					}
+					set_leader = yes
+					}
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = yes
+					}
+					add_popularity = {
+						ideology = nationalist
+						popularity = 0.65
+					}
+					add_popularity = {
+						ideology = communism
+						popularity = -0.45
+					}
+					add_to_variable = { party_pop_array^20 = 0.85 }
+					recalculate_party = yes
+				}
+				hidden_effect = {
+					set_ruling_leader = yes
+					set_leader = yes
+					set_variable = { current_term = 0 }
+				}
+				create_country_leader = {
+					name = "Eduard Rossel"
+					picture = "gfx/leaders/SOV/sov_rossel.dds"
+					expire = "2045.1.1"
+					ideology = Nat_Populism
+					traits = {
+						nationalist_Nat_Populism
+					}
+				}
+				set_cosmetic_tag = URA_oblast
+				clr_country_flag = dynamic_flag
+			}
+			SOV = {
+				add_state_core = 676
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+	}
+	option = {
+		name = subject_rus.120.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.120.c executed"
+		ai_chance = {
+			base = 0
+		}
+		trigger = {
+			SOV = { owns_state = 668 }
+			SOV = { owns_state = 1140 }
+		}
+		add_political_power = -100
+		URA = { transfer_state = 676 }
+		URA = { add_state_core = 676 }
+		SOV = { add_state_core = 676 }
+		URA = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_oblast
+		}
+		set_autonomy = {
+			target = URA
+			autonomy_state = autonomy_oblast_rf
+		}
+		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		hidden_effect = {
+			URA = {
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 20 } } }
+					hidden_effect = {
+						clear_array = ruling_party
+						clear_array = gov_coalition_array
+						add_to_array = { ruling_party = 20 }
+						update_government_coalition_strength = yes
+						update_party_name = yes
+						set_coalition_drift = yes
+						meta_effect = {
+						text = {
+							set_country_flag = [META_SET_RULING_PARTY]
+						}
+						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+					}
+					set_leader = yes
+					}
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = yes
+					}
+					add_popularity = {
+						ideology = nationalist
+						popularity = 0.65
+					}
+					add_popularity = {
+						ideology = communism
+						popularity = -0.45
+					}
+					add_to_variable = { party_pop_array^20 = 0.85 }
+					recalculate_party = yes
+				}
+				hidden_effect = {
+					set_ruling_leader = yes
+					set_leader = yes
+					set_variable = { current_term = 0 }
+				}
+				create_country_leader = {
+					name = "Eduard Rossel"
+					picture = "gfx/leaders/SOV/sov_rossel.dds"
+					expire = "2045.1.1"
+					ideology = Nat_Populism
+					traits = {
+						nationalist_Nat_Populism
+					}
+				}
+				add_ideas = SUB_small_taxes
+				add_ideas = CHE_republic_rf
+				set_cosmetic_tag = URA_oblast
+				clr_country_flag = dynamic_flag
+			}
+			SOV = {
+				set_temp_variable = { modify_subjectnalogs = 1.5 }
+				modify_subjectnalogs_support = yes
+			}
+			SUB_separatism_plus_subject = yes
+		}
+		URA = {
+			change_tag_from = SOV
+		}
+	}
+}
+#Ural Zavods
+country_event = {
+	id = subject_rus.121
+	title = subject_rus.121.t
+	desc = subject_rus.121.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+	option = {
+		name = subject_rus.121.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.121.a executed"
+		FROM = { country_event = { id = subject_rus.122 days = 1 } }
+		set_temp_variable = { treasury_change = -2.75 }
+		modify_treasury_effect = yes
+		add_timed_idea = { idea = URA_ekb_concern_idea_other days = 720 }
+		set_temp_variable = { percent_change = 0.3 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		change_influence_percentage = yes
+		add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_positive }
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 20
+				is_top5_influencer = yes
+			}
+			modifier = {
+				factor = 20
+				is_top3_influencer = yes
+			}
+			modifier = {
+				factor = 20
+				has_opinion = { target = ROOT value > 50 }
+			}
+		}
+	}
+	option = {
+		name = subject_rus.121.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.121.b executed"
+		FROM = { country_event = { id = subject_rus.123 days = 1 } }
+		add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
+		reverse_add_opinion_modifier = { target = FROM modifier = recent_actions_negative }
+		set_temp_variable = { percent_change = -2 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FROM }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 20
+				NOT = { is_influencer = yes }
+			}
+			modifier = {
+				factor = 20
+				has_opinion = { target = ROOT value < 50 }
+			}
+		}
+	}
+}
+#Ural Zavods Gives
+country_event = {
+	id = subject_rus.122
+	title = subject_rus.122.t
+	desc = subject_rus.122.d
+	timeout_days = 2
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.122.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.122.a executed"
+		set_temp_variable = { modify_subjectavtoritet = 4 }
+		modify_subjectavtoritet_support = yes
+		set_temp_variable = { treasury_change = 2.75 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+#Ural Zavods Not Gives
+country_event = {
+	id = subject_rus.123
+	title = subject_rus.123.t
+	desc = subject_rus.123.d
+	picture = GFX_sovfed
+	is_triggered_only = yes
+
+	option = {
+		name = subject_rus.123.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.123.a executed"
+		set_temp_variable = { modify_subjectavtoritet = -6 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#Subject Other Nalogs UP(2)
+country_event = {
+	id = subject_rus.124
+	title = subject_rus.124.t
+	desc = subject_rus.124.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.124.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.124.a executed"
+		trigger = {
+			URA = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		URA = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.124.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.124.b executed"
+		trigger = {
+			CRM = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		CRM = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.124.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.124.c executed"
+		trigger = {
+			KUB = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KUB = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_rise = yes
+		}
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject Other Nalogs Fall(2)
+country_event = {
+	id = subject_rus.125
+	title = subject_rus.125.t
+	desc = subject_rus.125.d
+	is_triggered_only = yes
+	picture = GFX_subject_taxes
+	option = {
+		name = subject_rus.125.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.125.a executed"
+		trigger = {
+			URA = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		URA = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.125.b
+		log = "[GetDateText]: [This.GetName]: subject_rus.125.b executed"
+		trigger = {
+			CRM = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		CRM = {
+			set_temp_variable = { modify_subjectinped = -15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.125.c
+		log = "[GetDateText]: [This.GetName]: subject_rus.125.c executed"
+		trigger = {
+			KUB = {
+				NOT = { has_idea = SUB_hard_taxes }
+				OR = {
+					has_autonomy_state = autonomy_republic_rf
+					has_autonomy_state = autonomy_kray_rf
+					has_autonomy_state = autonomy_oblast_rf
+					has_autonomy_state = autonomy_okrug_rf
+				}
+			}
+		}
+		KUB = {
+			set_temp_variable = { modify_subjectinped = 15 }
+			modify_subjectinped_support = yes
+			SUB_taxes_subject_fall = yes
+		}
+	}
+	option = {
+		name = subject_rus.108.f
+		log = "[GetDateText]: [This.GetName]: subject_rus.108.f executed"
+	}
+}
+#Subject War Against Jirinovsky
+country_event = {
+	id = subject_rus.126
+	title = subject_rus.126.t
+	desc = subject_rus.126.d
+	is_triggered_only = yes
+	picture = GFX_sov_kto_start
+	option = {
+		name = subject_rus.126.a
+		log = "[GetDateText]: [This.GetName]: subject_rus.126.a executed"
+		declare_war_on = {
+			target = SOV
+			type = annex_everything
+		}
+		SOV = {
+			add_stability = -0.03
+		}
+		hidden_effect = {
+			division_template = {
+				name = "The Rebel Battalion"
+				regiments = {
+					L_Inf_Bat = { x = 0 y = 0 }
+					L_Inf_Bat = { x = 0 y = 1 }
+				}
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 1011 }
+				create_unit = {
+					division = "name = \"The Rebel Battalion\" division_template = \"The Rebel Battalion\" start_experience_factor = 0.2"
+					owner = ROOT
+				}
+			}
+		}
+	}
+}
+###########URAL EVENTS###########
+#Foreign Investors
+country_event = {
+	id = ural_event.1
+	title = ural_event.1.t
+	desc = ural_event.1.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.1.a
+		log = "[GetDateText]: [This.GetName]: ural_event.1.a executed"
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = ROOT }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		set_temp_variable = { treasury_change = -7 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = { target = URA modifier = recent_actions_positive }
+		reverse_add_opinion_modifier = { target = URA modifier = recent_actions_positive }
+		URA = { country_event = { id = ural_event.2 days = 1 } }
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.1.b
+		log = "[GetDateText]: [This.GetName]: ural_event.1.b executed"
+		URA = { country_event = { id = ural_event.3 days = 1 } }
+		add_opinion_modifier = { target = URA modifier = recent_actions_negative }
+		reverse_add_opinion_modifier = { target = URA modifier = recent_actions_negative }
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Foreign Investors Agree
+country_event = {
+	id = ural_event.2
+	title = ural_event.2.t
+	desc = ural_event.2.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.2.a
+		log = "[GetDateText]: [This.GetName]: ural_event.2.a executed"
+		random_owned_controlled_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+#Foreign Investors Disagree
+country_event = {
+	id = ural_event.3
+	title = ural_event.3.t
+	desc = ural_event.3.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.3.a
+		log = "[GetDateText]: [This.GetName]: ural_event.3.a executed"
+	}
+}
+#Belarus Investors
+country_event = {
+	id = ural_event.4
+	title = ural_event.4.t
+	desc = ural_event.4.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.4.a
+		log = "[GetDateText]: [This.GetName]: ural_event.4.a executed"
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = BLR }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = { target = URA modifier = recent_actions_positive }
+		reverse_add_opinion_modifier = { target = URA modifier = recent_actions_positive }
+		URA = { country_event = { id = ural_event.5 days = 1 } }
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.4.b
+		log = "[GetDateText]: [This.GetName]: ural_event.4.b executed"
+		URA = { country_event = { id = ural_event.6 days = 1 } }
+		add_opinion_modifier = { target = URA modifier = recent_actions_negative }
+		reverse_add_opinion_modifier = { target = URA modifier = recent_actions_negative }
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Belarus Investors Agree
+country_event = {
+	id = ural_event.5
+	title = ural_event.5.t
+	desc = ural_event.5.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.5.a
+		log = "[GetDateText]: [This.GetName]: ural_event.5.a executed"
+		add_timed_idea = {
+			idea = BLR_agriculture
+			days = 750
+		}
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+	}
+}
+#Belarus Investors Disagree
+country_event = {
+	id = ural_event.6
+	title = ural_event.6.t
+	desc = ural_event.6.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.6.a
+		log = "[GetDateText]: [This.GetName]: ural_event.6.a executed"
+	}
+}
+#Ural Declare Republic
+country_event = {
+	id = ural_event.7
+	title = ural_event.7.t
+	desc = ural_event.7.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.7.a
+		log = "[GetDateText]: [This.GetName]: ural_event.7.a executed"
+		hidden_effect = {
+			URA = {
+				if = {
+					limit = {
+						has_autonomy_state = autonomy_okrug_rf
+						has_country_flag = SOV_subject_okrug
+					}
+					clr_country_flag = SOV_subject_okrug
+					set_country_flag = SOV_subject_republic
+					SOV = {
+						set_autonomy = {
+							target = URA
+							autonomy_state = autonomy_republic_rf
+						}
+					}
+					if = {
+						limit = {
+							URA = {
+								NOT = {
+									has_country_leader = {
+										name = "Eduard Rossel"
+										ruling_only = yes
+									}
+								}
+							}
+						}
+						create_country_leader = {
+							name = "Eduard Rossel"
+							picture = "gfx/leaders/SOV/URA/Eduard_Rossel.dds"
+							expire = "2045.1.1"
+							ideology = Nat_Populism
+							traits = {
+								nationalist_Nat_Populism
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						has_autonomy_state = autonomy_oblast_rf
+						has_country_flag = SOV_subject_oblast
+					}
+					clr_country_flag = SOV_subject_oblast
+					set_country_flag = SOV_subject_republic
+					SOV = {
+						set_autonomy = {
+							target = URA
+							autonomy_state = autonomy_republic_rf
+						}
+					}
+					if = {
+						limit = {
+							URA = {
+								NOT = {
+									has_country_leader = {
+										name = "Eduard Rossel"
+										ruling_only = yes
+									}
+								}
+							}
+						}
+						create_country_leader = {
+							name = "Eduard Rossel"
+							picture = "gfx/leaders/SOV/URA/Eduard_Rossel.dds"
+							expire = "2045.1.1"
+							ideology = Nat_Populism
+							traits = {
+								nationalist_Nat_Populism
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						has_autonomy_state = autonomy_kray_rf
+						has_country_flag = SOV_subject_kray
+					}
+					clr_country_flag = SOV_subject_kray
+					set_country_flag = SOV_subject_republic
+					SOV = {
+						set_autonomy = {
+							target = URA
+							autonomy_state = autonomy_republic_rf
+						}
+					}
+					if = {
+						limit = {
+							URA = {
+								NOT = {
+									has_country_leader = {
+										name = "Eduard Rossel"
+										ruling_only = yes
+									}
+								}
+							}
+						}
+						create_country_leader = {
+							name = "Eduard Rossel"
+							picture = "gfx/leaders/SOV/URA/Eduard_Rossel.dds"
+							expire = "2045.1.1"
+							ideology = Nat_Populism
+							traits = {
+								nationalist_Nat_Populism
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+#Ural try Annex Kurgan
+country_event = {
+	id = ural_event.8
+	title = ural_event.8.t
+	desc = ural_event.8.d
+	timeout_days = 5
+	picture = GFX_URA_referendum_kurgan
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.8.a
+		log = "[GetDateText]: [This.GetName]: ural_event.8.a executed"
+		URA = { country_event = { id = ural_event.9 days = 1 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.8.b
+		log = "[GetDateText]: [This.GetName]: ural_event.8.b executed"
+		URA = { country_event = { id = ural_event.10 days = 1 } }
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Ural Annex Orenburg
+country_event = {
+	id = ural_event.9
+	title = ural_event.9.t
+	desc = ural_event.9.d
+	picture = GFX_URA_referendum_orenburg
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.9.a
+		log = "[GetDateText]: [This.GetName]: ural_event.9.a executed"
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+		set_temp_variable = { modify_subjectinped = -45 }
+		modify_subjectinped_support = yes
+		URA = { transfer_state = 1071 }
+		1071 = { add_core_of = URA }
+		set_temp_variable = { percent_change = 0.5 }
+		change_domestic_influence_percentage = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+#Ural Not Annex
+country_event = {
+	id = ural_event.10
+	title = ural_event.10.t
+	desc = ural_event.10.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+	option = {
+		name = ural_event.10.a
+		log = "[GetDateText]: [This.GetName]: ural_event.10.a executed"
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_negative
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_negative
+			}
+		}
+		set_temp_variable = { modify_subjectavtoritet = -4 }
+		modify_subjectavtoritet_support = yes
+	}
+}
+#Ural try Annex Chelyaba
+country_event = {
+	id = ural_event.11
+	title = ural_event.11.t
+	desc = ural_event.11.d
+	timeout_days = 5
+	picture = GFX_URA_referendum_chelyaba
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.11.a
+		log = "[GetDateText]: [This.GetName]: ural_event.11.a executed"
+		URA = { country_event = { id = ural_event.12 days = 1 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.11.b
+		log = "[GetDateText]: [This.GetName]: ural_event.11.b executed"
+		URA = { country_event = { id = ural_event.10 days = 1 } }
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Ural Annex Chelyaba
+country_event = {
+	id = ural_event.12
+	title = ural_event.12.t
+	desc = ural_event.12.d
+	picture = GFX_URA_referendum_chelyaba
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.12.a
+		log = "[GetDateText]: [This.GetName]: ural_event.12.a executed"
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+		set_temp_variable = { modify_subjectinped = -45 }
+		modify_subjectinped_support = yes
+		URA = { transfer_state = 675 }
+		675 = { add_core_of = URA }
+		set_temp_variable = { percent_change = 0.5 }
+		change_domestic_influence_percentage = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+#Ural try Annex Orenburg
+country_event = {
+	id = ural_event.13
+	title = ural_event.13.t
+	desc = ural_event.13.d
+	timeout_days = 5
+	picture = GFX_URA_referendum_orenburg
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.13.a
+		log = "[GetDateText]: [This.GetName]: ural_event.13.a executed"
+		URA = { country_event = { id = ural_event.14 days = 1 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.13.b
+		log = "[GetDateText]: [This.GetName]: ural_event.13.b executed"
+		URA = { country_event = { id = ural_event.10 days = 1 } }
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Ural Annex Orenburg
+country_event = {
+	id = ural_event.14
+	title = ural_event.14.t
+	desc = ural_event.14.d
+	picture = GFX_URA_referendum_orenburg
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.14.a
+		log = "[GetDateText]: [This.GetName]: ural_event.14.a executed"
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+		set_temp_variable = { modify_subjectinped = -45 }
+		modify_subjectinped_support = yes
+		URA = { transfer_state = 1118 }
+		1118 = { add_core_of = URA }
+		set_temp_variable = { percent_change = 0.5 }
+		change_domestic_influence_percentage = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+#Ural try Annex Perm
+country_event = {
+	id = ural_event.15
+	title = ural_event.15.t
+	desc = ural_event.15.d
+	timeout_days = 5
+	picture = GFX_URA_referendum_perm
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.15.a
+		log = "[GetDateText]: [This.GetName]: ural_event.15.a executed"
+		URA = { country_event = { id = ural_event.16 days = 1 } }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.15.b
+		log = "[GetDateText]: [This.GetName]: ural_event.15.b executed"
+		URA = { country_event = { id = ural_event.10 days = 1 } }
+		set_temp_variable = { percent_change = -8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Ural Annex Perm
+country_event = {
+	id = ural_event.16
+	title = ural_event.16.t
+	desc = ural_event.16.d
+	picture = GFX_URA_referendum_perm
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.16.a
+		log = "[GetDateText]: [This.GetName]: ural_event.16.a executed"
+		set_temp_variable = { modify_subjectavtoritet = 2 }
+		modify_subjectavtoritet_support = yes
+		set_temp_variable = { modify_subjectinped = -45 }
+		modify_subjectinped_support = yes
+		URA = { transfer_state = 658 }
+		658 = { add_core_of = URA }
+		set_temp_variable = { percent_change = 0.5 }
+		change_domestic_influence_percentage = yes
+		add_opinion_modifier = {
+			target = SOV
+			modifier = recent_actions_positive
+		}
+		SOV = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+	}
+}
+#Ural Bundesver
+country_event = {
+	id = ural_event.17
+	title = ural_event.17.t
+	desc = ural_event.17.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.17.a
+		log = "[GetDateText]: [This.GetName]: ural_event.17.a executed"
+		add_command_power = 10
+		army_experience = 5
+		URA = { country_event = { id = ural_event.18 days = 1 } }
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = GER }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_positive
+		}
+		GER = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = ural_event.17.b
+		log = "[GetDateText]: [This.GetName]: ural_event.17.b executed"
+		URA = { country_event = { id = ural_event.19 days = 1 } }
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_negative
+		}
+		GER = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_negative
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Ural Yes Bundesver
+country_event = {
+	id = ural_event.18
+	title = ural_event.18.t
+	desc = ural_event.18.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.18.a
+		log = "[GetDateText]: [This.GetName]: ural_event.18.a executed"
+		URA_idea_ural_army_reforms = yes
+		add_command_power = 10
+		army_experience = 5
+	}
+}
+#Ural No Offer
+country_event = {
+	id = ural_event.19
+	title = ural_event.19.t
+	desc = ural_event.19.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.19.a
+		log = "[GetDateText]: [This.GetName]: ural_event.19.a executed"
+
+	}
+}
+#Ural Trade
+country_event = {
+	id = ural_event.20
+	title = ural_event.20.t
+	desc = ural_event.20.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.20.a
+		log = "[GetDateText]: [This.GetName]: ural_event.20.a executed"
+		URA = { country_event = { id = ural_event.21 days = 1 } }
+		add_timed_idea = { idea = URA_ekb_concern_idea_other days = 930 }
+		set_temp_variable = { treasury_change = -8.75 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = GER }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_positive
+		}
+		GER = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = ural_event.20.b
+		log = "[GetDateText]: [This.GetName]: ural_event.20.b executed"
+		URA = { country_event = { id = ural_event.19 days = 1 } }
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_negative
+		}
+		GER = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_negative
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Ural Yes Trade
+country_event = {
+	id = ural_event.21
+	title = ural_event.21.t
+	desc = ural_event.21.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.21.a
+		log = "[GetDateText]: [This.GetName]: ural_event.21.a executed"
+		set_temp_variable = { treasury_change = 2 }
+		modify_treasury_effect = yes
+		random_owned_controlled_state = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+#Ural Infra
+country_event = {
+	id = ural_event.22
+	title = ural_event.22.t
+	desc = ural_event.22.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.22.a
+		log = "[GetDateText]: [This.GetName]: ural_event.22.a executed"
+		URA = { country_event = { id = ural_event.23 days = 1 } }
+		set_temp_variable = { treasury_change = -3.5 }
+		modify_treasury_effect = yes
+		add_timed_idea = {
+			idea = URA_ugmk_idea4_export
+			days = 950
+		}
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = GER }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_positive
+		}
+		GER = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = ural_event.22.b
+		log = "[GetDateText]: [This.GetName]: ural_event.22.b executed"
+		URA = { country_event = { id = ural_event.19 days = 1 } }
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_negative
+		}
+		GER = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_negative
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Ural Yes Road
+country_event = {
+	id = ural_event.23
+	title = ural_event.23.t
+	desc = ural_event.23.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.23.a
+		log = "[GetDateText]: [This.GetName]: ural_event.23.a executed"
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = GER }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		random_owned_state = {
+			prioritize = { 676 }
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+}
+#Ural Trade Promka
+country_event = {
+	id = ural_event.24
+	title = ural_event.24.t
+	desc = ural_event.24.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.24.a
+		log = "[GetDateText]: [This.GetName]: ural_event.24.a executed"
+		URA = { country_event = { id = ural_event.25 days = 1 } }
+		add_timed_idea = { idea = URA_ekb_concern_idea_other days = 720 }
+		set_temp_variable = { treasury_change = -2.75 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_positive
+		}
+		ROOT = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_positive
+			}
+		}
+		URA = { clr_country_flag = URA_deal_offer }
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.24.b
+		log = "[GetDateText]: [This.GetName]: ural_event.24.b executed"
+		URA = { country_event = { id = ural_event.26 days = 1 } }
+		add_opinion_modifier = {
+			target = URA
+			modifier = recent_actions_negative
+		}
+		ROOT = {
+			add_opinion_modifier = {
+				target = URA
+				modifier = recent_actions_negative
+			}
+		}
+		URA = { clr_country_flag = URA_deal_offer }
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Ural Yes Trade
+country_event = {
+	id = ural_event.25
+	title = ural_event.25.t
+	desc = ural_event.25.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.25.a
+		log = "[GetDateText]: [This.GetName]: ural_event.25.a executed"
+		set_temp_variable = { treasury_change = 2.75 }
+	}
+}
+#Ural No Trade
+country_event = {
+	id = ural_event.26
+	title = ural_event.26.t
+	desc = ural_event.26.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.26.a
+		log = "[GetDateText]: [This.GetName]: ural_event.26.a executed"
+	}
+}
+#Ural Kurgan Referendum
+country_event = {
+	id = ural_event.27
+	title = ural_event.27.t
+	desc = ural_event.27.d
+	picture = GFX_URA_referendum_kurgan
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.27.a
+		log = "[GetDateText]: [This.GetName]: ural_event.27.a executed"
+		URA = { country_event = { id = ural_event.28 days = 1 } }
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = ural_event.27.b
+		log = "[GetDateText]: [This.GetName]: ural_event.27.b executed"
+		URA = { country_event = { id = ural_event.29 days = 1 } }
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Ural Kurgan Referendum Yes
+country_event = {
+	id = ural_event.28
+	title = ural_event.28.t
+	desc = ural_event.28.d
+	picture = GFX_URA_referendum_kurgan
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.28.a
+		log = "[GetDateText]: [This.GetName]: ural_event.28.a executed"
+		URA = { transfer_state = 1071 }
+		1071 = { add_core_of = URA }
+	}
+}
+#Ural Kurgan Referendum No
+country_event = {
+	id = ural_event.29
+	title = ural_event.29.t
+	desc = ural_event.29.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.29.a
+		log = "[GetDateText]: [This.GetName]: ural_event.29.a executed"
+	}
+}
+#Ural Chelyabinsk Referendum
+country_event = {
+	id = ural_event.30
+	title = ural_event.30.t
+	desc = ural_event.30.d
+	picture = GFX_URA_referendum_chelyaba
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.30.a
+		log = "[GetDateText]: [This.GetName]: ural_event.30.a executed"
+		URA = { country_event = { id = ural_event.31 days = 1 } }
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = ural_event.30.b
+		log = "[GetDateText]: [This.GetName]: ural_event.30.b executed"
+		URA = { country_event = { id = ural_event.29 days = 1 } }
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Ural Chelyabinsk Referendum Yes
+country_event = {
+	id = ural_event.31
+	title = ural_event.31.t
+	desc = ural_event.31.d
+	picture = GFX_URA_referendum_chelyaba
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.31.a
+		log = "[GetDateText]: [This.GetName]: ural_event.31.a executed"
+		URA = { transfer_state = 675 }
+		675 = { add_core_of = URA }
+	}
+}
+#Ural Orenburg Referendum
+country_event = {
+	id = ural_event.32
+	title = ural_event.32.t
+	desc = ural_event.32.d
+	picture = GFX_URA_referendum_orenburg
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.32.a
+		log = "[GetDateText]: [This.GetName]: ural_event.32.a executed"
+		URA = { country_event = { id = ural_event.33 days = 1 } }
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = ural_event.32.b
+		log = "[GetDateText]: [This.GetName]: ural_event.32.b executed"
+		URA = { country_event = { id = ural_event.29 days = 1 } }
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Ural Orenburg Referendum Yes
+country_event = {
+	id = ural_event.33
+	title = ural_event.33.t
+	desc = ural_event.33.d
+	picture = GFX_URA_referendum_orenburg
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.33.a
+		log = "[GetDateText]: [This.GetName]: ural_event.33.a executed"
+		URA = { transfer_state = 1118 }
+		1118 = { add_core_of = URA }
+	}
+}
+#Ural Perm Referendum
+country_event = {
+	id = ural_event.34
+	title = ural_event.34.t
+	desc = ural_event.34.d
+	picture = GFX_URA_referendum_perm
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.34.a
+		log = "[GetDateText]: [This.GetName]: ural_event.34.a executed"
+		URA = { country_event = { id = ural_event.35 days = 1 } }
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = ural_event.34.b
+		log = "[GetDateText]: [This.GetName]: ural_event.34.b executed"
+		URA = { country_event = { id = ural_event.29 days = 1 } }
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Ural Perm Referendum Yes
+country_event = {
+	id = ural_event.35
+	title = ural_event.35.t
+	desc = ural_event.35.d
+	picture = GFX_URA_referendum_perm
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.35.a
+		log = "[GetDateText]: [This.GetName]: ural_event.35.a executed"
+		URA = { transfer_state = 658 }
+		658 = { add_core_of = URA }
+	}
+}
+#Ural Yugra Referendum
+country_event = {
+	id = ural_event.36
+	title = ural_event.36.t
+	desc = ural_event.36.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.36.a
+		log = "[GetDateText]: [This.GetName]: ural_event.36.a executed"
+		URA = { country_event = { id = ural_event.37 days = 1 } }
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = ural_event.36.b
+		log = "[GetDateText]: [This.GetName]: ural_event.36.b executed"
+		URA = { country_event = { id = ural_event.29 days = 1 } }
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Ural Yugra Referendum Yes
+country_event = {
+	id = ural_event.37
+	title = ural_event.37.t
+	desc = ural_event.37.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.37.a
+		log = "[GetDateText]: [This.GetName]: ural_event.37.a executed"
+		hidden_effect = {
+			SOV = {
+				release = KHM
+				set_autonomy = {
+					target = KHM
+					autonomy_state = autonomy_free
+				}
+			}
+			KHM = { set_country_flag = SUB_subject_rebeliion_flag }
+			URA = {
+				set_temp_variable = { percent_change = 15 }
+				set_temp_variable = { tag_index = URA }
+				set_temp_variable = { influence_target = KHM }
+				change_influence_percentage = yes
+				set_autonomy = {
+					target = KHM
+					autonomy_state = autonomy_autonomous_state
+				}
+			}
+		}
+	}
+}
+#Ural Rebellion Kazaks in Kazah
+country_event = {
+	id = ural_event.38
+	title = ural_event.38.t
+	desc = ural_event.38.d
+	picture = GFX_subject_ural
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.38.a
+		log = "[GetDateText]: [This.GetName]: ural_event.38.a executed"
+		custom_effect_tooltip = URA_kazahrevoult_warning_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					URA = { is_subject_of = SOV }
+				}
+				URA = { transfer_state = 718 }
+				718 = { add_core_of = URA }
+				if = {
+					limit = {
+						KAZ = { 
+							is_in_faction_with = SOV 
+						}
+					}
+					leave_faction = yes
+				}
+				declare_war_on = {
+					target = SOV
+					type = annex_everything
+				}
+				declare_war_on = {
+					target = URA
+					type = annex_everything
+				}
+				URA = {
+					718 = {
+						create_unit = {
+							division = "name = \"Urals Cossack Regiment\" division_template = \"Cossack Regiment\" start_experience_base = 0.1"
+							owner = URA
+							prioritize_location = 7341
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { URA = { is_subject_of = SOV } }
+				}
+				URA = { transfer_state = 718 }
+				718 = { add_core_of = URA }
+				declare_war_on = {
+					target = URA
+					type = annex_everything
+				}
+				URA = {
+					718 = {
+						create_unit = {
+							division = "name = \"Urals Cossack Regiment\" division_template = \"Cossack Regiment\" start_experience_base = 0.1"
+							owner = URA
+							prioritize_location = 7341
+						}
+					}
+				}
+			}
+		}
+	}
+}
+#Ural Give Romanov
+country_event = {
+	id = ural_event.39
+	title = ural_event.39.t
+	desc = ural_event.39.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.39.a
+		log = "[GetDateText]: [This.GetName]: ural_event.39.a executed"
+		URA = { country_event = { id = ural_event.40 days = 1 } }
+		add_ideas = URA_romanov_empire
+		set_temp_variable = { treasury_change = 5 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = ural_event.39.b
+		log = "[GetDateText]: [This.GetName]: ural_event.39.b executed"
+		URA = { country_event = { id = ural_event.41 days = 1 } }
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Agree Romanov
+country_event = {
+	id = ural_event.40
+	title = ural_event.40.t
+	desc = ural_event.40.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.40.a
+		log = "[GetDateText]: [This.GetName]: ural_event.40.a executed"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+	}
+}
+#Disagree Romanov
+country_event = {
+	id = ural_event.41
+	title = ural_event.41.t
+	desc = ural_event.41.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.41.a
+		log = "[GetDateText]: [This.GetName]: ural_event.41.a executed"
+	}
+}
+#USAID
+country_event = {
+	id = ural_event.42
+	title = ural_event.42.t
+	desc = ural_event.42.d
+	picture = GFX_USA_generic
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.42.a
+		log = "[GetDateText]: [This.GetName]: ural_event.42.a executed"
+		URA = { country_event = { id = ural_event.43 days = 1 } }
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = ural_event.42.b
+		log = "[GetDateText]: [This.GetName]: ural_event.42.b executed"
+		URA = { country_event = { id = ural_event.44 days = 1 } }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Agree USAID
+country_event = {
+	id = ural_event.43
+	title = ural_event.43.t
+	desc = ural_event.43.d
+	picture = GFX_USA_generic
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.43.a
+		log = "[GetDateText]: [This.GetName]: ural_event.43.a executed"
+		add_ideas = USA_usaid
+		set_temp_variable = { temp_opinion = 5 }
+		change_international_bankers_opinion = yes
+	}
+}
+#Disagree USAID
+country_event = {
+	id = ural_event.44
+	title = ural_event.44.t
+	desc = ural_event.44.d
+	picture = GFX_USA_generic
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.44.a
+		log = "[GetDateText]: [This.GetName]: ural_event.44.a executed"
+	}
+}
+#Ural Yanao Referendum
+country_event = {
+	id = ural_event.45
+	title = ural_event.45.t
+	desc = ural_event.45.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.45.a
+		log = "[GetDateText]: [This.GetName]: ural_event.45.a executed"
+		URA = { country_event = { id = ural_event.46 days = 1 } }
+		SUB_separatism_minus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = ural_event.45.b
+		log = "[GetDateText]: [This.GetName]: ural_event.45.b executed"
+		URA = { country_event = { id = ural_event.29 days = 1 } }
+		SUB_separatism_plus_subject = yes
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+#Ural Yanao Referendum Yes
+country_event = {
+	id = ural_event.46
+	title = ural_event.46.t
+	desc = ural_event.46.d
+	picture = GFX_subject_yugra
+	is_triggered_only = yes
+
+	option = {
+		name = ural_event.46.a
+		log = "[GetDateText]: [This.GetName]: ural_event.46.a executed"
+		hidden_effect = {
+			SOV = {
+				release = YAM
+				set_autonomy = {
+					target = YAM
+					autonomy_state = autonomy_free
+				}
+			}
+			YAM = { set_country_flag = SUB_subject_rebeliion_flag }
+			URA = {
+				set_temp_variable = { percent_change = 15 }
+				set_temp_variable = { tag_index = URA }
+				set_temp_variable = { influence_target = YAM }
+				change_influence_percentage = yes
+				set_autonomy = {
+					target = YAM
+					autonomy_state = autonomy_autonomous_state
+				}
+			}
+		}
+	}
+}
+#Foreign Investors
+country_event = {
+	id = ural_event.47
+	title = ural_event.47.t
+	desc = ural_event.47.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.47.a
+		log = "[GetDateText]: [This.GetName]: ural_event.47.a executed"
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = ROOT }
+		set_temp_variable = { influence_target = URA }
+		change_influence_percentage = yes
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		set_temp_variable = { int_investment_change = 1 }
+		modify_international_investment_effect = yes
+		add_opinion_modifier = { target = URA modifier = recent_actions_positive }
+		reverse_add_opinion_modifier = { target = URA modifier = recent_actions_positive }
+		URA = { country_event = { id = ural_event.48 days = 1 } }
+		ai_chance = {
+			base = 90
+		}
+	}
+	option = {
+		name = ural_event.1.b
+		log = "[GetDateText]: [This.GetName]: ural_event.1.b executed"
+		URA = { country_event = { id = ural_event.48 days = 1 } }
+		add_opinion_modifier = { target = URA modifier = recent_actions_negative }
+		reverse_add_opinion_modifier = { target = URA modifier = recent_actions_negative }
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+#Foreign Investors Agree
+country_event = {
+	id = ural_event.48
+	title = ural_event.48.t
+	desc = ural_event.48.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.48.a
+		log = "[GetDateText]: [This.GetName]: ural_event.48.a executed"
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
+	}
+}
+#Foreign Investors Disagree
+country_event = {
+	id = ural_event.49
+	title = ural_event.49.t
+	desc = ural_event.49.d
+	timeout_days = 5
+	is_triggered_only = yes
+	picture = GFX_subject_ural
+	option = {
+		name = ural_event.49.a
+		log = "[GetDateText]: [This.GetName]: ural_event.49.a executed"
+	}
+}
+
+

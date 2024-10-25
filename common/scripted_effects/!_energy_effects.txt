@@ -86,7 +86,7 @@ calculate_energy_use = {
 	add_to_temp_variable = { energy_use_multiplier_agriculture_district = modifier@energy_use_modifier_agriculture_district }
 	multiply_temp_variable = { energy_use_agriculture_district = energy_use_multiplier_agriculture_district }
 
-	set_temp_variable = { energy_use_mils = num_of_military_factories }
+	set_temp_variable = { energy_use_mils = military_fac }
 	add_to_temp_variable = { energy_use_mils = num_of_naval_factories }
 	multiply_temp_variable = { energy_use_mils = energy_use_base_mils }
 	add_to_temp_variable = { energy_use_multiplier_mils = modifier@energy_use_modifier_mils }
@@ -141,6 +141,8 @@ calculate_energy_use = {
 	set_temp_variable = { temp_renewable_energy_gain_m = 1 }
 	add_to_temp_variable = { temp_renewable_energy_gain_m = modifier@renewable_energy_gain_multiplier }
 	multiply_variable = { energy_sum = temp_renewable_energy_gain_m }
+	multiply_variable = { minimum_renewable_energy_var = temp_renewable_energy_gain_m }
+	multiply_variable = { maximum_renewable_energy_var = temp_renewable_energy_gain_m }
 
 	set_variable = { renewable_energy_display_var = energy_sum }
 
@@ -169,15 +171,14 @@ calculate_energy_use = {
 
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
-	if = { #temporary solution
-		limit = {
-			check_variable = { fuel_k = 0 }
-		}
+	if = { limit = { check_variable = { fuel_k = 0 } }
 		set_variable = { fossil_pp_energy_generation = 0 }
 		set_variable = { fossil_pp_fuel_consumption = 0 }
 		set_temp_variable = { no_fuel_killswitch_var = 0 }
 	}
 	add_to_variable = { energy_sum = fossil_pp_energy_generation }
+
+	# Nuclear Energy Section
 	if = {
 		limit = {
 			OR = {
@@ -315,9 +316,9 @@ energy_on_daily = {
 	multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
 	add_to_variable = { stored_energy = daily_energy_balance }
 	clamp_variable = {
-		var = stored_energy
+		var = ROOT.stored_energy
 		min = 0
-		max = max_stored_energy
+		max = ROOT.max_stored_energy
 	}
 }
 
@@ -325,24 +326,17 @@ energy_on_daily = {
 # Purpose: Calculates the randomized variable for the amount of energy gained from Renewable Energy
 random_renewable_variable_calculation = {
 	every_controlled_state = {
-		set_variable_to_random = {
-			var = renewable_energy_random_var
-			min = 0
-			max = 1
-		}
-		set_variable_to_random = {
-			var = renewable_energy_random_var2
-			min = 0
-			max = 1
-		}
+		set_variable_to_random = { var = renewable_energy_random_var min = 0 max = 1 }
+		set_variable_to_random = { var = renewable_energy_random_var2 min = 0 max = 1 }
 		multiply_variable = { renewable_energy_random_var = renewable_energy_random_var2 }
+		set_variable = { renewable_energy_random_var = 1 }
 		add_to_variable = { renewable_energy_random_var = modifier@state_renewable_capacity_factor_modifier }
-		clamp_variable = {
-			var = renewable_energy_random_var
-			min = 0
-			max = 1
-		}
+		clamp_variable = { var = renewable_energy_random_var min = 0 max = 1 }
 		clear_variable = renewable_energy_random_var2
+
+		set_variable = { min_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
+		set_variable = { max_renewable_energy_var = 1 }
+		add_to_variable = { max_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
 	}
 }
 
@@ -760,6 +754,10 @@ setup_starting_world_hydropower = {
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
+		set_variable = { geothermal_energy_production_var = 2.327 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
 	}
 		#USA - Tennessee
 	793 = {
@@ -776,8 +774,19 @@ setup_starting_world_hydropower = {
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
+		set_variable = { geothermal_energy_production_var = 3.985 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
 	}
-		#Mexico - Chiapas
+	# USA - Hawaii
+	811 = {
+		set_variable = { geothermal_energy_production_var = 0.342 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+	# Mexico - Chiapas
 	839 = {
 		set_variable = { hydroelectric_energy_production_var = 1.188 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -793,7 +802,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Mexico - Sinaloa
+	# Mexico - Sinaloa
 	831 = {
 		set_variable = { hydroelectric_energy_production_var = 0.263 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -801,7 +810,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Mexico - Guerrero
+	# Mexico - Guerrero
 	837 = {
 		set_variable = { hydroelectric_energy_production_var = 0.614 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -809,7 +818,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Mexico - Mexico
+	# Mexico - Mexico
 	835 = {
 		set_variable = { hydroelectric_energy_production_var = 0.225 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -817,15 +826,19 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Mexico - Sonara
+	# Mexico - Sonara
 	829 = {
 		set_variable = { hydroelectric_energy_production_var = 0.133 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
+		set_variable = { geothermal_energy_production_var = 0.734 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
 	}
-		#Mexico - Veracrus
+	# Mexico - Veracrus
 	838 = {
 		set_variable = { hydroelectric_energy_production_var = 0.131 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -833,7 +846,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Canada - Quebec
+	# Canada - Quebec
 	762 = {
 		set_variable = { hydroelectric_energy_production_var = 15.987 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -841,7 +854,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Canada - British Columbia
+	# Canada - British Columbia
 	754 = {
 		set_variable = { hydroelectric_energy_production_var = 12.049 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -849,7 +862,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Canada - Newfoundland
+	# Canada - Newfoundland
 	759 = {
 		set_variable = { hydroelectric_energy_production_var = 8.540 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -857,7 +870,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Canada - Ontario
+	# Canada - Ontario
 	763 = {
 		set_variable = { hydroelectric_energy_production_var = 4.407 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -865,7 +878,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Canada - Manitoba
+	# Canada - Manitoba
 	757 = {
 		set_variable = { hydroelectric_energy_production_var = 4.005 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -873,7 +886,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	#Canada - Ungava
+	# Canada - Ungava
 	1160 = {
 		set_variable = { hydroelectric_energy_production_var = 15.987 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1121,7 +1134,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	#Norway - Nordland
+	# Norway - Nordland
 	31 = {
 		set_variable = { hydroelectric_energy_production_var = 12.500 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1129,7 +1142,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	#Japan - Gifu
+	# Japan - Gifu
 	613 = {
 		set_variable = { hydroelectric_energy_production_var = 3.350 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1137,7 +1150,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Japan - Gumma
+	# Japan - Gumma
 	615 = {
 		set_variable = { hydroelectric_energy_production_var = 3.071 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1145,12 +1158,16 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		# Japan - Aichi
+	# Japan - Aichi
 	609 = {
 		set_variable = { hydroelectric_energy_production_var = 2.938 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.112 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
 		}
 	}
 		#Japan - Fukushima
@@ -1953,7 +1970,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Ghana - Coastal Ghana
+	# Ghana - Coastal Ghana
 	346 = {
 		set_variable = { hydroelectric_energy_production_var = 0.558 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1961,7 +1978,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Ghana - Upper Ghana
+	# Ghana - Upper Ghana
 	348 = {
 		set_variable = { hydroelectric_energy_production_var = 0.189 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1969,7 +1986,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Croatia - Slovonia
+	# Croatia - Slovonia
 	126 = {
 		set_variable = { hydroelectric_energy_production_var = 0.736 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1977,15 +1994,19 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Iceland - Iceland
+	# Iceland - Iceland
 	7 = {
 		set_variable = { hydroelectric_energy_production_var = 0.717 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
+		set_variable = { geothermal_energy_production_var = 0.518 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
 	}
-		#Congo - Katanga
+	# Congo - Katanga
 	306 = {
 		set_variable = { hydroelectric_energy_production_var = 0.049 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1993,7 +2014,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Congo - Kasai
+	# Congo - Kasai
 	304 = {
 		set_variable = { hydroelectric_energy_production_var = 0.240 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -2001,7 +2022,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Congo - Bandundu
+	# Congo - Bandundu
 	303 = {
 		set_variable = { hydroelectric_energy_production_var = 0.390 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -2009,7 +2030,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Thailand - Central Thailand
+	# Thailand - Central Thailand
 	508 = {
 		set_variable = { hydroelectric_energy_production_var = 0.361 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -2129,6 +2150,61 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
+	# Kenya - Rift Valley
+	244 = {
+		set_variable = { geothermal_energy_production_var = 0.112 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+	# Czech Republic - Bohemia
+	117 = {
+		set_variable = { hydroelectric_energy_production_var = 0.584 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Czech Republic - Sumava
+	1017 = {
+		set_variable = { hydroelectric_energy_production_var = 0.123 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Pomorze
+	113 = {
+		set_variable = { hydroelectric_energy_production_var = 0.716 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Malopolska
+	1098 = {
+		set_variable = { hydroelectric_energy_production_var = 0.700 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Mazowsze
+	114 = {
+		set_variable = { hydroelectric_energy_production_var = 0.162 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Zachodnie Pomorze
+	474 = {
+		set_variable = { hydroelectric_energy_production_var = 0.150 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
 
 	every_state = {
 		limit = {
@@ -2232,18 +2308,27 @@ build_enrichment_facilities_effect = {
 
 	if = { limit = { NOT = { is_in_array = { global.enrichment_countries = THIS.id } } }
 		add_to_array = { global.enrichment_countries = THIS.id }
-		if = { limit = { is_ai = yes }
-			if = { limit = { check_variable = { var_LEU_selected = 2 } }
-				set_variable = { var_LEU_selected = 1 }
-			}
-			else = {
-				set_variable = { var_LEU_selected = 2 }
-				set_variable = { var_HEU_selected = 1 }
-			}
-			set_enrichment_efficiency_LEU = yes
-			update_nuclear_production = yes
-			var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
-			update_nuclear_production = yes
+		if = { limit = { check_variable = { var_LEU_selected = 2 } }
+			set_variable = { var_LEU_selected = 1 }
+		}
+		else = {
+			set_variable = { var_LEU_selected = 2 }
+			set_variable = { var_HEU_selected = 1 }
+		}
+		set_enrichment_efficiency_LEU = yes
+		update_nuclear_production = yes
+		var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
+		update_nuclear_production = yes
+
+		# Set Nuclear Energy Card just in case
+		if = { limit = { NOT = { is_in_array = { nuclear_status_array = 4 } } }
+			add_to_array = { nuclear_status_array = nuclear_status_display_array^i }
+			set_nuclear_status_special_effect = yes
+			clr_country_flag = open_MD_nuclear_doctrine_window
+			clear_array = nuclear_status_display_array
+			set_nuke_arrays_selected_TAG = yes
+			update_nuclear_deterrence = yes
+			missile_ui_update = yes
 		}
 	}
 }
