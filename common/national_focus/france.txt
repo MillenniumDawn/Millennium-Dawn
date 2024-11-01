@@ -1,4 +1,4 @@
-# Author(s): Angriest Bird, Elra
+﻿# Author(s): Angriest Bird, Elra
 focus_tree = {
 	id = france_focus
 
@@ -28,6 +28,9 @@ focus_tree = {
 			}
 			add_dynamic_modifier = {
 				modifier = FRA_econ_policy
+			}
+			add_dynamic_modifier = {
+				modifier = FRA_social_balance
 			}
 		}
 
@@ -472,7 +475,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_eu_federalism"
 			every_country = {
-				limit = { has_idea = NATO_member }
+				limit = { has_idea = EU_member }
 				limit = { has_idea_great_power}
 				set_temp_variable = { modify_eurosceptic = -0.1 }
 				set_temp_variable = { modify_eurosceptic_target = PREV }
@@ -509,7 +512,7 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = -0.1 }
 			set_temp_variable = { temp_outlook_increase = -0.1 }
 			add_relative_party_popularity = yes
-			set_temp_variable = { temp_change = 0.10 }
+			set_temp_variable = { temp_change = -0.10 }
 			FRA_desindus = yes
 			set_temp_variable = { temp_change = 0.075 }
 			FRA_services_boost = yes
@@ -616,10 +619,26 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = FRA_eu_federalism }
+		bypass = {
+			OR = {
+				NOT = { country_exists = GRE }
+				GRE = {has_idea = EU_member}
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_french_political_reformation"
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { modify_eurosceptic = -0.1 }
+			set_temp_variable = { modify_eurosceptic_target = GRE }
+			eurosceptic_change = yes
+			GRE = {
+				set_temp_variable = { treasury_change = 15 }
+				modify_treasury_effect = yes
+				country_event = { id = france_md.150 }
+			}
 		}
 
 		ai_will_do = {
@@ -649,7 +668,7 @@ focus_tree = {
 		prerequisite = { focus = FRA_friend_eu }
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		completion_reward = {
-			log = "[GetDateText]: [THIS.GetName]: Focus FRA_french_autonomy"
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_FRA_tax_evasion"
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -716,6 +735,57 @@ focus_tree = {
 		prerequisite = { focus = FRA_atlantist_drift }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_ease_interventionism"
+			if = {
+				limit = {
+					has_idea = intervention_isolation
+				}
+				swap_ideas = {
+					remove_idea = intervention_isolation
+					add_idea = intervention_limited_interventionism
+				}
+			}
+
+			if = {
+				limit = {
+					has_idea = intervention_local_security
+				}
+				swap_ideas = {
+					remove_idea = intervention_local_security
+					add_idea = intervention_limited_interventionism
+				}
+			}
+
+			if = {
+				limit = {
+					has_idea = intervention_neo_imperialism
+				}
+				swap_ideas = {
+					remove_idea = intervention_limited_interventionism
+					add_idea = intervention_limited_interventionism
+				}
+			}
+
+			if = {
+				limit = {
+					has_idea = intervention_regional_interventionism
+				}
+				swap_ideas = {
+					remove_idea = intervention_regional_interventionism
+					add_idea = intervention_limited_interventionism
+				}
+			}
+
+			if = {
+				limit = {
+					has_idea = intervention_global_interventionism
+				}
+				swap_ideas = {
+					remove_idea = intervention_global_interventionism
+					add_idea = intervention_limited_interventionism
+				}
+			}
+			add_stability = 0.1
+			add_political_power = 150
 		}
 
 		ai_will_do = {
@@ -767,6 +837,9 @@ focus_tree = {
 			FRA_decrease_growth = yes
 			set_temp_variable = { temp_opinion = -10 }
 			change_labour_unions_opinion = yes
+			add_stability = -0.05
+			set_temp_variable = { temp_opinion = 10 }
+			FRA_increase_output = yes
 		}
 
 		ai_will_do = {
@@ -787,6 +860,11 @@ focus_tree = {
 		prerequisite = { focus = FRA_liberal_turn }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_timebomb"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = -0.25 }
+			add_relative_party_popularity = yes
+			country_event = { id = france_md.162 }
+			unlock_decision_category_tooltip = Socialist_collapse_category
 		}
 
 		ai_will_do = {
@@ -813,6 +891,17 @@ focus_tree = {
 		prerequisite = { focus = FRA_NOTRe_law }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_vigipirate"
+			increase_policing_budget = yes
+			if = {
+				limit = {
+					has_intelligence_agency = yes
+				}
+				upgrade_intelligence_agency = upgrade_passive_defense
+			}
+			else = {
+				add_ideas = vigipirate_surveillance
+				add_stability = -0.05
+			}
 		}
 
 		ai_will_do = {
@@ -850,6 +939,9 @@ focus_tree = {
 		prerequisite = { focus = FRA_vigipirate }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_not_done"
+			add_stability = 0.1
+			add_political_power = 150
+			add_idea = FRA_resist_inevitable
 		}
 		ai_will_do = {
 			factor = 1
@@ -882,6 +974,14 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_meet_friends"
+			every_country = {
+				if = {
+					limit = {
+						western_social_democrats_are_in_power = yes
+					}
+					country_event = { id = france_md.151 }
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -915,6 +1015,87 @@ focus_tree = {
 		prerequisite = { focus = FRA_not_done }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_turn_ecology"
+			swap_ideas = {
+				remove_idea = FRA_resist_inevitable2
+				add_idea = FRA_resist_inevitable3
+			}
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				NOT = {
+					has_global_flag = FRA_CHAOS_PATH
+					has_idea = EU_member
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					has_global_flag = FRA_CHAOS_PATH
+					has_government = democratic
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = FRA_military_coop
+		icon = state_of_french_politics
+
+		x = -4
+		y = 6
+		relative_position_id = FRA_state_of_french_politics
+		cost = 10
+		prerequisite = { focus = FRA_greece_eurozone }
+		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_best_duo"
+			every_country = {
+				if = {
+					limit = {
+						has_idea = EU_member
+					}
+					country_event = { id = france_md.164 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				NOT = {
+					has_global_flag = FRA_CHAOS_PATH
+					has_idea = EU_member
+				}
+			}
+		}
+	}
+	focus = {
+		id = FRA_party_unity
+		icon = national_unity
+
+		x = -9
+		y = 8
+		relative_position_id = FRA_state_of_french_politics
+
+		cost = 25
+
+		prerequisite = { focus = FRA_not_done }
+		completion_reward = {
+			add_political_power = -200
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_party_unity"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.1 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = -0.1 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -941,72 +1122,12 @@ focus_tree = {
 		icon = state_of_french_politics
 
 		x = -5
-		y = 7
+		y = 8
 		relative_position_id = FRA_state_of_french_politics
+
 		cost = 10
 		prerequisite = { focus = FRA_meet_friends }
-		prerequisite = { focus = FRA_greece_eurozone }
-		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL }
-		completion_reward = {
-			log = "[GetDateText]: [THIS.GetName]: Focus FRA_best_duo"
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 0
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-					has_idea = EU_member
-				}
-			}
-		}
-	}
-	focus = {
-		id = FRA_party_unity
-		icon = national_unity
-
-		x = -9
-		y = 8
-		relative_position_id = FRA_state_of_french_politics
-
-		cost = 25
-
-		prerequisite = { focus = FRA_not_done }
-		completion_reward = {
-			log = "[GetDateText]: [THIS.GetName]: Focus FRA_party_unity"
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 0
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-					has_idea = EU_member
-				}
-			}
-			modifier = {
-				factor = 0
-				NOT = {
-					has_global_flag = FRA_CHAOS_PATH
-					has_government = democratic
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = FRA_military_coop
-		icon = state_of_french_politics
-
-		x = -5
-		y = 8
-		relative_position_id = FRA_state_of_french_politics
-
-		cost = 10
-
-		prerequisite = { focus = FRA_best_duo }
+		prerequisite = { focus = FRA_military_coop }
 
 		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_INFLUENCE }
 
@@ -1040,6 +1161,7 @@ focus_tree = {
 		prerequisite = { focus = FRA_party_unity }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_stole_voter"
+			country_event = { id = france_md.163 }
 		}
 
 		ai_will_do = {
@@ -1066,6 +1188,13 @@ focus_tree = {
 		prerequisite = { focus = FRA_turn_ecology }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_ps_lgbt"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+			swap_ideas = {
+				remove_idea = FRA_resist_inevitable2
+				add_idea = FRA_resist_inevitable3
+			}
 		}
 
 		ai_will_do = {
@@ -1098,9 +1227,10 @@ focus_tree = {
 
 		prerequisite = { focus = FRA_ps_lgbt }
 		prerequisite = { focus = FRA_stole_voter }
-		prerequisite = { focus = FRA_military_coop }
+		prerequisite = { focus = FRA_best_duo }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_ps_win"
+			add_idea = FRA_socialism_renew
 		}
 
 		ai_will_do = {
@@ -1142,13 +1272,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_Neither_right_nor_left"
-			add_ideas = FRA_idea_means_of_production
-			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.10 }
 			add_relative_party_popularity = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_industrial_conglomerates_opinion = yes
+			set_temp_variable = { temp_change = 0.05 }
+			FRA_change_politics_west = yes
 		}
 
 		ai_will_do = {
@@ -1203,11 +1331,12 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
-			log = "[GetDateText]: [THIS.GetName]: Focus FRA_a_new_dawn"
-			FRA_change_politics_west = yes
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_Get_indecisives"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = -0.10 }
+			add_relative_party_popularity = yes
 			set_temp_variable = { party_index = 2 }
-			set_temp_variable = { party_popularity_increase = 0.20 }
-			set_temp_variable = { temp_outlook_increase = 0.20 }
+			set_temp_variable = { party_popularity_increase = -0.10 }
 			add_relative_party_popularity = yes
 		}
 
@@ -1234,16 +1363,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_abolish_ISF"
-			add_timed_idea = { idea = FRA_idea_class_equality_reform days = 1095 }
-			set_temp_variable = { temp_opinion = -5 }
-			change_defense_industry_opinion = yes
-			change_small_medium_business_owners_opinion = yes
-			change_landowners_opinion = yes
-			change_oligarchs_opinion = yes
-			set_temp_variable = { temp_opinion = 10 }
-			change_labour_unions_opinion = yes
-			change_communist_cadres_opinion = yes
-			change_farmers_opinion = yes
+			set_temp_variable = { temp_change = -0.1 }
+			FRA_change_tax_revenue = yes
+			set_temp_variable = { pop_change = -5 }
+			modify_population_tax_rate_effect = yes
 		}
 
 		ai_will_do = {
@@ -1270,19 +1393,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_Fight_Deficit"
-			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				set_temp_variable = { modify_eurosceptic = 0.05 }
-				set_temp_variable = { modify_eurosceptic_target = ROOT }
-				eurosceptic_change = yes
-			}
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
-			set_temp_variable = { party_index = 19 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			set_temp_variable = { temp_change = -2 }
+			FRA_decrease_interest = yes
+			add_stability = -0.1
 		}
 
 		ai_will_do = {
@@ -1308,15 +1421,29 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_Reconize_Mistakes"
-			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				set_temp_variable = { modify_eurosceptic = 0.05 }
-				set_temp_variable = { modify_eurosceptic_target = ROOT }
-				eurosceptic_change = yes
+			if = { limit = { country_exists = ALG }
+				add_opinion_modifier = {
+					modifier = supports_us
+					target = ALG
+				}
+				ALG = {
+					country_event = france_md.171
+				}
 			}
-			else = {
-				add_political_power = 100
+			if = { limit = { country_exists = VIE }
+				add_opinion_modifier = {
+					modifier = supports_us
+					target = VIE
+				}
+				VIE = {
+					country_event = france_md.170
+				}
 			}
-			add_ideas = FRA_popular_ministry_idea
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { temp_outlook_increase = -0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -1342,8 +1469,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: FRA_Western_policy"
-			add_stability = 0.05
-			increase_policing_budget = yes
+			every_country = {
+				limit = { has_idea = NATO_member }
+				add_opinion_modifier = { target = ROOT modifier = military_cooperation }
+				reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
+			}
+			if = { limit = { country_exists = USA }
+				add_opinion_modifier = {
+					modifier = supports_us
+					target = USA
+				}
+			}
+			add_political_power = 150
 		}
 
 		ai_will_do = {
@@ -1380,49 +1517,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_independant_Euro"
-			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				set_temp_variable = { modify_eurosceptic = 0.10 }
-				set_temp_variable = { modify_eurosceptic_target = ROOT }
-				eurosceptic_change = yes
+			every_country = {
+				limit = { has_idea = EU_member }
+				set_temp_variable = { percent_change = 10 }
+				change_domestic_influence_percentage = yes
+				add_stability = 0.05
+				add_stability = 0.1
 			}
-			else = {
-				add_political_power = 75
-			}
-
-			if = { limit = { check_variable = { party_pop_array^19 < party_pop_array^4 } }
-				if = { limit = { NOT = { emerging_communist_state_are_in_power = yes } }
-					set_temp_variable = { rul_party_temp = 4 }
-				}
-				else = {
-					set_temp_variable = { change_leader_temp = 1 }
-				}
-				change_ruling_party_effect = yes
-				set_politics = {
-					ruling_party = communism
-					elections_allowed = no
-				}
-				set_temp_variable = { party_index = 4 }
-				set_temp_variable = { party_popularity_increase = 0.075 }
-				set_temp_variable = { temp_outlook_increase = 0.075 }
-				add_relative_party_popularity = yes
-			}
-			else = {
-				if = { limit = { NOT = { neutrality_neutral_communism_are_in_power = yes } }
-					set_temp_variable = { rul_party_temp = 19 }
-				}
-				else = {
-					set_temp_variable = { change_leader_temp = 1 }
-				}
-				change_ruling_party_effect = yes
-				set_politics = {
-					ruling_party = neutrality
-					elections_allowed = no
-				}
-				set_temp_variable = { party_index = 19 }
-				set_temp_variable = { party_popularity_increase = 0.075 }
-				set_temp_variable = { temp_outlook_increase = 0.075 }
-				add_relative_party_popularity = yes
-			}
+			add_political_power = -200
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -1441,7 +1545,6 @@ focus_tree = {
 		cost = 7.86
 
 		prerequisite = { focus = FRA_abolish_ISF }
-		
 		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_DIPLOMACY  FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
@@ -1459,25 +1562,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_reduce_tax"
-			every_neighbor_country = {
-				limit = {
-					NOT = { is_in_array = { ruling_party = 4 } }
-				}
-				set_temp_variable = { party_index = 4 }
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
-			}
-			if = { limit = { has_idea = labour_unions }
-				swap_ideas = {
-					remove_idea = labour_unions
-					add_idea = communist_cadres
-				}
-			}
-			if = { limit = { has_war_support < 0.75 }
-				add_war_support = 0.03
-			}
-			add_political_power = 100
+			set_temp_variable = { temp_change = -0.1 }
+			FRA_change_tax_revenue = yes
+			set_temp_variable = { pop_change = -5 }
+			modify_population_tax_rate_effect = yes
+			set_temp_variable = { pop_change = -0.15 }
+			FRA_cons_good = yes
 		}
 
 		ai_will_do = {
@@ -1515,7 +1605,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_increase_pension_age"
-			add_ideas = FRA_idea_communist_revolution1
+			add_ideas = FRA_pension_reform
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = -0.1 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -1698,6 +1791,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus FRA_reise_tertiary"
+			set_temp_variable = { temp_change = -0.20 }
+			FRA_desindus = yes
+			set_temp_variable = { temp_change = 0.15 }
+			FRA_services_boost = yes
+			set_temp_variable = { temp_change = 0.1 }
+			FRA_services_revenue = yes
 		}
 
 		ai_will_do = {
