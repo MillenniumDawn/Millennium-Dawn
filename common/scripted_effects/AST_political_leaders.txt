@@ -1,396 +1,1030 @@
+# By Zei33
+
+# How to use this system?
+# set_leader_AST effect is called common/99_election_effects.txt
+# set_leader_AST checks which political party is in power,
+# then calls the elect_party effect for the relevant party.
+# The elect_party effect contains the logic for choosing the current leader.
+# Each leader has their own effect called to switch them in.
+# retire_leader_AST effect is called in common/decisions/Political Desicions.txt
+# retire_leader_AST adds the current leader to the retired_political_leaders array,
+# which is currently setup in history/countries/AST - Australia.txt, although ideally
+# integrating into the old system's effects would be better.
+# Once a politician's ID is in the retired array, leadership will auto pass to the next
+# eligible leader in the party, repeating until a non-retired leader is reached.
+
+## Liberal Party - Index: 1 ##
+elect_party_western_conservatism_AST = {
+	if = {
+		limit = {
+			OR = { date > 2000.1.1 date = 2000.1.1 }
+			date < 2007.1.1
+		}
+		elect_leader_john_howard_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2007.1.1 date = 2007.1.1 }
+			date < 2010.1.1
+		}
+		elect_leader_peter_costello_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2010.1.1 date = 2010.1.1 }
+			date < 2013.1.1
+		}
+		elect_leader_malcolm_turnbull_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2013.1.1 date = 2013.1.1 }
+			date < 2016.1.1
+		}
+		elect_leader_tony_abbott_AST = yes
+	}
+	else_if = {
+		limit = { # Malcolm Turnbull got a second try after the Abbott disaster
+			OR = { date > 2016.1.1 date = 2016.1.1 }
+			date < 2018.1.1
+		}
+		elect_leader_malcolm_turnbull_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2018.1.1 date = 2018.1.1 }
+			date < 2022.1.1
+		}
+		elect_leader_scott_morrison_AST = yes
+	}
+	else_if = {
+		limit = {
+			date > 2022.1.1 date = 2022.1.1
+		}
+		elect_leader_peter_dutton_AST = yes
+	}
+}
+
+# John Howard - Liberal Party - 0 #
+elect_leader_john_howard_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 0 } }
+		elect_leader_peter_costello_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 0 }
+		create_country_leader = {
+			name = "John Howard"
+			picture = "John_Howard.dds"
+			desc = "JOHN_HOWARD_LEADER_DESC"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+}
+
+# Peter Costello - Liberal Party - 1 #
+elect_leader_peter_costello_AST = {
+	log = "Testing if Peter Costello should be leader."
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 1 } }
+		elect_leader_malcolm_turnbull_AST = yes
+		log = "Peter Costello is retired, electing Malcolm Turnbull."
+	}
+	else = {
+		set_variable = { current_political_leader = 1 }
+		create_country_leader = {
+			name = "Peter Costello"
+			picture = "Peter_Costello.dds"
+			desc = "PETER_COSTELLO_LEADER_DESC"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+}
+
+# Malcolm Turnbull - Liberal Party - 2 #
+elect_leader_malcolm_turnbull_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 2 } }
+		elect_leader_tony_abbott_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 2 }
+		create_country_leader = {
+			name = "Malcolm Turnbull"
+			picture = "Malcolm_Turnbull.dds"
+			desc = "MALCOLM_TURNBULL_LEADER_DESC"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+}
+
+# Tony Abbott - Liberal Party - 3 #
+elect_leader_tony_abbott_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 3 } }
+		elect_leader_scott_morrison_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 3 }
+		create_country_leader = {
+			name = "Tony Abbott"
+			picture = "Tony_Abbott.dds"
+			desc = "TONY_ABBOTT_LEADER_DESC"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+}
+
+# Scott Morrison - Liberal Party - 4 #
+elect_leader_scott_morrison_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 4 } }
+		elect_leader_peter_dutton_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 4 }
+		create_country_leader = {
+			name = "Scott Morrison"
+			picture = "Scott_Morrison.dds"
+			desc = "SCOTT_MORRISON_LEADER_DESC"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+}
+
+# Peter Dutton - Liberal Party - 5 #
+elect_leader_peter_dutton_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 5 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 5 }
+		create_country_leader = {
+			name = "Peter Dutton"
+			picture = "Peter_Dutton.dds"
+			desc = "PETER_DUTTON_LEADER_DESC"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+}
+
+## Centre Alliance - Index: 2 ##
+elect_party_western_liberalism_AST = {
+	if = {
+		limit = {
+			date > 2000.1.1 date = 2000.1.1
+		}
+		elect_leader_nick_xenophon_AST = yes
+	}
+}
+
+# Nick Xenophon - Centre Alliance - 6 #
+elect_leader_nick_xenophon_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 6 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 6 }
+		create_country_leader = {
+			name = "Nick Xenophon"
+			picture = "Nick_Xenophon.dds"
+			desc = "NICK_XENOPHON_LEADER_DESC"
+			ideology = liberalism
+			traits = { western_liberalism }
+		}
+	}
+}
+
+## Labor Party - Index: 3 ##
+elect_party_western_socialism_AST = {
+		if = {
+		limit = {
+			OR = { date > 2000.1.1 date = 2000.1.1 }
+			date < 2007.1.1
+		}
+		elect_leader_kim_beazley_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2007.1.1 date = 2007.1.1 }
+			date < 2010.1.1
+		}
+		elect_leader_kevin_rudd_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2010.1.1 date = 2010.1.1 }
+			date < 2013.1.1
+		}
+		elect_leader_julia_gillard_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2013.1.1 date = 2013.1.1 }
+			date < 2016.1.1
+		}
+		elect_leader_kevin_rudd_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2016.1.1 date = 2016.1.1 }
+			date < 2019.1.1
+		}
+		elect_leader_bill_shorten_AST = yes
+	}
+	else_if = {
+		limit = {
+			date > 2019.1.1 date = 2019.1.1
+		}
+		elect_leader_anthony_albanese_AST = yes
+	}
+}
+
+# Kim Beazley - Labor Party - 7 #
+elect_leader_kim_beazley_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 7 } }
+		elect_leader_kevin_rudd_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 7 }
+		create_country_leader = {
+			name = "Kim Beazley"
+			picture = "Kim_Beazley.dds"
+			desc = "KIM_BEAZLEY_LEADER_DESC"
+			ideology = socialism
+			traits = { western_socialism }
+		}
+	}
+}
+
+# Kevin Rudd - Labor Party - 8 #
+elect_leader_kevin_rudd_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 8 } }
+		elect_leader_julia_gillard_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 8 }
+		create_country_leader = {
+			name = "Kevin Rudd"
+			picture = "Kevin_Rudd.dds"
+			desc = "KEVIN_RUDD_LEADER_DESC"
+			ideology = socialism
+			traits = { western_socialism }
+		}
+	}
+}
+
+# Julia Gillard - Labor Party - 9 #
+elect_leader_julia_gillard_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 9 } }
+		elect_leader_bill_shorten_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 9 }
+		create_country_leader = {
+			name = "Julia Gillard"
+			picture = "Julia_Gillard.dds"
+			desc = "JULIA_GILLARD_LEADER_DESC"
+			ideology = socialism
+			traits = { western_socialism }
+		}
+	}
+}
+
+# Bill Shorten - Labor Party - 10 #
+elect_leader_bill_shorten_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 10 } }
+		elect_leader_anthony_albanese_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 10 }
+		create_country_leader = {
+			name = "Bill Shorten"
+			picture = "Bill_Shorten.dds"
+			desc = "BILL_SHORTEN_LEADER_DESC"
+			ideology = socialism
+			traits = { western_socialism }
+		}
+	}
+}
+
+# Anthony Albanese - Labor Party - 11 #
+elect_leader_anthony_albanese_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 11 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 11 }
+		create_country_leader = {
+			name = "Anthony Albanese"
+			picture = "Anthony_Albanese.dds"
+			desc = "ANTHONY_ALBANESE_LEADER_DESC"
+			ideology = socialism
+			traits = { western_socialism }
+		}
+	}
+}
+
+## Communist Party of Australia (CPA) - Index: 4 ##
+elect_party_emerging_communist_AST = {
+	if = {
+		limit = {
+			date > 2000.1.1 date = 2000.1.1
+		}
+		elect_leader_peter_symon_AST = yes
+	}
+}
+
+# Peter Symon - Communist Party of Australia (CPA) - 12 #
+elect_leader_peter_symon_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 12 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 12 }
+		create_country_leader = {
+			name = "Peter Symon"
+			picture = "Peter_Symon.dds"
+			desc = "PETER_SYMON_LEADER_DESC"
+			ideology = Communist-State
+			traits = { emerging_Communist }
+		}
+	}
+}
+
+## Socialist Alliance - Index: 5 ##
+elect_party_emerging_anarchist_communism_AST = {
+	if = {
+		limit = {
+			date > 2000.1.1 date = 2000.1.1
+		}
+		elect_leader_sue_bolton_AST = yes
+	}
+}
+
+# Sue Bolton - Socialist Alliance - 13 #
+elect_leader_sue_bolton_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 13 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 13 }
+		create_country_leader = {
+			name = "Sue Bolton"
+			picture = "Sue_Bolton.dds"
+			desc = "SUE_BOLTON_LEADER_DESC"
+			ideology = anarchist_communism
+			traits = { emerging_anarchist_communism }
+		}
+	}
+}
+
+## Katter's Australian Party (KAP) - Index: 6 ##
+elect_party_emerging_conservative_AST = {
+	if = {
+		limit = {
+			date > 2000.1.1 date = 2000.1.1
+		}
+		elect_leader_bob_katter_AST = yes
+	}
+}
+
+# Bob Katter - Katter's Australian Party (KAP) - 14 #
+elect_leader_bob_katter_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 14 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 14 }
+		create_country_leader = {
+			name = "Bob Katter"
+			picture = "Bob_Katter.dds"
+			desc = "BOB_KATTER_LEADER_DESC"
+			ideology = Conservative
+			traits = { emerging_Conservative }
+		}
+	}
+}
+
+## National Party of Australia - Index: 14 ##
+elect_party_neutrality_neutral_conservatism_AST = {
+	if = {
+		limit = {
+			OR = { date > 2000.1.1 date = 2000.1.1 }
+			date < 2005.1.1
+		}
+		elect_leader_john_anderson_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2005.1.1 date = 2005.1.1 }
+			date < 2007.1.1
+		}
+		elect_leader_mark_vaile_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2007.1.1 date = 2007.1.1 }
+			date < 2016.1.1
+		}
+		elect_leader_warren_truss_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2016.1.1 date = 2016.1.1 }
+			date < 2018.1.1
+		}
+		elect_leader_barnaby_joyce_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2018.1.1 date = 2018.1.1 }
+			date < 2021.1.1
+		}
+		elect_leader_michael_mccormack_AST = yes
+	}
+	else_if = {
+		limit = {
+			date > 2021.1.1 date = 2021.1.1
+		}
+		elect_leader_barnaby_joyce_AST = yes
+	}
+}
+
+# John Anderson - National Party - 15 #
+elect_leader_john_anderson_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 15 } }
+		elect_leader_mark_vaile_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 15 }
+		create_country_leader = {
+			name = "John Anderson"
+			picture = "John_Anderson.dds"
+			desc = "JOHN_ANDERSON_LEADER_DESC"
+			ideology = neutral_conservatism
+			traits = { neutrality_neutral_conservatism }
+		}
+	}
+}
+
+# Mark Vaile - National Party - 16 #
+elect_leader_mark_vaile_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 16 } }
+		elect_leader_warren_truss_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 16 }
+		create_country_leader = {
+			name = "Mark Vaile"
+			picture = "Mark_Vaile.dds"
+			desc = "MARK_VAILE_LEADER_DESC"
+			ideology = neutral_conservatism
+			traits = { neutrality_neutral_conservatism }
+		}
+	}
+}
+
+# Warren Truss - National Party - 17 #
+elect_leader_warren_truss_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 17 } }
+		elect_leader_barnaby_joyce_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 17 }
+		create_country_leader = {
+			name = "Warren Truss"
+			picture = "Warren_Truss.dds"
+			desc = "WARREN_TRUSS_LEADER_DESC"
+			ideology = neutral_conservatism
+			traits = { neutrality_neutral_conservatism }
+		}
+	}
+}
+
+# Barnaby Joyce - National Party - 18 #
+elect_leader_barnaby_joyce_AST = {
+	if = {
+		limit = {
+			AND = {
+				is_in_array = { retired_political_leaders = 18 }
+				is_in_array = { retired_political_leaders = 19 }
+			}
+		}
+		# If both Barnaby Joyce and Michael McCormack are retired, elect a random
+		# Slightly weird logic because Barnaby is re-elected after McCormack unless
+		# Barnaby has already retired.
+	}
+	else_if = {
+		limit = { is_in_array = { retired_political_leaders = 18 } }
+		elect_leader_michael_mccormack_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 18 }
+		create_country_leader = {
+			name = "Barnaby Joyce"
+			picture = "Barnaby_Joyce.dds"
+			desc = "BARNABY_JOYCE_LEADER_DESC"
+			ideology = neutral_conservatism
+			traits = { neutrality_neutral_conservatism }
+		}
+	}
+}
+
+# Michael McCormack - National Party - 19 #
+elect_leader_michael_mccormack_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 19 } }
+		# Since Barnaby Joyce returns in 2021, we can loop back
+		elect_leader_barnaby_joyce_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 19 }
+		create_country_leader = {
+			name = "Michael McCormack"
+			picture = "Michael_McCormack.dds"
+			desc = "MICHAEL_MCCORMACK_LEADER_DESC"
+			ideology = neutral_conservatism
+			traits = { neutrality_neutral_conservatism }
+		}
+	}
+}
+
+## Liberal Democratic Party (LDP) - Index: 16 ##
+elect_party_neutrality_neutral_libertarian_AST = {
+	if = {
+		limit = {
+			date > 2000.1.1 date = 2000.1.1
+		}
+		elect_leader_john_humphreys_AST = yes
+	}
+}
+
+# John Humphreys - Liberal Democratic Party (LDP) - 20 #
+elect_leader_john_humphreys_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 20 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 20 }
+		create_country_leader = {
+			name = "Dr John Humphreys"
+			picture = "John_Humphreys.dds"
+			desc = "JOHN_HUMPHREYS_LEADER_DESC"
+			ideology = Neutral_Libertarian
+			traits = { neutrality_Neutral_Libertarian }
+		}
+	}
+}
+
+## Australian Greens - Index: 17 ##
+elect_party_neutrality_neutral_green_AST = {
+	if = {
+		limit = {
+			OR = { date > 2000.1.1 date = 2000.1.1 }
+			date < 2012.1.1
+		}
+		elect_leader_bob_brown_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2012.1.1 date = 2012.1.1 }
+			date < 2015.1.1
+		}
+		elect_leader_christine_milne_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2015.1.1 date = 2015.1.1 }
+			date < 2021.1.1
+		}
+		elect_leader_richard_di_natale_AST = yes
+	}
+	else_if = {
+		limit = {
+			date > 2021.1.1 date = 2021.1.1
+		}
+		elect_leader_adam_bandt_AST = yes
+	}
+}
+
+# Bob Brown - Australian Greens - 21 #
+elect_leader_bob_brown_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 21 } }
+		elect_leader_christine_milne_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 21 }
+		create_country_leader = {
+			name = "Bob Brown"
+			picture = "Bob_Brown.dds"
+			desc = "BOB_BROWN_LEADER_DESC"
+			ideology = neutral_green
+			traits = { neutrality_neutral_green }
+		}
+	}
+}
+
+# Christine Milne - Australian Greens - 22 #
+elect_leader_christine_milne_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 22 } }
+		elect_leader_richard_di_natale_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 22 }
+		create_country_leader = {
+			name = "Christine Milne"
+			picture = "Christine_Milne.dds"
+			desc = "CHRISTINE_MILNE_LEADER_DESC"
+			ideology = neutral_green
+			traits = { neutrality_neutral_green }
+		}
+	}
+}
+
+# Richard Di Natale - Australian Greens - 23 #
+elect_leader_richard_di_natale_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 23 } }
+		elect_leader_adam_bandt_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 23 }
+		create_country_leader = {
+			name = "Richard Di Natale"
+			picture = "Richard_Di_Natale.dds"
+			desc = "RICHARD_DI_NATALE_LEADER_DESC"
+			ideology = neutral_green
+			traits = { neutrality_neutral_green }
+		}
+	}
+}
+
+# Adam Bandt - Australian Greens - 24 #
+elect_leader_adam_bandt_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 24 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 24 }
+		create_country_leader = {
+			name = "Adam Bandt"
+			picture = "Adam_Bandt.dds"
+			desc = "ADAM_BANDT_LEADER_DESC"
+			ideology = neutral_green
+			traits = { neutrality_neutral_green }
+		}
+	}
+}
+
+## Socialist Equality Party (SEP) - Index: 19 ##
+elect_party_neutrality_neutral_communism_AST = {
+	if = {
+		limit = {
+			OR = { date > 2000.1.1 date = 2000.1.1 }
+			date < 2016.1.1
+		}
+		elect_leader_nick_beams_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2016.1.1 date = 2016.1.1 }
+		}
+		elect_leader_james_cogan_AST = yes
+	}
+}
+
+# Nick Beams - SEP - 25 #
+elect_leader_nick_beams_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 25 } }
+		elect_leader_james_cogan_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 25 }
+		create_country_leader = {
+			name = "Nick Beams"
+			picture = "Nick_Beams.dds"
+			desc = "NICK_BEAMS_LEADER_DESC"
+			ideology = neutral_communism
+			traits = { neutrality_neutral_communism }
+		}
+	}
+}
+
+# James Cogan - SEP - 26 #
+elect_leader_james_cogan_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 26 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 26 }
+		create_country_leader = {
+			name = "James Cogan"
+			picture = "James_Cogan.dds"
+			desc = "JAMES_COGAN_LEADER_DESC"
+			ideology = neutral_communism
+			traits = { neutrality_neutral_communism }
+		}
+	}
+}
+
+
+## One Nation - Index: 20 ##
+elect_party_nationalist_nat_populism_AST = {
+		if = {
+		limit = {
+			OR = { date > 2000.1.1 date = 2000.1.1 }
+			date < 2002.1.1
+		}
+		elect_leader_pauline_hanson_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2002.1.1 date = 2002.1.1 }
+			date < 2004.1.1
+		}
+		elect_leader_david_oldfield_AST = yes
+	}
+	else_if = {
+		limit = {
+			date > 2004.1.1 date = 2004.1.1
+		}
+		elect_leader_pauline_hanson_AST = yes
+	}
+}
+
+# Pauline Hanson - One Nation - 27 #
+elect_leader_pauline_hanson_AST = {
+	if = {
+		limit = {
+			AND = {
+				is_in_array = { retired_political_leaders = 27 }
+				is_in_array = { retired_political_leaders = 28 }
+			}
+		}
+		# Both have been retired so elect some random
+	}
+	else_if = {
+		limit = { is_in_array = { retired_political_leaders = 27 } }
+		elect_leader_david_oldfield_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 27 }
+		create_country_leader = {
+			name = "Pauline Hanson"
+			picture = "Pauline_Hanson.dds"
+			desc = "PAULINE_HANSON_LEADER_DESC"
+			ideology = nat_populism
+			traits = { nationalist_nat_populism }
+		}
+	}
+}
+
+# David Oldfield - One Nation - 28 #
+elect_leader_david_oldfield_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 28 } }
+		elect_leader_pauline_hanson_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 28 }
+		create_country_leader = {
+			name = "David Oldfield"
+			picture = "David_Oldfield.dds"
+			desc = "DAVID_OLDFIELD_LEADER_DESC"
+			ideology = nat_populism
+			traits = { nationalist_nat_populism }
+		}
+	}
+}
+
+## Australia First Party - Index: 21 ##
+elect_party_nationalist_nat_fascism_AST = {
+	if = {
+		limit = {
+			date > 2000.1.1 date = 2000.1.1
+		}
+		elect_leader_jim_saleam_AST = yes
+	}
+}
+
+# Jim Saleam - Australia First Party - 29 #
+elect_leader_jim_saleam_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 29 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 29 }
+		create_country_leader = {
+			name = "Jim Saleam"
+			picture = "Jim_Saleam.dds"
+			desc = "JIM_SALEAM_LEADER_DESC"
+			ideology = Nat_Fascism
+			traits = { nationalist_Nat_Fascism }
+		}
+	}
+}
+
+## Australian Defence Force - Index: 22 ##
+elect_party_nationalist_nat_autocracy_AST = {
+		if = {
+		limit = {
+			OR = { date > 2000.1.1 date = 2000.1.1 }
+			date < 2014.1.1
+		}
+		elect_leader_chris_barrie_AST = yes
+	}
+	else_if = {
+		limit = {
+			OR = { date > 2014.1.1 date = 2014.1.1 }
+			date < 2018.1.1
+		}
+		elect_leader_mark_binskin_AST = yes
+	}
+	else_if = {
+		limit = {
+			date > 2018.1.1 date = 2018.1.1
+		}
+		elect_leader_angus_campbell_AST = yes
+	}
+}
+
+# Chris Barrie - ADF - 30 #
+elect_leader_chris_barrie_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 30 } }
+		elect_leader_mark_binskin_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 30 }
+		create_country_leader = {
+			name = "Chris Barrie"
+			picture = "Chris_Barrie.dds"
+			desc = "CHRIS_BARRIE_LEADER_DESC"
+			ideology = nat_autocracy
+			traits = { nationalist_nat_autocracy }
+		}
+	}
+}
+
+# Mark Binskin - ADF - 31 #
+elect_leader_mark_binskin_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 31 } }
+		elect_leader_angus_campbell_AST = yes
+	}
+	else = {
+		set_variable = { current_political_leader = 31 }
+		create_country_leader = {
+			name = "Mark Binskin"
+			picture = "Mark_Binskin.dds"
+			desc = "MARK_BINSKIN_LEADER_DESC"
+			ideology = nat_autocracy
+			traits = { nationalist_nat_autocracy }
+		}
+	}
+}
+
+# Angus Campbell - ADF - 32 #
+elect_leader_angus_campbell_AST = {
+	if = {
+		limit = { is_in_array = { retired_political_leaders = 32 } }
+	}
+	else = {
+		set_variable = { current_political_leader = 32 }
+		create_country_leader = {
+			name = "Angus Campbell"
+			picture = "Angus_Campbell.dds"
+			desc = "ANGUS_CAMPBELL_LEADER_DESC"
+			ideology = nat_autocracy
+			traits = { nationalist_nat_autocracy }
+		}
+	}
+}
+
+### Set Leader - Decide political leader based on ruling party ###
 set_leader_AST = {
+	hidden_effect = { kill_country_leader = yes }
+	## Western Outlook Parties ##
 
-	if = { limit = { has_country_flag = set_socialism }
-
-		if = { limit = { check_variable = { socialism_leader = 0 } }
-			add_to_variable = { socialism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Kim Beazley"
-				picture = "Kim_Beazley.dds"
-				ideology = socialism
-				traits = {
-					western_socialism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { socialism_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { socialism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { socialism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Kevin Rudd"
-				picture = "Kevin_Rudd.dds"
-				ideology = socialism
-				traits = {
-					western_socialism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { socialism_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Liberal Party - Index: 1 #
+	if = {
+		limit = { has_country_flag = set_conservatism }
+		elect_party_western_conservatism_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Communist-State }
-		if = { limit = { check_variable = { Communist-State_leader = 0 } }
-			add_to_variable = { Communist-State_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Peter Symon"
-				picture = "Peter_Symon.dds"
-				ideology = Communist-State
-				traits = {
-					emerging_Communist-State
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Communist-State_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Communist-State_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Communist-State_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Bob Briton"
-				picture = "Bob_Briton.dds"
-				ideology = Communist-State
-				traits = {
-					emerging_Communist-State
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Communist-State_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Centre Alliance - Index: 2 #
+	else_if = {
+		limit = { has_country_flag = set_liberalism }
+		elect_party_western_liberalism_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_anarchist_communism }
-		if = { limit = { check_variable = { anarchist_communism_leader = 0 } }
-			add_to_variable = { anarchist_communism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Sue Bolton"
-				picture = "Sue_Bolton.dds"
-				ideology = anarchist_communism
-				traits = {
-					emerging_anarchist_communism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { anarchist_communism_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
+	# Labor Party - Index: 3 #
+	else_if = {
+		limit = { has_country_flag = set_socialism }
+		elect_party_western_socialism_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Neutral_conservatism }
-		if = { limit = { check_variable = { Neutral_conservatism_leader = 0 } }
-			add_to_variable = { Neutral_conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "John Anderson"
-				picture = "John_Anderson.dds"
-				ideology = Neutral_conservatism
-				traits = {
-					neutrality_Neutral_conservatism
-				}
-			}
+	## End of Western Outlook Parties ##
 
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_conservatism_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Neutral_conservatism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+	## Emerging Outlook Parties ##
 
-			create_country_leader = {
-				name = "Barnaby Joyce"
-				picture = "Barnaby_Joyce.dds"
-				ideology = Neutral_conservatism
-				traits = {
-					neutrality_Neutral_conservatism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Communist Party of Australia (CPA) - Index: 4 #
+	else_if = {
+		limit = { has_country_flag = set_Communist-State }
+		elect_party_emerging_communist_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Neutral_Libertarian }
-		if = { limit = { check_variable = { Neutral_Libertarian_leader = 0 } }
-			add_to_variable = { Neutral_Libertarian_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Dr John Humphreys"
-				picture = "John_Humpherys.dds"
-				ideology = Neutral_Libertarian
-				traits = {
-					neutrality_Neutral_Libertarian
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Libertarian_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Neutral_Libertarian_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_Libertarian_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "John Humphreys"
-				picture = "John_Humpherys.dds"
-				ideology = Neutral_Libertarian
-				traits = {
-					neutrality_Neutral_Libertarian
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Libertarian_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Neutral_Libertarian_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_Libertarian_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Gabriel Buckley"
-				picture = "Gabriel_Buckley.dds"
-				ideology = Neutral_Libertarian
-				traits = {
-					neutrality_Neutral_Libertarian
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Libertarian_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Socialist Alliance - Index: 5 #
+	else_if = {
+		limit = { has_country_flag = set_anarchist_communism }
+		elect_party_emerging_anarchist_communism_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Neutral_Communism }
-		if = { limit = { check_variable = { Neutral_Communism_leader = 0 } }
-			add_to_variable = { Neutral_Communism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Nick Beams"
-				picture = "Nick_Beams.dds"
-				ideology = Neutral_Communism
-				traits = {
-					neutrality_Neutral_Communism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Communism_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Neutral_Communism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_Communism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "James Cogan"
-				picture = "James_Cogan.dds"
-				ideology = Neutral_Communism
-				traits = {
-					neutrality_Neutral_Communism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Communism_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Katter's Australian Party (KAP) - Index: 6 #
+	else_if = {
+		limit = { has_country_flag = set_Conservative }
+		elect_party_emerging_conservative_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Neutral_green }
-		if = { limit = { check_variable = { Neutral_green_leader = 0 } }
-			add_to_variable = { Neutral_green_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Dee Margetts"
-				picture = "Dee_Margetts.dds"
-				ideology = Neutral_green
-				traits = {
-					neutrality_Neutral_green
-				}
-			}
+	## End of Emerging Outlook Parties ##
 
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_green_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Neutral_green_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_green_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+	## Non-aligned Outlook Parties ##
 
-			create_country_leader = {
-				name = "Richard Di Natale"
-				picture = "Richard_Di_Natale.dds"
-				ideology = Neutral_green
-				traits = {
-					neutrality_Neutral_green
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_green_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# National Party of Australia - Index: 14 #
+	else_if = {
+		limit = { has_country_flag = set_Neutral_conservatism }
+		elect_party_neutrality_neutral_conservatism_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Nat_Autocracy }
-		if = { limit = { check_variable = { Nat_Autocracy_leader = 0 } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Adm. Chris Barres"
-				picture = "Chris_Barrie.dds"
-				ideology = Nat_Autocracy
-				traits = {
-					nationalist_Nat_Autocracy
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Nat_Autocracy_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Chris Barres"
-				picture = "Chris_Barrie.dds"
-				ideology = Nat_Autocracy
-				traits = {
-					nationalist_Nat_Autocracy
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Nat_Autocracy_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Acm. Mark Binskin"
-				picture = "Mark_Binskin.dds"
-				ideology = Nat_Autocracy
-				traits = {
-					nationalist_Nat_Autocracy
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
-		if = { limit = { check_variable = { Nat_Autocracy_leader = 3 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Mark Binskin"
-				picture = "Mark_Binskin.dds"
-				ideology = Nat_Autocracy
-				traits = {
-					nationalist_Nat_Autocracy
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Liberal Democratic Party (LDP) - Index: 16 #
+	else_if = {
+		limit = { has_country_flag = set_Neutral_Libertarian }
+		elect_party_neutrality_neutral_libertarian_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Nat_Fascism }
-		if = { limit = { check_variable = { Nat_Fascism_leader = 0 } }
-			add_to_variable = { Nat_Fascism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Jim Salaem"
-				picture = "Jim_Saleam.dds"
-				ideology = Nat_Fascism
-				traits = {
-					nationalist_Nat_Fascism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Fascism_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Nat_Fascism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Fascism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Jim Saleam"
-				picture = "Jim_Saleam.dds"
-				ideology = Nat_Fascism
-				traits = {
-					nationalist_Nat_Fascism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Fascism_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Australian Greens - Index: 17 #
+	else_if = {
+		limit = { has_country_flag = set_Neutral_green }
+		elect_party_neutrality_neutral_green_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Nat_Populism }
-		if = { limit = { check_variable = { Nat_Populism_leader = 0 } }
-			add_to_variable = { Nat_Populism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Pauline Hanson"
-				picture = "Pauline_Hanson.dds"
-				ideology = Nat_Populism
-				traits = {
-					nationalist_Nat_Populism
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Populism_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
+	# Socialist Equality Party (SEP) - Index: 19 #
+	else_if = {
+		limit = { has_country_flag = set_Neutral_Communism }
+		elect_party_neutrality_neutral_communism_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_liberalism }
-		if = { limit = { check_variable = { liberalism_leader = 0 } }
-			add_to_variable = { liberalism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Nick Xenophon"
-				picture = "Nick_Xenophon.dds"
-				ideology = liberalism
-				traits = {
-					western_liberalism
-				}
-			}
+	## End of Non-aligned Outlook Parties ##
 
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { liberalism_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	## Nationalist Outlook Parties ##
+
+	# One Nation - Index: 20 #
+	else_if = {
+		limit = { has_country_flag = set_Nat_Populism }
+		elect_party_nationalist_nat_populism_AST = yes
 	}
-	else_if = { limit = { has_country_flag = set_Conservative }
-		if = { limit = { check_variable = { Conservative_leader = 0 } }
-			add_to_variable = { Conservative_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Bob Katter"
-				picture = "Bob_Katter.dds"
-				ideology = Conservative
-				traits = {
-					emerging_Conservative
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Conservative_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+	# Australia First Party - Index: 21 #
+	else_if = {
+		limit = { has_country_flag = set_Nat_Fascism }
+		elect_party_nationalist_nat_fascism_AST = yes
 	}
+
+	# Australian Defence Force - Index: 22 #
+	else_if = {
+		limit = { has_country_flag = set_Nat_Autocracy }
+		elect_party_nationalist_nat_autocracy_AST = yes
+	}
+
+	## End of Nationalist Outlook Parties ##
+	else = {
+		log = "[GetDateText]: [Root.GetName]: Invalid ruling party for set_leader."
+	}
+}
+
+### Retire leader - will pass leadership to next in line ###
+retire_leader_AST = {
+	add_to_array = {
+		array = retired_political_leaders
+		value = current_political_leader
+	}
+
+	set_leader_AST = yes
 }
