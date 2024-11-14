@@ -1,0 +1,200 @@
+# Author(s): Stjern (Total War Mod)
+# Adapted by Mahhouse, Bird for use in MD
+# Source: https://steamcommunity.com/sharedfiles/filedetails/?id=806209426&searchtext=total+war
+scripted_gui = {
+	counter_ui = {
+		window_name = "counter_ui_container"
+
+		parent_window_token = top_bar
+
+		dynamic_lists = {
+			topbar_list = {
+				array = ROOT.topbar_array
+				entry_container = "topbar_list_container"
+			}
+			topbar_menu = {
+				array = ROOT.topbar_menu
+				entry_container = "topbar_menu_container"
+			}
+		}
+
+		properties = {
+			topbar_icon = { image = "[GetTopbarIcon]" }
+		}
+		# Limits how many counters you can have in total. 16 max fills up a 1080p screen to the end.
+		triggers = {
+			counter_ui_button_click_enabled = {
+				check_variable = { topbar_array^num < 16 }
+			}
+		}
+
+		effects = {
+			# Creates a new UI
+			counter_ui_button_click = {
+				add_to_array = { ROOT.topbar_array = 1 }
+				add_to_array = { ROOT.topbar_selected_container = 0 }
+				add_to_array = { ROOT.topbar_array_menu = 0 }
+				add_to_array = { ROOT.topbar_option_one = 0 }
+				add_to_array = { ROOT.topbar_option_two = 0 }
+			}
+
+			list_click = {
+				set_temp_variable = { container_index = i }
+
+				set_variable = { ROOT.topbar_selected_container^topbar_container_index = ROOT.topbar_menu^container_index }
+			}
+
+			list_right_click = {
+				if = { limit = { check_variable = { topbar_menu^i = 5 } }
+					if = { limit = { check_variable = { topbar_option_one^topbar_container_index > 4 } }
+						set_variable = { topbar_option_one^topbar_container_index = 0 }
+					}
+					else = {
+						add_to_variable = { topbar_option_one^topbar_container_index = 1 }
+					}
+				}
+				else_if = { limit = { check_variable = { topbar_menu^i = 6 } }
+					if = { limit = { check_variable = { topbar_option_one^topbar_container_index > 4 } }
+						set_variable = { topbar_option_one^topbar_container_index = 0 }
+					}
+					else = {
+						add_to_variable = { topbar_option_one^topbar_container_index = 1 }
+					}
+				}
+				else_if = { limit = { check_variable = { topbar_menu^i = 19 } }
+					if = { limit = { check_variable = { topbar_option_one^topbar_container_index > 2 } }
+						set_variable = { topbar_option_one^topbar_container_index = 0 }
+					}
+					else = {
+						add_to_variable = { topbar_option_one^topbar_container_index = 1 }
+					}
+				}
+				else_if = { limit = { check_variable = { topbar_menu^i = 21 } }
+					if = { limit = { check_variable = { topbar_option_one^topbar_container_index > 1 } }
+						set_variable = { topbar_option_one^topbar_container_index = 0 }
+					}
+					else = {
+						add_to_variable = { topbar_option_one^topbar_container_index = 1 }
+					}
+				}
+				else_if = { limit = { check_variable = { topbar_menu^i = 22 } }
+					if = { limit = { check_variable = { topbar_option_one^topbar_container_index > 2 } }
+						set_variable = { topbar_option_one^topbar_container_index = 0 }
+					}
+					else = {
+						add_to_variable = { topbar_option_one^topbar_container_index = 1 }
+					}
+				}
+				else_if = { limit = { check_variable = { topbar_menu^i = 23 } }
+					if = { limit = { check_variable = { topbar_option_one^topbar_container_index > 0 } }
+						set_variable = { topbar_option_one^topbar_container_index = 0 }
+					}
+					else = {
+						add_to_variable = { topbar_option_one^topbar_container_index = 1 }
+					}
+				}
+			}
+			list_shift_click = {
+				if = { limit = { check_variable = { topbar_menu^i = 5 } }
+					if = { limit = { check_variable = { topbar_option_two^topbar_container_index > 3 } }
+						set_variable = { topbar_option_two^topbar_container_index = 0 }
+					}
+					else = {
+						add_to_variable = { topbar_option_two^topbar_container_index = 1 }
+					}
+				}
+			}
+
+			# The UI Container Button
+			background_button_click = {
+				set_temp_variable = { temp = topbar_container_index  }
+				set_variable = { topbar_container_index = i }
+
+				clear_array = topbar_menu
+				if = { limit = { check_variable = { temp = topbar_container_index } }
+					if = { limit = { check_variable = { ROOT.topbar_array_menu^topbar_container_index = 1 } }
+						set_variable = { ROOT.topbar_array_menu^topbar_container_index = 0 }
+					}
+					else = {
+						set_variable = { ROOT.topbar_array_menu^topbar_container_index = 1 }
+
+						add_to_array = { topbar_menu = 1 } #casualties counter (death from war), index 0
+						add_to_array = { topbar_menu = 2 } #surrender counter, index 1
+						add_to_array = { topbar_menu = 3 } #strength ratio counter (army), index 2
+						add_to_array = { topbar_menu = 4 } #naval strength ratio counter, index 3
+						add_to_array = { topbar_menu = 5 } #resources counter, index 4
+						add_to_array = { topbar_menu = 6 } #Govt. Popularity counter, index 5
+
+						add_to_array = { topbar_menu = 10 } #energy balance counter, index 6
+						add_to_array = { topbar_menu = 11 } #weekly balance counter, index 7
+						add_to_array = { topbar_menu = 12 } #unemployment rate counter, index 8
+
+						add_to_array = { topbar_menu = 14 } #ships counter, index 9
+						add_to_array = { topbar_menu = 15 } #tax cost counter, index 10
+						add_to_array = { topbar_menu = 19 } #factories counter, index 11
+						add_to_array = { topbar_menu = 20 } #protest counter, index 12
+						add_to_array = { topbar_menu = 21 } #foreign influencing counter, index 13
+						add_to_array = { topbar_menu = 22 } #European Union, index 14
+						add_to_array = { topbar_menu = 23 } #Foreign Investment
+					}
+				}
+				else = {
+					set_variable = { ROOT.topbar_array_menu^temp = 0 }
+					set_variable = { ROOT.topbar_array_menu^topbar_container_index = 1 }
+
+					add_to_array = { topbar_menu = 1 } #casualties counter (death from war), index 0
+					add_to_array = { topbar_menu = 2 } #surrender counter, index 1
+					add_to_array = { topbar_menu = 3 } #strength ratio counter (army), index 2
+					add_to_array = { topbar_menu = 4 } #naval strength ratio counter, index 3
+					add_to_array = { topbar_menu = 5 } #resources counter, index 4
+					add_to_array = { topbar_menu = 6 } #Govt. Popularity counter, index 5
+
+					add_to_array = { topbar_menu = 10 } #energy balance counter, index 6
+					add_to_array = { topbar_menu = 11 } #weekly balance counter, index 7
+					add_to_array = { topbar_menu = 12 } #unemployment rate counter, index 8
+
+					add_to_array = { topbar_menu = 14 } #ships counter, index 9
+					add_to_array = { topbar_menu = 15 } #tax cost counter, index 10
+					add_to_array = { topbar_menu = 19 } #factories counter, index 11
+					add_to_array = { topbar_menu = 20 } #protest counter, index 12
+					add_to_array = { topbar_menu = 21 } #Foreign Influencing, index 13
+					add_to_array = { topbar_menu = 22 } #European Union, index 14
+					add_to_array = { topbar_menu = 23 } #European Union, index 14
+				}
+			}
+
+			background_button_right_click = {
+				remove_from_array = { ROOT.topbar_array = 1 }
+				subtract_from_variable = { topbar_container_index = 1 }
+				if = {
+					limit = { check_variable = { ROOT.topbar_array^0 = 0 } }
+					clear_array = topbar_menu
+					clear_variable = topbar_container_index
+				}
+			}
+
+			# Additional Functionalities
+			# shift-right: clears all of the containers
+			# control-right: clears all of the selected containers
+			# control-shift-right: clears all containers and clears all arrays
+			# right click: close current container
+			background_button_shift_right_click = {
+				clear_array = ROOT.topbar_array
+			}
+
+			background_button_control_right_click = {
+				for_each_loop = {
+					array = ROOT.topbar_selected_container
+					set_variable = { ROOT.topbar_selected_container^i = 0 }
+				}
+				clear_variable = topbar_menu
+			}
+
+			background_button_control_shift_right_click = {
+				clear_array = ROOT.topbar_array
+				clear_array = ROOT.topbar_array_menu
+				clear_array = ROOT.topbar_selected_container
+			}
+		}
+	}
+}
