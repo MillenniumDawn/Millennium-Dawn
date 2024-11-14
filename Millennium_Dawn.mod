@@ -1,5 +1,5 @@
 version="1.11.0"
-name="Millennium Dawn: Developer Version -- NEW DLC"
+name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"
@@ -9,7 +9,7 @@ tags={
 supported_version="1.15.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
-path="mod/millennium-dawn-patch"
+path="mod/Millennium_Dawn"
 
 replace_path = "events"
 replace_path = "common/abilities"
