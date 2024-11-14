@@ -10,7 +10,7 @@ tags={
 	"Balance"
 	"Fixes"
 }
-supported_version="1.14.*"
+supported_version="1.15.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
 
