@@ -46,14 +46,19 @@ NATO_join = {
 #USE INSTEAD OF USA = { country_event = NATO.14 } TO BE SURE USA WONT APPLY MEMBERSHIP IF THEY ARE NOT NATO MEMBER MORE
 NATO_join_via_event = {
 	if = {
-		limit = { USA = { has_idea = NATO_member } }
+		limit = {
+			USA = {
+				has_idea = NATO_member
+				is_faction_leader = yes
+			}
+		}
 		USA = { country_event = NATO.14 }
 	}
 	else = {
 		random_country = {
 			limit = {
 				has_idea = NATO_member
-				is_major = yes
+				is_faction_leader = yes
 			}
 			country_event = NATO.14
 		}
@@ -68,25 +73,27 @@ NATO_leave = {
 
 	for_each_scope_loop = {
 		array = global.nato_members
+		if = {
+			limit = { has_idea = NATO_member }
+			# Nato members are mad you left.
+			add_opinion_modifier = { target = PREV modifier = left_nato }
 
-		# Nato members are mad you left.
-		add_opinion_modifier = { target = PREV modifier = left_nato }
+			# Remove nato opinion boost.
+			remove_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
+			PREV = { remove_opinion_modifier = { target = PREV modifier = NATO_member_modifier } }
 
-		# Remove nato opinion boost.
-		remove_opinion_modifier = { target = PREV modifier = NATO_member_modifier }
-		PREV = { remove_opinion_modifier = { target = PREV modifier = NATO_member_modifier } }
-
-		# Remove military access.
-		diplomatic_relation = {
-			country = PREV
-			relation = military_access
-			active = no
-		}
-		PREV = {
+			# Remove military access.
 			diplomatic_relation = {
 				country = PREV
 				relation = military_access
 				active = no
+			}
+			PREV = {
+				diplomatic_relation = {
+					country = PREV
+					relation = military_access
+					active = no
+				}
 			}
 		}
 	}
