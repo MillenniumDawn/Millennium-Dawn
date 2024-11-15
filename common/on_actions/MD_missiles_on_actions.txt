@@ -1,81 +1,20 @@
 on_actions = {
 	on_startup = {
 		effect = {
-			### new moved to global arrays
-			### 00_missiles_models.txt
-			ABK = {
-				log = "[GetDateText]: [THIS.GetName]: on_startup setup missile global arrays"
-				set_all_missile_defense_tech = yes
-				set_all_missile_tech = yes
-				set_all_warhead_tech = yes
-				set_nuclear_status_nuclear_deterrence = yes
-				set_nuclear_doctrine_nuclear_deterrence = yes
-				set_all_nuclear_warhead_tech = yes
-				set_all_conventional_warhead_tech = yes
-				set_all_prod_arrays = yes
-				set_all_sat_system_tech = yes
-				set_all_OLV_tech = yes
-				set_all_ASAT_tech = yes
-				set_all_KILLSAT_tech = yes
-				set_all_sat_mass = yes
-				set_all_spp_mass = yes
-				set_RODS_damage = yes
-				set_missile_display_stats = yes
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = FSTK_allowed
-						option = yes
-					}
-				}
-				set_global_flag = FSTK_allowed
-			}
-			if = {
-				limit = {
-					has_game_rule = {
-						rule = AI_first_use
-						option = no
-					}
-				}
-				set_global_flag = NO_AI_first_use
-			}
-			### for topbar without LaR
-			if = {
-				limit = {
-					NOT = { has_dlc = "La Resistance" }
-				}
-				set_variable = { global.var_missiles_button_x = -57 }
-			}
 			every_country = {
 				log = "[GetDateText]: [THIS.GetName]: on_startup setup missiles"
 				set_country_flag = setup_missiles
-				set_variable = { var_missile_trajectory_ID = -1 }
 				set_variable = { var_KB_ID = -1 }
 				set_variable = { missile_launch_selected_TAG = THIS.id }
 				set_variable = { orbit_selected_TAG = THIS.id }
 				set_variable = { nukes_selected_TAG = THIS.id }
-				set_variable = { var_nuke_energy_ratio = 0.50 }
-				set_variable = { var_nuke_nuclear_material_ratio = 0.50 }
 				set_variable = { var_CIC_use_enrichment = 0 }
-				set_variable = { var_CIC_use_nuclear = 0 }
 				set_variable = { var_nuke_energy_prod = 0 }
 				set_variable = { var_nuke_nuclear_material_prod = 0 }
 				set_variable = { var_nuclear_warhead_prod_factor = 2 }
 				set_variable = { var_nuclear_material_stockpile = 0 }
-				set_variable = { var_fire_sort_button = 2 }
-				set_variable = { var_strategic_strike = 2 } # 1 active, 2 not active
-				set_variable = { var_tactical_strike = 2 } # 1 active, 2 not active
-				set_variable = { var_NSAM_auto_redeploy = 1 }
-				set_variable = { var_SAM_auto_redeploy = 1 }
-				set_variable = { var_NSAM_MD_auto_redeploy = 1 }
-				set_variable = { var_SAM_MD_auto_redeploy = 1 }
-				set_variable = { var_NABM_auto_redeploy = 1 }
-				set_variable = { var_ABM_auto_redeploy = 1 }
 				set_variable = { var_kinetic_bombardment_stats = 2 }
-				### for MD_missile_sea_launch_points_CV.txt ### maybe change meta_triggers
-				set_variable = { var_CV_number_LAM = 1 }
-				#
+				# 154 missile types and otherwise
 				resize_array = { missile_inventory_array = 154 }
 				if = {
 					limit = {
@@ -84,16 +23,9 @@ on_actions = {
 					remove_ideas = nuclear_power
 					add_dynamic_modifier = { modifier = nuclear_state_modifier }
 				}
-				add_dynamic_modifier = { modifier = air_defense_modifiers_system }
 				add_dynamic_modifier = { modifier = GNSS_system }
 				add_dynamic_modifier = { modifier = COMSAT_system }
 				add_dynamic_modifier = { modifier = SPYSAT_system }
-				calculate_NSAM_AD_gui_vars = yes
-				calculate_SAM_AD_gui_vars = yes
-				calculate_SAM_MD_sea_gui_vars = yes
-				calculate_SAM_MD_land_gui_vars = yes
-				calculate_ABM_sea_gui_vars = yes
-				calculate_ABM_land_gui_vars = yes
 				set_sat_orbit_startup = yes
 
 				set_variable = { var_nuclear_material_nuclear_deterrence_factor = 0.005 }
@@ -109,31 +41,6 @@ on_actions = {
 
 				#for testing network traffic
 				set_COM_sat_receiver_tech_array = yes
-				#testing nukes
-				set_variable = { var_launch_nuke_num = 0 }
-				set_variable = { var_on_nuke_drop = 0 }
-				set_variable = { global.temp_count = 0 }
-			}
-
-			set_temp_variable = { temp1 = 1 } # 0
-			while_loop_effect = {
-				limit = {
-					check_variable = { temp1 < 22 } # number of buildings + 1 # number of buildings 20
-				}
-				add_to_array = { global.building_array = temp1 }
-				add_to_temp_variable = { temp1 = 1 }
-			}
-			every_state = {
-				limit = {
-					is_coastal = yes
-					# afghanistan ocean (was mand for intervention forces)
-					NOT = { state = 724 }
-					NOT = { state = 411 }
-					NOT = { state = 410 }
-				}
-				log = "[GetDateText]: [THIS.GetName]: on_startup set is_coastal"
-				add_to_array = { global.sea_launch_point_array = THIS.id }
-				set_state_flag = sea_launch_point
 			}
 		}
 	}
@@ -146,39 +53,19 @@ on_actions = {
 					NOT = { has_country_flag = setup_missiles }
 				}
 				set_country_flag = setup_missiles
-				set_variable = { var_missile_trajectory_ID = -1 }
 				set_variable = { var_KB_ID = -1 }
 				set_variable = { missile_launch_selected_TAG = THIS.id }
 				set_variable = { orbit_selected_TAG = THIS.id }
 				set_variable = { nukes_selected_TAG = THIS.id }
-				set_variable = { var_nuke_energy_ratio = 0.50 }
-				set_variable = { var_nuke_nuclear_material_ratio = 0.50 }
 				set_variable = { var_CIC_use_enrichment = 0 }
-				set_variable = { var_CIC_use_nuclear = 0 }
 				set_variable = { var_nuke_energy_prod = 0 }
 				set_variable = { var_nuke_nuclear_material_prod = 0 }
 				set_variable = { var_nuclear_warhead_prod_factor = 2 }
 				set_variable = { var_nuclear_material_stockpile = 0 }
-				set_variable = { var_fire_sort_button = 2 }
-				set_variable = { var_NSAM_auto_redeploy = 1 }
-				set_variable = { var_SAM_auto_redeploy = 1 }
-				set_variable = { var_NSAM_MD_auto_redeploy = 1 }
-				set_variable = { var_SAM_MD_auto_redeploy = 1 }
-				set_variable = { var_NABM_auto_redeploy = 1 }
-				set_variable = { var_ABM_auto_redeploy = 1 }
-				set_variable = { var_kinetic_bombardment_stats = 2 }
-				set_variable = { var_CV_number_LAM = 1 }
 				resize_array = { missile_inventory_array = 154 }
-				add_dynamic_modifier = { modifier = air_defense_modifiers_system }
 				add_dynamic_modifier = { modifier = GNSS_system }
 				add_dynamic_modifier = { modifier = COMSAT_system }
 				add_dynamic_modifier = { modifier = SPYSAT_system }
-				calculate_NSAM_AD_gui_vars = yes
-				calculate_SAM_AD_gui_vars = yes
-				calculate_SAM_MD_sea_gui_vars = yes
-				calculate_SAM_MD_land_gui_vars = yes
-				calculate_ABM_sea_gui_vars = yes
-				calculate_ABM_land_gui_vars = yes
 				set_sat_orbit_startup = yes
 				set_variable = { var_nuclear_material_nuclear_deterrence_factor = 0.005 }
 				clear_payload_types = yes
@@ -187,10 +74,6 @@ on_actions = {
 				add_to_array = { array = spp_inventory_array value = 1 index = 2 }
 				#for testing network traffic
 				set_COM_sat_receiver_tech_array = yes
-				#testing nukes
-				set_variable = { var_launch_nuke_num = 0 }
-				set_variable = { var_on_nuke_drop = 0 }
-				set_variable = { global.temp_count = 0 }
 			}
 			missile_ui_update = yes
 		}
@@ -198,62 +81,33 @@ on_actions = {
 
 	on_release_as_puppet = {
 		effect = {
-			log = "[GetDateText]: [THIS.GetName]: on_release_as_puppet setup missiles"
 			if = {
 				limit = {
 					NOT = { has_country_flag = setup_missiles }
 				}
 				set_country_flag = setup_missiles
-				set_variable = { var_missile_trajectory_ID = -1 }
 				set_variable = { var_KB_ID = -1 }
 				set_variable = { missile_launch_selected_TAG = THIS.id }
 				set_variable = { orbit_selected_TAG = THIS.id }
 				set_variable = { nukes_selected_TAG = THIS.id }
-				set_variable = { var_nuke_energy_ratio = 0.50 }
-				set_variable = { var_nuke_nuclear_material_ratio = 0.50 }
 				set_variable = { var_CIC_use_enrichment = 0 }
-				set_variable = { var_CIC_use_nuclear = 0 }
 				set_variable = { var_nuke_energy_prod = 0 }
 				set_variable = { var_nuke_nuclear_material_prod = 0 }
 				set_variable = { var_nuclear_warhead_prod_factor = 2 }
 				set_variable = { var_nuclear_material_stockpile = 0 }
-				set_variable = { var_fire_sort_button = 2 }
-				set_variable = { var_NSAM_auto_redeploy = 1 }
-				set_variable = { var_SAM_auto_redeploy = 1 }
-				set_variable = { var_NSAM_MD_auto_redeploy = 1 }
-				set_variable = { var_SAM_MD_auto_redeploy = 1 }
-				set_variable = { var_NABM_auto_redeploy = 1 }
-				set_variable = { var_ABM_auto_redeploy = 1 }
-				set_variable = { var_kinetic_bombardment_stats = 2 }
-				set_variable = { var_CV_number_LAM = 1 }
 				resize_array = { missile_inventory_array = 154 }
-				add_dynamic_modifier = { modifier = air_defense_modifiers_system }
 				add_dynamic_modifier = { modifier = GNSS_system }
 				add_dynamic_modifier = { modifier = COMSAT_system }
 				add_dynamic_modifier = { modifier = SPYSAT_system }
-				calculate_NSAM_AD_gui_vars = yes
-				calculate_SAM_AD_gui_vars = yes
-				calculate_SAM_MD_sea_gui_vars = yes
-				calculate_SAM_MD_land_gui_vars = yes
-				calculate_ABM_sea_gui_vars = yes
-				calculate_ABM_land_gui_vars = yes
 				set_sat_orbit_startup = yes
 				set_variable = { var_nuclear_material_nuclear_deterrence_factor = 0.005 }
-				### sat gui testing
-				# add_to_array = { payload_types_array = 1 }
-				# add_to_array = { payload_types_array = 1 }
-				# add_to_array = { payload_types_array = 1 }
-				# add_to_array = { payload_types_array = 1 }
+
 				clear_payload_types = yes
 				add_to_array = { array = spp_inventory_array value = 1 index = 0 }
 				add_to_array = { array = spp_inventory_array value = 30 index = 1 }
 				add_to_array = { array = spp_inventory_array value = 1 index = 2 }
 				#for testing network traffic
 				set_COM_sat_receiver_tech_array = yes
-				#testing nukes
-				set_variable = { var_launch_nuke_num = 0 }
-				set_variable = { var_on_nuke_drop = 0 }
-				set_variable = { global.temp_count = 0 }
 			}
 			missile_ui_update = yes
 		}
@@ -261,317 +115,15 @@ on_actions = {
 
 	on_weekly = {
 		effect = {
-			#In the past it was every day
-			update_nuclear_production = yes
+			# In the past it was every day
 			nuclear_reactor_fuel_consumption = yes
 
-			# Update Stockpile
-			add_to_variable = { var_nuclear_material_stockpile = var_nuke_nuclear_material_prod }
-			clamp_variable = { var = var_nuclear_material_stockpile min = 0 max = 2000000 }
-			add_to_variable = { var_reactor_material_stockpile = var_nuke_nuclear_reactor_prod }
-			clamp_variable = { var = var_reactor_material_stockpile min = 0 max = 2000000 }
-
 			# Other Nuclear Stuff
-			update_nuclear_deterrence = yes
-			update_nuclear_stability_factor = yes
 			update_sat_systems_stats = yes
-			update_deployed_air_missile_defense = yes
+
 			########
-			missile_on_weekly = yes
-			set_missile_launch_arrays_selected_TAG = yes
-			on_weekly_redeploy = yes
 			clear_spy_sat_mission_arrays = yes
 			update_SPY_mission_num = yes
-			check_enrichment = yes
-			missile_ui_update = yes
-		}
-	}
-
-	on_monthly = {
-		effect = {
-			clear_variable = var_NSAM_AD_lost_monthly
-			clear_variable = var_SAM_AD_lost_monthly
-			clear_variable = var_NSAM_MD_lost_monthly
-			clear_variable = var_SAM_MD_lost_monthly
-			clear_variable = var_NABM_lost_monthly
-			clear_variable = var_ABM_lost_monthly
-			missile_ui_update = yes
-		}
-	}
-
-	on_nuke_drop = {
-		effect = {
-			FROM = {
-				controller = {
-					if = {
-						limit = {
-							NOT = { original_tag = PREV.PREV }
-						}
-						country_event = {
-							id = nukes.2 #file: missiles_events.txt
-							hours = 4
-						}
-					}
-					else_if = {
-						limit = {
-							original_tag = PREV.PREV
-						}
-						every_country = {
-							limit = {
-								NOT = { is_ai = yes }
-								NOT = { has_country_flag = NOT_show_nuclare_test_info }
-							}
-							country_event = {
-								id = nukes.4 #file: missiles_events.txt
-								hours = 4
-							}
-						}
-					}
-				}
-			}
-			### for nuke damage
-			set_temp_variable = { temp_idx = global.nuke_drop_salvo_idx }
-			log = "[GetDateText]: [Root.GetName]: global.nuke_drop_salvo_idx [?global.nuke_drop_salvo_idx]"
-			FROM = {
-				controller = {
-					log = "[GetDateText]: FROM [FROM.GetName]: on_nuke_drop controller [THIS.GetName] [?FROM.GetID]"
-					log = "[?global.damage_building_1_array^temp_idx]"
-					log = "[?global.damage_building_2_array^temp_idx]"
-					log = "[?global.damage_building_3_array^temp_idx]"
-					log = "[?global.damage_building_4_array^temp_idx]"
-					log = "[?global.damage_building_5_array^temp_idx]"
-					log = "[?global.damage_building_6_array^temp_idx]"
-					log = "[?global.damage_building_7_array^temp_idx]"
-					log = "[?global.damage_building_8_array^temp_idx]"
-					log = "[?global.damage_building_9_array^temp_idx]"
-					log = "[?global.damage_building_10_array^temp_idx]"
-					log = "[?global.damage_building_11_array^temp_idx]"
-					log = "[?global.damage_building_12_array^temp_idx]"
-					log = "[?global.damage_building_13_array^temp_idx]"
-					log = "[?global.damage_building_14_array^temp_idx]"
-					log = "[?global.damage_building_15_array^temp_idx]"
-					#log = "temp_missile_strike_type [?temp_missile_strike_type]"
-					FROM = {
-						remove_building = {
-							type = industrial_complex
-							level = PREV.nuke_temp0
-						}
-						remove_building = {
-							type = arms_factory
-							level = PREV.nuke_temp1
-						}
-						remove_building = {
-							type = infrastructure
-							level = PREV.nuke_temp2
-						}
-						remove_building = {
-							type = internet_station
-							level = PREV.nuke_temp3
-						}
-						remove_building = {
-							type = dockyard
-							level = PREV.nuke_temp4
-						}
-						remove_building = {
-							type = air_base
-							level = PREV.nuke_temp5
-						}
-						remove_building = {
-							type = radar_station
-							level = PREV.nuke_temp6
-						}
-						remove_building = {
-							type = anti_air_building
-							level = PREV.nuke_temp7
-						}
-						remove_building = {
-							type = missile_defense_station
-							level = PREV.nuke_temp8
-						}
-						remove_building = {
-							type = TEL_base
-							level = PREV.nuke_temp9
-						}
-						remove_building = {
-							type = missile_silo
-							level = PREV.nuke_temp10
-						}
-						remove_building = {
-							type = nuclear_reactor
-							level = PREV.nuke_temp11
-						}
-						remove_building = {
-							type = synthetic_refinery
-							level = PREV.nuke_temp12
-						}
-						remove_building = {
-							type = fuel_silo
-							level = PREV.nuke_temp13
-						}
-						remove_building = {
-							type = offices
-							level = PREV.nuke_temp14
-						}
-						add_building_construction = {
-							type = industrial_complex
-							level = PREV.nuke_temp0
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = arms_factory
-							level = PREV.nuke_temp1
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = infrastructure
-							level = PREV.nuke_temp2
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = internet_station
-							level = PREV.nuke_temp3
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = dockyard
-							level = PREV.nuke_temp4
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = air_base
-							level = PREV.nuke_temp5
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = radar_station
-							level = PREV.nuke_temp6
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = anti_air_building
-							level = PREV.nuke_temp7
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = missile_defense_station
-							level = PREV.nuke_temp8
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = TEL_base
-							level = PREV.nuke_temp9
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = missile_silo
-							level = PREV.nuke_temp10
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = nuclear_reactor
-							level = PREV.nuke_temp11
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = synthetic_refinery
-							level = PREV.nuke_temp12
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = fuel_silo
-							level = PREV.nuke_temp13
-							instant_build = yes
-						}
-						add_building_construction = {
-							type = offices
-							level = PREV.nuke_temp14
-							instant_build = yes
-						}
-						#set_nuke_damage = yes
-						meta_effect = {
-							text = {
-								damage_building = {
-									type = industrial_complex
-									damage = [nuke_temp0_d]
-								}
-								damage_building = {
-									type = arms_factory
-									damage = [nuke_temp1_d]
-								}
-								damage_building = {
-									type = infrastructure
-									damage = [nuke_temp2_d]
-								}
-								damage_building = {
-									type = internet_station
-									damage = [nuke_temp3_d]
-								}
-								damage_building = {
-									type = dockyard
-									damage = [nuke_temp4_d]
-								}
-								damage_building = {
-									type = air_base
-									damage = [nuke_temp5_d]
-								}
-								damage_building = {
-									type = radar_station
-									damage = [nuke_temp6_d]
-								}
-								damage_building = {
-									type = anti_air_building
-									damage = [nuke_temp7_d]
-								}
-								damage_building = {
-									type = missile_defense_station
-									damage = [nuke_temp8_d]
-								}
-								damage_building = {
-									type = TEL_base
-									damage = [nuke_temp9_d]
-								}
-								damage_building = {
-									type = missile_silo
-									damage = [nuke_temp10_d]
-								}
-								damage_building = {
-									type = nuclear_reactor
-									damage = [nuke_temp11_d]
-								}
-								damage_building = {
-									type = synthetic_refinery
-									damage = [nuke_temp12_d]
-								}
-								damage_building = {
-									type = fuel_silo
-									damage = [nuke_temp13_d]
-								}
-								damage_building = {
-									type = offices
-									damage = [nuke_temp14_d]
-								}
-							}
-
-							#### changed to arrays
-							nuke_temp0_d = "[?global.damage_building_1_array^temp_idx]"
-							nuke_temp1_d = "[?global.damage_building_2_array^temp_idx]"
-							nuke_temp2_d = "[?global.damage_building_3_array^temp_idx]"
-							nuke_temp3_d = "[?global.damage_building_4_array^temp_idx]"
-							nuke_temp4_d = "[?global.damage_building_5_array^temp_idx]"
-							nuke_temp5_d = "[?global.damage_building_6_array^temp_idx]"
-							nuke_temp6_d = "[?global.damage_building_7_array^temp_idx]"
-							nuke_temp7_d = "[?global.damage_building_8_array^temp_idx]"
-							nuke_temp8_d = "[?global.damage_building_9_array^temp_idx]"
-							nuke_temp9_d = "[?global.damage_building_10_array^temp_idx]"
-							nuke_temp10_d = "[?global.damage_building_11_array^temp_idx]"
-							nuke_temp11_d = "[?global.damage_building_12_array^temp_idx]"
-							nuke_temp12_d = "[?global.damage_building_13_array^temp_idx]"
-							nuke_temp13_d = "[?global.damage_building_14_array^temp_idx]"
-							nuke_temp14_d = "[?global.damage_building_15_array^temp_idx]"
-						}
-					}
-				}
-			}
 			missile_ui_update = yes
 		}
 	}
