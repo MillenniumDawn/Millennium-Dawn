@@ -1,5 +1,5 @@
-#Cooked by Warner
-#YOU SHOULD DO `pip install Pillow` IN CMD IF YOU GET ERRORS FOR 'PIL' MODULE.
+# Cooked by Warner
+# YOU SHOULD DO `pip install Pillow` IN CMD IF YOU GET ERRORS FOR 'PIL' MODULE.
 
 import os
 import PIL.Image
@@ -14,8 +14,8 @@ states_dir = os.path.abspath(os.path.join(os.path.dirname(mod),'..\history\state
 definition_file = os.path.abspath(os.path.join(os.path.dirname(mod),'..\map\definition.csv'))
 desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
 
-state_ids = input("Enter the state ID(s) splited by spaces: ").split(" ")
-scale_number = int(input("Enter the scale (I suggest 2, but try one in game to see how big it becomes)(default is 1): "))
+state_ids = input("Enter the state ID(s) separated by spaces: ").split(" ")
+scale_number = int(input("Enter the scale (I suggest 2, but try one in game to see how big it becomes)(default is 1): ") or 1)
 
 def rgb_to_hex(rgb):
     return '#%02x%02x%02x' % rgb
@@ -47,21 +47,34 @@ for state_id in state_ids:
         province_ids = []
         with open(state_file, 'r', encoding='utf-8-sig') as file:
             state_data = file.read()
-            province_ids = re.findall(r"provinces\s*=\s*{([^}]*)}", state_data)[0].split()
-            state_name = re.search(r"\d+-(.+)\.txt", file_name).group(1)
-            print("State Name:", state_name)
+            match = re.findall(r"provinces\s*=\s*{([^}]*)}", state_data)
+            if match:
+                province_ids = match[0].split()
+            state_name_match = re.search(r"\d+-(.+)\.txt", file_name)
+            if state_name_match:
+                state_name = state_name_match.group(1)
+                print("State Name:", state_name)
+            else:
+                print("Could not extract state name from file name.")
+                continue
 
         with open(definition_file, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            next(csv_reader)
+            next(csv_reader)  # Skip header
             for row in csv_reader:
-                province_id = int(row[0])
-                if str(province_id) in province_ids:
-                    rgb = tuple(map(int, row[1:4]))
-                    hex_code = rgb_to_hex(rgb)
-                    hex_codes.append(hex_code)
-
-
+                if len(row) < 4:
+                    print(f"Skipping malformed row: {row}")
+                    continue
+                print("Row content:", row)  # Debugging line
+                try:
+                    province_id = int(row[0])
+                    if str(province_id) in province_ids:
+                        rgb = tuple(map(int, row[1:4]))
+                        hex_code = rgb_to_hex(rgb)
+                        hex_codes.append(hex_code)
+                except ValueError:
+                    print(f"Skipping invalid province_id: {row[0]}")
+                    
         print("Province IDs:", province_ids)
         print("HEX Codes:", hex_codes)
         print("Let me cook...")
@@ -102,7 +115,7 @@ for state_id in state_ids:
         new_resize_height = int(resize_height * scale_number)
         resized_image = new_image.resize((new_resize_width, new_resize_height))
         output_name = state_name.lower().replace(" ", "_")
-        resized_image.save(desktop_path + f"\{output_name}.png")
+        resized_image.save(os.path.join(desktop_path, f"{output_name}.png"))
 
-        print(f"\nI cooked {state_id}-{state_name}. Output is in your desktop.\n")
+        print(f"\nI cooked {state_id}-{state_name}. Output is on your desktop.\n")
 print("It's over...")
