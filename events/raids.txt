@@ -1,0 +1,760 @@
+add_namespace = MD_raid
+
+# War Event
+country_event = {
+	id = MD_raid.1
+	title = MD_raid.1.t
+	desc = MD_raid.1.d
+	picture = GFX_pkk_munic
+	is_triggered_only = yes
+	# Retaliate
+	option = {
+		name = MD_raid.1.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.1.a executed"
+		add_war_support = 0.10
+		add_opinion_modifier = {
+			target = FROM
+			modifier = violated_territorial_sovereignty
+		}
+
+		create_wargoal = { type = puppet_wargoal_focus target = FROM }
+		add_stability = -0.05
+		# Simple AI for now until something more advanced is placed here - DROID
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 0
+				OR = {
+					#Don't attack Western if Western
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					#Don't get new enemies
+					has_war = yes
+					has_civil_war = yes
+					#Don't attack if they are land locked non-neighbour
+					AND = {
+						NOT = { is_neighbor_of = FROM }
+						FROM = { NOT = { any_owned_state = { is_coastal = yes } } }
+					}
+					#Ignore if they are small and not a neighbour
+					NOT = { is_neighbor_of = FROM }
+				}
+			}
+			modifier = {
+				factor = 1.6
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.3
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 0
+				strength_ratio = {
+					tag = FROM
+					ratio < 0.75
+				}
+			}
+			modifier = {
+				factor = 0
+				enemies_strength_ratio > 0.5
+			}
+		}
+	}
+
+	# Promise a response
+
+	option = {
+		name = MD_raid.1.b
+		log = "[GetDateText]: [This.GetName]: MD_raid.1.b executed"
+		add_war_support = 0.10
+		add_opinion_modifier = {
+			target = FROM
+			modifier = violated_territorial_sovereignty
+		}
+
+		set_country_flag = { flag = promised_retaliation_against@FROM days = 270 value = 1 }
+		custom_effect_tooltip = MD_timed_raid_TT
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0
+				strength_ratio = {
+					tag = FROM
+					ratio < 1.0
+				}
+			}
+			modifier = {
+				factor = 2
+				strength_ratio = {
+					tag = FROM
+					ratio > 1.5
+				}
+			}
+			modifier = {
+				factor = 0.05
+				NOT = { is_neighbor_of = FROM }
+			}
+			modifier = {
+				factor = 1.6
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0.3
+				has_government = neutrality
+			}
+		}
+	}
+
+	# Demand Reparations
+
+	option = {
+		name = MD_raid.1.c
+		log = "[GetDateText]: [This.GetName]: MD_raid.1.c executed"
+		add_opinion_modifier = {
+			target = FROM
+			modifier = violated_territorial_sovereignty
+		}
+
+		FROM = {
+			country_event = {
+				id = MD_raid.2
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 60
+			# If somewhat weaker, then try to avoid a response
+			modifier = {
+				factor = 10
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+			modifier = {
+				factor = 0.1
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 2
+				has_idea = NATO_member
+			}
+			modifier = {
+				factor = 1.5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Diplomatic protest
+
+	option = {
+		name = MD_raid.1.e
+		log = "[GetDateText]: [This.GetName]: MD_raid.1.e executed"
+		trigger = {
+			NOT = {
+				FROM = {
+					is_embargoed_by = ROOT
+				}
+			}
+		}
+		add_opinion_modifier = {
+			target = FROM
+			modifier = violated_territorial_sovereignty
+		}
+
+		send_embargo = FROM
+		ai_chance = {
+			base = 50
+			# If absolutely weaker, completely avoid conflict
+			modifier = {
+				factor = 10
+				strength_ratio = {
+					tag = FROM
+					ratio < 1.0
+				}
+			}
+			modifier = {
+				factor = 0.1
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 2
+				has_idea = NATO_member
+			}
+			modifier = {
+				factor = 1.5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+country_event = {
+	id = MD_raid.2
+	title = MD_raid.2.t
+	desc = MD_raid.2.d
+	picture = GFX_treaty
+	is_triggered_only = yes
+	# Retaliate
+	option = {
+		name = MD_raid.2.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.2.a executed"
+		FROM = {
+			country_event = {
+				id = MD_raid.4
+			}
+		}
+		ai_chance = {
+			factor = 40
+		}
+	}
+
+	# Promise a response
+
+	option = {
+		name = MD_raid.2.b
+		log = "[GetDateText]: [This.GetName]: MD_raid.2.b executed"
+		custom_effect_tooltip = MD_reparation_TT
+		effect_tooltip = {
+			FROM = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = -0.10 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+			hidden_effect = {
+				FROM = {
+					set_temp_variable = { treasury_change = gdp_total }
+					multiply_temp_variable = { treasury_change = -0.10 }
+					set_temp_variable = { temp_reparation = treasury_change }
+					modify_treasury_effect = yes
+				}
+				FROM = {
+					set_temp_variable = { treasury_change = gdp_total }
+					multiply_temp_variable = { treasury_change = 0.10 }
+					set_temp_variable = { temp_reparation = treasury_change }
+					modify_treasury_effect = yes
+				}
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = temp_reparation }
+				modify_treasury_effect = yes
+			}
+		}
+		FROM = {
+			country_event = {
+				id = MD_raid.3
+			}
+		}
+		ai_chance = {
+			factor = 40
+		}
+	}
+}
+
+# Reparations Paid!
+country_event = {
+	id = MD_raid.3
+	title = MD_raid.3.t
+	desc = MD_raid.3.d
+	picture = GFX_treaty
+	is_triggered_only = yes
+	# Good
+	option = {
+		name = MD_raid.3.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.3.a executed"
+		FROM = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.10 }
+			set_temp_variable = { temp_reparation = treasury_change }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = {
+			FROM = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = -0.10 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+			FROM = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.10 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+		}
+		ROOT = {
+			set_temp_variable = { treasury_change = temp_reparation }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			factor = 40
+		}
+	}
+}
+
+# Reparations Refused!
+country_event = {
+	id = MD_raid.4
+	title = MD_raid.4.t
+	desc = MD_raid.4.d
+	picture = GFX_treaty_rejected
+	is_triggered_only = yes
+
+	# Ok, they asked for it
+	option = {
+		name = MD_raid.4.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.4.a executed"
+		create_wargoal = { type = puppet_wargoal_focus target = FROM }
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 10
+				strength_ratio = {
+					tag = FROM
+					ratio > 1.25
+				}
+			}
+			modifier = {
+				factor = 0
+				enemies_strength_ratio > 0.5
+			}
+			modifier = {
+				factor = 0.5
+				NOT = { is_neighbor_of = FROM }
+			}
+		}
+	}
+
+	# Don't fight a war, but hey, lets get the whole world to fuck their eco if we can
+	option = {
+		name = MD_raid.4.c
+		log = "[GetDateText]: [This.GetName]: MD_raid.4.c executed"
+		trigger = {
+			NOT = {
+				has_idea = Non_State_Actor
+			}
+		}
+		trigger = {
+			NOT = {
+				has_country_flag = is_raid_sanctioning@FROM
+			}
+		}
+
+		FROM = {
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = refused_payment_got_sanctioned_no_raids
+					}
+				}
+				set_country_flag = {
+					flag = refused_payment_got_sanctioned_no_raids
+					days = 365
+					value = 1
+				}
+				set_variable = { raid_international_trade_sanctions = -0.005 }
+				set_variable = { raid_international_research_sanctions = -0.001 }
+				add_dynamic_modifier = {
+					modifier = raiding_economic_sanctions
+				}
+			}
+			else = {
+				add_to_variable = { raid_international_trade_sanctions = -0.005 }
+				add_to_variable = { raid_international_research_sanctions = -0.001 }
+			}
+
+			country_event = {
+				id = MD_raid.13
+			}
+		}
+
+		set_country_flag = {
+			flag = is_raid_sanctioning@FROM
+		}
+
+		ai_chance = {
+			base = 20
+
+			modifier = {
+				factor = 10
+				strength_ratio = {
+					tag = FROM
+					ratio < 1
+				}
+			}
+			modifier = {
+				factor = 5
+				enemies_strength_ratio > 0.5
+			}
+			modifier = {
+				factor = 5
+				NOT = { is_neighbor_of = FROM }
+			}
+		}
+	}
+
+	# It is not worth it
+	option = {
+		name = MD_raid.4.b
+		log = "[GetDateText]: [This.GetName]: MD_raid.4.b executed"
+
+		ai_chance = {
+			base = 55
+		}
+	}
+}
+
+# Our Government Faces International and Domestic Humiliation
+country_event = {
+	id = MD_raid.5
+	title = MD_raid.5.t
+	desc = MD_raid.5.d
+	picture = GFX_treaty_rejected
+	is_triggered_only = yes
+
+	# Ok
+	option = {
+		name = MD_raid.5.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.5.a executed"
+
+		ai_chance = {
+			factor = 40
+		}
+	}
+}
+
+country_event = {
+	id = MD_raid.6
+	title = MD_raid.6.t
+	desc = MD_raid.6.d
+	picture = GFX_retaliatory_strike
+	is_triggered_only = yes
+	# Ok
+	option = {
+		name = MD_raid.6.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.6.a executed"
+		if = {
+			limit = {
+				FROM = { has_country_flag = promised_retaliation_against@FROM }
+			}
+			FROM = {
+				clr_country_flag = promised_retaliation_against@FROM
+			}
+		}
+		ai_chance = {
+			factor = 40
+		}
+	}
+}
+
+country_event = {
+	id = MD_raid.8
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		log = "Starting Raid for [THIS.GetTag] To [ROOT.actor_country.GetTag]"
+		var:ROOT.actor_country = {
+			country_event = {
+				id = MD_raid.9
+			}
+			set_country_flag = {
+				flag = temp_flag_raids
+				days = 2
+				value = 1
+			}
+		}
+	}
+}
+
+#Raid event that coordinates all the other raid events going out in the proper order
+country_event = {
+	id = MD_raid.9
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		log = "Starting Raid for [ROOT.target_country.GetTag] FROM [FROM.GetTag]"
+		var:ROOT.target_country = {
+			country_event = {
+				id = MD_raid.1
+			}
+			every_neighbor_country = {
+				limit = {
+					NOT = {
+						original_tag = var:ROOT.hostile_country
+						original_tag = var:ROOT.target_country
+					}
+				}
+				if = {
+					limit = {
+						is_in_faction_with = var:ROOT.target_country
+					}
+					country_event = {
+						id = MD_raid.12
+					}
+				}
+				else_if = {
+					limit = {
+						NOT = {
+							has_country_flag = temp_flag_raids
+						}
+					}
+					country_event = {
+						id = MD_raid.10
+						days = 1
+					}
+				}
+			}
+			every_country = {
+				limit = {
+					NOT = {
+						original_tag = var:ROOT.target_country
+						original_tag = var:ROOT.hostile_country
+						is_neighbor_of = var:ROOT.target_country
+					}
+				}
+				if = {
+					limit = {
+						is_in_faction_with = var:ROOT.target_country
+					}
+					country_event = {
+						id = MD_raid.12
+					}
+				}
+				else_if = {
+					limit = {
+						NOT = {
+							has_country_flag = temp_flag_raids
+						}
+					}
+					country_event = {
+						id = MD_raid.11
+						days = 1
+					}
+				}
+			}
+		}
+	}
+}
+
+#Event given to all neighboring countries that a neighbor just got raided
+country_event = {
+	id = MD_raid.10
+	title = MD_raid.10.t
+	desc = MD_raid.10.d
+	picture = GFX_pkk_munic
+	is_triggered_only = yes
+	trigger = {
+		NOT = {
+			has_country_flag = temp_flag_raids
+		}
+	}
+	option = {
+		name = MD_raid.10.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.10.a executed"
+		add_opinion_modifier = {
+			target = FROM
+			modifier = violated_neighbors_sovereignty
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+#Event to nations that dont share government with the raider
+country_event = {
+	id = MD_raid.11
+	title = MD_raid.11.t
+	desc = MD_raid.11.d
+	picture = GFX_pkk_munic
+	is_triggered_only = yes
+	hidden = yes
+	trigger = {
+		NOT = {
+			has_country_flag = temp_flag_raids
+		}
+	}
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: MD_raid.11.a executed"
+
+		if = {
+			limit = {
+				NOT = {
+					has_government = FROM
+				}
+			}
+			add_opinion_modifier = {
+				target = FROM
+				modifier = dislike_when_they_do_stuff
+			}
+		}
+	}
+}
+
+#Event to faction members
+country_event = {
+	id = MD_raid.12
+	title = MD_raid.12.t
+	desc = MD_raid.12.d
+	picture = GFX_pkk_munic
+	is_triggered_only = yes
+
+	option = {
+		name = MD_raid.12.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.12.a executed"
+
+		add_opinion_modifier = {
+			target = FROM
+			modifier = violated_allies_sovereignty
+		}
+
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+#Event to host nation after international sanctions are requested
+country_event = {
+	id = MD_raid.13
+	title = MD_raid.13.t
+	desc = MD_raid.13.d
+	picture = GFX_pkk_munic
+	is_triggered_only = yes
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: MD_raid.13 executed"
+		hidden_effect = {
+			every_country = {
+				limit = {
+					NOT = {
+						original_tag = FROM
+						original_tag = FROM.FROM
+					}
+				}
+				country_event = {
+					id = MD_raid.14
+				}
+			}
+		}
+	}
+
+	option = {
+		name = MD_raid.13.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.13.a executed"
+		custom_effect_tooltip = MD_sanctioned_TT
+	}
+}
+
+#Sanctions event to all nations that lets them decide if they want to sanction the agressor nation or not
+country_event = {
+	id = MD_raid.14
+	title = MD_raid.14.t
+	desc = MD_raid.14.d
+	picture = GFX_pkk_munic
+	is_triggered_only = yes
+
+	option = {
+		name = MD_raid.14.a
+		log = "[GetDateText]: [This.GetName]: MD_raid.14.a executed"
+
+		trigger = {
+			NOT = {
+				has_country_flag = is_raid_sanctioning@FROM
+			}
+		}
+
+		FROM = {
+			add_to_variable = { raid_international_trade_sanctions = -0.005 }
+			add_to_variable = { raid_international_research_sanctions = -0.001 }
+		}
+
+		set_country_flag = {
+			flag = is_raid_sanctioning@FROM
+			days = 365
+			value = 1
+		}
+
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 10
+				is_in_array = {
+					array = potential_and_current_enemies
+					value = FROM
+				}
+			}
+			modifier = {
+				factor = 2
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				factor = 5
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				factor = 10
+				is_in_array = {
+					array = allies
+					value = FROM.FROM
+				}
+			}
+			modifier = {
+				factor = 0
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				factor = 0
+				is_in_array = {
+					array = allies
+					value = FROM
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value > 10
+				}
+			}
+			modifier = {
+				factor = 0
+				FROM = {
+					has_idea = superpower
+				}
+				OR = {
+					has_idea = regional_power
+					has_idea = minor_power
+					has_idea = non_power
+				}
+			}
+		}
+	}
+
+	option = {
+		name = MD_raid.14.b
+		log = "[GetDateText]: [This.GetName]: MD_raid.14.b executed"
+
+		ai_chance = {
+			base = 40
+		}
+	}
+}
