@@ -1306,7 +1306,7 @@ apply_international_bankers_dynamic_effect_DYNMOD = {
 	multiply_variable = { INTB_psof_var = 0.003 }
 	multiply_variable = { INTB_local_resources_factor_var = 0.002 }
 	multiply_variable = { INTB_trade_opinion_factor_var = 0.004 }
-	multiply_variable = { INTB_democratic_acceptance_factor_var = 0.5 }
+	multiply_variable = { INTB_democratic_acceptance_factor_var = global.monthly_internal_faction_tick_rate }
 	multiply_variable = { INTB_democratic_drift_var = 0.001 }
 	multiply_variable = { INTB_investment_duration_var = -0.002 }
 	multiply_variable = { INTB_investment_cost_var = -0.002 }
@@ -1350,7 +1350,7 @@ apply_industrial_conglomerates_dynamic_effect_DYNMOD = {
 	# Multiplies by the scaled factor - Max values: 15%, 10%, 25, 0.05
 	multiply_variable = { ICL_psifra_factor_var = 0.003 }
 	multiply_variable = { ICL_local_resources_factor_var = 0.002 }
-	multiply_variable = { ICL_communism_acceptance_factor_var = 0.5 }
+	multiply_variable = { ICL_communism_acceptance_factor_var = global.monthly_internal_faction_tick_rate }
 	multiply_variable = { ICL_communism_drift = 0.001 }
 	multiply_variable = { ICL_civilian_industry_tax_modifier_var = 0.004 }
 
@@ -1370,7 +1370,7 @@ apply_oligarchs_dynamic_effect_DYNMOD = {
 	# Multiplies by the scaled factor - Max values: 15%, 5%, 25, 0.05
 	multiply_variable = { OLI_psic_factor_var = 0.003 }
 	multiply_variable = { OLI_local_resources_factor_var = 0.004 }
-	multiply_variable = { OLI_communism_acceptance_factor_var = 0.5 }
+	multiply_variable = { OLI_communism_acceptance_factor_var = global.monthly_internal_faction_tick_rate }
 	multiply_variable = { OLI_communism_drift_var = 0.001 }
 
 	# Force the Update Dynamic Modifier with new Calculated Effects
@@ -1944,6 +1944,11 @@ change_fossil_fuel_industry_opinion = {
 		# 	set_variable = { defense_industry_min = x }
 		# }
 
+		if = {
+			limit = { has_idea = rentier_state }
+			add_to_temp_variable = { fossil_fuel_industry_min = 15 }
+		}
+
 		clamp_variable = {
 			var = fossil_fuel_industry_opinion
 			min = fossil_fuel_industry_min
@@ -2147,6 +2152,7 @@ change_farmers_opinion = {
 					is_in_array = { ruling_party = 13 }	#Neutral autocrats
 					is_in_array = { ruling_party = 21 }	#fascists
 					is_in_array = { ruling_party = 22 }	#military junta
+					has_idea = syria_increased_agricultural_subsidies #increasing agricultural subsidies gets farmers' effects double
 				}
 				check_variable = { temp_opinion > 0 }
 			}
@@ -2547,6 +2553,35 @@ change_the_military_opinion = {
 		#	limit = { tag = TAG }
 		# 	set_variable = { the_military_min = x }
 		# }
+		if = {
+			limit = { has_idea = defence_03 }
+			add_to_temp_variable = { the_military_min = 5 }
+		}
+		else_if = {
+			limit = { has_idea = defence_04 }
+			add_to_temp_variable = { the_military_min = 10 }
+		}
+		else_if = {
+			limit = { has_idea = defence_05 }
+			add_to_temp_variable = { the_military_min = 15 }
+		}
+		else_if = {
+			limit = { has_idea = defence_06 }
+			add_to_temp_variable = { the_military_min = 20 }
+		}
+		else_if = {
+			limit = { has_idea = defence_07 }
+			add_to_temp_variable = { the_military_min = 25 }
+		}
+		else_if = {
+			limit = { has_idea = defence_08 }
+			add_to_temp_variable = { the_military_min = 30 }
+		}
+		else_if = {
+			limit = { has_idea = defence_09 }
+			add_to_temp_variable = { the_military_min = 35 }
+		}
+
 		if = { limit = { has_idea = internal_factions_allowed_foreign_nationals_military }
 			add_to_temp_variable = { the_military_max = -5 }
 		}
@@ -3235,40 +3270,45 @@ monthly_tick_internal_factions_opinion = {
 			has_idea = small_medium_business_owners
 			check_variable = { small_medium_business_owners_opinion > 49 }
 		}
-		subtract_from_variable = { small_medium_business_owners_opinion = 0.5 }
+		subtract_from_variable = { small_medium_business_owners_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = small_medium_business_owners_opinion min = 50 }
+		apply_small_medium_business_owner_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = international_bankers
 			check_variable = { international_bankers_opinion > 49 }
 		}
-		subtract_from_variable = { international_bankers_opinion = 0.5 }
+		subtract_from_variable = { international_bankers_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = international_bankers_opinion min = 50 }
+		apply_international_bankers_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = oligarchs
 			check_variable = { oligarchs_opinion > 49 }
 		}
-		subtract_from_variable = { oligarchs_opinion = 0.5 }
+		subtract_from_variable = { oligarchs_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = oligarchs_opinion min = 50 }
+		apply_oligarchs_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = industrial_conglomerates
 			check_variable = { industrial_conglomerates_opinion > 49 }
 		}
-		subtract_from_variable = { industrial_conglomerates_opinion = 0.5 }
+		subtract_from_variable = { industrial_conglomerates_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = industrial_conglomerates_opinion min = 50 }
+		apply_industrial_conglomerates_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = fossil_fuel_industry
 			check_variable = { fossil_fuel_industry_opinion > 49 }
 		}
-		subtract_from_variable = { fossil_fuel_industry_opinion = 0.5 }
+		subtract_from_variable = { fossil_fuel_industry_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = fossil_fuel_industry_opinion min = 50 }
+		apply_fossil_fuel_industry_dynamic_effect_DYNMOD = yes
 	}
 	# Militaristic Factions
 	if = {
@@ -3276,32 +3316,36 @@ monthly_tick_internal_factions_opinion = {
 			has_idea = intelligence_community
 			check_variable = { intelligence_community_opinion > 49 }
 		}
-		subtract_from_variable = { intelligence_community_opinion = 0.5 }
+		subtract_from_variable = { intelligence_community_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = intelligence_community_opinion min = 50 }
+		apply_intelligence_community_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_military
 			check_variable = { the_military_opinion > 49 }
 		}
-		subtract_from_variable = { the_military_opinion = 0.5 }
+		subtract_from_variable = { the_military_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = the_military_opinion min = 50 }
+		apply_the_military_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = defense_industry
 			check_variable = { defense_industry_opinion > 49 }
 		}
-		subtract_from_variable = { defense_industry_opinion = 0.5 }
+		subtract_from_variable = { defense_industry_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = defense_industry_opinion min = 50 }
+		apply_defense_industry_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = maritime_industry
 			check_variable = { maritime_industry_opinion > 49 }
 		}
-		subtract_from_variable = { maritime_industry_opinion = 0.5 }
+		subtract_from_variable = { maritime_industry_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = maritime_industry_opinion min = 50 }
+		apply_maritime_industry_dynamic_effect_DYNMOD = yes
 	}
 	# Special Interest Groups
 	if = {
@@ -3309,64 +3353,72 @@ monthly_tick_internal_factions_opinion = {
 			has_idea = wahabi_ulema
 			check_variable = { wahabi_ulema_opinion > 49 }
 		}
-		subtract_from_variable = { wahabi_ulema_opinion = 0.5 }
+		subtract_from_variable = { wahabi_ulema_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = wahabi_ulema_opinion min = 50 }
+		apply_wahabi_ulema_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_priesthood
 			check_variable = { the_priesthood_opinion > 49 }
 		}
-		subtract_from_variable = { the_priesthood_opinion = 0.5 }
+		subtract_from_variable = { the_priesthood_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = the_priesthood_opinion min = 50 }
+		apply_the_priesthood_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_ulema
 			check_variable = { the_ulema_opinion > 49 }
 		}
-		subtract_from_variable = { the_ulema_opinion = 0.5 }
+		subtract_from_variable = { the_ulema_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = the_ulema_opinion min = 50 }
+		apply_the_ulema_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_clergy
 			check_variable = { the_clergy_opinion > 49 }
 		}
-		subtract_from_variable = { the_clergy_opinion = 0.5 }
+		subtract_from_variable = { the_clergy_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = the_clergy_opinion min = 50 }
+		apply_the_clergy_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = communist_cadres
 			check_variable = { communist_cadres_opinion > 49 }
 		}
-		subtract_from_variable = { communist_cadres_opinion = 0.5 }
+		subtract_from_variable = { communist_cadres_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = communist_cadres_opinion min = 50 }
+		apply_communist_cadres_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = farmers
 			check_variable = { farmers_opinion > 49 }
 		}
-		subtract_from_variable = { farmers_opinion = 0.5 }
+		subtract_from_variable = { farmers_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = farmers_opinion min = 50 }
+		apply_farmers_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = landowners
 			check_variable = { landowners_opinion > 49 }
 		}
-		subtract_from_variable = { landowners_opinion = 0.5 }
+		subtract_from_variable = { landowners_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = landowners_opinion min = 50 }
+		apply_landowners_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = labour_unions
 			check_variable = { labour_unions_opinion > 49 }
 		}
-		subtract_from_variable = { labour_unions_opinion = 0.5 }
+		subtract_from_variable = { labour_unions_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = labour_unions_opinion min = 50 }
+		apply_labour_unions_dynamic_effect_DYNMOD = yes
 	}
 	# Nation Specific
 	if = {
@@ -3374,63 +3426,71 @@ monthly_tick_internal_factions_opinion = {
 			has_idea = irgc
 			check_variable = { irgc_opinion > 49 }
 		}
-		subtract_from_variable = { irgc_opinion = 0.5 }
+		subtract_from_variable = { irgc_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = irgc_opinion min = 50 }
+		apply_irgc_iranian_quds_force_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = foreign_jihadis
 			check_variable = { foreign_jihadis_opinion > 49 }
 		}
-		subtract_from_variable = { foreign_jihadis_opinion = 0.5 }
+		subtract_from_variable = { foreign_jihadis_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = foreign_jihadis_opinion min = 50 }
+		apply_foreign_jihadis_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = iranian_quds_force
 			check_variable = { iranian_quds_force_opinion > 49 }
 		}
-		subtract_from_variable = { iranian_quds_force_opinion = 0.5 }
+		subtract_from_variable = { iranian_quds_force_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = iranian_quds_force_opinion min = 50 }
+		apply_irgc_iranian_quds_force_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = saudi_royal_family
 			check_variable = { saudi_royal_family_opinion > 49 }
 		}
-		subtract_from_variable = { saudi_royal_family_opinion = 0.5 }
+		subtract_from_variable = { saudi_royal_family_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = saudi_royal_family_opinion min = 50 }
+		apply_saudi_royal_family_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = chaebols
 			check_variable = { chaebols_opinion > 49 }
 		}
-		subtract_from_variable = { chaebols_opinion = 0.5 }
+		subtract_from_variable = { chaebols_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = chaebols_opinion min = 50 }
+		apply_chaebols_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = wall_street
 			check_variable = { wall_street_opinion > 49 }
 		}
-		subtract_from_variable = { wall_street_opinion = 0.5 }
+		subtract_from_variable = { wall_street_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = wall_street_opinion min = 50 }
+		apply_wall_street_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_donju
 			check_variable = { the_donju_opinion > 49 }
 		}
-		subtract_from_variable = { the_donju_opinion = 0.5 }
+		subtract_from_variable = { the_donju_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = the_donju_opinion min = 50 }
+		apply_the_donju_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_bazaar
 			check_variable = { the_bazaar_opinion > 49 }
 		}
-		subtract_from_variable = { the_bazaar_opinion = 0.5 }
+		subtract_from_variable = { the_bazaar_opinion = global.monthly_internal_faction_tick_rate }
 		clamp_variable = { var = the_bazaar_opinion min = 50 }
+		apply_the_bazaar_dynamic_effect_DYNMOD = yes
 	}
 }
