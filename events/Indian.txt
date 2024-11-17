@@ -77,34 +77,25 @@ news_event = {
 
 	is_triggered_only = yes
 	major = yes
+	trigger = {
+		NOT = {
+			has_war_with = SOV
+			has_war_with = JAP
+			has_war_with = LAO
+		}
+	}
+
 
 	option = {
 		name = RAJ_eastas.1.o1
 		log = "[GetDateText]: [This.GetName]: RAJ_eastas.1.o1 executed"
-		add_opinion_modifier = {
-			target = SOV
-			modifier = diplomatic_support
-		}
-		reverse_add_opinion_modifier = {
-			target = SOV
-			modifier = diplomatic_support
-		}
-		add_opinion_modifier = {
-			target = JAP
-			modifier = diplomatic_support
-		}
-		reverse_add_opinion_modifier = {
-			target = JAP
-			modifier = diplomatic_support
-		}
-		add_opinion_modifier = {
-			target = LAO
-			modifier = diplomatic_support
-		}
-		reverse_add_opinion_modifier = {
-			target = LAO
-			modifier = diplomatic_support
-		}
+
+		add_opinion_modifier = { target = SOV modifier = east_asia_summit }
+		reverse_add_opinion_modifier = { target = SOV modifier = east_asia_summit }
+		add_opinion_modifier = { target = JAP modifier = east_asia_summit }
+		reverse_add_opinion_modifier = { target = JAP modifier = east_asia_summit }
+		add_opinion_modifier = { target = LAO modifier = east_asia_summit }
+		reverse_add_opinion_modifier = { target = LAO modifier = east_asia_summit }
 	}
 }
 
@@ -635,6 +626,7 @@ country_event = {
 	}
 }
 
+# India Asks for Investments!
 country_event = {
 	id = indian_event.18
 	title = indian_event.18.t
@@ -644,21 +636,64 @@ country_event = {
 	option = {
 		name = indian_event.18.a
 		log = "[GetDateText]: [This.GetName]: indian_event.18.a executed"
-		ai_chance = { base = 1 }
 		set_temp_variable = { int_investment_change = 7.5 }
 		modify_international_investment_effect = yes
+		set_temp_variable = { treasury_change = -7.5 }
+		modify_treasury_effect = yes
+
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = THIS }
+		set_temp_variable = { influence_target = RAJ }
+		change_influence_percentage = yes
+
 		RAJ = {
-			one_random_industrial_complex = yes
-			country_event = {
-				id = indian_event.20
-				days = 1
+			random_owned_controlled_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+					OR = {
+						is_in_home_area = yes
+						NOT = {
+							owner = {
+								any_owned_state = {
+									free_building_slots = {
+										building = industrial_complex
+										size > 0
+										include_locked = yes
+									}
+									is_in_home_area = yes
+								}
+							}
+						}
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			hidden_effect = {
+				country_event = {
+					id = indian_event.20
+					days = 1
+				}
 			}
 		}
+
+		ai_chance = {
+			base = 1
+		}
 	}
+
 	option = {
 		name = indian_event.18.b
 		log = "[GetDateText]: [This.GetName]: indian_event.18.b executed"
-		ai_chance = { base = 1 }
 		hidden_effect = {
 			RAJ = {
 				country_event = {
@@ -666,6 +701,10 @@ country_event = {
 					days = 1
 				}
 			}
+		}
+
+		ai_chance = {
+			base = 1
 		}
 	}
 }
@@ -787,7 +826,7 @@ country_event = {
 		add_political_power = -100
 	}
 	option = {
-		name = indian_event.25.a
+		name = indian_event.25.b
 		log = "[GetDateText]: [This.GetName]: indian_event.25.b executed"
 		swap_ideas = {
 			remove_idea = RAJ_re_fake_militar3
@@ -813,7 +852,6 @@ country_event = {
 
 country_event = {
 	id = indian_event.27
-	immediate = { log = "[GetDateText]: [Root.GetName]: event indian_event.27" }
 	title = indian_event.27.t
 	desc = indian_event.27.d
 	picture = GFX_generic_factory

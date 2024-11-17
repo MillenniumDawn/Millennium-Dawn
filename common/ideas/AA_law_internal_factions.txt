@@ -13,7 +13,7 @@
 # Special Interest: Labour Unions, Landowners, Farmers, Communist Cadres
 # Religious Factions: Wahhabi Ulema, The Ulema, The Clergy, The Priesthood
 # Nation Specific: The Donju, The Bazaar, Saudi Royal Family, IRGC, Iranian Quds Force,
-# Foreign Jihadis, VEVAK, Chaebols, Wall Street, ISI Pakistan, National Security Service.
+# Foreign Jihadis, VEVAK, Chaebols, Wall Street, National Security Service.
 
 ideas = {
 	internal_factions = {
@@ -25,6 +25,7 @@ ideas = {
 			# Korea, North Korea, and Iran all get unique versions of the SMBO faction.
 			allowed = {
 				NOT = {
+					original_tag = WAG
 					original_tag = KOR
 					original_tag = NKO
 					original_tag = PER
@@ -49,7 +50,12 @@ ideas = {
 
 		international_bankers = {
 			# USA Get's the Wall Street Faction which is essentially a better version of this
-			allowed = { NOT = { original_tag = USA } }
+			allowed = { 
+				NOT = { 
+					original_tag = WAG
+					original_tag = USA 
+				} 
+			}
 			cost = 1500
 
 			on_add = {
@@ -116,6 +122,7 @@ ideas = {
 					original_tag = BLR
 					original_tag = SYR
 					original_tag = EGY
+					original_tag = WAG
 				}
 			}
 
@@ -166,6 +173,7 @@ ideas = {
 					original_tag = EGY
 					original_tag = VEN
 					original_tag = NIG
+					original_tag = WAG
 				}
 			}
 
@@ -192,6 +200,7 @@ ideas = {
 					original_tag = EGY
 					original_tag = VEN
 					original_tag = NIG
+					original_tag = WAG
 				}
 			}
 
@@ -225,6 +234,9 @@ ideas = {
 			available = {
 				any_owned_state = {
 					is_coastal = yes
+				}
+				NOT = { 
+					original_tag = WAG
 				}
 			}
 
@@ -269,7 +281,12 @@ ideas = {
 		the_military = {
 			cost = 1500
 
-			available = { NOT = { has_idea = no_military } }
+			available = { 
+				NOT = { 
+					has_idea = no_military 
+					original_tag = WAG
+				} 
+			}
 			modifier = {
 				nationalist_drift = 0.02
 				expected_mil_modifier = 0.5
@@ -295,6 +312,7 @@ ideas = {
 				NOT = {
 					original_tag = PAK
 					original_tag = PER
+					original_tag = WAG
 				}
 			}
 
@@ -325,6 +343,7 @@ ideas = {
 				NOT = {
 					has_government = nationalist
 					has_government = fascism
+					original_tag = WAG
 				}
 			}
 
@@ -371,7 +390,10 @@ ideas = {
 			cost = 1500
 
 			visible = {
-				NOT = { original_tag = LBA }
+				NOT = { 
+					original_tag = WAG
+					original_tag = LBA 
+				}
 			}
 
 			on_add = {
@@ -399,6 +421,7 @@ ideas = {
 			# If you are not communist you can't have communist things
 			visible = {
 				NOT = {
+					original_tag = WAG
 					original_tag = CHI
 					original_tag = VIE
 					original_tag = LAO
@@ -463,6 +486,9 @@ ideas = {
 			cost = 1500
 
 			available = {
+				NOT = {
+					original_tag = WAG
+				}
 				OR = {
 					has_idea = buddism
 					has_idea = hindu
@@ -493,6 +519,9 @@ ideas = {
 			cost = 1500
 
 			available = {
+				NOT = {
+					original_tag = WAG
+				}
 				OR = {
 					has_idea = sunni
 					has_idea = ibadi
@@ -519,6 +548,9 @@ ideas = {
 			cost = 1500
 
 			available = {
+				NOT = {
+					original_tag = WAG
+				}
 				OR = {
 					has_idea = orthodox_christian
 					has_idea = christian
@@ -564,6 +596,9 @@ ideas = {
 				}
 			}
 			available = {
+				NOT = {
+					original_tag = WAG
+				}
 				OR = {
 					has_idea = sunni
 					has_idea = ibadi
@@ -749,6 +784,7 @@ ideas = {
 				send_volunteer_size = 1
 				surrender_limit = 0.2
 				expected_mil_modifier = 0.5
+				weekly_manpower = 100
 			}
 
 			on_add = {
@@ -940,19 +976,55 @@ ideas = {
 
 			modifier = {
 				conscription_factor = 0.05
-				migration_rate_value_factor = 0.10
+				migration_rate_value_factor = 0.15
 				custom_modifier_tooltip = the_military_minus_5_tt
 			}
 		}
 
 		internal_factions_temporarily_reduce_migrations = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add internal_factions_allowed_foreign_nationals_military" }
+			on_add = { log = "[GetDateText]: [Root.GetName]: add internal_factions_temporarily_reduce_migrations" }
 			allowed = { always = yes }
 			removal_cost = -1
 			picture = Disorganization_Military_3
 			modifier = {
 				border_control_multiplier_modifier = -0.05
 				migration_rate_value_factor = -0.10
+			}
+		}
+
+		internal_factions_religious_people_in_education = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add internal_factions_religious_people_in_education" }
+			allowed = { always = yes }
+			removal_cost = -1
+			picture = Disorganization_Military_3
+			modifier = {
+				education_cost_multiplier_modifier = -0.10
+				stability_factor = -0.04
+			}
+		}
+
+		internal_factions_taxing_religious_institutions = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add internal_factions_taxing_religious_institutions" }
+			allowed = { always = yes }
+			removal_cost = -1
+			picture = idea_ARG_political_corruption_modifier
+			cancel = {
+				NOT = {
+					OR = {
+						has_idea = the_ulema
+						has_idea = the_clergy
+						has_idea = wahabi_ulema
+						has_idea = the_priesthood
+					}
+				}
+			}
+			modifier = {
+				custom_modifier_tooltip = internal_factions_taxing_religious_institutions_tt
+				stability_factor = -0.05
+				custom_modifier_tooltip = the_ulema_minus_5_tt
+				custom_modifier_tooltip = the_clergy_minus_5_tt
+				custom_modifier_tooltip = wahabi_ulema_minus_5_tt
+				custom_modifier_tooltip = the_priesthood_minus_5_tt
 			}
 		}
 	}

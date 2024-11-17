@@ -1,0 +1,2331 @@
+types = {
+	#TODO: Implement the AI to better pick targets for attacks. Consult kind birdy for assistance here
+	#Provides intel gain / short term advantages to players attacking / bombing in that state
+	special_reconassiance = {
+		days_to_prepare = 15
+		days_re_enable = 180
+
+		category = special_forces_raids
+
+		command_power = 20 # command power allocation cost
+
+		arrow = {
+			type = line
+		}
+		unit_model = {
+			type = equipment
+		}
+
+		# Specific Target is visible
+		show_target = {
+			OR = {
+				has_war_with = FROM
+				has_wargoal_against = FROM
+				is_justifying_wargoal_against = FROM
+			}
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_wargoal_against = FROM
+				has_war_with = FROM
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 1  max = 5 }
+			}
+		}
+		target_icon = GFX_other_target_icon
+		launch_sound = raid_launch_marine
+
+		essential_equipment = {
+
+		}
+
+		additional_equipment = {
+			# list of equipment archetypes and numbers
+
+		}
+
+		target_type = {
+			building = {
+				type = supply_node
+			}
+			building = {
+				type = air_base
+			}
+			building = {
+				type = naval_base
+			}
+			building = {
+				type = radar_station
+			}
+		}
+
+		starting_point = {
+			types = { air_base naval_base }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.05
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 0.5
+				}
+				organisation = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 60
+				}
+				strength = {
+					weight = 0.05
+					start_weight = -0.05
+					reference = 1
+				}
+				recon = {
+					weight = 0.20
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.3
+					#start_reference = 50
+					reference = 100
+				}
+			}
+			critical = {
+				base = 0.05
+			}
+			disaster = {
+				base = 0.25
+			}
+		}
+
+		success_levels = {
+			failure = {
+
+				victim_effects = {
+					# Effects on target
+					var:target_state = {
+
+					}
+
+				}
+				actor_effects = {
+
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.30
+						str_damage = 0.15
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					var:victim_country = {
+
+					}
+
+				}
+				actor_effects = {
+
+					var:actor_country = {
+						add_timed_idea = {
+							idea = special_recon
+							days = 20
+						}
+					}
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+				}
+
+			}
+			success = {
+				victim_effects = {
+					var:target_state = {
+
+					}
+					var:victim_country = {
+
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.02
+						ratio = yes
+					}
+
+					var:actor_country = {
+						add_timed_idea = {
+							idea = special_recon
+							days = 40
+						}
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+					add_history_entry = {
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:target_state = {
+
+					}
+					var:victim_country = {
+
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.1
+						str_damage = 0
+						ratio = yes
+					}
+
+					var:actor_country = {
+						add_timed_idea = {
+							idea = special_recon
+							days = 60
+						}
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 500
+					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > -150
+				}
+			}
+			modifier = {
+				factor = 0
+				date < 1936.6.1
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				factor = 0.05
+				threat < 0.10
+			}
+			modifier = {
+				factor = 0
+				date < 2002.1.1
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+	}
+	#Attacks enemy supply hubs / railways, temp reducing supply in region
+	direct_action_raid_supply = {
+		days_to_prepare = 15
+		days_re_enable = 180
+
+		category = special_forces_raids
+
+		command_power = 20 # command power allocation cost
+
+		arrow = {
+			type = line
+		}
+		unit_model = {
+			type = equipment
+		}
+
+		allowed = {
+
+		}
+		# Raid Type is visible
+		visible = {
+
+		}
+		# Specific Target is visible
+		show_target = {
+			OR = {
+				has_war_with = FROM
+				has_wargoal_against = FROM
+				is_justifying_wargoal_against = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+					if = {
+						limit = {
+							has_idea = intervention_limited_interventionism
+						}
+						is_neighbor_of = FROM
+					}else_if = {
+						limit = {
+							has_idea = intervention_regional_interventionism
+						}
+						custom_trigger_tooltip = {
+							tooltip = nation_on_same_continent
+							FROM = {
+								PREV_is_on_same_continent = yes
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_wargoal_against = FROM
+				has_war_with = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+				}
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_war_with = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+					has_political_power > 100
+				}
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 5 }
+			}
+		}
+		target_icon = GFX_other_target_icon
+		launch_sound = raid_launch_marine
+
+		essential_equipment = {
+
+		}
+
+		additional_equipment = {
+			# list of equipment archetypes and numbers
+
+		}
+
+		target_type = {
+			building = {
+				type = supply_node
+			}
+		}
+
+		starting_point = {
+			types = { air_base naval_base }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.25
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.50
+					start_weight = -0.25
+					reference = 0.75
+				}
+
+				organisation = {
+					weight = 0.20
+					start_weight = -0.10
+					reference = 100
+				}
+
+				strength = {
+					weight = 0.15
+					start_weight = -0.05
+					reference = 1
+				}
+
+				recon = {
+					weight = 0.25
+					start_weight = -0.25
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.5
+					start_weight = -0.1
+					reference = 100
+					start_reference = 10
+				}
+			}
+
+			critical = {
+				base = 0.05
+			}
+
+			disaster = {
+				base = 0.25
+			}
+		}
+
+		success_levels = {
+			failure = {
+
+				victim_effects = {
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.30
+						str_damage = 0.15
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_supply_node = THIS.building_level@supply_node }
+							for_loop_effect = {
+								end = num_supply_node
+								value = temp_hold
+								damage_building = {
+								type = supply_node
+								damage = 0.5 # levels of damage
+							}
+						}
+						set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
+						for_loop_effect = {
+							end = num_rail_way
+							value = temp_hold
+							damage_building = {
+								type = rail_way
+								damage = 0.5 # levels of damage
+							}
+						}
+					}
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+
+					var:actor_country = {
+					}
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+
+			}
+			success = {
+				victim_effects = {
+					var:target_state = {
+						var:target_state = {
+							set_temp_variable = { num_supply_node = THIS.building_level@supply_node }
+							for_loop_effect = {
+								end = num_supply_node
+								value = temp_hold
+								damage_building = {
+								type = supply_node
+								damage = 0.5 # levels of damage
+							}
+							}
+							set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
+							for_loop_effect = {
+								end = num_rail_way
+								value = temp_hold
+								damage_building = {
+									type = rail_way
+									damage = 0.5 # levels of damage
+								}
+							}
+						}
+						if = {
+							limit = {
+								NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+							}
+							hidden_effect = {
+								var:actor_country = {
+									set_variable = { THIS.target_country = var:ROOT.victim_country }
+									set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+									country_event = {
+										id = MD_raid.8
+									}
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.02
+						ratio = yes
+					}
+
+					var:actor_country = {
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+					add_history_entry = {
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_supply_node = THIS.building_level@supply_node }
+						for_loop_effect = {
+							end = num_supply_node
+							value = temp_hold
+							damage_building = {
+							type = supply_node
+							damage = 0.5 # levels of damage
+						}
+						}
+						set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
+						for_loop_effect = {
+							end = num_rail_way
+							value = temp_hold
+							damage_building = {
+								type = rail_way
+								damage = 0.5 # levels of damage
+							}
+						}
+						if = {
+							limit = {
+								NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+							}
+							hidden_effect = {
+								var:actor_country = {
+									set_variable = { THIS.target_country = var:ROOT.victim_country }
+									set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+									country_event = {
+										id = MD_raid.8
+									}
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.1
+						str_damage = 0
+						ratio = yes
+					}
+
+					var:actor_country = {
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 500
+					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > -150
+				}
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				factor = 0
+				date < 2002.1.1
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+			modifier = {
+				factor = 0.05
+				threat < 0.10
+			}
+		}
+	}
+	#Direct attacks on enemy ports or airbases
+	direct_action_raid_air = {
+		days_to_prepare = 15
+		days_re_enable = 180
+
+		category = special_forces_raids
+
+		command_power = 20 # command power allocation cost
+
+		arrow = {
+			type = line
+		}
+		unit_model = {
+			type = equipment
+		}
+
+		allowed = {
+		}
+		# Raid Type is visible
+		visible = {
+
+		}
+		# Specific Target is visible
+		show_target = {
+			OR = {
+				has_war_with = FROM
+				has_wargoal_against = FROM
+				is_justifying_wargoal_against = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+					if = {
+						limit = {
+							has_idea = intervention_limited_interventionism
+						}
+						is_neighbor_of = FROM
+					}else_if = {
+						limit = {
+							has_idea = intervention_regional_interventionism
+						}
+						custom_trigger_tooltip = {
+							tooltip = nation_on_same_continent
+							FROM = {
+								PREV_is_on_same_continent = yes
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_wargoal_against = FROM
+				has_war_with = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+				}
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_war_with = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+				}
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 1  max = 5}
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+		essential_equipment = {
+
+		}
+
+		additional_equipment = {
+			# list of equipment archetypes and numbers
+
+		}
+
+		target_type = {
+			building = {
+				type = air_base
+			}
+		}
+
+		starting_point = {
+			types = { air_base naval_base }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.25
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.50
+					start_weight = -0.25
+					reference = 0.75
+				}
+
+				organisation = {
+					weight = 0.20
+					start_weight = -0.10
+					reference = 100
+				}
+
+				strength = {
+					weight = 0.15
+					start_weight = -0.05
+					reference = 1
+				}
+
+				recon = {
+					weight = 0.25
+					start_weight = -0.25
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.5
+					start_weight = -0.1
+					reference = 100
+					start_reference = 10
+				}
+			}
+
+			critical = {
+				base = 0.05
+			}
+
+			disaster = {
+				base = 0.25
+			}
+		}
+
+		success_levels = {
+			failure = {
+
+				victim_effects = {
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.30
+						str_damage = 0.15
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_air_base = THIS.building_level@air_base }
+						for_loop_effect = {
+							end = num_air_base
+							value = temp_hold
+							damage_building = {
+								type = air_base
+								damage = 0.5 # levels of damage
+							}
+						}
+						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
+						for_loop_effect = {
+							end = num_naval_base
+							value = temp_hold
+							damage_building = {
+								type = naval_base
+								damage = 0.5 # levels of damage
+							}
+						}
+					}
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+
+					var:actor_country = {
+					}
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+
+			}
+			success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_air_base = THIS.building_level@air_base }
+						for_loop_effect = {
+							end = num_air_base
+							value = temp_hold
+							damage_building = {
+								type = air_base
+								damage = 0.5 # levels of damage
+							}
+						}
+						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
+						for_loop_effect = {
+							end = num_naval_base
+							value = temp_hold
+							damage_building = {
+								type = naval_base
+								damage = 0.5 # levels of damage
+							}
+						}
+					}
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.02
+						ratio = yes
+					}
+
+					var:actor_country = {
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+					add_history_entry = {
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_air_base = THIS.building_level@air_base }
+						for_loop_effect = {
+							end = num_air_base
+							value = temp_hold
+							damage_building = {
+								type = air_base
+								damage = 0.5 # levels of damage
+							}
+						}
+						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
+						for_loop_effect = {
+							end = num_naval_base
+							value = temp_hold
+							damage_building = {
+								type = naval_base
+								damage = 0.5 # levels of damage
+							}
+						}
+					}
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.1
+						str_damage = 0.02
+						ratio = yes
+					}
+
+					var:actor_country = {
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 500
+					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > -150
+				}
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				factor = 0.05
+				threat < 0.10
+			}
+			modifier = {
+				factor = 0
+				date < 2002.1.1
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+	}
+	#Direct attacks on enemy ports or airbases
+	direct_action_raid_naval = {
+		days_to_prepare = 15
+		days_re_enable = 180
+
+		category = special_forces_raids
+
+		command_power = 20 # command power allocation cost
+
+		arrow = {
+			type = line
+		}
+		unit_model = {
+			type = equipment
+		}
+
+		allowed = {
+		}
+		# Raid Type is visible
+		visible = {
+
+		}
+		# Specific Target is visible
+		show_target = {
+			OR = {
+				has_war_with = FROM
+				has_wargoal_against = FROM
+				is_justifying_wargoal_against = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+					if = {
+						limit = {
+							has_idea = intervention_limited_interventionism
+						}
+						is_neighbor_of = FROM
+					}else_if = {
+						limit = {
+							has_idea = intervention_regional_interventionism
+						}
+						custom_trigger_tooltip = {
+							tooltip = nation_on_same_continent
+							FROM = {
+								PREV_is_on_same_continent = yes
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_wargoal_against = FROM
+				has_war_with = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+				}
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_war_with = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					FROM = {
+						has_war = yes
+					}
+				}
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 1  max = 5}
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+		essential_equipment = {
+
+		}
+
+		additional_equipment = {
+			# list of equipment archetypes and numbers
+
+		}
+
+		target_type = {
+			building = {
+				type = naval_base
+			}
+		}
+
+		starting_point = {
+			types = { air_base naval_base }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.25
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.50
+					start_weight = -0.25
+					reference = 0.75
+				}
+
+				organisation = {
+					weight = 0.20
+					start_weight = -0.10
+					reference = 100
+				}
+
+				strength = {
+					weight = 0.15
+					start_weight = -0.05
+					reference = 1
+				}
+
+				recon = {
+					weight = 0.25
+					start_weight = -0.25
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.5
+					start_weight = -0.1
+					reference = 100
+					start_reference = 10
+				}
+			}
+
+			critical = {
+				base = 0.05
+			}
+
+			disaster = {
+				base = 0.25
+			}
+		}
+
+		success_levels = {
+			failure = {
+
+				victim_effects = {
+					# Effects on target
+					var:target_state = {
+
+					}
+				}
+				actor_effects = {
+
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.30
+						str_damage = 0.15
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_air_base = THIS.building_level@air_base }
+						for_loop_effect = {
+							end = num_air_base
+							value = temp_hold
+							damage_building = {
+								type = air_base
+								damage = 0.5 # levels of damage
+							}
+						}
+						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
+						for_loop_effect = {
+							end = num_naval_base
+							value = temp_hold
+							damage_building = {
+								type = naval_base
+								damage = 0.5 # levels of damage
+							}
+						}
+					}
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+
+					var:actor_country = {
+					}
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+
+			}
+			success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_air_base = THIS.building_level@air_base }
+						for_loop_effect = {
+							end = num_air_base
+							value = temp_hold
+							damage_building = {
+								type = air_base
+								damage = 0.5 # levels of damage
+							}
+						}
+						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
+						for_loop_effect = {
+							end = num_naval_base
+							value = temp_hold
+							damage_building = {
+								type = naval_base
+								damage = 0.5 # levels of damage
+							}
+						}
+					}
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.02
+						ratio = yes
+					}
+
+					var:actor_country = {
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+					add_history_entry = {
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:target_state = {
+						set_temp_variable = { num_air_base = THIS.building_level@air_base }
+						for_loop_effect = {
+							end = num_air_base
+							value = temp_hold
+							damage_building = {
+								type = air_base
+								damage = 0.5 # levels of damage
+							}
+						}
+						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
+						for_loop_effect = {
+							end = num_naval_base
+							value = temp_hold
+							damage_building = {
+								type = naval_base
+								damage = 0.5 # levels of damage
+							}
+						}
+					}
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.1
+						str_damage = 0.02
+						ratio = yes
+					}
+
+					var:actor_country = {
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 500
+					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > -150
+				}
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				factor = 0.05
+				threat < 0.10
+			}
+			modifier = {
+				factor = 0
+				date < 2002.1.1
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+	}
+	#Direct action mission to kill scientists / generals
+	scientist_kill_mission = {
+		days_to_prepare = 30
+		days_re_enable = 270
+
+		category = special_forces_raids
+
+		command_power = 20 # command power allocation cost
+
+		arrow = {
+			type = line
+		}
+		unit_model = {
+			type = equipment
+		}
+
+		allowed = {
+		}
+		# Raid Type is visible
+		visible = {
+
+		}
+		# Specific Target is visible
+		show_target = {
+			OR = {
+				has_war_with = FROM
+				has_wargoal_against = FROM
+				is_justifying_wargoal_against = FROM
+				AND = {
+					has_opinion = {
+						target = FROM
+						value < -50
+					}
+					if = {
+						limit = {
+							has_idea = intervention_limited_interventionism
+						}
+						is_neighbor_of = FROM
+					}else_if = {
+						limit = {
+							has_idea = intervention_regional_interventionism
+						}
+						custom_trigger_tooltip = {
+							tooltip = nation_on_same_continent
+							FROM = {
+								PREV_is_on_same_continent = yes
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_wargoal_against = FROM
+				has_war_with = FROM
+				has_opinion = {
+					target = FROM
+					value < 50
+				}
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_war_with = FROM
+				has_political_power > 300
+			}
+		}
+
+		target_type = {
+			building = {
+				tags = facility
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 5 }
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+		starting_point = {
+			types = { air_base naval_base }
+		}
+		success_factors = {
+			success = {
+				base = 0.25
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.50
+					start_weight = -0.25
+					reference = 0.75
+				}
+
+				organisation = {
+					weight = 0.20
+					start_weight = -0.10
+					reference = 100
+				}
+
+				strength = {
+					weight = 0.15
+					start_weight = -0.05
+					reference = 1
+				}
+
+				recon = {
+					weight = 0.25
+					start_weight = -0.25
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.5
+					start_weight = -0.1
+					reference = 100
+					start_reference = 10
+				}
+			}
+
+			critical = {
+				base = 0.05
+			}
+
+			disaster = {
+				base = 0.05
+			}
+		}
+
+		success_levels = {
+			failure = {
+				victim_effects = {
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+				}
+				actor_effects = {
+
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.40
+						str_damage = 0.20
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = {
+									has_war_with = var:ROOT.victim_country
+								}
+							}
+						}
+					}
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+					var:target_state = {
+						damage_building = {
+							tags = { facility }
+							damage = 0.5
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.3
+						str_damage = 0.1
+						ratio = yes
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+
+			}
+			success = {
+				victim_effects = {
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+
+					var:target_state = {
+						damage_building = {
+							tags = facility
+							damage = 1
+							province = var:ROOT.target_province
+						}
+					}
+					var:victim_country = {
+						random_active_scientist = {
+							injure_scientist_for_days = 90
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.15
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					var:actor_country = {
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+					add_history_entry = {
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					if = {
+						limit = {
+							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
+						}
+						hidden_effect = {
+							var:actor_country = {
+								set_variable = { THIS.target_country = var:ROOT.victim_country }
+								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
+								country_event = {
+									id = MD_raid.8
+								}
+							}
+						}
+					}
+
+					var:target_state = {
+						damage_building = {
+							tags = facility
+							damage = 1
+							province = var:ROOT.target_province
+						}
+					}
+					var:victim_country = {
+						random_active_scientist = {
+							injure_scientist_for_days = 180
+						}
+					}
+				}
+				actor_effects = {
+					# Damage to unit
+					raid_damage_units = {
+						org_damage = 0.1
+						str_damage = 0
+						ratio = yes
+					}
+
+					var:actor_country = {
+						add_breakthrough_progress = {
+							specialization = all
+							value = 0.3
+						}
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+					var:actor_country = {
+						if = {
+							limit = {
+								NOT = { has_war_with = var:ROOT.victim_country }
+							}
+							add_political_power = -100
+						}
+					}
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 500
+					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > -150
+				}
+			}
+			modifier = {
+				add = -10
+				NOT = { has_war_with = FROM }
+				OR = {
+					AND = {
+						FROM = { has_government = democratic }
+						THIS = { has_government = democratic }
+					}
+					AND = {
+						FROM = { has_government = neutrality }
+						THIS = { has_government = neutrality }
+					}
+					AND = {
+						FROM = { has_government = communism }
+						THIS = { has_government = communism }
+					}
+				}
+			}
+			modifier = {
+				factor = 100
+				has_country_flag = promised_retaliation_against@FROM
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_idea = superpower
+					has_idea = great_power
+					has_idea = large_power
+				}
+			}
+			modifier = {
+				factor = 0.05
+				threat < 0.10
+			}
+			modifier = {
+				# Don't target anyone who is not a potential enemy
+				factor = 0
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+					is_in_array = {
+						array = potential_and_current_enemies
+						value = FROM  # Target country
+					}
+				}
+			}
+            modifier = {
+				factor = 0
+				has_war = yes
+				NOT = {
+					has_war_with = FROM
+					has_country_flag = promised_retaliation_against@FROM
+				}
+			}
+			modifier = {
+				factor = 0
+				tag = USA
+				FROM = {
+					tag = IRQ
+				}
+				date < 2004.1.1
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+			modifier = {
+				factor = 0
+				date < 2002.1.1
+				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+			#do some checks for nations here, like someone going for nukes will likely be targeted by enemies
+		}
+	}
+	#TODO: Add during the first hotfix, but let nations who hate each other and share a border do border skirmishes for funsies
+	# sf_incited_border_war = {
+	# 	days_to_prepare = 1
+	# 	days_re_enable = 1
+
+	# 	category = special_forces_raids
+
+	# 	ai_will_do = {
+	# 		base = 1
+	# 	}
+
+	# 	command_power = 20 # command power allocation cost
+
+	# 	arrow = {
+	# 		type = line
+	# 	}
+	# 	unit_model = {
+	# 		type = equipment
+	# 	}
+
+	# 	# Specific Target is visible
+	# 	show_target = {
+	# 		var:target_state = {
+	# 			any_neighbor_state = {
+	# 				is_controlled_by = ROOT
+	# 			}
+	# 		}
+	# 		NOT = { is_in_faction_with = FROM }
+	# 		has_opinion = {
+	# 			target = FROM
+	# 			value < 0
+	# 		}
+	# 	}
+
+	# 	# Can prepare
+	# 	available = {
+	# 		has_political_power > 400
+	# 	}
+
+	# 	launchable = {
+	# 		has_political_power > 400
+	# 	}
+
+	# 	target_type = {
+	# 		state = {
+	# 			always = yes
+	# 		}
+	# 	}
+
+	# 	unit_requirements = {
+	# 		battalion_types = {
+	# 			Special_Forces = { min = 5 }
+	# 		}
+	# 	}
+
+	# 	launch_sound = raid_launch_marine
+	# 	target_icon = GFX_other_target_icon
+	# 	starting_point = {
+	# 		types = { air_base naval_base }
+	# 	}
+	# 	success_factors = {
+	# 		success = {
+	# 			base = 0.25
+
+	# 			# Raiding unit modifiers
+	# 			experience = {
+	# 				weight = 0.50
+	# 				start_weight = -0.25
+	# 				reference = 0.75
+	# 			}
+
+	# 			organisation = {
+	# 				weight = 0.20
+	# 				start_weight = -0.10
+	# 				reference = 100
+	# 			}
+
+	# 			strength = {
+	# 				weight = 0.15
+	# 				start_weight = -0.05
+	# 				reference = 1
+	# 			}
+
+	# 			recon = {
+	# 				weight = 0.25
+	# 				start_weight = -0.25
+	# 				reference = 10
+	# 			}
+
+	# 			### Target Modifiers
+	# 			resistance = {
+	# 				reference = 100
+	# 				start_reference = 20 # Resistance below 20 doesn't help
+	# 				weight = 0.2
+	# 			}
+	# 			intel = {
+	# 				weight = 0.5
+	# 				start_weight = -0.1
+	# 				reference = 100
+	# 				start_reference = 10
+	# 			}
+	# 		}
+
+	# 		critical = {
+	# 			base = 0.05
+	# 		}
+
+	# 		disaster = {
+	# 			base = 0.05
+	# 		}
+	# 	}
+
+	# 	success_levels = {
+	# 		failure = {
+	# 			victim_effects = {
+	# 				var:target_state = {
+	# 					random_neighbor_state = {
+	# 						limit = { is_controlled_by = var:ROOT.actor_country }
+	# 						set_temp_variable = { ROOT.starting_state = THIS.id }
+	# 					}
+	# 				}
+	# 				start_border_war = {
+	# 					change_state_after_war = no
+	# 					attacker = {
+	# 						state = var:starting_state
+	# 						num_provinces = 1
+	# 					}
+	# 					defender = {
+	# 						state = var:target_state
+	# 						num_provinces = 1
+	# 					}
+	# 				}
+	# 			}
+	# 		}
+	# 		limited_success = {
+	# 			victim_effects = {
+	# 				var:target_state = {
+	# 					random_neighbor_state = {
+	# 						limit = { is_controlled_by = var:ROOT.actor_country }
+	# 						set_temp_variable = { ROOT.starting_state = THIS.id }
+	# 					}
+	# 				}
+	# 				start_border_war = {
+	# 					change_state_after_war = no
+	# 					attacker = {
+	# 						state = var:starting_state
+	# 						num_provinces = 1
+	# 					}
+	# 					defender = {
+	# 						state = var:target_state
+	# 						num_provinces = 1
+	# 					}
+	# 				}
+	# 			}
+	# 		}
+	# 		success = {
+	# 			victim_effects = {
+	# 				var:target_state = {
+	# 					random_neighbor_state = {
+	# 						limit = { is_controlled_by = var:ROOT.actor_country }
+	# 						set_temp_variable = { ROOT.starting_state = THIS.id }
+	# 					}
+	# 				}
+	# 				start_border_war = {
+	# 					change_state_after_war = no
+	# 					attacker = {
+	# 						state = var:starting_state
+	# 						num_provinces = 1
+	# 					}
+	# 					defender = {
+	# 						state = var:target_state
+	# 						num_provinces = 1
+	# 					}
+	# 				}
+	# 			}
+	# 		}
+	# 		critical_success = {
+	# 			victim_effects = {
+	# 				var:target_state = {
+	# 					random_neighbor_state = {
+	# 						limit = { is_controlled_by = var:ROOT.actor_country }
+	# 						set_temp_variable = { ROOT.starting_state = THIS.id }
+	# 					}
+	# 				}
+	# 				start_border_war = {
+	# 					change_state_after_war = no
+	# 					attacker = {
+	# 						state = var:starting_state
+	# 						num_provinces = 1
+	# 					}
+	# 					defender = {
+	# 						state = var:target_state
+	# 						num_provinces = 1
+	# 					}
+	# 				}
+	# 			}
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 2
+	# 		modifier = {
+	# 			factor = 0
+	# 			is_major = no
+	# 		}
+	# 		modifier = {
+	# 			factor = 0
+	# 			date < 1939.5.1 # No one probably does anything interesting before this anyway :)
+	# 		}
+	# 		modifier = {
+	# 			# Don't target anyone who is not a potential enemy
+	# 			factor = 0
+	# 			NOT = {
+	# 				is_in_array = {
+	# 					array = potential_and_current_enemies
+	# 					value = FROM  # Target country
+	# 				}
+	# 			}
+	# 		}
+	# 	}
+	# }
+}
