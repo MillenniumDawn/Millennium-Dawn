@@ -1670,12 +1670,11 @@ country_event = {
 	option = { # Crackdown on them!
 		name = tajik_radicalism.2.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.2.a executed"
-		custom_effect_tooltip = TAJ_random_prod_damage_TT
-		hidden_effect = {
-			random_core_state = {
-				add_to_variable = { productivity_state_var = -20 }
-			}
+		random_core_state = {
+			add_to_variable = { productivity_state_var = -10 }
 		}
+		custom_effect_tooltip = TAJ_lose_10_prod_TT
+		newline = yes
 		add_equipment_to_stockpile = {
 			type = infantry_weapons
 			amount = -100
@@ -3809,6 +3808,538 @@ country_event = { # Monthly Goods (Variation 1)
 		}
 		set_temp_variable = { temp_opinion = 5 }
 		change_maritime_industry_opinion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Bad Events
+country_event = { # Foreign Influence Has Made It's Way In
+	id = tajik_corruption.2
+	title = tajik_corruption.2.t
+	desc = tajik_corruption.2.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.2.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.2.a executed"
+		random_country = {
+			set_temp_variable = { percent_change = 1.50 }
+			set_temp_variable = { tag_index = THIS }
+			set_temp_variable = { influence_target = TAJ }
+			change_influence_percentage = yes
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Islamist Pamphlets Spread
+	id = tajik_corruption.3
+	title = tajik_corruption.3.t
+	desc = tajik_corruption.3.d
+	trigger = {
+		NOT = {
+			has_government = fascism
+		}
+		neutrality_muslim_brotherhood_not_in_power_or_coalition = yes
+	}
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.3.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.3.a executed"
+		add_popularity = {
+			ideology = fascism
+			popularity = 0.05
+		}
+		newline = yes
+		add_stability = -0.01
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Anti-Government Pamphlets Spread
+	id = tajik_corruption.4
+	title = tajik_corruption.4.t
+	desc = tajik_corruption.4.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.4.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.4.a executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.025 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Drugs From Abroad Plunge Our Soldiers into Addiction
+	id = tajik_corruption.5
+	title = tajik_corruption.5.t
+	desc = tajik_corruption.5.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.5.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.5.a executed"
+		army_experience = -20
+		air_experience = -20
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Drugs From Abroad Plunge Our People into Addiction
+	id = tajik_corruption.6
+	title = tajik_corruption.6.t
+	desc = tajik_corruption.6.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.6.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.6.a executed"
+		random_core_state = {
+			add_to_variable = { productivity_state_var = -10 }
+		}
+		custom_effect_tooltip = TAJ_lose_10_prod_TT
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Terrorist Attack Linked to Black-Market Trade
+	id = tajik_corruption.7
+	title = tajik_corruption.7.t
+	desc = tajik_corruption.7.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.7.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.7.a executed"
+		random_core_state = {
+			limit = {
+				industrial_complex > 0
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 1.0
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Money Smuggled From National Treasury
+	id = tajik_corruption.8
+	title = tajik_corruption.8.t
+	desc = tajik_corruption.8.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.8.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.8.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.05 }
+		set_temp_variable = { temp_reparation = treasury_change }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Corrupt Officials Gave Away State Secrets
+	id = tajik_corruption.9
+	title = tajik_corruption.9.t
+	desc = tajik_corruption.9.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.9.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.9.a executed"
+		random_list = {
+			25 = {
+				if = {
+					limit = {
+						NOT = {
+							has_idea = paralyzing_corruption
+						}
+					}
+					increase_corruption = yes
+				}
+				else = {
+					add_political_power = -300
+				}
+			}
+			75 = {
+				add_political_power = -75
+				add_command_power = -25
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Internal Factions Upset With Mismanagement
+	id = tajik_corruption.10
+	title = tajik_corruption.10.t
+	desc = tajik_corruption.10.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.10.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.10.a executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
+		change_oligarchs_opinion = yes
+		change_farmers_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_fossil_fuel_industry_opinion = yes
+		change_international_bankers_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+		change_defense_industry_opinion = yes
+		change_iranian_quds_force_opinion = yes
+		change_landowners_opinion = yes
+		change_maritime_industry_opinion = yes
+		change_intelligence_community_opinion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Good Events
+
+country_event = { # Foreign State Secrets Found
+	id = tajik_corruption.11
+	title = tajik_corruption.11.t
+	desc = tajik_corruption.11.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.11.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.11.a executed"
+		add_breakthrough_progress = {
+			specialization = all
+			value = 0.10
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Missile Smuggled
+	id = tajik_corruption.12
+	title = tajik_corruption.12.t
+	desc = tajik_corruption.12.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.12.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.12.a executed"
+		if = {
+			limit = {
+				has_dlc = "Gotterdammerung"
+			}
+			add_equipment_to_stockpile = {
+				type = ballistic_missile_equipment_1
+				amount = 2
+				producer = SOV
+			}
+		}
+		else = {
+			add_equipment_to_stockpile = {
+				type = guided_missile_equipment_1
+				amount = 2
+				producer = SOV
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Gold Smuggled
+	id = tajik_corruption.13
+	title = tajik_corruption.13.t
+	desc = tajik_corruption.13.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.13.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.13.a executed"
+		add_resource = {
+			type = chromium
+			amount = 1
+			state = 724
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Weapons Equipment Smuggled
+	id = tajik_corruption.14
+	title = tajik_corruption.14.t
+	desc = tajik_corruption.14.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.14.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.14.a executed"
+		add_equipment_to_stockpile = {
+			type = artillery_1
+			amount = 20
+			producer = SOV
+		}
+		newline = yes
+		add_equipment_to_stockpile = {
+			type = Anti_tank_1
+			amount = 15
+			producer = SOV
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Foreign Blueprints Smuggled
+	id = tajik_corruption.15
+	title = tajik_corruption.15.t
+	desc = tajik_corruption.15.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.15.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.15.a executed"
+		random_list = {
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_agriculture_tech
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_genes
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_fighter
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_industry
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_computing_tech
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_internet_tech
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_ai
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_Civilian
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_fuel_oil
+				}
+			}
+			10 = {
+				add_tech_bonus = {
+					name = tajik_bonus_random
+					bonus = 0.15
+					uses = 1
+					category = CAT_inf
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Military Doctrines Smuggled
+	id = tajik_corruption.16
+	title = tajik_corruption.16.t
+	desc = tajik_corruption.16.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.16.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.16.a executed"
+		random_list = {
+			50 = {
+				add_doctrine_cost_reduction = {
+					name = GENERIC_land_doctrine_innovations
+					cost_reduction = 0.25
+					uses = 1
+					category = CAT_land_doctrine
+				}
+			}
+			50 = {
+				add_doctrine_cost_reduction = {
+					name = GENERIC_air_doctrine_expertise
+					cost_reduction = 0.25
+					uses = 1
+					category = CAT_air_doctrine
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Farming Equipment Smuggled
+	id = tajik_corruption.17
+	title = tajik_corruption.17.t
+	desc = tajik_corruption.17.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.17.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.17.a executed"
+		one_random_agriculture_district = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = tajik_corruption.17.b
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.17.b executed"
+		set_temp_variable = { treasury_change = 3.70 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Military Tactic Handout Smuggled
+	id = tajik_corruption.18
+	title = tajik_corruption.18.t
+	desc = tajik_corruption.18.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.18.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.18.a executed"
+		random_army_leader = {
+			random_list = {
+				25 = {
+					add_attack = 1
+				}
+				25 = {
+					add_defense = 1
+				}
+				25 = {
+					add_logistics = 1
+				}
+				25 = {
+					add_planning = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Dangerous Contraband Stopped
+	id = tajik_corruption.19
+	title = tajik_corruption.19.t
+	desc = tajik_corruption.19.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_corruption.19.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.19.a executed"
+		add_political_power = 75
 		ai_chance = {
 			base = 1
 		}
