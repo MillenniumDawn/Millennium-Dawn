@@ -2730,8 +2730,19 @@ country_event = {
 		set_country_flag = { flag = recently_got_labour_union_migrant_protest value = 1 days = 180 }
 	}
 
-
 	mean_time_to_happen = {
+		modifier = {
+			factor = 0.50
+			check_variable = { labour_unions_opinion > 90 }
+		}
+		modifier = {
+			factor = 0.50
+			check_variable = { labour_unions_opinion > 75 }
+		}
+		modifier = {
+			factor = 0.50
+			check_variable = { labour_unions_opinion > 60 }
+		}
 		modifier = {
 			factor = 1.10
 			check_variable = { net_immigration_rate > 0.02 }
@@ -2753,15 +2764,15 @@ country_event = {
 			check_variable = { net_immigration_rate > 0.25 }
 		}
 		modifier = {
-			factor = 2
+			factor = 1.80
 			check_variable = { net_immigration_rate > 0.35 }
 		}
 		modifier = {
-			factor = 2.5
+			factor = 2.25
 			check_variable = { net_immigration_rate > 0.40 }
 		}
 		modifier = {
-			factor = 3.25
+			factor = 2.50
 			check_variable = { net_immigration_rate > 0.5 }
 		}
 	}
@@ -3125,7 +3136,7 @@ country_event = {
 
 	mean_time_to_happen = {
 		modifier = {
-			factor = 4
+			factor = 3.5
 			OR = {
 				check_variable = { the_priesthood_opinion < 35 }
 				check_variable = { the_clergy_opinion < 35 }
@@ -3167,6 +3178,15 @@ country_event = {
 				check_variable = { the_clergy_opinion > 75 }
 				check_variable = { the_ulema_opinion > 75 }
 				check_variable = { wahabi_ulema_opinion > 75 }
+			}
+		}
+		modifier = {
+			factor = 0.5
+			OR = {
+				check_variable = { the_priesthood_opinion > 95 }
+				check_variable = { the_clergy_opinion > 95 }
+				check_variable = { the_ulema_opinion > 95 }
+				check_variable = { wahabi_ulema_opinion > 95 }
 			}
 		}
 	}
@@ -3352,6 +3372,147 @@ country_event = {
 					check_variable = { wahabi_ulema_opinion < 45 }
 				}
 			}
+		}
+	}
+}
+
+# Communist Cadres & The Military Argue Over Ideology
+country_event = {
+	id = internal_factions_events.40
+	title = internal_factions_events.40.t
+	desc = internal_factions_events.40.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_military_cc_squabbles }
+		has_idea = the_military
+		has_idea = communist_cadres
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_military_cc_squabbles value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			OR = {
+				check_variable = { communist_cadres_opinion > 65 }
+				check_variable = { the_military_opinion > 65 }
+			}
+		}
+		modifier = {
+			factor = 2
+			OR = {
+				check_variable = { communist_cadres_opinion > 85 }
+				check_variable = { the_military_opinion > 85 }
+			}
+		}
+	}
+
+	# Take the Communist Cadres Side
+	option = {
+		name = internal_factions_events.40.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.40.a executed"
+
+		set_temp_variable = { temp_opinion = -8 }
+		change_communist_cadres_opinion = yes
+		set_temp_variable = { temp_opinion = 8 }
+		change_the_military_opinion = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Take the Military Side
+	option = {
+		name = internal_factions_events.40.b
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.40.b executed"
+
+		set_temp_variable = { temp_opinion = 8 }
+		change_communist_cadres_opinion = yes
+		set_temp_variable = { temp_opinion = -8 }
+		change_the_military_opinion = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Help the Both Of Us
+	option = {
+		name = internal_factions_events.40.c
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.40.c executed"
+
+		set_temp_variable = { temp_opinion = -4 }
+		change_communist_cadres_opinion = yes
+		set_temp_variable = { temp_opinion = -4 }
+		change_the_military_opinion = yes
+		lose_pp_for_2_months = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# The Communist Cadres Requests Governmental Concessions
+country_event = {
+	id = internal_factions_events.41
+	title = internal_factions_events.41.t
+	desc = internal_factions_events.41.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_requested_governmental_concessions }
+		has_idea = communist_cadres
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_requested_governmental_concessions value = 1 days = 180 }
+	}
+
+	# Allow the Communist Cadres Into the Goverment
+	option = {
+		name = internal_factions_events.40.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.40.a executed"
+
+		set_temp_variable = { temp_opinion = 10 }
+		change_communist_cadres_opinion = yes
+
+		lose_pp_for_4_months = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Allow Limited Consul
+	option = {
+		name = internal_factions_events.40.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.40.a executed"
+
+		set_temp_variable = { temp_opinion = 5 }
+		change_communist_cadres_opinion = yes
+
+		lose_pp_for_month = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Deny the Request
+	option = {
+		name = internal_factions_events.40.a
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.40.a executed"
+
+		set_temp_variable = { temp_opinion = -5 }
+		change_communist_cadres_opinion = yes
+
+		lose_pp_for_month = yes
+
+		ai_chance = {
+			base = 1
 		}
 	}
 }
