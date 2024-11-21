@@ -16,7 +16,7 @@ TAJ_forbidden_bazaar = {
 			}
 		}
 
-		complete_effect = {
+		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TAJ_high_security"
 			set_country_flag = TAJ_high_security_flag
 			clr_country_flag = TAJ_medium_security_flag
@@ -45,7 +45,7 @@ TAJ_forbidden_bazaar = {
 			}
 		}
 
-		complete_effect = {
+		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TAJ_medium_security"
 			set_country_flag = TAJ_medium_security_flag
 			clr_country_flag = TAJ_high_security_flag
@@ -71,7 +71,7 @@ TAJ_forbidden_bazaar = {
 			}
 		}
 
-		complete_effect = {
+		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TAJ_low_security"
 			set_country_flag = TAJ_negligible_security_flag
 			clr_country_flag = TAJ_high_security_flag
@@ -85,19 +85,23 @@ TAJ_forbidden_bazaar = {
 
 	TAJ_flood_russian_market_with_drugs = {
 		icon = attract_foreign_investor
+
 		allowed = { original_tag = TAJ }
 
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.4 }
+		}
+		custom_cost_text = cost_3_5
+
+		days_remove = 1 #TODO
+
+		fire_only_once = yes
+
 		available = {
-
+			country_exists = SOV
 		}
 
-		visible = {
-			NOT = {
-				has_country_flag = TAJ_negligible_security_flag
-			}
-		}
-
-		complete_effect = {
+		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TAJ_flood_russian_market_with_drugs"
 			SOV = {
 				country_event = {
@@ -105,6 +109,11 @@ TAJ_forbidden_bazaar = {
 				}
 			}
 			custom_effect_tooltip = TAJ_adds_tajik_drugs_TT
+			set_country_flag = TAJ_drugs_into_russia
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -3.50 }
+				modify_treasury_effect = yes
+			}
 		}
 
 		ai_will_do = {
@@ -116,21 +125,76 @@ TAJ_forbidden_bazaar = {
 
 		allowed = { original_tag = TAJ }
 
-		available = {
-
+		custom_cost_trigger = {
+			check_variable = { treasury > 2.4 }
 		}
+		custom_cost_text = cost_2_5
+
+		days_remove = 40
 
 		visible = {
+			has_country_flag = TAJ_drugs_into_russia
+		}
+
+		available = {
 			NOT = {
-				has_country_flag = TAJ_negligible_security_flag
+				check_variable = {
+					TAJ_drugs_police_modifier > 47
+				}
+				check_variable = {
+					TAJ_corruption_drugs_modifier > 47
+				}
 			}
 		}
 
-		complete_effect = {
+		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TAJ_increase_drug_amount"
 			custom_effect_tooltip = TAJ_increase_cost_by_2_TT
 			SOV = {
 				country_event = tajik_corruption.21
+			}
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -2.50 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	TAJ_threaten_russia = {
+
+		allowed = { original_tag = TAJ }
+
+		custom_cost_trigger = {
+			command_power > 14
+		}
+		custom_cost_text = command_power_more_than_15
+
+		days_remove = 40
+
+		visible = {
+			has_country_flag = TAJ_drugs_into_russia
+		}
+
+		available = {
+			NOT = {
+				check_variable = {
+					TAJ_drugs_police_modifier > 47
+				}
+				check_variable = {
+					TAJ_corruption_drugs_modifier > 47
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAJ_threaten_russia"
+			custom_effect_tooltip = TAJ_increase_cost_by_2_TT
+			SOV = {
+				country_event = tajik_corruption.23
 			}
 		}
 
@@ -143,22 +207,19 @@ TAJ_forbidden_bazaar = {
 
 		allowed = { original_tag = TAJ }
 
-		available = {
-
-		}
+		days_remove = 15
 
 		visible = {
-			NOT = {
-				has_country_flag = TAJ_negligible_security_flag
-			}
+			has_country_flag = TAJ_drugs_into_russia
 		}
 
-		complete_effect = {
+		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TAJ_end_the_drug_flow"
 			custom_effect_tooltip = TAJ_remove_negative_debuffs_sov_TT
 			SOV = {
 				country_event = tajik_corruption.22
 			}
+			clr_country_flag = TAJ_drugs_into_russia
 		}
 
 		ai_will_do = {
