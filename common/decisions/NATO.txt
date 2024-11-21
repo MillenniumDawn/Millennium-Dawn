@@ -2,10 +2,6 @@ NATO_decisions = {
 	leave_NATO = {
 		icon = GFX_decision_generic_leave_nato
 
-		available = {
-			has_idea = NATO_member
-		}
-
 		visible = {
 			has_idea = NATO_member
 		}
@@ -18,7 +14,7 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 0
 			#By default a country will leave if not Western
 			modifier = {
 				add = 1000
@@ -35,6 +31,7 @@ NATO_decisions = {
 				NOT = { original_tag = ITA }
 				NOT = { original_tag = DEN }
 				NOT = { original_tag = CAN }
+				NOT = { original_tag = SPR }
 			}
 			#Turkey will stay in NATO if Western or if led by AKP
 			modifier = {
@@ -48,6 +45,16 @@ NATO_decisions = {
 						has_government = neutrality
 						NOT = { is_in_array = { ruling_party = 12 } }
 					}
+				}
+			}
+			modifier = {
+				factor = 0
+				original_tag = TUR
+				is_historical_focus_on = yes
+				NOT = {
+					has_government = nationalist
+					has_government = fascism
+					has_government = communism
 				}
 			}
 			# Baltic countries only leave if Emerging or Nationalistic
@@ -108,11 +115,24 @@ NATO_decisions = {
 				}
 			}
 			modifier = {
+				factor = 0
+				original_tag = CZE
+				AND = {
+					has_government = nationalist
+					nationalist_military_junta_are_in_power = yes
+					is_historical_focus_on = yes
+				}
+			}
+			# Denmark should leave if they're not RWP, Western or Neutrality
+			modifier = {
 				add = 1000
 				original_tag = DEN
 				NOT = { has_government = neutrality }
 				NOT = { has_government = democratic }
-				NOT = { has_government = nationalist }
+				AND = {
+					has_government = nationalist
+					is_in_array = { ruling_party = 20 }
+				}
 			}
 			modifier = {
 				factor = 0
@@ -142,43 +162,21 @@ NATO_decisions = {
 					has_global_flag = POL_KORWIN_PE_PATH
 				}
 			}
-		}
-	}
-
-	denounce_Status_As_Major_Non_NATO_Ally = {
-		icon = GFX_decision_generic_leave_nato
-
-		available = {
-			has_idea = Major_Non_NATO_Ally
-		}
-
-		visible = {
-			has_idea = Major_Non_NATO_Ally
-		}
-
-		cost = 100
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision denounce_Status_As_Major_Non_NATO_Ally"
-			remove_ideas = Major_Non_NATO_Ally
-			clr_country_flag = Major_Non_NATO_Ally
-			remove_from_tech_sharing_group = Major_Non_NATO_Ally_Share
-
-			USA = {
-				add_opinion_modifier = { target = PREV modifier = left_alliance }
-			}
-
-			#news_event = { id = NATO.6 hours = 6 }
-
-			# Remove opinion modifiers.
-			every_other_country = {
-				limit = {
-					has_opinion_modifier = Major_Non_NATO_Ally
-				}
-
-				remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally }
-				hidden_effect = {
-					PREV = { remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally } }
+			# Spain will leave if the Unidas Podemos is in the elections and nationalist not vox
+			modifier = {
+				add = 1000
+				original_tag = SPR
+				OR = {
+					AND = {
+						has_government = nationalist
+						NOT = { is_in_array = { ruling_party = 20 } }
+					}
+					has_government = communism
+					has_government = fascism
+					AND = {
+						has_government = neutrality
+						is_in_array = { ruling_party = 18 }
+					}
 				}
 			}
 		}
@@ -199,7 +197,7 @@ NATO_decisions = {
 			NOT = { has_country_flag = collapsed_nation }
 		}
 
-		cost = 250
+		cost = 150
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision become_NATO_aspirant"
@@ -214,13 +212,38 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 1
 			modifier = {
-				add = 10
-				has_opinion = { target = USA value > 150 }
+				add = 150
+				OR = {
+					AND = {
+						has_opinion = { target = USA value > 150 }
+						USA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = FRA value > 150 }
+						FRA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = GER value > 150 }
+						GER = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = ENG value > 150 }
+						ENG = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = SPR value > 150 }
+						SPR = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = ITA value > 150 }
+						ITA = { has_idea = NATO_member }
+					}
+				}
 			}
 			modifier = {
-				add = 100
+				add = 150
 				OR = {
 					original_tag = LAT
 					original_tag = LIT
@@ -235,15 +258,12 @@ NATO_decisions = {
 					has_government = neutrality
 				}
 				OR = {
-					AND = {
-						date > 2003.1.1
-						is_historical_focus_on = yes
-					}
+					date > 2003.1.1
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 100
+				add = 150
 				OR = {
 					original_tag = ALB
 					original_tag = CRO
@@ -253,75 +273,87 @@ NATO_decisions = {
 					has_government = neutrality
 				}
 				OR = {
-					AND = {
-						date > 2008.1.1
-						is_historical_focus_on = yes
-					}
+					date > 2008.1.1
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 100
+				add = 150
 				original_tag = MNT
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
 				OR = {
-					AND = {
-						date > 2016.1.1
-						is_historical_focus_on = yes
-					}
+					date > 2016.1.1
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 100
+				add = 150
 				original_tag = FYR
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
 				OR = {
-					AND = {
-						date > 2018.1.1
-						is_historical_focus_on = yes
-					}
+					date > 2018.1.1
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				factor = 5
+				add = 150
 				OR = {
 					original_tag = SWE
 					original_tag = FIN
 				}
 				OR = {
+					date > 2019.1.1
 					SOV = { has_added_tension_amount > 10 }
 					SOV = { has_war_with = UKR }
 				}
 			}
+			modifier = {
+				factor = 2.5
+				# Russia is at war with European democratic nations
+				SOV = { NOT = { has_government = democratic } }
+				OR = {
+					SOV = { has_war_with = UKR }
+					SOV = { has_war_with = FIN }
+					SOV = { has_war_with = LIT }
+					SOV = { has_war_with = LAT }
+					SOV = { has_war_with = EST }
+					SOV = { has_war_with = GEO }
+					SOV = { has_war_with = BLR }
+					SOV = { has_war_with = ABK }
+					SOV = { has_war_with = SOO }
+				}
+			}
 			# Hardcoded Section to Ensure they join
 			modifier = {
-				add = 100
-				OR = {
-					original_tag = LAT
-					original_tag = LIT
-					original_tag = EST
-					original_tag = ROM
-					original_tag = SLO
-					original_tag = SLV
-					original_tag = BUL
-					original_tag = ALB
-					original_tag = CRO
-					original_tag = MNT
-					original_tag = FYR
+				add = 40
+				var:influence_array^0 = {
+					has_idea = NATO_member
 				}
-				OR = {
-					has_government = democratic
-					has_government = neutrality
+			}
+			modifier = {
+				add = 30
+				var:influence_array^1 = {
+					has_idea = NATO_member
 				}
-				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 15
+				var:influence_array^2 = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
 			}
 		}
 	}
@@ -378,7 +410,28 @@ NATO_decisions = {
 		ai_will_do = {
 			base = 10
 			modifier = {
-				factor = 100
+				add = 350
+				OR = {
+					AND = {
+						has_opinion = { target = USA value > 150 }
+						USA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = FRA value > 150 }
+						FRA = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = GER value > 150 }
+						GER = { has_idea = NATO_member }
+					}
+					AND = {
+						has_opinion = { target = ENG value > 150 }
+						ENG = { has_idea = NATO_member }
+					}
+				}
+			}
+			modifier = {
+				factor = 350
 				OR = {
 					original_tag = LAT
 					original_tag = LIT
@@ -428,21 +481,6 @@ NATO_decisions = {
 			modifier = {
 				add = 100
 				SOV = { has_added_tension_amount > 5 }
-			}
-			modifier = {
-				factor = 0
-				is_historical_focus_on = no
-				has_opinion = { target = FROM value < 50 }
-			}
-			modifier = {
-				factor = 2
-				has_opinion = { target = FROM value > 49 }
-			}
-			modifier = {
-				factor = 5
-				FROM = {
-					is_top3_twenty_influencer = yes
-				}
 			}
 			# Historical AI
 			modifier = {
@@ -518,7 +556,7 @@ NATO_decisions = {
 		ai_will_do = {
 			base = 10
 			modifier = {
-				factor = 5
+				factor = 350
 				OR = {
 					AND = {
 						date > 2003.1.1
@@ -537,7 +575,7 @@ NATO_decisions = {
 				}
 			}
 			modifier = {
-				factor = 5
+				factor = 350
 				OR = {
 					AND = {
 						date > 2008.1.1
@@ -551,7 +589,7 @@ NATO_decisions = {
 				}
 			}
 			modifier = {
-				factor = 5
+				factor = 350
 				OR = {
 					AND = {
 						date > 2016.1.1
@@ -612,6 +650,9 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision show_non_ratified_countries"
 			NATO_show_non_ratified_countries = yes
 		}
+		ai_will_do = {
+			factor = 355
+		}
 	}
 
 	nato_enhance_forward_presence_brigade = {
@@ -636,6 +677,9 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.2 days = 1 }
 		}
+		ai_will_do = {
+			factor = 355
+		}
 	}
 
 	nato_deply_turkish_brigade = {
@@ -659,6 +703,9 @@ NATO_decisions = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.4 days = 1 }
+		}
+		ai_will_do = {
+			factor = 355
 		}
 	}
 
@@ -706,6 +753,9 @@ NATO_decisions = {
 		remove_effect = {
 			add_ideas = NATO_idea_Nuclear_sharing_Groupe
 		}
+		ai_will_do = {
+			factor = 355
+		}
 	}
 
 	Nato_Nuclear_Sharing = {
@@ -730,15 +780,15 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_Nuclear_Sharing"
 			custom_effect_tooltip = Nato_Nuclear_Sharing_I_TT
 			hidden_effect = {
-				set_temp_variable = { nuclear_warhead_index = 4 }
-				set_temp_variable = { nuclear_warhead_count = 20 }
-				modify_nuclear_warhead_inventory_count = yes
 				clr_country_flag = GER_no_nuclear
 				set_country_flag = NPROG_completed
-				set_temp_variable = { missile_type = 4 }
-				set_temp_variable = { missile_index = 41 }
-				set_temp_variable = { missile_count = 20 }
-				modify_missile_inventory_count = yes
+				if = {
+					limit = { has_dlc = "Gotterdammerung"}
+					add_equipment_to_stockpile = {
+						type = guided_missile_equipment_2
+						amount = 20
+					}
+				}
 				add_popularity = {
 					ideology = democratic
 					popularity = 0.05
@@ -748,26 +798,41 @@ NATO_decisions = {
 					popularity = 0.05
 				}
 				USA = {
-					set_temp_variable = { nuclear_warhead_index = 4 }
-					set_temp_variable = { nuclear_warhead_count = -20 }
-					modify_nuclear_warhead_inventory_count = yes
+					if = {
+						limit = { has_dlc = "Gotterdammerung"}
+						add_equipment_to_stockpile = {
+							type = guided_missile_equipment_2
+							amount = -20
+						}
+					}
 				}
 			}
 		}
 		remove_effect = {
 			custom_effect_tooltip = Nato_Nuclear_Sharing_II_TT
 			hidden_effect = {
-				set_temp_variable = { nuclear_warhead_index = 4 }
-				set_temp_variable = { nuclear_warhead_count = -20 }
-				modify_nuclear_warhead_inventory_count = yes
+				if = {
+					limit = { has_dlc = "Gotterdammerung"}
+					add_equipment_to_stockpile = {
+						type = guided_missile_equipment_2
+						amount = -20
+					}
+				}
 				set_country_flag = GER_no_nuclear
 				clr_country_flag = NPROG_completed
 				USA = {
-					set_temp_variable = { nuclear_warhead_index = 4 }
-					set_temp_variable = { nuclear_warhead_count = 20 }
-					modify_nuclear_warhead_inventory_count = yes
+					if = {
+						limit = { has_dlc = "Gotterdammerung"}
+						add_equipment_to_stockpile = {
+							type = guided_missile_equipment_2
+							amount = 20
+						}
+					}
 				}
 			}
+		}
+		ai_will_do = {
+			factor = 355
 		}
 	}
 
@@ -815,6 +880,9 @@ NATO_decisions = {
 		}
 		remove_effect = {
 			remove_ideas = NATO_idea_Nuclear_sharing_Groupe
+		}
+		ai_will_do = {
+			factor = 355
 		}
 	}
 }

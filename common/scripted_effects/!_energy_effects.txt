@@ -179,15 +179,29 @@ calculate_energy_use = {
 	add_to_variable = { energy_sum = fossil_pp_energy_generation }
 
 	# Nuclear Energy Section
+	if = { limit = { has_country_flag = enabled_nuclear_reactor_fuel_production }
+		set_variable = { var_enrichment_nuclear_energy_prod_factor = 200 } # CHANGE ME IF YOU WANT ME TO BE MORE PRODUCTIVE, weekly production value
+
+		set_temp_variable = { modify_leu = 1 }
+		add_to_temp_variable = { modify_leu = modifier@leu_fuel_production_modifier }
+
+		multiply_variable = { var_enrichment_nuclear_energy_prod_factor = modify_leu }
+		round_variable = var_enrichment_nuclear_energy_prod_factor
+
+		set_temp_variable = { temp1 = var_enrichment_nuclear_energy_prod_factor }
+		multiply_temp_variable = { temp1 = enrichment_facilities }
+		set_variable = { var_nuke_nuclear_reactor_prod = temp1 }
+	}
+	else = {
+		set_variable = { var_nuke_nuclear_reactor_prod = 0 }
+	}
+
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { nuclear_status_array = 1 }
-				is_in_array = { nuclear_status_array = 2 }
-				is_in_array = { nuclear_status_array = 3 }
-				is_in_array = { nuclear_status_array = 4 }
-				is_in_array = { nuclear_status_array = 6 }
-				is_in_array = { nuclear_status_array = 8 }
+				has_idea = nuclear_energy
+				has_idea = nuclear_power_off
+				has_idea = nuclear_power_def
 			}
 		}
 		set_variable = { nuclear_fuel_consumption = modifier@nuclear_fuel_consumption }
@@ -202,6 +216,7 @@ calculate_energy_use = {
 		set_temp_variable = { nuclear_energy_generation_multiplier = 1 }
 		add_to_temp_variable = { nuclear_energy_generation_multiplier = modifier@nuclear_energy_generation_modifier }
 		multiply_variable = { nuclear_energy_generation = nuclear_energy_generation_multiplier }
+
 		if = { limit = { check_variable = { var_reactor_material_stockpile = 0 } }
 			set_temp_variable = { nuclear_fuel_fulfillment = var_nuke_nuclear_reactor_prod }
 			divide_temp_variable = { nuclear_fuel_fulfillment = nuclear_fuel_consumption }
@@ -2157,6 +2172,54 @@ setup_starting_world_hydropower = {
 			modifier = geothermal_infrastructure_in_state
 		}
 	}
+	# Czech Republic - Bohemia
+	117 = {
+		set_variable = { hydroelectric_energy_production_var = 0.584 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Czech Republic - Sumava
+	1017 = {
+		set_variable = { hydroelectric_energy_production_var = 0.123 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Pomorze
+	113 = {
+		set_variable = { hydroelectric_energy_production_var = 0.716 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Malopolska
+	1098 = {
+		set_variable = { hydroelectric_energy_production_var = 0.700 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Mazowsze
+	114 = {
+		set_variable = { hydroelectric_energy_production_var = 0.162 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Zachodnie Pomorze
+	474 = {
+		set_variable = { hydroelectric_energy_production_var = 0.150 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
 
 	every_state = {
 		limit = {
@@ -2260,18 +2323,9 @@ build_enrichment_facilities_effect = {
 
 	if = { limit = { NOT = { is_in_array = { global.enrichment_countries = THIS.id } } }
 		add_to_array = { global.enrichment_countries = THIS.id }
-		if = { limit = { is_ai = yes }
-			if = { limit = { check_variable = { var_LEU_selected = 2 } }
-				set_variable = { var_LEU_selected = 1 }
-			}
-			else = {
-				set_variable = { var_LEU_selected = 2 }
-				set_variable = { var_HEU_selected = 1 }
-			}
-			set_enrichment_efficiency_LEU = yes
-			update_nuclear_production = yes
-			var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
-			update_nuclear_production = yes
+		if = {
+			limit = { NOT = { has_country_flag = enabled_nuclear_reactor_fuel_production } }
+			set_country_flag = enabled_nuclear_reactor_fuel_production
 		}
 	}
 }

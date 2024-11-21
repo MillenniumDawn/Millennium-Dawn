@@ -1732,7 +1732,7 @@ focus_tree = {
 			if = {
 				limit = {
 					has_completed_focus = LBA_ally_with_boko_haram
-					NIG = { salafist_caliphate_are_in_power = no }
+					NIG = { salafist_caliphate_are_not_in_power = yes }
 				}
 				NIG = { country_event = { id = LibyaFocus.2 days = 1 } }
 			}
@@ -3771,21 +3771,7 @@ focus_tree = {
 			add_ideas = LBA_strong_president
 			set_temp_variable = { election_year = global.year }
 			subtract_from_temp_variable = { election_year = 2 }
-			set_country_flag = no_leader_change
-			meta_effect = {
-				text = {
-					set_politics = {
-						ruling_party = [OUTLOOK]
-						elections_allowed = yes
-						last_election = "[YEAR].[MONTH].1"
-						election_frequency = 60
-					}
-				}
-				OUTLOOK = "[meta_ideology_names]"
-				YEAR = election_year
-				MONTH = global.month
-			}
-			clr_country_flag = no_leader_change
+			set_elections_60_months = yes
 		}
 
 	}
@@ -3825,21 +3811,7 @@ focus_tree = {
 			add_ideas = LBA_constitutional_monarchy
 			set_temp_variable = { election_year = global.year }
 			subtract_from_temp_variable = { election_year = 2 }
-			set_country_flag = no_leader_change
-			meta_effect = {
-				text = {
-					set_politics = {
-						ruling_party = [OUTLOOK]
-						elections_allowed = yes
-						last_election = "[YEAR].[MONTH].1"
-						election_frequency = 48
-					}
-				}
-				OUTLOOK = "[meta_ideology_names]"
-				YEAR = election_year
-				MONTH = global.month
-			}
-			clr_country_flag = no_leader_change
+			set_elections_48_months = yes
 		}
 
 	}
@@ -5394,7 +5366,6 @@ focus_tree = {
 						free_building_slots = {
 							building = air_base
 							size > 0
-							include_locked = yes
 						}
 					}
 				}
@@ -5413,7 +5384,6 @@ focus_tree = {
 						free_building_slots = {
 							building = air_base
 							size > 0
-							include_locked = yes
 						}
 					}
 				}
@@ -5432,7 +5402,6 @@ focus_tree = {
 						free_building_slots = {
 							building = air_base
 							size > 0
-							include_locked = yes
 						}
 					}
 				}
@@ -5674,7 +5643,28 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_sabha_launch_site"
-			add_ideas = LBA_rocket_launch_site
+			if = {
+				limit = {
+					392 = {
+						air_facility < 1
+						land_facility < 1
+						nuclear_facility < 1
+					}
+				}
+				set_temp_variable = { treasury_change = -15 }
+				modify_treasury_effect = yes
+				392 = {
+					add_building_construction = {
+						type = air_facility
+						level = 1
+						instant_build = yes
+						province = 6295
+					}
+				}
+			}
+			else = {
+				one_random_air_facility = yes
+			}
 		}
 
 	}
@@ -6158,7 +6148,7 @@ focus_tree = {
 	}
 	focus = {
 		id = LBA_shift_to_military
-		icon = Generic_Low_Morale
+		icon = Generic_Morale_Bonus_Focus
 		cost = 7
 		prerequisite = {
 			focus = LBA_shuffle_officers
@@ -6826,8 +6816,11 @@ focus_tree = {
 			FOCUS_FILTER_INTERNAL_AFFAIRS
 		}
 
-		available = {
-			controls_state = 1100
+		bypass = {
+			OR = {
+				is_special_project_completed = sp:sp_libya_gmmr_phase3_project
+				NOT = { controls_state = 1100 }
+			}
 		}
 
 		ai_will_do = {
@@ -6840,19 +6833,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_gmmr_kufra"
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
-			swap_ideas = {
-				remove_idea = LBA_great_man_made_river_phase2
-				add_idea = LBA_great_man_made_river_phase3
+			add_breakthrough_points = {
+				specialization = specialization_nuclear
+				value = 1
 			}
-			hidden_effect = {
-				CYR = {
-					swap_ideas = {
-						remove_idea = LBA_great_man_made_river_phase2
-						add_idea = LBA_great_man_made_river_phase3
-					}
-				}
+			sp:sp_libya_gmmr_phase3_project = {
+				add_project_progress_ratio = 0.15
 			}
 		}
 
@@ -6872,8 +6860,11 @@ focus_tree = {
 			FOCUS_FILTER_INTERNAL_AFFAIRS
 		}
 
-		available = {
-			controls_state = 393
+		bypass = {
+			OR = {
+				is_special_project_completed = sp:sp_libya_gmmr_phase4_west_project
+				NOT = { controls_state = 393 }
+			}
 		}
 
 		ai_will_do = {
@@ -6886,28 +6877,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_gmmr_kufra"
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = -7 }
 			modify_treasury_effect = yes
-			if = {
-				limit = { has_idea = LBA_great_man_made_river_phase41 }
-				swap_ideas = {
-					remove_idea = LBA_great_man_made_river_phase41
-					add_idea = LBA_great_man_made_river_phase42
-				}
+			add_breakthrough_points = {
+				specialization = specialization_nuclear
+				value = 1
 			}
-			else = {
-				swap_ideas = {
-					remove_idea = LBA_great_man_made_river_phase3
-					add_idea = LBA_great_man_made_river_phase41
-				}
-			}
-			hidden_effect = {
-				TRP = {
-					swap_ideas = {
-						remove_idea = LBA_great_man_made_river_phase2
-						add_idea = LBA_great_man_made_river_phase42
-					}
-				}
+			sp:sp_libya_gmmr_phase4_west_project = {
+				add_project_progress_ratio = 0.15
 			}
 		}
 
@@ -6963,8 +6940,11 @@ focus_tree = {
 			FOCUS_FILTER_INTERNAL_AFFAIRS
 		}
 
-		available = {
-			controls_state = 396
+		bypass = {
+			OR = {
+				is_special_project_completed = sp:sp_libya_gmmr_phase4_east_project
+				NOT = { controls_state = 396 }
+			}
 		}
 
 		ai_will_do = {
@@ -6977,28 +6957,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_gmmr_jaghbub"
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = -7 }
 			modify_treasury_effect = yes
-			if = {
-				limit = { has_idea = LBA_great_man_made_river_phase41 }
-				swap_ideas = {
-					remove_idea = LBA_great_man_made_river_phase41
-					add_idea = LBA_great_man_made_river_phase42
-				}
+			add_breakthrough_points = {
+				specialization = specialization_nuclear
+				value = 1
 			}
-			else = {
-				swap_ideas = {
-					remove_idea = LBA_great_man_made_river_phase3
-					add_idea = LBA_great_man_made_river_phase41
-				}
-			}
-			hidden_effect = {
-				CYR = {
-					swap_ideas = {
-						remove_idea = LBA_great_man_made_river_phase3
-						add_idea = LBA_great_man_made_river_phase42
-					}
-				}
+			sp:sp_libya_gmmr_phase4_east_project = {
+				add_project_progress_ratio = 0.15
 			}
 		}
 
@@ -7070,9 +7036,11 @@ focus_tree = {
 			FOCUS_FILTER_INTERNAL_AFFAIRS
 		}
 
-		available = {
-			controls_state = 919
-			controls_state = 391
+		bypass = {
+			OR = {
+				is_special_project_completed = sp:sp_libya_gmmr_phase5_project
+				NOT = { controls_state = 919 }
+			}
 		}
 
 		ai_will_do = {
@@ -7089,25 +7057,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_gmmr_connect_east_west"
-			set_temp_variable = { treasury_change = -5 }
+			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
-			swap_ideas = {
-				remove_idea = LBA_great_man_made_river_phase42
-				add_idea = LBA_great_man_made_river_phase5
+			add_breakthrough_points = {
+				specialization = specialization_nuclear
+				value = 1
 			}
-			hidden_effect = {
-				TRP = {
-					swap_ideas = {
-						remove_idea = LBA_great_man_made_river_phase42
-						add_idea = LBA_great_man_made_river_phase5
-					}
-				}
-				CYR = {
-					swap_ideas = {
-						remove_idea = LBA_great_man_made_river_phase42
-						add_idea = LBA_great_man_made_river_phase5
-					}
-				}
+			sp:sp_libya_gmmr_phase5_project = {
+				add_project_progress_ratio = 0.15
 			}
 		}
 
@@ -8775,7 +8732,51 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_wmds"
-			add_ideas = LBA_friedrich_tinner
+			if = {
+				limit = {
+					has_character = LBA_friedrich_tinner
+				}
+				LBA_friedrich_tinner = {
+					add_scientist_level = {
+						level = 1
+						specialization = specialization_nuclear
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					has_scientist_specialization = specialization_nuclear
+				}
+				random_scientist = {
+					limit = {
+						has_scientist_level = {
+							level > 0
+							specialization = specialization_nuclear
+						}
+					}
+					add_scientist_xp = {
+						experience = 200
+						specialization = specialization_nuclear
+					}
+				}
+			}
+			else = {
+				LBA_nuclear_nadal = {
+					add_scientist_role = {
+						scientist = {
+							traits = { scientist_trait_missile_specialist scientist_trait_nuclear_specialist }
+							skills = {
+								specialization_nuclear = 1
+								specialization_air = 1
+							}
+						}
+					}
+				}
+			}
+			add_breakthrough_points = {
+				specialization = specialization_nuclear
+				value = 2
+			}
 			add_days_mission_timeout = {
 				mission = libya_negotiations_with_un
 				days = 60
@@ -8993,11 +8994,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_disarmament_program"
 			if = {
-				limit = { has_idea = LBA_friedrich_tinner }
-				remove_ideas = LBA_friedrich_tinner
-			}
-			else = {
+				limit = {
+					country_exists = SWI
+					SWI = { NOT = { is_subject_of = ROOT } }
+					SWI = { NOT = { is_in_faction_with = ROOT } }
+				}
 				custom_effect_tooltip = LBA_disarmament_program_tt
+				LBA_friedrich_tinner = { set_nationality = SWI }
+				SWI = { country_event = { id = LibyaFocus.105 hours = 6 } }
 			}
 			increase_economic_growth = yes
 			add_days_mission_timeout = {
@@ -9072,7 +9076,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_remove_sanctions"
-			random_country = {
+			random_other_country = {
 				limit = {
 					OR = {
 						has_idea = regional_power
@@ -11110,6 +11114,9 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = LBA_support_sudan
 		}
+		mutually_exclusive = {
+			focus = LBA_support_south_sudan
+		}
 		x = 12
 		y = 2
 		relative_position_id = LBA_neighbourly_politics
@@ -11119,7 +11126,9 @@ focus_tree = {
 		}
 
 		available = {
+			country_exists = DAR
 			NOT = { SUD = { is_subject_of = ROOT } }
+			NOT = { SSU = { is_subject_of = ROOT } }
 		}
 
 		bypass = {
@@ -11161,6 +11170,9 @@ focus_tree = {
 		mutually_exclusive = {
 			focus = LBA_support_darfur
 		}
+		mutually_exclusive = {
+			focus = LBA_support_south_sudan
+		}
 		x = 14
 		y = 2
 		relative_position_id = LBA_neighbourly_politics
@@ -11170,7 +11182,9 @@ focus_tree = {
 		}
 
 		available = {
+			country_exists = SUD
 			NOT = { DAR = { is_subject_of = ROOT } }
+			NOT = { SSU = { is_subject_of = ROOT } }
 		}
 
 		bypass = {
@@ -11199,19 +11213,89 @@ focus_tree = {
 
 	}
 	focus = {
+		id = LBA_support_south_sudan
+		icon = align_to_south_sudan
+		cost = 7
+		prerequisite = {
+			focus = LBA_southern_focus
+		}
+		mutually_exclusive = {
+			focus = LBA_support_darfur
+		}
+		mutually_exclusive = {
+			focus = LBA_support_sudan
+		}
+		x = 16
+		y = 2
+		relative_position_id = LBA_neighbourly_politics
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE
+		}
+
+		available = {
+			country_exists = SSU
+			NOT = { DAR = { is_subject_of = ROOT } }
+			NOT = { SUD = { is_subject_of = ROOT } }
+		}
+
+		bypass = {
+			SSU = { is_subject_of = ROOT }
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_support_south_sudan"
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = SSU }
+			set_temp_variable = { percent_change = 4 }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = SSU
+				modifier = declaration_of_friendship
+			}
+			reverse_add_opinion_modifier = {
+				target = SSU
+				modifier = declaration_of_friendship
+			}
+		}
+
+	}
+	focus = {
 		id = LBA_send_mercenaries
 		icon = Generic_Partisan
 		cost = 5
 		prerequisite = {
 			focus = LBA_support_darfur
 			focus = LBA_support_sudan
+			focus = LBA_support_south_sudan
 		}
-		x = 13
+		x = 14
 		y = 3
 		relative_position_id = LBA_neighbourly_politics
 
 		search_filters = {
 			FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE
+		}
+
+		available = {
+			OR = {
+				AND = {
+					has_completed_focus = LBA_support_darfur
+					country_exists = DAR
+				}
+				AND = {
+					has_completed_focus = LBA_support_sudan
+					country_exists = SUD
+				}
+				AND = {
+					has_completed_focus = LBA_support_south_sudan
+					country_exists = SSU
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -11227,20 +11311,12 @@ focus_tree = {
 				limit = {
 					NOT = { has_completed_focus = LBA_support_darfur }
 					NOT = { has_completed_focus = LBA_support_sudan }
+					NOT = { has_completed_focus = LBA_support_south_sudan }
 				}
 				custom_effect_tooltip = LBA_send_mercenaries_tt_1
 				effect_tooltip = {
-					if = {
-						limit = { NOT = { country_exists = DAR } }
-						SUD = { release = DAR }
-						DAR = {
-							declare_war_on = {
-								target = SUD
-								type = annex_everything
-							}
-						}
-					}
 					DAR = {
+						add_stability = 0.05
 						capital_scope = {
 							create_unit = {
 								division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
@@ -11270,33 +11346,31 @@ focus_tree = {
 					set_temp_variable = { percent_change = 5 }
 					change_influence_percentage = yes
 				}
+				newline = yes
+				custom_effect_tooltip = LBA_send_mercenaries_tt_3
+				effect_tooltip = {
+					SSU = {
+						add_stability = 0.05
+						capital_scope = {
+							create_unit = {
+								division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
+								owner = SSU
+							}
+						}
+					}
+					set_temp_variable = { tag_index = ROOT }
+					set_temp_variable = { influence_target = SSU }
+					set_temp_variable = { percent_change = 5 }
+					change_influence_percentage = yes
+				}
 			}
 			else = {
 				if = {
 					limit = { has_completed_focus = LBA_support_darfur }
-					if = {
-						limit = { NOT = { country_exists = DAR } }
-						SUD = { country_event = { id = LibyaFocus.76 hours = 3 } }
-						effect_tooltip = {
-							SUD = { release = DAR }
-							DAR = {
-								declare_war_on = {
-									target = SUD
-									type = annex_everything
-								}
-							}
-							DAR = {
-								capital_scope = {
-									create_unit = {
-										division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
-										owner = DAR
-									}
-								}
-							}
-						}
-					}
-					else = {
+					DAR = { country_event = { id = LibyaFocus.77 hours = 3 } }
+					effect_tooltip = {
 						DAR = {
+							add_stability = 0.05
 							capital_scope = {
 								create_unit = {
 									division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
@@ -11310,7 +11384,8 @@ focus_tree = {
 					set_temp_variable = { percent_change = 5 }
 					change_influence_percentage = yes
 				}
-				else = {
+				else_if = {
+					limit = { has_completed_focus = LBA_support_sudan }
 					SUD = { country_event = { id = LibyaFocus.77 hours = 3 } }
 					effect_tooltip = {
 						SUD = {
@@ -11325,6 +11400,24 @@ focus_tree = {
 					}
 					set_temp_variable = { tag_index = ROOT }
 					set_temp_variable = { influence_target = SUD }
+					set_temp_variable = { percent_change = 5 }
+					change_influence_percentage = yes
+				}
+				else = {
+					SSU = { country_event = { id = LibyaFocus.77 hours = 3 } }
+					effect_tooltip = {
+						SSU = {
+							add_stability = 0.05
+							capital_scope = {
+								create_unit = {
+									division = "name = \"Murtaziqat Libiun\" division_template = \"Libyan Mercenaries\" start_experience_factor = 0.4"
+									owner = SSU
+								}
+							}
+						}
+					}
+					set_temp_variable = { tag_index = ROOT }
+					set_temp_variable = { influence_target = SSU }
 					set_temp_variable = { percent_change = 5 }
 					change_influence_percentage = yes
 				}
