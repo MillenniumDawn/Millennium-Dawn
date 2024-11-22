@@ -428,8 +428,10 @@ scripted_diplomatic_actions = {
 		selectable = {
 			#selected country has lower GDP/C than us
 			custom_trigger_tooltip = {
-				tooltip = gdp_greater_than_other
-				check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
+				set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
+				multiply_temp_variable = { gdp_total_temp = 2 }
+				check_variable = { gdp_total_temp > THIS.gdp_total }
+				tooltip = gdp_total_cannot_be_double_ours
 			}
 			gdp_debt_ratio_higher_25 = yes
 			ROOT = {
@@ -768,6 +770,23 @@ scripted_diplomatic_actions = {
 			modifier = {
 				factor = 0.50
 				ROOT = { has_political_power < 450 }
+			}
+			modifier = {
+				factor = 0
+				set_temp_variable = { tmp = debt }
+				multiply_temp_variable = { tmp = 0.25 }
+				ROOT = {
+					set_temp_variable = { debt_temp = debt }
+					add_to_temp_variable = { debt_temp = PREV.tmp }
+
+					set_temp_variable = { interest_rate_temp = debt_temp }
+					divide_temp_variable = { interest_rate_temp = gdp_total }
+					multiply_temp_variable = { interest_rate_temp = 10 }
+
+					set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
+					add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
+				}
+				check_variable = { ROOT.interest_rate_temp > 8.99 }
 			}
 			modifier = {
 				factor = 0
@@ -1277,7 +1296,7 @@ scripted_diplomatic_actions = {
 		selectable = {
 			OR = {
 				THIS = { is_subject_of = ROOT }
-				ROOT = { OVERLORD = { tag = PREV.PREV } }
+				ROOT = { has_subject = PREV }
 			}
 		}
 

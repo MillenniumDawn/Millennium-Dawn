@@ -236,6 +236,18 @@ scripted_gui = {
 				}
 				log = "[GetDateText]: [THIS.GetName]: DEBUG: 1076 Max debt paid (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
 			}
+			# Automatically Pay off Debt
+			debt_bg_alt_shift_right_click = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = automatically_pay_off_debt_enabled }
+					}
+					set_country_flag = automatically_pay_off_debt_enabled
+				}
+				else = {
+					clr_country_flag = automatically_pay_off_debt_enabled
+				}
+			}
 		}
 
 		triggers = {
@@ -1440,6 +1452,17 @@ scripted_gui = {
 					ingame_update_setup = yes
 				}
 			}
+			bottom_bar_debt_bg_alt_shift_right_click = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = automatically_pay_off_debt_enabled }
+					}
+					set_country_flag = automatically_pay_off_debt_enabled
+				}
+				else = {
+					clr_country_flag = automatically_pay_off_debt_enabled
+				}
+			}
 
 			bottom_bar_int_investments_bg_right_click = {
 				subtract_from_variable = { int_investments = 1 }
@@ -1576,17 +1599,10 @@ scripted_gui = {
 					# Killswitch
 					modifier = {
 						factor = 0
-						has_global_flag = GAME_RULE_enabled_hard_economic_ai
-						NOT = {
-							has_idea = economic_boom
-						}
-					}
-					modifier = {
-						factor = 0
-						has_global_flag = GAME_RULE_enabled_hard_economic_ai
-						NOT = {
-							has_idea = negligible_corruption
-						}
+						set_temp_variable = { gdp_total_temp = gdp_total }
+						multiply_temp_variable = { gdp_total_temp = 0.001 }
+						multiply_temp_variable = { gdp_total_temp = 0.5 }
+						check_variable = { treasury_rate > gdp_total_temp }
 					}
 					modifier = {
 						factor = 0
@@ -1632,23 +1648,7 @@ scripted_gui = {
 						factor = 1.15
 						has_idea = economic_boom
 					}
-
-
 					# Killswitch
-					modifier = {
-						factor = 0
-						has_global_flag = GAME_RULE_enabled_hard_economic_ai
-						NOT = {
-							has_idea = economic_boom
-						}
-					}
-					modifier = {
-						factor = 0
-						has_global_flag = GAME_RULE_enabled_hard_economic_ai
-						NOT = {
-							has_idea = negligible_corruption
-						}
-					}
 					modifier = {
 						factor = 0
 						OR = {
@@ -1738,7 +1738,6 @@ scripted_gui = {
 						}
 						check_variable = { treasury_rate > 2.00 }
 						check_variable = { treasury_rate < 10.00 }
-						#ai_has_high_surplus = no
 					}
 					# Generic Economic
 					modifier = {
@@ -1769,18 +1768,15 @@ scripted_gui = {
 					# Killswitch
 					modifier = {
 						factor = 0
-						has_global_flag = GAME_RULE_enabled_hard_economic_ai
-						OR = {
-							NOT = { has_idea = economic_boom }
-							NOT = { has_idea = negligible_corruption }
-						}
+						set_temp_variable = { gdp_total_temp = gdp_total }
+						multiply_temp_variable = { gdp_total_temp = 0.001 }
+						check_variable = { treasury_rate > gdp_total_temp }
 					}
 					modifier = {
 						factor = 0
 						OR = {
 							has_country_flag = temp_decrease_corporate_taxes
 							has_country_flag = no_corporate_tax_rate_change
-							check_variable = { treasury_rate > 9.99 }
 							num_of_civilian_factories < 5
 						}
 					}
@@ -1862,7 +1858,6 @@ scripted_gui = {
 							has_idea = economic_boom
 						}
 					}
-
 					# Killswitch
 					modifier = {
 						factor = 0
