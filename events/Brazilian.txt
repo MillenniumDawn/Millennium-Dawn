@@ -1,77 +1,160 @@
 ﻿add_namespace = brazil
 add_namespace = brazil_news
 add_namespace = brazil_flavour_events
+add_namespace = brazil_amazon
 
-#Amazonian Development Project
+# Amazonian Development Project
 country_event = {
 	id = brazil.3
 	title = brazil.3.t
 	desc = brazil.3.d
 	picture = GFX_mining
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = {
+			has_country_flag = amazonian_development_project
+			has_country_flag = denied_amazonian_development_project
+		}
+	}
 
+	# The Tree will Go Back Anyways
 	option = {
 		name = brazil.3.a
 		log = "[GetDateText]: [This.GetName]: brazil.3.a executed"
-		add_stability = -0.10
+		add_stability = -0.05
 		set_country_flag = amazonian_development_project
 		add_ideas = BRA_idea_amazonian_development_project
-		set_temp_variable = { temp_opinion = 5 }
+
+		set_temp_variable = { temp_opinion = 10 }
 		change_industrial_conglomerates_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_fossil_fuel_industry_opinion = yes
+
+		unlock_decision_tooltip = BRA_decision_the_road_to_el_dorado
+		unlock_decision_tooltip = BRA_decision_expand_the_mining_industry
+		unlock_decision_tooltip = BRA_decision_increase_the_oil_production
+		unlock_decision_tooltip = BRA_decision_increase_military_production
+		unlock_decision_tooltip = BRA_decision_tech_metal_industry_in_the_amazon
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				check_variable = { industrial_conglomerates_opinion < 50 }
+				has_idea = industrial_conglomerates
+			}
+			modifier = {
+				add = 5
+				check_variable = { small_medium_business_owners_opinion < 50 }
+				has_idea = small_medium_business_owners
+			}
+			modifier = {
+				add = 5
+				check_variable = { fossil_fuel_industry_opinion < 50 }
+				has_idea = fossil_fuel_industry
+			}
+			modifier = {
+				add = 5
+				has_stability > 0.50
+			}
+		}
 	}
 
+	# The Environment is Not for Sale
 	option = {
 		name = brazil.3.b
 		log = "[GetDateText]: [This.GetName]: brazil.3.b executed"
-		add_stability = 0.075
+		add_stability = 0.05
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		set_temp_variable = { temp_outlook_increase = 0.04 }
+		add_relative_party_popularity = yes
 		set_country_flag = denied_amazonian_development_project
+
 		set_temp_variable = { temp_opinion = -5 }
 		change_industrial_conglomerates_opinion = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				has_stability < 0.30
+			}
+			modifier = {
+				add = 5
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 15
+				is_historical_focus_on = yes
+			}
+		}
 	}
 }
-#Project Devastate the Amazon
+
+# Project Devastate the Amazon
 country_event = {
 	id = brazil.6
 	title = brazil.6.t
 	desc = brazil.6.d
 	picture = GFX_country_event_amazon_rainforest_devastation
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
+	# Business is more important than some silly trees
 	option = {
 		name = brazil.6.a
 		log = "[GetDateText]: [This.GetName]: brazil.6.a executed"
-		add_political_power = 25
+		add_political_power = 75
 		add_stability = -0.05
 		set_temp_variable = { temp_opinion = 5 }
 		change_industrial_conglomerates_opinion = yes
+		change_small_medium_business_owners_opinion = yes
+		change_landowners_opinion = yes
+
+		set_temp_variable = { temp_change = -50 }
+		BRA_wild_acreage_effect = yes
+
+		ai_chance = {
+			base = 0
+		}
 	}
 
+	# We must preserve our national treasure for future generations
 	option = {
 		name = brazil.6.b
 		log = "[GetDateText]: [This.GetName]: brazil.6.b executed"
-		add_stability = 0.10
-		add_to_variable = {
-			var = party_pop_array^17
-			value = 0.05
+		add_stability = 0.05
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		set_temp_variable = { temp_outlook_increase = 0.04 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_change = 50 }
+		BRA_conserv_acreage_effect = yes
+		set_temp_variable = { temp_change = -50 }
+		BRA_wild_acreage_effect = yes
+
+		# Take the stability here and get the conservation lands on lock
+		ai_chance = {
+			base = 10
 		}
-		add_popularity = {
-			ideology = neutrality
-			popularity = 0.05
-		}
-		recalculate_party = yes
-		custom_effect_tooltip = BRA_event_brazil.6_tt
 	}
 }
-#Lula is Elected
+
+# Lula is Elected
 country_event = {
 	id = brazil.4
 	title = brazil.4.t
 	desc = brazil.4.d
 	picture = GFX_country_event_lula
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
 	option = {
 		name = brazil.4.a
@@ -81,19 +164,20 @@ country_event = {
 	}
 }
 
-#Workers Alignment Scripted Variable Events Neo Comunista
+# Workers Alignment Scripted Variable Events Neo Comunista
 country_event = {
 	id = brazil.7
 	title = brazil.7.t
 	desc = brazil.7.d
 	picture = GFX_politics_communism_lenin
+	is_triggered_only = yes
+	fire_only_once = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		has_idea = BRA_idea_radical_leftist
 		check_variable = { var = BRA_brazilian_party_alignment value = 10 compare = less_than_or_equals }
 	}
-	is_triggered_only = yes
-	fire_only_once = yes
+
 
 	option = {
 		name = brazil.7.a
@@ -103,17 +187,18 @@ country_event = {
 			remove_idea = BRA_idea_radical_leftist
 		}
 	}
-
 }
-#Party - Aligned - Radical Leftist
+
+# Party - Aligned - Radical Leftist
 country_event = {
 	id = brazil.8
 	title = brazil.8.t
 	desc = brazil.8.d
 	picture = GFX_politics_left_wing
-
+	is_triggered_only = yes
+	fire_only_once = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		OR = {
 			has_idea = BRA_idea_neo_comunista
 			has_idea = BRA_idea_slightly_radical
@@ -121,33 +206,25 @@ country_event = {
 		check_variable = { var = BRA_brazilian_party_alignment value = 10 compare = greater_than_or_equals }
 		check_variable = { var = BRA_brazilian_party_alignment value = 30 compare = less_than_or_equals }
 	}
-	is_triggered_only = yes
-	fire_only_once = yes
 
 	option = {
 		name = brazil.8.a
 		log = "[GetDateText]: [This.GetName]: brazil.8.a executed"
-		if = {
-			limit = {
-				has_idea = BRA_idea_slightly_radical
-			}
+		if = { limit = { has_idea = BRA_idea_slightly_radical }
 			swap_ideas = {
 				add_idea = BRA_idea_radical_leftist
 				remove_idea = BRA_idea_slightly_radical
 			}
 		}
-		if = {
-			limit = {
-				has_idea = BRA_idea_neo_comunista
-			}
+		if = { limit = { has_idea = BRA_idea_neo_comunista }
 			swap_ideas = {
 				add_idea = BRA_idea_radical_leftist
 				remove_idea = BRA_idea_neo_comunista
 			}
-
 		}
 	}
 }
+
 #Party - Slightly Radicalized Government
 country_event = {
 	id = brazil.9
@@ -190,6 +267,7 @@ country_event = {
 		}
 	}
 }
+
 #Well Balanced
 country_event = {
 	id = brazil.10
@@ -232,7 +310,8 @@ country_event = {
 		}
 	}
 }
-#Party Slightly Reformist Government
+
+# Party Slightly Reformist Government
 country_event = {
 	id = brazil.11
 	title = brazil.11.t
@@ -274,7 +353,8 @@ country_event = {
 		}
 	}
 }
-#Party Reformist Government
+
+# Party Reformist Government
 country_event = {
 	id = brazil.12
 	title = brazil.12.t
@@ -341,45 +421,143 @@ country_event = {
 	}
 }
 
-#March of the Excluded
+# March of the Excluded
 country_event = {
 	id = brazil.14
 	title = brazil.14.t
 	desc = brazil.14.d
 	picture = GFX_politics_protest
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
+	# Allow the Protest
 	option = {
 		name = brazil.14.a
 		log = "[GetDateText]: [This.GetName]: brazil.14.a executed"
-		add_political_power = -75
-		add_stability = -0.005
+		add_stability = -0.01
 
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Crackdown on the March
+	option = {
+		name = brazil.14.b
+		log = "[GetDateText]: [This.GetName]: brazil.14.b executed"
+		add_stability = -0.04
+		add_political_power = 75
+
+		ai_chance = {
+			base = 0
+		}
 	}
 }
-#French Naval Studies
+
+# French Naval Studies
 country_event = {
 	id = brazil.15
 	title = brazil.15.t
 	desc = brazil.15.d
 	picture = GFX_country_event_french_navy
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = FRA
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+	}
 
 	option = {
 		name = brazil.15.a
 		log = "[GetDateText]: [This.GetName]: brazil.15.a executed"
-		if = {
-			limit = {
-				country_exists = BRA
-				NOT = { has_war_with = BRA }
+		BRA = {
+			add_ideas = BRA_idea_french_naval_studies
+			add_opinion_modifier = { target = ROOT modifier = french_naval_studies }
+			country_event = diplomatic_response.1
+		}
+		add_opinion_modifier = { target = BRA modifier = french_naval_studies }
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				OR = {
+					AND = {
+						FRA = { has_government = democratic }
+						BRA = { has_government = democratic }
+					}
+					AND = {
+						FRA = { has_government = neutrality }
+						BRA = { has_government = neutrality }
+					}
+					AND = {
+						FRA = { has_government = communism }
+						BRA = { has_government = communism }
+					}
+				}
 			}
-			BRA = {
-				add_ideas = BRA_idea_french_naval_studies
-				add_opinion_modifier = { target = ROOT modifier = french_naval_studies }
+			modifier = {
+				add = 5
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = BRA }
+						check_variable = { influence_array_val^0 = 9.99 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = BRA }
+						check_variable = { influence_array_val^1 = 9.99 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = BRA }
+						check_variable = { influence_array_val^2 = 9.99 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = BRA }
+						check_variable = { influence_array_val^3 = 9.99 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = BRA }
+						check_variable = { influence_array_val^4 = 9.99 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = BRA }
+						check_variable = { influence_array_val^5 = 9.99 }
+					}
+				}
 			}
-			add_opinion_modifier = { target = BRA modifier = french_naval_studies }
+			modifier = {
+				add = 5
+				BRA = {
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = FRA }
+							check_variable = { influence_array_val^0 = 9.99 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = FRA }
+							check_variable = { influence_array_val^1 = 9.99 }
+						}
+						AND = {
+							check_variable = { influence_array^2 = FRA }
+							check_variable = { influence_array_val^2 = 9.99 }
+						}
+						AND = {
+							check_variable = { influence_array^3 = FRA }
+							check_variable = { influence_array_val^3 = 9.99 }
+						}
+						AND = {
+							check_variable = { influence_array^4 = FRA }
+							check_variable = { influence_array_val^4 = 9.99 }
+						}
+						AND = {
+							check_variable = { influence_array^5 = FRA }
+							check_variable = { influence_array_val^5 = 9.99 }
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -389,6 +567,18 @@ country_event = {
 		BRA = {
 			add_political_power = -25
 			add_opinion_modifier = { target = ROOT modifier = france_denies_studies }
+			country_event = diplomatic_response.2
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				OR = {
+					BRA = { has_government = nationalist }
+					BRA = { has_government = fascism }
+				}
+			}
 		}
 	}
 }
@@ -436,6 +626,7 @@ country_event = {
 		}
 	}
 }
+
 ################################################################################################
 #South American Unity
 country_event = {
@@ -631,7 +822,8 @@ country_event = {
 		}
 	}
 }
-#A New Way
+
+# A New Way
 country_event = {
 	id = brazil.24
 	title = brazil.24.t
@@ -643,22 +835,21 @@ country_event = {
 	option = {
 		name = brazil.24.a
 		log = "[GetDateText]: [This.GetName]: brazil.24.a executed"
-		custom_effect_tooltip = BRA_add_monarchism_15_tt
 		add_ideas = BRA_idea_monarchism1
-		hidden_effect = {
-				add_popularity = { ideology = nationalist popularity = 0.005 }
-				add_to_variable = { party_pop_array^23 = 0.015 }
-				recalculate_party = yes
-			}
-		}
+		set_temp_variable = { party_index = 23 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
 	}
+
+}
 
 #Government Influences globo
 country_event = {
 	id = brazil.25
 	title = brazil.25.t
 	desc = brazil.25.d
-#	picture = -
+	#	picture = -
 
 	is_triggered_only = yes
 
@@ -724,14 +915,13 @@ country_event = {
 	option = {
 		name = brazil.26.c
 		log = "[GetDateText]: [This.GetName]: brazil.26.c executed"
-		custom_effect_tooltip = BRA_add_populism_10_tt
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.08 }
+		set_temp_variable = { temp_outlook_increase = 0.08 }
+		add_relative_party_popularity = yes
 		add_political_power = 300
-		hidden_effect = {
-			add_popularity = { ideology = nationalist popularity = 0.1 }
-			add_to_variable = { party_pop_array^20 = 0.1 } #PSL
-			recalculate_party = yes
-		}
 	}
+
 	option = {
 		name = brazil.26.dd
 		log = "[GetDateText]: [This.GetName]: brazil.26.dd executed"
@@ -752,6 +942,7 @@ country_event = {
 		}
 	}
 }
+
 #Press Censorship
 country_event = {
 	id = brazil.27
@@ -828,9 +1019,11 @@ country_event = {
 	id = brazil.29
 	title = brazil.29.t
 	desc = brazil.29.d
-#	picture = -
-
+	# picture = - # TODO: Replace with event image at some point
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
 	option = {
 		name = brazil.29.a
@@ -850,14 +1043,17 @@ country_event = {
 		}
 	}
 }
-#Far-Right Leaders to Brazil
+
+# Far-Right Leaders to Brazil
 country_event = {
 	id = brazil.30
 	title = brazil.30.t
 	desc = brazil.30.d
-#	picture = -
-
+	# picture = - # TODO: Replace with event image at some point
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
 	option = {
 		name = brazil.30.a
@@ -869,58 +1065,28 @@ country_event = {
 	}
 }
 
-#Logging Reforms
+# Logging Reforms
 country_event = {
 	id = brazil.31
 	title = brazil.31.t
 	desc = brazil.31.d
 	picture = GFX_mining
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
+	# Begin the Logging Reforms
 	option = {
 		name = brazil.31.a
 		log = "[GetDateText]: [This.GetName]: brazil.31.a executed"
 		add_stability = 0.075
 		set_temp_variable = { temp_opinion = -5 }
 		change_industrial_conglomerates_opinion = yes
-		add_to_variable = {
-			var = party_pop_array^17
-			value = 0.05
-		}
-		add_popularity = {
-			ideology = neutrality
-			popularity = 0.05
-		}
-		recalculate_party = yes
-		custom_effect_tooltip = BRA_event_brazil.6_tt
-	}
-}
-
-#Operation: Preserve The Amazon
-country_event = {
-	id = brazil.32
-	title = brazil.32.t
-	desc = brazil.32.d
-#	picture = -
-
-	is_triggered_only = yes
-
-	option = {
-		name = brazil.32.a
-		log = "[GetDateText]: [This.GetName]: brazil.32.a executed"
-		add_stability = 0.075
-		add_political_power = 100
-		add_to_variable = {
-			var = party_pop_array^17
-			value = 0.05
-		}
-		add_popularity = {
-			ideology = neutrality
-			popularity = 0.05
-		}
-		recalculate_party = yes
-		custom_effect_tooltip = BRA_event_brazil.6_tt
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		set_temp_variable = { temp_outlook_increase = 0.04 }
+		add_relative_party_popularity = yes
 	}
 }
 
@@ -929,9 +1095,11 @@ country_event = {
 	id = brazil.33
 	title = brazil.33.t
 	desc = brazil.33.d
-#	picture = -
-
+	#	picture = -
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
 	option = {
 		name = brazil.33.a
@@ -945,14 +1113,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: brazil.33.b executed"
 		add_stability = 0.10
 		add_political_power = -50
-		add_to_variable = {
-			var = party_pop_array^17
-			value = 0.05
-		}
-		add_popularity = {
-			ideology = neutrality
-			popularity = 0.05
-		}
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+
 		COL = {
 			add_opinion_modifier = { target = BRA modifier = has_expressed_loyalty }
 		}
@@ -974,13 +1139,12 @@ country_event = {
 	}
 }
 
-#UNASUL Members
+# UNASUL Members
 country_event = {
 	id = brazil.34
 	title = brazil.34.t
 	desc = brazil.34.d
-#	picture = -
-
+	#	picture = -
 	is_triggered_only = yes
 
 	option = {
@@ -998,14 +1162,14 @@ country_event = {
 	}
 }
 
-#Align with other parties
+# Align with other parties
 country_event = {
 	id = brazil.35
 	title = brazil.35.t
 	desc = brazil.35.d
-#	picture = -
-
+	#	picture = -
 	is_triggered_only = yes
+
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: brazil.35.a executed"
@@ -1026,6 +1190,8 @@ country_event = {
 			add_popularity = { ideology = democratic popularity = 0.1 }
 		}
 	}
+
+
 	option = {
 		log = "[GetDateText]: [This.GetName]: brazil.35.b executed"
 		add_ideas = BRA_idea_mbl
@@ -1034,6 +1200,8 @@ country_event = {
 		add_stability = 0.1
 		add_popularity = { ideology = democratic popularity = 0.1 }
 	}
+
+
 	option = {
 		log = "[GetDateText]: [This.GetName]: brazil.35.c executed"
 		add_ideas = BRA_idea_mbl
@@ -1056,13 +1224,13 @@ country_event = {
 		}
 	}
 }
-#Cisplatina Question
+
+# Cisplatina Question
 country_event = {
 	id = brazil.36
 	title = brazil.36.t
 	desc = brazil.36.d
-#	picture = -
-
+	# picture = - # TODO: Replace with event image at some point
 	is_triggered_only = yes
 
 	option = {
@@ -1096,20 +1264,20 @@ country_event = {
 		}
 	}
 }
-#Dilma's Impeachment
+
+# Dilma's Impeachment
 country_event = {
 	id = brazil.37
 	title = brazil.37.t
 	desc = brazil.37.d
 	picture = GFX_country_event_brazilian_impeachment_dilma
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2016.8.31
 		date > 2016.9.05
 	}
 
-	is_triggered_only = yes
 
 	option = {
 		name = brazil.37.a
@@ -1124,15 +1292,15 @@ country_event = {
 		}
 	}
 }
-#Lula Arrested
+
+# Lula Arrested
 country_event = {
 	id = brazil.38
 	title = brazil.38.t
 	desc = brazil.38.d
 	picture = GFX_country_event_brazilian_lula_arrested
-
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2018.4.07
 		date < 2018.4.10
 	}
@@ -1201,6 +1369,22 @@ country_event = {
 		add_political_power = 150
 
 		clr_country_flag = generic_election_killswitch
+
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 10
+				has_global_flag = BRA_SERRA
+			}
+			modifier = {
+				factor = 1.5
+				is_historical_focus_on = no
+			}
+			modifier = {
+				factor = 1.5
+				democratic > 0.2
+			}
+		}
 	}
 
 	option = {
@@ -1238,7 +1422,25 @@ country_event = {
 
 		add_political_power = 150
 
+		# Unlocks the custom mechanic for Lula and co.
+		unlock_decision_category_tooltip = BRA_workers_party_alignment_decision_category
+
 		clr_country_flag = generic_election_killswitch
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = BRA_LULA
+			}
+			modifier = {
+				factor = 1.5
+				communism > 0.2
+			}
+		}
 	}
 }
 
@@ -1248,14 +1450,12 @@ country_event = {
 	title = brazil.40.t
 	desc = brazil.40.d
 	picture = GFX_country_event_brazilian_impeachment_protests
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2016.8.31
 		date > 2016.9.05
 	}
-
-	is_triggered_only = yes
 
 	option = {
 		name = brazil.40.a
@@ -1265,138 +1465,309 @@ country_event = {
 	}
 }
 
-#Bolsonaro Stabbed
+# Bolsonaro Stabbed
 country_event = {
 	id = brazil.41
 	title = brazil.41.t
 	desc = brazil.41.d
 	picture = GFX_country_event_brazilian_bolsonaro_stabbed
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
 	option = {
 		name = brazil.41.a
 		log = "[GetDateText]: [This.GetName]: brazil.41.a executed"
 		add_popularity = { ideology = nationalist popularity = 0.02 }
+		recalculate_party = yes
 		add_stability = -0.01
+
+		ai_chance = {
+			base = 1
+		}
 	}
+
 	option = {
 		name = brazil.41.b
 		log = "[GetDateText]: [This.GetName]: brazil.41.a executed"
 		add_popularity = { ideology = communism popularity = 0.02 }
+		recalculate_party = yes
 		add_stability = -0.01
+
+		ai_chance = {
+			base = 1
+		}
 	}
 }
 
-### News events
-
-#Bolsonaro Coups Brazil
-news_event = {
-	id = brazil_news.1
-	title = brazil_news.1.t
-	desc = brazil_news.1.d
-#	picture = -
-
+# United States - Seek Foreign Assistance
+country_event = {
+	id = brazil.42
+	title = brazil.42.t
+	desc = brazil.42.d
+	picture = GFX_country_event_brazilian_lula_arrested # TODO: Temp, replace with something else
 	is_triggered_only = yes
-	major = yes
+	trigger = {
+		original_tag = USA
+	}
 
 	option = {
-		name = brazil_news.1.a
-		log = "[GetDateText]: [This.GetName]: brazil_news.1.a executed"
-		trigger = { original_tag = BRA }
+		name = brazil.42.a
+		log = "[GetDateText]: [This.GetName]: brazil.41.a executed"
+		effect_tooltip = {
+			set_temp_variable = { treasury_change = -75 }
+			modify_treasury_effect = yes
+			BRA = {
+				set_temp_variable = { debt_change = -150 }
+				modify_debt_effect = yes
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = USA.id }
+				set_temp_variable = { influence_target = BRA.id }
+				change_influence_percentage = yes
+				swap_ideas = {
+					remove_idea = BRA_idea_oncoming_debt_crisis
+					add_idea = BRA_idea_foreign_debt_assistance
+				}
+			}
+		}
+		set_country_flag = BRA_USA_accepted_the_foreign_debt_assistance
+		hidden_effect = {
+			BRA = { country_event = { id = brazil.43 days = 3 } }
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 3
+				has_opinion = {
+					target = BRA
+					value > 50
+				}
+			}
+			modifier = {
+				add = 3
+				has_opinion = {
+					target = BRA
+					value > 75
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = BRA
+					value > 100
+				}
+			}
+			modifier = {
+				add = 5
+				OR = {
+					AND = {
+						USA = { has_government = democratic }
+						BRA = { has_government = democratic }
+					}
+					AND = {
+						USA = { has_government = neutrality }
+						BRA = { has_government = neutrality }
+					}
+					AND = {
+						USA = { has_government = communism }
+						BRA = { has_government = communism }
+					}
+				}
+			}
+		}
 	}
+
 	option = {
-		name = brazil_news.1.b
-		log = "[GetDateText]: [This.GetName]: brazil_news.1.b executed"
-		trigger = { NOT = { original_tag = BRA } }
+		name = brazil.42.a
+		log = "[GetDateText]: [This.GetName]: brazil.42.b executed"
+		effect_tooltip = {
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+			swap_ideas = {
+				remove_idea = BRA_idea_oncoming_debt_crisis
+				add_idea = BRA_idea_worsening_debt_crisis
+			}
+		}
+
+		hidden_effect = {
+			BRA = { country_event = { id = brazil.43 days = 3 } }
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 3
+				has_opinion = {
+					target = BRA
+					value < 5
+				}
+			}
+		}
 	}
 }
 
-#Brazil Privatises Petrobras
-news_event = {
-	id = brazil_news.2
-	title = brazil_news.2.t
-	desc = brazil_news.2.d
-#	picture = -
-
-	is_triggered_only = yes
-	major = yes
-
-	option = {
-		name = brazil_news.2.a
-		log = "[GetDateText]: [This.GetName]: brazil_news.2.a executed"
-		trigger = { original_tag = BRA }
+country_event = {
+	id = brazil.43
+	title = {
+		text = brazil.43.t1
+		trigger = {
+			USA = { has_country_flag = BRA_USA_accepted_the_foreign_debt_assistance }
+		}
 	}
+	title = {
+		text = brazil.43.t2
+		trigger = {
+			USA = { NOT = { has_country_flag = BRA_USA_accepted_the_foreign_debt_assistance } }
+		}
+	}
+	desc = {
+		text = brazil.43.d1
+		trigger = {
+			USA = { has_country_flag = BRA_USA_accepted_the_foreign_debt_assistance }
+		}
+	}
+	desc = {
+		text = brazil.43.d2
+		trigger = {
+			USA = { NOT = { has_country_flag = BRA_USA_accepted_the_foreign_debt_assistance } }
+		}
+	}
+	picture = GFX_country_event_brazilian_lula_arrested # TODO: Temp, replace with something else
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
+
 	option = {
-		name = brazil_news.2.b
-		log = "[GetDateText]: [This.GetName]: brazil_news.2.b executed"
-		trigger = { NOT = { original_tag = BRA } }
+		name = brazil.43.a
+		log = "[GetDateText]: [This.GetName]: brazil.41.a executed"
+		trigger = {
+			USA = { has_country_flag = BRA_USA_accepted_the_foreign_debt_assistance }
+		}
+
+		USA = {
+			set_temp_variable = { treasury_change = -75 }
+			modify_treasury_effect = yes
+		}
+		BRA = {
+			set_temp_variable = { debt_change = -150 }
+			modify_debt_effect = yes
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = USA.id }
+			set_temp_variable = { influence_target = BRA.id }
+			change_influence_percentage = yes
+			swap_ideas = {
+				remove_idea = BRA_idea_oncoming_debt_crisis
+				add_idea = BRA_idea_foreign_debt_assistance
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = brazil.43.a
+		log = "[GetDateText]: [This.GetName]: brazil.42.b executed"
+		trigger = {
+			USA = { NOT = { has_country_flag = BRA_USA_accepted_the_foreign_debt_assistance } }
+		}
+
+		BRA = {
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+			swap_ideas = {
+				remove_idea = BRA_idea_oncoming_debt_crisis
+				add_idea = BRA_idea_worsening_debt_crisis
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
 	}
 }
 
-#Luiz I bring back the empire
-news_event = {
-	id = brazil_news.3
-	title = brazil_news.3.t
-	desc = brazil_news.3.d
-#	picture = -
-
+# Belém Requests to Slash & Burn for Agriculture Districts
+country_event = {
+	id = brazil.44
+	title = brazil.44.t
+	desc = brazil.4.d
+	picture = GFX_country_event_brazilian_impeachment_protests
 	is_triggered_only = yes
-	major = yes
-
-	option = {
-		name = brazil_news.3.a
-		log = "[GetDateText]: [This.GetName]: brazil_news.3.a executed"
-		trigger = { original_tag = BRA }
+	trigger = {
+		original_tag = BRA
 	}
+
+	# Allow the Slash-n-Burn
 	option = {
-		name = brazil_news.3.b
-		log = "[GetDateText]: [This.GetName]: brazil_news.3.b executed"
-		trigger = { NOT = { original_tag = BRA } }
+		name = brazil.44.a
+		log = "[GetDateText]: [This.GetName]: brazil.44.a executed"
+		set_temp_variable = { temp_change = -25 }
+		BRA_wild_acreage_effect = yes
+		891 = {
+			add_building_construction = {
+				type = agriculture_district
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
 	}
-}
 
-#Cisplatina is reclaimed
-news_event = {
-	id = brazil_news.4
-	title = brazil_news.4.t
-	desc = brazil_news.4.d
-#	picture = -
-
-	is_triggered_only = yes
-
+	# Deny the Slash-n-Burn
 	option = {
-		name = brazil_news.4.a
-		log = "[GetDateText]: [This.GetName]: brazil_news.4.a executed"
+		name = brazil.44.b
+		log = "[GetDateText]: [This.GetName]: brazil.44.b executed"
+
+		ai_chance = {
+			base = 0
+		}
 	}
 }
 
 ###Flavour Events
-
-#Brazilian Independence Day
-##To be replaced with national focus
-
-#Kidnapping of Patricia Abravanel
+# Kidnapping of Patricia Abravanel
 country_event = {
 	id = brazil_flavour_events.1
 	title = brazil_flavour_events.1.t
 	desc = brazil_flavour_events.1.d
 	picture = GFX_court
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2001.1.01
 		date < 2002.1.01
 	}
 
-	fire_only_once = yes
-	is_triggered_only = yes
-
 	option = {
 		name = brazil_flavour_events.1.a
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.1.a executed"
-		add_political_power = 10
+		add_political_power = 15
+
+		hidden_effect = {
+			random_list = {
+				65 = {
+					country_event = {
+						id = brazil_flavour_events.2	#Kidnapping of Silvio Santos
+						days = 7
+					}
+				}
+				35 = {
+					country_event = {
+						id = brazil_flavour_events.3	#Murder of Silvio Santos
+						days = 7
+					}
+				}
+			}
+		}
 	}
+
 	option = {
 		name = brazil_flavour_events.1.b
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.1.b executed"
@@ -1406,14 +1777,14 @@ country_event = {
 			random_list = {
 				85 = {
 					country_event = {
-					id = brazil_flavour_events.2	#Kidnapping of Silvio Santos
-					days = 7
+						id = brazil_flavour_events.2	#Kidnapping of Silvio Santos
+						days = 7
 					}
 				}
 				15 = {
 					country_event = {
-					id = brazil_flavour_events.3	#Murder of Silvio Santos
-					days = 7
+						id = brazil_flavour_events.3	#Murder of Silvio Santos
+						days = 7
 					}
 				}
 			}
@@ -1421,14 +1792,12 @@ country_event = {
 	}
 }
 
-##Kidnapping of Silvio Santos
+# Kidnapping of Silvio Santos
 country_event = {
 	id = brazil_flavour_events.2
 	title = brazil_flavour_events.2.t
 	desc = brazil_flavour_events.2.d
 	picture = GFX_court
-
-	fire_only_once = yes
 	is_triggered_only = yes
 
 	option = {
@@ -1444,9 +1813,10 @@ country_event = {
 	title = brazil_flavour_events.3.t
 	desc = brazil_flavour_events.3.d
 	picture = GFX_court
-
-	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
 	option = {
 		name = brazil_flavour_events.3.a
@@ -1455,32 +1825,28 @@ country_event = {
 	}
 }
 
-#The assassination of Antonio da Costa Santos
+#The Assassination of Antonio da Costa Santos
 country_event = {
 	id = brazil_flavour_events.4
 	title = brazil_flavour_events.4.t
 	desc = brazil_flavour_events.4.d
 	picture = GFX_BRA_event_toninho_pt
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2001.1.01
 		date < 2002.1.01
 	}
-
-	fire_only_once = yes
-	is_triggered_only = yes
 
 	option = {
 		name = brazil_flavour_events.4.a
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.4.a executed"
 		add_political_power = -25
 		add_stability = -0.03
-		add_popularity = {
-			ideology = communism
-			popularity = 0.02
-		}
+		add_popularity = { ideology = communism popularity = 0.02 }
+		recalculate_party = yes
 	}
+
 	option = {
 		name = brazil_flavour_events.4.b
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.4.b executed"
@@ -1489,27 +1855,25 @@ country_event = {
 	}
 }
 
-#Brazil’s 5th Fifa World Cup
+# Brazil’s 5th Fifa World Cup
 country_event = {
 	id = brazil_flavour_events.5
 	title = brazil_flavour_events.5.t
 	desc = brazil_flavour_events.5.d
 	picture = GFX_BRA_event_copa_2002
-
+	is_triggered_only = yes
 	trigger = {
 		tag = BRA
 		date > 2002.1.01
 		date < 2003.1.01
 	}
 
-	fire_only_once = yes
-	is_triggered_only = yes
-
 	option = {
 		name = brazil_flavour_events.5.a
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.5.a executed"
 		add_stability = 0.01
 	}
+
 	option = {
 		name = brazil_flavour_events.5.b
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.5.a executed"
@@ -1517,21 +1881,18 @@ country_event = {
 	}
 }
 
-#Canal Hotel Bombing
+# Canal Hotel Bombing
 country_event = {
 	id = brazil_flavour_events.6
 	title = brazil_flavour_events.6.t
 	desc = brazil_flavour_events.6.d
 	picture = GFX_BRA_event_canal_hotel_bomb
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2003.1.01
 		date < 2004.1.01
 	}
-
-	fire_only_once = yes
-	is_triggered_only = yes
 
 	option = {
 		name = brazil_flavour_events.6.a
@@ -1541,12 +1902,13 @@ country_event = {
 		add_manpower = -1
 		hidden_effect = {
 			country_event = {
-			id = brazil_flavour_events.10	#Sérgio Vieira de Mello Medal
-			days = 2200
-			random_days = 360
+				id = brazil_flavour_events.10	#Sérgio Vieira de Mello Medal
+				days = 2200
+				random_days = 360
 			}
 		}
 	}
+
 	option = {
 		name = brazil_flavour_events.6.b
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.6.a executed"
@@ -1563,15 +1925,12 @@ country_event = {
 	title = brazil_flavour_events.7.t
 	desc = brazil_flavour_events.7.d
 	picture = GFX_BRA_event_cyclone_catarina
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2004.1.01
 		date < 2005.1.01
 	}
-
-	fire_only_once = yes
-	is_triggered_only = yes
 
 	option = {
 		name = brazil_flavour_events.7.a
@@ -1613,21 +1972,18 @@ country_event = {
 	}
 }
 
-#Aftermath of the Putim Prison Jailbreak
+# Aftermath of the Putim Prison Jailbreak
 country_event = {
 	id = brazil_flavour_events.8
 	title = brazil_flavour_events.8.t
 	desc = brazil_flavour_events.8.d
 	picture = GFX_BRA_event_putim_prison
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2000.1.01
 		date < 2001.1.01
 	}
-
-	fire_only_once = yes
-	is_triggered_only = yes
 
 	option = {
 		name = brazil_flavour_events.8.a
@@ -1643,21 +1999,18 @@ country_event = {
 	}
 }
 
-#Banco Central Burglary
+# Banco Central Burglary
 country_event = {
 	id = brazil_flavour_events.9
 	title = brazil_flavour_events.9.t
 	desc = brazil_flavour_events.9.d
 	picture = GFX_banking_crisis
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2005.1.01
 		date < 2006.1.01
 	}
-
-	fire_only_once = yes
-	is_triggered_only = yes
 
 	option = {
 		name = brazil_flavour_events.9.a
@@ -1667,25 +2020,39 @@ country_event = {
 		modify_treasury_effect = yes
 		add_political_power = -50
 		increase_policing_budget = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
+
 	option = {
 		name = brazil_flavour_events.9.b
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.9.b executed"
 		add_stability = -0.02
 		set_temp_variable = { treasury_change = -0.716 }
 		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 1
+		}
 	}
 }
 
-#Sérgio Vieira de Mello Medal
+# Sérgio Vieira de Mello Medal
 country_event = {
 	id = brazil_flavour_events.10
 	title = brazil_flavour_events.10.t
 	desc = brazil_flavour_events.10.d
 	picture = GFX_BRA_event_canal_hotel_bomb
-
-	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
 
 	option = {
 		name = brazil_flavour_events.10.a
@@ -1695,73 +2062,85 @@ country_event = {
 	}
 }
 
-#TAM Airlines Flight 3054 Disaster
+# TAM Airlines Flight 3054 Disaster
 country_event = {
 	id = brazil_flavour_events.11
 	title = brazil_flavour_events.11.t
 	desc = brazil_flavour_events.11.d
 	picture = plane_crash
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2007.1.01
 		date < 2008.1.01
 	}
-
-	fire_only_once = yes
-	is_triggered_only = yes
 
 	option = {
 		name = brazil_flavour_events.11.a
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.11.a executed"
 		add_stability = -0.02
 		add_manpower = -199
+
+		ai_chance = {
+			base = 1
+		}
 	}
+
 	option = {
 		name = brazil_flavour_events.11.b
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.11.b executed"
-		add_stability = -0.02
+		add_stability = 0.01
 		add_manpower = -199
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.001 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 }
 
-#2017 Carnaval
+# 2017 Carnaval
 country_event = {
 	id = brazil_flavour_events.12
 	title = brazil_flavour_events.12.t
 	desc = brazil_flavour_events.12.d
 	picture = GFX_country_event_brazilian_carnaval
-
+	is_triggered_only = yes
 	trigger = {
-		tag = BRA
+		original_tag = BRA
 		date > 2017.1.01
 		date < 2018.1.01
 	}
 
-	fire_only_once = yes
-	is_triggered_only = yes
-
 	option = {
 		name = brazil_flavour_events.12.a
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.12.a executed"
-		add_political_power = 10
+		add_political_power = 25
+
+		ai_chance = {
+			base = 1
+		}
 	}
 }
 
-#Cristo Redentor, Wonder of the World
+# Cristo Redentor, Wonder of the World
 country_event = {
 	id = brazil_flavour_events.13
 	title = brazil_flavour_events.13.t
 	desc = brazil_flavour_events.13.d
 	picture = GFX_country_event_brazilian_new_year
-
+	is_triggered_only = yes
 	trigger = {
 		tag = BRA
 		date > 2007.1.01
 	}
-
-	fire_only_once = yes
-	is_triggered_only = yes
 
 	option = {
 		name = brazil_flavour_events.13.a
@@ -1769,6 +2148,7 @@ country_event = {
 		add_political_power = 10
 		add_stability = 0.02
 	}
+
 	option = {
 		name = brazil_flavour_events.13.b
 		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.13.a executed"
@@ -1777,57 +2157,2223 @@ country_event = {
 	}
 }
 
-#Marcos Pontes the first Brazilian in Space
-##Re-work into future, revised space focus tree
+# The Liberal Front Party Changes Names
 country_event = {
-	id = brazil_flavour_events.15
-	title = brazil_flavour_events.15.t
-	desc = brazil_flavour_events.15.d
-	picture = GFX_BRA_event_marcos_pontes
-
-	fire_only_once = yes
+	id = brazil_flavour_events.14
+	title = brazil_flavour_events.14.t
+	desc = brazil_flavour_events.14.d
+	picture = GFX_BRA_event_putim_prison # TODO: Replace with a better icon
 	is_triggered_only = yes
-
-	option = {
-		name = brazil_flavour_events.15.a
-		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.15.a executed"
-		add_political_power = -50
-		add_tech_bonus = {
-			name = BRA_space_event_tech_buff_desc
-			category = CAT_computing_tech
-			bonus = 0.25
-			uses = 2
-		}
-		set_temp_variable = { treasury_change = -5 }
-		modify_treasury_effect = yes
-		add_war_support = 0.02
+	trigger = {
+		original_tag = BRA
+		date > 2007.1.01
 	}
+
+	# The Democrats have Formed
 	option = {
-		name = brazil_flavour_events.15.b
-		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.15.b executed"
-		add_stability = 0.01
+		name = brazil_flavour_events.14.a
+		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.14.a executed"
+		set_country_flag = BRA_democrats_party_formed
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
 	}
 }
 
-#The PCC
-##Should be reworked into an expanded Cartel system
+# Brazilian Amazon Rainforest Conservation System
+# Rampant Wildfires
 country_event = {
-	id = brazil_flavour_events.16
-	title = brazil_flavour_events.16.t
-	desc = brazil_flavour_events.16.d
-	picture = GFX_BRA_event_pcc
+	id = brazil_amazon.1
+	title = brazil_amazon.1.t
+	desc = brazil_amazon.1.d
+	picture = GFX_amazon_wildforest
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_amazon_rampant_wildfires }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_amazon_rampant_wildfires value = 1 days = 90 }
+	}
 
-	fire_only_once = yes
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+		modifier = {
+			factor = 0.60
+			has_country_flag = BRA_established_amazon_park_service
+		}
+	}
+
+	# Do What We Can with What We Have
+	option = {
+		name = brazil_amazon.1.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.1.a executed"
+
+		if = {
+			limit = { NOT = { has_country_flag = BRA_established_amazon_park_service } }
+			random_owned_state = {
+				limit = {
+					is_brazilian_amazon_state = yes
+				}
+				random_list = {
+					10 = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+					10 = {
+						damage_building = {
+							type = industrial_complex
+							damage = 1
+						}
+					}
+					10 = {
+						damage_building = {
+							type = arms_factory
+							damage = 1
+						}
+					}
+					10 = {
+						damage_building = {
+							type = offices
+							damage = 1
+						}
+					}
+					10 = { }
+				}
+			}
+			set_temp_variable = { temp_change = -25 }
+			BRA_wild_acreage_effect = yes
+		}
+		else = {
+			random_owned_state = {
+				limit = {
+					is_brazilian_amazon_state = yes
+				}
+				random_list = {
+					10 = {
+						damage_building = {
+							type = infrastructure
+							damage = 0.5
+						}
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							check_variable = { building_level@industrial_complex > 0 }
+						}
+						damage_building = {
+							type = industrial_complex
+							damage = 0.5
+						}
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							check_variable = { building_level@arms_factory > 0 }
+						}
+						damage_building = {
+							type = arms_factory
+							damage = 0.5
+						}
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							check_variable = { building_level@offices > 0 }
+						}
+						damage_building = {
+							type = offices
+							damage = 0.5
+						}
+					}
+					10 = {
+						modifier = {
+							factor = 2
+							BRA = { has_country_flag = BRA_established_amazon_park_service }
+						}
+					}
+				}
+			}
+			set_temp_variable = { temp_change = -15 }
+			BRA_wild_acreage_effect = yes
+		}
+
+	}
+
+	# Deploy the Army
+	option = {
+		name = brazil_amazon.1.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.1.b executed"
+		trigger = {
+			has_country_flag = BRA_amazon_military_high_command
+		}
+		add_command_power = -30
+		set_temp_variable = { temp_change = -10 }
+		BRA_wild_acreage_effect = yes
+	}
+}
+
+# Amazon River Flooding
+country_event = {
+	id = brazil_amazon.2
+	title = brazil_amazon.2.t
+	desc = brazil_amazon.2.d
+	picture = GFX_amazon_rainforest_flooding
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_amazon_river_flooded }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_amazon_river_flooded value = 1 days = 90 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1500 }
+		}
+		modifier = {
+			factor = 0.60
+			has_country_flag = BRA_established_amazon_park_service
+		}
+	}
+
+	# Do What We Can with What We have
+	option = {
+		name = brazil_amazon.2.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.2.a executed"
+
+		set_temp_variable = { temp_change = -20 }
+		BRA_wild_acreage_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Deploy the army to assist with search and rescue, quickly!
+	option = {
+		name = brazil_amazon.2.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.2.b executed"
+		trigger = {
+			has_country_flag = BRA_amazon_military_high_command
+		}
+
+		add_command_power = -25
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Drought in Amazon Border Regions
+country_event = {
+	id = brazil_amazon.3
+	title = brazil_amazon.3.t
+	desc = brazil_amazon.3.d
+	picture = GFX_amazon_rainforest_drought
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_drought_in_amazon_border_regions }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_drought_in_amazon_border_regions value = 1 days = 120 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1500 }
+		}
+	}
+
+	# They Should Manage Their Water Better
+	option = {
+		name = brazil_amazon.3.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.3.a executed"
+
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { temp_change = -40 }
+		BRA_wild_acreage_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Deploy as Much Disaster Relief as We Can Spare, quickly!
+	option = {
+		name = brazil_amazon.3.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.3.b executed"
+		trigger = {
+			has_country_flag = BRA_amazon_military_high_command
+		}
+		add_political_power = -25
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.001 }
+		modify_treasury_effect = yes
+
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Tropical Storm Strikes Amazon Regions
+country_event = {
+	id = brazil_amazon.4
+	title = brazil_amazon.4.t
+	desc = brazil_amazon.4.d
+	picture = GFX_amazon_rainforest_tropical_storm
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_tropical_storm_strikes_amazon_regions }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_tropical_storm_strikes_amazon_regions value = 1 days = 280 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1500 }
+		}
+	}
+
+	# They Should Build Things Sturdier
+	option = {
+		name = brazil_amazon.4.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.4.a executed"
+
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.04 }
+		set_temp_variable = { temp_outlook_increase = -0.04 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_change = -60 }
+		BRA_wild_acreage_effect = yes
+	}
+
+	# Deploy as Much Disaster Relief as We Can Spare, Quickly!
+	option = {
+		name = brazil_amazon.4.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.4.b executed"
+		add_political_power = -50
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.003 }
+		modify_treasury_effect = yes
+
+		set_temp_variable = { temp_change = -40 }
+		BRA_wild_acreage_effect = yes
+	}
+}
+
+# Illegal Clear Cutting
+country_event = {
+	id = brazil_amazon.5
+	title = brazil_amazon.5.t
+	desc = brazil_amazon.5.d
+	picture = GFX_amazon_rainforest_logging
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_illegal_clear_cutting }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_illegal_clear_cutting value = 1 days = 120 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = depression
+		}
+		modifier = {
+			factor = 1.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stagnation
+		}
+	}
+
+	# Do what little we can at this point.
+	option = {
+		name = brazil_amazon.5.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.5.a executed"
+
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+	}
+
+	# They know the deal, where’s our cut?
+	option = {
+		name = brazil_amazon.5.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.5.b executed"
+		trigger = {
+			has_dynamic_modifier = {
+				modifier = narco_state_bonuses
+			}
+		}
+
+		set_temp_variable = { temp_change = -20 }
+		BRA_wild_acreage_effect = yes
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.008 }
+		modify_treasury_effect = yes
+	}
+}
+
+# Illegal Slash-n-Burn
+country_event = {
+	id = brazil_amazon.6
+	title = brazil_amazon.6.t
+	desc = brazil_amazon.6.d
+	picture = GFX_amazon_slash_n_burn
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_illegal_slash_n_burn }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_illegal_slash_n_burn value = 1 days = 120 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+		modifier = {
+			factor = 2
+			has_idea = depression
+		}
+		modifier = {
+			factor = 1.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stagnation
+		}
+	}
+
+	# Do what little we can at this point.
+	option = {
+		name = brazil_amazon.6.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.6.a executed"
+
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+
+		hidden_effect = {
+			random_list = {
+				95 = {
+					# Do Nothing
+				}
+				5 = {
+					country_event = { id = brazil_amazon.8 days = 7 }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# They know the deal, where’s our cut?
+	option = {
+		name = brazil_amazon.6.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.6.b executed"
+		trigger = {
+			has_dynamic_modifier = {
+				modifier = narco_state_bonuses
+			}
+		}
+
+		set_temp_variable = { temp_change = -5 }
+		BRA_wild_acreage_effect = yes
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.001 }
+		modify_treasury_effect = yes
+
+		hidden_effect = {
+			random_list = {
+				85 = {
+					# Do Nothing
+				}
+				15 = {
+					country_event = { id = brazil_amazon.8 days = 7 }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Legal Developments - Company Purchases Local Amazonian Conservation Land Rights
+# Restarted on brazil_amazon.21
+country_event = {
+	id = brazil_amazon.7
+	title = brazil_amazon.7.t
+	desc = brazil_amazon.7.d
+	picture = GFX_court
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_local_company_purchases_conservation_land }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_local_company_purchases_conservation_land value = 1 days = 120 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+		modifier = {
+			factor = 2
+			has_completed_focus = BRA_legalize_independent_amazonian_development
+		}
+		modifier = {
+			factor = 0.25
+			NOT = { has_completed_focus = BRA_legalize_independent_amazonian_development }
+		}
+	}
+
+	# Do what little we can at this point.
+	option = {
+		name = brazil_amazon.7.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.7.a executed"
+		random_list = {
+			20 = {
+				random_owned_controlled_state = {
+					limit = {
+						is_brazilian_amazon_state = yes
+					}
+					add_resource = {
+						type = chromium
+						amount = 8
+					}
+				}
+			}
+			20 = {
+				random_owned_controlled_state = {
+					limit = {
+						is_brazilian_amazon_state = yes
+					}
+					add_resource = {
+						type = oil
+						amount = 8
+					}
+				}
+			}
+			20 = {
+				random_owned_controlled_state = {
+					limit = {
+						is_brazilian_amazon_state = yes
+					}
+					add_resource = {
+						type = aluminium
+						amount = 8
+					}
+				}
+			}
+			20 = {
+				random_owned_controlled_state = {
+					limit = {
+						is_brazilian_amazon_state = yes
+					}
+					add_resource = {
+						type = rubber
+						amount = 8
+					}
+				}
+			}
+		}
+
+		set_temp_variable = { temp_change = -30 }
+		BRA_conserv_acreage_effect = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Slash-n-Burn Triggers Wildfires
+country_event = {
+	id = brazil_amazon.8
+	title = brazil_amazon.8.t
+	desc = brazil_amazon.8.d
+	picture = GFX_amazon_wildforest
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_slah_n_burn_triggers_wildfires }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_slah_n_burn_triggers_wildfires value = 1 days = 120 }
+	}
+
+	# Those damn fools.
+	option = {
+		name = brazil_amazon.8.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.8.a executed"
+
+		set_temp_variable = { temp_change = -25 }
+		BRA_wild_acreage_effect = yes
+	}
+
+	# Luckily, we’ve prepared for such a possibility.
+	option = {
+		name = brazil_amazon.8.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.8.b executed"
+		trigger = {
+			has_country_flag = BRA_established_amazon_park_service
+		}
+
+		add_political_power = -15
+		set_temp_variable = { temp_change = -5 }
+		BRA_wild_acreage_effect = yes
+
+	}
+}
+
+# Poaching Leads to Local Ecosystem Collapse
+country_event = {
+	id = brazil_amazon.9
+	title = brazil_amazon.9.t
+	desc = brazil_amazon.9.d
+	picture = GFX_illegal_poaching
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_poaching_leads_to_local_ecosystem_collapse }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_poaching_leads_to_local_ecosystem_collapse value = 1 days = 150 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = depression
+		}
+		modifier = {
+			factor = 1.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stagnation
+		}
+	}
+
+	# Do what little we can at this point.
+	option = {
+		name = brazil_amazon.9.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.9.a executed"
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+	}
+
+	# Have the National Park Service reintroduce cornerstone species.
+	option = {
+		name = brazil_amazon.9.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.9.b executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.001 }
+		modify_treasury_effect = yes
+
+	}
+
+	# They know the deal, where’s our cut?
+	option = {
+		name = brazil_amazon.9.c
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.9.c executed"
+		trigger = {
+			has_dynamic_modifier = {
+				modifier = narco_state_bonuses
+			}
+		}
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.003 }
+		modify_treasury_effect = yes
+	}
+}
+
+# Illegal Incursions onto Native Land
+country_event = {
+	id = brazil_amazon.10
+	title = brazil_amazon.10.t
+	desc = brazil_amazon.10.d
+	picture = GFX_brazilian_nativers
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_illegal_incursions_onto_native_land }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_illegal_incursions_onto_native_land value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = depression
+		}
+		modifier = {
+			factor = 1.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stagnation
+		}
+	}
+
+	# They say it’s their land, let them deal with it.
+	option = {
+		name = brazil_amazon.10.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.10.a executed"
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+		hidden_effect = {
+			random_list = {
+				50 = { }
+				50 = {
+					random_owned_controlled_state = {
+						limit = {
+							is_brazilian_amazon_state = yes
+						}
+						set_variable = { BRA.incursion_state = THIS.id }
+					}
+					# Incursions Lead to Killings
+					country_event = { id = brazil_amazon.11 days = 7 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Find someone, anyone, to deal with this problem.
+	option = {
+		name = brazil_amazon.10.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.10.b executed"
+		add_political_power = -50
+		hidden_effect = {
+			random_list = {
+				85 = { }
+				15 = {
+					random_owned_controlled_state = {
+						limit = {
+							is_brazilian_amazon_state = yes
+						}
+						set_variable = { BRA.incursion_state = THIS.id }
+					}
+					# Incursions Lead to Killings
+					country_event = { id = brazil_amazon.11 days = 7 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Send in the army to deal with this.
+	option = {
+		name = brazil_amazon.10.c
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.10.c executed"
+		trigger = {
+			has_country_flag = BRA_amazon_military_high_command
+		}
+		add_command_power = -25
+
+		# Natives Express Thanks
+		country_event = { id = brazil_amazon.12 days = 7 }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Incursions Lead to Killings
+country_event = {
+	id = brazil_amazon.11
+	title = brazil_amazon.11.t
+	desc = brazil_amazon.11.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
+
+	# A textbook case of natives killing developers.
+	option = {
+		name = brazil_amazon.11.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.11.a executed"
+
+		var:BRA.incursion_state = {
+			add_dynamic_modifier = {
+				modifier = BRA_native_violence_modifier
+				days = 90
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# A textbook case of criminals killing natives.
+	option = {
+		name = brazil_amazon.11.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.11.b executed"
+		add_political_power = -50
+
+		hidden_effect = {
+			random_list = {
+				50 = {
+
+				}
+				50 = {
+					var:BRA.incursion_state = {
+						add_dynamic_modifier = {
+							modifier = BRA_native_violence_modifier
+							days = 90
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Send in the army to break this up.
+	option = {
+		name = brazil_amazon.11.c
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.11.c executed"
+		trigger = {
+			has_country_flag = BRA_amazon_military_high_command
+		}
+		add_command_power = -35
+
+		hidden_effect = {
+			random_list = {
+				85 = {
+
+				}
+				15 = {
+					var:BRA.incursion_state = {
+						add_dynamic_modifier = {
+							modifier = BRA_native_violence_modifier
+							days = 90
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Natives Express Thanks
+country_event = {
+	id = brazil_amazon.12
+	title = brazil_amazon.12.t
+	desc = brazil_amazon.12.d
+	picture = GFX_brazilian_nativers
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
+
+	# They are law-abiding citizens, they deserve our protection
+	option = {
+		name = brazil_amazon.12.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.12.a executed"
+		add_political_power = 75
+	}
+}
+
+# Jungle Narcotics Field Located
+country_event = {
+	id = brazil_amazon.13
+	title = brazil_amazon.13.t
+	desc = brazil_amazon.13.d
+	picture = GFX_BRA_event_pcc # TODO: Replace this with a proper image
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+
+		NOT = { has_country_flag = BRA_jungle_narcotics_field_located }
+		OR = {
+			has_dynamic_modifier = { modifier = cartel_penalties }
+			has_dynamic_modifier = { modifier = narco_state_bonuses }
+		}
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_jungle_narcotics_field_located value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			has_idea = depression
+		}
+		modifier = {
+			factor = 1.75
+			has_idea = recession
+		}
+		modifier = {
+			factor = 1.5
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 1.05
+			has_dynamic_modifier = { modifier = narco_state_bonuses }
+		}
+	}
+
+	# Try to get in there and do what we can
+	option = {
+		name = brazil_amazon.13.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.13.a executed"
+		set_temp_variable = { temp_change = -25 }
+		BRA_wild_acreage_effect = yes
+		set_temp_variable = { cart_strength_change = -3 }
+		modify_cartel_variables_effect = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Have our policing forces cooperate with the local army command
+	option = {
+		name = brazil_amazon.13.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.13.b executed"
+		trigger = {
+			has_country_flag = BRA_amazon_military_high_command
+		}
+		set_temp_variable = { temp_change = -15 }
+		BRA_wild_acreage_effect = yes
+		set_temp_variable = { cart_strength_change = -7 }
+		modify_cartel_variables_effect = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Oh! That's where that field was, clever.
+	option = {
+		name = brazil_amazon.13.c
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.13.b executed"
+		trigger = {
+			has_dynamic_modifier = { modifier = narco_state_bonuses }
+		}
+		set_temp_variable = { temp_change = -30 }
+		BRA_wild_acreage_effect = yes
+
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# [?var:influence_array^0.GetName] Pressures for Conservation
+country_event = {
+	id = brazil_amazon.14
+	title = brazil_amazon.14.t
+	desc = brazil_amazon.14.d
+	picture = GFX_BRA_event_pcc # TODO: Replace this with a proper image
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { check_variable = { influence_array^0 = 0 } }
+	}
+
+	# We cannot sacrifice our values for short-term gains
+	option = {
+		name = brazil_amazon.14.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.14.a executed"
+
+	}
+
+	# Striking a Lucrative Deal is always beneficial
+	option = {
+		name = brazil_amazon.14.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.14.b executed"
+
+	}
+}
+
+# Critical Amazon Dam Overflows
+country_event = {
+	id = brazil_amazon.15
+	title = brazil_amazon.15.t
+	desc = brazil_amazon.15.d
+	picture = GFX_amazon_rainforest_dam
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_country_flag = BRA_critical_amazon_dam_overflows }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_critical_amazon_dam_overflows value = 1 days = 210 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 250 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 400 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 500 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 650 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 800 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1000 }
+		}
+		modifier = {
+			factor = 1.05
+			check_variable = { BRA.BRA_acres_current < 1500 }
+		}
+	}
+
+	# The chances are slim, we should only deploy what is necessary now
+	option = {
+		name = brazil_amazon.15.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.15.a executed"
+
+		random_list = {
+			25 = {
+				country_event = { id = brazil_amazon.16 days = 7 }
+			}
+			75 = {
+				country_event = { id = brazil_amazon.18 days = 7 }
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Plan for the worst, begin an evacuation of downstream regions
+	option = {
+		name = brazil_amazon.15.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.15.b executed"
+
+		add_political_power = -50
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.005 }
+		modify_treasury_effect = yes
+
+		random_list = {
+			25 = {
+				country_event = { id = brazil_amazon.17 days = 7 }
+			}
+			75 = {
+				country_event = { id = brazil_amazon.19 days = 7 }
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Disastrous Dam Burst
+country_event = {
+	id = brazil_amazon.16
+	title = brazil_amazon.16.t
+	desc = brazil_amazon.16.d
+	picture = GFX_amazon_rainforest_flooding_two
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
+
+	# This-This Wasn't Supposed to Happen...
+	option = {
+		name = brazil_amazon.16.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.16.a executed"
+
+		set_temp_variable = { temp_change = -30 }
+		BRA_wild_acreage_effect = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.08 }
+		set_temp_variable = { temp_outlook_increase = -0.08 }
+		add_relative_party_popularity = yes
+
+		random_owned_controlled_state = {
+			limit = { is_in_array = { BRA.amazon_states = THIS.id } }
+			damage_building = {
+				type = infrastructure
+				damage = 8.0
+			}
+			if = {
+				limit = { check_variable = { building_level@industrial_complex > 0 } }
+				damage_building = {
+					type = industrial_complex
+					damage = 8.0
+				}
+			}
+			if = {
+				limit = { check_variable = { building_level@offices > 0 } }
+				damage_building = {
+					type = offices
+					damage = 8.0
+				}
+			}
+			if = {
+				limit = { check_variable = { building_level@arms_factory > 0 } }
+				damage_building = {
+					type = arms_factory
+					damage = 8.0
+				}
+			}
+			if = {
+				limit = { check_variable = { building_level@agriculture_district > 0 } }
+				damage_building = {
+					type = agriculture_district
+					damage = 8.0
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Hell on Earth, Deploy as Much as We Can to the Area
+	option = {
+		name = brazil_amazon.16.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.16.b executed"
+		add_political_power = -100
+		add_command_power = -25
+		set_temp_variable = { temp_change = -20 }
+		BRA_wild_acreage_effect = yes
+
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+
+		random_owned_controlled_state = {
+			limit = { is_in_array = { BRA.amazon_states = THIS.id } }
+			damage_building = {
+				type = infrastructure
+				damage = 5.0
+			}
+			if = {
+				limit = { check_variable = { building_level@industrial_complex > 0 } }
+				damage_building = {
+					type = industrial_complex
+					damage = 5.0
+				}
+			}
+			if = {
+				limit = { check_variable = { building_level@offices > 0 } }
+				damage_building = {
+					type = offices
+					damage = 5.0
+				}
+			}
+			if = {
+				limit = { check_variable = { building_level@arms_factory > 0 } }
+				damage_building = {
+					type = arms_factory
+					damage = 5.0
+				}
+			}
+			if = {
+				limit = { check_variable = { building_level@agriculture_district > 0 } }
+				damage_building = {
+					type = agriculture_district
+					damage = 5.0
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# A Dam Bursts
+country_event = {
+	id = brazil_amazon.17
+	title = brazil_amazon.17.t
+	desc = brazil_amazon.17.d
+	picture = GFX_amazon_rainforest_flooding_two
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
+
+	# I can only imagine a world where we did nothing
+	option = {
+		name = brazil_amazon.17.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.17.a executed"
+		set_temp_variable = { temp_change = -10 }
+		BRA_wild_acreage_effect = yes
+
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+
+		random_owned_state = {
+			limit = {
+				is_brazilian_amazon_state = yes
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 2
+			}
+			random_list = {
+				10 = {
+					damage_building = {
+						type = industrial_complex
+						damage = 3
+					}
+				}
+				10 = {
+					damage_building = {
+						type = arms_factory
+						damage = 3
+					}
+				}
+				10 = {
+					damage_building = {
+						type = offices
+						damage = 3
+					}
+				}
+				10 = { }
+			}
+		}
+	}
+}
+
+# Dam Overflow Subsidies
+country_event = {
+	id = brazil_amazon.18
+	title = brazil_amazon.18.t
+	desc = brazil_amazon.18.d
+	picture = GFX_amazon_rainforest_flooding_two
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
+
+	# And, we saved money by doing nothing
+	option = {
+		name = brazil_amazon.18.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.18.a executed"
+
+		set_temp_variable = { temp_change = -5 }
+		BRA_wild_acreage_effect = yes
+
+		random_owned_state = {
+			limit = {
+				is_brazilian_amazon_state = yes
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+			random_list = {
+				10 = {
+					damage_building = {
+						type = industrial_complex
+						damage = 4
+					}
+				}
+				10 = {
+					damage_building = {
+						type = arms_factory
+						damage = 3
+					}
+				}
+				10 = {
+					damage_building = {
+						type = offices
+						damage = 3
+					}
+				}
+				10 = { }
+			}
+		}
+	}
+}
+
+# Dam Overflow Subsidies (Alternate)
+country_event = {
+	id = brazil_amazon.19
+	title = brazil_amazon.19.t
+	desc = brazil_amazon.19.d
+	picture = GFX_amazon_rainforest_flooding_two
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+	}
+
+	# In moments like these, you almost enjoy being a public servant
+	option = {
+		name = brazil_amazon.19.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.19.a executed"
+
+		set_temp_variable = { temp_change = -5 }
+		BRA_wild_acreage_effect = yes
+
+		random_owned_state = {
+			limit = {
+				is_brazilian_amazon_state = yes
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+			random_list = {
+				10 = {
+					damage_building = {
+						type = industrial_complex
+						damage = 1
+					}
+				}
+				10 = {
+					damage_building = {
+						type = arms_factory
+						damage = 1
+					}
+				}
+				10 = {
+					damage_building = {
+						type = offices
+						damage = 1
+					}
+				}
+				10 = { }
+			}
+		}
+	}
+}
+
+# Positive Events
+# Amazon Establishes Distribution Centre in Amazonas
+country_event = {
+	id = brazil_amazon.20
+	title = brazil_amazon.20.t
+	desc = brazil_amazon.20.d
+	picture = GFX_amazon_logo
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		NOT = { has_global_flag = BRA_amazon_rainforest_fully_devastated }
+
+		# Check if the total buildings is over 10
+		892 = {
+			set_temp_variable = { total_building = building_level@industrial_complex }
+			add_to_temp_variable = { total_building = building_level@arms_factory }
+			add_to_temp_variable = { total_building = building_level@agriculture_district }
+			add_to_temp_variable = { total_building = building_level@offices }
+		}
+		check_variable = { total_building > 9 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_country_flag = BRA_banned_all_amazonian_private_development
+		}
+		modifier = {
+			factor = 1.25
+			has_country_flag = BRA_legalized_independent_development
+		}
+		modifier = {
+			factor = 2
+			892 = {
+				set_temp_variable = { total_building = building_level@industrial_complex }
+				add_to_temp_variable = { total_building = building_level@arms_factory }
+				add_to_temp_variable = { total_building = building_level@agriculture_district }
+				add_to_temp_variable = { total_building = building_level@offices }
+			}
+			check_variable = { total_building > 14 }
+		}
+		modifier = {
+			factor = 2
+			892 = {
+				set_temp_variable = { total_building = building_level@industrial_complex }
+				add_to_temp_variable = { total_building = building_level@arms_factory }
+				add_to_temp_variable = { total_building = building_level@agriculture_district }
+				add_to_temp_variable = { total_building = building_level@offices }
+			}
+			check_variable = { total_building > 19 }
+		}
+		modifier = {
+			factor = 2
+			892 = {
+				set_temp_variable = { total_building = building_level@industrial_complex }
+				add_to_temp_variable = { total_building = building_level@arms_factory }
+				add_to_temp_variable = { total_building = building_level@agriculture_district }
+				add_to_temp_variable = { total_building = building_level@offices }
+			}
+			check_variable = { total_building > 24 }
+		}
+		modifier = {
+			factor = 2
+			892 = {
+				set_temp_variable = { total_building = building_level@industrial_complex }
+				add_to_temp_variable = { total_building = building_level@arms_factory }
+				add_to_temp_variable = { total_building = building_level@agriculture_district }
+				add_to_temp_variable = { total_building = building_level@offices }
+			}
+			check_variable = { total_building > 29 }
+		}
+	}
+
+	# This is getting out of hand, now there are two of them
+	option = {
+		name = brazil_amazon.20.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.20.a executed"
+		set_country_flag = BRA_amazon_invested_in_the_amazon
+		if = { limit = { 892 = { infrastructure < 5 } }
+			892 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		else = {
+			add_political_power = 100
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# The Amazon is Devastated
+country_event = {
+	id = brazil_amazon.21
+	title = brazil_amazon.21.t
+	desc = brazil_amazon.21.d
+	picture = GFX_country_event_amazon_rainforest_devastation
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		check_variable = { BRA.BRA_acres_current < 50 }
+		NOT = { has_global_flag = BRA_amazon_rainforest_fully_devastated }
+	}
+
+	# The Very Last Truffala Tree of Them All
+	option = {
+		name = brazil_amazon.21.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.21.a executed"
+		set_global_flag = BRA_amazon_rainforest_fully_devastated
+		add_stability = -0.05
+		news_event = brazil_news.5
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Agro-Industrial Company Invests in Fields
+country_event = {
+	id = brazil_amazon.22
+	title = brazil_amazon.22.t
+	desc = brazil_amazon.22.d
+	picture = GFX_grain_silo_investments
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		has_country_flag = BRA_legalized_independent_development
+		NOT = { has_global_flag = BRA_amazon_rainforest_fully_devastated }
+		NOT = { has_country_flag = BRA_private_company_clears_and_builds_new_fields }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_private_company_clears_and_builds_new_fields value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_idea = depression
+		}
+		modifier = {
+			factor = 0.50
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.80
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+	}
+
+	# Awesome!
+	option = {
+		name = brazil_amazon.22.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.22.a executed"
+		set_temp_variable = { temp_change = -12 }
+		BRA_wild_acreage_effect = yes
+		random_owned_controlled_state = {
+			limit = {
+				is_brazilian_amazon_state = yes
+			}
+			add_building_construction = {
+				type = agriculture_district
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+	# Deny the Developments
+	option = {
+		name = brazil_amazon.22.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.22.b executed"
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Industrial Mining Companies Exploit Resource Reserves
+country_event = {
+	id = brazil_amazon.23
+	title = brazil_amazon.23.t
+	desc = brazil_amazon.23.d
+	picture = GFX_amazon_rainforest_mining_two
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		has_country_flag = BRA_legalized_independent_development
+		NOT = { has_global_flag = BRA_amazon_rainforest_fully_devastated }
+		NOT = { has_country_flag = BRA_private_company_exploits_resource_reserves }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_private_company_exploits_resource_reserves value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_idea = depression
+		}
+		modifier = {
+			factor = 0.50
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.80
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+	}
+
+	# Awesome!
+	option = {
+		name = brazil_amazon.23.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.23.a executed"
+		set_temp_variable = { temp_change = -5 }
+		BRA_wild_acreage_effect = yes
+		random_owned_controlled_state = {
+			limit = {
+				is_brazilian_amazon_state = yes
+			}
+			random_list = {
+				20 = {
+					add_resource = {
+						type = chromium
+						amount = 6
+					}
+				}
+				20 = {
+					add_resource = {
+						type = oil
+						amount = 6
+					}
+				}
+				20 = {
+					add_resource = {
+						type = aluminium
+						amount = 6
+					}
+				}
+			}
+		}
+	}
+
+	# Deny the Developments
+	option = {
+		name = brazil_amazon.23.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.23.b executed"
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Private Company Develops Infrastructure in the Amazon
+country_event = {
+	id = brazil_amazon.24
+	title = brazil_amazon.24.t
+	desc = brazil_amazon.24.d
+	picture = GFX_amazon_road_paving
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		has_country_flag = BRA_legalized_independent_development
+		NOT = { has_global_flag = BRA_amazon_rainforest_fully_devastated }
+		NOT = { has_country_flag = BRA_private_company_invests_in_infrastructure }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_private_company_invests_in_infrastructure value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_idea = depression
+		}
+		modifier = {
+			factor = 0.50
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.80
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+	}
+
+	# Awesome!
+	option = {
+		name = brazil_amazon.24.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.24.a executed"
+		set_temp_variable = { temp_change = -5 }
+		BRA_wild_acreage_effect = yes
+		random_owned_controlled_state = {
+			limit = {
+				is_brazilian_amazon_state = yes
+				infrastructure < 5
+			}
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+	# Deny the Developments
+	option = {
+		name = brazil_amazon.24.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.24.b executed"
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Private Companies Create New Construction Company
+country_event = {
+	id = brazil_amazon.25
+	title = brazil_amazon.25.t
+	desc = brazil_amazon.25.d
+	picture = GFX_amazon_road_paving
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		has_country_flag = BRA_legalized_independent_development
+		NOT = { has_global_flag = BRA_amazon_rainforest_fully_devastated }
+		NOT = { has_country_flag = BRA_private_company_creates_new_construction_company }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_private_company_creates_new_construction_company value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_idea = depression
+		}
+		modifier = {
+			factor = 0.50
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.80
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+	}
+
+	# Awesome!
+	option = {
+		name = brazil_amazon.25.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.25.a executed"
+		set_temp_variable = { temp_change = -12 }
+		BRA_wild_acreage_effect = yes
+		random_owned_controlled_state = {
+			limit = {
+				is_brazilian_amazon_state = yes
+			}
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+				instant_build = yes
+			}
+		}
+	}
+
+	# Deny the Patent
+	option = {
+		name = brazil_amazon.25.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.25.b executed"
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Private Companies Replant Portions of the Amazon
+country_event = {
+	id = brazil_amazon.26
+	title = brazil_amazon.26.t
+	desc = brazil_amazon.26.d
+	picture = GFX_amazon_rainforest_replanting
+	is_triggered_only = yes
+	trigger = {
+		original_tag = BRA
+		has_country_flag = BRA_legalized_independent_development
+		NOT = { has_global_flag = BRA_amazon_rainforest_fully_devastated }
+		NOT = { has_country_flag = BRA_no_conservation_land_for_me }
+	}
+	immediate = {
+		set_country_flag = { flag = BRA_no_conservation_land_for_me value = 1 days = 180 }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 0.25
+			has_idea = depression
+		}
+		modifier = {
+			factor = 0.50
+			has_idea = recession
+		}
+		modifier = {
+			factor = 0.80
+			has_idea = stagnation
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 250 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 400 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 500 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 650 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 800 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1000 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { BRA.BRA_acres_current > 1500 }
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { BRA.BRA_acres_wild < 300 }
+		}
+		modifier = {
+			factor = 1.5
+			check_variable = { BRA.BRA_acres_wild < 150 }
+		}
+	}
+
+	# Awesome!
+	option = {
+		name = brazil_amazon.26.a
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.26.a executed"
+
+		set_temp_variable = { temp_change = 75 }
+		BRA_conserv_acreage_effect = yes
+
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Deny the Patent
+	option = {
+		name = brazil_amazon.26.b
+		log = "[GetDateText]: [This.GetName]: brazil_amazon.26.b executed"
+		set_temp_variable = { party_index = 17 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { temp_opinion = -5 }
+		change_small_medium_business_owners_opinion = yes
+		change_industrial_conglomerates_opinion = yes
+	}
+}
+
+### News events
+# Bolsonaro Coups Brazil
+news_event = {
+	id = brazil_news.1
+	title = brazil_news.1.t
+	desc = brazil_news.1.d
+	# picture = - # TODO: Replace with event image at some point
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brazil_news.1.a
+		log = "[GetDateText]: [This.GetName]: brazil_news.1.a executed"
+		trigger = { original_tag = BRA }
+	}
+	option = {
+		name = brazil_news.1.b
+		log = "[GetDateText]: [This.GetName]: brazil_news.1.b executed"
+		trigger = { NOT = { original_tag = BRA } }
+	}
+}
+
+# Brazil Privatises Petrobras
+news_event = {
+	id = brazil_news.2
+	title = brazil_news.2.t
+	desc = brazil_news.2.d
+	# picture = - # TODO: Replace with event image at some point
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brazil_news.2.a
+		log = "[GetDateText]: [This.GetName]: brazil_news.2.a executed"
+		trigger = { original_tag = BRA }
+	}
+	option = {
+		name = brazil_news.2.b
+		log = "[GetDateText]: [This.GetName]: brazil_news.2.b executed"
+		trigger = { NOT = { original_tag = BRA } }
+	}
+}
+
+# Luiz I bring back the empire
+news_event = {
+	id = brazil_news.3
+	title = brazil_news.3.t
+	desc = brazil_news.3.d
+	# picture = - # TODO: Replace with event image at some point
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brazil_news.3.a
+		log = "[GetDateText]: [This.GetName]: brazil_news.3.a executed"
+		trigger = { original_tag = BRA }
+	}
+	option = {
+		name = brazil_news.3.b
+		log = "[GetDateText]: [This.GetName]: brazil_news.3.b executed"
+		trigger = { NOT = { original_tag = BRA } }
+	}
+}
+
+# Cisplatina is reclaimed
+news_event = {
+	id = brazil_news.4
+	title = brazil_news.4.t
+	desc = brazil_news.4.d
+	# picture = - # TODO: Replace with event image at some point
 	is_triggered_only = yes
 
 	option = {
-		name = brazil_flavour_events.16.a
-		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.16.a executed"
-		add_stability = -0.05
+		name = brazil_news.4.a
+		log = "[GetDateText]: [This.GetName]: brazil_news.4.a executed"
 	}
+}
+
+# The Amazon is Devastated
+news_event = {
+	id = brazil_news.5
+	title = brazil_news.5.t
+	desc = brazil_news.5.d
+	# picture = - # TODO: Replace with event image at some point
+	is_triggered_only = yes
+
 	option = {
-		name = brazil_flavour_events.16.b
-		log = "[GetDateText]: [This.GetName]: brazil_flavour_events.16.b executed"
-		increase_policing_budget = yes
+		name = brazil_news.5.a
+		log = "[GetDateText]: [This.GetName]: brazil_news.4.a executed"
 	}
 }
