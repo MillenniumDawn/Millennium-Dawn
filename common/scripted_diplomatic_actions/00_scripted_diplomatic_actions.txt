@@ -772,6 +772,18 @@ scripted_diplomatic_actions = {
 				ROOT = { has_political_power < 450 }
 			}
 			modifier = {
+				factor = 0.25
+				ROOT = { check_variable = { debt_ratio > 0.8 } }
+			}
+			modifier = {
+				factor = 0.25
+				ROOT = { check_variable = { debt_ratio > 1.0 } }
+			}
+			modifier = {
+				factor = 0.25
+				ROOT = { check_variable = { debt_ratio > 1.2 } }
+			}
+			modifier = {
 				factor = 0
 				set_temp_variable = { tmp = debt }
 				multiply_temp_variable = { tmp = 0.25 }
@@ -1221,7 +1233,12 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect propose_subsidies_to_subject"
-			ROOT = { clear_variable = pending_overlord_subsidization_offer }
+			THIS = {
+				set_country_flag = { flag = recently_rejected_overlord_subsidies_offer value = 1 days = 90 }
+				ROOT = {
+					clear_variable = pending_overlord_subsidization_offer
+				}
+			}
 		}
 
 		accept_title = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_ACCEPT
@@ -1283,6 +1300,10 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				factor = 0
+				THIS = { has_country_flag = recently_rejected_overlord_subsidies_offer }
+			}
+			modifier = {
+				factor = 0
 				ROOT = { NOT = { check_variable = { pending_overlord_subsidization_offer = 0 } } }
 			}
 		}
@@ -1297,6 +1318,8 @@ scripted_diplomatic_actions = {
 			OR = {
 				THIS = { is_subject_of = ROOT }
 				ROOT = { has_subject = PREV }
+				ROOT = { has_country_flag = overlord_subsidies }
+				THIS = { OVERLORD = { tag = ROOT } }
 			}
 		}
 
