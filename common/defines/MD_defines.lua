@@ -481,7 +481,7 @@
 	NDefines.NNavy.COMBAT_SHIP_SPEED_TO_FIELD_FACTOR = 0.15 -- 0.03
 	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_CENTER_LINE = 350 -- 50
 	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_ARRIVE = 600 -- 80
-	NDefines.NNavy.COMBAT_MIN_DURATION = 16 -- 8
+	NDefines.NNavy.COMBAT_MIN_DURATION = 12 -- 8
 	NDefines.NNavy.COMBAT_CHASE_RESIGNATION_HOURS = 6 -- 8
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW = 0.35 -- 0.2
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_MEDIUM = 0.55 -- 0.5
@@ -520,15 +520,15 @@
 	}
 	NDefines.NNavy.ORG_COST_WHILE_MOVING = {
 		0.3, -- HOLD
-		0.2, -- PATROL
-		0.25, -- STRIKE FORCE
-		0.2, -- CONVOY RAIDING
-		0.2, -- CONVOY ESCORT
-		0.2, -- MINES PLANTING
-		0.2, -- MINES SWEEPING
-		0.2, -- TRAIN
+		0.35, -- PATROL
+		0.35, -- STRIKE FORCE
+		0.35, -- CONVOY RAIDING
+		0.25, -- CONVOY ESCORT
+		0.35, -- MINES PLANTING
+		0.35, -- MINES SWEEPING
+		0.35, -- TRAIN
 		0.3, -- RESERVE_FLEET
-		0.2, -- NAVAL_INVASION_SUPPORT
+		0.35, -- NAVAL_INVASION_SUPPORT
 	}
 	NDefines.NNavy.MISSION_SUPREMACY_RATIOS = {
 		0.5, -- HOLD
@@ -578,12 +578,12 @@
 	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 6
 	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 8 -- 8
 	NDefines.NNavy.NAVAL_MINES_DECAY_AT_PEACE_TIME = 0.05 -- 0.25
-	NDefines.NNavy.ATTRITION_WHILE_MOVING_FACTOR = 2.5 -- 1.5
-	NDefines.NNavy.ATTRITION_DAMAGE_ORG = 0.03 -- 0.01
-	NDefines.NNavy.ATTRITION_DAMAGE_STR = 0.09 -- 0.03
-	NDefines.NNavy.ATTRITION_STR_DAMAGE_CHANCE = 0.4 -- 0.2
-	NDefines.NNavy.TRAINING_ACCIDENT_CHANCES = 0.005 -- 0.02
-	NDefines.NNavy.TRAINING_ACCIDENT_STRENGTH_LOSS_FACTOR = 0.02 -- 0.05
+	NDefines.NNavy.ATTRITION_WHILE_MOVING_FACTOR = 3.5 -- 1.5
+	NDefines.NNavy.ATTRITION_DAMAGE_ORG = 0.15 -- 0.01
+	NDefines.NNavy.ATTRITION_DAMAGE_STR = 0.25 -- 0.03
+	NDefines.NNavy.ATTRITION_STR_DAMAGE_CHANCE = 0.6 -- 0.2
+	NDefines.NNavy.TRAINING_ACCIDENT_CHANCES = 0.01 -- 0.02
+	NDefines.NNavy.TRAINING_ACCIDENT_STRENGTH_LOSS_FACTOR = 0.04 -- 0.05
 	NDefines.NNavy.TRAINING_EXPERIENCE_FACTOR = 0.15 -- 0.3
 	NDefines.NNavy.UNIT_EXPERIENCE_PER_COMBAT_HOUR = 15 -- 10
 	NDefines.NNavy.LEADER_EXPERIENCE_SCALE = 2 -- 1
@@ -601,13 +601,13 @@
 	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1 		-- optimum carrier count for carrier taskforces
 	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6 		-- optimum capital count for capital taskforces
 	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2			-- optimum screen count for screen taskforces
-	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
+	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 2				-- optimum sub count for sub taskforces
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4
 	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 6
 
 	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 4			-- carrier fleets will at least have this amount of capitals
-	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 4				-- capital to carrier count in carrier taskfoces
-	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2				-- screens to capital/carrier count in carrier & capital taskforces
+	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 3				-- capital to carrier count in carrier taskfoces
+	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 0.5				-- screens to capital/carrier count in carrier & capital taskforces
 
 	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
 	NDefines.NNavy.RELATIVE_SURFACE_DETECTION_TO_POSITIONING_FACTOR = 0.01 -- 0.01
