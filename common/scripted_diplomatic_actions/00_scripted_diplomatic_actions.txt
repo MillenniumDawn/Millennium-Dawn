@@ -428,8 +428,10 @@ scripted_diplomatic_actions = {
 		selectable = {
 			#selected country has lower GDP/C than us
 			custom_trigger_tooltip = {
-				tooltip = gdp_greater_than_other
-				check_variable = { gdp_per_capita < ROOT.gdp_per_capita }
+				set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
+				multiply_temp_variable = { gdp_total_temp = 2 }
+				check_variable = { gdp_total_temp > THIS.gdp_total }
+				tooltip = gdp_total_cannot_be_double_ours
 			}
 			gdp_debt_ratio_higher_25 = yes
 			ROOT = {
@@ -768,6 +770,35 @@ scripted_diplomatic_actions = {
 			modifier = {
 				factor = 0.50
 				ROOT = { has_political_power < 450 }
+			}
+			modifier = {
+				factor = 0.25
+				ROOT = { check_variable = { debt_ratio > 0.8 } }
+			}
+			modifier = {
+				factor = 0.25
+				ROOT = { check_variable = { debt_ratio > 1.0 } }
+			}
+			modifier = {
+				factor = 0.25
+				ROOT = { check_variable = { debt_ratio > 1.2 } }
+			}
+			modifier = {
+				factor = 0
+				set_temp_variable = { tmp = debt }
+				multiply_temp_variable = { tmp = 0.25 }
+				ROOT = {
+					set_temp_variable = { debt_temp = debt }
+					add_to_temp_variable = { debt_temp = PREV.tmp }
+
+					set_temp_variable = { interest_rate_temp = debt_temp }
+					divide_temp_variable = { interest_rate_temp = gdp_total }
+					multiply_temp_variable = { interest_rate_temp = 10 }
+
+					set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
+					add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
+				}
+				check_variable = { ROOT.interest_rate_temp > 8.99 }
 			}
 			modifier = {
 				factor = 0
@@ -1202,7 +1233,12 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect propose_subsidies_to_subject"
-			ROOT = { clear_variable = pending_overlord_subsidization_offer }
+			THIS = {
+				set_country_flag = { flag = recently_rejected_overlord_subsidies_offer value = 1 days = 90 }
+				ROOT = {
+					clear_variable = pending_overlord_subsidization_offer
+				}
+			}
 		}
 
 		accept_title = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_ACCEPT
@@ -1264,6 +1300,10 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				factor = 0
+				THIS = { has_country_flag = recently_rejected_overlord_subsidies_offer }
+			}
+			modifier = {
+				factor = 0
 				ROOT = { NOT = { check_variable = { pending_overlord_subsidization_offer = 0 } } }
 			}
 		}
@@ -1277,7 +1317,9 @@ scripted_diplomatic_actions = {
 		selectable = {
 			OR = {
 				THIS = { is_subject_of = ROOT }
-				ROOT = { OVERLORD = { tag = PREV.PREV } }
+				ROOT = { has_subject = PREV }
+				ROOT = { has_country_flag = overlord_subsidies }
+				THIS = { OVERLORD = { tag = ROOT } }
 			}
 		}
 

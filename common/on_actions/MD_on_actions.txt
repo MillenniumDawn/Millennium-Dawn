@@ -6,21 +6,77 @@ on_actions = {
 			random_renewable_variable_calculation = yes
 			worker_requirements_variable_gdpc_converging = yes
 
-			#Update money system right before adjusting weekly value
+			# Update money system right before adjusting weekly value
 			ingame_update_setup = yes
-			#Remove weekly rate from treasury
+
+			# Remove weekly rate from treasury
 			if = { limit = { has_country_flag = int_reinvestment_flag }
 				add_to_variable = { int_investments = int_investments_rate }
 			}
-			add_to_variable = { treasury = treasury_rate }
+
+			# No longer subject stop paying for subsidies
+			if = { limit = { NOT = { check_variable = { subject_subsidization^0 = 0 } } }
+				for_each_scope_loop = {
+					array = subject_subsidization
+					if = {
+						limit = {
+							OR = {
+								NOT = { country_exists = THIS }
+								NOT = { is_subject_of = PREV }
+							}
+						}
+						if = {
+							limit = { is_debug = yes }
+							log = "[GetDateText]: [PREV.GetName]: Subject Subsidization from [PREV.GetName] to [THIS.GetName] has ended."
+						}
+						set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
+						# Clear the data
+						clr_country_flag = overlord_is_subsidizing_us_@PREV
+						clr_country_flag = overlord_subsidies
+						remove_ideas = idea_overlord_subsidies
+						ingame_update_setup = yes
+						PREV = {
+							set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
+							clr_country_flag = overlord_is_subsidizing_us_@PREV
+							remove_from_array = { subject_subsidization = PREV.id }
+							ingame_update_setup = yes
+						}
+					}
+				}
+			}
+
+			# Pay down debt automatically this weekly tick
+			if = {
+				limit = {
+					check_variable = { treasury_rate > 0 }
+					has_country_flag = automatically_pay_off_debt_enabled
+					check_variable = { debt > 0 }
+				}
+				set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
+				multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
+				subtract_from_variable = { debt = treasury_rate_debt_payment }
+
+				if = {
+					limit = { check_variable = { debt < 0.001 } }
+					set_variable = { debt = 0 }
+					clr_country_flag = automatically_pay_off_debt_enabled
+				}
+			}
+
+			set_temp_variable = { treasury_rate_gain = treasury_rate }
+			subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
+
+			add_to_variable = { treasury = treasury_rate_gain }
 			#Automated taking debt - has calculate_interest_rate at the end
 			automated_debt_taker = yes
+
 
 			# Force Update Influencer Map Mode
 			recalculate_influence = yes
 			force_update_map_mode = { mapmode = influence_map_mode }
 
-
+			# Set the Ideological Power Ideas
+			IP_idea_weekly_configuration = yes
 
 			# Initialize the Investment Pulse for this Week
 			if = {
@@ -348,6 +404,23 @@ on_actions = {
 					}
 				}
 			}
+
+			FROM = {
+				# projects
+				# remove all projects by the annexed country
+				if = { limit = { check_variable = { active_projects > 0 } }
+
+					for_each_loop = {
+						array = project_array
+
+						if = { limit = { check_variable = { v < 0 } }
+
+							set_variable = { project = i }
+							end_project = yes
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -355,16 +428,10 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					ROOT = {
-						original_tag = ARM
-					}
-					FROM = {
-						original_tag = TUR
-					}
+					ROOT = { original_tag = ARM }
+					FROM = { original_tag = TUR }
 				}
-				ROOT = {
-					add_ideas = ARM_turkish_peasants
-				}
+				ROOT = { add_ideas = ARM_turkish_peasants }
 			}
 			if = {
 				limit = {
