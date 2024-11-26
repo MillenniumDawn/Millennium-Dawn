@@ -1106,12 +1106,17 @@ focus_tree = {
 	focus = {
 		id = PMR_shevchuk
 		icon = pmr_shevchuk
+
 		x = 0
 		y = 7
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_dictatorship }
+
 		cost = 3
+
+		prerequisite = { focus = PMR_dictatorship }
 		mutually_exclusive = { focus = PMR_pro_ukraine }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+
 		available = {
 			date > 2005.1.1
 			OR = {
@@ -1119,7 +1124,7 @@ focus_tree = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_shevchuk"
 			create_country_leader = {
@@ -1290,25 +1295,31 @@ focus_tree = {
 	focus = {
 		id = PMR_anti_smirnov
 		icon = smirnov_elected
-		x = -1
+
+		x = 0
 		y = 8
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_shevchuk }
 		cost = 5
+
+		prerequisite = { focus = PMR_shevchuk }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		available = {
 			OR = {
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_anti_smirnov"
-			swap_ideas = {
-				remove_idea = PMR_father_nation_idea4
-				add_idea = PMR_father_nation_idea3
+			if = {
+				limit = {
+					has_idea = PMR_father_nation_idea4
+				}
+				remove_ideas = PMR_father_nation_idea4
 			}
-			add_political_power = -50
+			add_political_power = -100
 		}
 		ai_will_do = {
 			factor = 1
@@ -1324,26 +1335,164 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_prepare_for_russia
-		icon = russian_cooperation
+		icon = Russian_Emergency_Powers
+
 		x = 1
-		y = 8
+		y = 9
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_shevchuk }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_anti_smirnov }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		available = {
 			OR = {
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
+			country_exists = SOV
+			is_subject = no
+			NOT = {
+				has_war_with = SOV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		bypass = {
+			OR = {
+				has_war_with = SOV
+				NOT = {
+					country_exists = SOV
+				}
+				is_subject = yes
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_prepare_for_russia"
-			set_temp_variable = { percent_change = 1.5 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = PMR }
-			change_influence_percentage = yes
-			hidden_effect = { PMR = { country_event = transnistria.24 } }
+			PMR = { 
+				country_event = transnistria.24
+			} 
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_HISTORIC_DEFAULT_PATH
+				add = 155
+			}
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_economist_from_russia
+		icon = russian_investements
+
+		x = 1
+		y = 10
+		relative_position_id = PMR_smirnov_era
+
+		cost = 5
+
+		prerequisite = { focus = PMR_prepare_for_russia }
+		prerequisite = { focus = PMR_against_sheriff }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
+		available = {
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+			country_exists = SOV
+			OR = {
+				PMR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			NOT = {
+				has_war_with = SOV
+			}
+		}
+		bypass = {
+			OR = {
+				has_war_with = SOV
+				NOT = {
+					country_exists = SOV
+				}
+				AND = {
+					NOT = {
+						PMR = { is_subject_of = SOV }
+					}
+					is_subject = yes
+				}
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_economist_from_russia"
+			SOV = { 
+				country_event = transnistria.30
+			} 
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_HISTORIC_DEFAULT_PATH
+				add = 155
+			}
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_agriculture_from_russia
+		icon = focus_dobriy_kola
+
+		x = -1
+		y = 10
+		relative_position_id = PMR_smirnov_era
+
+		cost = 5
+
+		prerequisite = { focus = PMR_prepare_for_russia }
+		prerequisite = { focus = PMR_against_sheriff }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
+		available = {
+			has_completed_focus = PMR_agro
+			has_completed_focus = PMR_sheriff_agro
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+			country_exists = SOV
+			OR = {
+				PMR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			NOT = {
+				has_war_with = SOV
+			}
+		}
+		bypass = {
+			OR = {
+				has_war_with = SOV
+				NOT = {
+					country_exists = SOV
+				}
+				AND = {
+					NOT = {
+						PMR = { is_subject_of = SOV }
+					}
+					is_subject = yes
+				}
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_agriculture_from_russia"
+			SOV = { 
+				country_event = transnistria.33
+			} 
 		}
 		ai_will_do = {
 			factor = 1
@@ -1360,60 +1509,34 @@ focus_tree = {
 	focus = {
 		id = PMR_against_sheriff
 		icon = pmr_sheriff
-		x = 0
+
+		x = -1
 		y = 9
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_anti_smirnov }
-		prerequisite = { focus = PMR_prepare_for_russia }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_anti_smirnov }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		available = {
 			OR = {
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_against_sheriff"
-			add_political_power = 100
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_global_flag = PMR_HISTORIC_DEFAULT_PATH
-				add = 155
+			add_political_power = -100
+			decrease_corruption = yes
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.15
 			}
-			modifier = {
-				has_global_flag = PMR_LEBED_PATH
-				add = 155
-			}
-		}
-	}
-	focus = {
-		id = PMR_mlv
-		icon = align_to_moldova
-		x = 0
-		y = 10
-		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_against_sheriff }
-		cost = 5
-		available = {
-			OR = {
-				emerging_autocracy_are_in_power = yes
-				emerging_reactionaries_are_in_power = yes
-			}
-		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_mlv"
-			add_opinion_modifier = {
-				modifier = supports_us
-				target = MLV
-			}
-			reverse_add_opinion_modifier = {
-				modifier = supports_us
-				target = MLV
-			}
+			set_temp_variable = { party_index = 15 }
+			set_temp_variable = { party_popularity_increase = -0.15 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -1430,11 +1553,17 @@ focus_tree = {
 	focus = {
 		id = PMR_krasno
 		icon = pmr_krasnoselksiy
+
 		x = 0
 		y = 11
 		relative_position_id = PMR_smirnov_era
+
 		cost = 3
-		prerequisite = { focus = PMR_mlv }
+
+		prerequisite = { focus = PMR_agriculture_from_russia }
+		prerequisite = { focus = PMR_economist_from_russia }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+
 		available = {
 			date > 2008.1.1
 			OR = {
@@ -1442,7 +1571,7 @@ focus_tree = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_krasno"
 			add_political_power = -60
@@ -1535,7 +1664,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_russian_flag"
 			add_ideas = PMR_russian_legacy
-			hidden_effect = { PMR = { country_event = transnistria.24 } }
 		}
 		ai_will_do = {
 			factor = 1
@@ -1552,17 +1680,22 @@ focus_tree = {
 	focus = {
 		id = PMR_romanovs
 		icon = sov_jirik_romanovs
+
 		x = 0
 		y = 2
 		relative_position_id = PMR_krasno
+
+		cost = 5
+
 		prerequisite = { focus = PMR_military_reform }
 		prerequisite = { focus = PMR_russian_flag }
 		prerequisite = { focus = PMR_soc_ref }
-		cost = 5
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_romanovs"
 			swap_ideas = {
@@ -1585,15 +1718,20 @@ focus_tree = {
 	focus = {
 		id = PMR_soc_ref
 		icon = welfare
+
 		x = 0
 		y = 1
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_krasno }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_krasno }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_soc_ref"
 			add_political_power = 45
@@ -1617,11 +1755,18 @@ focus_tree = {
 	focus = {
 		id = PMR_cis_2
 		icon = pmr_cis_2
+
 		x = 2
-		y = 3
+		y = 2
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_romanovs }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_military_reform }
+		prerequisite = { focus = PMR_russian_flag }
+		prerequisite = { focus = PMR_soc_ref }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 			OR = {
@@ -1630,6 +1775,7 @@ focus_tree = {
 				country_exists = SOO
 			}
 		}
+
 		bypass = {
 			NOT = {
 				country_exists = NKR
@@ -1637,7 +1783,7 @@ focus_tree = {
 				country_exists = SOO
 			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_cis_2"
 			add_opinion_modifier = {
@@ -1686,15 +1832,22 @@ focus_tree = {
 	focus = {
 		id = PMR_deccomus
 		icon = pmr_deccomuniz
-		x = -2
+
+		x = 0
 		y = 3
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_romanovs }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_romanovs }
+		prerequisite = { focus = PMR_cis_2 }
+		prerequisite = { focus = PMR_orthodoxy }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_deccomus"
 			swap_ideas = {
@@ -1717,15 +1870,23 @@ focus_tree = {
 	focus = {
 		id = PMR_free_internet
 		icon = economic_internet
+
 		x = -2
 		y = 5
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_not_soviet }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_not_soviet }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
+		bypass = {
+			NOT = { has_idea = PMR_internet_cencor }
+		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_free_internet"
 			remove_ideas = PMR_internet_cencor
@@ -1745,17 +1906,24 @@ focus_tree = {
 	focus = {
 		id = PMR_orthodoxy
 		icon = orthodox_patriarh
-		x = 0
-		y = 3
+
+		x = -2
+		y = 2
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_romanovs }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_military_reform }
+		prerequisite = { focus = PMR_russian_flag }
+		prerequisite = { focus = PMR_soc_ref }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus  PMR_orthodoxy"
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_orthodoxy"
 			swap_ideas = {
 				remove_idea = communist_cadres
 				add_idea = the_clergy
@@ -3097,12 +3265,7 @@ focus_tree = {
 		cost = 5
 		available = {
 			NOT = {
-				OR = {
-					has_idea = PMR_sheriff4
-					has_idea = PMR_sheriff5
-					has_idea = PMR_sheriff6
-					has_idea = PMR_sheriff7
-				}
+				has_idea = PMR_sheriff7
 				is_subject = no
 			}
 		}
@@ -3231,17 +3394,20 @@ focus_tree = {
 	focus = {
 		id = PMR_not_soviet
 		icon = pmr_empire_trans
+
 		x = 0
 		y = 4
 		relative_position_id = PMR_krasno
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		prerequisite = { focus = PMR_deccomus }
+
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
-		prerequisite = { focus = PMR_deccomus }
-		prerequisite = { focus = PMR_orthodoxy }
-		prerequisite = { focus = PMR_cis_2 }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_not_soviet"
 			remove_ideas = PMR_fragment_ussr
@@ -3299,15 +3465,20 @@ focus_tree = {
 	focus = {
 		id = PMR_general
 		icon = monarchism_absolutism
+
 		x = 0
 		y = 5
 		relative_position_id = PMR_krasno
+
 		cost = 3
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+		prerequisite = { focus = PMR_not_soviet }
+
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
-		prerequisite = { focus = PMR_not_soviet }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_general"
 			add_country_leader_trait = PMR_general_monarchist_christian
