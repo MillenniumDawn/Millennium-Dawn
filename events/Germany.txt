@@ -9,6 +9,7 @@ add_namespace = germany_foci
 add_namespace = GER_News
 add_namespace = germany_nsu
 add_namespace = germany_party
+add_namespace = GER_agrar
 
 ### Content
 # 1 - Investigate The NPD
@@ -648,6 +649,108 @@ country_event = {
 		}
 	}
 }
+country_event = {
+	id = germany.8
+	title = germany.8.t
+	desc = germany.8.d
+	picture = GFX_Berlin_attack
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = germany.8.a
+		log = "[GetDateText]: [This.GetName]: germany.8.a executed"
+		custom_effect_tooltip = germany.8.a_desc
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = GER_BFV_GONE
+				}
+			}
+			custom_effect_tooltip = GER_increase_islamist_status_by_2
+			add_to_variable = { GER_islamist_department_status = 2 }
+		}
+		newline = yes
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = GER_BFV_GONE
+				}
+				OR = {
+					check_variable = { GER_islamist_department_status < 30 }
+					check_variable = { GER_islamist_spending_level = 1 }
+				}
+			}
+			custom_effect_tooltip = GER_due_to_low_dept_status
+			newline = yes
+			add_stability = -0.01
+		}
+		else = {
+			add_stability = -0.01
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = {
+		name = germany.8.b
+		log = "[GetDateText]: [This.GetName]: germany.8.b executed"
+		custom_effect_tooltip = germany.8.b_desc
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = GER_BFV_GONE
+				}
+			}
+			custom_effect_tooltip = GER_increase_rightist_status_by_2
+			add_to_variable = { GER_rightwing_department_status = 2 }
+		}
+		newline = yes
+		if = {
+			limit = {
+				check_variable = { GER_rightwing_department_status < 30 }
+				NOT = {
+					has_country_flag = GER_BFV_GONE
+				}
+			}
+			custom_effect_tooltip = GER_due_to_low_dept_status
+			newline = yes
+			add_stability = -0.02
+		}
+		else = {
+			add_stability = -0.02
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = GER_BFV_GONE
+				}
+			}
+			custom_effect_tooltip = GER_increase_islamist_status_by_2
+			add_to_variable = { GER_islamist_department_status = 2 }
+		}
+		newline = yes
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = GER_BFV_GONE
+				}
+				OR = {
+					check_variable = { GER_islamist_department_status < 30 }
+					check_variable = { GER_islamist_spending_level = 1 }
+				}
+			}
+			custom_effect_tooltip = GER_due_to_low_dept_status
+			newline = yes
+			add_stability = 0.01
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
 
 # Committee Of Inquiry Starts Its Investigation
 country_event = {
@@ -7839,6 +7942,9 @@ country_event = { #Flugabwehr
 	option = {	# mobilize units
 		name = Germany.590.a
 		log = "[GetDateText]: [This.GetName]: Germany.590.a executed"
+			set_temp_variable = { treasury_change = GER.gdp_per_capita }
+				multiply_temp_variable = { treasury_change = -0.26 }
+				modify_treasury_effect = yes
 				capital_scope = {
 					create_unit = {
 						division = "name =\"Flugabwehrraketengeschwader 3\" division_template = \"Flugabwehrraketengeschwader\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
@@ -7885,6 +7991,9 @@ country_event = { #Flugabwehr
 	option = {	# spread units
 		name = Germany.590.b
 		log = "[GetDateText]: [This.GetName]: Germany.590.b executed"
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+				multiply_temp_variable = { treasury_change = -0.20 }
+				modify_treasury_effect = yes
 		37 = {
 			remove_building = {
 				type = anti_air_building
@@ -16612,7 +16721,7 @@ country_event = {
 		name = germany_yearly.46.a
 		log = "[GetDateText]: [This.GetName]: germany_yearly.46.a executed"
 		hidden_effect = {
-			
+			country_event = { id = germany.8 days = 353 random_days = 1 }
 		}
 	}
 }
@@ -16702,5 +16811,412 @@ country_event = { #Creation of AfD
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.04 }
 		add_relative_party_popularity = yes
+	}
+}
+# BSE
+country_event = {
+	id = GER_agrar.1
+	title = GER_agrar.1.t
+	desc = GER_agrar.1.d
+	picture = GFX_BSE-Bild
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+	
+	option = { # BSE Arrive
+		name = GER_agrar.1.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.1.a executed"
+		custom_effect_tooltip = GER_agrar.1.a_desc
+		add_timed_idea = {
+			idea = GER_BSE_Crisis_I
+			days = 350
+		}
+		hidden_effect = {
+			country_event = {
+				id = GER_agrar.2
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+# React the Crisis
+country_event = {
+	id = GER_agrar.2
+	title = GER_agrar.2.t
+	desc = GER_agrar.2.d
+	picture = GFX_BSE-Bild
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+	
+	option = { # give subventions
+		name = GER_agrar.2.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.2.a executed"
+		custom_effect_tooltip = GER_agrar.2.a_desc
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.09 }
+			modify_treasury_effect = yes
+		add_stability = 0.02
+		
+		hidden_effect = {
+			country_event = {
+				id = GER_agrar.3
+				days = 30
+			}
+			remove_ideas = GER_BSE_Crisis_I
+			add_timed_idea = {
+				idea = GER_BSE_Crisis_II
+				days = 320
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # the market clean it self
+		name = GER_agrar.2.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.2.b executed"
+		custom_effect_tooltip = GER_agrar.2.b_desc
+		add_stability = -0.01
+		GER = {
+			37 = {
+				remove_building = {
+						type = agriculture_district
+						level = 1
+				} 
+			}
+		}
+		GER = {
+			38 = {
+				remove_building = {
+						type = agriculture_district
+						level = 1
+				} 
+			}
+		}
+		hidden_effect = {
+			country_event = {
+				id = GER_agrar.3
+				days = 30
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+#Handle the Crisi
+country_event = {
+	id = GER_agrar.3
+	title = GER_agrar.3.t
+	desc = GER_agrar.3.d
+	picture = GFX_BSE-Bild_II
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+	
+	option = { # investigate the reason
+		name = GER_agrar.3.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.3.a executed"
+		custom_effect_tooltip = GER_agrar.3.a_desc
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.04 }
+			modify_treasury_effect = yes
+		add_stability = 0.02
+		hidden_effect = {
+			country_event = {
+				id = GER_agrar.4
+				days = 120
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # blame the GB
+		name = GER_agrar.3.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.3.b executed"
+		custom_effect_tooltip = GER_agrar.3.b_desc
+		ENG = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = GER_blame_for_BSE
+			}
+		}
+		add_stability = 0.01
+		hidden_effect = {
+			country_event = {
+				id = GER_agrar.3
+				days = 120
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+#aftermath
+country_event = {
+	id = GER_agrar.4
+	title = GER_agrar.4.t
+	desc = GER_agrar.4.d
+	picture = GFX_BSE-Bild
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+	
+	option = { # subventions and controlls
+		name = GER_agrar.4.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.4.a executed"
+		custom_effect_tooltip = GER_agrar.4.a_desc
+		GER = {
+			38 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = agriculture_district
+					level = 2
+					instant_build = yes
+				} 
+			}
+		}
+		GER = {
+			539 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = agriculture_district
+					level = 1
+					instant_build = yes
+				} 
+			}
+		}
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.15 }
+			modify_treasury_effect = yes
+		add_stability = 0.02
+		ai_chance = {
+			base = 4
+		}
+	}
+
+	option = { # small subventiions
+		name = GER_agrar.4.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.4.b executed"
+		custom_effect_tooltip = GER_agrar.4.b_desc
+		GER = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = agriculture_district
+					level = 1
+					instant_build = yes
+				} 
+			}
+		}
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.09 }
+			modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 4
+		}
+	}
+}
+# Vogel Grippe
+country_event = {
+	id = GER_agrar.5
+	title = GER_agrar.5.t
+	desc = GER_agrar.5.d
+	picture = GFX_schweine_grippe
+
+	is_triggered_only = yes
+	
+	option = { # give subventions
+		name = GER_agrar.5.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.5.a executed"
+		custom_effect_tooltip = GER_agrar.5.a_desc
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.04 }
+			modify_treasury_effect = yes
+		add_stability = 0.02
+		
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_chicken_flu
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # the market clean it self
+		name = GER_agrar.5.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.5.b executed"
+		custom_effect_tooltip = GER_agrar.5.b_desc
+		add_stability = -0.01
+		GER = {
+			random_controlled_state = {
+				remove_building = {
+						type = agriculture_district
+						level = 1
+				} 
+			}
+		}
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_chicken_flu
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+# Schweine Grippe
+country_event = {
+	id = GER_agrar.6
+	title = GER_agrar.6.t
+	desc = GER_agrar.6.d
+	picture = GFX_schweine_grippe
+
+	is_triggered_only = yes
+	
+	option = { # give subventions
+		name = GER_agrar.6.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.6.a executed"
+		custom_effect_tooltip = GER_agrar.6.a_desc
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.04 }
+			modify_treasury_effect = yes
+		add_stability = 0.02
+		
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_swine_flu
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # the market clean it self
+		name = GER_agrar.6.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.6.b executed"
+		custom_effect_tooltip = GER_agrar.6.b_desc
+		add_stability = -0.01
+		GER = {
+			random_controlled_state = {
+				remove_building = {
+						type = agriculture_district
+						level = 1
+				} 
+			}
+		}
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_swine_flu
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+# Negotiate Subventions
+country_event = {
+	id = GER_agrar.7
+	title = GER_agrar.7.t
+	desc = GER_agrar.7.d
+	picture = GFX_Subventionen_du_bauer
+
+	immediate = {
+		hidden_effect = {
+			clr_country_flag = GER_subventions_I
+			clr_country_flag = GER_subventions_II
+			clr_country_flag = GER_subventions_III
+		}
+	}
+
+	is_triggered_only = yes
+	
+	option = { # small subventions
+		name = GER_agrar.7.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.7.a executed"
+		custom_effect_tooltip = GER_agrar.7.a_desc
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.022 }
+			modify_treasury_effect = yes
+		add_stability = -0.01
+		add_timed_idea = {
+				idea = GER_idea_Agriculture_I
+				days = 900
+			}
+			hidden_effect = {
+			country_event = {
+				id = GER_agrar.7
+				days = 950
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+	option = { # medium subventions
+		name = GER_agrar.7.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.7.b executed"
+		custom_effect_tooltip = GER_agrar.7.b_desc
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.043 }
+			modify_treasury_effect = yes
+		add_stability = 0.03
+		add_timed_idea = {
+				idea = GER_idea_Agriculture_II
+				days = 900
+			}
+			hidden_effect = {
+			country_event = {
+				id = GER_agrar.7
+				days = 950
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+	option = { # big subventions
+		name = GER_agrar.7.c
+		log = "[GetDateText]: [This.GetName]:GER_agrar.7.c executed"
+		custom_effect_tooltip = GER_agrar.7.c_desc
+		set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.061 }
+			modify_treasury_effect = yes
+		add_stability = 0.05
+		add_timed_idea = {
+				idea = GER_idea_Agriculture_III
+				days = 900
+			}
+			hidden_effect = {
+			country_event = {
+				id = GER_agrar.7
+				days = 950
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
 	}
 }
