@@ -1,84 +1,465 @@
-BRA_workers_party_alignment_decision_category = {
+BRA_amazon_conservation_system_decision_category = {
 
-	BRA_decision_support_radicals = {
+	BRA_decision_plant_additional_trees = {
+		icon = GFX_decision_Decision_tree_smol
+
 		cost = 50
-		icon = unknown
-		available = { has_government = communism }
 
-		days_remove = 7
+		days_remove = 45
 		days_re_enable = 45
-		fire_only_once = no
+
+		available = {
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_support_radicals"
-			subtract_from_variable = { BRA_brazilian_party_alignment = 5.0 }
-			custom_effect_tooltip = BRA_lowers_party_alignment_by_5_tt
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_plant_additional_trees"
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_plant_additional_trees"
+			set_temp_variable = { temp_change = 60 }
+			BRA_conserv_acreage_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 1
-
-			modifier = {
-				add = 3
-				is_historical_focus_on = yes
-			}
+			base = 25
 		}
 	}
 
-	BRA_decision_support_reformists = {
+	BRA_decision_declare_new_conservation_lands = {
+		icon = GFX_decision_generic_operation
+
 		cost = 50
-		icon = unknown
 
-		available = { has_government = communism }
-
-		days_remove = 7
+		days_remove = 45
 		days_re_enable = 45
-		fire_only_once = no
+
+		available = {
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_support_reformists"
-			add_to_variable = { BRA_brazilian_party_alignment = 5.0 }
-			custom_effect_tooltip = BRA_raise_party_alignment_by_5_tt
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_declare_new_conservation_lands"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_plant_additional_trees"
+			set_temp_variable = { temp_change = 20 }
+			BRA_conserv_acreage_effect = yes
+			set_temp_variable = { temp_change = -20 }
+			BRA_wild_acreage_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 2
+			base = 25
+		}
+	}
 
+	BRA_decision_establish_amazonian_national_park_service = {
+		icon = GFX_decision_eng_trade_unions_support
+
+		cost = 100
+
+		days_remove = 60
+		fire_only_once = yes
+
+		available = {
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		}
+		visible = {
+			NOT = { has_country_flag = BRA_established_amazon_park_service }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_establish_amazonian_national_park_service"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_establish_amazonian_national_park_service"
+			set_temp_variable = { temp_change = 25 }
+			BRA_acres_conserved_change_effect = yes
+			set_country_flag = BRA_established_amazon_park_service
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	BRA_decision_reduce_fires = {
+		icon = GFX_decision_fire
+
+		cost = 50
+
+		days_remove = 45
+		fire_only_once = yes
+
+		visible = {
+			owns_state = 892
+			892 = {
+				free_building_slots = {
+					building = infrastructure
+					size > 1
+					include_locked = no
+				}
+			}
+		}
+		available = {
+			892 = { infrastructure < 5 }
+			has_full_control_of_state = 892
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 892
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_reduce_fires"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_reduce_fires"
+			892 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			add_stability = 0.05
+ 		}
+
+		ai_will_do = {
+			base = 5
 			modifier = {
-				add = 3
+				add = 4
 				is_historical_focus_on = no
 			}
+			modifier = {
+				add = 5
+				has_stability < 0.25
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
-}
 
-BRA_amazon_resource_development_decision_category = {
+	BRA_decision_safe_mining_expansion = {
+		icon = GFX_decision_aluminium
+		cost = 100
 
-	BRA_decision_intial_investment = {
+		days_remove = 100
+		fire_only_once = yes
+
+		available = {
+			has_full_control_of_state = 892
+			has_full_control_of_state = 891
+		}
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 891
+				state = 892
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_safe_mining_expansion"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_safe_mining_expansion"
+			892 = {
+				add_resource = {
+					type = aluminium
+					amount = 8
+				}
+			}
+			891 = {
+				add_resource = {
+					type = aluminium
+					amount = 8
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 4
+				is_historical_focus_on = no
+			}
+			modifier = {
+				add = 5
+				check_variable = { resource_imported@aluminium > 6 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BRA_decision_expand_the_gold_mining_initiatives = {
+		icon = GFX_decision_rubber
+		cost = 100
+
+		days_remove = 100
+		fire_only_once = yes
+
+		available = {
+			has_full_control_of_state = 892
+			has_full_control_of_state = 891
+		}
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 891
+				state = 892
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_expand_the_gold_mining_initiatives"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_expand_the_gold_mining_initiatives"
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
+			892 = {
+				add_resource = {
+					type = chromium
+					amount = 12
+				}
+			}
+			891 = {
+				add_resource = {
+					type = chromium
+					amount = 12
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 4
+				is_historical_focus_on = no
+			}
+			modifier = {
+				add = 5
+				check_variable = { resource_imported@chromium > 6 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BRA_decision_expand_rubber_production_on_the_coast = {
+		icon = GFX_decision_chromium
+		cost = 100
+
+		days_remove = 100
+		fire_only_once = yes
+
+		available = {
+			has_full_control_of_state = 1024
+			has_full_control_of_state = 892
+		}
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 1024
+				state = 892
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_expand_rubber_production_on_the_coast"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_expand_rubber_production_on_the_coast"
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
+			891 = {
+				add_resource = {
+					type = rubber
+					amount = 16
+				}
+			}
+			1024 = {
+				add_resource = {
+					type = rubber
+					amount = 16
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 4
+				is_historical_focus_on = no
+			}
+			modifier = {
+				add = 5
+				check_variable = { resource_imported@chromium > 6 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	BRA_decision_halt_independent_developments = {
+		cost = 50
+
+		days_re_enable = 7
+
+		visible = {
+			has_completed_focus = BRA_legalize_independent_amazonian_development
+			has_country_flag = BRA_legalized_independent_development
+		}
+
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_halt_independent_developments"
+			clr_country_flag = BRA_legalized_independent_development
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	BRA_decision_continue_independent_developments = {
+		cost = 50
+
+		days_re_enable = 7
+
+		visible = {
+			has_completed_focus = BRA_legalize_independent_amazonian_development
+			NOT = { has_country_flag = BRA_legalized_independent_development }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_continue_independent_developments"
+			set_country_flag = BRA_legalized_independent_development
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	BRA_decision_permanently_ban_private_development = {
+		cost = 50
+
+		visible = {
+			NOT = { has_country_flag = BRA_banned_all_amazonian_private_development }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_permanently_ban_private_development"
+			set_country_flag = BRA_banned_all_amazonian_private_development
+			add_stability = 0.05
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				neutrality_neutral_green_are_in_power = yes
+			}
+			modifier = {
+				add = 3
+				has_stability < 0.35
+			}
+			modifier = {
+				add = 3
+				has_stability < 0.50
+			}
+		}
+	}
+
+	# Unlocks Decisions from Logging Reforms
+	BRA_decision_initial_investment = {
 
 		cost = 75
 
-		available = {
-			check_variable = { treasury	> 7.5 }
+		days_remove = 60
+		days_re_enable = 30
+
+		visible = {
+			has_completed_focus = BRA_amazonian_development_project
+			has_idea = BRA_idea_amazonian_development_project
+
+			AND = {
+				NOT = { has_country_flag = BRA_decision_tech_metal_industry_in_the_amazon }
+				NOT = { has_country_flag = BRA_increase_the_military_production }
+				NOT = { has_country_flag = BRA_increase_the_oil_production }
+				NOT = { has_country_flag = BRA_expand_the_mining_industry }
+				NOT = { has_country_flag = BRA_the_road_to_el_dorado }
+			}
 		}
 
-
-		days_remove = 30
-		days_re_enable = 1
-		fire_only_once = no
-
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_intial_investment"
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_initial_investment"
 			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 2
-
+			base = 5
 			modifier = {
-				add = 4
+				add = 5
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 5
+				has_full_control_of_state = 892
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { resource_imported@tungsten > 6 }
+					check_variable = { resource_imported@oil > 6 }
+					check_variable = { resource_imported@chromium > 6 }
+					check_variable = { resource_imported@steel > 6 }
+					check_variable = { resource_imported@rubber > 6 }
+				}
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -86,17 +467,37 @@ BRA_amazon_resource_development_decision_category = {
 	BRA_decision_the_road_to_el_dorado = {
 		cost = 75
 
+		days_remove = 45
+		fire_only_once = yes
+
+		visible = {
+			892 = { infrastructure < 5 }
+			has_completed_focus = BRA_amazonian_development_project
+			has_idea = BRA_idea_amazonian_development_project
+		}
 		available = {
 			has_full_control_of_state = 892
-			has_decision = BRA_decision_intial_investment
+			has_decision = BRA_decision_initial_investment
 		}
 
-		days_remove = 45
-		days_re_enable = 0
-		fire_only_once = yes
+		highlight_states = {
+			highlight_state_targets = {
+				state = 892
+			}
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_the_road_to_el_dorado"
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
+
+			set_country_flag = BRA_the_road_to_el_dorado
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_the_road_to_el_dorado"
 			892 = {
 				add_building_construction = {
 					type = infrastructure
@@ -106,257 +507,759 @@ BRA_amazon_resource_development_decision_category = {
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+			change_fossil_fuel_industry_opinion = yes
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 2
-
+			base = 1
+			modifier = {
+				add = 5
+				892 = { infrastructure < 5 }
+			}
 			modifier = {
 				add = 4
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 5
+				has_decision = BRA_decision_initial_investment
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
 
 	BRA_decision_expand_the_mining_industry = {
+		icon = GFX_decision_aluminium
 
 		cost = 100
 
+		days_remove = 100
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = BRA_amazonian_development_project
+			has_idea = BRA_idea_amazonian_development_project
+		}
 		available = {
 			has_full_control_of_state = 892
-			has_decision = BRA_decision_intial_investment
-			# has_idea = BRA_idea_initial_investiment
+			has_decision = BRA_decision_initial_investment
 		}
-
-		days_remove = 100
-		days_re_enable = 0
-		fire_only_once = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_expand_the_mining_industry"
-			add_resource = {
-				type = aluminium
-				amount = 6
-				state = 892
-			}
 			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
+
+			set_country_flag = BRA_expand_the_mining_industry
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_expand_the_mining_industry"
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
+			add_resource = {
+				type = aluminium
+				amount = 10
+				state = 892
+			}
 		}
 
 		ai_will_do = {
-			factor = 6
-
+			base = 6
 			modifier = {
 				add = 4
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 5
+				check_variable = { resource_imported@aluminium > 6 }
+			}
+			modifier = {
+				factor = 5
+				has_decision = BRA_decision_initial_investment
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
 
 	BRA_decision_increase_the_oil_production = {
+		icon = GFX_decision_oil
 
 		cost = 75
 
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = BRA_amazonian_development_project
+			has_idea = BRA_idea_amazonian_development_project
+		}
 		available = {
 			has_full_control_of_state = 891
-			has_decision = BRA_decision_intial_investment
-			# has_idea = BRA_idea_initial_investiment
+			has_decision = BRA_decision_initial_investment
 		}
 
-
-		days_remove = 90
-		days_re_enable = 0
-		fire_only_once = yes
+		highlight_states = {
+			highlight_state_targets = {
+				state = 891
+			}
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_increase_the_oil_production"
-			add_resource = {
-				type = oil
-				amount = 6
-				state = 891
-			}
 			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
+
+			set_country_flag = BRA_increase_the_oil_production
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_increase_the_oil_production"
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
+			add_resource = {
+				type = oil
+				amount = 12
+				state = 891
+			}
 		}
 
 		ai_will_do = {
-			factor = 6
-
+			base = 6
 			modifier = {
 				add = 4
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				add = 5
+				check_variable = { resource_imported@oil > 6 }
+			}
+			modifier = {
+				factor = 5
+				has_decision = BRA_decision_initial_investment
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
 
 	BRA_decision_increase_military_production = {
+		icon = GFX_decision_military_buildup
 
 		cost = 150
 
+		days_remove = 90
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = BRA_amazonian_development_project
+			has_idea = BRA_idea_amazonian_development_project
+			892 = {
+				free_building_slots = {
+					building = arms_factory
+					size > 1
+					include_locked = yes
+				}
+			}
+		}
 		available = {
 			has_full_control_of_state = 892
-			has_decision = BRA_decision_intial_investment
-			# has_idea = BRA_idea_initial_investiment
+			has_decision = BRA_decision_initial_investment
 		}
 
-		days_remove = 90
-		days_re_enable = 0
-		fire_only_once = yes
+		highlight_states = {
+			highlight_state_targets = {
+				state = 892
+			}
+		}
+
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_increase_military_production"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+
+			set_country_flag = BRA_increase_the_military_production
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_increase_military_production"
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
 			892 = {
+				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
 					type = arms_factory
 					level = 1
 					instant_build = yes
 				}
 			}
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 6
-
+			base = 6
+			modifier = {
+				add = 10
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				threat > 0.25
+			}
 			modifier = {
 				add = 4
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 5
+				has_decision = BRA_decision_initial_investment
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
 
 	BRA_decision_tech_metal_industry_in_the_amazon = {
+		icon = GFX_decision_tungsten
 
 		cost = 125
 
+		days_remove = 100
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = BRA_amazonian_development_project
+			has_idea = BRA_idea_amazonian_development_project
+		}
 		available = {
 			has_full_control_of_state = 892
-			has_decision = BRA_decision_intial_investment
-			# has_idea = BRA_idea_initial_investiment
+			has_decision = BRA_decision_initial_investment
 		}
 
-
-		days_remove = 100
-		days_re_enable = 0
-		fire_only_once = yes
+		highlight_states = {
+			highlight_state_targets = {
+				state = 892
+			}
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_tech_metal_industry_in_the_amazon"
 			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
+
+			set_country_flag = BRA_decision_tech_metal_industry_in_the_amazon
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_tech_metal_industry_in_the_amazon"
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
 			add_resource = {
 				type = tungsten
-				amount = 6
+				amount = 8
 				state = 892
 			}
 		}
 
 		ai_will_do = {
-			factor = 6
-
+			base = 6
+			modifier = {
+				add = 5
+				check_variable = { resource_imported@tungsten > 6 }
+			}
 			modifier = {
 				add = 4
 				is_historical_focus_on = yes
 			}
+			modifier = {
+				factor = 5
+				has_decision = BRA_decision_initial_investment
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 }
 
-BRA_car_wash_decision_category = {
+# Major Development Projects
+BRA_major_development_projects_decision_category = {
+	BRA_decision_transposition_saofrancisco = {
+		icon = GFX_decision_resource_production
 
-}
+		cost = 100
 
-#Amazon Protection
-BRA_amazon_protection_decision_category = {
-
-	BRA_decision_reduce_fires = {
-		cost = 75
-
-		available = {
-			has_full_control_of_state = 892
-			has_full_control_of_state = 891
-		}
-
-
-		days_remove = 45
-		days_re_enable = 0
+		days_remove = 150
 		fire_only_once = yes
 
+		visible = {
+			has_completed_focus = BRA_major_development_projects
+		}
+		available = {
+			has_full_control_of_state = 887
+		}
+
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_the_road_to_el_dorado"
-			set_temp_variable = { treasury_change = -3.5 }
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_transposition_saofrancisco"
+			add_manpower = -5000
+			add_command_power = -5
+			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
 		}
 
 		remove_effect = {
-			892 = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_transposition_saofrancisco"
+			887 = {
+				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
-					type = infrastructure
+					type = arms_factory
 					level = 1
 					instant_build = yes
 				}
 			}
-			add_stability = 0.05
-			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_reduce_fires"
- 		}
-		highlight_states = { }
+			add_manpower = 50000
+		}
 
 		ai_will_do = {
-			factor = 1
-
+			base = 40
 			modifier = {
-				add = 4
-				is_historical_focus_on = no
+				factor = 0
+				political_power_daily < 0.5
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
 
-	BRA_decision_safe_mining_expansion = {
+	BRA_decision_bacia_tocantins = {
+		icon = generic_construction
 
-		cost = 100
+		cost = 150
 
-		available = {
-			has_full_control_of_state = 892
-			has_full_control_of_state = 891
-		}
-
-
-		days_remove = 100
-		days_re_enable = 0
+		days_remove = 150
 		fire_only_once = yes
 
+		visible = {
+			has_completed_focus = BRA_major_development_projects
+			OR = {
+				890 = { infrastructure < 5 }
+				885 = { infrastructure < 5 }
+			}
+		}
+		available = {
+			has_full_control_of_state = 890
+			has_full_control_of_state = 885
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				OR = {
+					AND = {
+						state = 890
+						890 = { infrastructure < 5 }
+					}
+					AND = {
+						state = 885
+						885 = { infrastructure < 5 }
+					}
+				}
+			}
+		}
+
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_expand_the_mining_industry"
-			set_temp_variable = { treasury_change = -7.5 }
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_bacia_tocantins"
+			add_manpower = -5000
+			add_command_power = -5
+			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 		}
 
 		remove_effect = {
-			add_resource = {
-				type = aluminium
-				amount = 3
-				state = 892
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_bacia_tocantins"
+			if = {
+				limit = {
+					890 = { infrastructure < 5 }
+				}
+				890 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
 			}
-			add_resource = {
-				type = aluminium
-				amount = 3
-				state = 891
+			if = {
+				limit = {
+					885 = { infrastructure < 5 }
+				}
+				885 = {
+					add_building_construction = {
+						type = infrastructure
+						level = 1
+						instant_build = yes
+					}
+				}
 			}
-			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_expand_the_mining_industry"
- 		}
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = {
+				factor = 2
+				OR = {
+					885 = { infrastructure < 3 }
+					890 = { infrastructure < 3 }
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					885 = { infrastructure < 5 }
+					890 = { infrastructure < 5 }
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					political_power_daily < 0.5
+					has_active_mission = bankruptcy_incoming_collapse
+				}
+			}
+		}
+	}
+
+	BRA_decision_army_projects = {
+		icon = generic_construction
+
+		cost = 150
+
+		days_remove = 150
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = BRA_major_development_projects
+		}
+		available = {
+			has_full_control_of_state = 890
+			has_full_control_of_state = 885
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_army_projects"
+			add_manpower = -5000
+			add_command_power = -5
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_army_projects"
+			890 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			891 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = {
+				factor = 2
+				num_of_available_military_factories < 25
+			}
+			modifier = {
+				factor = 1.5
+				num_of_available_military_factories < 40
+			}
+			modifier = {
+				factor = 1.5
+				num_of_available_military_factories < 60
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					political_power_daily < 0.5
+					has_active_mission = bankruptcy_incoming_collapse
+				}
+			}
+		}
+	}
+
+	BRA_decision_improve_dockyards = {
+		icon = generic_construction
+
+		cost = 150
+
+		days_remove = 150
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = BRA_major_development_projects
+		}
+		available = {
+			has_full_control_of_state = 890
+			has_full_control_of_state = 885
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				OR = {
+					AND = {
+						state = 890
+						890 = {
+							free_building_slots = {
+								building = dockyard
+								size > 1
+								include_locked = yes
+							}
+						}
+					}
+					AND = {
+						state = 885
+						885 = {
+							free_building_slots = {
+								building = dockyard
+								size > 1
+								include_locked = yes
+							}
+						}
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_improve_dockyards"
+			add_manpower = -5000
+			add_command_power = -5
+			set_temp_variable = { treasury_change = 0 }
+			if = {
+				limit = {
+					890 = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+				}
+				add_to_temp_variable = { treasury_change = -8 }
+			}
+			if = {
+				limit = {
+					885 = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+				}
+				add_to_temp_variable = { treasury_change = -8 }
+			}
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_improve_dockyards"
+			if = {
+				limit = {
+					890 = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+				}
+				890 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			if = {
+				limit = {
+					885 = {
+						free_building_slots = {
+							building = dockyard
+							size > 1
+							include_locked = yes
+						}
+					}
+				}
+				885 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+		}
+
+
+		ai_will_do = {
+			base = 40
+			modifier = {
+				factor = 0
+				OR = {
+					political_power_daily < 0.5
+					has_active_mission = bankruptcy_incoming_collapse
+				}
+			}
+		}
+	}
+
+	BRA_decision_amazonian_projects = {
+		icon = generic_construction
+
+		cost = 150
+
+		days_remove = 150
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = BRA_major_development_projects
+		}
+		available = {
+			has_full_control_of_state = 892
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_amazonian_projects"
+			add_manpower = -5000
+			add_command_power = -15
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_change = -8 }
+			BRA_wild_acreage_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove BRA_decision_amazonian_projects"
+			892 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = {
+				factor = 0
+				OR = {
+					political_power_daily < 0.5
+					has_active_mission = bankruptcy_incoming_collapse
+				}
+			}
+		}
 	}
 }
 
-#Bolsonaro Alignment
+# Worker's Party Alignment
+BRA_workers_party_alignment_decision_category = {
+	BRA_decision_support_radicals = {
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 50
+
+		days_remove = 7
+		days_re_enable = 45
+
+		available = {
+			has_government = communism
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_support_radicals"
+			set_temp_variable = { temp_change = -5 }
+			BRA_worker_party_alignment_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 3
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	BRA_decision_support_reformists = {
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 50
+
+		days_remove = 7
+		days_re_enable = 45
+
+		available = {
+			has_government = communism
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_support_reformists"
+			set_temp_variable = { temp_change = 5 }
+			BRA_worker_party_alignment_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 3
+				is_historical_focus_on = no
+			}
+		}
+	}
+}
+
+# Bolsonaro Alignment
 BRA_bolsonaro_alignment_decision_category = {
 
 	BRA_decision_gatter_conservative_support = {
+		icon = generic_civil_support
 
 		cost = 50
-		icon = generic_civil_support
+
+		days_remove = 7
+		days_re_enable = 45
 
 		available = {
 			has_government = nationalist
@@ -364,11 +1267,6 @@ BRA_bolsonaro_alignment_decision_category = {
 				has_idea = BRA_idea_bolsonaro_conservative_influence
 			}
 		}
-
-
-		days_remove = 7
-		days_re_enable = 45
-		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_gatter_conservative_support"
@@ -380,8 +1278,7 @@ BRA_bolsonaro_alignment_decision_category = {
 		}
 
 		ai_will_do = {
-			factor = 1
-
+			base = 1
 			modifier = {
 				add = 3
 				is_historical_focus_on = yes
@@ -390,9 +1287,12 @@ BRA_bolsonaro_alignment_decision_category = {
 	}
 
 	BRA_decision_gatter_liberal_support = {
+		icon = eng_propaganda_campaigns
 
 		cost = 50
-		icon = eng_propaganda_campaigns
+
+		days_remove = 7
+		days_re_enable = 45
 
 		available = {
 			has_government = nationalist
@@ -400,10 +1300,6 @@ BRA_bolsonaro_alignment_decision_category = {
 				has_idea = BRA_idea_bolsonaro_liberal_influence
 			}
 		}
-
-		days_remove = 7
-		days_re_enable = 45
-		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_gatter_liberal_support"
@@ -416,8 +1312,7 @@ BRA_bolsonaro_alignment_decision_category = {
 
 
 		ai_will_do = {
-			factor = 2
-
+			base = 1
 			modifier = {
 				add = 3
 				is_historical_focus_on = no
@@ -426,19 +1321,17 @@ BRA_bolsonaro_alignment_decision_category = {
 	}
 
 	BRA_decision_support_private_sector = {
+		icon = generic_factory
 
 		cost = 50
-		icon = generic_factory
+
+		days_remove = 7
+		days_re_enable = 45
 
 		available = {
 			has_government = nationalist
 			NOT = { has_idea = BRA_idea_supporting_private_sector }
 		}
-
-
-		days_remove = 7
-		days_re_enable = 45
-		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_support_private_sector"
@@ -446,12 +1339,10 @@ BRA_bolsonaro_alignment_decision_category = {
 				idea = BRA_idea_supporting_private_sector
 				days = 730
 			}
-			custom_effect_tooltip = BRA_supporting_private_sector_tt
 		}
 
 		ai_will_do = {
-			factor = 1
-
+			base = 1
 			modifier = {
 				add = 3
 				is_historical_focus_on = no
@@ -460,9 +1351,12 @@ BRA_bolsonaro_alignment_decision_category = {
 	}
 
 	BRA_decision_support_militaries = {
+		icon = brazilian_guns
 
 		cost = 50
-		icon = brazilian_guns
+
+		days_remove = 7
+		days_re_enable = 45
 
 		available = {
 			has_government = nationalist
@@ -471,307 +1365,19 @@ BRA_bolsonaro_alignment_decision_category = {
 			}
 		}
 
-
-		days_remove = 7
-		days_re_enable = 45
-		fire_only_once = no
-
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_support_militaries"
 			add_timed_idea = {
 				idea = BRA_idea_supporting_military
 				days = 730
 			}
-			# custom_effect_tooltip = BRA_supporting_militaries_tt
 		}
 
 		ai_will_do = {
-			factor = 1
-
+			base = 1
 			modifier = {
 				add = 3
 				is_historical_focus_on = no
-			}
-		}
-	}
-}
-
-##Major development projects
-BRA_major_development_projects_decision_category = {
-	BRA_transposition_saofrancisco = {
-
-		icon = GFX_decision_resource_production
-
-		allowed = {
-			original_tag = BRA
-		}
-
-		available = {
-			has_full_control_of_state = 887
-			owns_state = 887
-		}
-
-		cost = 100
-		days_remove = 150
-		fire_only_once = yes
-
-		ai_will_do = {
-			factor = 40
-			modifier = {
-				political_power_daily < 0.5
-				factor = 0
-			}
-		}
-
-		visible = {
-			has_completed_focus = BRA_major_development_projects
-			original_tag = BRA
-		}
-
-		complete_effect = {
-			add_manpower = -5000
-			add_command_power = -5
-			set_temp_variable = { treasury_change = -30 }
-			modify_treasury_effect = yes
-		}
-		remove_effect = {
-			887 = {
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-			add_manpower = 50000
-		}
-	}
-	BRA_bacia_tocantins = {
-
-		icon = generic_construction
-
-		allowed = {
-			original_tag = BRA
-		}
-
-		available = {
-			has_full_control_of_state = 890
-			owns_state = 890
-			has_full_control_of_state = 885
-			owns_state = 885
-		}
-
-		cost = 150
-		days_remove = 150 fire_only_once = yes
-
-		ai_will_do = {
-			factor = 40
-			modifier = {
-				political_power_daily < 0.5
-				factor = 0
-			}
-		}
-
-		visible = {
-			has_completed_focus = BRA_major_development_projects
-			original_tag = BRA
-		}
-
-		complete_effect = {
-			add_manpower = -5000
-			add_command_power = -5
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
-		remove_effect = {
-
-			890 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-
-			885 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-	}
-	BRA_army_projects = {
-
-		icon = generic_construction
-
-		allowed = {
-			original_tag = BRA
-		}
-
-		available = {
-			has_full_control_of_state = 890
-			owns_state = 890
-			has_full_control_of_state = 885
-			owns_state = 885
-		}
-
-		cost = 150
-		days_remove = 150 fire_only_once = yes
-
-		ai_will_do = {
-			factor = 40
-			modifier = {
-				political_power_daily < 0.5
-				factor = 0
-			}
-		}
-
-		visible = {
-			has_completed_focus = BRA_major_development_projects
-			original_tag = BRA
-		}
-
-		modifier = { }
-
-		complete_effect = {
-			add_manpower = -5000
-			add_command_power = -5
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
-		remove_effect = {
-			890 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
-				}
-			}
-
-			891 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = arms_factory
-					level = 2
-					instant_build = yes
-				}
-			}
-		}
-	}
-	BRA_improve_dockyards = {
-
-		icon = generic_construction
-
-		allowed = {
-			original_tag = BRA
-		}
-
-		available = {
-			has_full_control_of_state = 890
-			owns_state = 890
-			has_full_control_of_state = 885
-			owns_state = 885
-		}
-
-		cost = 150
-		days_remove = 150 fire_only_once = yes
-
-		ai_will_do = {
-			factor = 40
-			modifier = {
-				political_power_daily < 0.5
-				factor = 0
-			}
-		}
-
-		visible = {
-			has_completed_focus = BRA_major_development_projects
-			original_tag = BRA
-		}
-
-		complete_effect = {
-			add_manpower = -5000
-			add_command_power = -5
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
-		remove_effect = {
-			883 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = dockyard
-					level = 2
-					instant_build = yes
-				}
-			}
-			889 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = dockyard
-					level = 2
-					instant_build = yes
-				}
-			}
-		}
-	}
-	BRA_amazonian_projects = {
-
-		icon = generic_construction
-
-		allowed = {
-			original_tag = BRA
-		}
-
-		available = {
-			has_full_control_of_state = 892
-			owns_state = 892
-		}
-
-		cost = 150
-		days_remove = 150
-		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = BRA_major_development_projects
-			original_tag = BRA
-		}
-
-		complete_effect = {
-			add_manpower = -5000
-			add_command_power = -5
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-		}
-
-		remove_effect = {
-
-			892 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 40
-			modifier = {
-				political_power_daily < 0.5
-				factor = 0
 			}
 		}
 	}
