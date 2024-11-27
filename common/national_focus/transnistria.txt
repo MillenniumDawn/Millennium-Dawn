@@ -8,7 +8,7 @@ focus_tree = {
 			tag = PMR
 		}
 	}
-	continuous_focus_position = { x = 1300 y = 2300 }
+	continuous_focus_position = { x = 800 y = 2300 }
 	focus = {
 		id = PMR_smirnov_era
 		icon = Smirnov_Era
@@ -51,8 +51,8 @@ focus_tree = {
 		id = PMR_economy
 		icon = pmr_economic
 
-		x = -18
-		y = 2
+		x = -9
+		y = 10
 		relative_position_id = PMR_smirnov_era
 
 		cost = 3
@@ -300,7 +300,7 @@ focus_tree = {
 		id = PMR_new_legistation
 		icon = Focus_Parliament_Constitution
 
-		x = -7
+		x = -6
 		y = 1
 		relative_position_id = PMR_economy
 
@@ -325,13 +325,13 @@ focus_tree = {
 		id = PMR_ukr_invest
 		icon = align_to_ukraine
 
-		x = -8
-		y = 2
+		x = -6
+		y = 3
 		relative_position_id = PMR_economy
 
 		cost = 5
 
-		prerequisite = { focus = PMR_new_legistation }
+		prerequisite = { focus = PMR_ge_invest }
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ECONOMY }
 
 		completion_reward = {
@@ -354,13 +354,13 @@ focus_tree = {
 		id = PMR_ita_invest
 		icon = align_to_italy
 
-		x = -7
-		y = 3
+		x = -6
+		y = 4
 		relative_position_id = PMR_economy
 
 		cost = 5
 
-		prerequisite = { focus = PMR_new_legistation }
+		prerequisite = { focus = PMR_ukr_invest }
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ECONOMY }
 
 		completion_reward = {
@@ -1618,15 +1618,27 @@ focus_tree = {
 	focus = {
 		id = PMR_military_reform
 		icon = pmr_nation
+
 		x = -2
 		y = 1
 		relative_position_id = PMR_krasno
-		prerequisite = { focus = PMR_krasno }
+
 		cost = 5
+
+		prerequisite = { focus = PMR_krasno }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+
 		available = {
 			neutrality_neutral_oligarch_are_in_power = yes
+			NOT = {
+				has_idea = PMR_reformed_army
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_HISTORIC }
+
+		bypass = {
+			has_idea = PMR_reformed_army
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_military_reform"
 			add_ideas = PMR_reformed_army
@@ -3674,7 +3686,7 @@ focus_tree = {
 	focus = {
 		id = PMR_vs_pmr
 		icon = pmr_soldier
-		x = 14
+		x = 9
 		y = 7
 		relative_position_id = PMR_smirnov_era
 		cost = 5
@@ -4219,35 +4231,510 @@ focus_tree = {
 		id = PMR_lebedev
 		icon = pmr_lebed_tiraspol
 
-		x = 8
-		y = 8
+		x = -18
+		y = 2
 		relative_position_id = PMR_smirnov_era
 
 		cost = 3
 
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_vs_pmr }
 
 		available = {
-			OR = {
-				has_completed_focus = PMR_spec
-				has_completed_focus = PMR_defence
-			}
-			has_completed_focus = PMR_vvs_rf
-			has_completed_focus = PMR_kazaks
+			nationalist_military_junta_are_in_power = yes
+			NOT = { has_country_flag = ded_lebed }
 		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_lebedev"
 			add_stability = -0.03
 			add_war_support = 0.07
-			if = {
-				limit = {
-					SOV = { NOT = { has_country_flag = ded_lebed } }
+			add_ideas = PMR_lebed_policy_idea
+			hidden_effect = {
+				if = {
+					limit = { PMR = { is_ai = yes } }
+					add_popularity = {
+						ideology = nationalist
+						popularity = 0.55
+					}
+					add_to_variable = { party_pop_array^22 = 0.75 }
+					recalculate_party = yes
+					add_to_variable = { party_pop_array^6 = -0.75 }
+					recalculate_party = yes
 				}
-				PMR = { country_event = transnistria.23 }
-				custom_effect_tooltip = PMR_lebed_ready_tt
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 22 } } }
+					set_temp_variable = { rul_party_temp = 22 }
+					set_temp_variable = { enable_elections = 0 }
+					change_ruling_party_effect = yes
+				}
+				set_temp_variable = { party_index = 22 }
+				set_temp_variable = { party_popularity_increase = 0.25 }
+				set_temp_variable = { temp_outlook_increase = 0.25 }
+				add_relative_party_popularity = yes
+				create_country_leader = {
+					name = "Alexander Lebed"
+					picture = "alexander_lebed.dds"
+					ideology = Nat_Autocracy
+					traits = {
+						nationalist_Nat_Autocracy
+					}
+				}
 			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_vs_reform
+		icon = pmr_nation
+
+		x = -2
+		y = 1
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_lebedev }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+			NOT = {
+				has_idea = PMR_reformed_army
+			}
+		}
+
+		bypass = {
+			has_idea = PMR_reformed_army
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_vs_reform"
+			add_ideas = PMR_reformed_army
+			add_doctrine_cost_reduction = {
+				name = SPR_the_new_tercio
+				category = CAT_land_doctrine
+				uses = 1
+				cost_reduction = 0.3
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_commies_goes_home
+		icon = anti_communism
+
+		x = -2
+		y = 2
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_vs_reform }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_commies_goes_home"
+			swap_ideas = {
+				remove_idea = PMR_lebed_policy_idea
+				add_idea = PMR_lebed_policy_idea1
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_support_nationalism
+		icon = pmr_support_nationalism
+
+		x = -1
+		y = 3
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_return_zavods }
+		prerequisite = { focus = PMR_commies_goes_home }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_support_nationalism"
+			swap_ideas = {
+				remove_idea = PMR_lebed_policy_idea1
+				add_idea = PMR_lebed_policy_idea2
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_reform_special_services
+		icon = pmr_mgb
+
+		x = 1
+		y = 3
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_return_zavods }
+		prerequisite = { focus = PMR_clean_corruption }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_reform_special_services"
+			add_ideas = PMR_reform_police_idea
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_transnistia_legion
+		icon = pmr_legion
+
+		x = 2
+		y = 4
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_reform_special_services }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_transnistia_legion"
+			add_ideas = PMR_legion_idea
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_ded_sheriff
+		icon = pmr_sheriff
+
+		x = 1
+		y = 5
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_transnistia_legion }
+		prerequisite = { focus = PMR_zapad_sosat }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+			has_idea = PMR_sheriff7
+		}
+
+		bypass = {
+			NOT = {
+				has_idea = PMR_sheriff7
+			}
+			has_country_flag = PMR_sheriff_finish
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_ded_sheriff"
+			remove_ideas = PMR_sheriff7
+			set_country_flag = PMR_sheriff_finish
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_militarize_young
+		icon = pmr_youth_arms
+
+		x = -1
+		y = 5
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_militarize_society }
+		prerequisite = { focus = PMR_zapad_sosat }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_militarize_young"
+			swap_ideas = {
+				remove_idea = PMR_lebed_policy_idea3
+				add_idea = PMR_lebed_policy_idea4
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_vpk
+		icon = army_tank_industry
+
+		x = 0
+		y = 6
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_ded_sheriff }
+		prerequisite = { focus = PMR_militarize_young }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_vpk"
+			one_random_arms_factory = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_zapad_sosat
+		icon = politic_anti_nato
+
+		x = 0
+		y = 4
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_reform_special_services }
+		prerequisite = { focus = PMR_support_nationalism }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_zapad_sosat"
+			add_ideas = PMR_anti_west_idea
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_militarize_society
+		icon = army_marching
+
+		x = -2
+		y = 4
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_support_nationalism }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_militarize_society"
+			swap_ideas = {
+				remove_idea = PMR_lebed_policy_idea2
+				add_idea = PMR_lebed_policy_idea3
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_army_corruption
+		icon = clear_generals
+
+		x = 0
+		y = 1
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_lebedev }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_army_corruption"
+			add_ideas = PMR_no_corrupt_army_idea
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_return_zavods
+		icon = economic_civil_industry
+
+		x = 0
+		y = 2
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_army_corruption }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_return_zavods"
+			one_random_industrial_complex = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_clean_government
+		icon = dominant_party
+
+		x = 2
+		y = 1
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_lebedev }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_clean_government"
+			add_ideas = PMR_corruption_dead_in_govern_idea
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_clean_corruption
+		icon = BLR_Anti_Corruption
+
+		x = 2
+		y = 2
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_clean_government }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_clean_corruption"
+			add_political_power = -100
+			decrease_corruption = yes
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.15
+			}
+			set_temp_variable = { party_index = 15 }
+			set_temp_variable = { party_popularity_increase = -0.15 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -4260,13 +4747,18 @@ focus_tree = {
 	focus = {
 		id = PMR_kishenev
 		icon = mol_and_tra_divide
+
 		x = -1
-		y = 1
+		y = 7
 		relative_position_id = PMR_lebedev
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_lebedev }
+		prerequisite = { focus = PMR_vpk }
+
 		available = {
+			nationalist_military_junta_are_in_power = yes
 			country_exists = MLV
 			MLV = {
 				influence_higher_20 = yes
@@ -4275,10 +4767,13 @@ focus_tree = {
 				NOT = { is_in_faction_with = PMR }
 			}
 		}
+
 		bypass = {
 			NOT = { country_exists = MLV }
 		}
+
 		will_lead_to_war_with = MLV
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_kishenev"
 			create_wargoal = {
@@ -4298,16 +4793,23 @@ focus_tree = {
 	focus = {
 		id = PMR_buharest
 		icon = attack_romania
+
 		x = -1
-		y = 2
+		y = 8
 		relative_position_id = PMR_lebedev
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
 		prerequisite = { focus = PMR_kishenev }
+
 		available = {
+			nationalist_military_junta_are_in_power = yes
 			country_exists = ROM
 		}
+
 		will_lead_to_war_with = ROM
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_buharest"
 			create_wargoal = {
@@ -4326,13 +4828,18 @@ focus_tree = {
 	focus = {
 		id = PMR_odessa
 		icon = attack_odessa
+
 		x = 1
-		y = 1
+		y = 7
 		relative_position_id = PMR_lebedev
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_lebedev }
+		prerequisite = { focus = PMR_vpk }
+
 		available = {
+			nationalist_military_junta_are_in_power = yes
 			UKR = {
 				influence_higher_20 = yes
 			}
@@ -4342,10 +4849,12 @@ focus_tree = {
 			}
 			NOT = { country_exists = OPR }
 		}
+
 		bypass = {
 			NOT = { country_exists = UKR }
 			country_exists = OPR
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_odessa"
 			set_temp_variable = { treasury_change = -1.0 }
@@ -4402,16 +4911,23 @@ focus_tree = {
 	focus = {
 		id = PMR_kiev
 		icon = attack_ukraine
+
 		x = 1
-		y = 2
+		y = 8
 		relative_position_id = PMR_lebedev
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
 		prerequisite = { focus = PMR_odessa }
+
 		available = {
+			nationalist_military_junta_are_in_power = yes
 			country_exists = UKR
 		}
+
 		will_lead_to_war_with = UKR
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_kiev"
 			create_wargoal = {
@@ -4430,8 +4946,8 @@ focus_tree = {
 	focus = {
 		id = PMR_path
 		icon = united_by_force
-		x = -14
-		y = 9
+		x = -19
+		y = 12
 		relative_position_id = PMR_smirnov_era
 		cost = 5
 		available = {
