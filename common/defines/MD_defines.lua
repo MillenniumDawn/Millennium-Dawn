@@ -143,7 +143,7 @@
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
 	-- Raid AI
-	NDefines.NAI.RAIDS_MIN_SUCCESS_FOR_LAUNCH = 0.15 -- 0.65 -- Scaled by 0.10 more for some reason
+	NDefines.NAI.RAIDS_MIN_SUCCESS_FOR_LAUNCH = 0.12 -- 0.65 -- Scaled by 0.10 more for some reason
 	NDefines.NAI.RAIDS_CREATE_FREQUENCEY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
 	NDefines.NAI.RAIDS_COMMAND_POWER_CAP_TO_CREATE = 60 -- 60
 	NDefines.NAI.RAIDS_CANCEL_AFTER_DAYS_LAUNCHABLE = 90 -- 60 -- Increased to give the AI more time to try and make a raid happen
