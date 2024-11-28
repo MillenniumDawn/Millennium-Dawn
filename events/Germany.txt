@@ -10,6 +10,7 @@ add_namespace = GER_News
 add_namespace = germany_nsu
 add_namespace = germany_party
 add_namespace = GER_agrar
+add_namespace = GER_Corruption
 
 ### Content
 # 1 - Investigate The NPD
@@ -2351,61 +2352,6 @@ country_event = {
 		add_political_power = -10
 	}
 }
-#thyssen_skandal trigger needed
-country_event = {
-	id = germany.67
-	title = germany.67.t
-	desc = germany.67.d
-	picture = GFX_Tank_factory
-
-	is_triggered_only = yes
-
-	immediate = {
-	}
-
-	option = { # Investigate corruption within ThyssenKrupp
-		name = germany.67.a
-		log = "[GetDateText]: [This.GetName]: germany.67.a executed"
-		add_stability = -0.03
-		add_political_power = -20
-	}
-
-	option = { # Downplay the scandal and protect the company
-		name = germany.67.b
-		log = "[GetDateText]: [This.GetName]: germany.67.b executed"
-		add_stability = -0.02
-		add_political_power = -10
-	}
-}
-
-country_event = {
-	id = germany.68
-	title = germany.68.t
-	desc = germany.68.d
-	picture = GFX_Tank_factory
-
-	is_triggered_only = yes
-
-	immediate = {
-	}
-
-	option = { # Hold those responsible accountable
-		name = germany.68.a
-		log = "[GetDateText]: [This.GetName]: germany.68.a executed"
-		add_stability = -0.03
-		add_political_power = 10
-	}
-
-	option = { # Shield ThyssenKrupp from further damage
-		name = germany.68.b
-		log = "[GetDateText]: [This.GetName]: germany.68.b executed"
-		add_stability = -0.02
-		add_political_power = -10
-	}
-}
-
-
-
 #NSU
 
 country_event = {
@@ -16423,7 +16369,6 @@ country_event = {
 			country_event = { id = germany.36 days = 1 random_days = 300 } #Berliner bank
 			country_event = { id = germany.49 days = 81 } #cebit 2001
 			country_event = { id = germany.46 days = 139 } #Berliner Rede
-			country_event = { id = GER_agrar.7 days = 120 random_days = 90 } 
 		}
 	}
 }
@@ -16449,7 +16394,6 @@ country_event = {
 			country_event = { id = Germany_Mech.28 days = 1 random_days = 360 } #Holzmann AG insolvent
 			country_event = { id = germany.59 days = 160 random_days = 360 }
 			country_event = { id = GER_Cold_War.9 days = 30 random_days = 360 } #Leopard 2 SPAIN
-			country_event = { id = GER_agrar.8 days = 120 random_days = 90 } 
 		}
 	}
 }
@@ -16825,13 +16769,6 @@ country_event = {
 	is_triggered_only = yes
 
 	fire_only_once = yes
-
-	immediate = {
-		hidden_effect = {
-			country_event = { id = GER_agrar.5 days = 1900 random_days = 560 } 
-			country_event = { id = GER_agrar.6 days = 1900 random_days = 360 } 
-		}
-	}
 	
 	option = { # BSE Arrive
 		name = GER_agrar.1.a
@@ -17046,17 +16983,6 @@ country_event = {
 	desc = GER_agrar.5.d
 	picture = GFX_schweine_grippe
 
-	immediate = {
-		hidden_effect = {
-			Random_list = {
-				30 = { country_event = { id = GER_agrar.5 days = 1200 random_days = 360 } }
-				30 = { country_event = { id = GER_agrar.5 days = 1900 random_days = 360 } }
-				20 = { country_event = { id = GER_agrar.5 days = 2600 random_days = 360 } }
-				20 = { }
-			}
-		}
-	}
-
 	is_triggered_only = yes
 	
 	option = { # give subventions
@@ -17109,17 +17035,6 @@ country_event = {
 	title = GER_agrar.6.t
 	desc = GER_agrar.6.d
 	picture = GFX_schweine_grippe
-
-	immediate = {
-		hidden_effect = {
-			Random_list = {
-				30 = { country_event = { id = GER_agrar.6 days = 1200 random_days = 360 } }
-				30 = { country_event = { id = GER_agrar.6 days = 1900 random_days = 360 } }
-				20 = { country_event = { id = GER_agrar.6 days = 2600 random_days = 360 } }
-				20 = { }
-			}
-		}
-	}
 
 	is_triggered_only = yes
 	
@@ -17288,6 +17203,679 @@ country_event = {
 				idea = GER_idea_Mining_III
 				days = 900
 			}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+#corruption 
+#ThyssenKrupp Marine
+country_event = {
+	id = GER_Corruption.01
+	title = GER_Corruption.01.t
+	desc = GER_Corruption.01.d
+	picture = GFX_report_event_Corruption_1
+
+	is_triggered_only = yes
+
+	option = { # full investigation
+		name = GER_Corruption.01.a
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.01.a executed"
+		custom_effect_tooltip = GER_Corruption.01.a_desc
+		add_stability = 0.03
+		if = {
+			limit = {
+				NOT = {
+					has_idea = negligible_corruption
+				}
+				else = {
+					NOT = {
+						has_idea = slight_corruption
+					}
+				}
+			}
+			decrease_corruption = yes
+		}
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = {
+				has_dlc = "Arms Against Tyranny"
+			}
+			mio:GER_thyssenkrupp_marine_naval_manufacturer = {
+				add_mio_research_bonus = -0.1
+				add_mio_funds_gain_factor = -0.1
+			}
+		}
+	}
+
+	option = { # moderate fine
+		name = GER_Corruption.01.b
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.01.b executed"
+		custom_effect_tooltip = GER_Corruption.01.b_desc
+		add_stability = 0.01
+		add_political_power = -10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+	}
+
+	option = { # conceal for a few bucks
+		name = GER_Corruption.01.c
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.01.c executed"
+		custom_effect_tooltip = GER_Corruption.01.c_desc
+		add_stability = -0.02
+		increase_corruption = yes
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.24 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.055 }
+		set_temp_variable = { temp_outlook_increase = -0.055 }
+		add_relative_party_popularity = yes
+	}
+}
+#KMW
+country_event = {
+	id = GER_Corruption.02
+	title = GER_Corruption.02.t
+	desc = GER_Corruption.02.d
+	picture = GFX_report_event_Corruption_1
+
+	is_triggered_only = yes
+
+	option = { # full investigation
+		name = GER_Corruption.02.a
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.02.a executed"
+		custom_effect_tooltip = GER_Corruption.02.a_desc
+		add_stability = 0.03
+		if = {
+			limit = {
+				NOT = {
+					has_idea = negligible_corruption
+				}
+				else = {
+					NOT = {
+						has_idea = slight_corruption
+					}
+				}
+			}
+			decrease_corruption = yes
+		}
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = {
+				has_dlc = "Arms Against Tyranny"
+			}
+			mio:GER_krauss_maffei_tank_manufacturer = {
+				add_mio_research_bonus = -0.1
+				add_mio_funds_gain_factor = -0.1
+			}
+		}
+	}
+
+	option = { # moderate fine
+		name = GER_Corruption.02.b
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.02.b executed"
+		custom_effect_tooltip = GER_Corruption.02.b_desc
+		add_stability = 0.01
+		add_political_power = -10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+	}
+
+	option = { # conceal for a few bucks
+		name = GER_Corruption.02.c
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.02.c executed"
+		custom_effect_tooltip = GER_Corruption.02.c_desc
+		add_stability = -0.02
+		increase_corruption = yes
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.24 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.055 }
+		set_temp_variable = { temp_outlook_increase = -0.055 }
+		add_relative_party_popularity = yes
+	}
+}
+#Rheinmetall
+country_event = {
+	id = GER_Corruption.03
+	title = GER_Corruption.03.t
+	desc = GER_Corruption.03.d
+	picture = GFX_report_event_Corruption_1
+
+	is_triggered_only = yes
+
+	option = { # full investigation
+		name = GER_Corruption.03.a
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.03.a executed"
+		custom_effect_tooltip = GER_Corruption.03.a_desc
+		add_stability = 0.03
+		if = {
+			limit = {
+				NOT = {
+					has_idea = negligible_corruption
+				}
+				else = {
+					NOT = {
+						has_idea = slight_corruption
+					}
+				}
+			}
+			decrease_corruption = yes
+		}
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = {
+				has_dlc = "Arms Against Tyranny"
+			}
+			mio:GER_rheinmetall_tank_manufacturer = {
+				add_mio_research_bonus = -0.1
+				add_mio_funds_gain_factor = -0.1
+			}
+		}
+	}
+
+	option = { # moderate fine
+		name = GER_Corruption.03.b
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.03.b executed"
+		custom_effect_tooltip = GER_Corruption.03.b_desc
+		add_stability = 0.01
+		add_political_power = -10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+	}
+
+	option = { # conceal for a few bucks
+		name = GER_Corruption.03.c
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.03.c executed"
+		custom_effect_tooltip = GER_Corruption.03.c_desc
+		add_stability = -0.03
+		increase_corruption = yes
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.24 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.055 }
+		set_temp_variable = { temp_outlook_increase = -0.055 }
+		add_relative_party_popularity = yes
+	}
+}
+#HK
+country_event = {
+	id = GER_Corruption.04
+	title = GER_Corruption.04.t
+	desc = GER_Corruption.04.d
+	picture = GFX_report_event_Corruption_1
+
+	is_triggered_only = yes
+
+	option = { # full investigation
+		name = GER_Corruption.04.a
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.04.a executed"
+		custom_effect_tooltip = GER_Corruption.04.a_desc
+		add_stability = 0.03
+		if = {
+			limit = {
+				NOT = {
+					has_idea = negligible_corruption
+				}
+				else = {
+					NOT = {
+						has_idea = slight_corruption
+					}
+				}
+			}
+			decrease_corruption = yes
+		}
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = {
+				has_dlc = "Arms Against Tyranny"
+			}
+			mio:GER_heckler_koch_materiel_manufacturer = {
+				add_mio_research_bonus = -0.1
+				add_mio_funds_gain_factor = -0.1
+			}
+		}
+	}
+
+	option = { # moderate fine
+		name = GER_Corruption.04.b
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.04.b executed"
+		custom_effect_tooltip = GER_Corruption.04.b_desc
+		add_stability = 0.01
+		add_political_power = -10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+	}
+
+	option = { # conceal for a few bucks
+		name = GER_Corruption.04.c
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.04.c executed"
+		custom_effect_tooltip = GER_Corruption.04.c_desc
+		add_stability = -0.04
+		increase_corruption = yes
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.24 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.055 }
+		set_temp_variable = { temp_outlook_increase = -0.055 }
+		add_relative_party_popularity = yes
+	}
+}
+#Airbus
+country_event = {
+	id = GER_Corruption.05
+	title = GER_Corruption.05.t
+	desc = GER_Corruption.05.d
+	picture = GFX_report_event_Corruption_1
+
+	is_triggered_only = yes
+
+	option = { # full investigation
+		name = GER_Corruption.05.a
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.05.a executed"
+		custom_effect_tooltip = GER_Corruption.05.a_desc
+		add_stability = 0.03
+		if = {
+			limit = {
+				NOT = {
+					has_idea = negligible_corruption
+				}
+				else = {
+					NOT = {
+						has_idea = slight_corruption
+					}
+				}
+			}
+			decrease_corruption = yes
+		}
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = {
+				has_dlc = "Arms Against Tyranny"
+			}
+			mio:GER_airbus_defence_aircraft_manufacturer = {
+				add_mio_research_bonus = -0.1
+				add_mio_funds_gain_factor = -0.1
+			}
+		}
+	}
+
+	option = { # moderate fine
+		name = GER_Corruption.05.b
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.05.b executed"
+		custom_effect_tooltip = GER_Corruption.05.b_desc
+		add_stability = 0.01
+		add_political_power = -10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		add_relative_party_popularity = yes
+	}
+
+	option = { # conceal for a few bucks
+		name = GER_Corruption.05.c
+		log = "[GetDateText]: [This.GetName]: GER_Corruption.05.c executed"
+		custom_effect_tooltip = GER_Corruption.05.c_desc
+		add_stability = -0.03
+		increase_corruption = yes
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.24 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.055 }
+		set_temp_variable = { temp_outlook_increase = -0.055 }
+		add_relative_party_popularity = yes
+	}
+}
+
+# Schweine Grippe
+country_event = {
+	id = GER_agrar.9
+	title = GER_agrar.9.t
+	desc = GER_agrar.9.d
+	picture = GFX_schweine_grippe
+
+	is_triggered_only = yes
+	
+	option = { # strict rules
+		name = GER_agrar.9.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.9.a executed"
+		custom_effect_tooltip = GER_agrar.9.a_desc
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.20 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		add_relative_party_popularity = yes
+		
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_Q_fever
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # public avareness
+		name = GER_agrar.9.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.9.b executed"
+		custom_effect_tooltip = GER_agrar.9.b_desc
+		add_stability = 0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.12 }
+			modify_treasury_effect = yes
+		add_political_power = -10
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_Q_fever
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # aviod panic
+		name = GER_agrar.9.c
+		log = "[GetDateText]: [This.GetName]:GER_agrar.9.c executed"
+		custom_effect_tooltip = GER_agrar.9.c_desc
+		add_stability = -0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.06 }
+			modify_treasury_effect = yes
+		add_political_power = -5
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_Q_fever
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# Restricted Substances
+country_event = {
+	id = GER_agrar.10
+	title = GER_agrar.10.t
+	desc = GER_agrar.10.d
+	picture = GFX_schweine_grippe
+
+	is_triggered_only = yes
+	
+	option = { # strict rules
+		name = GER_agrar.10.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.10.a executed"
+		custom_effect_tooltip = GER_agrar.10.a_desc
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.20 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		add_relative_party_popularity = yes
+		
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_banned_pesticid_used
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # public avareness
+		name = GER_agrar.10.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.10.b executed"
+		custom_effect_tooltip = GER_agrar.10.b_desc
+		add_stability = 0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.12 }
+			modify_treasury_effect = yes
+		add_political_power = -10
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_banned_pesticid_used
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # aviod panic
+		name = GER_agrar.10.c
+		log = "[GetDateText]: [This.GetName]:GER_agrar.10.c executed"
+		custom_effect_tooltip = GER_agrar.10.c_desc
+		add_stability = -0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.06 }
+			modify_treasury_effect = yes
+		add_political_power = -5
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_banned_pesticid_used
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# H5N8
+country_event = {
+	id = GER_agrar.11
+	title = GER_agrar.11.t
+	desc = GER_agrar.11.d
+	picture = GFX_schweine_grippe
+
+	is_triggered_only = yes
+	
+	option = { # strict rules
+		name = GER_agrar.11.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.11.a executed"
+		custom_effect_tooltip = GER_agrar.11.a_desc
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.20 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		add_relative_party_popularity = yes
+		
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_H5N8
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # public avareness
+		name = GER_agrar.11.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.11.b executed"
+		custom_effect_tooltip = GER_agrar.11.b_desc
+		add_stability = 0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.12 }
+			modify_treasury_effect = yes
+		add_political_power = -10
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_H5N8
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # aviod panic
+		name = GER_agrar.11.c
+		log = "[GetDateText]: [This.GetName]:GER_agrar.11.c executed"
+		custom_effect_tooltip = GER_agrar.11.c_desc
+		add_stability = -0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.06 }
+			modify_treasury_effect = yes
+		add_political_power = -5
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_H5N8
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# MKS
+country_event = {
+	id = GER_agrar.12
+	title = GER_agrar.12.t
+	desc = GER_agrar.12.d
+	picture = GFX_schweine_grippe
+
+	is_triggered_only = yes
+	
+	option = { # strict rules
+		name = GER_agrar.12.a
+		log = "[GetDateText]: [This.GetName]:GER_agrar.12.a executed"
+		custom_effect_tooltip = GER_agrar.12.a_desc
+		add_stability = 0.02
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.20 }
+			modify_treasury_effect = yes
+		add_political_power = -20
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		add_relative_party_popularity = yes
+		
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_Foot_and_moooouuuhhh
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # public avareness
+		name = GER_agrar.12.b
+		log = "[GetDateText]: [This.GetName]:GER_agrar.12.b executed"
+		custom_effect_tooltip = GER_agrar.12.b_desc
+		add_stability = 0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.12 }
+			modify_treasury_effect = yes
+		add_political_power = -10
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_Foot_and_moooouuuhhh
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = { # aviod panic
+		name = GER_agrar.12.c
+		log = "[GetDateText]: [This.GetName]:GER_agrar.12.c executed"
+		custom_effect_tooltip = GER_agrar.12.c_desc
+		add_stability = -0.01
+		set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = 0.06 }
+			modify_treasury_effect = yes
+		add_political_power = -5
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		set_temp_variable = { temp_outlook_increase = -0.02 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			add_timed_idea = {
+				idea = GER_idea_Foot_and_moooouuuhhh
+				days = 60
+			}
+		}
 		ai_chance = {
 			base = 3
 		}
