@@ -1,190 +1,279 @@
-PLPC_is_on = {
-	has_game_rule = {
-		rule = allow_player_led_PC
-		option = yes
-	}
-}
+# GAME RULE TRIGGERS
+	# PLAYER LED PEACE DEALS
+		PLPC_is_on = {
+			has_game_rule = {
+				rule = allow_player_led_PC
+				option = yes
+			}
+		}
+		PLPC_is_off = {
+			has_game_rule = {
+				rule = allow_player_led_PC
+				option = no
+			}
+		}
+	# CHAOTIC PEACE DEALS
+		CPC_is_on = {
+			has_game_rule = {
+				rule = allow_chaotic_PC
+				option = yes
+			}
+		}
+		CPC_is_off = {
+			has_game_rule = {
+				rule = allow_chaotic_PC
+				option = no
+			}
+		}
+	# CONDITIONAL PEACE DEALS
+		CPD_are_allowed = {
+			has_game_rule = {
+				rule = allowed_CPD
+				option = yes
+			}
+		}
+# CONDITIONAL PEACE DEAL TRIGGERS
+	# AI SPECIFIC TRIGGERS
+		CPD_AI_will_offer_peace = { always = no }
+		CPD_AI_will_accept = { # this is just for some display shit, will make this work later
+			# BASE ACCEPTANCE
+			set_temp_variable = { CPD_acceptance_temp = -100 }
 
-PLPC_is_off = {
-	has_game_rule = {
-		rule = allow_player_led_PC
-		option = no
-	}
-}
+			# OTHER CHECKS IN HERE
 
-CPC_is_on = {
-	has_game_rule = {
-		rule = allow_chaotic_PC
-		option = yes
-	}
-}
+			# FINAL CHECK
+			check_variable = { CPD_acceptance_temp > 0 }
+		}
+	# OTHER TRIGGERS
+		CPD_calculate_province_cost = {
+			if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+				# COST MODIFIERS
+					if = {
+						limit = {
+							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+							is_core_of = ROOT
+						}
+						divide_temp_variable = { CPD_VP_temp = 2 }
+					}
+					else_if = {
+						limit = {
+							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+							is_claimed_by = ROOT
+						}
+						divide_temp_variable = { CPD_VP_temp = 1.5 }
+					}
+			}
+			else_if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					divide_temp_variable = { CPD_VP_temp = 2 }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+			}
+			else_if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					divide_temp_variable = { CPD_VP_temp = 4 }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+			}
+			else_if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					divide_temp_variable = { CPD_VP_temp = 3 }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+			}
+			if = {
+				limit = { is_owned_and_controlled_by = THIS.owner }
+				multiply_temp_variable = { CPD_VP_temp = 2 }
+			}
+			always = yes
+		}
 
-CPC_is_off = {
-	has_game_rule = {
-		rule = allow_chaotic_PC
-		option = no
-	}
-}
 
-CPC_off_western = {
-	ROOT = { has_government = democratic }
-	FROM = { has_government = democratic }
-}
 
-CPC_off_emerging = {
-	ROOT = { has_government = communism }
-	FROM = { has_government = communism }
-}
 
-CPC_off_salafist = {
-	ROOT = { has_government = fascism }
-	FROM = { has_government = fascism }
-}
 
-CPC_off_non_aligned = {
-	ROOT = { has_government = neutrality }
-	FROM = { has_government = neutrality }
-}
 
-CPC_off_nationalist = {
-	ROOT = { has_government = nationalist }
-	FROM = { has_government = nationalist }
-}
-
-# ERI_is_ethiopian_again = {
-# 	if = {
-# 		limit = {
-# 			NOT = { has_global_flag = ETH_victory_ERI }
-# 			ROOT = { original_tag = ERI }
-# 			FROM = { original_tag = ETH }
-# 		}
-# 	}
-# }
-
-LBA_was_original_state = {
-	OR = {
-		state = 391
-		state = 392
-		state = 393
-		state = 395
-		state = 396
-		state = 397
-		state = 579
-		state = 918
-		state = 919
-		state = 920
-		state = 1100
-		state = 1101
-	}
-}
-
-LBA_salafist_claim = {
-	OR = {
-		state = 85
-		state = 187
-		state = 327
-		state = 329
-		state = 330
-		state = 366
-		state = 370
-		state = 379
-		state = 381
-		state = 382
-		state = 394
-		state = 413
-		state = 1108
-		state = 1163
-		state = 1164
-		state = 1165
-		state = 1167
-	}
-}
-
-NIG_was_boko_haramed = {
-	OR = {
-		original_tag = BEN
-		original_tag = CAM
-		original_tag = CAR
-		original_tag = EGU
-		original_tag = NGR
-		original_tag = TOG
-	}
-}
-
-NIG_state_was_boko_haramed = {
-	OR = {
-		is_core_of = BEN
-		is_core_of = CAM
-		is_core_of = CAR
-		is_core_of = EGU
-		is_core_of = NGR
-		is_core_of = TOG
-	}
-}
-
-NOV_is_novorossiya_tag = {
-	OR = {
-		original_tag = CRM
-		original_tag = DPR
-		original_tag = HPR
-		original_tag = LPR
-		original_tag = NOV
-		original_tag = OPR
-	}
-}
-
-NOV_is_novorossiya_state = {
-	OR = {
-		state = 333
-		state = 693
-		state = 694
-		state = 695
-		state = 696
-		state = 1030
-		state = 1075
-		state = 1076
-		state = 1085
-		state = 1086
-		state = 1087
-	}
-}
-
-PAL_palestinian_state = {
-	OR = {
-		state = 204
-		state = 205
-		state = 206
-		state = 207
-		state = 208
-		state = 209
-	}
-}
-
-SER_is_yugoslav_nation = {
-	OR = {
-		original_tag = BOS
-		original_tag = CRO
-		original_tag = FYR
-		original_tag = HZG
-		original_tag = KOS
-		original_tag = MNT
-		original_tag = RSK
-		original_tag = SLV
-		original_tag = VOJ
-	}
-}
-
-SOV_fucked_around_and_found_out = {
-	if = {
-		limit = {
-			NOT = {
-				has_game_rule = {
-					rule = rule_disable_nato
-					option = no
+# FOR COUNTRY SPECIFIC PEACE DEALS WITH TOTAL WARS
+	# ERITREA
+		# unsure why it was commented out but will leave it as such
+		# until i remember wtf this was for, leave it be
+		#
+		# ERI_is_ethiopian_again = {
+		# 	if = {
+		# 		limit = {
+		# 			NOT = { has_global_flag = ETH_victory_ERI }
+		# 			ROOT = { original_tag = ERI }
+		# 			FROM = { original_tag = ETH }
+		# 		}
+		# 	}
+		# }
+	# LIBYA
+		LBA_was_original_state = {
+			OR = {
+				state = 391
+				state = 392
+				state = 393
+				state = 395
+				state = 396
+				state = 397
+				state = 579
+				state = 918
+				state = 919
+				state = 920
+				state = 1100
+				state = 1101
+			}
+		}
+		LBA_salafist_claim = {
+			OR = {
+				state = 85
+				state = 187
+				state = 327
+				state = 329
+				state = 330
+				state = 366
+				state = 370
+				state = 379
+				state = 381
+				state = 382
+				state = 394
+				state = 413
+				state = 1108
+				state = 1163
+				state = 1164
+				state = 1165
+				state = 1167
+			}
+		}
+	# NIGERIA
+		NIG_was_boko_haramed = {
+			OR = {
+				original_tag = BEN
+				original_tag = CAM
+				original_tag = CAR
+				original_tag = EGU
+				original_tag = NGR
+				original_tag = TOG
+			}
+		}
+		NIG_state_was_boko_haramed = {
+			OR = {
+				is_core_of = BEN
+				is_core_of = CAM
+				is_core_of = CAR
+				is_core_of = EGU
+				is_core_of = NGR
+				is_core_of = TOG
+			}
+		}
+	# NOVOROSSIYA
+		NOV_is_novorossiya_tag = {
+			OR = {
+				original_tag = CRM
+				original_tag = DPR
+				original_tag = HPR
+				original_tag = LPR
+				original_tag = NOV
+				original_tag = OPR
+			}
+		}
+		NOV_is_novorossiya_state = {
+			OR = {
+				state = 333
+				state = 693
+				state = 694
+				state = 695
+				state = 696
+				state = 1030
+				state = 1075
+				state = 1076
+				state = 1085
+				state = 1086
+				state = 1087
+			}
+		}
+	# PALESTINE
+		PAL_palestinian_state = {
+			OR = {
+				state = 204
+				state = 205
+				state = 206
+				state = 207
+				state = 208
+				state = 209
+			}
+		}
+	# SERBIA
+		SER_is_yugoslav_nation = {
+			OR = {
+				original_tag = BOS
+				original_tag = CRO
+				original_tag = FYR
+				original_tag = HZG
+				original_tag = KOS
+				original_tag = MNT
+				original_tag = RSK
+				original_tag = SLV
+				original_tag = VOJ
+			}
+		}
+	# RUSSIA
+		SOV_fucked_around_and_found_out = {
+			if = {
+				limit = {
+					NOT = {
+						has_game_rule = {
+							rule = rule_disable_nato
+							option = no
+						}
+					}
+					ROOT = { original_tag = SOV }
+					FROM = { has_idea = NATO_member }
 				}
 			}
-			ROOT = { original_tag = SOV }
-			FROM = { has_idea = NATO_member }
 		}
-	}
-}
+# MISCELLANEOUS TRIGGERS
+	# CHAOTIC PEACE DEAL TRIGGERS
+		CPC_off_western = {
+			ROOT = { has_government = democratic }
+			FROM = { has_government = democratic }
+		}
+		CPC_off_emerging = {
+			ROOT = { has_government = communism }
+			FROM = { has_government = communism }
+		}
+		CPC_off_salafist = {
+			ROOT = { has_government = fascism }
+			FROM = { has_government = fascism }
+		}
+		CPC_off_non_aligned = {
+			ROOT = { has_government = neutrality }
+			FROM = { has_government = neutrality }
+		}
+		CPC_off_nationalist = {
+			ROOT = { has_government = nationalist }
+			FROM = { has_government = nationalist }
+		}
