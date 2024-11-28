@@ -4446,7 +4446,9 @@ country_event = { # Tajikistan Increases Narcotics Flow Into Our Markets
 		log = "[GetDateText]: [This.GetName]: tajik_corruption.21.a executed"
 		custom_effect_tooltip = TAJ_increase_cost_by_2_TT
 		add_to_variable = { var = TAJ_drugs_police_modifier value = 0.02 }
+		clamp_variable = { var = TAJ_drugs_police_modifier min = 0 max = 0.99 }
 		add_to_variable = { var = TAJ_corruption_drugs_modifier value = 0.02 }
+		clamp_variable = { var = TAJ_corruption_drugs_modifier min = 0 max = 0.99 }
 		random_list = {
 			30 = {
 				add_stability = -0.01
@@ -4526,12 +4528,6 @@ country_event = { # Tajikistan Threatens to Lower Border Security!
 	option = { # Do this one more time and see what happens
 		name = tajik_corruption.23.c
 		log = "[GetDateText]: [This.GetName]: tajik_corruption.23.c executed"
-		TAJ = {
-			country_event = {
-				id = tajik_corruption.26
-				days = 2
-			}
-		}
 		trigger = {
 			TAJ = {
 				NOT = {
@@ -4539,8 +4535,38 @@ country_event = { # Tajikistan Threatens to Lower Border Security!
 				}
 			}
 		}
+		set_country_flag = SOV_attack_if_repeated_TAJ
+		TAJ = {
+			country_event = {
+				id = tajik_corruption.26
+				days = 2
+			}
+		}
 		ai_chance = {
 			base = 1
+		}
+	}
+
+	option = { #War
+		name = tajik_corruption.23.c1
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.23.c1 executed"
+		trigger = {
+			TAJ = {
+				NOT = {
+					has_idea = CSTO_member
+				}
+			}
+			has_country_flag = SOV_attack_if_repeated_TAJ
+		}
+		create_wargoal = {
+			target = TAJ
+			type = annex_everything
+		}
+		TAJ = {
+			country_event = tajik_corruption.27
+		}
+		ai_chance = {
+			base = 100
 		}
 	}
 }
@@ -4555,7 +4581,32 @@ country_event = { # Russia Grants Economic Support
 	option = { # Fine
 		name = tajik_corruption.24.a
 		log = "[GetDateText]: [This.GetName]: tajik_corruption.24.a executed"
-
+		set_temp_variable = { percent_change = 1.00 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = TAJ }
+		change_influence_percentage = yes
+		random_list = {
+			25 = {
+				custom_effect_tooltip = TAJ_boost_to_inf_cont_TT
+				add_to_variable = { var = production_speed_infrastructure_factor value = 0.02 }
+				clamp_variable = { var = production_speed_infrastructure_factor min = 0 max = 0.99 }
+			}
+			25 = {
+				custom_effect_tooltip = TAJ_boost_to_resources_TT
+				add_to_variable = { var = TAJ_russian_money_resources value = 0.02 }
+				clamp_variable = { var = TAJ_russian_money_resources min = 0 max = 0.99 }
+			}
+			25 = {
+				custom_effect_tooltip = TAJ_boost_to_pp_TT
+				add_to_variable = { var = TAJ_russian_money_political_power value = 0.02 }
+				clamp_variable = { var = TAJ_russian_money_political_power min = 0 max = 0.99 }
+			}
+			25 = {
+				custom_effect_tooltip = TAJ_boost_to_resources_TT
+				add_to_variable = { var = global_building_slots_factor value = 0.02 }
+				clamp_variable = { var = global_building_slots_factor min = 0 max = 0.99 }
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -4592,6 +4643,76 @@ country_event = { # Russia Threatens Us!
 
 		ai_chance = {
 			base = 1
+		}
+	}
+}
+
+country_event = { # Russia Angered
+	id = tajik_corruption.27
+	title = tajik_corruption.27.t
+	desc = tajik_corruption.27.d
+
+	is_triggered_only = yes
+
+	option = { # We'll Remember That
+		name = tajik_corruption.27.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.27.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Russian Ultimatum
+	id = tajik_corruption.28
+	title = tajik_corruption.28.t
+	desc = tajik_corruption.28.d
+
+	is_triggered_only = yes
+
+	option = { # We'll Remember That
+		name = tajik_corruption.28.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.28.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Tajikistan Fails to Comply
+	id = tajik_corruption.29
+	title = tajik_corruption.29.t
+	desc = tajik_corruption.29.d
+
+	is_triggered_only = yes
+
+	option = { # We'll Remember That
+		name = tajik_corruption.29.a
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.29.a executed"
+		if = {
+			limit = {
+				TAJ = {
+					is_in_faction_with = SOV
+				}
+			}
+			remove_from_faction = TAJ
+		}
+		create_wargoal = {
+			target = TAJ
+			type = puppet_wargoal_focus
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = { # We'll Remember That
+		name = tajik_corruption.29.b
+		log = "[GetDateText]: [This.GetName]: tajik_corruption.29.b executed"
+		ai_chance = {
+			base = 0
 		}
 	}
 }
