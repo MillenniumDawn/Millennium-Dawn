@@ -1042,6 +1042,15 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SOV_nord_stream2_sov_idea }
 		}
 	}
+	# Kazakhstan
+	if = {
+		limit = { original_tag = KAZ }
+		if = {
+			limit = { has_idea = SOV_baikonur_kaz_idea }
+			set_variable = { additional_income_SOV_baikonur_kaz_idea = 0.055 }
+			add_to_variable = { additional_income_rate = additional_income_SOV_baikonur_kaz_idea }
+		}
+	}
 	# Wagner
 	if = {
 		limit = { original_tag = WAG }
@@ -1355,6 +1364,15 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_evergreen = EGY.current_evergreen_capacity }
 			multiply_variable = { additional_income_evergreen = 0.1 }
 			add_to_variable = { additional_income_rate = additional_income_evergreen }
+		}
+	}
+	#ISRAEL
+	if = {
+		limit = { original_tag = ISR }
+		if = {
+			limit = { has_idea = civ_guns_exports }
+			set_variable = { additional_income_civ_guns = 0.484 }
+			add_to_variable = { additional_income_rate = additional_income_civ_guns  }
 		}
 	}
 	#Libya
@@ -3206,6 +3224,15 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_BLR_oil_russian_positive }
 		}
 	}
+	# Russia
+	if = {
+		limit = { original_tag = SOV }
+		if = {
+			limit = { has_idea = SOV_baikonur_sov_kaz_idea }
+			set_variable = { additional_expense_SOV_baikonur_sov_kaz_idea = 0.055 }
+			add_to_variable = { additional_expenses_rate = additional_expense_SOV_baikonur_sov_kaz_idea }
+		}
+	}
 	# Ukraine
 	if = {
 		limit = { original_tag = UKR }
@@ -3257,6 +3284,35 @@ calculate_additional_expense_rate = {
 				has_dynamic_modifier = { modifier = FRA_idea_nepad_modifier }
 			}
 			add_to_variable = { additional_expenses_rate = FRA.FRA_nepad_sponsor_weekly_cost }
+		}
+	}
+
+	if = {
+		limit = { original_tag = ISR }
+		if = {
+			limit = { has_idea = israeli_intelligenc_idea }
+			set_variable = { additional_spend_mossad = -0.215 }
+			add_to_variable = { additional_income_rate = additional_spend_mossad }
+		}
+		if = {
+			limit = { has_idea = israeli_intelligenc2_idea }
+			set_variable = { additional_spend_mossad = -0.415 }
+			add_to_variable = { additional_income_rate = additional_spend_mossad }
+		}
+		if = {
+			limit = { has_idea = israeli_intelligenc3_idea }
+			set_variable = { additional_spend_mossad = -0.615 }
+			add_to_variable = { additional_income_rate = additional_spend_mossad }
+		}
+		if = {
+			limit = { has_idea = israeli_intelligenc3_idea }
+			set_variable = { additional_spend_mossad = -0.615 }
+			add_to_variable = { additional_income_rate = additional_spend_mossad }
+		}
+		if = {
+			limit = { has_idea = ISR_gay_parades }
+			set_variable = { additional_earn_lgbt = 0.488 }
+			add_to_variable = { additional_income_rate = additional_earn_lgbt }
 		}
 	}
 	# Czech Republic
@@ -3650,6 +3706,7 @@ update_state_variables = {
 		every_controlled_state = {
 			add_to_temp_variable = { PREV.num_missile_silo = building_level@rocket_site }
 			add_to_temp_variable = { PREV.num_anti_air_building = building_level@anti_air_building }
+			add_to_variable = { PREV.total_number_of_controlled_states = 1 }
 			add_to_variable = { PREV.rocket_sites = building_level@rocket_site }
 			add_to_variable = { PREV.anti_air_building = buildling_level@anti_air_building }
 			add_to_variable = { PREV.agriculture_district_total = building_level@agriculture_district }
@@ -3844,7 +3901,7 @@ calculate_gdp = {
 	subtract_from_temp_variable = { workforce_total = agriculture_workers }
 
 	# Factories & Offices Employment
-	set_temp_variable = { workers_per_civ_fac = 0.360 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
+	set_temp_variable = { workers_per_civ_fac = 0.345 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
 	set_temp_variable = { workers_per_mil_fac = 0.025 }
 	set_temp_variable = { workers_per_dockyard = 0.025 }
 	set_temp_variable = { workers_per_office = 0.630 }
@@ -3858,9 +3915,12 @@ calculate_gdp = {
 	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
 	clamp_temp_variable = { var = mil_facs_worker_requirement_multiplier min = 0.10 }
 
+	multiply_temp_variable = { workers_per_mil_fac = mil_facs_worker_requirement_multiplier }
+	set_variable = { workers_per_mil_fac_display = workers_per_mil_fac }
+	multiply_variable = { workers_per_mil_fac_display = 1000 }
+
 	set_temp_variable = { max_workers_in_mil_facs = military_fac }
 	multiply_temp_variable = { max_workers_in_mil_facs = workers_per_mil_fac }
-	multiply_temp_variable = { max_workers_in_mil_facs = mil_facs_worker_requirement_multiplier }
 	set_variable = { workers_in_mil_facs = max_workers_in_mil_facs }
 	clamp_variable = {
 		var = workers_in_mil_facs
@@ -3874,9 +3934,12 @@ calculate_gdp = {
 		set_variable = { military_factories_manpower_fulfillment = 1 }
 	}
 
+	multiply_temp_variable = { workers_per_dockyard = mil_facs_worker_requirement_multiplier }
+	set_variable = { workers_per_dockyard_display = workers_per_dockyard }
+	multiply_variable = { workers_per_dockyard_display = 1000 }
+
 	set_temp_variable = { max_workers_in_dockyards = dockyard_fac }
 	multiply_temp_variable = { max_workers_in_dockyards = workers_per_dockyard }
-	multiply_temp_variable = { max_workers_in_dockyards = mil_facs_worker_requirement_multiplier }
 	set_variable = { workers_in_dockyards = max_workers_in_dockyards }
 	clamp_variable = {
 		var = workers_in_dockyards
@@ -3893,6 +3956,7 @@ calculate_gdp = {
 	set_temp_variable = { worker_requirement_gdp_multiplier = 3 }
 	divide_temp_variable = { worker_requirement_gdp_multiplier = temp_gdp_per_capita }
 	add_to_temp_variable = { worker_requirement_gdp_multiplier = 1 }
+	set_variable = { workers_requirement_gdp_multiplier_display = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_civ_fac = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_office = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_agriculture_district = worker_requirement_gdp_multiplier }
@@ -3901,9 +3965,13 @@ calculate_gdp = {
 	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
 	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
 	clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 }
+
+	multiply_temp_variable = { workers_per_civ_fac = civ_facs_worker_requirement_multiplier }
+	set_variable = { workers_per_civ_fac_display = workers_per_civ_fac }
+	multiply_variable = { workers_per_civ_fac_display = 1000 }
+
 	set_temp_variable = { max_workers_in_civ_facs = industrial_complex_total }
 	multiply_temp_variable = { max_workers_in_civ_facs = workers_per_civ_fac }
-	multiply_temp_variable = { max_workers_in_civ_facs = civ_facs_worker_requirement_multiplier }
 	set_variable = { workers_in_civ_facs = max_workers_in_civ_facs }
 	clamp_variable = {
 		var = workers_in_civ_facs
@@ -3921,9 +3989,13 @@ calculate_gdp = {
 	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@offices_worker_requirement_modifier }
 	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
 	clamp_temp_variable = { var = offices_worker_requirement_multiplier min = 0.10 }
+
+	multiply_temp_variable = { workers_per_office = offices_worker_requirement_multiplier }
+	set_variable = { workers_per_office_display = workers_per_office }
+	multiply_variable = { workers_per_office_display = 1000 }
+
 	set_temp_variable = { max_workers_in_offices = office_park_total }
 	multiply_temp_variable = { max_workers_in_offices = workers_per_office }
-	multiply_temp_variable = { max_workers_in_offices = offices_worker_requirement_multiplier }
 	set_variable = { workers_in_offices = max_workers_in_offices }
 	clamp_variable = {
 		var = workers_in_offices
@@ -3941,9 +4013,14 @@ calculate_gdp = {
 	add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@agriculture_district_worker_requirement_modifier }
 	add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
 	clamp_temp_variable = { var = agriculture_district_worker_requirement_multiplier min = 0.10 }
+
+	multiply_temp_variable = { workers_per_agriculture_district = agriculture_district_worker_requirement_multiplier }
+	set_variable = { workers_per_agriculture_district_display = workers_per_agriculture_district }
+	multiply_variable = { workers_per_agriculture_district_display = 1000 }
+
 	set_temp_variable = { max_workers_in_agriculture_district = agriculture_district_total }
 	multiply_temp_variable = { max_workers_in_agriculture_district = workers_per_agriculture_district }
-	multiply_temp_variable = { max_workers_in_agriculture_district = agriculture_district_worker_requirement_multiplier }
+
 	set_variable = { workers_in_agriculture_district = max_workers_in_agriculture_district }
 	clamp_variable = {
 		var = workers_in_agriculture_district
