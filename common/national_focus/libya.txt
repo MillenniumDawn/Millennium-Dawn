@@ -1176,15 +1176,29 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-					has_idea = intelligence_community
+					NOT = { has_idea = the_ulema }
 				}
-				swap_ideas = {
-					add_idea = the_ulema
-					remove_idea = intelligence_community
+				if = {
+					limit = { has_idea = intelligence_community }
+					swap_ideas = {
+						add_idea = the_ulema
+						remove_idea = intelligence_community
+					}
 				}
-			}
-			else = {
-				add_ideas = the_ulema
+				else_if = {
+					limit = { has_idea = the_military }
+					swap_ideas = {
+						add_idea = the_ulema
+						remove_idea = the_military
+					}
+				}
+				else_if = {
+					limit = { has_idea = fossil_fuel_industry }
+					swap_ideas = {
+						add_idea = the_ulema
+						remove_idea = fossil_fuel_industry
+					}
+				}
 			}
 		}
 
@@ -2138,7 +2152,7 @@ focus_tree = {
 			85 = {
 				add_dynamic_modifier = {
 					modifier = LBA_immigration_target
-					days = 365
+					days = 360
 				}
 			}
 		}
@@ -3172,12 +3186,28 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-					has_idea = intelligence_community
 					NOT = { has_idea = labour_unions }
 				}
-				swap_ideas = {
-					add_idea = labour_unions
-					remove_idea = intelligence_community
+				if = {
+					limit = { has_idea = intelligence_community }
+					swap_ideas = {
+						add_idea = labour_unions
+						remove_idea = intelligence_community
+					}
+				}
+				else_if = {
+					limit = { has_idea = the_military }
+					swap_ideas = {
+						add_idea = labour_unions
+						remove_idea = the_military
+					}
+				}
+				else_if = {
+					limit = { has_idea = fossil_fuel_industry }
+					swap_ideas = {
+						add_idea = labour_unions
+						remove_idea = fossil_fuel_industry
+					}
 				}
 			}
 			hidden_effect = { news_event = { id = LibyaFocusNews.4 hours = 6 } }
@@ -3843,9 +3873,17 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_federation"
-			custom_effect_tooltip = LBA_federation_tt
-			hidden_effect = { lba_disable_tribalism = yes }
-			set_country_flag = LBA_tribalism_disabled
+			if = {
+				limit = {
+					NOT = { has_country_flag = LBA_tribalism_disabled }
+				}
+				custom_effect_tooltip = LBA_federation_tt
+				hidden_effect = { lba_disable_tribalism = yes }
+				set_country_flag = LBA_tribalism_disabled
+			}
+			else = {
+				add_political_power = 200
+			}
 			set_cosmetic_tag = LBA_LIBYAN_FEDERATION
 		}
 
@@ -3872,10 +3910,29 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_minority_rights"
 			if = {
-				limit = { has_idea = the_Military }
-				swap_ideas = {
-					remove_idea = the_Military
-					add_idea = landowners
+				limit = {
+					NOT = { has_idea = landowners }
+				}
+				if = {
+					limit = { has_idea = the_military }
+					swap_ideas = {
+						add_idea = landowners
+						remove_idea = the_military
+					}
+				}
+				else_if = {
+					limit = { has_idea = fossil_fuel_industry }
+					swap_ideas = {
+						add_idea = landowners
+						remove_idea = fossil_fuel_industry
+					}
+				}
+				else_if = {
+					limit = { has_idea = labour_unions }
+					swap_ideas = {
+						add_idea = landowners
+						remove_idea = labour_unions
+					}
 				}
 			}
 			swap_ideas = {
@@ -7206,7 +7263,7 @@ focus_tree = {
 				}
 				add_state_modifier = {
 					modifier = {
-						monthly_population = 0.15
+						state_productivity_growth_modifier = 0.15
 					}
 				}
 			}
@@ -7732,6 +7789,11 @@ focus_tree = {
 			FOCUS_FILTER_INDUSTRY
 		}
 
+		available = {
+			western_liberals_are_not_in_power = yes
+			neutrality_neutral_libertarians_are_not_in_power = yes
+		}
+
 		ai_will_do = {
 			factor = 10
 			modifier = {
@@ -7799,6 +7861,11 @@ focus_tree = {
 
 		search_filters = {
 			FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE
+		}
+
+		available = {
+			western_liberals_are_not_in_power = yes
+			neutrality_neutral_libertarians_are_not_in_power = yes
 		}
 
 		ai_will_do = {
@@ -7972,6 +8039,11 @@ focus_tree = {
 			FOCUS_FILTER_INDUSTRY
 		}
 
+		available = {
+			western_liberals_are_not_in_power = yes
+			neutrality_neutral_libertarians_are_not_in_power = yes
+		}
+
 		ai_will_do = {
 			factor = 10
 			modifier = {
@@ -8032,6 +8104,10 @@ focus_tree = {
 
 		search_filters = {
 			FOCUS_FILTER_INDUSTRY
+		}
+
+		bypass = {
+			has_country_flag = libya_noc_dismantled
 		}
 
 		ai_will_do = {
@@ -8139,6 +8215,11 @@ focus_tree = {
 
 		search_filters = {
 			FOCUS_FILTER_INDUSTRY
+		}
+
+		available = {
+			western_liberals_are_not_in_power = yes
+			neutrality_neutral_libertarians_are_not_in_power = yes
 		}
 
 		ai_will_do = {
@@ -8252,6 +8333,11 @@ focus_tree = {
 			FOCUS_FILTER_INDUSTRY
 		}
 
+		available = {
+			western_liberals_are_not_in_power = yes
+			neutrality_neutral_libertarians_are_not_in_power = yes
+		}
+
 		ai_will_do = {
 			factor = 10
 		}
@@ -8340,11 +8426,43 @@ focus_tree = {
 			}
 			else_if = {
 				limit = { has_completed_focus = LBA_continue_nationalised_economy }
-				libya_increase_nationalisation_5 = yes
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
+				random_owned_controlled_state = {
+					limit = {
+						NOT = { has_state_category = state_military_base }
+						NOT = { has_state_category = state_inhospitable }
+					}
+					add_resource = {
+						type = aluminium
+						amount = 4
+					}
+					add_resource = {
+						type = tungsten
+						amount = 4
+					}
+					libya_tribal_loyalty_from_building = yes
+				}
 			}
 			else_if = {
 				limit = { has_completed_focus = LBA_liberalise_economy }
-				libya_decrease_nationalisation_5 = yes
+				set_temp_variable = { treasury_change = -7.5 }
+				modify_treasury_effect = yes
+				random_owned_controlled_state = {
+					limit = {
+						NOT = { has_state_category = state_military_base }
+						NOT = { has_state_category = state_inhospitable }
+					}
+					add_resource = {
+						type = rubber
+						amount = 4
+					}
+					add_resource = {
+						type = chromium
+						amount = 4
+					}
+					libya_tribal_loyalty_from_building = yes
+				}
 			}
 		}
 
@@ -13854,6 +13972,14 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				factor = 1.5
+				has_government = democratic
+			}
+			modifier = {
+				factor = 0.5
+				NOT = { has_government = democratic }
+			}
 		}
 
 		completion_reward = {
@@ -13911,6 +14037,14 @@ focus_tree = {
 
 		ai_will_do = {
 			factor = 10
+			modifier = {
+				factor = 0.5
+				has_government = democratic
+			}
+			modifier = {
+				factor = 1.5
+				NOT = { has_government = democratic }
+			}
 		}
 
 		completion_reward = {
@@ -14669,6 +14803,681 @@ focus_tree = {
 			remove_ideas = LBA_cyrenaican_oil_expertise
 			remove_ideas = LBA_fezzani_desert_expertise
 			add_ideas = LBA_tribal_union
+		}
+
+	}
+
+	focus = {
+		id = LBA_free_libya
+		icon = expand_finance_ministry
+		cost = 7
+		prerequisite = {
+			focus = LBA_end_of_gaddafi
+		}
+		x = 8
+		y = 1
+		relative_position_id = LBA_end_of_gaddafi
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_free_libya"
+			increase_economic_growth = yes
+		}
+
+	}
+	focus = {
+		id = LBA_emergency_privatisation
+		icon = radical_tax_reform
+		cost = 10
+		prerequisite = {
+			focus = LBA_free_libya
+		}
+		x = -2
+		y = 1
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_emergency_privatisation"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.075 }
+			multiply_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = LBA_emergency_privatisation_tt
+			add_to_variable = { lba_oil_nationalisation = -0.20 }
+			clamp_variable = {
+				var = lba_oil_nationalisation
+				max = 0
+			}
+			libya_update_nationalisation = yes
+		}
+
+	}
+	focus = {
+		id = LBA_multi_party_cabinet
+		icon = KHM_democratic_coalition
+		cost = 7
+		prerequisite = {
+			focus = LBA_free_libya
+		}
+		x = 0
+		y = 1
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+			OR = {
+				western_autocrats_are_in_coalition = yes
+				western_conservatism_are_in_coalition = yes
+				western_social_democrats_are_in_coalition = yes
+				emerging_communist_state_are_in_coalition = yes
+				emerging_anarchist_communism_are_in_coalition = yes
+				emerging_reactionaries_are_in_coalition = yes
+				emerging_autocracy_are_in_coalition = yes
+				emerging_moderate_shiite_are_in_coalition = yes
+				emerging_hardline_shiite_are_in_coalition = yes
+				salafist_kingdom_are_in_coalition = yes
+				salafist_caliphate_are_in_coalition = yes
+				neutrality_neutral_muslim_brotherhood_are_in_coalition = yes
+				neutrality_neutral_autocracy_are_in_coalition = yes
+				neutrality_neutral_conservatism_are_in_coalition = yes
+				neutrality_neutral_oligarch_are_in_coalition = yes
+				neutrality_neutral_green_are_in_coalition = yes
+				neutrality_neutral_social_are_in_coalition = yes
+				neutrality_neutral_communism_are_in_coalition = yes
+				nationalist_right_wing_populists_are_in_coalition = yes
+				nationalist_fascist_are_in_coalition = yes
+				nationalist_military_junta_are_in_coalition = yes
+				nationalist_monarchists_are_in_coalition = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_multi_party_cabinet"
+			add_ideas = LBA_multiple_parties_in_cabinet
+		}
+
+	}
+	focus = {
+		id = LBA_guarantee_freedoms
+		icon = Fight_for_Freedom
+		cost = 7
+		prerequisite = {
+			focus = LBA_free_libya
+		}
+		x = 2
+		y = 1
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_multi_party_cabinet"
+			add_ideas = LBA_guaranteed_freedom
+		}
+
+	}
+	focus = {
+		id = LBA_attract_private_oil_companies
+		icon = royal_dutch_shell
+		cost = 5
+		prerequisite = {
+			focus = LBA_emergency_privatisation
+		}
+		x = -3
+		y = 2
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_attract_private_oil_companies"
+			custom_effect_tooltip = LBA_attract_private_oil_companies_tt
+			unlock_decision_tooltip = libya_develop_oil_fields_with_foreign_aid
+		}
+
+	}
+	focus = {
+		id = LBA_allow_private_farming
+		icon = goal_JAP_agrarian_reform
+		cost = 10
+		prerequisite = {
+			focus = LBA_emergency_privatisation
+		}
+		x = -1
+		y = 2
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_allow_private_farming"
+			add_ideas = LBA_private_agriculture_encouraged
+			set_temp_variable = { treasury_change = -3.75 }
+			modify_treasury_effect = yes
+			if = {
+				limit = {
+					NOT = { check_variable = { total_unemployed_percentage_display > 0 } }
+				}
+				set_temp_variable = { temp_productivity_change = 30 }
+				flat_productivity_change_effect = yes
+			}
+			else = {
+				random_owned_state = {
+					limit = {
+						free_building_slots = {
+							building = agriculture_district
+							size > 0
+							include_locked = yes
+						}
+						NOT = { has_state_category = state_military_base }
+						NOT = { has_state_category = state_inhospitable }
+						is_coastal = yes
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = agriculture_district
+						level = 1
+						instant_build = yes
+					}
+					libya_tribal_loyalty_from_building = yes
+				}
+			}
+		}
+
+	}
+	focus = {
+		id = LBA_freedom_of_conscience
+		icon = religious_unity
+		cost = 5
+		prerequisite = {
+			focus = LBA_guarantee_freedoms
+		}
+		x = 1
+		y = 2
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_freedom_of_conscience"
+			set_temp_variable = { temp_modify_social_con_government = -20 }
+			modify_social_conservatism_government = yes
+		}
+
+	}
+	focus = {
+		id = LBA_free_prisoners
+		icon = pro_immigration2
+		cost = 5
+		prerequisite = {
+			focus = LBA_guarantee_freedoms
+		}
+		x = 3
+		y = 2
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_free_prisoners"
+			add_political_power = 200
+		}
+
+	}
+	focus = {
+		id = LBA_dismantle_noc
+		icon = seize_oil
+		cost = 10
+		prerequisite = {
+			focus = LBA_attract_private_oil_companies
+		}
+		x = -4
+		y = 3
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_dismantle_noc"
+			set_temp_variable = { temp_productivity_change = 10 }
+			flat_productivity_change_effect = yes
+			set_country_flag = libya_noc_dismantled
+			custom_effect_tooltip = LBA_dismantle_noc_tt
+			remove_dynamic_modifier = { modifier = libya_oil_nationalisation_dynamic_modifier }
+			if = {
+				limit = { has_idea = fossil_fuel_industry }
+				if = {
+					limit = { NOT = { has_idea = international_bankers } }
+					swap_ideas = {
+						add_idea = international_bankers
+						remove_idea = fossil_fuel_industry
+					}
+				}
+				else_if = {
+					limit = { NOT = { has_idea = industrial_conglomerates } }
+					swap_ideas = {
+						add_idea = industrial_conglomerates
+						remove_idea = fossil_fuel_industry
+					}
+				}
+				else = {
+					swap_ideas = {
+						add_idea = maritime_industry
+						remove_idea = fossil_fuel_industry
+					}
+				}
+			}
+			hidden_effect = {
+				if = {
+					limit = {
+						OR = {
+							NOT = { country_exists = TRP }
+							TRP = { is_subject_of = ROOT }
+						}
+					}
+					remove_dynamic_modifier = { modifier = libya_oil_nationalisation_dynamic_modifier }
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { country_exists = CYR }
+							CYR = { is_subject_of = ROOT }
+						}
+					}
+					remove_dynamic_modifier = { modifier = libya_oil_nationalisation_dynamic_modifier }
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { country_exists = FEZ }
+							FEZ = { is_subject_of = ROOT }
+						}
+					}
+					remove_dynamic_modifier = { modifier = libya_oil_nationalisation_dynamic_modifier }
+				}
+			}
+		}
+
+	}
+	focus = {
+		id = LBA_approach_india
+		icon = align_to_india
+		cost = 5
+		prerequisite = {
+			focus = LBA_allow_private_farming
+		}
+		prerequisite = {
+			focus = LBA_freedom_of_conscience
+		}
+		mutually_exclusive = {
+			focus = LBA_approach_switzerland
+			focus = LBA_approach_france
+		}
+		x = -2
+		y = 3
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 1.2
+				RAJ = {
+					is_same_government = yes
+				}
+			}
+			modifier = {
+				factor = 0.8
+				RAJ = {
+					is_same_government = no
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_approach_india"
+			RAJ = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship
+				}
+				reverse_add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship
+				}
+			}
+		}
+
+	}
+	focus = {
+		id = LBA_approach_switzerland
+		icon = align_to_switzerland
+		cost = 5
+		prerequisite = {
+			focus = LBA_allow_private_farming
+		}
+		prerequisite = {
+			focus = LBA_freedom_of_conscience
+		}
+		mutually_exclusive = {
+			focus = LBA_approach_france
+			focus = LBA_approach_india
+		}
+		x = 0
+		y = 3
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_approach_switzerland"
+			SWI = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship
+				}
+				reverse_add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship
+				}
+			}
+		}
+
+	}
+	focus = {
+		id = LBA_approach_france
+		icon = align_to_france
+		cost = 5
+		prerequisite = {
+			focus = LBA_allow_private_farming
+		}
+		prerequisite = {
+			focus = LBA_freedom_of_conscience
+		}
+		mutually_exclusive = {
+			focus = LBA_approach_switzerland
+			focus = LBA_approach_india
+		}
+		x = 2
+		y = 3
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 1.2
+				FRA = {
+					is_same_government = yes
+				}
+			}
+			modifier = {
+				factor = 0.8
+				FRA = {
+					is_same_government = no
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_approach_france"
+			FRA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship
+				}
+				reverse_add_opinion_modifier = {
+					target = ROOT
+					modifier = declaration_of_friendship
+				}
+			}
+		}
+
+	}
+	focus = {
+		id = LBA_hire_indian_workers
+		icon = BRA_labor_laws
+		cost = 7
+		prerequisite = {
+			focus = LBA_approach_india
+		}
+		x = -2
+		y = 4
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_hire_indian_workers"
+			add_ideas = LBA_indian_workers
+		}
+
+	}
+	focus = {
+		id = LBA_hire_swiss_advisors
+		icon = economic_prosperity2
+		cost = 7
+		prerequisite = {
+			focus = LBA_approach_switzerland
+		}
+		x = 0
+		y = 4
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_hire_swiss_advisors"
+			add_ideas = LBA_swiss_financial_advisors
+		}
+
+	}
+	focus = {
+		id = LBA_hire_french_energy_advisors
+		icon = goal_JAP_restart_nukepowerplant
+		cost = 7
+		prerequisite = {
+			focus = LBA_approach_france
+		}
+		x = 2
+		y = 4
+		relative_position_id = LBA_free_libya
+
+		search_filters = {
+			FOCUS_FILTER_FOREIGN_POLICY
+		}
+
+		available = {
+			OR = {
+				western_liberals_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus LBA_hire_french_energy_advisors"
+			add_ideas = LBA_fnench_nuclear_support
 		}
 
 	}
