@@ -29,7 +29,7 @@ news_event = {
 	fire_only_once = yes
 
 	mean_time_to_happen = {
-    		days = 3
+		days = 3
 	}
 
 	option = {
@@ -43,7 +43,6 @@ country_event = {
 	title = TNZ.1.t
 	desc = TNZ.1.d
 	picture = GFX_political_deal
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.1" }
 
 	is_triggered_only = yes
 
@@ -86,7 +85,6 @@ country_event = {
 	title = TNZ.2.t
 	desc = TNZ.2.d
 	picture = naval_base
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.2" }
 
 	is_triggered_only = yes
 
@@ -117,7 +115,6 @@ country_event = {
 	title = TNZ.3.t
 	desc = TNZ.3.d
 	picture = GFX_EAF_event_ken_TNZ_uga
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.3" }
 
 	is_triggered_only = yes
 
@@ -670,7 +667,6 @@ country_event = {
 	title = TNZ.17.t
 	desc = TNZ.17.d
 	picture = GFX_african_guard
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.17" }
 
 	is_triggered_only = yes
 
@@ -691,7 +687,6 @@ country_event = {
 	title = TNZ.18.t
 	desc = TNZ.18.d
 	picture = GFX_african_guard
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.18" }
 
 	is_triggered_only = yes
 
@@ -722,7 +717,6 @@ country_event = {
 	title = TNZ.19.t
 	desc = TNZ.19.d
 	picture = GFX_african_guard
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.19" }
 
 	is_triggered_only = yes
 
@@ -753,7 +747,6 @@ country_event = {
 	title = TNZ.20.t
 	desc = TNZ.20.d
 	picture = african_treaty
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.20" }
 
 	is_triggered_only = yes
 
@@ -778,7 +771,6 @@ news_event = {
 	title = TNZ.21.t
 	desc = TNZ.21.d
 	picture = africans_marching
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.21" }
 
 	is_triggered_only = yes
 
@@ -792,30 +784,10 @@ news_event = {
 			add_manpower = -3
 			remove_ideas = COM_anjouan
 		}
-		custom_effect_tooltip = TNZ_com_5_influence_tt
-		hidden_effect = {
-			COM = {
-				set_temp_variable = { influence_gain = 5 }
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = TNZ }
-						}
-						add_to_variable = { influence_array_val^v = influence_gain }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { NOT = { has_country_flag = found } }
-						add_to_array = { influence_array = TNZ.id }
-						add_to_array = { influence_array_val = influence_gain }
-				}
-				clr_country_flag = found
-				recalculate_influence = yes
-			}
-		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = TNZ }
+		set_temp_variable = { influence_target = COM.id }
+		change_influence_percentage = yes
 	}
 }
 
@@ -824,7 +796,6 @@ country_event = {
 	title = TNZ.22.t
 	desc = TNZ.22.d
 	picture = GFX_african_guard
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.22" }
 
 	is_triggered_only = yes
 
@@ -1700,19 +1671,20 @@ news_event = {
 }
 
 
+# The IMF Evaluates our Debt Crisis
 country_event = {
 	id = TNZ.46
 	title = TNZ.46.t
 	desc = TNZ.46.d
 	picture = GFX_generic_factory
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.46" }
-
 	is_triggered_only = yes
+	trigger = {
+		original_tag = TNZ
+	}
 
 	option = {
 		name = TNZ.46.a
 		log = "[GetDateText]: [This.GetName]: TNZ.46.a executed"
-		ai_chance = { base = 1 }
 		trigger = {
 			check_variable = { debt > 3 }
 			NOT = {
@@ -1722,36 +1694,16 @@ country_event = {
 				}
 			}
 		}
-		hidden_effect = {
-			if = {
-				limit = {
-					check_variable = { debt > 4 }
-					check_variable = { debt < 7 }
-				}
-				subtract_from_variable = { debt = 4 }
-			}
-			if = {
-				limit = {
-						check_variable = { debt > 6 }
-						check_variable = { debt < 10 }
-				}
-				subtract_from_variable = { debt = 8 }
-			}
-			if = {
-				limit = {
-						check_variable = { debt > 9 }
-						check_variable = { debt < 13 }
-				}
-				subtract_from_variable = { debt = 10 }
-			}
-			if = {
-				limit = {
-					check_variable = { debt > 12 }
-				}
-				subtract_from_variable = { debt = 12 }
-			}
+
+		set_temp_variable = { debt_change = debt }
+		multiply_temp_variable = { debt_change = 0.05 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 1
 		}
 	}
+
 	option = {
 		name = TNZ.46.b
 		log = "[GetDateText]: [This.GetName]: TNZ.46.b executed"
@@ -2330,251 +2282,5 @@ news_event = {
 			}
 		}
 		ai_chance = { base = 1 }
-	}
-}
-
-
-
-
-### Do only with Tanzania ###
-news_event = {
-	id = TNZ.69
-	title = TNZ.69.t
-	desc = TNZ.69.d
-	picture = GFX_african_guard
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.69" }
-
-	is_triggered_only = yes
-
-	option = {
-		name = TNZ.69.a
-		log = "[GetDateText]: [This.GetName]: TNZ.69.a executed"
-		ai_chance = { base = 1 }
-		annex_country = {
-			target = KEN
-		}
-		annex_country = {
-			target = UGA
-		}
-		annex_country = {
-			target = RWA
-		}
-		annex_country = {
-			target = BUR
-		}
-		annex_country = {
-			target = MLC
-		}
-		annex_country = {
-			target = RCD
-		}
-		annex_country = {
-			target = DRC
-		}
-		annex_country = {
-			target = SOM
-		}
-		annex_country = {
-			target = PUN
-		}
-		annex_country = {
-			target = ETH
-		}
-		annex_country = {
-			target = SAF
-		}
-		annex_country = {
-			target = COM
-		}
-		annex_country = {
-			target = SEY
-		}
-		annex_country = {
-			target = MAD
-		}
-		annex_country = {
-			target = NIG
-		}
-		annex_country = {
-			target = SSU
-		}
-		annex_country = {
-			target = SUD
-		}
-		annex_country = {
-			target = NAM
-		}
-		annex_country = {
-			target = BOT
-		}
-		annex_country = {
-			target = ZIM
-		}
-		annex_country = {
-			target = UNI
-		}
-		annex_country = {
-			target = AGL
-		}
-		annex_country = {
-			target = CNG
-		}
-		annex_country = {
-			target = GAB
-		}
-		annex_country = {
-			target = MOZ
-		}
-		annex_country = {
-			target = MLW
-		}
-		annex_country = {
-			target = ZAM
-		}
-		annex_country = {
-			target = EGU
-		}
-		annex_country = {
-			target = SAO
-		}
-		annex_country = {
-			target = CAM
-		}
-		annex_country = {
-			target = BEN
-		}
-		annex_country = {
-			target = TOG
-		}
-		annex_country = {
-			target = GAH
-		}
-		annex_country = {
-			target = CDI
-		}
-		annex_country = {
-			target = LIB
-		}
-		annex_country = {
-			target = LUR
-		}
-		annex_country = {
-			target = AFR
-		}
-		annex_country = {
-			target = SIE
-		}
-		annex_country = {
-			target = GUI
-		}
-		annex_country = {
-			target = GUB
-		}
-		annex_country = {
-			target = SEN
-		}
-		annex_country = {
-			target = GAM
-		}
-		annex_country = {
-			target = BFA
-		}
-		annex_country = {
-			target = MAL
-		}
-		annex_country = {
-			target = NGR
-		}
-		annex_country = {
-			target = ERI
-		}
-		annex_country = {
-			target = DJI
-		}
-		annex_country = {
-			target = SML
-		}
-		annex_country = {
-			target = JUB
-		}
-		annex_country = {
-			target = SWS
-		}
-		annex_country = {
-			target = SNA
-		}
-		annex_country = {
-			target = MAU
-		}
-		annex_country = {
-			target = CHA
-		}
-		annex_country = {
-			target = CAR
-		}
-		annex_country = {
-			target = LES
-		}
-		annex_country = {
-			target = SWA
-		}
-		annex_country = {
-			target = EGY
-		}
-		annex_country = {
-			target = LBA
-		}
-		annex_country = {
-			target = ALG
-		}
-		annex_country = {
-			target = MOR
-		}
-		annex_country = {
-			target = TUN
-		}
-		annex_country = {
-			target = SHA
-		}
-		annex_country = {
-			target = MRT
-		}
-		annex_country = {
-			target = VER
-		}
-		every_owned_state = {
-			add_core_of = ROOT
-		}
-		set_cosmetic_tag = AFRICA_UNITED
-		set_capital = 256
-		remove_ideas = idea_eac_member_state
-		remove_ideas = TNZ_zanzibar
-		remove_ideas = TNZ_political_landscape_1
-		remove_ideas = TNZ_political_landscape
-	}
-}
-
-news_event = {
-	id = TNZ.70
-	title = TNZ.70.t
-	desc = TNZ.70.d
-	picture = GFX_african_guard
-	immediate = { log = "[GetDateText]: [Root.GetName]: event TNZ.70" }
-
-	is_triggered_only = yes
-
-	option = {
-		name = TNZ.70.a
-		log = "[GetDateText]: [This.GetName]: TNZ.70.a executed"
-		ai_chance = { base = 1 }
-		every_owned_state = {
-			add_core_of = ROOT
-		}
-		if = {
-			limit = {
-				tag = FRA
-			}
-			set_capital = 50
-		}
 	}
 }
