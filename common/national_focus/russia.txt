@@ -1,7 +1,5 @@
 ﻿## RUSSIA FOCUS TREE
-## Authors: heastel, alexmarkel0v, crocomoth, BoNDeX, LordBogdanoff, DarkCloud, Reid, PAKMAN, scotch and BirdyBoi
-
-
+## Authors: LordBogdanoff,heastel, alexmarkel0v, crocomoth, BoNDeX, DarkCloud, Reid, PAKMAN, scotch and BirdyBoi
 focus_tree = {
 	id = russia_focus
 	country = {
@@ -12,6 +10,40 @@ focus_tree = {
 		}
 	}
 	continuous_focus_position = { x = 6300 y = 2200 }
+	# Sets Camera to Opening of the Start
+	initial_show_position = { x = 2 y = 0 }
+
+	# Focus Shortcut
+	shortcut = {
+		name = SOV_military_tree_shortcut
+		target = SOV_groznyy_offensive
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = SOV_economy_tree_shortcut
+		target = SOV_economic_russian
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = SOV_zhirinovsky_tree_shortcut
+		target = SOV_zhirinovsky
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = SOV_putin_tree_shortcut
+		target = SOV_putin
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = SOV_zyuganov_tree_shortcut
+		target = SOV_zyuganov
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = SOV_liberals_tree_shortcut
+		target = SOV_path_of_western
+		scroll_wheel_factor = 0.80
+	}
 	focus = {
 		id = SOV_reign_of_yeltsin
 		icon = boris_yeltsin_sheep
@@ -32,7 +64,12 @@ focus_tree = {
 			set_country_flag = nobody_union_prezik
 			hidden_effect = {
 				if = {
-					limit = { SOV = { is_ai = yes } }
+					limit = {
+						SOV = {
+							is_ai = yes
+							is_historical_focus_on = no
+						}
+					}
 					country_event = { id = russia.61 days = 1 }
 				}
 				country_event = { id = sov_other.35 days = 100 }
@@ -41,8 +78,12 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { 
-			base = 100 
+		ai_will_do = {
+			base = 100
+			modifier = {
+				has_war = no
+				add = 900
+			}
 		}
 	}
 	#Start of Subject
@@ -90,52 +131,25 @@ focus_tree = {
 			add_to_variable = { SOV_putin_politic_communism_drift = 0.05 }
 			custom_effect_tooltip = SOV_putin_politic_start_tt
 			set_country_flag = sov_putin_econ
-					if = {
-						limit = { has_country_flag = sov_putin_econ }
-							clr_country_flag = sov_zug_econ
-							clr_country_flag = sov_zir_econ
-					}
+			if = {
+				limit = { has_country_flag = sov_putin_econ }
+				clr_country_flag = sov_zug_econ
+				clr_country_flag = sov_zir_econ
+			}
+
 			if = {
 				limit = { NOT = { is_in_array = { ruling_party = 6 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 6 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
-				}
-				set_politics = {
-					ruling_party = communism
-					elections_allowed = yes
-				}
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^6 = 0.075 }
-				recalculate_party = yes
+				set_temp_variable = { rul_party_temp = 6 }
+				set_temp_variable = { enable_elections = 0 }
+				change_ruling_party_effect = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 6 } }
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^6 = 0.075 }
-				recalculate_party = yes
-			}
+
 			set_temp_variable = { party_index = 6 }
-			set_temp_variable = { party_popularity_increase = 0.025 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
 			add_relative_party_popularity = yes
 		}
+
 		ai_will_do = {
 			base = 155
 			modifier = {
@@ -349,6 +363,11 @@ focus_tree = {
 					fuck_ai_russia_popularity = yes
 				}
 			}
+			add_power_balance_value = {
+				id = SOV_west_east_bop
+				value = 0.20
+				tooltip_side = SOV_west_east_bop_right_side
+			}
 
 		}
 		ai_will_do = {
@@ -471,6 +490,7 @@ focus_tree = {
 		available = {
 			emerging_reactionaries_are_in_power = yes
 			has_completed_focus = SOV_delay_sibirneft_merger
+			has_completed_focus = SOV_economic_buy_thk_bp
 			custom_trigger_tooltip = {
 				tooltip = SOV_state_corp_tt
 				has_country_flag = SOV_state_corp_1
@@ -625,6 +645,11 @@ focus_tree = {
 					fuck_ai_russia_popularity = yes
 				}
 			}
+			add_power_balance_value = {
+				id = SOV_west_east_bop
+				value = 0.20
+				tooltip_side = SOV_west_east_bop_right_side
+			}
 		}
 		ai_will_do = {
 			base = 155
@@ -679,7 +704,7 @@ focus_tree = {
 			add_political_power = 150
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -710,7 +735,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -736,7 +761,7 @@ focus_tree = {
 			change_oligarchs_opinion = yes
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -762,7 +787,7 @@ focus_tree = {
 			add_to_variable = { SOV_oligarchs_office_income_factor = 0.05 }
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -794,7 +819,7 @@ focus_tree = {
 			add_to_variable = { SOV_oligarchs_neutrality_drift_factor = 0.03 }
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -821,7 +846,7 @@ focus_tree = {
 			add_to_variable = { SOV_oligarchs_neutrality_drift_factor = 0.02 }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = { base = 355 }
 	}
 	focus = {
 		id = SOV_bring_the_old_gang_from_abroad
@@ -842,7 +867,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -872,7 +897,7 @@ focus_tree = {
 			change_oligarchs_opinion = yes
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -894,7 +919,7 @@ focus_tree = {
 			country_event = sov_oligarchs.4
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				add = 155
 				has_global_flag = SOV_OLIGARCHS_RUSSIA_PATH
@@ -931,10 +956,10 @@ focus_tree = {
 				tooltip_side = SOV_west_east_bop_left_side
 			}
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = { base = 355 }
 	}
 	focus = {
-		id = SOV_russian_laizess_faire
+		id = SOV_russian_laissez_faire
 		icon = BRA_libertarian_economics
 		x = -1
 		y = 5
@@ -944,8 +969,8 @@ focus_tree = {
 		prerequisite = { focus = SOV_restore_semibankirshina }
 		search_filters = { FOCUS_FILTER_RUSSIA_UNITED }
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_laizess_faire"
-			custom_effect_tooltip = SOV_russian_laizess_faire_tt
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_laissez_faire"
+			custom_effect_tooltip = SOV_russian_laissez_faire_tt
 			add_to_variable = { SOV_oligarchs_construction_speed_factor = 0.10 }
 			add_to_variable = { SOV_oligarchs_office_income_factor = 0.07 }
 			increase_economic_growth = yes
@@ -1002,7 +1027,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SOV_subjects
 		cost = 4
-		
+
 		available = {
 			NOT = { country_exists = BSH }
 			SOV = { owns_state = 664 }
@@ -1358,6 +1383,11 @@ focus_tree = {
 					fuck_ai_russia_popularity = yes
 				}
 			}
+			add_power_balance_value = {
+				id = SOV_west_east_bop
+				value = 0.20
+				tooltip_side = SOV_west_east_bop_right_side
+			}
 		}
 		ai_will_do = {
 			base = 155
@@ -1561,14 +1591,19 @@ focus_tree = {
 				update_party_name = yes
 				set_coalition_drift = yes
 				meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
+					text = {
+						set_country_flag = [META_SET_RULING_PARTY]
+					}
+					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
 				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-			}
-			set_leader = yes
+				set_leader = yes
 			}
 			country_event = sov_vybory.1
+			add_power_balance_value = {
+				id = SOV_west_east_bop
+				value = -0.20
+				tooltip_side = SOV_west_east_bop_left_side
+			}
 		}
 		ai_will_do = {
 			base = 155
@@ -2537,7 +2572,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_UNITED }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_annexation_of_crimea"
-			UKR = { 
+			UKR = {
 				if = {
 					limit = {
 						NOT = {
@@ -2555,7 +2590,7 @@ focus_tree = {
 						UKR_maidan_start_check = yes
 					}
 				}
-				country_event = { id = russia.7 days = 1 } 
+				country_event = { id = russia.7 days = 1 }
 			}
 		}
 		ai_will_do = {
@@ -2584,8 +2619,8 @@ focus_tree = {
 		prerequisite = { focus = SOV_loosen_government_censorship }
 		prerequisite = { focus = SOV_gay_propaganda_laws }
 
-		available = { 
-			emerging_reactionaries_are_in_power = yes 
+		available = {
+			emerging_reactionaries_are_in_power = yes
 		}
 
 		completion_reward = {
@@ -2910,7 +2945,7 @@ focus_tree = {
 			}
 			UKR = {
 				NOT = { is_subject_of = SOV }
-				
+
 				NOT = { is_in_faction_with = SOV }
 				NOT = { has_government = communism }
 			}
@@ -3009,7 +3044,7 @@ focus_tree = {
 			}
 			UKR = {
 				NOT = { is_subject_of = SOV }
-				
+
 				NOT = { is_in_faction_with = SOV }
 			}
 		}
@@ -3058,7 +3093,7 @@ focus_tree = {
 			}
 			UKR = {
 				NOT = { is_subject_of = SOV }
-				
+
 				NOT = { is_in_faction_with = SOV }
 			}
 			OR = {
@@ -3275,7 +3310,7 @@ focus_tree = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
-		bypass = { 
+		bypass = {
 			has_completed_focus = SOV_storm_v
 		}
 		prerequisite = { focus = SOV_reconservation }
@@ -4391,6 +4426,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zhirinovsky"
 			country_event = sov_nationalists.32
+			news_event = sov_nationalists_news.1
 			set_country_flag = sov_zir_econ
 			if = {
 				limit = { has_country_flag = sov_zir_econ }
@@ -4410,43 +4446,19 @@ focus_tree = {
 					add_to_variable = { party_pop_array^6 = -0.75 }
 					recalculate_party = yes
 				}
+
 				if = {
 					limit = { NOT = { is_in_array = { ruling_party = 20 } } }
-					hidden_effect = {
-						clear_array = ruling_party
-						clear_array = gov_coalition_array
-						add_to_array = { ruling_party = 20 }
-						update_government_coalition_strength = yes
-						update_party_name = yes
-						set_coalition_drift = yes
-						meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
-					}
-					set_politics = {
-						ruling_party = nationalist
-						elections_allowed = yes
-					}
-					add_popularity = {
-						ideology = nationalist
-						popularity = 0.075
-					}
-					add_to_variable = { party_pop_array^20 = 0.15 }
-					recalculate_party = yes
+					set_temp_variable = { rul_party_temp = 20 }
+					set_temp_variable = { enable_elections = 0 }
+					change_ruling_party_effect = yes
 				}
-				else_if = {
-					limit = { is_in_array = { ruling_party = 20 } }
-					add_popularity = {
-						ideology = nationalist
-						popularity = 0.075
-					}
-					add_to_variable = { party_pop_array^20 = 0.15 }
-					recalculate_party = yes
-				}
+
+				set_temp_variable = { party_index = 20 }
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { temp_outlook_increase = 0.10 }
+				add_relative_party_popularity = yes
+
 				set_cosmetic_tag = SOV_AUTH_S_nationalist
 				clr_country_flag = dynamic_flag
 			}
@@ -4676,7 +4688,7 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_jirik_partiya_puppet_sovet"
 			swap_ideas = {
@@ -5002,6 +5014,7 @@ focus_tree = {
 			change_oligarchs_opinion = yes
 			set_temp_variable = { treasury_change = 50.5 }
 			modify_treasury_effect = yes
+			country_event = { id = sov_economic.26 days = 1 }
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -5378,7 +5391,7 @@ focus_tree = {
 				}
 			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zhirinovsky_economic_policy"
 			add_stability = 0.05
@@ -5545,11 +5558,12 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 			}
 		}
-		
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_revitalize_russian_industrial_sector"
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_nationalize"
 			two_office_construction = yes
 			decrease_corruption = yes
+			country_event = { id = sov_economic.31 days = 1 }
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -5600,6 +5614,15 @@ focus_tree = {
 			change_fossil_fuel_industry_opinion = yes
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
+			if = {
+				limit = {
+					has_completed_focus = SOV_economic_reform_gazprom
+				}
+				SOV = {
+					set_temp_variable = { modify_capitalisation_gazprom = 1.3 }
+					modify_capitalisation_gazprom_support = yes
+				}
+			}
 			hidden_effect = {
 				if = {
 					limit = { SOV = { is_ai = yes } }
@@ -6170,11 +6193,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 155
-			modifier = {
-				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -6196,8 +6215,8 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 			}
 		}
-		
-		bypass = { 
+
+		bypass = {
 			has_completed_focus = SOV_storm_z
 		}
 
@@ -6227,7 +6246,7 @@ focus_tree = {
 						Militia_Bat = { x = 0 y = 0 }
 						Militia_Bat = { x = 0 y = 1 }
 						Militia_Bat = { x = 1 y = 0 }
-	
+
 					}
 					priority = 2
 				}
@@ -6243,11 +6262,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 155
-			modifier = {
-				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -6331,11 +6346,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 155
-			modifier = {
-				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -6370,11 +6381,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 155
-			modifier = {
-				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -6409,11 +6416,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 155
-			modifier = {
-				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -6441,7 +6444,7 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
+		bypass = {
 			has_idea = drafted_women
 		}
 
@@ -6464,11 +6467,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 155
-			modifier = {
-				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -6520,7 +6519,7 @@ focus_tree = {
 		relative_position_id = SOV_zhirinovsky
 
 		cost = 5
-		
+
 		prerequisite = { focus = SOV_iron_regency }
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
 
@@ -6530,7 +6529,7 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_amend_the_russian_constitution"
 			country_event = { id = sov_nationalists.1 days = 1 }
@@ -6564,7 +6563,7 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_iron_regency"
 			add_political_power = 250
@@ -6699,7 +6698,7 @@ focus_tree = {
 				picture = "Vladimir_Zhirinovsky_dict.dds"
 				ideology = Nat_Populism
 				traits = {
-					nationalist_Nat_Populism 
+					nationalist_Nat_Populism
 					lawyer
 					popular_figurehead
 					military_genius
@@ -7199,7 +7198,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			 base = 1 
+			 base = 1
 		}
 	}
 	focus = {
@@ -7250,8 +7249,8 @@ focus_tree = {
 		cost = 5
 
 		mutually_exclusive = { focus = SOV_condemn_the_partition_of_india }
-		prerequisite = { 
-			focus = SOV_istanbul_is_constantinople 
+		prerequisite = {
+			focus = SOV_istanbul_is_constantinople
 			focus = SOV_avenge_tsushima
 		}
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
@@ -7265,10 +7264,10 @@ focus_tree = {
 			NOT = { has_completed_focus = SOV_demand_manchuria }
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = CHI
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -7295,8 +7294,8 @@ focus_tree = {
 		cost = 5
 
 		mutually_exclusive = { focus = SOV_praise_china }
-		prerequisite = { 
-			focus = SOV_istanbul_is_constantinople 
+		prerequisite = {
+			focus = SOV_istanbul_is_constantinople
 			focus = SOV_avenge_tsushima
 		}
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
@@ -7309,10 +7308,10 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = RAJ
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -7363,6 +7362,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_russian_irredentism"
 			country_event = sov_nationalists.20
+			every_country = {
+				limit = {
+					NOT = { tag = SOV }
+				}
+				news_event = sov_nationalists_news.2
+			}
 			hidden_effect = { add_dynamic_modifier = { modifier = SOV_rus_empire_outer_modifier } }
 			add_to_variable = { SOV_rus_empire_outer_production_factory_efficiency_gain_factor = 0.05 }
 			add_to_variable = { SOV_rus_empire_outer_conversion_cost_civ_to_mil_factor = -0.10 }
@@ -7409,17 +7414,17 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
+		bypass = {
 			OR = {
 				BLR = {
 					is_subject = yes
 				}
-				NOT = { 
+				NOT = {
 					country_exists = BLR
-				} 
+				}
 			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_strengthen_union_state"
 			BLR = { country_event = { id = russia_governorate.16 days = 1 } }
@@ -7437,7 +7442,7 @@ focus_tree = {
 		id = SOV_maintain_csto_1
 		icon = attack_csto
 
-		x = -13
+		x = -12
 		y = 2
 		relative_position_id = SOV_zhirinovsky
 
@@ -7454,10 +7459,10 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				has_idea = CSTO_member
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -7465,7 +7470,7 @@ focus_tree = {
 			russia_leave_every_faction = yes
 			add_political_power = 50
 		}
-		
+
 		ai_will_do = {
 			base = 155
 			modifier = {
@@ -7478,7 +7483,7 @@ focus_tree = {
 		id = SOV_rus_sphere_united_arms
 		icon = sov_russian_sphere
 
-		x = -13
+		x = -12
 		y = 3
 		relative_position_id = SOV_zhirinovsky
 
@@ -7486,7 +7491,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_maintain_csto_1 }
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
-		
+
 		available = {
 			OR = {
 				nationalist_monarchists_are_in_power = yes
@@ -7505,6 +7510,7 @@ focus_tree = {
 					set_country_flag = SOV_western_sanctions
 					add_dynamic_modifier = { modifier = SOV_western_sanctions_modifier }
 					country_event = { id = sov_final_strike.7 days = 15 }
+					country_event = { id = sov_economic.25 days = 1 }
 					SOV_economy_cars_western_lose_script = yes
 					USA = {
 						country_event = { id = sov_final_strike.4 days = 1 }
@@ -7548,19 +7554,19 @@ focus_tree = {
 				nationalist_monarchists_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 			}
-			OR = { 
+			OR = {
 				country_exists = ABK
 				country_exists = SOO
 				country_exists = GEO
-			} 
+			}
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = ABK
 				country_exists = SOO
 				country_exists = GEO
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -7576,7 +7582,7 @@ focus_tree = {
 				GEO = { country_event = { id = russia_governorate.10 } }
 			}
 		}
-		
+
 		ai_will_do = {
 			base = 155
 			modifier = {
@@ -7710,11 +7716,12 @@ focus_tree = {
 						change_influence_percentage = yes
 						country_event = { id = sov_nationalists.11 }
 					}
-				}
-				SOV = {
-					set_autonomy = {
-						target = SAZ
-						autonomy_state = autonomy_governorate_rf
+					SOV = {
+						country_event = sov_nationalists.50
+						set_autonomy = {
+							target = SAZ
+							autonomy_state = autonomy_governorate_rf
+						}
 					}
 				}
 			}
@@ -7755,10 +7762,10 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = ARM
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -7809,7 +7816,7 @@ focus_tree = {
 				AZE = { owns_state = 1036 }
 				AZE = { owns_state = 1037 }
 			}
-			AZE = { 
+			AZE = {
 				influence_higher_30 = yes
 			}
 		}
@@ -7833,7 +7840,7 @@ focus_tree = {
 	focus = {
 		id = SOV_alliance_armenia
 		icon = garlick
-		
+
 		x = -16
 		y = 7
 		relative_position_id = SOV_zhirinovsky
@@ -7856,10 +7863,10 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = AZE
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -7923,7 +7930,7 @@ focus_tree = {
 			}
 			country_event = sov_nationalists.38
 			if = {
-				limit = { 
+				limit = {
 					OR = {
 						KAZ = { owns_state = 718 }
 						KAZ = { owns_state = 719 }
@@ -7975,14 +7982,14 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
+		bypass = {
 			UKR = {
 				OR = {
 					has_country_flag = ukr_revoult_bilo
 					has_country_flag = UKR_pisuar_rise
-					NOT = { 
+					NOT = {
 						country_exists = UKR
-					} 
+					}
 				}
 			}
 		}
@@ -8178,6 +8185,7 @@ focus_tree = {
 					set_cosmetic_tag = GOV_LRP
 					clr_country_flag = dynamic_flag
 					SOV = {
+						country_event = sov_nationalists.50
 						set_autonomy = {
 							target = LRP
 							autonomy_state = autonomy_governorate_rf
@@ -8231,13 +8239,13 @@ focus_tree = {
 				MLV = { is_subject = no }
 			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zhirinovsky_take_trans"
 			if = {
-				limit = { 
+				limit = {
 					PMR = { is_subject = no }
-					country_exists = PMR 
+					country_exists = PMR
 				}
 				PMR = { country_event = sov_nationalists.22 }
 			}
@@ -8261,7 +8269,7 @@ focus_tree = {
 	focus = {
 		id = SOV_treaty_with_turkmenistan
 		icon = turkmen_turkmenistan
-		
+
 		x = -9
 		y = 6
 		relative_position_id = SOV_zhirinovsky
@@ -8279,7 +8287,7 @@ focus_tree = {
 			country_exists = TRK
 		}
 
-		bypass = { 
+		bypass = {
 			NOT = {
 				country_exists = TRK
 			}
@@ -8301,7 +8309,7 @@ focus_tree = {
 	focus = {
 		id = SOV_treaty_with_afganistan
 		icon = afghanistan_agreement
-		
+
 		x = -7
 		y = 6
 		relative_position_id = SOV_zhirinovsky
@@ -8319,10 +8327,10 @@ focus_tree = {
 			country_exists = AFG
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = AFG
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -8356,7 +8364,7 @@ focus_tree = {
 				nationalist_monarchists_are_in_power = yes
 				nationalist_right_wing_populists_are_in_power = yes
 			}
-			OR = { 
+			OR = {
 				country_exists = LAT
 				country_exists = LIT
 				country_exists = EST
@@ -8427,10 +8435,10 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = GRE
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -8450,7 +8458,7 @@ focus_tree = {
 		id = SOV_help_sirya
 		icon = ssnp_coup
 
-		x = -18	
+		x = -18
 		y = 7
 		relative_position_id = SOV_zhirinovsky
 
@@ -8478,10 +8486,10 @@ focus_tree = {
 				SYR = {
 					is_subject = yes
 				}
-				NOT = { 
+				NOT = {
 					country_exists = SYR
-				} 
-			} 
+				}
+			}
 		}
 
 		completion_reward = {
@@ -8520,19 +8528,19 @@ focus_tree = {
 				SYR = {
 					OR = {
 						is_subject_of = SOV
-						is_in_faction_with = SOV 
+						is_in_faction_with = SOV
 					}
 				}
 				ARM = {
 					OR = {
 						is_subject_of = SOV
-						is_in_faction_with = SOV 
+						is_in_faction_with = SOV
 					}
 				}
 				GRE = {
 					OR = {
 						is_subject_of = SOV
-						is_in_faction_with = SOV 
+						is_in_faction_with = SOV
 					}
 				}
 			}
@@ -8541,41 +8549,41 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_syria_kurdistan_armenia_summit"
 			if = {
-				limit = { 
+				limit = {
 					SYR = {
 						OR = {
 							is_subject_of = SOV
-							is_in_faction_with = SOV 
+							is_in_faction_with = SOV
 						}
  					}
 				}
-				SYR = { 
+				SYR = {
 					country_event = { id = sov_nationalists.14 }
 				}
 			}
 			if = {
-				limit = { 
+				limit = {
 					GRE = {
 						OR = {
 							is_subject_of = SOV
-							is_in_faction_with = SOV 
+							is_in_faction_with = SOV
 						}
  					}
 				}
-				GRE = { 
+				GRE = {
 					country_event = { id = sov_nationalists.14 }
 				}
 			}
 			if = {
-				limit = { 
+				limit = {
 					ARM = {
 						OR = {
 							is_subject_of = SOV
-							is_in_faction_with = SOV 
+							is_in_faction_with = SOV
 						}
  					}
 				}
-				ARM = { 
+				ARM = {
 					country_event = { id = sov_nationalists.14 }
 				}
 			}
@@ -8615,10 +8623,10 @@ focus_tree = {
 			country_exists = TUR
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = TUR
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -8926,8 +8934,8 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = { 
-			focus = SOV_question_of_bavaria 
+		prerequisite = {
+			focus = SOV_question_of_bavaria
 			focus = SOV_question_of_east_german
 			focus = SOV_question_of_catalonia
 			focus = SOV_question_of_andaluces
@@ -8985,7 +8993,7 @@ focus_tree = {
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
-		prerequisite = { 
+		prerequisite = {
 			focus = SOV_praise_china
 			focus = SOV_condemn_the_partition_of_india
 		}
@@ -9025,13 +9033,13 @@ focus_tree = {
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
-		prerequisite = { 
+		prerequisite = {
 			focus = SOV_end_the_usa
 		}
 		will_lead_to_war_with = USA
 
 		available = {
-			USA = { 
+			USA = {
 				owns_state = 814
 				influence_higher_30 = yes
 			}
@@ -9091,7 +9099,7 @@ focus_tree = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				add = 50
 			}
-			
+
 		}
 	}
 	focus = {
@@ -9129,7 +9137,7 @@ focus_tree = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				add = 50
 			}
-			
+
 		}
 	}
 	focus = {
@@ -9165,7 +9173,7 @@ focus_tree = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				add = 50
 			}
-			
+
 		}
 	}
 	focus = {
@@ -9207,7 +9215,7 @@ focus_tree = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				add = 50
 			}
-			
+
 		}
 	}
 	focus = {
@@ -9272,7 +9280,7 @@ focus_tree = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				add = 50
 			}
-			
+
 		}
 	}
 	focus = {
@@ -9338,7 +9346,7 @@ focus_tree = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				add = 50
 			}
-			
+
 		}
 	}
 	focus = {
@@ -9396,14 +9404,14 @@ focus_tree = {
 				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
 				add = 50
 			}
-			
+
 		}
 	}
 	focus = {
 		id = SOV_imperial_russian_lands
 		icon = Rus_wake_up
 
-		x = -15
+		x = -14
 		y = 3
 		relative_position_id = SOV_zhirinovsky
 
@@ -9450,7 +9458,7 @@ focus_tree = {
 		id = SOV_governorates
 		icon = sov_governorates
 
-		x = -15
+		x = -14
 		y = 2
 		relative_position_id = SOV_zhirinovsky
 
@@ -9484,7 +9492,7 @@ focus_tree = {
 		id = SOV_unite_of_greater_russia
 		icon = SOV_united_and_strong_russia
 
-		x = -13
+		x = -12
 		y = 4
 		relative_position_id = SOV_zhirinovsky
 
@@ -9501,7 +9509,7 @@ focus_tree = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = SOV_republickill_23_TT
-				check_variable = { SOV.republickill = 23 }
+				check_variable = { SOV.republickill > 18 }
 			}
 		}
 
@@ -9528,7 +9536,7 @@ focus_tree = {
 		id = SOV_protect_russians
 		icon = russia2
 
-		x = -17
+		x = -16
 		y = 4
 		relative_position_id = SOV_zhirinovsky
 
@@ -9591,7 +9599,7 @@ focus_tree = {
 		id = SOV_proclamation_of_greater_russia
 		icon = Focus_Romanov
 
-		x = -15
+		x = -14
 		y = 4
 		relative_position_id = SOV_zhirinovsky
 
@@ -9661,11 +9669,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 155
-			modifier = {
-				has_global_flag = SOV_RISE_OF_RUSSIA_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -9693,7 +9697,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_claim_finland"
 			custom_effect_tooltip = jirik_finland_tt
 		}
-		
+
 		ai_will_do = {
 			base = 155
 			modifier = {
@@ -9725,8 +9729,8 @@ focus_tree = {
 				NOT = {
 					has_completed_focus = SER_union_state
 				}
-				NOT = {	
-					has_autonomy_state = autonomy_union_state 
+				NOT = {
+					has_autonomy_state = autonomy_union_state
 				}
 				OR = {
 					nationalist_monarchists_are_in_power = yes
@@ -9770,12 +9774,12 @@ focus_tree = {
 			country_exists = POL
 		}
 
-		bypass = { 
+		bypass = {
 			OR = {
-				NOT = { 
+				NOT = {
 					country_exists = POL
 				}
-				POL = { 
+				POL = {
 					has_completed_focus = POL_new_allience
 				}
 			}
@@ -9881,7 +9885,7 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 			}
 			country_exists = SPR
-			SPR = { 
+			SPR = {
 				owns_state = 86
 			}
 		}
@@ -9924,7 +9928,7 @@ focus_tree = {
 				nationalist_right_wing_populists_are_in_power = yes
 			}
 			country_exists = SPR
-			SPR = { 
+			SPR = {
 				owns_state = 93
 			}
 		}
@@ -10157,7 +10161,7 @@ focus_tree = {
 		relative_position_id = SOV_zhirinovsky
 
 		cost = 5
-		
+
 		prerequisite = { focus = SOV_revive_the_great_idea focus = SOV_help_sirya }
 		prerequisite = { focus = SOV_alliance_armenia }
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
@@ -10176,15 +10180,15 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
+		bypass = {
 			OR = {
 				BUL = {
 					is_subject = yes
 				}
-				NOT = { 
+				NOT = {
 					country_exists = BUL
-				} 
-			} 
+				}
+			}
 		}
 
 		completion_reward = {
@@ -10206,7 +10210,7 @@ focus_tree = {
 		id = SOV_Bring_back_the_legacy_of_the_Russian_Empire
 		icon = SOV_russian_empire_flag
 
-		x = -17
+		x = -16
 		y = 2
 		relative_position_id = SOV_zhirinovsky
 
@@ -10214,7 +10218,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_russian_irredentism }
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
-		
+
 		available = {
 			OR = {
 				nationalist_monarchists_are_in_power = yes
@@ -10248,7 +10252,7 @@ focus_tree = {
 		id = SOV_Former_Russian_capital
 		icon = SOV_petrograd
 
-		x = -17
+		x = -16
 		y = 3
 		relative_position_id = SOV_zhirinovsky
 
@@ -10256,7 +10260,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_Bring_back_the_legacy_of_the_Russian_Empire }
 		search_filters = { FOCUS_FILTER_RUSSIA_LDPR }
-		
+
 		available = {
 			OR = {
 				nationalist_monarchists_are_in_power = yes
@@ -10271,7 +10275,7 @@ focus_tree = {
 			add_political_power = 90
 			set_country_flag = SOV_moscow_no_more
 		}
-		
+
 		ai_will_do = {
 			base = 155
 			modifier = {
@@ -10302,10 +10306,10 @@ focus_tree = {
 			country_exists = CHI
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = CHI
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -10323,7 +10327,7 @@ focus_tree = {
 	}
 	focus = {
 		id = SOV_allied_nrk
-		icon = align_to_north_korea
+		icon = SOV_korea_love
 
 		x = -1
 		y = 1
@@ -10344,20 +10348,20 @@ focus_tree = {
 				is_subject = no
 			}
 		}
-		
-		bypass = { 
+
+		bypass = {
 			OR = {
 				NKO = {
 					is_subject = yes
 				}
-				NOT = { 
+				NOT = {
 					country_exists = NKO
-				} 
-			} 
+				}
+			}
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_demand_manchuria"
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_allied_nrk"
 			NKO = { country_event = sov_nationalists.12 }
 		}
 
@@ -10389,12 +10393,12 @@ focus_tree = {
 			}
 			country_exists = MON
 		}
-		
-		bypass = { 
-			NOT = { 
+
+		bypass = {
+			NOT = {
 				country_exists = MON
 			}
-		} 
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_zheltoros"
@@ -10475,10 +10479,10 @@ focus_tree = {
 			country_exists = JAP
 		}
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				country_exists = JAP
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -10580,6 +10584,7 @@ focus_tree = {
 					set_country_flag = SOV_western_sanctions
 					add_dynamic_modifier = { modifier = SOV_western_sanctions_modifier }
 					country_event = { id = sov_final_strike.7 days = 15 }
+					country_event = { id = sov_economic.25 days = 1 }
 					SOV_economy_cars_western_lose_script = yes
 					USA = {
 						country_event = { id = sov_final_strike.4 days = 1 }
@@ -11536,7 +11541,7 @@ focus_tree = {
 			}
 		}
 	}
-	
+
 	#Start of Zyuganov Branch
 	focus = {
 		id = SOV_zyuganov
@@ -11558,57 +11563,32 @@ focus_tree = {
 			country_event = sov_other.2
 			set_country_flag = sov_zug_econ
 			hidden_effect = {
-			if = {
-				limit = { SOV = { is_ai = yes } }
-				add_to_variable = { party_pop_array^4 = 0.75 }
-				recalculate_party = yes
-				add_to_variable = { party_pop_array^6 = -0.75 }
-				recalculate_party = yes
-			}
-			if = {
-				limit = { has_country_flag = sov_zug_econ }
-				clr_country_flag = sov_putin_econ
-				clr_country_flag = sov_zir_econ
-			}
-			if = {
-				limit = { NOT = { is_in_array = { ruling_party = 4 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 4 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
+				if = {
+					limit = { SOV = { is_ai = yes } }
+					add_to_variable = { party_pop_array^4 = 0.75 }
+					recalculate_party = yes
+					add_to_variable = { party_pop_array^6 = -0.75 }
+					recalculate_party = yes
+				}
+				if = {
+					limit = { has_country_flag = sov_zug_econ }
+					clr_country_flag = sov_putin_econ
+					clr_country_flag = sov_zir_econ
+				}
 
+				if = {
+					limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+					set_temp_variable = { rul_party_temp = 4 }
+					set_temp_variable = { enable_elections = 0 }
+					change_ruling_party_effect = yes
 				}
-				set_politics = {
-					ruling_party = communism
-					elections_allowed = yes
-				}
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^4 = 0.15 }
-				recalculate_party = yes
+
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { temp_outlook_increase = 0.10 }
+				add_relative_party_popularity = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 4 } }
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^4 = 0.15 }
-				recalculate_party = yes
-			}
-			}
+
 			custom_effect_tooltip = SOV_zyuganov_tt
 			hidden_effect = { add_dynamic_modifier = { modifier = SOV_revived_politburo_modifier } }
 			add_to_variable = { SOV_revived_politburo_communism_support = 0.05 }
@@ -12078,7 +12058,7 @@ focus_tree = {
 					add_idea = the_military
 				}
 				hidden_effect = {
-					
+
 				}
 			}
 
@@ -14042,6 +14022,7 @@ focus_tree = {
 					set_country_flag = SOV_western_sanctions
 					add_dynamic_modifier = { modifier = SOV_western_sanctions_modifier }
 					country_event = { id = sov_final_strike.7 days = 15 }
+					country_event = { id = sov_economic.25 days = 1 }
 					SOV_economy_cars_western_lose_script = yes
 					USA = {
 						country_event = { id = sov_final_strike.4 days = 1 }
@@ -15819,19 +15800,50 @@ focus_tree = {
 				}
 			}
 		}
+		bypass = {
+			NOT = {
+				has_idea = SOV_broken_economy_idea_1
+				has_idea = SOV_broken_economy_idea_2
+				has_idea = SOV_broken_economy_idea_3
+				has_idea = sco_member
+				has_idea = sco_observer
+				has_idea = sco_member_econ
+				has_idea = sco_member_pol
+				has_idea = sco_member_mil
+			}
+		}
 		search_filters = { FOCUS_FILTER_RUSSIA_JUST FOCUS_FILTER_RUSSIA_YABLO FOCUS_FILTER_RUSSIA_SPS FOCUS_FILTER_RUSSIA_PARNAS }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_withdraw_from_the_sco"
 			add_political_power = 150
 			add_stability = 0.05
-			remove_ideas = sco_member
+			if = {
+				limit = { has_idea = sco_member }
+				remove_ideas = sco_member
+			}
+			if = {
+				limit = { has_idea = sco_observer }
+				remove_ideas = sco_observer
+			}
+			if = {
+				limit = { has_idea = sco_member_econ }
+				remove_ideas = sco_member_econ
+			}
+			if = {
+				limit = { has_idea = sco_member_pol }
+				remove_ideas = sco_member_pol
+			}
+			if = {
+				limit = { has_idea = sco_member_mil }
+				remove_ideas = sco_member_mil
+			}
 		}
 		ai_will_do = { base = 1 }
 	}
 	focus = {
 		id = SOV_release_prisoners
 		icon = release_russian_prisoners
-		
+
 		x = 7
 		y = 1
 		relative_position_id = SOV_new_russia
@@ -15849,7 +15861,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_new_russia }
 		search_filters = { FOCUS_FILTER_RUSSIA_YABLO FOCUS_FILTER_RUSSIA_SPS FOCUS_FILTER_RUSSIA_PARNAS }
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_release_prisoners"
 			add_to_variable = { SOV_navalny_inner_political_power_gain = 0.05 }
@@ -16094,7 +16106,7 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			add_relative_party_popularity = yes
 		}
-		
+
 		ai_will_do = {
 			base = 155
 			modifier = {
@@ -16396,7 +16408,7 @@ focus_tree = {
 			}
 
 		}
-		
+
 		ai_will_do = {
 			base = 155
 			modifier = {
@@ -16604,7 +16616,7 @@ focus_tree = {
 							}
 						}
 					}
-					
+
 				}
 			}
 		}
@@ -19675,8 +19687,8 @@ focus_tree = {
 			add_war_support = 0.05
 			hidden_effect = {
 				if = {
-					limit = { 
-						SOV = { is_ai = yes } 
+					limit = {
+						SOV = { is_ai = yes }
 						CHE = { is_ai = yes }
 						SOV = { has_war_with = CHE }
 					}
@@ -19691,7 +19703,6 @@ focus_tree = {
 				is_historical_focus_on = yes
 				add = 50
 			}
-			
 		}
 	}
 	focus = {
@@ -19722,12 +19733,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -19746,16 +19752,7 @@ focus_tree = {
 			change_intelligence_community_opinion = yes
 		}
 		ai_will_do = {
-			base = 150
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			modifier = {
-				has_global_flag = SOV_PUTIN_PATH
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -19772,16 +19769,7 @@ focus_tree = {
 			add_ideas = SOV_russian_spaceforce
 		}
 		ai_will_do = {
-			base = 150
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			modifier = {
-				has_global_flag = SOV_PUTIN_PATH
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -19858,12 +19846,8 @@ focus_tree = {
 		cost = 5
 		available = {
 			has_war = yes
-			NOT = {
-				OR = {
-					emerging_communist_state_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
-				}
-			}
+			emerging_communist_state_are_not_in_power = yes
+			neutrality_neutral_communism_are_not_in_power = yes
 			has_country_flag = SOV_wagner_rebeliion_flag
 		}
 		prerequisite = { focus = SOV_pmc_gazproms focus = SOV_armneia_arbat focus = SOV_rus_nati_help }
@@ -20093,12 +20077,8 @@ focus_tree = {
 		cost = 5
 		available = {
 			has_war = yes
-			NOT = {
-				OR = {
-					emerging_communist_state_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
-				}
-			}
+			emerging_communist_state_are_not_in_power = yes
+			neutrality_neutral_communism_are_not_in_power = yes
 		}
 		bypass = {
 			has_completed_focus = SOV_rva
@@ -20180,12 +20160,8 @@ focus_tree = {
 		cost = 5
 		available = {
 			has_war = yes
-			NOT = {
-				OR = {
-					emerging_communist_state_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
-				}
-			}
+			emerging_communist_state_are_not_in_power = yes
+			neutrality_neutral_communism_are_not_in_power = yes
 			has_completed_focus = SOV_economic_reform_gazprom
 		}
 		prerequisite = { focus = SOV_special_o }
@@ -20531,7 +20507,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 1
-			
+
 		}
 	}
 	focus = {
@@ -20585,7 +20561,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -20623,7 +20599,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -20659,13 +20635,7 @@ focus_tree = {
 			country_event = russia.58
 		}
 		ai_will_do = {
-			factor = 355
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -20678,12 +20648,12 @@ focus_tree = {
 		prerequisite = { focus = SOV_2001_military_reforms }
 		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 
-		bypass = { 
-			NOT = { 
+		bypass = {
+			NOT = {
 				has_idea = CSTO_member
-			} 
+			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_csto_training_exercises"
 			army_experience = 30
@@ -20694,13 +20664,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			factor = 355
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -20749,7 +20713,6 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 355
-			
 		}
 	}
 	focus = {
@@ -20767,7 +20730,6 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 355
-			
 		}
 	}
 	focus = {
@@ -20859,7 +20821,6 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 355
-			
 		}
 	}
 	focus = {
@@ -20885,13 +20846,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -20929,13 +20884,7 @@ focus_tree = {
 			add_ideas = SOV_alpha
 		}
 		ai_will_do = {
-			factor = 355
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -20955,19 +20904,13 @@ focus_tree = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
 				prioritize = { 666 }
 				create_unit = {
-					division = "name = \"15th Separate Guards Motorized Rifle Brigade\" division_template = \"Motor Rifle Brigade\" start_experience_factor = 0.1"
+					division = "name = \"15th Separate Guards Motor Rifle Alexandria (Peacekeeping) Brigade\" division_template = \"Motor Rifle Brigade\" start_experience_factor = 0.1"
 					owner = ROOT
 				}
 			}
 		}
 		ai_will_do = {
-			factor = 355
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -21003,11 +20946,7 @@ focus_tree = {
 			air_experience = 15
 		}
 		ai_will_do = {
-			factor = 355
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -21046,11 +20985,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -21079,7 +21014,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
 		}
 	}
 	focus = {
@@ -21214,7 +21149,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
 		}
 	}
 	focus = {
@@ -21225,10 +21160,8 @@ focus_tree = {
 		relative_position_id = SOV_finish_1998_reforms
 		cost = 7
 		available = {
-			OR = {
-				emerging_anarchist_communism_are_not_in_power = yes
-				neutrality_neutral_communism_are_not_in_power = yes
-			}
+			emerging_anarchist_communism_are_not_in_power = yes
+			neutrality_neutral_communism_are_not_in_power = yes
 			owns_state = 1140
 		}
 		prerequisite = { focus = SOV_mto }
@@ -21346,7 +21279,7 @@ focus_tree = {
 			modify_wagnerbund_support = yes
 		}
 		ai_will_do = {
-			base = 155
+			base = 1
 		}
 	}
 	focus = {
@@ -21453,31 +21386,31 @@ focus_tree = {
 			642 = { # Kaliningrad
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
-					type = missile_silo
+					type = rocket_site
 					level = 1
 					instant_build = yes
 				}
 			}
 			668 = { # North Krasnodar
-			add_extra_state_shared_building_slots = 1
-			add_building_construction = {
-				type = missile_silo
-				level = 1
-				instant_build = yes
-			}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = rocket_site
+					level = 1
+					instant_build = yes
+				}
 			}
 			1140 = { # South Krasnodar
-			add_extra_state_shared_building_slots = 1
-			add_building_construction = {
-				type = missile_silo
-				level = 1
-				instant_build = yes
-			}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = rocket_site
+					level = 1
+					instant_build = yes
+				}
 			}
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21502,7 +21435,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21525,7 +21458,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21547,7 +21480,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21569,7 +21502,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21591,7 +21524,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21619,7 +21552,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21654,7 +21587,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21670,14 +21603,21 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_modernize_soviet_missile_stockpiles"
 			set_temp_variable = { treasury_change = -4 }
 			modify_treasury_effect = yes
-			set_temp_variable = { missile_type = 1 }
-			set_temp_variable = { missile_index = 15 }
-			set_temp_variable = { missile_count = 25 }
-			modify_missile_inventory_count = yes
+			if = {
+				limit = { has_dlc = "Gotterdammerung"}
+				if = {
+					limit = { NOT = { has_tech = ICBM5 } }
+					set_technology = { ICBM5 = 1 }
+				}
+				add_equipment_to_stockpile = {
+					type = nuclear_missile_equipment_5
+					amount = 25
+				}
+			}
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21713,7 +21653,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 1
-			
+
 		}
 	}
 	focus = {
@@ -21744,7 +21684,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 1
-			
+
 		}
 	}
 	focus = {
@@ -21772,7 +21712,7 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
 	focus = {
@@ -21811,10 +21751,10 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 155
-			
+
 		}
 	}
-	
+
 	focus = {
 		id = SOV_expand_kalashnikov_concern
 		icon = KK
@@ -21842,12 +21782,7 @@ focus_tree = {
 			add_ideas = SOV_kalashnikov_idea
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -21886,11 +21821,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -21919,12 +21850,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -21952,11 +21878,7 @@ focus_tree = {
 			add_ideas = SOV_kbp_idea
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -21983,12 +21905,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -22015,12 +21932,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -22047,12 +21959,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			
+			base = 355
 		}
 	}
 	focus = {
@@ -22096,7 +22003,7 @@ focus_tree = {
 			add_to_variable = { SOV_rosgvardia_police_cost_multiplier_modifier = 0.10 }
 			custom_effect_tooltip = SOV_rosgvardia_start_tt
 			create_corps_commander = {
-				name = "Victor Zolotov"
+				name = "Viktor Zolotov"
 				portrait_path = "gfx/leaders/SOV/SOV_zolotov.dds"
 				traits = { }
 				skill = 1
@@ -22106,7 +22013,9 @@ focus_tree = {
 				logistics_skill = 1
 			}
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 
 	focus = {
@@ -22169,7 +22078,7 @@ focus_tree = {
 			decrease_corruption = yes
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -22203,7 +22112,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -22547,6 +22456,11 @@ focus_tree = {
 			remove_ideas = SOV_putinism_system_protest
 			country_event = sov_medvedev.7
 			set_cosmetic_tag = SOV_dimon
+			add_power_balance_value = {
+				id = SOV_west_east_bop
+				value = 0.20
+				tooltip_side = SOV_west_east_bop_right_side
+			}
 		}
 		ai_will_do = {
 			base = 1
@@ -22629,6 +22543,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_defend_national_interests"
 			add_country_leader_trait = iron_dimon
 			SOV_warcult_script_good = yes
+			add_power_balance_value = {
+				id = SOV_west_east_bop
+				value = 0.20
+				tooltip_side = SOV_west_east_bop_right_side
+			}
 		}
 		ai_will_do = { base = 155 }
 	}
@@ -22650,6 +22569,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_enforce_liberal_values"
 			country_event = sov_medvedev.8
 			remove_ideas = SOV_putinism_system_protest
+			add_power_balance_value = {
+				id = SOV_west_east_bop
+				value = -0.20
+				tooltip_side = SOV_west_east_bop_right_side
+			}
 		}
 		ai_will_do = {
 			base = 1
@@ -26985,7 +26909,7 @@ focus_tree = {
 				modify_treasury_effect = yes
 				add_to_variable = { SOV_koba_politic_tax_gain_multiplier_modifier = 0.09 }
 				custom_effect_tooltip = SOV_koba_politic2_tt
-				
+
 				if = {
 					limit = { has_idea = SOV_corrupt_oligarchy }
 					remove_ideas = SOV_corrupt_oligarchy
@@ -27249,6 +27173,7 @@ focus_tree = {
 					set_country_flag = SOV_western_sanctions
 					add_dynamic_modifier = { modifier = SOV_western_sanctions_modifier }
 					country_event = { id = sov_final_strike.7 days = 15 }
+					country_event = { id = sov_economic.25 days = 1 }
 					SOV_economy_cars_western_lose_script = yes
 					USA = {
 						country_event = { id = sov_final_strike.4 days = 1 }
@@ -27908,7 +27833,7 @@ focus_tree = {
 			}
 		}
 
-		bypass = { 
+		bypass = {
 			AND = {
 				NOT = {
 					country_exists = CZE
@@ -27934,7 +27859,7 @@ focus_tree = {
 	focus = {
 		id = SOV_economic_russian
 		icon = russian_investements
-		
+
 		x = 47
 		y = 23
 		relative_position_id = SOV_reign_of_yeltsin
@@ -27948,6 +27873,7 @@ focus_tree = {
 			hidden_effect = {
 				set_country_flag = SOV_gazprom_mechanic_close
 				set_country_flag = SOV_roskosmos_mechanic_close
+				set_country_flag = SOV_interrao_mechanic_close
 			}
 			one_random_industrial_complex = yes
 		}
@@ -27972,7 +27898,9 @@ focus_tree = {
 			add_ideas = SOV_idea_outer_space_development
 			set_country_flag = SOV_roskosmos_mechanic_close
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_outer_space_vostochniy
@@ -27988,7 +27916,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 1069 } 
+			SOV = { owns_state = 1069 }
 		}
 
 		completion_reward = {
@@ -28013,7 +27941,9 @@ focus_tree = {
 				}
 			}
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_outer_space_asteroids_mining
@@ -28053,7 +27983,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 			custom_effect_tooltip = SOV_mining_asteroid_tt
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_outer_space_sateelites
@@ -28095,7 +28027,9 @@ focus_tree = {
 				category = CAT_satellite
 			}
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_outer_space_space_combat_wombat
@@ -28136,7 +28070,9 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -25 }
 			modify_treasury_effect = yes
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_outer_space_weaponized_space
@@ -28164,7 +28100,9 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_outer_space_moon_base
@@ -28196,7 +28134,9 @@ focus_tree = {
 				category = CAT_missile
 			}
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_outer_space_marines
@@ -28218,7 +28158,9 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -100 }
 			modify_treasury_effect = yes
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	##Russian Resistance Economy
 	focus = {
@@ -28242,7 +28184,9 @@ focus_tree = {
 			set_temp_variable = { percent_change = 4 }
 			change_domestic_influence_percentage = yes
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_fnb_destroyed
@@ -28271,7 +28215,9 @@ focus_tree = {
 				add_idea = SOV_ruble_collapse_1
 			}
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_prevent_panic_on_currency_exchange
@@ -28296,7 +28242,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_research_speed = 0.01 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_stop_moex_sessions
@@ -28320,8 +28268,15 @@ focus_tree = {
 			change_oligarchs_opinion = yes
 			add_to_variable = { SOV_sanctions_construction_speed = 0.01 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
+			custom_effect_tooltip = SOV_stop_moex_tt
+			hidden_effect = {
+				set_country_flag = SOV_stop_moex
+			}
+			country_event = { id = sov_economic.33 days = 30 }
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_prevent_ruble_collapse
@@ -28338,7 +28293,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_prevent_panic_on_currency_exchange }
 
 		available = { has_country_flag = SOV_western_sanctions }
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_prevent_ruble_collapse"
 			swap_ideas = {
@@ -28348,7 +28303,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_roi = 0.02 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_stabilized_finances
@@ -28371,7 +28328,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_roi = 0.02 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_back_to_growth
@@ -28395,14 +28354,16 @@ focus_tree = {
 			add_stability = 0.07
 			add_political_power = 100
 			increase_economic_growth = yes
-
+			custom_effect_tooltip = SOV_sanctions_over_capitalization_tt
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_expansion_of_importozamesheniye
 		icon = focus_dobriy_kola
-		
+
 		x = 2
 		y = 1
 		relative_position_id = SOV_russian_resistance_economy
@@ -28423,7 +28384,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_research_speed = 0.02 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_consumer_goods_replacement
@@ -28448,7 +28411,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_office_tax_gain = 0.02 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_add_liquidity
@@ -28473,7 +28438,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_construction_speed = 0.03 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_UVZ_expanding
@@ -28489,7 +28456,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = { has_country_flag = SOV_western_sanctions }
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_UVZ_expanding"
 			add_ideas = BLR_uvz
@@ -28514,15 +28481,7 @@ focus_tree = {
 
 		}
 		ai_will_do = {
-			base = 1
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			modifier = {
-				has_global_flag = SOV_PUTIN_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -28553,15 +28512,7 @@ focus_tree = {
 			add_ideas = mass_produce_drone
 		}
 		ai_will_do = {
-			base = 1
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-			modifier = {
-				has_global_flag = SOV_PUTIN_PATH
-				add = 50
-			}
+			base = 355
 		}
 	}
 	focus = {
@@ -28590,7 +28541,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_construction_speed = 0.02 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_creation_of_sovereign_economy
@@ -28615,7 +28568,9 @@ focus_tree = {
 			add_to_variable = { SOV_sanctions_office_tax_gain = 0.02 }
 			custom_effect_tooltip = SOV_sanctions_eras_TT
 		}
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rusagro
@@ -28667,7 +28622,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rusagro_expanded
@@ -28706,7 +28663,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_miratorg
@@ -28722,7 +28681,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 642 } 
+			SOV = { owns_state = 642 }
 		}
 
 		completion_reward = {
@@ -28741,7 +28700,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_miratorg_expanded
@@ -28781,7 +28742,9 @@ focus_tree = {
 
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_efko
@@ -28819,14 +28782,16 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			add_ideas = SOV_efko_idea 
+			add_ideas = SOV_efko_idea
 			set_temp_variable = { treasury_change = -12.5 }
 			modify_treasury_effect = yes
 			set_temp_variable = { modify_economic = 1 }
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_efko_expanded
@@ -28860,17 +28825,19 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -8 }
 			modify_treasury_effect = yes
 			swap_ideas = {
-				remove_idea = SOV_efko_idea 
+				remove_idea = SOV_efko_idea
 				add_idea = SOV_efko_idea1
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_phos_agro
 		icon = SOV_phosagro
-		
+
 		x = -19
 		y = 3
 		relative_position_id = SOV_economic_russian
@@ -28884,7 +28851,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_phos_agro"
 			add_ideas = SOV_azod_phosagro_income
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_belarus_integrate
@@ -28913,7 +28882,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_grodno_annex
@@ -28944,7 +28915,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_140_annex
@@ -28965,13 +28938,15 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_grodno_annex"
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_140_annex"
 			add_ideas = BLR_140_zavod_union_state1
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_mzkt_annex
@@ -28992,13 +28967,15 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_grodno_annex"
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_mzkt_annex"
 			add_ideas = BLR_mzkt_union_state1
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_peleng_annex
@@ -29019,13 +28996,15 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_grodno_annex"
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_peleng_annex"
 			add_ideas = BLR_peleng_union_state1
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rao_ues
@@ -29045,7 +29024,9 @@ focus_tree = {
 			country_event = { id = sov_economic.6 days = 1 }
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_interrao
@@ -29073,7 +29054,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_interrao_expand
@@ -29117,7 +29100,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rus_hydro
@@ -29167,7 +29152,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rus_hydro_expanded
@@ -29232,13 +29219,15 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_found_rosatom
 		icon = rosatom
 
-		x = -11
+		x = -10
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -29257,7 +29246,7 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -29272,7 +29261,7 @@ focus_tree = {
 		id = SOV_economic_floating_nuclear
 		icon = russia_ledocol
 
-		x = -11
+		x = -10
 		y = 2
 		relative_position_id = SOV_economic_russian
 
@@ -29289,7 +29278,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -29321,7 +29310,114 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
+			modifier = {
+				is_historical_focus_on = yes
+				add = 50
+			}
+			modifier = {
+				has_global_flag = SOV_PUTIN_PATH
+				add = 50
+			}
+		}
+	}
+	focus = {
+		id = SOV_rosatom_fuel_division
+		icon = SOV_armz_rosatom
+
+		x = -9
+		y = 3
+		relative_position_id = SOV_economic_russian
+
+		cost = 7
+
+		prerequisite = { focus = SOV_economic_floating_nuclear }
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosatom_fuel_division"
+			add_ideas = SOV_rosatom_fuel_division_idea
+			set_temp_variable = { modify_economic = 1 }
+			modify_economic_support = yes
+		}
+		ai_will_do = {
+			base = 355
+			modifier = {
+				is_historical_focus_on = yes
+				add = 50
+			}
+			modifier = {
+				has_global_flag = SOV_PUTIN_PATH
+				add = 50
+			}
+		}
+	}
+	focus = {
+		id = SOV_rosatom_fuel_division2
+		icon = uranium_imports
+
+		x = -9
+		y = 4
+		relative_position_id = SOV_economic_russian
+
+		cost = 7
+
+		prerequisite = { focus = SOV_rosatom_fuel_division }
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosatom_fuel_division2"
+			swap_ideas = {
+				remove_idea = SOV_rosatom_fuel_division_idea
+				add_idea = SOV_rosatom_fuel_division_idea1
+			}
+			681 = {
+				add_building_construction = {
+					type = nuclear_facility
+					province = 7789
+					level = 1
+				}
+			}
+			set_temp_variable = { modify_economic = 1 }
+			modify_economic_support = yes
+		}
+		ai_will_do = {
+			base = 355
+			modifier = {
+				is_historical_focus_on = yes
+				add = 50
+			}
+			modifier = {
+				has_global_flag = SOV_PUTIN_PATH
+				add = 50
+			}
+		}
+	}
+	focus = {
+		id = SOV_rosatom_predmet_zoloto
+		icon = sov_rosatom_true_armz
+
+		x = -10
+		y = 5
+		relative_position_id = SOV_economic_russian
+
+		cost = 5
+
+		prerequisite = { focus = SOV_rosatom_fuel_division2 }
+		prerequisite = { focus = SOV_economic_anti_terrorist_rosatom }
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosatom_predmet_zoloto"
+			swap_ideas = {
+				remove_idea = SOV_rosatom_fuel_division_idea
+				add_idea = SOV_rosatom_fuel_division_idea1
+			}
+			set_temp_variable = { modify_economic = 1 }
+			modify_economic_support = yes
+		}
+		ai_will_do = {
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -29357,7 +29453,7 @@ focus_tree = {
 			}
 		}
 		ai_will_do = {
-			base = 155
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -29372,7 +29468,7 @@ focus_tree = {
 		id = SOV_economic_severstal
 		icon = SOV_severstal
 
-		x = -5
+		x = -4
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -29407,13 +29503,15 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_severstal_expanded
 		icon = focus_CHL_silverworking
 
-		x = -5
+		x = -4
 		y = 2
 		relative_position_id = SOV_economic_russian
 
@@ -29423,7 +29521,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 648 } 
+			SOV = { owns_state = 648 }
 		}
 
 		completion_reward = {
@@ -29439,13 +29537,15 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_mechel
 		icon = SOV_mechel
 
-		x = -7
+		x = -6
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -29455,7 +29555,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 1133 } 
+			SOV = { owns_state = 1133 }
 		}
 
 		completion_reward = {
@@ -29476,13 +29576,15 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_yakut_ugol
 		icon = BRA_mensalao_new
 
-		x = -7
+		x = -6
 		y = 2
 		relative_position_id = SOV_economic_russian
 
@@ -29492,7 +29594,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 688 } 
+			SOV = { owns_state = 688 }
 		}
 
 		completion_reward = {
@@ -29515,13 +29617,15 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_evraz
 		icon = SOV_evraz
 
-		x = -9
+		x = -8
 		y = 1
 		relative_position_id = SOV_economic_russian
 
@@ -29531,7 +29635,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 1066 } 
+			SOV = { owns_state = 1066 }
 		}
 
 		completion_reward = {
@@ -29549,13 +29653,15 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_evraz_asset
 		icon = focus_CHL_silverworking
 
-		x = -9
+		x = -8
 		y = 2
 		relative_position_id = SOV_economic_russian
 
@@ -29565,7 +29671,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 1066 } 
+			SOV = { owns_state = 1066 }
 		}
 
 		completion_reward = {
@@ -29588,7 +29694,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_delay_sibirneft_merger
@@ -29602,13 +29710,13 @@ focus_tree = {
 
 		prerequisite = { focus = SOV_economic_russian }
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_delay_sibirneft_merger"
 			country_event = { id = sov_economic.5 days = 1 }
 		}
 		ai_will_do = {
-			base = 50
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -29637,7 +29745,7 @@ focus_tree = {
 			country_event = sov_economic.1
 		}
 		ai_will_do = {
-			base = 1
+			base = 355
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -29667,7 +29775,7 @@ focus_tree = {
 				has_country_flag = SOV_khodorkovsky_found_guilty
 			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_khodorkovsky_trial"
 			country_event = sov_economic.2
@@ -29694,7 +29802,7 @@ focus_tree = {
 		relative_position_id = SOV_economic_russian
 
 		cost = 7
-		
+
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SOV_khodorkovsky_trigger_TT
@@ -29738,7 +29846,7 @@ focus_tree = {
 		id = SOV_economic_reform_rosneft
 		icon = Rosneft
 
-		x = -9
+		x = -8
 		y = 5
 		relative_position_id = SOV_economic_russian
 
@@ -29763,13 +29871,15 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_use_yukos
 		icon = yukos
 
-		x = -9
+		x = -8
 		y = 6
 		relative_position_id = SOV_economic_russian
 
@@ -29792,13 +29902,15 @@ focus_tree = {
 			change_fossil_fuel_industry_opinion = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_buy_itera
 		icon = SOV_itera
 
-		x = -11
+		x = -10
 		y = 7
 		relative_position_id = SOV_economic_russian
 
@@ -29842,13 +29954,15 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_buy_severnaya_neft
 		icon = SOV_nnk
 
-		x = -9
+		x = -8
 		y = 7
 		relative_position_id = SOV_economic_russian
 
@@ -29882,13 +29996,15 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_buy_thk_bp
 		icon = SOV_tnk_bp
 
-		x = -7
+		x = -6
 		y = 7
 		relative_position_id = SOV_economic_russian
 
@@ -29902,7 +30018,9 @@ focus_tree = {
 			country_event = { id = sov_economic.4 days = 1 }
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_gazprom_neft
@@ -29932,7 +30050,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_arctic_gas
@@ -29984,13 +30104,15 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_slavneft
 		icon = SOV_slavneft
 
-		x = -6
+		x = -5
 		y = 6
 		relative_position_id = SOV_economic_russian
 
@@ -30025,7 +30147,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_gas_with_sibur
@@ -30066,7 +30190,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_oil_nenets
@@ -30082,7 +30208,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 683 } 
+			SOV = { owns_state = 683 }
 		}
 
 		completion_reward = {
@@ -30101,7 +30227,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_oil_yamao
@@ -30118,7 +30246,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 679 } 
+			SOV = { owns_state = 679 }
 		}
 
 		completion_reward = {
@@ -30137,7 +30265,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_oil_khmao
@@ -30153,7 +30283,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 678 } 
+			SOV = { owns_state = 678 }
 		}
 
 		completion_reward = {
@@ -30172,9 +30302,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
-	
+
 	focus = {
 		id = SOV_economic_rubber
 		icon = focus_BRA_rubber_war
@@ -30219,8 +30351,9 @@ focus_tree = {
 				}
 			}
 		}
-
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rubber_foreign
@@ -30238,7 +30371,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_rubber_foreign"
 			if = {
-				limit = { 
+				limit = {
 					NOT = {
 						has_war_with = FRA
 					}
@@ -30278,7 +30411,9 @@ focus_tree = {
 				JAP = { country_event = sov_economic.13 }
 			}
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rostelekom
@@ -30305,7 +30440,9 @@ focus_tree = {
 			set_temp_variable = { modify_economic = 1 }
 			modify_economic_support = yes
 		}
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_inter_networks
@@ -30327,7 +30464,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_gosuslugi
@@ -30353,7 +30492,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_megaphon
@@ -30382,7 +30523,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_tele2
@@ -30447,7 +30590,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_mts
@@ -30479,7 +30624,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_mts_expanding
@@ -30539,7 +30686,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_glonass
@@ -30563,7 +30712,9 @@ focus_tree = {
 			add_ideas = SOV_idea_glonass
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_aeroflot
@@ -30585,7 +30736,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_poebda
@@ -30608,7 +30761,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_new_airports
@@ -30661,7 +30816,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd
@@ -30683,7 +30840,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd_sochi
@@ -30721,7 +30880,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd_more_trains
@@ -30747,7 +30908,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd_moscow_circle
@@ -30786,7 +30949,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd_transsib
@@ -30900,7 +31065,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd_baikal_amure
@@ -30951,7 +31118,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd_north_latitudinal
@@ -30966,7 +31135,7 @@ focus_tree = {
 		prerequisite = { focus = SOV_economic_rjd_baikal_amure }
 		prerequisite = { focus = SOV_economic_rjd_transsib }
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
-	
+
 		available = {
 			SOV = { owns_state = 679 }
 		}
@@ -31021,7 +31190,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rjd_mcd
@@ -31045,7 +31216,14 @@ focus_tree = {
 			652 = { #Moscow
 				add_building_construction = {
 					type = infrastructure
-					level = 2
+					level = 1
+					instant_build = yes
+				}
+			}
+			1189 = { #Moscow
+				add_building_construction = {
+					type = infrastructure
+					level = 1
 					instant_build = yes
 				}
 			}
@@ -31053,7 +31231,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_rusal
@@ -31069,7 +31249,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 1065 } 
+			SOV = { owns_state = 1065 }
 		}
 
 		completion_reward = {
@@ -31092,7 +31272,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_buy_sual
@@ -31133,7 +31315,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_auto
@@ -31175,9 +31359,9 @@ focus_tree = {
 				SOV = {
 					has_country_flag = SOV_western_sanctions
 				}
-			} 
+			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_cars_europe"
 			add_ideas = SOV_foreign_cars_idea
@@ -31204,7 +31388,7 @@ focus_tree = {
 				SOV = {
 					has_country_flag = SOV_western_sanctions
 				}
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -31250,9 +31434,9 @@ focus_tree = {
 				SOV = {
 					has_country_flag = SOV_western_sanctions
 				}
-			} 
+			}
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_cars_usa"
 			SOV_economy_cars_script = yes
@@ -31283,7 +31467,7 @@ focus_tree = {
 				SOV = {
 					has_country_flag = SOV_western_sanctions
 				}
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -31330,7 +31514,7 @@ focus_tree = {
 				SOV = {
 					has_country_flag = SOV_western_sanctions
 				}
-			} 
+			}
 		}
 
 		cancel = {
@@ -31372,7 +31556,7 @@ focus_tree = {
 				SOV = {
 					has_country_flag = SOV_western_sanctions
 				}
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -31413,7 +31597,7 @@ focus_tree = {
 		available = {
 			NOT = {
 				has_war_with = CHI
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -31443,7 +31627,7 @@ focus_tree = {
 		available = {
 			NOT = {
 				has_war_with = CHI
-			} 
+			}
 		}
 
 		completion_reward = {
@@ -31797,9 +31981,12 @@ focus_tree = {
 				}
 				every_country = { news_event = { id = russia_news.7 } }
 			}
+			country_event = { id = sov_economic.32 days = 1 }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_gazprom_stream
@@ -32020,7 +32207,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_destiny_vk
@@ -32040,7 +32229,9 @@ focus_tree = {
 			add_ideas = SOV_vk_idea
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_mir
@@ -32060,7 +32251,9 @@ focus_tree = {
 			add_ideas = SOV_mir_idea
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_destiny_sber
@@ -32080,11 +32273,13 @@ focus_tree = {
 			add_ideas = SOV_sber_idea
 			SOV = {
 				set_temp_variable = { modify_capitalisation_sberbank = 0.150 }
-				modify_capitalisation_rosneft_support = yes
+				modify_capitalisation_sberbank_support = yes
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_destiny_yandex
@@ -32104,7 +32299,9 @@ focus_tree = {
 			add_ideas = SOV_yandex_idea
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_alrosa
@@ -32144,8 +32341,9 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -12.1 }
 			modify_treasury_effect = yes
 		}
-
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_nakynskoe
@@ -32161,7 +32359,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 688 } 
+			SOV = { owns_state = 688 }
 		}
 
 		completion_reward = {
@@ -32178,7 +32376,9 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_nornickel
@@ -32238,7 +32438,7 @@ focus_tree = {
 				}
 			}
 		}
-		
+
 		ai_will_do = { base = 40 }
 	}
 	focus = {
@@ -32303,8 +32503,9 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -34.5 }
 			modify_treasury_effect = yes
 		}
-
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_reform_gazprom
@@ -32329,8 +32530,9 @@ focus_tree = {
 				modify_capitalisation_gazprom_support = yes
 			}
 		}
-
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_buy_sibur
@@ -32359,7 +32561,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_zapolyarnoe
@@ -32375,13 +32579,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 679 } 
+			SOV = { owns_state = 679 }
 		}
 
 		bypass = {
 			NOT = { SOV = { owns_state = 679 } }
 		}
-		
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_economic_zapolyarnoe"
 			679 = {
@@ -32398,7 +32602,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_nat_gas_sakhalin
@@ -32414,7 +32620,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY }
 
 		available = {
-			SOV = { owns_state = 691 } 
+			SOV = { owns_state = 691 }
 		}
 
 		bypass = {
@@ -32444,7 +32650,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_gazprom_tes
@@ -32495,7 +32703,9 @@ focus_tree = {
 			modify_economic_support = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_remove_guzinsky
@@ -32514,8 +32724,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_remove_guzinsky"
 			country_event = { id = sov_economic.3 days = 1 }
 		}
-
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_trikolov_tv
@@ -32541,8 +32752,9 @@ focus_tree = {
 				add_idea = SOV_private_media_nationalisation_idea1
 			}
 		}
-
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 	focus = {
 		id = SOV_economic_gazprom_media
@@ -32570,8 +32782,9 @@ focus_tree = {
 			set_temp_variable = { modify_capitalisation_gazprom = 0.200 }
 			modify_capitalisation_gazprom_support = yes
 		}
-
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 355
+		}
 	}
 
 }
