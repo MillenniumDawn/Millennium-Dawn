@@ -32,13 +32,11 @@ from tokenize import Ignore
 # tgalist: List of files that are .tga
 # ddsdict: Dictionary of all file names and their paths
 # country_tag_list: Country Tag List
-# inputpath: Path to the given directory
 ddslist = []
 ddsdict = {}
 pnglist = []
 tgalist = []
 country_tag_list = []
-inputpath = ""
 
 # Modfolder = the mod folder name
 # mod = The mod name
@@ -52,19 +50,20 @@ def main():
 	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "))
 
 	if selection == 1:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\gfx\interface\goals'))
+		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\\gfx\\interface\\goals'))
 		print(path)
 		getfiles(path)
 	elif selection == 2:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\gfx\event_pictures'))
+		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\\gfx\\event_pictures'))
 		print(path)
 		getfiles(path)
 	elif selection == 3:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\gfx\interface\ideas'))
+		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\\gfx\\interface\\ideas'))
 		print(path)
 		getfiles(path)
 	elif selection == 4:
 		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\\gfx\\interface\\technologies'))
+
 
 		print(path)
 		getfiles(path)
@@ -79,7 +78,7 @@ def main():
 		print(path)
 		getfiles(path)
 	elif selection == 7:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\gfx\interface\decisions'))
+		path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\\gfx\\interface\\decisions'))
 		print(path)
 		getfiles(path)
 	else:

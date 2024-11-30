@@ -63,54 +63,37 @@ get_strategic_building_levels = {
 }
 
 update_misc_vars = {
-	set_variable = {
-		consumer_goods_factories = num_of_civilian_factories
-	}
-	multiply_variable = {
-		consumer_goods_factories = modifier@consumer_goods_factor
-	}
-	set_variable = {
-		effective_civilian_factories = num_of_civilian_factories
-	}
-	subtract_from_variable = {
-		effective_civilian_factories = consumer_goods_factories
-	}
-	set_temp_variable = {
-		civ_factories_multiplier = modifier@production_speed_buildings_factor
-	}
-	multiply_temp_variable = {
-		civ_factories_multiplier = effective_civilian_factories
-	}
-	add_to_variable = {
-		effective_civilian_factories = civ_factories_multiplier
-	}
-	set_variable = {
-		effective_military_factories = num_of_military_factories
-	}
-	set_temp_variable = {
-		mil_factories_multiplier = modifier@industrial_capacity_factory
-	}
-	multiply_temp_variable = {
-		mil_factories_multiplier = effective_military_factories
-	}
-	add_to_variable = {
-		effective_military_factories = mil_factories_multiplier
-	}
-	set_variable = {
-		effective_naval_factories = num_of_naval_factories
-	}
-	set_temp_variable = {
-		nav_factories_multiplier = modifier@industrial_capacity_dockyard
-	}
-	multiply_temp_variable = {
-		nav_factories_multiplier = effective_naval_factories
-	}
-	add_to_variable = {
-		effective_naval_factories = nav_factories_multiplier
-	}
-	set_variable = {
-		num_controlled_states_including_subjects = num_controlled_states
-	}
+	# Consumer Good Factories
+	set_variable = { consumer_goods_factories = num_of_civilian_factories }
+
+	set_temp_variable = { actual_consumer_goods_percent = modifier@consumer_goods_expected_value }
+	set_temp_variable = { consumer_goods_factor_full = 1 }
+	add_to_temp_variable = { consumer_goods_factor_full = modifier@consumer_goods_factor }
+	multiply_temp_variable = { actual_consumer_goods_percent = consumer_goods_factor_full }
+
+	multiply_variable = { consumer_goods_factories = actual_consumer_goods_percent }
+
+	set_variable = { used_consumer_goods_factories = num_of_civilian_factories }
+	subtract_from_variable = { used_consumer_goods_Factories = consumer_goods_factories }
+
+	set_variable = { effective_civilian_factories = num_of_civilian_factories }
+	subtract_from_variable = { effective_civilian_factories = consumer_goods_factories }
+
+	set_temp_variable = { civ_factories_multiplier = modifier@production_speed_buildings_factor }
+	multiply_temp_variable = { civ_factories_multiplier = effective_civilian_factories }
+	add_to_variable = { effective_civilian_factories = civ_factories_multiplier }
+
+	set_variable = { effective_military_factories = num_of_military_factories }
+	set_temp_variable = { mil_factories_multiplier = modifier@industrial_capacity_factory }
+	multiply_temp_variable = { mil_factories_multiplier = effective_military_factories }
+	add_to_variable = { effective_military_factories = mil_factories_multiplier }
+
+	set_variable = { effective_naval_factories = num_of_naval_factories }
+	set_temp_variable = { nav_factories_multiplier = modifier@industrial_capacity_dockyard }
+	multiply_temp_variable = { nav_factories_multiplier = effective_naval_factories }
+	add_to_variable = { effective_naval_factories = nav_factories_multiplier }
+
+	set_variable = { num_controlled_states_including_subjects = num_controlled_states }
 	for_each_scope_loop = {
 		array = subjects
 		add_to_variable = {
@@ -278,8 +261,10 @@ ledger_quicksort = {
 				}
 			}
 		}
+		# Make sure to update common/scripted_localisation/ledger_localisation.txt for the new variables you're adding
 		VARIABLE = "[ROOT.LedgerGetVariableToSort]"
 	}
+
 	clear_variable = min
 	clear_variable = tmp
 	clear_variable = random_pivot

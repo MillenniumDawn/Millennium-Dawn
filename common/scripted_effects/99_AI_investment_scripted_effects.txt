@@ -1,0 +1,946 @@
+# AI Investable Assets Commands
+# Used in 00_influence_on_actions.txt :)
+# Page 1
+# line One - CIC - 1, MIC - 2, NIC - 3
+# Line Two - Infrastructure - 4, Offices - 5, SAM - 6, Radar - 7
+# Page 2
+# Line One - Air Bases - 8, Fuel Silo - 9, Internet Station - 10
+# Line Two - Biofuel Refineries - 11
+# Positions of Line One: { 8, 45, 82, 119 }, 45
+# Positions of Line Two: { 8, 45, 82, 119 }, 76
+# In scope STATE random_owned_state
+# TAG = { random_owned_state = { } }
+
+# GUI : PREV = { CONTROLLER = { } }
+invest_cic = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 1 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_mic = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 2 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_nic = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 3 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_infra = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 4 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_offices = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 5 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_anti_air = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 6 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_radar = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 7 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_air_bases = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 8 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_fuel_silo = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 9 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_internet_station = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 10 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_biofuel_refinery = {
+	PREV.PREV = {
+		set_variable = { project_building_type^-1 = 11 }
+		set_variable = { project_build_amount^-1 = 1 }
+
+		PREV = {
+			save_event_target_as = AC_state_event_target
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+# Building Type 1: Civilian industry
+AI_get_civilian_industry_score = {
+	if = { limit = { free_building_slots = { building = industrial_complex size > 0  include_locked = no } }
+		# Score Modeling
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 170 }
+
+		# Increase section
+		# Adds score if target country has low civs in relation to mils and docks.
+		if = { limit = { CONTROLLER = { num_of_factories > 0 } }
+			if = {
+				limit = {
+					CONTROLLER = {
+						set_temp_variable = { civs_to_factories_ratio = num_of_civilian_factories }
+						divide_temp_variable = { civs_to_factories_ratio = num_of_factories }
+						check_variable = { civs_to_factories_ratio < 0.65 } # civs make up less than 65% of total factories (excluding offices)
+					}
+				}
+				add_to_temp_variable = { v1 = 15 }
+			}
+		}
+
+		# Decrease Section
+		# Ensures Civilian Industry is Evenly Distributed Across Country
+		set_temp_variable = { v2 = building_level@industrial_complex }
+
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 15 } }
+			add_to_temp_variable = { v2 = 5 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 30 } }
+			add_to_temp_variable = { v2 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 45 } }
+			add_to_temp_variable = { v2 = 15 }
+		}
+
+		# No points in investing civs if almost no employees are available (scaled for smaller countries population wise)
+		if = {
+			limit = {
+				CONTROLLER = {
+					check_variable = { total_unemployed_percentage_display < 0.020 } # 2% unemployment
+					check_variable = { population_total_m < 30 }
+				}
+			}
+			add_to_temp_variable = { v2 = 100 }
+		}
+		# No point in investing civs if almost no employees are available (scaled for larger countries population wise)
+		if = {
+			limit = {
+				CONTROLLER = {
+					check_variable = { total_unemployed_percentage_display < 0.010 } # 1% unemployment
+					check_variable = { population_total_m > 29.999 }
+				}
+			}
+			add_to_temp_variable = { v2 = 100 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 1 }
+		}
+	}
+}
+
+# Building Type 2: Military Industry
+AI_get_military_industry_score = {
+	set_temp_variable = { AI_score = 0 }
+
+	set_temp_variable = { v1 = 150 }
+
+	# Increase Section
+	if = { limit = { date > 2004.1.1 }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { date > 2006.1.1 }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { threat > 10 }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { threat > 20 }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { threat > 40 }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 15 } }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 10 } }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_military_factories < 5 } }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+		add_to_temp_variable = { v1 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		add_to_temp_variable = { v1 = 15 }
+	}
+
+	# Reduction Section
+	# Ensures Military Industry is Evenly Distributed Across Country
+	set_temp_variable = { v2 = building_level@arms_factory }
+
+	if = { limit = { CONTROLLER = { has_war = no } }
+		add_to_temp_variable = { v2 = 20 }
+	}
+	## Do not cripple your economy
+	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
+		add_to_temp_variable = { v2 = 10 }
+	}
+
+	# Lowers score if target country has too many mils in relation to civs and docks
+	if = { limit = { CONTROLLER = { num_of_factories > 0 } }
+		if = {
+			limit = {
+				CONTROLLER = {
+					set_temp_variable = { mils_to_factories_ratio = num_of_military_factories }
+					divide_temp_variable = { mils_to_factories_ratio = num_of_factories }
+					check_variable = { mils_to_factories_ratio > 0.45 } # when mils make up more than 20% of total factories (excluding offices)
+				}
+			}
+			add_to_temp_variable = { v2 = 70 }
+		}
+	}
+
+	# No point in investing mils if almost no employees are available
+	if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
+		add_to_temp_variable = { v2 = 50 }
+	}
+
+	subtract_from_temp_variable = { v1 = v2 }
+	add_to_temp_variable = { AI_score = v1 }
+
+	# AI_not_in_home_area = yes # Trigger doesn't work currently
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = 2 }
+	}
+}
+
+# Building Type 3: Dockyards
+AI_get_dockyard_score = {
+	set_temp_variable = { AI_score = 0 }
+
+	set_temp_variable = { v1 = 170 } # Basis
+
+	# Increase Section
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 15 } }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 10 } }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { CONTROLLER = { num_of_naval_factories < 5 } }
+		add_to_temp_variable = { v1 = 10 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+		add_to_temp_variable = { v1 = 15 }
+	}
+	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		add_to_temp_variable = { v1 = 15 }
+	}
+
+	# Reduction Section
+	set_temp_variable = { v2 = 0 } # Basis
+
+	if = { limit = { CONTROLLER = { has_war = no } }
+		add_to_temp_variable = { v2 = 35 }
+	}
+
+	## Do not try to invest in a non-coastal state
+	if = { limit = { is_coastal = no }
+		add_to_temp_variable = { v2 = 100 }
+	}
+
+	# Reduce if nation can't support building a navy resource wise
+	if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 200 } } }
+		add_to_temp_variable = { v2 = 20 }
+	}
+	if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 100 } } }
+		add_to_temp_variable = { v2 = 40 }
+	}
+
+	# Reduce if nation can't support building a navy money wise
+	if = { limit = { CONTROLLER = { check_variable = { gdp_total < 1000 } } }
+	add_to_temp_variable = { v2 = 100 }
+	}
+	if = { limit = { CONTROLLER = { check_variable = { interest_rate > 10.5 } } }
+	add_to_temp_variable = { v2 = 40 }
+	}
+
+	# Lowers score if target country has too many docks in relation to civs and mils
+	if = { limit = { CONTROLLER = { num_of_factories > 0 } }
+		if = {
+			limit = {
+				CONTROLLER = {
+					set_temp_variable = { docks_to_factories_ratio = num_of_naval_factories }
+					divide_temp_variable = { docks_to_factories_ratio = num_of_factories }
+					check_variable = { docks_to_factories_ratio > 0.20 } # when docks make up more than 20% of total factories (excluding offices)
+				}
+			}
+			add_to_temp_variable = { v2 = 50 }
+		}
+	}
+
+	# No point in investing docks if almost no employees are available
+	if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
+		add_to_temp_variable = { v2 = 50 }
+	}
+
+	subtract_from_temp_variable = { v1 = v2 }
+	add_to_temp_variable = { AI_score = v1 }
+
+	# AI_not_in_home_area = yes # Trigger doesn't work currently
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = 3 }
+	}
+}
+
+temp_test = {
+	754 = {
+		AI_get_infrastructure_score = yes
+	}
+}
+# Building Type 4: Infrastructure
+AI_get_infrastructure_score = {
+	if = { limit = { free_building_slots = { building = infrastructure size > 0  include_locked = no } }
+		# Score Modeling
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 200 }
+
+		# Increase section
+		# States with Resources get more infrastructure investments
+		if = {
+			limit = {
+				OR = {
+					has_resources_amount = { resource = aluminium amount > 10 }
+					has_resources_amount = { resource = oil amount > 10 }
+					has_resources_amount = { resource = steel amount > 10 }
+					has_resources_amount = { resource = rubber amount > 10 }
+					has_resources_amount = { resource = tungsten amount > 10 }
+					has_resources_amount = { resource = chromium amount > 10 }
+				}
+			}
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_resources_amount = { resource = aluminium amount > 20 }
+					has_resources_amount = { resource = oil amount > 20 }
+					has_resources_amount = { resource = steel amount > 20 }
+					has_resources_amount = { resource = rubber amount > 20 }
+					has_resources_amount = { resource = tungsten amount > 20 }
+					has_resources_amount = { resource = chromium amount > 20 }
+				}
+			}
+			add_to_temp_variable = { v1 = 25 }
+		}
+
+		# Decrease section
+		set_temp_variable = { v2 = building_level@infrastructure }
+		multiply_temp_variable = { v2 = 20 }
+
+		# Deprioritize states with minimal building slots left
+		if = {
+			limit = { free_building_slots = { building = industrial_complex size < 5  include_locked = no } } # although this checks civs specifically in a state available to build, this works for mils, docks, and offices too since they all share the slots.
+			add_to_temp_variable = { v2 = 15 }
+		}
+		if = {
+			limit = { free_building_slots = { building = industrial_complex size < 10  include_locked = no } } # although this checks civs specifically in a state available to build, this works for mils, docks, and offices too since they all share the slots.
+			add_to_temp_variable = { v2 = 15 }
+		}
+
+		# Do not invest infrastructure if you have more then your current value
+		set_temp_variable = { differential_infra = building_level@infrastructure }
+		for_each_loop = {
+			array = project_type_in_state
+			value = v
+			index = i
+
+			if = { limit = { check_variable = { project_type_in_state^i = 4 } }
+				add_to_temp_variable = { differential_infra = 1 }
+			}
+		}
+		add_to_temp_variable = { differential_infra = remaining_level }
+		if = { limit = { check_variable = { differential_infra > 4 } }
+			add_to_temp_variable = { v2 = 100 }
+		}
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 4 }
+		}
+	}
+}
+
+# Building Type 5: Offices
+AI_get_offices_score = {
+	if = { limit = { free_building_slots = { building = offices size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 180 }
+
+		# Increase section
+		# Higher chance to invest office if target has high corp tax rate (meaning they could utilize the office well)
+		if = { limit = { CONTROLLER = { check_variable = { corporate_tax_rate > 22 } } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { corporate_tax_rate > 27 } } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { corporate_tax_rate > 32 } } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+
+		# Decrease section
+		# Ensures offices are evenly distributed across country
+		set_temp_variable = { v2 = building_level@offices }
+
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 1 } }
+			add_to_temp_variable = { v2 = 15 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
+			add_to_temp_variable = { v2 = 12 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 8 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+			add_to_temp_variable = { v2 = 5 }
+		}
+
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 15 } } }
+			add_to_temp_variable = { v2 = 15 }
+		}
+
+		# No points in investing office if almost no employees are available (scaled for smaller countries population wise)
+		if = {
+			limit = {
+				CONTROLLER = {
+					check_variable = { total_unemployed_percentage_display < 0.020 } # 2% unemployment
+					check_variable = { population_total_m < 30 }
+				}
+			}
+			add_to_temp_variable = { v2 = 100 }
+		}
+		# No points in investing office if almost no employees are available (scaled for larger countries population wise)
+		if = {
+			limit = {
+				CONTROLLER = {
+					check_variable = { total_unemployed_percentage_display < 0.010 } # 1% unemployment
+					check_variable = { population_total_m > 29.999 }
+				}
+			}
+			add_to_temp_variable = { v2 = 100 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 5 }
+		}
+	}
+}
+
+# Building Type 9: Fuel Silo
+# AI Currently do not make any investments fuel silo investments
+AI_get_fuel_silo_score = {
+	if = { limit = { free_building_slots = { building = fuel_silo size > 0 include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 170 }
+		set_temp_variable = { v2 = 10 }
+
+		if = { limit = { CONTROLLER = { any_neighbor_country = { has_war_with = PREV } } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 250 } } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 500 } } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 750 } } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+
+		multiply_temp_variable = { v2 = 10 }
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 9 }
+		}
+	}
+}
+
+# Building Type 10: Network Infrastructure
+AI_get_network_infrastructure_score = {
+	if = { limit = { free_building_slots = { building = internet_station size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 130 }
+
+		# Increase Section
+		if = { limit = { check_variable = { building_level@infrastructure = 5 } }
+			add_to_temp_variable = { v1 = 50 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 100 } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 500 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 1000 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 2000 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 4000 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 6000 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+
+		# Reduction Section
+		set_temp_variable = { v2 = 0 }
+
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 9.999 } } }
+			add_to_temp_variable = { v2 = 25 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 10 }
+		}
+	}
+}
+
+# Building Type 11: Renewable Energy Infrastructure
+AI_get_renewable_energy_score = {
+	if = { limit = { free_building_slots = { building = synthetic_refinery size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 95 }
+
+		# Increase Section
+
+		# Increases score the more the target country is energy deficient in terms of percentage of produciton to consumption. The "steps" give less score than fossil plants so that fossil plants are prefered to be invested over renewable, with renewables chosen when the other increase sections are active.
+		CONTROLLER = {
+			set_temp_variable = { energy_balance_ratio = energy_sum }
+			divide_temp_variable = { energy_balance_ratio = energy_consumption }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+
+		# Increases score if there is a renewable energy capacity factor in the state, increasing it more the higher it is.
+		set_temp_variable = { state_renewable_capacity_factor_score = modifier@state_renewable_capacity_factor_modifier }
+		multiply_temp_variable = { state_renewable_capacity_factor_score = 150 }
+		add_to_temp_variable = { v1 = state_renewable_capacity_factor_score }
+
+		# Increases score the more renewable energy gainmultiplier they have (primarily obtained from techs). Note, this section is useless when modifier is below 1.50 due to the reduction section below.
+		CONTROLLER = { set_temp_variable = { renewable_energy_gain_multiplier_score = modifier@renewable_energy_gain_multiplier } }
+		multiply_temp_variable = { renewable_energy_gain_multiplier_score = 20 }
+		add_to_temp_variable = { v1 = renewable_energy_gain_multiplier_score }
+
+		# Reduction Section
+		set_temp_variable = { v2 = 0 }
+
+		# AI won't invest renewable plants if the target country doesn't have at least the 2010 renewable tech that gives a combined 1.50 energy gain multiplier (will earlier if the target country has other bonuses from focuses/spirits)
+		if = { limit = { CONTROLLER = { check_variable = { modifier@renewable_energy_gain_multiplier < 1.50 } } }
+			add_to_temp_variable = { v2 = 1000 }
+		}
+
+		# AI won't invest if target country is positive on energy
+		if = { limit = { check_variable = { energy_balance_ratio > 1.00 } }
+			add_to_temp_variable = { v2 = 1000 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 11 }
+		}
+	}
+}
+
+# Building Type 12: Fossil Fuel Powerplant
+AI_get_fossil_powerplant_score = {
+	if = { limit = { free_building_slots = { building = fossil_powerplant size > 0  include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 95 }
+
+		# Increase Section
+
+		# Increases score the more the target country is energy deficient in terms of percentage of production to consumption
+		CONTROLLER = {
+			set_temp_variable = { energy_balance_ratio = energy_sum }
+			divide_temp_variable = { energy_balance_ratio = energy_consumption }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+		if = { limit = { CONTROLLER = { has_idea = heavy_power_restrictions_spirit } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { has_idea = some_power_restrictions_spirit } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+
+		# Being retarded with your power
+		if = { limit = { CONTROLLER = { has_idea = heavy_additional_consumption_spirit } }
+			add_to_temp_variable = { v1 = -25 }
+		}
+		if = { limit = { CONTROLLER = { has_idea = some_additional_consumption_spirit } }
+			add_to_temp_variable = { v1 = -15 }
+		}
+
+		add_to_temp_variable = { AI_score = v1 }
+
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 12 }
+		}
+	}
+}
+
+AI_edge_case_calculations = {
+	if = { limit = { check_variable = { THIS.state_population_k < 100 } }
+		subtract_from_temp_variable = { AI_score = 20 } # 10 before change due to below
+	}
+	if = { limit = { check_variable = { THIS.state_population_k < 85 } }
+		subtract_from_temp_variable = { AI_score = 40 } # 25 before change due to below
+	}
+	if = { limit = { check_variable = { THIS.state_population_k < 60 } }
+		subtract_from_temp_variable = { AI_score = 80 } # 50 before change due to below
+	}
+
+	if = { limit = { has_state_flag = currently_encouraged_investments }
+		add_to_temp_variable = { AI_score = 20 }
+	}
+}
+
+AI_country_selection_calculation = {
+	# Investee gets this flag for 75 days when a country (investor) chooses them as best country to invest in but can't find any projects worth investing in them (which the project scoring is the same for all investors to that investee so no point in investors choosing them as the best country for some time). Flag added in AC_events file.
+	if = { limit = { has_country_flag = recently_failed_to_invest }
+		add_to_temp_variable = { AI_country_score = -200 }
+	}
+	if = { limit = { has_idea = Non_State_Actor }
+		add_to_temp_variable = { AI_country_score = -60 }
+	}
+	# Investee recently rejected an investment from us
+	if = { limit = { has_country_flag = recently_refused_investment@PREV }
+		add_to_temp_variable = { AI_country_score = -100 }
+	}
+	#investee gets this flag for 21 days when a country (investor) invests a valid project in that country, so a country can't be spammed by investments in a short period of time (or less liekly). Flag added in AC_events file.
+	if = {
+		limit = { has_country_flag = recently_accepted_an_investment }
+		add_to_temp_variable = { AI_country_score = -50 }
+	}
+
+	if = { limit = { is_in_faction_with = PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	if = { limit = { has_country_flag = trade_agreement@PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	# Check if one of the projects in the other one is there
+	if = { limit = { NOT = { check_variable = { PREV.project_array^0 = 0 } } }
+		for_each_scope_loop = {
+			array = PREV.project_array
+			if = { limit = { is_owned_and_controlled_by = PREV }
+				add_to_temp_variable = { AI_country_score = -35 }
+			}
+		}
+	}
+
+	# Check if the ROOT is ECB President
+	if = {
+		limit = {
+			PREV = { has_idea = ECB_president }
+			is_in_array = { global.EU_member = THIS.id }
+		}
+		add_to_temp_variable = { AI_country_score = 15 }
+	}
+	if = {
+		limit = {
+			PREV = { has_idea = EU_finance_minister }
+			is_in_array = { global.EU_member = THIS.id }
+		}
+		add_to_temp_variable = { AI_country_score = 5 }
+	}
+
+	# Check whether someone is an influencer
+	for_each_scope_loop = {
+		array = influence_array
+		if = { limit = { check_variable = { THIS.id = PREV.id } }
+			add_to_temp_variable = { AI_country_score = 40 }
+		}
+	}
+	PREV = {
+		for_each_scope_loop = {
+			array = influence_array
+			if = { limit = { check_variable = { THIS.id = PREV.id } }
+				add_to_temp_variable = { AI_country_score = 40 }
+			}
+		}
+	}
+
+	# Opinion Calculator
+	set_temp_variable = { opinion_value = opinion@PREV }
+	multiply_temp_variable = { opinion_value = 0.30 }
+	clamp_temp_variable = { var = opinion_value min = -75 max = 75 }
+	add_to_temp_variable = { AI_country_score = opinion_value }
+
+	# Corruption Level Check
+	if = { limit = { has_idea = paralyzing_corruption }
+		add_to_temp_variable = { AI_country_score = -25 }
+	}
+	else_if = { limit = { has_idea = crippling_corruption }
+		add_to_temp_variable = { AI_country_score = -20 }
+	}
+	else_if = { limit = { has_idea = rampant_corruption }
+		add_to_temp_variable = { AI_country_score = -17.5 }
+	}
+	else_if = { limit = { has_idea = unrestrained_corruption }
+		add_to_temp_variable = { AI_country_score = -15 }
+	}
+	else_if = { limit = { has_idea = systematic_corruption }
+		add_to_temp_variable = { AI_country_score = -12.5 }
+	}
+	else_if = { limit = { has_idea = widespread_corruption }
+		add_to_temp_variable = { AI_country_score = -10 }
+	}
+	else_if = { limit = { has_idea = medium_corruption }
+		add_to_temp_variable = { AI_country_score = -7.5 }
+	}
+	else_if = { limit = { has_idea = modest_corruption }
+		add_to_temp_variable = { AI_country_score = -5 }
+	}
+	else_if = { limit = { has_idea = slight_corruption }
+		add_to_temp_variable = { AI_country_score = -2 }
+	}
+
+	# Corporate Tax Evaluation
+	if = { limit = { check_variable = { corporate_tax_rate > 30 } }
+		set_temp_variable = { corp_temp = corporate_tax_rate }
+		multiply_temp_variable = { corp_temp = -0.50 }
+		add_to_temp_variable = { AI_country_score = corp_temp }
+	}
+
+	if = {
+		limit = {
+			PREV = { exists = yes }
+			PREV_is_on_same_continent = yes
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+
+	# Countries under 30k gdpc will receive a bonus to score of 1.5 per gdcp under 30k and ones above will receive a score reduction for the same amount.
+	set_temp_variable = { gdpc_scaler = gdp_per_capita }
+	multiply_temp_variable = { gdpc_scaler = -2 }
+	add_to_temp_variable = { gdpc_scaler = 60 }
+	add_to_temp_variable = { AI_country_score = gdpc_scaler }
+	# Countries with big economies slightly less likely to get investments, mostly to slightly reduce the mass amount of investments going into developed European countries
+	set_temp_variable = { gdp_scaler = gdp_total }
+	multiply_temp_variable = { gdp_scaler = -0.002 }
+	clamp_temp_variable = { var = gdp_scaler min = -20 }
+	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# if = {
+	# 	limit = { check_variable = { gdp_per_capita > 35 } }
+	# 	set_temp_variable = { gdp_scaler = gdp_per_capita }
+	# 	subtract_from_temp_variable = { gdp_scaler = 35 }
+	# 	multiply_temp_variable = { gdp_scaler = -2 }
+	# 	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# }
+	# else = {
+	# 	set_temp_variable = { gdp_scaler = 35 }
+	# 	add_to_temp_variable = { gdp_scaler = gdp_per_capita }
+	# 	multiply_temp_variable = { gdp_scaler = 2 }
+	# 	add_to_temp_variable = { AI_country_score = gdp_scaler }
+	# }
+
+	# AI Support the other AI
+	if = {
+		limit = {
+			OR = {
+				num_of_available_civilian_factories < 15
+				check_variable = { treasury_rate < 1.00 }
+			}
+		}
+		add_to_temp_variable = { AI_country_score = 30 }
+	}
+
+	# Invest in Enemy of my Enemy
+	if = {
+		limit = {
+			OR = {
+				any_enemy_country = {
+					has_war_with = ROOT
+				}
+				any_enemy_country = {
+					has_opinion = { target = ROOT value < -50 }
+				}
+			}
+		}
+		add_to_temp_variable = { AI_country_score = 30 }
+	}
+
+	# Multipliers
+	set_temp_variable = { AC_score_modifier = 1 }
+	subtract_from_temp_variable = { AC_score_modifier = THIS.modifier@receiving_investment_cost_modifier }
+	add_to_temp_variable = { AC_score_modifier = PREV.modifier@investment_cost_modifier }
+	clamp_temp_variable = { var = AC_score_modifier min = 0.50 max = 1.50 }
+
+	multiply_temp_variable = { AI_country_score = AC_score_modifier }
+
+	set_temp_variable = { AC_duration_modifier = 1 }
+	add_to_temp_variable = { AC_duration_modifier = THIS.modifier@receiving_investment_duration_modifier }
+	add_to_temp_variable = { AC_duration_modifier = PREV.modifier@investment_duration_modifier }
+	clamp_temp_variable = { var = AC_duration_modifier min = 0.50 max = 1.50 }
+
+	multiply_temp_variable = { AI_country_score = AC_duration_modifier }
+}
