@@ -87,11 +87,17 @@ decision_category_energy = {
 		}
 	}
 
-
 	energy_buy_reactor_grade_material = {
 		icon = GFX_decision_energy_buy_button
 		allowed = { always = yes }
 		visible = {
+			ROOT = {
+				set_temp_variable = { temp = nuclear_fuel_consumption }
+				multiply_temp_variable = { temp = 2 }
+				NOT = { check_variable = { var_nuke_nuclear_material_prod > temp } }
+				# Check if you have nuclear reactors
+				has_nuclear_reactors = yes
+			}
 			FROM = {
 				NOT = { has_war_with = ROOT }
 				NOT = {
@@ -103,9 +109,6 @@ decision_category_energy = {
 			}
 		}
 		available = {
-			ROOT = {
-				has_nuclear_reactors = yes
-			}
 			FROM = {
 				has_enrichment_facilities = yes
 				has_reactor_material_stockpile = yes
@@ -123,6 +126,7 @@ decision_category_energy = {
 				set_temp_variable = { temp_purchase_tag = PREV.id }
 				if = {
 					limit = { NOT = { has_country_flag = auto_accept_all_purchases } }
+					set_variable = { purchaser_tag_reactor = temp_purchase_tag }
 					country_event = energy.1
 				}
 				else = {
@@ -141,11 +145,11 @@ decision_category_energy = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			base = 1
 			# Buy Fuel if you're short
 			modifier = {
 				factor = 5
-				ROOT = { check_variable = { var_reactor_material_stockpile < 2500 } }
+				ROOT = { check_variable = { var_reactor_material_stockpile < 3000 } }
 			}
 			modifier = {
 				factor = 2
@@ -155,6 +159,48 @@ decision_category_energy = {
 				factor = 2
 				ROOT = { has_idea = NATO_member }
 				FROM = { has_idea = NATO_member }
+			}
+			modifier = {
+				factor = 2
+				ROOT = { has_idea = CSTO_member }
+				FROM = { has_idea = CSTO_member }
+			}
+			modifier = {
+				factor = 0.25
+				OR = {
+					AND = {
+						ROOT = { original_tag = USA }
+						FROM = { original_tag = SOV }
+					}
+					AND = {
+						ROOT = { original_tag = SOV }
+						FROM = { original_tag = USA }
+					}
+					AND = {
+						ROOT = { original_tag = CHI }
+						FROM = { original_tag = USA }
+					}
+					AND = {
+						ROOT = { original_tag = USA }
+						FROM = { original_tag = CHI }
+					}
+					AND = {
+						ROOT = { original_tag = CHI }
+						FROM = { original_tag = RAJ }
+					}
+					AND = {
+						ROOT = { original_tag = RAJ }
+						FROM = { original_tag = CHI }
+					}
+					AND = {
+						ROOT = { original_tag = TAI }
+						FROM = { original_tag = CHI }
+					}
+					AND = {
+						ROOT = { original_tag = CHI }
+						FROM = { original_tag = TAI }
+					}
+				}
 			}
 			modifier = {
 				factor = 1.5

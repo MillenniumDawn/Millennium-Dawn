@@ -999,7 +999,7 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = GEO_supress_oppos_com
+		id = GEO_suppress_oppos_com
 		icon = GEO_beria_gulag
 		x = 0
 		y = 1
@@ -1013,7 +1013,7 @@ focus_tree = {
 			focus = GEO_government_reform_com
 		}
 		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: GEO_supress_oppos_com"
+			log = "[GetDateText]: [This.GetName]: GEO_suppress_oppos_com"
 			set_temp_variable = {
 				modify_eurosceptic = 0.05
 			}
@@ -1042,7 +1042,7 @@ focus_tree = {
 			FOCUS_FILTER_POLITICAL
 		}
 		prerequisite = {
-			focus = GEO_supress_oppos_com
+			focus = GEO_suppress_oppos_com
 		}
 		prerequisite = {
 			focus = GEO_political_reformation
@@ -1133,7 +1133,7 @@ focus_tree = {
 			FOCUS_FILTER_POLITICAL
 		}
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GEO_allow_religion_geo"
+			log = "[GetDateText]: [Root.GetName]: Focus GEO_rel_question_com"
 			add_stability = 0.01
 			add_popularity = {
 				ideology = democratic
@@ -1157,7 +1157,7 @@ focus_tree = {
 			FOCUS_FILTER_POLITICAL
 		}
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GEO_rel_question_com"
+			log = "[GetDateText]: [Root.GetName]: Focus GEO_allow_religion_geo"
 			swap_ideas = {
 				remove_idea = orthodox_christian
 				add_idea = pluralist
@@ -1210,7 +1210,7 @@ focus_tree = {
 			add_political_power = 100
 		}
 		prerequisite = {
-			focus = GEO_supress_oppos_com
+			focus = GEO_suppress_oppos_com
 		}
 		prerequisite = {
 			focus = GEO_allow_religion_geo
@@ -1276,7 +1276,7 @@ focus_tree = {
 			FOCUS_FILTER_POLITICAL
 		}
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ARM_prohibition_religion"
+			log = "[GetDateText]: [Root.GetName]: Focus GEO_no_opium_for_people"
 			if = {
 				limit = {
 					has_idea = orthodox_christian
@@ -3618,13 +3618,7 @@ focus_tree = {
 		x = -3
 		y = 1
 		cost = 10
-		ai_will_do = {
-			factor = 155
-			modifier = {
-				factor = 155
-				has_global_flag = GEO_PRO_RUS_PATH
-			}
-		}
+
 		relative_position_id = GEO_crush_opposition_dreams
 		available = { cis_trade_above_50 = yes }
 		search_filters = {
@@ -3632,32 +3626,24 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_ustupki_russia"
-			clear_array = ruling_party
-			clear_array = gov_coalition_array
-			add_to_array = {
-				ruling_party = 7
-			}
-			update_government_coalition_strength = yes
-			update_party_name = yes
-			set_coalition_drift = yes
-			meta_effect = {
-				text = {
-					set_country_flag = [META_SET_RULING_PARTY]
+			if = {
+				limit = { NOT = { is_in_array = { ruling_party = 7 } } }
+				set_temp_variable = { rul_party_temp = 7 }
+				if = {
+					limit = { has_elections = no }
+					set_temp_variable = { enable_elections = 1 }
 				}
-				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+				else = {
+					set_temp_variable = { enable_elections = 0 }
+				}
+				change_ruling_party_effect = yes
 			}
-			set_leader = yes
-			set_politics = {
-				ruling_party = communism
-			}
-			add_popularity = {
-				ideology = communism
-				popularity = 0.05
-			}
-			add_to_variable = {
-				party_pop_array^7 = 0.075
-			}
-			recalculate_party = yes
+
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.075 }
+			set_temp_variable = { temp_outlook_increase = 0.075 }
+			add_relative_party_popularity = yes
+
 			hidden_effect = {
 				remove_state_core = 466
 				add_ideas = GEO_adjara_unstable
@@ -3673,6 +3659,14 @@ focus_tree = {
 			focus = GEO_pokrov_of_west
 			focus = GEO_red_bridge
 			focus = GEO_revive_mhedrioni
+		}
+
+		ai_will_do = {
+			factor = 155
+			modifier = {
+				factor = 155
+				has_global_flag = GEO_PRO_RUS_PATH
+			}
 		}
 	}
 	focus = {
@@ -3696,57 +3690,17 @@ focus_tree = {
 			country_event = georg_militar.1
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_revive_mhedrioni"
 			if = {
-				limit = {
-					NOT = {
-						is_in_array = {
-							ruling_party = 22
-						}
-					}
-				}
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = {
-						ruling_party = 22
-					}
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
-				}
-				set_politics = {
-					ruling_party = nationalist
-				}
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = {
-					party_pop_array^21 = 0.075
-				}
-				recalculate_party = yes
+				limit = { NOT = { is_in_array = { ruling_party = 22 } } }
+				set_temp_variable = { rul_party_temp = 22 }
+				set_temp_variable = { enable_elections = 0 }
+				change_ruling_party_effect = yes
 			}
-			else_if = {
-				limit = {
-					is_in_array = {
-						ruling_party = 21
-					}
-				}
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = {
-					party_pop_array^21 = 0.075
-				}
-				recalculate_party = yes
-			}
+
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+
 			create_country_leader = {
 				name = "David Tevzadze - Mhedrionis Sabcho"
 				picture = "david_tevzadze.dds"
@@ -8916,25 +8870,25 @@ focus_tree = {
 			if = {
 				limit = {
 					NOT = {
-						has_idea = BRA_brazil_energy1
-						has_idea = BRA_brazil_energy2
-						has_idea = BRA_brazil_energy3
+						has_idea = BRA_idea_brazil_energy1
+						has_idea = BRA_idea_brazil_energy2
+						has_idea = BRA_idea_brazil_energy3
 					}
 				}
-				add_ideas = BRA_brazil_energy1
+				add_ideas = BRA_idea_brazil_energy3
 			}
 			else_if = {
-				limit = { has_idea = BRA_brazil_energy1 }
+				limit = { has_idea = BRA_idea_brazil_energy1 }
 				swap_ideas = {
-					remove_idea = BRA_brazil_energy1
-					add_idea = BRA_brazil_energy2
+					remove_idea = BRA_idea_brazil_energy1
+					add_idea = BRA_idea_brazil_energy2
 				}
 			}
 			else_if = {
-				limit = { has_idea = BRA_brazil_energy2 }
+				limit = { has_idea = BRA_idea_brazil_energy2 }
 				swap_ideas = {
-					remove_idea = BRA_brazil_energy2
-					add_idea = BRA_brazil_energy3
+					remove_idea = BRA_idea_brazil_energy2
+					add_idea = BRA_idea_brazil_energy3
 				}
 			}
 			set_temp_variable = { temp_opinion = -10 }
@@ -8962,28 +8916,28 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_mktavari_tpp1"
-				if = {
+			if = {
 				limit = {
 					NOT = {
-						has_idea = BRA_brazil_energy1
-						has_idea = BRA_brazil_energy2
-						has_idea = BRA_brazil_energy3
+						has_idea = BRA_idea_brazil_energy1
+						has_idea = BRA_idea_brazil_energy2
+						has_idea = BRA_idea_brazil_energy3
 					}
 				}
-				add_ideas = BRA_brazil_energy1
+				add_ideas = BRA_idea_brazil_energy3
 			}
 			else_if = {
-				limit = { has_idea = BRA_brazil_energy1 }
+				limit = { has_idea = BRA_idea_brazil_energy1 }
 				swap_ideas = {
-					remove_idea = BRA_brazil_energy1
-					add_idea = BRA_brazil_energy2
+					remove_idea = BRA_idea_brazil_energy1
+					add_idea = BRA_idea_brazil_energy2
 				}
 			}
 			else_if = {
-				limit = { has_idea = BRA_brazil_energy2 }
+				limit = { has_idea = BRA_idea_brazil_energy2 }
 				swap_ideas = {
-					remove_idea = BRA_brazil_energy2
-					add_idea = BRA_brazil_energy3
+					remove_idea = BRA_idea_brazil_energy2
+					add_idea = BRA_idea_brazil_energy3
 				}
 			}
 			set_temp_variable = { temp_opinion = -10 }
@@ -9007,28 +8961,28 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_mktavari_tpp2"
-						if = {
+			if = {
 				limit = {
 					NOT = {
-						has_idea = BRA_brazil_energy1
-						has_idea = BRA_brazil_energy2
-						has_idea = BRA_brazil_energy3
+						has_idea = BRA_idea_brazil_energy1
+						has_idea = BRA_idea_brazil_energy2
+						has_idea = BRA_idea_brazil_energy3
 					}
 				}
-				add_ideas = BRA_brazil_energy1
+				add_ideas = BRA_idea_brazil_energy3
 			}
 			else_if = {
-				limit = { has_idea = BRA_brazil_energy1 }
+				limit = { has_idea = BRA_idea_brazil_energy1 }
 				swap_ideas = {
-					remove_idea = BRA_brazil_energy1
-					add_idea = BRA_brazil_energy2
+					remove_idea = BRA_idea_brazil_energy1
+					add_idea = BRA_idea_brazil_energy2
 				}
 			}
 			else_if = {
-				limit = { has_idea = BRA_brazil_energy2 }
+				limit = { has_idea = BRA_idea_brazil_energy2 }
 				swap_ideas = {
-					remove_idea = BRA_brazil_energy2
-					add_idea = BRA_brazil_energy3
+					remove_idea = BRA_idea_brazil_energy2
+					add_idea = BRA_idea_brazil_energy3
 				}
 			}
 			set_temp_variable = { temp_opinion = -10 }
@@ -9603,6 +9557,10 @@ focus_tree = {
 					has_idea = GEO_gaz_problems
 				}
 				remove_ideas = GEO_gaz_problems
+			}
+			SOV = {
+				set_temp_variable = { modify_capitalisation_gazprom = 0.130 }
+				modify_capitalisation_gazprom_support = yes
 			}
 		}
 	}
@@ -11783,8 +11741,8 @@ focus_tree = {
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				add_equipment_to_stockpile = {
-					type = small_plane_strike_airframe_1
-					variant_name = "Su-22M5 Fitter"
+					type = small_plane_cas_airframe_1
+					variant_name = "Su-17M4"
 					amount = 15
 					producer = SOV
 				}

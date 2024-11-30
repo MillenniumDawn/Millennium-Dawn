@@ -387,6 +387,46 @@ on_actions = {
 				ROOT = { add_timed_idea = { idea = Strategic_city_captured1 days = 60 } }
 				news_event = { id = city_captured.11 }
 			}
+
+			FROM.FROM = {
+				if = { limit = { check_variable = { projects_in_state^num > 0 } }
+
+					for_each_scope_loop = {
+						array = projects_in_state
+
+						if = {
+							limit = {
+								NOT = {
+									ROOT = { is_justifying_wargoal_against = PREV }
+									tag = ROOT
+									ROOT = { has_war_with = PREV }
+								}
+							}
+							add_to_array = { PREV.remove_projects = THIS.id }
+						}
+						else = {
+							# update project target country
+							# remove the target decision from the old controller
+							meta_effect = {
+								text = { var:project_target_country^PREV.project_target_state_@THIS = { remove_targeted_decision = { target = PREV decision = AC_project_[x]_target_decision } } }
+								x = "[?PREV.project_target_state_@THIS]"
+							}
+
+							set_variable = { project_target_country^PREV.project_target_state_@THIS = ROOT.id }
+						}
+					}
+
+					for_each_scope_loop = {
+						array = remove_projects
+
+						set_variable = { project = PREV.project_target_state_@THIS }
+						log = "AC - [GetDate] [This.GetTag] - on_state_control_changed - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
+						end_project = yes
+					}
+
+					clear_array = remove_projects
+				}
+			}
 		}
 	}
 }
