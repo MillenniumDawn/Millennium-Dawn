@@ -3013,6 +3013,8 @@ USA_f35_program_decisions = {
 		icon = GFX_decision_nato_f35_announce_button
 		days_remove = 60
 
+		fire_only_once = yes
+
 		available = {
 			custom_trigger_tooltip = {
 				check_variable = { USA_f35_progress = 100 }
@@ -3022,7 +3024,7 @@ USA_f35_program_decisions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_announce_completion_of_f35"
-
+			country_event = usa.84
 		}
 
 		ai_will_do = {
@@ -3054,6 +3056,12 @@ USA_f35_program_decisions = {
 					has_country_flag = USA_f35_cmtech
 					has_country_flag = USA_f35_radar
 				}
+			}
+		}
+
+		visible = {
+			NOT = {
+				USA = { has_country_flag = USA_f35_designed }
 			}
 		}
 
@@ -3100,6 +3108,12 @@ USA_f35_program_decisions = {
 			has_tech = gen_5_light
 		}
 
+		visible = {
+			NOT = {
+				USA = { has_country_flag = USA_f35_designed }
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_put_forward_frame_tech"
 			custom_effect_tooltip = USA_increase_funding_by_10
@@ -3130,6 +3144,12 @@ USA_f35_program_decisions = {
 
 		available = {
 			has_tech = countermeasures_3
+		}
+
+		visible = {
+			NOT = {
+				USA = { has_country_flag = USA_f35_designed }
+			}
 		}
 
 		remove_effect = {
@@ -3164,6 +3184,12 @@ USA_f35_program_decisions = {
 			has_tech = avionics_3
 		}
 
+		visible = {
+			NOT = {
+				USA = { has_country_flag = USA_f35_designed }
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_put_forward_frame_tech"
 			custom_effect_tooltip = USA_increase_funding_by_10
@@ -3186,24 +3212,214 @@ USA_f35_program_decisions = {
 		}
 	}
 	# Post Completion Decisions
-	# USA
-	USA_replace_fleet_of_f16 = {
-		icon = GFX_decision_nato_f35_radar_button
+
+	USA_place_orders_for_f35_contributors = {
+		icon = GFX_decision_nato_f35_expansion_button
 		days_remove = 60
 
 		fire_only_once = yes
 
 		visible = {
-			has_country_flag = USA_f35_designed
+			USA = { has_country_flag = USA_f35_designed }
+			has_country_flag = USA_f35_legacy_members
+			NOT = {
+				original_tag = USA
+			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_replace_fleet_of_f16"
-
+			clr_country_flag = USA_f35_legacy_members
+			set_country_flag = USA_f35_program_member_new
+			country_event = usa.85
 		}
 
 		ai_will_do = {
 			base = 100
+		}
+	}
+
+	USA_place_orders_for_f35 = {
+		icon = GFX_decision_nato_f35_expansion_button
+		days_remove = 70
+
+		days_re_enable = 160
+
+		visible = {
+			USA = { has_country_flag = USA_f35_designed }
+			has_country_flag = USA_f35_program_member_new
+			NOT = {
+				original_tag = USA
+				has_country_flag = F35_placed_small_order_A
+				has_country_flag = F35_placed_small_order_B
+				has_country_flag = F35_placed_large_order_A
+				has_country_flag = F35_placed_large_order_B
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_place_orders_for_f35"
+			country_event = usa.86
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				if = {
+					limit = {
+						check_variable = { interest_rate > 6.000 }
+					}
+				}
+				factor = 0
+			}
+		}
+	}
+
+	# Orders
+
+	small_f35a_order = {
+		icon = GFX_decision_nato_f35_expansion_button
+
+		days_mission_timeout = 360
+
+		is_good = yes
+
+		available = {
+			always = no
+		}
+
+		activation = {
+			has_country_flag = F35_placed_small_order_A
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout small_f35a_order"
+			clr_country_flag = F35_placed_small_order_A
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 20
+				producer = USA
+			}
+			add_to_variable = { var = f35_production_debuff value = 0.02 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+			random_list = {
+				10 = {
+					one_random_arms_factory = yes
+				}
+				90 = {
+				}
+			}
+		}
+	}
+
+	small_f35b_order = {
+		icon = GFX_decision_nato_f35_expansion_button
+
+		days_mission_timeout = 360
+
+		is_good = yes
+
+		available = {
+			always = no
+		}
+
+		activation = {
+			has_country_flag = F35_placed_small_order_B
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout small_f35b_order"
+			clr_country_flag = F35_placed_small_order_B
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 20
+				producer = USA
+			}
+			add_to_variable = { var = f35_production_debuff value = 0.02 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+			random_list = {
+				10 = {
+					one_random_arms_factory = yes
+				}
+				90 = {
+				}
+			}
+		}
+	}
+
+	# Large Orders
+
+	large_f35a_order = {
+		icon = GFX_decision_nato_f35_expansion_button
+
+		days_mission_timeout = 500
+
+		is_good = yes
+
+		available = {
+			always = no
+		}
+
+		activation = {
+			has_country_flag = F35_placed_large_order_A
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout large_f35a_order"
+			clr_country_flag = F35_placed_large_order_A
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 40
+				producer = USA
+			}
+			add_to_variable = { var = f35_production_debuff value = 0.04 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+			random_list = {
+				30 = {
+					one_random_arms_factory = yes
+				}
+				70 = {
+				}
+			}
+		}
+	}
+
+	large_f35b_order = {
+		icon = GFX_decision_nato_f35_expansion_button
+
+		days_mission_timeout = 500
+
+		is_good = yes
+
+		available = {
+			always = no
+		}
+
+		activation = {
+			has_country_flag = F35_placed_large_order_B
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout large_f35b_order"
+			clr_country_flag = F35_placed_large_order_B
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 40
+				producer = USA
+			}
+			add_to_variable = { var = f35_production_debuff value = 0.04 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+			random_list = {
+				30 = {
+					one_random_arms_factory = yes
+				}
+				70 = {
+				}
+			}
 		}
 	}
 }
