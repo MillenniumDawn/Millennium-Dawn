@@ -3022,6 +3022,10 @@ USA_f35_program_decisions = {
 			}
 		}
 
+		visible = {
+			original_tag = USA
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_announce_completion_of_f35"
 			country_event = usa.84
@@ -3172,7 +3176,7 @@ USA_f35_program_decisions = {
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_put_forward_frame_tech"
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_put_forward_counter_measure_tech"
 			custom_effect_tooltip = USA_increase_funding_by_10
 			air_experience = 100
 			set_party_index_to_ruling_party = yes
@@ -3220,7 +3224,7 @@ USA_f35_program_decisions = {
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_put_forward_frame_tech"
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_put_forward_radar_tech"
 			custom_effect_tooltip = USA_increase_funding_by_10
 			air_experience = 100
 			set_party_index_to_ruling_party = yes
@@ -3267,7 +3271,7 @@ USA_f35_program_decisions = {
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_replace_fleet_of_f16"
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_place_orders_for_f35_contributors"
 			clr_country_flag = USA_f35_legacy_members
 			set_country_flag = USA_f35_program_member_new
 			country_event = usa.85
@@ -3458,6 +3462,177 @@ USA_f35_program_decisions = {
 				}
 				70 = {
 				}
+			}
+		}
+	}
+	# Removal
+	USA_open_removals = {
+
+		visible = {
+			OR = {
+				has_country_flag = USA_open_f35_program_nato
+				has_country_flag = USA_open_f35_program_world
+			}
+			NOT = {
+				has_country_flag = USA_removals_opened
+			}
+			is_ai = no
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_open_removals"
+			set_country_flag = USA_removals_opened
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	USA_close_removals = {
+
+		visible = {
+			OR = {
+				has_country_flag = USA_open_f35_program_nato
+				has_country_flag = USA_open_f35_program_world
+			}
+			has_country_flag = USA_removals_opened
+			is_ai = no
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_close_removals"
+			clr_country_flag = USA_removals_opened
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	USA_kick_out_of_program = {
+
+		allowed = { always = yes }
+
+		visible = {
+			original_tag = USA
+			if = {
+				limit = {
+					is_ai = no
+				}
+				has_country_flag = USA_removals_opened
+			}
+		}
+
+		target_array = global.f35_members
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_kick_out_of_program"
+			FROM = {
+				remove_from_array = { global.f35_members = THIS.id }
+				clr_country_flag = USA_accepted_into_f35_program
+				clr_country_flag = USA_f35_legacy_members
+				clr_country_flag = USA_f35_program_member_new
+				clr_country_flag = F35_placed_small_order_A
+				clr_country_flag = F35_placed_small_order_B
+				clr_country_flag = F35_placed_large_order_A
+				clr_country_flag = F35_placed_large_order_B
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			# Opinion Low from the US
+			modifier = {
+				USA = {
+					has_opinion = {
+						target = FROM
+						value < 0
+					}
+				}
+				add = 5
+			}
+			# Don't let them steal your secrets
+			modifier = {
+				CHI = {
+					NOT = {
+						has_government = democratic
+						has_government = neutrality
+					}
+				}
+				FROM = {
+					check_variable = { influence_array^0 = CHI }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			modifier = {
+				PER = {
+					has_completed_focus = PER_the_third_development_plan
+				}
+				FROM = {
+					check_variable = { influence_array^0 = PER }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			modifier = {
+				SOV = {
+					NOT = {
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				FROM = {
+					check_variable = { influence_array^0 = SOV }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			# Don't act like a dumbass
+			modifier = {
+				FROM = { has_added_tension_amount > 19 }
+				add = 5
+			}
+			# Puppet of an enemy
+			modifier = {
+				CHI = {
+					NOT = {
+						has_government = democratic
+						has_government = neutrality
+					}
+				}
+				FROM = {
+					is_subject_of = CHI
+				}
+				add = 5
+			}
+			modifier = {
+				PER = {
+					has_completed_focus = PER_the_third_development_plan
+				}
+				FROM = {
+					is_subject_of = PER
+				}
+				add = 5
+			}
+			modifier = {
+				SOV = {
+					NOT = {
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				FROM = {
+					is_subject_of = SOV
+				}
+				add = 5
+			}
+			# If you are not in NATO, or have MNNA
+			modifier = {
+				FROM = {
+					NOT = {
+						has_idea = NATO_member
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				add = 5
 			}
 		}
 	}

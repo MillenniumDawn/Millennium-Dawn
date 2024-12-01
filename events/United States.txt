@@ -17861,7 +17861,7 @@ country_event = {
 		NOT = { has_country_flag = collapsed_nation }
 	}
 
-	#Good Idea!
+	# Good Idea!
 	option = {
 		name = usa.80.o1
 		log = "[GetDateText]: [This.GetName]: usa.80.o1 executed"
@@ -17880,13 +17880,17 @@ country_event = {
 			base = 1
 		}
 	}
-	#Forget It
+	# Forget It
 	option = {
 		name = usa.80.o2
 		log = "[GetDateText]: [This.GetName]: usa.80.o2 executed"
 
 		ai_chance = {
 			base = 0
+			modifier = {
+				has_country_leader = { name = "Bernie Sanders" ruling_only = yes }
+				add = 10
+			}
 		}
 	}
 }
@@ -18024,7 +18028,11 @@ country_event = {
 	desc = usa.83.d
 	picture = GFX_f_plane_usa
 	is_triggered_only = yes
-
+	trigger = {
+		NOT = {
+			original_tag = USA
+		}
+	}
 	option = {
 		name = usa.83.o1
 		log = "[GetDateText]: [This.GetName]: usa.83.o1 executed"
@@ -18033,6 +18041,7 @@ country_event = {
 		set_temp_variable = { tag_index = USA }
 		set_temp_variable = { influence_target = ROOT }
 		change_influence_percentage = yes
+		add_to_array = { global.f35_members = THIS.id }
 		set_country_flag = USA_accepted_into_f35_program
 		if = {
 			limit = {
@@ -18646,7 +18655,7 @@ country_event = {
 			base = 1
 			modifier = {
 				has_opinion = { target = FROM value > 115 }
-				add = 10
+				add = 15
 			}
 			modifier = {
 				FROM = {
@@ -18670,7 +18679,7 @@ country_event = {
 			country_event = usa.91
 		}
 		ai_chance = {
-			base = 1
+			base = 0
 			modifier = {
 				FROM = {
 					has_government = nationalist
@@ -18695,6 +18704,89 @@ country_event = {
 					has_war = yes
 				}
 			}
+			modifier = {
+				CHI = {
+					NOT = {
+						has_government = democratic
+						has_government = neutrality
+					}
+				}
+				FROM = {
+					check_variable = { influence_array^0 = CHI }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			modifier = {
+				PER = {
+					has_completed_focus = PER_the_third_development_plan
+				}
+				FROM = {
+					check_variable = { influence_array^0 = PER }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			modifier = {
+				SOV = {
+					NOT = {
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				FROM = {
+					check_variable = { influence_array^0 = SOV }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			# Don't act like a dumbass
+			modifier = {
+				FROM = { has_added_tension_amount > 19 }
+				add = 5
+			}
+			# Puppet of an enemy
+			modifier = {
+				CHI = {
+					NOT = {
+						has_government = democratic
+						has_government = neutrality
+					}
+				}
+				FROM = {
+					is_subject_of = CHI
+				}
+				add = 5
+			}
+			modifier = {
+				PER = {
+					has_completed_focus = PER_the_third_development_plan
+				}
+				FROM = {
+					is_subject_of = PER
+				}
+				add = 5
+			}
+			modifier = {
+				SOV = {
+					NOT = {
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				FROM = {
+					is_subject_of = SOV
+				}
+				add = 5
+			}
+			# If you are not in NATO, or have MNNA
+			modifier = {
+				FROM = {
+					NOT = {
+						has_idea = NATO_member
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				add = 5
+			}
 		}
 	}
 }
@@ -18710,6 +18802,7 @@ country_event = {
 		name = usa.90.o1
 		log = "[GetDateText]: [This.GetName]: usa.90.o1 executed"
 		custom_effect_tooltip = USA_unlock_f35_decision_TT
+		add_to_array = { global.f35_members = THIS.id }
 		if = {
 			limit = {
 				USA = {
@@ -18738,7 +18831,32 @@ country_event = {
 	option = {
 		name = usa.91.o1
 		log = "[GetDateText]: [This.GetName]: usa.91.o1 executed"
+		custom_effect_tooltip = USA_reasons_for_denial_TT
+		ai_chance = {
+			base = 10
+		}
+	}
+}
 
+country_event = {
+	id = usa.92
+	title = usa.92.t
+	desc = usa.92.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.92.o1
+		log = "[GetDateText]: [This.GetName]: usa.92.o1 executed"
+		custom_effect_tooltip = USA_removed_from_F35_TT
+		remove_from_array = { global.f35_members = THIS.id }
+		clr_country_flag = USA_accepted_into_f35_program
+		clr_country_flag = USA_f35_legacy_members
+		clr_country_flag = USA_f35_program_member_new
+		clr_country_flag = F35_placed_small_order_A
+		clr_country_flag = F35_placed_small_order_B
+		clr_country_flag = F35_placed_large_order_A
+		clr_country_flag = F35_placed_large_order_B
 		ai_chance = {
 			base = 10
 		}
