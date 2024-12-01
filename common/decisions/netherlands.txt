@@ -3044,9 +3044,302 @@ HOL_VOC_category = {
 		}
 		cancel_trigger = {
 		}
-
+		war_with_target_on_timeout = yes
 		timeout_effect = {
 			HOL = { country_event = HOL_VOC.36 }
+			hidden_effect = {
+				set_country_flag = HOL_dutch_indies_conquest
+			}
 		}
+	}
+	HOL_request_military_access_australia = {
+		icon = x
+
+		allowed = {
+			original_tag = HOL
+		}
+		targets = { AST }
+
+		available = {
+			AST = {
+				is_subject = no
+			}
+		}
+		visible = {
+			has_completed_focus = HOL_reclaim_crown_colony
+		}
+		cost = 50
+		complete_effect = {
+			AST = { country_event = HOL_VOC.39 }
+		}
+	}
+	HOL_reduce_java_detection = {
+		icon = x
+		allowed = {
+			original_tag = HOL
+		}
+
+		available = {
+			has_completed_focus = HOL_reclaim_batavia
+			NOT = { has_country_flag = HOL_voc_counter_discover_chance }
+		}
+
+		targets = { IND }
+
+		days_remove = 60
+		days_re_enable = 30
+
+		custom_cost_trigger = {
+			has_army_experience > 19
+			command_power > 20
+		}
+
+		custom_cost_text = army_xp_20
+		custom_cost_text = command_power_more_than_20
+
+		visible = {
+			has_completed_focus = HOL_reclaim_batavia
+		}
+
+		complete_effect = {
+			army_experience = -20
+			add_command_power = -20
+			add_to_variable = {
+				HOL_java_detection_chance_change = -10
+			}
+			HOL_java_detection_chance_effect = yes
+			hidden_effect = {
+				set_country_flag = HOL_voc_counter_discover_chance
+			}
+		}
+
+	}
+	HOL_increase_java_strength = {
+		icon = x
+
+		allowed = {
+			original_tag = HOL
+		}
+		available = {
+			has_completed_focus = HOL_reclaim_batavia
+		}
+
+		custom_cost_trigger = {
+			has_army_experience > 19
+			command_power > 20
+			has_political_power > 19
+		}
+
+		custom_cost_text = army_xp_20
+		custom_cost_text = command_power_more_than_20
+		custom_cost_text = GER_20_pp_cost_TT
+
+		days_re_enable = 30
+		days_remove = 60
+
+		visible = {
+			has_completed_focus = HOL_reclaim_batavia
+		}
+
+		modifier = {
+			industrial_capacity_factory = -0.10
+			military_factories_productivity = -0.05
+		}
+
+		complete_effect = {
+			army_experience = -20
+			add_command_power = -20
+			add_political_power = -20
+
+		}
+		remove_effect = {
+			add_to_variable = {
+				HOL_java_strength_change = 10
+			}
+			HOL_increase_voc_java_strength_effect = yes
+		}
+	}
+	HOL_increase_convoy = {
+		icon = x
+
+		allowed = {
+			original_tag = HOL
+		}
+		available = {
+			OR = {
+				has_completed_focus = HOL_reclaim_batavia
+				has_completed_focus = HOL_reclaim_outer_islands
+			}
+		}
+
+		custom_cost_trigger = {
+			has_navy_experience > 19
+			command_power > 20
+			has_political_power > 19
+		}
+
+		custom_cost_text = command_power_more_than_20
+		custom_cost_text = GER_20_pp_cost_TT
+
+		days_re_enable = 30
+		days_remove = 60
+
+		available = {
+			OR = {
+				has_completed_focus = HOL_reclaim_batavia
+				has_completed_focus = HOL_reclaim_outer_islands
+			}
+		}
+
+		modifier = {
+			industrial_capacity_dockyard = 0.10
+		}
+
+		complete_effect = {
+			navy_experience = -20
+			add_command_power = -20
+			add_political_power = -20
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.02 }
+			modify_treasury_effect = yes
+
+		}
+		remove_effect = {
+			if = {
+				limit = { has_completed_focus = HOL_reclaim_batavia }
+				add_to_variable = {
+					HOL_java_strength_change = 10
+				}
+				HOL_increase_voc_java_strength_effect = yes
+			}
+			else_if = {
+				limit = { has_completed_focus = HOL_reclaim_outer_islands }
+				add_to_variable = {
+					HOL_sumatra_strength_change = 10
+				}
+				HOL_increase_voc_sumatra_strength_effect = yes
+				add_to_variable = {
+					HOL_kalimantan_strength_change = 10
+				}
+				HOL_kalimantan_detection_chance_effect = yes
+			}
+
+		}
+	}
+	HOL_deploy_java_commando = {
+		icon = x
+
+		allowed = {
+			original_tag = HOL
+		}
+
+		available = {
+		HOL = { has_war_with = IND }
+        has_country_flag = HOL_dutch_indies_conquest
+		}
+
+		visible = {
+			check_variable = { HOL_java_strength > 0 }
+		}
+
+		fire_only_once = yes
+
+		complete_effect = {
+			if = {
+				limit = { check_variable = { HOL_java_strength < 30 } }
+				load_oob = "HOL_VOC_nonnsblow"
+			}
+			if = {
+				limit = { check_variable = { HOL_java_strength >= 30 } }
+				load_oob = "HOL_VOC_nonnsbmedium"
+			}
+			if = {
+				limit = { check_variable = { HOL_java_strength >= 70 } }
+				load_oob = "HOL_VOC_nonnsbhigh"
+				}
+			HOL = { set_state_controller = 1113 }
+		}
+	}
+	HOL_reduce_sumatra_detection = {
+		icon = x
+		allowed = {
+			original_tag = HOL
+		}
+
+		available = {
+			has_completed_focus = HOL_reclaim_outer_islands
+			NOT = { has_country_flag = HOL_voc_counter_discover_chance }
+		}
+
+		targets = { IND }
+
+		days_remove = 60
+		days_re_enable = 30
+
+		custom_cost_trigger = {
+			has_army_experience > 19
+			command_power > 20
+		}
+
+		custom_cost_text = army_xp_20
+		custom_cost_text = command_power_more_than_20
+
+		visible = {
+			has_completed_focus = HOL_reclaim_outer_islands
+		}
+
+		complete_effect = {
+			army_experience = -20
+			add_command_power = -20
+			add_to_variable = {
+				HOL_sumatra_detection_chance_change = -10
+			}
+			HOL_sumatra_detection_chance_effect = yes
+			hidden_effect = {
+				set_country_flag = HOL_voc_counter_discover_chance
+			}
+		}
+
+	}
+	HOL_reduce_sumatra_detection = {
+		icon = x
+		allowed = {
+			original_tag = HOL
+		}
+
+		available = {
+			has_completed_focus = HOL_reclaim_outer_islands
+			NOT = { has_country_flag = HOL_voc_counter_discover_chance }
+		}
+
+		targets = { IND }
+
+		days_remove = 60
+		days_re_enable = 30
+
+		custom_cost_trigger = {
+			has_army_experience > 19
+			command_power > 20
+		}
+
+		custom_cost_text = army_xp_20
+		custom_cost_text = command_power_more_than_20
+
+		visible = {
+			has_completed_focus = HOL_reclaim_outer_islands
+		}
+
+		complete_effect = {
+			army_experience = -20
+			add_command_power = -20
+			add_to_variable = {
+				HOL_kalimantan_detection_chance_change = -10
+			}
+			HOL_kalimantan_detection_chance_effect = yes
+			hidden_effect = {
+				set_country_flag = HOL_voc_counter_discover_chance
+			}
+		}
+
 	}
 }
