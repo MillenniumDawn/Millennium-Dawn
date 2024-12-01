@@ -462,8 +462,29 @@
 	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 30
-	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 3
+	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50
+	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10
+	NDefines.NAir.MISSION_FUEL_COSTS = {
+		1.0, -- AIR_SUPERIORITY
+		1.0, -- CAS
+		0.4, -- INTERCEPTION
+		1.0, -- STRATEGIC_BOMBER
+		1.0, -- NAVAL_BOMBER
+		1.0, -- DROP_NUKE
+		1.0, -- PARADROP
+		0.75, -- NAVAL_KAMIKAZE
+		1.0, -- PORT_STRIKE
+		1.0, -- ATTACK_LOGISTICS
+		1.0, -- AIR_SUPPLY
+		0.4, -- TRAINING
+		1.0, -- NAVAL_MINES_PLANTING
+		1.0, -- NAVAL_MINES_SWEEPING
+		1.0, -- RECON
+		1.0, -- NAVAL_PATROL
+		0.0, -- BARRAGE
+		0,0, -- NUCLEAR
+		0,0, -- SAM
+	}
 
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4 -- 30
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 4 -- 1
@@ -864,8 +885,8 @@
 	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
 	NDefines.NAI.NUM_AI_MESSAGES = 300
 	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
-	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 0.8
-	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 0.7
+	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 1.5
+	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 1.5
 	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.8
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
@@ -901,6 +922,9 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
+	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.6 -- Importance of SAMs in strat region Higher value = more -- 0.2
+	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75 -- Importance of missiles for regions of strat importance. Higher = more -- 1.5
+	NDefines.NAI.LAND_DEFENSE_AA_IMPORTANCE_FACTOR = 1.0 -- Factor of AA on stat importance
 
 	-- NOperatives Defines
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 25.0 -- (We do not need factories aside from establishment)
