@@ -51,8 +51,8 @@ focus_tree = {
 		id = PMR_economy
 		icon = pmr_economic
 
-		x = -9
-		y = 10
+		x = -8
+		y = 12
 		relative_position_id = PMR_smirnov_era
 
 		cost = 3
@@ -577,6 +577,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_father_of_the_nation"
 			add_ideas = PMR_father_nation_idea
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.07 }
+			set_temp_variable = { temp_outlook_increase = 0.07 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -618,6 +622,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_denomination"
 			remove_ideas = PMR_denomination_idea
 			decrease_economic_growth = yes
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -816,7 +824,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_media
-		icon = SOV_tv_propaganda
+		icon = pmr_smirnov_televizor
 
 		x = 1
 		y = 4
@@ -981,6 +989,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_referendums"
 			country_event = transnistria.29
+			unlock_decision_tooltip = PMR_russia_refendum
 		}
 		ai_will_do = {
 			factor = 1
@@ -1050,7 +1059,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_dictatorship
-		icon = focus_generic_military_dictatorship
+		icon = pmr_smirnov_dick
 
 		x = 0
 		y = 6
@@ -1150,26 +1159,37 @@ focus_tree = {
 				has_global_flag = PMR_UKRAINE_PATH
 				add = -50
 			}
+			modifier = {
+				SOV = {
+					is_top3_influencer = no
+				}
+				add = -355
+			}
 		}
 	}
 	focus = {
 		id = PMR_pro_ukraine
-		icon = flag_ukraine
-		x = 4
+		icon = UKR_ukraine
+
+		x = -4
 		y = 7
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_dictatorship }
+
 		cost = 3
+
+		prerequisite = { focus = PMR_dictatorship }
 		mutually_exclusive = { focus = PMR_shevchuk }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+
 		available = {
-			date > 2005.1.1
 			is_subject = no
 			OR = {
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
+			country_exists = UKR
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_pro_ukraine"
 			set_temp_variable = { percent_change = 2 }
@@ -1183,33 +1203,170 @@ focus_tree = {
 				has_global_flag = PMR_UKRAINE_PATH
 				add = 155
 			}
+			modifier = {
+				SOV = {
+					is_top3_influencer = no
+				}
+				add = 155
+			}
 		}
 	}
 	focus = {
-		id = PMR_propaganda
-		icon = internet_freedom_ukraine
-		x = 3
+		id = PMR_expel_russian
+		icon = blr_denied_rus_language
+
+		x = -4
 		y = 8
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_pro_ukraine }
+
 		cost = 4
+
+		prerequisite = { focus = PMR_pro_ukraine }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+
 		available = {
+			country_exists = UKR
+			is_subject = no
+			has_idea = PMR_14_army
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+
+		bypass = {
+			NOT = {
+				has_idea = PMR_14_army
+			}
+		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_expel_russian"
+			remove_ideas = PMR_14_army
+			SOV = { 
+				country_event = transnistria.39
+			}
+			set_temp_variable = { percent_change = -12 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = PMR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_UKRAINE_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_invite_ukrainians
+		icon = ukr_peace
+
+		x = -4
+		y = 9
+		relative_position_id = PMR_smirnov_era
+
+		cost = 4
+
+		prerequisite = { focus = PMR_expel_russian }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
+		available = {
+			country_exists = UKR
 			is_subject = no
 			OR = {
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_invite_ukrainians"
+			UKR = { 
+				country_event = transnistria.36
+			} 
+			set_temp_variable = { percent_change = -12 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = PMR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_UKRAINE_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_propaganda
+		icon = internet_freedom_ukraine
+
+		x = -3
+		y = 10
+		relative_position_id = PMR_smirnov_era
+
+		cost = 4
+
+		prerequisite = { focus = PMR_invite_ukrainians }
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
+		available = {
+			country_exists = UKR
+			is_subject = no
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_pro_ukraine"
-			add_opinion_modifier = {
-				modifier = supports_us
-				target = UKR
+			add_political_power = 100
+			set_temp_variable = { percent_change = 7 }
+			set_temp_variable = { tag_index = UKR }
+			set_temp_variable = { influence_target = PMR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_UKRAINE_PATH
+				add = 155
 			}
-			reverse_add_opinion_modifier = {
-				modifier = supports_us
-				target = UKR
+		}
+	}
+	focus = {
+		id = PMR_ukr_corps
+		icon = UKR_economic_prosperity
+
+		x = -3
+		y = 11
+		relative_position_id = PMR_smirnov_era
+
+		cost = 4
+
+		prerequisite = { focus = PMR_propaganda }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
+		available = {
+			country_exists = UKR
+			is_subject = no
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_ukr_corps"
+			149 = {
+				add_building_construction = {
+					type = agriculture_district
+					level = 1
+					instant_build = yes
+				}
 			}
 			set_temp_variable = { percent_change = 6 }
 			set_temp_variable = { tag_index = UKR }
@@ -1225,22 +1382,66 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = PMR_ref_join_ukr
-		icon = UKR_iron_republic
-		x = 4
-		y = 9
+		id = PMR_ukr_law
+		icon = UKR_Ukrainization
+
+		x = -5
+		y = 11
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_propaganda }
+
+		cost = 4
+
 		prerequisite = { focus = PMR_contacts }
-		cost = 5
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
 		available = {
+			country_exists = UKR
 			is_subject = no
 			OR = {
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_ukr_law"
+			add_ideas = PMR_grivna_efffect_idea
+			set_temp_variable = { percent_change = 6 }
+			set_temp_variable = { tag_index = UKR }
+			set_temp_variable = { influence_target = PMR }
+			change_influence_percentage = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_UKRAINE_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_ref_join_ukr
+		icon = ukraine_idelistic
+
+		x = -4
+		y = 12
+		relative_position_id = PMR_smirnov_era
+
+		cost = 5
+
+		prerequisite = { focus = PMR_ukr_corps }
+		prerequisite = { focus = PMR_ukr_law }
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
+		available = {
+			country_exists = UKR
+			is_subject = no
+			OR = {
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_ref_join_ukr"
 			UKR = { country_event = transnistria.26 }
@@ -1256,19 +1457,25 @@ focus_tree = {
 	focus = {
 		id = PMR_contacts
 		icon = parliament_ukraine
-		x = 5
-		y = 8
+
+		x = -5
+		y = 10
 		relative_position_id = PMR_smirnov_era
-		prerequisite = { focus = PMR_pro_ukraine }
+
 		cost = 4
+
+		prerequisite = { focus = PMR_invite_ukrainians }
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
 		available = {
+			country_exists = UKR
 			is_subject = no
 			OR = {
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_UKRAINE }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_contacts"
 			add_opinion_modifier = {
@@ -1294,7 +1501,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_anti_smirnov
-		icon = smirnov_elected
+		icon = pmr_smirnov_dead_dick
 
 		x = 0
 		y = 8
@@ -1386,7 +1593,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_economist_from_russia
-		icon = russian_investements
+		icon = pmr_russian_bank_help
 
 		x = 1
 		y = 10
@@ -1663,7 +1870,7 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_russian_flag
-		icon = RUS_flag
+		icon = pmr_second_flag
 		x = 2
 		y = 1
 		relative_position_id = PMR_krasno
@@ -2100,14 +2307,19 @@ focus_tree = {
 	focus = {
 		id = PMR_soc_dem
 		icon = pmr_liberalism
-		x = -6
+
+		x = -7
 		y = 2
 		relative_position_id = PMR_smirnov_era
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
+
 		available = {
 			has_government = democratic
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_soc_dem"
 			hidden_effect = { add_dynamic_modifier = { modifier = PMR_democrat_inner_modifier } }
@@ -2127,15 +2339,20 @@ focus_tree = {
 	focus = {
 		id = PMR_liberalism
 		icon = pmr_liberalists
+
 		x = -2
 		y = 1
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_soc_dem }
+
 		available = {
 			has_government = democratic
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_liberalism"
 			add_ideas = PMR_trans_libelaralism
@@ -2152,15 +2369,20 @@ focus_tree = {
 	focus = {
 		id = PMR_freedom
 		icon = Election
+
 		x = 0
 		y = 1
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_soc_dem }
+
 		available = {
 			has_government = democratic
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_freedom"
 			add_to_variable = { PMR_democrat_inner_democratic_drift = 0.01 }
@@ -2179,19 +2401,25 @@ focus_tree = {
 	focus = {
 		id = PMR_rhetoric
 		icon = pmr_pro_moldavian
+
 		x = 2
 		y = 1
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_soc_dem }
+
 		available = {
 			has_government = democratic
 			country_exists = MLV
 		}
+
 		bypass = {
 			NOT = { country_exists = MLV }
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_rhetoric"
 			set_temp_variable = { percent_change = 5 }
@@ -2218,17 +2446,23 @@ focus_tree = {
 	focus = {
 		id = PMR_new_society
 		icon = pmr_new_people
+
 		x = 0
 		y = 2
+
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
-		available = {
-			has_government = democratic
-		}
 		prerequisite = { focus = PMR_rhetoric }
 		prerequisite = { focus = PMR_freedom }
 		prerequisite = { focus = PMR_liberalism }
+
+		available = {
+			has_government = democratic
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_new_society"
 			add_to_variable = { PMR_democrat_inner_stability_factor = -0.07 }
@@ -2247,15 +2481,20 @@ focus_tree = {
 	focus = {
 		id = PMR_deccomuniz
 		icon = pmr_deccomuniz
+
 		x = 1
 		y = 3
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_new_society }
+
 		available = {
 			has_government = democratic
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_deccomuniz"
 			remove_ideas = PMR_fragment_ussr
@@ -2272,15 +2511,20 @@ focus_tree = {
 	focus = {
 		id = PMR_wind_farms
 		icon = windmills
+
 		x = 2
 		y = 4
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_deccomuniz }
+
 		available = {
 			has_government = democratic
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_wind_farms"
 			add_ideas = PMR_wind_farms
@@ -2296,15 +2540,20 @@ focus_tree = {
 	focus = {
 		id = PMR_bio_fuel
 		icon = oil_green
+
 		x = -2
 		y = 4
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_deccomuniz }
+
 		available = {
 			has_government = democratic
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_wind_farms"
 			two_random_synthetic_refinery = yes
@@ -2320,19 +2569,25 @@ focus_tree = {
 	focus = {
 		id = PMR_partnership
 		icon = align_to_moldova
+
 		x = -1
 		y = 3
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_new_society }
+		
 		available = {
 			has_government = democratic
 			country_exists = MLV
 		}
+
 		bypass = {
 			NOT = { country_exists = MLV }
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_partnership"
 			add_opinion_modifier = {
@@ -2398,12 +2653,17 @@ focus_tree = {
 	focus = {
 		id = PMR_federation
 		icon = pmr_federation
+
 		x = 0
-		y = 5
+		y = 7
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
-		prerequisite = { focus = PMR_contact_eu }
+		prerequisite = { focus = PMR_it }
+		prerequisite = { focus = PMR_west_markets }
+
 		available = {
 			MLV = {
 				is_subject = no
@@ -2412,13 +2672,15 @@ focus_tree = {
 			has_government = democratic
 			country_exists = MLV
 		}
+
 		bypass = {
 			NOT = { country_exists = MLV }
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_federation"
 			add_political_power = 100
-			MLV = { country_event = transnistria.17 }
+			unlock_decision_tooltip = PMR_moldova_refendum
 		}
 		ai_will_do = {
 			factor = 1
@@ -2431,16 +2693,22 @@ focus_tree = {
 	focus = {
 		id = PMR_investors
 		icon = business_man2
+
 		x = 0
-		y = 6
+		y = 5
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
-		prerequisite = { focus = PMR_federation }
+		prerequisite = { focus = PMR_contact_eu }
+		prerequisite = { focus = PMR_bio_fuel }
+		prerequisite = { focus = PMR_wind_farms }
+
 		available = {
 			has_government = democratic
-			NOT = { has_idea = Lacks_International_Recognition }
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_investors"
 			add_timed_idea = { idea = PMR_investors_idea days = 730 }
@@ -2458,10 +2726,13 @@ focus_tree = {
 	focus = {
 		id = PMR_it
 		icon = economic_it
+
 		x = -1
-		y = 7
+		y = 6
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_investors }
 
@@ -2469,6 +2740,7 @@ focus_tree = {
 			has_government = democratic
 			NOT = { has_idea = Lacks_International_Recognition }
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_it"
 			one_office_construction = yes
@@ -2490,16 +2762,21 @@ focus_tree = {
 	focus = {
 		id = PMR_west_markets
 		icon = market_economy
+
 		x = 1
-		y = 7
+		y = 6
 		relative_position_id = PMR_soc_dem
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_SOCDEM }
 		prerequisite = { focus = PMR_investors }
+
 		available = {
 			has_government = democratic
-			NOT = { has_idea = Lacks_International_Recognition }
+
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_west_markets"
 			add_timed_idea = { idea = PMR_western_market_idea days = 365 }
@@ -2515,19 +2792,21 @@ focus_tree = {
 	focus = {
 		id = PMR_commi
 		icon = pmr_comm_patry
-		x = -11
+
+		x = -15
 		y = 2
 		relative_position_id = PMR_smirnov_era
-		cost = 5
+
+		cost = 2
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_commi"
-			hidden_effect = { add_dynamic_modifier = { modifier = PMR_kommi_modifier } }
-			add_to_variable = { PMR_kommi_political_power_gain = 0.01 }
-			custom_effect_tooltip = PMR_kommi_start_tt
 			if = {
 				limit = { has_idea = the_clergy }
 				swap_ideas = {
@@ -2540,6 +2819,7 @@ focus_tree = {
 				remove_ideas = PMR_fragment_rus_empire
 				add_ideas = PMR_fragment_ussr
 			}
+			add_political_power = 100
 			hidden_effect = {
 				if = {
 					limit = { NOT = { has_completed_focus = PMR_return_empire } }
@@ -2558,23 +2838,28 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_single
-		icon = communism3
-		x = -1
+		icon = generic_one_party
+
+		x = 0
 		y = 1
 		relative_position_id = PMR_commi
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
 		prerequisite = { focus = PMR_commi }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_federation"
-			set_temp_variable = { pop_change = -5 }
-			modify_population_tax_rate_effect = yes
-			set_temp_variable = { corp_change = 5 }
-			modify_corporate_tax_rate_effect = yes
-			add_stability = 0.08
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			add_stability = 0.02
 		}
 		ai_will_do = {
 			factor = 1
@@ -2587,20 +2872,86 @@ focus_tree = {
 	focus = {
 		id = PMR_collectivism
 		icon = blr_collectivism
-		x = 1
-		y = 1
+
+		x = -3
+		y = 3
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_commi_ideology }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_commi }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_collectivism"
-			add_to_variable = { PMR_kommi_local_resources_factor = 0.05 }
-			custom_effect_tooltip = PMR_kommi11_tt
+			add_ideas = PMR_collectivism_idea
 			set_temp_variable = { temp_opinion = 6 }
+			change_communist_cadres_opinion = yes
+			add_political_power = 50
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_commi_promka
+		icon = communist_factories
+
+		x = 3
+		y = 2
+		relative_position_id = PMR_commi
+
+		cost = 2
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_single }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_workers"
+			set_temp_variable = { temp_opinion = 5 }
+			change_communist_cadres_opinion = yes
+			add_political_power = 50
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_commi_ideology
+		icon = left_Propaganda
+
+		x = -3
+		y = 2
+		relative_position_id = PMR_commi
+
+		cost = 2
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_single }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_workers"
+			set_temp_variable = { temp_opinion = 5 }
 			change_communist_cadres_opinion = yes
 			add_political_power = 50
 		}
@@ -2615,23 +2966,25 @@ focus_tree = {
 	focus = {
 		id = PMR_workers
 		icon = blr_support_of_the_worker
-		x = 0
-		y = 2
+
+		x = 1
+		y = 3
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_commi_promka }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_single }
-		prerequisite = { focus = PMR_collectivism }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_workers"
 			set_temp_variable = { temp_opinion = 5 }
 			change_communist_cadres_opinion = yes
-			add_to_variable = { PMR_kommi_consumer_goods_factor = -0.02 }
-			add_to_variable = { PMR_kommi_drift_defence_factor = 0.3 }
-			custom_effect_tooltip = PMR_kommi12_tt
+			add_ideas = PMR_the_rights_of_the_worker_idea
 			add_political_power = 50
 		}
 		ai_will_do = {
@@ -2644,18 +2997,24 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_education
-		icon = revolutionary_government
+		icon = blr_soviet_academy_of_sciences
+
 		x = -2
-		y = 3
+		y = 4
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_atheism }
+		prerequisite = { focus = PMR_collectivism }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_workers }
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_workers"
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_education"
 			set_temp_variable = { temp_opinion = 3 }
 			change_communist_cadres_opinion = yes
 			add_ideas = PMR_commi_education_idea
@@ -2670,16 +3029,21 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_people_militia
-		icon = Communal_Militias
-		x = 0
-		y = 3
+		icon = Focus_Red_Army
+
+		x = 3
+		y = 7
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_clean_governments }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_workers }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_people_militia"
 			add_ideas = PMR_people_militia
@@ -2693,24 +3057,174 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = PMR_pioneer
-		icon = blr_pioneria
+		id = PMR_revoult_spirit
+		icon = Generic_Socialist_Revolution
+
 		x = 2
-		y = 3
+		y = 8
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_people_militia }
+		prerequisite = { focus = PMR_ded_sheriffs }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus  PMR_revoult_spirit"
+			add_ideas = PMR_revoult_spirits_idea
+			add_political_power = -55
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_interbrigade
+		icon = builder_of_the_red_army
+
+		x = 1
+		y = 9
+		relative_position_id = PMR_commi
+
+		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_workers }
+		prerequisite = { focus = PMR_revoult_spirit }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_interbrigade"
+			add_ideas = PMR_interbrigade_idea
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_red_army_pmr
+		icon = communism10
+
+		x = 0
+		y = 10
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_interbrigade }
+		prerequisite = { focus = PMR_new_five }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+			OR = {
+				has_idea = PMR_new_army1
+				has_idea = PMR_spetznaz
+				has_idea = PMR_pograncy
+			}
+		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_interbrigade"
+			if = {
+				limit = { has_idea = PMR_new_army1 }
+				swap_ideas = {
+					remove_idea = PMR_new_army1
+					add_idea = PMR_new_army3
+				}
+			}
+			if = {
+				limit = { has_idea = PMR_spetznaz }
+				swap_ideas = {
+					remove_idea = PMR_spetznaz
+					add_idea = PMR_spetznaz1
+				}
+			}
+			if = {
+				limit = { has_idea = PMR_pograncy }
+				swap_ideas = {
+					remove_idea = PMR_pograncy
+					add_idea = PMR_pograncy1
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_anti_corrupt_company
+		icon = BLR_Anti_Corruption
+
+		x = -3
+		y = 7
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_clean_governments }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_anti_corrupt_company"
+			add_timed_idea = { idea = PMR_anti_corruption_fight days = 1030 }
+			set_temp_variable = { temp_opinion = -10 }
+			change_oligarchs_opinion = yes
+			add_political_power = -25
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_pioneer
+		icon = blr_pioneria
+
+		x = -4
+		y = 4
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_marxism }
+		prerequisite = { focus = PMR_collectivism }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_pioneer"
-			add_political_power = 50
-			add_to_variable = { PMR_kommi_recruitable_population_factor = 0.05 }
-			custom_effect_tooltip = PMR_kommi6_tt
-			add_to_variable = { PMR_kommi_political_power_gain = 0.02 }
-			set_temp_variable = { temp_opinion = 4 }
+			add_political_power = -10
+			set_temp_variable = { temp_opinion = 5 }
 			change_communist_cadres_opinion = yes
 		}
 		ai_will_do = {
@@ -2724,23 +3238,26 @@ focus_tree = {
 	focus = {
 		id = PMR_marxism
 		icon = blr_marks_school
-		x = -1
-		y = 4
+
+		x = -5
+		y = 3
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_commi_ideology }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_pioneer }
-		prerequisite = { focus = PMR_education }
-		prerequisite = { focus = PMR_people_militia }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_marxism"
-			add_to_variable = { PMR_kommi_communism_drift = 0.05 }
-			add_to_variable = { PMR_kommi_stability_factor = -0.07 }
-			add_to_variable = { PMR_kommi_education_cost_multiplier_modifier = 0.05 }
-			custom_effect_tooltip = PMR_kommi7_tt
+			add_timed_idea = {
+				idea = PMR_marxist_reeducation_idea
+				days = 1825
+			}
 			if = { limit = { has_idea = EU_member }
 				set_temp_variable = { modify_eurosceptic = 0.20 }
 				set_temp_variable = { modify_eurosceptic_target = ROOT }
@@ -2757,20 +3274,23 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_national_industry
-		icon = Generic_Militant_Socialism
-		x = 1
-		y = 4
+		icon = communism19
+
+		x = 3
+		y = 3
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_commi_promka }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_pioneer }
-		prerequisite = { focus = PMR_education }
-		prerequisite = { focus = PMR_people_militia }
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_marxism"
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_national_industry"
 			one_random_industrial_complex = yes
 			one_random_fossil_fuel_powerplant = yes
 		}
@@ -2783,18 +3303,81 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = PMR_atheism
-		icon = blr_state_atheism
-		x = -2
-		y = 5
+		id = PMR_totalitarian_economic
+		icon = communism9
+
+		x = 5
+		y = 3
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_commi_promka }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_totalitarian_economic"
+			add_ideas = PMR_control_economic_idea
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_nationalize_burjui
+		icon = blr_nationalize_foreign_business
+
+		x = 4
+		y = 4
+		relative_position_id = PMR_commi
+
+		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_marxism }
+		prerequisite = { focus = PMR_totalitarian_economic }
 		prerequisite = { focus = PMR_national_industry }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_nationalize_burjui"
+			two_random_agriculture_district = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_atheism
+		icon = blr_state_atheism
+
+		x = -1
+		y = 3
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_commi_ideology }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_atheism"
 			swap_ideas = {
@@ -2802,8 +3385,6 @@ focus_tree = {
 				add_idea = DEN_idea_state_atheism
 			}
 			add_political_power = -50
-			add_to_variable = { PMR_kommi_research_speed_factor = 0.10 }
-			custom_effect_tooltip = PMR_kommi8_tt
 			set_temp_variable = { temp_opinion = 3 }
 			change_communist_cadres_opinion = yes
 		}
@@ -2817,17 +3398,21 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_anti_nationalism
-		icon = anti_nationalism
-		x = 0
-		y = 5
+		icon = politic_propaganda_close
+
+		x = -2
+		y = 6
 		relative_position_id = PMR_commi
+
 		cost = 5
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
+
+		prerequisite = { focus = PMR_new_trans }
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_marxism }
-		prerequisite = { focus = PMR_national_industry }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_anti_nationalism"
 			add_political_power = -70
@@ -2850,18 +3435,142 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = PMR_chinese_economic
-		icon = prc_currency_reform
-		x = 2
-		y = 5
+		id = PMR_army_corruptions
+		icon = clear_generals
+
+		x = 0
+		y = 6
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_new_trans }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
+			NOT = {
+				has_idea = PMR_no_corrupt_army_idea
+			}
 		}
+
+		bypass = {
+			has_idea = PMR_no_corrupt_army_idea
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_army_corruption"
+			add_ideas = PMR_no_corrupt_army_idea
+			add_political_power = -50
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_clean_governments
+		icon = dominant_party
+
+		x = 2
+		y = 6
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_new_trans }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+			NOT = {
+				has_idea = PMR_corruption_dead_in_govern_idea
+			}
+		}
+
+		bypass = {
+			has_idea = PMR_corruption_dead_in_govern_idea
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_clean_government"
+			add_ideas = PMR_corruption_dead_in_govern_idea
+			add_political_power = -50
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_ded_sheriffs
+		icon = pmr_sheriff
+
+		x = 1
+		y = 7
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_clean_governments }
+		prerequisite = { focus = PMR_army_corruptions }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+			has_idea = PMR_sheriff7
+		}
+
+		bypass = {
+			NOT = {
+				has_idea = PMR_sheriff7
+			}
+			has_country_flag = PMR_sheriff_finish
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_ded_sheriff"
+			remove_ideas = PMR_sheriff7
+			set_country_flag = PMR_sheriff_finish
+			add_political_power = -100
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_chinese_economic
+		icon = prc_currency_reform
+
+		x = -1
+		y = 7
+		relative_position_id = PMR_commi
+
+		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_marxism }
-		prerequisite = { focus = PMR_national_industry }
+		prerequisite = { focus = PMR_anti_nationalism }
+		prerequisite = { focus = PMR_army_corruptions }
+
+		available = {
+			is_subject = no
+			emerging_communist_state_are_in_power = yes
+		}
+
+		bypass = {
+			is_subject = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_chinese_economic"
 			add_ideas = PMR_chinese_economic
@@ -2875,25 +3584,64 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = PMR_mobilise
-		icon = Labourist
-		x = 0
-		y = 6
+		id = PMR_new_chinush
+		icon = SOV_semi_presidential_republic
+
+		x = -2
+		y = 8
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_chinese_economic }
+		prerequisite = { focus = PMR_anti_corrupt_company }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_chinese_economic }
-		prerequisite = { focus = PMR_atheism }
-		prerequisite = { focus = PMR_anti_nationalism }
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_mobilise"
-			add_manpower = 2000
-			add_to_variable = { PMR_kommi_production_speed_buildings_factor = 0.10 }
-			add_to_variable = { PMR_kommi_production_factory_efficiency_gain_factor = 0.10 }
-			custom_effect_tooltip = PMR_kommi10_tt
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_new_chinush"
+			add_stability = 0.05
+			add_political_power = 100
+			decrease_corruption = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
+		id = PMR_new_five
+		icon = blr_five_year_plan
+
+		x = -1
+		y = 9
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_new_chinush }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+			NOT = {
+				has_idea = PMR_five_year_plans_idea
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_new_five"
+			add_political_power = 100
+			add_timed_idea = {
+				idea = PMR_five_year_plans_idea
+				days = 1825
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -2906,15 +3654,21 @@ focus_tree = {
 	focus = {
 		id = PMR_fixe
 		icon = blr_five_year_plan
-		x = 0
-		y = 7
+
+		x = 2
+		y = 4
 		relative_position_id = PMR_commi
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_workers }
+		prerequisite = { focus = PMR_national_industry }
+
 		available = {
 			emerging_communist_state_are_in_power = yes
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
-		prerequisite = { focus = PMR_mobilise }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_fixe"
 			add_political_power = 150
@@ -2932,14 +3686,46 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = PMR_new_trans
+		icon = communism14
+
+		x = 0
+		y = 5
+		relative_position_id = PMR_commi
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_COMMI }
+		prerequisite = { focus = PMR_fixe }
+		prerequisite = { focus = PMR_nationalize_burjui }
+		prerequisite = { focus = PMR_education }
+		prerequisite = { focus = PMR_pioneer }
+
+		available = {
+			emerging_communist_state_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_new_trans"
+			increase_economic_growth = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_COMMUNISM_PATH
+				add = 355
+			}
+		}
+	}
+	focus = {
 		id = PMR_just
 		icon = pmr_republic
 		x = 7
-		y = 1
+		y = 2
 		relative_position_id = PMR_smirnov_era
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		completion_reward = {
@@ -2973,7 +3759,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_just }
@@ -3006,7 +3792,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_patriotism }
@@ -3030,7 +3816,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_patriotism }
@@ -3054,15 +3840,21 @@ focus_tree = {
 	focus = {
 		id = PMR_empower
 		icon = focus_FIN_socialist_wellfare
+
 		x = 1
 		y = 1
 		relative_position_id = PMR_just
+
 		cost = 5
-		available = {
-			emerging_anarchist_communism_are_in_power = yes
-		}
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_just }
+
+		available = {
+			neutrality_neutral_communism_are_in_power = yes
+		}
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_empower"
 			add_to_variable = { PMR_just_inner_neutrality_drift = 0.02 }
@@ -3080,21 +3872,27 @@ focus_tree = {
 	focus = {
 		id = PMR_guarantees
 		icon = pensions_increase
+
 		x = 0
 		y = 2
 		relative_position_id = PMR_just
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_empower }
 		prerequisite = { focus = PMR_patriotism }
+
+		available = {
+			neutrality_neutral_communism_are_in_power = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_guarantees"
 			add_to_variable = { PMR_just_inner_population_tax_income_multiplier_modifier = 0.05 }
 			add_to_variable = { PMR_just_inner_social_cost_multiplier_modifier = -0.1 }
 			add_to_variable = { PMR_just_inner_bureaucracy_cost_multiplier_modifier = 0.05 }
 			custom_effect_tooltip = PMR_just_inner6_tt
-			set_temp_variable = { modify_sheriffs = -2 }
-			
 		}
 		ai_will_do = {
 			factor = 1
@@ -3112,7 +3910,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_guarantees }
@@ -3141,7 +3939,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_guarantees }
@@ -3170,7 +3968,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_guarantees }
@@ -3197,7 +3995,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_democracy }
@@ -3226,7 +4024,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_health }
@@ -3251,7 +4049,7 @@ focus_tree = {
 		relative_position_id = PMR_just
 		cost = 5
 		available = {
-			emerging_anarchist_communism_are_in_power = yes
+			neutrality_neutral_communism_are_in_power = yes
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_REPUBLIC }
 		prerequisite = { focus = PMR_economic }
@@ -3686,16 +4484,24 @@ focus_tree = {
 	focus = {
 		id = PMR_vs_pmr
 		icon = pmr_soldier
-		x = 9
+
+		x = 11
 		y = 7
 		relative_position_id = PMR_smirnov_era
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_vs_pmr"
 			army_experience = 15
 			air_experience = 5
 			increase_military_spending = yes
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -3708,12 +4514,16 @@ focus_tree = {
 	focus = {
 		id = PMR_ground
 		icon = Transnistrian_Army
-		x = -2
+
+		x = -3
 		y = 1
 		relative_position_id = PMR_vs_pmr
+
 		cost = 4
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
 		prerequisite = { focus = PMR_vs_pmr }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_ground"
 			army_experience = 25
@@ -3723,6 +4533,14 @@ focus_tree = {
 				uses = 1
 				cost_reduction = 0.5
 			}
+			swap_ideas = {
+				remove_idea = PMR_disorganized_army
+				add_idea = PMR_disorganized_army_2
+			}
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -3735,12 +4553,16 @@ focus_tree = {
 	focus = {
 		id = PMR_doctrine
 		icon = pmr_nation
-		x = -0
+
+		x = -1
 		y = 1
 		relative_position_id = PMR_vs_pmr
+
 		cost = 4
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
 		prerequisite = { focus = PMR_vs_pmr }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_doctrine"
 			PMR = { country_event = transnistria.18 }
@@ -3756,12 +4578,25 @@ focus_tree = {
 	focus = {
 		id = PMR_iskander
 		icon = iskander
-		x = -0
-		y = 3
+
+		x = 6
+		y = 2
 		relative_position_id = PMR_vs_pmr
+
 		cost = 4
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_doctrine }
+		prerequisite = { focus = PMR_exer }
+
+		available = {
+			OR = {
+				PMR = { is_subject_of = SOV }
+				is_subject = no
+			}
+			country_exists = SOV
+			has_idea = PMR_14_army
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_iskander"
 			SOV = { country_event = transnistria.19 }
@@ -3777,15 +4612,53 @@ focus_tree = {
 	focus = {
 		id = PMR_suvorov_academy
 		icon = army_general_stuff1
+
 		x = -3
 		y = 2
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
 		prerequisite = { focus = PMR_ground }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_suvorov_academy"
 			add_ideas = PMR_suvorov
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_lebed_academy
+		icon = pmr_lebed_tiraspol
+
+		x = -1
+		y = 2
+		relative_position_id = PMR_vs_pmr
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_ground }
+		prerequisite = { focus = PMR_doctrine }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_suvorov_academy"
+			add_ideas = PMR_lebed_univer
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -3798,8 +4671,8 @@ focus_tree = {
 	focus = {
 		id = PMR_exer
 		icon = sov_mechanize
-		x = -1
-		y = 2
+		x = 5
+		y = 1
 		relative_position_id = PMR_vs_pmr
 		cost = 5
 		available = {
@@ -3808,9 +4681,10 @@ focus_tree = {
 				is_subject = no
 			}
 			country_exists = SOV
+			has_idea = PMR_14_army
 		}
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_ground }
+		prerequisite = { focus = PMR_vs_pmr }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_exer"
 			add_timed_idea = { idea = PMR_exercises days = 650 }
@@ -3825,21 +4699,25 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = PMR_upgrade
-		icon = infantry_axis2
+		id = PMR_pograncy
+		icon = sov_border_guard
+
 		x = -2
 		y = 3
 		relative_position_id = PMR_vs_pmr
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_exer }
+		prerequisite = { focus = PMR_lebed_academy }
 		prerequisite = { focus = PMR_suvorov_academy }
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_upgrade"
-			swap_ideas = {
-				remove_idea = PMR_disorganized_army
-				add_idea = PMR_disorganized_army_2
-			}
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_pograncy"
+			add_ideas = PMR_pograncy
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -3850,27 +4728,28 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = PMR_chechen
-		icon = battle_in_chechnia
-		x = -4
-		y = 4
+		id = PMR_upgrade
+		icon = infantry_axis2
+
+		x = 2
+		y = 3
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
-		available = {
-			OR = {
-				PMR = { is_subject_of = SOV }
-				is_subject = no
-			}
-			country_exists = SOV
-		}
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_upgrade }
+		prerequisite = { focus = PMR_air_academy }
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_chechen"
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_upgrade"
 			swap_ideas = {
 				remove_idea = PMR_disorganized_army_2
 				add_idea = PMR_disorganized_army_3
 			}
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -3883,37 +4762,25 @@ focus_tree = {
 	focus = {
 		id = PMR_military
 		icon = army_military_industryy
-		x = -2
+
+		x = 0
 		y = 4
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
 		prerequisite = { focus = PMR_upgrade }
+		prerequisite = { focus = PMR_spec }
+		prerequisite = { focus = PMR_pograncy }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_military"
-			set_temp_variable = { percent_change = 3.5 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = PMR }
-			change_influence_percentage = yes
-			random_owned_controlled_state = {
-				if = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
+			one_random_arms_factory = yes
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -3926,10 +4793,16 @@ focus_tree = {
 	focus = {
 		id = PMR_euiqp
 		icon = blr_russian_weapon_deal
-		x = 0
-		y = 4
+
+		x = 4
+		y = 2
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_exer }
+
 		available = {
 			OR = {
 				PMR = { is_subject_of = SOV }
@@ -3937,10 +4810,9 @@ focus_tree = {
 			}
 			country_exists = SOV
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_upgrade }
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_military"
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_euiqp"
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
@@ -3959,15 +4831,17 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_new_army
-		icon = army_upgrade
-		x = -2
+		icon = pmr_new_army
+
+		x = 0
 		y = 5
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_euiqp }
 		prerequisite = { focus = PMR_military }
-		prerequisite = { focus = PMR_chechen }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_new_army"
 			swap_ideas = {
@@ -3975,28 +4849,10 @@ focus_tree = {
 				add_idea = PMR_new_army
 			}
 			add_command_power = 40
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_global_flag = PMR_LEBED_PATH
-				add = 155
-			}
-		}
-	}
-	focus = {
-		id = PMR_defence
-		icon = military_fort2
-		x = -3
-		y = 6
-		relative_position_id = PMR_vs_pmr
-		cost = 5
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_new_army }
-		mutually_exclusive = { focus = PMR_spec }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_defence"
-			add_ideas = PMR_forts_buildings
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -4009,13 +4865,17 @@ focus_tree = {
 	focus = {
 		id = PMR_spec
 		icon = pmr_specnaz
-		x = -1
-		y = 6
+
+		x = 0
+		y = 3
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_new_army }
-		mutually_exclusive = { focus = PMR_defence }
+		prerequisite = { focus = PMR_air_academy }
+		prerequisite = { focus = PMR_lebed_academy }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_spec"
 			add_ideas = PMR_spetznaz
@@ -4031,15 +4891,16 @@ focus_tree = {
 	focus = {
 		id = PMR_bpla
 		icon = pmr_drone_army
-		x = -2
-		y = 7
+
+		x = 0
+		y = 6
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = {
-			focus = PMR_spec
-			focus = PMR_defence
-		}
+		prerequisite = { focus = PMR_new_army }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_bpla"
 			swap_ideas = {
@@ -4058,12 +4919,16 @@ focus_tree = {
 	focus = {
 		id = PMR_air
 		icon = transnistrian_air_force
-		x = 2
+
+		x = 3
 		y = 1
 		relative_position_id = PMR_vs_pmr
+
 		cost = 4
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
 		prerequisite = { focus = PMR_vs_pmr }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_air"
 			air_experience = 25
@@ -4072,6 +4937,14 @@ focus_tree = {
 				category = CAT_air_doctrine
 				uses = 1
 				cost_reduction = 0.50
+			}
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			add_relative_party_popularity = yes
+			swap_ideas = {
+				remove_idea = PMR_null_airforce
+				add_idea = PMR_null_airforce_2
 			}
 		}
 		ai_will_do = {
@@ -4085,10 +4958,16 @@ focus_tree = {
 	focus = {
 		id = PMR_kazaks
 		icon = pmr_kazaki
-		x = 4
+
+		x = 1
 		y = 1
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_vs_pmr }
+
 		available = {
 			has_manpower > 499
 			custom_trigger_tooltip = {
@@ -4100,8 +4979,7 @@ focus_tree = {
 				has_country_flag = kazak5
 			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_vs_pmr }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_kazaks"
 			add_manpower = -499
@@ -4136,88 +5014,24 @@ focus_tree = {
 	focus = {
 		id = PMR_air_academy
 		icon = blr_mig_25
-		x = 1
+
+		x = 2
 		y = 2
 		relative_position_id = PMR_vs_pmr
+
 		cost = 5
+
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_air }
+		prerequisite = { focus = PMR_air focus = PMR_kazaks }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_air_academy"
 			add_ideas = PMR_academy_air
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_global_flag = PMR_LEBED_PATH
-				add = 155
-			}
-		}
-	}
-	focus = {
-		id = PMR_instructors
-		icon = russian_cooperation
-		x = 3
-		y = 2
-		relative_position_id = PMR_vs_pmr
-		cost = 5
-		available = {
-			OR = {
-				PMR = { is_subject_of = SOV }
-				is_subject = no
-			}
-			country_exists = SOV
-		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_air }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_instructors"
-			swap_ideas = {
-				remove_idea = PMR_null_airforce
-				add_idea = PMR_null_airforce_2
-			}
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_global_flag = PMR_LEBED_PATH
-				add = 155
-			}
-		}
-	}
-	focus = {
-		id = PMR_vvs_rf
-		icon = RUS_airforce
-		x = 2
-		y = 3
-		relative_position_id = PMR_vs_pmr
-		cost = 5
-		available = {
-			OR = {
-				PMR = { is_subject_of = SOV }
-				is_subject = no
-			}
-			country_exists = SOV
-		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_instructors }
-		prerequisite = { focus = PMR_air_academy }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_vvs_rf"
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
 			remove_ideas = PMR_null_airforce_2
-			set_temp_variable = { percent_change = 2.5 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = PMR }
-			change_influence_percentage = yes
-			149 = {
-				add_building_construction = {
-					type = air_base
-					level = 1
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -5.5 }
-			modify_treasury_effect = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -4231,7 +5045,7 @@ focus_tree = {
 		id = PMR_lebedev
 		icon = pmr_lebed_tiraspol
 
-		x = -18
+		x = -24
 		y = 2
 		relative_position_id = PMR_smirnov_era
 
@@ -4242,6 +5056,9 @@ focus_tree = {
 		available = {
 			nationalist_military_junta_are_in_power = yes
 			NOT = { has_country_flag = ded_lebed }
+			NOT = {
+				PMR = { is_subject_of = UKR }
+			}
 		}
 		
 		completion_reward = {
@@ -4485,6 +5302,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_ded_sheriff"
 			remove_ideas = PMR_sheriff7
 			set_country_flag = PMR_sheriff_finish
+			add_political_power = -100
 		}
 		ai_will_do = {
 			factor = 1
@@ -4548,6 +5366,214 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_vpk"
 			one_random_arms_factory = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_kazaki_more
+		icon = pmr_kazaki
+
+		x = -2
+		y = 7
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_vpk }
+
+		available = {
+			has_idea = PMR_kazachestvo
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_vpk"
+			add_manpower = -499
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Black Sea Cossack Regiment\" division_template = \"Cossack Regiment\" start_experience_factor = 0.3"
+					owner = PMR
+					prioritize_location = 13202
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_sheriff_mobilize
+		icon = pmr_sheriff_free
+
+		x = 2
+		y = 7
+		relative_position_id = PMR_lebedev
+
+		cost = 3
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_vpk }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_sheriff_mobilize"
+			add_manpower = 2145
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_moldova_finish
+		icon = pmr_annex_moldova
+
+		x = 0
+		y = 8
+		relative_position_id = PMR_lebedev
+
+		cost = 2
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_defenced }
+		prerequisite = { focus = PMR_sheriff_mobilize }
+		prerequisite = { focus = PMR_kazaki_more }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+			country_exists = MLV
+			MLV = {
+				NOT = { is_in_faction_with = PMR }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_moldova_finish"
+			add_political_power = 55
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_moldova_weapons
+		icon = ak74u
+
+		x = 1
+		y = 9
+		relative_position_id = PMR_lebedev
+
+		cost = 3
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_moldova_finish }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+			country_exists = MLV
+			MLV = {
+				NOT = { is_in_faction_with = PMR }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_moldova_weapons"
+			add_manpower = 2145
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_moldova_money
+		icon = pmr_moldova_money
+
+		x = -1
+		y = 9
+		relative_position_id = PMR_lebedev
+
+		cost = 3
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_moldova_finish }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+			country_exists = MLV
+			MLV = {
+				NOT = { is_in_faction_with = PMR }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_moldova_money"
+			set_temp_variable = { percent_change = 4.5 }
+			set_temp_variable = { tag_index = PMR }
+			set_temp_variable = { influence_target = MLV }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -1.3 }
+			modify_treasury_effect = yes
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_defenced
+		icon = army_defence1
+
+		x = 0
+		y = 7
+		relative_position_id = PMR_lebedev
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
+		prerequisite = { focus = PMR_vpk }
+
+		available = {
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_vpk"
+			add_stability = 0.1
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			149 = {
+				add_building_construction = { type = bunker province = 13204 level = 1 }
+				add_building_construction = { type = bunker province = 13203 level = 1 }
+				add_building_construction = { type = bunker province = 13202 level = 1 }
+			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -4634,6 +5660,13 @@ focus_tree = {
 
 		available = {
 			nationalist_military_junta_are_in_power = yes
+			NOT = {
+				has_idea = PMR_no_corrupt_army_idea
+			}
+		}
+
+		bypass = {
+			has_idea = PMR_no_corrupt_army_idea
 		}
 
 		completion_reward = {
@@ -4693,6 +5726,13 @@ focus_tree = {
 
 		available = {
 			nationalist_military_junta_are_in_power = yes
+			NOT = {
+				has_idea = PMR_corruption_dead_in_govern_idea
+			}
+		}
+
+		bypass = {
+			has_idea = PMR_corruption_dead_in_govern_idea
 		}
 
 		completion_reward = {
@@ -4748,14 +5788,15 @@ focus_tree = {
 		id = PMR_kishenev
 		icon = mol_and_tra_divide
 
-		x = -1
-		y = 7
+		x = 0
+		y = 10
 		relative_position_id = PMR_lebedev
 
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_vpk }
+		prerequisite = { focus = PMR_moldova_money }
+		prerequisite = { focus = PMR_moldova_weapons }
 
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -4795,7 +5836,7 @@ focus_tree = {
 		icon = attack_romania
 
 		x = -1
-		y = 8
+		y = 11
 		relative_position_id = PMR_lebedev
 
 		cost = 5
@@ -4830,13 +5871,13 @@ focus_tree = {
 		icon = attack_odessa
 
 		x = 1
-		y = 7
+		y = 11
 		relative_position_id = PMR_lebedev
 
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_TRANSNISTRIA_ARMY }
-		prerequisite = { focus = PMR_vpk }
+		prerequisite = { focus = PMR_kishenev }
 
 		available = {
 			nationalist_military_junta_are_in_power = yes
@@ -4913,7 +5954,7 @@ focus_tree = {
 		icon = attack_ukraine
 
 		x = 1
-		y = 8
+		y = 12
 		relative_position_id = PMR_lebedev
 
 		cost = 5
@@ -4946,16 +5987,24 @@ focus_tree = {
 	focus = {
 		id = PMR_path
 		icon = united_by_force
+
 		x = -19
 		y = 12
 		relative_position_id = PMR_smirnov_era
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+
 		available = {
 			997 = { is_controlled_by = PMR }
 			147 = { is_controlled_by = PMR }
 			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_path"
 			add_political_power = 100
@@ -4970,19 +6019,26 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_full
-		icon = Focus_Parliament_Constitution
-		x = -1
+		icon = pmr_annex_moldova
+
+		x = 0
 		y = 1
 		relative_position_id = PMR_path
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_path }
+
 		available = {
 			997 = { is_controlled_by = PMR }
 			147 = { is_controlled_by = PMR }
 			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_path }
-		mutually_exclusive = { focus = PMR_confe }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_full"
 			add_timed_idea = { idea = PMR_reform_debuff days = 360 }
@@ -4998,18 +6054,26 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_no_autonomy
-		icon = MEX_Trial_of_pena_nieto
-		x = -1
+		icon = pmr_gagauzia
+
+		x = -2
 		y = 2
 		relative_position_id = PMR_path
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_full }
+
 		available = {
 			997 = { is_controlled_by = PMR }
 			147 = { is_controlled_by = PMR }
 			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_full }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_no_autonomy"
 			PMR = {	add_state_core = 997 }
@@ -5028,81 +6092,6 @@ focus_tree = {
 					add_to_variable = { int_investments = GGZ.int_investments }
 				}
 			}
-			if = {
-				limit = {
-					country_exists = OPR
-					OPR = { is_subject_of = PMR }
-				}
-				annex_country = { target = OPR transfer_troops = yes }
-				OPR = { every_core_state = { add_core_of = PMR } }
-				hidden_effect = {
-					add_to_variable = { treasury = OPR.treasury }
-					add_to_variable = { debt = OPR.debt }
-					add_to_variable = { int_investments = OPR.int_investments }
-				}
-			}
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_global_flag = PMR_LEBED_PATH
-				add = 155
-			}
-		}
-	}
-	focus = {
-		id = PMR_confe
-		icon = autonomy
-		x = 1
-		y = 1
-		relative_position_id = PMR_path
-		cost = 5
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_path }
-		mutually_exclusive = { focus = PMR_full }
-		available = {
-			997 = { is_controlled_by = PMR }
-			147 = { is_controlled_by = PMR }
-			148 = { is_controlled_by = PMR }
-		}
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_full"
-			add_timed_idea = { idea = PMR_reform_debuff1 days = 360 }
-			decrease_centralization = yes
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				has_global_flag = PMR_LEBED_PATH
-				add = 155
-			}
-		}
-	}
-	focus = {
-		id = PMR_gagauz
-		icon = MoldovaGagauzia
-		x = 1
-		y = 2
-		relative_position_id = PMR_path
-		cost = 5
-		available = {
-			997 = { is_controlled_by = PMR }
-			147 = { is_controlled_by = PMR }
-			148 = { is_controlled_by = PMR }
-		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_confe }
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus PMR_gagauz"
-			release = GGZ
-			add_stability = 0.07
-			add_war_support = -0.04
-			set_autonomy = {
-				target = GGZ
-				autonomy_state = autonomy_moldovian_federation
-				end_wars = no
-				end_civil_wars = no
-			}
 		}
 		ai_will_do = {
 			factor = 1
@@ -5114,17 +6103,25 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_integr_economy
-		icon = focus_consolidat
+		icon = pmr_moldova_money
+
 		x = 0
-		y = 3
+		y = 2
 		relative_position_id = PMR_path
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_full }
+
 		available = {
 			147 = { is_controlled_by = PMR }
 			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_gagauz focus = PMR_no_autonomy }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_integr_economy"
 			PMR = {	add_state_core = 147 }
@@ -5141,37 +6138,96 @@ focus_tree = {
 	focus = {
 		id = PMR_political
 		icon = focus_generic_improve_the_administration
-		x = 0
-		y = 4
+
+		x = 2
+		y = 2
 		relative_position_id = PMR_path
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_full }
+
 		available = {
 			147 = { is_controlled_by = PMR }
 			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_integr_economy }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_political"
 			PMR = {	add_state_core = 148 }
 			add_political_power = 65
-			custom_effect_tooltip = PMR_federation_based_tt
-			if = {
-				limit = {
-					has_completed_focus = PMR_kishenev
-				}
-				GGZ = {
-					set_country_flag = PMR_subject_agree
-				}
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
 			}
-			if = {
-				limit = {
-					has_completed_focus = PMR_kishenev
-				}
-				MLV = {
-					set_country_flag = PMR_subject_agree
-				}
+		}
+	}
+	focus = {
+		id = PMR_kabardiners
+		icon = pmr_kabardiners
+
+		x = 1
+		y = 3
+		relative_position_id = PMR_path
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_integr_economy }
+		prerequisite = { focus = PMR_political }
+
+		available = {
+			147 = { is_controlled_by = PMR }
+			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
 			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_kabardiners"
+			add_ideas = PMR_kabardiner
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_global_flag = PMR_LEBED_PATH
+				add = 155
+			}
+		}
+	}
+	focus = {
+		id = PMR_peace_keaper
+		icon = pmr_peacerota
+
+		x = -1
+		y = 3
+		relative_position_id = PMR_path
+
+		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_integr_economy }
+		prerequisite = { focus = PMR_no_autonomy }
+
+		available = {
+			147 = { is_controlled_by = PMR }
+			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PMR_peace_keaper"
+			add_ideas = PMR_peacerota_idea
 		}
 		ai_will_do = {
 			factor = 1
@@ -5183,17 +6239,26 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_true
-		icon = united_by_force
+		icon = pmr_new_moldova
+
 		x = 0
-		y = 5
+		y = 4
 		relative_position_id = PMR_path
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_kabardiners }
+		prerequisite = { focus = PMR_peace_keaper }
+
 		available = {
 			147 = { is_controlled_by = PMR }
 			148 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_political }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_true"
 			hidden_effect = {
@@ -5216,18 +6281,26 @@ focus_tree = {
 	}
 	focus = {
 		id = PMR_integrate_mlv_place
-		icon = Greater_Moldovia
+		icon = pmr_new_moldova_finish
+
 		x = 0
-		y = 6
+		y = 5
 		relative_position_id = PMR_path
+
 		cost = 5
+
+		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
+		prerequisite = { focus = PMR_true }
+
 		available = {
 			152 = { is_controlled_by = PMR }
 			335 = { is_controlled_by = PMR }
 			1111 = { is_controlled_by = PMR }
+			NOT = {
+				country_exists = MLV
+			}
 		}
-		search_filters = { FOCUS_FILTER_TRANSNISTRIA_INTEGRATE_MLV }
-		prerequisite = { focus = PMR_true }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_integrate_mlv_place"
 			PMR = {	add_state_core = 152 }
