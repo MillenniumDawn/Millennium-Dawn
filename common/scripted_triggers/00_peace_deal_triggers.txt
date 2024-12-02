@@ -37,10 +37,102 @@
 		CPD_AI_will_offer_peace = { always = no }
 		CPD_AI_will_accept = { # this is just for some display shit, will make this work later
 			# BASE ACCEPTANCE
-			set_temp_variable = { CPD_acceptance_temp = -100 }
+			set_temp_variable = { CPD_acceptance_temp = -50 }
 
 			# OTHER CHECKS IN HERE
-
+			# ECONOMIC FACTORING
+				set_temp_variable = { CPD_IR_temp = var:THIS.interest_rate }
+				if = {
+					limit = { THIS = { has_active_mission = debt_default_main_mission } }
+					add_to_temp_variable = { CPD_IR_temp = 5 }
+				}
+				if = {
+					limit = { check_variable = { CPD_IR_temp > 14.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 10 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 12.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 8 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 9.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 6 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 7.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 4 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 4.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 2 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_IR_temp }
+			# WAR SUPPORT
+				set_temp_variable = { CPD_WS_temp = var:THIS.has_war_support }
+				multiply_temp_variable = { CPD_WS_temp = -200 }
+				round_temp_variable = CPD_WS_temp
+				add_to_temp_variable = { CPD_WS_temp = 101 }
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_WS_temp }
+			# RELATIVE STRENGTH
+				set_temp_variable = { CPD_RSB_temp = THIS.enemies_strength_ratio@ROOT }
+				multiply_temp_variable = { CPD_RSB_temp = 100 }
+				round_temp_variable = CPD_RSB_temp
+				subtract_from_temp_variable = { CPD_RSB_temp = 100 }
+				clamp_temp_variable = {
+					var = CPD_RSB_temp
+					max = 1000
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_RSB_temp }
+			# CLOSE TO SURRENDER
+				set_temp_variable = { CPD_SP_temp = var:THIS.surrender_progress }
+				multiply_temp_variable = { CPD_SP_temp = 200 }
+				round_temp_variable = CPD_SP_temp
+				subtract_from_temp_variable = { CPD_SP_temp = 100 }
+				clamp_temp_variable = {
+					var = CPD_SP_temp
+					min = 0
+					max = 100
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_SP_temp }
+			# BATTLES WON
+				set_temp_variable = { CPD_RBW_temp = ROOT.CPD_VP@PREV }
+				set_temp_variable = { CPD_TBW_temp = THIS.CPD_VP@ROOT }
+				subtract_from_temp_variable = { CPD_RBW_temp = CPD_TBW_temp }
+				round_temp_variable = CPD_RBW_temp
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_RBW_temp }
+			# POWER RANKING
+				if = {
+					limit = { THIS = { has_idea = superpower } }
+					set_temp_variable = { CPD_PR_temp = -60 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = great_power } }
+					set_temp_variable = { CPD_PR_temp = -45 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = large_power } }
+					set_temp_variable = { CPD_PR_temp = -30 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = regional_power } }
+					set_temp_variable = { CPD_PR_temp = -15 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = non_power } }
+					set_temp_variable = { CPD_PR_temp = 15 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_PR_temp }
+			# FACTION BACKING
+				add_to_temp_variable = { CPD_FB_temp = 5 }
+				if = {
+					limit = { THIS = { has_idea = NATO_member } }
+					add_to_temp_variable = { CPD_FB_temp = -30 }
+				}
+				if = {
+					limit = { THIS = { has_idea = CSTO_member } }
+					add_to_temp_variable = { CPD_FB_temp = -30 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_FB_temp }
 			# FINAL CHECK
 			check_variable = { CPD_acceptance_temp > 0 }
 		}
@@ -110,6 +202,106 @@
 			}
 			always = yes
 		}
+
+		CPD_calculate_province_cost_loc = {
+			if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+				# COST MODIFIERS
+					if = {
+						limit = {
+							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+							is_core_of = ROOT
+						}
+						divide_temp_variable = { CPD_VP_temp = 2 }
+					}
+					else_if = {
+						limit = {
+							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+							is_claimed_by = ROOT
+						}
+						divide_temp_variable = { CPD_VP_temp = 1.5 }
+					}
+			}
+			else_if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					divide_temp_variable = { CPD_VP_temp = 2 }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+			}
+			else_if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					divide_temp_variable = { CPD_VP_temp = 4 }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+			}
+			else_if = {
+				limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
+				# COST CALCULATION
+					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+					divide_temp_variable = { CPD_VP_temp = 3 }
+					round_temp_variable = CPD_VP_temp
+					clamp_temp_variable = {
+						var = CPD_VP_temp
+						min = 1
+					}
+			}
+			if = {
+				limit = { is_owned_and_controlled_by = THIS.owner }
+				multiply_temp_variable = { CPD_VP_temp = 2 }
+			}
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
+				if = {
+					limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+					multiply_temp_variable = { CPD_VP_temp = 1 }
+				}
+				else = { multiply_temp_variable = { CPD_VP_temp = -1 } }
+			}
+			else = {
+				if = {
+					limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+					multiply_temp_variable = { CPD_VP_temp = -1 }
+				}
+				else = { multiply_temp_variable = { CPD_VP_temp = 1 } }
+			}
+			always = yes
+		}
+
+		# CPD_cost_of_state_loc = {
+		# 	if = {
+		# 		limit = {
+		# 			OR = {
+		# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+		# 				ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
+		# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+		# 				ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
+		# 			}
+		# 		}
+		# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
+		# 		multiply_temp_variable = { CPD_value_of_state_display = -1 }
+		# 	}
+		# 	else = {
+		# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
+		# 		multiply_temp_variable = { CPD_value_of_state_display = 1 }
+		# 	}
+		# }
 
 
 
