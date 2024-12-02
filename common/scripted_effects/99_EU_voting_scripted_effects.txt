@@ -87,17 +87,20 @@ EU_update_AI_general_voting_modifiers = {
 
 	# Common Law Section, this is something that can and is repeated so we will be tucking it in here with the general modifiers since that goes at the end.
 	if = {
-		limit = { check_variable = { EU_AI_focus_modifier_yes_vote > 0 } }
-		add_to_variable = { global.EU_active_vote_yes = 1 }
-		add_to_array = { global.EU_active_vote_supporters = THIS }
-		set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
-		add_to_variable = { global.var_EUpopRatioYes = add_ratio_value }
-	}
-	else = {
-		add_to_variable = { global.EU_active_vote_no = 1 }
-		add_to_array = { global.EU_active_vote_rejecters = THIS }
-		set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
-		add_to_variable = { global.var_EUpopRatioNo = add_ratio_value }
+		limit = { is_ai = yes }
+		if = {
+			limit = { check_variable = { EU_AI_focus_modifier_yes_vote > 0 } }
+			add_to_variable = { global.EU_active_vote_yes = 1 }
+			add_to_array = { global.EU_active_vote_supporters = THIS }
+			set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
+			add_to_variable = { global.var_EUpopRatioYes = add_ratio_value }
+		}
+		else = {
+			add_to_variable = { global.EU_active_vote_no = 1 }
+			add_to_array = { global.EU_active_vote_rejecters = THIS }
+			set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
+			add_to_variable = { global.var_EUpopRatioNo = add_ratio_value }
+		}
 	}
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: AI Voting Weight on EU Law Index: [?v], AI Weight: [?EU_AI_focus_modifier_yes_vote]"
@@ -1913,6 +1916,17 @@ cleanup_european_union_voting_yes = {
 			clr_country_flag = current_vote_influenced
 		}
 	}
+}
+
+emergency_vote_clear = {
+	set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
+	set_variable = { global.current_active_vote_disp = 0 }
+	set_variable = { global.EU_active_vote_yes = 0 }
+	set_variable = { global.EU_active_Vote_no = 0 }
+	set_variable = { global.var_EUpopRatioNo = 0 }
+	set_variable = { global.var_EUpopRatioYes = 0 }
+	clear_array = global.EU_active_vote_supporters
+	clear_array = global.EU_active_vote_rejecters
 }
 
 cleanup_european_union_voting_no = {
