@@ -55,10 +55,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: tajik_focus.1.a executed"
 		add_popularity = {
 			ideology = fascism
-			popularity = -0.10
+			popularity = -0.05
 		}
 		724 = {
-			add_manpower = -100000
+			add_manpower = -50000
 		}
 		ai_chance = {
 			base = 1
@@ -70,7 +70,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: tajik_focus.1.b executed"
 		add_popularity = {
 			ideology = fascism
-			popularity = 0.15
+			popularity = 0.10
 		}
 		724 = {
 			add_manpower = 100000
@@ -93,7 +93,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: tajik_focus.2.a executed"
 		FROM = { country_event = { id = md4.17 days = 1 } }
 		ai_chance = {
-			base = 1
+			base = 10
 		}
 	}
 
@@ -108,6 +108,10 @@ country_event = {
 		}
 		ai_chance = {
 			base = 1
+			modifier = {
+				is_in_faction = yes
+				add = 100
+			}
 		}
 	}
 }
@@ -141,9 +145,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: tajik_focus.4.a executed"
 		custom_effect_tooltip = TAJ_effect_if_we_accept_TT
 		effect_tooltip = {
-			TAJ = {
-				one_random_industrial_complex = yes
-			}
+			TAJ = { one_random_industrial_complex = yes }
 			set_temp_variable = { percent_change = 3.00 }
 			set_temp_variable = { tag_index = SAU }
 			set_temp_variable = { influence_target = TAJ }
@@ -157,9 +159,7 @@ country_event = {
 		ai_chance = {
 			base = 1
 			modifier = {
-				SAU = {
-					has_opinion = { target = TAJ value > 20 }
-				}
+				has_opinion = { target = TAJ value > 20 }
 				add = 20
 			}
 		}
@@ -683,13 +683,19 @@ country_event = { # Tajikistan Pursues Aggressive Nationalization
 		name = tajik_focus.20.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.20.b executed"
 		send_embargo = TAJ
+		TAJ = {
+			country_event = {
+				id = tajik_focus.21
+				days = 1
+			}
+		}
 		ai_chance = {
-			base = 1
+			base = 2
 		}
 	}
 }
 
-country_event = { # Tajikistan Pursues Aggressive Nationalization
+country_event = { # We've Been Sanctioned
 	id = tajik_focus.21
 	title = tajik_focus.21.t
 	desc = tajik_focus.21.d
@@ -698,24 +704,6 @@ country_event = { # Tajikistan Pursues Aggressive Nationalization
 	option = { # Don't care
 		name = tajik_focus.21.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.21.a executed"
-		ai_chance = {
-			base = 1
-		}
-	}
-
-	option = {
-		name = tajik_focus.21.b
-		log = "[GetDateText]: [This.GetName]: tajik_focus.21.b executed"
-		send_embargo = TAJ
-		ai_chance = {
-			base = 1
-		}
-	}
-
-	option = {
-		name = tajik_focus.21.c
-		log = "[GetDateText]: [This.GetName]: tajik_focus.21.c executed"
-		send_embargo = TAJ
 		ai_chance = {
 			base = 1
 		}
@@ -917,7 +905,14 @@ country_event = { # Assault on the Palace
 	option = { # Shell it
 		name = tajik_focus.26.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.25.a executed"
-		custom_effect_tooltip = TAJ_low_success
+		custom_effect_tooltip = TAJ_low_success_TT
+		newline = yes
+		724 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1.0
+			}
+		}
 		hidden_effect = {
 			random_list = {
 				70 = {
@@ -941,7 +936,7 @@ country_event = { # Assault on the Palace
 	option = { # Launch an armored assualt
 		name = tajik_focus.26.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.25.b executed"
-		custom_effect_tooltip = TAJ_medium_success
+		custom_effect_tooltip = TAJ_medium_success_TT
 		hidden_effect = {
 			random_list = {
 				50 = {
@@ -965,7 +960,7 @@ country_event = { # Assault on the Palace
 	option = { # Send in experienced troops
 		name = tajik_focus.26.c
 		log = "[GetDateText]: [This.GetName]: tajik_focus.25.c executed"
-		custom_effect_tooltip = TAJ_high_success
+		custom_effect_tooltip = TAJ_high_success_TT
 		hidden_effect = {
 			random_list = {
 				30 = {
@@ -1014,6 +1009,18 @@ country_event = { # Rahmon Killed
 		name = tajik_focus.28.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.28.a executed"
 		set_country_flag = TAJ_rahmon_dead
+		custom_effect_tooltip = TAJ_rahmon_dies_TT
+		hidden_effect = {
+			create_country_leader = {
+				name = "Rustam Emomali"
+				picture = "rostam_rahmon.dds"
+				ideology = Conservative
+				traits = {
+					emerging_Conservative
+					inexperienced
+				}
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1170,17 +1177,18 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_rahmon_dead
 					}
 					create_country_leader = {
-						name = "Rustam Rahmanov"
+						name = "Rustam Emomali"
 						picture = "rostam_rahmon.dds"
 						ideology = Conservative
 						traits = {
 							emerging_Conservative
+							inexperienced
 						}
 					}
 				}
 				else = {
 					create_country_leader = {
-						name = "Emomali Rahmanov"
+						name = "Emomali Emomali"
 						picture = "emomali_rahmon_young.dds"
 						ideology = Conservative
 						traits = {
@@ -1352,6 +1360,7 @@ country_event = { # Tajik Revolution
 						ideology = Conservative
 						traits = {
 							emerging_Conservative
+							inexperienced
 						}
 					}
 				}
@@ -1446,7 +1455,7 @@ country_event = { # Victory in Civil War
 	}
 }
 
-country_event = { # Silent Erosion TODO:
+country_event = { # Silent Erosion
 	id = tajik_focus.31
 	title = tajik_focus.31.t
 	desc = tajik_focus.31.d
@@ -1455,7 +1464,15 @@ country_event = { # Silent Erosion TODO:
 	option = {
 		name = tajik_focus.31.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.31.a executed"
-
+		723 = {
+			add_to_variable = { productivity_state_var = -50 }
+			custom_effect_tooltip = TAJ_lose_50_prod_TT
+		}
+		newline = yes
+		add_timed_idea = {
+			idea = TAJ_wealth_of_hoji_akbar
+			days = 1200
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1464,7 +1481,20 @@ country_event = { # Silent Erosion TODO:
 	option = {
 		name = tajik_focus.31.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.31.b executed"
-
+		set_temp_variable = { percent_change = 3.00 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = TAJ }
+		change_influence_percentage = yes
+		newline = yes
+		set_temp_variable = { percent_change = 1.00 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = TAJ }
+		change_influence_percentage = yes
+		newline = yes
+		add_timed_idea = {
+			idea = TAJ_wealth_of_bobojon
+			days = 1200
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1473,7 +1503,21 @@ country_event = { # Silent Erosion TODO:
 	option = {
 		name = tajik_focus.31.c
 		log = "[GetDateText]: [This.GetName]: tajik_focus.31.c executed"
+		retire_character = TAJ_ghaffor_mirzoyev
+		newline = yes
+		add_timed_idea = {
+			idea = TAJ_wealth_of_ghaffor
+			days = 1200
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
 
+	option = {
+		name = tajik_focus.31.d1
+		log = "[GetDateText]: [This.GetName]: tajik_focus.31.d1 executed"
+		add_political_power = 25
 		ai_chance = {
 			base = 1
 		}
@@ -1923,6 +1967,78 @@ country_event = { # Russia Offers No Concessions
 	option = {
 		name = tajik_focus.46.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.46.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Tajikistan Double Crosses Us!
+	id = tajik_focus.47
+	title = tajik_focus.47.t
+	desc = tajik_focus.47.d
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = tajik_focus.47.a
+		log = "[GetDateText]: [This.GetName]: tajik_focus.47.a executed"
+		add_opinion_modifier = {
+			target = TAJ
+			modifier = betrayed_our_cause
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Tajikistan Cancels the 201st Base Lease
+	id = tajik_focus.48
+	title = tajik_focus.48.t
+	desc = tajik_focus.48.d
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = tajik_focus.48.a
+		log = "[GetDateText]: [This.GetName]: tajik_focus.48.a executed"
+		hidden_effect = {
+			country_event = {
+				id = tajik_focus.49
+				days = 3652 # 10 years
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Coup Against Tajikistan?
+	id = tajik_focus.49
+	title = tajik_focus.49.t
+	desc = tajik_focus.49.d
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = tajik_focus.49.a
+		log = "[GetDateText]: [This.GetName]: tajik_focus.49.a executed"
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_opinion = {
+					target = TAJ
+					value < 10
+				}
+				add = 100
+			}
+		}
+	}
+
+	option = {
+		name = tajik_focus.49.b
+		log = "[GetDateText]: [This.GetName]: tajik_focus.49.b executed"
 
 		ai_chance = {
 			base = 1
