@@ -464,11 +464,9 @@ focus_tree = {
 				idea = ARM_hard_antikapital_idea
 				days = 120
 			}
-			hidden_effect = {
-				add_to_variable = { party_pop_array^4 = 0.1 }
-				recalculate_party = yes
-			}
-			custom_effect_tooltip = FRA_communist_rise_10_TT
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			add_relative_party_popularity = yes
 			custom_effect_tooltip = ARM_hard_anti_capital_TT
 		}
 	}
@@ -3012,27 +3010,23 @@ focus_tree = {
 	focus = {
 		id = ARM_prohibition_religion
 		icon = christianophobia
+
+		x = 4
+		y = 10
+
 		cost = 10
+
 		prerequisite = {
 			focus = ARM_secularism
 			focus = ARM_KPA
 			focus = ARM_OKPA
 		}
+		mutually_exclusive = { focus = ARM_tolerance }
+
 		available = {
 			has_completed_focus = ARM_victory_of_reds
 		}
-		mutually_exclusive = {
-			focus = ARM_tolerance
-		}
-		x = 4
-		y = 10
-		ai_will_do = {
-			base = 1
-			modifier = {
-				has_global_flag = ARM_COMMIES_PATH
-				add = 50
-			}
-		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_prohibition_religion"
 			if = {
@@ -3062,6 +3056,14 @@ focus_tree = {
 					remove_idea = The_Clergy
 					add_idea = intelligence_community
 				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				has_global_flag = ARM_COMMIES_PATH
+				add = 50
 			}
 		}
 	}
@@ -5533,13 +5535,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Fifth_International"
 			every_neighbor_country = {
-				add_popularity = {
-					ideology = communism
-					popularity = 0.10
+				limit = {
+					NOT = { emerging_communist_state_are_in_power = yes }
 				}
-				add_to_variable = { party_pop_array^4 = 0.10 }
-				recalculate_party = yes
-				custom_effect_tooltip = FRA_communist_rise_10_TT
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				set_temp_variable = { temp_outlook_increase = 0.10 }
+				add_relative_party_popularity = yes
 			}
 			add_war_support = 0.10
 			add_opinion_modifier = {
@@ -6924,40 +6926,21 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_army"
 			if = {
 				limit = { NOT = { is_in_array = { ruling_party = 22 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 22 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
+				set_temp_variable = { rul_party_temp = 22 }
+				if = {
+					limit = { has_elections = no }
+					set_temp_variable = { enable_elections = 1 }
 				}
-				set_politics = {
-					ruling_party = nationalist
+				else = {
+					set_temp_variable = { enable_elections = 0 }
 				}
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
+				change_ruling_party_effect = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 21 } }
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
-			}
+
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
 		}
 	}
 	focus = {
@@ -6987,44 +6970,22 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_artsivner"
 			if = {
 				limit = { NOT = { is_in_array = { ruling_party = 20 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 20 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					create_country_leader = {
-						name = "Khachik Asryan"
-						picture = "khachik_asryan.dds"
-						ideology = Nat_Autocracy
-						expire = "2099.1.1"
-					}
-					set_leader = yes
+				set_temp_variable = { rul_party_temp = 20 }
+				if = {
+					limit = { has_elections = no }
+					set_temp_variable = { enable_elections = 1 }
 				}
-				set_politics = { ruling_party = nationalist }
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
+				else = {
+					set_temp_variable = { enable_elections = 0 }
 				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
+				change_ruling_party_effect = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 21 } }
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
-			}
+
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+
 			set_cosmetic_tag = ARM_arcivner_sim_nationalist
 		}
 	}
@@ -7061,40 +7022,22 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_dashnak"
 			if = {
 				limit = { NOT = { is_in_array = { ruling_party = 21 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 21 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
+				set_temp_variable = { rul_party_temp = 21 }
+				if = {
+					limit = { has_elections = no }
+					set_temp_variable = { enable_elections = 1 }
 				}
-				set_politics = {
-					ruling_party = nationalist
+				else = {
+					set_temp_variable = { enable_elections = 0 }
 				}
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
+				change_ruling_party_effect = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 21 } }
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
-			}
+
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+
 			set_cosmetic_tag = ARM_dashnakcutyun_nationalist
 		}
 	}
@@ -7124,40 +7067,21 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_monarch"
 			if = {
 				limit = { NOT = { is_in_array = { ruling_party = 23 } } }
-				hidden_effect = {
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 23 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
-					meta_effect = {
-						text = {
-							set_country_flag = [META_SET_RULING_PARTY]
-						}
-						META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
-					}
-					set_leader = yes
+				set_temp_variable = { rul_party_temp = 23 }
+				if = {
+					limit = { has_elections = no }
+					set_temp_variable = { enable_elections = 1 }
 				}
-				set_politics = {
-					ruling_party = nationalist
+				else = {
+					set_temp_variable = { enable_elections = 0 }
 				}
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
+				change_ruling_party_effect = yes
 			}
-			else_if = {
-				limit = { is_in_array = { ruling_party = 21 } }
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^21 = 0.075 }
-				recalculate_party = yes
-			}
+
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
 		}
 	}
 	focus = {
@@ -8168,33 +8092,26 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_Tsarukyan"
-			hidden_effect = {
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 7 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-				meta_effect = {
-					text = {
-						set_country_flag = [META_SET_RULING_PARTY]
-					}
-					META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			if = {
+				limit = { NOT = { is_in_array = { ruling_party = 7 } } }
+				set_temp_variable = { rul_party_temp = 7 }
+				if = {
+					limit = { has_elections = no }
+					set_temp_variable = { enable_elections = 1 }
 				}
-				set_leader = yes
-				set_politics = {
-					ruling_party = communism
+				else = {
+					set_temp_variable = { enable_elections = 0 }
 				}
-				add_popularity = {
-					ideology = communism
-					popularity = 0.05
-				}
-				add_to_variable = { party_pop_array^7 = 0.075 }
-				recalculate_party = yes
+				change_ruling_party_effect = yes
 			}
+
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+
 			country_event = arme.1012
 			add_political_power = 50
-			add_popularity = { ideology = communism popularity = 0.025 }
 		}
 		x = 38
 		y = 13
@@ -12954,11 +12871,16 @@ focus_tree = {
 		}
 		x = 46
 		y = 8
-				completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus ARM_iskanders"
-					add_to_variable = { missile_inventory_array^54 = 4 }
-					custom_effect_tooltip = ARM_iskander_TT
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ARM_iskanders"
+			add_equipment_to_stockpile = {
+				type = guided_missile_equipment_4
+				amount = 5
+			}
 		}
 	}
+
 	focus = {
 		id = ARM_kalash_zawod
 		icon = ak103
