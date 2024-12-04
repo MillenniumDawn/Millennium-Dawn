@@ -179,15 +179,29 @@ calculate_energy_use = {
 	add_to_variable = { energy_sum = fossil_pp_energy_generation }
 
 	# Nuclear Energy Section
+	if = { limit = { has_country_flag = enabled_nuclear_reactor_fuel_production }
+		set_variable = { var_enrichment_nuclear_energy_prod_factor = 200 } # CHANGE ME IF YOU WANT ME TO BE MORE PRODUCTIVE, weekly production value
+
+		set_temp_variable = { modify_leu = 1 }
+		add_to_temp_variable = { modify_leu = modifier@leu_fuel_production_modifier }
+
+		multiply_variable = { var_enrichment_nuclear_energy_prod_factor = modify_leu }
+		round_variable = var_enrichment_nuclear_energy_prod_factor
+
+		set_temp_variable = { temp1 = var_enrichment_nuclear_energy_prod_factor }
+		multiply_temp_variable = { temp1 = enrichment_facilities }
+		set_variable = { var_nuke_nuclear_reactor_prod = temp1 }
+	}
+	else = {
+		set_variable = { var_nuke_nuclear_reactor_prod = 0 }
+	}
+
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { nuclear_status_array = 1 }
-				is_in_array = { nuclear_status_array = 2 }
-				is_in_array = { nuclear_status_array = 3 }
-				is_in_array = { nuclear_status_array = 4 }
-				is_in_array = { nuclear_status_array = 6 }
-				is_in_array = { nuclear_status_array = 8 }
+				has_idea = nuclear_energy
+				has_idea = nuclear_power_off
+				has_idea = nuclear_power_def
 			}
 		}
 		set_variable = { nuclear_fuel_consumption = modifier@nuclear_fuel_consumption }
@@ -202,6 +216,7 @@ calculate_energy_use = {
 		set_temp_variable = { nuclear_energy_generation_multiplier = 1 }
 		add_to_temp_variable = { nuclear_energy_generation_multiplier = modifier@nuclear_energy_generation_modifier }
 		multiply_variable = { nuclear_energy_generation = nuclear_energy_generation_multiplier }
+
 		if = { limit = { check_variable = { var_reactor_material_stockpile = 0 } }
 			set_temp_variable = { nuclear_fuel_fulfillment = var_nuke_nuclear_reactor_prod }
 			divide_temp_variable = { nuclear_fuel_fulfillment = nuclear_fuel_consumption }
@@ -343,133 +358,655 @@ random_renewable_variable_calculation = {
 setup_starting_world_hydropower = {
 	#also sets up world geothermal
 	#storage will be utilized for future battery mechanics
-		#Italy - Lombardia
-	80 = { #Italy - Lombardiid number of the state, in this case lombardy state in northern italy
-		set_variable = { hydroelectric_energy_production_var = 5.636 } #average power output in gw of all hydropower infrastructure in the state (you can convert it from annual twh if you have that data)
-		set_variable = { hydroelectric_energy_storage_var = 300 } #this is the storage capacity of the dam in gwh				   #divide the number of annual twh produced by 8.760 to obtain the average power in gw
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Piemonte
-	77 = {
-		set_variable = { hydroelectric_energy_production_var = 3.205 }
-		set_variable = { hydroelectric_energy_storage_var = 200 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Tentino-South Tyrol
-	285 = {
-		set_variable = { hydroelectric_energy_production_var = 3.009 }
-		set_variable = { hydroelectric_energy_storage_var = 200 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Campaignia
-	82 = {
-		set_variable = { hydroelectric_energy_production_var = 1.411 }
+
+	### North America ################################################################
+	#Canada - Quebec
+	762 = {
+		set_variable = { hydroelectric_energy_production_var = 15.987 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Italy - Veneto
-	78 = {
-		set_variable = { hydroelectric_energy_production_var = 1.077 }
+		#Canada - British Columbia
+	754 = {
+		set_variable = { hydroelectric_energy_production_var = 12.049 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
-	}
-		#Italy - Marche
-	960 = {
-		set_variable = { hydroelectric_energy_production_var = 1.725 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Aosta Valley
-	1059 = {
-		set_variable = { hydroelectric_energy_production_var = 0.832 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Sicilia
-	83 = {
-		set_variable = { hydroelectric_energy_production_var = 0.729 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Calabria
-	956 = {
-		set_variable = { hydroelectric_energy_production_var = 0.844 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Emilia-Romagna
-	265 = {
-		set_variable = { hydroelectric_energy_production_var = 0.609 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Fruili-Venezia Guilia
-	1061 = {
-		set_variable = { hydroelectric_energy_production_var = 0.458 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Sardinia
-	84 = {
-		set_variable = { hydroelectric_energy_production_var = 0.437 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy - Lazio
-	81 = {
-		set_variable = { hydroelectric_energy_production_var = 0.397 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Italy -Toscana
-	79 = {
-		set_variable = { hydroelectric_energy_production_var = 0.297 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-		set_variable = { geothermal_energy_production_var = 0.627 }
+		set_variable = { geothermal_energy_production_var = 0.015 }
 		add_dynamic_modifier = {
 			modifier = geothermal_infrastructure_in_state
 		}
 	}
-		#UK - Shetland
-	9 = {
-		set_variable = { hydroelectric_energy_production_var = 1.459 }
+		#Canada - Newfoundland
+	759 = {
+		set_variable = { hydroelectric_energy_production_var = 8.540 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#UK - Highlands
-	437 = {
-		set_variable = { hydroelectric_energy_production_var = 0.730 }
+		#Canada - Ontario
+	763 = {
+		set_variable = { hydroelectric_energy_production_var = 4.407 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Canada - Manitoba
+	757 = {
+		set_variable = { hydroelectric_energy_production_var = 4.005 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Canada - Alberta
+	755 = {
+		set_variable = { geothermal_energy_production_var = 0.005 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Canada - Ungava
+	1160 = {
+		set_variable = { hydroelectric_energy_production_var = 15.987 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#USA - New York
+	769 = {
+		set_variable = { hydroelectric_energy_production_var = 3.290 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#USA - Virginia
+	773 = {
+		set_variable = { hydroelectric_energy_production_var = 3.693 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#USA - Michigan
+	777 = {
+		set_variable = { hydroelectric_energy_production_var = 2.671 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#USA - Tennessee
+	793 = {
+		set_variable = { hydroelectric_energy_production_var = 1.987 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#USA - Nevada
+	807 = {
+		set_variable = { hydroelectric_energy_production_var = 2.558 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 2.327 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#USA - Washington
+	809 = {
+		set_variable = { hydroelectric_energy_production_var = 11.590 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#USA - Oregon
+	810 = {
+		set_variable = { hydroelectric_energy_production_var = 3.056 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#USA - California
+	811 = {
+		set_variable = { hydroelectric_energy_production_var = 1.845 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 10.455 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		# USA - Hawaii
+	817 = {
+		set_variable = { geothermal_energy_production_var = 0.342 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		# Mexico - Sonara
+	829 = {
+		set_variable = { hydroelectric_energy_production_var = 0.133 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.734 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Mexico - Sinaloa
+	831 = {
+		set_variable = { hydroelectric_energy_production_var = 0.263 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Mexico - Guanajuato
+	834 = {
+		set_variable = { geothermal_energy_production_var = 0.600 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Mexico - Mexico
+	835 = {
+		set_variable = { hydroelectric_energy_production_var = 0.225 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Mexico - Jalisco
+	836 = {
+		set_variable = { hydroelectric_energy_production_var = 0.712 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Mexico - Guerrero
+	837 = {
+		set_variable = { hydroelectric_energy_production_var = 0.614 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Mexico - Veracrus
+	838 = {
+		set_variable = { hydroelectric_energy_production_var = 0.131 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.040 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		# Mexico - Chiapas
+	839 = {
+		set_variable = { hydroelectric_energy_production_var = 1.188 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+	#Saints kitts and Nevis -
+
+		# France - Guadeloupe
+	68 = {
+		set_variable = { geothermal_energy_production_var = 0.015 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+
+	### Central America ################################################################
+
+		#Guatemala - Guatemala
+	841 = {
+		set_variable = { geothermal_energy_production_var = 0.196 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+
+		#Belize -
+
+		#El Savador - San Salvador
+	843 = {
+		set_variable = { geothermal_energy_production_var = 0.095 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+
+		#Honduras -
+
+		# Nicaragua - Managua
+	849 = {
+		set_variable = { geothermal_energy_production_var = 0.102 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Costa Rica - Northern Coast Rica
+	851 = {
+		set_variable = { hydroelectric_energy_production_var = 0.644 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.154 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+
+	### South America ################################################################
+
+		#Colombia - Boyaca
+	870 = {
+		set_variable = { hydroelectric_energy_production_var = 0.578 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Colombia - Caldas
+	871 = {
+		set_variable = { hydroelectric_energy_production_var = 0.334 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Colombia - Huila
+	874 = {
+		set_variable = { hydroelectric_energy_production_var = 0.311 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Colombia - Cundinamarca
+	911 = {
+		set_variable = { hydroelectric_energy_production_var = 0.694 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Colombia - Cordoba
+	912 = {
+		set_variable = { hydroelectric_energy_production_var = 1.432 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Colombia - Santander
+	913 = {
+		set_variable = { hydroelectric_energy_production_var = 0.0918 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Venezuela - Bolivar
+	876 = {
+		set_variable = { hydroelectric_energy_production_var = 7.100 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Venezuela - Barinas
+	915 = {
+		set_variable = { hydroelectric_energy_production_var = 0.056 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Venezuela - Merida
+	916 = {
+		set_variable = { hydroelectric_energy_production_var = 0.245 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+	#French Guiana -
+
+		#Ecuador - Coastal Ecuador
+	905 = {
+		set_variable = { hydroelectric_energy_production_var = 0.860 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Peru - Northern Peru
+	903 = {
+		set_variable = { hydroelectric_energy_production_var = 0.432 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Peru - Coastal Peru
+	904 = {
+		set_variable = { hydroelectric_energy_production_var = 1.104 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+	#Bolivia -
+
+		#Brazil - Parana
+	880 = {
+		set_variable = { hydroelectric_energy_production_var = 10.115 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Sao Paulo
+	882 = {
+		set_variable = { hydroelectric_energy_production_var = 2.488 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Bahia
+	887 = {
+		set_variable = { hydroelectric_energy_production_var = 3.091 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Rio Grande de Sul
+	879 = {
+		set_variable = { hydroelectric_energy_production_var = 1.040 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Menas Gerais
+	884 = {
+		set_variable = { hydroelectric_energy_production_var = 1.140 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Goias
+	885 = {
+		set_variable = { hydroelectric_energy_production_var = 1.504 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Mato Grosso
+	886 = {
+		set_variable = { hydroelectric_energy_production_var = 1.315 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Santa Catarina
+	953 = {
+		set_variable = { hydroelectric_energy_production_var = 1.047 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Para
+	891 = {
+		set_variable = { hydroelectric_energy_production_var = 8.116 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Rondonia
+	1021 = {
+		set_variable = { hydroelectric_energy_production_var = 2.586 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Brazil - Alagoas
+	1029 = {
+		set_variable = { hydroelectric_energy_production_var = 2.284 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Paraguay - Alto Parana
+	895 = {
+		set_variable = { hydroelectric_energy_production_var = 6.000 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Uruguay - Northern Uruguay
+	893 = {
+		set_variable = { hydroelectric_energy_production_var = 0.606 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Uruguay - Rio de la Plata
+	894 = {
+		set_variable = { hydroelectric_energy_production_var = 0.190 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Argentina - Rio Negro
+	443 = {
+		set_variable = { hydroelectric_energy_production_var = 0.077 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Argentina - San Juan
+	449 = {
+		set_variable = { hydroelectric_energy_production_var = 0.072 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Argentina - Entre Rios
+	448 = {
+		set_variable = { hydroelectric_energy_production_var = 0.559 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Argentina - Cordoba
+	450 = {
+		set_variable = { hydroelectric_energy_production_var = 0.050 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Argentina - Corrientes
+	453 = {
+		set_variable = { hydroelectric_energy_production_var = 0.917 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Argentina - Mendoza
+	454 = {
+		set_variable = { hydroelectric_energy_production_var = 0.791 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Argentina - Neuquen
+	457 = {
+		set_variable = { hydroelectric_energy_production_var = 0.450 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Chile - Central Chile
+	468 = {
+		set_variable = { hydroelectric_energy_production_var = 2.117 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+	### Scandinavia North Europe ################################################################
+
+		#Iceland - Iceland
+	7 = {
+		set_variable = { hydroelectric_energy_production_var = 0.717 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.8442 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Norway - Troms
+	30 = {
+		set_variable = { hydroelectric_energy_production_var = 1.784 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Norway - Nordland
+	31 = {
+		set_variable = { hydroelectric_energy_production_var = 12.500 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Norway - Finmark
+	337 = {
+		set_variable = { hydroelectric_energy_production_var = 1.960 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Sweden - Norrland
+	33 = {
+		set_variable = { hydroelectric_energy_production_var = 1.962 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Sweden - Svealand
+	34 = {
+		set_variable = { hydroelectric_energy_production_var = 4.681 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { hydroelectric_energy_production_var = 0.179 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Sweden - Vastra Gotaland
+	35 = {
+		set_variable = { hydroelectric_energy_production_var = 0.354 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Sweden - Vasterbotten
+	439 = {
+		set_variable = { hydroelectric_energy_production_var = 1.041 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Sweden - Jamtland
+	550 = {
+		set_variable = { hydroelectric_energy_production_var = 0.422 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Sweden - Dalarna
+	881 = {
+		set_variable = { hydroelectric_energy_production_var = 0.929 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Finland - Savo-Karjala
+	103 = {
+		set_variable = { hydroelectric_energy_production_var = 1.666 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+	#United Kingdom UK
+		#UK - Shetland
+	9 = {
+		set_variable = { hydroelectric_energy_production_var = 1.459 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -483,9 +1020,9 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#France - Champagne-Ardenne
-	305 = {
-		set_variable = { hydroelectric_energy_production_var = 0.800 } #bit sus as it might be storage
+		#UK - Highlands
+	437 = {
+		set_variable = { hydroelectric_energy_production_var = 0.730 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -507,17 +1044,25 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#France - Auvergne
-	962 = {
-		set_variable = { hydroelectric_energy_production_var = 0.928 }
+		#France - Provence
+	63 = {
+		set_variable = { hydroelectric_energy_production_var = 0.536 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#France - Provence
-	63 = {
-		set_variable = { hydroelectric_energy_production_var = 0.536 }
+		#France - Champagne-Ardenne
+	305 = {
+		set_variable = { hydroelectric_energy_production_var = 0.800 } #bit sus as it might be storage
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#France - Savoy
+	857 = {
+		set_variable = { hydroelectric_energy_production_var = 1.163 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -539,9 +1084,9 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#France - Savoy
-	857 = {
-		set_variable = { hydroelectric_energy_production_var = 1.163 }
+		#France - Auvergne
+	962 = {
+		set_variable = { hydroelectric_energy_production_var = 0.928 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -555,9 +1100,71 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Austria - Tirol
-	286 = {
-		set_variable = { hydroelectric_energy_production_var = 4.754 } #Might include storage
+	#Monaco -
+
+		#Italy - Piemonte
+	77 = {
+		set_variable = { hydroelectric_energy_production_var = 3.205 }
+		set_variable = { hydroelectric_energy_storage_var = 200 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Veneto
+	78 = {
+		set_variable = { hydroelectric_energy_production_var = 1.077 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy -Toscana
+	79 = {
+		set_variable = { hydroelectric_energy_production_var = 0.297 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.800 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Italy - Lombardia
+	80 = { #Italy - Lombardiid number of the state, in this case lombardy state in northern italy
+		set_variable = { hydroelectric_energy_production_var = 5.636 } #average power output in gw of all hydropower infrastructure in the state (you can convert it from annual twh if you have that data)
+		set_variable = { hydroelectric_energy_storage_var = 300 } #this is the storage capacity of the dam in gwh				   #divide the number of annual twh produced by 8.760 to obtain the average power in gw
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Campaignia
+	82 = {
+		set_variable = { hydroelectric_energy_production_var = 1.411 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Sicilia
+	83 = {
+		set_variable = { hydroelectric_energy_production_var = 0.729 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Sardinia
+	84 = {
+		set_variable = { hydroelectric_energy_production_var = 0.437 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Lazio
+	81 = {
+		set_variable = { hydroelectric_energy_production_var = 0.397 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -571,6 +1178,54 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
+		#Italy - Emilia-Romagna
+	265 = {
+		set_variable = { hydroelectric_energy_production_var = 0.609 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Tentino-South Tyrol
+	285 = {
+		set_variable = { hydroelectric_energy_production_var = 3.009 }
+		set_variable = { hydroelectric_energy_storage_var = 200 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Calabria
+	956 = {
+		set_variable = { hydroelectric_energy_production_var = 0.844 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Marche
+	960 = {
+		set_variable = { hydroelectric_energy_production_var = 1.725 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Aosta Valley
+	1059 = {
+		set_variable = { hydroelectric_energy_production_var = 0.832 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Italy - Fruili-Venezia Guilia
+	1061 = {
+		set_variable = { hydroelectric_energy_production_var = 0.458 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
 		#Austria - Niederosterreich
 	76 = {
 		set_variable = { hydroelectric_energy_production_var = 3.139 } #Might include storage
@@ -579,25 +1234,21 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Netherlands - Oost-Nederland
-	48 = {
-		set_variable = { hydroelectric_energy_production_var = 0.0141 }
+		#Austria - Tirol
+	286 = {
+		set_variable = { hydroelectric_energy_production_var = 4.754 } #Might include storage
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Netherlands - Holland
-	46 = {
-		set_variable = { hydroelectric_energy_production_var = 0.0118 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Netherlands - Zuid-Nederland
-	47 = {
-		set_variable = { hydroelectric_energy_production_var = 0.011 }
+
+
+	#Luxembourg -
+
+		#Belguim - Vlaanderen
+	50 = {
+		set_variable = { hydroelectric_energy_production_var = 0.006 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -619,9 +1270,249 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Belguim - Vlaanderen
-	50 = {
-		set_variable = { hydroelectric_energy_production_var = 0.006 }
+		#Netherlands - Holland
+	46 = {
+		set_variable = { hydroelectric_energy_production_var = 0.0118 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Netherlands - Zuid-Nederland
+	47 = {
+		set_variable = { hydroelectric_energy_production_var = 0.011 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Netherlands - Oost-Nederland
+	48 = {
+		set_variable = { hydroelectric_energy_production_var = 0.0141 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+	# Spain - Madrid
+	91 = {
+		set_variable = { hydroelectric_energy_production_var = 0.289 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Spain - Catalonia
+	86 = {
+		set_variable = { hydroelectric_energy_production_var = 0.232 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Spain - Aragon
+	87 = {
+		set_variable = { hydroelectric_energy_production_var = 0.188 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	91 = {
+		set_variable = { hydroelectric_energy_production_var = 0.289 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Spain - Andalusia
+	93 = {
+		set_variable = { hydroelectric_energy_production_var = 0.272 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Spain - Extremadura
+	968 = {
+		set_variable = { hydroelectric_energy_production_var = 0.365 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Spain - Castilla La Mancha
+	970 = {
+		set_variable = { hydroelectric_energy_production_var = 0.321 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Spain - Leon
+	971 = {
+		set_variable = { hydroelectric_energy_production_var = 0.415 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Portugal - Centro
+	97 = {
+		set_variable = { hydroelectric_energy_production_var = 0.115 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Portugal - The Azores
+	99 = {
+		set_variable = { geothermal_energy_production_var = 0.2415 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+	# Portugal - Norte
+	1055 = {
+		set_variable = { hydroelectric_energy_production_var = 0.178 }
+		set_variable = { hydroelectric_energy_storage_var = 320 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+	# Lithuania - Klaipedia
+	1043 = {
+		set_variable = { geothermal_energy_production_var = 0.035 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+
+
+	### East Europe ################################################################
+
+	# Poland - Pomorze
+	113 = {
+		set_variable = { hydroelectric_energy_production_var = 0.716 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Mazowsze
+	114 = {
+		set_variable = { hydroelectric_energy_production_var = 0.162 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Zachodnie Pomorze
+	474 = {
+		set_variable = { hydroelectric_energy_production_var = 0.150 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Poland - Malopolska
+	1098 = {
+		set_variable = { hydroelectric_energy_production_var = 0.700 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Czech Republic - Bohemia
+	117 = {
+		set_variable = { hydroelectric_energy_production_var = 0.584 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Czech Republic - Sumava
+	1017 = {
+		set_variable = { hydroelectric_energy_production_var = 0.123 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Ukraine - Kharkiv
+	696 = {
+		set_variable = { hydroelectric_energy_production_var = 0.335 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Ukraine - Zaporizhzhya
+	694 = {
+		set_variable = { hydroelectric_energy_production_var = 0.372 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Ukraine - Kyiv
+	698 = {
+		set_variable = { hydroelectric_energy_production_var = 0.162 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Ukraine - Kherson
+	1085 = {
+		set_variable = { hydroelectric_energy_production_var = 0.088 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Ukraine = Mykolayaiv
+	1086 = {
+		set_variable = { hydroelectric_energy_production_var = 0.078 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Ukraine - Dnipropetrovsk
+	1087 = {
+		set_variable = { hydroelectric_energy_production_var = 0.091 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Ukraine - Cherkasy
+	1091 = {
+		set_variable = { hydroelectric_energy_production_var = 0.267 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Romania - Western Banat
+	998 = {
+		set_variable = { hydroelectric_energy_production_var = 1.694 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Moldova
+
+
+	### Balkans ################################################################
+
+		#Slovenia - Carniola
+	124 = {
+		set_variable = { hydroelectric_energy_production_var = 0.111 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -635,9 +1526,41 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Slovenia - Carniola
-	124 = {
-		set_variable = { hydroelectric_energy_production_var = 0.111 }
+	# Croatia - Slovonia
+	126 = {
+		set_variable = { hydroelectric_energy_production_var = 0.736 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Bosnia - Bosnia
+	128 = {
+		set_variable = { hydroelectric_energy_production_var = 0.639 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Bosnia - East Srpska
+	129 = {
+		set_variable = { hydroelectric_energy_production_var = 0.667 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Bosnia - Brcko
+	1053 = {
+		set_variable = { hydroelectric_energy_production_var = 0.120 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Bosnia - West Srpska
+	1054 = {
+		set_variable = { hydroelectric_energy_production_var = 0.309 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -691,14 +1614,6 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Macedonia - Eastern Macedonia
-	136 = {
-		set_variable = { hydroelectric_energy_production_var = 0.116 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
 		#Macedonia - Western Macedonia
 	135 = {
 		set_variable = { hydroelectric_energy_production_var = 0.383 }
@@ -707,709 +1622,24 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#USA - Washington
-	809 = {
-		set_variable = { hydroelectric_energy_production_var = 11.590 }
+		#Macedonia - Eastern Macedonia
+	136 = {
+		set_variable = { hydroelectric_energy_production_var = 0.116 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#USA - Virginia
-	773 = {
-		set_variable = { hydroelectric_energy_production_var = 3.693 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#USA - New York
-	769 = {
-		set_variable = { hydroelectric_energy_production_var = 3.290 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#USA - Oregon
-	810 = {
-		set_variable = { hydroelectric_energy_production_var = 3.056 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#USA - Michigan
-	777 = {
-		set_variable = { hydroelectric_energy_production_var = 2.671 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#USA - Nevada
-	807 = {
-		set_variable = { hydroelectric_energy_production_var = 2.558 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-		set_variable = { geothermal_energy_production_var = 2.327 }
-		add_dynamic_modifier = {
-			modifier = geothermal_infrastructure_in_state
-		}
-	}
-		#USA - Tennessee
-	793 = {
-		set_variable = { hydroelectric_energy_production_var = 1.987 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#USA - California
-	811 = {
-		set_variable = { hydroelectric_energy_production_var = 1.845 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-		set_variable = { geothermal_energy_production_var = 3.985 }
-		add_dynamic_modifier = {
-			modifier = geothermal_infrastructure_in_state
-		}
-	}
-	# USA - Hawaii
-	811 = {
-		set_variable = { geothermal_energy_production_var = 0.342 }
-		add_dynamic_modifier = {
-			modifier = geothermal_infrastructure_in_state
-		}
-	}
-	# Mexico - Chiapas
-	839 = {
-		set_variable = { hydroelectric_energy_production_var = 1.188 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Mexico - Jalisco
-	836 = {
-		set_variable = { hydroelectric_energy_production_var = 0.712 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Mexico - Sinaloa
-	831 = {
-		set_variable = { hydroelectric_energy_production_var = 0.263 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Mexico - Guerrero
-	837 = {
-		set_variable = { hydroelectric_energy_production_var = 0.614 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Mexico - Mexico
-	835 = {
-		set_variable = { hydroelectric_energy_production_var = 0.225 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Mexico - Sonara
-	829 = {
-		set_variable = { hydroelectric_energy_production_var = 0.133 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-		set_variable = { geothermal_energy_production_var = 0.734 }
-		add_dynamic_modifier = {
-			modifier = geothermal_infrastructure_in_state
-		}
-	}
-	# Mexico - Veracrus
-	838 = {
-		set_variable = { hydroelectric_energy_production_var = 0.131 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Canada - Quebec
-	762 = {
-		set_variable = { hydroelectric_energy_production_var = 15.987 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Canada - British Columbia
-	754 = {
-		set_variable = { hydroelectric_energy_production_var = 12.049 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Canada - Newfoundland
-	759 = {
-		set_variable = { hydroelectric_energy_production_var = 8.540 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Canada - Ontario
-	763 = {
-		set_variable = { hydroelectric_energy_production_var = 4.407 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Canada - Manitoba
-	757 = {
-		set_variable = { hydroelectric_energy_production_var = 4.005 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Canada - Ungava
-	1160 = {
-		set_variable = { hydroelectric_energy_production_var = 15.987 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	#Brazil - Parana
-	880 = {
-		set_variable = { hydroelectric_energy_production_var = 10.115 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Para
-	891 = {
-		set_variable = { hydroelectric_energy_production_var = 8.116 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Bahia
-	887 = {
-		set_variable = { hydroelectric_energy_production_var = 3.091 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Rondonia
-	1021 = {
-		set_variable = { hydroelectric_energy_production_var = 2.586 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Sao Paulo
-	882 = {
-		set_variable = { hydroelectric_energy_production_var = 2.488 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Alagoas
-	1029 = {
-		set_variable = { hydroelectric_energy_production_var = 2.284 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Goias
-	885 = {
-		set_variable = { hydroelectric_energy_production_var = 1.504 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Mato Grosso
-	886 = {
-		set_variable = { hydroelectric_energy_production_var = 1.315 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Santa Catarina
-	953 = {
-		set_variable = { hydroelectric_energy_production_var = 1.047 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Menas Gerais
-	884 = {
-		set_variable = { hydroelectric_energy_production_var = 1.140 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Brazil - Rio Grande de Sul
-	879 = {
-		set_variable = { hydroelectric_energy_production_var = 1.040 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#China - Guangdong
-	534 = {
-		set_variable = { hydroelectric_energy_production_var = 1.230 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#China - Henan
-	567 = {
-		set_variable = { hydroelectric_energy_production_var = 1.146 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#China - Hubei
-	570 = {
-		set_variable = { hydroelectric_energy_production_var = 15.809 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#China - Jillin
-	554 = {
-		set_variable = { hydroelectric_energy_production_var = 1.566 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#China - Yunnan
-	578 = {
-		set_variable = { hydroelectric_energy_production_var = 4.717 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#China - Zhejiang
-	538 = {
-		set_variable = { hydroelectric_energy_production_var = 0.923 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Amur
-	1069 = {
-		set_variable = { hydroelectric_energy_production_var = 1.848 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Dagestan
-	671 = {
-		set_variable = { hydroelectric_energy_production_var = 0.966 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Khakassia
-	1065 = {
-		set_variable = { hydroelectric_energy_production_var = 3.719 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Krasnoyarsk
-	682 = {
-		set_variable = { hydroelectric_energy_production_var = 5.555 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Murmansk
-	643 = {
-		set_variable = { hydroelectric_energy_production_var = 0.775 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Perm
-	658 = {
-		set_variable = { hydroelectric_energy_production_var = 0.868 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Samara
-	663 = {
-		set_variable = { hydroelectric_energy_production_var = 1.281 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Volgograd
-	665 = {
-		set_variable = { hydroelectric_energy_production_var = 2.993 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Russia - Tartarstan
-	661 = {
-		set_variable = { hydroelectric_energy_production_var = 0.776 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	#Russia - Saratov
-	1130 = {
-		set_variable = { hydroelectric_energy_production_var = 1.281 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	#Russia - Ulyanovsk
-	1131 = {
-		set_variable = { hydroelectric_energy_production_var = 1.281 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	#Norway - Troms
-	30 = {
-		set_variable = { hydroelectric_energy_production_var = 1.784 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	#Norway - Finmark
-	337 = {
-		set_variable = { hydroelectric_energy_production_var = 1.960 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Norway - Nordland
-	31 = {
-		set_variable = { hydroelectric_energy_production_var = 12.500 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Japan - Gifu
-	613 = {
-		set_variable = { hydroelectric_energy_production_var = 3.350 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Japan - Gumma
-	615 = {
-		set_variable = { hydroelectric_energy_production_var = 3.071 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Japan - Aichi
-	609 = {
-		set_variable = { hydroelectric_energy_production_var = 2.938 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-		set_variable = { geothermal_energy_production_var = 0.112 }
-		add_dynamic_modifier = {
-			modifier = geothermal_infrastructure_in_state
-		}
-	}
-		#Japan - Fukushima
-	616 = {
-		set_variable = { hydroelectric_energy_production_var = 2.100 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Japan - Hiroshima
-	611 = {
-		set_variable = { hydroelectric_energy_production_var = 0.857 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Japan - Fukui
-	612 = {
-		set_variable = { hydroelectric_energy_production_var = 0.304 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Japan - Hokkaido
-	617 = {
-		set_variable = { hydroelectric_energy_production_var = 0.277 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Sweden - Norrbotten
-	34 = {
-		set_variable = { hydroelectric_energy_production_var = 4.681 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Sweden - Vasternorrland
-	33 = {
-		set_variable = { hydroelectric_energy_production_var = 1.962 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Sweden - Vasterbotten
-	439 = {
-		set_variable = { hydroelectric_energy_production_var = 1.041 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Sweden - Vastra Gotaland
-	35 = {
-		set_variable = { hydroelectric_energy_production_var = 0.354 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Sweden - Dalarna
-	881 = {
-		set_variable = { hydroelectric_energy_production_var = 0.929 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Sweden - Jamtland
-	550 = {
-		set_variable = { hydroelectric_energy_production_var = 0.422 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Sweden - Uppsala
-	34 = {
-		set_variable = { hydroelectric_energy_production_var = 0.179 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Uttar Pradesh
-	445 = {
-		set_variable = { hydroelectric_energy_production_var = 1.826 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Himachal Pradesh
-	428 = {
-		set_variable = { hydroelectric_energy_production_var = 1.753 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Tamil Nadu
-	462 = {
-		set_variable = { hydroelectric_energy_production_var = 1.279 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Madhya Pradesh
-	438 = {
-		set_variable = { hydroelectric_energy_production_var = 1.255 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Jammu and Kashmir
-	327 = {
-		set_variable = { hydroelectric_energy_production_var = 1.255 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Andhra Pradesh
-	460 = {
-		set_variable = { hydroelectric_energy_production_var = 1.255 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Karnataka
-	467 = {
-		set_variable = { hydroelectric_energy_production_var = 1.047 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#India - Uttarakhand
-	1063 = {
-		set_variable = { hydroelectric_energy_production_var = 1.026 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Venezuela - Bolivar
-	876 = {
-		set_variable = { hydroelectric_energy_production_var = 7.100 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Venezuela - Merida
-	916 = {
-		set_variable = { hydroelectric_energy_production_var = 0.245 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Venezuela - Barinas
-	915 = {
-		set_variable = { hydroelectric_energy_production_var = 0.056 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Paraguay - Alto Parana
-	895 = {
-		set_variable = { hydroelectric_energy_production_var = 6.000 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Colombia - Antioquia
-	912 = {
-		set_variable = { hydroelectric_energy_production_var = 1.432 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Colombia - Cundinamarca
-	911 = {
-		set_variable = { hydroelectric_energy_production_var = 0.694 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Colombia - Boyaca
-	870 = {
-		set_variable = { hydroelectric_energy_production_var = 0.578 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Colombia - Caldas
-	871 = {
-		set_variable = { hydroelectric_energy_production_var = 0.334 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Colombia - Huila
-	874 = {
-		set_variable = { hydroelectric_energy_production_var = 0.311 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Colombia - Cordoba
-	913 = {
-		set_variable = { hydroelectric_energy_production_var = 0.0918 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Turkey - Sanliurfa
-	934 = {
-		set_variable = { hydroelectric_energy_production_var = 0.902 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
+
+
+	### Southeastern Europe ################################################################
+
+	#Malta -
+
+	#Bulgaria -
+
+	#Greece -
+
 		#Turkey - Diyarbakir
 	155 = {
 		set_variable = { hydroelectric_energy_production_var = 0.714 }
@@ -1434,9 +1664,9 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Turkey - Kahramanmaras
-	161 = {
-		set_variable = { hydroelectric_energy_production_var = 0.376 }
+		#Turkey - Antalya
+	157 = {
+		set_variable = { hydroelectric_energy_production_var = 0.209 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -1450,9 +1680,9 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Turkey - Antalya
-	157 = {
-		set_variable = { hydroelectric_energy_production_var = 0.209 }
+		#Turkey - Kahramanmaras
+	161 = {
+		set_variable = { hydroelectric_energy_production_var = 0.376 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -1466,231 +1696,20 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Argentina - Corrientes
-	453 = {
-		set_variable = { hydroelectric_energy_production_var = 0.917 }
+		#Turkey - Sanliurfa
+	934 = {
+		set_variable = { hydroelectric_energy_production_var = 0.902 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Argentina - Mendoza
-	454 = {
-		set_variable = { hydroelectric_energy_production_var = 0.791 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Argentina - Entre Rios
-	448 = {
-		set_variable = { hydroelectric_energy_production_var = 0.559 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Argentina - Neuquen
-	457 = {
-		set_variable = { hydroelectric_energy_production_var = 0.450 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Argentina - Rio Negro
-	443 = {
-		set_variable = { hydroelectric_energy_production_var = 0.077 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Argentina - San Juan
-	449 = {
-		set_variable = { hydroelectric_energy_production_var = 0.072 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Argentina - Cordoba
-	450 = {
-		set_variable = { hydroelectric_energy_production_var = 0.050 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#New Zealand - South Island
-	750 = {
-		set_variable = { hydroelectric_energy_production_var = 1.327 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#New Zealand - North Island
-	751 = {
-		set_variable = { hydroelectric_energy_production_var = 1.488 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Chile - Central Chile
-	468 = {
-		set_variable = { hydroelectric_energy_production_var = 2.117 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Pakistan - Azad Kashmir
-	420 = {
-		set_variable = { hydroelectric_energy_production_var = 0.305 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Pakistan - Frontier Province
-	418 = {
-		set_variable = { hydroelectric_energy_production_var = 1.644 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Pakistan - Punjab
-	563 = {
-		set_variable = { hydroelectric_energy_production_var = 0.056 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Australia - New South Wales
-	742 = {
-		set_variable = { hydroelectric_energy_production_var = 1.132 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Australia - Queensland
-	741 = {
-		set_variable = { hydroelectric_energy_production_var = 0.223 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Australia - Tasmania
-	744 = {
-		set_variable = { hydroelectric_energy_production_var = 0.378 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Australia - Victoria
-	743 = {
-		set_variable = { hydroelectric_energy_production_var = 0.184 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Australia - Western Australia
-	746 = {
-		set_variable = { hydroelectric_energy_production_var = 0.148 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Peru - Coastal Peru
-	904 = {
-		set_variable = { hydroelectric_energy_production_var = 1.104 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Peru - Coastal Peru
-	904 = {
-		set_variable = { hydroelectric_energy_production_var = 1.104 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Peru - Northern Peru
-	903 = {
-		set_variable = { hydroelectric_energy_production_var = 0.432 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Romania - Western Banat
-	998 = {
-		set_variable = { hydroelectric_energy_production_var = 1.694 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Finland - Savo-Karjala
-	103 = {
-		set_variable = { hydroelectric_energy_production_var = 1.666 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Vietnam - Red River Delta
-	522 = {
-		set_variable = { hydroelectric_energy_production_var = 1.135 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Vietnam - Mekong Delta
-	518 = {
-		set_variable = { hydroelectric_energy_production_var = 0.546 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Tajikistan - Tajik Bactria
-	724 = {
-		set_variable = { hydroelectric_energy_production_var = 1.045 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Takijistan - Gorno
-	722 = {
-		set_variable = { hydroelectric_energy_production_var = 0.515 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Tajikistan - Sungd
-	723 = {
-		set_variable = { hydroelectric_energy_production_var = 0.008 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Egypt - Suez
+	#Cyprus -
+
+
+
+
+	#Egypt - Suez
 	214 = {
 		set_variable = { hydroelectric_energy_production_var = 1.059 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1698,7 +1717,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Egypt - Cairo
+	#Egypt - Cairo
 	215 = {
 		set_variable = { hydroelectric_energy_production_var = 0.493 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -1706,270 +1725,34 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Kyrgyzstan - Tian Shan
-	720 = {
-		set_variable = { hydroelectric_energy_production_var = 1.403 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
+
+
+	### Horn of Africa ################################################################
+
+	#Eritrea -
+
+	#Etophia – Eastern Oromia
+	234 = {
+		set_variable = { geothermal_energy_production_var = 0.0085 }
 		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
+			modifier = geothermal_infrastructure_in_state
 		}
 	}
-		#Kyrgyzstan - Pamir
-	721 = {
-		set_variable = { hydroelectric_energy_production_var = 0.263 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
+	#Djibouti -
+
+	#Somalia -
+
+	# Kenya - Rift Valley
+	244 = {
+		set_variable = { geothermal_energy_production_var = 0.215 }
 		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
+			modifier = geothermal_infrastructure_in_state
 		}
 	}
-		#Portugal - Centro
-	97 = {
-		set_variable = { hydroelectric_energy_production_var = 0.386 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Portugal - Lisboa
-	96 = {
-		set_variable = { hydroelectric_energy_production_var = 0.575 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Portugal - Alentejo
-	1056 = {
-		set_variable = { hydroelectric_energy_production_var = 0.327 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ukraine - Cherkasy
-	1091 = {
-		set_variable = { hydroelectric_energy_production_var = 0.267 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ukraine - Kharkiv
-	696 = {
-		set_variable = { hydroelectric_energy_production_var = 0.335 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ukraine - Dnipropetrovsk
-	1087 = {
-		set_variable = { hydroelectric_energy_production_var = 0.091 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ukraine - Kherson
-	1085 = {
-		set_variable = { hydroelectric_energy_production_var = 0.088 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ukraine - Kyiv
-	698 = {
-		set_variable = { hydroelectric_energy_production_var = 0.162 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ukraine = Mykolayaiv
-	1086 = {
-		set_variable = { hydroelectric_energy_production_var = 0.078 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ukraine - Zaporizhzhya
-	694 = {
-		set_variable = { hydroelectric_energy_production_var = 0.372 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#North Korea - Pyongyang
-	602 = {
-		set_variable = { hydroelectric_energy_production_var = 1.167 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Indonesia - Eastern Java
-	634 = {
-		set_variable = { hydroelectric_energy_production_var = 0.107 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Indonesia - Western Java
-	631 = {
-		set_variable = { hydroelectric_energy_production_var = 0.199 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Bosnia - West Srpska
-	1054 = {
-		set_variable = { hydroelectric_energy_production_var = 0.309 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Bosnia - Brcko
-	1053 = {
-		set_variable = { hydroelectric_energy_production_var = 0.120 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Bosnia - East Srpska
-	129 = {
-		set_variable = { hydroelectric_energy_production_var = 0.667 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Bosnia - Bosnia
-	128 = {
-		set_variable = { hydroelectric_energy_production_var = 0.639 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Mozambique - Maputo
-	264 = {
-		set_variable = { hydroelectric_energy_production_var = 0.053 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Mozambique - Tete
-	262 = {
-		set_variable = { hydroelectric_energy_production_var = 1.037 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Philippines - Southern Luzon
-	735 = {
-		set_variable = { hydroelectric_energy_production_var = 0.290 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Philippines - Northern Luzon
-	737 = {
-		set_variable = { hydroelectric_energy_production_var = 0.205 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Philippines - Visayas
-	738 = {
-		set_variable = { hydroelectric_energy_production_var = 0.131 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Philippines - Mindanao
-	739 = {
-		set_variable = { hydroelectric_energy_production_var = 0.248 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Zambia - Lusaka
-	329 = {
-		set_variable = { hydroelectric_energy_production_var = 0.308 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Zambia - Western Zambia
-	295 = {
-		set_variable = { hydroelectric_energy_production_var = 0.464 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Ecuador - Coastal Ecuador
-	905 = {
-		set_variable = { hydroelectric_energy_production_var = 0.860 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Kazakhstan - Atyrau
-	718 = {
-		set_variable = { hydroelectric_energy_production_var = 0.266 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Kazakhstan = Povlodar
-	715 = {
-		set_variable = { hydroelectric_energy_production_var = 0.714 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Malaysia - Eastern Malaysia
-	529 = {
-		set_variable = { hydroelectric_energy_production_var = 0.779 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Uruguay - Rio de la Plata
-	894 = {
-		set_variable = { hydroelectric_energy_production_var = 0.190 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Uruguay - Northern Uruguay
-	893 = {
-		set_variable = { hydroelectric_energy_production_var = 0.606 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
+
+
+
+
 	# Ghana - Coastal Ghana
 	346 = {
 		set_variable = { hydroelectric_energy_production_var = 0.558 }
@@ -1986,27 +1769,29 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Croatia - Slovonia
-	126 = {
-		set_variable = { hydroelectric_energy_production_var = 0.736 }
+	#Togo
+
+	#Benin
+
+		#Nigeria - Lagos
+	334 = {
+		set_variable = { hydroelectric_energy_production_var = 0.651 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Iceland - Iceland
-	7 = {
-		set_variable = { hydroelectric_energy_production_var = 0.717 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-		set_variable = { geothermal_energy_production_var = 0.518 }
-		add_dynamic_modifier = {
-			modifier = geothermal_infrastructure_in_state
-		}
-	}
-	# Congo - Katanga
+	#Cameroon
+
+	#Centeral African Republic
+
+	#Equatorial Guinea
+
+	#Gabon
+
+	#Congo
+
+	# Congo  DR- Katanga
 	306 = {
 		set_variable = { hydroelectric_energy_production_var = 0.049 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -2014,7 +1799,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Congo - Kasai
+	# Congo DR - Kasai
 	304 = {
 		set_variable = { hydroelectric_energy_production_var = 0.240 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -2022,7 +1807,7 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Congo - Bandundu
+	# Congo DR - Bandundu
 	303 = {
 		set_variable = { hydroelectric_energy_production_var = 0.390 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
@@ -2030,17 +1815,177 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Thailand - Central Thailand
-	508 = {
-		set_variable = { hydroelectric_energy_production_var = 0.361 }
+	#Uganda
+
+	#Rwanda
+
+	#Burundi
+
+
+
+
+		#Zambia - Lusaka
+	329 = {
+		set_variable = { hydroelectric_energy_production_var = 0.308 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Thailand - Northern Thailand
-	507 = {
-		set_variable = { hydroelectric_energy_production_var = 0.312 }
+		#Zambia - Western Zambia
+	295 = {
+		set_variable = { hydroelectric_energy_production_var = 0.464 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Malawi
+
+		#Mozambique - Tete
+	262 = {
+		set_variable = { hydroelectric_energy_production_var = 1.037 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Mozambique - Maputo
+	264 = {
+		set_variable = { hydroelectric_energy_production_var = 0.053 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Namibia
+
+	#Botswana
+
+	#Zimbabwe
+
+	#South Africa
+
+	#Lesotho
+
+	#Swaziland
+
+	#Madagascar
+
+	#Comoros
+
+	#Seychelles
+
+	#Mauritius
+
+
+
+		#Russia - Murmansk
+	643 = {
+		set_variable = { hydroelectric_energy_production_var = 0.775 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Perm
+	658 = {
+		set_variable = { hydroelectric_energy_production_var = 0.868 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Tartarstan
+	661 = {
+		set_variable = { hydroelectric_energy_production_var = 0.776 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Samara
+	663 = {
+		set_variable = { hydroelectric_energy_production_var = 1.281 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Volgograd
+	665 = {
+		set_variable = { hydroelectric_energy_production_var = 2.993 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Dagestan
+	671 = {
+		set_variable = { hydroelectric_energy_production_var = 0.966 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Krasnoyarsk
+	682 = {
+		set_variable = { hydroelectric_energy_production_var = 5.555 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Khakassia
+	1065 = {
+		set_variable = { hydroelectric_energy_production_var = 3.719 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Amur
+	1069 = {
+		set_variable = { hydroelectric_energy_production_var = 1.848 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Saratov
+	1130 = {
+		set_variable = { hydroelectric_energy_production_var = 1.281 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Russia - Ulyanovsk
+	1131 = {
+		set_variable = { hydroelectric_energy_production_var = 1.281 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		# Russia - Kamchatka
+	1137 = {
+		set_variable = { geothermal_energy_production_var = 0.1178 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Kazakhstan = Povlodar
+	715 = {
+		set_variable = { hydroelectric_energy_production_var = 0.714 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Kazakhstan - Atyrau
+	718 = {
+		set_variable = { hydroelectric_energy_production_var = 0.266 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -2062,144 +2007,601 @@ setup_starting_world_hydropower = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Nigeria - Lagos
-	334 = {
-		set_variable = { hydroelectric_energy_production_var = 0.651 }
+	#Turkmenistan
+
+		#Kyrgyzstan - Tian Shan
+	720 = {
+		set_variable = { hydroelectric_energy_production_var = 1.403 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-		#Costa Rica - Northern Coast Rica
-	851 = {
-		set_variable = { hydroelectric_energy_production_var = 0.644 }
+		#Kyrgyzstan - Pamir
+	721 = {
+		set_variable = { hydroelectric_energy_production_var = 0.263 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Spain - Madrid
-	91 = {
+		#Tajikistan - Gorno
+	722 = {
+		set_variable = { hydroelectric_energy_production_var = 0.515 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Tajikistan - Sungd
+	723 = {
+		set_variable = { hydroelectric_energy_production_var = 0.008 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Tajikistan - Tajik Bactria
+	724 = {
+		set_variable = { hydroelectric_energy_production_var = 1.045 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+
+
+
+		#China - Guangdong
+	534 = {
+		set_variable = { hydroelectric_energy_production_var = 1.230 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#China - Zhejiang
+	538 = {
+		set_variable = { hydroelectric_energy_production_var = 0.923 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#China - Jillin
+	554 = {
+		set_variable = { hydroelectric_energy_production_var = 1.566 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#China - Henan
+	567 = {
+		set_variable = { hydroelectric_energy_production_var = 1.146 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#China - Hubei
+	570 = {
+		set_variable = { hydroelectric_energy_production_var = 15.809 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#China - Yunnan
+	578 = {
+		set_variable = { hydroelectric_energy_production_var = 4.717 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		# China - Xizang
+	589 = {
+		set_variable = { geothermal_energy_production_var = 0.0283 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		# Taiwan - Toucheng
+	600 = {
+		set_variable = { geothermal_energy_production_var = 0.00026 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		# Taiwan – Cingshuei
+	1156 = {
+		set_variable = { geothermal_energy_production_var = 0.0018 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+	#Mongolia
+
+		#North Korea - Pyongyang
+	602 = {
+		set_variable = { hydroelectric_energy_production_var = 1.167 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#South Korea
+
+	#Japan - Kyushu
+	609 = {
+		set_variable = { hydroelectric_energy_production_var = 2.938 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.1933 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Japan - Chugoku
+	611 = {
+		set_variable = { hydroelectric_energy_production_var = 0.857 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.0125 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Japan - Fukui
+	612 = {
+		set_variable = { hydroelectric_energy_production_var = 0.304 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Japan - Chubu
+	613 = {
+		set_variable = { hydroelectric_energy_production_var = 3.350 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.0235 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Japan - Kanto
+	615 = {
+		set_variable = { hydroelectric_energy_production_var = 3.071 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.0052 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Japan - Tohoku
+	616 = {
+		set_variable = { hydroelectric_energy_production_var = 2.100 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.2038 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Japan - Hokkaido
+	617 = {
+		set_variable = { hydroelectric_energy_production_var = 0.277 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.0345 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+
+
+
+	#Pakistan - Frontier Province
+	418 = {
+		set_variable = { hydroelectric_energy_production_var = 1.644 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Pakistan - Azad Kashmir
+	420 = {
+		set_variable = { hydroelectric_energy_production_var = 0.305 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Pakistan - Punjab
+	563 = {
+		set_variable = { hydroelectric_energy_production_var = 0.056 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Jammu and Kashmir
+	327 = {
+		set_variable = { hydroelectric_energy_production_var = 1.255 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Himachal Pradesh
+	428 = {
+		set_variable = { hydroelectric_energy_production_var = 1.753 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Madhya Pradesh
+	438 = {
+		set_variable = { hydroelectric_energy_production_var = 1.255 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Uttar Pradesh
+	445 = {
+		set_variable = { hydroelectric_energy_production_var = 1.826 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Andhra Pradesh
+	460 = {
+		set_variable = { hydroelectric_energy_production_var = 1.255 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Tamil Nadu
+	462 = {
+		set_variable = { hydroelectric_energy_production_var = 1.279 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Karnataka
+	467 = {
+		set_variable = { hydroelectric_energy_production_var = 1.047 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#India - Uttarakhand
+	1063 = {
+		set_variable = { hydroelectric_energy_production_var = 1.026 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Nepal
+
+	#Bhutan
+
+	#Sri Lanka
+
+
+	### South East Asia ################################################################
+
+		#Myanmar - Karen State
+	501 = {
+		set_variable = { hydroelectric_energy_production_var = 0.168 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Laos - Mekong Valey
+	516 = {
+		set_variable = { hydroelectric_energy_production_var = 0.275 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Laos - Southern Laos
+	517 = {
+		set_variable = { hydroelectric_energy_production_var = 0.592 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	#Cambodia
+
+		#Vietnam - Mekong Delta
+	518 = {
+		set_variable = { hydroelectric_energy_production_var = 0.546 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Vietnam - Southern Vietnam
+	519 = {
+		set_variable = { hydroelectric_energy_production_var = 0.643 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Vietnam - Vietnam Highland
+	520 = {
+		set_variable = { hydroelectric_energy_production_var = 0.575 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Vietnam - Red River Delta
+	522 = {
+		set_variable = { hydroelectric_energy_production_var = 2.040 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Thailand - Northern Thailand
+	507 = {
+		set_variable = { hydroelectric_energy_production_var = 0.312 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+	# Thailand - Central Thailand
+	508 = {
+		set_variable = { hydroelectric_energy_production_var = 0.361 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Malaysia - Sarawak
+	525 = {
+		set_variable = { hydroelectric_energy_production_var = 0.108 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Malaysia - West Malaysia
+	528 = {
+		set_variable = { hydroelectric_energy_production_var = 0.598 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Malaysia - Eastern Malaysia
+	529 = {
+		set_variable = { hydroelectric_energy_production_var = 1.000 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Malaysia - Sabah
+	1016 = {
+		set_variable = { hydroelectric_energy_production_var = 0.075 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+
+		#Indonesia - North Sumatera
+	623 = {
+		set_variable = { geothermal_energy_production_var = 0.603 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Indonesia - South Sumatera
+	629 = {
 		set_variable = { hydroelectric_energy_production_var = 0.289 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Spain - LEon
-	971 = {
-		set_variable = { hydroelectric_energy_production_var = 0.415 }
+		#Indonesia - Western Java
+	631 = {
+		set_variable = { hydroelectric_energy_production_var = 1.896 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
-	}
-	# Spain - Andalusia
-	93 = {
-		set_variable = { hydroelectric_energy_production_var = 0.272 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Spain - Aragon
-	87 = {
-		set_variable = { hydroelectric_energy_production_var = 0.188 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Spain - Catalonia
-	86 = {
-		set_variable = { hydroelectric_energy_production_var = 0.232 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Spain - Extremadura
-	968 = {
-		set_variable = { hydroelectric_energy_production_var = 0.365 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Spain - Castilla La Mancha
-	970 = {
-		set_variable = { hydroelectric_energy_production_var = 0.321 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Portugal - Norte
-	1055 = {
-		set_variable = { hydroelectric_energy_production_var = 0.178 }
-		set_variable = { hydroelectric_energy_storage_var = 320 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Portugal - Centro
-	97 = {
-		set_variable = { hydroelectric_energy_production_var = 0.115 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-	# Kenya - Rift Valley
-	244 = {
-		set_variable = { geothermal_energy_production_var = 0.112 }
+		set_variable = { geothermal_energy_production_var = 1.109 }
 		add_dynamic_modifier = {
 			modifier = geothermal_infrastructure_in_state
 		}
 	}
-	# Czech Republic - Bohemia
-	117 = {
-		set_variable = { hydroelectric_energy_production_var = 0.584 }
+		#Indonesia - Eastern Java
+	634 = {
+		set_variable = { hydroelectric_energy_production_var = 0.105 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Czech Republic - Sumava
-	1017 = {
-		set_variable = { hydroelectric_energy_production_var = 0.123 }
+		#Indonesia - Sulawesi
+	639 = {
+		set_variable = { hydroelectric_energy_production_var = 0.431 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Poland - Pomorze
-	113 = {
-		set_variable = { hydroelectric_energy_production_var = 0.716 }
+		#Indonesia – Central Java
+	1114 = {
+		set_variable = { hydroelectric_energy_production_var = 0.181 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.06 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Philippines - Nortern Luzon
+	735 = {
+		set_variable = { hydroelectric_energy_production_var = 1.038 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Poland - Malopolska
-	1098 = {
-		set_variable = { hydroelectric_energy_production_var = 0.700 }
+		#Philippines - South Luzon
+	736 = {
+		set_variable = { geothermal_energy_production_var = 0.736 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Philippines - Visayas
+	737 = {
+		set_variable = { hydroelectric_energy_production_var = 0.205 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.72137 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Philippines - Moro
+	738 = {
+		set_variable = { hydroelectric_energy_production_var = 0.588 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.10848 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#Philippines - Mindanao
+	739 = {
+		set_variable = { hydroelectric_energy_production_var = 0.255 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 0.3562 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+
+
+	### Australia & Oceania ################################################################
+
+		#Papua New Guinea - North papua
+	732 = {
+		set_variable = { hydroelectric_energy_production_var = 0.077 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Poland - Mazowsze
-	114 = {
-		set_variable = { hydroelectric_energy_production_var = 0.162 }
+		#Australia - Queensland
+	741 = {
+		set_variable = { hydroelectric_energy_production_var = 0.658 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
 		}
 	}
-	# Poland - Zachodnie Pomorze
-	474 = {
-		set_variable = { hydroelectric_energy_production_var = 0.150 }
+		#Australia - New South Wales
+	742 = {
+		set_variable = { hydroelectric_energy_production_var = 4.157 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Australia - Victoria
+	743 = {
+		set_variable = { hydroelectric_energy_production_var = 0.300 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Australia - Tasmania
+	744 = {
+		set_variable = { hydroelectric_energy_production_var = 1.865 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Australia - Western Australia
+	746 = {
+		set_variable = { hydroelectric_energy_production_var = 0.148 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#New Zealand - South Island
+	750 = {
+		set_variable = { hydroelectric_energy_production_var = 1.539 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+		set_variable = { geothermal_energy_production_var = 3.148 }
+		add_dynamic_modifier = {
+			modifier = geothermal_infrastructure_in_state
+		}
+	}
+		#New Zealand - North Island
+	751 = {
+		set_variable = { hydroelectric_energy_production_var = 3.072 }
+		set_variable = { hydroelectric_energy_storage_var = 0 }
+		add_dynamic_modifier = {
+			modifier = hydroelectric_infrastructure_in_state
+		}
+	}
+		#Fiji - Fiji
+	535 = {
+		set_variable = { hydroelectric_energy_production_var = 0.080 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
@@ -2308,27 +2710,9 @@ build_enrichment_facilities_effect = {
 
 	if = { limit = { NOT = { is_in_array = { global.enrichment_countries = THIS.id } } }
 		add_to_array = { global.enrichment_countries = THIS.id }
-		if = { limit = { check_variable = { var_LEU_selected = 2 } }
-			set_variable = { var_LEU_selected = 1 }
-		}
-		else = {
-			set_variable = { var_LEU_selected = 2 }
-			set_variable = { var_HEU_selected = 1 }
-		}
-		set_enrichment_efficiency_LEU = yes
-		update_nuclear_production = yes
-		var:nukes_selected_TAG = { set_variable = { var_selected_TAG_LEU_selected = THIS.var_LEU_selected } }
-		update_nuclear_production = yes
-
-		# Set Nuclear Energy Card just in case
-		if = { limit = { NOT = { is_in_array = { nuclear_status_array = 4 } } }
-			add_to_array = { nuclear_status_array = nuclear_status_display_array^i }
-			set_nuclear_status_special_effect = yes
-			clr_country_flag = open_MD_nuclear_doctrine_window
-			clear_array = nuclear_status_display_array
-			set_nuke_arrays_selected_TAG = yes
-			update_nuclear_deterrence = yes
-			missile_ui_update = yes
+		if = {
+			limit = { NOT = { has_country_flag = enabled_nuclear_reactor_fuel_production } }
+			set_country_flag = enabled_nuclear_reactor_fuel_production
 		}
 	}
 }

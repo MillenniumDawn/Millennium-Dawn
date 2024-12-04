@@ -1879,21 +1879,69 @@ find_two_highest_parties = {
 	set_variable = { party_pop_elect_array^max_index_1 = max_1_tmp }
 }
 
+# function: update_party_name
+# Purpose: Updates the political ideology
 update_party_name = {
-	if = {
-		limit = {
-			check_variable = { ruling_party^num > 0 }
-		}
-		meta_effect = {
-			text = {
-				set_party_name = {
-					ideology = [OUTLOOK]
-					name = [SUBIDEOLOGY_NAME]
-					long_name = [SUBIDEOLOGY_NAME]
+	if = { limit = { check_variable = { ruling_party^num > 0 } }
+		if = { limit = { has_government = democratic }
+			meta_effect = {
+				text = {
+					set_party_name = {
+						ideology = democratic
+						name = "[SUBIDEOLOGY_NAME]"
+						long_name = "[SUBIDEOLOGY_NAME]"
+					}
 				}
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
 			}
-			OUTLOOK = "[meta_ideology_names]"
-			SUBIDEOLOGY_NAME = "[show_ruling_party]"
+		}
+		else_if = { limit = { has_government = communism }
+			meta_effect = {
+				text = {
+					set_party_name = {
+						ideology = communism
+						name = "[SUBIDEOLOGY_NAME]"
+						long_name = "[SUBIDEOLOGY_NAME]"
+					}
+				}
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
+		else_if = { limit = { has_government = fascism }
+			meta_effect = {
+				text = {
+					set_party_name = {
+						ideology = fascism
+						name = "[SUBIDEOLOGY_NAME]"
+						long_name = "[SUBIDEOLOGY_NAME]"
+					}
+				}
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
+		else_if = { limit = { has_government = neutrality }
+			meta_effect = {
+				text = {
+					set_party_name = {
+						ideology = neutrality
+						name = "[SUBIDEOLOGY_NAME]"
+						long_name = "[SUBIDEOLOGY_NAME]"
+					}
+				}
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
+		}
+		else_if = { limit = { has_government = nationalist }
+			meta_effect = {
+				text = {
+					set_party_name = {
+						ideology = nationalist
+						name = "[SUBIDEOLOGY_NAME]"
+						long_name = "[SUBIDEOLOGY_NAME]"
+					}
+				}
+				SUBIDEOLOGY_NAME = "[show_ruling_party]"
+			}
 		}
 	}
 }
@@ -2062,7 +2110,7 @@ refund_government_coalition = {
 			text = {
 				pol_distance_matrix_[NUM] = yes
 			}
-			NUM = "[?current_id|.0]"
+			NUM = "[?current_id|0]"
 		}
 		set_temp_variable = { pol_dist_temp = pol_distance_current }
 		multiply_temp_variable = { sum = pol_distance_current }
@@ -2071,22 +2119,18 @@ refund_government_coalition = {
 	set_variable = { pp_cost_to_invite = sum_factor }
 	multiply_variable = { pp_cost_to_invite = 1500 } #75%
 	add_political_power = pp_cost_to_invite
-	log = "[GetDateText]: [THIS.GetName]: DEBUG CODE 69420: PP Refund: [?pp_cost_to_invite], Pop of Current Element: [?sum], Current ID: [?current_id], Pol Distance Current: [?pol_distance_current], Sum Factor: [?sum_factor]"
 }
 
 store_election_values = {
-
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = v
 		if = {
 			limit = {
-				#true if no specific value has already been set
 				check_variable = { party_pop_elect_array^v = -1 }
 			}
 			if = {
 				limit = {
-					#normal popularity entry is over threshold
 					check_variable = { party_pop_array^v > election_threshold }
 				}
 				set_variable = { party_pop_elect_array^v = party_pop_array^v }
@@ -6190,7 +6234,7 @@ party_2_pol_distance_23 = {
 ##Western_Autocracy
 pol_distance_matrix_0 = {
 	if = { limit = { is_in_array = { ruling_party = 1 } } #conservatism
-			set_variable = { pol_distance_current = 0.2 }
+		set_variable = { pol_distance_current = 0.2 }
 	}
 	else_if = { limit = { is_in_array = { ruling_party = 2 } } #liberalism
 			set_variable = { pol_distance_current = 0.4 }
@@ -7942,29 +7986,43 @@ pol_distance_matrix_23 = {
 # Add Coalition Member
 # set_temp_variable = { add_col_one = 0-23 } -- Required
 add_coalition_members_effect = {
-	custom_effect_tooltip = add_coalition_members_effect_TT
-	add_to_array = { gov_coalition_array = add_col_one }
-	hidden_effect = {
-		update_government_coalition_strength = yes
-		set_coalition_drift = yes
+	if = {
+		limit = {
+			NOT = { is_in_array = { gov_coalition_array = add_col_one } }
+		}
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
+		hidden_effect = {
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+		}
 	}
 }
 
-# Remove Coalition Member
-# set_temp_variable = { add_col_one = 0-23 }
+# Function: Remove Coalition Member
+# Parameters: set_temp_variable = { remove_col_one = 0-23 }
 remove_coalition_members_effect = {
-	custom_effect_tooltip = remove_coalition_members_effect_TT
-	remove_from_array = { gov_coalition_array = remove_col_one }
-	update_government_coalition_strength = yes
-	set_coalition_drift = yes
+	if = {
+		limit = {
+			is_in_array = { gov_coalition_array = remove_col_one }
+		}
+		custom_effect_tooltip = remove_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = remove_col_one }
+		hidden_effect = {
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+		}
+	}
 }
 
-# Change Party Command
+# Function: Change Party Command
+# Parameters:
 # set_temp_variable = { rul_party_temp = 0-23 }
 # set_temp_variable = { col_one = 0 - 23 }  -- Optional
 # set_temp_variable = { col_two = 0 - 23 }  -- Optional
 # set_temp_variable = { col_three = 0 - 23 }  -- Optional
 # set_temp_variable = { change_leader_temp = 0-1 } -- Optional
+# set_temp_variable = { enable_elections = 0-1 } -- Optional
 change_ruling_party_effect = {
 	# Do Not Retire Section
 	if = { limit = { check_variable = { change_leader_temp = 1 } }
@@ -7997,6 +8055,112 @@ change_ruling_party_effect = {
 		add_to_array = { gov_coalition_array = add_col_one }
 	}
 
+	# Enable Elections of 0 means that they have elections
+	if = { limit = { check_variable = { enable_elections = 0 } }
+		if = {
+			limit = {
+				check_variable = { rul_party_temp > 0 }
+				check_variable = { rul_party_temp < 4 }
+			}
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 3 }
+				check_variable = { rul_party_temp < 11 }
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 10 }
+				check_variable = { rul_party_temp < 12 }
+			}
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 11 }
+				check_variable = { rul_party_temp < 20 }
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 19 }
+				check_variable = { rul_party_temp < 24 }
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = yes
+			}
+		}
+	}
+	else = {
+		if = {
+			limit = {
+				check_variable = { rul_party_temp > -1 }
+				check_variable = { rul_party_temp < 4 }
+			}
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 3 }
+				check_variable = { rul_party_temp < 11 }
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 10 }
+				check_variable = { rul_party_temp < 12 }
+			}
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 11 }
+				check_variable = { rul_party_temp < 20 }
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp > 19 }
+				check_variable = { rul_party_temp < 24 }
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+		}
+	}
+
 	hidden_effect = {
 		update_government_coalition_strength = yes
 		update_party_name = yes
@@ -8009,7 +8173,7 @@ change_ruling_party_effect = {
 	}
 }
 
-# update_dirty_subideology
+# Function: update_dirty_subideology
 # Purpose: updates the subideology dirty variable to ensure the UI is up-to-date
 update_dirty_subideology = {
 	if = { limit = { check_variable = { global.subideologies_view_main < 100000 } }
@@ -8358,4 +8522,821 @@ set_partyall_allowed = {
 	}
 	clr_country_flag = free_ban_parties
 	custom_effect_tooltip = set_partyall_allowed_tt
+}
+
+set_election_year_60_months = {
+	set_country_flag = no_leader_change
+	set_temp_variable = { election_year = global.year }
+	subtract_from_temp_variable = { election_year = year_change }
+	if = { limit = { has_government = democratic }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = election_year
+			MONTH = global.month
+		}
+	}
+	if = { limit = { has_government = neutrality }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = election_year
+			MONTH = global.month
+		}
+	}
+	if = { limit = { has_government = fascism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = election_year
+			MONTH = global.month
+		}
+	}
+	if = { limit = { has_government = nationalist }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = election_year
+			MONTH = global.month
+		}
+	}
+	if = { limit = { has_government = communism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = election_year
+			MONTH = global.month
+		}
+	}
+	clr_country_flag = no_leader_change
+}
+
+set_elections_72_months = {
+	set_country_flag = no_leader_change
+	if = {
+		limit = { has_government = democratic }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 72
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = nationalist }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 72
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = neutrality }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 72
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = fascism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 72
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = communism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 72
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	clr_country_flag = no_leader_change
+}
+
+set_elections_60_months = {
+	set_country_flag = no_leader_change
+	if = {
+		limit = { has_government = democratic }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = nationalist }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = neutrality }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = fascism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = communism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	clr_country_flag = no_leader_change
+}
+
+set_elections_48_months = {
+	set_country_flag = no_leader_change
+	if = {
+		limit = { has_government = democratic }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = democratic
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 48
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = nationalist }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 48
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = neutrality }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = neutrality
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 48
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = fascism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 48
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	if = {
+		limit = { has_government = communism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 48
+				}
+			}
+			YEAR = "[?global.year]"
+			MONTH = "[?global.month|0]"
+		}
+	}
+	clr_country_flag = no_leader_change
+}
+
+IP_idea_on_startup_configuration = {
+	#Communists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 19 }
+			}
+			NOT = { has_idea = IP_spread_the_revolution }
+		}
+		add_ideas = IP_spread_the_revolution
+	}
+	#Socialists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 3 }	#socialsim
+				is_in_array = { ruling_party = 5 }	#anarchist_communism
+				is_in_array = { ruling_party = 17 }	#Neutral_green
+				is_in_array = { ruling_party = 18 }	#neutral_Social
+			}
+			NOT = { has_idea = IP_welfare_state }
+		}
+		add_ideas = IP_welfare_state
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 3 }	#socialsim
+				is_in_array = { ruling_party = 5 }	#anarchist_communism
+				is_in_array = { ruling_party = 18 }	#neutral_Social
+			}
+		}
+		update_construction_bonus_from_interventionism = yes
+	}
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 17 }	#Neutral_green
+		}
+		update_construction_bonus_from_interventionism_green = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 3 }	#socialsim
+				is_in_array = { ruling_party = 5 }	#anarchist_communism
+				is_in_array = { ruling_party = 17 }	#Neutral_green
+				is_in_array = { ruling_party = 18 }	#neutral_Social
+			}
+			NOT = { has_idea = IP_naive_worldview }
+		}
+		add_ideas = IP_naive_worldview
+	}
+	#Conservatives
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_good_old_days }
+		}
+		add_ideas = IP_good_old_days
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_stable_society }
+		}
+		add_ideas = IP_stable_society
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_patriotism }
+		}
+		add_ideas = IP_patriotism
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+			}
+			NOT = { has_idea = IP_patriotism_religious }
+		}
+		add_ideas = IP_patriotism_religious
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_homefront_first }
+		}
+		add_ideas = IP_homefront_first
+	}
+	#Liberals
+	if = {
+		limit = {
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+			NOT = { has_idea = IP_invisible_hand }
+		}
+		add_ideas = IP_invisible_hand
+	}
+	if = {
+		limit = {
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+			NOT = { has_idea = IP_anti_military }
+		}
+		add_ideas = IP_anti_military
+	}
+	#Autocrats
+	if = {
+		limit = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				is_in_array = { ruling_party = 7 }	#Emerging autocrats
+				is_in_array = { ruling_party = 13 }	#Neutral autocrats
+				is_in_array = { ruling_party = 15 }	#oligarchs
+				is_in_array = { ruling_party = 21 }	#fascists
+				is_in_array = { ruling_party = 22 }	#military junta
+			}
+		}
+		update_pp_bonus_from_corruption = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				is_in_array = { ruling_party = 7 }	#Emerging autocrats
+				is_in_array = { ruling_party = 13 }	#Neutral autocrats
+				is_in_array = { ruling_party = 15 }	#oligarchs
+				is_in_array = { ruling_party = 22 }	#military junta
+			}
+			NOT = { has_idea = IP_emergency_powers }
+		}
+		add_ideas = IP_emergency_powers
+	}
+	if = {
+		limit = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				is_in_array = { ruling_party = 7 }	#Emerging autocrats
+				is_in_array = { ruling_party = 13 }	#Neutral autocrats
+				is_in_array = { ruling_party = 15 }	#oligarchs
+				is_in_array = { ruling_party = 21 }	#fascists
+				is_in_array = { ruling_party = 22 }	#military junta
+			}
+			NOT = { has_idea = IP_yes_men_army }
+		}
+		add_ideas = IP_yes_men_army
+	}
+	#Monarchists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 10 }	#Kingdom
+				is_in_array = { ruling_party = 23 }	#Monarchist
+			}
+			NOT = { has_idea = IP_keep_it_in_the_family }
+		}
+		add_ideas = IP_keep_it_in_the_family
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 10 }	#Kingdom
+				is_in_array = { ruling_party = 23 }	#Monarchist
+			}
+			NOT = { has_idea = IP_for_king_and_queen }
+		}
+		add_ideas = IP_for_king_and_queen
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 10 }	#Kingdom
+				is_in_array = { ruling_party = 23 }	#Monarchist
+			}
+			NOT = { has_idea = IP_outdated_ideals }
+		}
+		add_ideas = IP_outdated_ideals
+	}
+	#Fundamentalists
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+			NOT = { has_idea = IP_religious_law_emerging }
+		}
+		add_ideas = IP_religious_law_emerging
+	}
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 11 }	#Caliphate
+			NOT = { has_idea = IP_religious_law_salafist }
+		}
+		add_ideas = IP_religious_law_salafist
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+				is_in_array = { ruling_party = 11 }	#Caliphate
+			}
+			NOT = { has_idea = IP_nationalist_liberation_movements }
+		}
+		add_ideas = IP_nationalist_liberation_movements
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+				is_in_array = { ruling_party = 11 }	#Caliphate
+			}
+			NOT = { has_idea = IP_international_pariah }
+		}
+		add_ideas = IP_international_pariah
+	}
+}
+
+IP_idea_weekly_configuration = {
+	#Communists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 19 }
+			}
+			NOT = { has_idea = IP_spread_the_revolution }
+		}
+		add_ideas = IP_spread_the_revolution
+	}
+	#Socialists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 3 }	#socialsim
+				is_in_array = { ruling_party = 5 }	#anarchist_communism
+				is_in_array = { ruling_party = 17 }	#Neutral_green
+				is_in_array = { ruling_party = 18 }	#neutral_Social
+			}
+			NOT = { has_idea = IP_welfare_state }
+		}
+		add_ideas = IP_welfare_state
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 3 }	#socialsim
+				is_in_array = { ruling_party = 5 }	#anarchist_communism
+				is_in_array = { ruling_party = 18 }	#neutral_Social
+			}
+		}
+		update_construction_bonus_from_interventionism = yes
+	}
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 17 }	#Neutral_green
+		}
+		update_construction_bonus_from_interventionism_green = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 3 }	#socialsim
+				is_in_array = { ruling_party = 5 }	#anarchist_communism
+				is_in_array = { ruling_party = 17 }	#Neutral_green
+				is_in_array = { ruling_party = 18 }	#neutral_Social
+			}
+			NOT = { has_idea = IP_naive_worldview }
+		}
+		add_ideas = IP_naive_worldview
+	}
+	#Conservatives
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_good_old_days }
+		}
+		add_ideas = IP_good_old_days
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_stable_society }
+		}
+		add_ideas = IP_stable_society
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_patriotism }
+		}
+		add_ideas = IP_patriotism
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+			}
+			NOT = { has_idea = IP_patriotism_religious }
+		}
+		add_ideas = IP_patriotism_religious
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 1 }	#conservative
+				is_in_array = { ruling_party = 6 }	#Conservative
+				is_in_array = { ruling_party = 8 }	#Mod vilayat e faqih
+				is_in_array = { ruling_party = 12 }	#muslim brotherhood
+				is_in_array = { ruling_party = 14 }	#neutral conservative
+				is_in_array = { ruling_party = 20 }	#national populist
+			}
+			NOT = { has_idea = IP_homefront_first }
+		}
+		add_ideas = IP_homefront_first
+	}
+	#Liberals
+	if = {
+		limit = {
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+			NOT = { has_idea = IP_invisible_hand }
+		}
+		add_ideas = IP_invisible_hand
+	}
+	if = {
+		limit = {
+			OR = {
+				has_country_leader_with_trait = western_technocrat
+				is_in_array = { ruling_party = 2 }	#liberalism
+				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
+			}
+			NOT = { has_idea = IP_anti_military }
+		}
+		add_ideas = IP_anti_military
+	}
+	#Autocrats
+	if = {
+		limit = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				is_in_array = { ruling_party = 7 }	#Emerging autocrats
+				is_in_array = { ruling_party = 13 }	#Neutral autocrats
+				is_in_array = { ruling_party = 15 }	#oligarchs
+				is_in_array = { ruling_party = 21 }	#fascists
+				is_in_array = { ruling_party = 22 }	#military junta
+			}
+		}
+		update_pp_bonus_from_corruption = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				is_in_array = { ruling_party = 7 }	#Emerging autocrats
+				is_in_array = { ruling_party = 13 }	#Neutral autocrats
+				is_in_array = { ruling_party = 15 }	#oligarchs
+				is_in_array = { ruling_party = 22 }	#military junta
+			}
+			NOT = { has_idea = IP_emergency_powers }
+		}
+		add_ideas = IP_emergency_powers
+	}
+	if = {
+		limit = {
+			OR = {
+				non_technocrats_western_autocrats_are_in_power = yes
+				is_in_array = { ruling_party = 7 }	#Emerging autocrats
+				is_in_array = { ruling_party = 13 }	#Neutral autocrats
+				is_in_array = { ruling_party = 15 }	#oligarchs
+				is_in_array = { ruling_party = 21 }	#fascists
+				is_in_array = { ruling_party = 22 }	#military junta
+			}
+			NOT = { has_idea = IP_yes_men_army }
+		}
+		add_ideas = IP_yes_men_army
+	}
+	#Monarchists
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 10 }	#Kingdom
+				is_in_array = { ruling_party = 23 }	#Monarchist
+			}
+			NOT = { has_idea = IP_keep_it_in_the_family }
+		}
+		add_ideas = IP_keep_it_in_the_family
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 10 }	#Kingdom
+				is_in_array = { ruling_party = 23 }	#Monarchist
+			}
+			NOT = { has_idea = IP_for_king_and_queen }
+		}
+		add_ideas = IP_for_king_and_queen
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 10 }	#Kingdom
+				is_in_array = { ruling_party = 23 }	#Monarchist
+			}
+			NOT = { has_idea = IP_outdated_ideals }
+		}
+		add_ideas = IP_outdated_ideals
+	}
+	#Fundamentalists
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+			NOT = { has_idea = IP_religious_law_emerging }
+		}
+		add_ideas = IP_religious_law_emerging
+	}
+	if = {
+		limit = {
+			is_in_array = { ruling_party = 11 }	#Caliphate
+			NOT = { has_idea = IP_religious_law_salafist }
+		}
+		add_ideas = IP_religious_law_salafist
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+				is_in_array = { ruling_party = 11 }	#Caliphate
+			}
+			NOT = { has_idea = IP_nationalist_liberation_movements }
+		}
+		add_ideas = IP_nationalist_liberation_movements
+	}
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 9 }	#Vilayat_e_Faqih
+				is_in_array = { ruling_party = 11 }	#Caliphate
+			}
+			NOT = { has_idea = IP_international_pariah }
+		}
+		add_ideas = IP_international_pariah
+	}
 }
