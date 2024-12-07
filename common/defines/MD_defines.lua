@@ -59,6 +59,12 @@
 	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_BASE = 0  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
 	NDefines.NDiplomacy.LL_TO_PUPPET_AUTONOMY_DAILY_FACTOR = -0.001  -- If overlord lend leases equipment to puppet of higher tech level as they have, puppet losses autonomy
 
+	NDefines.NDiplomacy.EMBARGO_THREAT_THRESHOLD = 20
+	NDefines.NDiplomacy.EMBARGO_DIFFERENT_IDEOLOGY_AI_WEIGHT = -5
+	NDefines.NDiplomacy.EMBARGO_DIFFERENT_IDEOLOGY_AT_OFFENSIVE_WAR_AI_WEIGHT = 15
+	NDefines.NDiplomacy.EMBARGO_NEIGHBOUR_AI_WEIGHT = -15
+	NDefines.NDiplomacy.EMBARGO_RECIPIENT_IS_MAJOR_AI_WEIGHT = 5
+
 	-- Faction related stuff
 	NDefines.NDiplomacy.TRUCE_PERIOD_AFTER_KICKING_FROM_FACTION = 30				-- Truce period after kicking someone from faction in days.
 	NDefines.NDiplomacy.NUM_DAYS_TO_ENABLE_KICKING_NEW_MEMBERS_OF_FACTION = 90			-- Number of days before being able to kick a new member of faction
@@ -686,6 +692,8 @@
 	NDefines.NTrade.BASE_LAND_TRADE_RANGE = 350 -- 1000
 	NDefines.NTrade.ANTI_MONOPOLY_TRADE_FACTOR_THRESHOLD = 0.5 -- 0.5
 	NDefines.NAI.SEA_PATH_LENGTH_SCORE_BASE = -10 -- Reduced from -30 to -10
+	NDefines.NAI.NUM_RESOURCES_TO_ALLOW_MINOR_EMBARGO = 100
+	NDefines.NAI.EMBARGO_WORLD_TENSION_THREAT_DIVISOR = 3.0
 
 	-- NAI Defines
 	-- BAI fix test
@@ -698,9 +706,9 @@
 	NDefines.NAI.ASSIGN_MOUNTAINEERS_TO_MOUNTAINS = 10.0                    -- factor for assigning mountaineer divisions to fronts with mountains (proportional to how much of that terrain type)
 	NDefines.NAI.ASSIGN_TANKS_TO_MOUNTAINS = -26.0                           -- factor for assigning tank divisions to fronts with mountains (proportional to how much of that terrain type)
 	NDefines.NAI.ASSIGN_TANKS_TO_JUNGLE = -6.0                              -- factor for assigning tank divisions to fronts with jungle (proportional to how much of that terrain type)
-	NDefines.NAI.UNIT_ASSIGNMENT_TERRAIN_IMPORTANCE = 10.0                  -- Terrain score for units are multiplied by this when the AI is deciding which front they should be assigned to
-	NDefines.NAI.MAX_FACTORY_TO_TRADE_FOR_FUEL_IN_PEACE = 0.40 -- percentage of factories traded away during peace time
 	NDefines.NAI.ASSIGN_INVASION_AMPHIBIOUS_ATTACK_FACTOR = 100 -- 50
+	NDefines.NAI.UNIT_ASSIGNMENT_TERRAIN_IMPORTANCE = 10.0                  -- Terrain score for units are multiplied by this when the AI is deciding which front they should be assigned to
+	NDefines.NAI.MAX_FACTORY_TO_TRADE_FOR_FUEL_IN_PEACE = 0.45 -- percentage of factories traded away during peace time
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
 	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
