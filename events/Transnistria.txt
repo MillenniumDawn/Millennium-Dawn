@@ -1,4 +1,5 @@
 ﻿add_namespace = transnistria
+add_namespace = transnistria_news
 #Weapon sells
 country_event = {
 	id = transnistria.1
@@ -13,7 +14,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: transnistria.1.a executed"
 		set_temp_variable = { treasury_change = 0.150 }
 		modify_treasury_effect = yes
-		set_temp_variable = { modify_kolbasna = -400 }
+		set_temp_variable = { modify_kolbasna = -350 }
 		modify_kolbasna_support = yes
 	}
 }
@@ -149,7 +150,9 @@ country_event = {
 			end_wars = no
 			end_civil_wars = no
 		}
-		release = GGZ
+		997 = {
+			transfer_state_to = GGZ
+		}
 		set_autonomy = {
 			target = GGZ
 			autonomy_state = autonomy_moldovian_federation1
@@ -193,6 +196,7 @@ country_event = {
 			end_civil_wars = no
 		}
 		custom_effect_tooltip = SOV_subjectsepar_minus_tt
+		PMR = { country_event = transnistria.40 }
 		hidden_effect = {
 			PMR = {
 				add_ideas = SUB_smallish_taxes
@@ -202,6 +206,12 @@ country_event = {
 				modify_subjectnalogs_support = yes
 			}
 			SUB_separatism_minus_subject = yes
+			hidden_effect = {
+				news_event = {
+					hours = 6
+					id = transnistria_news.1
+				}
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -221,6 +231,7 @@ country_event = {
 	option = {
 		name = transnistria.16.b
 		log = "[GetDateText]: [This.GetName]: transnistria.16.b executed"
+		PMR = { country_event = transnistria.41 }
 		ai_chance = {
 			base = 10
 			modifier = {
@@ -242,6 +253,7 @@ country_event = {
 	title = transnistria.17.t
 	desc = transnistria.17.d
 	is_triggered_only = yes
+	picture = transnistria_moldova_relations
 	option = {
 		name = transnistria.17.a
 		log = "[GetDateText]: [This.GetName]: transnistria.17.a executed"
@@ -255,11 +267,9 @@ country_event = {
 				change_tag_from = PMR
 			}
 		}
-		PMR = {
-			MLV = {
-				annex_country = { target = PREV transfer_troops = yes }
-			}
-			every_core_state = { add_core_of = MLV }
+		country_event = {
+			id = transnistria.42
+			days = 2
 		}
 		ai_chance = {
 			base = 90
@@ -373,49 +383,60 @@ country_event = {
 	desc = transnistria.21.d
 	picture = GFX_sov_iskander
 	is_triggered_only = yes
+
 	option = {
 		name = transnistria.21.a
 		log = "[GetDateText]: [This.GetName]: transnistria.21.a executed"
 		set_temp_variable = { treasury_change = -0.7 }
 		modify_treasury_effect = yes
 		add_political_power = -100
-		MLV = { release = GGZ }
-		set_autonomy = {
-			target = GGZ
-			autonomy_state = autonomy_moldovian_federation
-			end_wars = no
-			end_civil_wars = no
+		997 = {
+			transfer_state_to = GGZ
 		}
 		if = {
 			limit = {
-				has_completed_focus = PMR_path
+				has_global_flag = GAME_RULE_allow_colored_puppets
 			}
-			GGZ = {
-				set_country_flag = PMR_subject_agree
+			set_autonomy = {
+				target = GGZ
+				autonomy_state = autonomy_autonomous_state_colored
+				end_wars = yes
+				end_civil_wars = yes
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = GGZ
+				autonomy_state = autonomy_autonomous_state
+				end_wars = yes
+				end_civil_wars = yes
 			}
 		}
 		GGZ = {
-		declare_war_on = {
-			target = MLV
-			type = annex_everything
-		}
+			declare_war_on = {
+				target = MLV
+				type = annex_everything
+			}
+			country_event = transnistria.22
 		}
 		set_temp_variable = { percent_change = 15.5 }
 		set_temp_variable = { tag_index = PMR }
 		set_temp_variable = { influence_target = GGZ }
 		change_influence_percentage = yes
 		ai_chance = {
-			base = 80
+			base = 100
 		}
 	}
+
 	option = {
 		name = transnistria.21.b
 		log = "[GetDateText]: [This.GetName]: transnistria.21.b executed"
 		ai_chance = {
-			base = 20
+			base = 0
 		}
 	}
 }
+
 ###Gagauzia Revoult###
 country_event = {
 	id = transnistria.22
@@ -429,6 +450,22 @@ country_event = {
 		set_temp_variable = { tag_index = PMR }
 		set_temp_variable = { influence_target = GGZ }
 		change_influence_percentage = yes
+		division_template = {
+			name = "Gagauz Revolutionaries"
+			regiments = {
+				Militia_Bat = { x = 0 y = 0 }
+			}
+		}
+		add_manpower = 3700
+		set_equipment_fraction = 0.25
+		997 = {
+			create_unit = {
+				division = "name = \"Gagauz Revolutionaries\" division_template = \"Gagauz Revolutionaries\" start_experience_base = 0.1"
+				owner = GGZ
+				count = 1
+				prioritize_location = 13302
+			}
+		}
 	}
 }
 ###Lebed###
@@ -493,21 +530,36 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: transnistria.26.a executed"
 		if = {
 			limit = {
-				has_global_flag = GAME_RULE_allow_colored_puppets
+				PMR = {
+					is_ai = no
+				}
 			}
-			set_autonomy = {
-				target = PMR
-				autonomy_state = autonomy_autonomous_state_colored
-				end_wars = yes
-				end_civil_wars = yes
+			if = {
+				limit = {
+					has_global_flag = GAME_RULE_allow_colored_puppets
+				}
+				set_autonomy = {
+					target = PMR
+					autonomy_state = autonomy_autonomous_state_colored
+					end_wars = yes
+					end_civil_wars = yes
+				}
+			}
+			else = {
+				set_autonomy = {
+					target = PMR
+					autonomy_state = autonomy_autonomous_state
+					end_wars = yes
+					end_civil_wars = yes
+				}
 			}
 		}
 		else = {
-			set_autonomy = {
-				target = PMR
-				autonomy_state = autonomy_autonomous_state
-				end_wars = yes
-				end_civil_wars = yes
+			PMR = {
+				UKR = {
+					annex_country = { target = PREV transfer_troops = yes }
+				}
+				every_core_state = { add_core_of = UKR }
 			}
 		}
 		ai_chance = {
@@ -535,8 +587,11 @@ country_event = {
 		set_temp_variable = { tag_index = PMR }
 		set_temp_variable = { influence_target = OPR }
 		change_influence_percentage = yes
-		ai_chance = {
-			base = 100
+		hidden_effect = {
+			news_event = {
+				hours = 6
+				id = transnistria_news.2
+			}
 		}
 	}
 }
@@ -777,5 +832,103 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: transnistria.39.a executed"
 	}
 }
+
+#Referendum Join to Russia - Agree
+country_event = {
+	id = transnistria.40
+	title = transnistria.40.t
+	desc = transnistria.40.d
+	is_triggered_only = yes
+	picture = GFX_transnistria_russia_relations
+	option = {
+		name = transnistria.40.a
+		log = "[GetDateText]: [This.GetName]: transnistria.40.a executed"
+	}
+}
+
+#Referendum Join to Russia - Disagree
+country_event = {
+	id = transnistria.41
+	title = transnistria.41.t
+	desc = transnistria.41.d
+	is_triggered_only = yes
+	picture = GFX_transnistria_russia_relations
+	option = {
+		name = transnistria.41.a
+		log = "[GetDateText]: [This.GetName]: transnistria.41.a executed"
+	}
+}
+
+#Referendum Join to Moldova - Annex PMR
+country_event = {
+	id = transnistria.42
+	title = transnistria.42.t
+	desc = transnistria.42.d
+	is_triggered_only = yes
+	picture = transnistria_moldova_relations
+	option = {
+		name = transnistria.42.a
+		log = "[GetDateText]: [This.GetName]: transnistria.41.a executed"
+		PMR = {
+			MLV = {
+				annex_country = { target = PREV transfer_troops = yes }
+			}
+			every_core_state = { add_core_of = MLV }
+		}
+		hidden_effect = {
+			news_event = {
+				hours = 6
+				id = transnistria_news.3
+			}
+		}
+	}
+}
+
+news_event = {
+	id = transnistria_news.1
+	major = yes
+	title = transnistria_news.1.t
+	desc = transnistria_news.1.d
+	picture = GFX_russia_annexes_transnistria
+
+	is_triggered_only = yes
+
+	option = {
+		name = transnistria_news.1.a
+		log = "[GetDateText]: [This.GetName]: transnistria_news.1.a executed"
+	}
+}
+
+news_event = {
+	id = transnistria_news.2
+	major = yes
+	title = transnistria_news.2.t
+	desc = transnistria_news.2.d
+	picture = GFX_ukraine_annexes_transnistria
+
+	is_triggered_only = yes
+
+	option = {
+		name = transnistria_news.2.a
+		log = "[GetDateText]: [This.GetName]: transnistria_news.2.a executed"
+	}
+}
+
+news_event = {
+	id = transnistria_news.3
+	major = yes
+	title = transnistria_news.3.t
+	desc = transnistria_news.3.d
+	picture = GFX_moldova_annexes_transnistria
+
+	is_triggered_only = yes
+
+	option = {
+		name = transnistria_news.3.a
+		log = "[GetDateText]: [This.GetName]: transnistria_news.3.a executed"
+	}
+}
+
+
 
 
