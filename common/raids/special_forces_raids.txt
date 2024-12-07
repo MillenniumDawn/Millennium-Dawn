@@ -30,6 +30,9 @@ types = {
 			OR = {
 				has_wargoal_against = FROM
 				has_war_with = FROM
+				hidden_trigger = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
 			}
 		}
 
@@ -120,7 +123,19 @@ types = {
 				victim_effects = {
 					# Effects on target
 					var:target_state = {
-
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = [DAM] # levels of damage
+								}
+								damage_building = {
+									type = naval_base
+									damage = [DAM] # levels of damage
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
 					}
 
 				}
@@ -173,7 +188,19 @@ types = {
 			success = {
 				victim_effects = {
 					var:target_state = {
-
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = [DAM] # levels of damage
+								}
+								damage_building = {
+									type = naval_base
+									damage = [DAM] # levels of damage
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
 					}
 					var:victim_country = {
 
@@ -210,7 +237,19 @@ types = {
 			critical_success = {
 				victim_effects = {
 					var:target_state = {
-
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = [DAM] # levels of damage
+								}
+								damage_building = {
+									type = naval_base
+									damage = [DAM] # levels of damage
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
 					}
 					var:victim_country = {
 
@@ -249,17 +288,25 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				NOT = {
+					has_war_with = FROM
+					is_neighbor_of = FROM
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				add = -100
+			}
+			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -75
+					value < -95
 				}
 			}
 			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -100
+					value < -125
 				}
 			}
 			modifier = {
@@ -270,14 +317,6 @@ types = {
 				}
 			}
 			modifier = {
-				factor = 0
-				date < 1936.6.1
-			}
-			modifier = {
-				has_country_flag = promised_retaliation_against@FROM
-				factor = 100
-			}
-			modifier = {
 				factor = 0.05
 				threat < 0.10
 			}
@@ -285,6 +324,23 @@ types = {
 				factor = 0
 				date < 2002.1.1
 				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+			modifier = {
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				factor = 0
+				FROM = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
 			}
 		}
 	}
@@ -330,7 +386,8 @@ types = {
 							has_idea = intervention_limited_interventionism
 						}
 						is_neighbor_of = FROM
-					}else_if = {
+					}
+					else_if = {
 						limit = {
 							has_idea = intervention_regional_interventionism
 						}
@@ -358,6 +415,9 @@ types = {
 					FROM = {
 						has_war = yes
 					}
+				}
+				hidden_trigger = {
+					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
 		}
@@ -511,7 +571,7 @@ types = {
 								value = temp_hold
 								damage_building = {
 								type = supply_node
-								damage = 0.5 # levels of damage
+								damage = 0.25 # levels of damage
 							}
 						}
 						set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
@@ -520,8 +580,26 @@ types = {
 							value = temp_hold
 							damage_building = {
 								type = rail_way
-								damage = 0.5 # levels of damage
+								damage = 0.25 # levels of damage
 							}
+						}
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = supply_node
+									damage = 0.25
+								}
+							}
+							DAM = 0.25
+						}
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = rail_way
+									damage = 0.25
+								}
+							}
+							DAM = 0.25
 						}
 					}
 					if = {
@@ -573,9 +651,9 @@ types = {
 								end = num_supply_node
 								value = temp_hold
 								damage_building = {
-								type = supply_node
-								damage = 0.5 # levels of damage
-							}
+									type = supply_node
+									damage = 0.5 # levels of damage
+								}
 							}
 							set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
 							for_loop_effect = {
@@ -585,6 +663,24 @@ types = {
 									type = rail_way
 									damage = 0.5 # levels of damage
 								}
+							}
+							meta_effect = {
+								text = {
+									damage_building = {
+										type = supply_node
+										damage = 0.50
+									}
+								}
+								DAM = 0.50
+							}
+							meta_effect = {
+								text = {
+									damage_building = {
+										type = rail_way
+										damage = 0.50
+									}
+								}
+								DAM = 0.50
 							}
 						}
 						if = {
@@ -644,9 +740,9 @@ types = {
 							end = num_supply_node
 							value = temp_hold
 							damage_building = {
-							type = supply_node
-							damage = 0.5 # levels of damage
-						}
+								type = supply_node
+								damage = 1.00 # levels of damage
+							}
 						}
 						set_temp_variable = { num_rail_way = THIS.building_level@rail_way }
 						for_loop_effect = {
@@ -654,8 +750,26 @@ types = {
 							value = temp_hold
 							damage_building = {
 								type = rail_way
-								damage = 0.5 # levels of damage
+								damage = 1.0 # levels of damage
 							}
+						}
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = supply_node
+									damage = 1.00
+								}
+							}
+							DAM = 1.00
+						}
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = rail_way
+									damage = 1.00
+								}
+							}
+							DAM = 1.00
 						}
 						if = {
 							limit = {
@@ -711,17 +825,25 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				NOT = {
+					has_war_with = FROM
+					is_neighbor_of = FROM
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				add = -100
+			}
+			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -75
+					value < -95
 				}
 			}
 			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -100
+					value < -125
 				}
 			}
 			modifier = {
@@ -732,10 +854,6 @@ types = {
 				}
 			}
 			modifier = {
-				has_country_flag = promised_retaliation_against@FROM
-				factor = 100
-			}
-			modifier = {
 				factor = 0
 				date < 2002.1.1
 				NOT = { has_country_flag = promised_retaliation_against@FROM }
@@ -743,6 +861,23 @@ types = {
 			modifier = {
 				factor = 0.05
 				threat < 0.10
+			}
+			modifier = {
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				factor = 0
+				FROM = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
 			}
 		}
 	}
@@ -815,6 +950,9 @@ types = {
 					FROM = {
 						has_war = yes
 					}
+				}
+				hidden_trigger = {
+					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
 		}
@@ -967,17 +1105,17 @@ types = {
 							value = temp_hold
 							damage_building = {
 								type = air_base
-								damage = 0.5 # levels of damage
+								damage = 0.25 # levels of damage
 							}
 						}
-						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
-						for_loop_effect = {
-							end = num_naval_base
-							value = temp_hold
-							damage_building = {
-								type = naval_base
-								damage = 0.5 # levels of damage
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = 0.25
+								}
 							}
+							DAM = 0.25
 						}
 					}
 					if = {
@@ -1032,14 +1170,14 @@ types = {
 								damage = 0.5 # levels of damage
 							}
 						}
-						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
-						for_loop_effect = {
-							end = num_naval_base
-							value = temp_hold
-							damage_building = {
-								type = naval_base
-								damage = 0.5 # levels of damage
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = 0.5
+								}
 							}
+							DAM = 0.5
 						}
 					}
 					if = {
@@ -1099,17 +1237,17 @@ types = {
 							value = temp_hold
 							damage_building = {
 								type = air_base
-								damage = 0.5 # levels of damage
+								damage = 1.00 # levels of damage
 							}
 						}
-						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
-						for_loop_effect = {
-							end = num_naval_base
-							value = temp_hold
-							damage_building = {
-								type = naval_base
-								damage = 0.5 # levels of damage
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = 1.00
+								}
 							}
+							DAM = 1.00
 						}
 					}
 					if = {
@@ -1165,17 +1303,25 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				NOT = {
+					has_war_with = FROM
+					is_neighbor_of = FROM
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				add = -100
+			}
+			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -75
+					value < -95
 				}
 			}
 			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -100
+					value < -125
 				}
 			}
 			modifier = {
@@ -1186,10 +1332,6 @@ types = {
 				}
 			}
 			modifier = {
-				has_country_flag = promised_retaliation_against@FROM
-				factor = 100
-			}
-			modifier = {
 				factor = 0.05
 				threat < 0.10
 			}
@@ -1197,6 +1339,23 @@ types = {
 				factor = 0
 				date < 2002.1.1
 				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+			modifier = {
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				factor = 0
+				FROM = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
 			}
 		}
 	}
@@ -1269,6 +1428,9 @@ types = {
 					FROM = {
 						has_war = yes
 					}
+				}
+				hidden_trigger = {
+					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
 		}
@@ -1373,7 +1535,15 @@ types = {
 				victim_effects = {
 					# Effects on target
 					var:target_state = {
-
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = naval_base
+									damage = [DAM] # levels of damage
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
 					}
 				}
 				actor_effects = {
@@ -1405,23 +1575,23 @@ types = {
 			limited_success = {
 				victim_effects = {
 					var:target_state = {
-						set_temp_variable = { num_air_base = THIS.building_level@air_base }
-						for_loop_effect = {
-							end = num_air_base
-							value = temp_hold
-							damage_building = {
-								type = air_base
-								damage = 0.5 # levels of damage
-							}
-						}
 						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
 						for_loop_effect = {
 							end = num_naval_base
 							value = temp_hold
 							damage_building = {
 								type = naval_base
-								damage = 0.5 # levels of damage
+								damage = 0.25 # levels of damage
 							}
+						}
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = naval_base
+									damage = 0.25
+								}
+							}
+							DAM = 0.25
 						}
 					}
 					if = {
@@ -1467,15 +1637,6 @@ types = {
 			success = {
 				victim_effects = {
 					var:target_state = {
-						set_temp_variable = { num_air_base = THIS.building_level@air_base }
-						for_loop_effect = {
-							end = num_air_base
-							value = temp_hold
-							damage_building = {
-								type = air_base
-								damage = 0.5 # levels of damage
-							}
-						}
 						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
 						for_loop_effect = {
 							end = num_naval_base
@@ -1484,6 +1645,15 @@ types = {
 								type = naval_base
 								damage = 0.5 # levels of damage
 							}
+						}
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = naval_base
+									damage = 0.50
+								}
+							}
+							DAM = 0.50
 						}
 					}
 					if = {
@@ -1537,23 +1707,23 @@ types = {
 			critical_success = {
 				victim_effects = {
 					var:target_state = {
-						set_temp_variable = { num_air_base = THIS.building_level@air_base }
-						for_loop_effect = {
-							end = num_air_base
-							value = temp_hold
-							damage_building = {
-								type = air_base
-								damage = 0.5 # levels of damage
-							}
-						}
 						set_temp_variable = { num_naval_base = THIS.building_level@naval_base }
 						for_loop_effect = {
 							end = num_naval_base
 							value = temp_hold
 							damage_building = {
 								type = naval_base
-								damage = 0.5 # levels of damage
+								damage = 1.00 # levels of damage
 							}
+						}
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = naval_base
+									damage = 1.00
+								}
+							}
+							DAM = 1.00
 						}
 					}
 					if = {
@@ -1609,17 +1779,25 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				NOT = {
+					has_war_with = FROM
+					is_neighbor_of = FROM
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				add = -100
+			}
+			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -75
+					value < -95
 				}
 			}
 			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -100
+					value < -125
 				}
 			}
 			modifier = {
@@ -1630,10 +1808,6 @@ types = {
 				}
 			}
 			modifier = {
-				has_country_flag = promised_retaliation_against@FROM
-				factor = 100
-			}
-			modifier = {
 				factor = 0.05
 				threat < 0.10
 			}
@@ -1641,6 +1815,23 @@ types = {
 				factor = 0
 				date < 2002.1.1
 				NOT = { has_country_flag = promised_retaliation_against@FROM }
+			}
+			modifier = {
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				factor = 0
+				FROM = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				has_country_flag = promised_retaliation_against@FROM
+				factor = 100
+			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
 			}
 		}
 	}
@@ -1705,6 +1896,9 @@ types = {
 				has_opinion = {
 					target = FROM
 					value < 50
+				}
+				hidden_trigger = {
+					has_country_flag = promised_retaliation_against@FROM
 				}
 			}
 		}
@@ -2017,17 +2211,25 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				NOT = {
+					has_war_with = FROM
+					is_neighbor_of = FROM
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				add = -100
+			}
+			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -75
+					value < -95
 				}
 			}
 			modifier = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value < -100
+					value < -125
 				}
 			}
 			modifier = {
@@ -2053,6 +2255,15 @@ types = {
 						FROM = { has_government = communism }
 						THIS = { has_government = communism }
 					}
+				}
+			}
+			modifier = {
+				NOT = {
+					has_country_flag = promised_retaliation_against@FROM
+				}
+				factor = 0
+				FROM = {
+					has_idea = NATO_member
 				}
 			}
 			modifier = {
@@ -2104,6 +2315,10 @@ types = {
 				date < 2002.1.1
 				NOT = { has_country_flag = promised_retaliation_against@FROM }
 			}
+			modifier = {
+				has_country_flag = conceded_to@FROM
+				factor = 0
+			}
 			#do some checks for nations here, like someone going for nukes will likely be targeted by enemies
 		}
 	}
@@ -2116,6 +2331,10 @@ types = {
 
 	# 	ai_will_do = {
 	# 		base = 1
+	#	modifier = {
+	#		has_country_flag = conceded_to@FROM
+	#		factor = -500
+	#	}
 	# 	}
 
 	# 	command_power = 20 # command power allocation cost

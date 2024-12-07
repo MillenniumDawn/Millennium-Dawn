@@ -1,4 +1,4 @@
-version="1.11.0"
+version="1.11.1"
 name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
@@ -39,6 +39,7 @@ replace_path = "common/scripted_effects"
 replace_path = "common/scripted_localisation"
 replace_path = "common/scripted_triggers"
 replace_path = "common/scripted_diplomatic_actions"
+replace_path = "common/special_projects"
 replace_path = "common/technologies"
 replace_path = "common/technology_sharing"
 replace_path = "common/unit_leader"
