@@ -7631,19 +7631,23 @@ neutrality_neutral_social_are_in_power = yes
 		id = TNZ_farmer_militia
 		icon = restrictive_gun_laws
 
-		x = -6
-		y = 3
-		relative_position_id = TNZ_armed_forces
+		x = 1
+		y = 1
+		relative_position_id = TNZ_expose_ag
 
 		cost = 10
 
 		prerequisite = { focus = TNZ_more_farms focus = TNZ_expose_ag }
-		prerequisite = { focus = TNZ_small_arms }
+		prerequisite = { focus = TNZ_more_dakka }
+		mutually_exclusive = { focus = TNZ_focus_professional_army }
+
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_farmer_militia executed"
 			add_war_support = 0.03
+			add_stability = -0.03
+			#Update army dynamic modifier (More recruitable factor), debuff agriculture
 		}
 
 
@@ -7656,9 +7660,9 @@ neutrality_neutral_social_are_in_power = yes
 		id = TNZ_formalize_the_guard
 		icon = restrictive_gun_laws
 
-		x = -7
-		y = 4
-		relative_position_id = TNZ_armed_forces
+		x = 0
+		y = 1
+		relative_position_id = TNZ_farmer_militia
 		cost = 10
 
 		prerequisite = { focus = TNZ_farmer_militia }
@@ -7667,6 +7671,7 @@ neutrality_neutral_social_are_in_power = yes
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_farmer_militia executed"
 			add_war_support = 0.03
+			#Update army dynamic modifier (provide 0.50% recruitable population)
 		}
 
 		ai_will_do = {
@@ -8468,9 +8473,9 @@ neutrality_neutral_social_are_in_power = yes
 		icon = align_to_nato
 
 
-		x = -7
-		y = 8
-		relative_position_id = TNZ_armed_forces
+		x = 0
+		y = 1.1
+		relative_position_id = TNZ_students_abroad
 
 		cost = 10
 
@@ -8521,7 +8526,7 @@ neutrality_neutral_social_are_in_power = yes
 		}
 
 
-		prerequisite = { focus = TNZ_students_abroad focus = TNZ_cadets_abroad }
+		prerequisite = { focus = TNZ_students_abroad }
 
 		mutually_exclusive = { focus = TNZ_east_tech focus = TNZ_african_tech }
 
@@ -8535,9 +8540,9 @@ neutrality_neutral_social_are_in_power = yes
 		icon = align_to_african_union
 
 
-		x = -5
-		y = 8
-		relative_position_id = TNZ_armed_forces
+		x = 2
+		y = 1
+		relative_position_id = TNZ_students_abroad
 		cost = 10
 
 
@@ -8590,7 +8595,7 @@ neutrality_neutral_social_are_in_power = yes
 		}
 
 
-		prerequisite = { focus = TNZ_students_abroad focus = TNZ_cadets_abroad }
+		prerequisite = { focus = TNZ_students_abroad }
 
 		mutually_exclusive = { focus = TNZ_west_tech focus = TNZ_east_tech }
 
@@ -8603,13 +8608,13 @@ neutrality_neutral_social_are_in_power = yes
 		id = TNZ_east_tech
 		icon = align_to_csto
 
-		x = -3
-		y = 8
-		relative_position_id = TNZ_armed_forces
+		x = -2
+		y = 1
+		relative_position_id = TNZ_students_abroad
 
 		cost = 10
 
-		prerequisite = { focus = TNZ_students_abroad focus = TNZ_cadets_abroad }
+		prerequisite = { focus = TNZ_students_abroad }
 		mutually_exclusive = { focus = TNZ_west_tech focus = TNZ_african_tech }
 
 		available = {
@@ -8655,7 +8660,7 @@ neutrality_neutral_social_are_in_power = yes
 		id = TNZ_armed_forces
 		icon = forces_tanzania
 
-		x = 79
+		x = 82
 		y = 0
 
 		cost = 5
@@ -8669,11 +8674,14 @@ neutrality_neutral_social_are_in_power = yes
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TNZ_armed_Forces executed"
-			army_experience = 75
-			navy_experience = 75
-			air_experience = 75
+			army_experience = 25
+			navy_experience = 25
+			air_experience = 25
 			if = {
-				limit = { has_war_support < 0.75 }
+				limit = { has_war_support < 0.45 }
+				add_war_support = 0.1
+			}
+			else = {
 				add_war_support = 0.05
 			}
 		}
@@ -8682,68 +8690,24 @@ neutrality_neutral_social_are_in_power = yes
 			base = 10
 		}
 	}
-
+	
+	# Ground Forces
 	focus = {
-		id = TNZ_the_army
-		icon = infantry_allies
+		id = TNZ_tanzanian_army
+		icon = infantry_india
 
-		x = -2
+		x = -4
 		y = 1
 		relative_position_id = TNZ_armed_forces
 
-		cost = 2.9
+		cost = 5
 
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = no_military }
-		}
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_the_army executed"
-			army_experience = 100
-			add_doctrine_cost_reduction = {
-				name = TNZ_the_army
-				cost_reduction = 0.25
-				uses = 1
-				category = CAT_air_doctrine
-			}
-		}
+		search_filters = { FOCUS_FILTER_MILITARY }
 
 		prerequisite = { focus = TNZ_armed_forces }
 
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_small_arms
-		icon = small_arms_east
-
-		x = -4
-		y = 2
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		prerequisite = { focus = TNZ_the_army }
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_small_arms executed"
-			add_tech_bonus = {
-				name = inf_wep_bonus
-				bonus = 0.30
-				uses = 1
-				category = Cat_INF_WEP
-			}
+			army_experience = 30
 		}
 
 		ai_will_do = {
@@ -8752,131 +8716,44 @@ neutrality_neutral_social_are_in_power = yes
 	}
 
 	focus = {
-		id = TNZ_artillery
-		icon = artillery
+		id = TNZ_military_restructuring
+		icon = Focus_Rifle_Production
 
-		x = -4
-		y = 3
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		prerequisite = { focus = TNZ_small_arms }
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_artillery executed"
-			add_tech_bonus = {
-				name = artillery_bonus
-				bonus = 0.35
-				uses = 1
-				category = Cat_SP_ARTY
-			}
-		}
-
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_tanks
-		icon = tanks
-
-
-		x = -5
-		y = 4
-		relative_position_id = TNZ_armed_forces
-		cost = 10
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_tanks executed"
-			add_tech_bonus = {
-				name = afv_bonus
-				bonus = 0.35
-				uses = 1
-				category = Cat_MBT
-			}
-		}
-
-		prerequisite = { focus = TNZ_artillery }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_armored_vehicles
-		icon = tanks
-
-
-		x = -3
-		y = 4
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_armored_vehicles executed"
-			add_tech_bonus = {
-				name = afv_bonus
-				bonus = 0.25
-				uses = 1
-				category = Cat_AFV
-			}
-		}
-
-		prerequisite = { focus = TNZ_artillery }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_armored_production
-		icon = general_staff
-
-		x = -6
-		y = 5
-		relative_position_id = TNZ_armed_forces
+		x = 0
+		y = 1
+		relative_position_id = TNZ_tanzanian_army
 
 		cost = 5
 
-		prerequisite = { focus = TNZ_tanks }
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		search_filters = { FOCUS_FILTER_MILITARY }
 
-		available = {
-			NOT = {
-				has_idea = defence_00
-				has_idea = officer_baptism_by_fire
-			}
-		}
+		prerequisite = { focus = TNZ_tanzanian_army }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_staff_reorganization executed"
-			army_experience = 20
+			custom_effect_tooltip = TNZ_ground_forces_tooltip
+
+			set_temp_variable = {
+				temp_change = 0.15
+			}
+			TNZ_change_ground_forces_army_attack_change = yes
+
+			set_temp_variable = {
+				temp_change = 0.05
+			}
+			TNZ_change_ground_forces_army_recovery_change = yes
+			TNZ_change_ground_forces_army_defence_change = yes
+			TNZ_change_ground_forces_war_support_change = yes
+
+			set_temp_variable = {
+				temp_change = 0.10
+			}
+			TNZ_change_ground_forces_army_org_change = yes
+			TNZ_change_ground_forces_army_cost_change = yes
+
+			set_temp_variable = {
+				temp_change = 0.3
+			}
+			TNZ_change_ground_forces_army_xp_gain_change = yes
 		}
 
 		ai_will_do = {
@@ -8885,31 +8762,23 @@ neutrality_neutral_social_are_in_power = yes
 	}
 
 	focus = {
-		id = TNZ_staff_reorganization
-		icon = general_staff
+		id = TNZ_more_dakka
+		icon = Focus_Rifle_Production
 
+		x = -2
+		y = 1
+		relative_position_id = TNZ_tanzanian_army
 
-		x = -4
-		y = 5
-		relative_position_id = TNZ_armed_forces
 		cost = 5
 
-		available = {
-			NOT = {
-				has_idea = defence_00
-				has_idea = officer_baptism_by_fire
-			}
-		}
+		search_filters = { FOCUS_FILTER_MILITARY }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		prerequisite = { focus = TNZ_tanzanian_army }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_staff_reorganization executed"
-			army_experience = 20
+			#Update military industry dynamic modifier (provide small arms production bonus)
+			one_random_arms_factory = yes
 		}
-
-		prerequisite = { focus = TNZ_tanks }
-		prerequisite = { focus = TNZ_armored_vehicles }
 
 		ai_will_do = {
 			base = 10
@@ -8917,518 +8786,96 @@ neutrality_neutral_social_are_in_power = yes
 	}
 
 	focus = {
-		id = TNZ_military_tech
-		icon = tanks
+		id = TNZ_focus_professional_army
+		icon = Focus_Rifle_Production
 
+		x = 0
+		y = 1
+		relative_position_id = TNZ_more_dakka
 
-		x = -1
-		y = 6
-		relative_position_id = TNZ_armed_forces
+		cost = 5
 
-		cost = 10
+		search_filters = { FOCUS_FILTER_MILITARY }
 
-		available = {
-			NOT = {
-				has_idea = defence_00
-			}
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		prerequisite = { focus = TNZ_more_dakka}
+		mutually_exclusive = { focus = TNZ_farmer_militia }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_military_tech executed"
-			army_experience = 20
-			navy_experience = 20
-			air_experience = 20
-			# TODO: Replace with some science/education buffs
-			# add_research_slot = 1
+			#Update army dynamic modifier
 		}
-
-		prerequisite = { focus = TNZ_staff_reorganization focus = TNZ_ace_pilots focus = TNZ_admirals }
-
 
 		ai_will_do = {
 			base = 10
 		}
 	}
 
+	#Airforce
 	focus = {
-		id = TNZ_cadets_abroad
-		icon = tanks
-
-
-		x = -1
-		y = 7
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		available = {
-			NOT = {
-				OR = {
-					has_idea = defence_00
-					has_idea = officer_baptism_by_fire
-					has_idea = no_military
-				}
-			}
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_cadets_abroad executed"
-			add_war_support = 0.01
-			army_experience = 5
-			navy_experience = 5
-			air_experience = 5
-			every_other_country = {
-				limit = {
-					has_opinion = {
-						target = TNZ
-						value > 49
-					}
-				}
-				add_opinion_modifier = {
-					target = TNZ
-					modifier = cadet_exchange_program
-				}
-			}
-			set_temp_variable = { treasury_change = -1 }
-			modify_treasury_effect = yes
-		}
-
-		prerequisite = { focus = TNZ_military_tech }
-
-		mutually_exclusive = { focus = TNZ_students_abroad }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_an_airforce
-		icon = air_force
-
+		id = TNZ_tanzanian_birds
+		icon = fighter_plane
 
 		x = 0
 		y = 1
 		relative_position_id = TNZ_armed_forces
 
-		cost = 2.9
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = no_military }
-		}
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_an_airforce executed"
-			air_experience = 75
-			add_doctrine_cost_reduction = {
-				cost_reduction = 0.05
-				category = air_doctrine
-				name = TNZ_an_airforce
-				uses = 1
-			}
-		}
-
-		prerequisite = {  focus = TNZ_armed_forces  }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_airbases
-		icon = fighters
-
-
-		x = 0
-		y = 2
-		relative_position_id = TNZ_armed_forces
-
-		cost = 15
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_airbases executed"
-			air_experience = 5
-			every_owned_state = {
-				limit = {
-					air_base > 2
-					air_base < 9
-				}
-				add_building_construction = {
-					type = air_base
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-
-		prerequisite = { focus = TNZ_an_airforce }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_fighters
-		icon = fighters2
-
-
-		x = -2
-		y = 2
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_fighters executed"
-			add_tech_bonus = {
-				name = multirole_bonus
-				bonus = 0.25
-				uses = 2
-				category = Cat_MR_FIGHTER
-
-			}
-		}
-
-		prerequisite = { focus = TNZ_an_airforce }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_bombers
-		icon = bombers
-
-
-		x = -2
-		y = 3
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_bombers executed"
-			add_tech_bonus = {
-				name = bombers_bonus
-				bonus = 0.30
-				uses = 1
-				category = Cat_STR_BOMBER
-			}
-		}
-
-		prerequisite = { focus = TNZ_fighters }
-
-		prerequisite = { focus = TNZ_airbases }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_helicopters
-		icon = military_mission
-
-
-		x = 0
-		y = 3
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		prerequisite = { focus = TNZ_fighters }
-		prerequisite = { focus = TNZ_airbases }
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = the_military }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_helicopters executed"
-			add_tech_bonus = {
-				name = helicopter_bonus
-				bonus = 0.3
-				uses = 1
-				category = Cat_HELI
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_ace_pilots
-		icon = military_mission
-
-
-		x = -1
-		y = 4
-		relative_position_id = TNZ_armed_forces
-
 		cost = 5
 
-		available = {
-			NOT = {
-				has_idea = defence_00
-				has_idea = officer_baptism_by_fire
-			}
-		}
+		search_filters = { FOCUS_FILTER_MILITARY }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		prerequisite = { focus = TNZ_armed_forces }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_ace_pilots executed"
-			air_experience = 20
+			#Update air dynamic modifier
+			#Provide research boosts for air
 		}
-
-		prerequisite = { focus = TNZ_bombers }
-
-		prerequisite = { focus = TNZ_helicopters }
 
 		ai_will_do = {
 			base = 10
 		}
 	}
 
+	#Navy
 	focus = {
-		id = TNZ_a_navy
-		icon = navy
+		id = TNZ_tanzanian_navy
+		icon = amphibious_assault
 
-
-		x = 2
+		x = 4
 		y = 1
 		relative_position_id = TNZ_armed_forces
 
-		cost = 2.9
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = no_military }
-		}
-
-		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_a_navy executed"
-			navy_experience = 75
-			add_doctrine_cost_reduction = {
-				cost_reduction = 0.05
-				category = Cat_naval_doctrine
-				name = TNZ_a_navy
-				uses = 1
-			}
-		}
-
-		prerequisite = {  focus = TNZ_armed_forces  }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_old_destroyers
-		icon = destroyers
-
-
-		x = 2
-		y = 2
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = no_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_old_destroyers executed"
-		}
-
-		prerequisite = {  focus = TNZ_a_navy  }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_submarines
-		icon = submarines
-
-
-		x = 2
-		y = 3
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = no_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_submarines executed"
-			add_tech_bonus = {
-				name = nuke_sub_bonus
-				bonus = 0.35
-				uses = 1
-				category = Cat_SUB
-			}
-		}
-
-		prerequisite = { focus = TNZ_old_destroyers }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_cruisers
-		icon = battle_ship_purple
-
-
-		x = 2
-		y = 4
-		relative_position_id = TNZ_armed_forces
-
-		cost = 10
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = no_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_cruisers executed"
-			add_tech_bonus = {
-				name = nuke_sub_bonus
-				bonus = 0.35
-				uses = 1
-				category = Cat_M_Cruiser
-			}
-		}
-
-		prerequisite = { focus = TNZ_submarines }
-
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_naval_bases
-		icon = naval_industry
-
-
-		x = 1
-		y = 5
-		relative_position_id = TNZ_armed_forces
-
-		cost = 15
-
-		available = {
-			NOT = { has_idea = defence_00 }
-			NOT = { has_idea = no_military }
-		}
-
-		search_filters = {FOCUS_FILTER_RESEARCH}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_naval_bases executed"
-			navy_experience = 5
-
-			every_owned_state = {
-				limit = {
-					naval_base > 2
-					naval_base < 9
-				}
-				add_building_construction = {
-					type = naval_base
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-
-		prerequisite = { focus = TNZ_cruisers }
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = TNZ_admirals
-		icon = military_mission
-
-
-		x = 3
-		y = 5
-		relative_position_id = TNZ_armed_forces
-
 		cost = 5
 
-		available = {
-			NOT = {
-				has_idea = no_military
-				has_idea = defence_00
-				has_idea = officer_baptism_by_fire
-			}
-		}
+		search_filters = { FOCUS_FILTER_MILITARY }
 
-		search_filters = {FOCUS_FILTER_RESEARCH}
+		prerequisite = { focus = TNZ_armed_forces }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus TNZ_admirals executed"
-			navy_experience = 20
+			#Update naval dynamic modifier
+			#provide research boost to air
 		}
 
-		prerequisite = { focus = TNZ_cruisers }
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = TNZ_a_true_military
+		icon = army_reform
+
+		x = 0
+		y = 8
+		relative_position_id = TNZ_armed_forces #Update when tree reaches
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_MILITARY }
+
+		prerequisite = {} #Require all 3 branch primary completion
+
+		completion_reward = {
+			#Update Army, Naval and Airforce dynamic modifiers
+		}
 
 		ai_will_do = {
 			base = 10
