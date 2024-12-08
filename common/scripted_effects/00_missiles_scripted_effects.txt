@@ -1,4 +1,109 @@
 # Author(s): AngriestBird, TheBrokenDroid, Doolittle
+basic_ai_space_prioritization = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { var_GNSS_mil_system_idx < GNSSVar }
+				check_variable = { GNSS_satellite_array^GNSSVar < global.GNSS_sat_system_max_array^GNSSVar }
+			}
+		}
+		#if you GNSS system selected is less than the GNSS system you have unlocked, build more modern GNSS stuff
+		set_country_flag = focus_GNSS_upgrade
+	}else = {
+		set_country_flag = focus_comsat_upgrade
+	}
+}
+
+basic_ai_space_program_production = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { treasury_rate > 0 }
+				check_variable = { interest_rate < 10 }
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = focus_GNSS_upgrade
+			}
+			set_temp_variable = { current_sats_in_orbit = GNSS_satellite_array^GNSSVar }
+			if = {
+				limit = {
+					check_variable = { current_sats_in_orbit < global.GNSS_sat_system_max_array^GNSSVar }
+				}
+				set_temp_variable = { production_need = global.GNSS_sat_system_max_array^GNSSVar }
+				subtract_from_temp_variable = { production_need = current_sats_in_orbit }
+				set_variable = { var_gui_prod_11_missile_inventory_idx = prod_11_display_array^GNSSVar }
+				set_variable = { var_gui_prod_11_price_unit = global.prod_11_price_unit^GNSSVar }
+				set_variable = { var_gui_prod_11_days_unit = global.prod_11_duration_unit^GNSSVar }
+				set_variable = { var_gui_prod_11_amount = production_need }
+				set_variable = { prod_11_multiplier = 1 }
+				calculate_production_vars_11 = yes
+				set_country_flag = missile_construction_11
+				activate_mission = missile_construction_11
+				subtract_from_variable = { treasury = var_gui_prod_11_price_total }
+			}
+		}else = {
+			set_temp_variable = { current_sats_in_orbit = COM_satellite_array^COMVar }
+			if = {
+				limit = {
+					check_variable = { current_sats_in_orbit < global.COM_sat_system_max_array^COMVar }
+				}
+				set_temp_variable = { production_need = global.COM_sat_system_max_array^COMVar }
+				subtract_from_temp_variable = { production_need = current_sats_in_orbit }
+				set_variable = { var_gui_prod_12_missile_inventory_idx = prod_12_display_array^COMVar }
+				set_variable = { var_gui_prod_12_price_unit = global.prod_12_price_unit^COMVar }
+				set_variable = { var_gui_prod_12_days_unit = global.prod_12_duration_unit^COMVar }
+				set_variable = { var_gui_prod_12_amount = production_need }
+				set_variable = { prod_12_multiplier = 1 }
+				calculate_production_vars_12 = yes
+				set_country_flag = missile_construction_12
+				activate_mission = missile_construction_12
+				subtract_from_variable = { treasury = var_gui_prod_12_price_total }
+			}
+		}
+		set_variable = { var_gui_prod_10_missile_inventory_idx = prod_10_display_array^OLVVar }
+		set_variable = { var_gui_prod_10_price_unit = global.prod_10_price_unit^OLVVar }
+		set_variable = { var_gui_prod_10_days_unit = global.prod_10_duration_unit^OLVVar }
+		if = {
+			limit = {
+				has_tech = part_reusable_OLV6
+				check_variable = { prod_10_display_array^OLVVar = 106 }
+			}
+			add_to_variable = { var_gui_prod_10_price_unit = -0.005 }
+			add_to_variable = { var_gui_prod_10_days_unit = -10 }
+		}
+		if = {
+			limit = {
+				has_tech = full_reusable_OLV7
+				check_variable = { prod_10_display_array^OLVVar = 107 }
+			}
+			add_to_variable = { var_gui_prod_10_price_unit = -0.01 }
+			add_to_variable = { var_gui_prod_10_days_unit = -25 }
+		}
+		if = {
+			limit = {
+				has_tech = full_reusable_OLV8
+				check_variable = { prod_10_display_array^OLVVar = 108 }
+			}
+			add_to_variable = { var_gui_prod_10_price_unit = -0.03 }
+			add_to_variable = { var_gui_prod_10_days_unit = -45 }
+		}
+		set_variable = { var_gui_prod_10_amount = 1 }
+		set_variable = { prod_10_multiplier = 1 }
+		calculate_production_vars_10 = yes
+		set_country_flag = missile_construction_10
+		activate_mission = missile_construction_10
+		subtract_from_variable = { treasury = var_gui_prod_10_price_total }
+	}
+}
+
+basic_ai_space_launch = {
+	#just use the launch code here, but pull the variables from the other stuff before
+	#limit AI to launching one - 2 at a time to ensure the weight stuff will always work out
+	#make AI launch as they build, so they just keep a steady pace
+}
+
 missile_ui_update = {
 	if = { limit = { NOT = { has_variable = global.missile_ui_updated } }
 		set_variable = { global.missile_ui_updated = 0 }
@@ -4120,9 +4225,7 @@ nuclear_reactor_fuel_consumption = {
 	clamp_variable = { var = var_reactor_material_stockpile min = 0 }
 
 	# Update Stockpile
-	add_to_variable = { var_nuclear_material_stockpile = var_nuke_nuclear_material_prod }
-	clamp_variable = { var = var_nuclear_material_stockpile min = 0 max = 2000000 }
-	add_to_variable = { var_reactor_material_stockpile = var_nuke_nuclear_reactor_prod }
+	add_to_variable = { var_reactor_material_stockpile = nuclear_reactor_fuel_production }
 	clamp_variable = { var = var_reactor_material_stockpile min = 0 max = 2000000 }
 }
 
@@ -4201,7 +4304,7 @@ setup_missile_configuration_effect = {
 		}
 		set_country_flag = setup_missiles
 		set_variable = { orbit_selected_TAG = THIS.id }
-		set_variable = { var_nuke_nuclear_material_prod = 0 }
+		set_variable = { nuclear_reactor_fuel_production = 0 }
 		set_variable = { var_nuclear_material_stockpile = 0 }
 		resize_array = { missile_inventory_array = 154 }
 		add_dynamic_modifier = { modifier = GNSS_system }
@@ -4209,7 +4312,14 @@ setup_missile_configuration_effect = {
 		add_dynamic_modifier = { modifier = SPYSAT_system }
 		set_sat_orbit_startup = yes
 
-		clear_payload_types = yes
+		# Configuration for Starting Payload Types
+		clear_variable = var_launch_mass
+		clear_array = payload_types_array
+		add_to_array = { payload_types_array = 1 }
+		add_to_array = { payload_types_array = 1 }
+		add_to_array = { payload_types_array = 1 }
+		add_to_array = { payload_types_array = 1 }
+
 		add_to_array = { array = spp_inventory_array value = 1 index = 0 }
 		add_to_array = { array = spp_inventory_array value = 30 index = 1 }
 		add_to_array = { array = spp_inventory_array value = 1 index = 2 }
