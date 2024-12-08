@@ -1,6 +1,9 @@
 ﻿add_namespace = korea
 add_namespace = korea_north
 add_namespace = kim_jong_il_death
+add_namespace = korea_russia
+add_namespace = korea_russia_news
+add_namespace = korea_china
 
 
 ### China Demands Our Withdrawal from the Korean Peninsula
@@ -116,7 +119,7 @@ country_event = {
 	option = {
 		name = korea.2.b #Initiate minor reforms.
 		swap_ideas = {
-			remove_idea = Planned_Economy
+			remove_idea = NKO_Planned_Economy
 			add_idea = Socialist_Market_Economy_planned_2
 		}
 		add_stability = -0.02
@@ -153,7 +156,7 @@ country_event = {
 	option = {
 		name = korea.2.c #Initiate moderate reforms.
 		swap_ideas = {
-			remove_idea = Planned_Economy
+			remove_idea = NKO_Planned_Economy
 			add_idea = Socialist_Market_Economy
 		}
 		add_stability = -0.05
@@ -186,7 +189,7 @@ country_event = {
 	option = {
 		name = korea.2.e #Initiate major reforms.
 		swap_ideas = {
-			remove_idea = Planned_Economy
+			remove_idea = NKO_Planned_Economy
 			add_idea = Socialist_Market_Economy_free_2
 		}
 		add_stability = -0.1
@@ -377,7 +380,7 @@ country_event = {
 			modifier = {
 				factor = 2
 				original_tag = KOR
-				NKO = { NOT = { has_idea = Planned_Economy } }
+				NKO = { NOT = { has_idea = NKO_Planned_Economy } }
 			}
 		}
 	}
@@ -879,6 +882,7 @@ news_event = {
 	}
 }
 
+# TODO: Rework this event chain
 country_event = {
 	id = korea.16
 	title = korea.16.t
@@ -887,12 +891,12 @@ country_event = {
 
 	trigger = {
 		original_tag = KOR
-		OR = {
+		is_subject = no
+		has_war_with = NKO
+		USA = {
 			has_war_with = NKO
-			USA = { has_war_with = NKO }
+			is_subject = no
 		}
-		KOR = { is_puppet = no }
-		USA = { is_puppet = no }
 		has_idea = KOR_wartime_control
 		NOT = { is_in_faction_with = USA }
 	}
@@ -1232,7 +1236,6 @@ country_event = {
 				NOT = {
 					has_completed_focus = KOR_pave_the_way_for_reunification
 					has_completed_focus = NKO_pave_the_way_for_reunification
-					has_completed_focus = NKO_Democracy_in_the_North
 					has_completed_focus = KOR_juche_in_the_south
 				}
 			}
@@ -1842,17 +1845,9 @@ country_event = {
 			NKO = { has_country_flag = NKO_proposed_north_reunification }
 		}
 	}
-	desc = {
-		text = korea.34.d1
-		trigger = {
-			NKO = { has_country_flag = NKO_proposed_unity_reunification }
-		}
-	}
-
 	picture = GFX_politics_negotiations
-
 	is_triggered_only = yes
-
+	
 	option = {
 		name = korea.26.a #Our country will be whole again!
 		log = "[GetDateText]: [This.GetName]: korea.34.a executed"
@@ -1862,14 +1857,7 @@ country_event = {
 			target = NKO
 			modifier = imminent_reunification
 		}
-		if = {
-			limit = { NKO = { has_country_flag = NKO_proposed_north_reunification } }
-			set_country_flag = KOR_agreed_NKO_led_reunification
-		}
-		else_if = {
-			limit = { NKO = { has_country_flag = NKO_proposed_unity_reunification } }
-			set_country_flag = KOR_agreed_neutral_reunification
-		}
+		set_country_flag = KOR_agreed_NKO_led_reunification
 		NKO = {
 			country_event = {
 				days = 1
@@ -1975,7 +1963,6 @@ country_event = {
 		NKO = {
 			set_country_flag = NKO_reunification_talks_failed
 			clr_country_flag = NKO_proposed_north_reunification
-			clr_country_flag = NKO_proposed_unity_reunification
 		}
 		ai_chance = {
 			factor = 5
@@ -2126,7 +2113,212 @@ country_event = {
 	}
 }
 
-	###North Korea###
+country_event = {
+	id = korea.39
+	title = korea.39.t
+	desc = korea.39.d
+	is_triggered_only = yes
+
+	option = {
+		name = korea.39.a
+		log = "[GetDateText]: [This.GetName]: korea.39.a executed"
+		NKO = {
+			country_event = { id = korea.40 }
+		}
+	}
+}
+
+country_event = {
+	id = korea.40
+	title = korea.40.t
+	desc = korea.40.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = korea.40.a
+		log = "[GetDateText]: [This.GetName]: korea.40.a executed"
+		if = {
+			limit = {
+				has_global_flag = GAME_RULE_allow_colored_puppets
+			}
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_autonomous_state_colored
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_autonomous_state
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+		declare_war_on = {
+			target = KOR
+			type = annex_everything
+		}
+	}
+}
+
+#North Korea proposes reunification
+country_event = {
+	id = korea.41
+	title = korea.41.t
+	desc = korea.41.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = korea.41.a
+		log = "[GetDateText]: [This.GetName]: korea.41.a executed"
+		add_war_support = -0.05
+		support_for_reunification_2 = yes
+		NKO = {
+			country_event = {
+				days = 1
+				id = korea.42
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_war_with = NKO
+			}
+			modifier = {
+				factor = 1
+				KOR = {
+					check_variable = { SFR < 0.5 }
+				}
+			}
+			modifier = {
+				add = 2
+				KOR = {
+					check_variable = { SFR > 0.5 }
+				}
+			}
+			modifier = {
+				add = 2
+				KOR = {
+					check_variable = { SFR > 0.6 }
+				}
+			}
+			modifier = {
+				add = 2
+				KOR = {
+					check_variable = { SFR > 0.7 }
+				}
+			}
+			modifier = {
+				add = 2
+				KOR = {
+					check_variable = { SFR > 0.8 }
+				}
+			}
+			modifier = {
+				add = 2
+				KOR = {
+					check_variable = { SFR > 0.9 }
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > -1
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 9
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 24
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 49
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 74
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 99
+				}
+			}
+		}
+	}
+
+	option = {
+		name = korea.41.b #Reunification can never take place on these terms...
+		log = "[GetDateText]: [This.GetName]: korea.41.b executed"
+		NKO = {
+			country_event = {
+				days = 1
+				id = korea.43
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+
+country_event = {
+	id = korea.42
+	title = korea.42.t
+	desc = korea.42.d
+	picture = GFX_KOR_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.42.a 
+		log = "[GetDateText]: [This.GetName]: korea.42.a executed"
+		set_country_flag = KOR_agreed_NKO_confederation
+	}
+}
+
+
+country_event = {
+	id = korea.43
+	title = korea.43.t
+	desc = korea.43.d
+	picture = GFX_KOR_generic
+
+	is_triggered_only = yes
+
+	option = {
+		name = korea.43.a 
+		log = "[GetDateText]: [This.GetName]: korea.43.a executed"
+	}
+}
+
+
+
+###North Korea###
 country_event = {
 	id = korea_north.1
 
@@ -2275,6 +2467,91 @@ country_event = {
 		complete_national_focus = NKO_Revaluation_Failure
 		set_country_flag = Revaluation_Failure
 		log = "[GetDateText]: [This.GetName]: korea_north.6.a executed"
+	}
+}
+#Export Weapon
+country_event = {
+	id = korea_north.11
+	title = korea_north.11.t
+	desc = korea_north.11.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+	#Done
+	option = {
+		name = korea_north.11.a
+		log = "[GetDateText]: [This.GetName]: korea_north.11.a executed"
+		add_equipment_to_stockpile = {
+			type = Anti_Air_0
+			amount = 40
+			producer = NKO
+		}
+		add_equipment_to_stockpile = {
+			type = infantry_weapons1
+			amount = 900
+			producer = NKO
+		}
+		add_equipment_to_stockpile = {
+			type = Anti_tank_0
+			amount = 50
+			producer = NKO
+		}
+		set_temp_variable = { treasury_change = -8.65 }
+		modify_treasury_effect = yes
+		NKO = {
+			country_event = { id = korea_north.12 }
+		}
+	}
+	#Not Done
+	option = {
+		name = korea_north.11.b
+		log = "[GetDateText]: [This.GetName]: korea_north.11.b executed"
+		NKO = {
+			country_event = { id = korea_north.13 }
+		}
+	}
+}
+country_event = {
+	id = korea_north.12
+	title = korea_north.12.t
+	desc = korea_north.12.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+	#Done
+	option = {
+		name = korea_north.12.a
+		log = "[GetDateText]: [This.GetName]: korea_north.12.a executed"
+		set_temp_variable = { treasury_change = 8.65 }
+		modify_treasury_effect = yes
+		add_equipment_to_stockpile = {
+			type = Anti_Air_0
+			amount = -40
+			producer = NKO
+		}
+		add_equipment_to_stockpile = {
+			type = infantry_weapons1
+			amount = -900
+			producer = NKO
+		}
+		add_equipment_to_stockpile = {
+			type = Anti_tank_0
+			amount = -50
+			producer = NKO
+		}
+	}
+}
+country_event = {
+	id = korea_north.13
+	title = korea_north.13.t
+	desc = korea_north.13.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+	#Done
+	option = {
+		name = korea_north.13.a
+		log = "[GetDateText]: [This.GetName]: korea_north.13.a executed"
 	}
 }
 
@@ -2499,5 +2776,1073 @@ country_event = {
 		add_political_power = -50
 		ai_chance = { factor = 50 }
 		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.7.b executed" #Doing nothing. What does Kim Jong-un have to do with me?
+	}
+}
+###########RUSSIAN-KOREA FRIENDSHIP MECHANIC EVENTS###########
+#Russian Base
+country_event = {
+	id = korea_russia.1
+	title = korea_russia.1.t
+	desc = korea_russia.1.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.1.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.1.a executed"
+		add_ideas = SOV_NKO_base
+		SOV = {
+			country_event = { id = korea_russia.2 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.1.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.1.b executed"
+		SOV = {
+			country_event = { id = korea_russia.3 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#They agree
+country_event = {
+	id = korea_russia.2
+	title = korea_russia.2.t
+	desc = korea_russia.2.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.2.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.2.a executed"
+
+		ai_chance = { base = 1 }
+	}
+}
+#They agree
+country_event = {
+	id = korea_russia.3
+	title = korea_russia.3.t
+	desc = korea_russia.3.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.3.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.3.a executed"
+
+		ai_chance = { base = 1 }
+	}
+}
+#Russian Nuclear
+country_event = {
+	id = korea_russia.4
+	title = korea_russia.4.t
+	desc = korea_russia.4.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.4.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.4.a executed"
+		NKO = {
+			country_event = { id = korea_russia.5 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.4.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.4.b executed"
+		NKO = {
+			country_event = { id = korea_russia.3 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Russian Nuclear Agree
+country_event = {
+	id = korea_russia.5
+	title = korea_russia.5.t
+	desc = korea_russia.5.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.5.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.5.a executed"
+		set_country_flag = SOV_agree_nuclear
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+#Russian Gives Us Armor
+country_event = {
+	id = korea_russia.6
+	title = korea_russia.6.t
+	desc = korea_russia.6.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.6.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.6.a executed"
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		add_ideas = NKO_korean_ratnik_conversion
+
+	}
+}
+#Korean ask about Gas Pipeline
+country_event = {
+	id = korea_russia.7
+	title = korea_russia.7.t
+	desc = korea_russia.7.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.7.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.7.a executed"
+		set_country_flag = SOV_gazprom_mechanic_korean_stream_agree
+		NKO = {
+			country_event = { id = korea_russia.2 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.7.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.7.b executed"
+		NKO = {
+			country_event = { id = korea_russia.3 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Korean ask Friendship Russia
+country_event = {
+	id = korea_russia.8
+	title = korea_russia.8.t
+	desc = korea_russia.8.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.8.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.8.a executed"
+		add_ideas = NKO_korean_russian_frienship
+		diplomatic_relation = {
+			country = NKO
+			relation = guarantee
+		}
+		NKO = {
+			country_event = { id = korea_russia.9 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.7.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.8.a executed"
+		NKO = {
+			country_event = { id = korea_russia.10 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Friendship Russia Agree
+country_event = {
+	id = korea_russia.9
+	title = korea_russia.9.t
+	desc = korea_russia.9.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.9.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.9.a executed"
+		add_ideas = NKO_korean_russian_frienship
+		diplomatic_relation = {
+			country = SOV
+			relation = guarantee
+		}
+		NKO_sanctions_positive = yes
+		news_event = {
+			hours = 6
+			id = korea_russia_news.1
+		}
+	}
+}
+#Friendship Russia Disagree
+country_event = {
+	id = korea_russia.10
+	title = korea_russia.10.t
+	desc = korea_russia.10.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.10.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.10.a executed"
+		add_ideas = NKO_korean_russian_frienship
+	}
+}
+#Russia ask Friendship Korea
+country_event = {
+	id = korea_russia.11
+	title = korea_russia.11.t
+	desc = korea_russia.11.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.11.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.11.a executed"
+		add_ideas = NKO_korean_russian_frienship
+		diplomatic_relation = {
+			country = SOV
+			relation = guarantee
+		}
+		SOV = {
+			country_event = { id = korea_russia.12 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.11.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.11.a executed"
+		NKO = {
+			country_event = { id = korea_russia.13 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Friendship Russia Agree
+country_event = {
+	id = korea_russia.12
+	title = korea_russia.12.t
+	desc = korea_russia.12.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.12.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.12.a executed"
+		add_ideas = NKO_korean_russian_frienship
+		diplomatic_relation = {
+			country = NKO
+			relation = guarantee
+		}
+		news_event = {
+			hours = 6
+			id = korea_russia_news.1
+		}
+	}
+}
+#Friendship Russia Disagree
+country_event = {
+	id = korea_russia.13
+	title = korea_russia.13.t
+	desc = korea_russia.13.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.13.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.13.a executed"
+		add_ideas = NKO_korean_russian_frienship
+	}
+}
+
+#Korea Ask About Cruiser
+country_event = {
+	id = korea_russia.14
+	title = korea_russia.14.t
+	desc = korea_russia.14.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.14.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.14.a executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		NKO = {
+			country_event = { id = korea_russia.15 }
+		}
+		if = {
+			limit = {
+				has_idea = NKO_korean_russian_frienship
+			}
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.14.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.14.b executed"
+		NKO = {
+			country_event = { id = korea_russia.3 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Russia Agree about Cruiser
+country_event = {
+	id = korea_russia.15
+	title = korea_russia.15.t
+	desc = korea_russia.15.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.15.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.15.a executed"
+		if = {
+			limit = {
+				has_tech = cruiser_hull_1
+			}
+			set_technology = { cruiser_hull_2 = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { has_tech = cruiser_hull_1 }
+			}
+			set_technology = { cruiser_hull_1 = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		if = {
+			limit = {
+				has_idea = NKO_korean_russian_frienship
+				NOT = { has_tech = destroyer_hull_1 }
+			}
+			set_technology = { destroyer_hull_1 = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				has_idea = NKO_korean_russian_frienship
+				has_tech = destroyer_hull_1
+			}
+			set_technology = { destroyer_hull_2 = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+#Country trade agreement agaisnt sanctions
+country_event = {
+	id = korea_russia.16
+	title = korea_russia.16.t
+	desc = korea_russia.16.d
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.16.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.16.a executed"
+		ROOT = {
+			add_opinion_modifier = {
+				target = NKO
+				modifier = trade_mission
+			}
+		}
+		set_temp_variable = { receiver_nation = ROOT.id }
+		set_temp_variable = { sender_nation = NKO.id }
+		set_improved_trade_agreement = yes
+		NKO = {
+			country_event = { id = korea_russia.17 }
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_government = communism
+				add = 99
+			}
+			modifier = {
+				has_government = nationalist
+				add = 99
+			}
+		}
+	}
+	option = {
+		name = korea_russia.16.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.16.b executed"
+		ROOT = {
+			add_opinion_modifier = {
+				target = NKO
+				modifier = recent_actions_negative
+			}
+		}
+		NKO = {
+			country_event = { id = korea_russia.18 }
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_government = democratic
+				add = 99
+			}
+			modifier = {
+				has_government = neutrality
+				add = 99
+			}
+		}
+	}
+}
+
+#Country trade agreement agree
+country_event = {
+	id = korea_russia.17
+	title = korea_russia.17.t
+	desc = korea_russia.17.d
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.17.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.17.a executed"
+		NKO = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = trade_mission
+			}
+		}
+		set_temp_variable = { receiver_nation = NKO.id }
+		set_temp_variable = { sender_nation = FROM.id }
+		set_improved_trade_agreement = yes
+		NKO_sanctions_positive = yes
+	}
+}
+
+#Country trade agreement disagree
+country_event = {
+	id = korea_russia.18
+	title = korea_russia.18.t
+	desc = korea_russia.18.d
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.18.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.18.a executed"
+		NKO = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = recent_actions_negative
+			}
+		}
+	}
+}
+
+#Korea Ask About Fighter
+country_event = {
+	id = korea_russia.19
+	title = korea_russia.19.t
+	desc = korea_russia.19.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.19.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.19.a executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		NKO = {
+			country_event = { id = korea_russia.20 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_russia.19.b
+		log = "[GetDateText]: [This.GetName]: korea_russia.19.b executed"
+		NKO = {
+			country_event = { id = korea_russia.3 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#Russia Agree about Fighter
+country_event = {
+	id = korea_russia.20
+	title = korea_russia.20.t
+	desc = korea_russia.20.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia.20.a
+		log = "[GetDateText]: [This.GetName]: korea_russia.20.a executed"
+		if = {
+			limit = {
+				has_tech = gen_3_light
+			}
+			set_technology = { gen_3_medium = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { has_tech = gen_3_light }
+			}
+			set_technology = { gen_3_light = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+#Treaty on Comprehensive Strategic Partnership News
+news_event = {
+	id = korea_russia_news.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event korea_russia_news.1" }
+	title = korea_russia_news.1.t
+	desc = korea_russia_news.1.d
+	picture = GFX_north_korea_russia
+
+	major = yes
+	
+	is_triggered_only = yes
+
+	option = {
+		name = korea_russia_news.1.a
+		log = "[GetDateText]: [This.GetName]: korea_russia_news.1.a executed"
+		trigger = { 
+			OR = {
+				original_tag = SOV 
+				original_tag = NKO
+			}
+		}
+	}
+
+	option = {
+		name = korea_russia_news.1.b
+		log = "[GetDateText]: [This.GetName]: korea_russia_news.1.b executed"
+		trigger = {
+			NOT = { 
+				OR = {
+					original_tag = SOV 
+					original_tag = NKO
+				}
+			}
+		}
+	}
+}
+#Korea Ask About Fighter
+country_event = {
+	id = korea_china.1
+	title = korea_china.1.t
+	desc = korea_china.1.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.1.a
+		log = "[GetDateText]: [This.GetName]: korea_china.1.a executed"
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		NKO = {
+			country_event = { id = korea_china.2 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.1.b
+		log = "[GetDateText]: [This.GetName]: korea_china.1.b executed"
+		NKO = {
+			country_event = { id = korea_china.3 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+#China Agree about Fighter
+country_event = {
+	id = korea_china.2
+	title = korea_china.2.t
+	desc = korea_china.2.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.2.a
+		log = "[GetDateText]: [This.GetName]: korea_china.2.a executed"
+		if = {
+			limit = {
+				has_tech = gen_3_light
+			}
+			set_technology = { gen_3_medium = 1 }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { has_tech = gen_3_light }
+			}
+			set_technology = { gen_3_light = 1 }
+			set_temp_variable = { percent_change = 11 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = NKO }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+#China Disagree about Fighter
+country_event = {
+	id = korea_china.3
+	title = korea_china.3.t
+	desc = korea_china.3.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.3.a
+		log = "[GetDateText]: [This.GetName]: korea_china.3.a executed"
+	}
+}
+
+#Korea Ask Military Support
+country_event = {
+	id = korea_china.4
+	title = korea_china.4.t
+	desc = korea_china.4.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.4.a
+		log = "[GetDateText]: [This.GetName]: korea_china.4.a executed"
+		NKO = {
+			country_event = { id = korea_china.5 }
+		}
+		diplomatic_relation = {
+			country = NKO
+			relation = guarantee
+			active = yes
+		}
+		diplomatic_relation = {
+			country = NKO
+			relation = non_aggression_pact
+			active = yes
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.4.b
+		log = "[GetDateText]: [This.GetName]: korea_china.4.b executed"
+		NKO = {
+			country_event = { id = korea_china.6 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Military Support
+country_event = {
+	id = korea_china.5
+	title = korea_china.5.t
+	desc = korea_china.5.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.5.a
+		log = "[GetDateText]: [This.GetName]: korea_china.5.a executed"
+		diplomatic_relation = {
+			country = CHI
+			relation = military_access
+			active = yes
+		}
+	}
+}
+
+#China Disagree
+country_event = {
+	id = korea_china.6
+	title = korea_china.6.t
+	desc = korea_china.6.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.6.a
+		log = "[GetDateText]: [This.GetName]: korea_china.6.a executed"
+
+	}
+}
+
+#Korea Ask Invest Resourse
+country_event = {
+	id = korea_china.7
+	title = korea_china.7.t
+	desc = korea_china.7.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.7.a
+		log = "[GetDateText]: [This.GetName]: korea_china.7.a executed"
+		NKO = {
+			country_event = { id = korea_china.8 }
+		}
+		set_temp_variable = { treasury_change = -5.6 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.7.b
+		log = "[GetDateText]: [This.GetName]: korea_china.7.b executed"
+		NKO = {
+			country_event = { id = korea_china.6 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Resourse
+country_event = {
+	id = korea_china.8
+	title = korea_china.8.t
+	desc = korea_china.8.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.8.a
+		log = "[GetDateText]: [This.GetName]: korea_china.8.a executed"
+		601 = {
+			add_resource = {
+				type = tungsten
+				amount = 2
+			}
+			add_resource = {
+				type = chromium
+				amount = 2
+			}
+		}
+		602  = {
+			add_resource = {
+				type = oil
+				amount = 2
+			}
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+	}
+}
+
+#Korea Ask Invest Factories
+country_event = {
+	id = korea_china.9
+	title = korea_china.9.t
+	desc = korea_china.9.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.9.a
+		log = "[GetDateText]: [This.GetName]: korea_china.9.a executed"
+		NKO = {
+			country_event = { id = korea_china.10 }
+		}
+		set_temp_variable = { treasury_change = -17 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.9.b
+		log = "[GetDateText]: [This.GetName]: korea_china.9.b executed"
+		NKO = {
+			country_event = { id = korea_china.6 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Factories
+country_event = {
+	id = korea_china.10
+	title = korea_china.10.t
+	desc = korea_china.10.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.10.a
+		log = "[GetDateText]: [This.GetName]: korea_china.10.a executed"
+		602  = {
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = industrial_complex
+				level = 2
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+	}
+}
+
+#Korea Ask Invest Banks
+country_event = {
+	id = korea_china.11
+	title = korea_china.11.t
+	desc = korea_china.11.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.11.a
+		log = "[GetDateText]: [This.GetName]: korea_china.11.a executed"
+		NKO = {
+			country_event = { id = korea_china.12 }
+		}
+		set_temp_variable = { percent_change = 6 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		add_political_power = -75
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.11.b
+		log = "[GetDateText]: [This.GetName]: korea_china.11.b executed"
+		NKO = {
+			country_event = { id = korea_china.6 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Banks
+country_event = {
+	id = korea_china.12
+	title = korea_china.12.t
+	desc = korea_china.12.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.12.a
+		log = "[GetDateText]: [This.GetName]: korea_china.12.a executed"
+		increase_economic_growth = yes
+		NKO_sanctions_positive = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+	}
+}
+
+#Korea Ask Invest Huawei
+country_event = {
+	id = korea_china.13
+	title = korea_china.13.t
+	desc = korea_china.13.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.13.a
+		log = "[GetDateText]: [This.GetName]: korea_china.13.a executed"
+		NKO = {
+			country_event = { id = korea_china.14 }
+		}
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.13.b
+		log = "[GetDateText]: [This.GetName]: korea_china.13.b executed"
+		NKO = {
+			country_event = { id = korea_china.6 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Invest Banks
+country_event = {
+	id = korea_china.14
+	title = korea_china.14.t
+	desc = korea_china.14.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.14.a
+		log = "[GetDateText]: [This.GetName]: korea_china.14.a executed"
+		add_tech_bonus = {
+			name = SOV_expand_the_tech_industry
+			bonus = 0.30
+			uses = 2
+			category = CAT_internet_tech
+		}
+	}
+}
+
+#Korea Ask China Base
+country_event = {
+	id = korea_china.15
+	title = korea_china.15.t
+	desc = korea_china.15.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.15.a
+		log = "[GetDateText]: [This.GetName]: korea_china.15.a executed"
+		NKO = {
+			country_event = { id = korea_china.16 }
+		}
+		set_temp_variable = { percent_change = 6 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = NKO }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		name = korea_china.15.b
+		log = "[GetDateText]: [This.GetName]: korea_china.15.b executed"
+		NKO = {
+			country_event = { id = korea_china.6 }
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#China Agree Base
+country_event = {
+	id = korea_china.16
+	title = korea_china.16.t
+	desc = korea_china.16.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = korea_china.16.a
+		log = "[GetDateText]: [This.GetName]: korea_china.16.a executed"
+		add_ideas = CHI_NKO_base
 	}
 }
