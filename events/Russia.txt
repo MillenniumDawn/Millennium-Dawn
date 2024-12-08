@@ -772,15 +772,6 @@ country_event = {
 		}
 		trigger = { country_exists = LPR }
 	}
-	##Play OPR
-	option = {
-		name = russia.16.o3
-		log = "[GetDateText]: [This.GetName]: russia.16.o3 executed"
-		OPR = {
-			change_tag_from = SOV
-		}
-		trigger = { country_exists = OPR }
-	}
 	##Play HPR
 	option = {
 		name = russia.16.o4
@@ -1966,10 +1957,21 @@ country_event = {
 	desc = russia.62.d
 	is_triggered_only = yes
 	picture = GFX_sov_lebed
+	trigger = {
+		NOT = {
+			PMR = {
+				has_country_flag = ded_lebed
+			}
+		}
+	}
 	option = {
 		name = russia.62.a
 		log = "[GetDateText]: [This.GetName]: russia.62.a"
-		set_country_flag = ded_lebed
+		hidden_effect = {
+			PMR = {
+				set_country_flag = ded_lebed
+			}
+		}
 	}
 }
 ##PMC Gazprom
@@ -6458,6 +6460,10 @@ country_event = {
 		name = russia_wagner.44.a
 		log = "[GetDateText]: [This.GetName]: russia_wagner.44.a executed"
 		add_ideas = SOV_wagner_military_advisors
+		set_temp_variable = { percent_change = 1.5 }
+		set_temp_variable = { tag_index = WAG }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
 		WAG = {
 			country_event = {
 				id = russia_wagner.45
@@ -8872,49 +8878,48 @@ country_event = {
 		}
 	}
 }
+##Annex Transnistria
 country_event = {
 	id = sov_nationalists.22
 	title = sov_nationalists.22.t
 	desc = sov_nationalists.22.d
-	picture = GFX_transistria_referendum
+	picture = GFX_transnistria_russia_relations
 
 	is_triggered_only = yes
 
 	option = {
 		name = sov_nationalists.22.a
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.22.a executed"
-		ai_chance = {
-			base = 80
-		}
-		SOV = {
-			country_event = sov_nationalists.51
-			add_to_variable = { treasury = PMR.treasury }
-			add_to_variable = { debt = PMR.debt }
-			add_to_variable = { int_investments = PMR.int_investments }
-			annex_country = { target = PMR transfer_troops = yes }
-		}
-		PMR = {
-			every_unit_leader = {
-				set_nationality = SOV
-			}
-			every_core_state = { add_core_of = SOV }
-		}
-	}
-	option = {
-		name = sov_nationalists.22.b
-		log = "[GetDateText]: [This.GetName]: sov_nationalists.22.b executed"
-		ai_chance = {
-			base = 20
-		}
-		SOV = {
+		hidden_effect = {
 			PMR = {
 				set_country_flag = SOV_subject_agree
 				set_country_flag = SOV_subject_republic
+				set_country_flag = SUB_russ_polit
+				update_party_name = yes
+				set_cosmetic_tag = PMR_russia
+				clr_country_flag = dynamic_flag
+				add_ideas = SUB_smallish_taxes
 			}
-			set_autonomy = {
-				target = PMR
-				autonomy_state = autonomy_republic_rf
+			SOV = {
+				set_autonomy = {
+					target = PMR
+					autonomy_state = autonomy_republic_rf
+					end_wars = no
+					end_civil_wars = no
+				}
+				set_temp_variable = { modify_subjectnalogs = 0.5 }
+				modify_subjectnalogs_support = yes
 			}
+			SUB_separatism_minus_subject = yes
+			hidden_effect = {
+				news_event = {
+					hours = 12
+					id = transnistria_news.1
+				}
+			}
+		}
+		ai_chance = {
+			base = 100
 		}
 	}
 
@@ -8924,7 +8929,6 @@ country_event = {
 		ai_chance = {
 			base = 0
 		}
-
 	}
 }
 ##Annex Manchuria
@@ -12710,7 +12714,6 @@ country_event = { # Funding success
 	id = russia.200
 	title = russia.200.t
 	desc = russia.200.d
-	picture = GFX_buran_hangar
 
 	is_triggered_only = yes
 
@@ -12729,7 +12732,6 @@ country_event = { # Funds Embezzled!
 	id = russia.300
 	title = russia.300.t
 	desc = russia.300.d
-	picture = GFX_buran_corruption
 
 	is_triggered_only = yes
 
@@ -12744,7 +12746,7 @@ country_event = { # Media in Frenzy
 	id = russia.301
 	title = russia.301.t
 	desc = russia.301.d
-	picture = GFX_buran_repaired
+	picture = GFX_buran_event_4_SOV
 
 	is_triggered_only = yes
 
@@ -12773,7 +12775,7 @@ country_event = { # Repaired
 	id = russia.302
 	title = russia.302.t
 	desc = russia.302.d
-	picture = GFX_buran_repaired
+	picture = GFX_buran_event_3_SOV
 
 	is_triggered_only = yes
 
@@ -12781,6 +12783,7 @@ country_event = { # Repaired
 		name = russia.302.a
 		log = "[GetDateText]: [This.GetName]: russia.302.a executed"
 		add_stability = 0.05
+		set_country_flag = SOV_mission_space_ended
 		news_event = {
 			hours = 6
 			id = russia.3022
@@ -12801,7 +12804,7 @@ news_event = {
 	major = yes
 	title = russia.3022.t
 	desc = russia.3022.d
-	picture = GFX_buran_repaired_news
+	picture = GFX_buran_event_3_news_SOV
 
 	is_triggered_only = yes
 
@@ -12823,6 +12826,7 @@ country_event = { # Fire
 		name = russia.303.a
 		log = "[GetDateText]: [This.GetName]: russia.303.a executed"
 		add_stability = -0.05
+		set_country_flag = SOV_mission_space_ended
 		news_event = {
 			hours = 6
 			id = russia.3033
@@ -12835,7 +12839,7 @@ news_event = {
 	major = yes
 	title = russia.3033.t
 	desc = russia.3033.d
-	picture = GFX_buran_fire_news
+	picture = GFX_buran_event_2_news_SOV
 
 	is_triggered_only = yes
 
@@ -12849,7 +12853,7 @@ country_event = { # Disaster
 	id = russia.304
 	title = russia.304.t
 	desc = russia.304.d
-	picture = GFX_buran_collapse
+	picture = GFX_buran_event_1_SOV
 
 	is_triggered_only = yes
 
@@ -12858,6 +12862,7 @@ country_event = { # Disaster
 		log = "[GetDateText]: [This.GetName]: russia.304.a executed"
 		add_stability = -0.05
 		add_political_power = -100
+		set_country_flag = SOV_mission_space_ended
 		news_event = {
 			hours = 6
 			id = russia.3044
@@ -12870,7 +12875,7 @@ news_event = {
 	major = yes
 	title = russia.3044.t
 	desc = russia.3044.d
-	picture = GFX_buran_collapse_news
+	picture = GFX_buran_event_1_news_SOV
 
 	is_triggered_only = yes
 
@@ -13671,15 +13676,15 @@ country_event = {
 	mean_time_to_happen = {
 		modifier = {
 			factor = 1.5
-			has_idea = SOV_gazprom_idea1
+			has_idea = SOV_gazprom1_idea
 		}
 		modifier = {
 			factor = 1.80
-			has_idea = SOV_gazprom_idea2
+			has_idea = SOV_gazprom2_idea
 		}
 		modifier = {
 			factor = 2.5
-			has_idea = SOV_gazprom_idea3
+			has_idea = SOV_gazprom3_idea
 		}
 	}
 
@@ -13926,15 +13931,15 @@ country_event = {
 	mean_time_to_happen = {
 		modifier = {
 			factor = 1.5
-			has_idea = SOV_gazprom_idea1
+			has_idea = SOV_gazprom1_idea
 		}
 		modifier = {
 			factor = 1.80
-			has_idea = SOV_gazprom_idea2
+			has_idea = SOV_gazprom2_idea
 		}
 		modifier = {
 			factor = 2.5
-			has_idea = SOV_gazprom_idea3
+			has_idea = SOV_gazprom3_idea
 		}
 	}
 
