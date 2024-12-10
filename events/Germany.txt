@@ -7797,7 +7797,7 @@ country_event = { #end Heer der Zukunft
 		name = Germany.585.a
 		log = "[GetDateText]: [This.GetName]: Germany.585.a executed"
 		clr_country_flag = GER_Weizsacker_commision
-		country_event = { id = germany.588 days = 365 }
+		country_lock_all_division_template = NO
 	}
 }
 country_event = { #Weizsäcker meets
@@ -7811,10 +7811,18 @@ country_event = { #Weizsäcker meets
 	option = { #ok
 		name = Germany.586.a
 		log = "[GetDateText]: [This.GetName]: Germany.586.a executed"
-		hidden_effect = {
-			country_event = { id = germany.587 days = 150 }
-			country_event = { id = Germany_Mech.27 days = 680 }
-			country_event = { id = Germany_Mech.29 days = 2214 }
+		IF = {
+			limit = {
+				has_dlc = "No Step Back"
+			}
+			hidden_effect = {
+				country_event = { id = germany.587 days = 150 }
+				country_event = { id = Germany_Mech.27 days = 680 }
+				country_event = { id = Germany_Mech.29 days = 2214 }
+			}
+		}
+		else_if = {
+			country_lock_all_division_template = NO
 		}
 		
 		add_Ideas = GER_Idea_Weizsackerkommission
@@ -11386,6 +11394,10 @@ country_event = { #Leopard 2E
 		name = GER_Cold_War.9.a
 		log = "[GetDateText]: [This.GetName]: GER_Cold_War.9.a executed"
 		custom_effect_tooltip = GER_Cold_War.9.a_desc
+		If = {
+			limit = {
+				has_dlc = "No Step Back"
+			}
 		SPR = {
 			create_equipment_variant = {
 				name = "Leopard 2E"
@@ -11410,6 +11422,12 @@ country_event = { #Leopard 2E
 				}
 				icon = "gfx/interface/technologies/GER/LAND/MBT5.dds"
 				model = "GER_MD4_medium_armor_3_entity"
+				}
+			}
+		}
+		else_if = {
+			SPR = {
+				set_technology = { MBT_4 = 1}
 			}
 		}
 	}
@@ -11417,12 +11435,24 @@ country_event = { #Leopard 2E
 		name = GER_Cold_War.9.b
 		log = "[GetDateText]: [This.GetName]: GER_Cold_War.9.b executed"
 		custom_effect_tooltip = GER_Cold_War.9.b_desc
-		SPR = {
+		If = {
+			limit = {
+				has_dlc = "No Step Back"
+			}
+			SPR = {
+				add_equipment_to_stockpile = {
+						type = mbt_hull_1
+						variant_name = "Leopard 2A6"
+						amount = 219
+						producer = GER
+				}
+			}
+		}
+		else_if = {
 			add_equipment_to_stockpile = {
-					type = mbt_hull_1
-					variant_name = "Leopard 2A6"
-					amount = 219
-					producer = GER
+				type = MBT_4 #Leopard 2A6
+				amount = 219
+				producer = GER
 			}
 		}
 		SPR = { 
@@ -19453,7 +19483,7 @@ country_event = { #accept
 	option = { #Good Guys
 		name = GER_Diplomacy_answer.1.a
 		log = "[GetDateText]: [This.GetName]: GER_Diplomacy_answer.1.a executed"
-		custom_effect_tooltip = GER_Diplomacy_answer.1.a_desc
+		#custom_effect_tooltip = GER_Diplomacy_answer.1.a_desc
 		
 		ai_chance = {
 			base = 5
@@ -19471,7 +19501,7 @@ country_event = { #Reject
 	option = { #Idiots
 		name = GER_Diplomacy_answer.2.a
 		log = "[GetDateText]: [This.GetName]: GER_Diplomacy_answer.2.a executed"
-		custom_effect_tooltip = GER_Diplomacy_answer.2.a_desc
+		#custom_effect_tooltip = GER_Diplomacy_answer.2.a_desc
 		
 		ai_chance = {
 			base = 5
@@ -19597,10 +19627,116 @@ country_event = { #Invite to Strategic partnership
 		name = GER_Diplomacy.3.a
 		log = "[GetDateText]: [This.GetName]: GER_Diplomacy.3.a executed"
 		custom_effect_tooltip = GER_Diplomacy.3.a_desc
-		country_event = { id = GER_Diplomacy_answer.1 days = 1 }
+		
 			set_country_flag = GER_Humbold_foundation
 			add_to_tech_sharing_group = Humbold_foundation_sharing_group
 			add_ideas = GER_wandel_durch_handel
+
+		GER = {
+			country_event = { id = GER_Diplomacy_answer.1 days = 1 }
+		}
+
+		if = {
+			Limit = {
+				original_tag = JAP
+			}
+			GER = {
+				add_tech_bonus = {
+				name = CAT_space
+				bonus = 0.50
+				uses = 2
+				category = CAT_space
+				}
+			}
+		}
+		else_if = {
+			Limit = {
+				original_tag = KOR
+			}
+			GER = {
+				add_tech_bonus = {
+				name = computing_tech
+				bonus = 0.6
+				uses = 2
+				category = CAT_computing_tech
+				}
+			}
+		}
+		else_if = {
+			Limit = {
+				original_tag = SAF
+			}
+			GER = {
+				38 = {
+					add_resource = {
+						type = tungsten
+						amount = 8
+					}
+				}
+			}
+		}
+		else_if = {
+			Limit = {
+				original_tag = VIE
+			}
+			GER = {
+				add_offsite_building = { type = industrial_complex level = 2 }
+			}
+			VIE = {
+				random_core_state = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = industrial_complex
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+		}
+		else_if = {
+			Limit = {
+				original_tag = RAJ 
+			}
+			GER = {
+				add_ideas = GER_Ideas_IT_Workers
+			}
+		}
+		else_if = {
+			Limit = {
+				original_tag = BRA 
+			}
+			GER = {
+				add_offsite_building = { type = industrial_complex level = 1 }
+				add_offsite_building = { type = offices level = 1 }
+			}
+			BRA = {
+				random_core_state = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+		}
+		else_if = {
+			Limit = {
+				original_tag = CHI 
+			}
+			GER = {
+				add_ideas = GER_Ideas_Chinese_Partners
+			}
+		}
+		else_if = {
+			Limit = {
+				original_tag = ISR
+			}
+			GER = {
+				add_ideas = GER_ideas_Israel_partner
+			}
+		}
+
 		ai_chance = {
 			base = 5
 		}
@@ -19999,7 +20135,7 @@ country_event = { #Aussenwirtschaft
 			base = 5
 		}
 	}
-	option = { #ressources/ what ever/ Australia
+	option = { #no
 		name = GER_Diplomacy.10.b
 		log = "[GetDateText]: [This.GetName]: GER_Diplomacy.10.b executed"
 		custom_effect_tooltip = GER_Diplomacy.10.b_desc
@@ -20012,7 +20148,7 @@ country_event = { #Aussenwirtschaft
 }
 
 
-country_event = { #international cutting edge tech
+country_event = { #Key ressources
 	id = GER_Diplomacy.11
 	title = GER_Diplomacy.11.t
 	desc = GER_Diplomacy.11.d
@@ -20024,7 +20160,89 @@ country_event = { #international cutting edge tech
 		name = GER_Diplomacy.11.a
 		log = "[GetDateText]: [This.GetName]: GER_Diplomacy.11.a executed"
 		custom_effect_tooltip = GER_Diplomacy.11.a_desc
-		
+		country_event = { id = GER_Diplomacy_answer.1 days = 1 }
+		random_state = {
+					limit = {
+						controller = { tag = ROOT }
+						free_building_slots = {
+							building = offices
+							size > 1
+							include_locked = yes
+						}
+					}
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = offices
+						level = 1
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = GER }
+				set_temp_variable = { influence_target = ROOT }
+					change_influence_percentage = yes
+
+			GER = {
+				set_temp_variable = { int_investment_change = ROOT.gdp_per_capita }
+					multiply_temp_variable = { int_investment_change = 0.46 }
+					modify_international_investment_effect = yes
+					set_temp_variable = { debt_change = ROOT.gdp_per_capita }
+					multiply_temp_variable = { debt_change = 0.31 }
+					modify_debt_effect = yes
+			}
+			If = {
+				Limit = {
+					original_tag = CHL
+				}
+				GER = {
+					38 = {
+						add_resource = {
+							type = tungsten
+							amount = 6
+						}
+					}
+				}
+			}
+			else_If = {
+				Limit = {
+					original_tag = CAN
+				}
+				GER = {
+					38 = {
+						add_resource = {
+							type = chromium
+							amount = 4
+						}
+					}
+				}
+			}
+			else_If = {
+				Limit = {
+					original_tag = SAF
+				}
+				GER = {
+					38 = {
+						add_resource = {
+							type = chromium
+							amount = 4
+						}
+					}
+				}
+			}
+			else_If = {
+				Limit = {
+					original_tag = NOR
+				}
+				GER = {
+					38 = {
+						add_resource = {
+							type = OIL
+							amount = 4
+						}
+					}
+				}
+			}
+			
 		ai_chance = {
 			base = 5
 		}
@@ -20033,18 +20251,10 @@ country_event = { #international cutting edge tech
 		name = GER_Diplomacy.11.b
 		log = "[GetDateText]: [This.GetName]: GER_Diplomacy.11.b executed"
 		custom_effect_tooltip = GER_Diplomacy.11.b_desc
+		country_event = { id = GER_Diplomacy_answer.2 days = 1 }
 		
 		ai_chance = {
-			base = 5
-		}
-	}
-	option = { #
-		name = GER_Diplomacy.11.c
-		log = "[GetDateText]: [This.GetName]: GER_Diplomacy.11.c executed"
-		custom_effect_tooltip = GER_Diplomacy.11.c_desc
-		
-		ai_chance = {
-			base = 5
+			base = 1
 		}
 	}
 }
