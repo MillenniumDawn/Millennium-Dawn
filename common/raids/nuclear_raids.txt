@@ -1,0 +1,1022 @@
+types = {
+	#Hits a province
+	tactical_nuclear_strike = {
+		days_to_prepare = 1
+		days_re_enable = 10
+
+		category = nuclear_raids
+
+		command_power = 20 # command power allocation cost
+
+		allowed = {
+			has_dlc = "Gotterdammerung"
+		}
+		# Raid Type is visible
+
+		# Specific Target is visible
+		show_target = {
+			NOT = {
+				is_in_faction_with = FROM
+			}
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_equipment = {
+					nuclear_missile_equipment > 1
+				}
+				has_equipment = {
+					nuclear_ballistic_missile_equipment > 1
+				}
+			}
+			OR = {
+				if = { limit = { has_idea = nuclear_power_def }
+					has_idea = nuclear_power_def
+					var:target_state = {
+						OR = {
+							is_owned_by = ROOT
+							is_claimed_by = ROOT
+						}
+					}
+					surrender_progress > 0.5
+				}
+				has_idea = nuclear_power_off
+				has_war_with = FROM
+			}
+			OR = {
+				if = {
+					limit = {
+						has_idea = tac_and_strat_retaliation
+					}
+					has_idea = tac_and_strat_retaliation
+					has_country_flag = has_been_nuked
+				}
+				has_idea = tac_first_use_strat_retaliation
+				has_idea = full_first_use
+			}
+		}
+		launchable = {
+			has_war_with = FROM
+		}
+
+		launch_sound = raid_launch_nuclear_strike
+		target_icon = GFX_other_target_icon
+		target_type = {
+			province = any
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber strategic_bomber }
+				modules = { spec_nuclear_consent }
+				amount = { min = 1 }
+			}
+		}
+		unit_requirements = {
+			equipment = {
+				type = { nuclear_ballistic_missile_equipment }
+				amount = { min = 1 }
+			}
+		}
+		essential_equipment = {
+
+		}
+
+		starting_point = {
+		    types = { air_base rocket_site submarine }
+		}
+
+		arrow = {
+			type = air
+		}
+		unit_model = {
+			type = equipment
+		}
+
+		success_factors = {
+			success = {
+				base = 1
+				experience = {
+					weight = 0.1
+					start_weight = -0.1
+					reference = 1000
+				}
+				air_defence = {
+					reference = 100
+					start_weight = -0.05
+					weight = 0.05
+				}
+				air_agility = {
+					reference = 100
+					start_weight = -0.1
+					weight = 0.1
+				}
+				reliability = {
+					start_weight = -0.1
+					weight = 0.1
+				}
+
+				air_superiority = {
+					reference = 1.0
+					start_weight = -0.25
+					weight = 0.25
+				}
+
+				# Target
+				interception = {
+					reference = 10
+					weight = -0.25
+				}
+				anti_air = {
+					weight = -0.05
+				}
+				radar = {
+					weight = -0.05
+				}
+				intel = {
+					weight = 0.2
+					#start_reference = 50
+					reference = 100
+				}
+			}
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					var:actor_country = {
+						custom_effect_tooltip = strike_aborted_tt
+						add_political_power = -50
+					}
+				}
+			}
+			limited_success = {
+				actor_effects = {
+					var:actor_country = {
+						custom_effect_tooltip = strike_aborted_tt
+					}
+				}
+			}
+			success = {
+				actor_effects = {
+					var:actor_country = {
+						launch_nuke = {
+							province = var:ROOT.target_province #optional use either province or state
+							use_nuke = no
+						}
+						add_named_threat = {
+							threat = 20
+							name = tactical_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+					}
+					raid_damage_units = {
+						plane_loss = 0.05
+						ratio = yes
+					}
+				}
+				victim_effects = {
+					var:target_state = {
+						custom_effect_tooltip = raid_nuclear_strike_tt
+						add_dynamic_modifier = {
+							modifier = nuclear_fallout
+							days = 365
+						}
+					}
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+					}
+				}
+			}
+			critical_success = {
+				actor_effects = {
+					var:actor_country = {
+						launch_nuke = {
+							province = var:ROOT.target_province #optional use either province or state
+							use_nuke = no
+						}
+						add_named_threat = {
+							threat = 20
+							name = tactical_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+					}
+				}
+				victim_effects = {
+					var:target_state = {
+						custom_effect_tooltip = raid_nuclear_strike_tt
+					}
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				surrender_progress > 0.5
+			}
+			modifier = {
+				factor = 5
+				surrender_progress > 0.75
+			}
+			modifier = {
+				factor = 10
+				surrender_progress > 0.9
+			}
+			modifier = {
+				factor = 0
+				threat < 0.10
+			}
+			modifier = {
+				# Don't target anyone who is not a potential enemy
+				factor = 0
+				NOT = {
+					is_in_array = {
+						array = potential_and_current_enemies
+						value = FROM  # Target country
+					}
+				}
+			}
+		}
+	}
+	#Nuke a whole state for the price of one
+	state_nuclear_strike = {
+		category = nuclear_raids
+
+		days_to_prepare = 1
+
+		command_power = 5 # command power allocation cost
+
+		allowed = {
+			has_dlc = "Gotterdammerung"
+		}
+		# Raid Type is visible
+		visible = {
+
+		}
+		# Specific Target is visible
+		show_target = {
+			NOT = {
+				is_in_faction_with = FROM
+			}
+
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_equipment = {
+					nuclear_missile_equipment > 1
+				}
+				has_equipment = {
+					nuclear_ballistic_missile_equipment > 1
+				}
+			}
+			OR = {
+				if = { limit = { has_idea = nuclear_power_def }
+					has_idea = nuclear_power_def
+					var:target_state = {
+						OR = {
+							is_owned_by = ROOT
+							is_claimed_by = ROOT
+						}
+					}
+					surrender_progress > 0.5
+				}
+				has_idea = nuclear_power_off
+			}
+			OR = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = strategic_retaliation_only
+							has_idea = tac_first_use_strat_retaliation
+							has_idea = tac_and_strat_retaliation
+						}
+					}
+					OR = {
+						has_idea = strategic_retaliation_only
+						has_idea = tac_first_use_strat_retaliation
+						has_idea = tac_and_strat_retaliation
+					}
+					has_country_flag = has_been_nuked
+				}
+				has_idea = full_first_use
+			}
+			has_war_with = FROM
+		}
+		launchable = {
+			has_war_with = FROM
+		}
+
+		target_type = {
+			province = any
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { nuclear_missile_equipment }
+				amount = { min = 1 }
+			}
+		}
+		unit_requirements = {
+			equipment = {
+				type = { nuclear_ballistic_missile_equipment }
+				amount = { min = 1 }
+			}
+		}
+		essential_equipment = {
+		}
+
+		starting_point = {
+		    types = {
+		        rocket_site
+		        submarine
+		    }
+		}
+		arrow = {
+		    type = ballistic
+		}
+
+		launch_sound = raid_launch_nuclear_missile
+		target_icon = GFX_other_target_icon
+        unit_model = {
+            type = equipment
+            scale = 0.5
+        }
+
+		success_factors = {
+			success = {
+				base = 0.8
+				intel = {
+					weight = 0.2
+					#start_reference = 50
+					reference = 100
+				}
+			}
+		}
+
+
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					var:actor_country = {
+						launch_nuke = {
+							province = var:ROOT.target_province #optional use either province or state
+							use_nuke = no #will consume nuke if specified
+						}
+						launch_nuke = {
+							state = var:ROOT.target_state
+							use_nuke = no
+						}
+						add_named_threat = {
+							threat = 50
+							name = state_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 1
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 1
+								target = EUU
+							}
+						}
+					}
+				}
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+						set_country_flag = {
+							flag = state_nuke_check
+							days = 1
+							value = 1
+						}
+					}
+					var:target_state = {
+						#custom_effect_tooltip = raid_nuclear_strike_tt
+						add_dynamic_modifier = {
+							modifier = nuclear_fallout
+							days = 365
+						}
+						damage_units = {
+							state = THIS
+							damage = 0.6
+							ratio = yes
+							army = yes
+							navy = yes
+						}
+					}
+				}
+			}
+			limited_success = {
+				actor_effects = {
+					var:actor_country = {
+						launch_nuke = {
+							province = var:ROOT.target_province #optional use either province or state
+							use_nuke = no #will consume nuke if specified
+						}
+						launch_nuke = {
+							state = var:ROOT.target_state
+							use_nuke = no
+						}
+						add_named_threat = {
+							threat = 50
+							name = state_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 1
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 1
+								target = EUU
+							}
+						}
+					}
+				}
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+					}
+					var:target_state = {
+						#custom_effect_tooltip = raid_nuclear_strike_tt
+						add_dynamic_modifier = {
+							modifier = nuclear_fallout
+							days = 365
+						}
+						damage_units = {
+							state = THIS
+							damage = 0.6
+							ratio = yes
+							army = yes
+							navy = yes
+						}
+					}
+				}
+			}
+			success = {
+				actor_effects = {
+					var:actor_country = {
+						launch_nuke = {
+							province = var:ROOT.target_province #optional use either province or state
+							use_nuke = no #will consume nuke if specified
+						}
+						launch_nuke = {
+							state = var:ROOT.target_state
+							use_nuke = no
+						}
+						add_named_threat = {
+							threat = 50
+							name = state_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 1
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 1
+								target = EUU
+							}
+						}
+					}
+				}
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+					}
+					var:target_state = {
+						#custom_effect_tooltip = raid_nuclear_strike_tt
+						add_dynamic_modifier = {
+							modifier = nuclear_fallout
+							days = 365
+						}
+						damage_units = {
+							state = THIS
+							damage = 0.6
+							ratio = yes
+							army = yes
+							navy = yes
+						}
+					}
+				}
+			}
+			critical_success = {
+				actor_effects = {
+					var:actor_country = {
+						launch_nuke = {
+							province = var:ROOT.target_province #optional use either province or state
+							use_nuke = no #will consume nuke if specified
+						}
+						launch_nuke = {
+							state = var:ROOT.target_state
+							use_nuke = no
+						}
+						add_named_threat = {
+							threat = 50
+							name = state_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 1
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 1
+								target = EUU
+							}
+						}
+					}
+				}
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+					}
+					var:target_state = {
+						#custom_effect_tooltip = raid_nuclear_strike_tt
+						add_dynamic_modifier = {
+							modifier = nuclear_fallout
+							days = 365
+						}
+						damage_units = {
+							state = THIS
+							damage = 0.6
+							ratio = yes
+							army = yes
+							navy = yes
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				surrender_progress > 0.5
+			}
+			modifier = {
+				factor = 5
+				surrender_progress > 0.75
+			}
+			modifier = {
+				factor = 10
+				surrender_progress > 0.9
+			}
+			modifier = {
+				factor = 0
+				threat < 0.10
+			}
+			modifier = {
+				# Don't target anyone who is not a potential enemy
+				factor = 0
+				NOT = {
+					is_in_array = {
+						array = potential_and_current_enemies
+						value = FROM  # Target country
+					}
+				}
+			}
+		}
+
+	}
+	#The whole enchilada. It's the end of the world as we know it!
+	strategic_nuclear_strike = {
+		category = nuclear_raids
+
+		days_to_prepare = 1
+		#Nuclear powers WILL get agressive if they are about to be conquered
+		#Realistic behavior, so people should be careful about how they push wars
+		#This should also include some more launch checks, but for now, this will work
+
+		command_power = 5 # command power allocation cost
+
+		allowed = {
+			has_dlc = "Gotterdammerung"
+		}
+		# Raid Type is visible
+		visible = {
+
+		}
+		# Specific Target is visible
+		show_target = {
+			NOT = {
+				is_in_faction_with = FROM
+			}
+		}
+
+		# Can prepare
+		available = {
+			OR = {
+				has_equipment = {
+					nuclear_missile_equipment > 11
+				}
+				has_equipment = {
+					nuclear_ballistic_missile_equipment > 11
+				}
+			}
+			if = {
+				limit = {
+					has_idea = nuclear_power_def
+				}
+				surrender_progress > 0.5
+			}
+			OR = {
+				if = {
+					limit = {
+						OR = {
+							has_idea = strategic_retaliation_only
+							has_idea = tac_first_use_strat_retaliation
+							has_idea = tac_and_strat_retaliation
+						}
+					}
+					OR = {
+						has_idea = strategic_retaliation_only
+						has_idea = tac_first_use_strat_retaliation
+						has_idea = tac_and_strat_retaliation
+					}
+					has_country_flag = has_been_nuked
+				}
+				has_idea = full_first_use
+			}
+			has_war_with = FROM
+		}
+		launchable = {
+			has_war_with = FROM
+		}
+
+		target_type = {
+			province = any
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { nuclear_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+		unit_requirements = {
+			equipment = {
+				type = { nuclear_ballistic_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+		essential_equipment = {
+		}
+
+		starting_point = {
+		    types = {
+		        rocket_site
+		        submarine
+		    }
+		}
+		arrow = {
+		    type = ballistic
+		}
+
+		launch_sound = raid_launch_nuclear_missile
+		target_icon = GFX_other_target_icon
+        unit_model = {
+            type = equipment
+            scale = 0.5
+        }
+
+		success_factors = {
+			success = {
+				base = 0.8
+				intel = {
+					weight = 0.2
+					#start_reference = 50
+					reference = 100
+				}
+			}
+		}
+
+
+
+		success_levels = {
+			failure = {
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+						set_country_flag = {
+							flag = state_nuke_check
+							days = 1
+							value = 1
+						}
+						every_owned_state = {
+							#Yes, it's weird; you basically have to make the country nuke itself, but it works
+							#DO NOT MESS WTIH THIS OR TRY TO CHANGE THIS, I TRIED, THE SCOPES DONT WORK RIGHT UNLESS ITS LIKE THIS
+							PREV = {
+								launch_nuke = {
+									state = PREV
+									use_nuke = no
+								}
+							}
+							damage_units = {
+								state = THIS
+								damage = 0.6
+								ratio = yes
+								army = yes
+								navy = yes
+							}
+							add_dynamic_modifier = {
+								modifier = nuclear_fallout
+								days = 365
+							}
+						}
+					}
+				}
+				actor_effects = {
+					var:actor_country = {
+						add_named_threat = {
+							threat = 100
+							name = strat_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 10
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 10
+								target = EUU
+							}
+						}
+					}
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+						set_country_flag = {
+							flag = state_nuke_check
+							days = 1
+							value = 1
+						}
+						every_owned_state = {
+							#Yes, it's weird; you basically have to make the country nuke itself, but it works
+							#DO NOT MESS WTIH THIS OR TRY TO CHANGE THIS, I TRIED, THE SCOPES DONT WORK RIGHT UNLESS ITS LIKE THIS
+							PREV = {
+								launch_nuke = {
+									state = PREV
+									use_nuke = no
+								}
+							}
+							damage_units = {
+								state = THIS
+								damage = 0.6
+								ratio = yes
+								army = yes
+								navy = yes
+							}
+							add_dynamic_modifier = {
+								modifier = nuclear_fallout
+								days = 365
+							}
+						}
+					}
+				}
+				actor_effects = {
+					var:actor_country = {
+						add_named_threat = {
+							threat = 100
+							name = strat_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 10
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 10
+								target = EUU
+							}
+						}
+					}
+				}
+			}
+			success = {
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+						set_country_flag = {
+							flag = state_nuke_check
+							days = 1
+							value = 1
+						}
+						every_owned_state = {
+							#Yes, it's weird; you basically have to make the country nuke itself, but it works
+							#DO NOT MESS WTIH THIS OR TRY TO CHANGE THIS, I TRIED, THE SCOPES DONT WORK RIGHT UNLESS ITS LIKE THIS
+							PREV = {
+								launch_nuke = {
+									state = PREV
+									use_nuke = no
+								}
+							}
+							damage_units = {
+								state = THIS
+								damage = 0.6
+								ratio = yes
+								army = yes
+								navy = yes
+							}
+							add_dynamic_modifier = {
+								modifier = nuclear_fallout
+								days = 365
+							}
+						}
+					}
+				}
+				actor_effects = {
+					var:actor_country = {
+						add_named_threat = {
+							threat = 100
+							name = strat_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 10
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 10
+								target = EUU
+							}
+						}
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:victim_country = {
+						set_country_flag = has_been_nuked
+						set_country_flag = {
+							flag = state_nuke_check
+							days = 1
+							value = 1
+						}
+						every_owned_state = {
+							PREV = {
+								launch_nuke = {
+									state = PREV
+									use_nuke = no
+								}
+							}
+							damage_units = {
+								state = THIS
+								damage = 0.6
+								ratio = yes
+								army = yes
+								navy = yes
+							}
+							add_dynamic_modifier = {
+								modifier = nuclear_fallout
+								days = 365
+							}
+						}
+					}
+				}
+				actor_effects = {
+					var:actor_country = {
+						add_named_threat = {
+							threat = 100
+							name = strat_nuclear_strike_wt_tt
+						}
+						if = {
+							limit = {
+								has_idea = nuclear_power_off
+								surrender_progress < 0.5
+							}
+							add_stability = -0.1
+						}
+						hidden_effect = {
+							send_equipment = {
+								equipment = nuclear_ballistic_missile_equipment
+								amount = 10
+								target = EUU
+							}
+							send_equipment = {
+								equipment = nuclear_missile_equipment
+								amount = 10
+								target = EUU
+							}
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				surrender_progress > 0.75
+			}
+			modifier = {
+				factor = 5
+				surrender_progress > 0.9
+			}
+			modifier = {
+				factor = 0
+				threat < 0.10
+			}
+			modifier = {
+				# Don't target anyone who is not a potential enemy
+				factor = 0
+				NOT = {
+					is_in_array = {
+						array = potential_and_current_enemies
+						value = FROM  # Target country
+					}
+				}
+			}
+		}
+	}
+}

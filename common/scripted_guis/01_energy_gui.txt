@@ -61,6 +61,10 @@ scripted_gui = {
 					}
 				}
 			}
+			enable_nuclear_reactor_fuel_production_click_enabled = {
+				has_tech = reactor1
+				has_enrichment_facilities = yes
+			}
 		}
 
 		effects = {
@@ -123,6 +127,7 @@ scripted_gui = {
 				}
 				ingame_update_setup = yes
 			}
+			# Other Buttons
 			build_enrichment_facility_button_click = {
 				log = "[GetDateText]: [Root.GetName]: Energy GUI build_enrichment_facility_button"
 				clr_country_flag = build_three_enrichment_facility
@@ -231,6 +236,17 @@ scripted_gui = {
 				buy_fuel_from_the_market_effect = yes
 				set_country_flag = { flag = recently_bought_fuel value = 1 days = 28 }
 			}
+			enable_nuclear_reactor_fuel_production_click = {
+				log = "[GetDateText]: [Root.GetName]: Energy GUI enable_nuclear_reactor_fuel_production_click"
+				if = {
+					limit = { has_country_flag = enabled_nuclear_reactor_fuel_production }
+					clr_country_flag = enabled_nuclear_reactor_fuel_production
+				}
+				else = {
+					set_country_flag = enabled_nuclear_reactor_fuel_production
+				}
+				ingame_update_setup = yes
+			}
 		}
 
 		# AI Section
@@ -244,7 +260,7 @@ scripted_gui = {
 
 		# If you wish to see the values outputted from this. enable human_ai and view ai.log in the logs
 		ai_enabled = { always = yes }
-		ai_test_interval = 72 # 3 Days
+		ai_test_interval = 144 # 3 Days
 		ai_max_weight_taken_per_test = 1
 
 		ai_check = {
@@ -256,21 +272,10 @@ scripted_gui = {
 					check_variable = { var_reactor_material_stockpile < 5000 }
 				}
 
-				# Temp AI check to make sure they remove the spirit and go to standard for now
+				# Check this
 				OR = {
-					AND = {
-						NOT = { original_tag = USA }
-						OR = {
-							has_idea = heavy_power_restrictions_spirit
-							has_idea = some_power_restrictions_spirit
-							has_idea = some_additional_consumption_spirit
-							has_idea = heavy_additional_consumption_spirit
-						}
-					}
-					AND = {
-						original_tag = USA
-						NOT = { has_idea = heavy_additional_consumption_spirit }
-					}
+					check_variable = { energy_balance_value_display > 1.05 }
+					check_variable = { energy_balance_value_display < 0.95 }
 				}
 			}
 		}
@@ -295,7 +300,7 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 5
-						check_variable = { nuclear_fuel_consumption > var_nuke_nuclear_reactor_prod }
+						check_variable = { nuclear_fuel_consumption > nuclear_reactor_fuel_production }
 					}
 					modifier = {
 						factor = 1.5
@@ -306,18 +311,91 @@ scripted_gui = {
 						check_variable = { nuclear_reactors > 5 }
 					}
 					modifier = {
+						factor = 1.5
+						check_variable = { nuclear_reactors > 8 }
+					}
+					modifier = {
+						factor = 1.5
+						check_variable = { nuclear_reactors > 10 }
+					}
+					modifier = {
 						factor = 0
 						OR = {
 							has_active_mission = bankruptcy_incoming_collapse
-							check_variable = { nuclear_fuel_consumption < var_nuke_nuclear_reactor_prod }
+							check_variable = { nuclear_fuel_consumption < nuclear_reactor_fuel_production }
 							check_variable = { nuclear_reactors < 1 }
 						}
 					}
 				}
 			}
+			# Power Consumption
+			heavy_power_restrictions_button_click = {
+				ai_will_do = {
+					base = 1
+					modifier = {
+						add = 10
+						check_variable = { energy_balance_value_display < 0.75 }
+						has_idea = some_additional_consumption_spirit
+						NOT = {
+							has_idea = some_additional_consumption_spirit
+							has_idea = heavy_additional_consumption_spirit
+						}
+					}
+					# DO NOT GO TO HEAVY POWER RESTRICTION UNLESS NEED BE
+					modifier = {
+						factor = 0
+						check_variable = { energy_balance_value_display > 0.75 }
+					}
+				}
+			}
+			some_power_restrictions_button_click = {
+				ai_will_do = {
+					base = 1
+					# Power has recovered, add up the restrictions
+					modifier = {
+						add = 10
+						check_variable = { energy_balance_value_display > 1.05 }
+						has_idea = heavy_power_restrictions_spirit
+						NOT = {
+							has_idea = some_additional_consumption_spirit
+							has_idea = heavy_additional_consumption_spirit
+						}
+					}
+					modifier = {
+						add = 15
+						check_variable = { energy_balance_value_display < 0.85 }
+						NOT = {
+							has_idea = some_additional_consumption_spirit
+							has_idea = heavy_additional_consumption_spirit
+						}
+					}
+					modifier = {
+						factor = 0
+						check_variable = { energy_balance_value_display > 0.95 }
+					}
+				}
+			}
 			no_power_rules_button_click = {
 				ai_will_do = {
-					factor = 1000
+					base = 100
+					modifier = {
+						add = 100
+						check_variable = { energy_balance_value_display > 1.15 }
+						OR = {
+							has_idea = heavy_power_restrictions_spirit
+							has_idea = some_power_restrictions_spirit
+						}
+					}
+					modifier = {
+						add = 100
+						check_variable = { energy_balance_value_display > 1.10 }
+						has_idea = some_power_restrictions_spirit
+					}
+					modifier = {
+						add = 100
+						check_variable = { energy_balance_value_display < 0.90 }
+						has_idea = some_additional_consumption_spirit
+					}
 					modifier = {
 						factor = 0
 						NOT = {
@@ -329,6 +407,90 @@ scripted_gui = {
 					}
 					modifier = {
 						factor = 0
+						OR = {
+							has_idea = some_additional_consumption_spirit
+							has_idea = heavy_additional_consumption_spirit
+						}
+					}
+					modifier = {
+						factor = 0
+						original_tag = USA
+					}
+				}
+			}
+			some_additional_consumption_button_click = {
+				ai_will_do = {
+					base = 1
+					modifier = {
+						add = 5
+						check_variable = { energy_balance_value_display > 1.15 }
+						NOT = {
+							has_idea = heavy_power_restrictions_spirit
+							has_idea = some_power_restrictions_spirit
+							has_idea = heavy_additional_consumption_spirit
+						}
+					}
+					modifier = {
+						add = 5
+						check_variable = { energy_balance_value_display < 0.90 }
+						has_idea = heavy_additional_consumption_spirit
+						NOT = {
+							has_idea = heavy_power_restrictions_spirit
+							has_idea = some_power_restrictions_spirit
+						}
+					}
+					modifier = {
+						factor = 0
+						check_variable = { energy_balance_value_display > 1.15 }
+						has_idea = heavy_additional_consumption_spirit
+						NOT = {
+							has_idea = heavy_power_restrictions_spirit
+							has_idea = some_power_restrictions_spirit
+						}
+					}
+					modifier = {
+						factor = 0
+						check_variable = { energy_balance_value_display > 0.95 }
+						check_variable = { energy_balance_value_display < 1.15 }
+					}
+					modifier = {
+						factor = 0
+						check_variable = { energy_balance_value_display < 0.95 }
+						NOT = {
+							has_idea = heavy_additional_consumption_spirit
+							has_idea = heavy_power_restrictions_spirit
+							has_idea = some_power_restrictions_spirit
+						}
+					}
+					modifier = {
+						add = 100
+						original_tag = USA
+					}
+				}
+			}
+			heavy_additional_consumption_button_click = {
+				ai_will_do = {
+					base = 1
+					modifier = {
+						add = 5
+						check_variable = { energy_balance_value_display > 1.15 }
+						has_idea = some_additional_consumption_spirit
+						NOT = {
+							has_idea = heavy_power_restrictions_spirit
+							has_idea = some_power_restrictions_spirit
+						}
+					}
+					modifier = {
+						factor = 0
+						check_variable = { energy_balance_value_display > 0.95 }
+						check_variable = { energy_balance_value_display < 1.15 }
+					}
+					modifier = {
+						factor = 0
+						check_variable = { energy_balance_value_display < 0.95 }
+					}
+					modifier = {
+						add = 100
 						original_tag = USA
 					}
 				}
@@ -338,7 +500,7 @@ scripted_gui = {
 
 	economic_state_view = {
 		context_type = selected_state_context
-		window_name = "state_energy_ui_view"
+		window_name = "state_economic_ui_view"
 
 		parent_window_token = selected_state_view
 	}

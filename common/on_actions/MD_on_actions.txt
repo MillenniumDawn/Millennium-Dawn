@@ -6,21 +6,89 @@ on_actions = {
 			random_renewable_variable_calculation = yes
 			worker_requirements_variable_gdpc_converging = yes
 
-			#Update money system right before adjusting weekly value
+			# Other Nuclear Stuff
+			update_sat_systems_stats = yes
+
+			########
+			clear_spy_sat_mission_arrays = yes
+			update_SPY_mission_num = yes
+			missile_ui_update = yes
+
+			# Update money system right before adjusting weekly value
 			ingame_update_setup = yes
-			#Remove weekly rate from treasury
+
+			# In the past it was every day
+			nuclear_reactor_fuel_consumption = yes
+
+
+			# Remove weekly rate from treasury
 			if = { limit = { has_country_flag = int_reinvestment_flag }
 				add_to_variable = { int_investments = int_investments_rate }
 			}
-			add_to_variable = { treasury = treasury_rate }
+
+			# No longer subject stop paying for subsidies
+			if = { limit = { NOT = { check_variable = { subject_subsidization^0 = 0 } } }
+				for_each_scope_loop = {
+					array = subject_subsidization
+					if = {
+						limit = {
+							OR = {
+								NOT = { country_exists = THIS }
+								NOT = { is_subject_of = PREV }
+							}
+						}
+						if = {
+							limit = { is_debug = yes }
+							log = "[GetDateText]: [PREV.GetName]: Subject Subsidization from [PREV.GetName] to [THIS.GetName] has ended."
+						}
+						set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
+						# Clear the data
+						clr_country_flag = overlord_is_subsidizing_us_@PREV
+						clr_country_flag = overlord_subsidies
+						remove_ideas = idea_overlord_subsidies
+						ingame_update_setup = yes
+						PREV = {
+							set_country_flag = { flag = canceled_overlord_subsidies_@PREV value = 1 days = 30 }
+							clr_country_flag = overlord_is_subsidizing_us_@PREV
+							remove_from_array = { subject_subsidization = PREV.id }
+							ingame_update_setup = yes
+						}
+					}
+				}
+			}
+
+			# Pay down debt automatically this weekly tick
+			if = {
+				limit = {
+					check_variable = { treasury_rate > 0 }
+					has_country_flag = automatically_pay_off_debt_enabled
+					check_variable = { debt > 0 }
+				}
+				set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
+				multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
+				subtract_from_variable = { debt = treasury_rate_debt_payment }
+
+				if = {
+					limit = { check_variable = { debt < 0.001 } }
+					set_variable = { debt = 0 }
+					clr_country_flag = automatically_pay_off_debt_enabled
+				}
+			}
+
+			set_temp_variable = { treasury_rate_gain = treasury_rate }
+			subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
+
+			add_to_variable = { treasury = treasury_rate_gain }
 			#Automated taking debt - has calculate_interest_rate at the end
 			automated_debt_taker = yes
+
 
 			# Force Update Influencer Map Mode
 			recalculate_influence = yes
 			force_update_map_mode = { mapmode = influence_map_mode }
 
-
+			# Set the Ideological Power Ideas
+			IP_idea_weekly_configuration = yes
 
 			# Initialize the Investment Pulse for this Week
 			if = {
@@ -348,6 +416,23 @@ on_actions = {
 					}
 				}
 			}
+
+			FROM = {
+				# projects
+				# remove all projects by the annexed country
+				if = { limit = { check_variable = { active_projects > 0 } }
+
+					for_each_loop = {
+						array = project_array
+
+						if = { limit = { check_variable = { v < 0 } }
+
+							set_variable = { project = i }
+							end_project = yes
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -355,16 +440,10 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					ROOT = {
-						original_tag = ARM
-					}
-					FROM = {
-						original_tag = TUR
-					}
+					ROOT = { original_tag = ARM }
+					FROM = { original_tag = TUR }
 				}
-				ROOT = {
-					add_ideas = ARM_turkish_peasants
-				}
+				ROOT = { add_ideas = ARM_turkish_peasants }
 			}
 			if = {
 				limit = {
@@ -468,6 +547,27 @@ on_actions = {
 						if = { limit = { check_variable = { printing_money_var > 0 } }
 							subtract_from_variable = { printing_money_var = 1 }
 						}
+
+						# TODO: Enable with additional development and testing
+						# if = {
+						# 	limit = {
+						# 		has_tech = OLV1
+						# 		OR = {
+						# 			has_tech = GNSS1
+						# 			has_tech = COMSAT1
+						# 			has_tech = SPYSAT1
+						# 		}
+						# 		NOT = { has_country_flag = doing_space_production }
+						# 	}
+						# 	basic_ai_space_program_production = yes
+						# }
+						# if = {
+						# 	limit = {
+						# 		#insert launch triggers here
+						# 		#require an OLV, and some stuff to send to space
+						# 	}
+						# 	basic_ai_space_launch = yes
+						# }
 					}
 
 					# Execute and Start the Yearly ETD Events

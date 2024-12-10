@@ -22,6 +22,30 @@
  	shared_focus = AFRICAN_UNION_shared_focus
 	# Czechoslovakian shared tree
 	shared_focus = CZE_SLO_open_political_court
+
+	# Focus Shortcut
+	shortcut = {
+		name = GENERIC_political_reform
+		target = GENERIC_political_reform
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = GENERIC_international_diplomacy
+		target = GENERIC_international_diplomacy
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = GENERIC_ease_of_business_reforms
+		target = GENERIC_ease_of_business_reforms
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = GENERIC_army_reform
+		target = GENERIC_army_reform
+		scroll_wheel_factor = 0.80
+	}
+
+	# Focus Section
 	focus = {
 		id = GENERIC_political_reform
 		icon = Election_graphics
@@ -130,7 +154,7 @@
 	}
 
 	focus = {
-		id = GENERIC_public_service_annoucement
+		id = GENERIC_public_service_announcement
 		icon = propaganda
 
 		x = -4
@@ -143,7 +167,7 @@
 		prerequisite = { focus = GENERIC_political_games }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_public_service_annoucement"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_public_service_announcement"
 			add_stability = 0.05
 			add_war_support = 0.05
 		}
@@ -190,7 +214,7 @@
 		cost = 8.6
 
 		search_filters = { FOCUS_FILTER_STABILITY }
-		prerequisite = { focus = GENERIC_public_service_annoucement }
+		prerequisite = { focus = GENERIC_public_service_announcement }
 		prerequisite = { focus = GENERIC_the_establishment }
 
 		completion_reward = {
@@ -376,12 +400,24 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_our_place"
-			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { percent_change = 8 }
 			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				check_variable = { domestic_influence_amount < 60 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { domestic_influence_amount < 40 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { domestic_influence_amount < 20 }
+			}
 		}
 	}
 
@@ -404,6 +440,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 5
+				OR = {
+					has_idea = paralyzing_corruption
+					has_idea = crippling_corruption
+					has_idea = rampant_corruption
+				}
+			}
 		}
 	}
 
@@ -2256,6 +2300,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				check_variable = { total_unemployed_percentage_display < 0.01}
+			}
 		}
 	}
 
@@ -2275,7 +2323,10 @@
 		prerequisite = { focus = GENERIC_light_industry_investments }
 		available = {
 			if = { limit = { is_ai = no }
-				num_of_factories > 4
+				custom_trigger_tooltip = {
+					tooltip = 50_total_gdp_tt
+					check_variable = { gdp_total > 50 }
+				}
 				has_war = no
 				has_offensive_war = no
 			}
@@ -2376,7 +2427,10 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = { focus = GENERIC_light_industry_investments }
 		available = {
-			num_of_factories > 7
+			custom_trigger_tooltip = {
+				tooltip = 95_total_gdp_tt
+				check_variable = { gdp_total > 95 }
+			}
 			has_war = no
 		}
 
@@ -2430,7 +2484,10 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 		prerequisite = { focus = GENERIC_heavy_industry_investments }
 		available = {
-			num_of_factories > 7
+			custom_trigger_tooltip = {
+				tooltip = 95_total_gdp_tt
+				check_variable = { gdp_total > 95 }
+			}
 			has_war = no
 		}
 
@@ -2568,6 +2625,7 @@
 			add_ideas = idea_focus_energy_preferred_fossil
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2668,6 +2726,13 @@
 			}
 			else = {
 				one_random_nuclear_reactor = yes
+			}
+			if = {
+				limit = { has_idea = non_nuclear_power }
+				swap_ideas = {
+					remove_idea = non_nuclear_power
+					add_idea = nuclear_energy
+				}
 			}
 		}
 
@@ -2938,7 +3003,10 @@
 		cost = 7.86
 
 		available = {
-			num_of_factories > 10
+			custom_trigger_tooltip = {
+				tooltip = 135_total_gdp_tt
+				check_variable = { gdp_total > 135 }
+			}
 			has_war = no
 		}
 
@@ -3010,7 +3078,10 @@
 
 		cost = 10
 		available = {
-			num_of_factories > 10
+			custom_trigger_tooltip = {
+				tooltip = 135_total_gdp_tt
+				check_variable = { gdp_total > 135 }
+			}
 		}
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
@@ -3045,7 +3116,12 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = GENERIC_assure_access_to_education }
 		prerequisite = { focus = GENERIC_satisfy_the_middle_class }
-		available = { num_of_factories > 12 }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = 160_total_gdp_tt
+				check_variable = { gdp_total > 160 }
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_universities"
@@ -3076,11 +3152,155 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = GENERIC_expand_the_universities }
 		prerequisite = { focus = GENERIC_assure_intellectual_freedoms }
-		available = { num_of_civilian_factories > 15 }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = 200_total_gdp_tt
+				check_variable = { gdp_total > 200 }
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_industrial_research_task_forces"
 			generic_research_buff = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = GENERIC_domestic_vehicle_research
+		icon = Tank_sheep
+
+		x = -2
+		y = 6
+		relative_position_id = GENERIC_satisfy_the_middle_class
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+		prerequisite = { focus = GENERIC_industrial_research_task_forces }
+		mutually_exclusive = {
+			focus = GENERIC_domestic_naval_research
+			focus = GENERIC_domestic_aircraft_research
+			focus = GENERIC_secret_weapons_program
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = 200_total_gdp_tt
+				check_variable = { gdp_total > 200 }
+			}
+			NOT = { has_facility_specialization = specialization_land }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_vehicle_research"
+			one_random_land_facility = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = GENERIC_domestic_naval_research
+		icon = Naval_Upgrade
+
+		x = 0
+		y = 6
+		relative_position_id = GENERIC_satisfy_the_middle_class
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+		prerequisite = { focus = GENERIC_industrial_research_task_forces }
+		mutually_exclusive = {
+			focus = GENERIC_domestic_vehicle_research
+			focus = GENERIC_domestic_aircraft_research
+			focus = GENERIC_secret_weapons_program
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = 200_total_gdp_tt
+				check_variable = { gdp_total > 200 }
+			}
+			any_owned_state = {
+				is_coastal = yes
+			}
+			NOT = { has_facility_specialization = specialization_naval }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_naval_research"
+			one_random_naval_facility = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = GENERIC_domestic_aircraft_research
+		icon = jet_engine
+
+		x = 2
+		y = 6
+		relative_position_id = GENERIC_satisfy_the_middle_class
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+		prerequisite = { focus = GENERIC_industrial_research_task_forces }
+		mutually_exclusive = {
+			focus = GENERIC_domestic_vehicle_research
+			focus = GENERIC_domestic_naval_research
+			focus = GENERIC_secret_weapons_program
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = 200_total_gdp_tt
+				check_variable = { gdp_total > 200 }
+			}
+			NOT = { has_facility_specialization = specialization_air }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_aircraft_research"
+			one_random_air_facility = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = GENERIC_secret_weapons_program
+		icon = nuclear_science
+
+		x = 4
+		y = 6
+		relative_position_id = GENERIC_satisfy_the_middle_class
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+		prerequisite = { focus = GENERIC_industrial_research_task_forces }
+		mutually_exclusive = {
+			focus = GENERIC_domestic_vehicle_research
+			focus = GENERIC_domestic_naval_research
+			focus = GENERIC_domestic_aircraft_research
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = 200_total_gdp_tt
+				check_variable = { gdp_total > 200 }
+			}
+			NOT = { has_facility_specialization = specialization_nuclear }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_secret_weapons_program"
+			one_random_nuclear_facility = yes
 		}
 
 		ai_will_do = {
@@ -3110,7 +3330,7 @@
 				uses = 1
 				cost_reduction = 0.5
 			}
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_maritime_industry_opinion = yes
 		}
 
@@ -3139,17 +3359,17 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_defense_industry_opinion = yes
 			change_maritime_industry_opinion = yes
+			one_random_arms_factory_free = yes
 		}
 
 		ai_will_do = {
 			base = 1
 			modifier = {
 				factor = 0
-				disabled_ai_unit_list = yes
-			}
-			modifier = {
-				factor = 0
-				num_of_civilian_factories < 10
+				OR = {
+					num_of_civilian_factories < 10
+					disabled_ai_unit_list = yes
+				}
 			}
 		}
 	}
@@ -3164,11 +3384,21 @@
 		cost = 10
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
+		available = { any_owned_state = { is_coastal = yes } }
 		prerequisite = { focus = GENERIC_naval_reform }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_bases"
-			one_random_dockyard = yes
+			random_owned_controlled_state = {
+				limit = {
+					can_construct_building = naval_base
+				}
+				construct_building_in_random_province = {
+					naval_base = 1
+				}
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_maritime_industry_opinion = yes
 		}
@@ -3256,6 +3486,7 @@
 		cost = 10
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
+		available = { any_owned_state = { is_coastal = yes } }
 		prerequisite = { focus = GENERIC_naval_bases }
 
 		available = {
@@ -3350,7 +3581,7 @@
 		id = GENERIC_aircraft_carriers
 		icon = carriers2
 
-		x = 2
+		x = 4
 		y = 2
 		relative_position_id = GENERIC_naval_reform
 
@@ -3359,6 +3590,7 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = GENERIC_surface_ships }
 		prerequisite = { focus = GENERIC_fighter_planes }
+		mutually_exclusive = { focus = GENERIC_light_helicopter_operators }
 		available = { num_of_naval_factories > 5 }
 
 		completion_reward = {
@@ -3373,6 +3605,53 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = minor_power
+					has_idea = non_power
+					has_idea = regional_power
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_light_helicopter_operators
+		icon = Generic_Naval_Helicopter
+
+		x = 2
+		y = 2
+		relative_position_id = GENERIC_naval_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+		prerequisite = { focus = GENERIC_surface_ships }
+		prerequisite = { focus = GENERIC_fighter_planes }
+		mutually_exclusive = { focus = GENERIC_aircraft_carriers }
+		available = { num_of_naval_factories > 5 }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_aircraft_carriers"
+			add_tech_bonus = {
+				name = GENERIC_aircraft_carriers
+				uses = 2
+				bonus = 0.5
+				category = CAT_lha
+				category = CAT_lpd
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = non_power
+					has_idea = minor_power
+				}
+			}
 		}
 	}
 
@@ -3524,6 +3803,98 @@
 			base = 1
 		}
 	}
+
+	focus = {
+		id = GENERIC_capital_defense_scheme
+		icon = army_anti_missles
+
+		x = 3
+		y = 1
+		relative_position_id = GENERIC_air_force_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_MILITARY FOCUS_FILTER_AIRCRAFT }
+		prerequisite = {
+			focus = GENERIC_air_force_reform
+			focus = GENERIC_military_emergency
+		}
+
+		available = {
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				has_tech = air_defense
+			}
+			else = {
+				has_tech = air_defense_non_got
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [RoGoot.GetName]: Focus GENERIC_air_doctrine_innovations"
+			if = {
+				limit = {
+					capital_scope = {
+						free_building_slots = {
+							building = anti_air_building
+							size > 0
+						}
+					}
+				}
+				capital_scope = {
+					add_building_construction = {
+						type = anti_air_building
+						level = 1
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { treasury_change = -3.25 }
+				modify_treasury_effect = yes
+			}
+			else = {
+				one_anti_air = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_defense_scheme_beta
+		icon = mlw_sam_sites
+
+		x = 3
+		y = 2
+		relative_position_id = GENERIC_air_force_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_MILITARY FOCUS_FILTER_AIRCRAFT }
+		prerequisite = { focus = GENERIC_capital_defense_scheme }
+
+		available = {
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				has_tech = air_defense
+			}
+			else = {
+				has_tech = air_defense_non_got
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [RoGoot.GetName]: Focus GENERIC_air_doctrine_innovations"
+			one_anti_air = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+
 	focus = {
 		id = GENERIC_countermeasures_against_aircraft
 		icon = naval_bombers
@@ -3534,20 +3905,37 @@
 
 		cost = 10
 
-		search_filters = { FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_AIRCRAFT }
 		prerequisite = {
 			focus = GENERIC_fighter_planes
 			focus = GENERIC_air_doctrine_innovations
 		}
-		available = { num_of_military_factories > 4 }
+		available = {
+			OR = {
+				num_of_military_factories > 4
+				has_war = yes
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_countermeasures_against_aircraft"
 			add_tech_bonus = {
 				name = GENERIC_countermeasures_against_aircraft
-				uses = 2
-				bonus = 0.5
+				uses = 1
+				bonus = 0.75
 				category = CAT_aa
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_dlc = "Gotterdammerung"
+							has_tech = air_defense
+						}
+						has_tech = air_defense_non_got
+					}
+				}
+				one_anti_air = yes
 			}
 		}
 
@@ -3646,7 +4034,7 @@
 		id = GENERIC_army_reform
 		icon = infantry_allies
 
-		x = 40
+		x = 41
 		y = 0
 
 		cost = 10
@@ -3682,8 +4070,50 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_military_emergency"
-			army_experience = 20
-			air_experience = 20
+			army_experience = 50
+			air_experience = 50
+			if = {
+				limit = { has_war_support < 0.75 }
+				add_war_support = 0.05
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_military_equipment_procurement
+		icon = lend_lease
+
+		x = 5
+		y = 1
+		relative_position_id = GENERIC_air_force_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_MILITARY_EQUIPMENT }
+		prerequisite = {
+			focus = GENERIC_military_emergency
+			focus = GENERIC_army_reform
+		}
+
+		available = {
+			OR = {
+				has_government = nationalist
+				has_government = fascism
+				has_war = yes
+				threat > 0.20
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [ROOT.GetName]: Focus GENERIC_military_equipment_procurement"
+			add_timed_idea = {
+				idea = idea_focus_import_additional_military_equipment
+				days = 365
+			}
 		}
 
 		ai_will_do = {
