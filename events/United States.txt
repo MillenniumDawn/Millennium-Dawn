@@ -18002,23 +18002,284 @@ country_event = {
 	trigger = {
 		tag = USA
 		NOT = { has_country_flag = collapsed_nation }
+		has_dlc = "By Blood Alone"
 	}
 
-	#Good Idea!
+	# Good Idea!
 	option = {
 		name = usa.80.o1
 		log = "[GetDateText]: [This.GetName]: usa.80.o1 executed"
-		create_equipment_variant = { # Light Multi-Role
-			name = "F-35 Lightning II"
+		set_country_flag = USA_started_f35_program
+		custom_effect_tooltip = USA_unlock_f35_decision_TT
+		newline = yes
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
+		set_country_flag = USA_accepted_into_f35_program
+		USA = {
+			add_to_variable = { var = USA_f35_progress value = 10 }
+			clamp_variable = { var = USA_f35_progress min = 0 max = 100 }
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Forget It
+	option = {
+		name = usa.80.o2
+		log = "[GetDateText]: [This.GetName]: usa.80.o2 executed"
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				has_country_leader = { name = "Bernie Sanders" ruling_only = yes }
+				add = 10
+			}
+		}
+	}
+}
+
+country_event = {
+	id = usa.81
+	title = usa.81.t
+	desc = usa.81.d
+	picture = GFX_f_plane_usa
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = collapsed_nation }
+	}
+
+	option = {
+		name = usa.81.o1
+		log = "[GetDateText]: [This.GetName]: usa.81.o1 executed"
+		custom_effect_tooltip = USA_increase_funding_by_1
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.01 }
+		USA = {
+			add_to_variable = { var = USA_f35_progress value = 1 }
+			clamp_variable = { var = USA_f35_progress min = 0 max = 100 }
+		}
+		ROOT = {
+			add_to_variable = { var = F35_contribution value = 1 }
+			clamp_variable = { var = F35_contribution min = 0 max = 100 }
+		}
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = usa.81.o2
+		log = "[GetDateText]: [This.GetName]: usa.81.o2 executed"
+		custom_effect_tooltip = USA_increase_funding_by_3
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.015 }
+		modify_treasury_effect = yes
+		USA = {
+			add_to_variable = { var = USA_f35_progress value = 3 }
+			clamp_variable = { var = USA_f35_progress min = 0 max = 100 }
+		}
+		ROOT = {
+			add_to_variable = { var = F35_contribution value = 2 }
+			clamp_variable = { var = F35_contribution min = 0 max = 100 }
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = usa.81.o3
+		log = "[GetDateText]: [This.GetName]: usa.81.o3 executed"
+		custom_effect_tooltip = USA_increase_funding_by_5
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.02 }
+		USA = {
+			add_to_variable = { var = USA_f35_progress value = 5 }
+			clamp_variable = { var = USA_f35_progress min = 0 max = 100 }
+		}
+		modify_treasury_effect = yes
+		ROOT = {
+			add_to_variable = { var = F35_contribution value = 3 }
+			clamp_variable = { var = F35_contribution min = 0 max = 100 }
+		}
+		ai_chance = {
+			base = 2
+		}
+	}
+}
+
+country_event = {
+	id = usa.82
+	title = usa.82.t
+	desc = usa.82.d
+	picture = GFX_f_plane_usa
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = USA
+		NOT = { has_country_flag = collapsed_nation }
+	}
+
+	option = {
+		name = usa.82.o1
+		log = "[GetDateText]: [This.GetName]: usa.82.o1 executed"
+		set_country_flag = USA_open_f35_program_nato
+		every_country = {
+			limit = {
+				has_idea = NATO_member
+			}
+			country_event = {
+				id = usa.83
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = usa.82.o2
+		log = "[GetDateText]: [This.GetName]: usa.82.o2 executed"
+		set_country_flag = USA_open_f35_program_world
+		every_country = {
+			limit = {
+				OR = {
+					has_idea = NATO_member
+					has_idea = Major_Non_NATO_Ally
+				}
+			}
+			country_event = {
+				id = usa.83
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = usa.82.o3
+		log = "[GetDateText]: [This.GetName]: usa.82.o3 executed"
+		set_country_flag = USA_open_f35_program_world
+		every_country = {
+			limit = {
+				OR = {
+					has_idea = NATO_member
+					has_idea = Major_Non_NATO_Ally
+				}
+			}
+			country_event = {
+				id = usa.93
+				days = 2
+			}
+		}
+		custom_effect_tooltip = USA_f35_apply_TT
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+country_event = {
+	id = usa.83
+	title = usa.83.t
+	desc = usa.83.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+	trigger = {
+		NOT = {
+			original_tag = USA
+		}
+	}
+	option = {
+		name = usa.83.o1
+		log = "[GetDateText]: [This.GetName]: usa.83.o1 executed"
+		custom_effect_tooltip = USA_unlock_f35_decision_TT
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		add_to_array = { global.f35_members = THIS.id }
+		set_country_flag = USA_accepted_into_f35_program
+		if = {
+			limit = {
+				USA = {
+					has_country_flag = USA_f35_designed
+				}
+			}
+			set_country_flag = USA_f35_program_member_new
+		}
+		else = {
+			set_country_flag = USA_f35_legacy_members
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = usa.83.o2
+		log = "[GetDateText]: [This.GetName]: usa.83.o2 executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = usa.84
+	title = usa.84.t
+	desc = usa.84.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.84.o1
+		log = "[GetDateText]: [This.GetName]: usa.84.o1 executed"
+		if = {
+			limit = {
+				NOT = {
+					has_tech = gen_5_light
+				}
+			}
+			set_technology = { gen_5_light = 1 }
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_tech = avionics_3
+				}
+			}
+			set_technology = { avionics_3 = 1 }
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_tech = countermeasures_3
+				}
+			}
+			set_technology = { countermeasures_3 = 1 }
+		}
+		# F-35A
+		create_equipment_variant = {
+			name = "F-35A Lightning II"
 			type = small_plane_strike_airframe_3
 			parent_version = 1
 			modules = {
 				fixed_main_weapon_slot = weap_int_mp_med_hardpoint_2
 				fixed_gun_slot = weap_multi_gun_3
 				engine_type_slot = engine_light_single_3
-				avionics_type_slot = avionics_manned_3
+				avionics_type_slot = avionics_manned_4
 				wingform_type_slot = wing_diamond
-				special_slot_type_1 = spec_countermeasures_2
+				special_slot_type_1 = spec_countermeasures_3
 				special_slot_type_2 = spec_stealthmats_1
 				special_slot_type_3 = spec_stealthshape_1
 				special_slot_type_4 = spec_refuel_3
@@ -18027,38 +18288,764 @@ country_event = {
 			}
 			upgrades = {
 				plane_bba_radar_upgrade = 5
-				plane_bba_engine_upgrade = 7
+				plane_bba_engine_upgrade = 4
 			}
 			icon = "gfx/interface/technologies/USA/AIR/MR4.dds"
 			model = "USA_MR_Fighter4_entity"
 			design_team = mio:USA_lockheed_martin_aircraft_manufacturer
 		}
-		newline = yes
-		set_temp_variable = { temp_opinion = 5 }
-		change_defense_industry_opinion = yes
-		newline = yes
-		add_timed_idea = {
-			idea = USA_f35_program
-			days = 3652
+		# F-35B
+		create_equipment_variant = {
+			name = "F-35B Lightning II"
+			type = cv_small_plane_strike_airframe_3
+			parent_version = 1
+			modules = {
+				fixed_main_weapon_slot = weap_int_mp_med_hardpoint_2
+				fixed_gun_slot = weap_multi_gun_3
+				engine_type_slot = engine_light_single_3
+				avionics_type_slot = avionics_manned_4
+				wingform_type_slot = wing_diamond
+				special_slot_type_1 = spec_countermeasures_3
+				special_slot_type_2 = spec_stealthmats_1
+				special_slot_type_3 = spec_stealthshape_1
+				special_slot_type_4 = spec_thrust_vector_1
+				fixed_auxiliary_weapon_slot_1 = weap_int_a2a_hardpoint_1
+				fixed_auxiliary_weapon_slot_2 = weap_int_mp_med_hardpoint_2
+			}
+			upgrades = {
+				plane_bba_radar_upgrade = 4
+				plane_bba_engine_upgrade = 4
+			}
+			icon = "gfx/interface/technologies/USA/AIR/MR5.dds"
+			model = "USA_cv_small_plane_strike_airframe_3_entity"
+			design_team = mio:USA_lockheed_martin_aircraft_manufacturer
 		}
-		newline = yes
-		set_temp_variable = { treasury_change = gdp_total }
-		multiply_temp_variable = { treasury_change = -0.08 }
-		modify_treasury_effect = yes
+		# F-35C
+		create_equipment_variant = {
+			name = "F-35C Lightning II"
+			type = cv_small_plane_strike_airframe_3
+			parent_version = 1
+			modules = {
+				fixed_main_weapon_slot = weap_int_mp_med_hardpoint_2
+				fixed_gun_slot = weap_multi_gun_3
+				engine_type_slot = engine_light_single_3
+				avionics_type_slot = avionics_manned_4
+				wingform_type_slot = wing_diamond
+				special_slot_type_1 = spec_countermeasures_3
+				special_slot_type_2 = spec_stealthmats_1
+				special_slot_type_3 = spec_stealthshape_1
+				special_slot_type_4 = spec_refuel_3
+				fixed_auxiliary_weapon_slot_1 = weap_int_a2a_hardpoint_1
+				fixed_auxiliary_weapon_slot_2 = weap_int_a2a_hardpoint_1
+			}
+			upgrades = {
+				plane_bba_radar_upgrade = 4
+				plane_bba_engine_upgrade = 4
+			}
+			icon = "gfx/interface/technologies/USA/AIR/LSTRCV2.dds"
+			model = "USA_CV_MR_Fighter4_entity"
+			design_team = mio:USA_lockheed_martin_aircraft_manufacturer
+		}
+		set_country_flag = USA_f35_designed
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+country_event = {
+	id = usa.85
+	title = usa.85.t
+	desc = usa.85.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.85.o1
+		log = "[GetDateText]: [This.GetName]: usa.85.o1 executed"
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 14
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 100
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 9
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 75
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 5
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 50
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 3
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 25
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 0
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 10
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution = 0
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = small_plane_strike_airframe_3
+				variant_name = "F-35A Lightning II"
+				amount = 5
+				producer = USA
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = usa.85.o2
+		log = "[GetDateText]: [This.GetName]: usa.85.o2 executed"
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 14
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 100
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 9
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 75
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 5
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 50
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 3
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 25
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution > 0
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 10
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					F35_contribution = 0
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_strike_airframe_3
+				variant_name = "F-35B Lightning II"
+				amount = 5
+				producer = USA
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+country_event = {
+	id = usa.86
+	title = usa.86.t
+	desc = usa.86.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.86.o1
+		log = "[GetDateText]: [This.GetName]: usa.86.o1 executed"
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = FROM }
+		change_influence_percentage = yes
+		if = {
+			limit = {
+				NOT = {
+					has_dynamic_modifier = {
+						modifier = USA_f35_supply_chain
+					}
+				}
+			}
+			add_dynamic_modifier = { modifier = USA_f35_supply_chain }
+		}
+		FROM = {
+			country_event = usa.87
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_opinion = { target = FROM value > 115 }
+				add = 10
+			}
+			modifier = {
+				FROM = {
+					has_government = democratic
+				}
+				add = 5
+			}
+			modifier = {
+				add = 5
+				FROM = {
+					has_war = no
+				}
+			}
+			modifier = {
+				add = -5
+				check_variable = {
+					f35_production_debuff < -0.20
+				}
+			}
+			modifier = {
+				add = -5
+				check_variable = {
+					f35_production_debuff < -0.40
+				}
+			}
+		}
+	}
+
+	option = {
+		name = usa.86.o2
+		log = "[GetDateText]: [This.GetName]: usa.86.o2 executed"
+		FROM = {
+			country_event = usa.88
+		}
 		ai_chance = {
 			base = 1
 		}
 	}
-	#Forget It
-	option = {
-		name = usa.80.o2
-		log = "[GetDateText]: [This.GetName]: usa.80.o2 executed"
+}
 
+country_event = {
+	id = usa.87
+	title = usa.87.t
+	desc = usa.87.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.87.o1
+		log = "[GetDateText]: [This.GetName]: usa.86.o1 executed"
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		set_country_flag = F35_placed_small_order_A
+		USA = {
+			add_to_variable = { var = f35_production_debuff value = -0.02 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+		}
+		ROOT = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.015 }
+			set_temp_variable = { temp_reparation = treasury_change }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = {
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = -0.015 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.015 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+		}
+		USA = {
+			set_temp_variable = { treasury_change = temp_reparation }
+			modify_treasury_effect = yes
+		}
 		ai_chance = {
-			base = 0
+			base = 10
+		}
+	}
+
+	option = {
+		name = usa.87.o2
+		log = "[GetDateText]: [This.GetName]: usa.86.o2 executed"
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		set_country_flag = F35_placed_small_order_B
+		USA = {
+			add_to_variable = { var = f35_production_debuff value = -0.02 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+		}
+		ROOT = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			set_temp_variable = { temp_reparation = treasury_change }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = {
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = -0.01 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.01 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+		}
+		USA = {
+			set_temp_variable = { treasury_change = temp_reparation }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = usa.87.o3
+		log = "[GetDateText]: [This.GetName]: usa.87.o3 executed"
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		set_country_flag = F35_placed_large_order_A
+		USA = {
+			add_to_variable = { var = f35_production_debuff value = -0.04 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+		}
+		ROOT = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.025 }
+			set_temp_variable = { temp_reparation = treasury_change }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = {
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = -0.025 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.025 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+		}
+		USA = {
+			set_temp_variable = { treasury_change = temp_reparation }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+
+	option = {
+		name = usa.87.o4
+		log = "[GetDateText]: [This.GetName]: usa.87.o4 executed"
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ROOT }
+		change_influence_percentage = yes
+		set_country_flag = F35_placed_large_order_B
+		USA = {
+			add_to_variable = { var = f35_production_debuff value = -0.04 }
+			clamp_variable = { var = f35_production_debuff min = -100 max = 0 }
+		}
+		ROOT = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.02 }
+			set_temp_variable = { temp_reparation = treasury_change }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = {
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = -0.02 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+			ROOT = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.02 }
+				set_temp_variable = { temp_reparation = treasury_change }
+				modify_treasury_effect = yes
+			}
+		}
+		USA = {
+			set_temp_variable = { treasury_change = temp_reparation }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 3
 		}
 	}
 }
+
+country_event = {
+	id = usa.88
+	title = usa.88.t
+	desc = usa.88.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.88.o1
+		log = "[GetDateText]: [This.GetName]: usa.88.o1 executed"
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+
+country_event = {
+	id = usa.89
+	title = usa.89.t
+	desc = usa.89.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.89.o1
+		log = "[GetDateText]: [This.GetName]: usa.89.o1 executed"
+		FROM = {
+			country_event = usa.90
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_opinion = { target = FROM value > 115 }
+				add = 15
+			}
+			modifier = {
+				FROM = {
+					has_government = democratic
+				}
+				add = 5
+			}
+			modifier = {
+				add = 5
+				FROM = {
+					has_war = no
+				}
+			}
+		}
+	}
+
+	option = {
+		name = usa.89.o2
+		log = "[GetDateText]: [This.GetName]: usa.89.o2 executed"
+		FROM = {
+			country_event = usa.91
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				FROM = {
+					has_government = nationalist
+				}
+				add = 5
+			}
+			modifier = {
+				FROM = {
+					has_government = fascism
+				}
+				add = 5
+			}
+			modifier = {
+				FROM = {
+					has_government = communism
+				}
+				add = 5
+			}
+			modifier = {
+				add = 5
+				FROM = {
+					has_war = yes
+				}
+			}
+			modifier = {
+				CHI = {
+					NOT = {
+						has_government = democratic
+						has_government = neutrality
+					}
+				}
+				FROM = {
+					check_variable = { influence_array^0 = CHI }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			modifier = {
+				PER = {
+					has_completed_focus = PER_the_third_development_plan
+				}
+				FROM = {
+					check_variable = { influence_array^0 = PER }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			modifier = {
+				SOV = {
+					NOT = {
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				FROM = {
+					check_variable = { influence_array^0 = SOV }
+					check_variable = { influence_array_val^0 > 19.999 }
+				}
+				add = 5
+			}
+			# Don't act like a dumbass
+			modifier = {
+				FROM = { has_added_tension_amount > 19 }
+				add = 5
+			}
+			# Puppet of an enemy
+			modifier = {
+				CHI = {
+					NOT = {
+						has_government = democratic
+						has_government = neutrality
+					}
+				}
+				FROM = {
+					is_subject_of = CHI
+				}
+				add = 5
+			}
+			modifier = {
+				PER = {
+					has_completed_focus = PER_the_third_development_plan
+				}
+				FROM = {
+					is_subject_of = PER
+				}
+				add = 5
+			}
+			modifier = {
+				SOV = {
+					NOT = {
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				FROM = {
+					is_subject_of = SOV
+				}
+				add = 5
+			}
+			# If you are not in NATO, or have MNNA
+			modifier = {
+				FROM = {
+					NOT = {
+						has_idea = NATO_member
+						has_idea = Major_Non_NATO_Ally
+					}
+				}
+				add = 5
+			}
+		}
+	}
+}
+
+country_event = {
+	id = usa.90
+	title = usa.90.t
+	desc = usa.90.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.90.o1
+		log = "[GetDateText]: [This.GetName]: usa.90.o1 executed"
+		custom_effect_tooltip = USA_unlock_f35_decision_TT
+		add_to_array = { global.f35_members = THIS.id }
+		if = {
+			limit = {
+				USA = {
+					has_country_flag = USA_f35_designed
+				}
+			}
+			set_country_flag = USA_f35_program_member_new
+		}
+		else = {
+			set_country_flag = USA_f35_legacy_members
+		}
+		set_country_flag = USA_accepted_into_f35_program
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+country_event = {
+	id = usa.91
+	title = usa.91.t
+	desc = usa.91.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.91.o1
+		log = "[GetDateText]: [This.GetName]: usa.91.o1 executed"
+		custom_effect_tooltip = USA_reasons_for_denial_TT
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+country_event = {
+	id = usa.92
+	title = usa.92.t
+	desc = usa.92.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.92.o1
+		log = "[GetDateText]: [This.GetName]: usa.92.o1 executed"
+		custom_effect_tooltip = USA_removed_from_F35_TT
+		remove_from_array = { global.f35_members = THIS.id }
+		clr_country_flag = USA_accepted_into_f35_program
+		clr_country_flag = USA_f35_legacy_members
+		clr_country_flag = USA_f35_program_member_new
+		clr_country_flag = F35_placed_small_order_A
+		clr_country_flag = F35_placed_small_order_B
+		clr_country_flag = F35_placed_large_order_A
+		clr_country_flag = F35_placed_large_order_B
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+country_event = {
+	id = usa.93
+	title = usa.93.t
+	desc = usa.93.d
+	picture = GFX_f_plane_usa
+	is_triggered_only = yes
+
+	option = {
+		name = usa.93.o1
+		log = "[GetDateText]: [This.GetName]: usa.93.o1 executed"
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+
 
 # This is for the AI game rule
 country_event = {
