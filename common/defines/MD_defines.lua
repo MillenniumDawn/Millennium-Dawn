@@ -64,6 +64,7 @@
 	NDefines.NDiplomacy.EMBARGO_DIFFERENT_IDEOLOGY_AT_OFFENSIVE_WAR_AI_WEIGHT = 15
 	NDefines.NDiplomacy.EMBARGO_NEIGHBOUR_AI_WEIGHT = -15
 	NDefines.NDiplomacy.EMBARGO_RECIPIENT_IS_MAJOR_AI_WEIGHT = 5
+	NDefines.NDiplomacy.EMBARGO_COST = 50									-- One-time cost
 
 	-- Faction related stuff
 	NDefines.NDiplomacy.TRUCE_PERIOD_AFTER_KICKING_FROM_FACTION = 30				-- Truce period after kicking someone from faction in days.
@@ -231,7 +232,20 @@
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
 	NDefines.NTechnology.BASE_TECH_COST = 250 -- 100 is vanilla --300 was the old MD cost
 	NDefines.NTechnology.MIN_RESEARCH_SPEED = 0.01 -- 0.10 in vanilla
-	NDefines.NTechnology.MAX_TECH_SHARING_BONUS = 0.25 -- Nerfed to 0.25 from Tech Sharing
+	NDefines.NTechnology.MAX_TECH_SHARING_BONUS = 0.10 -- vanilla is 0.50 from Tech Sharing
+	
+	NDefines.NProject.SCIENTIST_SKILL_LEVEL_SPEED_MODIFIER = {		-- Bonus to apply to daily phase progress according to the skill level of the scientist
+	    -0.10,    -- -1.0 means -100%         also name loc key is SCIENTIST_SKILL_LEVEL_NAME_0
+		-0.05,  -- -0.05 means -5%			also name loc key is SCIENTIST_SKILL_LEVEL_NAME_1
+		0.05,	-- 0 means no change		also name loc key is SCIENTIST_SKILL_LEVEL_NAME_2
+		0.1,   -- 0.15 means +15%			...
+		0.15,
+		0.25,	-- Size MUST be SCIENTIST_SKILL_LEVEL_THRESHOLDS's size + 1
+	}
+	NDefines.NProject.BREAKTHROUGH_DAILY_SCIENTIST_SKILL_GAIN = 15       -- Amount in 1/100th percentage gained per skill when doing basic research. E.g. 5 = 0.05% per skill level.
+	NDefines.NProject.BREAKTHROUGH_DAILY_TECHNOLOGY_GAIN = 10           -- Amount in 1/100th percentage. E.g. 25 = 0.25%
+	NDefines.NProject.BREAKTHROUGH_DAILY_ROCKET_SITE_GAIN = 0		   -- Amount in 1/100th percentage gained per rocket site level. E.g. 1 = 0.01% per rocket site level.
+	NDefines.NProject.BREAKTHROUGH_DAILY_NUCLEAR_REACTOR_GAIN = 0       -- Amount in 1/100th percentage gained per nuclear reactor. E.g. 2 = 0.02% per nuclear reactor.
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
 	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 5.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
