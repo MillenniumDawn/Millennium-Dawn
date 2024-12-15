@@ -348,6 +348,74 @@ recalculate_social_desire = {
 
 ##Military Laws
 recalculate_defence_spending_desire = {
+	# if expected spending is low, see if we can boost it
+	if = {
+		limit = {
+			NOT = { has_idea = no_military }
+			check_variable = { expected_military_sp < 5 }
+			NOT = {
+				ai_has_major_economic_problems = yes
+				ai_has_moderate_economic_problems = yes
+			}
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_idea = intervention_neo_imperialism
+					has_idea = intervention_global_interventionism
+				}
+			}
+
+			add_to_variable = { expected_military_sp = 2 }
+		}
+		if = {
+			limit = { threat > 0.35 }
+			add_to_variable = { expected_military_sp = 1 }
+		}
+		if = {
+			limit = {
+				OR = {
+					threat > 0.6
+					any_neighbor_country = {
+						has_war = yes
+					}
+				}
+			}
+			add_to_variable = { expected_military_sp = 1 }
+		}
+		if = {
+			limit = {
+				any_home_area_neighbor_country = {
+					OR = {
+						has_war_with = ROOT
+						has_wargoal_against = ROOT
+						is_justifying_wargoal_against = ROOT
+					}
+				}
+			}
+
+			add_to_variable = { expected_military_sp = 1 }
+		}
+
+		clamp_variable = {
+			var = expected_military_sp
+			min = 1
+			max = 4
+		}
+	}
+
+	# if we STILL lower than 4 AND we have low manpower, increase it
+	if = {
+		limit = {
+			check_variable = { expected_military_sp < 5 }
+			manpower_per_military_factory < 450
+		}
+
+		add_to_variable = { expected_military_sp = 1 }
+	}
+
+
 	if = { limit = { check_variable = { expected_military_sp = 8 } }
 		set_country_flag = wants_military_08
 	}
