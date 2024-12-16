@@ -22,6 +22,30 @@
  	shared_focus = AFRICAN_UNION_shared_focus
 	# Czechoslovakian shared tree
 	shared_focus = CZE_SLO_open_political_court
+
+	# Focus Shortcut
+	shortcut = {
+		name = GENERIC_political_reform
+		target = GENERIC_political_reform
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = GENERIC_international_diplomacy
+		target = GENERIC_international_diplomacy
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = GENERIC_ease_of_business_reforms
+		target = GENERIC_ease_of_business_reforms
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = GENERIC_army_reform
+		target = GENERIC_army_reform
+		scroll_wheel_factor = 0.80
+	}
+
+	# Focus Section
 	focus = {
 		id = GENERIC_political_reform
 		icon = Election_graphics
@@ -2276,6 +2300,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				check_variable = { total_unemployed_percentage_display < 0.01}
+			}
 		}
 	}
 
@@ -2324,6 +2352,10 @@
 
 		ai_will_do = {
 			base = 3
+			modifier = {
+				factor = 0
+				check_variable = { total_unemployed_percentage_display < 0.02 }
+			}
 		}
 	}
 
@@ -2597,6 +2629,7 @@
 			add_ideas = idea_focus_energy_preferred_fossil
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
+			change_oligarchs_opinion = yes
 		}
 
 		ai_will_do = {
@@ -2698,6 +2731,13 @@
 			else = {
 				one_random_nuclear_reactor = yes
 			}
+			if = {
+				limit = { has_idea = non_nuclear_power }
+				swap_ideas = {
+					remove_idea = non_nuclear_power
+					add_idea = nuclear_energy
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -2745,6 +2785,10 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 		prerequisite = { focus = GENERIC_mobilize_the_working_class }
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = 95_total_gdp_tt
+				check_variable = { gdp_total > 95 }
+			}
 			has_civil_war = no
 			has_offensive_war = no
 		}
@@ -3294,7 +3338,7 @@
 				uses = 1
 				cost_reduction = 0.5
 			}
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_maritime_industry_opinion = yes
 		}
 
@@ -3323,17 +3367,17 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_defense_industry_opinion = yes
 			change_maritime_industry_opinion = yes
+			one_random_arms_factory_free = yes
 		}
 
 		ai_will_do = {
 			base = 1
 			modifier = {
 				factor = 0
-				disabled_ai_unit_list = yes
-			}
-			modifier = {
-				factor = 0
-				num_of_civilian_factories < 10
+				OR = {
+					num_of_civilian_factories < 10
+					disabled_ai_unit_list = yes
+				}
 			}
 		}
 	}
@@ -3545,7 +3589,7 @@
 		id = GENERIC_aircraft_carriers
 		icon = carriers2
 
-		x = 2
+		x = 4
 		y = 2
 		relative_position_id = GENERIC_naval_reform
 
@@ -3554,6 +3598,7 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = GENERIC_surface_ships }
 		prerequisite = { focus = GENERIC_fighter_planes }
+		mutually_exclusive = { focus = GENERIC_light_helicopter_operators }
 		available = { num_of_naval_factories > 5 }
 
 		completion_reward = {
@@ -3568,6 +3613,53 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = minor_power
+					has_idea = non_power
+					has_idea = regional_power
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_light_helicopter_operators
+		icon = Generic_Naval_Helicopter
+
+		x = 2
+		y = 2
+		relative_position_id = GENERIC_naval_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+		prerequisite = { focus = GENERIC_surface_ships }
+		prerequisite = { focus = GENERIC_fighter_planes }
+		mutually_exclusive = { focus = GENERIC_aircraft_carriers }
+		available = { num_of_naval_factories > 5 }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_aircraft_carriers"
+			add_tech_bonus = {
+				name = GENERIC_aircraft_carriers
+				uses = 2
+				bonus = 0.5
+				category = CAT_lha
+				category = CAT_lpd
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = non_power
+					has_idea = minor_power
+				}
+			}
 		}
 	}
 
@@ -3719,6 +3811,98 @@
 			base = 1
 		}
 	}
+
+	focus = {
+		id = GENERIC_capital_defense_scheme
+		icon = army_anti_missles
+
+		x = 3
+		y = 1
+		relative_position_id = GENERIC_air_force_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_MILITARY FOCUS_FILTER_AIRCRAFT }
+		prerequisite = {
+			focus = GENERIC_air_force_reform
+			focus = GENERIC_military_emergency
+		}
+
+		available = {
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				has_tech = air_defense
+			}
+			else = {
+				has_tech = air_defense_non_got
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [RoGoot.GetName]: Focus GENERIC_capital_defense_scheme"
+			if = {
+				limit = {
+					capital_scope = {
+						free_building_slots = {
+							building = anti_air_building
+							size > 0
+						}
+					}
+				}
+				capital_scope = {
+					add_building_construction = {
+						type = anti_air_building
+						level = 1
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { treasury_change = -3.25 }
+				modify_treasury_effect = yes
+			}
+			else = {
+				one_anti_air = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_defense_scheme_beta
+		icon = mlw_sam_sites
+
+		x = 3
+		y = 2
+		relative_position_id = GENERIC_air_force_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_MILITARY FOCUS_FILTER_AIRCRAFT }
+		prerequisite = { focus = GENERIC_capital_defense_scheme }
+
+		available = {
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				has_tech = air_defense
+			}
+			else = {
+				has_tech = air_defense_non_got
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [RoGoot.GetName]: Focus GENERIC_defense_scheme_beta"
+			one_anti_air = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+
 	focus = {
 		id = GENERIC_countermeasures_against_aircraft
 		icon = naval_bombers
@@ -3729,20 +3913,37 @@
 
 		cost = 10
 
-		search_filters = { FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_AIRCRAFT }
 		prerequisite = {
 			focus = GENERIC_fighter_planes
 			focus = GENERIC_air_doctrine_innovations
 		}
-		available = { num_of_military_factories > 4 }
+		available = {
+			OR = {
+				num_of_military_factories > 4
+				has_war = yes
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_countermeasures_against_aircraft"
 			add_tech_bonus = {
 				name = GENERIC_countermeasures_against_aircraft
-				uses = 2
-				bonus = 0.5
+				uses = 1
+				bonus = 0.75
 				category = CAT_aa
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_dlc = "Gotterdammerung"
+							has_tech = air_defense
+						}
+						has_tech = air_defense_non_got
+					}
+				}
+				one_anti_air = yes
 			}
 		}
 
@@ -3841,7 +4042,7 @@
 		id = GENERIC_army_reform
 		icon = infantry_allies
 
-		x = 40
+		x = 41
 		y = 0
 
 		cost = 10
@@ -3877,8 +4078,50 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_military_emergency"
-			army_experience = 20
-			air_experience = 20
+			army_experience = 50
+			air_experience = 50
+			if = {
+				limit = { has_war_support < 0.75 }
+				add_war_support = 0.05
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = GENERIC_military_equipment_procurement
+		icon = lend_lease
+
+		x = 5
+		y = 1
+		relative_position_id = GENERIC_air_force_reform
+
+		cost = 10
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_MILITARY_EQUIPMENT }
+		prerequisite = {
+			focus = GENERIC_military_emergency
+			focus = GENERIC_army_reform
+		}
+
+		available = {
+			OR = {
+				has_government = nationalist
+				has_government = fascism
+				has_war = yes
+				threat > 0.20
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [ROOT.GetName]: Focus GENERIC_military_equipment_procurement"
+			add_timed_idea = {
+				idea = idea_focus_import_additional_military_equipment
+				days = 365
+			}
 		}
 
 		ai_will_do = {
