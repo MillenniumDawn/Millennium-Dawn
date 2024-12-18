@@ -230,11 +230,32 @@ clear_law_desire_flags = {
 	clr_country_flag = wants_social_04
 	clr_country_flag = wants_social_05
 	clr_country_flag = wants_social_06
+	clr_country_flag = wants_military_01
+	clr_country_flag = wants_military_02
+	clr_country_flag = wants_military_03
+	clr_country_flag = wants_military_04
+	clr_country_flag = wants_military_05
+	clr_country_flag = wants_military_06
+	clr_country_flag = wants_military_07
+	clr_country_flag = wants_military_08
 }
 
 # Bureaucracy desire is chiefly determined by the size/strength of the nation. More powerful the nation, more it wants a higher level of bureaucracy.
 # Secondary to size and power of the nation is the GDP of the nation - impoverished nations can't afford an extensive bureaucracy.
 recalculate_bureaucracy_desire = {
+	if = {
+		limit = {
+			has_variable = bureau_desire_offset
+		}
+
+		add_to_variable = { expected_adm_spending = bureau_desire_offset }
+		clamp_variable = {
+			var = expected_adm_spending
+			min = 1
+			max = 5
+		}
+	}
+
 	if = {
 		limit = { check_variable = { expected_adm_spending = 5 } }
 		set_country_flag = wants_bureau_05
@@ -259,6 +280,19 @@ recalculate_bureaucracy_desire = {
 # Police desire should tend to gravitate toward the middle (police_03) in most nations. This is also affected by politics - repressive governments
 # want more police apparatus than more liberal/libertarian ones. Also influenced by GDP - impoverished nations cannot afford large police forces.
 recalculate_police_desire = {
+	if = {
+		limit = {
+			has_variable = police_desire_offset
+		}
+
+		add_to_variable = { expected_police_spending = police_desire_offset }
+		clamp_variable = {
+			var = expected_police_spending
+			min = 1
+			max = 5
+		}
+	}
+
 	if = { limit = { check_variable = { expected_police_spending = 5 } }
 		set_country_flag = wants_police_05
 	}
@@ -279,6 +313,19 @@ recalculate_police_desire = {
 # Education desire is highly dependent on wealth and development level. Underdeveloped or developing nations should have edu_01 or edu_02.
 # Most developed nations should never go below edu_03. Richer nations should have edu_04. Also dependent on political policies.
 recalculate_edu_desire = {
+	if = {
+		limit = {
+			has_variable = education_desire_offset
+		}
+
+		add_to_variable = { expected_edu_spending = education_desire_offset }
+		clamp_variable = {
+			var = expected_edu_spending
+			min = 1
+			max = 5
+		}
+	}
+
 	if = { limit = { check_variable = { expected_edu_spending = 5 } }
 		set_country_flag = wants_edu_05
 	}
@@ -298,6 +345,19 @@ recalculate_edu_desire = {
 
 # Health is again highly dependent on development.
 recalculate_health_desire = {
+	if = {
+		limit = {
+			has_variable = health_desire_offset
+		}
+
+		add_to_variable = { expected_health_spending = health_desire_offset }
+		clamp_variable = {
+			var = expected_health_spending
+			min = 1
+			max = 6
+		}
+	}
+
 	if = {
 		limit = { check_variable = { expected_health_spending = 6 } }
 		set_country_flag = wants_health_06
@@ -325,6 +385,19 @@ recalculate_health_desire = {
 
 # Welfare is highly dependent on development, but with more GDP categories skewing lower.
 recalculate_social_desire = {
+	if = {
+		limit = {
+			has_variable = social_desire_offset
+		}
+
+		add_to_variable = { expected_welfare_spending = social_desire_offset }
+		clamp_variable = {
+			var = expected_welfare_spending
+			min = 1
+			max = 6
+		}
+	}
+
 	# Finally, set country flag based on result.
 	if = { limit = { check_variable = { expected_welfare_spending = 6 } }
 		set_country_flag = wants_social_06
@@ -452,6 +525,9 @@ recalculate_law_desires = {
 	recalculate_edu_desire = yes
 	recalculate_health_desire = yes
 	recalculate_social_desire = yes
+	recalculate_defence_spending_desire = yes
+	# will increase next month, just in case
+	inrease_spending_if_possible = yes
 }
 
 focus_on_laws_due_to_economic_despair = {
@@ -466,6 +542,13 @@ focus_on_laws_due_to_economic_despair = {
 			}
 		}
 		set_country_flag = AI_economic_downspiral
+
+		# reset increased spending if we are doing bad
+		set_variable = { bureau_desire_offset = 0 }
+		set_variable = { education_desire_offset = 0 }
+		set_variable = { health_desire_offset = 0 }
+		set_variable = { police_desire_offset = 0 }
+		set_variable = { social_desire_offset = 0 }
 		log = "[GetDateText]: [Root.GetName]: AI Scripted Trigger: focus_on_laws_due_to_economic_despair fired"
 	}
 	else_if = {
@@ -644,5 +727,39 @@ social_law_desire_trigger = {
 	}
 	else = {
 		log = "[GetDateText]: [Root.GetName]: Error: No Social Budget law desire found"
+	}
+}
+
+inrease_spending_if_possible = {
+	if = {
+		# if we are good on taxes and not increased spending already
+		limit = {
+			check_variable = { treasury_rate > 0 }
+			check_variable = { corporate_tax < 25 }
+			check_variable = { population_tax < 25 }
+			has_bureau_idea_law_desired = yes
+			has_education_law_desired = yes
+			has_health_law_desired = yes
+			has_police_idea_law_desired = yes
+			has_social_law_desired = yes
+		}
+
+		random_list = {
+			10 = {
+				add_to_variable = { bureau_desire_offset = 1 }
+			}
+			10 = {
+				add_to_variable = { education_desire_offset = 1 }
+			}
+			10 = {
+				add_to_variable = { health_desire_offset = 1 }
+			}
+			10 = {
+				add_to_variable = { police_desire_offset = 1 }
+			}
+			10 = {
+				add_to_variable = { social_desire_offset = 1 }
+			}
+		}
 	}
 }
