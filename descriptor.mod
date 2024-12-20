@@ -1,4 +1,4 @@
-version="1.10.5"
+version="1.11.1"
 name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
@@ -10,7 +10,7 @@ tags={
 	"Balance"
 	"Fixes"
 }
-supported_version="1.14.*"
+supported_version="1.15.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
 
@@ -39,6 +39,7 @@ replace_path = "common/scripted_effects"
 replace_path = "common/scripted_localisation"
 replace_path = "common/scripted_triggers"
 replace_path = "common/scripted_diplomatic_actions"
+replace_path = "common/special_projects"
 replace_path = "common/technologies"
 replace_path = "common/technology_sharing"
 replace_path = "common/unit_leader"
