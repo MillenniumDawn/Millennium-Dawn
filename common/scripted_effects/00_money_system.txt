@@ -1,14 +1,14 @@
-# Original Written by Killerrabbit
-# Reworked by Gearz, and Angriest Bird
+# Author(s): AngriestBird, Simone, Kalkalash
+# Original written by Killerrabbit, originally optimized by HiddenGearz
 
 # GDP Calculation
 # Calculating things for the money system
-#Interest rates are set in GDP/C - need modifier based on debt_ratio, to avoid rich countries getting infinite rich by taking huge loans and reinvesting abroad
-#Variable explanations
-#####treasury_rate - How much money your country is making daily#####
-#tax_gain - money your gaining from taxes
-#int_investments_rate - money your gaining from international investments
-#resource_sale_rate - money your gaining from exports
+# Interest rates are set in GDP/C - need modifier based on debt_ratio, to avoid rich countries getting infinite rich by taking huge loans and reinvesting abroad
+# Variable explanations
+# treasury_rate - How much money your country is making daily#####
+# tax_gain - money your gaining from taxes
+# int_investments_rate - money your gaining from international investments
+# resource_sale_rate - money your gaining from exports
 
 # expense_gain - total amount of money your spending
 # debt_rate - How much money your country owes in debt
@@ -21,6 +21,7 @@
 # military_rate - cost of military law
 # personnel_cost - how much you pay soldiers and maintenance on equipment
 
+# Cyber Cost
 # treasury_cyber_small - cost of small investments in cyber security infrastructure
 # treasury_cyber_medium - cost of medium investments in cyber security infrastructure
 # treasury_cyber_large - cost of large investments in cyber security infrastructure
@@ -47,19 +48,19 @@
 # Adjusts the percentage of refugees off of your total population
 @refugee_percentage_adjuster = 0.005
 
-# ingame_update_setup
-# This function is used to update the economic setup mid game
+# Effect: ngame_update_setup
+# Purpose: This function is used to update the economic setup mid game
 ingame_update_setup = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
 
-	#Income
+	# Income
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
 	calculate_tax_gain = yes
 	calculate_additional_income_rate = yes
 
-	#Expenses
+	# Expenses
 	update_military_rate = yes
 	update_bureaucracy_rate = yes
 	update_police_rate = yes
@@ -69,13 +70,13 @@ ingame_update_setup = {
 	calculate_interest_rate = yes
 	calculate_additional_expense_rate = yes
 
-	#Various
+	# Miscellaneous
 	update_economic_cycle_cost = yes
 	update_cyber_cost = yes
 	hidden_effect = { productivity_growth_display_effect = yes }
 	calculate_migration_mechanic_values = yes
 
-	## AI Section
+	# AI Section
 	# This is for calculating the AIs desired economic tax law
 	if = { limit = { is_ai = yes }
 		calculate_ai_taxes_desire = yes
@@ -86,7 +87,7 @@ ingame_update_setup = {
 		force_update_map_mode = { mapmode = productivity_map_mode }
 	}
 
-	#Visuals
+	# Visuals
 	update_display = yes
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
@@ -102,8 +103,8 @@ ingame_update_setup = {
 	refresh_gui = yes
 }
 
-# calculate_tax_rate
-# Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
+# Effect: calculate_tax_rate
+# Purpose: Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
 	hidden_effect = {
 		if = { limit = { NOT = { has_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit } } }
@@ -352,6 +353,8 @@ calculate_tax_gain = {
 	add_to_variable = { var = tax_gain value = population_tax }
 }
 
+# Effect: calculate_additional_income_rate
+# Purpose: Calculates income from additional sources such as focuses, decisions, effects, events and more
 calculate_additional_income_rate = {
 	set_variable = { additional_income_rate = 0 }
 
@@ -1559,7 +1562,8 @@ calculate_additional_income_rate = {
 	}
 }
 
-#Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
+# Effect: calculate_interest_rate
+# Purpose: Calculates the interest rate of a nation based off their debt relative to their GDP
 calculate_interest_rate = {
 	if = {			#if country has no debt and high interest national spirit (because they paid it off from having 15% debt interest to 0 within the same in-game day), it'll set all to 0 and remove high interest spirit, also skipping all other calculations to save on processing.
 		limit = {
@@ -1686,9 +1690,10 @@ calculate_interest_rate = {
 	}
 }
 
-#Update military spending
+# Effect: update_military_rate
+# Purpose: Calculates the military spending rate during the weekly update
 update_military_rate = {
-	#clear the array that stores the law costgdp_total
+	#clear the array that stores the law cost
 	clear_array = array_defence_spend
 
 	# Recreate the Array
@@ -2284,7 +2289,8 @@ update_military_rate = {
 	clamp_variable = { var = defence_gain min = 0 }
 }
 
-#Update bureaucracy spending
+# Effect: update_bureaucracy_rate
+# Purpose: Calculates the bureaucracy spending rate during the weekly update
 update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
@@ -2346,7 +2352,8 @@ update_bureaucracy_rate = {
 	clamp_variable = { var = bureaucracy_gain min = 0 }
 }
 
-#Update police spending
+# Effect: update_police_rate
+# Purpose: Calculates the police/internal security spending rate during the weekly update
 update_police_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_security_spend
@@ -2409,7 +2416,8 @@ update_police_rate = {
 	clamp_variable = { var = security_gain min = 0 }
 }
 
-#Update education spending
+# Effect: update_education_rate
+# Purpose: Calculates the eduaction spending rate during the weekly update
 update_education_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_education_spend
@@ -2549,7 +2557,8 @@ update_education_rate = {
 	clamp_variable = { var = total_facilities_spending_display_var min = 0 }
 }
 
-#Update health spending
+# Effect: update_health_rate
+# Purpose: Calculates the healtchare spending rate during the weekly update
 update_health_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_health_spend
@@ -2616,7 +2625,8 @@ update_health_rate = {
 	clamp_variable = { var = health_gain min = 0 }
 }
 
-#Update social spending
+# Effect: update_social_rate
+# Purpose: Calculates the social spending rate during the weekly update
 update_social_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_social_spend
@@ -2683,6 +2693,8 @@ update_social_rate = {
 	clamp_variable = { var = welfare_gain min = 0 }
 }
 
+# Effect: calculate_additional_expense_rate
+# Purpose: Calculates any additional expenditures stemming from content such as decisions, effects, tech, ideas or more
 calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
 	# Additional expenses, set expense amount as a variable (weekly gain)
@@ -3200,6 +3212,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_USA_war_cost }
 		}
 	}
+	# Iraq - IRQ
 	if = {
 		limit = { original_tag = IRQ }
 		if = {
@@ -3218,7 +3231,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_iraq_war_compensation_two }
 		}
 	}
-	# Iran
+	# Iran - PER
 	if = {
 		limit = { original_tag = PER }
 		if = {
@@ -3242,7 +3255,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_cerato_car }
 		}
 	}
-	# Belarus
+	# Belarus - BLR
 	if = {
 		limit = { original_tag = BLR }
 		if = {
@@ -3256,7 +3269,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_BLR_oil_russian_positive }
 		}
 	}
-	# Russia
+	# Russia - SOV
 	if = {
 		limit = { original_tag = SOV }
 		if = {
@@ -3276,7 +3289,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_NKO_korean_repair_frontline_workers }
 		}
 	}
-	# Ukraine
+	# Ukraine - UKR
 	if = {
 		limit = { original_tag = UKR }
 		if = {
@@ -3295,7 +3308,7 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_UKR_russian_gas_cheaper }
 		}
 	}
-	# Egypt
+	# Egypt - EGY
 	if = {
 		limit = { original_tag = EGY }
 		if = {
@@ -3319,17 +3332,14 @@ calculate_additional_expense_rate = {
 			add_to_variable = { additional_expenses_rate = additional_expense_broken }
 		}
 	}
-	# France
+	# France - FRA
 	if = {
 		limit = { original_tag = FRA }
-		if = {
-			limit = {
-				has_dynamic_modifier = { modifier = FRA_idea_nepad_modifier }
-			}
+		if = { limit = { has_dynamic_modifier = { modifier = FRA_idea_nepad_modifier } }
 			add_to_variable = { additional_expenses_rate = FRA.FRA_nepad_sponsor_weekly_cost }
 		}
 	}
-
+	# Israel - ISR
 	if = {
 		limit = { original_tag = ISR }
 		if = {
@@ -3541,11 +3551,7 @@ update_display = {
 	set_variable = { budget_array^8 = border_control_gain }
 
 	if = { limit = { is_debug = yes }
-		find_highest_in_array = {
-			array = budget_array
-			value = value_highest_cost_temp
-			index = index_highest_cost_temp
-		}
+		find_highest_in_array = { array = budget_array value = value_highest_cost_temp index = index_highest_cost_temp }
 		log = "[GetDateText]: [THIS.GetName]: Highest Economic Expenditure: Index: [?index_highest_cost_temp] Value: [?value_highest_cost_temp]: Treasury Rate: [?THIS.treasury_rate]"
 	}
 
@@ -3574,122 +3580,127 @@ update_economic_cycle_cost = {
 	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
 }
 
+# Effect: update_cyber_cost
+# Purpose: Updates the cost of cyber strike decisions from the old espinoage system
 update_cyber_cost = {
-	if = {
-		limit = {
-			check_variable = { gdp_total < 501 }
+	if = { limit = { NOT = { has_dlc = "La Resistance" } }
+		if = {
+			limit = {
+				check_variable = { gdp_total < 501 }
+			}
+			set_variable = { treasury_cyber_small = gdp_total }
+			multiply_variable = { treasury_cyber_small = 0.006 }
+			set_variable = { treasury_cyber_medium = gdp_total }
+			multiply_variable = { treasury_cyber_medium = 0.011 }
+			multiply_variable = { treasury_cyber_medium = 0.85 }
+			set_variable = { treasury_cyber_large = gdp_total }
+			multiply_variable = { treasury_cyber_large = 0.015 }
 		}
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.006 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.011 }
-		multiply_variable = { treasury_cyber_medium = 0.85 }
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.015 }
-	}
 
-	if = {
-		limit = {
-			check_variable = { gdp_total > 500 }
-			check_variable = { gdp_total < 1001 }
+		if = {
+			limit = {
+				check_variable = { gdp_total > 500 }
+				check_variable = { gdp_total < 1001 }
+			}
+			set_variable = { treasury_cyber_small = gdp_total }
+			multiply_variable = { treasury_cyber_small = 0.005 }
+			multiply_variable = { treasury_cyber_small = 0.85 }
+			set_variable = { treasury_cyber_medium = gdp_total }
+			multiply_variable = { treasury_cyber_medium = 0.009 }
+			multiply_variable = { treasury_cyber_medium = 0.85 }
+			set_variable = { treasury_cyber_large = gdp_total }
+			multiply_variable = { treasury_cyber_large = 0.015 }
+			multiply_variable = { treasury_cyber_large = 0.90 }
 		}
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.005 }
-		multiply_variable = { treasury_cyber_small = 0.85 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.009 }
-		multiply_variable = { treasury_cyber_medium = 0.85 }
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.015 }
-		multiply_variable = { treasury_cyber_large = 0.90 }
-	}
 
-	if = {
-		limit = {
-			check_variable = { gdp_total > 1000 }
-			check_variable = { gdp_total < 2001 }
+		if = {
+			limit = {
+				check_variable = { gdp_total > 1000 }
+				check_variable = { gdp_total < 2001 }
+			}
+			set_variable = { treasury_cyber_small = gdp_total }
+			multiply_variable = { treasury_cyber_small = 0.004 }
+			set_variable = { treasury_cyber_medium = gdp_total }
+			multiply_variable = { treasury_cyber_medium = 0.007 }
+			multiply_variable = { treasury_cyber_medium = 0.85 }
+			set_variable = { treasury_cyber_large = gdp_total }
+			multiply_variable = { treasury_cyber_large = 0.01 }
 		}
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.004 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.007 }
-		multiply_variable = { treasury_cyber_medium = 0.85 }
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.01 }
-	}
 
-	if = {
-		limit = {
-			check_variable = { gdp_total > 2000 }
-			check_variable = { gdp_total < 5001 }
+		if = {
+			limit = {
+				check_variable = { gdp_total > 2000 }
+				check_variable = { gdp_total < 5001 }
+			}
+			set_variable = { treasury_cyber_small = gdp_total }
+			multiply_variable = { treasury_cyber_small = 0.003 }
+			multiply_variable = { treasury_cyber_small = 0.85 }
+			set_variable = { treasury_cyber_medium = gdp_total }
+			multiply_variable = { treasury_cyber_medium = 0.005 }
+			multiply_variable = { treasury_cyber_medium = 0.75 }
+			set_variable = { treasury_cyber_large = gdp_total }
+			multiply_variable = { treasury_cyber_large = 0.005 }
 		}
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.003 }
-		multiply_variable = { treasury_cyber_small = 0.85 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.005 }
-		multiply_variable = { treasury_cyber_medium = 0.75 }
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.005 }
-	}
 
-	if = {
-		limit = {
-			check_variable = { gdp_total > 5000 }
-			check_variable = { gdp_total < 10001 }
+		if = {
+			limit = {
+				check_variable = { gdp_total > 5000 }
+				check_variable = { gdp_total < 10001 }
+			}
+			set_variable = { treasury_cyber_small = gdp_total }
+			multiply_variable = { treasury_cyber_small = 0.002 }
+			multiply_variable = { treasury_cyber_small = 0.85 }
+			set_variable = { treasury_cyber_medium = gdp_total }
+			multiply_variable = { treasury_cyber_medium = 0.003 }
+			multiply_variable = { treasury_cyber_medium = 0.90 }
+			set_variable = { treasury_cyber_large = gdp_total }
+			multiply_variable = { treasury_cyber_large = 0.005 }
+			multiply_variable = { treasury_cyber_large = 0.80 }
 		}
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.002 }
-		multiply_variable = { treasury_cyber_small = 0.85 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.003 }
-		multiply_variable = { treasury_cyber_medium = 0.90 }
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.005 }
-		multiply_variable = { treasury_cyber_large = 0.80 }
-	}
 
-	if = {
-		limit = {
-			check_variable = { gdp_total > 10000 }
-			check_variable = { gdp_total < 30001 }
+		if = {
+			limit = {
+				check_variable = { gdp_total > 10000 }
+				check_variable = { gdp_total < 30001 }
+			}
+			set_variable = { treasury_cyber_small = gdp_total }
+			multiply_variable = { treasury_cyber_small = 0.002 }
+			multiply_variable = { treasury_cyber_small = 0.70 }
+			set_variable = { treasury_cyber_medium = gdp_total }
+			multiply_variable = { treasury_cyber_medium = 0.003 }
+			multiply_variable = { treasury_cyber_medium = 0.65 }
+			set_variable = { treasury_cyber_large = gdp_total }
+			multiply_variable = { treasury_cyber_large = 0.003 }
+			multiply_variable = { treasury_cyber_large = 0.85 }
 		}
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.002 }
-		multiply_variable = { treasury_cyber_small = 0.70 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.003 }
-		multiply_variable = { treasury_cyber_medium = 0.65 }
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.003 }
-		multiply_variable = { treasury_cyber_large = 0.85 }
-	}
 
-	if = {
-		limit = {
-			check_variable = { gdp_total > 30000 }
+		if = {
+			limit = {
+				check_variable = { gdp_total > 30000 }
+			}
+			set_variable = { treasury_cyber_small = gdp_total }
+			multiply_variable = { treasury_cyber_small = 0.001 }
+			set_variable = { treasury_cyber_medium = gdp_total }
+			multiply_variable = { treasury_cyber_medium = 0.002 }
+			multiply_variable = { treasury_cyber_medium = 0.70 }
+			set_variable = { treasury_cyber_large = gdp_total }
+			multiply_variable = { treasury_cyber_large = 0.002 }
+			multiply_variable = { treasury_cyber_large = 0.87 }
 		}
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.001 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.002 }
-		multiply_variable = { treasury_cyber_medium = 0.70 }
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.002 }
-		multiply_variable = { treasury_cyber_large = 0.87 }
+
+		#Additional additive modifiers
+		set_temp_variable = { cyber_cost_multiplier = 1 }
+		add_to_temp_variable = { cyber_cost_multiplier = modifier@cyber_cost_multiplier_modifier }
+
+		multiply_variable = { treasury_cyber_small = cyber_cost_multiplier }
+		multiply_variable = { treasury_cyber_medium = cyber_cost_multiplier }
+		multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 	}
-
-	#Additional additive modifiers
-	set_temp_variable = { cyber_cost_multiplier = 1 }
-	add_to_temp_variable = { cyber_cost_multiplier = modifier@cyber_cost_multiplier_modifier }
-
-	multiply_variable = { treasury_cyber_small = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_medium = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
-#Weekly tick action
-automated_debt_taker = { # Checks to see if treasury is negative at the same time as weekly balance adds or removes from treasury, borrowing debt automatically if treasury is negative (to make it positive).
+# Effect: automated_debt_taker
+# Purpose: The weekly on action effect that checks if the treasury has gone negative and then take out a reasonable amount of debt to cover the treasury and offset the deficit
+automated_debt_taker = {
 	if = { limit = { check_variable = { treasury < 0 } }
 		set_temp_variable = { treasury_temp = treasury }
 		multiply_temp_variable = { treasury_temp = -1 }
@@ -3851,7 +3862,7 @@ calculate_gdp = {
 	# Reset the Gross Domestic Payment
 	set_variable = { var = gdp_total value = 0 }
 
-	# Calculates Unemployment
+	# Calculate the Unemployment Value
 	set_temp_variable = { workforce_total = population_total_m }
 	multiply_temp_variable = { workforce_total = 0.6 }
 	set_temp_variable = { workforce_total_multiplier = 1 }
@@ -3862,6 +3873,14 @@ calculate_gdp = {
 	set_variable = { workforce_total_display = workforce_total }
 	set_variable = { workforce_total_percentage_display = workforce_total_display }
 	divide_variable = { workforce_total_percentage_display = population_total_m }
+
+	# Productivity Multiplication
+	set_temp_variable = { distance_from_productivity = overall_productivity }
+	multiply_temp_variable = { distance_from_productivity = 0.001 }
+	if = {
+		limit = { check_variable = { distance_from_productivity < 1 } }
+		add_to_temp_variable = { distance_from_productivity = -1 }
+	}
 
 	# Primary Sector
 	# Employment in the Resource Sector
@@ -3899,12 +3918,9 @@ calculate_gdp = {
 	add_to_temp_variable = { gdp_from_resource_sector_tech_multiplier = modifier@local_resources_factor }
 	multiply_temp_variable = { gdp_from_resource_sector = gdp_from_resource_sector_tech_multiplier }
 
-	# Employment in Subsitence Agriculture
+	# Employment in Subsistence Agriculture
 	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
-	clamp_temp_variable = {
-		var = temp_gdp_per_capita
-		min = agriculture_workers_threshold_control
-	}
+	clamp_temp_variable = { var = temp_gdp_per_capita min = agriculture_workers_threshold_control }
 	if = {
 		limit = { check_variable = { gdpc_converging_var < 1.3 } }
 		set_temp_variable = { agriculture_workers_percentage = gdpc_converging_var }
@@ -3965,10 +3981,7 @@ calculate_gdp = {
 	set_temp_variable = { max_workers_in_mil_facs = military_fac }
 	multiply_temp_variable = { max_workers_in_mil_facs = workers_per_mil_fac }
 	set_variable = { workers_in_mil_facs = max_workers_in_mil_facs }
-	clamp_variable = {
-		var = workers_in_mil_facs
-		max = workforce_total
-	}
+	clamp_variable = { var = workers_in_mil_facs max = workforce_total }
 	multiply_variable = { workers_in_mil_facs = military_factory_employment_var }
 	set_variable = { military_factories_manpower_fulfillment = workers_in_mil_facs }
 	divide_variable = { military_factories_manpower_fulfillment = max_workers_in_mil_facs }
@@ -3996,18 +4009,12 @@ calculate_gdp = {
 		set_variable = { naval_factories_manpower_fulfillment = 1 }
 	}
 
-	set_temp_variable = { worker_requirement_gdp_multiplier = 3 }
-	divide_temp_variable = { worker_requirement_gdp_multiplier = temp_gdp_per_capita }
-	add_to_temp_variable = { worker_requirement_gdp_multiplier = 1 }
-	set_variable = { workers_requirement_gdp_multiplier_display = worker_requirement_gdp_multiplier }
-	multiply_temp_variable = { workers_per_civ_fac = worker_requirement_gdp_multiplier }
-	multiply_temp_variable = { workers_per_office = worker_requirement_gdp_multiplier }
-	multiply_temp_variable = { workers_per_agriculture_district = worker_requirement_gdp_multiplier }
-
+	# Civilian Factory Factory Worker Requirements
 	set_temp_variable = { civ_facs_worker_requirement_multiplier = 1 }
 	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
 	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 }
+	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = distance_from_productivity }
+	clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 max = 5.0 } # Tentative clamp
 
 	multiply_temp_variable = { workers_per_civ_fac = civ_facs_worker_requirement_multiplier }
 	set_variable = { workers_per_civ_fac_display = workers_per_civ_fac }
@@ -4016,10 +4023,8 @@ calculate_gdp = {
 	set_temp_variable = { max_workers_in_civ_facs = industrial_complex_total }
 	multiply_temp_variable = { max_workers_in_civ_facs = workers_per_civ_fac }
 	set_variable = { workers_in_civ_facs = max_workers_in_civ_facs }
-	clamp_variable = {
-		var = workers_in_civ_facs
-		max = workforce_total
-	}
+	clamp_variable = { var = workers_in_civ_facs max = workforce_total }
+
 	multiply_variable = { workers_in_civ_facs = civilian_factory_employment_var }
 	set_variable = { civilian_factories_manpower_fulfillment = workers_in_civ_facs }
 	divide_variable = { civilian_factories_manpower_fulfillment = max_workers_in_civ_facs }
@@ -4194,40 +4199,9 @@ calculate_gdp = {
 	clamp_variable = { var = gdp_total min = 0.1 }
 	set_variable = { gdp_per_capita = gdp_total }
 	divide_variable = { gdp_per_capita = population_total_m }
-	# set_temp_variable = { low_gdp_c_correction = 1 }
-	# divide_temp_variable = { low_gdp_c_correction = gdp_per_capita }
-	# divide_temp_variable = { low_gdp_c_correction = gdp_per_capita }
-	# clamp_temp_variable = {
-		# var = low_gdp_c_correction
-		# max = 1
-		# min = 0
-	# }
-	# add_to_variable = { gdp_per_capita = low_gdp_c_correction }
-	# set_temp_variable = { gdp_display = population_total_m }
-	# multiply_temp_variable = { gdp_display = gdp_per_capita }
-	# set_variable = { gdp_total = gdp_display }
 
 	calculate_gdp_modifiers = yes
 	force_update_dynamic_modifier = yes
-}
-
-# Enable/Disable Personal Tax Rate Change
-disable_personal_tax_rate_change = {
-	set_country_flag = { flag = no_personal_tax_rate_change days = 365 value = 1 }
-	custom_effect_tooltip = disables_personal_tax_rate_change
-}
-enable_personal_tax_rate_change = {
-	clr_country_flag = no_personal_tax_rate_change
-	custom_effect_tooltip = enables_personal_tax_rate_change
-}
-# Enable/Disable Corporate Tax Rate Change
-disable_corporate_tax_rate_change = {
-	set_country_flag = { flag = no_corporate_tax_rate_change days = 365 value = 1 }
-	custom_effect_tooltip = disables_corporate_tax_rate_change
-}
-enable_corporate_tax_rate_change = {
-	clr_country_flag = no_corporate_tax_rate_change
-	custom_effect_tooltip = enables_corporate_tax_rate_change
 }
 
 #Calculate modifiers associated with GDP/C
@@ -4507,7 +4481,6 @@ productivity_growth_display_effect = {
 }
 
 update_employment_productivity_output_dynamic_modifier = {
-
 	# productivity (P) and employment level (E) are supposed to behave as multiplicative factors of factories outputs (O)
 	# (Outputs being counstruction speed for civilian factories, military output for mils and dockyard output for docks)
 	# So if B is the base output and M the ingame modifier (production_speed_buildings_factor in the case of construction speed, for example)
@@ -4609,32 +4582,6 @@ productivity_growth_effect = {
 	add_to_variable = { global.world_population = population_total_m }
 }
 
-flat_productivity_change_effect = {
-	every_controlled_state = {
-		add_to_variable = { productivity_state_var = temp_productivity_change }
-		clamp_variable = {
-			var = productivity_state_var
-			min = 100
-		}
-		custom_effect_tooltip = flat_productivity_change_effect_TT
-	}
-	ingame_update_setup = yes
-}
-
-state_flat_productivity_change_effect = {
-	add_to_variable = { productivity_state_var = temp_productivity_change }
-	clamp_variable = {
-		var = productivity_state_var
-		min = 100
-	}
-	custom_effect_tooltip = flat_productivity_change_effect_TT
-	hidden_effect = {
-		CONTROLLER = {
-			ingame_update_setup = yes
-		}
-	}
-}
-
 worker_requirements_variable_gdpc_converging = {
 	set_temp_variable = { temp_difference = gdp_per_capita }
 	subtract_from_temp_variable = { temp_difference = gdpc_converging_var }
@@ -4642,55 +4589,6 @@ worker_requirements_variable_gdpc_converging = {
 	add_to_variable = { gdpc_converging_var = temp_difference }
 }
 
-setup_starting_world_productivity = {
-	add_dynamic_modifier = { modifier = productivity_and_employment_modifier }
-	if = {
-		limit = { NOT = { has_variable = overall_productivity } }
-		if = { limit = { is_in_africa = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 550 }
-			}
-			set_variable = { overall_productivity = 550 }
-		}
-		if = { limit = { is_in_asia = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 650 }
-			}
-			set_variable = { overall_productivity = 650 }
-		}
-		if = { limit = { is_in_oceania = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 650 }
-			}
-			set_variable = { overall_productivity = 650 }
-		}
-		if = { limit = { is_in_europe = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 1000 }
-			}
-			set_variable = { overall_productivity = 1000 }
-		}
-		if = { limit = { is_in_the_middle_east = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
-			}
-			set_variable = { overall_productivity = 750 }
-		}
-		if = { limit = { is_in_south_america = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
-			}
-			set_variable = { overall_productivity = 750 }
-		}
-		if = { limit = { is_in_north_america = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
-			}
-			set_variable = { overall_productivity = 750 }
-		}
-	}
-	update_employment_productivity_output_dynamic_modifier = yes
-}
 
 # Effect: calculate_migration_mechanic_values
 # Purpose: Calculates the effects of the migration mechanic.
@@ -4865,6 +4763,8 @@ calculate_migration_mechanic_values = {
 	clamp_variable = { var = net_immigration_rate max = max_net_immigration_rate }
 }
 
+# Effect: calculate_cost_pp_economic_cycles
+# Purpose: Calculates the political power cost of economic ideas
 calculate_cost_pp_economic_cycles = {
 	set_variable = { pp_cost_economic = 0 }
 	set_temp_variable = { tmp_tax_gain_multiplier_modifier = modifier@tax_gain_multiplier_modifier }
@@ -4908,4 +4808,57 @@ calculate_cost_pp_economic_cycles = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Next Cycle Political Power Cost: [?pp_cost_economic]"
 	}
+}
+
+# on_startup configurations
+# Effect: setup_starting_world_productivity
+# Purpose: Configures all starting world productivity values that are not preset in their history files
+setup_starting_world_productivity = {
+	add_dynamic_modifier = { modifier = productivity_and_employment_modifier }
+	if = {
+		limit = { NOT = { has_variable = overall_productivity } }
+		if = { limit = { is_in_africa = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 550 }
+			}
+			set_variable = { overall_productivity = 550 }
+		}
+		if = { limit = { is_in_asia = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 650 }
+			}
+			set_variable = { overall_productivity = 650 }
+		}
+		if = { limit = { is_in_oceania = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 650 }
+			}
+			set_variable = { overall_productivity = 650 }
+		}
+		if = { limit = { is_in_europe = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 1000 }
+			}
+			set_variable = { overall_productivity = 1000 }
+		}
+		if = { limit = { is_in_the_middle_east = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 750 }
+			}
+			set_variable = { overall_productivity = 750 }
+		}
+		if = { limit = { is_in_south_america = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 750 }
+			}
+			set_variable = { overall_productivity = 750 }
+		}
+		if = { limit = { is_in_north_america = yes }
+			every_controlled_state = {
+				set_variable = { productivity_state_var = 750 }
+			}
+			set_variable = { overall_productivity = 750 }
+		}
+	}
+	update_employment_productivity_output_dynamic_modifier = yes
 }
