@@ -710,6 +710,7 @@
 	NDefines.NAI.EMBARGO_WORLD_TENSION_THREAT_DIVISOR = 3.0
 
 	-- NAI Defines
+	NDefines.NAI.PRODUCTION_EQUIPMENT_SURPLUS_FACTOR = 0.1	
 	-- BAI fix test
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 6.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 2.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
