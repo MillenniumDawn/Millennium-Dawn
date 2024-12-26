@@ -15,9 +15,51 @@ country_event = {
 	picture = GFX_TAJ_watermelon
 	is_triggered_only = yes
 
+	trigger = {
+		OR = {
+			has_country_leader = { name = "Emomali Rahmonov" ruling_only = yes }
+			has_country_leader = { name = "Emomali Rahmon" ruling_only = yes }
+			has_country_leader = { name = "Rustam Emomali" ruling_only = yes }
+		}
+	}
+
 	option = {
 		name = tajik_flavor.1.a
 		log = "[GetDateText]: [This.GetName]: tajik_flavor.1.a executed"
+		add_stability = -0.01
+		hidden_effect = {
+			if = {
+				limit = {
+					has_country_flag = TAJ__party_name
+				}
+				create_country_leader = {
+					name = "Emomali Rahmon"
+					picture = "emomali_rahmon.dds"
+					ideology = Nat_Populism
+					traits = {
+						nationalist_Nat_Populism
+						Hands_that_Crafted_the_Nation
+						his_excellency
+						military_career
+						capable
+					}
+				}
+			}
+			else = {
+				create_country_leader = {
+					name = "Emomali Rahmon"
+					picture = "emomali_rahmon.dds"
+					ideology = Conservative
+					traits = {
+						emerging_Conservative
+						Hands_that_Crafted_the_Nation
+						his_excellency
+						military_career
+						capable
+					}
+				}
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1014,6 +1056,7 @@ country_event = { # Assault on the Palace
 		name = tajik_focus.26.b
 		log = "[GetDateText]: [This.GetName]: tajik_focus.25.b executed"
 		custom_effect_tooltip = TAJ_medium_success_TT
+		add_stability = -0.10
 		hidden_effect = {
 			random_list = {
 				50 = {
@@ -1038,6 +1081,7 @@ country_event = { # Assault on the Palace
 		name = tajik_focus.26.c
 		log = "[GetDateText]: [This.GetName]: tajik_focus.25.c executed"
 		custom_effect_tooltip = TAJ_high_success_TT
+		add_manpower = -12500
 		hidden_effect = {
 			random_list = {
 				30 = {
@@ -1104,6 +1148,84 @@ country_event = { # Rahmon Killed
 	}
 }
 
+country_event = { # UTO Demands
+	id = tajik_focus.280
+	title = tajik_focus.280.t
+	desc = tajik_focus.280.d
+	is_triggered_only = yes
+
+	option = {
+		name = tajik_focus.280.a
+		log = "[GetDateText]: [This.GetName]: tajik_focus.280.a executed"
+		if = {
+			limit = {
+				emerging_communist_state_are_not_in_power = yes
+			}
+			activate_mission = TAJ_communist_demand
+		}
+		if = {
+			limit = {
+				nationalist_right_wing_populists_are_in_power = no
+			}
+			activate_mission = TAJ_nationalist_demand
+		}
+		if = {
+			limit = {
+				neutrality_muslim_brotherhood_not_in_power_or_coalition = yes
+			}
+			activate_mission = TAJ_islamist_demand
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Re-Join CSTO?
+	id = tajik_focus.281
+	title = tajik_focus.281.t
+	desc = tajik_focus.281.d
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			has_war_with = SOV
+		}
+		if = {
+			limit = {
+				KYR = {
+					is_in_faction_with = SOV
+				}
+				NOT = {
+					has_war_with = KYR
+				}
+			}
+		}
+	}
+
+	option = {
+		name = tajik_focus.281.a
+		log = "[GetDateText]: [This.GetName]: tajik_focus.281.a executed"
+		SOV = {
+			country_event = {
+				id = CSTO.1
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = tajik_focus.281.b
+		log = "[GetDateText]: [This.GetName]: tajik_focus.281.b executed"
+		add_political_power = 10
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
 country_event = { # Tajik Revolution
 	id = tajik_focus.29
 	title = tajik_focus.29.t
@@ -1114,6 +1236,12 @@ country_event = { # Tajik Revolution
 		name = tajik_focus.29.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.29.a executed"
 		set_country_flag = TAJ_tajik_revolt_began
+		hidden_effect = {
+			remove_from_array = { global.CSTO_member = THIS }
+			remove_ideas = CSTO_member
+			ROOT = { remove_from_tech_sharing_group = CSTO_Tech_Share }
+			leave_faction = yes
+		}
 		# Party Centered Scenario
 		if = {
 			limit = {
@@ -1265,7 +1393,7 @@ country_event = { # Tajik Revolution
 				}
 				else = {
 					create_country_leader = {
-						name = "Emomali Emomali"
+						name = "Emomali Rahmonov"
 						picture = "emomali_rahmon_young.dds"
 						ideology = Conservative
 						traits = {
@@ -1273,6 +1401,24 @@ country_event = { # Tajik Revolution
 						}
 					}
 				}
+
+				init_influence = yes
+				set_variable = { domestic_influence_amount = 87 }
+				add_to_array = { influence_array = SOV.id }
+				add_to_array = { influence_array_val = 70 }
+				add_to_array = { influence_array = CHI.id }
+				add_to_array = { influence_array_val = 28 }
+				add_to_array = { influence_array = USA.id }
+				add_to_array = { influence_array_val = 2 }
+				add_to_array = { influence_array = RAJ.id }
+				add_to_array = { influence_array_val = 14 }
+				add_to_array = { influence_array = PER.id }
+				add_to_array = { influence_array_val = 26 }
+				add_to_array = { influence_array = UZB.id }
+				add_to_array = { influence_array_val = 18 }
+				add_to_array = { influence_array = TUR.id }
+				add_to_array = { influence_array_val = 15 }
+				startup_influence = yes
 
 				### Ruling Party
 				add_to_array = { ruling_party = 6 }
@@ -1298,6 +1444,11 @@ country_event = { # Tajik Revolution
 				check_variable = {
 					TAJ_uto_unity > 49.99
 				}
+			}
+			add_ideas = TAJ_uto_support
+			hidden_effect = {
+				set_cosmetic_tag = TAJ_REB
+				set_country_flag = is_TAJIKISTAN
 			}
 			if = {
 				limit = {
@@ -1432,7 +1583,7 @@ country_event = { # Tajik Revolution
 						has_country_flag = TAJ_rahmon_dead
 					}
 					create_country_leader = {
-						name = "Rustam Rahmanov"
+						name = "Rustam Emomali"
 						picture = "rostam_rahmon.dds"
 						ideology = Conservative
 						traits = {
@@ -1443,7 +1594,7 @@ country_event = { # Tajik Revolution
 				}
 				else = {
 					create_country_leader = {
-						name = "Emomali Rahmanov"
+						name = "Emomali Rahmonov"
 						picture = "emomali_rahmon_young.dds"
 						ideology = Conservative
 						traits = {
@@ -1451,6 +1602,24 @@ country_event = { # Tajik Revolution
 						}
 					}
 				}
+
+				init_influence = yes
+				set_variable = { domestic_influence_amount = 87 }
+				add_to_array = { influence_array = SOV.id }
+				add_to_array = { influence_array_val = 70 }
+				add_to_array = { influence_array = CHI.id }
+				add_to_array = { influence_array_val = 28 }
+				add_to_array = { influence_array = USA.id }
+				add_to_array = { influence_array_val = 2 }
+				add_to_array = { influence_array = RAJ.id }
+				add_to_array = { influence_array_val = 14 }
+				add_to_array = { influence_array = PER.id }
+				add_to_array = { influence_array_val = 26 }
+				add_to_array = { influence_array = UZB.id }
+				add_to_array = { influence_array_val = 18 }
+				add_to_array = { influence_array = TUR.id }
+				add_to_array = { influence_array_val = 15 }
+				startup_influence = yes
 
 				### Ruling Party
 				add_to_array = { ruling_party = 6 }
@@ -1510,6 +1679,66 @@ country_event = { # Tajik Revolution
 				}
 			}
 		}
+		hidden_effect = {
+			set_country_flag = manual_civil_war_debuff_removal
+			remove_ideas = civil_war_disorganised_military_1
+			remove_ideas = civil_war_disorganised_military_2_military
+			remove_ideas = civil_war_disorganised_military_2_production
+			remove_ideas = civil_war_disorganised_military_2_experience
+			remove_ideas = civil_war_disorganised_military_3_military
+			remove_ideas = civil_war_disorganised_military_3_production
+			remove_ideas = civil_war_disorganised_military_3_experience
+			remove_ideas = civil_war_disorganised_military_4_military
+			remove_ideas = civil_war_disorganised_military_4_production
+			remove_ideas = civil_war_disorganised_military_4_experience
+			remove_ideas = civil_war_disorganised_military_5_military
+			remove_ideas = civil_war_disorganised_military_5_production
+			remove_ideas = civil_war_disorganised_military_5_experience
+			clr_country_flag = manual_civil_war_debuff_removal
+			if = {
+				limit = {
+					has_country_flag = TAJ_rahmon_dead
+				}
+				RAH = {
+					create_country_leader = {
+						name = "Rustam Emomali"
+						picture = "rostam_rahmon.dds"
+						ideology = Conservative
+						traits = {
+							emerging_Conservative
+							inexperienced
+						}
+					}
+				}
+			}
+			else = {
+				RAH = {
+					create_country_leader = {
+						name = "Emomali Rahmonov"
+						picture = "emomali_rahmon_young.dds"
+						ideology = Conservative
+						traits = {
+							emerging_Conservative
+						}
+					}
+					set_country_flag = manual_civil_war_debuff_removal
+					remove_ideas = civil_war_disorganised_military_1
+					remove_ideas = civil_war_disorganised_military_2_military
+					remove_ideas = civil_war_disorganised_military_2_production
+					remove_ideas = civil_war_disorganised_military_2_experience
+					remove_ideas = civil_war_disorganised_military_3_military
+					remove_ideas = civil_war_disorganised_military_3_production
+					remove_ideas = civil_war_disorganised_military_3_experience
+					remove_ideas = civil_war_disorganised_military_4_military
+					remove_ideas = civil_war_disorganised_military_4_production
+					remove_ideas = civil_war_disorganised_military_4_experience
+					remove_ideas = civil_war_disorganised_military_5_military
+					remove_ideas = civil_war_disorganised_military_5_production
+					remove_ideas = civil_war_disorganised_military_5_experience
+					clr_country_flag = manual_civil_war_debuff_removal
+				}
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1525,7 +1754,18 @@ country_event = { # Victory in Civil War
 	option = {
 		name = tajik_focus.30.a
 		log = "[GetDateText]: [This.GetName]: tajik_focus.30.a executed"
-
+		hidden_effect = {
+			country_event = {
+				id = tajik_focus.280
+				days = 120
+			}
+			country_event = {
+				id = tajik_focus.281
+				days = 360
+			}
+			drop_cosmetic_tag = yes
+			clr_country_flag = is_TAJIKISTAN
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -2474,7 +2714,7 @@ country_event = {
 			add_relative_party_popularity = yes
 			create_country_leader = {
 				name = "Emomali Rahmon"
-				picture = "emomali_rahmon_young.dds"
+				picture = "emomali_rahmon.dds"
 				ideology = Nat_Populism
 				traits = {
 					nationalist_Nat_Populism
@@ -3242,6 +3482,23 @@ country_event = {
 	}
 }
 
+country_event = {
+	id = tajik_focus.71
+	title = tajik_focus.71.t
+	desc = tajik_focus.71.d
+	is_triggered_only = yes
+	picture = GFX_TAJ_dushanbe
+	# Ok
+	option = {
+		name = tajik_focus.71.a
+		log = "[GetDateText]: [This.GetName]: tajik_focus.71.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
 # Extremist Events
 
 country_event = {
@@ -3250,6 +3507,14 @@ country_event = {
 	desc = tajik_radicalism.1.d
 
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
 
 	option = {
 		name = tajik_radicalism.1.a
@@ -3429,6 +3694,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.2.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.2.a executed"
@@ -3465,6 +3738,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.3.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.3.a executed"
@@ -3495,6 +3776,14 @@ country_event = {
 	desc = tajik_radicalism.4.d
 
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
 
 	option = { # Crackdown on them!
 		name = tajik_radicalism.4.a
@@ -3529,6 +3818,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.5.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.5.a executed"
@@ -3560,6 +3857,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.6.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.6.a executed"
@@ -3588,6 +3893,14 @@ country_event = {
 	desc = tajik_radicalism.7.d
 
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
 
 	option = { # Crackdown on them!
 		name = tajik_radicalism.7.a
@@ -3621,6 +3934,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.8.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.8.a executed"
@@ -3650,6 +3971,14 @@ country_event = {
 	desc = tajik_radicalism.9.d
 
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
 
 	option = { # Crackdown on them!
 		name = tajik_radicalism.9.a
@@ -3686,6 +4015,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.10.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.10.a executed"
@@ -3721,6 +4058,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.11.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.11.a executed"
@@ -3749,6 +4094,14 @@ country_event = {
 	desc = tajik_radicalism.12.d
 
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
 
 	option = { # Crackdown on them!
 		name = tajik_radicalism.12.a
@@ -3852,6 +4205,11 @@ country_event = {
 		NOT = {
 			has_idea = TAJ_distrupted_commerce
 		}
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
 	}
 	option = { # Crackdown on them!
 		name = tajik_radicalism.14.a
@@ -3884,6 +4242,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
+
 	option = { # Crackdown on them!
 		name = tajik_radicalism.15.a
 		log = "[GetDateText]: [This.GetName]: tajik_radicalism.15.a executed"
@@ -3901,6 +4267,14 @@ country_event = {
 	desc = tajik_radicalism.16.d
 	fire_only_once = yes
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			neutrality_neutral_muslim_brotherhood_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			salafist_kingdom_are_in_power = yes
+		}
+	}
 
 	option = { # Crackdown on them!
 		name = tajik_radicalism.16.a
@@ -6486,6 +6860,10 @@ country_event = { # Nadyrov's Plea
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
+
 	option = { # Just another day on the Job
 		name = tajik_lore.0.a
 		log = "[GetDateText]: [This.GetName]: tajik_lore.0.a executed"
@@ -6503,6 +6881,10 @@ country_event = { # The Harshest Truth
 
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
 
 	option = { # Allahumma arhamna
 		name = tajik_lore.1.a
@@ -6522,6 +6904,10 @@ country_event = { # Arsenal Blueprint
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
+
 	option = { # Looks like rabbit season is in play 
 		name = tajik_lore.2.a
 		log = "[GetDateText]: [This.GetName]: tajik_lore.2.a executed"
@@ -6539,6 +6925,10 @@ country_event = { # Optics from the Tavildara valley pt1
 
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
 
 	option = { # Always walking on the brink
 		name = tajik_lore.3.a
@@ -6558,6 +6948,10 @@ country_event = { # Optics from the Tavildara valley pt2
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
+
 	option = { # Are fruit’s rotted away and they killed it
 		name = tajik_lore.4.a
 		log = "[GetDateText]: [This.GetName]: tajik_lore.2.a executed"
@@ -6575,6 +6969,10 @@ country_event = { # The cover up
 
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
 
 	option = { # A day at its finest
 		name = tajik_lore.5.a
@@ -6594,6 +6992,10 @@ country_event = { # A unwanted call
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
+
 	option = { # Well Well Well
 		name = tajik_lore.6.a
 		log = "[GetDateText]: [This.GetName]: tajik_lore.6.a executed"
@@ -6611,6 +7013,10 @@ country_event = { # Hills Ablaze
 
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
 
 	option = { # Leave no response
 		name = tajik_lore.7.a
@@ -6642,6 +7048,10 @@ country_event = { # Plans for a strike into Tajikistan (Uzbek Event)
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
+
 	option = { # there is no choice Are hand is forced
 		name = tajik_lore.8.a
 		log = "[GetDateText]: [This.GetName]: tajik_lore.8.a executed"
@@ -6671,6 +7081,10 @@ country_event = { # Mine the borders (Uzbek Event)
 
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
 
 	option = { # There is no choice Are hand is forced
 		name = tajik_lore.9.a
@@ -6702,6 +7116,10 @@ country_event = { # Uzbekistan lays its landmines
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
+
 	option = { # We are out of our grasp
 		name = tajik_lore.10.a
 		log = "[GetDateText]: [This.GetName]: tajik_lore.10.a executed"
@@ -6731,6 +7149,10 @@ country_event = { # Crisis Talks with Uzbekistan
 
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		emerging_conservative_in_power_or_coalition = yes
+	}
 
 	option = { # A nation wide sigh
 		name = tajik_lore.11.a
