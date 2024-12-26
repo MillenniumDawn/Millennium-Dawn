@@ -418,57 +418,23 @@
 		}
 # FOREIGN POLICY - FOPOL
 	# GCC
-		MLW_FOPOL_GCC_MLW_decisions_category = {
-			MLW_FOPOL_new_mining_rights_auction = {
-				icon = decision
-				visible = {
-					# has_completed_focus = MLW_gcc_mining_rights
-					# NOT = { has_country_flag = MLW_FOPOL_rights_sold_FLAG }
-					is_debug = yes # fix # remove when done
-				}
-				available = {}
-				cost = 75
-				days_remove = 14
-				complete_effect = {
-					set_country_flag = { flag = MLW_FOPOL_rights_sold_FLAG }
-				}
-				remove_effect = {}
-			}
-			# MLW_FOPOL_GCC_megaproject_workers = {}
-		}
+		MLW_FOPOL_GCC_MLW_decisions_category = {}
 		MLW_FOPOL_GCC_GCC_decisions_category = {
-			MLW_FOPOL_GCC_join_auction_list = {
+			MLW_FOPOL_GCC_hire_megaproject_workers = {
 				icon = decision
 				visible = {
-					# MLW = { has_completed_focus = MLW_gcc_mining_rights }
-					# MLW_GCC_nation = yes
-					NOT = { is_in_array = { MLW.GCC_mining_rights_auctioneers = THIS } }
+					MLW = { has_completed_focus = MLW_gcc_megaprojects }
+					MLW_GCC_nation = yes
 				}
 				available = {
 					MLW = {
 						has_opinion = {
-							target = FROM
-							value > 9
+							target = ROOT
+							value > 39
 						}
 					}
 				}
-
-				cost = 50
-
-				complete_effect = {
-				}
-			}
-			MLW_FOPOL_GCC_increase_bid = {}
-			MLW_FOPOL_GCC_bow_out_of_auction = {}
-			MLW_FOPOL_GCC_hire_megaproject_workers = {
-				icon = decision
-				visible = {
-					# MLW = { has_completed_focus = MLW_gcc_megaprojects }
-					# MLW_GCC_nation = yes
-					NOT = { has_country_flag = MLW_FOPOL_megaproject_workers_FLAG }
-				}
-				available = {}
-				custom_cost_trigger = { check_variable = { treasury > 0 } }
+				custom_cost_trigger = { check_variable = { treasury > 2.4 } }
 				custom_cost_text = MLW_workers_GCC_COST
 				days_remove = 360
 				complete_effect = {
@@ -477,12 +443,14 @@
 					multiply_temp_variable = { treasury_change = -1 }
 					modify_treasury_effect = yes
 					add_ideas = MLW_MSCC_GCC_workers
-					set_country_flag = MLW_FOPOL_megaproject_workers_FLAG
 					MLW = { country_event = MLW_MSCC.1 }
+					set_temp_variable = { GCC_nation = THIS }
+					MLW_GCC_hire_MSCC = yes
 				}
 				remove_effect = {
 					remove_ideas = MLW_MSCC_GCC_workers
-					clr_country_flag = MLW_FOPOL_megaproject_workers_FLAG
+					set_temp_variable = { GCC_nation = THIS }
+					MLW_GCC_fire_MSCC = yes
 				}
 			}
 			MLW_FOPOL_GCC_opt_out_of_viewing = {
@@ -2421,6 +2389,134 @@
 			}
 		}
 # MISCELLANEOUS POLICIES
+	MLW_GEN_missed_policies = {
+		MLW_GEN_MP_engage_the_NGOs_UDF = {
+			icon = decision
+
+			fire_only_once = yes
+
+			visible = {
+				OR = {
+					AND = {
+						western_liberals_are_not_in_power = yes
+						NOT = { has_completed_focus = MLW_UDF_engage_the_ngos }
+						has_idea = MLW_NGO_interferences_1
+					}
+					is_debug = yes
+				}
+			}
+
+			custom_cost_trigger = { check_variable = { treasury > 2.49 } }
+			custom_cost_text = cost_2_5
+
+			days_remove = 60
+
+			complete_effect = {
+				set_temp_variable = { treasury_change = -2.5 }
+				modify_treasury_effect = yes
+			}
+
+			remove_effect = {
+				swap_ideas = {
+					remove_idea = MLW_NGO_interferences_1
+					add_idea = MLW_NGO_interferences_2
+				}
+				unlock_decision_tooltip = MLW_GEN_MP_pressure_the_NGOs_UDF
+			}
+		}
+		MLW_GEN_MP_pressure_the_NGOs_UDF = {
+			icon = decision
+
+			fire_only_once = yes
+
+			visible = {
+				OR = {
+					AND = {
+						western_liberals_are_not_in_power = yes
+						NOT = { has_completed_focus = MLW_UDF_engage_the_ngos }
+						has_idea = MLW_NGO_interferences_2
+					}
+					is_debug = yes
+				}
+			}
+
+			custom_cost_trigger = { check_variable = { treasury > 4.99 } }
+			custom_cost_text = cost_5_0
+
+			days_remove = 90
+
+			complete_effect = {
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+			}
+
+			remove_effect = {
+				swap_ideas = {
+					remove_idea = MLW_NGO_interferences_2
+					add_idea = MLW_NGO_interferences_3
+				}
+				unlock_decision_tooltip = MLW_GEN_MP_remove_the_NGOs_UDF
+			}
+		}
+		MLW_GEN_MP_remove_the_NGOs_UDF = {
+			icon = decision
+			visible = {
+				OR = {
+					AND = {
+						western_liberals_are_not_in_power = yes
+						NOT = { has_completed_focus = MLW_UDF_engage_the_ngos }
+						has_idea = MLW_NGO_interferences_1
+					}
+					is_debug = yes
+				}
+			}
+
+			custom_cost_trigger = { check_variable = { treasury > 9.99 } }
+			custom_cost_text = cost_10_0
+
+			days_remove = 120
+
+			complete_effect = {
+				set_temp_variable = { treasury_change = -10 }
+				modify_treasury_effect = yes
+			}
+
+			remove_effect = {
+				remove_ideas = MLW_NGO_interferences_3
+			}
+		}
+		MLW_GEN_MP_energy_infrastructure_UDF = {
+			icon = decision
+
+			fire_only_once = yes
+
+			visible = {
+				OR = {
+					AND = {
+						western_liberals_are_not_in_power = yes
+						NOT = { has_completed_focus = MLW_UDF_energy_infrastructure }
+					}
+					is_debug = yes
+				}
+			}
+
+			custom_cost_trigger = { check_variable = { treasury > 5.99 } }
+			custom_cost_text = cost_6_0
+
+			days_remove = 120
+
+			complete_effect = {
+				set_temp_variable = { treasury_change = -6 }
+				modify_treasury_effect = yes
+			}
+			remove_effect = {
+				swap_ideas = {
+					remove_idea = MLW_overloaded_grid_idea_1
+					add_idea = MLW_overloaded_grid_idea_2
+				}
+			}
+		}
+	}
 	# MLW_GEN_policies_cat = {
 	# 	# YOUTH POLICIES
 	# 		# MLW_GEN_view_youth_policies = {
@@ -4351,8 +4447,16 @@
 	# }
 	# CURING MALAWI
 	# FEEDING MALAWI
-	# LOGGING
-		MLW_logging_cat = {
+	# LOGGING - fix
+		MLW_logging_cat = { # fix
+				# fix
+				#
+				# unlock decisions that allow the tackling of loggers, can be aggressive or
+				# give concessions, both will remove the DM but aggressive will result in
+				# party losing support although its faster to get rid of loggers
+				#
+				# concessions being given will be costly but eventually result in a factory
+				# due to logging industry being legitimised
 			MLW_military_victory_over_loggers = {
 				icon = decision
 				visible = {
@@ -7794,7 +7898,126 @@
 		# 			}
 		# }
 	# UNITED DEMOCRATIC FRONT (UDF) # fix
-		# MLW_UDF_policies_cat = {
+		MLW_UDF_policies_cat = {
+			MLW_UDF_pressure_the_NGOs = {
+				icon = decision
+
+				fire_only_once = yes
+
+				visible = {
+					OR = {
+						AND = {
+							has_completed_focus = MLW_UDF_engage_the_ngos
+							has_idea = MLW_NGO_interferences_2
+						}
+						is_debug = yes
+					}
+				}
+				cost = 100
+				complete_effect = {
+					swap_ideas = {
+						remove_idea = MLW_NGO_interferences_2
+						add_idea = MLW_NGO_interferences_3
+					}
+					unlock_decision_tooltip = MLW_UDF_remove_the_NGOs
+				}
+			}
+			MLW_UDF_remove_the_NGOs = {
+				icon = decision
+
+				fire_only_once = yes
+
+				visible = {
+					OR = {
+						AND = {
+							has_completed_focus = MLW_UDF_engage_the_ngos
+							has_idea = MLW_NGO_interferences_3
+						}
+						is_debug = yes
+					}
+				}
+				cost = 200
+				complete_effect = {
+					remove_ideas = MLW_NGO_interferences_3
+				}
+			}
+			MLW_UDF_housing_market_injection = {
+				icon = decision
+				visible = {
+					OR = {
+						has_completed_focus = MLW_UDF_revitalise_housing
+						is_debug = yes
+					}
+				}
+				available = {
+					OR = {
+						has_idea = depression
+						has_idea = recession
+						has_idea = stagnation
+					}
+					MLW_housing_market_possible = yes
+				}
+				cost = 100
+				fixed_random_seed = no
+				complete_effect = {
+					set_temp_variable = { treasury_change = 2 }
+					modify_treasury_effect = yes
+					set_party_index_to_ruling_party = yes
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					random_owned_state = { add_extra_state_shared_building_slots = -1 }
+					random_list = {
+						75 = { increase_economic_growth = yes }
+						25 = {}
+					}
+				}
+			}
+			MLW_UDF_police_raids = {
+				icon = decision
+				visible = {
+					OR = {
+						has_country_flag = MLW_UDF_citizen_spying
+						is_debug = yes
+					}
+				}
+				available = {
+					MLW_not_raiding_opposition = yes
+					UDF_is_NOT_junior_partner = yes
+				}
+				custom_cost_trigger = { command_power > 19 }
+				custom_cost_text = command_power_more_than_20
+				fixed_random_seed = no
+				days_remove = 60
+				complete_effect = {
+					add_command_power = -20
+					set_country_flag = MLW_raids_underway
+				}
+
+				remove_effect = {
+					if = {
+						limit = {
+							has_country_flag = MLW_DPP_has_formed
+							has_country_flag = MLW_PP_has_formed
+						}
+						MLW_UDF_raid_DPP_PP = yes
+					}
+					else_if = {
+						limit = {
+							has_country_flag = MLW_DPP_has_formed
+							NOT = { has_country_flag = MLW_PP_has_formed }
+						}
+						MLW_UDF_raid_DPP = yes
+					}
+					else = { MLW_UDF_raid = yes }
+				}
+			}
+		}
+
+
+
+
+
 		# 	MLW_UDF_constitution_referendum = {
 		# 		icon = decision
 		# 		available = { always = no }
@@ -7944,202 +8167,9 @@
 		# 			}
 		# 		}
 		# 	}
-		# 	MLW_UDF_pressure_the_NGOs = {
-		# 		icon = decision
-		# 		visible = {
-		# 			has_completed_focus = MLW_UDF_engage_the_ngos
-		# 			has_idea = MLW_NGO_interferences_2
-		# 		}
-		# 		cost = 100
-		# 		fixed_random_seed = no
-		# 		complete_effect = {
-		# 			swap_ideas = {
-		# 				remove_idea = MLW_NGO_interferences_2
-		# 				add_idea = MLW_NGO_interferences_3
-		# 			}
-		# 			unlock_decision_tooltip = MLW_UDF_remove_the_NGOs
-		# 		}
-		# 	}
-		# 	MLW_UDF_remove_the_NGOs = {
-		# 		icon = decision
-		# 		visible = {
-		# 			has_completed_focus = MLW_UDF_engage_the_ngos
-		# 			has_idea = MLW_NGO_interferences_3
-		# 			is_debug = yes
-		# 		}
-		# 		cost = 200
-		# 		fixed_random_seed = no
-		# 		complete_effect = {
-		# 			remove_ideas = MLW_NGO_interferences_3
-		# 		}
-		# 	}
-		# 	MLW_UDF_housing_market_injection = {
-		# 		icon = decision
-		# 		visible = { has_completed_focus = MLW_UDF_revitalise_housing }
-		# 		available = {
-		# 			OR = {
-		# 				has_idea = depression
-		# 				has_idea = recession
-		# 				has_idea = stagnation
-		# 			}
-		# 			MLW_housing_market_possible = yes
-		# 		}
-		# 		cost = 100
-		# 		fixed_random_seed = no
-		# 		complete_effect = {
-		# 			set_temp_variable = { treasury_change = 2 }
-		# 			modify_treasury_effect = yes
-		# 			set_party_index_to_ruling_party = yes
-		# 			set_temp_variable = { party_popularity_increase = 0.05 }
-		# 			set_temp_variable = { temp_outlook_increase = 0.05 }
-		# 			add_relative_party_popularity = yes
-		# 			random_owned_state = { add_extra_state_shared_building_slots = -1 }
-		# 			random_list = {
-		# 				75 = { increase_economic_growth = yes }
-		# 				25 = {}
-		# 			}
-		# 		}
-		# 	}
-		# 	MLW_UDF_police_raids = {
-		# 		icon = decision
-		# 		visible = { has_country_flag = MLW_UDF_citizen_spying }
-		# 		available = {
-		# 			MLW_not_raiding_opposition = yes
-		# 			UDF_is_NOT_junior_partner = yes
-		# 		}
-		# 		custom_cost_trigger = { command_power > 19 }
-		# 		custom_cost_text = command_power_more_than_20
-		# 		fixed_random_seed = no
-		# 		days_remove = 60
-		# 		complete_effect = {
-		# 			add_command_power = -20
-		# 			set_country_flag = MLW_raids_underway
-		# 		}
-		# 		remove_effect = {
-		# 			if = {
-		# 				limit = {
-		# 					has_country_flag = MLW_DPP_has_formed
-		# 					has_country_flag = MLW_PP_has_formed
-		# 				}
-		# 				random_list = {
-		# 					20 = {
-		# 						set_temp_variable = { party_index = 1 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					20 = {
-		# 						set_temp_variable = { party_index = 3 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					20 = {
-		# 						set_temp_variable = { party_index = 14 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					20 = {
-		# 						set_temp_variable = { party_index = 18 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					20 = {
-		# 						set_temp_variable = { party_index = 20 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 				}
-		# 				hidden_effect = {
-		# 					if = {
-		# 						limit = { NOT = { has_country_flag = MLW_mozambican_raid } }
-		# 						random_list = {
-		# 							90 = {}
-		# 							10 = {
-		# 								country_event = {
-		# 									id = MLW_Trade_MOZ.6
-		# 									days = 3
-		# 								}
-		# 							}
-		# 						}
-		# 					}
-		# 				}
-		# 			}
-		# 			else_if = {
-		# 				limit = {
-		# 					has_country_flag = MLW_DPP_has_formed
-		# 					NOT = { has_country_flag = MLW_PP_has_formed }
-		# 				}
-		# 				random_list = {
-		# 					25 = {
-		# 						set_temp_variable = { party_index = 3 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					25 = {
-		# 						set_temp_variable = { party_index = 14 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					25 = {
-		# 						set_temp_variable = { party_index = 18 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					25 = {
-		# 						set_temp_variable = { party_index = 20 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 				}
-		# 				hidden_effect = {
-		# 					if = {
-		# 						limit = { NOT = { has_country_flag = MLW_mozambican_raid } }
-		# 						random_list = {
-		# 							90 = {}
-		# 							10 = {
-		# 								country_event = {
-		# 									id = MLW_Trade_MOZ.6
-		# 									days = 3
-		# 								}
-		# 							}
-		# 						}
-		# 					}
-		# 				}
-		# 			}
-		# 			else = {
-		# 				random_list = {
-		# 					33 = {
-		# 						set_temp_variable = { party_index = 14 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					33 = {
-		# 						set_temp_variable = { party_index = 18 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 					33 = {
-		# 						set_temp_variable = { party_index = 20 }
-		# 						set_temp_variable = { party_popularity_increase = -0.025 }
-		# 						add_relative_party_popularity = yes
-		# 					}
-		# 				}
-		# 				hidden_effect = {
-		# 					if = {
-		# 						limit = { NOT = { has_country_flag = MLW_mozambican_raid } }
-		# 						random_list = {
-		# 							90 = {}
-		# 							10 = {
-		# 								country_event = {
-		# 									id = MLW_Trade_MOZ.6
-		# 									days = 3
-		# 								}
-		# 							}
-		# 						}
-		# 					}
-		# 				}
-		# 			}
-		# 		}
-		# 	}
+
+
+
 		# 	# TIER 1 POLICIES # fix
 		# 		# TOURIST HEALTHCARE # fix
 		# 			MLW_UDF_tourist_healthcare_ENACT = { # fix
@@ -9111,7 +9141,6 @@
 		# 			}
 		# 		#
 		# 	#
-		# }
 		MLW_privatisation_decision_CAT = {
 			MLW_UDF_privatisation_IND = {
 				icon = decision

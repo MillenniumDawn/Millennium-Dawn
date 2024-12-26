@@ -175,335 +175,277 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 				}
 				MLW_refresh_AIO = yes
 			}
-			# auction stuff
-			MLW_GCC_find_winning_bid = {
-				find_highest_in_array = {
-					array = GCC_mining_rights_auctioneers
-					value = MLW_GCC_bidding_value
-					index = MLW_GCC_bidder_index
-				}
-				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: Highest Bidder: Index: [?MLW_GCC_bidder_index.GetName] Bid Value: [?MLW_GCC_bidding_value]"
-				}
-			}
-			MLW_GCC_join_auction = {
-				if = {
-					limit = { var:GCC_nation = { NOT = { is_in_array = { MLW.GCC_mining_rights_auctioneers = THIS } } } }
-					var:GCC_nation = { add_to_array = { MLW.GCC_mining_rights_auctioneers = THIS } }
-					custom_effect_tooltip = MLW_GCC_join_auction_TT
-				}
-				MLW_refresh_AIO = yes
-			}
-			MLW_GCC_leave_auction = {
-				if = {
-					limit = { var:GCC_nation = { is_in_array = { MLW.GCC_mining_rights_auctioneers = THIS } } }
-					var:GCC_nation = { remove_from_array = { MLW.GCC_mining_rights_auctioneers = THIS } }
-					custom_effect_tooltip = MLW_GCC_leave_auction_TT
-				}
-				MLW_refresh_AIO = yes
-			}
-			MLW_GCC_bid_change = {
-				add_to_variable = { MLW_GCC_bidding_value = MLW_GCC_bid_change }
-				custom_effect_tooltip = MLW_GCC_bid_change_TT
-			}
-			# fix - not sure how to make this work as intended, leaving it like this for now until it comes to me in a dream
-			# MLW_GCC_mining_rights_effect_for_GCC = {}
-			# MLW_GCC_mining_rights_effect_for_MLW = {}
-			MLW_GCC_mining_rights_effect = {
-				set_variable = { MLW_GCC_mining_rights_STEEL_GCC = MLW_GCC_steel_change }
-				set_variable = { MLW_GCC_mining_rights_TECH_GCC = MLW_GCC_tech_change }
-				set_variable = { MLW_GCC_mining_rights_LIGHT_GCC = MLW_GCC_light_change }
-				set_variable = { MLW_GCC_mining_rights_PRECIOUS_GCC = MLW_GCC_precious_change }
 
-				set_variable = { MLW_GCC_mining_rights_STEEL_MLW = MLW_GCC_steel_change }
-				multiply_variable = { MLW_GCC_mining_rights_STEEL_MLW = -1 }
-				set_variable = { MLW_GCC_mining_rights_TECH_MLW = MLW_GCC_tech_change }
-				multiply_variable = { MLW_GCC_mining_rights_TECH_MLW = -1 }
-				set_variable = { MLW_GCC_mining_rights_LIGHT_MLW = MLW_GCC_light_change }
-				multiply_variable = { MLW_GCC_mining_rights_LIGHT_MLW = -1}
-				set_variable = { MLW_GCC_mining_rights_PRECIOUS_MLW = MLW_GCC_precious_change }
-				multiply_variable = { MLW_GCC_mining_rights_PRECIOUS_MLW = -1 }
-
-				if = { limit = { MLW = { NOT = { has_dynamic_modifier = { modifier = MLW_GCC_mining_rights_MLW_DM } } } } add_dynamic_modifier = { modifier = MLW_GCC_mining_rights_MLW_DM } }
-				if = { limit = { PREV = { NOT = { has_dynamic_modifier = { modifier = MLW_GCC_mining_rights_GCC_DM } } } } add_dynamic_modifier = { modifier = MLW_GCC_mining_rights_GCC_DM } }
+			MLW_mscc_test = {
+				every_country = {
+					limit = { MLW_GCC_nation = yes }
+					set_temp_variable = { GCC_nation = THIS }
+					MLW_GCC_hire_MSCC = yes
+				}
 			}
-			# MLW_GCC_mining_rights_end_effect = {
-			# 	clear_variable = MLW_GCC_mining_rights_STEEL_GCC
-			# 	clear_variable = MLW_GCC_mining_rights_TECH_GCC
-			# 	clear_variable = MLW_GCC_mining_rights_LIGHT_GCC
-			# 	clear_variable = MLW_GCC_mining_rights_PRECIOUS_GCC
-
-			# 	clear_variable = MLW_GCC_mining_rights_STEEL_MLW
-			# 	clear_variable = MLW_GCC_mining_rights_TECH_MLW
-			# 	clear_variable = MLW_GCC_mining_rights_LIGHT_MLW
-			# 	clear_variable = MLW_GCC_mining_rights_PRECIOUS_MLW
-			# }
 		# LAKE WARS EFFECTS
-		MLW_LW_select_state_effect = {
-			set_variable = { ROOT.MLW_LW_state_selected = THIS.id }
-			custom_effect_tooltip = MLW_LW_select_state_effect_TT
-			MLW_refresh_AIO = yes
-		}
-		MLW_LW_state_array_setup = {
-			clear_array = MLW.LW_states
-			if = { limit = { NOT = { 1045 = { is_core_of = MLW } } } 1045 = { add_to_array = { MLW.LW_states = THIS } } }
-			if = { limit = { NOT = { 1046 = { is_core_of = MLW } } } 1046 = { add_to_array = { MLW.LW_states = THIS } } }
-			if = { limit = { NOT = { 1047 = { is_core_of = MLW } } } 1047 = { add_to_array = { MLW.LW_states = THIS } } }
-			if = { limit = { NOT = { 1049 = { is_core_of = MLW } } } 1049 = { add_to_array = { MLW.LW_states = THIS } } }
-			MLW_refresh_AIO = yes
-		}
-		MLW_LW_test_diplo = {
-			set_temp_variable = { MLW_LW_progress_change = 1 }
-			MLW_LW_update_militaristic_progress = yes
-		}
-		MLW_LW_update_diplomatic_progress = {
-			var:MLW_LW_state_selected = {
-				add_to_variable = { MLW_LW_diplomatic_progress = MLW_LW_progress_change }
-				clamp_variable = {
-					var = MLW_LW_diplomatic_progress
-					min = 0
-					max = 10
+			MLW_LW_select_state_effect = {
+				set_variable = { ROOT.MLW_LW_state_selected = THIS.id }
+				custom_effect_tooltip = MLW_LW_select_state_effect_TT
+				MLW_refresh_AIO = yes
+			}
+			MLW_LW_state_array_setup = {
+				clear_array = MLW.LW_states
+				if = { limit = { NOT = { 1045 = { is_core_of = MLW } } } 1045 = { add_to_array = { MLW.LW_states = THIS } } }
+				if = { limit = { NOT = { 1046 = { is_core_of = MLW } } } 1046 = { add_to_array = { MLW.LW_states = THIS } } }
+				if = { limit = { NOT = { 1047 = { is_core_of = MLW } } } 1047 = { add_to_array = { MLW.LW_states = THIS } } }
+				if = { limit = { NOT = { 1049 = { is_core_of = MLW } } } 1049 = { add_to_array = { MLW.LW_states = THIS } } }
+				MLW_refresh_AIO = yes
+			}
+			MLW_LW_test_diplo = {
+				set_temp_variable = { MLW_LW_progress_change = 1 }
+				MLW_LW_update_militaristic_progress = yes
+			}
+			MLW_LW_update_diplomatic_progress = {
+				var:MLW_LW_state_selected = {
+					add_to_variable = { MLW_LW_diplomatic_progress = MLW_LW_progress_change }
+					clamp_variable = {
+						var = MLW_LW_diplomatic_progress
+						min = 0
+						max = 10
+					}
 				}
+				custom_effect_tooltip = MLW_LW_update_diplomatic_progress_TT
+				MLW_refresh_AIO = yes
 			}
-			custom_effect_tooltip = MLW_LW_update_diplomatic_progress_TT
-			MLW_refresh_AIO = yes
-		}
-		MLW_LW_update_militaristic_progress = {
-			var:MLW_LW_state_selected = {
-				add_to_variable = { MLW_LW_militarist_progress = MLW_LW_progress_change }
-				clamp_variable = {
-					var = MLW_LW_militarist_progress
-					min = 0
-					max = 10
+			MLW_LW_update_militaristic_progress = {
+				var:MLW_LW_state_selected = {
+					add_to_variable = { MLW_LW_militarist_progress = MLW_LW_progress_change }
+					clamp_variable = {
+						var = MLW_LW_militarist_progress
+						min = 0
+						max = 10
+					}
 				}
+				custom_effect_tooltip = MLW_LW_update_militaristic_progress_TT
+				MLW_refresh_AIO = yes
 			}
-			custom_effect_tooltip = MLW_LW_update_militaristic_progress_TT
-			MLW_refresh_AIO = yes
-		}
-		update_MLW_LW_agri_income = {
-			custom_effect_tooltip = update_MLW_LW_agri_income_TT
-			add_to_variable = { MLW_LW_agri_income_multiplier = DM_agri_income_change }
-		}
-		update_MLW_LW_mzuzu_income = {
-			custom_effect_tooltip = update_MLW_LW_mzuzu_income_TT
-			add_to_variable = { MLW_LW_mzuzu_income_multiplier = DM_mzuzu_income_change }
-		}
-		update_MLW_LW_migration_rate = {
-			custom_effect_tooltip = update_MLW_LW_migration_rate_TT
-			add_to_variable = { MLW_LW_migration_rate = DM_migration_rate_change }
-		}
-		MLW_LW_SEZ_effect = {
-			set_variable = { MLW_LW_agri_income_multiplier = 0 }
-			if = {
-				limit = { check_variable = { MLW_LW_SEZ_number = 4 } }
-				set_temp_variable = { DM_agri_income_change = 0.15 }
-				update_MLW_LW_agri_income = yes
+			update_MLW_LW_agri_income = {
+				custom_effect_tooltip = update_MLW_LW_agri_income_TT
+				add_to_variable = { MLW_LW_agri_income_multiplier = DM_agri_income_change }
 			}
-			else_if = {
-				limit = { check_variable = { MLW_LW_SEZ_number = 3 } }
-				set_temp_variable = { DM_agri_income_change = 0.09 }
-				update_MLW_LW_agri_income = yes
+			update_MLW_LW_mzuzu_income = {
+				custom_effect_tooltip = update_MLW_LW_mzuzu_income_TT
+				add_to_variable = { MLW_LW_mzuzu_income_multiplier = DM_mzuzu_income_change }
 			}
-			else_if = {
-				limit = { check_variable = { MLW_LW_SEZ_number = 2 } }
-				set_temp_variable = { DM_agri_income_change = 0.06 }
-				update_MLW_LW_agri_income = yes
+			update_MLW_LW_migration_rate = {
+				custom_effect_tooltip = update_MLW_LW_migration_rate_TT
+				add_to_variable = { MLW_LW_migration_rate = DM_migration_rate_change }
 			}
-			else_if = {
-				limit = { check_variable = { MLW_LW_SEZ_number = 1 } }
-				set_temp_variable = { DM_agri_income_change = 0.03 }
-				update_MLW_LW_agri_income = yes
-			}
-			if = {
-				limit = { MLW_mzuzu_motors_exists = yes }
-				set_variable = { MLW_LW_mzuzu_income_multiplier = 0 }
+			MLW_LW_SEZ_effect = {
+				set_variable = { MLW_LW_agri_income_multiplier = 0 }
 				if = {
 					limit = { check_variable = { MLW_LW_SEZ_number = 4 } }
-					set_temp_variable = { DM_mzuzu_income_change = 0.15 }
-					update_MLW_LW_mzuzu_income = yes
+					set_temp_variable = { DM_agri_income_change = 0.15 }
+					update_MLW_LW_agri_income = yes
 				}
 				else_if = {
 					limit = { check_variable = { MLW_LW_SEZ_number = 3 } }
-					set_temp_variable = { DM_mzuzu_income_change = 0.09 }
-					update_MLW_LW_mzuzu_income = yes
+					set_temp_variable = { DM_agri_income_change = 0.09 }
+					update_MLW_LW_agri_income = yes
 				}
 				else_if = {
 					limit = { check_variable = { MLW_LW_SEZ_number = 2 } }
-					set_temp_variable = { DM_mzuzu_income_change = 0.06 }
-					update_MLW_LW_mzuzu_income = yes
+					set_temp_variable = { DM_agri_income_change = 0.06 }
+					update_MLW_LW_agri_income = yes
 				}
 				else_if = {
 					limit = { check_variable = { MLW_LW_SEZ_number = 1 } }
-					set_temp_variable = { DM_mzuzu_income_change = 0.03 }
-					update_MLW_LW_mzuzu_income = yes
+					set_temp_variable = { DM_agri_income_change = 0.03 }
+					update_MLW_LW_agri_income = yes
+				}
+				if = {
+					limit = { MLW_mzuzu_motors_exists = yes }
+					set_variable = { MLW_LW_mzuzu_income_multiplier = 0 }
+					if = {
+						limit = { check_variable = { MLW_LW_SEZ_number = 4 } }
+						set_temp_variable = { DM_mzuzu_income_change = 0.15 }
+						update_MLW_LW_mzuzu_income = yes
+					}
+					else_if = {
+						limit = { check_variable = { MLW_LW_SEZ_number = 3 } }
+						set_temp_variable = { DM_mzuzu_income_change = 0.09 }
+						update_MLW_LW_mzuzu_income = yes
+					}
+					else_if = {
+						limit = { check_variable = { MLW_LW_SEZ_number = 2 } }
+						set_temp_variable = { DM_mzuzu_income_change = 0.06 }
+						update_MLW_LW_mzuzu_income = yes
+					}
+					else_if = {
+						limit = { check_variable = { MLW_LW_SEZ_number = 1 } }
+						set_temp_variable = { DM_mzuzu_income_change = 0.03 }
+						update_MLW_LW_mzuzu_income = yes
+					}
 				}
 			}
-		}
-		MLW_LW_diplomatic_annexation_checker = {
-			if = {
-				limit = { NOT = { has_country_flag = MLW_LW_diplomatic_annexation_FLAG } }
-				set_country_flag = MLW_LW_diplomatic_annexation_FLAG
-				custom_effect_tooltip = MLW_LW_diplomatic_annexation_checker_TT
+			MLW_LW_diplomatic_annexation_checker = {
+				if = {
+					limit = { NOT = { has_country_flag = MLW_LW_diplomatic_annexation_FLAG } }
+					set_country_flag = MLW_LW_diplomatic_annexation_FLAG
+					custom_effect_tooltip = MLW_LW_diplomatic_annexation_checker_TT
+				}
 			}
-		}
-		MLW_LW_hybrid_warfare_on_MBEYA = {
-			set_country_flag = {
-				flag = MLW_LW_hybrid_warfare_1045_FLAG
-				days = 180
-				value = 1
-			}
-			1045 = {
-				set_state_flag = {
-					flag = MLW_LW_hybrid_warfare_FLAG
+			MLW_LW_hybrid_warfare_on_MBEYA = {
+				set_country_flag = {
+					flag = MLW_LW_hybrid_warfare_1045_FLAG
 					days = 180
 					value = 1
 				}
+				1045 = {
+					set_state_flag = {
+						flag = MLW_LW_hybrid_warfare_FLAG
+						days = 180
+						value = 1
+					}
+				}
 			}
-		}
-		MLW_LW_hybrid_warfare_on_NJOMBE = {
-			set_country_flag = {
-				flag = MLW_LW_hybrid_warfare_1046_FLAG
-				days = 180
-				value = 1
-			}
-			1046 = {
-				set_state_flag = {
-					flag = MLW_LW_hybrid_warfare_FLAG
+			MLW_LW_hybrid_warfare_on_NJOMBE = {
+				set_country_flag = {
+					flag = MLW_LW_hybrid_warfare_1046_FLAG
 					days = 180
 					value = 1
 				}
+				1046 = {
+					set_state_flag = {
+						flag = MLW_LW_hybrid_warfare_FLAG
+						days = 180
+						value = 1
+					}
+				}
 			}
-		}
-		MLW_LW_hybrid_warfare_on_WESTRUVUMA = {
-			set_country_flag = {
-				flag = MLW_LW_hybrid_warfare_1047_FLAG
-				days = 180
-				value = 1
-			}
-			1047 = {
-				set_state_flag = {
-					flag = MLW_LW_hybrid_warfare_FLAG
+			MLW_LW_hybrid_warfare_on_WESTRUVUMA = {
+				set_country_flag = {
+					flag = MLW_LW_hybrid_warfare_1047_FLAG
 					days = 180
 					value = 1
 				}
+				1047 = {
+					set_state_flag = {
+						flag = MLW_LW_hybrid_warfare_FLAG
+						days = 180
+						value = 1
+					}
+				}
 			}
-		}
-		MLW_LW_hybrid_warfare_on_WESTNIASSA = {
-			set_country_flag = {
-				flag = MLW_LW_hybrid_warfare_1049_FLAG
-				days = 90
-				value = 1
-			}
-			1049 = {
-				set_state_flag = {
-					flag = MLW_LW_hybrid_warfare_FLAG
+			MLW_LW_hybrid_warfare_on_WESTNIASSA = {
+				set_country_flag = {
+					flag = MLW_LW_hybrid_warfare_1049_FLAG
 					days = 90
 					value = 1
 				}
-			}
-		}
-
-		MLW_LW_militaristic_annexation_checker = {
-			if = {
-				limit = { NOT = { has_country_flag = MLW_LW_militaristic_annexation_FLAG } }
-				set_country_flag = MLW_LW_militaristic_annexation_FLAG
-				custom_effect_tooltip = MLW_LW_militaristic_annexation_checker_TT
-			}
-		}
-
-		MLW_LW_assault_from_NORTH_MALAWI = {
-			custom_effect_tooltip = MLW_LW_assault_from_NORTH_MALAWI_TT
-			set_country_flag = MLW_LW_assault_launched_from_NORTH_MALAWI
-		}
-		MLW_LW_assault_from_NJOMBE = {
-			custom_effect_tooltip = MLW_LW_assault_from_NJOMBE_TT
-			set_country_flag = MLW_LW_assault_launched_from_NJOMBE
-		}
-		MLW_LW_assault_from_MBEYA = {
-			custom_effect_tooltip = MLW_LW_assault_from_MBEYA_TT
-			set_country_flag = MLW_LW_assault_launched_from_MBEYA
-		}
-		MLW_LW_assault_from_WEST_RUVUMA = {
-			custom_effect_tooltip = MLW_LW_assault_from_WEST_RUVUMA_TT
-			set_country_flag = MLW_LW_assault_launched_from_WEST_RUVUMA
-		}
-		MLW_LW_assault_from_WEST_NIASSA = {
-			custom_effect_tooltip = MLW_LW_assault_from_WEST_NIASSA_TT
-			set_country_flag = MLW_LW_assault_launched_from_WEST_NIASSA
-		}
-		MLW_LW_assault_from_SOUTH_MALAWI = {
-			custom_effect_tooltip = MLW_LW_assault_from_SOUTH_MALAWI_TT
-			set_country_flag = MLW_LW_assault_launched_from_SOUTH_MALAWI
-		}
-
-		MLW_LW_hybrid_warfare_refugee_math = {
-			set_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 1 }
-			if = { # DRC CHECK
-				limit = { has_country_flag = MLW_UDF_DRC_refugee_visa_ACTIVE }
-				if = { # DRC HIGH LEVEL
-					limit = { has_country_flag = MLW_second_congolese_war_refugee_level_DRC }
-					add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.5 }
+				1049 = {
+					set_state_flag = {
+						flag = MLW_LW_hybrid_warfare_FLAG
+						days = 90
+						value = 1
+					}
 				}
-				else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.2 } }
 			}
-			if = { # RWA CHECK
-				limit = { has_country_flag = MLW_UDF_RWA_refugee_visa_ACTIVE }
-				if = { # RWA HIGH LEVEL
-					limit = { has_country_flag = MLW_second_congolese_war_refugee_level_RWA }
-					add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.2 }
+
+			MLW_LW_militaristic_annexation_checker = {
+				if = {
+					limit = { NOT = { has_country_flag = MLW_LW_militaristic_annexation_FLAG } }
+					set_country_flag = MLW_LW_militaristic_annexation_FLAG
+					custom_effect_tooltip = MLW_LW_militaristic_annexation_checker_TT
 				}
-				else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.1 } }
 			}
-			if = { # BUR CHECK
-				limit = { has_country_flag = MLW_UDF_BUR_refugee_visa_ACTIVE }
-				if = { # BUR HIGH LEVEL
-					limit = { has_country_flag = MLW_second_congolese_war_refugee_level_BUR }
-					add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.1 }
+
+			MLW_LW_assault_from_NORTH_MALAWI = {
+				custom_effect_tooltip = MLW_LW_assault_from_NORTH_MALAWI_TT
+				set_country_flag = MLW_LW_assault_launched_from_NORTH_MALAWI
+			}
+			MLW_LW_assault_from_NJOMBE = {
+				custom_effect_tooltip = MLW_LW_assault_from_NJOMBE_TT
+				set_country_flag = MLW_LW_assault_launched_from_NJOMBE
+			}
+			MLW_LW_assault_from_MBEYA = {
+				custom_effect_tooltip = MLW_LW_assault_from_MBEYA_TT
+				set_country_flag = MLW_LW_assault_launched_from_MBEYA
+			}
+			MLW_LW_assault_from_WEST_RUVUMA = {
+				custom_effect_tooltip = MLW_LW_assault_from_WEST_RUVUMA_TT
+				set_country_flag = MLW_LW_assault_launched_from_WEST_RUVUMA
+			}
+			MLW_LW_assault_from_WEST_NIASSA = {
+				custom_effect_tooltip = MLW_LW_assault_from_WEST_NIASSA_TT
+				set_country_flag = MLW_LW_assault_launched_from_WEST_NIASSA
+			}
+			MLW_LW_assault_from_SOUTH_MALAWI = {
+				custom_effect_tooltip = MLW_LW_assault_from_SOUTH_MALAWI_TT
+				set_country_flag = MLW_LW_assault_launched_from_SOUTH_MALAWI
+			}
+
+			MLW_LW_hybrid_warfare_refugee_math = {
+				set_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 1 }
+				if = { # DRC CHECK
+					limit = { has_country_flag = MLW_UDF_DRC_refugee_visa_ACTIVE }
+					if = { # DRC HIGH LEVEL
+						limit = { has_country_flag = MLW_second_congolese_war_refugee_level_DRC }
+						add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.5 }
+					}
+					else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.2 } }
 				}
-				else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.05 } }
+				if = { # RWA CHECK
+					limit = { has_country_flag = MLW_UDF_RWA_refugee_visa_ACTIVE }
+					if = { # RWA HIGH LEVEL
+						limit = { has_country_flag = MLW_second_congolese_war_refugee_level_RWA }
+						add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.2 }
+					}
+					else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.1 } }
+				}
+				if = { # BUR CHECK
+					limit = { has_country_flag = MLW_UDF_BUR_refugee_visa_ACTIVE }
+					if = { # BUR HIGH LEVEL
+						limit = { has_country_flag = MLW_second_congolese_war_refugee_level_BUR }
+						add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.1 }
+					}
+					else = { add_to_temp_variable = { MLW_LW_hybrid_multiplier_TEMP = 0.05 } }
+				}
 			}
-		}
 
-		MLW_LW_hybrid_warfare_math = {
-			clear_variable = MLW_LW_defence_VAR
-			MLW_LW_hybrid_warfare_refugee_math = yes
-			if = {
-				limit = { MLW_LW_MBEYA = yes }
-				# defence math
-				set_temp_variable = { DM_defence_change = 1045.MLW_LW_hybrid_warfare } # 5 - 5 times decision taken
-				multiply_temp_variable = { DM_defence_change = 6 } # 30 - multiplied by 6
-				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP } # 1.8 - max modifier with refugee math
-				multiply_temp_variable = { DM_defence_change = -1 } # inverted to give debuff
-				set_variable = { MLW_LW_defence_VAR = DM_defence_change } # -54%
+			MLW_LW_hybrid_warfare_math = {
+				clear_variable = MLW_LW_defence_VAR
+				MLW_LW_hybrid_warfare_refugee_math = yes
+				if = {
+					limit = { MLW_LW_MBEYA = yes }
+					# defence math
+					set_temp_variable = { DM_defence_change = 1045.MLW_LW_hybrid_warfare } # 5 - 5 times decision taken
+					multiply_temp_variable = { DM_defence_change = 6 } # 30 - multiplied by 6
+					multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP } # 1.8 - max modifier with refugee math
+					multiply_temp_variable = { DM_defence_change = -1 } # inverted to give debuff
+					set_variable = { MLW_LW_defence_VAR = DM_defence_change } # -54%
+				}
+				if = {
+					limit = { MLW_LW_NJOMBE = yes }
+					set_temp_variable = { DM_defence_change = 1046.MLW_LW_hybrid_warfare }
+					multiply_temp_variable = { DM_defence_change = 6 }
+					multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
+					multiply_temp_variable = { DM_defence_change = -1 }
+					set_variable = { MLW_LW_defence_VAR = DM_defence_change }
+				}
+				if = {
+					limit = { MLW_LW_WESTRUVUMA = yes }
+					set_temp_variable = { DM_defence_change = 1047.MLW_LW_hybrid_warfare }
+					multiply_temp_variable = { DM_defence_change = 6 }
+					multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
+					multiply_temp_variable = { DM_defence_change = -1 }
+					set_variable = { MLW_LW_defence_VAR = DM_core_defence_change }
+				}
+				if = {
+					limit = { MLW_LW_WESTNIASSA = yes }
+					set_temp_variable = { DM_defence_change = 1049.MLW_LW_hybrid_warfare }
+					multiply_temp_variable = { DM_defence_change = 6 }
+					multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
+					multiply_temp_variable = { DM_defence_change = -1 }
+					set_variable = { MLW_LW_defence_VAR = DM_defence_change }
+				}
 			}
-			if = {
-				limit = { MLW_LW_NJOMBE = yes }
-				set_temp_variable = { DM_defence_change = 1046.MLW_LW_hybrid_warfare }
-				multiply_temp_variable = { DM_defence_change = 6 }
-				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
-				multiply_temp_variable = { DM_defence_change = -1 }
-				set_variable = { MLW_LW_defence_VAR = DM_defence_change }
-			}
-			if = {
-				limit = { MLW_LW_WESTRUVUMA = yes }
-				set_temp_variable = { DM_defence_change = 1047.MLW_LW_hybrid_warfare }
-				multiply_temp_variable = { DM_defence_change = 6 }
-				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
-				multiply_temp_variable = { DM_defence_change = -1 }
-				set_variable = { MLW_LW_defence_VAR = DM_core_defence_change }
-			}
-			if = {
-				limit = { MLW_LW_WESTNIASSA = yes }
-				set_temp_variable = { DM_defence_change = 1049.MLW_LW_hybrid_warfare }
-				multiply_temp_variable = { DM_defence_change = 6 }
-				multiply_temp_variable = { DM_defence_change = MLW_LW_hybrid_multiplier_TEMP }
-				multiply_temp_variable = { DM_defence_change = -1 }
-				set_variable = { MLW_LW_defence_VAR = DM_defence_change }
-			}
-		}
-
-
-
 		# SOUTH AFRICA EFFECTS
 			MLW_SAF_dynamic_modifier_check_for_SAF = {
 				if = { limit = { NOT = { has_dynamic_modifier = { modifier = MLW_SAF_DM } } } add_dynamic_modifier = { modifier = MLW_SAF_DM } }
@@ -790,7 +732,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = 0.05 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.10 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 2
 					limit = { has_idea = slight_corruption }
@@ -799,7 +741,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = 0.04 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.09 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 3
 					limit = { has_idea = modest_corruption }
@@ -808,7 +750,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = 0.03 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.08 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 4
 					limit = { has_idea = medium_corruption }
@@ -817,7 +759,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = 0.02 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.07 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 5
 					limit = { has_idea = widespread_corruption }
@@ -826,14 +768,14 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = 0.01 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.06 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 6
 					limit = { has_idea = systematic_corruption }
 					set_temp_variable = { DM_corruption_cost_change = 0.25 }
 					update_MLW_MCP_corruption_cost = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.05 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 7
 					limit = { has_idea = unrestrained_corruption }
@@ -842,7 +784,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = -0.01 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.04 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 8
 					limit = { has_idea = rampant_corruption }
@@ -851,7 +793,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = -0.02 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.03 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else_if = { # CORRUPTION 9
 					limit = { has_idea = crippling_corruption }
@@ -860,7 +802,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = -0.03 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.02 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				else = { # CORRUPTION 10
 					set_temp_variable = { DM_corruption_cost_change = 0.45 }
@@ -868,7 +810,7 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					set_temp_variable = { DM_tax_gain_change = -0.04 }
 					update_MLW_MCP_tax_gain = yes
 					set_temp_variable = { DM_bureau_cost_change = -0.01 }
-					update_MLW_MCP_centralisation_cost = yes
+					# update_MLW_MCP_centralisation_cost = yes
 				}
 				force_update_dynamic_modifier = yes
 			}
@@ -1225,6 +1167,78 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					newline = yes
 				}
 			}
+			MLW_UDF_raid_DPP_PP = {
+				random_list = {
+					20 = {
+						set_temp_variable = { party_index = 1 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					20 = {
+						set_temp_variable = { party_index = 3 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					20 = {
+						set_temp_variable = { party_index = 14 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					20 = {
+						set_temp_variable = { party_index = 18 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					20 = {
+						set_temp_variable = { party_index = 20 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+				}
+			}
+			MLW_UDF_raid_DPP = {
+				random_list = {
+					25 = {
+						set_temp_variable = { party_index = 3 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					25 = {
+						set_temp_variable = { party_index = 14 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					25 = {
+						set_temp_variable = { party_index = 18 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					25 = {
+						set_temp_variable = { party_index = 20 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+				}
+			}
+			MLW_UDF_raid = {
+				random_list = {
+					33 = {
+						set_temp_variable = { party_index = 14 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					33 = {
+						set_temp_variable = { party_index = 18 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+					33 = {
+						set_temp_variable = { party_index = 20 }
+						set_temp_variable = { party_popularity_increase = -0.025 }
+						add_relative_party_popularity = yes
+					}
+				}
+			}
 			# DM EFFECTS
 				update_MLW_UDF_centralisation_cost = {
 					custom_effect_tooltip = MLW_UDF_bureau_cost_TT
@@ -1246,9 +1260,21 @@ if_they_accept_tooltip = { custom_effect_tooltip = if_they_accept_tooltip_TT }
 					custom_effect_tooltip = MLW_UDF_factory_efficiency_TT
 					add_to_variable = { MLW_UDF_factory_efficiency = DM_factory_efficiency_change }
 				}
+				update_MLW_UDF_foreign_influence_defence = { # fix
+					custom_effect_tooltip = MLW_UDF_foreign_influence_defence_TT
+					add_to_variable = { MLW_UDF_foreign_influence_defence = DM_foreign_influence_DEF_change }
+				}
 				update_MLW_UDF_health_cost = {
 					custom_effect_tooltip = MLW_UDF_health_cost_TT
 					add_to_variable = { MLW_UDF_health_cost = DM_health_cost_change }
+				}
+				update_MLW_UDF_investment_cost = { # fix
+					custom_effect_tooltip = MLW_UDF_investment_cost_TT
+					add_to_variable = { MLW_UDF_investment_cost = DM_investment_cost_change }
+				}
+				update_MLW_UDF_investment_time = { # fix
+					custom_effect_tooltip = MLW_UDF_investment_time_TT
+					add_to_variable = { MLW_UDF_investment_time = DM_investment_time_change }
 				}
 				update_MLW_UDF_migration_rate = {
 					custom_effect_tooltip = MLW_UDF_migration_rate_TT
