@@ -990,11 +990,7 @@ POL_revert_others_changes_category = {
 				add_to_variable = { effect_days = idea_days_mofifier }
 				remove_ideas = { POL_nationalist_research_large }
 			}
-			if = {
-				limit = { has_idea = POL_inner_network_idea }
-				add_to_variable = { effect_days = idea_days_mofifier }
-				remove_ideas = { POL_inner_network_idea }
-			}
+
 			if = {
 				limit = { has_idea = POL_paramilitary_organization_idea }
 				add_to_variable = { effect_days = idea_days_mofifier }
@@ -1128,11 +1124,6 @@ POL_revert_others_changes_category = {
 				remove_ideas = { POL_nationalist_research_large }
 			}
 			if = {
-				limit = { has_idea = POL_inner_network_idea }
-				add_to_variable = { effect_days = idea_days_mofifier }
-				remove_ideas = { POL_inner_network_idea }
-			}
-			if = {
 				limit = { has_idea = POL_paramilitary_organization_idea }
 				add_to_variable = { effect_days = idea_days_mofifier }
 				remove_ideas = { POL_paramilitary_organization_idea }
@@ -1204,11 +1195,6 @@ POL_revert_others_changes_category = {
 				limit = { has_idea = POL_nationalist_research_large }
 				add_to_variable = { effect_days = idea_days_mofifier }
 				remove_ideas = { POL_nationalist_research_large }
-			}
-			if = {
-				limit = { has_idea = POL_inner_network_idea }
-				add_to_variable = { effect_days = idea_days_mofifier }
-				remove_ideas = { POL_inner_network_idea }
 			}
 			if = {
 				limit = { has_idea = POL_paramilitary_organization_idea }
@@ -1312,11 +1298,6 @@ POL_revert_others_changes_category = {
 				limit = { has_idea = POL_nationalist_research_large }
 				add_to_variable = { effect_days = idea_days_mofifier }
 				remove_ideas = { POL_nationalist_research_large }
-			}
-			if = {
-				limit = { has_idea = POL_inner_network_idea }
-				add_to_variable = { effect_days = idea_days_mofifier }
-				remove_ideas = { POL_inner_network_idea }
 			}
 			if = {
 				limit = { has_idea = POL_paramilitary_organization_idea }
@@ -2684,6 +2665,7 @@ POL_visegrad_unification4_category = {
 
 	POL_visegrad_breakup = {
 		activation = {
+			has_cosmetic_tag = POL_QUAD
 			OR = {
 				check_variable = { THIS.CZEunhappy = 100 }
 				check_variable = { THIS.SLOunhappy = 100 }
@@ -2695,9 +2677,11 @@ POL_visegrad_unification4_category = {
 		is_good = no
 		days_mission_timeout = 0
 		selectable_mission = no
+		fire_only_once = yes
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision POL_info"
+			log = "[GetDateText]: [Root.GetName]: Decision POL_visegrad_breakup"
+			set_country_flag = POL_visegrad_breakup_occurred
 			release = CZE
 			release = HUN
 			release = SLO
@@ -2709,9 +2693,22 @@ POL_visegrad_unification4_category = {
 				POL_united_visegrad4_idea
 				POL_viser_idea
 			}
-			USA = {
-				add_to_faction = CZE
-				add_to_faction = HUN
+			if = {
+				limit = {
+					NOT = {
+						has_global_flag = GAME_RULE_nato_disabled
+						USA = {
+							OR = {
+								has_war_with = CZE
+								has_war_with = HUN
+							}
+						}
+					}
+				}
+				USA = {
+					add_to_faction = CZE
+					add_to_faction = HUN
+				}
 			}
 			if = {
 				limit = {
@@ -3277,12 +3274,9 @@ POL_air_defense_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision POL_anti_missile_security"
-			set_technology = {
-				missile_defense = 1
-			}
 			random_controlled_state = {
 				add_building_construction = {
-					type = missile_defense_station
+					type = rocket_site
 					level = 2
 					instant_build = yes
 				}
