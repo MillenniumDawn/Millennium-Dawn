@@ -180,28 +180,12 @@ calculate_tax_gain = {
 	# Commercialized Agriculture Districts - (Agricultural Districts) * 2.25
 	# Offices - (Offices) * 5
 	set_variable = { civil_fac_tax = industrial_complex_total }
-	if = {
-		limit = {
-			is_in_array = { ruling_party = 15 }	#oligarchs
-		}
-		multiply_variable = { civil_fac_tax = 1.1 }
-	}
 	multiply_variable = { civil_fac_tax = 2.5 }
 	set_variable = { military_fac_tax = military_fac }
 	multiply_variable = { military_fac_tax = 0.2 }
 	set_variable = { dockyard_tax = dockyard_fac }
 	multiply_variable = { dockyard_tax = 0.2 }
 	set_variable = { office_tax = office_park_total }
-	if = {
-		limit = {
-			OR = {
-				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 } # Liberalism
-				is_in_array = { ruling_party = 16 } # Neutral Libertarians
-			}
-		}
-		multiply_variable = { office_tax = 1.1 }
-	}
 	multiply_variable = { office_tax = 5 }
 
 	set_variable = { agriculture_district_tax = agriculture_district_total }
@@ -535,9 +519,10 @@ calculate_additional_income_rate = {
 	}
 	# Imposing Taxation on Religious Institutions
 	if = { limit = { has_idea = internal_factions_taxing_religious_institutions }
-		set_variable = { additional_income_taxing_religious_institutions = gdp_total }
-		multiply_variable = { additional_income_taxing_religious_institutions = 0.006 }
-		multiply_variable = { additional_income_taxing_religious_institutions = 0.5 }
+		set_variable = { additional_income_taxing_religious_institutions = population_total_m }
+		set_temp_variable = { gdp_per_capita_temp = gdp_per_capita }
+		divide_temp_variable = { gdp_per_capita_temp = 750 }
+		multiply_variable = { additional_income_taxing_religious_institutions = gdp_per_capita_temp }
 		add_to_variable = { additional_income_rate = additional_income_taxing_religious_institutions }
 	}
 
@@ -1140,6 +1125,32 @@ calculate_additional_income_rate = {
 			limit = { has_idea = NOR_bergen_engines }
 			set_variable = { additional_income_NOR_engines = 0.700 }
 			add_to_variable = { additional_income_rate = additional_income_NOR_engines }
+		}
+	}
+	# Tajikistan
+	if = {
+		limit = { original_tag = TAJ }
+		if = {
+			limit = {
+				OR = {
+					has_idea = TAJ_201st_base
+					has_idea = TAJ_201st_base_usa
+					has_idea = TAJ_201st_base_chi
+					has_idea = TAJ_201st_base_raj
+				}
+			}
+			set_variable = { additional_income_TAJ_201st = 0.075 }
+			add_to_variable = { additional_income_rate = additional_income_TAJ_201st }
+		}
+		if = {
+			limit = { has_idea = TAJ_201st_base_upgrade }
+			set_variable = { additional_income_TAJ_201st_upgrade = 0.175 }
+			add_to_variable = { additional_income_rate = additional_income_TAJ_201st_upgrade }
+		}
+		if = {
+			limit = { has_idea = TAJ_gulfs_bankroll_idea }
+			set_variable = { additional_income_TAJ_bankroll = 0.050 }
+			add_to_variable = { additional_income_rate = additional_income_TAJ_bankroll }
 		}
 	}
 	# Liechtenstein
@@ -3162,8 +3173,8 @@ calculate_additional_expense_rate = {
 		limit = { original_tag = CHI }
 		if = {
 			limit = { has_idea = CHI_china_economic_assistant }
-			set_variable = { additional_expense_chinas_economic_assistant = 0.2 }
-			add_to_variable = { additional_income_rate = additional_expense_chinas_economic_assistant }
+			set_variable = { additional_expense_CHI_china_economic_assistant = 0.200 }
+			add_to_variable = { additional_expenses_rate = additional_expense_CHI_china_economic_assistant }
 		}
 	}
 
@@ -3376,19 +3387,7 @@ calculate_additional_expense_rate = {
 #Update money gained from international investments
 calculate_int_investments_rate = {
 	# Set base ROI rate
-	if = {
-		limit = {
-			OR = {
-				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 }	#liberalism
-				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
-			}
-		}
-		set_variable = { roi_rate = 0.08 }	#8%
-	}
-	else = {
-		set_variable = { roi_rate = 0.06 }	#6%
-	}
+	set_variable = { roi_rate = 0.06 }	#6%
 
 	# Modifier for ROI
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
