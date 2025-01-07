@@ -1619,74 +1619,8 @@
 		set_temp_variable = { reform_expectance_from_taxes = tax_rate }
 		multiply_temp_variable = { reform_expectance_from_taxes = -0.001 }
 
-		add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_stability }
-		add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_laws }
-		add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_taxes }
-		add_to_temp_variable = { reform_expectance_from_interest_rate = reform_expectance_from_war }
-
-		add_to_variable = { drift_switch_var_base = reform_expectance_from_interest_rate }
-
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base > 0.25 }
-			}
-			add_to_variable = { drift_switch_var_base = -0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base > 0.3 }
-			}
-			add_to_variable = { drift_switch_var_base = -0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base > 0.35 }
-			}
-			add_to_variable = { drift_switch_var_base = -0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base > 0.4 }
-			}
-			add_to_variable = { drift_switch_var_base = -0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base > 0.45 }
-			}
-			add_to_variable = { drift_switch_var_base = -0.01 }
-		}
-
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base < -0.25 }
-			}
-			add_to_variable = { drift_switch_var_base = 0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base < -0.3 }
-			}
-			add_to_variable = { drift_switch_var_base = 0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base < -0.35 }
-			}
-			add_to_variable = { drift_switch_var_base = 0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base < -0.4 }
-			}
-			add_to_variable = { drift_switch_var_base = 0.01 }
-		}
-		if = {
-			limit = {
-				check_variable = { drift_switch_var_base < -0.45 }
-			}
-			add_to_variable = { drift_switch_var_base = 0.01 }
-		}
+		#calculate the total change from all sources in a variable that is then displayed in the dynamic modifier
+		set_variable = { reform_expectance_drift_display_var = 0 }
 		#technocratic government effect
 		if = {
 			limit = {
@@ -1695,8 +1629,21 @@
 					has_country_leader_with_trait = roman_senate_trait
 				}
 			}
-			add_to_variable = { drift_switch_var_base = 0.05 }
+			add_to_variable = { reform_expectance_drift_display_var = 0.05 }
 		}
+
+		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_stability }
+		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_laws }
+		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_taxes }
+		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_war }
+		add_to_variable = { reform_expectance_drift_display_var = reform_expectance_from_interest_rate }
+
+		set_temp_variable = { drift_switch_var_correction = drift_switch_var_base }
+		multiply_temp_variable = { drift_switch_var_correction = 0.2 } #very heavy correction to avoid excessive values
+		add_to_variable = { reform_expectance_drift_display_var = drift_switch_var_correction }
+		
+		#add the final value of the changes to the reform expectance variable
+		add_to_variable = { drift_switch_var_base = reform_expectance_drift_display_var }		
 	}
 
 	# weekly_stability_from_situation = {
