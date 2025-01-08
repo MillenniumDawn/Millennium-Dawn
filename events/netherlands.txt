@@ -40,6 +40,12 @@ add_namespace = HOL_personal_union_scotland
 add_namespace = HOL_VOC
 add_namespace = HOL_WIC
 add_namespace = HOL_NVU
+add_namespace = HOL_D66
+
+# CONSTANT FOR INNER CIRCLE TIMES (These needs to be x7 compared to the Focus cost in the focus file) - NEEDS TO MATCH THE SAME CONSTANTS USED IN THE FOCUS FILE x7
+@HOL_D66_time_tier_1 = 140
+# FLAG CONSTANTS (It is 1 day more so the tooltip and days shown in the focus about Focus Progress match exactly the moment when the focus is completed)
+@HOL_D66_time_tier_1_flag = 141
 
 country_event = {
 	id = HOL_Railway_Developments.01
@@ -7715,10 +7721,11 @@ country_event = {
         HOL = {
             country_event = HOL_NVU.2
         }
+        ai_chance = {
+            base = 50
+        }
     }
-    ai_chance = {
-        base = 50
-    }
+
 
     option = {
         name = HOL_NVU.1.b  # Refuse aid
@@ -7859,4 +7866,56 @@ country_event = {
         }
     }
 }
+country_event = {
+	id = HOL_D66.01
 
+	hidden = yes
+
+	is_triggered_only = yes
+
+    fire_only_once = yes
+
+	trigger = {
+		neutrality_neutral_social_are_in_coalition = yes
+	}
+
+    mean_time_to_happen = {
+        days = 160
+    }
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_completed_focus = HOL_D66 }
+			}
+			activate_shine_on_focus = HOL_D66
+			set_country_flag = { flag = HOL_D66_in_progress_flag days = @HOL_D66_time_tier_1_flag value = 1 }
+			country_event = { id = HOL_D66.02 days = @HOL_D66_time_tier_1_flag }
+		}
+	}
+}
+country_event = {
+	id = HOL_D66.02
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = HOL_D66
+	}
+
+	immediate = {
+        if = {
+            limit = { has_shine_effect_on_focus = HOL_D66 }
+            complete_national_focus = {
+				focus = HOL_D66
+				use_side_message = yes
+                originator_name = "D66"
+			}
+            clr_country_flag = HOL_D66_in_progress_flag
+			country_event = { id = HOL_D66.01 days = HOL_minor_parties_to_start_focus random_days = HOL_minor_parties_random_days }
+
+        }
+	}
+}
