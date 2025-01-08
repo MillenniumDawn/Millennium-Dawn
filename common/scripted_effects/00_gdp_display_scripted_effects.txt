@@ -1,0 +1,121 @@
+initial_setup = {
+	resize_array = {
+		array = gdp_graphx
+		value = 0
+		size = 120
+	}
+
+	resize_array = {
+		array = gdp_graph
+		value = 0
+		size = 120
+	}
+}
+
+initialize_x_axis = {
+	set_temp_variable = { x_coord = 0 }
+
+	# sets up every X, we need to be precise here
+	for_loop_effect = {
+		start = 0
+		end = current_gdp_graph_end
+		compare = less_than_or_equals
+
+		set_variable = { gdp_graphx^v = x_coord }
+
+		add_to_temp_variable = { x_coord = 7.05 }
+	}
+
+	# now round to closest int value
+	for_loop_effect = {
+		start = 0
+		end = 120
+
+		# set_temp_variable = { tmp = gdp_graphx^v }
+		# round_variable = tmp
+		round_variable = gdp_graphx^v
+
+		#add_to_variable = { gdp_graphx^v = 35 } # add X offset
+		log = "[?gdp_graphx^v]"
+	}
+}
+
+recalculate_gdp_display = {
+	initialize_x_axis = yes
+	set_temp_variable = { high = 0 }
+	set_temp_variable = { low = 0 }
+
+	set_temp_variable = { high = gdp_array^0 }
+	multiply_temp_variable = { high = 1.8 }
+	find_highest_in_array = {
+		array = gdp_array
+		value = max
+		index = max_index
+	}
+
+	if = {
+		limit = { check_variable = { max > high } }
+		set_temp_variable = { high = max }
+	}
+
+	set_temp_variable = { low = gdp_array^0 }
+	multiply_temp_variable = { low = 0.8 }
+
+	find_lowest_in_array = {
+		array = gdp_array
+		value = min
+		index = min_index
+	}
+
+	if = {
+		limit = { check_variable = { min < low } }
+		set_temp_variable = { low = min }
+	}
+
+	log = "high = [?high] low = [?low]"
+
+	set_temp_variable = { diff = high }
+	subtract_from_temp_variable = { diff = low }
+
+	# divide in 11 intervals
+	set_temp_variable = { step = diff }
+	multiply_temp_variable = { step = 0.1 }
+
+	set_temp_variable = { buf = low }
+	# set up gdp scale
+	for_loop_effect = {
+		start = 0
+		end = 11
+
+		set_variable = { gdp_scale^v = buf }
+		round_variable = gdp_scale^v
+		add_to_temp_variable = { buf = step }
+	}
+
+	# y pixel hieght is 450 pixels
+	# x pixel width is 846 pixels = 7.46 pixels
+
+	# set up main graph
+	for_loop_effect = {
+		start = 0
+		end = current_gdp_graph_end
+		compare = less_than_or_equals
+
+		set_temp_variable = { y_coord = gdp_array^v }
+		subtract_from_temp_variable = { y_coord = low }
+		divide_temp_variable = { y_coord = diff }
+		multiply_temp_variable = { y_coord = 450 }
+		round_variable = y_coord
+		log = "starting y = [?y_coord]"
+
+		set_variable = { gdp_graph^v = y_coord }
+		# y offset
+		add_to_variable = { gdp_graph^v = 75 }
+		# mirror the value
+		set_temp_variable = { tmp = 525 }
+		subtract_from_temp_variable = { tmp = gdp_graph^v }
+
+		set_variable = { gdp_graph^v = tmp }
+		log = "y = [?gdp_graph^v]"
+	}
+}
