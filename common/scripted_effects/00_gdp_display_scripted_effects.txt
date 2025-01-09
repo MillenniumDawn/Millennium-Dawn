@@ -1,4 +1,4 @@
-initial_setup = {
+graph_initial_setup = {
 	resize_array = {
 		array = gdp_graphx
 		value = 0
@@ -10,6 +10,24 @@ initial_setup = {
 		value = 0
 		size = 120
 	}
+
+	resize_array = {
+		array = gdp_array
+		value = gdp_total
+		size = 120
+	}
+
+	set_temp_variable = { tmp = global.year }
+	for_loop_effect = {
+		start = 0
+		end = 12
+
+		set_variable = { date_scale^v = tmp }
+		add_to_temp_variable = { tmp = 1 }
+	}
+
+	# as its incremented at the start
+	set_variable = { current_gdp_graph_end = -1 }
 }
 
 initialize_x_axis = {
@@ -31,12 +49,7 @@ initialize_x_axis = {
 		start = 0
 		end = 120
 
-		# set_temp_variable = { tmp = gdp_graphx^v }
-		# round_variable = tmp
 		round_variable = gdp_graphx^v
-
-		#add_to_variable = { gdp_graphx^v = 35 } # add X offset
-		log = "[?gdp_graphx^v]"
 	}
 }
 
@@ -96,26 +109,73 @@ recalculate_gdp_display = {
 	# x pixel width is 846 pixels = 7.46 pixels
 
 	# set up main graph
+	for_each_loop = {
+		array = gdp_array
+		value = v
+		index = i
+		break = break
+
+		if = {
+			limit = { check_variable = { i > current_gdp_graph_end } }
+			set_temp_variable = { break = 1 }
+		}
+		else = {
+			set_temp_variable = { y_coord = v }
+			subtract_from_temp_variable = { y_coord = low }
+			divide_temp_variable = { y_coord = diff }
+			multiply_temp_variable = { y_coord = 450 }
+			round_variable = y_coord
+			log = "starting y = [?y_coord]"
+
+			set_variable = { gdp_graph^i = y_coord }
+			# y offset
+			add_to_variable = { gdp_graph^i = -50 }
+			# mirror the value
+			set_temp_variable = { tmp = 450 }
+			subtract_from_temp_variable = { tmp = gdp_graph^i }
+
+			set_variable = { gdp_graph^i = tmp }
+			log = "y = [?gdp_graph^i]"
+		}
+	}
+}
+
+gdp_graph_shift_array = {
+	set_temp_variable = { new_index = 11 }
 	for_loop_effect = {
 		start = 0
-		end = current_gdp_graph_end
-		compare = less_than_or_equals
+		end = 108
 
-		set_temp_variable = { y_coord = gdp_array^v }
-		subtract_from_temp_variable = { y_coord = low }
-		divide_temp_variable = { y_coord = diff }
-		multiply_temp_variable = { y_coord = 450 }
-		round_variable = y_coord
-		log = "starting y = [?y_coord]"
+		set_variable = { gdp_array^v = gdp_array^new_index }
+		add_to_temp_variable = { new_index = 1 }
+	}
 
-		set_variable = { gdp_graph^v = y_coord }
-		# y offset
-		add_to_variable = { gdp_graph^v = 75 }
-		# mirror the value
-		set_temp_variable = { tmp = 525 }
-		subtract_from_temp_variable = { tmp = gdp_graph^v }
+	# set to 1st element so it scales correctly
+	for_loop_effect = {
+		start = 108
+		end = 120
 
-		set_variable = { gdp_graph^v = tmp }
-		log = "y = [?gdp_graph^v]"
+		set_variable = { gdp_array^v = gdp_array^0 }
+	}
+
+	set_variable = { current_gdp_graph_end = 108 }
+
+	set_temp_variable = { tmp = date_scale^0 }
+	add_to_temp_variable = { tmp = 1 }
+	for_loop_effect = {
+		start = 0
+		end = 12
+
+		set_variable = { date_scale^v = tmp }
+		add_to_temp_variable = { tmp = 1 }
+	}
+}
+
+gdp_graph_on_monthly = {
+	add_to_variable = { current_gdp_graph_end = 1 }
+	set_variable = { gdp_array^current_gdp_graph_end = gdp_total }
+	if = {
+		limit = { check_variable = { current_gdp_graph_end = 119 } }
+		gdp_graph_shift_array = yes
 	}
 }
