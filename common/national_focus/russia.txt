@@ -20807,8 +20807,8 @@ focus_tree = {
 			modify_treasury_effect = yes
 			add_tech_bonus = {
 				name = SOV_armata_universal_combat_platform
-				bonus = 0.45
-				uses = 1
+				bonus = 0.75
+				uses = 2
 				category = CAT_mbt
 			}
 			set_temp_variable = { temp_opinion = 5 }
@@ -21058,14 +21058,13 @@ focus_tree = {
 		id = SOV_rosgvardia
 		icon = Rosgvardia
 
-		x = -7
-		y = 10
-		relative_position_id = SOV_finish_1998_reforms
+		x = -5
+		y = 7
+		relative_position_id = SOV_continue_etatist_rise
 
 		cost = 5
 
-		prerequisite = { focus = SOV_increased_arms_exports_2 }
-		prerequisite = { focus = SOV_expand_kalashnikov_concern }
+		prerequisite = { focus = SOV_go_russia focus = SOV_cross_the_rubicon focus = SOV_tandemokratia focus = SOV_rodina_prevails }
 		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 
 		available = {
@@ -21164,6 +21163,7 @@ focus_tree = {
 			hidden_effect = {
 				division_template = {
 					name = "Battalion of Prisoners"
+					is_locked = yes
 					regiments = {
 						Militia_Bat = { x = 0 y = 0 }
 						Militia_Bat = { x = 0 y = 1 }
@@ -22622,27 +22622,22 @@ focus_tree = {
 		id = SOV_rosguard_start_org
 		icon = sov_rosgvardia
 
-		x = -7
-		y = 11
+		x = -5
+		y = 10
 		relative_position_id = SOV_finish_1998_reforms
 
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_RUSSIA_ARMY  FOCUS_FILTER_PMC_WAGNER }
-		prerequisite = { focus = SOV_rosgvardia }
+		prerequisite = { focus = SOV_increased_arms_exports_2 }
+		prerequisite = { focus = SOV_expand_kalashnikov_concern }
+
+		available = {
+			has_completed_focus = SOV_rosgvardia
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_start_org"
-			if = {
-				limit = {
-					NOT = {
-					has_country_flag = SOV_wagner_parties
-					}
-				}
-				set_temp_variable = { party_index = 22 }
-				set_temp_variable = { party_popularity_increase = -0.004 }
-				add_relative_party_popularity = yes
-			}
 			if = {
 				limit = {
 					has_completed_focus = SOV_slavic_corps
@@ -22650,11 +22645,7 @@ focus_tree = {
 				set_temp_variable = { modify_wagnerbund = -1 }
 				modify_wagnerbund_support = yes
 			}
-			hidden_effect = { add_dynamic_modifier = { modifier = SOV_rosgvardia_modifier } }
-			add_to_variable = { SOV_rosgvardia_root_out_resistance_effectiveness_factor = 0.20 }
-			add_to_variable = { SOV_rosgvardia_foreign_subversive_activites = -0.15 }
-			add_to_variable = { SOV_rosgvardia_police_cost_multiplier_modifier = 0.10 }
-			custom_effect_tooltip = SOV_rosgvardia_start_tt
+			add_ideas = SOV_rosguard_idea
 			create_corps_commander = {
 				name = "Viktor Zolotov"
 				portrait_path = "gfx/leaders/SOV/SOV_zolotov.dds"
@@ -22686,11 +22677,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_armor"
-			add_to_variable = { SOV_rosgvardia_root_out_resistance_effectiveness_factor = 0.05 }
-			add_to_variable = { SOV_rosgvardia_foreign_subversive_activites = -0.05 }
-			custom_effect_tooltip = SOV_rosgvardia1_tt
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
+			swap_ideas = {
+				remove_idea = SOV_rosguard_idea
+				add_idea = SOV_rosguard_idea1
+			}
 			if = {
 				limit = {
 					has_completed_focus = SOV_slavic_corps
@@ -22721,11 +22713,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		prerequisite = { focus = SOV_rosguard_start_org }
 
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_military"
-			add_to_variable = { SOV_rosgvardia_enemy_operative_detection_chance_factor = 0.10 }
-			add_to_variable = { SOV_rosgvardia_resistance_growth = -0.05 }
-			custom_effect_tooltip = SOV_rosgvardia2_tt
 			if = {
 				limit = {
 					NOT = {
@@ -22736,7 +22726,7 @@ focus_tree = {
 				set_temp_variable = { party_popularity_increase = -0.001 }
 				add_relative_party_popularity = yes
 			}
-			decrease_corruption = yes
+			add_ideas = SOV_rosguard_troops_idea
 		}
 		ai_will_do = {
 			base = 355
@@ -22759,21 +22749,28 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_ARMY }
 		prerequisite = { focus = SOV_rosguard_start_org }
 
+		available = {
+			OR = {
+				emerging_anarchist_communism_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+		}
+
+		available = {
+			has_idea = SOV_omon_idea
+			has_idea = SOV_sobr_idea
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_occup"
-			add_to_variable = { SOV_rosgvardia_resistance_growth = -0.10 }
-			add_to_variable = { SOV_rosgvardia_resistance_damage_to_garrison = -0.05 }
-			add_to_variable = { SOV_rosgvardia_police_cost_multiplier_modifier = 0.07 }
-			custom_effect_tooltip = SOV_rosgvardia3_tt
-			if = {
-				limit = {
-					NOT = {
-					has_country_flag = SOV_wagner_parties
-					}
-				}
-				set_temp_variable = { party_index = 22 }
-				set_temp_variable = { party_popularity_increase = -0.002 }
-				add_relative_party_popularity = yes
+			swap_ideas = {
+				remove_idea = SOV_omon_idea
+				add_idea = SOV_omon_idea1
+			}
+			swap_ideas = {
+				remove_idea = SOV_sobr_idea
+				add_idea = SOV_sobr_idea1
 			}
 		}
 		ai_will_do = {
@@ -22800,86 +22797,37 @@ focus_tree = {
 		prerequisite = { focus = SOV_rosguard_military }
 
 		available = {
-			has_country_flag = SOV_wagner_rebeliion_flag
+			OR = {
+				has_country_flag = SOV_wagner_rebeliion_flag
+				nationalist_monarchists_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_tank"
-			if = {
-				limit = {
-					NOT = {
-					has_country_flag = SOV_wagner_parties
-					}
-				}
-				set_temp_variable = { party_index = 22 }
-				set_temp_variable = { party_popularity_increase = -0.04 }
-				add_relative_party_popularity = yes
-			}
 			division_template = {
 				name = "Rosgvardia Tank Brigade"
-					regiments = {
-						armor_Bat = { x = 0 y = 0 }
-						armor_Bat = { x = 0 y = 1 }
-						Militia_Bat = { x = 1 y = 0 }
-						Militia_Bat = { x = 1 y = 1 }
-						Militia_Bat = { x = 1 y = 2 }
-						Militia_Bat = { x = 2 y = 1 }
-						Arty_Bat = { x = 2 y = 0 }
-						Arty_Bat = { x = 2 y = 1 }
-						Arty_Bat = { x = 2 y = 2 }
-					}
-					support = {
-						Mot_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
-					}
+				is_locked = yes
+				regiments = {
+					armor_Bat = { x = 0 y = 0 }
+					armor_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 1 y = 0 }
+					Militia_Bat = { x = 1 y = 1 }
+					Militia_Bat = { x = 1 y = 2 }
+					Militia_Bat = { x = 2 y = 1 }
+					Arty_Bat = { x = 2 y = 0 }
+					Arty_Bat = { x = 2 y = 1 }
+					Arty_Bat = { x = 2 y = 2 }
+				}
+				support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
+					L_Engi_Comp = { x = 0 y = 1 }
+				}
 			}
-			add_to_variable = { SOV_rosgvardia_army_leader_cost_factor = -0.10 }
-			add_to_variable = { SOV_rosgvardia_police_cost_multiplier_modifier = 0.10 }
-			custom_effect_tooltip = SOV_rosgvardia4_tt
-
 		}
 		ai_will_do = {
 			base = 155
-			modifier = {
-				is_historical_focus_on = yes
-				add = 50
-			}
-		}
-	}
-	focus = {
-		id = SOV_rosguard_wagner
-		icon = sov_rosgvardia_wagner
-
-		x = 0
-		y = 3
-		relative_position_id = SOV_rosguard_start_org
-
-		cost = 5
-
-		search_filters = { FOCUS_FILTER_RUSSIA_ARMY FOCUS_FILTER_PMC_WAGNER }
-		prerequisite = { focus = SOV_rosguard_tank }
-
-		available = {
-			has_country_flag = rosgvardia_wagner
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SOV_rosguard_wagner"
-			add_ideas = SOV_wagner_rosguard_idea
-			clr_country_flag = SOV_wagner_parties
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 665 }
-				create_unit = {
-					division = "name = \"Separate Brigade of PMCs Wagner\" division_template = \"Rosgvardia\" start_experience_factor = 0.9"
-					owner = SOV
-				}
-			}
-			set_temp_variable = { treasury_change = -4 }
-			modify_treasury_effect = yes
-		}
-		ai_will_do = {
-			base = 1
 			modifier = {
 				is_historical_focus_on = yes
 				add = 50
@@ -22940,7 +22888,7 @@ focus_tree = {
 	focus = {
 		id = SOV_unlimited_samoderzhaviye
 		icon = Russian_crest_knights
-		x = -4.5
+		x = -3
 		y = 7
 		relative_position_id = SOV_continue_etatist_rise
 		cost = 7
