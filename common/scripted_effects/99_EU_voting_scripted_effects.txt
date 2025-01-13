@@ -87,17 +87,20 @@ EU_update_AI_general_voting_modifiers = {
 
 	# Common Law Section, this is something that can and is repeated so we will be tucking it in here with the general modifiers since that goes at the end.
 	if = {
-		limit = { check_variable = { EU_AI_focus_modifier_yes_vote > 0 } }
-		add_to_variable = { global.EU_active_vote_yes = 1 }
-		add_to_array = { global.EU_active_vote_supporters = THIS }
-		set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
-		add_to_variable = { global.var_EUpopRatioYes = add_ratio_value }
-	}
-	else = {
-		add_to_variable = { global.EU_active_vote_no = 1 }
-		add_to_array = { global.EU_active_vote_rejecters = THIS }
-		set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
-		add_to_variable = { global.var_EUpopRatioNo = add_ratio_value }
+		limit = { is_ai = yes }
+		if = {
+			limit = { check_variable = { EU_AI_focus_modifier_yes_vote > 0 } }
+			add_to_variable = { global.EU_active_vote_yes = 1 }
+			add_to_array = { global.EU_active_vote_supporters = THIS }
+			set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
+			add_to_variable = { global.var_EUpopRatioYes = add_ratio_value }
+		}
+		else = {
+			add_to_variable = { global.EU_active_vote_no = 1 }
+			add_to_array = { global.EU_active_vote_rejecters = THIS }
+			set_temp_variable = { add_ratio_value = THIS.var_EUpopRatio }
+			add_to_variable = { global.var_EUpopRatioNo = add_ratio_value }
+		}
 	}
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: AI Voting Weight on EU Law Index: [?v], AI Weight: [?EU_AI_focus_modifier_yes_vote]"
@@ -923,10 +926,25 @@ focus_EU203_QMV_result = {
 		}
 		set_country_flag = focus_EU203_QMV_yes
 
+		if = {
+			limit = {
+				any_of_scopes = {
+					array = global.EU_member
+					has_idea = european_debt_crisis
+				}
+			}
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				remove_ideas = european_debt_crisis
+			}
+		}
 		every_country = {
-			limit = { has_idea = EU_member }
+			limit = {
+				has_idea = EU_member
+			}
 			add_ideas = euro_bonds
-			remove_ideas = european_debt_crisis
 		}
 
 		set_temp_variable = { eurobonds_debt_total = 0 }
@@ -1018,10 +1036,25 @@ focus_EU205_QMV_result = {
 		}
 		set_country_flag = focus_EU205_QMV_yes
 
+		if = {
+			limit = {
+				any_of_scopes = {
+					array = global.EU_member
+					has_idea = european_debt_crisis
+				}
+			}
+			every_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				remove_ideas = european_debt_crisis
+			}
+		}
 		every_country = {
-			limit = { has_idea = EU_member }
+			limit = {
+				has_idea = EU_member
+			}
 			add_ideas = euro_rescue_package
-			remove_ideas = european_debt_crisis
 		}
 
 		cleanup_european_union_voting_yes = yes
@@ -1234,70 +1267,8 @@ focus_EU308_QMV_result = {
 		set_country_flag = focus_EU308_QMV_yes
 
 		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
-			if = {
-				limit = {
-					NOT = { is_in_array = { array = nuclear_status_array value = 3 } }
-				}
-				set_country_flag = NPROG_completed
-				add_to_array = { nuclear_status_array = 3 }
-				add_to_array = { selected_TAG_nuclear_status_array = 3 }
-				if = {
-					limit = {
-						NOT = {
-							has_dynamic_modifier = {
-								modifier = nuclear_state_modifier
-							}
-						}
-					}
-					add_dynamic_modifier = { modifier = nuclear_state_modifier }
-				}
-			}
-			for_each_loop = {
-				array = nuclear_status_array
-				if = {
-					limit = {
-						check_variable = { nuclear_status_array^i = 6 }
-					}
-					remove_from_array = {
-						array = nuclear_status_array
-						value = 6
-						index = i
-					}
-				}
-				if = {
-					limit = {
-						check_variable = { nuclear_status_array^i = 7 }
-					}
-					remove_from_array = {
-						array = nuclear_status_array
-						value = 7
-						index = i
-					}
-				}
-			}
-			set_variable = { nukes_selected_TAG = THIS.id }
-			clear_array = THIS.selected_TAG_nuclear_status_array
-			clear_array = THIS.selected_TAG_nuclear_doctrine_array
-			var:nukes_selected_TAG = {
-				for_each_loop = {
-					array = THIS.nuclear_status_array
-					add_to_array = { THIS.selected_TAG_nuclear_status_array = v }
-				}
-				for_each_loop = {
-					array = THIS.nuclear_doctrine_array
-					add_to_array = { THIS.selected_TAG_nuclear_doctrine_array = v }
-				}
-			}
-			var:nukes_selected_TAG = {
-				set_variable = { THIS.var_selected_TAG_LEU_selected = var_LEU_selected }
-			}
-			var:nukes_selected_TAG = {
-				set_variable = { THIS.var_selected_TAG_HEU_selected = var_HEU_selected }
-			}
-			update_nuclear_deterrence = yes
+			limit = { has_idea = EU_member }
+			add_ideas = nuclear_power_def
 		}
 		set_global_flag = EU_nuke_power
 
@@ -3078,6 +3049,17 @@ cleanup_european_union_voting_yes = {
 	}
 }
 
+emergency_vote_clear = {
+	set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
+	set_variable = { global.current_active_vote_disp = 0 }
+	set_variable = { global.EU_active_vote_yes = 0 }
+	set_variable = { global.EU_active_Vote_no = 0 }
+	set_variable = { global.var_EUpopRatioNo = 0 }
+	set_variable = { global.var_EUpopRatioYes = 0 }
+	clear_array = global.EU_active_vote_supporters
+	clear_array = global.EU_active_vote_rejecters
+}
+
 cleanup_european_union_voting_no = {
 	set_global_flag = EU_qualified_majority_voting_NO
 	set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
@@ -3137,12 +3119,18 @@ EU_show_display_effects_for_law = {
 			add_ideas = euro_bonds
 			if = {
 				limit = { has_global_flag = EUU_european_debt_crisis }
-				remove_ideas = european_debt_crisis
 				every_country = {
 					limit = {
-						has_idea = EUU_national_dept_crisis_eu
+						has_idea = EU_member
 					}
-					remove_ideas = EUU_national_dept_crisis_eu
+					if = {
+						limit = { has_idea = european_debt_crisis }
+						remove_ideas = european_debt_crisis
+					}
+					if = {
+						limit = { has_idea = european_debt_crisis }
+						remove_ideas = EUU_national_dept_crisis_eu
+					}
 				}
 			}
 		}
