@@ -51,7 +51,7 @@ SOV_Sovfed_category = {
 	SUB_economic_integrate = {
 		fire_only_once = no
 		days_remove = 30
-		icon = GFX_decision_sovfed_annex_button
+		icon = GFX_decision_sovfed_economic_button
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = SUB_sovfed_pmr_subject_economic_available_tt
@@ -72,7 +72,59 @@ SOV_Sovfed_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision SUB_economic_integrate"
 			custom_effect_tooltip = SUB_sovfed_pmr_subject_economic_tt
 			hidden_effect = {
+				SOV = { country_event = { id = subject_rus.128 days = 1 } }
 				SUB_subjects_integrate_economic_of_russia = yes
+			}
+		}
+		ai_will_do = { factor = 355 }
+	}
+	#INTEGRATE IN RUSSIAN ECONOMIC
+	SUB_economic_integrate_yes = {
+		fire_only_once = no
+		days_remove = 30
+		icon = GFX_decision_sovfed_economic_button
+		visible = {
+			NOT = {
+				original_tag = PMR
+			}
+			OR = {
+				has_autonomy_state = autonomy_republic_rf
+				has_autonomy_state = autonomy_kray_rf
+				has_autonomy_state = autonomy_oblast_rf
+				has_autonomy_state = autonomy_okrug_rf
+			}
+			SUB_subjects_economic_integration = yes
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SUB_economic_integrate_yes"
+			custom_effect_tooltip = SUB_sovfed_pmr_subject_economic_tt
+			hidden_effect = {
+				SOV = { country_event = { id = subject_rus.128 days = 1 } }
+				SUB_subjects_integrate_economic_of_russia = yes
+			}
+		}
+		ai_will_do = { factor = 355 }
+	}
+	#INTEGRATE IN RUSSIAN ARMY
+	SUB_army_integrate = {
+		fire_only_once = no
+		days_remove = 30
+		icon = GFX_decision_sovfed_campaign_button
+		visible = {
+			OR = {
+				has_autonomy_state = autonomy_republic_rf
+				has_autonomy_state = autonomy_kray_rf
+				has_autonomy_state = autonomy_oblast_rf
+				has_autonomy_state = autonomy_okrug_rf
+			}
+			SUB_subjects_army_integration = yes
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SUB_economic_integrate"
+			custom_effect_tooltip = SUB_sovfed_subject_army_tt
+			hidden_effect = {
+				SOV = { country_event = { id = subject_rus.129 days = 1 } }
+				SUB_subjects_integrate_army_of_russia = yes
 			}
 		}
 		ai_will_do = { factor = 355 }
@@ -122,31 +174,6 @@ SOV_Sovfed_category = {
 			russia_subject_money_small = yes
 		}
 	}
-	#REQUEST FACTORY
-	SUB_buildings = {
-		icon = GFX_decision_sovfed_buildings_button
-		days_remove = 270
-		cost = 50
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SUB_authority_more_40
-				check_variable = { ROOT.subjectavtoritet > 39 }
-			}
-		}
-		visible = {
-			NOT = { original_tag = SOV }
-			ROOT = { 
-				OR = {
-					has_autonomy_state = autonomy_republic_rf
-					has_autonomy_state = autonomy_kray_rf
-				}
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SUB_buildings"
-			SOV = { country_event = { id = subject_rus.38 days = 1 } }
-		}
-	}
 	#REQUEST NEW STATUS OF SUBJECT
 	SUB_change_status = {
 		icon = GFX_decision_sovfed_paper_button
@@ -173,159 +200,6 @@ SOV_Sovfed_category = {
 			SOV = { country_event = { id = subject_rus.66 days = 1 } }
 		}
 		ai_will_do = { factor = 355 }
-	}
-	#MILITARY CAMPAIGNS
-	###########Military Campaigns - Open###########
-	SUB_subject_campaigns_open = {
-		icon = GFX_decision_sovfed_campaign_button
-		days_remove = 1
-		fire_only_once = no
-		visible = {
-			has_country_flag = SUB_subject_campaigns_close
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SUB_subject_campaigns_open"
-			clr_country_flag = SUB_subject_campaigns_close
-			set_country_flag = SUB_subject_campaigns_open
-		}
-	}
-	###########Military Campaigns - Close###########
-	SUB_subject_campaigns_close = {
-		icon = GFX_decision_sovfed_campaign_button
-		days_remove = 1
-		fire_only_once = no
-		visible = {
-			has_country_flag = SUB_subject_campaigns_open
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SUB_subject_campaigns_close"
-			clr_country_flag = SUB_subject_campaigns_open
-			set_country_flag = SUB_subject_campaigns_close
-		}
-	}
-	#FINISH ACTIVE MILITARY CAMPAIGN
-	SUB_subject_help_finish = {
-		icon = GFX_decision_sovfed_campaign_button
-		days_remove = 20
-		visible = {
-			has_country_flag = SUB_subject_campaigns_open
-			tag = SOV
-			SUB_subjects_availables_for_campaigns = yes
-			SOV = { 
-				has_country_flag = SUB_campaign_start
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SUB_subject_help_finish"
-			SOV = { clr_country_flag = SUB_campaign_start }
-		}
-	}
-	#HELP SADDAM AGAINST USA
-	SUB_subject_help_iraq = {
-		icon = GFX_decision_sovfed_campaign_button
-		custom_cost_trigger = {
-			command_power > 50
-		}
-		custom_cost_text = command_power_more_than_50
-		days_remove = 20
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_subject_republic_has_tt
-				SUB_subjects_availables_for_campaigns = yes
-			}
-			IRQ = {
-				has_war_with = USA
-				is_subject = no
-				has_government = nationalist
-			}
-			country_exists = IRQ
-		}
-		visible = {
-			has_country_flag = SUB_subject_campaigns_open
-			tag = SOV
-			SOV = { 
-				NOT = { has_country_flag = SUB_campaign_start } 
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SUB_subject_help_iraq"
-			custom_effect_tooltip = SUB_campaign_prepare_tt
-			SOV = { set_country_flag = SUB_campaign_start }
-			hidden_effect = {
-				SUB_campaign_military_subject_iraq = yes
-			}
-		}
-	}
-	#HELP SYRIA
-	SUB_subject_help_syria = {
-		icon = GFX_decision_sovfed_campaign_button
-		custom_cost_trigger = {
-			command_power > 50
-		}
-		custom_cost_text = command_power_more_than_50
-		days_remove = 20
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_subject_republic_has_tt
-				SUB_subjects_availables_for_campaigns = yes
-			}
-			SYR = {
-				has_war = yes
-				is_subject = no
-				has_government = communism
-			}
-			country_exists = SYR
-		}
-		visible = {
-			has_country_flag = SUB_subject_campaigns_open
-			tag = SOV
-			SOV = { 
-				NOT = { has_country_flag = SUB_campaign_start } 
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SUB_subject_help_syria"
-			custom_effect_tooltip = SUB_campaign_prepare_tt
-			SOV = { set_country_flag = SUB_campaign_start }
-			hidden_effect = {
-				SUB_campaign_military_subject_syria = yes
-			}
-		}
-	}
-	#HELP DONETSK
-	SUB_subject_help_dpr = {
-		icon = GFX_decision_sovfed_campaign_button
-		custom_cost_trigger = {
-			command_power > 50
-		}
-		custom_cost_text = command_power_more_than_50
-		days_remove = 20
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_subject_republic_has_tt
-				SUB_subjects_availables1_for_campaigns = yes
-			}
-			DPR = {
-				has_war_with = UKR
-				is_subject = no
-			}
-			country_exists = DPR
-		}
-		visible = {
-			has_country_flag = SUB_subject_campaigns_open
-			tag = SOV
-			SOV = { 
-				NOT = { has_country_flag = SUB_campaign_start } 
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SUB_subject_help_dpr"
-			custom_effect_tooltip = SUB_campaign_prepare_tt
-			SOV = { set_country_flag = SUB_campaign_start }
-			hidden_effect = {
-				SUB_campaign_military_subject_dpr = yes
-			}
-		}
 	}
 	###########RUSSIA DECISIONS###########
 	###########MOSCOW - Open###########
@@ -1930,7 +1804,7 @@ SOV_Sovfed_category = {
 	#SUBJECT INDUSTRY ADDED DECISIONS
 	#TATARSTAN INDUSTRY ADDED
 	SOV_added_tatarstan = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -1963,7 +1837,7 @@ SOV_Sovfed_category = {
 		}
 	}
 	SOV_added_tatarstan1 = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -1985,7 +1859,7 @@ SOV_Sovfed_category = {
 	}
 	#BASHKORTOSTAN INDUSTRY ADDED
 	SOV_added_bashkortostan = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -2018,7 +1892,7 @@ SOV_Sovfed_category = {
 		}
 	}
 	SOV_added_bashkortostan1 = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -2040,7 +1914,7 @@ SOV_Sovfed_category = {
 	}
 	#CRIMEA INDUSTRY ADDED
 	SOV_added_crimea = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -2073,7 +1947,7 @@ SOV_Sovfed_category = {
 		}
 	}
 	SOV_added_crimea1 = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -2150,7 +2024,7 @@ SOV_Sovfed_category = {
 	}
 	#KHARKIV INDUSTRY ADDED
 	SOV_added_kharkivz = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -2183,7 +2057,7 @@ SOV_Sovfed_category = {
 		}
 	}
 	SOV_added_kharkivz1 = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -2205,7 +2079,7 @@ SOV_Sovfed_category = {
 	}
 	#URAL INDUSTRY ADDED
 	SOV_added_uralz = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
@@ -2238,7 +2112,7 @@ SOV_Sovfed_category = {
 		}
 	}
 	SOV_added_uralz1 = {
-		icon = GFX_decision_sovfed_buildings_button
+		icon = GFX_decision_sovfed_button
 		cost = 180
 		days_remove = 100
 		visible = {
