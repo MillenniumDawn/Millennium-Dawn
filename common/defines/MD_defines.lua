@@ -720,6 +720,7 @@
 	NDefines.NAI.ASSIGN_MOUNTAINEERS_TO_MOUNTAINS = 10.0                    -- factor for assigning mountaineer divisions to fronts with mountains (proportional to how much of that terrain type)
 	NDefines.NAI.ASSIGN_TANKS_TO_MOUNTAINS = -26.0                           -- factor for assigning tank divisions to fronts with mountains (proportional to how much of that terrain type)
 	NDefines.NAI.ASSIGN_TANKS_TO_JUNGLE = -6.0                              -- factor for assigning tank divisions to fronts with jungle (proportional to how much of that terrain type)
+	NDefines.NAI.ASSIGN_INVASION_AMPHIBIOUS_ATTACK_FACTOR = 100 -- 50
 	NDefines.NAI.UNIT_ASSIGNMENT_TERRAIN_IMPORTANCE = 10.0                  -- Terrain score for units are multiplied by this when the AI is deciding which front they should be assigned to
 	NDefines.NAI.MAX_FACTORY_TO_TRADE_FOR_FUEL_IN_PEACE = 0.45 -- percentage of factories traded away during peace time
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
