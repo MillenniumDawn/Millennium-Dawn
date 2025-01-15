@@ -4516,7 +4516,7 @@ productivity_growth_display_effect = {
 			}
 
 			# Encourage Productivity from State Owned Investments
-			if = { limit = { has_state_flag = encourage_productivity_in_state_click }
+			if = { limit = { has_state_flag = encourage_productivity_in_state }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
 			}
 
@@ -4671,47 +4671,23 @@ setup_starting_world_productivity = {
 	add_dynamic_modifier = { modifier = productivity_and_employment_modifier }
 	if = {
 		limit = { NOT = { has_variable = overall_productivity } }
-		if = { limit = { is_in_africa = yes }
-			every_controlled_state = {
+		every_controlled_state = {
+			if = { limit = { PREV = { is_in_africa = yes } }
 				set_variable = { productivity_state_var = 550 }
+				set_variable = { PREV.overall_productivity = 550 }
 			}
-			set_variable = { overall_productivity = 550 }
-		}
-		if = { limit = { is_in_asia = yes }
-			every_controlled_state = {
+			else_if = { limit = { PREV = { OR = { is_in_asia = yes is_in_oceania = yes } } }
 				set_variable = { productivity_state_var = 650 }
+				set_variable = { PREV.overall_productivity = 650 }
 			}
-			set_variable = { overall_productivity = 650 }
-		}
-		if = { limit = { is_in_oceania = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 650 }
-			}
-			set_variable = { overall_productivity = 650 }
-		}
-		if = { limit = { is_in_europe = yes }
-			every_controlled_state = {
+			else_if = { limit = { PREV = { is_in_europe = yes } }
 				set_variable = { productivity_state_var = 1000 }
+				set_variable = { PREV.overall_productivity = 1000 }
 			}
-			set_variable = { overall_productivity = 1000 }
-		}
-		if = { limit = { is_in_the_middle_east = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
+			else_if = { limit = { PREV = { OR = { is_in_the_middle_east = yes is_in_south_america = yes is_in_north_america = yes } } }
+				set_variable = { productivity_state_var = 550 }
+				set_variable = { PREV.overall_productivity = 550 }
 			}
-			set_variable = { overall_productivity = 750 }
-		}
-		if = { limit = { is_in_south_america = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
-			}
-			set_variable = { overall_productivity = 750 }
-		}
-		if = { limit = { is_in_north_america = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
-			}
-			set_variable = { overall_productivity = 750 }
 		}
 	}
 	update_employment_productivity_output_dynamic_modifier = yes
