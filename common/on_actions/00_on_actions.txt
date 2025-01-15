@@ -40,7 +40,7 @@ on_actions = {
 							size > 0
 							state = PREV
 						}
-						has_tech = marine_raider_beach_prepration
+						has_tech = marine_raider_beach_preparation
 					}
 					NOT = { has_state_flag = marines_commando_effect }
 					OWNER = { NOT = { tag = ROOT } }
@@ -1360,6 +1360,32 @@ on_actions = {
 				FROM = { annex_country = { target = ISI } }
 			}
 
+		}
+	}
+
+	# ROOT is capitulated country, FROM is winner
+	on_capitulation_immediate = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = MON }
+					FROM = { original_tag = CHI }
+				}
+				CHI = { country_event = { id = china.56 days = 1 } }
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = TAI }
+					FROM = { original_tag = CHI }
+				}
+				CHI = { country_event = { id = china.54 days = 1 } }
+			}
+		}
+	}
+
+	#ROOT is winner, FROM is loser (called for all winners against all losers)
+	on_before_peace_conference_start = {
+		effect = {
 			#Special capitulation for the 2nd Sudanese civil war
 			if = {
 				limit = {
@@ -1368,8 +1394,8 @@ on_actions = {
 				#Sudan wins
 				if = {
 					limit = {
-						FROM = { original_tag = SUD }
-						ROOT = { original_tag = SSU }
+						ROOT = { original_tag = SUD }
+						FROM = { original_tag = SSU }
 					}
 					SUD = {
 						annex_country = {
@@ -1385,13 +1411,14 @@ on_actions = {
 					every_state = {
 						remove_claim_by = SSU
 					}
-					hidden_effect = { news_event = { id = SouthSudanNews.3 hours = 6 } }
+					set_global_flag = second_sudanese_civil_war_over
+					SUD = { hidden_effect = { news_event = { id = SouthSudanNews.3 days = 1 } } }
 				}
 				#South Sudan wins
 				if = {
 					limit = {
-						FROM = { original_tag = SSU }
-						ROOT = { original_tag = SUD }
+						ROOT = { original_tag = SSU }
+						FROM = { original_tag = SUD }
 					}
 					SSU = {
 						annex_country = {
@@ -1417,28 +1444,9 @@ on_actions = {
 					every_state = {
 						remove_claim_by = SUD
 					}
-					hidden_effect = { news_event = { id = SouthSudanNews.3 hours = 6 } }
+					set_global_flag = second_sudanese_civil_war_over
+					SSU = { hidden_effect = { news_event = { id = SouthSudanNews.3 days = 1 } } }
 				}
-			}
-		}
-	}
-
-	# ROOT is capitulated country, FROM is winner
-	on_capitulation_immediate = {
-		effect = {
-			if = {
-				limit = {
-					ROOT = { original_tag = MON }
-					FROM = { original_tag = CHI }
-				}
-				CHI = { country_event = { id = china.56 days = 1 } }
-			}
-			if = {
-				limit = {
-					ROOT = { original_tag = TAI }
-					FROM = { original_tag = CHI }
-				}
-				CHI = { country_event = { id = china.54 days = 1 } }
 			}
 		}
 	}
