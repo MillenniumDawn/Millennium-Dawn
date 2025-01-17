@@ -158,16 +158,24 @@ calculate_energy_use = {
 	add_to_variable = { energy_sum = geothermal_energy_generation }
 
 	# Calculate fuel consumption and energy generation of fossil power plants
-	set_variable = { fossil_pp_energy_generation = modifier@fossil_energy_gain }
-	set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
-	add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
-	multiply_variable = { fossil_pp_energy_generation = fossil_pp_energy_generation_multiplier }
+	if = { limit = { has_country_flag = disable_fossil_fuel_power_plant_flag }
+		set_variable = { fossil_pp_energy_generation = 0 }
+		set_variable = { fossil_pp_fuel_consumption = 0 }
+	}
+	else = {
+		set_variable = { fossil_pp_energy_generation = modifier@fossil_energy_gain }
+		set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
+		add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
+		multiply_variable = { fossil_pp_energy_generation = fossil_pp_energy_generation_multiplier }
 
-	set_variable = { fossil_pp_fuel_consumption = modifier@fossil_fuel_consumption }
-	set_temp_variable = { fossil_pp_fuel_consumption_multiplier = 1 }
-	add_to_temp_variable = { fossil_pp_fuel_consumption_multiplier = modifier@fossil_pp_fuel_consumption_modifier }
-	multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
-	multiply_variable = { fossil_pp_fuel_consumption = -1 }
+		set_variable = { fossil_pp_fuel_consumption = modifier@fossil_fuel_consumption }
+		set_temp_variable = { fossil_pp_fuel_consumption_multiplier = 1 }
+		add_to_temp_variable = { fossil_pp_fuel_consumption_multiplier = modifier@fossil_pp_fuel_consumption_modifier }
+		multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
+		multiply_variable = { fossil_pp_fuel_consumption = -1 }
+	}
+
+
 
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
@@ -180,24 +188,25 @@ calculate_energy_use = {
 
 	# Nuclear Energy Section
 	if = { limit = { has_country_flag = enabled_nuclear_reactor_fuel_production }
-		set_variable = { var_enrichment_nuclear_energy_prod_factor = 200 } # CHANGE ME IF YOU WANT ME TO BE MORE PRODUCTIVE, weekly production value
+		set_temp_variable = { base_nuclear_reactor_fuel_production = 200 } # CHANGE ME IF YOU WANT ME TO BE MORE PRODUCTIVE, weekly production value
 
 		set_temp_variable = { modify_leu = 1 }
-		add_to_temp_variable = { modify_leu = modifier@leu_fuel_production_modifier }
+		add_to_temp_variable = { modify_leu = modifier@nuclear_reactor_fuel_production }
 
-		multiply_variable = { var_enrichment_nuclear_energy_prod_factor = modify_leu }
-		round_variable = var_enrichment_nuclear_energy_prod_factor
+		multiply_temp_variable = { base_nuclear_reactor_fuel_production = modify_leu }
+		round_variable = base_nuclear_reactor_fuel_production
 
-		set_temp_variable = { temp1 = var_enrichment_nuclear_energy_prod_factor }
+		set_temp_variable = { temp1 = base_nuclear_reactor_fuel_production }
 		multiply_temp_variable = { temp1 = enrichment_facilities }
-		set_variable = { var_nuke_nuclear_reactor_prod = temp1 }
+		set_variable = { nuclear_reactor_fuel_production = temp1 }
 	}
 	else = {
-		set_variable = { var_nuke_nuclear_reactor_prod = 0 }
+		set_variable = { nuclear_reactor_fuel_production = 0 }
 	}
 
 	if = {
 		limit = {
+			NOT = { has_country_flag = disable_nuclear_power_plant_flag }
 			OR = {
 				has_idea = nuclear_energy
 				has_idea = nuclear_power_off
@@ -209,7 +218,7 @@ calculate_energy_use = {
 		add_to_temp_variable = { nuclear_fuel_consumption_multiplier = modifier@nuclear_fuel_consumption_modifier }
 		multiply_variable = { nuclear_fuel_consumption = nuclear_fuel_consumption_multiplier }
 
-		set_variable = { net_nuclear_fuel_display = var_nuke_nuclear_reactor_prod }
+		set_variable = { net_nuclear_fuel_display = nuclear_reactor_fuel_production }
 		subtract_from_variable = { net_nuclear_fuel_display = nuclear_fuel_consumption }
 
 		set_variable = { nuclear_energy_generation = modifier@nuclear_energy_gain }
@@ -218,7 +227,7 @@ calculate_energy_use = {
 		multiply_variable = { nuclear_energy_generation = nuclear_energy_generation_multiplier }
 
 		if = { limit = { check_variable = { var_reactor_material_stockpile = 0 } }
-			set_temp_variable = { nuclear_fuel_fulfillment = var_nuke_nuclear_reactor_prod }
+			set_temp_variable = { nuclear_fuel_fulfillment = nuclear_reactor_fuel_production }
 			divide_temp_variable = { nuclear_fuel_fulfillment = nuclear_fuel_consumption }
 			clamp_temp_variable = { var = nuclear_fuel_fulfillment min = 0 max = 1 }
 			multiply_variable = { nuclear_energy_generation = nuclear_fuel_fulfillment }
@@ -344,7 +353,6 @@ random_renewable_variable_calculation = {
 		set_variable_to_random = { var = renewable_energy_random_var min = 0 max = 1 }
 		set_variable_to_random = { var = renewable_energy_random_var2 min = 0 max = 1 }
 		multiply_variable = { renewable_energy_random_var = renewable_energy_random_var2 }
-		set_variable = { renewable_energy_random_var = 1 }
 		add_to_variable = { renewable_energy_random_var = modifier@state_renewable_capacity_factor_modifier }
 		clamp_variable = { var = renewable_energy_random_var min = 0 max = 1 }
 		clear_variable = renewable_energy_random_var2
@@ -2020,30 +2028,6 @@ setup_starting_world_hydropower = {
 		#Kyrgyzstan - Pamir
 	721 = {
 		set_variable = { hydroelectric_energy_production_var = 0.263 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Tajikistan - Gorno
-	722 = {
-		set_variable = { hydroelectric_energy_production_var = 0.515 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Tajikistan - Sungd
-	723 = {
-		set_variable = { hydroelectric_energy_production_var = 0.008 }
-		set_variable = { hydroelectric_energy_storage_var = 0 }
-		add_dynamic_modifier = {
-			modifier = hydroelectric_infrastructure_in_state
-		}
-	}
-		#Tajikistan - Tajik Bactria
-	724 = {
-		set_variable = { hydroelectric_energy_production_var = 1.045 }
 		set_variable = { hydroelectric_energy_storage_var = 0 }
 		add_dynamic_modifier = {
 			modifier = hydroelectric_infrastructure_in_state
