@@ -1,4 +1,13 @@
+# Author(s): AngriestBird
 clamp_threat = {
+
+	# Calculate Min/Max Terror Threat
+	set_temp_variable = { min_threat = 0 }
+	set_temp_variable = { max_threat = 100 }
+
+	add_to_temp_variable = { min_threat = modifier@minimum_terror_threat_modifier }
+	add_to_temp_variable = { max_threat = modifier@maximum_terror_threat_modifier }
+
 	if = {
 		limit = {
 			OR = {
@@ -6,133 +15,37 @@ clamp_threat = {
 				has_completed_focus = GCC_a_radical_reorientation
 			}
 		}
-		clamp_variable = {
-			var = threat_level
-			min = 75
-			max = 100
-		}
+		add_to_temp_variable = { min_threat = 25 }
 	}
-	else_if = {
-		limit = {
-			has_war = yes
-			no_jihadist_government = yes
-			NOT = { has_completed_focus = GCC_a_radical_reorientation }
-		}
-		clamp_variable = {
-			var = threat_level
-			min = 50
-			max = 90
-		}
+	if = {
+		limit = { has_war = yes }
+		add_to_temp_variable = { min_threat = 10 }
 	}
-	else_if = {
-		limit = {
-			has_war = no
-			no_jihadist_government = yes
-			NOT = { has_completed_focus = GCC_a_radical_reorientation }
-			has_stability < 0.4
-			OR = {
-				has_idea = paralyzing_corruption
-				has_idea = crippling_corruption
-				has_idea = rampant_corruption
-				has_idea = unrestrained_corruption
-			}
-			check_variable = { gdp_per_capita < 10.000 }
-		}
-		clamp_variable = {
-			var = threat_level
-			min = 30
-			max = 70
-		}
+	if = {
+		limit = { check_variable = { gdp_per_capita < 10.000 } }
+		add_to_temp_variable = { min_threat = 10 }
 	}
-	else_if = {
-		limit = {
-			has_war = no
-			no_jihadist_government = yes
-			NOT = { has_completed_focus = GCC_a_radical_reorientation }
-			OR = {
-				AND = {
-					has_stability < 0.4
-					OR = {
-						has_idea = paralyzing_corruption
-						has_idea = crippling_corruption
-						has_idea = rampant_corruption
-						has_idea = unrestrained_corruption
-					}
-				}
-				AND = {
-					has_stability < 0.4
-					check_variable = { gdp_per_capita < 10.000 }
-				}
-				AND = {
-					check_variable = { gdp_per_capita < 10.000 }
-					OR = {
-						has_idea = paralyzing_corruption
-						has_idea = crippling_corruption
-						has_idea = rampant_corruption
-						has_idea = unrestrained_corruption
-					}
-				}
-			}
-		}
-		clamp_variable = {
-			var = threat_level
-			min = 20
-			max = 60
-		}
-	}
-	else_if = {
-		limit = {
-			has_war = no
-			no_jihadist_government = yes
-			NOT = { has_completed_focus = GCC_a_radical_reorientation }
-			OR = {
-				has_stability < 0.4
-				has_idea = paralyzing_corruption
-				has_idea = crippling_corruption
-				has_idea = rampant_corruption
-				has_idea = unrestrained_corruption
-				check_variable = { gdp_per_capita < 10.000 }
-			}
-		}
-		clamp_variable = {
-			var = threat_level
-			min = 10
-			max = 50
-		}
-	}
-	else_if = {
-		limit = {
-			has_war = no
-			no_jihadist_government = yes
-			NOT = { has_completed_focus = GCC_a_radical_reorientation }
-			NOT = {
-				has_stability < 0.4
-				has_idea = paralyzing_corruption
-				has_idea = crippling_corruption
-				has_idea = rampant_corruption
-				has_idea = unrestrained_corruption
-				check_variable = { gdp_per_capita < 10.000 }
-			}
-		}
-		clamp_variable = {
-			var = threat_level
-			min = 0
-			max = 40
-		}
-	}
+
+	clamp_temp_variable = { var = min_threat min = 0 max = 100 }
+	clamp_temp_variable = { var = max_threat min = 0 max = 100 }
+
+	clamp_variable = { var = threat_level min = min_threat max = max_threat }
+
+	set_variable = { min_terror_threat_display = min_threat }
+	set_variable = { max_terror_threat_display = max_threat }
+
+	# Set terror threat level
 	clr_country_flag = threat_level_critical
 	clr_country_flag = threat_level_severe
 	clr_country_flag = threat_level_substantial
 	clr_country_flag = threat_level_moderate
 	clr_country_flag = threat_level_low
 	clr_country_flag = threat_level_negligible
-	if = {
-		limit = {
-			check_variable = { threat_level > 80 }
-		}
+
+	if = { limit = { check_variable = { threat_level > 80 } }
 		set_country_flag = threat_level_critical
 	}
-	if = {
+	else_if = {
 		limit = {
 			check_variable = { threat_level < 81 }
 			check_variable = { threat_level > 50 }
@@ -160,12 +73,10 @@ clamp_threat = {
 		}
 		set_country_flag = threat_level_low
 	}
-	else_if = {
-		limit = {
-			check_variable = { threat_level < 11 }
-		}
+	else = {
 		set_country_flag = threat_level_negligible
 	}
+
 	#make countries consistent
 	if = {
 		limit = { ROOT = { tag = GNA } }
@@ -220,101 +131,32 @@ clamp_threat = {
 		limit = { ROOT = { tag = PUK } }
 		IRQ = { set_variable = { threat_level = PUK.threat_level } }
 	}
+
 	clamp_variable = { var = threat_level min = 0 max = 100 }
+	update_international_system_gui = yes
 }
 
 clamp_radicalization = {
+
+	set_temp_variable = { min_radical = 0 }
+	set_temp_variable = { max_radical = 100 }
+
+	add_to_temp_variable = { min_radical = modifier@minimum_radicalization_modifier }
+	add_to_temp_variable = { max_radical = modifier@maximum_radicalization_modifier }
+
 	if = {
-		limit = {
-			NOT = { has_idea = ibadi has_idea = sufi_islam }
-			has_stability < 0.4
-			OR = {
-				has_idea = paralyzing_corruption
-				has_idea = crippling_corruption
-				has_idea = rampant_corruption
-				has_idea = unrestrained_corruption
-			}
-			check_variable = { gdp_per_capita < 10.000 }
-		}
-		clamp_variable = {
-			var = radicalization
-			min = 30
-			max = 100
-		}
+		limit = { check_variable = { gdp_per_capita < 10.000 } }
+		add_to_temp_variable = { max_radical = 10 }
 	}
-	else_if = {
-		limit = {
-			NOT = { has_idea = ibadi has_idea = sufi_islam }
-			OR = {
-				AND = {
-					has_stability < 0.4
-					OR = {
-						has_idea = paralyzing_corruption
-						has_idea = crippling_corruption
-						has_idea = rampant_corruption
-						has_idea = unrestrained_corruption
-					}
-				}
-				AND = {
-					has_stability < 0.4
-					check_variable = { gdp_per_capita < 10.000 }
-				}
-				AND = {
-					check_variable = { gdp_per_capita < 10.000 }
-					OR = {
-						has_idea = paralyzing_corruption
-						has_idea = crippling_corruption
-						has_idea = rampant_corruption
-						has_idea = unrestrained_corruption
-					}
-				}
-			}
-		}
-		clamp_variable = {
-			var = radicalization
-			min = 20
-			max = 100
-		}
-	}
-	else_if = {
-		limit = {
-			OR = {
-				has_stability < 0.4
-				has_idea = paralyzing_corruption
-				has_idea = crippling_corruption
-				has_idea = rampant_corruption
-				has_idea = unrestrained_corruption
-				check_variable = { gdp_per_capita < 10.000 }
-			}
-			NOT = { has_idea = ibadi has_idea = sufi_islam }
-		}
-		clamp_variable = {
-			var = radicalization
-			min = 10
-			max = 100
-		}
-	}
-	else_if = {
-		limit = {
-			OR = {
-				NOT = {
-					has_stability < 0.4
-					has_idea = paralyzing_corruption
-					has_idea = crippling_corruption
-					has_idea = rampant_corruption
-					has_idea = unrestrained_corruption
-					check_variable = { gdp_per_capita < 10.000 }
-				}
-				has_idea = ibadi
-				has_idea = sufi_islam
-			}
-		}
-		clamp_variable = {
-			var = radicalization
-			min = 0
-			max = 100
-		}
-	}
+
+	clamp_temp_variable = { var = min_radical min = 0 max = 100 }
+	clamp_temp_variable = { var = max_radical min = 0 max = 100 }
+
+	clamp_variable = { var = radicalization min = min_radical max = max_radical }
+
+	set_variable = { min_radical_display = min_radical }
+	set_variable = { max_radical_display = max_radical }
+
 	if = {
 		limit = {
 			NOT = {
@@ -324,17 +166,14 @@ clamp_radicalization = {
 				tag = PUK
 				tag = ROJ
 			}
-			check_variable = { radicalization > 9 }
+			check_variable = { radicalization > 19 }
 		}
 		add_ideas = youth_radicalization
 	}
-	else_if = {
-		limit = {
-			has_idea = youth_radicalization
-			check_variable = { radicalization < 10 }
-		}
+	else = {
 		remove_ideas = youth_radicalization
 	}
+
 	#make countries consistent
 	if = {
 		limit = { ROOT = { tag = GNA } }
@@ -390,6 +229,7 @@ clamp_radicalization = {
 		IRQ = { set_variable = { radicalization = PUK.radicalization } }
 	}
 	clamp_variable = { var = radicalization min = 0 max = 100 }
+	update_international_system_gui = yes
 }
 
 # Function Name: modify_radicalization_effect
