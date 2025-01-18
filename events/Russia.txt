@@ -1,7 +1,6 @@
 add_namespace = russia
 add_namespace = russia_news
 add_namespace = russia_wagner
-add_namespace = russia_governorate
 add_namespace = sov_yeltsin
 add_namespace = sov_vybory
 add_namespace = russia_med
@@ -11,8 +10,6 @@ add_namespace = sov_furgal
 add_namespace = sov_nemtsov
 add_namespace = sov_girkin
 add_namespace = sov_communists
-add_namespace = sov_nationalists
-add_namespace = sov_nationalists_news
 add_namespace = sov_final_strike
 add_namespace = sov_student_rallies
 add_namespace = sov_warsaw_pact
@@ -27,6 +24,9 @@ add_namespace = sov_just_russia
 add_namespace = sov_dissolution
 add_namespace = sov_navalny
 add_namespace = sov_economic
+add_namespace = russia_governorate
+add_namespace = sov_nationalists
+add_namespace = sov_nationalists_news
 
 #Russian Invites [From.ThisGetName] to Faction
 country_event = {
@@ -4051,8 +4051,9 @@ country_event = {
 		ai_chance = {
 			base = 50
 		}
-		SOV = {	country_event = { id = belarus_union.9 days = 1 } }
-		BLR = { set_country_flag = BLR_unionstate_agree }
+		BLR = { 
+			set_country_flag = BLR_unionstate_agree 
+		}
 		hidden_effect = {
 			if = {
 				limit = {
@@ -4084,6 +4085,17 @@ country_event = {
 				}
 				remove_ideas = BLR_unstable_national_currency4
 			}
+			BLR = {
+				add_ideas = USR_union_state_idea
+				add_ideas = USR_valute_idea
+				add_ideas = USR_civils_idea
+				add_ideas = USR_economic_space_idea
+				add_ideas = USR_eternal_commitie_idea
+				add_ideas = USR_money_palata_idea
+				add_ideas = USR_council_ministers_idea
+				add_ideas = USR_gos_sovet_idea
+				add_ideas = USR_parlament_idea
+			}
 		}
 		SOV = {
 			set_autonomy = {
@@ -4114,6 +4126,212 @@ country_event = {
 		}
 	}
 }
+
+#Armenia Governorate
+country_event = {
+	id = russia_governorate.20
+	title = russia_governorate.20.t
+	desc = russia_governorate.20.d
+	picture = GFX_sov_empire_governorates
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = russia_governorate.20.o1
+		log = "[GetDateText]: [This.GetName]: russia_governorate.20.o1 executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_government = nationalist
+				add = 90
+			}
+			modifier = {
+				ARM = {
+					is_subject_of = SOV
+				}
+				add = 90
+			}
+		}
+		SOV = {
+			country_event = { id = russia_governorate.21 }
+		}
+		ARM = {
+			set_country_flag = SOV_subject_agree
+			set_country_flag = SOV_subject_governorate
+			SOV = {
+				set_autonomy = {
+					target = ARM
+					autonomy_state = autonomy_governorate_rf
+				}
+			}
+		}
+	}
+
+	option = {
+		name = russia_governorate.20.o2
+		log = "[GetDateText]: [This.GetName]: russia_governorate.20.o2 executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_government = democratic
+				add = 90
+			}
+			modifier = {
+				has_government = communism
+				add = 90
+			}
+			modifier = {
+				has_government = neutrality
+				add = 90
+			}
+		}
+		SOV = { add_opinion_modifier = { target = ARM modifier = betrayed_our_cause } }
+		SOV = { country_event = { id = russia_governorate.22 } }
+	}
+
+	option = {
+		name = russia_governorate.20.o3
+		log = "[GetDateText]: [This.GetName]: russia_governorate.20.o3 executed"
+		trigger = {
+			NOT = {
+				has_autonomy_state = autonomy_union_state
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				has_government = nationalist
+				add = 90
+			}
+			modifier = {
+				emerging_reactionaries_are_in_power = yes
+				add = 90
+			}
+			modifier = {
+				has_government = neutrality
+				add = 90
+			}
+		}
+		SOV = { country_event = { id = russia_governorate.23 } }
+	}
+}
+
+#They accept!
+country_event = {
+	id = russia_governorate.21
+	title = russia_governorate.21.t
+	desc = russia_governorate.21.d
+	picture = GFX_SOV_generic
+
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = russia_governorate.21.o1
+		log = "[GetDateText]: [This.GetName]: russia_governorate.21.o1 executed"
+		every_country = {
+			limit = {
+				is_in_faction_with = SOV
+				NOT = { tag = SOV }
+				NOT = { tag = ARM }
+			}
+			country_event = russia.5
+		}
+	}
+}
+
+#They refuse!
+country_event = {
+	id = russia_governorate.22
+	title = russia_governorate.22.t
+	desc = russia_governorate.22.d
+	picture = GFX_SOV_generic
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = russia_governorate.22.o1
+		log = "[GetDateText]: [This.GetName]: russia_governorate.22.o1 executed"
+		effect_tooltip = {
+			add_opinion_modifier = { target = ARM modifier = betrayed_our_cause }
+		}
+		if = {
+			limit = { ARM = { NOT = { is_subject_of = SOV } } }
+			ARM = {
+				every_controlled_state = {
+					add_core_of = SOV
+				}
+			}
+			SOV = {
+				create_wargoal = {
+					target = BLR
+					type = annex_everything
+				}
+			}
+		}
+	}
+}
+
+#They Union state
+country_event = {
+	id = russia_governorate.23
+	title = russia_governorate.23.t
+	desc = russia_governorate.23.d
+	picture = GFX_SOV_generic
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = russia_governorate.23.o1
+		log = "[GetDateText]: [This.GetName]: russia_governorate.23.o1 executed"
+		ai_chance = {
+			base = 50
+		}
+		ARM = { set_country_flag = USR_armenia_create_union_state }
+		SOV = {
+			set_autonomy = {
+				target = ARM
+				autonomy_state = autonomy_union_state
+			}
+		}
+		hidden_effect = {
+			ARM = {
+				add_ideas = USR_union_state_idea
+				add_ideas = USR_valute_idea
+				add_ideas = USR_civils_idea
+				add_ideas = USR_economic_space_idea
+				add_ideas = USR_eternal_commitie_idea
+				add_ideas = USR_money_palata_idea
+				add_ideas = USR_council_ministers_idea
+				add_ideas = USR_gos_sovet_idea
+				add_ideas = USR_parlament_idea
+			}
+		}
+	}
+	option = {
+		name = russia_governorate.23.o2
+		log = "[GetDateText]: [This.GetName]: russia_governorate.23.o2 executed"
+		ai_chance = {
+			base = 50
+		}
+		if = {
+			limit = { ARM = { NOT = { is_subject_of = SOV } } }
+			ARM = {
+				every_controlled_state = {
+					add_core_of = SOV
+				}
+			}
+			SOV = {
+				create_wargoal = {
+					target = ARM
+					type = annex_everything
+				}
+			}
+		}
+	}
+}
+
 
 
 ####Russian News----
@@ -8451,8 +8669,11 @@ country_event = {
 	option = {
 		name = sov_nationalists.12.a
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.12.a"
-		if = { limit = { is_in_faction = yes }
-		leave_faction = yes
+		if = { 
+			limit = { 
+				is_in_faction = yes 
+			}
+			leave_faction = yes
 		}
 		SOV = { add_to_faction = PREV }
 		SOV = { country_event = diplomatic_response.1 }
@@ -9533,11 +9754,11 @@ country_event = {
 				POL = {
 					transfer_units_fraction = {
 						target = PREV
-						size = 0.7
-						stockpile_ratio = 0.6
-						army_ratio = 0.6
-						navy_ratio = 0.6
-						air_ratio = 0.6
+						size = 0.8
+						stockpile_ratio = 0.8
+						army_ratio = 0.8
+						navy_ratio = 0.8
+						air_ratio = 0.8
 					}
 				}
 				declare_war_on = {
@@ -9603,11 +9824,11 @@ country_event = {
 				CZE = {
 					transfer_units_fraction = {
 						target = PREV
-						size = 0.7
-						stockpile_ratio = 0.6
-						army_ratio = 0.6
-						navy_ratio = 0.6
-						air_ratio = 0.6
+						size = 0.8
+						stockpile_ratio = 0.8
+						army_ratio = 0.8
+						navy_ratio = 0.8
+						air_ratio = 0.8
 					}
 				}
 				declare_war_on = {
@@ -9636,9 +9857,9 @@ country_event = {
 		SOV = { country_event = diplomatic_response.1 }
 
 		add_opinion_modifier = { target = SOV modifier = has_expressed_loyalty }
-			diplomatic_relation = {
-				country = SOV
-				relation = military_access
+		diplomatic_relation = {
+			country = SOV
+			relation = military_access
 		}
 		ai_chance = {
 			base = 10
