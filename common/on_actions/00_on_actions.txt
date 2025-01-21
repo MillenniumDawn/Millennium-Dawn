@@ -870,17 +870,34 @@ on_actions = {
 
 			# update GDP graph
 			if = {
-				limit = {
-					is_ai = no
-					OR = {
-						check_variable = { global.month = 3 }
-						check_variable = { global.month = 6 }
-						check_variable = { global.month = 9 }
-						check_variable = { global.month = 12 }
+				limit = { is_ai = no }
+
+				gdp_graph_on_monthly = yes
+				# its a bit bad thing to do it here, but we need to smooth out "bumps" in gdp graph
+				# if gdp increases/drops by more then 5% in 1 month, take gdp value from 3 months back
+				# and use it to "smoothe out" the values between current and 3 months old gdp
+				if = {
+					# atleast couple of months in the game
+					limit = {
+						check_variable = { current_gdp_graph_end > 2 }
+					}
+
+					set_temp_variable = { temp_index = current_gdp_graph_end }
+					subtract_from_temp_variable = { temp_index = 1 }
+					set_temp_variable = { old_gdp = gdp_array^temp_index }
+
+					divide_temp_variable = { old_gdp = gdp_total }
+					if = {
+						limit = {
+							OR = {
+								check_variable = { old_gdp < 0.95 }
+								check_variable = { old_gdp > 1.05 }
+							}
+						}
+
+						correct_gdp_graph = yes
 					}
 				}
-
-				gdp_graph_on_quaterly = yes
 			}
 			log = "on monthly done"
 		}
