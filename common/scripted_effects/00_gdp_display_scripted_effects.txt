@@ -39,8 +39,12 @@ graph_initial_setup = {
 	}
 
 	# as its incremented at the start
-	set_variable = { current_gdp_graph_end = -1 }
+	set_variable = { current_gdp_graph_end = 0 }
 	set_variable = { gdp_graph_dirty_var = 0 }
+
+	set_variable = { gdp_array^current_gdp_graph_end = gdp_total }
+	set_variable = { gdpc_array^current_gdp_graph_end = gdp_per_capita }
+	set_variable = { prod_array^current_gdp_graph_end = overall_productivity }
 }
 
 initialize_x_axis = {
@@ -196,7 +200,10 @@ recalculate_gdp_c_display = {
 		start = 0
 		end = 11
 
+		# since it is gdp/c
+		multiply_temp_variable = { buf = 1000 }
 		set_variable = { gdp_scale^v = buf }
+
 		round_variable = gdp_scale^v
 		add_to_temp_variable = { buf = step }
 	}
@@ -359,7 +366,41 @@ gdp_graph_shift_array = {
 	gdp_graph_update_dirty_var = yes
 }
 
-gdp_graph_on_monthly = {
+gdp_graph_on_quaterly = {
+	set_temp_variable = { oldgdp = gdp_array^current_gdp_graph_end^current_gdp_graph_end }
+	set_temp_variable = { oldgdpc = gdpc_array^current_gdp_graph_end^current_gdp_graph_end }
+	set_temp_variable = { oldprod = prod_array^current_gdp_graph_end^current_gdp_graph_end }
+
+	set_temp_variable = { gdpdiff = gdp_total }
+	set_temp_variable = { gdpcdiff = gdp_per_capita }
+	set_temp_variable = { proddiff = overall_productivity }
+
+	subtract_from_temp_variable = { gdpdiff = oldgdp }
+	subtract_from_temp_variable = { gdpcdiff = oldgdpc }
+	subtract_from_temp_variable = { proddiff = oldprod }
+
+	multiply_temp_variable = { gdpdiff = 0.33 }
+	multiply_temp_variable = { gdpcdiff = 0.33 }
+	multiply_temp_variable = { proddiff = 0.33 }
+
+	add_to_temp_variable = { oldgdp = gdpdiff }
+	add_to_temp_variable = { oldgdpc = gdpcdiff }
+	add_to_temp_variable = { oldprod = proddiff }
+
+	add_to_variable = { current_gdp_graph_end = 1 }
+	set_variable = { gdp_array^current_gdp_graph_end = oldgdp }
+	set_variable = { gdpc_array^current_gdp_graph_end = oldgdpc }
+	set_variable = { prod_array^current_gdp_graph_end = oldprod }
+
+	add_to_temp_variable = { oldgdp = gdpdiff }
+	add_to_temp_variable = { oldgdpc = gdpcdiff }
+	add_to_temp_variable = { oldprod = proddiff }
+
+	add_to_variable = { current_gdp_graph_end = 1 }
+	set_variable = { gdp_array^current_gdp_graph_end = oldgdp }
+	set_variable = { gdpc_array^current_gdp_graph_end = oldgdpc }
+	set_variable = { prod_array^current_gdp_graph_end = oldprod }
+
 	add_to_variable = { current_gdp_graph_end = 1 }
 	set_variable = { gdp_array^current_gdp_graph_end = gdp_total }
 	set_variable = { gdpc_array^current_gdp_graph_end = gdp_per_capita }
