@@ -3437,14 +3437,6 @@ calculate_int_investments_rate = {
 
 #Calculates income from resources
 calculate_resource_sale_rate = {
-	#Set the base price for single unit of resource, this is the relative price between resources
-	set_temp_variable = { oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
-	set_temp_variable = { steel_price = 0.024 } #Based on steel price
-	set_temp_variable = { aluminium_price = 0.21 }	#Based on aluminium price
-	set_temp_variable = { tungsten_price = 0.28 }	#Based on copper price
-	set_temp_variable = { chromium_price = 0.18 }	#Based on gold price
-	set_temp_variable = { rubber_price = 0.09 }	#Based on rubber price
-
 	#resource_exported = total amount of resources put to market
 	set_variable = { oil_exports = resource_exported@oil }
 	set_variable = { steel_exports = resource_exported@steel }
@@ -3483,12 +3475,12 @@ calculate_resource_sale_rate = {
 	multiply_variable = { rubber_exports = CIC_from_trade }
 
 	#Multiply with cost to get money generated
-	multiply_variable = { oil_exports = oil_price }
-	multiply_variable = { steel_exports = steel_price }
-	multiply_variable = { aluminium_exports = aluminium_price }
-	multiply_variable = { tungsten_exports = tungsten_price }
-	multiply_variable = { chromium_exports = chromium_price }
-	multiply_variable = { rubber_exports = rubber_price }
+	multiply_variable = { oil_exports = global.oil_price }
+	multiply_variable = { steel_exports = global.steel_price }
+	multiply_variable = { aluminium_exports = global.aluminium_price }
+	multiply_variable = { tungsten_exports = global.tungsten_price }
+	multiply_variable = { chromium_exports = global.chromium_price }
+	multiply_variable = { rubber_exports = global.rubber_price }
 
 	#Additional additive modifiers
 	set_temp_variable = { resource_export_multiplier = 1 }
@@ -3925,7 +3917,7 @@ calculate_gdp = {
 	add_to_temp_variable = { workforce_total = max_resource_workers }
 	# Calculates GDP from the reosurce sector
 	set_temp_variable = { gdp_from_resource_sector = total_resource_amount }
-	multiply_temp_variable = { gdp_from_resource_sector = 0.5 } #gdp per resource, currently flat will look to improve it based on fluctuating price maybe
+	multiply_temp_variable = { gdp_from_resource_sector = global.resource_gdp_coeff } #gdp per resource
 	set_temp_variable = { gdp_from_resource_sector_multiplier = 1 }
 	add_to_temp_variable = { gdp_from_resource_sector_multiplier = modifier@gdp_from_resource_sector_modifier }
 	multiply_temp_variable = { gdp_from_resource_sector = gdp_from_resource_sector_multiplier }
@@ -4918,4 +4910,99 @@ calculate_cost_pp_economic_cycles = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Next Cycle Political Power Cost: [?pp_cost_economic]"
 	}
+}
+
+set_initial_cost_resources = {
+	#Set the base price for single unit of resource, this is the relative price between resources
+	set_variable = { global.oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_variable = { global.steel_price = 0.024 } #Based on steel price
+	set_variable = { global.aluminium_price = 0.21 }	#Based on aluminium price
+	set_variable = { global.tungsten_price = 0.28 }	#Based on copper price
+	set_variable = { global.chromium_price = 0.18 }	#Based on gold price
+	set_variable = { global.rubber_price = 0.09 }	#Based on rubber price
+}
+
+recalculate_resources_price = {
+	#steel = 2030 rubber = 738 oil = 2737 alum = 1225 tungsten = 1102 chromium = 907
+	set_temp_variable = { sum_steel = 0 }
+	set_temp_variable = { sum_rubber = 0 }
+	set_temp_variable = { sum_oil = 0 }
+	set_temp_variable = { sum_alum = 0 }
+	set_temp_variable = { sum_tungsten = 0 }
+	set_temp_variable = { sum_chromium = 0 }
+
+	every_country = {
+		add_to_temp_variable = { sum_steel = resource_exported@steel }
+		add_to_temp_variable = { sum_rubber = resource_exported@rubber }
+		add_to_temp_variable = { sum_oil = resource_exported@oil }
+		add_to_temp_variable = { sum_alum = resource_exported@aluminium }
+		add_to_temp_variable = { sum_tungsten = resource_exported@tungsten }
+		add_to_temp_variable = { sum_chromium = resource_exported@chromium }
+	}
+
+	#steel = 2511 rubber = 961 oil = 3404 alum = 1535 tungsten = 1485 chromium = 1322
+	set_temp_variable = { default_steel = 2500 }
+	set_temp_variable = { default_rubber = 950 }
+	set_temp_variable = { default_oil = 3400 }
+	set_temp_variable = { default_alum = 1535 }
+	set_temp_variable = { default_tungsten = 1450 }
+	set_temp_variable = { default_chromium = 1300 }
+
+	divide_temp_variable = { default_steel = sum_steel }
+	divide_temp_variable = { default_rubber = sum_rubber }
+	divide_temp_variable = { default_oil = sum_oil }
+	divide_temp_variable = { default_alum = sum_alum }
+	divide_temp_variable = { default_tungsten = sum_tungsten }
+	divide_temp_variable = { default_chromium = sum_chromium }
+
+	multiply_variable = { global.oil_price = sum_oil }
+	clamp_variable = {
+		var = global.oil_price
+		min = 1.36
+		max = 34
+	}
+
+	multiply_variable = { global.steel_price = sum_steel }
+	clamp_variable = {
+		var = global.steel_price
+		min = 0.005
+		max = 0.120
+	}
+
+	multiply_variable = { global.rubber_price = sum_rubber }
+	clamp_variable = {
+		var = global.rubber_price
+		min = 0.018
+		max = 0.45
+	}
+
+	multiply_variable = { global.aluminium_price = sum_alum }
+	clamp_variable = {
+		var = global.aluminium_price
+		min = 0.042
+		max = 1.05
+	}
+
+	multiply_variable = { global.tungsten_price = sum_tungsten }
+	clamp_variable = {
+		var = global.tungsten_price
+		min = 0.056
+		max = 1.4
+	}
+
+	multiply_variable = { global.chromium_price = sum_chromium }
+	clamp_variable = {
+		var = global.chromium_price
+		min = 0.036
+		max = 0.9
+	}
+
+	set_variable = { global.resource_gdp_coeff = sum_oil }
+	add_to_variable = { global.resource_gdp_coeff = sum_steel }
+	add_to_variable = { global.resource_gdp_coeff = sum_rubber }
+	add_to_variable = { global.resource_gdp_coeff = sum_alum }
+	add_to_variable = { global.resource_gdp_coeff = sum_tungsten }
+	add_to_variable = { global.resource_gdp_coeff = sum_chromium }
+
+	multiply_variable = { global.resource_gdp_coeff = 0.083 } # average around 6 resources, and 0.5 flat gdp constant
 }
