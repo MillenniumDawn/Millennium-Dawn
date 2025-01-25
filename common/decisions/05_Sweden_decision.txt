@@ -1,16 +1,31 @@
 # Author(s): Borgers
 SWE_decision_Forsvarsmarkten_category = {
 	SWE_Home_Guard = {
-		fire_only_once = yes
+		fire_only_once = no
 		days_remove = 180
 		available = {
 			original_tag = SWE
-			#has_defensive_war = yes
+			OR = {
+				has_defensive_war = yes
+				threat > 0.6
+				any_country = {
+					is_justifying_wargoal_against = SWE
+				}
+			}
 		}
 
 		visible = {
  			original_tag = SWE
-			#has_defensive_war = yes
+			NOT = {
+				has_idea = SWE_idea_total_defence_duty
+			}
+			OR = {
+				has_defensive_war = yes
+				threat > 0.6
+				any_country = {
+					is_justifying_wargoal_against = SWE
+				}
+			}
 		}
 
 		complete_effect = {
@@ -83,15 +98,28 @@ SWE_decision_Forsvarsmarkten_category = {
 		}
 	}
 	SWE_fortifications = {
-		fire_only_once = no
+		fire_only_once = yes
 		days_remove = 45
 		available = {
 			original_tag = SWE
+			OR = {
+				has_defensive_war = yes
+				threat > 0.6
+				any_country = {
+					is_justifying_wargoal_against = SWE
+				}
+			}
 		}
 
 		visible = {
  			original_tag = SWE
-			#has_defensive_war = yes
+			OR = {
+				has_defensive_war = yes
+				threat > 0.6
+				any_country = {
+					is_justifying_wargoal_against = SWE
+				}
+			}
 		}
 		complete_effect = {
 
@@ -123,8 +151,10 @@ SWE_decision_Forsvarsmarkten_category = {
 	}
 	SWE_Officer_education_course = {
 
-		days_remove = 90
+		days_remove = 30
 		cost = 100
+		days_re_enable = 365
+		fire_only_once = no
 		available = {
 			original_tag = SWE
 		}
@@ -185,8 +215,10 @@ SWE_decision_Forsvarsmarkten_category = {
 	}
 	SWE_only_active_Personal_Trainings_exercise = {
 
-		days_remove = 365
+		days_remove = 30
 		cost = 100
+		days_re_enable = 365
+		fire_only_once = no
 		available = {
 			original_tag = SWE
 		}
@@ -214,8 +246,10 @@ SWE_decision_Forsvarsmarkten_category = {
 	}
 	SWE_Home_defence_Trainings_exercise = {
 
-		days_remove = 365
+		days_remove = 30
 		cost = 100
+		days_re_enable = 365
+		fire_only_once = no
 		available = {
 			original_tag = SWE
 		}
@@ -245,18 +279,68 @@ SWE_decision_Forsvarsmarkten_category = {
 	}
 	SWE_launch_total_defence = {
 
-		days_remove = 365
 		cost = 100
+		fire_only_once = no
 		available = {
 			original_tag = SWE
+			OR = {
+				has_defensive_war = yes
+				threat > 0.6
+				any_country = {
+					is_justifying_wargoal_against = SWE
+				}
+			}
 		}
 
 		visible = {
 			original_tag = SWE
+			OR = {
+				has_defensive_war = yes
+				threat > 0.6
+				any_country = {
+					is_justifying_wargoal_against = SWE
+				}
+			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_launch_total_defence"
 			add_ideas = SWE_idea_total_defence_duty
+			add_stability = 0.1
+			add_war_support = 0.1
+			add_manpower = 15000
+			if = {
+				limit = { has_idea = defence_00 }
+				swap_ideas = { remove_idea = defence_00 add_idea = defence_04 }
+			}
+			else_if = {
+				limit = { has_idea = defence_01 }
+				swap_ideas = { remove_idea = defence_01 add_idea = defence_04 }
+			}
+			else_if = {
+				limit = { has_idea = defence_02 }
+				swap_ideas = { remove_idea = defence_02 add_idea = defence_04 }
+			}
+			else_if = {
+				limit = { has_idea = defence_03 }
+				swap_ideas = { remove_idea = defence_03 add_idea = defence_04 }
+			}
+			else_if = {
+				limit = { has_idea = defence_04 }
+				swap_ideas = { remove_idea = defence_04 add_idea = defence_05 }
+			}
+			if = {
+				limit = { has_idea = police_01 }
+				swap_ideas = { remove_idea = police_01 add_idea = police_02 }
+			}
+			else_if = {
+				limit = { has_idea = police_02 }
+				swap_ideas = { remove_idea = police_02 add_idea = police_03 }
+			}
+			else_if = {
+				limit = { has_idea = police_03 }
+				swap_ideas = { remove_idea = police_03 add_idea = police_04 }
+			}
+			increase_conscription_effect = yes
 		}
 		ai_will_do = {
 			factor = 1
@@ -264,21 +348,856 @@ SWE_decision_Forsvarsmarkten_category = {
 	}
 	SWE_back_to_normality = {
 
-		days_remove = 365
+		fire_only_once = no
 		cost = 100
 		available = {
 			original_tag = SWE
+			has_idea = SWE_idea_total_defence_duty
 		}
 
 		visible = {
 			original_tag = SWE
+			has_idea = SWE_idea_total_defence_duty
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_back_to_normality"
-			add_ideas = SWE_idea_total_defence_duty
+			remove_ideas = SWE_idea_total_defence_duty
+			if = {
+				limit = { has_idea = defence_03 }
+				swap_ideas = { remove_idea = defence_03 add_idea = defence_02 }
+				}
+			else_if = {
+				limit = { has_idea = defence_04 }
+				swap_ideas = { remove_idea = defence_04 add_idea = defence_02 }
+			}
+			else_if = {
+				limit = { has_idea = defence_05 }
+				swap_ideas = { remove_idea = defence_05 add_idea = defence_02 }
+			}
+			else_if = {
+				limit = { has_idea = defence_06 }
+				swap_ideas = { remove_idea = defence_06 add_idea = defence_02 }
+			}
+			if = {
+				limit = { has_idea = police_02 }
+				swap_ideas = { remove_idea = police_01 add_idea = police_01 }
+			}
+			else_if = {
+				limit = { has_idea = police_03 }
+				swap_ideas = { remove_idea = police_02 add_idea = police_02 }
+			}
+			else_if = {
+				limit = { has_idea = police_04 }
+				swap_ideas = { remove_idea = police_04 add_idea = police_02 }
+			}
+			decrease_conscription_effect = yes
 		}
 		ai_will_do = {
 			factor = 1
+		}
+	}
+}
+SWE_decision_Subventions_category = {
+	SWE_Subventions_forestry_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		fixed_random_seed = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SWE_Subventions_for_Grain_decision"
+			set_temp_variable = { treasury_change = gdp_from_agriculture }
+			multiply_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = SWE_ideas_forestry
+				days = 365
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision SWE_Subventions_for_Grain_decision executed"
+			custom_effect_tooltip = SWE_Agriculture_subvention_TT
+			add_stability = 0.03
+			hidden_effect = {
+				random_list = {
+					40 = {
+						set_temp_variable = { int_investment_change = gdp_from_agriculture }
+						multiply_temp_variable = { int_investment_change = 0.5 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = gdp_from_agriculture }
+						multiply_temp_variable = { int_investment_change = 0.4 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = gdp_from_agriculture }
+						multiply_temp_variable = { int_investment_change = 0.2 }
+						modify_international_investment_effect = yes
+					}
+					30 = {
+						set_temp_variable = { int_investment_change = gdp_from_agriculture }
+						multiply_temp_variable = { int_investment_change = 0.1 }
+						modify_international_investment_effect = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	SWE_Subventions_for_mining_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		fixed_random_seed = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SWE_Subventions_for_Pigs_decision"
+			set_temp_variable = { treasury_change = total_resource_amount }
+			multiply_temp_variable = { treasury_change = -0.08 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = SWE_ideas_mining
+				days = 365
+			}
+		
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision SWE_Subventions_for_Pigs_decision executed"
+			custom_effect_tooltip = SWE_Agriculture_subvention_TT
+			add_stability = 0.03
+			hidden_effect = {
+				random_list = {
+					40 = {
+						set_temp_variable = { int_investment_change = total_resource_amount }
+						multiply_temp_variable = { int_investment_change = 0.10 }
+						modify_international_investment_effect = yes
+					}
+					30 = {
+						set_temp_variable = { int_investment_change = total_resource_amount }
+						multiply_temp_variable = { int_investment_change = 0.9 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = total_resource_amount }
+						multiply_temp_variable = { int_investment_change = 0.8 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = total_resource_amount }
+						multiply_temp_variable = { int_investment_change = 0.7 }
+						modify_international_investment_effect = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	SWE_Subventions_for_Industry_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		fixed_random_seed = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SWE_Subventions_for_Beef_decision"
+			set_temp_variable = { treasury_change = industrial_complex_total }
+			multiply_temp_variable = { treasury_change = -0.8 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = SWE_ideas_industry
+				days = 365
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision SWE_Subventions_for_Beef_decision executed"
+			custom_effect_tooltip = SWE_Agriculture_subvention_TT
+			add_stability = 0.03
+			hidden_effect = {
+				random_list = {
+					35 = {
+						set_temp_variable = { int_investment_change = industrial_complex_total }
+						multiply_temp_variable = { int_investment_change = 0.9 }
+						modify_international_investment_effect = yes
+					}
+					25 = {
+						set_temp_variable = { int_investment_change = industrial_complex_total }
+						multiply_temp_variable = { int_investment_change = 0.8 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = industrial_complex_total }
+						multiply_temp_variable = { int_investment_change = 0.7 }
+						modify_international_investment_effect = yes
+					}
+					25 = {
+						set_temp_variable = { int_investment_change = industrial_complex_total }
+						multiply_temp_variable = { int_investment_change = 0.6 }
+						modify_international_investment_effect = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	SWE_Subventions_for_offices_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SWE_Subventions_for_Fishing_decision"
+			set_temp_variable = { treasury_change = office_park_total }
+			multiply_temp_variable = { treasury_change = -0.7 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = SWE_ideas_offices
+				days = 365
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision SWE_Subventions_for_Fishing_decision executed"
+			custom_effect_tooltip = SWE_Agriculture_subvention_TT
+			add_stability = 0.03
+			hidden_effect = {
+				random_list = {
+					40 = {
+						set_temp_variable = { int_investment_change = gdp_from_offices }
+						multiply_temp_variable = { int_investment_change = 0.9 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = gdp_from_offices }
+						multiply_temp_variable = { int_investment_change = 0.8 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = gdp_from_offices }
+						multiply_temp_variable = { int_investment_change = 0.5 }
+						modify_international_investment_effect = yes
+					}
+					30 = {
+						set_temp_variable = { int_investment_change = gdp_from_offices }
+						multiply_temp_variable = { int_investment_change = 0.3 }
+						modify_international_investment_effect = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	SWE_Subventions_for_Docs_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SWE_Subventions_for_Fishing_decision"
+			set_temp_variable = { treasury_change = dockyard_fac }
+			multiply_temp_variable = { treasury_change = -2.0 }
+			modify_treasury_effect = yes
+			add_timed_idea = {
+				idea = SWE_ideas_docs
+				days = 365
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: decision SWE_Subventions_for_Fishing_decision executed"
+			custom_effect_tooltip = SWE_Agriculture_subvention_TT
+			add_stability = 0.03
+			hidden_effect = {
+				random_list = {
+					40 = {
+						set_temp_variable = { int_investment_change = dockyard_fac }
+						multiply_temp_variable = { int_investment_change = 2.5 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = dockyard_fac }
+						multiply_temp_variable = { int_investment_change = 2.1 }
+						modify_international_investment_effect = yes
+					}
+					15 = {
+						set_temp_variable = { int_investment_change = dockyard_fac }
+						multiply_temp_variable = { int_investment_change = 1.9 }
+						modify_international_investment_effect = yes
+					}
+					30 = {
+						set_temp_variable = { int_investment_change = dockyard_fac }
+						multiply_temp_variable = { int_investment_change = 1.3 }
+						modify_international_investment_effect = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+SWE_decision_Banking_category = {
+	SWE_Bad_Bank_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_decision executed"
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.09 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = gdp_per_capita }
+			multiply_temp_variable = { int_investment_change = -0.06 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = gdp_per_capita }
+			multiply_temp_variable = { debt_change = -0.20 }
+			modify_debt_effect = yes
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+		}
+	}
+	SWE_invest_SBAB_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = gdp_per_capita }
+			multiply_temp_variable = { int_investment_change = 0.12 }
+			modify_international_investment_effect = yes
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+		}
+	}
+	SWE_invest_Nordea_shares_decision = {
+		icon = decision_generic_eurozone
+		#cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = NOR.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = NOR.gdp_per_capita }
+			multiply_temp_variable = { int_investment_change = 0.09 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = NOR.gdp_per_capita }
+			multiply_temp_variable = { debt_change = 0.03 }
+			modify_debt_effect = yes
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+
+			if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_I
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_I
+					add_idea = SWE_AP_Fond_II
+				}
+			}
+			else_if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_II
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_II
+					add_idea = SWE_AP_Fond_III
+				}
+			}
+			else_if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_III
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_III
+					add_idea = SWE_AP_Fond_IV
+				}
+			}
+		}
+	}
+	SWE_invest_Handelsbanken_shares_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = GER.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = GER.gdp_per_capita }
+			multiply_temp_variable = { int_investment_change = 0.09 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = GER.gdp_per_capita }
+			multiply_temp_variable = { debt_change = 0.03 }
+			modify_debt_effect = yes
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+
+			if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_I
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_I
+					add_idea = SWE_AP_Fond_II
+				}
+			}
+			else_if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_II
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_II
+					add_idea = SWE_AP_Fond_III
+				}
+			}
+			else_if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_III
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_III
+					add_idea = SWE_AP_Fond_IV
+				}
+			}
+		}
+	}
+	SWE_invest_HSBC_shares_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = ENG.gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = ENG.gdp_per_capita }
+			multiply_temp_variable = { int_investment_change = 0.09 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = ENG.gdp_per_capita }
+			multiply_temp_variable = { debt_change = 0.03 }
+			modify_debt_effect = yes
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+
+			if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_I
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_I
+					add_idea = SWE_AP_Fond_II
+				}
+			}
+			else_if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_II
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_II
+					add_idea = SWE_AP_Fond_III
+				}
+			}
+			else_if = {
+				Limit = {
+					has_idea = SWE_AP_Fond_III
+			}
+				swap_ideas = {
+					remove_idea = SWE_AP_Fond_III
+					add_idea = SWE_AP_Fond_IV
+				}
+			}
+		}
+	}
+	SWE_deregulation_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			add_timed_idea = {
+				idea = SWE_deregulation_idea
+				days = 365
+			}
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+			custom_effect_tooltip = DEN_agricultural_income
+		}
+	}
+	SWE_cut_interest_rate_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			add_timed_idea = {
+				idea = SWE_idea_cut_interest_rate
+				days = 365
+			}
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+			custom_effect_tooltip = DEN_agricultural_income
+		}
+	}
+	SWE_easing_lending_standards_decision = {#
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			add_timed_idea = {
+				idea = SWE_idea_easing_lending_standards
+				days = 365
+			}
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+			custom_effect_tooltip = DEN_agricultural_income
+		}
+	}
+	SWE_Government_subsidized_loans_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			966 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			769 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { debt_change = gdp_per_capita }
+			multiply_temp_variable = { debt_change = 0.15 }
+			modify_debt_effect = yes
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+			custom_effect_tooltip = DEN_agricultural_income
+		}
+	}
+	SWE_New_market_invest_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		fire_only_once = yes
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			add_tech_bonus = {
+				name = GER_foreign_exchange
+				bonus = 0.5
+				uses = 2
+				category = CAT_ai
+				category = CAT_computing_tech
+				category = CAT_internet_tech
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = gdp_per_capita }
+			multiply_temp_variable = { int_investment_change = 0.09 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = gdp_per_capita }
+			multiply_temp_variable = { debt_change = 0.03 }
+			modify_debt_effect = yes
+
+			set_temp_variable = { modify_SWE_Banking_risk = 10 }
+			SWE_modify_Banking_risk = yes
+			custom_effect_tooltip = DEN_agricultural_income
+		}
+	}
+}
+SWE_decision_Privatisation_category = {
+	SWE_Privatisation_Post_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = treasury_change }
+			multiply_temp_variable = { int_investment_change = -0.28 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.08 }
+			modify_debt_effect = yes
+		}
+	}
+	SWE_Privatisation_Telia_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = treasury_change }
+			multiply_temp_variable = { int_investment_change = -0.28 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.08 }
+			modify_debt_effect = yes
+		}
+	}
+	SWE_Privatisation_SBAB_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = treasury_change }
+			multiply_temp_variable = { int_investment_change = -0.28 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.08 }
+			modify_debt_effect = yes
+		}
+	}
+	SWE_Privatisation_energy_companies_decision = {
+		icon = decision_generic_eurozone
+		cost = 75
+		days_remove = 365
+		days_re_enable = 90
+		available = {
+			original_tag = SWE
+			#has_defensive_war = yes
+		}
+
+		visible = {
+ 			original_tag = SWE
+			#has_defensive_war = yes
+		}
+		remove_effect = {
+		log = "[GetDateText]: [This.GetName]: decision SWE_Bad_Bank_EZB_decision executed"
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = treasury_change }
+			multiply_temp_variable = { int_investment_change = -0.28 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { debt_change = debt }
+			multiply_temp_variable = { debt_change = -0.08 }
+			modify_debt_effect = yes
 		}
 	}
 }
