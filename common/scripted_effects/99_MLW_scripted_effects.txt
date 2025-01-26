@@ -1707,6 +1707,472 @@ MLW_init_MCP_policies_DEBUG = {
 		add_to_array = { MLW.MCP_policies_passed_parliament = 1131 } # CHRISTIAN NATIONALISM
 }
 
+MLW_select_enacted_MCP_policy = {
+	clear_variable = ROOT.MLW_policy_selected
+	set_variable = { ROOT.MLW_policy_selected = MLW.MCP_policies_passed_parliament^i }
+	MLW_refresh_AIO = yes
+}
+
+MLW_select_repealed_MCP_policy = {
+	log = "test"
+	clear_variable = ROOT.MLW_policy_selected
+	set_variable = { ROOT.MLW_policy_selected = MLW.MCP_repealed_policies^i }
+	MLW_refresh_AIO = yes
+}
+
+MLW_repeal_selected_MCP_policy = {
+	MLW_repeal_MCP_policy_check = yes
+	add_to_array = { MLW.MCP_repealed_policies = ROOT.MLW_policy_selected }
+	remove_from_array = { MLW.MCP_policies_passed_parliament = ROOT.MLW_policy_selected }
+	clear_variable = ROOT.MLW_policy_selected
+	MLW_refresh_AIO = yes
+}
+
+MLW_reenact_selected_MCP_policy = {
+	MLW_reenact_MCP_policy_check = yes
+	add_to_array = { MLW.MCP_policies_passed_parliament = ROOT.MLW_policy_selected }
+	remove_from_array = { MLW.MCP_repealed_policies = ROOT.MLW_policy_selected }
+	clear_variable = ROOT.MLW_policy_selected
+	MLW_refresh_AIO = yes
+}
+
+MLW_repeal_MCP_policy_check = {
+	if = { # ANTI CORRUPTION AGENCY
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1105 } }
+		set_temp_variable = { DM_corruption_cost_change = 0.05 }
+		update_MLW_MCP_corruption_cost = yes
+	}
+	if = { # COMMUNITY HEALTHCARE ACT
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1112 } }
+		if = {
+			limit = { has_country_flag = MLW_community_health_PLURALIST }
+			set_temp_variable = { DM_pop_growth_change = 0.025 }
+			update_MLW_population_growth = yes
+			clr_country_flag = MLW_community_health_PLURALIST
+		}
+		else_if = {
+			limit = { has_country_flag = MLW_community_health_CHRISTIAN }
+			set_temp_variable = { DM_pop_growth_change = -0.025 }
+			update_MLW_population_growth = yes
+			clr_country_flag = MLW_community_health_CHRISTIAN
+		}
+		else_if = {
+			limit = { has_country_flag = MLW_community_health_MUSLIM }
+			set_temp_variable = { DM_pop_growth_change = -0.05 }
+			update_MLW_population_growth = yes
+			clr_country_flag = MLW_community_health_MUSLIM
+		}
+		else = { custom_effect_tooltip = i_have_no_idea_TT }
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = 0.02 }
+		update_MLW_healthcare_cost = yes
+	}
+	if = { # CCAM RENEWAL
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1124 } }
+		set_temp_variable = { DM_pop_growth_change = -0.005 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = 0.015 }
+		update_MLW_MCP_health_cost = yes
+		newline = yes
+		set_temp_variable = { LC_group = 0 }
+		set_temp_variable = { LC_change = 0.05 }
+		MLW_MCP_LC_update = yes
+	}
+	if = { # MODESTY AND DECENCY LAWS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1129 } }
+		set_temp_variable = { DM_stability_change = 0.08 }
+		update_MLW_MCP_stability = yes
+		newline = yes
+		set_temp_variable = { DM_pop_growth_change = -0.05 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { LC_group = 1 }
+		set_temp_variable = { LC_change = 0.1 }
+		MLW_MCP_LC_update = yes
+	}
+	if = { # CONSERVATIVE DRESS CODES
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1110 } }
+		set_temp_variable = { DM_stability_change = 0.03 }
+		update_MLW_MCP_stability = yes
+		newline = yes
+		set_temp_variable = { LC_group = 1 }
+		set_temp_variable = { LC_change = 0.07 }
+		MLW_MCP_LC_update = yes
+	}
+	if = { # CONTRACEPTIVE BANS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1121 } }
+		set_temp_variable = { DM_pop_growth_change = -0.085 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = -0.075 }
+		update_MLW_MCP_health_cost = yes
+		newline = yes
+		set_temp_variable = { LC_group = 1 }
+		set_temp_variable = { LC_change = 0.025 }
+		MLW_MCP_LC_update = yes
+		clr_country_flag = MLW_MCP_banned_contraceptives
+	}
+	if = { # ENSHRINED TRADITIONALISM
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1125 } }
+		set_temp_variable = { DM_pop_growth_change = -0.025 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { LC_group = 1 }
+		set_temp_variable = { LC_change = 0.05 }
+		MLW_MCP_LC_update = yes
+		clr_country_flag = MLW_MCP_women_banned_from_service
+	}
+	if = { # DECENTRALISED ACA OFFICES
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1109 } }
+		custom_effect_tooltip = "this needs to be reversed with the effect MLW_MCP_corruption_decentralisation"
+	}
+	if = { # ACA TRANSPARENCY LAWS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1141 } }
+		if = {
+			limit = { has_country_flag = MLW_MCP_hardliner_transparency }
+			set_temp_variable = { DM_pop_tax_income_change = -0.05 }
+			update_MLW_MCP_pop_tax_income = yes
+			newline = yes
+			set_temp_variable = { DM_corp_tax_income_change = 0.025 }
+			update_MLW_MCP_corp_tax_income = yes
+			if = {
+				limit = { has_country_flag = MLW_MCP_big_business }
+				clr_country_flag = MLW_MCP_big_business
+			}
+			clr_country_flag = MLW_MCP_hardliner_transparency
+		}
+		else = {
+			set_temp_variable = { DM_pop_tax_income_change = 0.025 }
+			update_MLW_MCP_pop_tax_income = yes
+			newline = yes
+			set_temp_variable = { DM_corp_tax_income_change = -0.05 }
+			update_MLW_MCP_corp_tax_income = yes
+			if = {
+				limit = { has_country_flag = MLW_MCP_the_little_guy }
+				clr_country_flag = MLW_MCP_the_little_guy
+			}
+		}
+	}
+	if = { # CORRUPTION WATCHDOG
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1142 } }
+		if = {
+			limit = { has_country_flag = MLW_MCP_hardliner_corruption }
+			set_temp_variable = { DM_corruption_cost_change = -0.1 }
+			update_MLW_MCP_corruption_cost = yes
+			clr_country_flag = MLW_MCP_hardliner_corruption
+		}
+		else = {
+			set_temp_variable = { DM_corruption_cost_change = 0.1 }
+			update_MLW_MCP_corruption_cost = yes
+		}
+	}
+	if = { # PRESS FREEDOMS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1134 } }
+		if = { # STATE MEDIA
+		limit = { has_country_flag = MLW_MCP_state_media }
+			set_temp_variable = { DM_corruption_cost_change = -0.2 }
+			update_MLW_MCP_corruption_cost = yes
+			newline = yes
+			set_temp_variable = { DM_political_power_gain_change = -0.1 }
+			update_MLW_MCP_pp_gain = yes
+			clr_country_flag = MLW_MCP_state_media
+		}
+		else_if = { # STATE SPONSORED
+			limit = { has_country_flag = MLW_MCP_sponsored_media }
+			set_temp_variable = { DM_corruption_cost_change = -0.05 }
+			update_MLW_MCP_corruption_cost = yes
+			newline = yes
+			set_temp_variable = { DM_political_power_gain_change = -0.2 }
+			update_MLW_MCP_pp_gain = yes
+			clr_country_flag = MLW_MCP_sponsored_media
+		}
+		else = { # FREE MEDIA
+			set_temp_variable = { DM_corruption_cost_change = 0.1 }
+			update_MLW_MCP_corruption_cost = yes
+			newline = yes
+			set_temp_variable = { DM_political_power_gain_change = -0.1 }
+			update_MLW_MCP_pp_gain = yes
+			clr_country_flag = MLW_MCP_free_media
+		}
+	}
+	if = { # DOCTORAL FUNDING PROGRAMME
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1138 } }
+		set_temp_variable = { DM_health_cost_change = 0.025 }
+		update_MLW_healthcare_cost = yes
+		newline = yes
+		set_temp_variable = { DM_pop_growth_change = -0.025 }
+		update_MLW_population_growth = yes
+	}
+	if = { # CHRISTIAN MEDICAL AID
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1133 } }
+		every_country = {
+			limit = { has_opinion_modifier = religious_outreach }
+			remove_opinion_modifier = { target = ROOT modifier = religious_outreach }
+		}
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = 0.015 }
+		update_MLW_healthcare_cost = yes
+	}
+	if = { # ACCESS TO WATER SCHEME
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1143 } }
+		if = {
+			limit = { has_country_flag = MLW_MCP_wfa_CLEAN }
+			set_temp_variable = { DM_health_cost_change = 0.1 }
+			update_MLW_MCP_health_cost = yes
+			newline = yes
+			set_temp_variable = { region_place = 1 }
+			set_temp_variable = { MLW_internal_migration_change = 0.15 }
+			update_MLW_internal_migration = yes
+			clr_country_flag = MLW_MCP_wfa_CLEAN
+		}
+		else = {
+			set_temp_variable = { DM_health_cost_change = 0.05 }
+			update_MLW_MCP_health_cost = yes
+			newline = yes
+			set_temp_variable = { region_place = 1 }
+			set_temp_variable = { MLW_internal_migration_change = 0.075 }
+			update_MLW_internal_migration = yes
+		}
+	}
+}
+
+MLW_reenact_MCP_policy_check = {
+	if = { # ANTI CORRUPTION AGENCY
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1105 } }
+		set_temp_variable = { DM_corruption_cost_change = -0.05 }
+		update_MLW_MCP_corruption_cost = yes
+	}
+	if = { # COMMUNITY HEALTHCARE ACT
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1112 } }
+		if = {
+			limit = { has_idea = pluralist }
+			set_temp_variable = { DM_pop_growth_change = -0.025 }
+			update_MLW_population_growth = yes
+			set_country_flag = MLW_community_health_PLURALIST
+		}
+		else_if = {
+			limit = { is_christian_nation = yes }
+			set_temp_variable = { DM_pop_growth_change = 0.025 }
+			update_MLW_population_growth = yes
+			set_country_flag = MLW_community_health_CHRISTIAN
+		}
+		else_if = {
+			limit = { is_muslim_nation = yes }
+			set_temp_variable = { DM_pop_growth_change = 0.05 }
+			update_MLW_population_growth = yes
+			set_country_flag = MLW_community_health_MUSLIM
+		}
+		else = { custom_effect_tooltip = i_have_no_idea_TT }
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = -0.02 }
+		update_MLW_healthcare_cost = yes
+	}
+	if = { # CCAM RENEWAL
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1124 } }
+		set_temp_variable = { DM_pop_growth_change = 0.005 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = -0.015 }
+		update_MLW_MCP_health_cost = yes
+		newline = yes
+		set_temp_variable = { LC_group = 1 }
+		set_temp_variable = { LC_change = 0.05 }
+		MLW_MCP_LC_update = yes
+	}
+	if = { # MODESTY AND DECENCY LAWS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1129 } }
+		set_temp_variable = { DM_stability_change = -0.08 }
+		update_MLW_MCP_stability = yes
+		newline = yes
+		set_temp_variable = { DM_pop_growth_change = 0.05 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { LC_group = 0 }
+		set_temp_variable = { LC_change = 0.1 }
+		MLW_MCP_LC_update = yes
+	}
+	if = { # CONSERVATIVE DRESS CODES
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1110 } }
+		set_temp_variable = { DM_stability_change = -0.03 }
+		update_MLW_MCP_stability = yes
+		newline = yes
+		set_temp_variable = { LC_group = 0 }
+		set_temp_variable = { LC_change = 0.07 }
+		MLW_MCP_LC_update = yes
+	}
+	if = { # CONTRACEPTIVE BANS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1121 } }
+		custom_effect_tooltip = MLW_MCP_banned_contraceptives_TT
+		newline = yes
+		set_temp_variable = { DM_pop_growth_change = 0.085 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = 0.075 }
+		update_MLW_MCP_health_cost = yes
+		newline = yes
+		set_temp_variable = { LC_group = 0 }
+		set_temp_variable = { LC_change = 0.025 }
+		MLW_MCP_LC_update = yes
+		set_country_flag = MLW_MCP_banned_contraceptives
+	}
+	if = { # ENSHRINED TRADITIONALISM
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1125 } }
+		custom_effect_tooltip = MLW_MCP_women_banned_from_serving_TT
+		newline = yes
+		set_temp_variable = { DM_pop_growth_change = 0.025 }
+		update_MLW_MCP_population_growth = yes
+		newline = yes
+		set_temp_variable = { LC_group = 0 }
+		set_temp_variable = { LC_change = 0.05 }
+		MLW_MCP_LC_update = yes
+		hidden_effect = {
+			if = {
+				limit = { has_idea = drafted_women }
+				swap_ideas = {
+					remove_idea = drafted_women
+					add_idea = no_women_in_military
+				}
+			}
+			else_if = {
+				limit = { has_idea = volunteer_women }
+				swap_ideas = {
+					remove_idea = volunteer_women
+					add_idea = no_women_in_military
+				}
+			}
+		}
+		set_country_flag = MLW_MCP_women_banned_from_service
+	}
+	if = { # DECENTRALISED ACA OFFICES
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1109 } }
+		MLW_MCP_corruption_decentralisation = yes
+		custom_effect_tooltip = MLW_corruption_explainer_TT
+	}
+	if = { # ACA TRANSPARENCY LAWS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1141 } }
+		if = {
+			limit = { check_variable = { MLW_MCP_faction_strength^1 > 0.499 } }
+			custom_effect_tooltip = MLW_MCP_hardliners_effect_TT
+			newline = yes
+			set_temp_variable = { DM_pop_tax_income_change = 0.05 }
+			update_MLW_MCP_pop_tax_income = yes
+			newline = yes
+			set_temp_variable = { DM_corp_tax_income_change = -0.025 }
+			update_MLW_MCP_corp_tax_income = yes
+			set_country_flag = MLW_MCP_hardliner_transparency
+		}
+		else = {
+			custom_effect_tooltip = MLW_MCP_moderates_effect_TT
+			newline = yes
+			set_temp_variable = { DM_pop_tax_income_change = -0.025 }
+			update_MLW_MCP_pop_tax_income = yes
+			newline = yes
+			set_temp_variable = { DM_corp_tax_income_change = 0.05 }
+			update_MLW_MCP_corp_tax_income = yes
+		}
+	}
+	if = { # CORRUPTION WATCHDOG
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1142 } }
+		if = {
+			limit = { check_variable = { MLW_MCP_faction_strength^1 > 0.499 } }
+			custom_effect_tooltip = MLW_MCP_hardliners_effect_TT
+			newline = yes
+			set_temp_variable = { DM_corruption_cost_change = 0.1 }
+			update_MLW_MCP_corruption_cost = yes
+			set_country_flag = MLW_MCP_hardliner_corruption
+		}
+		else = {
+			custom_effect_tooltip = MLW_MCP_moderates_effect_TT
+			newline = yes
+			set_temp_variable = { DM_corruption_cost_change = -0.1 }
+			update_MLW_MCP_corruption_cost = yes
+		}
+	}
+	if = { # PRESS FREEDOMS
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1134 } }
+		if = { # STATE MEDIA
+			limit = { check_variable = { MLW_MCP_faction_strength^1 > 0.699 } }
+			custom_effect_tooltip = MLW_MCP_hardliners_effect_TT
+			newline = yes
+			set_temp_variable = { DM_corruption_cost_change = 0.2 }
+			update_MLW_MCP_corruption_cost = yes
+			newline = yes
+			set_temp_variable = { DM_political_power_gain_change = 0.1 }
+			update_MLW_MCP_pp_gain = yes
+			set_country_flag = MLW_MCP_state_media
+		}
+		else_if = { # STATE SPONSORED
+			limit = {
+				check_variable = { MLW_MCP_faction_strength^1 < 0.7 }
+				check_variable = { MLW_MCP_faction_strength^1 > 0.399 }
+			}
+			custom_effect_tooltip = MLW_MCP_hardliners_effect_TT
+			newline = yes
+			set_temp_variable = { DM_corruption_cost_change = 0.05 }
+			update_MLW_MCP_corruption_cost = yes
+			newline = yes
+			set_temp_variable = { DM_political_power_gain_change = 0.2 }
+			update_MLW_MCP_pp_gain = yes
+			set_country_flag = MLW_MCP_sponsored_media
+		}
+		else = { # FREE MEDIA
+			custom_effect_tooltip = MLW_MCP_moderates_effect_TT
+			newline = yes
+			set_temp_variable = { DM_corruption_cost_change = -0.1 }
+			update_MLW_MCP_corruption_cost = yes
+			newline = yes
+			set_temp_variable = { DM_political_power_gain_change = 0.1 }
+			update_MLW_MCP_pp_gain = yes
+			set_country_flag = MLW_MCP_free_media
+		}
+	}
+	if = { # DOCTORAL FUNDING PROGRAMME
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1138 } }
+		set_temp_variable = { DM_health_cost_change = -0.025 }
+		update_MLW_healthcare_cost = yes
+		newline = yes
+		set_temp_variable = { DM_pop_growth_change = 0.025 }
+		update_MLW_population_growth = yes
+	}
+	if = { # CHRISTIAN MEDICAL AID
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1133 } }
+		every_country = {
+			limit = { is_christian_nation = yes }
+			add_opinion_modifier = { target = ROOT modifier = religious_outreach }
+		}
+		newline = yes
+		set_temp_variable = { DM_health_cost_change = -0.015 }
+		update_MLW_healthcare_cost = yes
+	}
+	if = { # ACCESS TO WATER SCHEME
+		limit = { check_variable = { ROOT.MLW_policy_selected = 1143 } }
+		if = {
+			limit = { has_completed_focus = MLW_clean_lake }
+			set_temp_variable = { DM_health_cost_change = -0.1 }
+			update_MLW_MCP_health_cost = yes
+			newline = yes
+			set_temp_variable = { region_place = 0 }
+			set_temp_variable = { MLW_internal_migration_change = 0.15 }
+			update_MLW_internal_migration = yes
+			set_country_flag = MLW_MCP_wfa_CLEAN
+		}
+		else = {
+			set_temp_variable = { DM_health_cost_change = -0.05 }
+			update_MLW_MCP_health_cost = yes
+			newline = yes
+			set_temp_variable = { region_place = 0 }
+			set_temp_variable = { MLW_internal_migration_change = 0.075 }
+			update_MLW_internal_migration = yes
+		}
+	}
+}
+
+MLW_clear_arrays = {
+	clear_array = MLW.MCP_repealed_policies
+	clear_array = MLW.MCP_policies_passed_parliament
+}
+
 MLW_init_repealed_MCP_policies_DEBUG = {
 	# TIER 1 POLICIES
 		add_to_array = { MLW.MCP_repealed_policies = 1105 } # ANTI CORRUPTION AGENCY
