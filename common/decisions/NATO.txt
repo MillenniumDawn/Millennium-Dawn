@@ -258,7 +258,7 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			base = 1
+			base = 25
 			modifier = {
 				add = 150
 				OR = {
@@ -463,7 +463,7 @@ NATO_decisions = {
 		}
 
 		ai_will_do = {
-			base = 10
+			base = 25
 			modifier = {
 				add = 350
 				OR = {
@@ -499,6 +499,8 @@ NATO_decisions = {
 					original_tag = CRO
 					original_tag = MNT
 					original_tag = FYR
+					original_tag = FIN
+					original_tag = SWE
 				}
 				is_historical_focus_on = yes
 			}
@@ -610,11 +612,13 @@ NATO_decisions = {
 			custom_trigger_tooltip = {
 				tooltip = TT_ALL_NATO_MEMBERS_RATIFIED
 
-				# Check if all members in nato has ratified the accenssion.
+				# Check if all members in nato has ratified the accession.
 				all_of_scopes = {
 					array = global.nato_members
-
-					has_country_flag = NATO_Ratified_@ROOT
+					if = {
+						limit = { THIS = { exists = yes } }
+						has_country_flag = NATO_Ratified_@ROOT
+					}
 				}
 			}
 		}
@@ -723,10 +727,10 @@ NATO_decisions = {
 	}
 
 	show_non_ratified_countries = {
-
 		icon = GFX_decision_generic_join_nato
 
 		visible = {
+			is_ai = no
 			has_country_flag = NATO_Accession_Voting
 		}
 
@@ -736,15 +740,21 @@ NATO_decisions = {
 			}
 		}
 
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision show_non_ratified_countries"
-			NATO_show_non_ratified_countries = yes
+		highlight_states = {
+			highlight_states_trigger = {
+				CONTROLLER = {
+					has_idea = NATO_member
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+			}
 		}
-		ai_will_do = {
-			factor = 355
+
+		complete_effect = {
+			NATO_show_non_ratified_countries = yes
 		}
 	}
 
+	# Custom Decisions
 	nato_enhance_forward_presence_brigade = {
 		icon = GFX_decision_infiltrate_state
 		allowed = {
