@@ -17093,13 +17093,41 @@ focus_tree = {
 
 		cost = 5
 
+		available = {
+			IRQ = {
+				influence_higher_10 = yes
+			}
+		}
+
 		prerequisite = { focus = PER_corridor_to_hezbollah focus = PER_hashd_al_shaabi }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_puppeteer_iraqi_politcs"
-
+			custom_effect_tooltip = PER_puppeteer_iraqi_politcs_TT
+			newline = yes
+			hidden_effect = {
+				IRQ = {
+					add_popularity = {
+						ideology = communism
+						popularity = 0.05
+					}
+					set_temp_variable = { party_index = 8 }
+					set_temp_variable = { party_popularity_increase = 0.025 }
+					add_relative_party_popularity = yes
+					set_temp_variable = { party_index = 6 }
+					set_temp_variable = { party_popularity_increase = 0.025 }
+					add_relative_party_popularity = yes
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = IRQ }
+					change_influence_percentage = yes
+				}
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = -0.012 }
+				modify_treasury_effect = yes	
+			}
 		}
 
 		ai_will_do = {
@@ -17152,9 +17180,46 @@ focus_tree = {
 		relative_position_id = PER_the_road_to_jerusalem
 
 		cost = 5
-
+		
 		prerequisite = { focus = PER_alawites_in_syria }
 		prerequisite = { focus = PER_palestinian_frontism }
+
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_local_security
+			}
+			NOT = {
+				has_war_with = SYR
+				any_allied_country = {
+					has_war_with = SYR
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = SYR }
+			}
+			NOT = {
+				SYR = {
+					has_country_flag = trade_agreement@PREV
+				}
+				has_country_flag = trade_agreementSYR
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = SYR }
+				PAK = {
+					is_subject_of = PER
+					is_subject = yes
+					has_country_flag = trade_agreement@ROOT
+					SYR = {
+						has_country_flag = trade_agreement@PREV
+					}
+				}
+			}
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
@@ -17164,14 +17229,24 @@ focus_tree = {
 			set_temp_variable = { receiver_nation = SYR.id }
 			set_temp_variable = { sender_nation = PER.id }
 			set_improved_trade_agreement = yes
+			hidden_effect = {
+				add_opinion_modifier = {
+					target = SYR
+					modifier = improve_trade
+				}
+				reverse_add_opinion_modifier = {
+					target = SYR
+					modifier = improve_trade
+				}
+				set_temp_variable = { target_nation = SYR.id }
+				set_temp_variable = { adding_nation = PER.id }
+				change_permanent_investment_target = yes
+				set_temp_variable = { target_nation = PER }
+				set_temp_variable = { adding_nation = SYR }
+				change_permanent_investment_target = yes
+			}
 			newline = yes
-			set_temp_variable = { target_nation = SYR.id }
-			set_temp_variable = { adding_nation = PER.id }
-			change_permanent_investment_target = yes
-			newline = yes
-			set_temp_variable = { target_nation = PER }
-			set_temp_variable = { adding_nation = SYR }
-			change_permanent_investment_target = yes
+			custom_effect_tooltip = PER_Cleaner_tooltip_for_syria_investment_TT
 		}
 
 		ai_will_do = {
