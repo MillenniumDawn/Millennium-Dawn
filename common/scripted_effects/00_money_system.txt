@@ -180,28 +180,12 @@ calculate_tax_gain = {
 	# Commercialized Agriculture Districts - (Agricultural Districts) * 2.25
 	# Offices - (Offices) * 5
 	set_variable = { civil_fac_tax = industrial_complex_total }
-	if = {
-		limit = {
-			is_in_array = { ruling_party = 15 }	#oligarchs
-		}
-		multiply_variable = { civil_fac_tax = 1.1 }
-	}
 	multiply_variable = { civil_fac_tax = 2.5 }
 	set_variable = { military_fac_tax = military_fac }
 	multiply_variable = { military_fac_tax = 0.2 }
 	set_variable = { dockyard_tax = dockyard_fac }
 	multiply_variable = { dockyard_tax = 0.2 }
 	set_variable = { office_tax = office_park_total }
-	if = {
-		limit = {
-			OR = {
-				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 } # Liberalism
-				is_in_array = { ruling_party = 16 } # Neutral Libertarians
-			}
-		}
-		multiply_variable = { office_tax = 1.1 }
-	}
 	multiply_variable = { office_tax = 5 }
 
 	set_variable = { agriculture_district_tax = agriculture_district_total }
@@ -535,9 +519,10 @@ calculate_additional_income_rate = {
 	}
 	# Imposing Taxation on Religious Institutions
 	if = { limit = { has_idea = internal_factions_taxing_religious_institutions }
-		set_variable = { additional_income_taxing_religious_institutions = gdp_total }
-		multiply_variable = { additional_income_taxing_religious_institutions = 0.006 }
-		multiply_variable = { additional_income_taxing_religious_institutions = 0.5 }
+		set_variable = { additional_income_taxing_religious_institutions = population_total_m }
+		set_temp_variable = { gdp_per_capita_temp = gdp_per_capita }
+		divide_temp_variable = { gdp_per_capita_temp = 750 }
+		multiply_variable = { additional_income_taxing_religious_institutions = gdp_per_capita_temp }
 		add_to_variable = { additional_income_rate = additional_income_taxing_religious_institutions }
 	}
 
@@ -1142,6 +1127,32 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_NOR_engines }
 		}
 	}
+	# Tajikistan
+	if = {
+		limit = { original_tag = TAJ }
+		if = {
+			limit = {
+				OR = {
+					has_idea = TAJ_201st_base
+					has_idea = TAJ_201st_base_usa
+					has_idea = TAJ_201st_base_chi
+					has_idea = TAJ_201st_base_raj
+				}
+			}
+			set_variable = { additional_income_TAJ_201st = 0.075 }
+			add_to_variable = { additional_income_rate = additional_income_TAJ_201st }
+		}
+		if = {
+			limit = { has_idea = TAJ_201st_base_upgrade }
+			set_variable = { additional_income_TAJ_201st_upgrade = 0.175 }
+			add_to_variable = { additional_income_rate = additional_income_TAJ_201st_upgrade }
+		}
+		if = {
+			limit = { has_idea = TAJ_gulfs_bankroll_idea }
+			set_variable = { additional_income_TAJ_bankroll = 0.050 }
+			add_to_variable = { additional_income_rate = additional_income_TAJ_bankroll }
+		}
+	}
 	# Liechtenstein
 	if = {
 		limit = { original_tag = LIC }
@@ -1219,6 +1230,27 @@ calculate_additional_income_rate = {
 			multiply_variable = { additional_income_GER_russian_buddies = 0.02 } #2% of yearly GDP
 			multiply_variable = { additional_income_GER_russian_buddies = 0.02 } #weekly
 			add_to_variable = { additional_income_rate = additional_income_GER_russian_buddies }
+		}
+		if = {
+			limit = { has_idea = GER_idea_okosteuer }
+			set_variable = { additional_income_GER_Ökosteuer = GER.gdp_per_capita }
+			multiply_variable = { additional_income_GER_Ökosteuer = 0.45 } #2% of yearly GDP
+			multiply_variable = { additional_income_GER_Ökosteuer = 0.02 } #weekly
+			add_to_variable = { additional_income_rate = additional_income_GER_Ökosteuer }
+		}
+		if = {
+			limit = { has_country_flag = GER_Solidaritatszuschlag }
+			set_variable = { additional_income_GER_Solidaritatszuschlag = GER.gdp_per_capita }
+			multiply_variable = { additional_income_GER_Solidaritatszuschlag = 0.22 } #2% of yearly GDP
+			multiply_variable = { additional_income_GER_Solidaritatszuschlag = 0.02 } #weekly
+			add_to_variable = { additional_income_rate = additional_income_GER_Solidaritatszuschlag }
+		}
+		if = {
+			limit = { has_country_flag = GER_Mehrwertsteuer }
+			set_variable = { additional_income_GER_Mehrwertsteuer = GER.gdp_per_capita }
+			multiply_variable = { additional_income_GER_Mehrwertsteuer = 2.6 } #8% of yearly GDP
+			multiply_variable = { additional_income_GER_Mehrwertsteuer = 0.02 } #weekly
+			add_to_variable = { additional_income_rate = additional_income_GER_Mehrwertsteuer }
 		}
 	}
 	#Turkey
@@ -3162,8 +3194,8 @@ calculate_additional_expense_rate = {
 		limit = { original_tag = CHI }
 		if = {
 			limit = { has_idea = CHI_china_economic_assistant }
-			set_variable = { additional_expense_chinas_economic_assistant = 0.2 }
-			add_to_variable = { additional_income_rate = additional_expense_chinas_economic_assistant }
+			set_variable = { additional_expense_CHI_china_economic_assistant = 0.200 }
+			add_to_variable = { additional_expenses_rate = additional_expense_CHI_china_economic_assistant }
 		}
 	}
 
@@ -3176,9 +3208,23 @@ calculate_additional_expense_rate = {
 	if = {
 		limit = { original_tag = GER }
 		if = {
-		  limit = { has_idea = GER_idea_war_reparations }
-		  set_variable = { additional_expense_GER_war_debt = 0.731 }
-		  add_to_variable = { additional_expenses_rate = additional_expense_GER_war_debt }
+			limit = { has_idea = GER_idea_war_reparations }
+			set_variable = { additional_expense_GER_war_debt = 0.731 }
+			add_to_variable = { additional_expenses_rate = additional_expense_GER_war_debt }
+		}
+		if = {
+			limit = { has_country_flag = GER_subventions_mining }
+			set_variable = { additional_expense_GER_subventions_mining = GER.gdp_per_capita }
+			multiply_variable = { additional_expense_GER_subventions_mining = 0.5 } #2% of yearly GDP
+			multiply_variable = { additional_expense_GER_subventions_mining = 0.02 } #weekly
+			add_to_variable = { additional_expenses_rate = additional_expense_GER_subventions_mining }
+		}
+		if = {
+			limit = { has_country_flag = GER_subventions_agrar }
+			set_variable = { additional_expense_GER_subventions_agrar = GER.gdp_per_capita }
+			multiply_variable = { additional_expense_GER_subventions_agrar = 0.7 } #2% of yearly GDP
+			multiply_variable = { additional_expense_GER_subventions_agrar = 0.02 } #weekly
+			add_to_variable = { additional_expenses_rate = additional_expense_GER_subventions_agrar }
 		}
 		if = {
 			limit = { has_idea = SOV_nord_stream_idea }
@@ -3376,19 +3422,7 @@ calculate_additional_expense_rate = {
 #Update money gained from international investments
 calculate_int_investments_rate = {
 	# Set base ROI rate
-	if = {
-		limit = {
-			OR = {
-				has_country_leader_with_trait = western_technocrat
-				is_in_array = { ruling_party = 2 }	#liberalism
-				is_in_array = { ruling_party = 16 }	#Neutral_Libertarian
-			}
-		}
-		set_variable = { roi_rate = 0.08 }	#8%
-	}
-	else = {
-		set_variable = { roi_rate = 0.06 }	#6%
-	}
+	set_variable = { roi_rate = 0.06 }	#6%
 
 	# Modifier for ROI
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
@@ -4311,10 +4345,10 @@ calculate_ai_taxes_desire = {
 		if = { limit = { has_stability < 0.25 }
 			multiply_temp_variable = { mather = 0.75 }
 		}
-		if = { limit = { check_variable = { population_tax_rate = 50 } }
+		# do not increase over 40%
+		if = { limit = { check_variable = { population_tax_rate > 39 } }
 			multiply_temp_variable = { mather = 0 }
 		}
-
 
 		# Custom: These are high pop nation should raise population tax
 		if = {
@@ -4353,6 +4387,17 @@ calculate_ai_taxes_desire = {
 		if = { limit = { has_stability < 0.05 }
 			multiply_temp_variable = { mather = 2 }
 		}
+		# Do not decrease lower than 20% personal taxes
+		# Do not decrease personal if we can decrease corporate
+		if = {
+			limit = {
+				OR = {
+					check_variable = { population_tax_rate < 20 }
+					check_variable = { corporate_tax_rate > 20 }
+				}
+			}
+			multiply_temp_variable = { mather = 0 }
+		}
 
 		set_variable = { ai_change_population_taxes = mather }
 		if = { limit = { is_debug = yes }
@@ -4388,11 +4433,13 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 2.50 }
 		}
 
-		if = { limit = { check_variable = { population_tax_rate > 45 } }
-			multiply_temp_variable = { mather = 5 }
-		}
-		else_if = { limit = { check_variable = { population_tax_rate > 35 } }
-			multiply_temp_variable = { mather = 3.5 }
+		# do not increase corporate taxes if we can increase personal taxes
+		if = {
+			limit = {
+				check_variable = { population_tax_rate < 30 }
+			}
+
+			multiply_temp_variable = { mather = 0 }
 		}
 
 		set_variable = { ai_change_corporate_taxes = mather }
@@ -4411,6 +4458,14 @@ calculate_ai_taxes_desire = {
 		}
 		if = { limit = { num_of_available_civilian_factories > 30 }
 			multiply_temp_variable = { mather = 0.5 }
+		}
+
+		# do not decrease lower than 15%
+		if = {
+			limit = {
+				check_variable = { corporate_tax_rate < 16 }
+			}
+			multiply_temp_variable = { mather = 0 }
 		}
 
 		set_variable = { ai_change_corporate_taxes = mather }
@@ -4491,7 +4546,7 @@ productivity_growth_display_effect = {
 			}
 
 			# Encourage Productivity from State Owned Investments
-			if = { limit = { has_state_flag = encourage_productivity_in_state_click }
+			if = { limit = { has_state_flag = encourage_productivity_in_state }
 				add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
 			}
 
@@ -4582,9 +4637,8 @@ update_employment_productivity_output_dynamic_modifier = {
 	add_to_variable = { agriculture_district_output_var = -1 } #to be used as malus in the dynamic modifier
 	set_temp_variable = { sum_of_agriculture_district_var_modifiers = modifier@production_speed_agriculture_district_factor }
 	subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
-	add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = 1 }
+	add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
 	multiply_variable = { agriculture_district_output_var = sum_of_agriculture_district_var_modifiers }
-	multiply_variable = { agriculture_district_output_var = -2 }
 
 	set_variable = { productivity_tax_effect_display = productivity_calculations_var }
 	add_to_variable = { productivity_tax_effect_display = -1 }
@@ -4647,47 +4701,23 @@ setup_starting_world_productivity = {
 	add_dynamic_modifier = { modifier = productivity_and_employment_modifier }
 	if = {
 		limit = { NOT = { has_variable = overall_productivity } }
-		if = { limit = { is_in_africa = yes }
-			every_controlled_state = {
+		every_controlled_state = {
+			if = { limit = { PREV = { is_in_africa = yes } }
 				set_variable = { productivity_state_var = 550 }
+				set_variable = { PREV.overall_productivity = 550 }
 			}
-			set_variable = { overall_productivity = 550 }
-		}
-		if = { limit = { is_in_asia = yes }
-			every_controlled_state = {
+			else_if = { limit = { PREV = { OR = { is_in_asia = yes is_in_oceania = yes } } }
 				set_variable = { productivity_state_var = 650 }
+				set_variable = { PREV.overall_productivity = 650 }
 			}
-			set_variable = { overall_productivity = 650 }
-		}
-		if = { limit = { is_in_oceania = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 650 }
-			}
-			set_variable = { overall_productivity = 650 }
-		}
-		if = { limit = { is_in_europe = yes }
-			every_controlled_state = {
+			else_if = { limit = { PREV = { is_in_europe = yes } }
 				set_variable = { productivity_state_var = 1000 }
+				set_variable = { PREV.overall_productivity = 1000 }
 			}
-			set_variable = { overall_productivity = 1000 }
-		}
-		if = { limit = { is_in_the_middle_east = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
+			else_if = { limit = { PREV = { OR = { is_in_the_middle_east = yes is_in_south_america = yes is_in_north_america = yes } } }
+				set_variable = { productivity_state_var = 550 }
+				set_variable = { PREV.overall_productivity = 550 }
 			}
-			set_variable = { overall_productivity = 750 }
-		}
-		if = { limit = { is_in_south_america = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
-			}
-			set_variable = { overall_productivity = 750 }
-		}
-		if = { limit = { is_in_north_america = yes }
-			every_controlled_state = {
-				set_variable = { productivity_state_var = 750 }
-			}
-			set_variable = { overall_productivity = 750 }
 		}
 	}
 	update_employment_productivity_output_dynamic_modifier = yes
