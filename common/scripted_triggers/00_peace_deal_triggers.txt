@@ -150,314 +150,227 @@
 			check_variable = { CPD_acceptance_temp > 0 }
 		}
 	# OTHER TRIGGERS
-		CPD_calculate_province_cost = {
-			if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-				# COST MODIFIERS
-					if = {
-						limit = {
-							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-							is_core_of = ROOT
-						}
-						divide_temp_variable = { CPD_VP_temp = 2 }
-					}
-					else_if = {
-						limit = {
-							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-							is_claimed_by = ROOT
-						}
-						divide_temp_variable = { CPD_VP_temp = 1.5 }
-					}
-			}
-			else_if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					divide_temp_variable = { CPD_VP_temp = 2 }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-			}
-			else_if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					divide_temp_variable = { CPD_VP_temp = 4 }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-			}
-			else_if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					divide_temp_variable = { CPD_VP_temp = 3 }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-			}
-			if = {
-				limit = { is_owned_and_controlled_by = THIS.owner }
-				multiply_temp_variable = { CPD_VP_temp = 2 }
-			}
-			always = yes
-		}
-
-		CPD_calculate_province_cost_loc = {
-			if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-				# COST MODIFIERS
-					if = {
-						limit = {
-							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-							is_core_of = ROOT
-						}
-						divide_temp_variable = { CPD_VP_temp = 2 }
-					}
-					else_if = {
-						limit = {
-							NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
-							is_claimed_by = ROOT
-						}
-						divide_temp_variable = { CPD_VP_temp = 1.5 }
-					}
-			}
-			else_if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					divide_temp_variable = { CPD_VP_temp = 2 }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-			}
-			else_if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					divide_temp_variable = { CPD_VP_temp = 4 }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-			}
-			else_if = {
-				limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
-				# COST CALCULATION
-					set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
-					divide_temp_variable = { CPD_VP_temp = 3 }
-					round_temp_variable = CPD_VP_temp
-					clamp_temp_variable = {
-						var = CPD_VP_temp
-						min = 1
-					}
-			}
-			if = {
-				limit = { is_owned_and_controlled_by = THIS.owner }
-				multiply_temp_variable = { CPD_VP_temp = 2 }
-			}
-			if = {
-				limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
-				if = {
-					limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
-					multiply_temp_variable = { CPD_VP_temp = 1 }
+		CPD_is_an_autonomy_allowed_to_receive_deal = {
+			custom_trigger_tooltip = {
+				tooltip = CPD_is_an_autonomy_allowed_to_receive_deal_TT
+				OR = {
+					# DEFAULT
+						has_autonomy_state = autonomy_associated_state
+					# DEFAULT - COLOURED
+						has_autonomy_state = autonomy_associated_state_colored
+					# CALIPHATE
+						has_autonomy_state = autonomy_terrorist_branch
+					# DANISH
+						has_autonomy_state = danish_crown_holding
+					# ISRAELI-PALESTINIAN
+						has_autonomy_state = autonomy_authority_of_palestine
+						has_autonomy_state = autonomy_authority_of_palestine_1
+						has_autonomy_state = autonomy_authority_of_palestine_2
+						has_autonomy_state = autonomy_provisional_security_of_gaza
+					# RUSSIAN
+						has_autonomy_state = autonomy_union_state
+					# UAR
+						has_autonomy_state = autonomy_uar_state
 				}
-				else = { multiply_temp_variable = { CPD_VP_temp = -1 } }
 			}
-			else = {
-				if = {
-					limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
-					multiply_temp_variable = { CPD_VP_temp = -1 }
-				}
-				else = { multiply_temp_variable = { CPD_VP_temp = 1 } }
-			}
-			always = yes
 		}
-
-		# CPD_cost_of_state_loc = {
-		# 	if = {
-		# 		limit = {
-		# 			OR = {
-		# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-		# 				ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
-		# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-		# 				ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
-		# 			}
-		# 		}
-		# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
-		# 		multiply_temp_variable = { CPD_value_of_state_display = -1 }
-		# 	}
-		# 	else = {
-		# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
-		# 		multiply_temp_variable = { CPD_value_of_state_display = 1 }
-		# 	}
-		# }
-
-
-
-
-
-
-# ERI_is_ethiopian_again = {
-# 	if = {
-# 		limit = {
-# 			NOT = { has_global_flag = ETH_victory_ERI }
-# 			ROOT = { original_tag = ERI }
-# 			FROM = { original_tag = ETH }
-# 		}
-# 	}
-# }
-
-LBA_was_original_state = {
-	OR = {
-		state = 391
-		state = 392
-		state = 393
-		state = 395
-		state = 396
-		state = 397
-		state = 579
-		state = 918
-		state = 919
-		state = 920
-		state = 1100
-		state = 1101
-	}
-}
-
-LBA_salafist_claim = {
-	OR = {
-		state = 85
-		state = 187
-		state = 327
-		state = 329
-		state = 330
-		state = 366
-		state = 370
-		state = 379
-		state = 381
-		state = 382
-		state = 394
-		state = 413
-		state = 1108
-		state = 1163
-		state = 1164
-		state = 1165
-		state = 1167
-	}
-}
-
-NIG_was_boko_haramed = {
-	OR = {
-		original_tag = BEN
-		original_tag = CAM
-		original_tag = CAR
-		original_tag = EGU
-		original_tag = NGR
-		original_tag = TOG
-	}
-}
-
-NIG_state_was_boko_haramed = {
-	OR = {
-		is_core_of = BEN
-		is_core_of = CAM
-		is_core_of = CAR
-		is_core_of = EGU
-		is_core_of = NGR
-		is_core_of = TOG
-	}
-}
-
-NOV_is_novorossiya_tag = {
-	OR = {
-		original_tag = CRM
-		original_tag = DPR
-		original_tag = HPR
-		original_tag = LPR
-		original_tag = NOV
-		original_tag = OPR
-	}
-}
-
-NOV_is_novorossiya_state = {
-	OR = {
-		state = 333
-		state = 693
-		state = 694
-		state = 695
-		state = 696
-		state = 1030
-		state = 1075
-		state = 1076
-		state = 1085
-		state = 1086
-		state = 1087
-	}
-}
-
-PAL_palestinian_state = {
-	OR = {
-		state = 204
-		state = 205
-		state = 206
-		state = 207
-		state = 208
-		state = 209
-	}
-}
-
-SER_is_yugoslav_nation = {
-	OR = {
-		original_tag = BOS
-		original_tag = CRO
-		original_tag = FYR
-		original_tag = HZG
-		original_tag = KOS
-		original_tag = MNT
-		original_tag = RSK
-		original_tag = SLV
-		original_tag = VOJ
-	}
-}
-
-SER_is_yugoslav_state = {
-	OR = {
-		is_core_of = BOS
-		is_core_of = CRO
-		is_core_of = FYR
-		is_core_of = HZG
-		is_core_of = KOS
-		is_core_of = MNT
-		is_core_of = RSK
-		is_core_of = SLV
-		is_core_of = VOJ
-	}
-}
-
+		CPD_is_an_autonomy_allowed_to_send_deal = {
+			custom_trigger_tooltip = {
+				tooltip = CPD_is_an_autonomy_allowed_to_send_deal_TT
+				OR = {
+					# DEFAULT
+						has_autonomy_state = autonomy_associated_state
+						has_autonomy_state = autonomy_satellite_state
+					# DEFAULT - COLOURED
+						has_autonomy_state = autonomy_associated_state_colored
+						has_autonomy_state = autonomy_satellite_state_colored
+					# CALIPHATE
+						has_autonomy_state = autonomy_terrorist_branch
+					# DANISH
+						has_autonomy_state = danish_crown_holding
+					# IRAQI
+						has_autonomy_state = autonomy_fifty_first_state_iraq
+					# ISRAELI-PALESTINIAN
+						has_autonomy_state = autonomy_authority_of_palestine
+						has_autonomy_state = autonomy_authority_of_palestine_1
+						has_autonomy_state = autonomy_authority_of_palestine_2
+						has_autonomy_state = autonomy_provisional_security_of_gaza
+					# RUSSIAN
+						has_autonomy_state = autonomy_union_state
+					# TAJIK
+						has_autonomy_state = autonomy_irn_province
+						has_autonomy_state = TAJ_autonomy_administrative_region
+					# UAR
+						has_autonomy_state = autonomy_uar_state
+						has_autonomy_state = autonomy_uar_province
+						has_autonomy_state = autonomy_uar_regional_command
+				}
+			}
+		}
+		# NEEDED FOR MATH/LOC
+			CPD_calculate_province_cost = {
+				if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+					# COST MODIFIERS
+						if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_core_of = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 2 }
+						}
+						else_if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_claimed_by = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 1.5 }
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 2 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 4 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 3 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				if = {
+					limit = { is_owned_and_controlled_by = THIS.owner }
+					multiply_temp_variable = { CPD_VP_temp = 2 }
+				}
+				always = yes
+			}
+			CPD_calculate_province_cost_loc = {
+				if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+					# COST MODIFIERS
+						if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_core_of = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 2 }
+						}
+						else_if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_claimed_by = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 1.5 }
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 2 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 4 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 3 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				if = {
+					limit = { is_owned_and_controlled_by = THIS.owner }
+					multiply_temp_variable = { CPD_VP_temp = 2 }
+				}
+				if = {
+					limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
+					if = {
+						limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+						multiply_temp_variable = { CPD_VP_temp = 1 }
+					}
+					else = { multiply_temp_variable = { CPD_VP_temp = -1 } }
+				}
+				else = {
+					if = {
+						limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+						multiply_temp_variable = { CPD_VP_temp = -1 }
+					}
+					else = { multiply_temp_variable = { CPD_VP_temp = 1 } }
+				}
+				always = yes
+			}
+			# CPD_cost_of_state_loc = {
+			# 	if = {
+			# 		limit = {
+			# 			OR = {
+			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+			# 				ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
+			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+			# 				ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
+			# 			}
+			# 		}
+			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
+			# 		multiply_temp_variable = { CPD_value_of_state_display = -1 }
+			# 	}
+			# 	else = {
+			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
+			# 		multiply_temp_variable = { CPD_value_of_state_display = 1 }
+			# 	}
+			# }
 # FOR COUNTRY SPECIFIC PEACE DEALS WITH TOTAL WARS
 	# ERITREA
 		# unsure why it was commented out but will leave it as such
@@ -473,115 +386,115 @@ SER_is_yugoslav_state = {
 		# 	}
 		# }
 	# LIBYA
-	LBA_was_original_state = {
-		OR = {
-			state = 391
-			state = 392
-			state = 393
-			state = 395
-			state = 396
-			state = 397
-			state = 579
-			state = 918
-			state = 919
-			state = 920
-			state = 1100
-			state = 1101
+		LBA_was_original_state = {
+			OR = {
+				state = 391
+				state = 392
+				state = 393
+				state = 395
+				state = 396
+				state = 397
+				state = 579
+				state = 918
+				state = 919
+				state = 920
+				state = 1100
+				state = 1101
+			}
 		}
-	}
-	LBA_salafist_claim = {
-		OR = {
-			state = 85
-			state = 187
-			state = 327
-			state = 329
-			state = 330
-			state = 366
-			state = 370
-			state = 379
-			state = 381
-			state = 382
-			state = 394
-			state = 413
-			state = 1108
-			state = 1163
-			state = 1164
-			state = 1165
-			state = 1167
+		LBA_salafist_claim = {
+			OR = {
+				state = 85
+				state = 187
+				state = 327
+				state = 329
+				state = 330
+				state = 366
+				state = 370
+				state = 379
+				state = 381
+				state = 382
+				state = 394
+				state = 413
+				state = 1108
+				state = 1163
+				state = 1164
+				state = 1165
+				state = 1167
+			}
 		}
-	}
-# NIGERIA
-	NIG_was_boko_haramed = {
-		OR = {
-			original_tag = BEN
-			original_tag = CAM
-			original_tag = CAR
-			original_tag = EGU
-			original_tag = NGR
-			original_tag = TOG
+	# NIGERIA
+		NIG_was_boko_haramed = {
+			OR = {
+				original_tag = BEN
+				original_tag = CAM
+				original_tag = CAR
+				original_tag = EGU
+				original_tag = NGR
+				original_tag = TOG
+			}
 		}
-	}
-	NIG_state_was_boko_haramed = {
-		OR = {
-			is_core_of = BEN
-			is_core_of = CAM
-			is_core_of = CAR
-			is_core_of = EGU
-			is_core_of = NGR
-			is_core_of = TOG
+		NIG_state_was_boko_haramed = {
+			OR = {
+				is_core_of = BEN
+				is_core_of = CAM
+				is_core_of = CAR
+				is_core_of = EGU
+				is_core_of = NGR
+				is_core_of = TOG
+			}
 		}
-	}
-# NOVOROSSIYA
-	NOV_is_novorossiya_tag = {
-		OR = {
-			original_tag = CRM
-			original_tag = DPR
-			original_tag = HPR
-			original_tag = LPR
-			original_tag = NOV
-			original_tag = OPR
+	# NOVOROSSIYA
+		NOV_is_novorossiya_tag = {
+			OR = {
+				original_tag = CRM
+				original_tag = DPR
+				original_tag = HPR
+				original_tag = LPR
+				original_tag = NOV
+				original_tag = OPR
+			}
 		}
-	}
-	NOV_is_novorossiya_state = {
-		OR = {
-			state = 333
-			state = 693
-			state = 694
-			state = 695
-			state = 696
-			state = 1030
-			state = 1075
-			state = 1076
-			state = 1085
-			state = 1086
-			state = 1087
+		NOV_is_novorossiya_state = {
+			OR = {
+				state = 333
+				state = 693
+				state = 694
+				state = 695
+				state = 696
+				state = 1030
+				state = 1075
+				state = 1076
+				state = 1085
+				state = 1086
+				state = 1087
+			}
 		}
-	}
-# PALESTINE
-	PAL_palestinian_state = {
-		OR = {
-			state = 204
-			state = 205
-			state = 206
-			state = 207
-			state = 208
-			state = 209
+	# PALESTINE
+		PAL_palestinian_state = {
+			OR = {
+				state = 204
+				state = 205
+				state = 206
+				state = 207
+				state = 208
+				state = 209
+			}
 		}
-	}
-# SERBIA
-	SER_is_yugoslav_nation = {
-		OR = {
-			original_tag = BOS
-			original_tag = CRO
-			original_tag = FYR
-			original_tag = HZG
-			original_tag = KOS
-			original_tag = MNT
-			original_tag = RSK
-			original_tag = SLV
-			original_tag = VOJ
+	# SERBIA
+		SER_is_yugoslav_nation = {
+			OR = {
+				original_tag = BOS
+				original_tag = CRO
+				original_tag = FYR
+				original_tag = HZG
+				original_tag = KOS
+				original_tag = MNT
+				original_tag = RSK
+				original_tag = SLV
+				original_tag = VOJ
+			}
 		}
-	}
 # MISCELLANEOUS TRIGGERS
 	# CHAOTIC PEACE DEAL TRIGGERS
 		CPC_off_western = {
