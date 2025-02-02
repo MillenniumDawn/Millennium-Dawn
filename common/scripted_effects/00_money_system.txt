@@ -4346,10 +4346,10 @@ calculate_ai_taxes_desire = {
 		if = { limit = { has_stability < 0.25 }
 			multiply_temp_variable = { mather = 0.75 }
 		}
-		if = { limit = { check_variable = { population_tax_rate = 50 } }
+		# do not increase over 40%
+		if = { limit = { check_variable = { population_tax_rate > 39 } }
 			multiply_temp_variable = { mather = 0 }
 		}
-
 
 		# Custom: These are high pop nation should raise population tax
 		if = {
@@ -4388,6 +4388,17 @@ calculate_ai_taxes_desire = {
 		if = { limit = { has_stability < 0.05 }
 			multiply_temp_variable = { mather = 2 }
 		}
+		# Do not decrease lower than 20% personal taxes
+		# Do not decrease personal if we can decrease corporate
+		if = {
+			limit = {
+				OR = {
+					check_variable = { population_tax_rate < 20 }
+					check_variable = { corporate_tax_rate > 20 }
+				}
+			}
+			multiply_temp_variable = { mather = 0 }
+		}
 
 		set_variable = { ai_change_population_taxes = mather }
 		if = { limit = { is_debug = yes }
@@ -4423,11 +4434,13 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 2.50 }
 		}
 
-		if = { limit = { check_variable = { population_tax_rate > 45 } }
-			multiply_temp_variable = { mather = 5 }
-		}
-		else_if = { limit = { check_variable = { population_tax_rate > 35 } }
-			multiply_temp_variable = { mather = 3.5 }
+		# do not increase corporate taxes if we can increase personal taxes
+		if = {
+			limit = {
+				check_variable = { population_tax_rate < 30 }
+			}
+
+			multiply_temp_variable = { mather = 0 }
 		}
 
 		set_variable = { ai_change_corporate_taxes = mather }
@@ -4446,6 +4459,14 @@ calculate_ai_taxes_desire = {
 		}
 		if = { limit = { num_of_available_civilian_factories > 30 }
 			multiply_temp_variable = { mather = 0.5 }
+		}
+
+		# do not decrease lower than 15%
+		if = {
+			limit = {
+				check_variable = { corporate_tax_rate < 16 }
+			}
+			multiply_temp_variable = { mather = 0 }
 		}
 
 		set_variable = { ai_change_corporate_taxes = mather }
