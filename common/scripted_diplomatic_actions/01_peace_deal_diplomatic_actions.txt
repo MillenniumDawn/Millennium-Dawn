@@ -30,6 +30,7 @@ scripted_diplomatic_actions = {
 				clr_country_flag = CPD_AI_wants_peace
 				clear_variable = CPD_AI_wants_peace_with
 			}
+			CPD_reset_built_peace_deal = yes
 		}
 
 		reject_effect = {
@@ -173,14 +174,34 @@ scripted_diplomatic_actions = {
 			}
 			CPD_faction_backing = {
 				# more likely to not surrender if ROOT is in one of the major factions
-				base = 5
+				base = 0
 				modifier = {
-					add = -30
+					add = -25
 					has_idea = NATO_member
 				}
 				modifier = {
-					add = -30
+					add = -25
 					has_idea = CSTO_member
+				}
+			}
+			CPD_months_at_war = {
+				# More likely to surrender if THIS has been at war for a very long time
+				base = 0
+				modifier = {
+					set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
+					multiply_temp_variable = { months_at_war_tmp = 2 }
+					add = var:months_at_war_tmp
+				}
+			}
+
+			# Acceptance from Calculate Peace Deal
+			CPD_accepting_peace_deal = {
+				base = 0
+				modifier = {
+					always = yes
+					set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
+					multiply_temp_variable = { v = -5 }
+					add = var:v
 				}
 			}
 		}

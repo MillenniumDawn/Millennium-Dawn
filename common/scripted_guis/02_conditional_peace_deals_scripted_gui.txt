@@ -8,7 +8,7 @@ scripted_gui = {
 
 		visible = {
 			always = yes
-			# has_country_flag = letmeseethegui
+			#	has_country_flag = CPD_considering_peace_deal
 		}
 
 		dynamic_lists = {
@@ -26,35 +26,43 @@ scripted_gui = {
 		}
 
 		properties = {
+			# Single State Action
 			CPD_annex_state_button = { image = "[CPD_ANNEX_STATE_BUTTON_LOC]" }
 			CPD_make_puppet_in_state_button = { image = "[CPD_MAKE_PUPPET_IN_STATE_BUTTON_LOC]" }
 			CPD_demilitarise_state_button = { image = "[CPD_DEMILITARISE_STATE_BUTTON_LOC]" }
 			CPD_liberate_in_state_button = { image = "[CPD_LIBERATE_IN_STATE_BUTTON_LOC]" }
-			# FULL COUNTRY ACTIONS
+			# Full Country Action
 			# CPD_full_puppet_button = { image = "[CPD_FULL_PUPPET_BUTTON_LOC]" }
+
+			# CPD_demands_tab_button = { frame = ROOT.CPD_selected_demands_frame_var }
+			# CPD_concessions_tab_button = { frame = ROOT.CPD_selected_concessions_frame_var }
 		}
 
 		effects = {
-			# select between concessions and demands
-
-			# DEMANDS
+			# Select Concessions/Demand Types
 			CPD_demands_tab_button_click = {
-				ROOT = { clr_country_flag = CPD_giving_concessions }
+				ROOT = {
+					# set_variable = { CPD_selected_demands_frame_var = 1 }
+					# set_variable = { CPD_selected_concessions_frame_var = 2 }
+					clr_country_flag = CPD_giving_concessions
+				}
 				CPD_demand_concede_switch = yes
 			}
-
-			# CONCESSIONS
 			CPD_concessions_tab_button_click = {
-				ROOT = { set_country_flag = CPD_giving_concessions }
+				ROOT = {
+					# set_variable = { CPD_selected_demands_frame_var = 2 }
+					# set_variable = { CPD_selected_concessions_frame_var = 1 }
+					set_country_flag = CPD_giving_concessions
+				}
 				CPD_demand_concede_switch = yes
 			}
 
-			# STATE ACTIONS BUTTONS
+			# Single State Action
 			CPD_annex_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 1 } }
 			CPD_make_puppet_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 2 } }
 			CPD_demilitarise_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 3 } }
 			CPD_liberate_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 4 } } # need to make this possible to select between multiple cores
-			# FULL COUNTRY ACTIONS
+			# Full Country Action
 			# CPD_full_puppet_button_click = { CPD_fully_puppet = yes }
 
 			# ADD STATE TO PEACE DEAL BUILD WITH CURRENT PARAMETERS
@@ -66,10 +74,26 @@ scripted_gui = {
 			CPD_liberate_in_state_button_visible = { has_country_flag = DREAD_HAS_FINISHED_THIS }
 			#
 			CPD_add_state_with_parameters_button_click_enabled = { NOT = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } } }
+
+			CPD_AIA_acceptance_ICON_visible = {
+				is_ai = yes
+				CPD_AI_will_accept = yes
+			}
+			CPD_AIA_decline_ICON_visible = {
+				OR = {
+					is_ai = no
+					AND = {
+						is_ai = yes
+						CPD_AI_will_accept = no
+					}
+				}
+			}
 		}
 
 		ai_enabled = { always = no }
 	}
+
+	# Receiver Event
 	CPD_built_peace_deal = {
 		# this seems to error in the log but doesn't crash, try later with other contexts
 		context_type = diplomatic_action
