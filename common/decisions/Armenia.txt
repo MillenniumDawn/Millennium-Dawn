@@ -780,12 +780,50 @@ ARM_army_category = {
 }
 
 ARM_ministry_of_external_category = {
+	ARM_integration_open = {
+		icon = GFX_decision_bulgarisation
+		allowed = { original_tag = ARM }
+		cost = 0
+		fire_only_once = no
+		days_remove = 1
+
+		available = {
+			tag = ARM
+		}
+		visible = {
+			tag = ARM
+		}
+		remove_effect = {
+			if = {
+				limit = {
+					has_country_flag = open_armyane_yes
+				}
+				clr_country_flag = open_armyane_yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_country_flag = open_armyane_yes
+					}
+				}
+				set_country_flag = open_armyane_yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ARM_1039_return"
+		}
+		ai_will_do = {
+			factor = 355
+		}
+	}
+	
 	ARM_ossetia_weapons = {
 		icon = GFX_decision_politic_kill
 		allowed = { original_tag = ARM }
 		available = {
 			has_completed_focus = ARM_support_ossetia
 		}
+		cost = 100
 		days_remove = 10
 		fire_only_once = no
 		visible = {
@@ -810,6 +848,7 @@ ARM_ministry_of_external_category = {
 					}
 				}
 			}
+			has_country_flag = open_armyane_yes
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove ARM_ossetia_weapons"
@@ -900,6 +939,7 @@ ARM_ministry_of_external_category = {
 				}
 			}
 		}
+		cost = 100
 		days_remove = 10
 		fire_only_once = no
 		visible = {
@@ -924,6 +964,7 @@ ARM_ministry_of_external_category = {
 					}
 				}
 			}
+			has_country_flag = open_armyane_yes
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove ARM_ossetia_revoult"
@@ -970,40 +1011,196 @@ ARM_ministry_of_external_category = {
 		}
 	}
 
-	ARM_integration_open = {
-		icon = GFX_decision_bulgarisation
+	ARM_chechnia_weapons = {
+		icon = GFX_decision_politic_kill
 		allowed = { original_tag = ARM }
-		cost = 0
-		fire_only_once = no
-		days_remove = 1
-
 		available = {
-			tag = ARM
+			has_completed_focus = ARM_supporting_chechens
 		}
+		cost = 100
+		days_remove = 10
+		fire_only_once = no
 		visible = {
-			tag = ARM
-		}
-		remove_effect = {
-			if = {
-				limit = {
-					has_country_flag = open_armyane_yes
-				}
-				clr_country_flag = open_armyane_yes
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_country_flag = open_armyane_yes
+			has_completed_focus = ARM_supporting_chechens
+			OR = {
+				AND = {
+					CHE = {
+						is_subject = no
+						exists = yes
 					}
 				}
-				set_country_flag = open_armyane_yes
+				AND = {
+					CHE = {
+						is_subject_of = SOV
+						exists = yes
+					}
+				}
+				AND = {
+					CHE = {
+						is_subject = no
+						exists = no
+					}
+				}
 			}
+			has_country_flag = open_armyane_yes
 		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ARM_1039_return"
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ARM_chechnia_weapons"
+			add_equipment_to_stockpile = {
+				type = Inf_equipment
+				amount = 150
+				producer = ARM
+			}
+			add_equipment_to_stockpile = {
+				type = util_vehicle_equipment
+				amount = 15
+				producer = ARM
+			}
+			if = {
+				limit = {
+					AND = {
+						CHE = {
+							is_subject = no
+							exists = yes
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 6 }
+				set_temp_variable = { tag_index = ARM.id }
+				set_temp_variable = { influence_target = CHE.id }
+				change_influence_percentage = yes
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							CHE = {
+								is_subject_of = SOV
+								exists = yes
+							}
+						}
+						AND = {
+							CHE = {
+								is_subject = no
+								exists = no
+							}
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 6 }
+				set_temp_variable = { tag_index = ARM.id }
+				set_temp_variable = { influence_target = SOV.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
 		}
 		ai_will_do = {
-			factor = 355
+			factor = 1000
+		}
+	}
+
+	ARM_chechnia_revoult = {
+		icon = GFX_decision_politic_kill
+		allowed = { original_tag = ARM }
+		available = {
+			has_completed_focus = ARM_supporting_chechens
+			OR = {
+				AND = {
+					CHE = {
+						is_subject = no
+						exists = yes
+						influence_higher_40 = yes
+					}
+				}
+				AND = {
+					CHE = {
+						is_subject_of = SOV
+						exists = yes
+					}
+					SOV = {
+						influence_higher_40 = yes
+					}
+				}
+				AND = {
+					CHE = {
+						is_subject = no
+						exists = no
+					}
+					SOV = {
+						influence_higher_40 = yes
+					}
+				}
+			}
+		}
+		cost = 100
+		days_remove = 10
+		fire_only_once = no
+		visible = {
+			has_completed_focus = ARM_supporting_chechens
+			OR = {
+				AND = {
+					CHE = {
+						is_subject = no
+						exists = yes
+					}
+				}
+				AND = {
+					CHE = {
+						is_subject_of = SOV
+						exists = yes
+					}
+				}
+				AND = {
+					CHE = {
+						is_subject = no
+						exists = no
+					}
+				}
+			}
+			has_country_flag = open_armyane_yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ARM_chechnia_revoult"
+			if = {
+				limit = {
+					SOV = {
+						owns_state = 672
+					}
+					AND = {
+						CHE = {
+							is_subject = no
+							exists = no
+						}
+					}
+				}
+				SOV = { country_event = arm_empire.19 }
+			}
+			if = {
+				limit = {
+					AND = {
+						CHE = {
+							is_subject_of = SOV
+							exists = yes
+						}
+					}
+				}
+				SOV = { country_event = arm_empire.20 }
+			}
+			if = {
+				limit = {
+					AND = {
+						CHE = {
+							is_subject = no
+							exists = yes
+						}
+					}
+				}
+				CHE = { country_event = arm_empire.21 }
+			}
+		}
+		ai_will_do = {
+			factor = 1000
 		}
 	}
 
@@ -3904,6 +4101,118 @@ ARM_ministry_of_external_category = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ARM_new_crusade_hazbik"
+		}
+		ai_will_do = {
+			factor = 355
+		}
+	}
+
+	ARM_new_crusade_palestine = {
+		icon = GFX_decision_bulgarisation
+		allowed = { original_tag = ARM }
+		cost = 100
+		fire_only_once = yes
+		days_remove = 120
+
+		available = {
+			has_completed_focus = ARM_liberating_levant
+		}
+		modifier = {
+		}
+		visible = {
+			tag = ARM
+			OR = {
+				AND = {
+					country_exists = PAL
+					country_exists = HAM
+				}
+				AND = {
+					NOT = {
+						has_war_with = PAL
+						has_war_with = HAM
+					}
+				}
+			}
+			has_completed_focus = ARM_liberating_levant
+			has_country_flag = open_armyane_yes
+		}
+		remove_effect = {
+			if = {
+				limit = {
+					country_exists = PAL
+					NOT = {
+						has_war_with = PAL
+					}
+				}
+				PAL = { country_event = { id = md4.14 days = 2 } }
+			}
+			if = {
+				limit = {
+					country_exists = HAM
+					NOT = {
+						has_war_with = HAM
+					}
+				}
+				HAM = { country_event = { id = md4.14 days = 2 } }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ARM_new_crusade_palestine"
+		}
+		ai_will_do = {
+			factor = 355
+		}
+	}
+
+	ARM_italy_reclamation = {
+		icon = GFX_decision_bulgarisation
+		allowed = { original_tag = ARM }
+		cost = 100
+		fire_only_once = yes
+		days_remove = 120
+
+		available = {
+			ITA = {
+				OR = {
+					western_autocrats_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					neutrality_neutral_oligarch_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+					neutrality_neutral_autocracy_are_in_power = yes
+				}
+				OR = {
+					has_completed_focus = ITA_reestablish_rome
+					has_completed_focus = ITA_empower_the_king
+				}
+			}
+		}
+		modifier = {
+		}
+		visible = {
+			tag = ARM
+			AND = {
+				NOT = {
+					has_war_with = ITA
+				}
+				country_exists = ITA
+			}
+			has_completed_focus = ARM_fate_of_italy
+			has_country_flag = open_armyane_yes
+		}
+		remove_effect = {
+			if = {
+				limit = {
+					country_exists = ITA
+					NOT = {
+						has_war_with = ITA
+					}
+				}
+				ITA = { country_event = { id = arm_empire.14 days = 2 } }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ARM_italy_reclamation"
 		}
 		ai_will_do = {
 			factor = 355
