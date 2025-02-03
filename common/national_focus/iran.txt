@@ -17029,7 +17029,6 @@ focus_tree = {
 				tooltip = IRQ_has_shia_civil_war
 				NOT = { has_global_flag = IRQ_has_shia_civil_war }
 			}
-			
 			IRQ = {
 				influence_higher_10 = yes
 				has_civil_war = no
@@ -17088,21 +17087,88 @@ focus_tree = {
 
 		prerequisite = { focus = PER_the_road_to_jerusalem focus = PER_veins_of_the_revolution }
 
+		available = {
+			is_subject = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_local_security
+			}
+			NOT = {
+				has_war_with = SYR
+				any_allied_country = {
+					has_war_with = SYR
+				}
+			}
+			SYR = {
+				influence_higher_15 = yes
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = SYR }
+				PER = {
+					is_subject_of = SYR
+					is_subject = yes
+				}
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_alawites_in_syria"
-			set_temp_variable = { percent_change = 4 }
-			set_temp_variable = { tag_index = PER }
-			set_temp_variable = { influence_target = SYR }
-			change_influence_percentage = yes
-			newline = yes
-			SYR = {
-				set_temp_variable = { party_index = 8 }
-				set_temp_variable = { party_popularity_increase = 0.10 }
-				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+			if = {
+				limit = {
+					SYR = { 
+						has_civil_war = no
+						emerging_autocracy_are_in_power = yes
+						NOT = { has_completed_focus = SYR_flowers_of_damascus_spring}
+					}
+				}
+				#Gobal Flag for Syria more likely TODO Iran focuses in its tree
+				set_global_flag = PER_syria_iran_focuses
+				set_country_flag  = PER_syria_intervention_open_if_needed
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = PER }
+				set_temp_variable = { influence_target = SYR }
+				change_influence_percentage = yes
+				newline = yes
+				SYR = {
+					country_event = axis_of_resistance_events.8
+					newline = yes
+					custom_effect_tooltip = AFG_effect_if_they_accept3TT
+					newline = yes
+					custom_effect_tooltip = PER_syria_iran_focuses
+					newline = yes
+					effect_tooltip = {
+						set_temp_variable = { party_index = 8 }
+						set_temp_variable = { party_popularity_increase = 0.10 }
+						set_temp_variable = { temp_outlook_increase = 0.05 }
+						add_relative_party_popularity = yes
+					}
+				}
 			}
+			else = {
+				SYR = { 
+					country_event = axis_of_resistance_events.9 #TODO Sheep
+				}
+			}
+			if = {
+				limit = {
+					stability < 0.3 # If stability is below 30%, add 30%.
+				}
+				#add effect
+			}
+			else_if = {
+				limit = {
+					stability < 0.6 # Otherwise, if it's below 60% (i.e. 30-59%), add 20%
+				}
+				#add effect
+			}
+			else = {
+				#add effect
+			}
+			
 		}
 
 		ai_will_do = {
@@ -17150,8 +17216,8 @@ focus_tree = {
 		bypass = {
 			OR = {
 				NOT = { country_exists = SYR }
-				PAK = {
-					is_subject_of = PER
+				PER = {
+					is_subject_of = SYR
 					is_subject = yes
 					has_country_flag = trade_agreement@ROOT
 					SYR = {
