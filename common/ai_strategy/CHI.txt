@@ -1,4 +1,14 @@
-CHI_sick_bastard = {
+CHI_infantry_focus = {
+	allowed = { original_tag = CHI }
+	enable = {
+		original_tag = CHI
+		num_divisions < 25
+	}
+	abort = {
+		num_divisions > 24
+	}
+}
+CHI_infantry_focus = {
 	allowed = { original_tag = CHI }
 	enable = {
 		original_tag = CHI
@@ -359,29 +369,164 @@ CHI_area_priority = {
 	ai_strategy = { type = area_priority id = middle_east value = 150 }
 	ai_strategy = { type = area_priority id = africa value = 150 }
 }
-
-CHI_antagonize_taiwan = {
+###CHINA WAR STRATEGIES###
+CHI_antagonize_taiwan = { #War preparation against Taiwan
 	allowed = { original_tag = CHI }
 	enable = {
 		CHI = { has_government = communism }
 		NOT = { TAI = { is_subject_of = CHI } }
 	}
 	abort = {
-		OR = {
-			CHI = { NOT = { has_government = communism } }
-			TAI = { is_subject_of = CHI }
-			NOT = { country_exists = TAI }
-		}
+		NOT = { country_exists = TAI }
+		has_completed_focus = CHI_Peaceful_Co_Existence
 	}
-
+	abort_when_not_enabled = yes
 	ai_strategy = { type = antagonize id = "TAI" value = 200 }
 	ai_strategy = { type = contain id = "TAI" value = 150 }
 	ai_strategy = { type = prepare_for_war id = TAI value = 100 }
 }
+CHI_focus_naval_taiwan = { #China focus on invading Taiwan, ignore Japan until Taiwan captured.
+	allowed = { original_tag = CHI }
+	enable = {
+		has_war_with = TAI
+	}
+	abort = { #Failcheck if Taiwan somehow move its capital elsewhere but CHI capture Taiwan island
+		has_full_control_of_state = 600
+		has_full_control_of_state = 599
+		has_full_control_of_state = 1158
+		has_full_control_of_state = 1157
+		has_full_control_of_state = 1156
+		has_full_control_of_state = 1155
+		has_full_control_of_state = 1109
+		has_full_control_of_state = 598
+		has_full_control_of_state = 430
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = invade id = TAI value = 200 }
+	ai_strategy = { type = invade id = KOR value = -100 }
+	ai_strategy = { type = invade id = JAP value = -100 }
+	ai_strategy = { type = invade id = USA value = -100 }
+	
+	ai_strategy = { type = naval_avoid_region id = 90 value = 100 } #east coast of Japan
+	ai_strategy = { type = naval_avoid_region id = 79 value = 100 } #west coast of Japan
+	ai_strategy = { type = naval_avoid_region id = 87 value = 100 } #north coast of Japan
+	
+	ai_strategy = { type = strike_force_home_base id = 200 value = 100 } #China south coast
+	ai_strategy = { type = strike_force_home_base id = 193 value = 100 } #Taiwan strait
+	ai_strategy = { type = strike_force_home_base id = 76 value = 100 } #East China sea
+	ai_strategy = { type = strike_force_home_base id = 77 value = 100 } #Yellow Sea
+}
+CHI_focus_naval_japan = { #China focus on invading Japan. Ignore the rest until done
+	allowed = { original_tag = CHI }
+	enable = {
+		has_war_with = JAP
+	}
+	abort = { #Failcheck if Japan somehow move its capital elsewhere but CHI capture all of Japan
+		has_full_control_of_state = 609
+		has_full_control_of_state = 610
+		has_full_control_of_state = 611
+		has_full_control_of_state = 612
+		has_full_control_of_state = 613
+		has_full_control_of_state = 615
+		has_full_control_of_state = 616
+		has_full_control_of_state = 617
+		has_full_control_of_state = 618
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = invade id = KOR value = -100 }
+	ai_strategy = { type = invade id = JAP value = 100 }
+	ai_strategy = { type = invade id = USA value = -100 }
+	
+	ai_strategy = { type = strike_force_home_base id = 90 value = 100 } #east coast of Japan
+	ai_strategy = { type = strike_force_home_base id = 79 value = 100 } #west coast of Japan
+	ai_strategy = { type = strike_force_home_base id = 76 value = 100 } #East China sea
+}
+CHI_invade_USA = { #CHI is less motivated to invade USA until it can fight US fleet and not at war with Japan and Taiwan
+	allowed = { tag = CHI }
+	enable = {
+		NOT = { has_war_with = JAP }
+		NOT = { has_war_with = TAI }
+		has_war_with = USA
+		CHI = {
+			naval_strength_ratio = {
+				tag = USA
+				ratio > 1.5
+			}
+		}
+	}
+	abort_when_not_enabled = yes
 
+	ai_strategy = { type = invade id = "CHI" value = 400 }
+}
+CHI_protect_coast_against_USA = { #CHI is fighting defensively if it doesn't have a naval favorable strength ratio with USA
+	allowed = { tag = CHI }
+	enable = {
+		country_exists = CHI
+		has_war_with = USA
+	}
+	abort = {
+		CHI = {
+			naval_strength_ratio = {
+				tag = USA
+				ratio > 1.5
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = area_priority id = chinese_coast value = 1000 } #Protect the coast
+}
+CHI_protect_coast = { #CHI is fighting defensively if it doesn't have a naval favorable strength ratio against enemies other than US
+	allowed = { tag = CHI }
+	enable = {
+		country_exists = CHI
+		NOT = { has_war_with = USA }
+		enemies_naval_strength_ratio > 1
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = area_priority id = chinese_coast value = 1000 } #Protect the coast
+}
+CHI_protect_coast_against_world = { #CHI is fighting defensively if it doesn't have a naval favorable strength ratio against enemy alliance
+	allowed = { tag = CHI }
+	enable = {
+		country_exists = CHI
+		alliance_naval_strength_ratio > 1.5
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = area_priority id = chinese_coast value = 1000 } #Protect the coast
+}
+JAP_stop_invading_CHI = { #Japan doesn't try to naval invade CHI if CHI navy isn't destroyed
+	allowed = { original_tag = JAP }
+	enable = {
+		has_war_with = CHI
+	}
+	abort = { #Tries to invade if Chinese fleet is defeated
+		CHI = { 
+			has_navy_size = { size > 20 }
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = invade id = CHI value = -100 }
+}
+TAI_stop_invading_CHI = { #Taiwan doesn't try to naval invade CHI if CHI navy isn't destroyed
+	allowed = { original_tag = TAI }
+	enable = {
+		has_war_with = CHI
+	}
+	abort = { #Tries to invade if Chinese fleet is defeated
+		CHI = { 
+			has_navy_size = { size > 20 }
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = invade id = CHI value = -100 }
+}
+###
 CHI_the_great_goliath = {
 	allowed = { original_tag = CHI }
-	enable = { country_exists = USA }
+	enable = {
+		CHI = { has_government = communism }
+		country_exists = USA
+	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = antagonize id = "USA" value = 150 }
@@ -467,26 +612,6 @@ CHI_arab_relations = {
 	ai_strategy = { type = alliance id = "OMA" value = 50 }
 	ai_strategy = { type = befriend id = "KUW" value = 50 }
 	ai_strategy = { type = alliance id = "KUW" value = 50 }
-}
-
-CHI_defeat_the_blockade = {
-	allowed = { tag = CHI }
-	enable = {
-		has_war_with = USA
-		alliance_naval_strength_ratio < 1.0 #If you are less then 100% relative strength keep the blockade defense
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = area_priority id = chinese_coast value = 100000 } #China should defend her coast agianst a superior foe
-	ai_strategy = {
-		type = put_unit_buffers
-		ratio = 0.50
-		states = {
-			574 531 532 534 595 537 538 536 540 541 544 435 549 548 434 552
-		}
-		subtract_invasions_from_need = no
-		subtract_fronts_from_need = no
-	}
 }
 
 CHI_contain_the_raj_kor_jap = {
