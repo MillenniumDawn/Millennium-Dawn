@@ -2125,7 +2125,7 @@ Syria_centralization_balance_of_power_category = {
 			has_completed_focus = SYR_address_ethnic_divides
 		}
 		days_remove = 120
-		days_re_enable = 100
+		days_re_enable = 35
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision syria_decision_increase_local_accountability_officials"
 		    add_timed_idea = {
@@ -2260,7 +2260,7 @@ Syria_centralization_balance_of_power_category = {
 			has_completed_focus = SYR_address_ethnic_divides
 		}
 		days_remove = 120
-		days_re_enable = 100
+		days_re_enable = 35
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision syria_decision_find_promising_bureaucracy"
 		    add_timed_idea = {
@@ -2452,6 +2452,78 @@ Syria_centralization_balance_of_power_category = {
                 value = 0.05
                 tooltip_side = SYR_republican_bop_right_side
             }
+		}
+	}
+	syria_decision_fund_voluntary_organizations = {
+		icon = GFX_decision_economy
+		available = {
+		}
+		visible = {
+			has_completed_focus = SYR_address_ethnic_divides
+		}
+		days_remove = 120
+		days_re_enable = 35
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision syria_decision_fund_voluntary_organizations"
+		    add_timed_idea = {
+		        idea = syria_funding_voluntary_organizations
+		    	days = 120
+		    }
+		}
+		remove_effect = {
+			set_temp_variable = { voluntary_groups_chance = 0 }
+            set_temp_variable = { syrian_centralization_minority_average = 0 }
+            set_temp_variable = { syrian_number_of_minorities = 0 }
+            if = {
+                limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier } }
+                add_to_temp_variable = { syrian_centralization_minority_average = alawite_status }
+                add_to_temp_variable = { syrian_number_of_minorities = 1 }
+            }
+            if = {
+                limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier } }
+                add_to_temp_variable = { syrian_centralization_minority_average = druze_status }
+                add_to_temp_variable = { syrian_number_of_minorities = 1 }
+            }
+            if = {
+                limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
+                add_to_temp_variable = { syrian_centralization_minority_average = kurdish_status }
+                add_to_temp_variable = { syrian_number_of_minorities = 1 }
+            }
+            if = {
+                limit = { syrian_number_of_minorities = 0 }
+                add_to_temp_variable = { syrian_centralization_minority_average = 80 }
+            }
+            else = {
+                divide_temp_variable = { syrian_centralization_minority_average = syrian_number_of_minorities }
+                divide_temp_variable = { syrian_centralization_minority_average = 1.25 }
+            }
+            add_to_temp_variable = { voluntary_groups_chance = syrian_centralization_minority_average }
+    
+            if = {
+		        limit = { is_in_array = { gov_coalition_array = 17 } }
+		    	add_to_temp_variable = { voluntary_groups_chance = 20 }
+		    }
+		    set_temp_variable = { remaining_chance = 100 }
+		    subtract_from_temp_variable = { remaining_chance = voluntary_groups_chance }
+		    clamp_temp_variable = {
+		    	var = remaining_chance
+		    	min = 0
+		    	max = 100
+		    }
+		    random_list = {
+		    	1 = {
+		    		modifier = {
+		    			factor = remaining_chance
+		    		}
+		    		SYR = { country_event = { id = SyriaFocus.92 days = 90 } }
+		    	}
+		    	1 = {
+		    		modifier = {
+		    			factor = voluntary_groups_chance
+		    		}
+		    		SYR = { country_event = { id = SyriaFocus.86 days = 90 } }
+		    	}
+		    }
 		}
 	}
 }
