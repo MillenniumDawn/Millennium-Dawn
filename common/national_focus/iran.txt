@@ -16626,27 +16626,21 @@ focus_tree = {
 				set_temp_variable = { iraq_domestic_influence_var = domestic_influence_amount }
 				set_temp_variable = { iraq_emerging_outlook_percentage = party_popularity@communism }
 				multiply_temp_variable = { iraq_emerging_outlook_percentage = 100 }
-				set_temp_variable = { iraq_not_emerging_popularity = 100 }
-				subtract_from_temp_variable = { iraq_not_emerging_popularity = iraq_emerging_outlook_percentage }
 
 				#Chances
 
 				#Coup
-				set_temp_variable = { coup_chance = 0 }
+				set_temp_variable = { coup_chance = -100 }
 				add_to_temp_variable = { coup_chance = iran_influence_percentage }
 				add_to_temp_variable = { coup_chance = 30 }
 
 				#Civil War
-				set_temp_variable = { civil_war_chance = 0 }
+				set_temp_variable = { civil_war_chance = 100 }
 				add_to_temp_variable = { civil_war_chance = 30 } #Makes civil war easier.
 				add_to_temp_variable = { civil_war_chance = iraq_emerging_outlook_percentage }
 				add_to_temp_variable = { coup_chance = iran_influence_percentage }
 
-				#Nothing happens
-				set_temp_variable = { fail_chance = 0 }
-				add_to_temp_variable = { fail_chance = iraq_not_emerging_popularity }
-				add_to_temp_variable = { fail_chance = iraq_domestic_influence_var }
-				add_to_temp_variable = { fail_chance = -50 } #Makes civil war easier.
+				
 			}
 			random_list = {
 				coup_chance = {
@@ -16721,71 +16715,128 @@ focus_tree = {
 						}
 					}
 				}
+				#NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
 				civil_war_chance = {
 					custom_effect_tooltip = PER_iraq_civilwar
 					hidden_effect = {
 						IRQ = {
+							set_country_flag = IRQ_badr_oponent
+							set_temp_variable = { IRQ_Support_for_shia_revolt = 0 }
+							add_to_temp_variable = { IRQ_Support_for_shia_revolt = party_pop_array^8 }
+							add_to_temp_variable = { IRQ_Support_for_shia_revolt = party_pop_array^9 }
+							add_to_temp_variable = { IRQ_Support_for_shia_revolt = party_pop_array^6 }
+							clamp_temp_variable = {
+								var = IRQ_Support_for_shia_revolt
+								min = 0
+								max = 0.8
+							}
 							start_civil_war = {
 								ideology = communism
-								size = 0.6
+								size = IRQ_Support_for_shia_revolt
 								states = {
-									171 170 169 557
+									1142 171 1123 1124 170
 								}
 								keep_political_leader = yes
 								keep_political_party_members = yes
 							}
-						}
-						every_country = {
-							limit = {
-								original_tag = IRQ
-								has_government = communism
-								NOT = { has_country_leader = { name = "Saddam Hussein" ruling_only = yes } }
-							}
-							set_politics = {
-								ruling_party = communism
-								elections_allowed = no
-							}
-							set_political_party = {
-								ideology = communism
-								popularity = 100
-							}
-							set_temp_variable = { party_index = 9 }
-							set_temp_variable = { party_popularity_increase = 1.00 }
-							add_relative_party_popularity = yes
-
-							set_temp_variable = { rul_party_temp = 9 }
-							change_ruling_party_effect = yes
-
-							swap_ideas = {
-								remove_idea = the_military
-								add_idea = iranian_quds_force
-							}
-
-							swap_ideas = {
-								remove_idea = sunni
-								add_idea = shia
-							}
-
-							create_country_leader = {
-								name = "Hadi al-Amiri"
-								picture = "Hadi_Al-Amiri.dds"
-								ideology = Vilayat_e_Faqih
-								traits = {
-									emerging_Vilayat_e_Faqih
+							add_ideas = rival_government
+							#Recognition
+							add_to_array = { global.rival_governments = THIS }
+							random_country_with_original_tag = {
+								original_tag_to_check = IRQ
+								limit = { has_government = communism }
+								set_politics = {
+									ruling_party = communism
+									elections_allowed = no
 								}
-							}
+								set_political_party = {
+									ideology = communism
+									popularity = 78
+								}
+								set_political_party = {
+									ideology = neutrality
+									popularity = 18
+								}
+								set_political_party = {
+									ideology = democratic
+									popularity = 4
+								}
 
-							set_temp_variable = { percent_change = 5.00 }
-							set_temp_variable = { tag_index = PER }
-							set_temp_variable = { influence_target = IRQ }
-							change_influence_percentage = yes
+								set_cosmetic_tag = IRQ_badr_revolt
+								set_country_flag = IRQ_shia_revolt
+
+								set_temp_variable = { party_index = 9 }
+								set_temp_variable = { party_popularity_increase = 0.30 }
+								add_relative_party_popularity = yes
+
+								set_temp_variable = { party_index = 6 }
+								set_temp_variable = { party_popularity_increase = 0.23 }
+								add_relative_party_popularity = yes
+
+								set_temp_variable = { party_index = 8 }
+								set_temp_variable = { party_popularity_increase = 0.25 }
+								add_relative_party_popularity = yes
+
+								set_temp_variable = { party_index = 19 }
+								set_temp_variable = { party_popularity_increase = 0.18 }
+								add_relative_party_popularity = yes
+
+								set_temp_variable = { party_index = 2 }
+								set_temp_variable = { party_popularity_increase = 0.4 }
+								add_relative_party_popularity = yes
+
+								set_temp_variable = { rul_party_temp = 9 }
+								change_ruling_party_effect = yes
+
+								set_temp_variable = { add_col_one = 8 }
+								add_coalition_members_effect = yes
+
+								set_temp_variable = { add_col_two  = 6 }
+								add_coalition_members_effect = yes
+
+								swap_ideas = {
+									remove_idea = the_military
+									add_idea = iranian_quds_force
+								}
+
+								swap_ideas = {
+									remove_idea = sunni
+									add_idea = shia
+								}
+
+								add_to_array = { global.rival_governments = THIS }
+
+								create_country_leader = {
+									name = "Hadi al-Amiri"
+									picture = "Hadi_Al-Amiri.dds"
+									ideology = Vilayat_e_Faqih
+									traits = {
+										emerging_Vilayat_e_Faqih
+									}
+								}
+
+								add_named_threat = {
+									threat = 5
+									name = IRQ_Iran_civil_war.threat
+								}
+								set_temp_variable = { IRQ_ROOT_TAG = ROOT }
+								PER = {
+									add_relation_modifier = {
+										target = IRQ_ROOT_TAG
+										modifier = generic_increased_military_support
+									}
+								}
+
+								set_temp_variable = { percent_change = 5.00 }
+								set_temp_variable = { tag_index = PER }
+								set_temp_variable = { influence_target = IRQ }
+								change_influence_percentage = yes
+							}
 						}
 					}
 				}
-				fail_chance = {
-
-				}
 			}
+
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = -0.05 }
 			modify_treasury_effect = yes
