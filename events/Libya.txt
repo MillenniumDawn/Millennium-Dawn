@@ -13836,6 +13836,107 @@ country_event = {
 	}
 }
 
+#End of the civil war
+country_event = {
+	id = LibyaCivilWarContent.24
+	title = LibyaCivilWarContent.24.t
+	desc = LibyaCivilWarContent.24.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	option = {
+		name = LibyaCivilWarContent.24.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.24.a executed"
+		set_temp_variable = { election_year = global.year }
+		subtract_from_temp_variable = { election_year = 3 }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = ROOT
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 48
+				}
+			}
+			YEAR = election_year
+			MONTH = global.month
+		}
+		custom_effect_tooltip = LibyaCivilWarContent.24.tooltip
+		set_country_flag = generic_election_killswitch
+		add_timed_idea = {
+			idea = LBA_aftermath_of_the_civil_war
+			days = 720
+		}
+	}
+	option = {
+		name = LibyaCivilWarContent.24.b
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.24.b executed"
+		if = {
+			limit = { has_dynamic_modifier = { modifier = LBA_tribal_militias } }
+			libya_add_tribal_independence = yes
+			set_temp_variable = { loyalty_change = -0.20 }
+			libya_change_tripolitania_loyalty = yes
+			set_temp_variable = { loyalty_change = -0.20 }
+			libya_change_cyrenaica_loyalty = yes
+			set_temp_variable = { loyalty_change = -0.20 }
+			libya_change_fezzan_loyalty = yes
+			libya_update_tribalism_modifiers = yes
+			newline = yes
+		}
+		if = {
+			limit = {
+				has_dynamic_modifier = { modifier = LBA_jihadist_militias }
+				NOT = { has_government = fascism }
+			}
+			libya_add_jihadist_independence = yes
+			set_temp_variable = { rad_change = 10 }
+			modify_radicalization_effect = yes
+			set_temp_variable = { threat_change = 10 }
+			modify_terror_threat_effect = yes
+			newline = yes
+		}
+		if = {
+			limit = {
+				has_dynamic_modifier = { modifier = LBA_islamist_militias }
+				NOT = { neutrality_neutral_muslim_brotherhood_are_in_power = yes }
+			}
+			libya_add_islamist_independence = yes
+			set_temp_variable = { influence_target = ROOT }
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = QAT }
+			change_influence_percentage = yes
+			newline = yes
+		}
+		if = {
+			limit = {
+				has_dynamic_modifier = { modifier = LBA_secularist_militias }
+				NOT = { nationalist_military_junta_are_in_power = yes }
+			}
+			libya_add_secularist_independence = yes
+			if = {
+				limit = { has_character = LBA_khalifa_haftar }
+				LBA_khalifa_haftar = { remove_unit_leader = yes }
+			}
+			set_temp_variable = { temp_opinion = -20 }
+			change_the_military_opinion = yes
+			newline = yes
+		}
+		if = {
+			limit = {
+				has_dynamic_modifier = { modifier = LBA_reformist_militias }
+				NOT = { has_government = democratic }
+			}
+			libya_add_reformist_independence = yes
+			add_stability = -0.10
+		}
+		add_timed_idea = {
+			idea = LBA_aftermath_of_the_civil_war
+			days = 720
+		}
+	}
+}
+
 #Gaddafi Assassinated
 news_event = {
 	id = LibyaFocusNews.1
