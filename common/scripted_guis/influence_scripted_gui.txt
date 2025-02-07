@@ -17,6 +17,7 @@ scripted_gui = {
 			opt_coup_button = { image = "[select_coup_button]" }
 			opt_economic_exploitation_button = { image = "[select_economic_exploitation_button]" }
 			opt_make_puppet_button = { image = "[select_make_puppet_button]" }
+			opt_military_supply_button = { image = "[select_military_supply_button]" }
 		}
 
 		triggers = {
@@ -131,6 +132,16 @@ scripted_gui = {
 				ERI_is_not_transitional_government = yes
 			}
 
+			opt_military_supply_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = opt_military_supply_button_TT
+					ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+				}
+				#Our Country is a top 7 influencer
+				is_influencer = yes
+				ERI_is_not_transitional_government = yes
+			}
+
 			opt_manipulate_politics_button_click_enabled = {
 				if = { 
 					limit = {
@@ -216,12 +227,21 @@ scripted_gui = {
 			# Hide Influence Buttons
 			opt_influence_action_button_visible = { NOT = { tag = ROOT } }
 			opt_aid_button_visible = { NOT = { tag = ROOT } }
-			opt_aid_military_button_visible = { NOT = { tag = ROOT } }
+			opt_aid_military_button_visible = { 
+				NOT = {
+					tag = ROOT
+					has_country_flag = military_supply_target
+				}
+			}
 			opt_target_other_button_visible = { NOT = { tag = ROOT } }
 			opt_manipulate_politics_button_visible = { NOT = { tag = ROOT } }
 			opt_coup_button_visible = { NOT = { tag = ROOT } }
 			opt_economic_exploitation_button_visible = { NOT = { tag = ROOT } }
 			opt_make_puppet_button_visible = { NOT = { tag = ROOT } }
+			opt_military_supply_button_visible = { 
+				NOT = { tag = ROOT }
+				PREV = { has_country_flag = military_supply_target }
+			}
 		}
 
 		effects = {
@@ -291,6 +311,19 @@ scripted_gui = {
 				ROOT = { #Uses the same as Economic AID to ensure the root is correct
 					PREV = {
 						country_event = { id = influence.50 }
+						ROOT = {
+							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
+						}
+					}
+				}
+			}
+
+			# Send Military Supply
+			# Weapons that are sent to overthrow a nation
+			opt_military_supply_button_click = {
+				ROOT = { # Player Nation
+					PREV = {
+						country_event = { id = influence.55 }
 						ROOT = {
 							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
 						}

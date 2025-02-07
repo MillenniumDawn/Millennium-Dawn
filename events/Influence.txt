@@ -2309,3 +2309,108 @@ country_event = {
 		clear_variable = nations_influenced
 	}
 }
+
+##Military Aid - NONAI Master Event
+country_event = {
+	id = influence.55
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event influence.55"
+		FROM = {
+			country_event = { id = influence.56 } #Choose how to ship equipment
+		}
+	}
+	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
+	desc = "Why you be triggering my events?"
+	hidden = yes
+	is_triggered_only = yes
+}
+
+#Send Military Supply to [THIS.GetName]
+country_event = {
+	id = influence.56
+	title = influence.56.t
+	desc = influence.56.d
+	picture = GFX_handgun
+	is_triggered_only = yes
+
+	#Send a Shipment around on Target size power etc
+	option = {
+		name = influence.56.a
+		log = "[GetDateText]: [This.GetName]: influence.56.a executed"
+		trigger = {
+			PREV = { has_equipment = { Inf_equipment > 250 } }
+		}
+		custom_effect_tooltip = influence.56.a_tt
+		#MASTER COST VAR
+		set_temp_variable = { amount_in_shipping = 250 }
+		#HAMAS Cost setting
+		set_temp_variable = { hamas_arms_temp_var = PAL.party_pop_array^12 }
+		multiply_temp_variable = { hamas_arms_temp_var = amount_in_shipping }
+		multiply_temp_variable = { hamas_arms_temp_var = -1 }
+		#THIS IS FOR AT & ATT COST
+		subtract_from_temp_variable = { hamas_arms_temp_var = 10 }
+		PREV = {
+			add_equipment_to_stockpile = {
+				amount = hamas_arms_temp_var
+				type = Inf_equipment
+				producer = PREV
+			}
+		}
+		FROM = {
+			set_temp_variable = { hamas_arms_temp_var = PAL.party_pop_array^12 }
+			multiply_temp_variable = { hamas_arms_temp_var = amount_in_shipping }
+			#Toll on travel
+			if = {
+				limit = { 
+					any_neighbor_country = {
+						NOT = {
+							OR = {
+								emerging_hardline_shiite_are_in_power = yes
+								emerging_moderate_shiite_are_in_power = yes
+							}
+						}
+					}
+				}
+				divide_temp_variable  = { hamas_arms_temp_var = 1.5 }
+			}
+			#NEED TO SET THESE TO HARD VARIBLE
+			add_equipment_to_stockpile = {
+				amount = hamas_arms_temp_var
+				type = Inf_equipment
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				amount = 2
+				type = L_AT_Equipment
+				producer = PREV
+			}
+			add_equipment_to_stockpile = {
+				amount = 2
+				type = AA_Equipment
+				producer = PREV
+			}
+			set_temp_variable = { hamas_arms_temp_var = PAL.party_pop_array^12 }
+			multiply_temp_variable = { hamas_arms_temp_var = 3 }
+			set_temp_variable = { percent_change = hamas_arms_temp_var }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#Maybe its better not
+	option = {
+		name = influence.56.b
+		log = "[GetDateText]: [This.GetName]: influence.56.b executed"
+
+		custom_effect_tooltip = influence.51.b_tt
+		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
+		ai_chance = {
+			factor = 0
+		}
+	}
+}
