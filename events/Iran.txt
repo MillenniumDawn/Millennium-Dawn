@@ -13,1111 +13,11 @@ add_namespace = PER_election_events
 add_namespace = PER_revolution
 add_namespace = PER_rev_flavor
 add_namespace = PER_political
-add_namespace = PER_majlis
 add_namespace = PER_civilwar
+# New namespaces or ones to be kept, the above may be deleted or moved
+add_namespace = PER_majlis
 add_namespace = nuclear_iran
-
-country_event = {
-	id = nuclear_iran.1
-	title = nuclear_iran.1.t
-	desc = nuclear_iran.1.d
-
-	is_triggered_only = yes
-	# Russia
-	option = {
-		name = nuclear_iran.1.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.1.a executed"
-		trigger = {
-			NOT = {
-				has_war_with = SOV
-			}
-		}
-		SOV = {
-			country_event = {
-				id = nuclear_iran.2
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-	# North Korea
-	option = {
-		name = nuclear_iran.1.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.1.b executed"
-		trigger = {
-			NOT = {
-				has_war_with = NKO
-			}
-		}
-		NKO = {
-			country_event = {
-				id = nuclear_iran.2
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 2.5
-		}
-	}
-}
-
-# Iran Asks Us for Help
-country_event = {
-	id = nuclear_iran.2
-	title = nuclear_iran.2.t
-	desc = nuclear_iran.2.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.2.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.2.a executed"
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = ROOT }
-		set_temp_variable = { influence_target = PER }
-		change_influence_percentage = yes
-		if = {
-			limit = {
-				ROOT = {
-					original_tag = NKO
-				}
-			}
-			custom_effect_tooltip = PER_missile_nko_TT
-			PER = {
-				country_event = {
-					id = nuclear_iran.3
-					days = 1
-				}
-			}
-		}
-		if = {
-			limit = {
-				ROOT = {
-					original_tag = SOV
-				}
-			}
-			custom_effect_tooltip = PER_missile_sov_TT
-			PER = {
-				country_event = {
-					id = nuclear_iran.4
-					days = 1
-				}
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-	# No
-	option = {
-		name = nuclear_iran.2.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.2.b executed"
-		if = {
-			limit = {
-				ROOT = {
-					original_tag = SOV
-				}
-			}
-			PER = {
-				set_country_flag = SOV_rejected_PER
-			}
-		}
-		if = {
-			limit = {
-				ROOT = {
-					original_tag = NKO
-				}
-			}
-			PER = {
-				set_country_flag = NKO_rejected_PER
-			}
-		}
-		PER = {
-			country_event = {
-				id = nuclear_iran.5
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-# North Korea Provides Missile Technology
-country_event = {
-	id = nuclear_iran.3
-	title = nuclear_iran.3.t
-	desc = nuclear_iran.3.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.3.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.3.a executed"
-		if = {
-			limit = {
-				has_tech = ICBM3
-			}
-			set_technology = { ICBM4 = 1 }
-		}
-		else = {
-			PER = {
-				set_technology = { ICBM3 = 1 }
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# Russia Provides Nuclear Technology
-country_event = {
-	id = nuclear_iran.4
-	title = nuclear_iran.4.t
-	desc = nuclear_iran.4.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.4.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.4.a executed"
-		if = {
-			limit = {
-				has_tech = reactor3
-			}
-			set_technology = { reactor4 = 1 }
-		}
-		else = {
-			PER = {
-				set_technology = { reactor3 = 1 }
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# FROM Denies Assistance
-country_event = {
-	id = nuclear_iran.5
-	title = nuclear_iran.5.t
-	desc = nuclear_iran.5.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.5.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.5.a executed"
-		if = {
-			limit = {
-				has_country_flag = NKO_rejected_PER
-			}
-			complete_national_focus = PER_mastering_the_atom
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# Iran Asks Us For Missiles
-
-country_event = {
-	id = nuclear_iran.6
-	title = nuclear_iran.6.t
-	desc = nuclear_iran.6.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.6.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.6.a executed"
-		if = {
-			limit = {
-				has_dlc = "Gotterdammerung"
-			}
-			send_equipment = {
-				type = guided_missile_equipment_1
-				amount = 400
-				target = PER
-			}
-		}
-		else = {
-			send_equipment = {
-				type = ballistic_missile_equipment
-				amount = 400
-				target = PER
-			}
-		}
-		effect_tooltip = {
-			PER = {
-				set_temp_variable = { treasury_change = -47.00 }
-				modify_treasury_effect = yes
-			}
-			SOV = {
-				set_temp_variable = { treasury_change = 47.00 }
-				modify_treasury_effect = yes
-			}
-			set_temp_variable = { percent_change = 4 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = PER }
-			change_influence_percentage = yes
-		}
-		PER = {
-			country_event = {
-				id = nuclear_iran.7
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-	# No
-	option = {
-		name = nuclear_iran.6.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.6.b executed"
-		PER = {
-			country_event = {
-				id = nuclear_iran.8
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-# Russia Sells it's Missiles
-country_event = {
-	id = nuclear_iran.7
-	title = nuclear_iran.7.t
-	desc = nuclear_iran.7.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.7.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.7.a executed"
-		effect_tooltip = {
-			SOV = {
-				if = {
-					limit = {
-						has_dlc = "Gotterdammerung"
-					}
-					send_equipment = {
-						type = guided_missile_equipment_1
-						amount = 400
-						target = PER
-					}
-				}
-				else = {
-					send_equipment = {
-						type = ballistic_missile_equipment
-						amount = 400
-						target = PER
-					}
-				}
-			}
-		}
-		PER = {
-			set_temp_variable = { treasury_change = -47.00 }
-			modify_treasury_effect = yes
-		}
-		SOV = {
-			set_temp_variable = { treasury_change = 47.00 }
-			modify_treasury_effect = yes
-		}
-		set_temp_variable = { percent_change = 4 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = PER }
-		change_influence_percentage = yes
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# Russia Refuses to Sell Missiles
-country_event = {
-	id = nuclear_iran.8
-	title = nuclear_iran.8.t
-	desc = nuclear_iran.8.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.8.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.8.a executed"
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-country_event = {
-	id = nuclear_iran.9
-	title = nuclear_iran.9.t
-	desc = nuclear_iran.9.d
-
-	is_triggered_only = yes
-	# Okay
-	option = {
-		name = nuclear_iran.9.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.9.a executed"
-		if = {
-			limit = {
-				has_dlc = "Gotterdammerung"
-			}
-			add_equipment_to_stockpile = {
-				type = nuclear_missile_equipment_3
-				amount = 15
-				producer = SOV
-			}
-		}
-		else = {
-			add_equipment_to_stockpile = {
-				type = ballistic_missile_equipment
-				amount = 100
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# Iran Asks for SHORAD Systems
-country_event = {
-	id = nuclear_iran.10
-	title = nuclear_iran.10.t
-	desc = nuclear_iran.10.d
-
-	is_triggered_only = yes
-
-	# Okay
-	option = {
-		name = nuclear_iran.10.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.10.a executed"
-		effect_tooltip = {
-			1146 = {
-				add_building_construction = {
-					type = anti_air_building
-					level = 1
-				}
-			}
-			newline = yes
-			406 = {
-				add_building_construction = {
-					type = anti_air_building
-					level = 1
-				}
-			}
-			newline = yes
-			400 = {
-				add_building_construction = {
-					type = anti_air_building
-					level = 1
-				}
-			}
-			newline = yes
-			978 = {
-				add_building_construction = {
-					type = anti_air_building
-					level = 1
-				}
-			}
-			newline = yes
-			401 = {
-				add_building_construction = {
-					type = anti_air_building
-					level = 1
-				}
-			}
-		}
-		set_temp_variable = { treasury_change = -16.25 }
-		modify_treasury_effect = yes
-		set_temp_variable = { percent_change = 5 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = PER }
-		change_influence_percentage = yes
-		PER = {
-			country_event = {
-				id = nuclear_iran.11
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	# No
-	option = {
-		name = nuclear_iran.10.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.10.a executed"
-		PER = {
-			country_event = {
-				id = nuclear_iran.12
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-
-# Russia Accepts
-country_event = {
-	id = nuclear_iran.11
-	title = nuclear_iran.11.t
-	desc = nuclear_iran.11.d
-
-	is_triggered_only = yes
-
-	# Okay
-	option = {
-		name = nuclear_iran.11.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.11.a executed"
-		1146 = {
-			add_building_construction = {
-				type = anti_air_building
-				level = 1
-			}
-		}
-		newline = yes
-		406 = {
-			add_building_construction = {
-				type = anti_air_building
-				level = 1
-			}
-		}
-		newline = yes
-		400 = {
-			add_building_construction = {
-				type = anti_air_building
-				level = 1
-			}
-		}
-		newline = yes
-		978 = {
-			add_building_construction = {
-				type = anti_air_building
-				level = 1
-			}
-		}
-		newline = yes
-		401 = {
-			add_building_construction = {
-				type = anti_air_building
-				level = 1
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-# Russia Rejects
-country_event = {
-	id = nuclear_iran.12
-	title = nuclear_iran.12.t
-	desc = nuclear_iran.12.d
-
-	is_triggered_only = yes
-
-	# Okay
-	option = {
-		name = nuclear_iran.12.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.12.a executed"
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# Grand Bargain (JCPOA Path)
-country_event = {
-	id = nuclear_iran.13
-	title = nuclear_iran.13.t
-	desc = nuclear_iran.13.d
-
-	is_triggered_only = yes
-
-	# Negotiate for Monetary Benefits
-	option = {
-		name = nuclear_iran.13.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.13.a executed"
-		activate_mission = PER_nuclear_disarming
-		405 = {
-			add_building_construction = {
-				type = offices
-				level = 1
-			}
-		}
-		newline = yes
-		400 = {
-			add_building_construction = {
-				type = offices
-				level = 1
-			}
-		}
-		newline = yes
-		402 = {
-			add_building_construction = {
-				type = agriculture_district
-				level = 1
-			}
-		}
-		newline = yes
-		407 = {
-			add_building_construction = {
-				type = agriculture_district
-				level = 1
-			}
-		}
-		newline = yes
-		401 = {
-			add_building_construction = {
-				type = agriculture_district
-				level = 1
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-	# Negotiate for Industrial Benefits
-	option = {
-		name = nuclear_iran.13.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.13.b executed"
-		activate_mission = PER_nuclear_disarming
-		405 = {
-			add_building_construction = {
-				type = industrial_complex
-				level = 1
-			}
-		}
-		newline = yes
-		400 = {
-			add_building_construction = {
-				type = industrial_complex
-				level = 1
-			}
-		}
-		newline = yes
-		1146 = {
-			add_building_construction = {
-				type = dockyard
-				level = 1
-			}
-		}
-		newline = yes
-		401 = {
-			add_building_construction = {
-				type = dockyard
-				level = 1
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-	# Negotiate for Energy Benefits
-	option = {
-		name = nuclear_iran.13.c
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.13.c executed"
-		activate_mission = PER_nuclear_disarming
-		405 = {
-			add_building_construction = {
-				type = nuclear_reactor
-				level = 1
-			}
-		}
-		newline = yes
-		400 = {
-			add_building_construction = {
-				type = nuclear_reactor
-				level = 1
-			}
-		}
-		newline = yes
-		1146 = {
-			add_building_construction = {
-				type = fossil_powerplant
-				level = 2
-			}
-		}
-		newline = yes
-		406 = {
-			add_building_construction = {
-				type = fossil_powerplant
-				level = 1
-			}
-		}
-		newline = yes
-		1039 = {
-			add_building_construction = {
-				type = dockyard
-				level = 1
-			}
-		}
-		newline = yes
-		1151 = {
-			add_building_construction = {
-				type = dockyard
-				level = 1
-			}
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# Iran Reveals Nuclear Capabilities (JCPOA Path)
-country_event = {
-	id = nuclear_iran.14
-	title = nuclear_iran.14.t
-	desc = nuclear_iran.14.d
-
-	is_triggered_only = yes
-
-	# Offer negotiations
-	option = {
-		name = nuclear_iran.14.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.14.a executed"
-		PER = {
-			country_event = {
-				id = nuclear_iran.13
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 1
-			modifier = {
-				add = 50
-				has_opinion = {
-					target = PER
-					value > 4
-				}
-			}
-		}
-	}
-	# Demand the destruction of all nuclear weapons
-	option = {
-		name = nuclear_iran.14.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.14.b executed"
-		PER = {
-			country_event = {
-				id = nuclear_iran.15
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 1
-			modifier = {
-				add = 50
-				USA = {
-					western_conservatism_are_in_power = yes
-				}
-			}
-		}
-	}
-}
-# US Gives its own offer
-country_event = {
-	id = nuclear_iran.15
-	title = nuclear_iran.15.t
-	desc = nuclear_iran.15.d
-
-	is_triggered_only = yes
-	# Ok
-	option = {
-		name = nuclear_iran.15.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.15.a executed"
-		activate_mission = PER_nuclear_disarming
-		USA = {
-			country_event = {
-				id = nuclear_iran.16
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-	# No
-	option = {
-		name = nuclear_iran.15.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.15.b executed"
-		set_country_flag = PER_nuclear_known
-		set_country_flag = PER_sanctioned
-		clr_country_flag = PER_nuclear_negotiations
-		USA = {
-			country_event = {
-				id = nuclear_iran.17
-				days = 1
-			}
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-# Iran accepts our offer
-country_event = {
-	id = nuclear_iran.16
-	title = nuclear_iran.16.t
-	desc = nuclear_iran.16.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = nuclear_iran.16.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.16.a executed"
-
-		ai_chance = {
-			base = 1
-		}
-	}
-}
-# Iran refuses our offer
-country_event = {
-	id = nuclear_iran.17
-	title = nuclear_iran.17.t
-	desc = nuclear_iran.17.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = nuclear_iran.17.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.17.a executed"
-		send_embargo = PER
-		every_country = {
-			limit = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-					original_tag = ISR
-					original_tag = SAU
-					original_tag = UAE
-					original_tag = KUW
-				}
-			}
-			country_event = {
-				id = nuclear_iran.18
-				days = 2
-			}
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-
-	option = {
-		name = nuclear_iran.17.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.17.b executed"
-		every_country = {
-			limit = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-					original_tag = ISR
-					original_tag = SAU
-					original_tag = UAE
-					original_tag = KUW
-				}
-			}
-			country_event = {
-				id = nuclear_iran.18
-				days = 2
-			}
-		}
-		ai_chance = {
-			base = 1
-		}
-	}
-
-	option = {
-		name = nuclear_iran.17.c
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.17.c executed"
-
-		ai_chance = {
-			base = 0
-		}
-	}
-}
-# US Calls for Sanctions on Iran
-country_event = {
-	id = nuclear_iran.18
-	title = nuclear_iran.18.t
-	desc = nuclear_iran.18.d
-	is_triggered_only = yes
-	trigger = {
-		country_exists = USA
-	}
-	# Ok
-	option = {
-		name = nuclear_iran.18.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.18.a executed"
-		send_embargo = PER
-		add_opinion_modifier = {
-			target = PER
-			modifier = sanctioned_iran
-		}
-		PER = {
-			country_event = nuclear_iran.19
-		}
-		PER = {
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = sanctioned_us
-			}
-		}
-		ai_chance = {
-			base = 5
-			modifier = {
-				add = 100
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-					has_government = fascism
-					original_tag = ISR
-					original_tag = SAU
-					original_tag = UAE
-					original_tag = KUW
-					NOT = {
-						original_tag = RAJ
-						original_tag = SWI
-						original_tag = AUS
-						original_tag = TAJ
-						original_tag = AFG
-						original_tag = CHI
-						original_tag = SOV
-						original_tag = KOR
-						original_tag = PAL
-						original_tag = SYR
-						original_tag = HUN
-						original_tag = TRK
-						original_tag = UZB
-						original_tag = ARM
-						is_in_africa = yes
-					}
-				}
-			}
-		}
-	}
-	# No
-	option = {
-		name = nuclear_iran.18.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.18.b executed"
-
-		ai_chance = {
-			base = 5
-			modifier = {
-				add = 100
-				OR = {
-					has_government = nationalist
-					has_government = communism
-					original_tag = RAJ
-					original_tag = SWI
-					original_tag = AUS
-					original_tag = TAJ
-					original_tag = AFG
-					original_tag = CHI
-					original_tag = SOV
-					original_tag = KOR
-					original_tag = PAL
-					original_tag = SYR
-					original_tag = HUN
-					original_tag = TRK
-					original_tag = UZB
-					original_tag = ARM
-					is_in_africa = yes
-				}
-			}
-		}
-	}
-}
-
-# International Sanctions!
-country_event = {
-	id = nuclear_iran.19
-	title = nuclear_iran.19.t
-	desc = nuclear_iran.19.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	# Ok
-	option = {
-		name = nuclear_iran.19.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.19.a executed"
-		set_country_flag = PER_sanctioned
-		set_country_flag = PER_nuclear_known
-		clr_country_flag = PER_nuclear_negotiations
-		if = {
-			limit = {
-				NOT = {
-					has_completed_focus = PER_silent_steps
-				}
-			}
-			complete_national_focus = PER_silent_steps
-		}
-		swap_ideas = {
-			remove_idea = PER_us_sanctions
-			add_idea = PER_us_sanctions_harshened
-		}
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-
-country_event = {
-	id = nuclear_iran.20
-	title = nuclear_iran.20.t
-	desc = nuclear_iran.20.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	# Demand the Dismantlement of all Iranian Nuclear Weapons!
-	option = {
-		name = nuclear_iran.20.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.20.a executed"
-		every_country = {
-			limit = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-					original_tag = ISR
-					original_tag = SAU
-					original_tag = UAE
-					original_tag = KUW
-				}
-			}
-			country_event = {
-				id = nuclear_iran.18
-				days = 2
-			}
-		}
-		PER = {
-			country_event = {
-				id = nuclear_iran.21
-			}
-		}
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-
-# United States Demands Nuclear Disarming
-country_event = {
-	id = nuclear_iran.21
-	title = nuclear_iran.21.t
-	desc = nuclear_iran.21.d
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	option = {
-		name = nuclear_iran.21.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.21.a executed"
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-# Iran Offers Cheap Oil
-country_event = {
-	id = nuclear_iran.22
-	title = nuclear_iran.22.t
-	desc = nuclear_iran.22.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	# Okay
-	option = {
-		name = nuclear_iran.22.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.22.a executed"
-		create_import = {
-			resource = oil
-			amount = 19
-			exporter = PER
-		}
-		set_temp_variable = { percent_change = 3 }
-		set_temp_variable = { tag_index = CHI }
-		set_temp_variable = { influence_target = PER }
-		change_influence_percentage = yes
-		PER = {
-			country_event = nuclear_iran.23
-		}
-		ai_chance = {
-			base = 5
-		}
-	}
-	# No
-	option = {
-		name = nuclear_iran.22.b
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.22.b executed"
-		PER = {
-			country_event = nuclear_iran.24
-		}
-		ai_chance = {
-			base = 0
-		}
-	}
-}
-
-country_event = {
-	id = nuclear_iran.23
-	title = nuclear_iran.23.t
-	desc = nuclear_iran.23.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	# Okay
-	option = {
-		name = nuclear_iran.23.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.23.a executed"
-		effect_tooltip = {
-			CHI = {
-				create_import = {
-					resource = oil
-					amount = 19
-					exporter = PER
-				}
-			}
-		}
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-
-country_event = {
-	id = nuclear_iran.24
-	title = nuclear_iran.24.t
-	desc = nuclear_iran.24.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	# Okay
-	option = {
-		name = nuclear_iran.24.a
-		log = "[GetDateText]: [This.GetName]: nuclear_iran.24.a executed"
-
-		ai_chance = {
-			base = 5
-		}
-	}
-}
-
-
-
-
-
+add_namespace = iranian_focus
 
 country_event = {
 	id = iran_md.1 # Flag change (alt hist)
@@ -21638,6 +20538,1233 @@ country_event = {
 			}
 			60 = { }
 		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# New Events
+
+# Nuclear Events
+country_event = {
+	id = nuclear_iran.1
+	title = nuclear_iran.1.t
+	desc = nuclear_iran.1.d
+
+	is_triggered_only = yes
+	# Russia
+	option = {
+		name = nuclear_iran.1.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.1.a executed"
+		trigger = {
+			NOT = {
+				has_war_with = SOV
+			}
+		}
+		SOV = {
+			country_event = {
+				id = nuclear_iran.2
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	# North Korea
+	option = {
+		name = nuclear_iran.1.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.1.b executed"
+		trigger = {
+			NOT = {
+				has_war_with = NKO
+			}
+		}
+		NKO = {
+			country_event = {
+				id = nuclear_iran.2
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 2.5
+		}
+	}
+}
+
+# Iran Asks Us for Help
+country_event = {
+	id = nuclear_iran.2
+	title = nuclear_iran.2.t
+	desc = nuclear_iran.2.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.2.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.2.a executed"
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = ROOT }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
+		if = {
+			limit = {
+				ROOT = {
+					original_tag = NKO
+				}
+			}
+			custom_effect_tooltip = PER_missile_nko_TT
+			PER = {
+				country_event = {
+					id = nuclear_iran.3
+					days = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				ROOT = {
+					original_tag = SOV
+				}
+			}
+			custom_effect_tooltip = PER_missile_sov_TT
+			PER = {
+				country_event = {
+					id = nuclear_iran.4
+					days = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	# No
+	option = {
+		name = nuclear_iran.2.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.2.b executed"
+		if = {
+			limit = {
+				ROOT = {
+					original_tag = SOV
+				}
+			}
+			PER = {
+				set_country_flag = SOV_rejected_PER
+			}
+		}
+		if = {
+			limit = {
+				ROOT = {
+					original_tag = NKO
+				}
+			}
+			PER = {
+				set_country_flag = NKO_rejected_PER
+			}
+		}
+		PER = {
+			country_event = {
+				id = nuclear_iran.5
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+# North Korea Provides Missile Technology
+country_event = {
+	id = nuclear_iran.3
+	title = nuclear_iran.3.t
+	desc = nuclear_iran.3.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.3.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.3.a executed"
+		if = {
+			limit = {
+				has_tech = ICBM3
+			}
+			set_technology = { ICBM4 = 1 }
+		}
+		else = {
+			PER = {
+				set_technology = { ICBM3 = 1 }
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Russia Provides Nuclear Technology
+country_event = {
+	id = nuclear_iran.4
+	title = nuclear_iran.4.t
+	desc = nuclear_iran.4.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.4.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.4.a executed"
+		if = {
+			limit = {
+				has_tech = reactor3
+			}
+			set_technology = { reactor4 = 1 }
+		}
+		else = {
+			PER = {
+				set_technology = { reactor3 = 1 }
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# FROM Denies Assistance
+country_event = {
+	id = nuclear_iran.5
+	title = nuclear_iran.5.t
+	desc = nuclear_iran.5.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.5.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.5.a executed"
+		if = {
+			limit = {
+				has_country_flag = NKO_rejected_PER
+			}
+			complete_national_focus = PER_mastering_the_atom
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Iran Asks Us For Missiles
+
+country_event = {
+	id = nuclear_iran.6
+	title = nuclear_iran.6.t
+	desc = nuclear_iran.6.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.6.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.6.a executed"
+		if = {
+			limit = {
+				has_dlc = "Gotterdammerung"
+			}
+			send_equipment = {
+				type = guided_missile_equipment_1
+				amount = 400
+				target = PER
+			}
+		}
+		else = {
+			send_equipment = {
+				type = ballistic_missile_equipment
+				amount = 400
+				target = PER
+			}
+		}
+		effect_tooltip = {
+			PER = {
+				set_temp_variable = { treasury_change = -47.00 }
+				modify_treasury_effect = yes
+			}
+			SOV = {
+				set_temp_variable = { treasury_change = 47.00 }
+				modify_treasury_effect = yes
+			}
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = PER }
+			change_influence_percentage = yes
+		}
+		PER = {
+			country_event = {
+				id = nuclear_iran.7
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	# No
+	option = {
+		name = nuclear_iran.6.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.6.b executed"
+		PER = {
+			country_event = {
+				id = nuclear_iran.8
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Russia Sells it's Missiles
+country_event = {
+	id = nuclear_iran.7
+	title = nuclear_iran.7.t
+	desc = nuclear_iran.7.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.7.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.7.a executed"
+		effect_tooltip = {
+			SOV = {
+				if = {
+					limit = {
+						has_dlc = "Gotterdammerung"
+					}
+					send_equipment = {
+						type = guided_missile_equipment_1
+						amount = 400
+						target = PER
+					}
+				}
+				else = {
+					send_equipment = {
+						type = ballistic_missile_equipment
+						amount = 400
+						target = PER
+					}
+				}
+			}
+		}
+		PER = {
+			set_temp_variable = { treasury_change = -47.00 }
+			modify_treasury_effect = yes
+		}
+		SOV = {
+			set_temp_variable = { treasury_change = 47.00 }
+			modify_treasury_effect = yes
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Russia Refuses to Sell Missiles
+country_event = {
+	id = nuclear_iran.8
+	title = nuclear_iran.8.t
+	desc = nuclear_iran.8.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.8.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.8.a executed"
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+country_event = {
+	id = nuclear_iran.9
+	title = nuclear_iran.9.t
+	desc = nuclear_iran.9.d
+
+	is_triggered_only = yes
+	# Okay
+	option = {
+		name = nuclear_iran.9.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.9.a executed"
+		if = {
+			limit = {
+				has_dlc = "Gotterdammerung"
+			}
+			add_equipment_to_stockpile = {
+				type = nuclear_missile_equipment_3
+				amount = 15
+				producer = SOV
+			}
+		}
+		else = {
+			add_equipment_to_stockpile = {
+				type = ballistic_missile_equipment
+				amount = 100
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Iran Asks for SHORAD Systems
+country_event = {
+	id = nuclear_iran.10
+	title = nuclear_iran.10.t
+	desc = nuclear_iran.10.d
+
+	is_triggered_only = yes
+
+	# Okay
+	option = {
+		name = nuclear_iran.10.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.10.a executed"
+		effect_tooltip = {
+			1146 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+				}
+			}
+			newline = yes
+			406 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+				}
+			}
+			newline = yes
+			400 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+				}
+			}
+			newline = yes
+			978 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+				}
+			}
+			newline = yes
+			401 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+				}
+			}
+		}
+		set_temp_variable = { treasury_change = -16.25 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
+		PER = {
+			country_event = {
+				id = nuclear_iran.11
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# No
+	option = {
+		name = nuclear_iran.10.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.10.a executed"
+		PER = {
+			country_event = {
+				id = nuclear_iran.12
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Russia Accepts
+country_event = {
+	id = nuclear_iran.11
+	title = nuclear_iran.11.t
+	desc = nuclear_iran.11.d
+
+	is_triggered_only = yes
+
+	# Okay
+	option = {
+		name = nuclear_iran.11.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.11.a executed"
+		1146 = {
+			add_building_construction = {
+				type = anti_air_building
+				level = 1
+			}
+		}
+		newline = yes
+		406 = {
+			add_building_construction = {
+				type = anti_air_building
+				level = 1
+			}
+		}
+		newline = yes
+		400 = {
+			add_building_construction = {
+				type = anti_air_building
+				level = 1
+			}
+		}
+		newline = yes
+		978 = {
+			add_building_construction = {
+				type = anti_air_building
+				level = 1
+			}
+		}
+		newline = yes
+		401 = {
+			add_building_construction = {
+				type = anti_air_building
+				level = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+# Russia Rejects
+country_event = {
+	id = nuclear_iran.12
+	title = nuclear_iran.12.t
+	desc = nuclear_iran.12.d
+
+	is_triggered_only = yes
+
+	# Okay
+	option = {
+		name = nuclear_iran.12.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.12.a executed"
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Grand Bargain (JCPOA Path)
+country_event = {
+	id = nuclear_iran.13
+	title = nuclear_iran.13.t
+	desc = nuclear_iran.13.d
+
+	is_triggered_only = yes
+
+	# Negotiate for Monetary Benefits
+	option = {
+		name = nuclear_iran.13.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.13.a executed"
+		activate_mission = PER_nuclear_disarming
+		405 = {
+			add_building_construction = {
+				type = offices
+				level = 1
+			}
+		}
+		newline = yes
+		400 = {
+			add_building_construction = {
+				type = offices
+				level = 1
+			}
+		}
+		newline = yes
+		402 = {
+			add_building_construction = {
+				type = agriculture_district
+				level = 1
+			}
+		}
+		newline = yes
+		407 = {
+			add_building_construction = {
+				type = agriculture_district
+				level = 1
+			}
+		}
+		newline = yes
+		401 = {
+			add_building_construction = {
+				type = agriculture_district
+				level = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	# Negotiate for Industrial Benefits
+	option = {
+		name = nuclear_iran.13.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.13.b executed"
+		activate_mission = PER_nuclear_disarming
+		405 = {
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+			}
+		}
+		newline = yes
+		400 = {
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+			}
+		}
+		newline = yes
+		1146 = {
+			add_building_construction = {
+				type = dockyard
+				level = 1
+			}
+		}
+		newline = yes
+		401 = {
+			add_building_construction = {
+				type = dockyard
+				level = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	# Negotiate for Energy Benefits
+	option = {
+		name = nuclear_iran.13.c
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.13.c executed"
+		activate_mission = PER_nuclear_disarming
+		405 = {
+			add_building_construction = {
+				type = nuclear_reactor
+				level = 1
+			}
+		}
+		newline = yes
+		400 = {
+			add_building_construction = {
+				type = nuclear_reactor
+				level = 1
+			}
+		}
+		newline = yes
+		1146 = {
+			add_building_construction = {
+				type = fossil_powerplant
+				level = 2
+			}
+		}
+		newline = yes
+		406 = {
+			add_building_construction = {
+				type = fossil_powerplant
+				level = 1
+			}
+		}
+		newline = yes
+		1039 = {
+			add_building_construction = {
+				type = dockyard
+				level = 1
+			}
+		}
+		newline = yes
+		1151 = {
+			add_building_construction = {
+				type = dockyard
+				level = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Iran Reveals Nuclear Capabilities (JCPOA Path)
+country_event = {
+	id = nuclear_iran.14
+	title = nuclear_iran.14.t
+	desc = nuclear_iran.14.d
+
+	is_triggered_only = yes
+
+	# Offer negotiations
+	option = {
+		name = nuclear_iran.14.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.14.a executed"
+		PER = {
+			country_event = {
+				id = nuclear_iran.13
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 50
+				has_opinion = {
+					target = PER
+					value > 4
+				}
+			}
+		}
+	}
+	# Demand the destruction of all nuclear weapons
+	option = {
+		name = nuclear_iran.14.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.14.b executed"
+		PER = {
+			country_event = {
+				id = nuclear_iran.15
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 50
+				USA = {
+					western_conservatism_are_in_power = yes
+				}
+			}
+		}
+	}
+}
+# US Gives its own offer
+country_event = {
+	id = nuclear_iran.15
+	title = nuclear_iran.15.t
+	desc = nuclear_iran.15.d
+
+	is_triggered_only = yes
+	# Ok
+	option = {
+		name = nuclear_iran.15.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.15.a executed"
+		activate_mission = PER_nuclear_disarming
+		USA = {
+			country_event = {
+				id = nuclear_iran.16
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No
+	option = {
+		name = nuclear_iran.15.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.15.b executed"
+		set_country_flag = PER_nuclear_known
+		set_country_flag = PER_sanctioned
+		clr_country_flag = PER_nuclear_negotiations
+		USA = {
+			country_event = {
+				id = nuclear_iran.17
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+# Iran accepts our offer
+country_event = {
+	id = nuclear_iran.16
+	title = nuclear_iran.16.t
+	desc = nuclear_iran.16.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = nuclear_iran.16.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.16.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+# Iran refuses our offer
+country_event = {
+	id = nuclear_iran.17
+	title = nuclear_iran.17.t
+	desc = nuclear_iran.17.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = nuclear_iran.17.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.17.a executed"
+		send_embargo = PER
+		every_country = {
+			limit = {
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+					original_tag = ISR
+					original_tag = SAU
+					original_tag = UAE
+					original_tag = KUW
+				}
+			}
+			country_event = {
+				id = nuclear_iran.18
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = nuclear_iran.17.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.17.b executed"
+		every_country = {
+			limit = {
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+					original_tag = ISR
+					original_tag = SAU
+					original_tag = UAE
+					original_tag = KUW
+				}
+			}
+			country_event = {
+				id = nuclear_iran.18
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = nuclear_iran.17.c
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.17.c executed"
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+# US Calls for Sanctions on Iran
+country_event = {
+	id = nuclear_iran.18
+	title = nuclear_iran.18.t
+	desc = nuclear_iran.18.d
+	is_triggered_only = yes
+	trigger = {
+		country_exists = USA
+	}
+	# Ok
+	option = {
+		name = nuclear_iran.18.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.18.a executed"
+		send_embargo = PER
+		add_opinion_modifier = {
+			target = PER
+			modifier = sanctioned_iran
+		}
+		PER = {
+			country_event = nuclear_iran.19
+		}
+		PER = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = sanctioned_us
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 100
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+					has_government = fascism
+					original_tag = ISR
+					original_tag = SAU
+					original_tag = UAE
+					original_tag = KUW
+					NOT = {
+						original_tag = RAJ
+						original_tag = SWI
+						original_tag = AUS
+						original_tag = TAJ
+						original_tag = AFG
+						original_tag = CHI
+						original_tag = SOV
+						original_tag = KOR
+						original_tag = PAL
+						original_tag = SYR
+						original_tag = HUN
+						original_tag = TRK
+						original_tag = UZB
+						original_tag = ARM
+						is_in_africa = yes
+					}
+				}
+			}
+		}
+	}
+	# No
+	option = {
+		name = nuclear_iran.18.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.18.b executed"
+
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 100
+				OR = {
+					has_government = nationalist
+					has_government = communism
+					original_tag = RAJ
+					original_tag = SWI
+					original_tag = AUS
+					original_tag = TAJ
+					original_tag = AFG
+					original_tag = CHI
+					original_tag = SOV
+					original_tag = KOR
+					original_tag = PAL
+					original_tag = SYR
+					original_tag = HUN
+					original_tag = TRK
+					original_tag = UZB
+					original_tag = ARM
+					is_in_africa = yes
+				}
+			}
+		}
+	}
+}
+
+# International Sanctions!
+country_event = {
+	id = nuclear_iran.19
+	title = nuclear_iran.19.t
+	desc = nuclear_iran.19.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	# Ok
+	option = {
+		name = nuclear_iran.19.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.19.a executed"
+		set_country_flag = PER_sanctioned
+		set_country_flag = PER_nuclear_known
+		clr_country_flag = PER_nuclear_negotiations
+		if = {
+			limit = {
+				NOT = {
+					has_completed_focus = PER_silent_steps
+				}
+			}
+			complete_national_focus = PER_silent_steps
+		}
+		swap_ideas = {
+			remove_idea = PER_us_sanctions
+			add_idea = PER_us_sanctions_harshened
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = nuclear_iran.20
+	title = nuclear_iran.20.t
+	desc = nuclear_iran.20.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	# Demand the Dismantlement of all Iranian Nuclear Weapons!
+	option = {
+		name = nuclear_iran.20.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.20.a executed"
+		every_country = {
+			limit = {
+				OR = {
+					has_government = democratic
+					has_government = neutrality
+					original_tag = ISR
+					original_tag = SAU
+					original_tag = UAE
+					original_tag = KUW
+				}
+			}
+			country_event = {
+				id = nuclear_iran.18
+				days = 2
+			}
+		}
+		PER = {
+			country_event = {
+				id = nuclear_iran.21
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# United States Demands Nuclear Disarming
+country_event = {
+	id = nuclear_iran.21
+	title = nuclear_iran.21.t
+	desc = nuclear_iran.21.d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = nuclear_iran.21.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.21.a executed"
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+# Iran Offers Cheap Oil
+country_event = {
+	id = nuclear_iran.22
+	title = nuclear_iran.22.t
+	desc = nuclear_iran.22.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	# Okay
+	option = {
+		name = nuclear_iran.22.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.22.a executed"
+		create_import = {
+			resource = oil
+			amount = 19
+			exporter = PER
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
+		PER = {
+			country_event = nuclear_iran.23
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	# No
+	option = {
+		name = nuclear_iran.22.b
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.22.b executed"
+		PER = {
+			country_event = nuclear_iran.24
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = nuclear_iran.23
+	title = nuclear_iran.23.t
+	desc = nuclear_iran.23.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	# Okay
+	option = {
+		name = nuclear_iran.23.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.23.a executed"
+		effect_tooltip = {
+			CHI = {
+				create_import = {
+					resource = oil
+					amount = 19
+					exporter = PER
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = nuclear_iran.24
+	title = nuclear_iran.24.t
+	desc = nuclear_iran.24.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	# Okay
+	option = {
+		name = nuclear_iran.24.a
+		log = "[GetDateText]: [This.GetName]: nuclear_iran.24.a executed"
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# New Events
+
+# IRGC Linked Politicians Invest in Foreign Companies
+country_event = {
+	id = iranian_focus.1
+	title = iranian_focus.1.t
+	desc = iranian_focus.1.d
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.1.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.1.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranian_focus.1.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.1.b executed"
+		set_temp_variable = { PER_corruption_cost_change = -0.03 }
+		update_PER_corruption_cost = yes
+		newline = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Black Gold
+
+country_event = {
+	id = iranian_focus.2
+	title = iranian_focus.2.t
+	desc = iranian_focus.2.d
+	is_triggered_only = yes
+	# Use the oil to build better infrastructure
+	option = {
+		name = iranian_focus.1.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.2.a executed"
+		400 = {
+			add_building_construction = {
+				type = fossil_powerplant
+				level = 1
+			}
+		}
+		newline = yes
+		1146 = {
+			add_building_construction = {
+				type = fossil_powerplant
+				level = 1
+			}
+		}
+		newline = yes
+		978 = {
+			add_building_construction = {
+				type = fossil_powerplant
+				level = 1
+			}
+		}
+		newline = yes
+		set_temp_variable = { treasury_change = -6.75 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Seize the fields and hold them
+	option = {
+		name = iranian_focus.2.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.2.b executed"
+		1146 = {
+			add_resource = {
+				type = oil
+				amount = 10
+			}
+		}
+		set_temp_variable = { treasury_change = -11.54 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Conference in Beijing
+country_event = {
+	id = iranian_focus.3
+	title = iranian_focus.3.t
+	desc = iranian_focus.3.d
+	is_triggered_only = yes
+	# Put Forward Iranian Designs
+	option = {
+		name = iranian_focus.3.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.3.a executed"
+		set_temp_variable = { percent_change = 3 }
+		change_domestic_influence_percentage = yes
+		newline = yes
+		set_temp_variable = { treasury_change = -12.5 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Request More Chinese Designs
+	option = {
+		name = iranian_focus.3.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.3.b executed"
+		add_tech_bonus = {
+			name = nuclear_reactors_research_bonus
+			bonus = 1
+			uses = 2
+			category = CAT_util
+		}
+		newline = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = CHI }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
 		ai_chance = {
 			base = 1
 		}
