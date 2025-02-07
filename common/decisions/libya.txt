@@ -4232,6 +4232,8 @@ libya_gaddafi_family = {
 					set_temp_variable = { rul_party_temp = opposition_party_index }
 					change_ruling_party_effect = yes
 					set_cosmetic_tag = GNA_NTC
+					clr_country_flag = dynamic_flag
+					clr_country_flag = dynamic_rebel_flag
 					set_country_flag = LBA_fall_of_gaddafi
 					set_country_flag = LBA_this_is_libyan_rebels
 					set_country_flag = LBA_democratic_reform
@@ -4284,6 +4286,8 @@ libya_gaddafi_family = {
 					}
 				}
 				set_cosmetic_tag = LBA_GADDAFI_LOYALISTS
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
 				set_country_flag = LBA_this_is_gaddafi
 				add_named_threat = {
 					threat = 5
@@ -4387,6 +4391,8 @@ libya_gaddafi_family = {
 				set_temp_variable = { enable_elections = 1 }
 				change_ruling_party_effect = yes
 				set_cosmetic_tag = GNA_NTC
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
 				set_country_flag = LBA_fall_of_gaddafi
 				set_country_flag = LBA_this_is_libyan_rebels
 				set_country_flag = LBA_democratic_reform
@@ -4396,6 +4402,8 @@ libya_gaddafi_family = {
 					ideology = communism
 					size = opposition_party_popularity
 					set_cosmetic_tag = LBA_GADDAFI_LOYALISTS
+					clr_country_flag = dynamic_flag
+					clr_country_flag = dynamic_rebel_flag
 					set_country_flag = LBA_this_is_gaddafi
 					keep_unit_leaders_trigger = {
 						always = yes
@@ -7082,6 +7090,312 @@ aozou_strip_occupation_decisions = {
 			}
 		}
 
+	}
+
+}
+
+libya_aftermath_of_civil_war = {
+
+	libya_integrate_militias_mission = {
+
+		activation = {
+			has_global_flag = first_libyan_civil_war_over
+			OR = {
+				has_dynamic_modifier = { modifier = LBA_tribal_militias }
+				has_dynamic_modifier = { modifier = LBA_jihadist_militias }
+				has_dynamic_modifier = { modifier = LBA_islamist_militias }
+				has_dynamic_modifier = { modifier = LBA_secularist_militias }
+				has_dynamic_modifier = { modifier = LBA_reformist_militias }
+			}
+		}
+
+		available = {
+			hidden_trigger = {
+				always = no
+			}
+		}
+
+		is_good = yes
+
+		days_mission_timeout = 90
+
+		timeout_effect = {
+			if = {
+				limit = { NOT = { has_country_flag = libya_LNA_formed } }
+				set_country_flag = libya_LNA_formed
+				custom_effect_tooltip = libya_integrate_militias_mission_create_LNA_tt
+			}
+			random_list = {
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_tribal_militias } }
+					}
+					libya_remove_tribal_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_jihadist_militias } }
+					}
+					libya_remove_jihadist_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_islamist_militias } }
+					}
+					libya_remove_islamist_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_secularist_militias } }
+					}
+					libya_remove_secularist_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_reformist_militias } }
+					}
+					libya_remove_reformist_independence = yes
+				}
+			}
+		}
+	}
+
+	libya_attack_ansar_al_sharia_in_benghazi = {
+
+		icon = military_plan
+
+		days_re_enable = 60
+
+		days_remove = 14
+
+		custom_cost_trigger = {
+			command_power > 50
+		}
+
+		custom_cost_text = command_power_more_than_50
+
+		visible = {
+			original_tag = LBA
+			ASL = { owns_state = 395 }
+			NOT = { has_war_with = ASL }
+		}
+
+		available = {
+			NOT = { has_idea = LBA_aftermath_of_the_civil_war }
+			has_border_war = no
+			OR = {
+				AND = {
+					controls_state = 396
+					divisions_in_state = {
+						size > 3
+						state = 396
+					}
+				}
+				AND = {
+					controls_state = 397
+					divisions_in_state = {
+						size > 3
+						state = 397
+					}
+				}
+			}
+			has_manpower > 1000
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_attack_ansar_al_sharia_in_benghazi [FROM.GetName]"
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_attack_ansar_al_sharia_in_benghazi [FROM.GetName]"
+			if = {
+				limit = { controls_state = 396 }
+				start_border_war = {
+   					change_state_after_war = yes
+					attacker = {
+						state = 396
+						num_of_provinces = 2
+						modifier = 0.5
+					}
+					defender = {
+						state = 395
+						num_of_provinces = 3
+					}
+				}
+			}
+			else = {
+				start_border_war = {
+   					change_state_after_war = yes
+					attacker = {
+						state = 397
+						num_of_provinces = 2
+						modifier = 0.5
+					}
+					defender = {
+						state = 395
+						num_of_provinces = 3
+					}
+				}
+			}
+		}
+
+	}
+
+	libya_operation_dignity_mission = {
+
+		activation = {
+			always = no
+		}
+
+		available = {
+			NOT = { country_exists = ASL }
+		}
+
+		cancel_trigger = {
+			has_country_leader = {
+				character = LBA_khalifa_haftar
+				ruling_only = yes
+			}
+		}
+
+		is_good = no
+
+		days_mission_timeout = 1
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout libya_operation_dignity_mission [FROM.GetName]"
+			custom_effect_tooltip = libya_operation_dignity_mission_tooltip
+			if = {
+				limit = { has_dynamic_modifier = { modifier = LBA_secularist_militias } }
+				remove_dynamic_modifier = { modifier = LBA_secularist_militias }
+			}
+			if = {
+				limit = { has_template = "Liwa al-Jaysh" }
+				delete_unit_template_and_units = {
+					division_template = "Liwa al-Jaysh"
+					disband = no
+				}
+			}
+			set_country_flag = LBA_this_is_GNC
+			set_cosmetic_tag = LBA_GENERAL_NATIONAL_CONGRESS
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+
+			start_civil_war = {
+				ruling_party = ROOT
+				ideology = nationalist
+				army_ratio = 0
+				states = all
+				states_filter = {
+					is_owned_by = ROOT
+					OR = {
+						state = 395
+						state = 396
+						state = 397
+						state = 579
+					}
+				}
+
+				set_country_flag = LBA_this_is_LNA
+				set_cosmetic_tag = LBA_LIBYAN_NATIONAL_ARMY
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
+				set_temp_variable = { rul_party_temp = 22 }
+				change_ruling_party_effect = yes
+				if = {
+					limit = { ROOT = { NOT = { has_character = LBA_khalifa_haftar } } }
+					every_possible_country = {
+						limit = { has_character = LBA_khalifa_haftar }
+						random_character = {
+							limit = { is_character = LBA_khalifa_haftar }
+							set_nationality = LNA
+						}
+					}
+				}
+				else = {
+					ROOT = { LBA_khalifa_haftar = { set_nationality = LNA } }
+				}
+				if = {
+					limit = { ROOT = { NOT = { has_character = LBA_abdulrazek_alnadoori } } }
+					every_possible_country = {
+						limit = { has_character = LBA_abdulrazek_alnadoori }
+						random_character = {
+							limit = { is_character = LBA_abdulrazek_alnadoori }
+							set_nationality = LNA
+						}
+					}
+				}
+				else = {
+					ROOT = { LBA_abdulrazek_alnadoori = { set_nationality = LNA } }
+				}
+				if = {
+					limit = { ROOT = { NOT = { has_character = LBA_fawzi_almansouri } } }
+					every_possible_country = {
+						limit = { has_character = LBA_fawzi_almansouri }
+						random_character = {
+							limit = { is_character = LBA_fawzi_almansouri }
+							set_nationality = LNA
+						}
+					}
+				}
+				else = {
+					ROOT = { LBA_fawzi_almansouri = { set_nationality = LNA } }
+				}
+				if = {
+					limit = { ROOT = { NOT = { has_character = LBA_saqr_geroushi } } }
+					every_possible_country = {
+						limit = { has_character = LBA_saqr_geroushi }
+						random_character = {
+							limit = { is_character = LBA_saqr_geroushi }
+							set_nationality = LNA
+						}
+					}
+				}
+				else = {
+					ROOT = { LBA_saqr_geroushi = { set_nationality = LNA } }
+				}
+				if = {
+					limit = { ROOT = { NOT = { has_character = LBA_faraj_al_mahdawi } } }
+					every_possible_country = {
+						limit = { has_character = LBA_faraj_al_mahdawi }
+						random_character = {
+							limit = { is_character = LBA_faraj_al_mahdawi }
+							set_nationality = LNA
+						}
+					}
+				}
+				else = {
+					ROOT = { LBA_faraj_al_mahdawi = { set_nationality = LNA } }
+				}
+
+				if = {
+					limit = { ROOT = { has_completed_focus = LBA_libyan_national_army } }
+					unlock_national_focus = LBA_libyan_national_army
+				}
+				else = {
+					complete_national_focus = LBA_libyan_national_army
+				}
+				complete_national_focus = LBA_call_back_haftar
+			}
+			LNA = {
+				declare_war_on = {
+					target = ASL
+					type = civil_war
+				}
+				add_civil_war_target = ASL
+			}
+			declare_war_on = {
+				target = ASL
+				type = civil_war
+			}
+			add_civil_war_target = ASL
+		}
 	}
 
 }

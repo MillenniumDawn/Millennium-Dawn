@@ -331,6 +331,11 @@ libya_gaddafi_family_modify_instability = {
 }
 
 libya_copy_gaddafi_flags = {
+	#Muammar
+	if = {
+		limit = { FROM = { has_country_flag = muammar_gaddafi_dead } }
+		set_country_flag = muammar_gaddafi_dead
+	}
 	#Muammad Muammar
 	if = {
 		limit = { FROM = { has_country_flag = muhammad_muammar_gaddafi_exile } }
@@ -1400,26 +1405,49 @@ libya_add_tribal_independence = {
 	set_temp_variable = { temp_outlook_increase = 0.02 }
 	add_relative_party_popularity = yes
 	if = {
-		limit = { tag = LRB }
-		if = {
-			limit = { NOT = { has_dynamic_modifier = { modifier = LBA_tribal_militias } } }
-			set_variable = { LBA_tribal_militias_stability_effect = -0.01 }
-			set_variable = { LBA_tribal_militias_political_conscription_factor_effect = -0.01 }
-			set_variable = { LBA_tribal_militias_neutrality_drift_effect = 0.01 }
-			add_dynamic_modifier = { modifier = LBA_tribal_militias }
-			custom_effect_tooltip = libya_add_tribal_independence_1_tt
+		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_tribal_militias } } }
+		set_variable = { LBA_tribal_militias_stability_effect = -0.01 }
+		set_variable = { LBA_tribal_militias_political_conscription_factor_effect = -0.01 }
+		set_variable = { LBA_tribal_militias_neutrality_drift_effect = 0.01 }
+		add_dynamic_modifier = { modifier = LBA_tribal_militias }
+		custom_effect_tooltip = libya_add_tribal_independence_1_tt
+	}
+	else = {
+		set_temp_variable = { LBA_tribal_militias_stability_effect_temp = -0.01 }
+		set_temp_variable = { LBA_tribal_militias_political_conscription_factor_effect_temp = -0.01 }
+		set_temp_variable = { LBA_tribal_militias_neutrality_drift_effect_temp = 0.01 }
+		add_to_variable = { LBA_tribal_militias_stability_effect = LBA_tribal_militias_stability_effect_temp }
+		add_to_variable = { LBA_tribal_militias_political_conscription_factor_effect = LBA_tribal_militias_political_conscription_factor_effect_temp }
+		add_to_variable = { LBA_tribal_militias_neutrality_drift_effect = LBA_tribal_militias_neutrality_drift_effect_temp }
+		custom_effect_tooltip = libya_add_tribal_independence_2_tt
+	}
+	force_update_dynamic_modifier = yes
+}
 
-		}
-		else = {
-			set_temp_variable = { LBA_tribal_militias_stability_effect_temp = -0.01 }
-			set_temp_variable = { LBA_tribal_militias_political_conscription_factor_effect_temp = -0.01 }
-			set_temp_variable = { LBA_tribal_militias_neutrality_drift_effect_temp = 0.01 }
+libya_remove_tribal_independence = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = LBA_tribal_militias } }
+		if = {
+			limit = { check_variable = { LBA_tribal_militias_neutrality_drift_effect > 0.01 } }
+			set_temp_variable = { LBA_tribal_militias_stability_effect_temp = 0.01 }
+			set_temp_variable = { LBA_tribal_militias_political_conscription_factor_effect_temp = 0.01 }
+			set_temp_variable = { LBA_tribal_militias_neutrality_drift_effect_temp = -0.01 }
 			add_to_variable = { LBA_tribal_militias_stability_effect = LBA_tribal_militias_stability_effect_temp }
 			add_to_variable = { LBA_tribal_militias_political_conscription_factor_effect = LBA_tribal_militias_political_conscription_factor_effect_temp }
 			add_to_variable = { LBA_tribal_militias_neutrality_drift_effect = LBA_tribal_militias_neutrality_drift_effect_temp }
 			custom_effect_tooltip = libya_add_tribal_independence_2_tt
+			force_update_dynamic_modifier = yes
 		}
-		force_update_dynamic_modifier = yes
+		else = {
+			remove_dynamic_modifier = { modifier = LBA_tribal_militias }
+			if = {
+				limit = { has_template = "Al-Milishiat Al-Qabalia" }
+				set_division_template_lock = {
+					division_template = "Al-Milishiat Al-Qabalia"
+					is_locked = no
+				}
+			}
+		}
 	}
 }
 
@@ -1429,25 +1457,49 @@ libya_add_jihadist_independence = {
 	set_temp_variable = { temp_outlook_increase = 0.02 }
 	add_relative_party_popularity = yes
 	if = {
-		limit = { tag = LRB }
+		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_jihadist_militias } } }
+		set_variable = { LBA_jihadist_militias_stability_effect = -0.01 }
+		set_variable = { LBA_jihadist_militias_construction_speed_effect = -0.02 }
+		set_variable = { LBA_jihadist_militias_fascism_drift_effect = 0.01 }
+		add_dynamic_modifier = { modifier = LBA_jihadist_militias }
+		custom_effect_tooltip = libya_add_jihadist_independence_1_tt
+	}
+	else = {
+		set_temp_variable = { LBA_jihadist_militias_stability_effect_temp = -0.01 }
+		set_temp_variable = { LBA_jihadist_militias_construction_speed_effect_temp = -0.02 }
+		set_temp_variable = { LBA_jihadist_militias_fascism_drift_effect_temp = 0.01 }
+		add_to_variable = { LBA_jihadist_militias_stability_effect = LBA_jihadist_militias_stability_effect_temp }
+		add_to_variable = { LBA_jihadist_militias_construction_speed_effect = LBA_jihadist_militias_construction_speed_effect_temp }
+		add_to_variable = { LBA_jihadist_militias_fascism_drift_effect = LBA_jihadist_militias_fascism_drift_effect_temp }
+		custom_effect_tooltip = libya_add_jihadist_independence_2_tt
+	}
+	force_update_dynamic_modifier = yes
+}
+
+libya_remove_jihadist_independence = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = LBA_jihadist_militias } }
 		if = {
-			limit = { NOT = { has_dynamic_modifier = { modifier = LBA_jihadist_militias } } }
-			set_variable = { LBA_jihadist_militias_stability_effect = -0.01 }
-			set_variable = { LBA_jihadist_militias_construction_speed_effect = -0.02 }
-			set_variable = { LBA_jihadist_militias_fascism_drift_effect = 0.01 }
-			add_dynamic_modifier = { modifier = LBA_jihadist_militias }
-			custom_effect_tooltip = libya_add_jihadist_independence_1_tt
-		}
-		else = {
-			set_temp_variable = { LBA_jihadist_militias_stability_effect_temp = -0.01 }
-			set_temp_variable = { LBA_jihadist_militias_construction_speed_effect_temp = -0.02 }
-			set_temp_variable = { LBA_jihadist_militias_fascism_drift_effect_temp = 0.01 }
+			limit = { check_variable = { LBA_jihadist_militias_fascism_drift_effect > 0.01 } }
+			set_temp_variable = { LBA_jihadist_militias_stability_effect_temp = 0.01 }
+			set_temp_variable = { LBA_jihadist_militias_construction_speed_effect_temp = 0.02 }
+			set_temp_variable = { LBA_jihadist_militias_fascism_drift_effect_temp = -0.01 }
 			add_to_variable = { LBA_jihadist_militias_stability_effect = LBA_jihadist_militias_stability_effect_temp }
 			add_to_variable = { LBA_jihadist_militias_construction_speed_effect = LBA_jihadist_militias_construction_speed_effect_temp }
 			add_to_variable = { LBA_jihadist_militias_fascism_drift_effect = LBA_jihadist_militias_fascism_drift_effect_temp }
 			custom_effect_tooltip = libya_add_jihadist_independence_2_tt
+			force_update_dynamic_modifier = yes
 		}
-		force_update_dynamic_modifier = yes
+		else = {
+			remove_dynamic_modifier = { modifier = LBA_jihadist_militias }
+			if = {
+				limit = { has_template = "Liwa al-Shuhada" }
+				set_division_template_lock = {
+					division_template = "Liwa al-Shuhada"
+					is_locked = no
+				}
+			}
+		}
 	}
 }
 
@@ -1457,26 +1509,49 @@ libya_add_islamist_independence = {
 	set_temp_variable = { temp_outlook_increase = 0.02 }
 	add_relative_party_popularity = yes
 	if = {
-		limit = { tag = LRB }
-		if = {
-			limit = { NOT = { has_dynamic_modifier = { modifier = LBA_islamist_militias } } }
-			set_variable = { LBA_islamist_militias_stability_effect = -0.01 }
-			set_variable = { LBA_islamist_militias_tax_gain_effect = -0.01 }
-			set_variable = { LBA_islamist_militias_neutrality_drift_effect = 0.01 }
-			add_dynamic_modifier = { modifier = LBA_islamist_militias }
-			custom_effect_tooltip = libya_add_islamist_independence_1_tt
+		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_islamist_militias } } }
+		set_variable = { LBA_islamist_militias_stability_effect = -0.01 }
+		set_variable = { LBA_islamist_militias_tax_gain_effect = -0.01 }
+		set_variable = { LBA_islamist_militias_neutrality_drift_effect = 0.01 }
+		add_dynamic_modifier = { modifier = LBA_islamist_militias }
+		custom_effect_tooltip = libya_add_islamist_independence_1_tt
+	}
+	else = {
+		set_temp_variable = { LBA_islamist_militias_stability_effect_temp = -0.01 }
+		set_temp_variable = { LBA_islamist_militias_tax_gain_effect_temp = -0.01 }
+		set_temp_variable = { LBA_islamist_militias_neutrality_drift_effect_temp = 0.01 }
+		add_to_variable = { LBA_islamist_militias_stability_effect = LBA_islamist_militias_stability_effect_temp }
+		add_to_variable = { LBA_islamist_militias_tax_gain_effect = LBA_islamist_militias_tax_gain_effect_temp }
+		add_to_variable = { LBA_islamist_militias_neutrality_drift_effect = LBA_islamist_militias_neutrality_drift_effect_temp }
+		custom_effect_tooltip = libya_add_islamist_independence_2_tt
+	}
+	force_update_dynamic_modifier = yes
+}
 
-		}
-		else = {
-			set_temp_variable = { LBA_islamist_militias_stability_effect_temp = -0.01 }
-			set_temp_variable = { LBA_islamist_militias_tax_gain_effect_temp = -0.01 }
-			set_temp_variable = { LBA_islamist_militias_neutrality_drift_effect_temp = 0.01 }
+libya_remove_islamist_independence = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = LBA_islamist_militias } }
+		if = {
+			limit = { check_variable = { LBA_islamist_militias_neutrality_drift_effect > 0.01 } }
+			set_temp_variable = { LBA_islamist_militias_stability_effect_temp = 0.01 }
+			set_temp_variable = { LBA_islamist_militias_tax_gain_effect_temp = 0.01 }
+			set_temp_variable = { LBA_islamist_militias_neutrality_drift_effect_temp = -0.01 }
 			add_to_variable = { LBA_islamist_militias_stability_effect = LBA_islamist_militias_stability_effect_temp }
 			add_to_variable = { LBA_islamist_militias_tax_gain_effect = LBA_islamist_militias_tax_gain_effect_temp }
 			add_to_variable = { LBA_islamist_militias_neutrality_drift_effect = LBA_islamist_militias_neutrality_drift_effect_temp }
 			custom_effect_tooltip = libya_add_islamist_independence_2_tt
+			force_update_dynamic_modifier = yes
 		}
-		force_update_dynamic_modifier = yes
+		else = {
+			remove_dynamic_modifier = { modifier = LBA_islamist_militias }
+			if = {
+				limit = { has_template = "Liwa al-Zanatan" }
+				set_division_template_lock = {
+					division_template = "Liwa al-Zanatan"
+					is_locked = no
+				}
+			}
+		}
 	}
 }
 
@@ -1486,26 +1561,49 @@ libya_add_secularist_independence = {
 	set_temp_variable = { temp_outlook_increase = 0.02 }
 	add_relative_party_popularity = yes
 	if = {
-		limit = { tag = LRB }
-		if = {
-			limit = { NOT = { has_dynamic_modifier = { modifier = LBA_secularist_militias } } }
-			set_variable = { LBA_secularist_militias_stability_effect = -0.01 }
-			set_variable = { LBA_secularist_militias_political_power_effect = -0.015 }
-			set_variable = { LBA_secularist_militias_nationalist_drift_effect = 0.01 }
-			add_dynamic_modifier = { modifier = LBA_secularist_militias }
-			custom_effect_tooltip = libya_add_secularist_independence_1_tt
+		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_secularist_militias } } }
+		set_variable = { LBA_secularist_militias_stability_effect = -0.01 }
+		set_variable = { LBA_secularist_militias_political_power_effect = -0.015 }
+		set_variable = { LBA_secularist_militias_nationalist_drift_effect = 0.01 }
+		add_dynamic_modifier = { modifier = LBA_secularist_militias }
+		custom_effect_tooltip = libya_add_secularist_independence_1_tt
+	}
+	else = {
+		set_temp_variable = { LBA_secularist_militias_stability_effect_temp = -0.01 }
+		set_temp_variable = { LBA_secularist_militias_political_power_effect_temp = -0.015 }
+		set_temp_variable = { LBA_secularist_militias_nationalist_drift_effect_temp = 0.01 }
+		add_to_variable = { LBA_secularist_militias_stability_effect = LBA_secularist_militias_stability_effect_temp }
+		add_to_variable = { LBA_secularist_militias_political_power_effect = LBA_secularist_militias_political_power_effect_temp }
+		add_to_variable = { LBA_secularist_militias_nationalist_drift_effect = LBA_secularist_militias_nationalist_drift_effect_temp }
+		custom_effect_tooltip = libya_add_secularist_independence_2_tt
+	}
+	force_update_dynamic_modifier = yes
+}
 
-		}
-		else = {
-			set_temp_variable = { LBA_secularist_militias_stability_effect_temp = -0.01 }
-			set_temp_variable = { LBA_secularist_militias_political_power_effect_temp = -0.015 }
-			set_temp_variable = { LBA_secularist_militias_nationalist_drift_effect_temp = 0.01 }
+libya_remove_secularist_independence = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = LBA_secularist_militias } }
+		if = {
+			limit = { check_variable = { LBA_secularist_militias_nationalist_drift_effect > 0.01 } }
+			set_temp_variable = { LBA_secularist_militias_stability_effect_temp = 0.01 }
+			set_temp_variable = { LBA_secularist_militias_political_power_effect_temp = 0.015 }
+			set_temp_variable = { LBA_secularist_militias_nationalist_drift_effect_temp = -0.01 }
 			add_to_variable = { LBA_secularist_militias_stability_effect = LBA_secularist_militias_stability_effect_temp }
 			add_to_variable = { LBA_secularist_militias_political_power_effect = LBA_secularist_militias_political_power_effect_temp }
 			add_to_variable = { LBA_secularist_militias_nationalist_drift_effect = LBA_secularist_militias_nationalist_drift_effect_temp }
 			custom_effect_tooltip = libya_add_secularist_independence_2_tt
+			force_update_dynamic_modifier = yes
 		}
-		force_update_dynamic_modifier = yes
+		else = {
+			remove_dynamic_modifier = { modifier = LBA_secularist_militias }
+			if = {
+				limit = { has_template = "Liwa al-Jaysh" }
+				set_division_template_lock = {
+					division_template = "Liwa al-Jaysh"
+					is_locked = no
+				}
+			}
+		}
 	}
 }
 
@@ -1515,25 +1613,143 @@ libya_add_reformist_independence = {
 	set_temp_variable = { temp_outlook_increase = 0.02 }
 	add_relative_party_popularity = yes
 	if = {
-		limit = { tag = LRB }
-		if = {
-			limit = { NOT = { has_dynamic_modifier = { modifier = LBA_reformist_militias } } }
-			set_variable = { LBA_reformist_militias_effect = -0.01 }
-			set_variable = { LBA_reformist_militias_army_org_effect = -0.02 }
-			set_variable = { LBA_reformist_militias_democratic_drift_effect = 0.01 }
-			add_dynamic_modifier = { modifier = LBA_reformist_militias }
-			custom_effect_tooltip = libya_add_reformist_independence_1_tt
+		limit = { NOT = { has_dynamic_modifier = { modifier = LBA_reformist_militias } } }
+		set_variable = { LBA_reformist_militias_effect = -0.01 }
+		set_variable = { LBA_reformist_militias_army_org_effect = -0.02 }
+		set_variable = { LBA_reformist_militias_democratic_drift_effect = 0.01 }
+		add_dynamic_modifier = { modifier = LBA_reformist_militias }
+		custom_effect_tooltip = libya_add_reformist_independence_1_tt
+	}
+	else = {
+		set_temp_variable = { LBA_reformist_militias_effect_temp = -0.01 }
+		set_temp_variable = { LBA_reformist_militias_army_org_effect_temp = -0.02 }
+		set_temp_variable = { LBA_reformist_militias_democratic_drift_effect_temp = 0.01 }
+		add_to_variable = { LBA_reformist_militias_effect = LBA_reformist_militias_effect_temp }
+		add_to_variable = { LBA_reformist_militias_army_org_effect = LBA_reformist_militias_army_org_effect_temp }
+		add_to_variable = { LBA_reformist_militias_democratic_drift_effect = LBA_reformist_militias_democratic_drift_effect_temp }
+		custom_effect_tooltip = libya_add_reformist_independence_2_tt
+	}
+	force_update_dynamic_modifier = yes
+}
 
-		}
-		else = {
-			set_temp_variable = { LBA_reformist_militias_effect_temp = -0.01 }
-			set_temp_variable = { LBA_reformist_militias_army_org_effect_temp = -0.02 }
+libya_remove_reformist_independence = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = LBA_reformist_militias } }
+		if = {
+			limit = { check_variable = { LBA_reformist_militias_democratic_drift_effect > 0.01 } }
+			set_temp_variable = { LBA_reformist_militias_effect_temp = 0.01 }
+			set_temp_variable = { LBA_reformist_militias_army_org_effect_temp = 0.02 }
 			set_temp_variable = { LBA_reformist_militias_democratic_drift_effect_temp = 0.01 }
 			add_to_variable = { LBA_reformist_militias_effect = LBA_reformist_militias_effect_temp }
 			add_to_variable = { LBA_reformist_militias_army_org_effect = LBA_reformist_militias_army_org_effect_temp }
 			add_to_variable = { LBA_reformist_militias_democratic_drift_effect = LBA_reformist_militias_democratic_drift_effect_temp }
 			custom_effect_tooltip = libya_add_reformist_independence_2_tt
+			force_update_dynamic_modifier = yes
 		}
-		force_update_dynamic_modifier = yes
+		else = {
+			remove_dynamic_modifier = { modifier = LBA_reformist_militias }
+			if = {
+				limit = { has_template = "Liwa al-Iislahiiyn" }
+				set_division_template_lock = {
+					division_template = "Liwa al-Iislahiiyn"
+					is_locked = no
+				}
+			}
+		}
+	}
+}
+
+libya_copy_country_flags = {
+	if = {
+		limit = { FROM = { has_country_flag = LBA_fall_of_gaddafi } }
+		set_country_flag = LBA_fall_of_gaddafi
+	}
+	if = {
+		limit = { FROM = { has_country_flag = LBA_democratic_reform } }
+		set_country_flag = LBA_democratic_reform
+	}
+	if = {
+		limit = { FROM = { has_country_flag = LBA_tribalism_disabled } }
+		set_country_flag = LBA_tribalism_disabled
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_toubou_supported } }
+		set_country_flag = libya_toubou_supported
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_noc_dismantled } }
+		set_country_flag = libya_noc_dismantled
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_el_sahara_fields_1_done } }
+		set_country_flag = libya_develop_el_sahara_fields_1_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_el_sahara_fields_2_done } }
+		set_country_flag = libya_develop_el_sahara_fields_2_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_el_sahara_fields_3_done } }
+		set_country_flag = libya_develop_el_sahara_fields_3_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_el_sahara_fields_4_done } }
+		set_country_flag = libya_develop_el_sahara_fields_4_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_west_waha_fields_1_done } }
+		set_country_flag = libya_develop_west_waha_fields_1_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_west_waha_fields_2_done } }
+		set_country_flag = libya_develop_west_waha_fields_2_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_west_waha_fields_3_done } }
+		set_country_flag = libya_develop_west_waha_fields_3_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_west_waha_fields_4_done } }
+		set_country_flag = libya_develop_west_waha_fields_4_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_east_waha_fields_1_done } }
+		set_country_flag = libya_develop_east_waha_fields_1_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_east_waha_fields_2_done } }
+		set_country_flag = libya_develop_east_waha_fields_2_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_east_waha_fields_3_done } }
+		set_country_flag = libya_develop_east_waha_fields_3_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_develop_east_waha_fields_4_done } }
+		set_country_flag = libya_develop_east_waha_fields_4_done
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_LNA_formed } }
+		set_country_flag = libya_LNA_formed
+	}
+	if = {
+		limit = { FROM = { has_country_flag = LBA_black_people_favoured } }
+		set_country_flag = LBA_black_people_favoured
+	}
+	if = {
+		limit = { FROM = { has_country_flag = libya_chad_uranium_deal } }
+		set_country_flag = libya_chad_uranium_deal
+	}
+	if = {
+		limit = { FROM = { has_country_flag = LBA_new_lifg } }
+		set_country_flag = LBA_new_lifg
+	}
+	if = {
+		limit = { FROM = { has_country_flag = LBA_zintan_brigades_formed } }
+		set_country_flag = LBA_zintan_brigades_formed
+	}
+	if = {
+		limit = { FROM = { has_country_flag = LBA_haftar_returned } }
+		set_country_flag = LBA_haftar_returned
 	}
 }
