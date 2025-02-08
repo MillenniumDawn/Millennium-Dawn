@@ -5,6 +5,7 @@ generic_infantry_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = AST
 				tag = AUS
 				tag = AZE
@@ -32,6 +33,7 @@ generic_infantry_equipment_organization = {
 				tag = JAP
 				tag = KOR
 				tag = MEX
+				tag = NIG
 				tag = NKO
 				tag = NOR
 				tag = PAK
@@ -1124,12 +1126,12 @@ generic_tank_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = AST
 				tag = AUS
 				tag = AZE
 				tag = BEL
 				tag = BLR
-				tag = BRA
 				tag = CHI
 				tag = CRO
 				tag = DEN
@@ -2287,6 +2289,8 @@ generic_naval_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = VEN
+				tag = ARG
 				tag = AST
 				tag = BRA
 				tag = CAN
@@ -3825,6 +3829,1185 @@ generic_naval_equipment_organization = {
 	}
 }
 
+generic_mixed_naval_equipment_organization = {
+	icon = GFX_idea_generic_naval_manufacturer_1
+	name = generic_mixed_naval_equipment_organization
+
+	allowed = {
+		NOT = {
+			OR = {
+				tag = AST
+				tag = BRA
+				tag = CAN
+				tag = CHI
+				tag = CHL
+				tag = CRO
+				tag = EGY
+				tag = ENG
+				tag = FIN
+				tag = FRA
+				tag = GER
+				tag = DEN
+				tag = HOL
+				tag = ITA
+				tag = JAP
+				tag = KOR
+				tag = NKO
+				tag = NOR
+				tag = PAK
+				tag = PER
+				tag = POL
+				tag = POR
+				tag = RAJ
+				tag = SOV
+				tag = SPR
+				tag = SWE
+				tag = SWI
+				tag = TUR
+				tag = UAE
+				tag = USA
+			}
+		}
+		has_idea = defense_industry
+	}
+
+	ai_will_do = {
+		base = 10
+	}
+
+	equipment_type = {
+		missile_submarine
+		attack_submarine
+		corvette
+		frigate
+		destroyer
+		patrol_boat
+	}
+	research_categories = { CAT_naval_eqp CAT_naval_misc }
+
+	research_bonus = 0.05
+
+	tree_header_text = {
+		text = mio_header_naval_eq_header
+		x = 2
+	}
+
+	tree_header_text = {
+		text = mio_header_naval_2_eq_header
+		x = 6
+	}
+
+	tree_header_text = {
+		text = mio_header_reseach_and_production
+		x = 10
+	}
+
+	initial_trait = {
+		name = generic_mio_initial_trait_md_naval_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_cost
+		name = generic_mio_nav_trait_sub_cost
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = 2 y = 0 }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0.5
+				FROM = {
+					num_of_naval_factories > 10
+				}
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_vis
+		name = generic_mio_nav_trait_sub_vis
+		icon = GFX_generic_mio_trait_icon_sub_visibility
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_cost
+
+		any_parent = { generic_mio_nav_trait_sub_cost }
+		mutually_exclusive = { generic_mio_nav_trait_sub_attack }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		equipment_bonus = {
+			sub_visibility = -0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_attack
+		name = generic_mio_nav_trait_sub_attack
+		icon = GFX_generic_mio_trait_icon_torpedo_attack
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_cost
+
+		any_parent = { generic_mio_nav_trait_sub_cost }
+		mutually_exclusive = { generic_mio_nav_trait_sub_vis }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		equipment_bonus = {
+			torpedo_attack = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_range
+		name = generic_mio_nav_trait_sub_range
+		icon = GFX_generic_mio_trait_icon_naval_range
+
+		position = { x = -2 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_attack
+
+		any_parent = { generic_mio_nav_trait_sub_attack generic_mio_nav_trait_sub_vis }
+		mutually_exclusive = { generic_mio_nav_trait_sub_speed }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		equipment_bonus = {
+			naval_range = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_speed
+		name = generic_mio_nav_trait_sub_speed
+		icon = GFX_generic_mio_trait_icon_naval_speed
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_attack
+
+		any_parent = { generic_mio_nav_trait_sub_attack generic_mio_nav_trait_sub_vis }
+		mutually_exclusive = { generic_mio_nav_trait_sub_range }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		equipment_bonus = {
+			naval_speed = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_shore
+		name = generic_mio_nav_trait_sub_shore
+		icon = GFX_generic_mio_trait_icon_hg_attack
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_speed
+
+		any_parent = { generic_mio_nav_trait_sub_speed generic_mio_nav_trait_sub_range }
+
+		limit_to_equipment_type = { missile_submarine submarine }
+
+		equipment_bonus = {
+			hg_attack = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_buf
+		name = generic_mio_nav_trait_sub_buf
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_shore
+
+		any_parent = { generic_mio_nav_trait_sub_shore }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		equipment_bonus = {
+			reliability = 0.075
+			anti_air_attack = 0.075
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_cost_2
+		name = generic_mio_nav_trait_sub_cost_2
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_buf
+
+		any_parent = { generic_mio_nav_trait_sub_buf }
+		mutually_exclusive = { generic_mio_nav_trait_sub_visibility_2 }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_sub_visibility_2
+		name = generic_mio_nav_trait_sub_visibility_2
+		icon = GFX_generic_mio_trait_icon_sub_visibility
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_sub_buf
+
+		any_parent = { generic_mio_nav_trait_sub_buf }
+		mutually_exclusive = { generic_mio_nav_trait_sub_cost_2 }
+
+		limit_to_equipment_type = { missile_submarine attack_submarine submarine }
+
+		equipment_bonus = {
+			sub_visibility = -0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_cost
+		name = generic_mio_nav_trait_light_cost
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = 7 y = 0 }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_la
+		name = generic_mio_nav_trait_light_la
+		icon = GFX_generic_mio_trait_icon_lg_attack
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_cost
+
+		any_parent = { generic_mio_nav_trait_light_cost }
+		mutually_exclusive = { generic_mio_nav_trait_light_torpedo }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			lg_attack = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_torpedo
+		name = generic_mio_nav_trait_light_torpedo
+		icon = GFX_generic_mio_trait_icon_torpedo_attack
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_cost
+
+		any_parent = { generic_mio_nav_trait_light_cost }
+		mutually_exclusive = { generic_mio_nav_trait_light_la }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			torpedo_attack = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_speed
+		name = generic_mio_nav_trait_light_speed
+		icon = GFX_generic_mio_trait_icon_naval_speed
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_la
+
+		any_parent = { generic_mio_nav_trait_light_torpedo generic_mio_nav_trait_light_la }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			naval_speed = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_detection
+		name = generic_mio_nav_trait_light_detection
+		icon = GFX_generic_mio_trait_icon_detection
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_la
+
+		any_parent = { generic_mio_nav_trait_light_torpedo generic_mio_nav_trait_light_la }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			sub_detection = 0.1
+			surface_detection = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_aa
+		name = generic_mio_nav_trait_light_aa
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		position = { x = 3 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_la
+
+		any_parent = { generic_mio_nav_trait_light_torpedo generic_mio_nav_trait_light_la }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			anti_air_attack = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_range
+		name = generic_mio_nav_trait_light_range
+		icon = GFX_generic_mio_trait_icon_naval_range
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_speed
+
+		any_parent = { generic_mio_nav_trait_light_aa generic_mio_nav_trait_light_detection generic_mio_nav_trait_light_speed }
+		mutually_exclusive = { generic_mio_nav_trait_light_stats }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			naval_range = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_stats
+		name = generic_mio_nav_trait_light_stats
+		icon = GFX_generic_mio_trait_icon_armor_value
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_detection
+
+		any_parent = { generic_mio_nav_trait_light_aa generic_mio_nav_trait_light_detection generic_mio_nav_trait_light_speed }
+		mutually_exclusive = { generic_mio_nav_trait_light_range }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			reliability = 0.1
+			armor_value = 0.1
+			sub_attack = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_strength
+		name = generic_mio_nav_trait_light_strength
+		icon = GFX_generic_mio_trait_icon_max_strength
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_stats
+
+		any_parent = { generic_mio_nav_trait_light_stats generic_mio_nav_trait_light_range }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			max_strength = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_prod_buff
+		name = generic_mio_nav_trait_prod_buff
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		position = { x = -2 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_range
+
+		any_parent = { generic_mio_nav_trait_light_stats generic_mio_nav_trait_light_range generic_mio_nav_trait_sub_shore }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate submarine missile_submarine attack_submarine patrol_boat }
+
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_cost_2
+		name = generic_mio_nav_trait_light_cost_2
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_strength
+
+		any_parent = { generic_mio_nav_trait_light_strength }
+		mutually_exclusive = { generic_mio_nav_trait_light_detection_2 }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_light_detection_2
+		name = generic_mio_nav_trait_light_detection_2
+		icon = GFX_generic_mio_trait_icon_detection
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_light_strength
+
+		any_parent = { generic_mio_nav_trait_light_strength }
+		mutually_exclusive = { generic_mio_nav_trait_light_cost_2 }
+
+		limit_to_equipment_type = { corvette stealth_corvette stealth_frigate frigate patrol_boat }
+
+		equipment_bonus = {
+			surface_detection = 0.1
+			sub_detection = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_ind_research
+		name = generic_mio_nav_trait_ind_research
+		icon = GFX_generic_mio_trait_icon_unique
+
+		position = { x = 12 y = 0 }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_ind_xp
+		name = generic_mio_nav_trait_ind_xp
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_nav_trait_ind_research
+
+		any_parent = { generic_mio_nav_trait_ind_research }
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_ind_buffs
+		name = generic_mio_nav_trait_ind_buffs
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_ind_xp
+
+		any_parent = { generic_mio_nav_trait_ind_research }
+		mutually_exclusive = { generic_mio_nav_trait_ind_capacity }
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.2
+			military_industrial_organization_design_team_change_cost = -0.2
+			military_industrial_organization_industrial_manufacturer_assign_cost = -0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_ind_capacity
+		name = generic_mio_nav_trait_ind_capacity
+		icon = GFX_generic_mio_department_icon_facilities
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_ind_xp
+
+		any_parent = { generic_mio_nav_trait_ind_research }
+		mutually_exclusive = { generic_mio_nav_trait_ind_buffs }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 3
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_ind_cost
+		name = generic_mio_nav_trait_ind_cost
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_nav_trait_ind_buffs
+
+		any_parent = { generic_mio_nav_trait_ind_buffs generic_mio_nav_trait_ind_capacity }
+
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_ind_research_2
+		name = generic_mio_nav_trait_ind_research_2
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_nav_trait_ind_cost
+
+		any_parent = { generic_mio_nav_trait_ind_cost }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_size_up_requirement = -0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_nav_trait_ind_capacity_2
+		name = generic_mio_nav_trait_ind_capacity_2
+		icon = GFX_generic_mio_department_icon_facilities
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_nav_trait_ind_research_2
+
+		all_parents = { generic_mio_nav_trait_ind_research_2 }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 3
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+}
+
 generic_air_equipment_organization = {
 	icon = GFX_idea_generic_air_manufacturer_1
 	name = generic_mio_general_air_org
@@ -3832,6 +5015,7 @@ generic_air_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = BEL
 				tag = BLR
 				tag = BRA
@@ -5449,16 +6633,18 @@ generic_specialized_tank_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = AST
 				tag = BEL
 				tag = BRM
 				tag = CAN
 				tag = CHI
-				tag = CHL
 				tag = CZE
 				tag = ENG
+				tag = EGY
 				tag = FRA
 				tag = HOL
+				tag = NIG
 				tag = IND
 				tag = ISR
 				tag = ITA
@@ -6325,7 +7511,10 @@ generic_aa_at_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = BRA
+				tag = ARG
 				tag = ENG
+				tag = EGY
 				tag = ISR
 				tag = ITA
 				tag = SER
@@ -7046,6 +8235,7 @@ generic_sub_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = AST
 				tag = CHI
 				tag = ENG
@@ -7827,11 +9017,14 @@ generic_naval_light_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
+				tag = BRA
 				tag = AST
 				tag = GER
 				tag = DEN
 				tag = JAP
 				tag = KOR
+				tag = NIG
 				tag = NOR
 				tag = RAJ
 				tag = ROM
@@ -9110,6 +10303,7 @@ generic_specialized_helicopter_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = BRA
 				tag = CHI
 				tag = EGY
@@ -9821,6 +11015,7 @@ generic_fixed_wing_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = BRA
 				tag = CHI
 				tag = GER
 				tag = DEN
@@ -10640,6 +11835,7 @@ generic_light_aircraft_equipment_organization = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = AST
 				tag = BRA
 				tag = CAN
@@ -11475,6 +12671,7 @@ GER_generic_small_arms_manufacturer = {
 	allowed = {
 		NOT = {
 			OR = {
+				tag = ARG
 				tag = AST
 				tag = BRA
 				tag = CAN
@@ -12731,6 +13928,933 @@ GER_generic_utility_vehicle_manufacturer = {
 				FROM = {
 					num_of_military_factories < 10
 				}
+			}
+		}
+	}
+}
+generic_cnc_equipment_organization = {
+	icon = GFX_idea_generic_infantry_equipment_manufacturer_2
+	name = generic_mio_general_cnc_org
+
+	allowed = {
+		NOT = {
+			OR = {
+				tag = AST
+				tag = BRA
+				tag = CAN
+				tag = CHI
+				tag = CHL
+				tag = CRO
+				tag = EGY
+				tag = ENG
+				tag = FIN
+				tag = FRA
+				tag = GER
+				tag = DEN
+				tag = HOL
+				tag = ITA
+				tag = JAP
+				tag = KOR
+				tag = NKO
+				tag = NOR
+				tag = PAK
+				tag = PER
+				tag = POL
+				tag = POR
+				tag = RAJ
+				tag = SOV
+				tag = SPR
+				tag = SWE
+				tag = SWI
+				tag = TUR
+				tag = UAE
+				tag = USA
+			}
+		}
+		has_idea = defense_industry
+	}
+
+	ai_will_do = {
+		base = 10
+		modifier = {
+			factor = 0.2
+			FROM = {
+				num_of_military_factories > 10
+			}
+		}
+	}
+
+	equipment_type = {
+		Inf_equipment
+		cnc_equipment
+		L_AT_Equipment
+		AA_Equipment
+		artillery_equipment
+	}
+	research_categories = { CAT_inf CAT_arty CAT_artillery }
+
+	research_bonus = 0.05
+
+
+	initial_trait = {
+		name = generic_mio_initial_trait_infantry_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.03
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_trait_inf_rel
+		name = generic_mio_inf_trait_inf_rel
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		position = { x = 4 y = 0 }
+
+		equipment_bonus = {
+			reliability = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_trait_support_art
+		name = generic_mio_inf_trait_support_art
+		icon = GFX_generic_mio_trait_icon_defense
+
+		any_parent = { generic_mio_inf_trait_inf_rel  }
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_inf_trait_inf_rel
+
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			defense = 0.1
+			breakthrough = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_trait_art_stats
+		name = generic_mio_inf_trait_art_stats
+		icon = GFX_generic_mio_trait_icon_soft_attack
+
+		any_parent = { generic_mio_inf_trait_inf_rel }
+
+		position = { x = -2 y = 1 }
+		relative_position_id = generic_mio_inf_trait_inf_rel
+
+		limit_to_equipment_type = { artillery_equipment }
+		equipment_bonus = {
+			soft_attack = 0.05
+			hard_attack = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_at_aa_trait_at_stats
+		name = generic_mio_at_aa_trait_at_stats
+		icon = GFX_generic_mio_trait_icon_hard_attack
+
+		any_parent = { generic_mio_inf_trait_art_stats }
+		mutually_exclusive = { generic_mio_at_aa_trait_aa_stats }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_inf_trait_art_stats
+
+		limit_to_equipment_type = { L_AT_Equipment H_AT_Equipment }
+		equipment_bonus = {
+			hard_attack = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_at_aa_trait_aa_stats
+		name = generic_mio_at_aa_trait_aa_stats
+		icon = GFX_generic_mio_trait_icon_soft_attack
+
+		any_parent = { generic_mio_inf_trait_art_stats }
+		mutually_exclusive = { generic_mio_at_aa_trait_at_stats }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_trait_art_stats
+
+		limit_to_equipment_type = { AA_Equipment spaa_hull }
+		equipment_bonus = {
+			air_attack = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_trait_cnc_prod_cost
+		name = generic_mio_inf_trait_cnc_prod_cost
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		any_parent = { generic_mio_inf_trait_inf_rel }
+
+		position = { x = 2 y = 1 }
+		relative_position_id = generic_mio_inf_trait_inf_rel
+
+		limit_to_equipment_type = { cnc_equipment }
+		production_bonus = {
+			production_cost_factor = -0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_trait_at_stats
+		name = generic_mio_inf_trait_at_stats
+		icon = GFX_generic_mio_trait_icon_hard_attack
+
+		any_parent = { generic_mio_inf_trait_cnc_prod_cost }
+		mutually_exclusive = { generic_mio_inf_trait_aa_stats }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_inf_trait_cnc_prod_cost
+
+		limit_to_equipment_type = { L_AT_Equipment }
+		equipment_bonus = {
+			hard_attack = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_trait_aa_stats
+		name = generic_mio_inf_trait_aa_stats
+		icon = GFX_generic_mio_trait_icon_soft_attack
+
+		any_parent = { generic_mio_inf_trait_cnc_prod_cost }
+		mutually_exclusive = { generic_mio_inf_trait_at_stats }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_trait_cnc_prod_cost
+
+		limit_to_equipment_type = { AA_Equipment }
+		equipment_bonus = {
+			air_attack = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_prod_eff
+		name = generic_mio_inf_prod_eff
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		any_parent = { generic_mio_inf_trait_aa_stats generic_mio_inf_trait_at_stats }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_trait_at_stats
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_at_ap
+		name = generic_mio_inf_at_ap
+		icon = GFX_generic_mio_trait_icon_ap_attack
+
+		any_parent = { generic_mio_inf_prod_eff generic_mio_inf_at_support }
+
+		position = { x = 0 y = 3 }
+		relative_position_id = generic_mio_inf_trait_support_art
+
+		limit_to_equipment_type = { L_AT_Equipment }
+		equipment_bonus = {
+			ap_attack = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_at_support
+		name = generic_mio_inf_at_support
+		icon = GFX_generic_mio_trait_icon_breakthrough
+
+		any_parent = { generic_mio_at_aa_trait_at_stats generic_mio_at_aa_trait_aa_stats }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_at_aa_trait_at_stats
+
+		limit_to_equipment_type = { L_AT_Equipment }
+		equipment_bonus = {
+			defense = 0.5
+			breakthrough = 0.5
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_cnc_org
+		name = generic_mio_inf_cnc_org
+		icon = GFX_generic_mio_trait_icon_unique
+
+		any_parent = { generic_mio_inf_at_ap generic_mio_inf_at_ap }
+		mutually_exclusive = { generic_mio_inf_cnc_rel }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_inf_at_ap
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			max_organisation = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_cnc_rel
+		name = generic_mio_inf_cnc_rel
+		icon = GFX_generic_mio_trait_icon_resources
+
+		any_parent = { generic_mio_inf_at_ap }
+		mutually_exclusive = { generic_mio_inf_cnc_org }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_at_ap
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			reliability = 0.1
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_prod_cost_dec
+		name = generic_mio_inf_prod_cost_dec
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		any_parent = { generic_mio_inf_cnc_rel generic_mio_inf_cnc_org }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_cnc_org
+
+		limit_to_equipment_type = { L_AT_Equipment AA_Equipment }
+		production_bonus = {
+			production_cost_factor = -0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_reass_buff
+		name = generic_mio_inf_reass_buff
+		icon = GFX_generic_mio_trait_icon_resources
+
+		position = { x = 10 y = 0 }
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.15
+			military_industrial_organization_design_team_change_cost = -0.1
+			military_industrial_organization_industrial_manufacturer_assign_cost = -0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_research_buff
+		name = generic_mio_inf_research_buff
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		any_parent = { generic_mio_inf_reass_buff }
+		mutually_exclusive = { generic_mio_inf_production }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_inf_reass_buff
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_production
+		name = generic_mio_inf_production
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		any_parent = { generic_mio_inf_reass_buff }
+		mutually_exclusive = { generic_mio_inf_research_buff }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_reass_buff
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+			production_efficiency_gain_factor = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_xp_gain
+		name = generic_mio_inf_xp_gain
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		any_parent = { generic_mio_inf_production generic_mio_inf_research_buff }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_research_buff
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_capacity
+		name = generic_mio_inf_capacity
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		any_parent = { generic_mio_inf_xp_gain }
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_inf_xp_gain
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 3
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_research_prod
+		name = generic_mio_inf_research_prod
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		any_parent = { generic_mio_inf_capacity }
+		mutually_exclusive = { generic_mio_inf_capacity_2 }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_inf_capacity
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_capacity_2
+		name = generic_mio_inf_capacity_2
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		any_parent = { generic_mio_inf_capacity }
+		mutually_exclusive = { generic_mio_inf_research_prod }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_capacity
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 3
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_bunch_of_buffs
+		name = generic_mio_inf_bunch_of_buffs
+		icon = GFX_generic_mio_trait_icon_unique
+
+		any_parent = { generic_mio_inf_research_prod generic_mio_inf_capacity_2 }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_inf_capacity_2
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.15
+			military_industrial_organization_design_team_change_cost = -0.1
+			military_industrial_organization_industrial_manufacturer_assign_cost = -0.1
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
 			}
 		}
 	}
