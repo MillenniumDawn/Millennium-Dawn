@@ -12994,6 +12994,7 @@ country_event = {
 		set_country_flag = LBA_new_lifg
 		custom_effect_tooltip = LibyaCivilWarContent.15.tooltip
 		LBA_abdel_hakim_al_hasidi = {
+			set_nationality = ROOT
 			add_corps_commander_role = {
 				skill = 3
 				traits = { war_hero infantry_officer trickster LBA_unit_leader_trait_cyrenaica }
@@ -13016,6 +13017,7 @@ country_event = {
 			create_unit = {
 				division = "name = \"Liwa Shuhada Abu Salim\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
 				owner = ROOT
+				id = 1890
 			}
 		}
 		libya_add_jihadist_independence = yes
@@ -13044,6 +13046,7 @@ country_event = {
 		set_temp_variable = { tag_index = QAT }
 		change_influence_percentage = yes
 		LBA_mahdi_al_harati = {
+			set_nationality = ROOT
 			add_corps_commander_role = {
 				skill = 4
 				traits = { harsh_leader armoured_cavalry_officer air_cavalry_leader LBA_unit_leader_trait_tripolitania }
@@ -13085,6 +13088,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.17.a executed"
 		set_country_flag = LBA_zintan_brigades_formed
 		LBA_osama_al_juwaili = {
+			set_nationality = ROOT
 			add_corps_commander_role = {
 				traits = { guerrilla_leader_trait scavenger LBA_unit_leader_trait_tripolitania }
 				skill = 4
@@ -13138,6 +13142,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.18.a executed"
 		set_country_flag = LBA_haftar_returned
 		LBA_khalifa_haftar = {
+			set_nationality = ROOT
 			add_field_marshal_role = {
 				traits = { old_guard career_officer aggressive_assaulter offensive_doctrine inspirational_leader infantry_leader LBA_unit_leader_trait_cyrenaica }
 				skill = 4
@@ -14044,7 +14049,7 @@ country_event = {
 						salafist_Caliphate
 					}
 				}
-				PREV = {
+				LBA = {
 					LBA_wissam_ben_hamid = {
 						set_nationality = ASL
 						add_corps_commander_role = {
@@ -14094,7 +14099,255 @@ country_event = {
 				setup_init_factions = yes 	#flags for int. factions
 				update_neighbors_effects = yes # Updates Neighbor Effects
 				economic_cycle_drift_popularity = yes #drift from neighbor
+
+				add_equipment_to_stockpile = {
+					type = convoy
+					amount = 50
+				}
 			}
+		}
+	}
+}
+
+#Derna Shura Council formed
+country_event = {
+	id = LibyaCivilWarContent.26
+	title = LibyaCivilWarContent.26.t
+	desc = LibyaCivilWarContent.26.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = ASL
+		ASL = { owns_state = 395 }
+		fascism > 0.10
+		owns_state = 396
+		ASL = { has_war = no }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			fascism > 0.15
+			fascism < 0.20
+		}
+		modifier = {
+			factor = 4
+			fascism > 0.20
+			fascism < 0.25
+		}
+		modifier = {
+			factor = 6
+			fascism > 0.25
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.26.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.26.a executed"
+		custom_effect_tooltip = LibyaCivilWarContent.26.tooltip2
+		delete_unit = {
+			id = 1890
+			disband = no
+		}
+		hidden_effect = {
+			ASL = {
+				if = {
+					limit = {
+						NOT = { has_template = "Liwa al-Shuhada"}
+					}
+					division_template = {
+						name = "Liwa al-Shuhada"
+						regiments = {
+							Mot_Militia_Bat = { x = 0 y = 0 }
+							Mot_Militia_Bat = { x = 0 y = 1 }
+							Mot_Militia_Bat = { x = 0 y = 2 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+						}
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"Liwa Shuhada Abu Salim\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+						owner = ROOT
+						id = 11954
+					}
+					create_unit = {
+						division = "name = \"Jaysh al-Islam\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+						owner = ROOT
+						id = 11954
+					}
+				}
+			}
+		}
+		396 = { add_dynamic_modifier = { modifier = LBA_shura_council_of_derna } }
+		if = {
+			limit = { has_active_mission = libya_operation_dignity_mission }
+			add_days_mission_timeout = {
+				mission = libya_operation_dignity_mission
+				days = -60
+			}
+		}
+		libya_add_jihadist_independence = yes
+		if = {
+			limit = { ASL = { NOT = { has_cosmetic_tag = LBA_SHURA_COUNCILS }}}
+			custom_effect_tooltip = LibyaCivilWarContent.26.tooltip1
+			ASL = { set_cosmetic_tag = LBA_SHURA_COUNCILS }
+		}
+		custom_effect_tooltip = {
+			localization_key = UNLOCK_DECISION_IN_CATEGORY
+			DECISION = libya_attack_ansar_al_sharia_in_derna
+			DECISION_CATEGORY = libya_aftermath_of_civil_war
+		}
+	}
+}
+
+#Ajdabiya Revolutionaries Shura Council formed
+country_event = {
+	id = LibyaCivilWarContent.27
+	title = LibyaCivilWarContent.27.t
+	desc = LibyaCivilWarContent.27.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = ASL
+		OR = {
+			ASL = { owns_state = 395 }
+			ASL = { owns_state = 919 }
+		}
+		fascism > 0.10
+		owns_state = 397
+		ASL = { has_war = no }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			fascism > 0.15
+			fascism < 0.20
+		}
+		modifier = {
+			factor = 4
+			fascism > 0.20
+			fascism < 0.25
+		}
+		modifier = {
+			factor = 6
+			fascism > 0.25
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.27.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.27.a executed"
+		hidden_effect = {
+			ASL = {
+				if = {
+					limit = {
+						NOT = { has_template = "Liwa al-Shuhada"}
+					}
+					division_template = {
+						name = "Liwa al-Shuhada"
+						regiments = {
+							Mot_Militia_Bat = { x = 0 y = 0 }
+							Mot_Militia_Bat = { x = 0 y = 1 }
+							Mot_Militia_Bat = { x = 0 y = 2 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+						}
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"Jaysh Shuraa Ajdabiana\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+						owner = ROOT
+						id = 11954
+					}
+					create_unit = {
+						division = "name = \"Katibat Muziq al-Zuwy\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+						owner = ROOT
+						id = 11954
+					}
+				}
+			}
+		}
+		397 = { add_dynamic_modifier = { modifier = LBA_shura_council_of_ajdabiya } }
+		if = {
+			limit = { has_active_mission = libya_operation_dignity_mission }
+			add_days_mission_timeout = {
+				mission = libya_operation_dignity_mission
+				days = -60
+			}
+		}
+		libya_add_jihadist_independence = yes
+		if = {
+			limit = { ASL = { NOT = { has_cosmetic_tag = LBA_SHURA_COUNCILS }}}
+			custom_effect_tooltip = LibyaCivilWarContent.27.tooltip1
+			ASL = { set_cosmetic_tag = LBA_SHURA_COUNCILS }
+		}
+		custom_effect_tooltip = {
+			localization_key = UNLOCK_DECISION_IN_CATEGORY
+			DECISION = libya_attack_ansar_al_sharia_in_ajdabiya
+			DECISION_CATEGORY = libya_aftermath_of_civil_war
+		}
+	}
+}
+
+#Rafallah al-Sahati brigade formed
+country_event = {
+	id = LibyaCivilWarContent.28
+	title = LibyaCivilWarContent.28.t
+	desc = LibyaCivilWarContent.28.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = ASL
+		fascism > 0.10
+		owns_state = 1100
+		ASL = { has_war = no }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			fascism > 0.15
+			fascism < 0.20
+		}
+		modifier = {
+			factor = 4
+			fascism > 0.20
+			fascism < 0.25
+		}
+		modifier = {
+			factor = 6
+			fascism > 0.25
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.28.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.28.a executed"
+		1100 = { add_dynamic_modifier = { modifier = LBA_southern_insurgency } }
+		if = {
+			limit = { has_active_mission = libya_operation_dignity_mission }
+			add_days_mission_timeout = {
+				mission = libya_operation_dignity_mission
+				days = -60
+			}
+		}
+		libya_add_jihadist_independence = yes
+		custom_effect_tooltip = {
+			localization_key = UNLOCK_DECISION_IN_CATEGORY
+			DECISION = libya_attack_ansar_al_sharia_in_kufra
+			DECISION_CATEGORY = libya_aftermath_of_civil_war
 		}
 	}
 }
