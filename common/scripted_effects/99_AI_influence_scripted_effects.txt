@@ -1,0 +1,132 @@
+AI_select_influence_target = {
+	# Find country with the best sore possible
+	set_temp_variable = { AI_best_country = 0 }
+	set_temp_variable = { AI_best_country_score = -1 }
+
+	for_each_scope_loop = {
+		array = influence_targets
+		if = {
+			limit = {
+				THIS = { exists = yes }
+			}
+
+			set_temp_variable = { AI_selected_country = THIS.id }
+			set_temp_variable = { AI_country_score = 0 }
+			AI_influence_country_selection_calculation = yes
+
+			# Sets the new best country
+			if = { limit = { check_variable = { AI_country_score > AI_best_country_score } }
+				set_temp_variable = { AI_best_country_score = AI_country_score }
+				set_temp_variable = { AI_best_country = AI_selected_country }
+			}
+		}
+	}
+}
+
+AI_do_not_conduct_influence_condition = {
+	PREV = {
+		if = {
+			limit = { has_war = yes }
+			add_to_temp_variable = { AI_country_score = -50 }
+		}
+		if = {
+			limit = {
+				political_power_daily < 2
+			}
+			add_to_temp_variable = { AI_country_score = -100 }
+		}
+		else = {
+			if = {
+				limit = {
+					political_power_daily > 4
+				}
+				add_to_temp_variable = { AI_country_score = 5 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 6
+				}
+				add_to_temp_variable = { AI_country_score = 15 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 8
+				}
+				add_to_temp_variable = { AI_country_score = 20 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 10
+				}
+				add_to_temp_variable = { AI_country_score = 25 }
+			}
+		}
+	}
+}
+
+AI_influence_country_selection_calculation = {
+	if = { limit = { has_idea = Non_State_Actor }
+		add_to_temp_variable = { AI_country_score = -80 }
+	}
+
+	# Influence those who are in your faction or in your faction
+	if = { limit = { is_in_faction_with = PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	if = {
+		limit = {
+			PREV = {
+				any_enemy_country = { is_in_faction_with = PREV.PREV }
+			}
+		}
+		add_to_temp_variable = { AI_country_score = -25 }
+	}
+
+	if = {
+		limit = { is_guaranteed_by = PREV }
+		add_to_temp_variable = { AI_country_score = 10 }
+	}
+
+	if = { limit = { has_country_flag = trade_agreement@PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	if = {
+		limit = { has_country_flag = mutual_investment_treaty_@PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+
+	# If already an influencer do more influencing
+	for_each_scope_loop = {
+		array = influence_array
+		if = { limit = { check_variable = { THIS.id = PREV.id } }
+			add_to_temp_variable = { AI_country_score = 40 }
+		}
+		if = {
+			limit = { check_variable = { influence_array^0 = PREV.id } }
+			add_to_temp_variable = { AI_country_score = 25 }
+		}
+		else_if = {
+			limit = { check_variable = { influence_array^1 = PREV.id } }
+			add_to_temp_variable = { AI_country_score = 25 }
+		}
+		else_if = {
+			limit = { check_variable = { influence_array^2 = PREV.id } }
+			add_to_temp_variable = { AI_country_score = 25 }
+		}
+	}
+
+	# Opinion Calculator
+	set_temp_variable = { opinion_value = opinion@PREV }
+	multiply_temp_variable = { opinion_value = 0.30 }
+	clamp_temp_variable = { var = opinion_value min = -75 max = 75 }
+	add_to_temp_variable = { AI_country_score = opinion_value }
+
+	# Same continent same vibe
+	if = {
+		limit = {
+			PREV = { exists = yes }
+			PREV_is_on_same_continent = yes
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+}
