@@ -98,21 +98,75 @@ AI_influence_country_selection_calculation = {
 	# If already an influencer do more influencing
 	for_each_scope_loop = {
 		array = influence_array
-		if = { limit = { check_variable = { THIS.id = PREV.id } }
+		# Check if you're an influencer at ALL
+		if = { limit = { check_variable = { influence_array^i = PREV.id } }
 			add_to_temp_variable = { AI_country_score = 40 }
+
+			# If i is in one of the top three add more fluff
+			if = {
+				limit = { check_variable = { i = 0 } }
+				add_to_temp_variable = { AI_country_score = 25 }
+			}
+			if = {
+				limit = { check_variable = { i = 1 } }
+				add_to_temp_variable = { AI_country_score = 25 }
+			}
+			if = {
+				limit = { check_variable = { i = 2 } }
+				add_to_temp_variable = { AI_country_score = 25 }
+			}
+
+			# If i is greater than this in one of these slots then calculate that difference
+			if = {
+				limit = { check_variable = { influence_array_val^i > 24.99 } }
+				add_to_temp_variable = { AI_country_score = 15 }
+			}
+			if = {
+				limit = { check_variable = { influence_array_val^i > 49.99 } }
+				add_to_temp_variable = { AI_country_score = 15 }
+			}
+			if = {
+				limit = { check_variable = { influence_array_val^i > 75.99 } }
+				add_to_temp_variable = { AI_country_score = 15 }
+			}
 		}
-		if = {
-			limit = { check_variable = { influence_array^0 = PREV.id } }
-			add_to_temp_variable = { AI_country_score = 25 }
+	}
+
+	# Same Outlook == should influence more!
+	if = {
+		limit = {
+			has_government = democratic
+			PREV = { has_government = democratic }
 		}
-		else_if = {
-			limit = { check_variable = { influence_array^1 = PREV.id } }
-			add_to_temp_variable = { AI_country_score = 25 }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = communism
+			PREV = { has_government = communism }
 		}
-		else_if = {
-			limit = { check_variable = { influence_array^2 = PREV.id } }
-			add_to_temp_variable = { AI_country_score = 25 }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = neutrality
+			PREV = { has_government = neutrality }
 		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = nationalist
+			PREV = { has_government = nationalist }
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = fascism
+			PREV = { has_government = fascism }
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
 	}
 
 	# Opinion Calculator
