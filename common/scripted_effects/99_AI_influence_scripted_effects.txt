@@ -183,4 +183,45 @@ AI_influence_country_selection_calculation = {
 		}
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
+
+	set_temp_variable_to_random = {
+		var = randomizer_country_score
+		min = 25
+		max = 75
+		integer = yes
+	}
+	subtract_from_temp_variable = { AI_country_score = randomizer_country_score }
+}
+
+add_permanent_investment_targets = {
+	for_each_scope_loop = {
+		array = PREV.permanent_influence_target
+		if = {
+			limit = { NOT = { is_in_array = { PREV.influence_targets = THIS } } }
+			add_to_array = { PREV.investment_targets = THIS }
+		}
+	}
+}
+
+# purpose: remove permanent_influence_target or add permanent_influence_target
+# target_nation - The nation that is the nation we want to impact their investment targets
+# adding_nation - The nation that is being added to the investment targeted
+# remove_nation - Executes the removal version of this script
+change_permanent_influence_target = {
+	if = {
+		limit = {
+			NOT = { var:target_nation = { is_in_array = { permanent_influence_target = var:adding_nation } } }
+			NOT = { check_variable = { adding_nation = 0 } }
+		}
+		custom_effect_tooltip = change_permanent_investment_target_tt
+		var:target_nation = {
+			add_to_array = { permanent_influence_target = var:adding_nation }
+		}
+	}
+	else = {
+		custom_effect_tooltip = change_permanent_investment_target_remove_tt
+		var:target_nation = {
+			remove_from_array = { permanent_influence_target = var:remove_nation }
+		}
+	}
 }
