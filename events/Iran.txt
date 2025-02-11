@@ -4082,7 +4082,7 @@ country_event = {
 					id = iraqi_flavor_events.13
 					hours = 1
 				}
-				country_event = { 
+				country_event = {
 					id = axis_of_resistance_events.11
 					days = 24
 					random_hours = 12
@@ -4204,7 +4204,7 @@ country_event = {
 					}
 				}
 			}
-				
+
 		}
 	}
 }
@@ -4228,7 +4228,7 @@ country_event = {
 		IRQ = {
 			release = IKR
 		}
-		BLC = { 
+		BLC = {
 			transfer_state = 1141
 		}
 		IKR = {
@@ -4284,19 +4284,19 @@ country_event = {
 					owner = IKR
 				}
 				declare_war_on = {
-					target = SYR 
+					target = SYR
 					type = annex_everything
 				}
 				#release = IRQ
 			}
 		}
-		IKR = { release = BLC 
+		IKR = { release = BLC
 	declare_war_on = {
-					target = SYR 
+					target = SYR
 					type = annex_everything
 				} }
-		
-		IRQ = { 
+
+		IRQ = {
 			transfer_state = 1141
 			transfer_state = 1124
 		}
@@ -22033,6 +22033,290 @@ country_event = {
 		update_PER_police_cost_multiplier_modifier = yes
 		ai_chance = {
 			base = 1
+		}
+	}
+}
+# Oil Shale in Jordan
+country_event = {
+	id = iranian_focus.11
+	title = iranian_focus.11.t
+	desc = iranian_focus.11.d
+	is_triggered_only = yes
+
+	# A great idea
+	option = {
+		name = iranian_focus.11.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.11.a executed"
+		custom_effect_tooltip = PER_oil_shale2_TT
+		PER = {
+			country_event = {
+				id = iranian_focus.12
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Never!
+	option = {
+		name = iranian_focus.11.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.11.b executed"
+		PER = {
+			country_event = {
+				id = iranian_focus.13
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+# FROM Agrees
+country_event = {
+	id = iranian_focus.12
+	title = iranian_focus.12.t
+	desc = iranian_focus.12.d
+	is_triggered_only = yes
+
+	# Great, lets start
+	option = {
+		name = iranian_focus.12.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.12.a executed"
+		if = {
+			limit = {
+				JOR = {
+					NOT = {
+						has_country_flag = JOR_agreed_oil_shale
+					}
+				}
+			}
+			210 = {
+				add_resource = {
+					type = oil
+					amount = 12
+				}
+			}
+			JOR = {
+				give_resource_rights = { receiver = PER state = 210 }
+			}
+			JOR = {
+				set_country_flag = JOR_agreed_oil_shale
+			}
+		}
+		else_if = {
+			limit = {
+				JOR = {
+					has_country_flag = JOR_asked_for_oil
+				}
+			}
+			custom_effect_tooltip = PER_extra_year_TT
+		}
+		else_if = {
+			limit = {
+				JOR = {
+					has_country_flag = JOR_asked_for_oil
+				}
+			}
+			add_to_variable = { var = PER_shale_contract value = 24 }
+			clamp_variable = { var = PER_shale_contract min = 0 max = 120 }
+			custom_effect_tooltip = PER_shortened_year_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# FROM Rejects
+country_event = {
+	id = iranian_focus.13
+	title = iranian_focus.13.t
+	desc = iranian_focus.13.d
+	is_triggered_only = yes
+
+	# Their loss
+	option = {
+		name = iranian_focus.13.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.13.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Our Options
+country_event = {
+	id = iranian_focus.14
+	title = iranian_focus.14.t
+	desc = iranian_focus.14.d
+	is_triggered_only = yes
+
+	# Ask for more oil
+	option = {
+		name = iranian_focus.14.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.14.a executed"
+		set_country_flag = JOR_asked_for_oil
+		PER = {
+			country_event = iranian_focus.15
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Ask for a shorter contract
+	option = {
+		name = iranian_focus.14.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.14.b executed"
+		set_country_flag = JOR_asked_for_time
+		PER = {
+			country_event = iranian_focus.16
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# Jordan Requests More Oil
+country_event = {
+	id = iranian_focus.15
+	title = iranian_focus.15.t
+	desc = iranian_focus.15.d
+	is_triggered_only = yes
+
+	# Okay
+	option = {
+		name = iranian_focus.15.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.15.a executed"
+		210 = {
+			add_resource = {
+				type = oil
+				amount = 5
+			}
+		}
+		JOR = {
+			country_event = {
+				id = iranian_focus.12
+				days = 1
+			}
+		}
+		custom_effect_tooltip = PER_extra_year_TT
+		add_to_variable = { var = PER_shale_contract value = -12 }
+		clamp_variable = { var = PER_shale_contract min = 0 max = 120 }
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No
+	option = {
+		name = iranian_focus.15.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.15.b executed"
+		custom_effect_tooltip = PER_likely_backout_TT
+		JOR = {
+			set_country_flag = PER_rejected
+			country_event = {
+				id = iranian_focus.13
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Jordan Requests Shorter Contract
+country_event = {
+	id = iranian_focus.16
+	title = iranian_focus.16.t
+	desc = iranian_focus.16.d
+	is_triggered_only = yes
+
+	# Okay
+	option = {
+		name = iranian_focus.16.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.16.a executed"
+		JOR = {
+			country_event = {
+				id = iranian_focus.12
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No
+	option = {
+		name = iranian_focus.16.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.16.b executed"
+		custom_effect_tooltip = PER_likely_backout_TT
+		JOR = {
+			set_country_flag = PER_rejected
+			country_event = {
+				id = iranian_focus.13
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# End of Contract
+country_event = {
+	id = iranian_focus.17
+	title = iranian_focus.17.t
+	desc = iranian_focus.17.d
+	is_triggered_only = yes
+
+	# Okay
+	option = {
+		name = iranian_focus.17.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.17.a executed"
+		PER = { remove_resource_rights = 210 }
+		JOR = {
+			clr_country_flag = JOR_agreed_oil_shale
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Jordan Backs Out of the Contract Early
+country_event = {
+	id = iranian_focus.18
+	title = iranian_focus.18.t
+	desc = iranian_focus.18.d
+	is_triggered_only = yes
+
+	# They did what?
+	option = {
+		name = iranian_focus.18.a
+		log = "[GetDateText]: [This.GetName]: iranian_focus.18.a executed"
+		PER = {
+			add_opinion_modifier = {
+				target = JOR
+				modifier = major_breach_of_trust
+			}
+			send_embargo = JOR
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Just let it go
+	option = {
+		name = iranian_focus.18.b
+		log = "[GetDateText]: [This.GetName]: iranian_focus.18.b executed"
+
+		ai_chance = {
+			base = 0
 		}
 	}
 }
