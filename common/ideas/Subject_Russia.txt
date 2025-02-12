@@ -4,7 +4,35 @@ ideas = {
 		#######SUBJECT MAIN#######
 		#######Subject idea#######
 		CHE_republic_rf = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea CHE_republic_rf" }
+			on_add = { 
+				log = "[GetDateText]: [Root.GetName]: add idea CHE_republic_rf"
+				if = {
+					limit = {
+						NOT = { 
+							SOV = { 
+								has_idea = SUB_confederation 
+								has_country_flag = SOV_subjects_good_federalism
+								has_idea = SUB_super_confederation
+							}
+						} 
+					}
+					SOV = {	add_ideas = SUB_confederation }
+				} 
+				if = {
+					limit = {
+						SOV = { 
+							has_country_flag = SOV_subjects_good_federalism
+						}
+						NOT = { 
+							SOV = { 
+								has_idea = SUB_confederation
+								has_idea = SUB_super_confederation
+							}
+						} 
+					}
+					SOV = {	add_ideas = SUB_super_confederation }
+				}
+			}
 			picture = sov_republic_rf
 			cancel = {
 				NOT = {
@@ -43,70 +71,6 @@ ideas = {
 				}
 			}
 		}
-		#######Military Campaign in Iraq#######
-		SUB_volunteer_iraq_idea = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea SUB_volunteer_iraq_idea" }
-			picture = sov_doctrines
-			allowed = { always = no }
-			allowed_civil_war = {
-				always = yes
-			}
-			cancel = {
-				OR = {
-					NOT = { has_autonomy_state = autonomy_republic_rf }
-					IRQ = {
-						NOT = { has_war_with = USA }
-					}
-					NOT = { SOV = { has_country_flag = SUB_campaign_start } }
-				}
-			}
-			modifier = {
-				send_volunteer_size = 1
-				send_volunteers_tension = -0.95
-			}
-		}
-		#######Military Campaign in Syria#######
-		SUB_volunteer_syria_idea = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea SUB_volunteer_syria_idea" }
-			picture = sov_doctrines
-			allowed = { always = no }
-			allowed_civil_war = {
-				always = yes
-			}
-			cancel = {
-				OR = {
-					NOT = { has_autonomy_state = autonomy_republic_rf }
-					SYR = {
-						has_war = no
-					}
-					NOT = { SOV = { has_country_flag = SUB_campaign_start } }
-				}
-			}
-			modifier = {
-				send_volunteer_size = 1
-				send_volunteers_tension = -0.95
-			}
-		}
-		#######Military Campaign in Donetsk#######
-		SUB_volunteer_dpr_idea = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add idea SUB_volunteer_dpr_idea" }
-			picture = sov_doctrines
-			allowed = { always = no }
-			allowed_civil_war = {
-				always = yes
-			}
-			cancel = {
-				OR = {
-					NOT = { has_autonomy_state = autonomy_republic_rf }
-					NOT = { has_war_with = UKR }
-					NOT = { SOV = { has_country_flag = SUB_campaign_start } }
-				}
-			}
-			modifier = {
-				send_volunteer_size = 1
-				send_volunteers_tension = -0.95
-			}
-		}
 		#######Debuff for Annex Subject#######
 		SUB_annex_debuff = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_annex_debuff" }
@@ -118,38 +82,19 @@ ideas = {
 
 			}
 		}
-		#######Debuff for Federalization#######
-		SUB_confederation = {
-			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_confederation" }
-			picture = sub_federalism_idea
-			allowed_civil_war = { always = yes }
-			cancel = {
-				NOT = {
-					SUB_subjects_availables = yes
-				}
-			}
-			modifier = {
-				political_power_gain = -0.07
-				stability_factor = -0.08
-				tax_gain_multiplier_modifier = -0.18
-				police_cost_multiplier_modifier = -0.10
-				education_cost_multiplier_modifier = -0.10
-				health_cost_multiplier_modifier = -0.10
-				social_cost_multiplier_modifier = -0.10
-				bureaucracy_cost_multiplier_modifier = -0.10
-				personnel_cost_multiplier_modifier = -0.10
-				production_speed_buildings_factor = 0.05
-				industry_free_repair_factor = 0.05
-			}
-		}
 		#Smallish Taxes
 		SUB_smallish_taxes = {
 			on_add = { log = "[GetDateText]: [Root.GetName]: add SUB_smallish_taxes" }
 			picture = sub_taxes_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
-				NOT = {
-					is_subject_of = SOV
+				OR = {
+					SOV = {
+						has_country_flag = SOV_subjects_no_taxes
+					}
+					NOT = {
+						is_subject_of = SOV
+					}
 				}
 			}
 			modifier = {
@@ -168,8 +113,13 @@ ideas = {
 			picture = sub_taxes_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
-				NOT = {
-					is_subject_of = SOV
+				OR = {
+					SOV = {
+						has_country_flag = SOV_subjects_no_taxes
+					}
+					NOT = {
+						is_subject_of = SOV
+					}
 				}
 			}
 			modifier = {
@@ -189,8 +139,13 @@ ideas = {
 			allowed_civil_war = { always = yes }
 			name = SUB_small_taxes
 			cancel = {
-				NOT = {
-					is_subject_of = SOV
+				OR = {
+					SOV = {
+						has_country_flag = SOV_subjects_no_taxes
+					}
+					NOT = {
+						is_subject_of = SOV
+					}
 				}
 			}
 			modifier = {
@@ -210,8 +165,13 @@ ideas = {
 			allowed_civil_war = { always = yes }
 			name = SUB_small_taxes
 			cancel = {
-				NOT = {
-					is_subject_of = SOV
+				OR = {
+					SOV = {
+						has_country_flag = SOV_subjects_no_taxes
+					}
+					NOT = {
+						is_subject_of = SOV
+					}
 				}
 			}
 			modifier = {
@@ -277,7 +237,10 @@ ideas = {
 			picture = msc_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
-				NOT = { owns_state = 652 }
+				OR = {
+					has_country_flag = SOV_moscow_no_more
+					NOT = { owns_state = 652 }
+				}
 			}
 			modifier = {
 				communism_drift = 0.01
@@ -289,7 +252,10 @@ ideas = {
 			picture = msc_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
-				NOT = { owns_state = 652 }
+				OR = {
+					has_country_flag = SOV_moscow_no_more
+					NOT = { owns_state = 652 }
+				}
 			}
 			modifier = {
 				communism_drift = 0.02
@@ -303,7 +269,10 @@ ideas = {
 			picture = msc_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
-				NOT = { owns_state = 652 }
+				OR = {
+					has_country_flag = SOV_moscow_no_more
+					NOT = { owns_state = 652 }
+				}
 			}
 			modifier = {
 				communism_drift = 0.02
@@ -317,7 +286,10 @@ ideas = {
 			picture = msc_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
-				NOT = { owns_state = 652 }
+				OR = {
+					has_country_flag = SOV_moscow_no_more
+					NOT = { owns_state = 652 }
+				}
 			}
 			modifier = {
 				nationalist_drift = 0.02
@@ -331,7 +303,10 @@ ideas = {
 			picture = msc_idea
 			allowed_civil_war = { always = yes }
 			cancel = {
-				NOT = { owns_state = 652 }
+				OR = {
+					has_country_flag = SOV_moscow_no_more
+					NOT = { owns_state = 652 }
+				}
 			}
 			modifier = {
 				democratic_drift = 0.02
@@ -346,6 +321,7 @@ ideas = {
 			allowed_civil_war = { always = yes }
 			cancel = {
 				OR = {
+					has_country_flag = SOV_moscow_no_more
 					NOT = { owns_state = 652 }
 					has_country_leader = { name = "Alexei Navalny" ruling_only = yes }
 				}
