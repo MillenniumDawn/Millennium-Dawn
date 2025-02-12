@@ -158,16 +158,24 @@ calculate_energy_use = {
 	add_to_variable = { energy_sum = geothermal_energy_generation }
 
 	# Calculate fuel consumption and energy generation of fossil power plants
-	set_variable = { fossil_pp_energy_generation = modifier@fossil_energy_gain }
-	set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
-	add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
-	multiply_variable = { fossil_pp_energy_generation = fossil_pp_energy_generation_multiplier }
+	if = { limit = { has_country_flag = disable_fossil_fuel_power_plant_flag }
+		set_variable = { fossil_pp_energy_generation = 0 }
+		set_variable = { fossil_pp_fuel_consumption = 0 }
+	}
+	else = {
+		set_variable = { fossil_pp_energy_generation = modifier@fossil_energy_gain }
+		set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
+		add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
+		multiply_variable = { fossil_pp_energy_generation = fossil_pp_energy_generation_multiplier }
 
-	set_variable = { fossil_pp_fuel_consumption = modifier@fossil_fuel_consumption }
-	set_temp_variable = { fossil_pp_fuel_consumption_multiplier = 1 }
-	add_to_temp_variable = { fossil_pp_fuel_consumption_multiplier = modifier@fossil_pp_fuel_consumption_modifier }
-	multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
-	multiply_variable = { fossil_pp_fuel_consumption = -1 }
+		set_variable = { fossil_pp_fuel_consumption = modifier@fossil_fuel_consumption }
+		set_temp_variable = { fossil_pp_fuel_consumption_multiplier = 1 }
+		add_to_temp_variable = { fossil_pp_fuel_consumption_multiplier = modifier@fossil_pp_fuel_consumption_modifier }
+		multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
+		multiply_variable = { fossil_pp_fuel_consumption = -1 }
+	}
+
+
 
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
@@ -198,6 +206,7 @@ calculate_energy_use = {
 
 	if = {
 		limit = {
+			NOT = { has_country_flag = disable_nuclear_power_plant_flag }
 			OR = {
 				has_idea = nuclear_energy
 				has_idea = nuclear_power_off
