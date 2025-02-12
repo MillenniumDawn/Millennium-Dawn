@@ -8717,7 +8717,7 @@ country_event = {
 		name = LibyaTribes.5.a
 		log = "[GetDateText]: [This.GetName]: LibyaTribes.5.a executed"
 		ai_chance = { base = 50 }
-		set_temp_variable = { temp_productivity_change = 0.25 }
+		set_temp_variable = { temp_productivity_change = 25 }
 		flat_productivity_change_effect = yes
 		set_temp_variable = { corp_change = -2 }
 		modify_corporate_tax_rate_effect = yes
@@ -12292,6 +12292,344 @@ country_event = {
 	}
 }
 
+#Choosing a side in civil war
+country_event = {
+	id = LibyaCivilWar.15
+	title = LibyaCivilWar.15.t
+	desc = LibyaCivilWar.15.d
+	picture = GFX_politics_protest #TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	option = {
+		name = LibyaCivilWar.15.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWar.15.a executed"
+		#Find the strongest non-government party
+		set_temp_variable = { opposition_party_index = 0 }
+		set_temp_variable = { opposition_party_popularity = 0 }
+		for_each_loop = {
+			array = party_pop_array
+			value = v
+			index = i
+			break = break
+			if = {
+				limit = {
+					check_variable = { v > opposition_party_popularity }
+					NOT = { is_in_array = { ruling_party = i } }
+					NOT = { is_in_array = { gov_coalition_array = i } }
+				}
+				set_temp_variable = { opposition_party_index = i }
+				set_temp_variable = { opposition_party_popularity = v }
+			}
+		}
+
+		#Set size for the civil war (2xpopularity, 3x if Revolutionary Guard deployed)
+		if = {
+			limit = { has_country_flag = LBA_military_used_on_protesters }
+			multiply_temp_variable = { opposition_party_popularity = 3 }
+		}
+		else = {
+			multiply_temp_variable = { opposition_party_popularity = 2 }
+		}
+		clamp_temp_variable = {
+			var = opposition_party_popularity
+			min = 0
+			max = 0.8
+		}
+		custom_effect_tooltip = start_civil_war_against_the_strongest_opposition_tt
+
+		set_cosmetic_tag = LBA_GADDAFI_LOYALISTS
+		clr_country_flag = dynamic_flag
+		clr_country_flag = dynamic_rebel_flag
+		set_country_flag = LBA_this_is_gaddafi
+		hidden_effect = {
+			#Start the civil war
+			if = {
+				limit = {
+					check_variable = { opposition_party_index < 4 }
+				}
+				start_civil_war = {
+					ideology = democratic
+					size = opposition_party_popularity
+					keep_all_characters = yes
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { opposition_party_index > 3 }
+					check_variable = { opposition_party_index < 10 }
+				}
+				start_civil_war = {
+					ideology = communism
+					size = opposition_party_popularity
+					keep_all_characters = yes
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { opposition_party_index > 9 }
+					check_variable = { opposition_party_index < 12 }
+				}
+				start_civil_war = {
+					ideology = fascism
+					size = opposition_party_popularity
+					keep_all_characters = yes
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { opposition_party_index > 11 }
+					check_variable = { opposition_party_index < 20 }
+				}
+				start_civil_war = {
+					ideology = neutrality
+					size = opposition_party_popularity
+					keep_all_characters = yes
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { opposition_party_index > 19 }
+				}
+				start_civil_war = {
+					ideology = nationalist
+					size = opposition_party_popularity
+					keep_all_characters = yes
+				}
+			}
+			#Set the revolting side correctly
+			random_enemy_country = {
+				limit = { original_tag = ROOT }
+				set_temp_variable = { rul_party_temp = opposition_party_index }
+				change_ruling_party_effect = yes
+				set_cosmetic_tag = GNA_NTC
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
+				set_country_flag = LBA_fall_of_gaddafi
+				set_country_flag = LBA_this_is_libyan_rebels
+				set_country_flag = LBA_democratic_reform
+				set_country_flag = generic_civil_war_skip_elections
+				country_event = LibyaCivilWarContent.13
+			}
+			LBA_abdel_hakim_al_hasidi = {
+				set_nationality = LRB
+			}
+			LBA_mahdi_al_harati = {
+				set_nationality = LRB
+			}
+			LBA_osama_al_juwaili = {
+				set_nationality = LRB
+			}
+			LBA_suleiman_mahmoud_al_obeidi = {
+				set_nationality = LRB
+				add_field_marshal_role = {
+					skill = 4
+					traits = { old_guard armor_officer harsh_leader organizer organizer_expert fast_planner LBA_unit_leader_trait_cyrenaica }
+					attack_skill = 2
+					defense_skill = 5
+					planning_skill = 1
+					logistics_skill = 6
+				}
+				add_advisor_role = {
+					advisor = {
+						slot = army_chief
+						idea_token = suleiman_mahmoud_al_obeidi
+						traits = {
+							army_chief_reform_1
+						}
+						cost = 100
+					}
+				}
+			}
+			LBA_khalifa_haftar = {
+				set_nationality = LRB
+			}
+			random = {
+				chance = 50
+				LBA_ahmed_oun = {
+					set_nationality = LRB
+				}
+			}
+			random = {
+				chance = 50
+				LBA_abdul_fatah_younis = {
+					set_nationality = LRB
+				}
+			}
+			add_named_threat = {
+				threat = 5
+				name = LBA_first_libyan_civil_war_tension
+			}
+			country_event = LibyaCivilWarContent.14
+		}
+		set_global_flag = first_libyan_civil_war
+		if = {
+			limit = { has_country_flag = LBA_military_used_on_protesters }
+			hidden_effect = {
+				every_country = {
+					limit = {
+						has_idea = NATO_member
+					}
+					set_country_flag = intervene_in_libya
+				}
+			}
+		}
+		hidden_effect = { news_event = { id = LibyaFocusNews.14 hours = 6 } }
+	}
+	option = {
+		name = LibyaCivilWar.15.b
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWar.15.b executed"
+		#Find the strongest non-government party
+		set_temp_variable = { opposition_party_index = 0 }
+		set_temp_variable = { opposition_party_popularity = 0 }
+		for_each_loop = {
+			array = party_pop_array
+			value = v
+			index = i
+			break = break
+			if = {
+				limit = {
+					check_variable = { v > opposition_party_popularity }
+					NOT = { is_in_array = { ruling_party = i } }
+					NOT = { is_in_array = { gov_coalition_array = i } }
+				}
+				set_temp_variable = { opposition_party_index = i }
+				set_temp_variable = { opposition_party_popularity = v }
+			}
+		}
+		multiply_temp_variable = { opposition_party_popularity = 2 }
+		clamp_temp_variable = {
+			var = opposition_party_popularity
+			min = 0
+			max = 0.8
+		}
+		multiply_temp_variable = { opposition_party_popularity = -1 }
+		add_to_temp_variable = { opposition_party_popularity = 1 }
+
+		custom_effect_tooltip = libya_gaddafi_family_anti_government_protests_join_rebels_tt
+		hidden_effect = {
+			set_temp_variable = { rul_party_temp = opposition_party_index }
+			set_temp_variable = { change_leader_temp = 0 }
+			set_temp_variable = { enable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+		set_cosmetic_tag = GNA_NTC
+		clr_country_flag = dynamic_flag
+		clr_country_flag = dynamic_rebel_flag
+		set_country_flag = LBA_fall_of_gaddafi
+		set_country_flag = LBA_this_is_libyan_rebels
+		set_country_flag = LBA_democratic_reform
+		set_country_flag = generic_civil_war_skip_elections
+		set_country_flag = no_leader_change
+		set_capital = { state = 395 }
+		start_civil_war = {
+			ideology = communism
+			size = opposition_party_popularity
+			keep_unit_leaders_trigger = {
+				always = yes
+			}
+			hidden_effect = {
+				set_cosmetic_tag = LBA_GADDAFI_LOYALISTS
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
+				set_country_flag = LBA_this_is_gaddafi
+				PREV = {
+					hidden_effect = {
+						LBA_hasan_al_kabir_al_gaddafi = {
+							set_nationality = PREV.PREV
+						}
+						LBA_abu_bakr_yunis_jabr = {
+							set_nationality = PREV.PREV
+						}
+						LBA_muhammad_muammar_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+						LBA_saif_al_islam_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+						LBA_al_saadi_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+						LBA_mutassim_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+						LBA_hannibal_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+						LBA_ayesha_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+						LBA_saif_al_arab_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+						LBA_khamis_gaddafi_dummy = {
+							set_nationality = PREV.PREV
+						}
+					}
+				}
+				country_event = LibyaCivilWarContent.14
+			}
+		}
+		clr_country_flag = no_leader_change
+		hidden_effect = {
+			add_popularity = {
+				ideology = communism
+				popularity = -0.3
+			}
+			LBA_suleiman_mahmoud_al_obeidi = {
+				add_field_marshal_role = {
+					skill = 4
+					traits = { old_guard armor_officer harsh_leader organizer organizer_expert fast_planner LBA_unit_leader_trait_cyrenaica }
+					attack_skill = 2
+					defense_skill = 5
+					planning_skill = 1
+					logistics_skill = 6
+				}
+				add_advisor_role = {
+					advisor = {
+						slot = army_chief
+						idea_token = suleiman_mahmoud_al_obeidi
+						traits = {
+							army_chief_reform_1
+						}
+						cost = 100
+					}
+				}
+			}
+			random = {
+				chance = 50
+				LBA_ahmed_oun = {
+					set_nationality = GAD
+				}
+			}
+			random = {
+				chance = 50
+				LBA_abdul_fatah_younis = {
+					set_nationality = GAD
+				}
+			}
+			add_named_threat = {
+				threat = 5
+				name = LBA_first_libyan_civil_war_tension
+			}
+			country_event = LibyaCivilWarContent.13
+		}
+		set_global_flag = first_libyan_civil_war
+		if = {
+			limit = { has_country_flag = LBA_military_used_on_protesters }
+			hidden_effect = {
+				every_country = {
+					limit = {
+						has_idea = NATO_member
+					}
+					set_country_flag = intervene_in_libya
+				}
+			}
+		}
+		hidden_effect = { news_event = { id = LibyaFocusNews.14 hours = 6 } }
+	}
+}
+
 #Events that happen during the first civil war
 #Warfalla tribe mobilises
 country_event = {
@@ -12997,7 +13335,7 @@ country_event = {
 			set_nationality = ROOT
 			add_corps_commander_role = {
 				skill = 3
-				traits = { war_hero infantry_officer trickster LBA_unit_leader_trait_cyrenaica }
+				traits = { war_hero infantry_officer trickster LBA_unit_leader_trait_cyrenaica LBA_unit_leader_trait_jihadist_commander }
 				attack_skill = 3
 				defense_skill = 1
 				planning_skill = 3
@@ -13049,7 +13387,7 @@ country_event = {
 			set_nationality = ROOT
 			add_corps_commander_role = {
 				skill = 4
-				traits = { harsh_leader armoured_cavalry_officer air_cavalry_leader LBA_unit_leader_trait_tripolitania }
+				traits = { harsh_leader armoured_cavalry_officer air_cavalry_leader LBA_unit_leader_trait_tripolitania LBA_unit_leader_trait_islamist_commander }
 				attack_skill = 4
 				defense_skill = 4
 				planning_skill = 3
@@ -13090,7 +13428,7 @@ country_event = {
 		LBA_osama_al_juwaili = {
 			set_nationality = ROOT
 			add_corps_commander_role = {
-				traits = { guerrilla_leader_trait scavenger LBA_unit_leader_trait_tripolitania }
+				traits = { guerrilla_leader_trait scavenger LBA_unit_leader_trait_tripolitania LBA_unit_leader_trait_islamist_commander }
 				skill = 4
 				attack_skill = 5
 				defense_skill = 1
@@ -13144,7 +13482,7 @@ country_event = {
 		LBA_khalifa_haftar = {
 			set_nationality = ROOT
 			add_field_marshal_role = {
-				traits = { old_guard career_officer aggressive_assaulter offensive_doctrine inspirational_leader infantry_leader LBA_unit_leader_trait_cyrenaica }
+				traits = { old_guard career_officer aggressive_assaulter offensive_doctrine inspirational_leader infantry_leader LBA_unit_leader_trait_cyrenaica LBA_unit_leader_trait_secularist_commander }
 				skill = 4
 				attack_skill = 2
 				defense_skill = 3
@@ -13877,6 +14215,8 @@ country_event = {
 
 	is_triggered_only = yes
 
+	fire_only_once = yes
+
 	immediate = {
 		add_timed_idea = {
 			idea = LBA_aftermath_of_the_civil_war
@@ -14118,12 +14458,17 @@ country_event = {
 
 	is_triggered_only = yes
 
+	fire_only_once = yes
+
 	trigger = {
 		country_exists = ASL
 		ASL = { owns_state = 395 }
 		fascism > 0.10
 		owns_state = 396
 		ASL = { has_war = no }
+		LBA_abdel_hakim_al_hasidi = {
+			is_unit_leader = no
+		}
 	}
 
 	mean_time_to_happen = {
@@ -14147,6 +14492,19 @@ country_event = {
 		name = LibyaCivilWarContent.26.a
 		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.26.a executed"
 		custom_effect_tooltip = LibyaCivilWarContent.26.tooltip2
+		LBA_salim_derby = {
+			set_nationality = ASL
+		}
+		every_unit_leader = {
+			limit = {
+				has_trait = LBA_unit_leader_trait_jihadist_commander
+				NOT = { is_character = LBA_mahdi_al_harati }
+			}
+			random = {
+				chance = 50
+				set_nationality = ASL
+			}
+		}
 		delete_unit = {
 			id = 1890
 			disband = no
@@ -14172,12 +14530,12 @@ country_event = {
 				capital_scope = {
 					create_unit = {
 						division = "name = \"Liwa Shuhada Abu Salim\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
-						owner = ROOT
+						owner = ASL
 						id = 11954
 					}
 					create_unit = {
 						division = "name = \"Jaysh al-Islam\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
-						owner = ROOT
+						owner = ASL
 						id = 11954
 					}
 				}
@@ -14213,6 +14571,8 @@ country_event = {
 	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
 
 	is_triggered_only = yes
+
+	fire_only_once = yes
 
 	trigger = {
 		country_exists = ASL
@@ -14266,12 +14626,12 @@ country_event = {
 				capital_scope = {
 					create_unit = {
 						division = "name = \"Jaysh Shuraa Ajdabiana\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
-						owner = ROOT
+						owner = ASL
 						id = 11954
 					}
 					create_unit = {
 						division = "name = \"Katibat Muziq al-Zuwy\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
-						owner = ROOT
+						owner = ASL
 						id = 11954
 					}
 				}
@@ -14307,6 +14667,8 @@ country_event = {
 	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
 
 	is_triggered_only = yes
+
+	fire_only_once = yes
 
 	trigger = {
 		country_exists = ASL
@@ -14349,6 +14711,814 @@ country_event = {
 			DECISION = libya_attack_ansar_al_sharia_in_kufra
 			DECISION_CATEGORY = libya_aftermath_of_civil_war
 		}
+	}
+}
+
+#Ansar al-Sharia takes control of Sirte
+country_event = {
+	id = LibyaCivilWarContent.29
+	title = LibyaCivilWarContent.29.t
+	desc = LibyaCivilWarContent.29.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		country_exists = ASL
+		fascism > 0.10
+		owns_state = 919
+		ASL = { has_war = no }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			fascism > 0.15
+			fascism < 0.20
+		}
+		modifier = {
+			factor = 4
+			fascism > 0.20
+			fascism < 0.25
+		}
+		modifier = {
+			factor = 6
+			fascism > 0.25
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.29.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.29.a executed"
+		919 = { transfer_state_to = ASL }
+		hidden_effect = {
+			ASL = {
+				if = {
+					limit = {
+						NOT = { has_template = "Liwa al-Shuhada"}
+					}
+					division_template = {
+						name = "Liwa al-Shuhada"
+						regiments = {
+							Mot_Militia_Bat = { x = 0 y = 0 }
+							Mot_Militia_Bat = { x = 0 y = 1 }
+							Mot_Militia_Bat = { x = 0 y = 2 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+						}
+					}
+				}
+				919 = {
+					create_unit = {
+						division = "name = \"Quat Himayat Sirt\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+						owner = ASL
+						id = 4047
+					}
+					create_unit = {
+						division = "name = \"Liwa Shuhada Sirt\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+						owner = ASL
+						id = 4047
+					}
+					create_unit = {
+						division = "name = \"Katibat Abu Abdullah Al-Libi\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+						owner = ASL
+						id = 4047
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_active_mission = libya_operation_dignity_mission }
+			add_days_mission_timeout = {
+				mission = libya_operation_dignity_mission
+				days = -60
+			}
+		}
+		libya_add_jihadist_independence = yes
+		custom_effect_tooltip = {
+			localization_key = UNLOCK_DECISION_IN_CATEGORY
+			DECISION = libya_attack_ansar_al_sharia_in_sirte
+			DECISION_CATEGORY = libya_aftermath_of_civil_war
+		}
+	}
+}
+
+#Ansar al-Sharia occupies Sabha
+country_event = {
+	id = LibyaCivilWarContent.30
+	title = LibyaCivilWarContent.30.t
+	desc = LibyaCivilWarContent.30.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		country_exists = ASL
+		fascism > 0.10
+		ASL = { owns_state = 919 }
+		ASL = { has_war = no }
+	}
+
+	mean_time_to_happen = {
+		modifier = {
+			factor = 2
+			fascism > 0.15
+			fascism < 0.20
+		}
+		modifier = {
+			factor = 4
+			fascism > 0.20
+			fascism < 0.25
+		}
+		modifier = {
+			factor = 6
+			fascism > 0.25
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.30.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.30.a executed"
+		392 = { set_demilitarized_zone = yes }
+		custom_effect_tooltip = LibyaCivilWarContent.30.tooltip
+		if = {
+			limit = { has_active_mission = libya_operation_dignity_mission }
+			add_days_mission_timeout = {
+				mission = libya_operation_dignity_mission
+				days = -60
+			}
+		}
+		libya_add_jihadist_independence = yes
+		custom_effect_tooltip = {
+			localization_key = UNLOCK_DECISION_IN_CATEGORY
+			DECISION = libya_attack_ansar_al_sharia_in_sabha
+			DECISION_CATEGORY = libya_aftermath_of_civil_war
+		}
+	}
+}
+
+#Abdel-Hakim al-Hasidi gets elected in Derna
+country_event = {
+	id = LibyaCivilWarContent.31
+	title = LibyaCivilWarContent.31.t
+	desc = LibyaCivilWarContent.31.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		has_character = LBA_abdel_hakim_al_hasidi
+		has_elections = yes
+		LBA_abdel_hakim_al_hasidi = {
+			is_unit_leader = yes
+		}
+		owns_state = 396
+		controls_state = 396
+	}
+
+	option = {
+		name = LibyaCivilWarContent.31.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.31.a executed"
+		LBA_abdel_hakim_al_hasidi = { retire = yes }
+		add_stability = 0.025
+		set_temp_variable = { temp_productivity_change = 25 }
+		flat_productivity_change_effect = yes
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.05 }
+		add_relative_party_popularity = yes
+		LBA = {
+			LBA_salim_derby = {
+				set_nationality = ROOT
+				add_corps_commander_role = {
+					skill = 2
+					traits = { commando_officer armoured_cavalry_leader  LBA_unit_leader_trait_cyrenaica LBA_unit_leader_trait_jihadist_commander }
+					attack_skill = 1
+					defense_skill = 2
+					planning_skill = 2
+					logistics_skill = 2
+				}
+			}
+		}
+	}
+	option = {
+		name = LibyaCivilWarContent.31.b
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.31.a executed"
+		LBA_abdel_hakim_al_hasidi = {
+			gain_xp = 500
+		}
+		libya_add_jihadist_independence = yes
+	}
+}
+
+#Choosing a defence minister
+country_event = {
+	id = LibyaCivilWarContent.32
+	title = LibyaCivilWarContent.32.t
+	desc = LibyaCivilWarContent.32.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		has_global_flag = first_libyan_civil_war_over
+	}
+
+	immediate = {
+		hidden_effect = {
+			random_unit_leader = {
+				limit = { NOT = { is_hired_as_advisor = yes } }
+				set_character_flag = first_pick_as_minister
+			}
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.32.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.32.a executed"
+		if ={
+			limit = {
+				any_unit_leader = {
+					is_army_chief = yes
+				}
+			}
+			random_unit_leader = {
+				limit = { has_character_flag = first_pick_as_minister }
+				add_advisor_role = {
+					advisor = {
+						slot = army_chief
+						idea_token = LBA_defence_minister_character
+						cost = 100
+						traits = { defence_minister_of_libya }
+					}
+				}
+				if = {
+					limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+					PREV = { libya_add_jihadist_independence = yes }
+				}
+				else_if = {
+					limit = {has_trait = LBA_unit_leader_trait_islamist_commander }
+					PREV = { libya_add_islamist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_secularist_commander }
+					PREV = { libya_add_secularist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_reformist_commander }
+					PREV = { libya_add_reformist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_tribal_commander }
+					PREV = { libya_add_tribal_independence = yes }
+				}
+			}
+		}
+		else = {
+			random_unit_leader = {
+				limit = { has_character_flag = first_pick_as_minister }
+				add_advisor_role = {
+					activate = yes
+					advisor = {
+						slot = army_chief
+						idea_token = LBA_defence_minister_character
+						cost = 100
+						traits = { defence_minister_of_libya }
+					}
+				}
+				if = {
+					limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+					PREV = { libya_add_jihadist_independence = yes }
+				}
+				else_if = {
+					limit = {has_trait = LBA_unit_leader_trait_islamist_commander }
+					PREV = { libya_add_islamist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_secularist_commander }
+					PREV = { libya_add_secularist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_reformist_commander }
+					PREV = { libya_add_reformist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_tribal_commander }
+					PREV = { libya_add_tribal_independence = yes }
+				}
+			}
+		}
+		hidden_effect = {
+			every_unit_leader = {
+				clr_character_flag = first_pick_as_minister
+			}
+		}
+	}
+	option = {
+		name = LibyaCivilWarContent.32.b
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.32.a executed"
+		if ={
+			limit = {
+				any_unit_leader = {
+					is_army_chief = yes
+				}
+			}
+			random_unit_leader = {
+				limit = {
+					NOT = { has_character_flag = first_pick_as_minister }
+					NOT = { is_hired_as_advisor = yes }
+				}
+				add_advisor_role = {
+					advisor = {
+						slot = army_chief
+						idea_token = LBA_defence_minister_character
+						cost = 100
+						traits = { defence_minister_of_libya }
+					}
+				}
+				if = {
+					limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+					PREV = { libya_add_jihadist_independence = yes }
+				}
+				else_if = {
+					limit = {has_trait = LBA_unit_leader_trait_islamist_commander }
+					PREV = { libya_add_islamist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_secularist_commander }
+					PREV = { libya_add_secularist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_reformist_commander }
+					PREV = { libya_add_reformist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_tribal_commander }
+					PREV = { libya_add_tribal_independence = yes }
+				}
+			}
+		}
+		else = {
+			random_unit_leader = {
+				limit = {
+					NOT = { has_character_flag = first_pick_as_minister }
+					NOT = { is_hired_as_advisor = yes }
+				}
+				add_advisor_role = {
+					activate = yes
+					advisor = {
+						slot = army_chief
+						idea_token = LBA_defence_minister_character
+						cost = 100
+						traits = { defence_minister_of_libya }
+					}
+				}
+				if = {
+					limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+					PREV = { libya_add_jihadist_independence = yes }
+				}
+				else_if = {
+					limit = {has_trait = LBA_unit_leader_trait_islamist_commander }
+					PREV = { libya_add_islamist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_secularist_commander }
+					PREV = { libya_add_secularist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_reformist_commander }
+					PREV = { libya_add_reformist_independence = yes }
+				}
+				else_if = {
+					limit = { has_trait = LBA_unit_leader_trait_tribal_commander }
+					PREV = { libya_add_tribal_independence = yes }
+				}
+			}
+		}
+		hidden_effect = {
+			every_unit_leader = {
+				clr_character_flag = first_pick_as_minister
+			}
+		}
+	}
+}
+
+#General abducted
+country_event = {
+	id = LibyaCivilWarContent.33
+	title = LibyaCivilWarContent.33.t
+	desc = LibyaCivilWarContent.33.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		OR = {
+			has_dynamic_modifier = { modifier = LBA_tribal_militias }
+			has_dynamic_modifier = { modifier = LBA_jihadist_militias }
+			has_dynamic_modifier = { modifier = LBA_islamist_militias }
+			has_dynamic_modifier = { modifier = LBA_secularist_militias }
+			has_dynamic_modifier = { modifier = LBA_reformist_militias }
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			random_list = {
+				10 = {
+					set_country_flag = LBA_tribal_abduction
+					random_unit_leader = {
+						limit = {
+							NOT = { has_trait = LBA_unit_leader_trait_tribal_commander }
+						}
+						set_character_flag = abducted
+					}
+				}
+				10 = {
+					set_country_flag = LBA_jihadist_abduction
+					random_unit_leader = {
+						limit = {
+							NOT = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+						}
+						set_character_flag = abducted
+					}
+				}
+				10 = {
+					set_country_flag = LBA_islamist_abduction
+					random_unit_leader = {
+						limit = {
+							NOT = { has_trait = LBA_unit_leader_trait_islamist_commander }
+						}
+						set_character_flag = abducted
+					}
+				}
+				10 = {
+					set_country_flag = LBA_secularist_abduction
+					random_unit_leader = {
+						limit = {
+							NOT = { has_trait = LBA_unit_leader_trait_secularist_commander }
+						}
+						set_character_flag = abducted
+					}
+				}
+				10 = {
+					set_country_flag = LBA_reformist_abduction
+					random_unit_leader = {
+						limit = {
+							NOT = { has_trait = LBA_unit_leader_trait_reformist_commander }
+						}
+						set_character_flag = abducted
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.33.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.33.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.025 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { has_country_flag = LBA_tribal_abduction }
+			libya_add_tribal_independence = yes
+		}
+		if = {
+			limit = { has_country_flag = LBA_jihadist_abduction }
+			libya_add_jihadist_independence = yes
+		}
+		if = {
+			limit = { has_country_flag = LBA_islamist_abduction }
+			libya_add_islamist_independence = yes
+		}
+		if = {
+			limit = { has_country_flag = LBA_secularist_abduction }
+			libya_add_secularist_independence = yes
+		}
+		if = {
+			limit = { has_country_flag = LBA_reformist_abduction }
+			libya_add_reformist_independence = yes
+		}
+		random_unit_leader = {
+			limit = { has_character_flag = abducted }
+			add_timed_unit_leader_trait = {
+				trait = sick
+				days = 180
+			}
+			clr_character_flag = abducted
+		}
+		clr_country_flag = LBA_tribal_abduction
+		clr_country_flag = LBA_jihadist_abduction
+		clr_country_flag = LBA_islamist_abduction
+		clr_country_flag = LBA_secularist_abduction
+		clr_country_flag = LBA_reformist_abduction
+	}
+	option = {
+		name = LibyaCivilWarContent.33.b
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.32.a executed"
+		random_unit_leader = {
+			limit = { has_character_flag = abducted }
+			add_timed_unit_leader_trait = {
+				trait = disgruntled
+				days = 360
+			}
+			if = {
+				limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+				PREV = { libya_add_jihadist_independence = yes }
+			}
+			else_if = {
+				limit = {has_trait = LBA_unit_leader_trait_islamist_commander }
+				PREV = { libya_add_islamist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_secularist_commander }
+				PREV = { libya_add_secularist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_reformist_commander }
+				PREV = { libya_add_reformist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_tribal_commander }
+				PREV = { libya_add_tribal_independence = yes }
+			}
+			clr_character_flag = abducted
+		}
+		clr_country_flag = LBA_tribal_abduction
+		clr_country_flag = LBA_jihadist_abduction
+		clr_country_flag = LBA_islamist_abduction
+		clr_country_flag = LBA_secularist_abduction
+		clr_country_flag = LBA_reformist_abduction
+	}
+	option = {
+		name = LibyaCivilWarContent.33.c
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.33.c executed"
+		random_list = {
+			75 = {
+				random_unit_leader = {
+					limit = { has_character_flag = abducted }
+					add_timed_unit_leader_trait = {
+						trait = wounded
+						days = 90
+					}
+					clr_character_flag = abducted
+				}
+			}
+			25 = {
+				random_unit_leader = {
+					limit = { has_character_flag = abducted }
+					retire = yes
+					clr_character_flag = abducted
+				}
+			}
+		}
+		clr_country_flag = LBA_tribal_abduction
+		clr_country_flag = LBA_jihadist_abduction
+		clr_country_flag = LBA_islamist_abduction
+		clr_country_flag = LBA_secularist_abduction
+		clr_country_flag = LBA_reformist_abduction
+	}
+}
+
+#Commander suspected of war crimes
+country_event = {
+	id = LibyaCivilWarContent.34
+	title = LibyaCivilWarContent.34.t
+	desc = LibyaCivilWarContent.34.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		has_global_flag = first_libyan_civil_war_over
+	}
+
+	immediate = {
+		hidden_effect = {
+			random_unit_leader = {
+				set_character_flag = war_criminal
+			}
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.34.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.34.a executed"
+		random_unit_leader = {
+			limit = { has_character_flag = war_criminal }
+			retire = yes
+			clr_character_flag = war_criminal
+		}
+	}
+	option = {
+		name = LibyaCivilWarContent.34.b
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.34.a executed"
+		add_timed_idea = {
+			idea = international_sanctions
+			days = 360
+		}
+		random_unit_leader = {
+			limit = { has_character_flag = war_criminal }
+			if = {
+				limit = {
+					NOT = { has_trait = harsh_leader }
+				}
+				if = {
+					limit = {
+						has_trait = kind_leader
+					}
+					remove_trait = { trait = kind_leader }
+				}
+				add_trait = { trait = harsh_leader }
+			}
+			if = {
+				limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+				PREV = { libya_add_jihadist_independence = yes }
+			}
+			else_if = {
+				limit = {has_trait = LBA_unit_leader_trait_islamist_commander }
+				PREV = { libya_add_islamist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_secularist_commander }
+				PREV = { libya_add_secularist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_reformist_commander }
+				PREV = { libya_add_reformist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_tribal_commander }
+				PREV = { libya_add_tribal_independence = yes }
+			}
+			clr_character_flag = war_criminal
+		}
+	}
+}
+
+#Commander retires from service
+country_event = {
+	id = LibyaCivilWarContent.35
+	title = LibyaCivilWarContent.35.t
+	desc = LibyaCivilWarContent.35.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		has_global_flag = first_libyan_civil_war_over
+	}
+
+	immediate = {
+		hidden_effect = {
+			random_unit_leader = {
+				set_character_flag = general_to_retire
+			}
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.35.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.35.a executed"
+		random_unit_leader = {
+			limit = { has_character_flag = general_to_retire }
+			retire = yes
+			clr_character_flag = general_to_retire
+		}
+	}
+	option = {
+		name = LibyaCivilWarContent.35.b
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.35.a executed"
+		random_unit_leader = {
+			limit = { has_character_flag = general_to_retire }
+			if = {
+				limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+				PREV = { libya_add_jihadist_independence = yes }
+			}
+			else_if = {
+				limit = {has_trait = LBA_unit_leader_trait_islamist_commander }
+				PREV = { libya_add_islamist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_secularist_commander }
+				PREV = { libya_add_secularist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_reformist_commander }
+				PREV = { libya_add_reformist_independence = yes }
+			}
+			else_if = {
+				limit = { has_trait = LBA_unit_leader_trait_tribal_commander }
+				PREV = { libya_add_tribal_independence = yes }
+			}
+			clr_character_flag = general_to_retire
+		}
+	}
+}
+
+#Commander goes to another country
+country_event = {
+	id = LibyaCivilWarContent.36
+	title = LibyaCivilWarContent.36.t
+	desc = LibyaCivilWarContent.36.d
+	picture = GFX_sudan_darfur_rebels	#TODO: ADD PICTURE
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = {
+		has_global_flag = first_libyan_civil_war_over
+		OR = {
+			AND = {
+				any_unit_leader = {
+					has_trait = LBA_unit_leader_trait_jihadist_commander
+				}
+				any_other_country = {
+					has_civil_war = yes
+					has_government = salafist
+				}
+			}
+			AND = {
+				any_unit_leader = {
+					has_trait = LBA_unit_leader_trait_islamist_commander
+				}
+				any_other_country = {
+					has_civil_war = yes
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				}
+			}
+			AND = {
+				any_unit_leader = {
+					has_trait = LBA_unit_leader_trait_secularist_commander
+				}
+				any_other_country = {
+					is_arabic_nation = yes
+					has_civil_war = yes
+					has_government = fascism
+				}
+			}
+			AND = {
+				any_unit_leader = {
+					has_trait = LBA_unit_leader_trait_reformist_commander
+				}
+				any_other_country = {
+					is_arabic_nation = yes
+					has_civil_war = yes
+					has_government = democratic
+				}
+			}
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			random_list = {
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = {
+							any_other_country = {
+								has_civil_war = yes
+								has_government = salafist
+							}
+						}
+					}
+					random_unit_leader = {
+						limit = { has_trait = LBA_unit_leader_trait_jihadist_commander }
+						set_character_flag = general_to_move
+					}
+					random_other_country = {
+						limit = {
+							has_civil_war = yes
+							has_government = salafist
+						}
+						save_event_target_as = libya_target_for_general
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = LibyaCivilWarContent.36.a
+		log = "[GetDateText]: [This.GetName]: LibyaCivilWarContent.36.a executed"
 	}
 }
 
