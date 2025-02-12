@@ -90,3 +90,5 @@
 
 	NDefines.NFrontend.CAMERA_LOOKAT_SETTINGS_X = 2058.0
 	NDefines.NFrontend.CAMERA_MIN_HEIGHT = 30.0
+	
+	NDefines.NGraphics.ACCLIMATIZATION_CAMO_SHOW_AT = 0.05				-- The moment at which the division gains enough acclimatization to change it's model to the camouflage one.
