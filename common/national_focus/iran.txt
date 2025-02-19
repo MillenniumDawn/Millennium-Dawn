@@ -8849,6 +8849,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_bastion_of_islam"
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = shia
+						has_idea = iranian_quds_forceq
+					}
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = PER }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+			newline = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_ulema_opinion = yes
 		}
 
 		ai_will_do = {
@@ -9280,14 +9295,53 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_establish_cyber_police"
-			add_ideas = PER_fata
-			newline = yes
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.05
+			if = {
+				limit = { any_core_state = { internet_station < 1 } }
+				set_temp_variable = { PER_internet_station_cost = 0 }
+
+				while_loop_effect = {
+					break = temp_break
+					limit = { any_core_state = { internet_station < 1 } }
+					if = {
+						limit = { any_core_state = { internet_station < 1 } }
+						random_core_state = {
+							limit = { internet_station < 1 }
+							add_building_construction = {
+								type = internet_station
+								level = 1
+								instant_build = yes
+							}
+							add_to_temp_variable = { PER_internet_station_cost = -3 }
+						}
+					}
+					else = { set_temp_variable = { temp_break = 1 } }
+				}
+				hidden_effect = {
+					set_temp_variable = { treasury_change = PER_internet_station_cost }
+					modify_treasury_effect = yes
+				}
+				custom_effect_tooltip = PER_internet_coverage_effect_TT
+			}
+			else = {
+				random_core_state = {
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+				random_core_state = {
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+				set_temp_variable = { treasury_change = -6 }
+				modify_treasury_effect = yes
 			}
 			newline = yes
-			increase_policing_budget = yes
+			decrease_corruption = yes
 		}
 
 		ai_will_do = {
@@ -9327,6 +9381,11 @@ focus_tree = {
 			}
 			newline = yes
 			add_ideas = PER_second_firewall
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.05
+			}
 		}
 
 		ai_will_do = {
@@ -9371,6 +9430,11 @@ focus_tree = {
 			}
 			newline = yes
 			add_ideas = PER_free_global_internet_2
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 
 		ai_will_do = {
@@ -9399,6 +9463,28 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_warrants_on_problematic_people"
+			if = {
+				limit = {
+					has_country_flag = PER_basij_fervor_decisions
+				}
+				custom_effect_tooltip = PER_basij_fervor2_TT
+				add_to_variable = { var = islamic_propaganda_status value = 15 }
+				clamp_variable = { var = islamic_propaganda_status min = 0 max = 100 }
+			}
+			else = {
+				custom_effect_tooltip = PER_basij_fervor_TT
+			}
+			newline = yes
+			set_temp_variable = { PER_political_power_factor_change = 0.05 }
+			update_PER_political_power_factor = yes
+			newline = yes
+			set_temp_variable = { PER_expected_police_modifier_change = -1.00 }
+			update_PER_expected_police_modifier = yes
+			newline = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -9431,6 +9517,17 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_increased_guidance_patrol"
 			set_temp_variable = { temp_opinion = 10 }
 			change_the_ulema_opinion = yes
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.05
+			}
+			newline = yes
+			set_temp_variable = { PER_police_cost_multiplier_modifier_change = 0.05 }
+			update_PER_police_cost_multiplier_modifier = yes
+			newline = yes
+			set_temp_variable = { PER_communism_drift_change = 0.03 }
+			update_PER_communism_drift = yes
 			hidden_effect = {
 				country_event = {
 					id = iranian_focus.34
@@ -9469,6 +9566,17 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_abolish_guidance_patrol"
 			set_temp_variable = { temp_opinion = -15 }
 			change_the_ulema_opinion = yes
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.1
+			}
+			newline = yes
+			set_temp_variable = { PER_productivity_cost_change = 0.05 }
+			update_PER_productivity_cost = yes
+			newline = yes
+			set_temp_variable = { PER_corruption_cost_change = -0.10 }
+			update_PER_corruption_cost = yes
 		}
 
 		ai_will_do = {
@@ -9497,8 +9605,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_hijab_and_chastity"
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_ulema_opinion = yes
+			set_temp_variable = { PER_propaganda_campaign_cost_modifier_change = -0.10 }
+			update_PER_propaganda_campaign_cost_modifier = yes
+			newline = yes
+			set_temp_variable = { PER_drift_defence_factor_change = 0.05 }
+			update_PER_drift_defence_factor = yes
+			newline = yes
+			set_temp_variable = { PER_foreign_influence_defense_modifier_change = 0.10 }
+			update_PER_foreign_influence_defense_modifier = yes
 		}
 
 		ai_will_do = {
@@ -9527,7 +9641,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_family_and_loyalty"
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_ulema_opinion = yes
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			newline = yes
+			set_temp_variable = { PER_monthly_population_change = 0.10 }
+			update_PER_monthly_population = yes
 		}
 
 		ai_will_do = {
@@ -20039,6 +20160,24 @@ focus_tree = {
 				remove_idea = PER_jahade_keshavarzi_2
 				add_idea = PER_jahade_keshavarzi_3
 			}
+			399 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = agriculture_district
+					level = 2
+				}
+			}
+			newline = yes
+			1138 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = agriculture_district
+					level = 2
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -15.00 }
+			modify_treasury_effect = yes
 		}
 	}
 	# Energy Branch
