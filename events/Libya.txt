@@ -1946,7 +1946,15 @@ country_event = {
 	option = {
 		name = LibyaFocus.37.a
 		log = "[GetDateText]: [This.GetName]: LibyaFocus.37.a executed"
-		trigger = { country_exists = CHI }
+		trigger = {
+			country_exists = CHI
+			CHI = {
+				OR = {
+					has_tech = ICBM
+					has_tech = NIRBM1
+				}
+			}
+		}
 		ai_chance = { base = 25 }
 		custom_effect_tooltip = Libya_buy_nukes_china_tt
 		CHI = { country_event = { id = LibyaFocus.38 days = 3 } }
@@ -1954,7 +1962,15 @@ country_event = {
 	option = {
 		name = LibyaFocus.37.b
 		log = "[GetDateText]: [This.GetName]: LibyaFocus.37.b executed"
-		trigger = { country_exists = PAK }
+		trigger = {
+			country_exists = PAK
+			PAK = {
+				OR = {
+					has_tech = ICBM
+					has_tech = NIRBM1
+				}
+			}
+		}
 		ai_chance = { base = 50 }
 		custom_effect_tooltip = Libya_buy_nukes_pakistan_tt
 		PAK = { country_event = { id = LibyaFocus.38 days = 3 } }
@@ -1962,7 +1978,15 @@ country_event = {
 	option = {
 		name = LibyaFocus.37.c
 		log = "[GetDateText]: [This.GetName]: LibyaFocus.37.c executed"
-		trigger = { country_exists = NKO }
+		trigger = {
+			country_exists = NKO
+			NKO = {
+				OR = {
+					has_tech = ICBM
+					has_tech = NIRBM1
+				}
+			}
+		}
 		ai_chance = { base = 25 }
 		custom_effect_tooltip = Libya_buy_nukes_north_korea_tt
 		NKO = { country_event = { id = LibyaFocus.38 days = 3 } }
@@ -2020,6 +2044,25 @@ country_event = {
 		random_list = {
 			success_chance = {
 				FROM = { country_event = { id = LibyaFocus.41 days = 14 } }
+				if = {
+					limit = { has_tech = ICBM  }
+					effect_tooltip = {
+						send_equipment = {
+							equipment = nuclear_missile_equipment
+							amount = 1
+							target = FROM
+						}
+					}
+				}
+				else = {
+					effect_tooltip = {
+						send_equipment = {
+							equipment = nuclear_ballistic_missile_equipment
+							amount = 1
+							target = FROM
+						}
+					}
+				}
 			}
 			fail_chance = {
 				USA = { country_event = { id = LibyaFocus.42 days = 7 } }
@@ -2091,7 +2134,23 @@ country_event = {
 	option = {
 		name = LibyaFocus.41.a
 		log = "[GetDateText]: [This.GetName]: LibyaFocus.41.a executed"
-		add_to_array = { array = nuclear_warhead_inventory_array value = 1 index = 0 }
+		FROM = {
+			if = {
+				limit = { has_tech = ICBM }
+				send_equipment = {
+					equipment = nuclear_missile_equipment
+					amount = 1
+					target = ROOT
+				}
+			}
+			else = {
+				send_equipment = {
+					equipment = nuclear_ballistic_missile_equipment
+					amount = 1
+					target = ROOT
+				}
+			}
+		}
 		custom_effect_tooltip = Libya_nuclear_deterrent_tt
 	}
 }
@@ -4511,6 +4570,135 @@ country_event = {
 	}
 }
 
+#Friedrich Tinner is arrested by Swiss authorities
+country_event = {
+	id = LibyaFocus.105
+	title = LibyaFocus.105.t
+	desc = LibyaFocus.105.d
+	picture = GFX_nuclear_test
+
+	is_triggered_only = yes
+
+	option = {
+		name = LibyaFocus.105.a	#Arrest Tinner
+		log = "[GetDateText]: [This.GetName]: LibyaFocus.105.a executed"
+		ai_chance = {
+			base = 70
+		}
+		retire_character = LBA_friedrich_tinner
+		add_political_power = 200
+		FROM = { country_event = { id = LibyaFocus.106 hours = 6 } }
+	}
+	option = {
+		name = LibyaFocus.105.b	#Employ Tinner
+		log = "[GetDateText]: [This.GetName]: LibyaFocus.105.b executed"
+		ai_chance = {
+			base = 10
+		}
+		effect_tooltip = { LBA_friedrich_tinner = { set_nationality = SWI } }
+		add_stability = -0.05
+		set_temp_variable = { influence_target = ROOT }
+		set_temp_variable = { tag_index = FROM }
+		set_temp_variable = { percent_change = 4 }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = LibyaFocus.107 hours = 6 } }
+	}
+	option = {
+		name = LibyaFocus.105.c	#Send him back
+		log = "[GetDateText]: [This.GetName]: LibyaFocus.105.c executed"
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = FROM
+					value > 50
+				}
+			}
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = FROM
+					value > 100
+				}
+			}
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = FROM
+					value > 150
+				}
+			}
+		}
+		LBA_friedrich_tinner = { set_nationality = FROM }
+		set_temp_variable = { influence_target = FROM }
+		set_temp_variable = { tag_index = ROOT }
+		set_temp_variable = { percent_change = 4 }
+		change_influence_percentage = yes
+		FROM = { country_event = { id = LibyaFocus.108 hours = 6 } }
+	}
+}
+
+#Friedrich Tinner is arrested by Swiss authorities
+country_event = {
+	id = LibyaFocus.106
+	title = LibyaFocus.106.t
+	desc = LibyaFocus.106.d
+	picture = GFX_nuclear_test
+
+	is_triggered_only = yes
+
+	option = {
+		name = LibyaFocus.106.a	#Arrest Tinner
+		log = "[GetDateText]: [This.GetName]: LibyaFocus.106.a executed"
+		effect_tooltip = { SWI = { retire_character = LBA_friedrich_tinner } }
+	}
+}
+
+#Friedrich Tinner is employed by Swiss authorities
+country_event = {
+	id = LibyaFocus.107
+	title = LibyaFocus.107.t
+	desc = LibyaFocus.107.d
+	picture = GFX_nuclear_test
+
+	is_triggered_only = yes
+
+	option = {
+		name = LibyaFocus.107.a	#Arrest Tinner
+		log = "[GetDateText]: [This.GetName]: LibyaFocus.107.a executed"
+		effect_tooltip = {
+			LBA_friedrich_tinner = { set_nationality = SWI }
+			add_stability = -0.05
+			set_temp_variable = { influence_target = FROM }
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { percent_change = 4 }
+			change_influence_percentage = yes
+		}
+	}
+}
+#Friedrich Tinner is returned by Swiss authorities
+country_event = {
+	id = LibyaFocus.108
+	title = LibyaFocus.108.t
+	desc = LibyaFocus.108.d
+	picture = GFX_nuclear_test
+
+	is_triggered_only = yes
+
+	option = {
+		name = LibyaFocus.108.a	#Arrest Tinner
+		log = "[GetDateText]: [This.GetName]: LibyaFocus.108.a executed"
+		effect_tooltip = {
+			LBA_friedrich_tinner = { set_nationality = ROOT }
+			set_temp_variable = { influence_target = ROOT }
+			set_temp_variable = { tag_index = FROM }
+			set_temp_variable = { percent_change = 4 }
+			change_influence_percentage = yes
+		}
+	}
+}
+
 #################
 # RANDOM EVENTS #
 #################
@@ -6123,7 +6311,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: LibyaRandomEvents.28.c executed"
 		ai_chance = { base = 50 }
 		add_stability = -0.05
-		set_temp_variable = { add_col_one = 12 }
+		set_temp_variable = { remove_col_one = 12 }
 		remove_coalition_members_effect = yes
 	}
 

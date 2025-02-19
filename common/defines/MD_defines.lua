@@ -6,8 +6,8 @@
 	NDefines.NGame.MAX_SCRIPTED_LOC_RECURSION = 40
 
 	-- NDiplomacy Defines
-	NDefines.NDiplomacy.MAX_OPINION_VALUE = 250
-	NDefines.NDiplomacy.MIN_OPINION_VALUE = -250
+	NDefines.NDiplomacy.MAX_OPINION_VALUE = 300
+	NDefines.NDiplomacy.MIN_OPINION_VALUE = -300
 	NDefines.NDiplomacy.BASE_NEGATIVE_OPINION_AFTER_BEING_KICKED = 50
 	NDefines.NDiplomacy.DECAY_RATE_OF_NEGATIVE_OPINION_AFTER_BEING_KICKED = 0.5
 	NDefines.NDiplomacy.TRUCE_BREAK_COST_PP = 100
@@ -28,25 +28,28 @@
 	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 1
 	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 7
 	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
-	NDefines.NDiplomacy.TENSION_STATE_VALUE = 4
+	NDefines.NDiplomacy.TENSION_STATE_VALUE = 3.25
 	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
-	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 13
-	NDefines.NDiplomacy.TENSION_CB_WAR = 5
+	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 10
+	NDefines.NDiplomacy.TENSION_CB_WAR = 3.75
 	NDefines.NDiplomacy.TENSION_PUPPET = 1.5 -- Reduced from 2.0
 	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
-	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.35  -- Reduced from 0.50
-	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.012						-- Each months tension decays this much
+	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.25  -- Reduced from 0.50
+	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.025						-- Each months tension decays this much
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MIN = 0 					-- Timed tension scale won't decrease under this value
 	NDefines.NDiplomacy.TENSION_GUARANTEE = -10
-	NDefines.NDiplomacy.TENSION_PEACE_FACTOR = 0.10					-- scale of the amount of tension (from war declaration) reduced when peace is completed.
+	NDefines.NDiplomacy.TENSION_PEACE_FACTOR = 0.25					-- scale of the amount of tension (from war declaration) reduced when peace is completed.
 	NDefines.NDiplomacy.TENSION_CAPITULATE = 0
+	NDefines.NDiplomacy.TENSION_WAR_REPARATION = 0
+	NDefines.NDiplomacy.TENSION_FACTION_JOIN = 2
+	NDefines.NDiplomacy.TENSION_JOIN_ATTACKER = 1
 	NDefines.NDiplomacy.GUARANTEE_COST = 50
 	NDefines.NDiplomacy.REVOKE_GUARANTEE_COST = 30
 	NDefines.NDiplomacy.OPINION_PER_VOLUNTEER = 15
-	NDefines.NDiplomacy.MAX_OPINION_FROM_VOLUNTEERS = 45
+	NDefines.NDiplomacy.MAX_OPINION_FROM_VOLUNTEERS = 50
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 3
 	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 20
 	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
@@ -139,6 +142,16 @@
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
+	-- Raid AI
+	NDefines.NAI.RAIDS_MIN_SUCCESS_FOR_LAUNCH = 0.12 -- 0.65 -- Scaled by 0.10 more for some reason
+	NDefines.NAI.RAIDS_CREATE_FREQUENCEY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
+	NDefines.NAI.RAIDS_COMMAND_POWER_CAP_TO_CREATE = 60 -- 60
+	NDefines.NAI.RAIDS_CANCEL_AFTER_DAYS_LAUNCHABLE = 90 -- 60 -- Increased to give the AI more time to try and make a raid happen
+	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_DURATION_DAYS = 180 -- 180
+	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_FACTOR = 0.4 -- 0.4
+	NDefines.NAI.RAIDS_NUKE_TARGET_CUT_OFF = 10 -- 10
+	NDefines.NAI.RAIDS_UNIT_SCORE_SUCCESS_CHANCE_FACTOR = 500.0 -- 500.0
+	NDefines.NAI.RAIDS_UNIT_SCORE_DISTANCE_KM_FACTOR = 0.1 -- 0.1
 	-- Market AI
 	NDefines.NAI.MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
 	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
@@ -215,8 +228,9 @@
 	NDefines.NTechnology.MAX_TECH_SHARING_BONUS = 0.25 -- Nerfed to 0.25 from Tech Sharing
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
+	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 5.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
 	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
-	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 24
+	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.RADAR_INTEL_EFFECT = 60 -- 40
@@ -254,7 +268,7 @@
 	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.005 -- 0.1
 	NDefines.NMilitary.ATTRITION_EQUIPMENT_PER_TYPE_LOSS_CHANCE = 0.005 -- 0.1
 	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50 -- 60
-	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = -0.40 -- 0.33 (not negative)
+	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = 0.10
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 24 -- 24
 	NDefines.NMilitary.LAND_SPEED_MODIFIER = 0.05 -- 0.05
 	NDefines.NMilitary.RIVER_CROSSING_PENALTY = -0.2 -- -0.3
@@ -448,6 +462,8 @@
 	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
+	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 30
+	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 3
 
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4 -- 30
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 4 -- 1
@@ -640,6 +656,9 @@
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.01   --0.04                       -- war score gained for every IC of the sunk ship
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 2  --10                       -- war score gained for every sunk convoy
 	NDefines.NNavy.WAR_SCORE_DECAY_FOR_BUILT_CONVOY = 1  --5                         -- war score deducted when convoy-raided enemy produces one new convoy
+
+	NDefines.NNavy.UNDERWAY_REPLENISHMENT_RANGE_FACTOR = 0.42 -- bonus factor applied to task force's range when underway replenishment is activated (e.g. 0.2 means +20%) -- 0.42 base game
+	NDefines.NNavy.UNDERWAY_REPLENISHMENT_CONVOY_COST_PER_FUEL = 0.42 -- Cost in convoys for underway replenishment multiplied by max daily fuel consumption (rounded up) -- 0.42 base game
 
 	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
