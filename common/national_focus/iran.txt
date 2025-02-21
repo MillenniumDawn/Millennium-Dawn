@@ -10947,6 +10947,7 @@ focus_tree = {
 		prerequisite = { focus = PER_the_road_to_jerusalem focus = PER_veins_of_the_revolution }
 
 		available = {
+			has_at_least_regional_power_status = yes
 			is_subject = no
 			NOT = {
 				has_idea = intervention_isolation
@@ -16216,6 +16217,29 @@ focus_tree = {
 		available = {
 			neutrality_neutral_libertarian_in_power_or_coalition = yes
 			20_percent_government_popularity = yes
+			OR = {
+				has_idea = the_military
+				has_idea = oligarchs
+			}
+			if = {
+				limit = {
+					has_idea = the_military
+				}
+				custom_trigger_tooltip = {
+					tooltip = PER_IRGC_at_least_positive_tt
+					check_variable = { the_military_opinion > 50 }
+				}
+			}
+			gdp_debt_ratio_lower_100 = yes
+		}
+
+		bypass = {
+			NOT = {
+				OR = {
+					has_idea = the_military
+					has_idea = oligarchs
+				}
+			}
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -16251,6 +16275,25 @@ focus_tree = {
 			OR = {
 				has_idea = the_military
 				has_idea = oligarchs
+			}
+			
+			if = {
+				limit = {
+					has_idea = small_medium_business_owners
+				}
+				custom_trigger_tooltip = {
+					tooltip = PER_bazaars_at_least_positive_tt
+					check_variable = { small_medium_business_owners_opinion > 50 }
+				}
+			}
+		}
+
+		bypass = {
+			NOT = {
+				OR = {
+					has_idea = the_military
+					has_idea = oligarchs
+				}
 			}
 		}
 
@@ -16326,6 +16369,7 @@ focus_tree = {
 		prerequisite = { focus = PER_march_towards_freedom }
 
 		available = {
+			#party_16_has_more_than_threshold = yes
 			neutrality_neutral_libertarian_in_power_or_coalition = yes
 			10_percent_government_popularity = yes
 		}
@@ -16365,7 +16409,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_inheritors_of_iran"
-
+			
 		}
 
 		ai_will_do = {
@@ -16397,7 +16441,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_recraft_state_foundations"
-
+			
 		}
 
 		ai_will_do = {
@@ -16427,16 +16471,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_a_heavy_hand"
-			set_temp_variable = { PER_civilian_factories_productivity_change = 0.10 }
-			update_PER_civilian_factories_productivity = yes
-			newline = yes
-			set_temp_variable = { PER_political_power_factor_change = 0.05 }
-			update_PER_political_power_factor = yes
-			newline = yes
-			set_temp_variable = { party_index = 16 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -16466,7 +16500,25 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_regain_popular_support"
-
+			if = {
+				limit = {
+					has_idea = small_medium_business_owners
+				}
+				set_temp_variable = { temp_opinion = 5 }
+				change_small_medium_business_owners_opinion = yes
+				newline = yes
+			}
+			
+			set_temp_variable = { PER_civilian_factories_productivity_change = 0.10 }
+			update_PER_civilian_factories_productivity = yes
+			newline = yes
+			set_temp_variable = { PER_political_power_factor_change = 0.05 }
+			update_PER_political_power_factor = yes
+			newline = yes
+			set_temp_variable = { party_index = 16 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -16476,7 +16528,7 @@ focus_tree = {
 
 	focus = {
 		id = PER_absorb_state_assets
-		icon = fmi_iran_real
+		icon = money_on_fire
 
 		x = -2
 		y = 3
@@ -16490,13 +16542,55 @@ focus_tree = {
 		available = {
 			neutrality_neutral_libertarian_in_power_or_coalition = yes
 			20_percent_government_popularity = yes
+			405 = { is_owned_and_controlled_by = PER }
+			if = {
+				limit = {
+					has_idea = small_medium_business_owners
+				}
+				custom_trigger_tooltip = {
+					tooltip = PER_bazaars_at_very_positive_tt
+					check_variable = { small_medium_business_owners_opinion > 64 }
+				}
+			}
+			gdp_debt_ratio_lower_100 = yes
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_regain_popular_support"
-
+			if = {
+				limit = {
+					NOT = { 
+						405 = {
+							free_building_slots = {
+								building = industrial_complex
+								size > 0
+								include_locked = yes
+							}
+						}
+						check_variable = { total_unemployed_percentage_display > 0}
+					}
+				}
+				405 = {
+					set_temp_variable = { temp_productivity_change = 60 }
+					flat_productivity_change_effect = yes
+				}
+			}
+			else = {
+				405 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = industrial_complex
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			newline = yes
+			custom_effect_tooltip = PER_if_unemployed_percentage_zero_civ
 		}
 
 		ai_will_do = {
@@ -16680,7 +16774,26 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_unorthodox_approach"
-
+			set_temp_variable = { temp_productivity_change = 50 }
+			every_owned_state = {
+				limit = {
+					OR = {
+						state = 405
+						state = 976
+						state = 400
+						state = 407
+					}
+					is_controlled_by = ROOT
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+					NOT = { has_state_category = state_military_base }
+					NOT = { has_state_category = state_inhospitable }
+				}
+				state_flat_productivity_change_effect = yes 
+			}
 		}
 
 		ai_will_do = {
@@ -16880,6 +16993,10 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = PER_stamp_out_factionalism focus = PER_shackle_the_unruly_clerics }
+
+		available = {
+			has_at_least_regional_power_status = yes
+		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
