@@ -30,8 +30,21 @@ PER_Iranian_elections_decision_category = {
 							}
 						}
 						else = {
-							country_event = {
-								id = PER_election_events.8
+							if = {
+								limit = {
+									has_country_flag = PER_yazdi_goes
+								}
+								country_event = {
+									id = PER_election_events.81
+								}
+							}
+							if = {
+								limit = {
+									NOT = { has_country_flag = PER_yazdi_goes }
+								}
+								country_event = {
+									id = PER_election_events.8
+								}
 							}
 						}
 
@@ -54,8 +67,21 @@ PER_Iranian_elections_decision_category = {
 							}
 						}
 						else = {
-							country_event = {
-								id = PER_election_events.10
+							if = {
+								limit = {
+									has_country_flag = PER_kavakebian_goes
+								}
+								country_event = {
+									id = PER_election_events.101
+								}
+							}
+							if = {
+								limit = {
+									NOT = { has_country_flag = PER_kavakebian_goes }
+								}
+								country_event = {
+									id = PER_election_events.10
+								}
 							}
 						}
 					}
@@ -77,8 +103,21 @@ PER_Iranian_elections_decision_category = {
 							}
 						}
 						else = {
-							country_event = {
-								id = PER_election_events.12
+							if = {
+								limit = {
+									has_country_flag = PER_karroubi_goes
+								}
+								country_event = {
+									id = PER_election_events.121
+								}
+							}
+							if = {
+								limit = {
+									NOT = { has_country_flag = PER_karroubi_goes }
+								}
+								country_event = {
+									id = PER_election_events.12
+								}
 							}
 						}
 					}
@@ -98,9 +137,20 @@ PER_Iranian_elections_decision_category = {
 							if = {
 								limit = {
 									has_country_flag = principalist_portrait_ghalibaf
+									NOT = {
+										has_country_flag = PER_mashaei_goes
+									}
 								}
 								country_event = {
 									id = PER_election_events.15
+								}
+							}
+							else_if = {
+								limit = {
+									has_country_flag = PER_mashaei_goes
+								}
+								country_event = {
+									id = PER_election_events.151
 								}
 							}
 							else = {
@@ -128,8 +178,23 @@ PER_Iranian_elections_decision_category = {
 									compare = greater_than_or_equals
 								}
 							}
-							country_event = {
-								id = PER_election_events.18
+							if = {
+								limit = {
+									has_country_flag = PER_bayadi_goes
+								}
+								country_event = {
+									id = PER_election_events.181
+								}
+							}
+							if = {
+								limit = {
+									NOT = {
+										has_country_flag = PER_bayadi_goes
+									}
+								}
+								country_event = {
+									id = PER_election_events.18
+								}
 							}
 						}
 						else = {
@@ -155,12 +220,48 @@ PER_Iranian_elections_decision_category = {
 								id = PER_election_events.20
 							}
 						}
-						else = {
+						else_if = {
+							limit = {
+								has_country_flag = PER_haghshenas_goes
+							}
+							country_event = {
+								id = PER_election_events.191
+							}
+						}
+						else_if = {
+							limit = {
+								NOT = {
+									has_country_flag = PER_haghshenas_goes
+								}
+							}
 							country_event = {
 								id = PER_election_events.19
 							}
 						}
 					}
+					else_if = { #14th Period
+					limit = {
+						date > 2024.6.5
+						date < 2025.7.1
+					}
+					if = {
+						limit = {
+							check_variable = {
+								var = principalists_popularity_percent
+								value = 50
+								compare = greater_than_or_equals
+							}
+						}
+						country_event = {
+							id = PER_election_events.201
+						}
+					}
+					else = {
+						country_event = {
+							id = PER_election_events.202
+						}
+					}
+				}
 					if = {
 						limit = {
 							has_country_flag = PER_election_enabled
@@ -2477,6 +2578,53 @@ PER_trade_spies = {
 }
 
 PER_domestic_politics = {
+
+	PER_establish_hardliner_control = {
+		allowed = { original_tag = PER }
+		fire_only_once = yes
+		days_remove = 60
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = 90_percent_government_coalition_strength_tt
+				check_variable = { government_coalition_strength > 0.899 }
+			}
+		}
+
+		visible = {
+			has_country_flag = PER_going_full_hardliner
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_establish_hardliner_control"
+			set_country_flag = PER_presidency_abolished
+			set_country_flag = PER_majles_abolished
+			custom_effect_tooltip = PER_abolish_president_and_majles_TT
+			newline = yes
+			add_stability = -0.15
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.50
+			}
+			newline = yes
+			country_event = iranian_focus.39
+			hidden_effect = {
+				PER_scripted_effect_update_principalists_popularity_variable = yes
+				set_temp_variable = { rul_party_temp = 9 }
+				change_ruling_party_effect = yes
+				PER_scripted_effect_finish_election = yes
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
 
 	PER_lift_the_fatwa = {
 		allowed = { original_tag = PER }
@@ -11128,7 +11276,7 @@ PER_basij_fervor = {
 
 	PER_mobilize_basij_education = {
 		allowed = { original_tag = PER }
-		icon = GFX_decision_generic_form_nation
+		icon = GFX_decision_eng_trade_unions_demand
 
 		available = {
 			custom_trigger_tooltip = {
@@ -11197,6 +11345,48 @@ PER_basij_fervor = {
 
 	# Non-Modifier Basij Uses
 
+	# Mobilize Parade
+
+	PER_basij_parade = {
+		allowed = { original_tag = PER }
+		icon = GFX_decision_generic_form_nation
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_basij_mobility_20_TT
+				check_variable = {
+					islamic_propaganda_status > 19
+				}
+			}
+			NOT = {
+				has_country_flag = PER_basij_parade_1_year
+				has_country_flag = PER_basij_fervor_drain
+			}
+
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_basij_parade"
+			custom_effect_tooltip = PER_15_reduced_basij_TT
+			add_to_variable = { var = islamic_propaganda_status value = -15 }
+			clamp_variable = { var = islamic_propaganda_status min = 0 max = 100 }
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.1
+			}
+			set_country_flag = {
+				flag = PER_basij_parade_1_year
+				days = 360
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
 	PER_basij_vote_suggestion = {
 		allowed = { original_tag = PER }
 		icon = GFX_decision_generic_civil_support
@@ -11217,8 +11407,6 @@ PER_basij_fervor = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision PER_basij_vote_suggestion"
-			set_country_flag = PER_basij_variable_stop
-			set_country_flag = PER_basij_fervor_drain
 			set_country_flag = {
 				flag = PER_basij_vote_1_year
 				days = 360
@@ -11227,6 +11415,8 @@ PER_basij_fervor = {
 			country_event = iranian_focus.35
 			newline = yes
 			custom_effect_tooltip = PER_15_reduced_basij_TT
+			add_to_variable = { var = islamic_propaganda_status value = -15 }
+			clamp_variable = { var = islamic_propaganda_status min = 0 max = 100 }
 		}
 
 		ai_will_do = {
@@ -11236,7 +11426,7 @@ PER_basij_fervor = {
 
 	PER_basij_protest_utilization = {
 		allowed = { original_tag = PER }
-		icon = GFX_decision_generic_political_discourse
+		icon = generic_police_action
 
 		available = {
 			custom_trigger_tooltip = {
