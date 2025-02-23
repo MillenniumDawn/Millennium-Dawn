@@ -1,5 +1,5 @@
 version="1.11.3"
-name="Millennium Dawn: Dev Lynx Fork"
+name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"
