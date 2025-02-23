@@ -9,7 +9,7 @@ tags={
 supported_version="1.15.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
-path="mod/Millennium_Dawn"
+path="mod/millennium-dawn-lynxivium-fork"
 
 replace_path = "events"
 replace_path = "common/abilities"
