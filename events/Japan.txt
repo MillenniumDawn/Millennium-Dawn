@@ -7975,6 +7975,329 @@ country_event = {
 }
 
 
+### 500-700
+
+# Tiebreaker: Ultimatum Choice
+country_event = {
+	id = Japan.100009800
+	title = Japan.100009800.t
+	desc = Japan.100009800.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Send the ultimatum
+	option = {
+		name = Japan.100009800.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009800.oA executed"
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Begin preparations to attack
+	option = {
+		name = Japan.100009800.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009800.oB executed"
+		# TODO: civil war third party cases
+		add_threat = 5
+		if = {
+			limit = {
+				var:jap_aggression_tiebreaker_target = {
+					original_tag = KOR
+				}
+			}
+			NKO = { set_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT }
+			activate_targeted_decision = { target = NKO decision = JAP_dec_article9_tiebreaker_ultimatum_demand }
+		}
+		if = {
+			limit = {
+				var:jap_aggression_tiebreaker_target = {
+					original_tag = NKO
+				}
+			}
+			KOR = { set_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT }
+			activate_targeted_decision = { target = KOR decision = JAP_dec_article9_tiebreaker_ultimatum_demand }
+		}
+		if = {
+			limit = {
+				var:jap_aggression_tiebreaker_target = {
+					original_tag = CHI
+				}
+			}
+			TAI = { set_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT }
+			activate_targeted_decision = { target = TAI decision = JAP_dec_article9_tiebreaker_ultimatum_demand }
+		}
+		if = {
+			limit = {
+				var:jap_aggression_tiebreaker_target = {
+					original_tag = TAI
+				}
+			}
+			CHI = { set_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT }
+			activate_targeted_decision = { target = CHI decision = JAP_dec_article9_tiebreaker_ultimatum_demand }
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Wave Off
+	option = {
+		name = Japan.100009800.oC
+		log = "[GetDateText]: [This.GetName]: Japan.100009800.oC executed"
+
+		var:jap_aggression_tiebreaker_target = {
+			clr_country_flag = JAP_AGGRESSION_TIEBREAKER_ONGOING
+		}
+		every_country = { # set flag for civil war countries so player cant open multiple events
+			limit = { # maybe a better way to test who is in civil war with
+				has_war_with = jap_aggression_tiebreaker_target
+				has_civil_war = yes
+			}
+			clr_country_flag = JAP_AGGRESSION_TIEBREAKER_ONGOING
+		}
+		clear_variable = jap_aggression_tiebreaker_target
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Tiebreaker: Ultimatum Demand
+country_event = {
+	id = Japan.100009801
+	title = Japan.100009801.t
+	desc = Japan.100009801.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# How dare they!
+	option = {
+		name = Japan.100009801.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009801.oA executed"
+		add_war_support = 0.15
+		add_timed_idea = {
+			idea = jap_tiebreaker_bonus_repel
+			days = 365
+		}
+		JAP = {
+			country_event = Japan.100009802 # Ultimatum Rejected
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Settle the issue before they arrive!
+	option = {
+		name = Japan.100009801.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009801.oB executed"
+		if = {
+			limit = {
+				original_tag = KOR
+				NOT = {
+					has_war_with = NKO
+				}
+			}
+			declare_war_on = {
+				target = NKO
+				type = annex_everything
+			}
+			add_threat = 5.0
+			JAP = { add_threat = 5.0 }
+		}
+		if = {
+			limit = {
+				original_tag = NKO
+				NOT = {
+					has_war_with = KOR
+				}
+			}
+			declare_war_on = {
+				target = KOR
+				type = annex_everything
+			}
+			add_threat = 5.0
+			JAP = { add_threat = 5.0 }
+		}
+		if = {
+			limit = {
+				original_tag = CHI
+				NOT = {
+					has_war_with = TAI
+				}
+			}
+			declare_war_on = {
+				target = TAI
+				type = annex_everything
+			}
+			add_threat = 5.0
+			JAP = { add_threat = 5.0 }
+		}
+		if = {
+			limit = {
+				original_tag = TAI
+				NOT = {
+					has_war_with = CHI
+				}
+			}
+			declare_war_on = {
+				target = CHI
+				type = annex_everything
+			}
+			add_threat = 5.0
+			JAP = { add_threat = 5.0 }
+		}
+		add_timed_idea = {
+			idea = jap_tiebreaker_bonus_victory
+			days = 90
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Appeal to our kin!
+	option = {
+		name = Japan.100009801.oC
+		log = "[GetDateText]: [This.GetName]: Japan.100009801.oC executed"
+
+		# TODO: try to work against JAP
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# We have no choice
+	option = {
+		name = Japan.100009801.oD
+		log = "[GetDateText]: [This.GetName]: Japan.100009801.oD executed"
+
+		if = {
+			limit = {
+				original_tag = KOR
+				NOT = {
+					has_war_with = NKO
+				}
+			}
+			NKO = {
+				set_autonomy = {
+					target = THIS
+					autonomy_state = autonomy_integrated_puppet
+					freedom_level = 0.5
+					end_civil_wars = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				original_tag = NKO
+				NOT = {
+					has_war_with = KOR
+				}
+			}
+			KOR = {
+				set_autonomy = {
+					target = THIS
+					autonomy_state = autonomy_integrated_puppet
+					freedom_level = 0.5
+					end_civil_wars = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				original_tag = CHI
+				NOT = {
+					has_war_with = TAI
+				}
+			}
+			TAI = {
+				set_autonomy = {
+					target = THIS
+					autonomy_state = autonomy_integrated_puppet
+					freedom_level = 0.5
+					end_civil_wars = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				original_tag = TAI
+				NOT = {
+					has_war_with = CHI
+				}
+			}
+			CHI = {
+				set_autonomy = {
+					target = THIS
+					autonomy_state = autonomy_integrated_puppet
+					freedom_level = 0.5
+					end_civil_wars = yes
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Tiebreaker: Ultimatum Rejection
+country_event = {
+	id = Japan.100009802
+	title = Japan.100009802.t
+	desc = Japan.100009802.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# We'll see about that
+	option = {
+		name = Japan.100009802.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009802.oA executed"
+		add_war_support = 0.02
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.05
+		}
+		recalculate_party = yes
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# We should really back off
+	option = {
+		name = Japan.100009802.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009802.oB executed"
+		add_political_power = -200
+		add_war_support = -0.03
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		add_threat = -0.03
+		var:jap_aggression_tiebreaker_target = {
+			clr_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
 #----------------------------------------------------------------
 #Events Triggered by Date
 #----------------------------------------------------------------

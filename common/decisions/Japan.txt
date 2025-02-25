@@ -224,7 +224,8 @@ catdec_mdmosjap_JAP_war_strategies = {
 	JAP_dec_jsdf_naval_equipment_lsd = {
 		allowed = { original_tag = JAP }
 
-		available = { always = yes }
+		activation = { has_completed_focus = JAP_navy_procurement }
+		available = { has_completed_focus = JAP_navy_procurement }
 
 		fire_only_once = yes
 		days_mission_timeout = 365
@@ -283,7 +284,8 @@ catdec_mdmosjap_JAP_war_strategies = {
 	JAP_dec_jsdf_naval_equipment_dd1 = {
 		allowed = { original_tag = JAP }
 
-		available = { always = yes }
+		activation = { has_completed_focus = JAP_navy_procurement }
+		available = { has_completed_focus = JAP_navy_procurement }
 
 		fire_only_once = yes
 		days_mission_timeout = 365
@@ -387,7 +389,8 @@ catdec_mdmosjap_JAP_war_strategies = {
 	JAP_dec_jsdf_naval_equipment_dd2 = {
 		allowed = { original_tag = JAP }
 
-		available = { always = yes }
+		activation = { has_completed_focus = JAP_navy_procurement }
+		available = { has_completed_focus = JAP_navy_procurement }
 
 		fire_only_once = yes
 		days_mission_timeout = 365
@@ -491,10 +494,8 @@ catdec_mdmosjap_JAP_war_strategies = {
 	JAP_dec_jsdf_naval_equipment_pg = {
 		allowed = { original_tag = JAP }
 
-		visible = {
-			has_completed_focus = JAP_navy_procurement
-		}
-		available = { always = yes }
+		activation = { has_completed_focus = JAP_navy_procurement }
+		available = { has_completed_focus = JAP_navy_procurement }
 
 		fire_only_once = yes
 		days_mission_timeout = 365
@@ -613,7 +614,8 @@ catdec_mdmosjap_JAP_war_strategies = {
 	JAP_dec_jsdf_air_equipment_ftwo1 = {
 		allowed = { original_tag = JAP }
 
-		available = { always = yes }
+		activation = { has_completed_focus = JAP_plane_procurement }
+		available = { has_completed_focus = JAP_plane_procurement }
 
 		fire_only_once = yes
 		days_mission_timeout = 365
@@ -651,7 +653,8 @@ catdec_mdmosjap_JAP_war_strategies = {
 	JAP_dec_jsdf_air_equipment_ftwo2 = {
 		allowed = { original_tag = JAP }
 
-		available = { always = yes }
+		activation = { has_completed_focus = JAP_plane_procurement }
+		available = { has_completed_focus = JAP_plane_procurement }
 
 		fire_only_once = yes
 		days_mission_timeout = 365
@@ -733,7 +736,7 @@ catdec_mdmosjap_JAP_war_strategies = {
 	}
 
 	JAP_dec_jsdf_air_equipment_heavy = { #unused
-		allowed = { always = false }
+		allowed = { original_tag = JAP }
 
 		visible = {
 			has_completed_focus = JAP_air_emphasis
@@ -1461,6 +1464,179 @@ catdec_mdmosjap_JAP_war_strategies = {
 
 		days_remove = 90
 		cost = 50
+
+		ai_will_do = { factor = 0 }
+	}
+
+	JAP_dec_article9_tiebreaker_ultimatum = {
+		allowed = { original_tag = JAP }
+
+		visible = {
+			has_completed_focus = JAP_assertive_tiebreaker
+		}
+		available = {
+			has_completed_focus = JAP_assertive_tiebreaker
+		}
+
+		targets_dynamic = yes
+		target_trigger = {
+			FROM = {
+				OR = {
+					AND = { #KOR
+						original_tag = KOR
+						NKO = { exists = yes }
+					}
+					AND = { #NKO
+						original_tag = NKO
+						KOR = { exists = yes }
+					}
+					AND = { #CHI
+						original_tag = CHI
+						TAI = { exists = yes }
+					}
+					AND = { #TAI
+						original_tag = TAI
+						CHI = { exists = yes }
+					}
+					#AND = { #TODO: support this
+					#	OR = {
+					#		is_SE_Asia = yes
+					#		is_East_Asia = yes
+					#	}
+					#	has_civil_war = yes
+					#}
+				}
+				is_subject_of = JAP
+				exists = yes
+				NOT = {
+					has_country_flag = JAP_AGGRESSION_TIEBREAKER_ONGOING
+					tag = JAP
+				}
+			}
+		}
+
+		complete_effect = {
+			FROM = {
+				set_country_flag = JAP_AGGRESSION_TIEBREAKER_ONGOING
+				every_other_country = { # set flag for civil war countries so player cant open multiple events
+					limit = { # maybe a better way to test who is in civil war with
+						has_war_with = FROM
+						has_civil_war = yes
+					}
+					set_country_flag = JAP_AGGRESSION_TIEBREAKER_ONGOING
+				}
+			}
+			set_variable = { jap_aggression_tiebreaker_target = FROM }
+			country_event = Japan.100009800 # Tiebreaker Ultimatum Choice
+		}
+
+		days_remove = 0
+		cost = 0
+
+
+
+		ai_will_do = { factor = 0 }
+	}
+
+	JAP_dec_article9_tiebreaker_ultimatum_demand = {
+		allowed = { original_tag = JAP }
+
+		available = {
+			var:jap_aggression_tiebreaker_target = {
+				NOT = { has_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT }
+			}
+			OR = {
+				AND = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = KOR
+					}
+					NKO = { exists = no }
+				}
+			}
+			OR = {
+				AND = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = NKO
+					}
+					KOR = { exists = no }
+				}
+			}
+			OR = {
+				AND = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = CHI
+					}
+					TAI = { exists = no }
+				}
+			}
+			OR = {
+				AND = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = TAI
+					}
+					CHI = { exists = no }
+				}
+			}
+		}
+		activation = { always = no }
+
+		days_mission_timeout = 30
+		selectable_mission = no
+		targets_dynamic = yes
+		target_trigger = {
+			has_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT
+		}
+
+		is_good = yes
+		war_with_on_timeout = var:jap_aggression_tiebreaker_target
+
+		timeout_effect = {
+			add_threat = 5.0
+			if = {
+				limit = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = KOR
+					}
+				}
+				declare_war_on = {
+					target = NKO
+					type = liberate_wargoal
+				}
+			}
+			if = {
+				limit = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = NKO
+					}
+				}
+				declare_war_on = {
+					target = KOR
+					type = liberate_wargoal
+				}
+			}
+			if = {
+				limit = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = CHI
+					}
+				}
+				declare_war_on = {
+					target = TAI
+					type = liberate_wargoal
+				}
+			}
+			if = {
+				limit = {
+					var:jap_aggression_tiebreaker_target = {
+						original_tag = TAI
+					}
+				}
+				declare_war_on = {
+					target = CHI
+					type = liberate_wargoal
+				}
+			}
+		}
 
 		ai_will_do = { factor = 0 }
 	}
