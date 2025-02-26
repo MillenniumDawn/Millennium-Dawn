@@ -1625,266 +1625,381 @@ country_event = {
 
 ###SFOR###
 
-# fight weapon smuggle
+# retreat forces
 country_event = {
 	id = SFOR.1
 	title = SFOR.1.t
 	desc = SFOR.1.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_german_parliament_bundestag
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		country_exists = BOS
+	}
 
 	option = { #Accept
 		name = SFOR.1.a
 		log = "[GetDateText]: [This.GetName]: SFOR.1.a executed"
-		
+		BOS = {
+			diplomatic_relation = { 
+					country = GER
+					relation = military_access 
+					active = no
+			}
+		}
+		GER = {
+			diplomatic_relation = { 
+				country = BOS
+				relation = guarantee 
+				active = yes
+			}
+			clr_country_flag = GER_SFOR
+		}
 
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# imprisson kriminal of war
+# end of mandatory
 country_event = {
 	id = SFOR.2
 	title = SFOR.2.t
 	desc = SFOR.2.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_german_parliament_bundestag
 	is_triggered_only = yes
 	fire_only_once = yes
+
+	trigger = {
+		country_exists = BOS
+		date < 2004.12.12
+	}
 
 	option = { #Accept
 		name = SFOR.2.a
 		log = "[GetDateText]: [This.GetName]: SFOR.2.a executed"
-		
+		BOS = {
+			diplomatic_relation = { 
+					country = GER
+					relation = military_access 
+					active = no
+			}
+		}
+		GER = {
+			diplomatic_relation = { 
+				country = BOS
+				relation = guarantee 
+				active = yes
+			}
+			clr_country_flag = GER_SFOR
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+	option = { #Accept
+		name = SFOR.2.b
+		log = "[GetDateText]: [This.GetName]: SFOR.2.b executed"
+		BOS = {
+			add_opinion_modifier = { target = GER modifier = declaration_of_friendship }
+		}
+		GER = {
+			diplomatic_relation = { 
+				country = BOS
+				relation = guarantee 
+				active = yes
+			}
+			add_opinion_modifier = { target = BOS modifier = declaration_of_friendship }
+		}
 
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# elections 2001
+# destroy weapon stocks and smuggler networks
 country_event = {
 	id = SFOR.3
 	title = SFOR.3.t
 	desc = SFOR.3.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_KFOR_III
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	option = { #Accept
+	option = { #launch
 		name = SFOR.3.a
 		log = "[GetDateText]: [This.GetName]: SFOR.3.a executed"
-		
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		BOS = {
+			add_stability = 0.02
+		}
+
+		ai_chance = {
+			base = 2
+		}
+	}
+
+	option = { #no risk
+		name = SFOR.3.b
+		log = "[GetDateText]: [This.GetName]: SFOR.3.b executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.005 }
+		set_temp_variable = { temp_outlook_increase = -0.005 }
+		add_political_power = 15
 
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# minefields remove
+# Radovan Karadzic attempt
 country_event = {
 	id = SFOR.4
 	title = SFOR.4.t
 	desc = SFOR.4.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_SFOR_I
 	is_triggered_only = yes
-	fire_only_once = yes
+	fire_only_once = no
+
+	trigger = {
+		GER= {
+			NOT = {
+				has_idea = GER_time_out
+				has_country_flag = GER_arrested
+			}
+		}
+	}
 
 	option = { #Accept
 		name = SFOR.4.a
 		log = "[GetDateText]: [This.GetName]: SFOR.4.a executed"
-		
+		hidden_effect = {
+			random_list = {
+				35 = {
+					country_event = {
+						id = SFOR.5
+						days = 4
+					}
+				}
+				65 = {
+					country_event = {
+						id = SFOR.6
+						days = 4			
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 2
+		}
+
+		option = { #no risk
+		name = SFOR.4.b
+		log = "[GetDateText]: [This.GetName]: SFOR.4.b executed"
+		add_political_power = 15
 
 		ai_chance = {
 			base = 2
 		}
 	}
+	}
 }
-# train Bosnian forces
+# success
 country_event = {
 	id = SFOR.5
 	title = SFOR.5.t
 	desc = SFOR.5.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_SFOR_II
 	is_triggered_only = yes
-	fire_only_once = yes
+	fire_only_once = no
 
 	option = { #Accept
 		name = SFOR.5.a
 		log = "[GetDateText]: [This.GetName]: SFOR.5.a executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		BOS = {
+			add_stability = 0.02
+			add_opinion_modifier = { target = GER modifier = recent_actions_positive }
+		}
+		SER = {
+			add_opinion_modifier = { target = GER modifier = recent_actions_negative }
+		}
 		
+		hidden_effect = {
+			GER = {
+				add_timed_idea = {
+					idea = GER_time_out
+					days = 400
+				}
+				set_country_flag = GER_arrested
+			}
+		}
 
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# unallowed stationed units found 
+# fail
 country_event = {
 	id = SFOR.6
 	title = SFOR.6.t
 	desc = SFOR.6.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_SFOR_II
 	is_triggered_only = yes
-	fire_only_once = yes
+	fire_only_once = no
 
 	option = { #Accept
 		name = SFOR.6.a
 		log = "[GetDateText]: [This.GetName]: SFOR.6.a executed"
-		
-
+		add_political_power = -10
+		hidden_effect = {
+			GER = {
+				add_timed_idea = {
+					idea = GER_time_out
+					days = 400
+				}
+			}
+		}
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# patoule unit under attack
+# soldier wounded while demining
 country_event = {
 	id = SFOR.7
 	title = SFOR.7.t
 	desc = SFOR.7.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_KFOR_IV
 	is_triggered_only = yes
 	fire_only_once = yes
 
 	option = { #Accept
 		name = SFOR.7.a
 		log = "[GetDateText]: [This.GetName]: SFOR.7.a executed"
-		
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.015 }
+		set_temp_variable = { temp_outlook_increase = -0.005 }
 
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# fight serbian rebels
+# smugglers catched on action
 country_event = {
 	id = SFOR.8
 	title = SFOR.8.t
 	desc = SFOR.8.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_KFOR_III
 	is_triggered_only = yes
-	fire_only_once = yes
+	fire_only_once = no
+
+	trigger = {
+		GER= {
+			NOT = {
+				has_idea = GER_time_out
+			}
+		}
+	}
 
 	option = { #Accept
 		name = SFOR.8.a
 		log = "[GetDateText]: [This.GetName]: SFOR.8.a executed"
-		
+		hidden_effect = {
+			random_list = {
+				50 = {
+					country_event = {
+						id = SFOR.9
+						days = 4
+					}
+				}
+				50 = {
+					country_event = {
+						id = SFOR.10
+						days = 4			
+					}
+				}
+			}
+		}
 
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# detect smuggle
+# handle them to authorities
 country_event = {
 	id = SFOR.9
 	title = SFOR.9.t
 	desc = SFOR.9.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_Feldjager_GER
 	is_triggered_only = yes
-	fire_only_once = yes
+	fire_only_once = no
 
 	option = { #Accept
 		name = SFOR.9.a
 		log = "[GetDateText]: [This.GetName]: SFOR.9.a executed"
-		
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.005 }
+		set_temp_variable = { temp_outlook_increase = 0.005 }
+		BOS = {
+			add_stability = 0.02
+		}
+
+		hidden_effect = {
+			GER = {
+				add_timed_idea = {
+					idea = GER_time_out
+					days = 400
+				}
+			}
+		}
 
 		ai_chance = {
 			base = 2
 		}
 	}
 }
-# Bomb assault on orthodox churche
+# look what we found 
 country_event = {
 	id = SFOR.10
 	title = SFOR.10.t
 	desc = SFOR.10.d
-	picture = GFX_uss_cole_bombing
+	picture = GFX_Feldjager_GER
 	is_triggered_only = yes
-	fire_only_once = yes
+	fire_only_once = no
 
 	option = { #Accept
 		name = SFOR.10.a
 		log = "[GetDateText]: [This.GetName]: SFOR.10.a executed"
-		
-
-		ai_chance = {
-			base = 2
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		BOS = {
+			add_stability = 0.02
+			add_opinion_modifier = { target = SER modifier = diplomatic_distance }
 		}
-	}
-}
-# Progroms 2004 I
-country_event = {
-	id = SFOR.11
-	title = SFOR.11.t
-	desc = SFOR.11.d
-	picture = GFX_uss_cole_bombing
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	option = { #Accept
-		name = SFOR.11.a
-		log = "[GetDateText]: [This.GetName]: SFOR.11.a executed"
-		
-
-		ai_chance = {
-			base = 2
+		SER = {
+			add_opinion_modifier = { target = BOS modifier = diplomatic_distance }
 		}
-	}
-}
-# Progroms 2004 II
-country_event = {
-	id = SFOR.12
-	title = SFOR.12.t
-	desc = SFOR.12.d
-	picture = GFX_uss_cole_bombing
-	is_triggered_only = yes
-	fire_only_once = yes
 
-	option = { #Accept
-		name = SFOR.12.a
-		log = "[GetDateText]: [This.GetName]: SFOR.12.a executed"
-		
-
-		ai_chance = {
-			base = 2
+		hidden_effect = {
+			GER = {
+				add_timed_idea = {
+					idea = GER_time_out
+					days = 400
+				}
+			}
 		}
-	}
-}
-# Progroms 2004 III
-country_event = {
-	id = SFOR.13
-	title = SFOR.13.t
-	desc = SFOR.13.d
-	picture = GFX_uss_cole_bombing
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	option = { #Accept
-		name = SFOR.13.a
-		log = "[GetDateText]: [This.GetName]: SFOR.13.a executed"
-		
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Indipendence
-country_event = {
-	id = SFOR.14
-	title = SFOR.14.t
-	desc = SFOR.14.d
-	picture = GFX_uss_cole_bombing
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	option = { #Accept
-		name = SFOR.14.a
-		log = "[GetDateText]: [This.GetName]: SFOR.14.a executed"
-		
 
 		ai_chance = {
 			base = 2
