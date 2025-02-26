@@ -2309,3 +2309,44 @@ country_event = {
 		clear_variable = nations_influenced
 	}
 }
+
+
+# Influence Master Event
+country_event = {
+	id = influence.500
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_political_power > 200
+		# Do not influence in the situation you are in a looming bankruptcy
+		NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		# Do not influence in the instance you are a subject
+		is_subject = no
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: AI Influence Pulse"
+		save_event_target_as = influence_sender
+
+		AI_select_influence_target = yes
+
+		# Check Investing Country
+		if = {
+			limit = {
+				OR = {
+					check_variable = { AI_best_country_score = -1 }
+					check_variable = { AI_best_country_score < AI_minimum_influence }
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: Influence Failed. No valid influence country. Skipping this influence pulse."
+		}
+		else = {
+			log = "[GetDateText]: [This.GetName]: Influence Country Succeeded. [?var:AI_best_country.GetName] scored a [?AI_best_country_score]"
+			var:AI_best_country = {
+				spread_influence = yes
+			}
+		}
+	}
+}
