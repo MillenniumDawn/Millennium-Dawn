@@ -8094,7 +8094,7 @@ country_event = {
 		}
 	}
 
-	# Settle the issue before they arrive!
+	# Settle the issue now!
 	option = {
 		name = Japan.100009801.oB
 		log = "[GetDateText]: [This.GetName]: Japan.100009801.oB executed"
@@ -8169,7 +8169,72 @@ country_event = {
 		name = Japan.100009801.oC
 		log = "[GetDateText]: [This.GetName]: Japan.100009801.oC executed"
 
-		# TODO: try to work against JAP
+		add_political_power = -200
+		if = {
+			limit = {
+				original_tag = KOR
+				NOT = {
+					has_war_with = NKO
+				}
+			}
+			NKO = {
+				add_autonomy_ratio = 0.5
+				add_political_power = 200
+			}
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = NKO.id }
+			change_influence_percentage = yes
+		}
+		if = {
+			limit = {
+				original_tag = NKO
+				NOT = {
+					has_war_with = KOR
+				}
+			}
+			KOR = {
+				add_autonomy_ratio = 0.5
+				add_political_power = 200
+			}
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = KOR.id }
+			change_influence_percentage = yes
+		}
+		if = {
+			limit = {
+				original_tag = CHI
+				NOT = {
+					has_war_with = TAI
+				}
+			}
+			TAI = {
+				add_autonomy_ratio = 0.5
+				add_political_power = 200
+			}
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = TAI.id }
+			change_influence_percentage = yes
+		}
+		if = {
+			limit = {
+				original_tag = TAI
+				NOT = {
+					has_war_with = CHI
+				}
+			}
+			CHI = {
+				add_autonomy_ratio = 0.5
+				add_political_power = 200
+			}
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = JAP.id }
+			set_temp_variable = { influence_target = CHI.id }
+			change_influence_percentage = yes
+		}
+		JAP = { country_event = Japan.100009804 } # they undermine our puppet's legitimacy!
 
 		ai_chance = {
 			base = 10
@@ -8245,12 +8310,13 @@ country_event = {
 				}
 			}
 		}
+		JAP = { country_event = Japan.100009805 } # they capitulate!
 
 		ai_chance = {
 			base = 10
 		}
 	}
-}
+
 
 # Tiebreaker: Ultimatum Rejection
 country_event = {
@@ -8266,6 +8332,7 @@ country_event = {
 		name = Japan.100009802.oA
 		log = "[GetDateText]: [This.GetName]: Japan.100009802.oA executed"
 		add_war_support = 0.02
+		add_threat = 0.3
 		add_popularity = {
 			ideology = nationalist
 			popularity = 0.05
@@ -8291,6 +8358,116 @@ country_event = {
 		var:jap_aggression_tiebreaker_target = {
 			clr_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT
 		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Tiebreaker: [TAG] Attacks First!
+country_event = {
+	id = Japan.100009803
+	title = Japan.100009803.t
+	desc = Japan.100009803.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	immediate = {
+		var:jap_aggression_tiebreaker_target = {
+			clr_country_flag = JAP_AGGRESSION_TIEBREAKER_IMMINENT
+		}
+		clear_variable = jap_aggression_tiebreaker_target
+	}
+
+	# Assure the public!
+	option = {
+		name = Japan.100009803.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009803.oA executed"
+		add_political_power = -150
+		add_war_support = 0.03
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# How could this happen?!
+	option = {
+		name = Japan.100009803.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009803.oB executed"
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		set_temp_variable = { temp_outlook_increase = -0.10 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Tiebreaker: [TAG] Undermines Our Puppet's Legitimacy!
+country_event = {
+	id = Japan.100009804
+	title = Japan.100009804.t
+	desc = Japan.100009804.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# There's no danger
+	option = {
+		name = Japan.100009804.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009804.oA executed"
+		add_war_support = 0.03
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.05
+		}
+		recalculate_party = yes
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	# Counter campaign!
+	option = {
+		name = Japan.100009804.oB
+		log = "[GetDateText]: [This.GetName]: Japan.100009804.oB executed"
+		add_political_power = -500
+		var:jap_aggression_tiebreaker_target = {
+			add_autonomy_ratio = -0.1
+		}
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = JAP.id }
+		set_temp_variable = { influence_target = jap_aggression_tiebreaker_target.id }
+		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Tiebreaker: [TAG] Capitulates!
+country_event = {
+	id = Japan.100009805
+	title = Japan.100009805.t
+	desc = Japan.100009805.d
+	picture = GFX_JAP_diet_address
+
+	is_triggered_only = yes
+
+	# Excellent!
+	option = {
+		name = Japan.100009805.oA
+		log = "[GetDateText]: [This.GetName]: Japan.100009805.oA executed"
+		add_political_power = 400
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
 
 		ai_chance = {
 			base = 10
