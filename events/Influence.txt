@@ -2343,12 +2343,12 @@ country_event = {
 				has_equipment = { Inf_equipment > 250 }
 			}
 		}
-		PER_scripted_effect_update_palestine_arms_via_land = yes 
+		PER_scripted_effect_update_palestine_arms_via_land = yes
 		ai_chance = {
 			base = 1
 		}
 	}
-	
+
 	option = {
 		name = influence.56.b
 		log = "[GetDateText]: [This.GetName]: influence.56.b executed"
@@ -2377,6 +2377,46 @@ country_event = {
 		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
 		ai_chance = {
 			base = 0
+		}
+	}
+}
+
+# Influence Master Event
+country_event = {
+	id = influence.500
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_political_power > 200
+		# Do not influence in the situation you are in a looming bankruptcy
+		NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		# Do not influence in the instance you are a subject
+		is_subject = no
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: AI Influence Pulse"
+		save_event_target_as = influence_sender
+
+		AI_select_influence_target = yes
+
+		# Check Investing Country
+		if = {
+			limit = {
+				OR = {
+					check_variable = { AI_best_country_score = -1 }
+					check_variable = { AI_best_country_score < AI_minimum_influence }
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: Influence Failed. No valid influence country. Skipping this influence pulse."
+		}
+		else = {
+			log = "[GetDateText]: [This.GetName]: Influence Country Succeeded. [?var:AI_best_country.GetName] scored a [?AI_best_country_score]"
+			var:AI_best_country = {
+				spread_influence = yes
+			}
 		}
 	}
 }
