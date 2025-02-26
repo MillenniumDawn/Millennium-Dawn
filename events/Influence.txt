@@ -2320,6 +2320,10 @@ country_event = {
 	trigger = {
 		is_ai = yes
 		has_political_power > 200
+		# Do not influence in the situation you are in a looming bankruptcy
+		NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		# Do not influence in the instance you are a subject
+		is_subject = no
 	}
 
 	immediate = {
@@ -2329,7 +2333,13 @@ country_event = {
 		AI_select_influence_target = yes
 
 		# Check Investing Country
-		if = { limit = { check_variable = { AI_best_country_score = -1 } }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { AI_best_country_score = -1 }
+					check_variable = { AI_best_country_score < AI_minimum_influence }
+				}
+			}
 			log = "[GetDateText]: [This.GetName]: Influence Failed. No valid influence country. Skipping this influence pulse."
 		}
 		else = {
