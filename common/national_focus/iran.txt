@@ -12650,12 +12650,179 @@ focus_tree = {
 				NOT = {
 					is_subject_of = PER
 				}
+				influence_higher_30 = yes
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus = PER_azeri_shias"
+			custom_effect_tooltip = PER_coup_against_azerbaijan_TT
+			AZE = {
+				if = {
+					limit = { check_variable = { influence_array^0 = PER } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^0 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^1 = PER } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^1 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^2 = PER } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^2 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^3 = PER } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^3 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^4 = PER } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^4 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^5 = PER } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^5 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^6 = PER } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^6 }
+				}
+				else = { set_temp_variable = { iran_influence_percentage = 0 } }
+				set_temp_variable = { aze_domestic_influence_var = domestic_influence_amount }
+				set_temp_variable = { aze_emerging_outlook_percentage = party_popularity@communism }
+				multiply_temp_variable = { aze_emerging_outlook_percentage = 100 }
+				set_temp_variable = { aze_not_emerging_popularity = 100 }
+				subtract_from_temp_variable = { aze_not_emerging_popularity = aze_emerging_outlook_percentage }
 
+				#Chances
+
+				#Coup
+				set_temp_variable = { coup_chance = 0 }
+				add_to_temp_variable = { coup_chance = iran_influence_percentage }
+				add_to_temp_variable = { coup_chance = 30 }
+
+				#Civil War
+				set_temp_variable = { civil_war_chance = 0 }
+				add_to_temp_variable = { civil_war_chance = 30 } #Makes civil war easier.
+				add_to_temp_variable = { civil_war_chance = aze_emerging_outlook_percentage }
+				add_to_temp_variable = { coup_chance = iran_influence_percentage }
+
+				#Nothing happens
+				set_temp_variable = { fail_chance = 0 }
+				add_to_temp_variable = { fail_chance = aze_not_emerging_popularity }
+				add_to_temp_variable = { fail_chance = aze_domestic_influence_var }
+				add_to_temp_variable = { fail_chance = -50 } #Makes civil war easier.
+			}
+			random_list = {
+				coup_chance = {
+					custom_effect_tooltip = PER_aze_coup
+					hidden_effect = {
+
+						AZE = {
+							set_politics = {
+								ruling_party = communism
+								elections_allowed = no
+							}
+							set_political_party = {
+								ideology = communism
+								popularity = 100
+							}
+							set_temp_variable = { party_index = 9 }
+							set_temp_variable = { party_popularity_increase = 1.00 }
+							add_relative_party_popularity = yes
+
+							set_temp_variable = { rul_party_temp = 9 }
+							change_ruling_party_effect = yes
+
+
+							swap_ideas = {
+								remove_idea = the_military
+								add_idea = iranian_quds_force
+							}
+
+							create_country_leader = {
+								name = "Tawhid Ibrahim Begli"
+								picture = "Tawhid_Ibrahim_Begli.dds"
+								ideology = Vilayat_e_Faqih
+								traits = {
+									emerging_Vilayat_e_Faqih
+									cleric
+									pro_iranian
+								}
+							}
+
+							set_temp_variable = { percent_change = 10.00 }
+							set_temp_variable = { tag_index = PER }
+							set_temp_variable = { influence_target = AZE }
+							change_influence_percentage = yes
+						}
+					}
+				}
+				civil_war_chance = {
+					custom_effect_tooltip = PER_aze_civilwar
+					hidden_effect = {
+						create_dynamic_country = {
+							original_tag = AZE
+							set_country_flag = AZE_husayncilar_tag
+							copy_tag = AZE
+							set_cosmetic_tag = EGY_baath_flag
+							set_popularities = {
+								nationalist = 100
+							}
+							set_politics = {
+								ruling_party = communism
+								last_election = "1997.6.8"
+								election_frequency = 48
+								elections_allowed = no
+							}
+							start_politics_input = yes
+							in_game_startup_nations_effect = yes
+							### Party Popularities
+							set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+							set_variable = { party_pop_array^1 = 0.00 } #conservatism
+							set_variable = { party_pop_array^2 = 0.00 } #liberalism
+							set_variable = { party_pop_array^3 = 0.00 } #socialism
+							set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+							set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+							set_variable = { party_pop_array^6 = 0.00 } #Conservative
+							set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+							set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+							set_variable = { party_pop_array^9 = 1.00 } #Vilayat_e_Faqih -> Principalists
+							set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+							set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+							set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+							set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+							set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+							set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+							set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+							set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+							set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+							set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+							set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+							set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+							set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+							set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+							### Ruling Party
+							add_to_array = { ruling_party = 9 }
+							startup_politics = yes
+							# Leader
+							create_country_leader = {
+								name = "Tawhid Ibrahim Begli"
+								picture = "Tawhid_Ibrahim_Begli.dds"
+								ideology = Vilayat_e_Faqih
+								traits = {
+									emerging_Vilayat_e_Faqih
+									cleric
+									pro_iranian
+								}
+							}
+							load_focus_tree = { tree = azerbaijan_focus_historical_early keep_completed = yes }
+						}
+					}
+				}
+				fail_chance = {
+
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -12680,7 +12847,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus = PER_striking_the_great_satan"
-
+			declare_war_on = {
+				target = USA
+				type = liberate_wargoal
+			}
 		}
 
 		ai_will_do = {
