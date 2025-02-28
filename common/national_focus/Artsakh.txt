@@ -144,7 +144,7 @@ focus_tree = {
 	}
 	focus = {
 		id = NKR_economy_support_local
-		icon = BRA_mensalao_new
+		icon = align_to_artsakh
 
 		x = 2
 		y = 4
@@ -256,7 +256,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus NKR_economy_construction executed"
-			one_random_industrial_complex = yes
+			710 = {
+				one_state_industrial_complex = yes
+			}			
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 		}
@@ -443,7 +445,7 @@ focus_tree = {
 	}
 	focus = {
 		id = NKR_safe_police_troops
-		icon = arm_policewoman
+		icon = arm_police_spec
 
 		x = 1
 		y = 2
@@ -551,6 +553,27 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus NKR_safe_army executed"
 			ARM_bad_army_remove = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = NKR_planes
+		icon = Artsakh_Air_Defence_Force
+
+		x = 0
+		y = 1
+		relative_position_id = NKR_safe_start
+
+		cost = 3
+
+		prerequisite = { focus = NKR_safe_start }
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus NKR_safe_army executed"
 		}
 
 		ai_will_do = {
@@ -789,6 +812,158 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus NKR_safe_full_integrate_army executed"
 			NKR_integrate_army_of_armenia = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = NKR_we_are_at_war
+		icon = Avenge_Nagorno_Karabakh
+
+		x = 4
+		y = 3
+		relative_position_id = NKR_safe_start
+
+		cost = 0.5
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			has_war_with = AZE
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus NKR_we_are_at_war executed"
+			add_manpower = 1000
+			add_war_support = 0.5
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = NKR_scorched_earth
+		icon = burning_their_fields
+
+		x = 4
+		y = 4
+		relative_position_id = NKR_safe_start
+
+		cost = 2
+
+		prerequisite = { focus = NKR_we_are_at_war }
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			has_completed_focus = NKR_economy_construction
+			has_war_with = AZE
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus NKR_scorched_earth executed"
+			710 = {
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+			ARM = {
+				add_offsite_building = { type = industrial_complex level = 1 }
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = NKR_plant_minefields
+		icon = land_mine_issue
+
+		x = 2
+		y = 4
+		relative_position_id = NKR_safe_start
+
+		cost = 2
+
+		prerequisite = { focus = NKR_we_are_at_war }
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			has_war_with = AZE
+			OR = {
+				NOT = {
+					controls_state = 1037
+				}
+				NOT = {
+					controls_state = 1036
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus NKR_plant_minefields executed"
+			custom_effect_tooltip = mines_lostprov_tt
+			if = {
+				limit = {
+					NOT = {
+						controls_state = 1037
+					}
+				}
+				1037 = {
+					add_dynamic_modifier = {
+						modifier = ARM_landmines
+					}
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						controls_state = 1036
+					}
+				}
+				1036 = {
+					add_dynamic_modifier = {
+						modifier = ARM_landmines
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+	focus = {
+		id = NKR_final_defense
+		icon = army_defence1
+
+		x = 3
+		y = 5
+		relative_position_id = NKR_safe_start
+
+		cost = 1
+
+		prerequisite = { 
+			focus = NKR_plant_minefields
+			focus = NKR_scorched_earth
+		}
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			has_war_with = AZE
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus NKR_plant_minefields executed"
+			add_timed_idea = {
+				idea = NKR_last_defense
+				days = 44
+			}
 		}
 
 		ai_will_do = {
