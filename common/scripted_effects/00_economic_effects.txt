@@ -546,3 +546,194 @@ set_improved_trade_agreement = {
 	}
 }
 
+monthly_economy_params_fluctuation = {
+	set_temp_variable = { chance_to_change_positive = 25 }
+	set_temp_variable = { chance_to_change_negative = 25 }
+
+	if = {
+		limit = { check_variable = { volatility_target > volatility } }
+		add_to_temp_variable = { chance_to_change_positive = 10 }
+		add_to_temp_variable = { chance_to_change_negative = -10 }
+	}
+	else = {
+		add_to_temp_variable = { chance_to_change_positive = -10 }
+		add_to_temp_variable = { chance_to_change_negative = 10 }
+	}
+
+	random_list = {
+		50 = { }
+		chance_to_change_positive = {
+			add_to_variable = { volatility = 5 }
+		}
+		chance_to_change_negative = {
+			add_to_variable = { volatility = -5 }
+		}
+	}
+
+	random_list = {
+		90 = { }
+		5 = {
+			add_to_variable = { volatility_target = 5 }
+		}
+		5 = {
+			add_to_variable = { volatility_target = -5 }
+		}
+	}
+
+	set_temp_variable = { chance_to_change_positive = 25 }
+	set_temp_variable = { chance_to_change_negative = 25 }
+
+	if = {
+		limit = { check_variable = { instability_target > instability } }
+		add_to_temp_variable = { chance_to_change_positive = 10 }
+		add_to_temp_variable = { chance_to_change_negative = -10 }
+	}
+	else = {
+		add_to_temp_variable = { chance_to_change_positive = -10 }
+		add_to_temp_variable = { chance_to_change_negative = 10 }
+	}
+
+	random_list = {
+		50 = { }
+		chance_to_change_positive = {
+			add_to_variable = { instability = 5 }
+		}
+		chance_to_change_negative = {
+			add_to_variable = { instability = -5 }
+		}
+	}
+
+	random_list = {
+		90 = { }
+		5 = {
+			add_to_variable = { instability_target = 5 }
+		}
+		5 = {
+			add_to_variable = { instability_target = -5 }
+		}
+	}
+
+	clamp_variable = {
+		var = volatility
+		min = 50
+		max = 150
+	}
+
+	clamp_variable = {
+		var = instability
+		min = 50
+		max = 150
+	}
+
+	random_list = {
+		1000 = { }
+		volatility = {
+			add_to_variable = { cycle_target = 0.25 }
+		}
+		volatility = {
+			add_to_variable = { cycle_target = -0.25 }
+		}
+	}
+
+	set_temp_variable = { chance_to_change_positive = 25 }
+	set_temp_variable = { chance_to_change_negative = 25 }
+
+	if = {
+		limit = { check_variable = { inflation_target > inflation_rate } }
+		add_to_temp_variable = { chance_to_change_positive = 10 }
+		add_to_temp_variable = { chance_to_change_negative = -10 }
+	}
+	else = {
+		add_to_temp_variable = { chance_to_change_positive = -10 }
+		add_to_temp_variable = { chance_to_change_negative = 10 }
+	}
+
+	random_list = {
+		50 = { }
+		chance_to_change_positive = {
+			add_to_variable = { inflation_rate = 0.1 }
+		}
+		chance_to_change_negative = {
+			add_to_variable = { inflation_rate = -0.1 }
+		}
+	}
+}
+
+monthly_inflation_effect = {
+	set_temp_variable = { buf = inflation_rate }
+	divide_temp_variable = { buf = 12 }
+	# otherwise, accuracy is lost
+	set_temp_variable = { inflation_mod = 100 }
+	subtract_from_temp_variable = { inflation_mod = buf }
+	multiply_temp_variable = { inflation_mod = 0.01 }
+
+	multiply_variable = { treasury = inflation_mod }
+	if = {
+		limit = { check_variable = { scalable_debt > 1 } }
+		multiply_variable = { scalable_debt = inflation_mod }
+	}
+	if = {
+		limit = { check_variable = { scalable_investments > 1 } }
+		multiply_variable = { scalable_investments = inflation_mod }
+	}
+}
+
+monthly_economy_params_effect = {
+	set_temp_variable = { bad_probability = 100 }
+	set_temp_variable = { good_probability = 100 }
+	add_to_temp_variable = { good_probability = volatility }
+	add_to_temp_variable = { bad_probability = volatility }
+	add_to_temp_variable = { bad_probability = instability }
+
+	set_temp_variable = { diff = 0 }
+	apply_economic_diff_to_probability = yes
+
+	set_temp_variable = { bad_diff = diff }
+	multiply_temp_variable = { bad_diff = -1 }
+
+	add_to_temp_variable = { good_probability = diff }
+	add_to_temp_variable = { bad_probability = diff }
+
+	random_list = {
+		1500 = {
+			# nothing
+		}
+		good_probability = {
+			# good event
+		}
+		bad_probability = {
+			# bad event
+		}
+	}
+}
+
+# diff variable as input
+apply_economic_diff_to_probability = {
+	if = {
+		limit = { has_idea = depression }
+		set_temp_variable = { cycle_id = 1 }
+	}
+	else_if = {
+		limit = { has_idea = recession }
+		set_temp_variable = { cycle_id = 2 }
+	}
+	else_if = {
+		limit = { has_idea = stagnation }
+		set_temp_variable = { cycle_id = 3 }
+	}
+	else_if = {
+		limit = { has_idea = stable_growth }
+		set_temp_variable = { cycle_id = 4 }
+	}
+	else_if = {
+		limit = { has_idea = fast_growth }
+		set_temp_variable = { cycle_id = 5 }
+	}
+	else = {
+		set_temp_variable = { cycle_id = 6 }
+	}
+
+	set_temp_variable = { diff = cycle_target }
+	subtract_from_temp_variable = { diff = cycle_id }
+	multiply_temp_variable = { diff = 10 }
+}
