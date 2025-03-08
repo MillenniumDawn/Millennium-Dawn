@@ -1,0 +1,1329 @@
+focus_tree = {
+	id = isis_tree
+	country = {
+		factor = 0
+		modifier = { add = 100 tag = ISI }
+	}
+	continuous_focus_position = { x = 100 y = 0 }
+
+	#Main ISIS Tree
+	focus = {
+		id = ISI_the_precarious_position
+		icon = sharia_law
+		x = 15
+		y = 0
+		cost = 1
+		available = { has_government = fascism }
+		bypass_if_unavailable = yes
+		select_effect = {
+			hidden_effect = {
+				country_event = { id = isis.100 }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+			add_war_support = 0.10
+			add_stability = 0.10
+			add_political_power = 150
+			add_ideas = ISI_the_beginning
+		}
+	}
+
+	focus = {
+		id = ISI_our_strongholds
+		icon = generic_entrenchment
+		x = 0
+		y = 1
+		cost = 1.5
+		relative_position_id = ISI_the_precarious_position
+		prerequisite = { focus = ISI_the_precarious_position }
+
+		available = {
+			has_government = fascism
+			OR = { #If you lose control of Raqqa Mosul or Deir ez Zor you lose the game and are locked out of the tree. You must hold here
+				has_full_control_of_state = 191
+				has_full_control_of_state = 192
+				has_full_control_of_state = 166
+				has_full_control_of_state = 561
+			}
+		}
+		bypass_if_unavailable = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_our_strongholds"
+			if = { limit = { has_full_control_of_state = 191 }
+				#1606 - Raqqa
+				191 = {
+					add_building_construction = {
+						type = bunker
+						province = 1606
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			if = { limit = { has_full_control_of_state = 192 }
+				#6312 - Deir ez-Zor
+				192 = {
+					add_building_construction = {
+						type = bunker
+						province = 6312
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			if = { limit = { has_full_control_of_state = 166 }
+				#10106 - Mosul
+				166 = {
+					add_building_construction = {
+						type = bunker
+						province = 10106
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			if = { limit = { has_full_control_of_state = 561 }
+				#7513 - Palmyra
+				561 = {
+					add_building_construction = {
+						type = bunker
+						province = 6297
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			set_temp_variable = { treasury_change = -0.100 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	focus = {
+		id = ISI_revitalize_the_caliphate
+		icon = isis_allegiance
+		x = 0
+		y = 3
+		cost = 5
+		relative_position_id = ISI_the_precarious_position
+		prerequisite = { focus = ISI_our_strongholds }
+
+		available = {
+			has_government = fascism
+			OR = { #If you lose control of Raqqa Mosul or Deir ez Zor you lose the game and are locked out of the tree. You must hold here
+				has_full_control_of_state = 191
+				has_full_control_of_state = 192
+				has_full_control_of_state = 166
+			}
+			custom_trigger_tooltip = {
+				tooltip = ISI_lone_wolf_strength_over_15_tt
+				check_variable = { warrior_strength > 14 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ISI_lone_wolf_approval_over_50_tt
+				check_variable = { warrior_approval > 49 }
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+			hidden_effect = {
+				if = {
+					limit = { NOT = { has_template = "Allah's Faithful" } }
+					division_template = {
+						name = "Allah's Faithful"
+						is_locked = yes
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+						}
+						support = {
+							L_Engi_Comp = { x = 0 y = 0 }
+							L_Recce_Comp = { x = 0 y = 1 }
+						}
+					}
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name=\"Allah's Faithful\" division_template = \"Allah's Faithful\" start_experience_factor = 0.5"
+					owner = ROOT
+					count = 3
+				}
+			}
+			subtract_from_variable = { warrior_strength = 5 } #Sims the Jihadists joining the military
+			custom_effect_tooltip = ISI_warrior_strength_increase_5_tt
+			add_to_variable = { warrior_approval = 5 }
+			custom_effect_tooltip = ISI_warrior_approval_increase_5_tt
+		}
+	}
+
+	focus = {
+		id = ISI_arm_the_populace
+		icon = conscription
+		x = -8
+		y = 1
+		cost = 4
+		relative_position_id = ISI_revitalize_the_caliphate
+		prerequisite = { focus = ISI_revitalize_the_caliphate }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+			set_temp_variable = { treasury_change = -0.500 }
+			modify_treasury_effect = yes
+			add_ideas = ISI_arm_the_populace_idea
+		}
+	}
+
+	#The War Economy
+	focus = {
+		id = ISI_the_islamic_war_economy
+		icon = central_planned_economy3
+		x = -10
+		y = 1
+		cost = 4
+		relative_position_id = ISI_revitalize_the_caliphate
+		prerequisite = { focus = ISI_revitalize_the_caliphate }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+			add_offsite_building = { type = arms_factory level = 2 }
+			add_offsite_building = { type = industrial_complex level = 2 }
+			set_temp_variable = { treasury_change = -1.00 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	focus = {
+		id = ISI_bleed_the_enemy_dry
+		icon = skull
+		x = -2
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_the_islamic_war_economy }
+
+		available = {
+			has_country_flag = ISI_chosen_the_rat_path
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+
+		}
+	}
+
+	focus = {
+		id = ISI_steal_the_rifles
+		icon = unknown
+		x = -3
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_bleed_the_enemy_dry }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_looters
+		icon = unknown
+		x = -1
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_bleed_the_enemy_dry }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_scrap_army
+		icon = unknown
+		x = -3
+		y = 3
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_steal_the_rifles }
+		prerequisite = { focus = ISI_looters }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_stolen_goods
+		icon = unknown
+		x = -4
+		y = 4
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_scrap_army }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_technical
+		icon = unknown
+		x = -2
+		y = 4
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_scrap_army }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_acquire_police_vehicles
+		icon = unknown
+		x = -3
+		y = 5
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_technical }
+		prerequisite = { focus = ISI_stolen_goods }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+	focus = {
+		id = ISI_non_standardization
+		icon = unknown
+		x = -3
+		y = 6
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_acquire_police_vehicles }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+
+	focus = {
+		id = ISI_islamic_sweat_shops
+		icon = unknown
+		x = 0
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_the_islamic_war_economy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+	focus = {
+		id = ISI_traditional_war_economy
+		icon = unknown
+		x = 2
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_the_islamic_war_economy }
+
+		available = {
+			has_country_flag = ISI_chosen_the_wrong_path
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_establish_the_workshop
+		icon = unknown
+		x = 1
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_traditional_war_economy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_local_arms_factories
+		icon = unknown
+		x = 3
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_traditional_war_economy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_armories_of_isis
+		icon = unknown
+		x = 3
+		y = 3
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = { focus = ISI_local_arms_factories }
+		prerequisite = { focus = ISI_establish_the_workshop }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_industrial_workshops
+		icon = unknown
+		x = 0
+		y = 3
+		cost = 4
+		relative_position_id = ISI_the_islamic_war_economy
+		prerequisite = {
+			focus = ISI_establish_the_workshop
+			focus = ISI_looters
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_nasheed_morale
+		icon = unknown
+		x = 0
+		y = 1
+		cost = 4
+		relative_position_id = ISI_industrial_workshops
+		prerequisite = { focus = ISI_industrial_workshops }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_quotas
+		icon = unknown
+		x = 0
+		y = 2
+		cost = 4
+		relative_position_id = ISI_industrial_workshops
+		prerequisite = { focus = ISI_nasheed_morale }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	#Armories of Allah
+	focus = {
+		id = ISI_gods_production
+		icon = unknown
+		x = -1
+		y = 1
+		cost = 4
+		relative_position_id = ISI_armories_of_isis
+		prerequisite = { focus = ISI_armories_of_isis }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_allahs_blessing
+		icon = unknown
+		x = 1
+		y = 1
+		cost = 4
+		relative_position_id = ISI_armories_of_isis
+		prerequisite = { focus = ISI_armories_of_isis }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_every_woman_a_worker
+		icon = unknown
+		x = 0
+		y = 2
+		cost = 4
+		relative_position_id = ISI_armories_of_isis
+		prerequisite = { focus = ISI_allahs_blessing }
+		prerequisite = { focus = ISI_gods_production }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_inspire_the_populace
+		icon = unknown
+		x = 0
+		y = 3
+		cost = 4
+		relative_position_id = ISI_armories_of_isis
+		prerequisite = { focus = ISI_every_woman_a_worker }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	#Counterfeit and Money Laundering
+
+	focus = {
+		id = ISI_counterfeiting_operations
+		icon = liberalization_policies
+		x = -4
+		y = 1
+		cost = 4
+		relative_position_id = ISI_revitalize_the_caliphate
+		prerequisite = { focus = ISI_revitalize_the_caliphate }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_offshore_accounts
+		icon = business_man
+		x = -2
+		y = 1
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_counterfeiting_operations }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_oil_rigging
+		icon = oil
+		x = 2
+		y = 1
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_counterfeiting_operations }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+	focus = {
+		id = ISI_cash_only
+		icon = money
+		x = 0
+		y = 1
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_counterfeiting_operations }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_isis_bucks
+		icon = unknown
+		x = 0
+		y = 2
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_cash_only }
+		prerequisite = { focus = ISI_offshore_accounts }
+		prerequisite = { focus = ISI_oil_rigging }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_fund_the_jihad
+		icon = unknown
+		x = 0
+		y = 3
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_isis_bucks }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_cryptocurrency
+		icon = unknown
+		x = 0
+		y = 4
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_fund_the_jihad }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_jihadist_bonuses
+		icon = unknown
+		x = 2
+		y = 3
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_isis_bucks focus = ISI_mobilize_the_jihadists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_bounties
+		icon = unknown
+		x = 2
+		y = 4
+		cost = 4
+		relative_position_id = ISI_counterfeiting_operations
+		prerequisite = { focus = ISI_jihadist_bonuses }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+
+	#Islamic Political Spectrum
+	focus = {
+		id = ISI_the_status_of_caliphate
+		icon = conservative
+		x = 7
+		y = 1
+		cost = 4
+		relative_position_id = ISI_revitalize_the_caliphate
+		prerequisite = { focus = ISI_revitalize_the_caliphate }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	#Path One/Two - Jihadists
+	focus = {
+		id = ISI_the_jihad
+		icon = jihad
+		x = -6
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_status_of_caliphate
+		prerequisite = { focus = ISI_the_status_of_caliphate }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_mobilize_the_jihadists
+		icon = unknown
+		x = -2
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_jihad
+		prerequisite = { focus = ISI_the_jihad }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_expansionary_methodology
+		icon = unknown
+		x = 0
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_jihad
+		prerequisite = { focus = ISI_the_jihad }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_cripple_the_enemy
+		icon = unknown
+		x = 2
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_jihad
+		prerequisite = { focus = ISI_the_jihad }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_sword_of_allah
+		icon = unknown
+		x = -1
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_jihad
+		prerequisite = { focus = ISI_expansionary_methodology }
+		prerequisite = { focus = ISI_mobilize_the_jihadists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_faith_in_the_quaran
+		icon = unknown
+		x = 1
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_jihad
+		prerequisite = { focus = ISI_expansionary_methodology }
+		prerequisite = { focus = ISI_cripple_the_enemy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_the_global_caliphate
+		icon = unknown
+		x = 0
+		y = 3
+		cost = 4
+		relative_position_id = ISI_the_jihad
+		prerequisite = { focus = ISI_sword_of_allah }
+		prerequisite = { focus = ISI_faith_in_the_quaran }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_setting_our_sights
+		icon = unknown
+		x = 0
+		y = 1
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_the_global_caliphate }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	##The Middle East Will Bend
+	focus = {
+		id = ISI_the_middle_east_will_bend
+		icon = unknown
+		x = -4.5
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_setting_our_sights }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+	focus = {
+		id = ISI_bring_iraq_to_heel
+		icon = unknown
+		x = -6
+		y = 3
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_the_middle_east_will_bend }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_bleeding_beirut
+		icon = unknown
+		x = -3
+		y = 3
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_the_middle_east_will_bend }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_prepare_against_the_saudis
+		icon = unknown
+		x = -7
+		y = 4
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_bring_iraq_to_heel }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_destroy_kuwait
+		icon = unknown
+		x = -5
+		y = 4
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_bring_iraq_to_heel }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_the_zionist_scrouge
+		icon = unknown
+		x = -3
+		y = 4
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_bleeding_beirut }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_topple_the_wahhabists
+		icon = unknown
+		x = -6
+		y = 5
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_prepare_against_the_saudis }
+		prerequisite = { focus = ISI_destroy_kuwait }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+	focus = {
+		id = ISI_blitz_jordan
+		icon = unknown
+		x = -4
+		y = 5
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_the_zionist_scrouge }
+		prerequisite = { focus = ISI_destroy_kuwait }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_middle_east_is_secured
+		icon = unknown
+		x = -5
+		y = 6
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_blitz_jordan }
+		prerequisite = { focus = ISI_topple_the_wahhabists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	#The Move on Africa
+	focus = {
+		id = ISI_african_islamism
+		icon = unknown
+		x = 0
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_setting_our_sights }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_contact_boko_haram
+		icon = unknown
+		x = -1
+		y = 1
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_african_islamism }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_somalian_fundamentalists
+		icon = unknown
+		x = 1
+		y = 1
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_african_islamism }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_the_state_of_kano
+		icon = unknown
+		x = -1
+		y = 2
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_contact_boko_haram }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_salafist_somalia
+		icon = unknown
+		x = 1
+		y = 2
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_somalian_fundamentalists }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_seize_hold
+		icon = unknown
+		x = 0
+		y = 3
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_the_state_of_kano }
+		prerequisite = { focus = ISI_salafist_somalia }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_brace
+		icon = unknown
+		x = 0
+		y = 4
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_seize_hold }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+	focus = {
+		id = ISI_exploit_kano
+		icon = unknown
+		x = -2
+		y = 4
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_seize_hold }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_establish_somali_charters
+		icon = unknown
+		x = 2
+		y = 4
+		cost = 4
+		relative_position_id = ISI_african_islamism
+		prerequisite = { focus = ISI_seize_hold }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	#Asia
+	focus = {
+		id = ISI_our_eastern_brothers
+		icon = unknown
+		x = 6
+		y = 2
+		cost = 4
+		relative_position_id = ISI_the_global_caliphate
+		prerequisite = { focus = ISI_setting_our_sights }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_seek_taliban_relations
+		icon = unknown
+		x = -3
+		y = 1
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_our_eastern_brothers }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_pakistani_islamic_relations
+		icon = unknown
+		x = 0
+		y = 1
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_our_eastern_brothers }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_reach_to_indonesia
+		icon = unknown
+		x = 3
+		y = 1
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_our_eastern_brothers }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_the_indians
+		icon = unknown
+		x = -2
+		y = 2
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_pakistani_islamic_relations }
+		prerequisite = { focus = ISI_seek_taliban_relations }
+		prerequisite = { focus = ISI_reach_to_indonesia }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_the_asean
+		icon = unknown
+		x = 0
+		y = 2
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_pakistani_islamic_relations }
+		prerequisite = { focus = ISI_seek_taliban_relations }
+		prerequisite = { focus = ISI_reach_to_indonesia }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_malaysia
+		icon = unknown
+		x = 2
+		y = 2
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_pakistani_islamic_relations }
+		prerequisite = { focus = ISI_seek_taliban_relations }
+		prerequisite = { focus = ISI_reach_to_indonesia }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_send_agents_of_allah
+		icon = unknown
+		x = -1
+		y = 3
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_the_asean }
+		prerequisite = { focus = ISI_the_indians }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_undermine_the_foreigners
+		icon = unknown
+		x = 1
+		y = 3
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_the_asean }
+		prerequisite = { focus = ISI_malaysia }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+	focus = {
+		id = ISI_seize_control
+		icon = true_caliphate
+		x = 0
+		y = 4
+		cost = 4
+		relative_position_id = ISI_our_eastern_brothers
+		prerequisite = { focus = ISI_send_agents_of_allah }
+		prerequisite = { focus = ISI_undermine_the_foreigners }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_revitalize_the_caliphate"
+		}
+	}
+
+
+	#Path Three - The People
+
+	#Path Four - The Ulema
+
+	#Syria Situation
+	focus = {
+		id = ISI_syrian_situation
+		icon = support_the_left_right
+		x = 19
+		y = 0
+		cost = 1
+		available = {
+			has_government = fascism
+			OR = {
+				has_war_with = FSA
+				has_war_with = SYR
+				has_war_with = ROJ
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+			add_war_support = 0.05
+			add_stability = 0.05
+		}
+	}
+
+	focus = {
+		id = ISI_crush_rojava
+		icon = attack_rojava
+		x = -2
+		y = 1
+		cost = 1
+		relative_position_id = ISI_syrian_situation
+		prerequisite = { focus = ISI_syrian_situation }
+
+		available = {
+			country_exists = ROJ
+			has_war_with = ROJ
+		}
+		bypass = {
+			NOT = {
+				country_exists = ROJ
+				has_war_with = ROJ
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+			add_timed_idea = {
+				idea = ISI_anti_kurdish_forces
+				days = 730
+			}
+		}
+	}
+	focus = {
+		id = ISI_crush_rebels
+		icon = attack_syrian_rebels
+		x = -2
+		y = 2
+		cost = 1
+		relative_position_id = ISI_syrian_situation
+		prerequisite = { focus = ISI_crush_rojava }
+
+		available = {
+			country_exists = FSA
+			has_war_with = FSA
+		}
+		bypass = {
+			NOT = {
+				country_exists = FSA
+				has_war_with = FSA
+			}
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+			add_timed_idea = {
+				idea = ISI_anti_rebellion_forces
+				days = 730
+			}
+		}
+	}
+
+	focus = {
+		id = ISI_integrate_tahrir
+		icon = become_puppet
+		x = 0
+		y = 1
+		cost = 1
+		relative_position_id = ISI_syrian_situation
+		prerequisite = { focus = ISI_syrian_situation }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+		}
+	}
+
+	focus = {
+		id = ISI_cybercaliphate
+		icon = cybercaliphate
+		x = 0
+		y = 2
+		cost = 1
+		relative_position_id = ISI_syrian_situation
+		prerequisite = { focus = ISI_integrate_tahrir }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+		}
+	}
+
+	focus = {
+		id = ISI_damascus_will_burn
+		icon = attack_syria
+		x = 2
+		y = 1
+		cost = 1
+		relative_position_id = ISI_syrian_situation
+		prerequisite = { focus = ISI_syrian_situation }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+		}
+	}
+
+	focus = {
+		id = ISI_hunt_the_dogs_down
+		icon = aggressive_diplomacy
+		x = 2
+		y = 2
+		cost = 1
+		relative_position_id = ISI_syrian_situation
+		prerequisite = { focus = ISI_syrian_situation }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+		}
+	}
+
+	focus = {
+		id = ISI_syria_is_ours
+		icon = true_caliphate
+		x = 0
+		y = 3
+		cost = 1
+		relative_position_id = ISI_syrian_situation
+		prerequisite = { focus = ISI_hunt_the_dogs_down }
+		prerequisite = { focus = ISI_cybercaliphate }
+		prerequisite = { focus = ISI_crush_rebels }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus ISI_the_precarious_position"
+		}
+	}
+}
