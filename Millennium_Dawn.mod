@@ -1,12 +1,12 @@
-version="1.11.1"
-name="Millennium Dawn: Developer Version"
+version="1.11.2b"
+name="Millennium Dawn: A Modern Day Mod"
 tags={
 	"Alternative History"
 	"Gameplay"
 	"Events"
 	"Graphics"
 }
-supported_version="1.15.*"
+supported_version="1.16.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
 path="mod/Millennium_Dawn"
