@@ -14156,13 +14156,62 @@ focus_tree = {
 			y = 2
 			relative_position_id = ARM_relations_with_iran
 	
-			cost = 5
+			cost = 5.5
 	
 			prerequisite = { focus = ARM_bilat_trade_agreement }
 			search_filters = { FOCUS_FILTER_RESEARCH }
 	
 			completion_reward = {
 				log = "[GetDateText]: [This.GetName]: focus ARM_export_weapons_iran executed"
+				PER = {
+					country_event = arme.94
+				}
+				effect_tooltip = {
+					set_temp_variable = { treasury_change = 20 }
+					modify_treasury_effect = yes
+					add_equipment_to_stockpile = {
+						type = infantry_weapons3
+						amount = -6000
+						producer = SOV
+					}
+					if = {
+						limit = { has_dlc = "No Step Back" }
+						PER = {
+							add_equipment_to_stockpile = {
+								type = mbt_hull_1
+								variant_name = "T-80"
+								amount = -120
+								producer = SOV
+							}
+						}
+					}
+					else = {
+						PER = {
+							add_equipment_to_stockpile = {
+								type = MBT_3
+								amount = 120
+								producer = SOV
+							}
+						}
+					}
+					add_opinion_modifier = {
+						modifier = supports_us
+						target = PER
+					}
+					if  = {
+						limit = {
+							PER  = {
+								has_government = communism
+							}
+						}
+						USA = {
+							add_opinion_modifier = {
+								modifier = recent_actions_negative
+								target = ARM
+							}
+						}
+					}
+				}
 			}
 	
 			ai_will_do = {
@@ -14379,19 +14428,39 @@ focus_tree = {
 		}
 		focus = {
 			id = ARM_third_power_transmission
-			icon = iran_new_plan
+			icon = free_economic_zones
 	
 			x = -1
 			y = 3
 			relative_position_id = ARM_relations_with_iran
 	
-			cost = 5
+			cost = 6
 	
 			prerequisite = { focus = ARM_arax_hydro_power }
 			search_filters = { FOCUS_FILTER_RESEARCH }
+			available = {
+				country_exists = PER
+				NOT = {
+					has_war_with = PER
+				}
+				1035 = {
+					is_controlled_by = ARM
+				}
+			}
 	
 			completion_reward = {
 				log = "[GetDateText]: [This.GetName]: focus ARM_third_power_transmission executed"
+				add_political_power = -100
+				add_opinion_modifier = {
+					target = PER
+					modifier = common_market
+				}
+				1035 = {
+					add_dynamic_modifier = {
+						modifier = ARM_free_trade_zone
+					}
+				}
+
 			}
 	
 			ai_will_do = {
