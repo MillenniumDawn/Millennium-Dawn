@@ -1,10 +1,14 @@
-version="1.11.2b"
-name="Millennium Dawn: A Modern Day Mod"
+version="1.11.3"
+name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"
 	"Events"
 	"Graphics"
+	"Map"
+	"National Focuses"
+	"Balance"
+	"Fixes"
 }
 supported_version="1.16.*"
 picture = "thumbnail.png"
