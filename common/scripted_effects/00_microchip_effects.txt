@@ -1,0 +1,89 @@
+microchip_startup = {
+	set_variable = { country_microchip_production_var = 0 }
+	set_variable = { country_tech_cost_var = 0 }
+	set_variable = { country_precious_cost_var = 0 }
+
+	add_dynamic_modifier = { modifier = microchip_production_modifier }
+}
+
+microchip_update = {
+	#Gather total resources available / to be produced
+	set_temp_variable = { country_tech_remaining = resource@tungsten }
+	set_temp_variable = { country_rare_remaining = resource@chromium }
+	set_temp_variable = { country_microchip_produced = resource_produced@microchips }
+
+	set_temp_variable = { country_microchip_reducer = 0 }
+
+	#Gather the overall production demand for the resources
+	set_temp_variable = { microchip_tech_need = 2 }
+	multiply_temp_variable = { microchip_tech_need = country_microchip_produced }
+	set_temp_variable = { microchip_rare_need = country_microchip_produced }
+
+	#Check if there is a deficit of either resource prior to production
+	#If there is, it is impossible to produce any microchips
+
+	if = {
+		limit = {
+			OR = {
+				check_variable = { country_tech_remaining < 1 }
+				check_variable = { country_rare_remaining < 1 }
+			}
+		}
+		#All production halts, and we 0 out the demand, since there is no production
+		if = {
+			limit = {
+				check_variable = { country_microchip_produced < 0 }
+			}
+			multiply_temp_variable = { country_microchip_produced = -1 }
+		}
+		if = {
+			limit = {
+				check_variable = { country_microchip_production_var = 0 }
+			}
+			set_variable = { country_microchip_production_var = country_microchip_produced }
+		}
+		set_variable = { country_tech_cost_var = 0 }
+		set_variable = { country_precious_cost_var = 0 }
+	}else = {
+		#Check if there is a deficit of either resource during production
+		set_temp_variable = { country_tech_deficit = country_tech_remaining }
+		subtract_from_temp_variable = { country_tech_deficit = microchip_tech_need }
+
+		set_temp_variable = { country_rare_deficit = country_rare_remaining }
+		subtract_from_temp_variable = { country_rare_deficit = microchip_rare_need }
+
+		if = {
+			limit = {
+				OR = {
+					check_variable = { country_tech_deficit < 0 }
+					check_variable = { country_rare_deficit < 0 }
+				}
+			}
+			if = {
+				limit = {
+					check_variable = { country_tech_deficit < 0 }
+				}
+				add_to_temp_variable = { country_microchip_reducer = country_tech_deficit }
+				divide_temp_variable = { country_microchip_reducer = 2 }
+				round_temp_variable = country_microchip_reducer
+				add_to_temp_variable = { microchip_tech_need = country_tech_deficit }
+			}
+			if = {
+				limit = {
+					check_variable = { country_rare_deficit < 0 }
+				}
+				#every rare metal leads to one less chip
+				add_to_temp_variable = { country_microchip_reducer = country_rare_deficit }
+				add_to_temp_variable = { microchip_rare_need = country_rare_deficit }
+			}
+			multiply_temp_variable = { country_microchip_reducer = -1 }
+			set_variable = { country_microchip_production_var = country_microchip_reducer }
+			set_variable = { country_tech_cost_var = microchip_tech_need }
+			set_variable = { country_precious_cost_var = microchip_rare_need }
+		}else = {
+			set_variable = { country_microchip_production_var = 0 }
+			set_variable = { country_tech_cost_var = microchip_tech_need }
+			set_variable = { country_precious_cost_var = microchip_rare_need }
+		}
+	}
+}
