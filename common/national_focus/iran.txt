@@ -16001,7 +16001,7 @@ focus_tree = {
 
 	focus = {
 		id = PER_new_horizons
-		icon = Focus_Northern_Expedition
+		icon = AFG_Solider
 
 		x = 2
 		y = 2
@@ -16367,7 +16367,7 @@ focus_tree = {
 
 	focus = {
 		id = PER_turmoil_in_the_ghanistan
-		icon = neutrality
+		icon = AFG_Attack_TAL
 
 		x = 8
 		y = 6
@@ -16378,9 +16378,20 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
+		available = {
+			has_intelligence_agency = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_turmoil_in_the_ghanistan"
-
+			upgrade_intelligence_agency = upgrade_army_department
+			newline = yes
+			army_experience = 50
+			newline = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = PER }
+			set_temp_variable = { influence_target = AFG }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -16407,7 +16418,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_support_shah_massoud"
-
+			country_event = iranian_focus.86
+			newline = yes
+			AFG = {
+				add_timed_idea = {
+					idea = PER_help_with_taliban
+					days = 200
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -16416,7 +16434,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = PER_purchase_captured_equipment
+		id = PER_fighting_the_taliban
 		icon = focus_AFG_against_kabul
 
 		x = -3
@@ -16432,7 +16450,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_purchase_captured_equipment"
-
+			PER = {
+				add_relation_modifier = {
+					target = AFG
+					modifier = generic_increased_military_support
+				}
+			}
+			newline = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = PER }
+			set_temp_variable = { influence_target = AFG }
+			change_influence_percentage = yes
+			newline = yes
+			set_temp_variable = { PER_experience_gain_army_change = 0.10 }
+			update_PER_experience_gain_army = yes
 		}
 
 		ai_will_do = {
@@ -16442,7 +16473,7 @@ focus_tree = {
 
 	focus = {
 		id = PER_encroachment_to_the_east
-		icon = neutrality
+		icon = dangerous_deal
 
 		x = 1
 		y = 1
@@ -16457,9 +16488,31 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
+		available = {
+			if = {
+				limit = {
+					country_exists = AFG
+				}
+				AFG = {
+					influence_higher_20 = yes
+				}
+			}
+			if = {
+				limit = {
+					country_exists = TAL
+				}
+				TAL = {
+					influence_higher_5 = yes
+				}
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_encroachment_to_the_east"
-
+			add_political_power = 100
+			newline = yes
+			set_temp_variable = { PER_foreign_influence_modifier_change = 0.05 }
+			update_PER_foreign_influence_modifier = yes
 		}
 
 		ai_will_do = {
@@ -16469,7 +16522,7 @@ focus_tree = {
 
 	focus = {
 		id = PER_karim_khalili
-		icon = neutrality
+		icon = karim_khalili
 
 		x = -1
 		y = 2
@@ -16478,7 +16531,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = PER_encroachment_to_the_east focus = PER_support_shah_massoud}
+		prerequisite = { focus = PER_encroachment_to_the_east }
 
 		mutually_exclusive = { focus = PER_asif_mohseni }
 
@@ -16486,7 +16539,76 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_karim_khalili"
+			if = {
+				limit = {
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
+				}
+				custom_effect_tooltip = PER_khalili_TT
+			}
+			else = {
+				custom_effect_tooltip = PER_khalili2_TT
+			}
+			newline = yes
+			custom_effect_tooltip = PER_hazara_hold_180_TT
+			hidden_effect = {
+				country_event = {
+					id = iranian_focus.87
+				}
+				TAL = {
+					country_event = iranian_focus.89
+				}
+				AFG = {
+					country_event = iranian_focus.89
+				}
+				412 = {
+					transfer_state_to = HAZ
+				}
+				AFG = {
+					delete_unit = {
+						division_template = "Northern Alliance Militia"
+						disband = yes
+					}
+					create_unit = {
+						division = "name = \"Eastern Shura\" division_template = \"Northern Alliance Brigade\" start_experience_factor = 1.0"
+						owner = AFG
+						count = 1
+					}
+				}
+				HAZ = {
+					set_cosmetic_tag = AFG_HAZ
+					declare_war_on = {
+						target = TAL
+						type = liberate_wargoal
+					}
+					declare_war_on = {
+						target = AFG
+						type = liberate_wargoal
+					}
+					division_template = {
+						name = "Fedayeen-e Hazaristan"
 
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Mot_Militia_Bat = { x = 1 y = 0 }
+						}
+
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							Mot_Recce_Comp = { x = 0 y = 1 }
+							Arty_Battery = { x = 0 y = 2 }
+							L_Engi_Comp = { x = 0 y = 3 }
+						}
+
+						priority = 100
+					}
+					country_event = iranian_focus.87
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -16496,7 +16618,7 @@ focus_tree = {
 
 	focus = {
 		id = PER_asif_mohseni
-		icon = neutrality
+		icon = AFG_ir_man
 
 		x = 1
 		y = 2
@@ -16513,7 +16635,75 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_asif_mohseni"
+			custom_effect_tooltip = PER_asif_TT
+			newline = yes
+			custom_effect_tooltip = PER_hazara_hold_180_TT
+			hidden_effect = {
+				country_event = {
+					id = iranian_focus.87
+				}
+				TAL = {
+					country_event = iranian_focus.89
+				}
+				AFG = {
+					country_event = iranian_focus.89
+				}
+				412 = {
+					transfer_state_to = HAZ
+				}
+				AFG = {
+					delete_unit = {
+						division_template = "Northern Alliance Militia"
+						disband = yes
+					}
+					create_unit = {
+						division = "name = \"Eastern Shura\" division_template = \"Northern Alliance Brigade\" start_experience_factor = 1.0"
+						owner = AFG
+						count = 1
+					}
+				}
+				HAZ = {
+					set_cosmetic_tag = AFG_HAZ
+					create_country_leader = {
+						name = "Asif Mohseni"
+						picture = "Asif_Mohseni.dds"
+						ideology = Vilayat_e_Faqih
+						traits = {
+							emerging_Vilayat_e_Faqih
+							anti_zionist
+							pro_iranian
+						}
+					}
+					declare_war_on = {
+						target = TAL
+						type = liberate_wargoal
+					}
+					declare_war_on = {
+						target = AFG
+						type = liberate_wargoal
+					}
+					division_template = {
+						name = "Fedayeen-e Hazaristan"
 
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Mot_Militia_Bat = { x = 1 y = 0 }
+						}
+
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							Mot_Recce_Comp = { x = 0 y = 1 }
+							Arty_Battery = { x = 0 y = 2 }
+							L_Engi_Comp = { x = 0 y = 3 }
+						}
+
+						priority = 100
+					}
+					country_event = iranian_focus.87
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -16523,7 +16713,7 @@ focus_tree = {
 
 	focus = {
 		id = PER_create_hazara_defense_force
-		icon = neutrality
+		icon = hazaristan_flag
 
 		x = 0
 		y = 3
@@ -16538,7 +16728,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_create_hazara_defense_force"
-
+			HAZ = {
+				country_event = iranian_focus.90
+			}
 		}
 
 		ai_will_do = {
