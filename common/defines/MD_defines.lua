@@ -28,20 +28,20 @@
 	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 1
 	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 7
 	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
-	NDefines.NDiplomacy.TENSION_STATE_VALUE = 3.60 -- 4 as of v1.11.1
+	NDefines.NDiplomacy.TENSION_STATE_VALUE = 3.25
 	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
-	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 11.5 -- 13 as of v1.11.1
-	NDefines.NDiplomacy.TENSION_CB_WAR = 4.25 -- 5 as of v1.11.1
+	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 10
+	NDefines.NDiplomacy.TENSION_CB_WAR = 3.75
 	NDefines.NDiplomacy.TENSION_PUPPET = 1.5 -- Reduced from 2.0
 	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
-	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.30  -- Reduced from 0.50
-	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.02						-- Each months tension decays this much
+	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.25  -- Reduced from 0.50
+	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.025						-- Each months tension decays this much
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MIN = 0 					-- Timed tension scale won't decrease under this value
 	NDefines.NDiplomacy.TENSION_GUARANTEE = -10
-	NDefines.NDiplomacy.TENSION_PEACE_FACTOR = 0.15					-- scale of the amount of tension (from war declaration) reduced when peace is completed.
+	NDefines.NDiplomacy.TENSION_PEACE_FACTOR = 0.25					-- scale of the amount of tension (from war declaration) reduced when peace is completed.
 	NDefines.NDiplomacy.TENSION_CAPITULATE = 0
 	NDefines.NDiplomacy.TENSION_WAR_REPARATION = 0
 	NDefines.NDiplomacy.TENSION_FACTION_JOIN = 2
@@ -168,7 +168,7 @@
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
 	NDefines.NCountry.FUEL_LEASE_CONVOY_RATIO = 0.00005 -- 0.0005
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
-	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.007 --0.015 in vanilla, reduced from the 0.01 in MD to accommodate for the migration system
+	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.008 --0.015 in vanilla, reduced from the 0.01 in MD to accomdate for the migration system
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
@@ -233,7 +233,7 @@
 	NDefines.NTechnology.BASE_TECH_COST = 250 -- 100 is vanilla --300 was the old MD cost
 	NDefines.NTechnology.MIN_RESEARCH_SPEED = 0.01 -- 0.10 in vanilla
 	NDefines.NTechnology.MAX_TECH_SHARING_BONUS = 0.10 -- vanilla is 0.50 from Tech Sharing
-
+	
 	NDefines.NProject.SCIENTIST_SKILL_LEVEL_SPEED_MODIFIER = {		-- Bonus to apply to daily phase progress according to the skill level of the scientist
 	    -0.10,    -- -1.0 means -100%         also name loc key is SCIENTIST_SKILL_LEVEL_NAME_0
 		-0.05,  -- -0.05 means -5%			also name loc key is SCIENTIST_SKILL_LEVEL_NAME_1
@@ -266,22 +266,32 @@
 	NDefines.NMilitary.ZERO_ORG_MOVEMENT_MODIFIER = -0.2 -- -0.8
 	NDefines.NMilitary.INFRASTRUCTURE_MOVEMENT_SPEED_IMPACT = -0.02 -- -0.05
 
+	NDefines.NMilitary.SOFT_ATTACK_TARGETING_FACTOR = 1.0 -- 1.0
+	NDefines.NMilitary.HARD_ATTACK_TARGETING_FACTOR = 1.4 -- 1.2 Increase the target priority of armored targets
+	NDefines.NMilitary.PIERCING_THRESHOLDS = { 1.00, 0.90, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.10, 0.00 } -- Adjusted these to give more granularity to armor vs pen
+	NDefines.NMilitary.PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50 }
+	NDefines.NMilitary.SPOTTING_QUALITY_DROP_HOURS = 6 -- 4
+	NDefines.NMilitary.BASE_CHANCE_TO_AVOID_HIT = 80 -- 90
+	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50 -- 60
+	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.35 -- 0.4 Decrease armor from individual units, to make needing to average armor out more important
+	NDefines.NMilitary.PEN_VS_AVERAGE = 0.45 -- 0.4 Increase pen avaiable to units, so that infantry has a better chance against armor
+
 	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
 	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 15 --24
 	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 4 -- Vanilla 5
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 8 -- 4
-	NDefines.NMilitary.LAND_COMBAT_ORG_DICE_SIZE = 2 -- 4
+	NDefines.NMilitary.LAND_COMBAT_ORG_DICE_SIZE = 4 -- 4
 	NDefines.NMilitary.LAND_COMBAT_STR_DICE_SIZE = 3 -- 2
-	NDefines.NMilitary.LAND_COMBAT_STR_DAMAGE_MODIFIER = 0.01 -- 0.05
-	NDefines.NMilitary.LAND_COMBAT_ORG_DAMAGE_MODIFIER = 0.024 -- 0.053
-	NDefines.NMilitary.LAND_AIR_COMBAT_STR_DAMAGE_MODIFIER = 0.05 -- 0.04
-	NDefines.NMilitary.LAND_AIR_COMBAT_ORG_DAMAGE_MODIFIER = 0.05 -- 0.04
-	NDefines.NMilitary.LAND_AIR_COMBAT_MAX_PLANES_PER_ENEMY_WIDTH = 1 -- 3
-	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_ON_SOFT_DICE_SIZE = 5 -- 6
-	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_ON_SOFT_DICE_SIZE = 3 -- 6
-	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_DEFLECTION_FACTOR = 0.3 -- 0.5
-	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_DEFLECTION_FACTOR = 0.5 -- 0.5
+	NDefines.NMilitary.LAND_COMBAT_STR_DAMAGE_MODIFIER = 0.05 -- 0.05
+	NDefines.NMilitary.LAND_COMBAT_ORG_DAMAGE_MODIFIER = 0.053 -- 0.053
+	NDefines.NMilitary.LAND_AIR_COMBAT_STR_DAMAGE_MODIFIER = 0.08 -- 0.04
+	NDefines.NMilitary.LAND_AIR_COMBAT_ORG_DAMAGE_MODIFIER = 0.08 -- 0.04
+	NDefines.NMilitary.LAND_AIR_COMBAT_MAX_PLANES_PER_ENEMY_WIDTH = 2 -- 3
+	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_ON_SOFT_DICE_SIZE = 4 -- 6
+	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_ON_SOFT_DICE_SIZE = 4 -- 6
+	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_DEFLECTION_FACTOR = 0.4 -- 0.5
+	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_DEFLECTION_FACTOR = 0.4 -- 0.5
 	NDefines.NMilitary.LAND_COMBAT_COLLATERAL_FACTOR = 0.05 -- 0.005
 	NDefines.NMilitary.LAND_COMBAT_FORT_DAMAGE_CHANCE = 15
 	NDefines.NMilitary.ATTRITION_DAMAGE_ORG = 0.04 -- 0.08
@@ -296,9 +306,9 @@
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY = -0.25 -- -0.25
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.45 -- -0.5
 	NDefines.NMilitary.BASE_FORT_PENALTY = -0.075 -- -0.15
-	NDefines.NMilitary.RECON_SKILL_IMPACT = 0.5 -- 5
-	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.5 -- -0.35
-	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
+	NDefines.NMilitary.RECON_SKILL_IMPACT = 2.5 -- 5
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.45 -- -0.35
+	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.4 -- -0.3
 	NDefines.NMilitary.SLOWEST_SPEED = 4 -- 4
 	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
@@ -328,7 +338,7 @@
 	NDefines.NMilitary.PLAN_PROVINCE_BASE_IMPORTANCE = 1.0 -- 2.0
 	NDefines.NMilitary.PLAN_AREA_DEFENSE_ENEMY_UNIT_FACTOR = -3.0 -- -2.0
 	NDefines.NMilitary.PLAN_EXECUTE_BALANCED_LIMIT = 2 -- 0
-	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY = -2 -- -2
+	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY = -1.5 -- -1
 	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY_MAX = -0.66 -- -0.33
 	NDefines.NMilitary.RETREAT_SPEED_FACTOR = 1.0 -- 0.25
 	NDefines.NMilitary.WITHDRAWING_SPEED_FACTOR = 0.35 -- 0.15
@@ -351,7 +361,8 @@
 	NDefines.NMilitary.UNIT_LEADER_ASSIGN_TRAIT_COST = 15.0 -- 15
 	NDefines.NMilitary.ATTACHED_WINGS_ORDER_UPDATE_DAYS = 1 -- 5
 	NDefines.NMilitary.BORDER_WAR_WIN_DAYS_AGAINST_EMPTY_OPPONENTS = 21 -- 14
-	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 10.0 -- 30.0
+	NDefines.NMilitary.XP_GAIN_FOR_SHATTERING = 20.0 -- 35.0
+	NDefines.NMilitary.XP_GAIN_PER_OVERRUN_UNIT = 20.0 -- 35.0
 	NDefines.NMilitary.ARMY_IDLE_FUEL_MULT = 0.05 -- 0.0
 	NDefines.NMilitary.OUT_OF_FUEL_SPEED_MULT = 0.7 -- 0.4
 	NDefines.NMilitary.ANTI_AIR_TARGETTING_TO_CHANCE = 0.02 -- 0.07
@@ -360,7 +371,7 @@
 	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.25 -- 1.0
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.0035 -- 0.0015
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
-	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }
+	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1 }
 	NDefines.NMilitary.ARMY_EXP_BASE_LEVEL = 3
 	NDefines.NMilitary.TRAINING_MAX_LEVEL = 5
 	NDefines.NMilitary.DEPLOY_TRAINING_MAX_LEVEL = 2
@@ -631,6 +642,7 @@
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT = 0.01 -- 0.1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT_FROM_AIR = 0.1 -- 0.1
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
+	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.25 -- 0.5
 	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.1 -- 0.25
 	NDefines.NNavy.NEW_NAVY_LEADER_LEVEL_CHANCES = {                                -- chances for new navy leaders to start at a given level
@@ -719,7 +731,6 @@
 	NDefines.NAI.ASSIGN_MOUNTAINEERS_TO_MOUNTAINS = 10.0                    -- factor for assigning mountaineer divisions to fronts with mountains (proportional to how much of that terrain type)
 	NDefines.NAI.ASSIGN_TANKS_TO_MOUNTAINS = -26.0                           -- factor for assigning tank divisions to fronts with mountains (proportional to how much of that terrain type)
 	NDefines.NAI.ASSIGN_TANKS_TO_JUNGLE = -6.0                              -- factor for assigning tank divisions to fronts with jungle (proportional to how much of that terrain type)
-	NDefines.NAI.ASSIGN_INVASION_AMPHIBIOUS_ATTACK_FACTOR = 100 -- 50
 	NDefines.NAI.UNIT_ASSIGNMENT_TERRAIN_IMPORTANCE = 10.0                  -- Terrain score for units are multiplied by this when the AI is deciding which front they should be assigned to
 	NDefines.NAI.MAX_FACTORY_TO_TRADE_FOR_FUEL_IN_PEACE = 0.45 -- percentage of factories traded away during peace time
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
