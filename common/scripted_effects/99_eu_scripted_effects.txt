@@ -2549,6 +2549,15 @@ on_startup_euu_action = {
 		limit = {
 			has_game_rule = {
 				rule = rule_european_union_voting_limits
+				option = one
+			}
+		}
+		set_global_flag = GAME_RULE_eu_one_cooldown
+	}
+	if = {
+		limit = {
+			has_game_rule = {
+				rule = rule_european_union_voting_limits
 				option = sixty
 			}
 		}
@@ -2793,6 +2802,18 @@ on_startup_euu_action = {
 set_the_eu_parliament_delay = {
 	hidden_effect = {
 		if = {
+			limit = { has_global_flag = GAME_RULE_eu_one_cooldown }
+			every_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 1 }
+				if = {
+					limit = { is_ai = no }
+					country_event = { id = EUvote.3 days = 1 }
+				}
+			}
+			set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 1 }
+		}
+		if = {
 			limit = { has_global_flag = GAME_RULE_eu_sixty_cooldown }
 			every_country = {
 				limit = { has_idea = EU_member }
@@ -2858,6 +2879,16 @@ set_the_eu_parliament_delay = {
 
 set_the_eu_council_delay = {
 	hidden_effect = {
+		if = {
+			limit = { has_global_flag = GAME_RULE_eu_one_cooldown }
+			set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 1 }
+			set_global_flag = { flag = delay_next_council_vote value = 1 days = 1 }
+			set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 1 }
+			if = {
+				limit = { is_ai = no }
+				country_event = { id = EUvote.4 days = 1 }
+			}
+		}
 		if = {
 			limit = { has_global_flag = GAME_RULE_eu_sixty_cooldown }
 			set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 60 }
