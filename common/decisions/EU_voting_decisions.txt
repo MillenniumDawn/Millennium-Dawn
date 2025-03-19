@@ -174,13 +174,16 @@ EU_voting_category = {
 								value = global.current_active_agenda_disp
 							}
 						}
-						if = { limit = { NOT = { check_variable = { global.current_active_agenda_disp = 0 } } }
-							if = { limit = { NOT = { check_variable = { global.current_active_agenda_disp = 999 } } }
-								if = { limit = { NOT = { check_variable = { global.current_active_agenda_disp = 998 } } }
-									add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
-									set_variable = { global.current_active_agenda_disp = 0 }
+						if = { 
+							limit = { 
+								NOT = {
+									check_variable = { global.current_active_agenda_disp = 0 } 
+								#	check_variable = { global.current_active_agenda_disp = 998 }
+								#	check_variable = { global.current_active_agenda_disp = 999 }
 								}
 							}
+							add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
+							set_variable = { global.current_active_agenda_disp = 0 }
 						}
 						if = {
 							limit = { has_country_flag = EU_budget_draft }
@@ -192,20 +195,6 @@ EU_voting_category = {
 						}
 						set_variable = { global.active_MEP_Support = 0 }
 						set_variable = { global.pass_vote_mission_ender = 0 }
-						if = {
-							limit = { is_in_array = { array = global.EU_council_votes value = 999 } }
-							remove_from_array = {
-								array = global.EU_council_votes
-								value = 999
-							}
-						}
-						if = {
-							limit = { is_in_array = { array = global.EU_council_votes value = 998 } }
-							remove_from_array = {
-								array = global.EU_council_votes
-								value = 998
-							}
-						}
 					}
 				}
 				EUXXX = "[EUXXX_EP_agenda]"
@@ -242,22 +231,8 @@ EU_voting_category = {
 								limit = {
 									NOT = { check_variable = { global.current_active_agenda_disp = 0 } }
 								}
-								if = {
-									limit = {
-										NOT = {
-											check_variable = { global.current_active_agenda_disp = 999 }
-										}
-									}
-									if = {
-										limit = {
-											NOT = {
-												check_variable = { global.current_active_agenda_disp = 998 }
-											}
-										}
-										add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
-										set_variable = { global.current_active_agenda_disp = 0 }
-									}
-								}
+								add_to_array = { global.EU_council_votes = global.current_active_agenda_disp }
+								set_variable = { global.current_active_agenda_disp = 0 }
 							}
 							if = {
 								limit = { has_country_flag = EU_budget_draft }
@@ -278,26 +253,12 @@ EU_voting_category = {
 							set_the_eu_parliament_delay = yes
 							set_variable = { global.active_MEP_Support = 0 }
 							set_variable = { global.pass_vote_mission_ender = 0 }
-							if = {
-								limit = { is_in_array = { array = global.EU_council_votes value = 999 } }
-								remove_from_array = {
-									array = global.EU_council_votes
-									value = 999
-								}
-							}
-							if = {
-								limit = { is_in_array = { array = global.EU_council_votes value = 998 } }
-								remove_from_array = {
-									array = global.EU_council_votes
-									value = 998
-								}
-							}
 						}
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
 					PG_X = "[PG_X_influence]"
 				}
-			} else = {
+			else = {
 				meta_effect = {
 					text = {
 						custom_effect_tooltip = tooltip_EU_parliament_focus_[EUXXX]_remove
@@ -322,20 +283,6 @@ EU_voting_category = {
 							}
 
 							set_the_eu_parliament_delay = yes
-							if = {
-								limit = { is_in_array = { array = global.EU_council_votes value = 999 } }
-								remove_from_array = {
-									array = global.EU_council_votes
-									value = 999
-								}
-							}
-							if = {
-								limit = { is_in_array = { array = global.EU_council_votes value = 998 } }
-								remove_from_array = {
-									array = global.EU_council_votes
-									value = 998
-								}
-							}
 						}
 					}
 					EUXXX = "[EUXXX_EP_agenda]"
@@ -780,46 +727,6 @@ EU_voting_category = {
 	##################################
 	### 1.1.8 New Voting Decisions ###
 	##################################
-
-	### Member State Policies # Result Mission QMV ###
-
-	EU_voting_mission_focus_EU002_QMV_result = {
-		allowed = { always = yes }
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = "Passing Votes"
-				EU_voting_decision_result_trigger = yes
-			}
-		}
-		activation = {
-			always = no
-		}
-		visible = {
-			has_country_flag = focus_EU002_QMV
-		}
-		days_mission_timeout = 14
-		selectable_mission = yes
-		fire_only_once = yes
-		complete_effect = {
-			focus_EU002_QMV_result = yes
-		}
-		timeout_effect = {
-			focus_EU002_QMV_result = yes
-		}
-		ai_will_do = {
-			factor = -1000
-			modifier = {
-				factor = 0
-				NOT = {
-					has_country_flag = focus_EU002_QMV
-				}
-				any_of_scopes = {
-					array = global.EU_member
-					has_country_flag = focus_EU002_QMV
-				}
-			}
-		}
-	}
 
 	### Charter of Fundamental Rights of the European Union # Result Mission QMV ###
 
@@ -2585,7 +2492,6 @@ EU_voting_category = {
 			always = yes
 		}
 		available = {
-			has_global_flag = focus_EU_mff_EP_approval
 			has_country_flag = EU_mff_draft
 		}
 		activation = {
@@ -2678,7 +2584,6 @@ EU_voting_category = {
 		}
 		timeout_effect = {
 			clr_global_flag = EU_budget_mff
-			clr_global_flag = focus_EU_mff_EP_approval
 			every_country = {
 				limit = {
 					has_idea = EU_member
@@ -2760,7 +2665,7 @@ EU_voting_category = {
 			factor = 1
 		}
 	}
-
+	
 	### budget draft of the next fiscal year ###
 	EU_budget_preparations = {
 		allowed = { always = yes }
@@ -2934,8 +2839,6 @@ EU_voting_category = {
 			factor = 1
 		}
 	}
-}
-
 
 EU_fiscal_category = {
 	invest_in_SWI = {
