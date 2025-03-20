@@ -5509,6 +5509,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_veter_must_rule executed"
+			add_ideas = ARM_zhirayr_veterans_idea
 		}
 		ai_will_do = {
 			base = 1
@@ -5541,6 +5542,13 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_staunch_western_position executed"
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.1
+			}
+			add_political_power = -75
+			add_ideas = ARM_zhirayr_pro_western_position_idea
+			
 		}
 		ai_will_do = {
 			base = 1
@@ -5573,6 +5581,20 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_no_more_kgb executed"
+			set_temp_variable = { percent_change = -3 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ARM }
+			change_influence_percentage = yes
+			add_ideas = ARM_zhirayr_no_russian_idea
+			add_opinion_modifier = { target = SOV modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = SOV modifier = recent_actions_negative }
+			if = {
+				limit = {
+					is_subject_of = SOV
+				}
+				add_autonomy_score = { value = -250 }
+			}
+			add_political_power = -100
 		}
 		ai_will_do = {
 			base = 1
@@ -5669,6 +5691,22 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_against_euroscepticism executed"
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = EU_member
+					}
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = recent_actions_positive
+				}
+			}
+
+			set_temp_variable = { modify_eurosceptic = -0.09 }
+			set_temp_variable = { modify_eurosceptic_target = ROOT }
+			eurosceptic_change = yes
+			add_stability = 0.02
 		}
 		ai_will_do = {
 			base = 1
@@ -5697,10 +5735,57 @@ focus_tree = {
 		
 		available = {
 			western_autocrats_are_in_power = yes
+			OR = {
+				country_exists = UKR
+				country_exists = BLR
+			}
+		}
+
+		bypass = {
+			OR = {
+				NOT = {
+					country_exists = BLR
+					country_exists = UKR
+				}
+			}
 		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_ally_ukr_blr executed"
+			if = {
+				limit = {
+					country_exists = UKR
+				}
+				UKR = {
+					add_timed_idea = { idea = ARM_zhirayr_in_blr_ukr_idea days = 365 }
+				}
+				set_temp_variable = { percent_change = -1 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = UKR }
+				change_influence_percentage = yes
+				add_political_power = -55
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ARM }
+				set_temp_variable = { influence_target = UKR }
+				change_influence_percentage = yes
+			}
+			if = {
+				limit = {
+					country_exists = BLR
+				}
+				BLR = {
+					add_timed_idea = { idea = ARM_zhirayr_in_blr_ukr_idea days = 365 }
+				}
+				set_temp_variable = { percent_change = -1 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = BLR }
+				change_influence_percentage = yes
+				add_political_power = -55
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ARM }
+				set_temp_variable = { influence_target = BLR }
+				change_influence_percentage = yes
+			}
 		}
 		ai_will_do = {
 			base = 1
@@ -5800,6 +5885,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_plant_radicalism executed"
+			add_ideas = ARM_zhirayr_radicalism_idea
 		}
 		ai_will_do = {
 			base = 1
@@ -5923,10 +6009,23 @@ focus_tree = {
 
 		available = {
 			western_autocrats_are_in_power = yes
+			is_subject_of = SOV
 		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_no_more_colony executed"
+			set_temp_variable = { percent_change = -5 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ARM }
+			change_influence_percentage = yes
+			SOV = {
+				release_puppet = ROOT
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_free
+				}
+			}
+			add_political_power = -200
 		}
 		ai_will_do = {
 			base = 1
@@ -6016,8 +6115,7 @@ focus_tree = {
 		cost = 2.5
 
 		search_filters = { FOCUS_FILTER_ARMENIA_POLITIC }
-		prerequisite = { focus = ARM_no_more_colony }
-		prerequisite = { focus = ARM_heroes_need_heroes }
+		prerequisite = { focus = ARM_no_more_colony focus = ARM_heroes_need_heroes }
 
 		available = {
 			western_autocrats_are_in_power = yes
