@@ -1,39 +1,50 @@
 # Welcome to Millennium Dawn's Dev Build
 
-Millennium Dawn is a multi-mod project set in 2000 and continues to the modern day and beyond. The mod boasts new and unique tech trees, focus trees, events, and decisions to immerse you in the intricacies of the modern era.
+Millennium Dawn is a comprehensive mod project starting in the year 2000 and extending to the present day and beyond. The mod features unique tech trees, focus trees, events, and decisions designed to fully immerse you in the complexities of the modern era.
 
-Further, it offers a new and unique economic system, a new political system, national taxation and debt, custom internal political factions, international influence mechanics, custom 3D models, a custom soundtrack, and much more!
+Experience our innovative economic and political systems, national taxation and debt mechanics, custom internal political factions, international influence dynamics, original 3D models, a custom soundtrack, and much more!
 
 ## Important Links
 
-[Link to MD's Discord](http://discord.gg/millenniumdawn)
+[Millennium Dawn Discord](http://discord.gg/millenniumdawn)
 
-[Bugreporting Form](https://forms.gle/2zAWhggnYbTcmG1b6)
+[Git Contribution Guidelines](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs)
 
-[MD's Git Instructions](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs)
+## Community Development
+
+We actively encourage community contributions and external development! Millennium Dawn is designed to be forkable, enabling you to:
+
+- Create custom branches or forks for new features
+- Develop submods and extensions
+- Experiment with gameplay modifications
+- Submit your improvements to the main project
+
+If you're interested in contributing, we welcome pull requests and are happy to review community-made changes. Please refer to our Git Contribution Guidelines for proper workflow procedures.
 
 ## Access Rules
 
 Developer/Junior Developer Access:
 
-- If you are a new recruit you will be given access for two months from the date you are added. i.e. if you join on Jan 1st. You get access until Feb 1st.
-- You are granted access based on your role. Playtesters get the reporter rule meaning they cannot do any pushing to branches. However, they may pull and update their local builds
-- Contributions of any kind show activity. Please be as active as you reasonably can.
-- Inactive users will be removed based on whether or not they are present on Discord or at the discretion of the Lead Developers.
+- New recruits receive access for two months from their addition date (e.g., if you join on January 1st, access continues until March 1st)
+- Access permissions are role-based. Playtesters have reporter status, allowing them to pull and update local builds but not push to branches
+- All types of contributions count as activity. Please remain as active as reasonably possible
+- Inactive users may be removed based on Discord presence or at the Lead Developers' discretion
 
 Playtester Access:
 
-- The first time you are granted access require your first playtest within 48 hours, after the first you get monthly access and are expected to do at least one playtest a month.
-- Playtesting for MD requires some pretty extensive notes and opinions regarding the content you're playtesting
+- First-time access requires completing an initial playtest within 48 hours
+- After the first playtest, monthly access is granted with the expectation of at least one playtest per month
+- Playtesting for Millennium Dawn requires detailed notes and substantive feedback on the content being tested
 
 ## Maintainers & Approvers
 
-MD has a number of maintainers who can push and pull from master. Most lead devs and a handful of select developers can also approve merge requests. If you need a merge request approved, please start by requesting a council member to look at the merge request in the discord.
+Millennium Dawn has designated maintainers who can push and pull from the master branch. Most lead developers and select other developers can approve merge requests. If you need a merge request approved, please begin by asking a council member to review your request in our Discord.
 
 ## Fork Users
 
-Thanks for wanting to help with MD! Please make sure to add yourself to [Authors](./AUTHORS.txt) and that your change is in the [Changelog](./Changelog.txt) so we can give you credit and that your update is added to the changelog.
+Thank you for contributing to Millennium Dawn! Please ensure you add yourself to the [Authors](./AUTHORS.txt) file and document your changes in the [Changelog](./Changelog.txt) so we can properly credit you and track updates.
 
-Thanks for reading!
+Thank you for your interest in our project!
 
-Sincerely, Bird
+Sincerely,
+Bird
