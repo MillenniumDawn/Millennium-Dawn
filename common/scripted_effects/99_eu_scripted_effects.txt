@@ -2775,9 +2775,13 @@ on_startup_euu_action = {
 				activate_mission = EU_mff_preparations
 				activate_mission = EU_budget_preparations
 			}
-			set_variable = { global.EU_budget_call_rate = 1.00 }
+			for_each_scope_loop = {
+				array = global.EU_member
+				set_variable = { THIS.EU_budget_call_rate = 1 }
+			}
+			set_variable = { global.EU_budget_min_call_rate = 1 }
 			set_EU_gdp = yes
-			set_EU_total_budget = yes
+			update_EU_budget_call_rate = yes
 			update_EU_average_gdp_lvl = yes
 			update_EU_average_eco_lvl = yes
 			set_EU_expenditure = yes
@@ -3258,57 +3262,24 @@ set_EU_gdp = {
 	update_eu_dirty_variable = yes
 }
 
-set_EU_total_budget = {
-	### EU Total Budget
-	set_variable = { global.EU_total_budget = global.EU_gdp }
-	multiply_variable = { global.EU_total_budget = global.EU_budget_call_rate }
-	divide_variable = { global.EU_total_budget = 100 }
-	set_variable = { global.EU_mff_total = global.EU_total_budget }
-	multiply_variable = { global.EU_mff_total = 5 }
-	### member state contribution
-	for_each_scope_loop = {
-		array = global.EU_member
-		set_variable = { THIS.EU_budget_call_rate = global.EU_budget_call_rate }
-		set_variable = { THIS.EU_budget_contribution = THIS.gdp_total }
-		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
-		divide_variable = { THIS.EU_budget_contribution = 100 }
-		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
-		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } # weeks in a year
-		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
-		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
-	}
-	### budget of next year
-	update_eu_dirty_variable = yes
-}
-
-update_EU_total_budget = {
-	### EU Total Budget
-	set_variable = { global.EU_total_budget = global.EU_gdp }
-	multiply_variable = { global.EU_total_budget = global.EU_budget_call_rate }
-	divide_variable = { global.EU_total_budget = 100 }
-	set_variable = { global.EU_mff_total = global.EU_total_budget }
-	multiply_variable = { global.EU_mff_total = 5 }
+update_EU_budget_call_rate = {
+	set_variable = { global.EU_total_budget = 0 }
 	### member state contribution
 	for_each_scope_loop = {
 		array = global.EU_member
 		set_variable = { THIS.EU_budget_contribution = THIS.gdp_total }
 		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
 		divide_variable = { THIS.EU_budget_contribution = 100 }
+		add_to_variable = { global.EU_total_budget = THIS.EU_budget_contribution }
 		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
 		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
 		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } #Weeks in a year
 		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
 	}
-	### budget of next year
-	update_eu_dirty_variable = yes
-}
+	### EU Total Budget
+	set_variable = { global.EU_mff_total = global.EU_total_budget }
+	multiply_variable = { global.EU_mff_total = 5 }
 
-update_EU_budget_call_rate = {
-	set_variable = { THIS.EU_budget_contribution = THIS.gdp_total }
-	multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
-	divide_variable = { THIS.EU_budget_contribution = 100 }
-	set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
-	divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
 	update_eu_dirty_variable = yes
 }
 
