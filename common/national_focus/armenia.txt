@@ -5578,7 +5578,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = ARM_Zhirayr_Sefilyan
 
-		cost = 2.5
+		cost = 5
 
 		search_filters = { FOCUS_FILTER_ARMENIA_POLITIC }
 		prerequisite = { focus = ARM_Zhirayr_Sefilyan }
@@ -5601,6 +5601,12 @@ focus_tree = {
 					is_subject_of = SOV
 				}
 				add_autonomy_score = { value = -250 }
+			}
+			if = {
+				limit = {
+					is_in_faction_with = SOV
+				}
+				leave_faction = yes
 			}
 			add_political_power = -100
 		}
@@ -5832,6 +5838,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_like_sassoun_daredevils executed"
+			add_ideas = ARM_zhirayr_sassoun_idea 
 		}
 		ai_will_do = {
 			base = 1
@@ -5949,7 +5956,8 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_investig_milit executed"
-			two_random_arms_factory = yes
+			one_random_arms_factory = yes
+			decrease_corruption = yes
 		}
 		ai_will_do = {
 			base = 1
@@ -5982,6 +5990,13 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_ecommerce_init executed"
+			add_ideas = ARM_zhirayr_e_commerce_idea
+			add_tech_bonus = {
+				name = ARM_uav_krunk
+				uses = 2
+				bonus = 0.5
+				category = CAT_internet_tech
+			}
 		}
 		ai_will_do = {
 			base = 1
@@ -6014,6 +6029,8 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_fourth_rev_stnd executed"
+			add_timed_idea = { idea = ARM_zhirayr_4th_idea days = 365 }
+			add_political_power = 200
 		}
 		ai_will_do = {
 			base = 1
@@ -6090,6 +6107,7 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_heroes_need_heroes executed"
+			add_ideas = ARM_zhirayr_heroes_idea
 		}
 		ai_will_do = {
 			base = 1
@@ -6133,6 +6151,12 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -9.00 }
 			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = CAT_nuclear_reactors
+				bonus = 0.5
+				uses = 2
+				category = CAT_nuclear_reactors
+			}
 		}
 		ai_will_do = {
 			base = 1
@@ -6165,6 +6189,24 @@ focus_tree = {
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_request_support_us executed"
+			division_template = {
+				name = "American Armenian Legion"
+				regiments = {
+					Special_Forces = { x = 0 y = 0 }
+					Special_Forces = { x = 0 y = 1 }
+					Special_Forces = { x = 1 y = 0 }
+					Special_Forces = { x = 1 y = 1 }
+				}
+
+				priority = 2
+			}
+			random_owned_controlled_state = {
+				prioritize = { 46 }
+				create_unit = {
+					division = "name = \"American Armenian Legion\" division_template = \"American Armenian Legion\" start_experience_factor = 1.0"
+					owner = ARM
+				}
+			}
 		}
 		ai_will_do = {
 			base = 1
@@ -6189,19 +6231,33 @@ focus_tree = {
 		cost = 2.5
 
 		search_filters = { FOCUS_FILTER_ARMENIA_POLITIC }
+		prerequisite = {  focus = ARM_fourth_rev_stnd }
+		prerequisite = {  focus = ARM_ecommerce_init }
 		prerequisite = { 
 			focus = ARM_no_more_colony
-			focus = ARM_fourth_rev_stnd
 			focus = ARM_heroes_need_heroes
-			focus = ARM_ecommerce_init
 		}
 
 		available = {
 			western_autocrats_are_in_power = yes
+			USA = {
+				has_opinion = {
+					target = ARM
+					value < 0
+				}
+				has_idea = NATO_member
+			}
+			country_exists = USA
+			NOT = {
+				has_war_with = USA
+			}
 		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_protectorate executed"
+			USA = {
+				country_event = arme.163
+			}
 		}
 		ai_will_do = {
 			base = 1
@@ -9639,7 +9695,7 @@ focus_tree = {
 
 		prerequisite = { focus = ARM_aspar_arms }
 		prerequisite = { focus = ARM_davisur_arm }
-		search_filters = { FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_ARMENIA_ARMY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ARM_uav_krunk"
@@ -16456,9 +16512,7 @@ focus_tree = {
 	
 			cost = 5
 	
-			prerequisite = { 
-				focus = ARM_post_ussr_partnersh
-			}
+			prerequisite = { focus = ARM_post_ussr_partnersh }
 			search_filters = { FOCUS_FILTER_ARMENIA_DIPLOMACY }
 
 			available = {
@@ -16467,7 +16521,6 @@ focus_tree = {
 					has_war_with = KAZ
 				}
 				OR = {
-					is_ai = yes
 					KAZ = {
 						has_opinion = {
 							target = ARM
@@ -16518,13 +16571,10 @@ focus_tree = {
 				NOT = {
 					has_war_with = UKR
 				}
-				OR = {
-					is_ai = yes
-					UKR = {
-						has_opinion = {
-							target = ARM
-							value > 9
-						}
+				UKR = {
+					has_opinion = {
+						target = ARM
+						value > 9
 					}
 				}
 			}
@@ -16647,9 +16697,27 @@ focus_tree = {
 	
 			prerequisite = { focus = ARM_trade_partnership_kaz }
 			search_filters = { FOCUS_FILTER_ARMENIA_DIPLOMACY }
+
+			available = {
+				country_exists = KAZ
+				NOT = {
+					has_war_with = KAZ
+				}
+				OR = {
+					KAZ = {
+						has_opinion = {
+							target = ARM
+							value > 9
+						}
+					}
+				}
+			}
 	
 			completion_reward = {
 				log = "[GetDateText]: [This.GetName]: focus ARM_kaz_scienc_part"
+				KAZ = {
+					country_event = arme.166
+				}
 			}
 	
 			ai_will_do = {
@@ -16668,9 +16736,25 @@ focus_tree = {
 	
 			prerequisite = { focus = ARM_trade_partnership_ukr }
 			search_filters = { FOCUS_FILTER_ARMENIA_DIPLOMACY }
+
+			available = {
+				country_exists = UKR
+				NOT = {
+					has_war_with = UKR
+				}
+				UKR = {
+					has_opinion = {
+						target = ARM
+						value > 9
+					}
+				}
+			}
 	
 			completion_reward = {
 				log = "[GetDateText]: [This.GetName]: focus ARM_diasp_ukr"
+				UKR = {
+					country_event = arme.169
+				}
 			}
 	
 			ai_will_do = {
