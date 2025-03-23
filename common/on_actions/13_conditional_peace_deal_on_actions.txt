@@ -78,22 +78,27 @@ on_actions = {
 
 	on_state_control_changed = {
 		effect = {
-			set_temp_variable = { CPD_SVP = FROM.FROM.state_strategic_value }
-			set_temp_variable = { CPD_VP_total = 0 }
-			every_country = {
-				limit = { has_war_with = FROM }
-				add_to_temp_variable = { CPD_VP_total = num_armies_in_state@FROM.FROM }
-				set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
-				divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
-				multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
-				add_to_variable = { CPD_VP@FROM = CPD_VP_temp }
-				subtract_from_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
-				clamp_variable = {
-					var = FROM.CPD_VP@THIS
-					min = 0
+			if = {
+				limit = {
+					ROOT = { has_war_with = FROM }
+				}
+				set_temp_variable = { CPD_SVP = FROM.FROM.state_strategic_value }
+				set_temp_variable = { CPD_VP_total = 0 }
+				ROOT = {
+					every_enemy_country = {
+						add_to_temp_variable = { CPD_VP_total = num_armies_in_state@FROM.FROM }
+						set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
+						divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
+						multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
+						add_to_variable = { CPD_VP@FROM = CPD_VP_temp }
+						subtract_from_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
+						clamp_variable = {
+							var = FROM.CPD_VP@THIS
+							min = 0
+						}
+					}
 				}
 			}
-
 		}
 	}
 }
