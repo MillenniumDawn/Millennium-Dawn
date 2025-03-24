@@ -6808,10 +6808,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_reseach_requirents_for_airforce"
 			add_tech_bonus = {
-				name = KOR_new_uniforms
+				name = CAT_air_eqp
 				bonus = 0.25
 				uses = 1
-				category = CAT_armor
+				category = CAT_air_eqp
 			}
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.15 }
@@ -7058,6 +7058,13 @@ focus_tree = {
 		cost = 5
 		prerequisite = { focus = GER_Weltraumkommando_der_Bundeswehr }
 
+		available = {
+			OR = {
+				is_special_project_completed = sp:sp_space_weapons_gdm
+				is_special_project_completed = sp:sp_space_weapons_non_gdm
+			}
+		}
+
 		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_AIRCRAFT }
 
 		completion_reward = {
@@ -7071,7 +7078,6 @@ focus_tree = {
 				uses = 1
 				category = CAT_satellite
 			}
-			set_technology = { KILLSAT1 = 1 }
 		}
 
 		ai_will_do = {
@@ -7103,7 +7109,6 @@ focus_tree = {
 				uses = 1
 				category = CAT_satellite
 			}
-			set_technology = { SPYSAT1 = 1 }
 		}
 
 		ai_will_do = {
@@ -8148,6 +8153,35 @@ focus_tree = {
 			modify_treasury_effect = yes
 			set_temp_variable = { GER_dockyard_productivity_change = 0.03 }
 			update_GER_dockyard_productivity = yes
+			if = { limit = { has_dlc = "Man the Guns" }
+				create_equipment_variant = {
+				name = "Braunschweig Class"
+				type = corvette_hull_3
+					name_group = GER_MODERN_CORVETTES_NAMES
+					parent_version = 0
+					modules = {
+						fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
+						fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+						fixed_ship_radar_slot = module_radar_5
+						fixed_ship_auxillary_slot_1 = module_asm_2
+						fixed_ship_auxillary_slot = module_minelaying
+						fixed_ship_battery_slot = module_76mm_gun_3
+						front_1_custom_slot = module_ram_3
+						rear_1_custom_slot = module_light_helipad_1
+					}
+				}
+			}
+			else_if = {
+				limit = { NOT = { has_dlc = "Man the Guns" } }
+				set_technology = { missile_corvette_3 = 1 }
+				create_equipment_variant = {
+					name = "Braunschweig Class"
+					type = missile_corvette_3
+				}
+			}
+			set_temp_variable = { treasury_change = gdp_per_capita }
+			multiply_temp_variable = { treasury_change = -0.15 }
+			modify_treasury_effect = yes
 		}
 		ai_will_do = {
 			base = 1
@@ -8267,9 +8301,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_New_Minesweepers"
 			#event
+			If = { 
+				limit = {
+					has_tech = corvette_hull_4
+				}
+			}
+			else = {
+				set_technology = {
+					corvette_hull_4 = 1
+				}
+			}
 			create_equipment_variant = {
 			name = "Frankenthal 2 Class"
-			type = corvette_hull_3
+			type = corvette_hull_4
 			name_group = GER_MODERN_CORVETTES_NAMES
 			parent_version = 0
 			modules = {
@@ -8297,10 +8341,23 @@ focus_tree = {
 		y = 1
 		relative_position_id = GER_Improve_naval_logistics
 		cost = 4.3
+		available = {
+			has_dlc = "Man the Guns"
+		}
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = GER_Improve_naval_logistics }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_New_Fregattes"
+			If = { 
+				limit = {
+					has_tech = frigate_hull_4
+				}
+			}
+			else = {
+				set_technology = {
+					frigate_hull_4 = 1
+				}
+			}
 			if = { limit = { has_dlc = "Man the Guns" }
 				create_equipment_variant = {
 					name = "Baden-Württemberg Class"
@@ -8309,7 +8366,7 @@ focus_tree = {
 					parent_version = 0
 					modules = {
 						fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
-						fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+						fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
 						fixed_ship_radar_slot = module_radar_5
 						fixed_ship_auxillary_slot_2 = module_asm_3
 						fixed_ship_auxillary_slot_1 = module_asm_3
@@ -8318,14 +8375,6 @@ focus_tree = {
 						front_1_custom_slot = module_chain_gun
 						rear_1_custom_slot = module_light_helipad_1
 					}
-				}
-			}
-			else_if = {
-				limit = { NOT = { has_dlc = "Man the Guns" } }
-				set_technology = { missile_frigate_4 = 1 }
-				create_equipment_variant = {
-					name = "Type 214-Class"
-					type = missile_frigate_4
 				}
 			}
 			set_temp_variable = { treasury_change = gdp_per_capita }
@@ -8343,35 +8392,38 @@ focus_tree = {
 		y = 1
 		relative_position_id = GER_Coastal_ships
 		cost = 4.3
+		available = {
+			has_dlc = "Man the Guns"
+		}
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = GER_Coastal_ships }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_New_Corvettes"
-			if = { limit = { has_dlc = "Man the Guns" }
-				create_equipment_variant = {
-				name = "Braunschweig Class"
-				type = corvette_hull_3
-					name_group = GER_MODERN_CORVETTES_NAMES
-					parent_version = 0
-					modules = {
-						fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
-						fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
-						fixed_ship_radar_slot = module_sonar_5
-						fixed_ship_auxillary_slot_1 = module_asm_2
-						fixed_ship_auxillary_slot = module_minelaying
-						fixed_ship_battery_slot = module_76mm_gun_3
-						front_1_custom_slot = module_ram_3
-						rear_1_custom_slot = module_light_helipad_1
-					}
+			If = { 
+				limit = {
+					has_tech = corvette_hull_4
 				}
 			}
-			else_if = {
-				limit = { NOT = { has_dlc = "Man the Guns" } }
-				set_technology = { missile_corvette_3 = 1 }
-				create_equipment_variant = {
-					name = "Braunschweig Class"
-					type = missile_corvette_3
+			else = {
+				set_technology = {
+					corvette_hull_4 = 1
+				}
+			}
+			create_equipment_variant = {
+			name = "Köln Class"
+			type = corvette_hull_4
+				name_group = GER_MODERN_CORVETTES_NAMES
+				parent_version = 0
+				modules = {
+					fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
+					fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
+					fixed_ship_radar_slot = module_radar_5
+					fixed_ship_auxillary_slot_1 = module_asm_2
+					fixed_ship_auxillary_slot = module_minelaying
+					fixed_ship_battery_slot = module_76mm_gun_3
+					front_1_custom_slot = module_ram_3
+					rear_1_custom_slot = module_light_helipad_1
 				}
 			}
 			set_temp_variable = { treasury_change = gdp_per_capita }
@@ -8389,11 +8441,24 @@ focus_tree = {
 		y = 1
 		relative_position_id = GER_Improve_naval_logistics
 		cost = 4.3
+		available = {
+			has_dlc = "Man the Guns"
+		}
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = GER_Improve_naval_logistics }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_New_Submarines"
+			If = { 
+				limit = {
+					has_tech = attack_submarine_hull_4
+				}
+			}
+			else = {
+				set_technology = {
+					attack_submarine_hull_4 = 1
+				}
+			}
 			if = { limit = { has_dlc = "Man the Guns" }
 					create_equipment_variant = {
 					name = "Type 214 Class"
@@ -8409,14 +8474,6 @@ focus_tree = {
 						fixed_ship_auxillary_slot = module_vls_sub_asm_3
 						fixed_ship_battery_slot = module_anti_ship_torpedoes_2
 					}
-				}
-			}
-			else_if = {
-				limit = { NOT = { has_dlc = "Man the Guns" } }
-				set_technology = { diesel_attack_submarine_4 = 1 }
-				create_equipment_variant = {
-					name = "Type 214-Class"
-					type = diesel_attack_submarine_4
 				}
 			}
 			set_temp_variable = { treasury_change = gdp_per_capita }
@@ -8745,7 +8802,7 @@ focus_tree = {
 			multiply_temp_variable = { treasury_change = -0.15 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = KOR_new_uniforms
+				name = CAT_sam
 				bonus = 0.50
 				uses = 1
 				category = CAT_sam
@@ -8775,7 +8832,7 @@ focus_tree = {
 			multiply_temp_variable = { treasury_change = -0.15 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = KOR_new_uniforms
+				name = CAT_aa
 				bonus = 0.25
 				uses = 2
 				category = CAT_aa
@@ -8923,10 +8980,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_New_Airdefence"
 			add_tech_bonus = {
-				name = KOR_new_uniforms
+				name = CAT_sam
 				bonus = 0.25
 				uses = 1
-				category = CAT_armor
+				category = CAT_sam
 			}
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.15 }
