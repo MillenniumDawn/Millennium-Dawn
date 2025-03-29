@@ -1362,7 +1362,8 @@ scripted_gui = {
 					has_country_flag = EU_mff_draft
 					has_active_mission = EU_mff_draft_mission
 				}
-				has_political_power > 100
+				check_variable = { global.EU_budget_min_call_rate < 10 }
+				has_political_power > 500
 			}
 			EU_min_call_rate_right_click_enabled = {
 				has_idea = EU_member
@@ -1371,7 +1372,8 @@ scripted_gui = {
 					has_country_flag = EU_mff_draft
 					has_active_mission = EU_mff_draft_mission
 				}
-				has_political_power > 100
+				check_variable = { global.EU_budget_min_call_rate > 0 }
+				has_political_power > 500
 			}
 			EU_global_call_rate_visible = {
 				EU_european_union_euro_fiscal_trigger = yes
@@ -1383,7 +1385,11 @@ scripted_gui = {
 					has_country_flag = EU_mff_draft
 					has_active_mission = EU_mff_draft_mission
 				}
-				has_political_power > 100
+				any_of_scopes = {
+					array = global.EU_member
+					check_variable = { THIS.EU_budget_call_rate < 100 }
+				}
+				has_political_power > global.EU_mff_global_cost
 			}
 			EU_global_call_rate_right_click_enabled = {
 				has_idea = EU_member
@@ -1392,8 +1398,11 @@ scripted_gui = {
 					has_country_flag = EU_mff_draft
 					has_active_mission = EU_mff_draft_mission
 				}
-				check_variable = { > global.EU_budget_min_call_rate }
-				has_political_power > 100
+				any_of_scopes = {
+					array = global.EU_member
+					check_variable = { THIS.EU_budget_call_rate > global.EU_budget_min_call_rate }
+				}
+				has_political_power > global.EU_mff_global_cost
 			}
 			EU_THIS_call_rate_visible = {
 				EU_european_union_euro_fiscal_trigger = yes
@@ -1416,7 +1425,6 @@ scripted_gui = {
 					has_active_mission = EU_mff_draft_mission
 				}
 				check_variable = { THIS.EU_budget_call_rate > global.EU_budget_min_call_rate }
-				check_variable = { THIS.EU_budget_call_rate > 0 }
 				has_political_power > 100
 			}
 			EU_global_expenses_visible = {
@@ -2047,6 +2055,8 @@ scripted_gui = {
 				set_temp_variable = { modify_eurosceptic = 0.05 }
 				EU_eurosceptic_change = yes
 				set_country_flag = EU_mff_draft
+				set_variable = { global.EU_mff_global_cost = 10 }
+				multiply_variable = { global.EU_mff_global_cost = global.var_EUmemberstatesTotal }
 				set_variable = { global.EU_mff_draft_invested_PP = 0 }
 				every_country = {
 					limit = {
@@ -2869,54 +2879,60 @@ scripted_gui = {
 
 			EU_min_call_rate_click = {
 				custom_effect_tooltip = tooltip_EU_budget_raise_min_call_rate_effect
-				add_political_power = -100
+				add_political_power = -500
+				add_to_variable = { global.EU_budget_min_call_rate = 0.05 }
 				for_each_scope_loop = {
 					array = global.EU_member
-					add_to_variable = { global.EU_budget_min_call_rate = 0.05 }
-					clamp_variable = { var = THIS.EU_budget_call_rate max = 100}
+					clamp_variable = {
+						var = THIS.EU_budget_call_rate 
+						min = global.EU_budget_min_call_rate 
+						max = 100 
+					}
 				}
 				update_EU_budget_call_rate = yes
-				add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
-				add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }
+				add_to_variable = { global.EU_mff_draft_invested_PP = 500 }
+				add_to_variable = { THIS.EU_mff_draft_invested_PP = 500 }
 				update_eu_dirty_variable = yes
 			}
 			EU_min_call_rate_right_click = {
 				custom_effect_tooltip = tooltip_EU_budget_lower_min_call_rate_effect
-				add_political_power = -100
-				for_each_scope_loop = {
-					array = global.EU_member
-					subtract_from_variable = { global.EU_budget_min_call_rate = 0.05 }
-					clamp_variable = { var = global.EU_budget_min_call_rate min = 0 }
+				add_political_power = -500
+				array = global.EU_member
+				subtract_from_variable = { global.EU_budget_min_call_rate = 0.05 }
+				array = global.EU_member
+				clamp_variable = { 
+					var = global.EU_budget_min_call_rate 
+					min = 0 
 				}
 				update_EU_budget_call_rate = yes
-				add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
-				add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }
+				add_to_variable = { global.EU_mff_draft_invested_PP = 500 }
+				add_to_variable = { THIS.EU_mff_draft_invested_PP = 500 }
 				update_eu_dirty_variable = yes
 			}
 			EU_global_call_rate_click = {
 				custom_effect_tooltip = tooltip_EU_budget_raise_global_call_rate_effect
-				add_political_power = -100
+				add_political_power = global.EU_mff_global_cost
 				for_each_scope_loop = {
 					array = global.EU_member
 					add_to_variable = { THIS.EU_budget_call_rate = 0.05 }
-					clamp_variable = { var = THIS.EU_budget_call_rate max = 100}
+					clamp_variable = { var = THIS.EU_budget_call_rate max = 100 }
 				}
 				update_EU_budget_call_rate = yes
-				add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
-				add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }
+				add_to_variable = { global.EU_mff_draft_invested_PP = global.EU_mff_global_cost }
+				add_to_variable = { THIS.EU_mff_draft_invested_PP = global.EU_mff_global_cost }
 				update_eu_dirty_variable = yes
 			}
 			EU_global_call_rate_right_click = {
 				custom_effect_tooltip = tooltip_EU_budget_lower_global_call_rate_effect
-				add_political_power = -100
+				add_political_power = global.EU_mff_global_cost
 				for_each_scope_loop = {
 					array = global.EU_member
 					subtract_from_variable = { THIS.EU_budget_call_rate = 0.05 }
-					clamp_variable = { var = THIS.EU_budget_call_rate min = 0 }
+					clamp_variable = { var = THIS.EU_budget_call_rate min = global.EU_budget_min_call_rate }
 				}
 				update_EU_budget_call_rate = yes
-				add_to_variable = { global.EU_mff_draft_invested_PP = 100 }
-				add_to_variable = { THIS.EU_mff_draft_invested_PP = 100 }
+				add_to_variable = { global.EU_mff_draft_invested_PP = global.EU_mff_global_cost }
+				add_to_variable = { THIS.EU_mff_draft_invested_PP = global.EU_mff_global_cost }
 				update_eu_dirty_variable = yes
 			}
 			EU_THIS_call_rate_click = {
@@ -2946,7 +2962,7 @@ scripted_gui = {
 				set_temp_variable = { modify_eurosceptic = 0.03 }
 				EU_eurosceptic_change = yes
 				add_to_variable = { THIS.EU_budget_call_rate = -0.05 }
-				clamp_variable = { var = THIS.EU_budget_call_rate min = 0 }
+				clamp_variable = { var = THIS.EU_budget_call_rate min = global.EU_budget_min_call_rate }
 				update_EU_budget_call_rate = yes
 				set_temp_variable = { modify_eurosceptic = -0.03 }
 				set_temp_variable = { modify_eurosceptic_target = THIS }
