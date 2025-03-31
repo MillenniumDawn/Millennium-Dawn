@@ -4151,3 +4151,222 @@ one_random_nuclear_facility = {
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
 }
+
+# Ingame Startup Effect
+ingame_startup_nations_effect = {
+	hidden_effect = {
+		set_variable = { civilian_factory_employment_var = 1 }
+		set_variable = { naval_factory_employment_var = 1 }
+		set_variable = { military_factory_employment_var = 1 }
+		set_variable = { office_employment_var = 1 }
+		set_variable = { agriculture_district_employment_var = 1 }
+		set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
+		inherit_technology = PREV
+		if = {
+			limit = {
+				NOT = { has_variable = domestic_influence_amount }
+			}
+			set_variable = { domestic_influence_amount = 100 }
+		}
+		if = {
+			limit = { NOT = { has_variable = corporate_tax_rate } }
+			set_variable = { var = corporate_tax_rate value = 20 }
+		}
+		if = {
+			limit = { NOT = { has_variable = population_tax_rate } }
+			set_variable = { var = population_tax_rate value = 20 }
+		}
+		calculate_influence_percentage = yes #set alignment drifts from influence
+		startup_politics = yes
+		ingame_update_setup = yes	 #money system
+		setup_init_factions = yes	 #flags for int. factions
+		set_law_vars = yes	 #vars for change laws secondary effects
+		update_neighbors_effects = yes # Updates Neighbor Effects
+		economic_cycle_drift_popularity = yes #drift from neighbor
+		ai_update_build_units = yes
+		init_auto_influence_array = yes
+		ingame_init_investment_system = yes
+		research_slot_init_for_country = yes
+		calculate_expected_spending = yes
+		setup_missile_configuration_effect = yes
+	}
+}
+
+#####################################
+### emergency_factory_conversion ####
+#####################################
+
+#This is going to give misleading and ugly tooltips. Making it nice will take effort. TODO_WTT_CD make nice or ignore and remove comment. Easiest solution is just making a custom tooltip that says "5 civilian factories will be converted to military factories" and ignore telling the player the states where it will happen.
+
+replace_civ_with_arms_factories = {
+
+	random_owned_controlled_state = {
+		limit = {
+			is_fully_controlled_by = ROOT
+			industrial_complex > 0
+		}
+		remove_building = {
+			type = industrial_complex
+			level = 1
+		}
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+
+	random_owned_controlled_state = {
+		limit = {
+			is_fully_controlled_by = ROOT
+			industrial_complex > 0
+		}
+		remove_building = {
+			type = industrial_complex
+			level = 1
+		}
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+
+	random_owned_controlled_state = {
+		limit = {
+			is_fully_controlled_by = ROOT
+			industrial_complex > 0
+		}
+		remove_building = {
+			type = industrial_complex
+			level = 1
+		}
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+
+	random_owned_controlled_state = {
+		limit = {
+			is_fully_controlled_by = ROOT
+			industrial_complex > 0
+		}
+		remove_building = {
+			type = industrial_complex
+			level = 1
+		}
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+
+	random_owned_controlled_state = {
+		limit = {
+			is_fully_controlled_by = ROOT
+			industrial_complex > 0
+		}
+		remove_building = {
+			type = industrial_complex
+			level = 1
+		}
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+#Country scope
+ROOT_inherit_current_scope_wars_effect = {
+	custom_effect_tooltip = ROOT_inherit_current_scope_wars_effect
+	hidden_effect = {
+		every_country = {
+			limit = {
+				has_defensive_war_with = PREV
+			}
+			ROOT = { declare_war_on = { target = PREV type = annex_everything } }
+		}
+		every_country = {
+			limit = {
+				has_offensive_war_with = PREV
+			}
+			declare_war_on = { target = ROOT type = annex_everything }
+		}
+	}
+}
+
+clear_sabotaged_resources_if_necesary = {
+	if = {
+		limit = {
+			not = {
+				has_dynamic_modifier = {
+					modifier = sabotaged_resources
+				}
+			}
+		}
+
+		clear_variable = sabotaged_oil
+		clear_variable = sabotaged_aluminium
+		clear_variable = sabotaged_rubber
+		clear_variable = sabotaged_tungsten
+		clear_variable = sabotaged_steel
+		clear_variable = sabotaged_chromium
+	}
+}
+
+#expectes a temp variable country_to_initiate which should contain original_tag to instantiate as a collabration government
+instantiate_collaboration_government = {
+	custom_effect_tooltip = compliance_80_effect_tooltip
+	hidden_effect = {
+		set_variable = { collaboration_formed@var:country_to_initiate = 1 }
+
+		if = {
+			# if country_to_initiate does not exist, simply release it as a puppet
+			limit = {
+				var:country_to_initiate = {
+					exists = no
+				}
+			}
+			var:country_to_initiate = { set_variable = { collaboration_formed_by = PREV } }
+			release_autonomy = {
+				target = country_to_initiate
+				autonomy_state = autonomy_collaboration_government
+				freedom_level = 0.5
+				release_non_owned_controlled = yes
+			}
+		}
+		else = {
+			# if country_to_initiate exists, create a dynamic country as our new puppet
+
+			create_dynamic_country = {
+				original_tag = country_to_initiate
+
+				set_variable = { collaboration_formed_by = PREV }
+				set_temp_variable = { new_country = this }
+
+				PREV = {
+					every_controlled_state = {
+						limit = { occupied_country_tag = country_to_initiate }
+
+						var:new_country = {
+							transfer_state = PREV
+						}
+					}
+
+					puppet = new_country
+
+					set_autonomy = {
+						target = new_country
+						autonomy_state = autonomy_collaboration_government
+						freedom_level = 0.5
+					}
+				}
+			}
+		}
+	}
+}
