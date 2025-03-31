@@ -961,7 +961,7 @@ country_event = {
 		}
 	}
 }
-
+#votes
 country_event = {
 	id = Balkan.7
 	title = Balkan.7.t
@@ -1139,7 +1139,48 @@ country_event = {
 		}
 	}
 }
+#riots
+country_event = {
+	id = Balkan.8
+	title = Balkan.8.t
+	desc = Balkan.8.d
+	picture = GFX_KFOR_VII
+	is_triggered_only = yes
+	fire_only_once = yes
 
+	trigger = {
+		NOT = {
+			original_tag = SOV
+		}
+		has_country_flag = balkan_activity
+		country_exists = KOS
+	}
+
+	option = { 
+		name = Balkan.8.a
+		log = "[GetDateText]: [This.GetName]: Balkan.8.a executed"
+
+		add_political_power = -10
+
+		KOS = {
+			add_stability = -0.01
+		}
+		every_country = {
+			limit = {
+				NOT = {
+					original_tag = SOV
+				}
+				has_country_flag = balkan_activity
+			} 
+		add_opinion_modifier = { target = ALB modifier = medium_decrease }
+		}
+
+
+		ai_chance = {
+			base = 2
+		}
+	}
+}
 
 #news 
 news_event = {
@@ -1147,6 +1188,7 @@ news_event = {
 	title = Balkan_news.1.t
 	desc = Balkan_news.1.d
 	picture = GFX_Der_stern
+	fire_only_once = yes
 
 	is_triggered_only = yes
 	trigger = {
@@ -1157,7 +1199,15 @@ news_event = {
 	option = {
 		name = Balkan_news.1.a
 		log = "[GetDateText]: [This.GetName]: Balkan_news.1.a executed"
-		country_event = { id = Balkan.6 days = 2 }
+		If = {
+			limit = {
+				original_tag = GER
+			}
+			country_event = { id = Balkan.6 days = 2 }
+		}
+		else = {
+
+		}
 	}
 }
 
@@ -1166,6 +1216,7 @@ news_event = {
 	title = Balkan_news.2.t
 	desc = Balkan_news.2.d
 	picture = GFX_Der_stern
+	fire_only_once = yes
 
 	is_triggered_only = yes
 	trigger = {
@@ -1184,6 +1235,7 @@ news_event = {
 	title = Balkan_news.3.t
 	desc = Balkan_news.3.d
 	picture = GFX_KFOR_schmuggler
+	fire_only_once = yes
 
 	is_triggered_only = yes
 	trigger = {
@@ -1201,7 +1253,8 @@ news_event = {
 	id = Balkan_news.4
 	title = Balkan_news.4.t
 	desc = Balkan_news.4.d
-	picture = GFX_Der_stern
+	picture = GFX_2004_riots
+	fire_only_once = yes
 
 	is_triggered_only = yes
 	trigger = {
@@ -1212,6 +1265,18 @@ news_event = {
 	option = {
 		name = Balkan_news.4.a
 		log = "[GetDateText]: [This.GetName]: Balkan_news.4.a executed"
+		If = {
+			limit = {
+				NOT = {
+					original_tag = SOV
+				}
+				has_country_flag = balkan_activity
+			}
+			country_event = { id = Balkan.8 days = 2 }
+		}
+		else = {
+			
+		}
 	}
 }
 
@@ -1219,1024 +1284,6 @@ news_event = {
 add_namespace = KFOR
 add_namespace = SFOR
 
-###KFOR###
-
-# Weapons Smugglers Captured by Our Patrols
-country_event = {
-	id = KFOR.3
-	title = KFOR.3.t
-	desc = KFOR.3.d
-	picture = GFX_KFOR_IV
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Hand them over to local authorities
-		name = KFOR.3.a
-		log = "[GetDateText]: [This.GetName]: KFOR.3.a executed"
-		KOS = {
-			add_stability = 0.02
-		}
-		GER = {
-			add_political_power = 10
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Conduct a deeper investigation into their supply network
-		name = KFOR.3.b
-		log = "[GetDateText]: [This.GetName]: KFOR.3.b executed"
-		hidden_effect = {
-			random_list = {
-				50 = {
-					GER = {
-						country_event = {
-						id = KFOR.301
-						days = 8
-						}
-					}
-				}
-				50 = {
-					GER = {
-						country_event = {
-						id = KFOR.302
-						days = 8
-						}
-					}
-				}
-			}
-		}
-		
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Weapons Smugglers Captured by Our Patrols
-country_event = {
-	id = KFOR.301
-	title = KFOR.301.t
-	desc = KFOR.301.d
-	picture = GFX_KFOR_IV
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Alert our allies and monitor the borders.
-		name = KFOR.301.a
-		log = "[GetDateText]: [This.GetName]: KFOR.301.a executed"
-		KOS = {
-			add_to_variable = { var = KOS_albania value = -0.02 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-		GER = {
-			add_opinion_modifier = {
-			target = ALB
-			modifier = medium_decrease
-			}
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Increase patrols to disrupt further smuggling.
-		name = KFOR.301.b
-		log = "[GetDateText]: [This.GetName]: KFOR.301.b executed"
-		KOS = {
-			add_to_variable = { var = KOS_albania value = -0.01 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-		GER = {
-			add_opinion_modifier = {
-			target = ALB
-			modifier = small_decrease
-			}
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Weapons Smugglers Captured by Our Patrols
-country_event = {
-	id = KFOR.302
-	title = KFOR.302.t
-	desc = KFOR.302.d
-	picture = GFX_KFOR_IV
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Inform the Serbian government and demand action.
-		name = KFOR.302.a
-		log = "[GetDateText]: [This.GetName]: KFOR.302.a executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = -0.02 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-		}
-		GER = {
-			add_opinion_modifier = {
-			target = SER
-			modifier = medium_decrease
-			}
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Expand intelligence operations to track their suppliers.
-		name = KFOR.302.b
-		log = "[GetDateText]: [This.GetName]: KFOR.302.b executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = -0.02 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-		}
-		GER = {
-			add_opinion_modifier = {
-			target = SER
-			modifier = small_decrease
-			}
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Clashes with UÇK Remnants – Attack on a Patrol
-country_event = {
-	id = KFOR.4
-	title = KFOR.4.t
-	desc = KFOR.4.d
-	picture = GFX_KFOR_I
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Increase patrol presence in high-risk areas
-		name = KFOR.4.a
-		log = "[GetDateText]: [This.GetName]: KFOR.4.a executed"
-		GER = {
-			add_opinion_modifier = {
-			target = ALB
-			modifier = major_breach_of_trust
-			}
-			add_political_power = -10
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Launch counter-operations to eliminate remaining threats
-		name = KFOR.4.b
-		log = "[GetDateText]: [This.GetName]: KFOR.4.b executed"
-		GER = {
-			add_opinion_modifier = {
-			target = ALB
-			modifier = drama
-			}
-			add_political_power = -5
-			add_command_power = 10
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Rising Tensions in Kosovo
-country_event = {
-	id = KFOR.5
-	title = KFOR.5.t
-	desc = KFOR.5.d
-	picture = GFX_KFOR_VI
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		date < 2004.4.1
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	immediate = {
-		GER = {
-			country_event = {
-			id = KFOR.6
-			days = 8
-			}
-		}
-	}
-
-	option = { #guarantie their indipendence and prevent Serbian influence
-		name = KFOR.5.a
-		log = "[GetDateText]: [This.GetName]: KFOR.5.a executed"
-		KOS = {
-			add_stability = 0.02
-		}
-		GER = {
-			add_political_power = -15
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #our mandat is keep peace, not intervene in balkan politics
-		name = KFOR.5.b
-		log = "[GetDateText]: [This.GetName]: KFOR.5.b executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = 0.03 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-			add_to_variable = { var = KOS_albania value = -0.02 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-		GER = {
-			add_political_power = -10
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# The Mitrovica Bridge Incident
-country_event = {
-	id = KFOR.6
-	title = KFOR.6.t
-	desc = KFOR.6.d
-	picture = GFX_KFOR_VII
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	immediate = {
-		GER = {
-			country_event = {
-			id = KFOR.7
-			days = 8
-			}
-		}
-	}
-
-	option = { #drill a new well
-		name = KFOR.6.a
-		log = "[GetDateText]: [This.GetName]: KFOR.6.a executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = 0.01 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-			add_to_variable = { var = KOS_albania value = -0.02 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #play stupid gamens, win stupid prices
-		name = KFOR.6.b
-		log = "[GetDateText]: [This.GetName]: KFOR.6.b executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = -0.03 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-			add_to_variable = { var = KOS_albania value = -0.01 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Serbian Enclaves Under Attack
-country_event = {
-	id = KFOR.7
-	title = KFOR.7.t
-	desc = KFOR.7.d
-	picture = GFX_KFOR_VII
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	immediate = {
-		GER = {
-			country_event = {
-			id = KFOR.8
-			days = 8
-			}
-		}
-	}
-
-	option = { #send a patrole to intervene 
-		name = KFOR.7.a
-		log = "[GetDateText]: [This.GetName]: KFOR.7.a executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = 0.02 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-			add_to_variable = { var = KOS_albania value = -0.02 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #a few Tanks should prevent any conflict
-		name = KFOR.7.b
-		log = "[GetDateText]: [This.GetName]: KFOR.7.b executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = -0.02 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-			add_to_variable = { var = KOS_albania value = 0.01 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# KFOR Outposts Under Siege
-country_event = {
-	id = KFOR.8
-	title = KFOR.8.t
-	desc = KFOR.8.d
-	picture = GFX_KFOR_V
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	immediate = {
-		GER = {
-			country_event = {
-			id = KFOR.9
-			days = 8
-			}
-		}
-	}
-
-	option = { #send a patrole to intervene 
-		name = KFOR.8.a
-		log = "[GetDateText]: [This.GetName]: KFOR.8.a executed"
-		KOS = {
-			add_to_variable = { var = KOS_albania value = -0.02 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-		
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #a few Tanks should prevent any conflict
-		name = KFOR.8.b
-		log = "[GetDateText]: [This.GetName]: KFOR.8.b executed"
-		KOS = {
-			add_to_variable = { var = KOS_albania value = 0.01 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-		}
-		
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Serbian Counter-Protests Erupt
-country_event = {
-	id = KFOR.9
-	title = KFOR.9.t
-	desc = KFOR.9.d
-	picture = GFX_KFOR_VII
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	immediate = {
-		GER = {
-			country_event = {
-			id = KFOR.10
-			days = 8
-			}
-		}
-	}
-
-	option = { #Accept
-		name = KFOR.9.a
-		log = "[GetDateText]: [This.GetName]: KFOR.9.a executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = 0.01 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-		}
-		SER = {
-			add_popularity = {
-				ideology = nationalist
-				popularity = -0.05
-			}
-			add_opinion_modifier = {
-			modifier = drama
-			target = GER
-			}
-		}
-		GER = {
-			add_opinion_modifier = {
-			modifier = drama
-			target = SER
-			}
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Accept
-		name = KFOR.9.b
-		log = "[GetDateText]: [This.GetName]: KFOR.9.b executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = -0.02 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-			add_stability = -0.04
-		}
-		GER = {
-			add_command_power = 20
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Aftermath of the Riots
-country_event = {
-	id = KFOR.10
-	title = KFOR.10.t
-	desc = KFOR.10.d
-	picture = GFX_KFOR_I
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	immediate = {
-		GER = {
-			set_country_flag = GER_KFOR_by_by
-		}
-	}
-
-	option = { #Accept
-		name = KFOR.10.a
-		log = "[GetDateText]: [This.GetName]: KFOR.10.a executed"
-		133 = {
-			every_state_division = {
-				add_divisional_commander_xp = 110
-			}
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Progroms 2004 II
-country_event = {
-	id = KFOR.11
-	title = KFOR.11.t
-	desc = KFOR.11.d
-	picture = GFX_Feldjager_GER
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Accept
-		name = KFOR.11.a
-		log = "[GetDateText]: [This.GetName]: KFOR.11.a executed"
-		KOS = {
-			add_stability = 0.02
-			increase_policing_budget = yes
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Progroms 2004 II
-country_event = {
-	id = KFOR.12
-	title = KFOR.12.t
-	desc = KFOR.12.d
-	picture = GFX_KFOR_VIII
-	is_triggered_only = yes
-
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Accept
-		name = KFOR.12.a
-		log = "[GetDateText]: [This.GetName]: KFOR.12.a executed"
-		KOS = {
-			add_to_variable = { var = KOS_serbs value = 0.02 }
-			clamp_variable = { var = KOS_serbs min = 0 max = 1 }
-			add_to_variable = { var = KOS_albania value = -0.02 }
-			clamp_variable = { var = KOS_albania min = 0 max = 1 }
-			add_stability = 0.02
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# Ending Our Military Commitment in Kosovo
-country_event = {
-	id = KFOR.13
-	title = KFOR.13.t
-	desc = KFOR.13.d
-	picture = GFX_german_parliament_bundestag
-	is_triggered_only = yes
-
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Accept
-		name = KFOR.13.a
-		log = "[GetDateText]: [This.GetName]: KFOR.13.a executed"
-		KOS = {
-			diplomatic_relation = { 
-					country = GER
-					relation = military_access 
-					active = no
-			}
-		}
-		GER = {
-			clr_country_flag = GER_KFOR
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Accept
-		name = KFOR.13.b
-		log = "[GetDateText]: [This.GetName]: KFOR.13.b executed"
-		KOS = {
-			diplomatic_relation = { 
-					country = GER
-					relation = military_access 
-					active = no
-			}
-			add_timed_idea = {
-				idea = idea_focus_national_security
-				days = 60
-			}
-		}
-		GER = {
-			clr_country_flag = GER_KFOR
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# "Kosovo’s Independence: A New Chapter"
-country_event = {
-	id = KFOR.14
-	title = KFOR.14.t
-	desc = KFOR.14.d
-	picture = GFX_KFOR_IX
-	is_triggered_only = yes
-
-	fire_only_once = yes
-
-	trigger = {
-		GER = {
-			has_country_flag = GER_KFOR_by_by
-		}
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Accept
-		name = KFOR.14.a
-		log = "[GetDateText]: [This.GetName]: KFOR.14.a executed"
-		KOS = {
-			diplomatic_relation = { 
-					country = GER
-					relation = military_access 
-					active = no
-			}
-		}
-		GER = {
-			diplomatic_relation = { 
-				country = KOS
-				relation = guarantee 
-				active = yes
-			}
-			clr_country_flag = GER_KFOR
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Accept
-		name = KFOR.14.b
-		log = "[GetDateText]: [This.GetName]: KFOR.14.b executed"
-		KOS = {
-			add_opinion_modifier = { target = GER modifier = diplomatic_proximity }
-		}
-		GER = {
-			diplomatic_relation = { 
-				country = KOS
-				relation = guarantee 
-				active = yes
-			}
-			add_opinion_modifier = { target = KOS modifier = diplomatic_proximity }
-			clr_country_flag = GER_KFOR
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-#offer support independence Kosovo
-country_event = {
-	id = KFOR.141
-	title = KFOR.141.t
-	desc = KFOR.141.d
-	picture = GFX_KFOR_IX
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #support
-		name = KFOR.141.a
-		log = "[GetDateText]: [This.GetName]: KFOR.141.a executed"
-		KOS = {
-			country_event = { id = KFOR.142 days = 1 }
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-#support independence Kosovo
-country_event = {
-	id = KFOR.142
-	title = KFOR.142.t
-	desc = KFOR.142.d
-	picture = GFX_KFOR_IX
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #we want it
-		name = KFOR.142.a
-		log = "[GetDateText]: [This.GetName]: KFOR.142.a executed"
-		SER = {
-			set_autonomy = {
-			target = KOS
-			autonomy_state = autonomy_free
-			end_wars = yes
-			end_civil_wars = yes
-			}
-			add_opinion_modifier = {
-				modifier = broke_off_diplomatic_relations
-				target = KOS
-			}
-		}
-		KOS = {
-			add_opinion_modifier = {
-				modifier = broke_off_diplomatic_relations
-				target = SER
-			}
-		}
-		GER = {
-			country_event = { id = KFOR.140 days = 1 }
-		}
-
-		ai_chance = {
-			base = 8
-		}
-	}
-	option = { #we stay with serbia
-		name = KFOR.142.b
-		log = "[GetDateText]: [This.GetName]: KFOR.142.b executed"
-		SER = {
-			add_opinion_modifier = {
-				modifier = declaration_of_friendship
-				target = KOS
-			}
-		}
-		KOS = {
-			add_opinion_modifier = {
-				modifier = declaration_of_friendship
-				target = SER
-			}
-		}
-		GER = {
-			country_event = { id = KFOR.143 days = 1 }
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-#offer support independence Kosovo
-country_event = {
-	id = KFOR.143
-	title = KFOR.143.t
-	desc = KFOR.143.d
-	picture = GFX_KFOR_IX
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #support
-		name = KFOR.143.a
-		log = "[GetDateText]: [This.GetName]: KFOR.143.a executed"
-		KOS = {
-			diplomatic_relation = { 
-					country = GER
-					relation = military_access 
-					active = no
-			}
-			add_opinion_modifier = { target = GER modifier = recent_actions_negative }
-		}
-		GER = {
-			diplomatic_relation = { 
-				country = KOS
-				relation = guarantee 
-				active = no
-			}
-			add_opinion_modifier = { target = KOS modifier = recent_actions_negative }
-			add_political_power = 5
-			clr_country_flag = GER_KFOR
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# "Reaffirming Our Mission in Kosovo"
-country_event = {
-	id = KFOR.15
-	title = KFOR.15.t
-	desc = KFOR.15.d
-	picture = GFX_german_parliament_bundestag
-	is_triggered_only = yes
-
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = KOS
-		country_exists = SER
-	}
-
-	option = { #Accept
-		name = KFOR.15.a
-		log = "[GetDateText]: [This.GetName]: KFOR.15.a executed"
-		KOS = {
-			one_random_infrastructure = yes
-			add_stability = 0.05
-		}
-		GER = {
-			add_command_power = 20
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-	option = { #Accept
-		name = KFOR.15.b
-		log = "[GetDateText]: [This.GetName]: KFOR.15.b executed"
-		KOS = {
-			add_stability = -0.1
-			diplomatic_relation = { 
-				country = GER
-				relation = military_access 
-				active = no
-			}
-		}
-		GER = {
-			diplomatic_relation = { 
-				country = KOS
-				relation = guarantee 
-				active = no
-			}
-			clr_country_flag = GER_KFOR
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-
-###SFOR###
-
-# retreat forces
-country_event = {
-	id = SFOR.1
-	title = SFOR.1.t
-	desc = SFOR.1.d
-	picture = GFX_german_parliament_bundestag
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = BOS
-	}
-
-	option = { #Accept
-		name = SFOR.1.a
-		log = "[GetDateText]: [This.GetName]: SFOR.1.a executed"
-		BOS = {
-			diplomatic_relation = { 
-					country = GER
-					relation = military_access 
-					active = no
-			}
-		}
-		GER = {
-			diplomatic_relation = { 
-				country = BOS
-				relation = guarantee 
-				active = yes
-			}
-			clr_country_flag = GER_SFOR
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# end of mandatory
-country_event = {
-	id = SFOR.2
-	title = SFOR.2.t
-	desc = SFOR.2.d
-	picture = GFX_german_parliament_bundestag
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	trigger = {
-		country_exists = BOS
-		date < 2004.12.12
-	}
-
-	option = { #Accept
-		name = SFOR.2.a
-		log = "[GetDateText]: [This.GetName]: SFOR.2.a executed"
-		BOS = {
-			diplomatic_relation = { 
-					country = GER
-					relation = military_access 
-					active = no
-			}
-		}
-		GER = {
-			diplomatic_relation = { 
-				country = BOS
-				relation = guarantee 
-				active = yes
-			}
-			clr_country_flag = GER_SFOR
-		}
-
-		ai_chance = {
-			base = 10
-		}
-	}
-	option = { #Accept
-		name = SFOR.2.b
-		log = "[GetDateText]: [This.GetName]: SFOR.2.b executed"
-		BOS = {
-			add_opinion_modifier = { target = GER modifier = declaration_of_friendship }
-		}
-		GER = {
-			diplomatic_relation = { 
-				country = BOS
-				relation = guarantee 
-				active = yes
-			}
-			add_opinion_modifier = { target = BOS modifier = declaration_of_friendship }
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
-# destroy weapon stocks and smuggler networks
-country_event = {
-	id = SFOR.3
-	title = SFOR.3.t
-	desc = SFOR.3.d
-	picture = GFX_KFOR_III
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	option = { #launch
-		name = SFOR.3.a
-		log = "[GetDateText]: [This.GetName]: SFOR.3.a executed"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.015 }
-		set_temp_variable = { temp_outlook_increase = 0.015 }
-		BOS = {
-			add_stability = 0.02
-		}
-
-		ai_chance = {
-			base = 2
-		}
-	}
-
-	option = { #no risk
-		name = SFOR.3.b
-		log = "[GetDateText]: [This.GetName]: SFOR.3.b executed"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.005 }
-		set_temp_variable = { temp_outlook_increase = -0.005 }
-		add_political_power = 15
-
-		ai_chance = {
-			base = 2
-		}
-	}
-}
 # Radovan Karadzic attempt
 country_event = {
 	id = SFOR.4
