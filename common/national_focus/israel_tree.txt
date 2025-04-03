@@ -28826,7 +28826,7 @@ focus_tree = {
 	focus = {
 		id = ISR_adir
 		icon = f35
-		x = 0
+		x = -1
 		y = 4
 		relative_position_id = ISR_miller_case
 		cost = 5
@@ -28835,9 +28835,6 @@ focus_tree = {
 		}
 		prerequisite = {
 			focus = ISR_lavi
-		}
-		prerequisite = {
-			focus = ISR_saraph
 		}
 		search_filters = {
 			FOCUS_FILTER_ISRMILITARY
@@ -28904,7 +28901,7 @@ focus_tree = {
 	focus = {
 		id = ISR_repair_the_atalefs
 		icon = people_helicopter
-		x = 2
+		x = 1
 		y = 1
 		relative_position_id = ISR_miller_case
 		cost = 5
@@ -28914,20 +28911,24 @@ focus_tree = {
 		search_filters = {
 			FOCUS_FILTER_ISRMILITARY
 		}
-		available = {
-			OR = {
-				has_tech = attack_helicopter1
-				has_tech = nsb_attack_helicopter_tech_1
-			}
-		}
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ISR_repair_the_atalefs executed"
 			air_experience = 25
 			add_command_power = 50
-			add_equipment_to_stockpile = {
-				type = attack_helicopter_hull_1
-				amount = 15
-				producer = FRA
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = {
+					type = attack_helicopter_hull_1
+					amount = 15
+					producer = FRA
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = attack_helicopter2
+					amount = 15
+					producer = FRA
+				}
 			}
 			set_temp_variable = {
 				treasury_change = -4
@@ -28938,6 +28939,7 @@ focus_tree = {
 			base = 3
 		}
 	}
+	# 2015 transport heli
 	focus = {
 		id = ISR_yassur
 		icon = toufan_helicopter
@@ -28946,26 +28948,19 @@ focus_tree = {
 		relative_position_id = ISR_miller_case
 		cost = 5
 		prerequisite = {
-			focus = ISR_repair_the_atalefs
+			focus = ISR_yanshuf
 		}
 		search_filters = {
 			FOCUS_FILTER_ISRMILITARY
 		}
+		available = {
+			has_tech = transport_helicopter4
+		}
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ISR_yassur executed"
-			if = {
-				limit = {
-					has_tech = transport_helicopter4
-				}
-				add_equipment_to_stockpile = {
-					type = transport_helicopter4
-					amount = 25
-				}
-			}
-			else = {
-				set_technology = {
-					transport_helicopter4 = 1
-				}
+			add_equipment_to_stockpile = {
+				type = transport_helicopter4
+				amount = 50
 			}
 			add_tech_bonus = {
 				name = ISR_yassur
@@ -28974,7 +28969,7 @@ focus_tree = {
 				category = CAT_trans_heli
 			}
 			set_temp_variable = {
-				treasury_change = -15
+				treasury_change = -14
 			}
 			modify_treasury_effect = yes
 		}
@@ -28982,34 +28977,25 @@ focus_tree = {
 			base = 3
 		}
 	}
+	# 1985 transport heli
 	focus = {
 		id = ISR_yanshuf
 		icon = POL_sikorsky
-		x = 1
-		y = 2
+		x = 3
+		y = 1
 		relative_position_id = ISR_miller_case
 		cost = 5
 		prerequisite = {
-			focus = ISR_repair_the_atalefs
+			focus = ISR_miller_case
 		}
 		search_filters = {
 			FOCUS_FILTER_ISRMILITARY
 		}
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ISR_yanshuf executed"
-			if = {
-				limit = {
-					has_tech = transport_helicopter4
-				}
-				add_equipment_to_stockpile = {
-					type = transport_helicopter4
-					amount = 25
-				}
-			}
-			else = {
-				set_technology = {
-					transport_helicopter2 = 1
-				}
+			add_equipment_to_stockpile = {
+				type = transport_helicopter2
+				amount = 50
 			}
 			add_tech_bonus = {
 				name = ISR_yanshuf
@@ -29018,7 +29004,7 @@ focus_tree = {
 				category = CAT_trans_heli
 			}
 			set_temp_variable = {
-				treasury_change = -15
+				treasury_change = -7
 			}
 			modify_treasury_effect = yes
 		}
@@ -29029,33 +29015,59 @@ focus_tree = {
 	focus = {
 		id = ISR_saraph
 		icon = helicopter_1
-		x = 2
-		y = 3
+		x = 1
+		y = 2
 		relative_position_id = ISR_miller_case
 		cost = 5
 		prerequisite = {
-			focus = ISR_yanshuf
-		}
-		prerequisite = {
-			focus = ISR_yassur
+			focus = ISR_repair_the_atalefs
 		}
 		search_filters = {
 			FOCUS_FILTER_ISRMILITARY
 		}
+		available = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = nsb_attack_helicopter_tech_4
+			}
+			else = {
+				has_tech = attack_helicopter4
+			}
+		}
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ISR_saraph executed"
 			if = {
-				limit = {
-					has_tech = attack_helicopter4
+				limit = { has_dlc = "No Step Back" }
+				# we need to add variant first
+				create_equipment_variant = {
+					name = "AH-64E Seraph"
+					type = attack_helicopter_hull_3
+					parent_version = 0
+					modules = {
+						helicopter_inner_hardpoint = helicopter_multiple_atgm_gen3
+						nose_gun_type_slot = helicopter_medium_nose_gun_gen2
+						armor_type_slot = helicopter_armor_gen2
+						engine_type_slot = helicopter_turbine_engine_gen4
+						defence_type_slot = flare_launchers
+						sensor_and_avionics_slot = sensors_and_avionics_gen_4
+						helicopter_middle_hardpoint_1 = helicopter_rocket_pod_gen2
+						special_defensive_type_slot_1 = em_lock_detection_system_gen2
+					}
+					upgrades = {
+						helicopter_nsb_upgrade = 5
+					}
+					icon = "gfx/interface/technologies/ISR/AIR/AH4.dds"
+					model = "USA_attack_helo_bat_entity"
 				}
 				add_equipment_to_stockpile = {
-					type = attack_helicopter4
-					amount = -50
+					type = attack_helicopter_hull_3
+					amount = 50
 				}
 			}
 			else = {
-				set_technology = {
-					attack_helicopter4 = 1
+				add_equipment_to_stockpile = {
+					type = attack_helicopter4
+					amount = 50
 				}
 			}
 			add_tech_bonus = {
