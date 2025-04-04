@@ -800,7 +800,7 @@
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 
 	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 999						-- 20 #Now AI like big fleet
-	NDefines.NAI.MAX_DISTANCE_NALAV_INVASION = 400.0				-- 200.0
+	NDefines.NAI.MAX_DISTANCE_NAVAL_INVASION = 400.0				-- 200.0
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
 	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
 	NDefines.NAI.TRANSPORTS_PER_PARATROOPER = 10					-- 20
@@ -808,7 +808,7 @@
 	NDefines.NAI.NAVAL_FIGHTERS_PER_PLANE = 2					-- 1.1
 	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_ARMY = 1					-- 0
 	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10				-- 150
-	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5				-- 100
+	NDefines.NAI.MINES_PLANTING_PLANES_PER_M	AX_DESIRE = 5				-- 100
 
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.2				-- 1.1
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- 20
