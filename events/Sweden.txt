@@ -1,4 +1,5 @@
 ﻿add_namespace = Sweden
+add_namespace = Sweden_foci
 
 ###################FOCUS TREE###############
 #The Church of Sweden (January 1, 2000)			#ETD REMOVED
@@ -819,3 +820,919 @@ country_event = {
 
 	}
 }
+
+#borgers focus events
+
+#Negotiate foreign air license
+country_event = {
+	id = Sweden_foci.1
+	title = Sweden_foci.1.t
+	desc = Sweden_foci.1.d
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	##Accept Send Request
+	option = {
+		name = Sweden_foci.1.o1
+		trigger = { 
+			SWE = {
+				OR = {
+					has_idea = NATO_member
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.1.o1 executed"
+		USA = { country_event = { id = Sweden_foci.1001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Sweden_foci.1.o2
+		trigger = { 
+			SWE = {
+				OR = {
+					is_in_faction_with = SOV 
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.1.o2 executed"
+		SOV = { country_event = { id = Sweden_foci.1001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+
+	#Deny the Request/We Do not have the funds
+	option = {
+		name = Sweden_foci.1.o3
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.1.o3 executed"
+		add_political_power = 50
+		add_war_support = -0.03
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { interest_rate > 7.999 }
+					has_idea = depression
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = Sweden_foci.1001
+	title = Sweden_foci.1001.t
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					has_idea = NATO_member
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.1001.d1
+	}
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					is_in_faction_with = SOV 
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.1001.d2
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.1001.o1 #no
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.1001.o1 executed"
+		SWE = { country_event = { id = Sweden_foci.1003 days = 7 } }
+		set_country_flag = i_like_cookies_2
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 2
+				THIS = { check_variable = { opinion@SWE < 11 } }
+			}
+		}
+	}
+
+	option = {
+		name = Sweden_foci.1001.o2 #yes
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.1001.o2 executed"
+		set_country_flag = i_like_cookies
+		SWE = { country_event = { id = Sweden_foci.1002 days = 7 } }
+		
+		
+		ai_chance = { base = 1 }
+	}
+}
+# SOV/USA ACCEPTS OUR REQUEST
+country_event = {
+	id = Sweden_foci.1002
+	title = Sweden_foci.1002.t
+	desc = {
+		trigger = { 
+			USA = {
+				has_country_flag = i_like_cookies
+			}
+		}
+		text = Sweden_foci.1002.d1
+	}
+	desc = {
+		SOV = {
+				has_country_flag = i_like_cookies
+			}
+		text = Sweden_foci.1002.d2
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.1002.o1
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.1002.o1 executed"
+		IF = {
+			limit = {
+				has_dlc = "By Blood Alone"
+				USA = {
+					has_country_flag = i_like_cookies
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_medium_plane_cas_airframe_2
+				amount = 36
+				variant_name = "F/A-18D Hornet"
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "By Blood Alone"
+				}
+				USA = {
+					has_country_flag = i_like_cookies
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = CV_MR_Fighter3 #F/A-18
+				producer = USA
+				amount = 36
+			}
+		}
+		IF = {
+			limit = {
+				has_dlc = "By Blood Alone"
+				SOV = {
+					has_country_flag = i_like_cookies
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = small_plane_airframe_2
+				amount = 36
+				variant_name = "MiG-29 Fulcrum"
+				producer = SOV
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "By Blood Alone"
+				}
+				SOV = {
+					has_country_flag = i_like_cookies
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = MR_Fighter2
+				amount = 36
+				producer = SOV
+			}
+		}
+	}
+}
+
+# SOV/USA DENIES OUR REQUEST
+country_event = {
+	id = Sweden_foci.1003
+	title = Sweden_foci.1003.t
+	desc = {
+		trigger = { 
+			USA = {
+				has_country_flag = i_like_cookies_2
+			}
+		}
+		text = Sweden_foci.1003.d1
+	}
+	desc = {
+		trigger = { 
+			SOV = {
+				has_country_flag = i_like_cookies_2
+			}
+		}
+		text = Sweden_foci.1003.d2
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.1003.o1
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.1003.o1 executed"
+	}
+}
+
+#Negotiate tank deals
+country_event = {
+	id = Sweden_foci.2
+	title = Sweden_foci.2.t
+	desc = Sweden_foci.2.d
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	##Accept Send Request
+	option = {
+		name = Sweden_foci.2.o1
+		trigger = { 
+			SWE = {
+				OR = {
+					has_idea = NATO_member
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2.o1 executed"
+		USA = { country_event = { id = Sweden_foci.2001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Sweden_foci.2.o2
+		trigger = { 
+			SWE = {
+				OR = {
+					is_in_faction_with = SOV 
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2.o2 executed"
+		SOV = { country_event = { id = Sweden_foci.2001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Sweden_foci.2.o3
+		trigger = { 
+			SWE = {
+				OR = {
+					is_in_faction_with = GER 
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2.o3 executed"
+		GER = { country_event = { id = Sweden_foci.2001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+
+	#Deny the Request/We Do not have the funds
+	option = {
+		name = Sweden_foci.2.o4
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2.o4 executed"
+		add_political_power = 50
+		add_war_support = -0.03
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { interest_rate > 7.999 }
+					has_idea = depression
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = Sweden_foci.2001
+	title = Sweden_foci.2001.t
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					is_in_faction_with = USA
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.2001.d1
+	}
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					is_in_faction_with = SOV 
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.2001.d2
+	}
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					is_in_faction_with = GER
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.2001.d3
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.2001.o1 #no
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2001.o1 executed"
+		set_country_flag = i_like_tanks
+		SWE = { country_event = { id = Sweden_foci.2003 days = 7 } }
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 2
+				THIS = { check_variable = { opinion@SWE < 11 } }
+			}
+		}
+	}
+
+	option = {
+		name = Sweden_foci.2001.o2 #yes
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2001.o2 executed"
+		SWE = { country_event = { id = Sweden_foci.2002 days = 7 } }
+		set_country_flag = i_like_tanks_2
+		ai_chance = { base = 1 }
+	}
+}
+# SOV/USA ACCEPTS OUR REQUEST
+country_event = {
+	id = Sweden_foci.2002
+	title = Sweden_foci.2002.t
+	desc = {
+		trigger = { 
+			USA = {
+				has_country_flag = i_like_tanks_2
+			}
+		}
+		text = Sweden_foci.2002.d1
+	}
+	desc = {
+		trigger = { 
+			SOV = {
+				has_country_flag = i_like_tanks_2
+			}
+		}
+		text = Sweden_foci.2002.d2
+	}
+	desc = {
+		trigger = { 
+			GER = {
+				has_country_flag = i_like_tanks_2
+			}
+		}
+		text = Sweden_foci.2002.d3
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.2002.o1
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2002.o1 executed"
+		IF = {
+			limit = {
+				has_dlc = "No Step Back"
+				USA = {
+					has_country_flag = i_like_tanks_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = mbt_hull_2
+				variant_name = "M1A2 Abrams"
+				amount = 42
+				producer = USA
+			}
+			USA = {
+				create_production_license = {
+					target = SWE
+					equipment = {
+						type = mbt_hull_2
+						variant_name = "M1A2 Abrams"
+					}
+					cost_factor = 1
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "No Step Back"
+				}
+				USA = {
+					has_country_flag = i_like_tanks_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = MBT_5
+				amount = 42
+				producer = USA
+			}
+			USA = {
+				create_production_license = {
+					target = SWE
+					equipment = {
+						type = MBT_5
+					}
+					cost_factor = 1
+				}
+			}
+		}
+		IF = {
+			limit = {
+				has_dlc = "No Step Back"
+				SOV = {
+					has_country_flag = i_like_tanks_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = mbt_hull_2
+				variant_name = "T-90A Vladimir"
+				amount = 42
+				producer = SOV
+			}
+			SOV = {
+				create_production_license = {
+					target = SWE
+					equipment = {
+						type = mbt_hull_2
+						variant_name = "T-90A Vladimir"
+					}
+					cost_factor = 1
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "No Step Back"
+				}
+				SOV = {
+					has_country_flag = i_like_tanks_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = MBT_5
+				amount = 42
+				producer = SOV
+			}
+			SOV = {
+				create_production_license = {
+					target = SWE
+					equipment = {
+						type = MBT_5
+					}
+					cost_factor = 1
+				}
+			}
+		}
+		IF = {
+			limit = {
+				has_dlc = "No Step Back"
+				GER = {
+					has_country_flag = i_like_tanks_2
+				}
+			}
+			create_equipment_variant = {
+				name = "Strv 122b"
+				type = mbt_hull_2
+				parent_version = 2
+				modules = {
+					main_armament_slot = tank_medium_cannon_2
+					turret_type_slot = tank_base_tank_turret
+					suspension_type_slot = tank_torsion_bar_suspension
+					armor_type_slot = tank_composite_armor_gen2
+					engine_type_slot = tank_diesel_engine_gen3
+					reload_type_slot = manual_loading
+					special_type_slot_1 = smoke_launchers_2
+					special_type_slot_2 = wet_ammo_storage
+					special_type_slot_3 = smoke_launchers_2
+					special_type_slot_4 = tank_battlestation_3		#Battlestation
+					special_type_slot_5 = spaced_armor_gen2		#ERA/Spaced
+				}
+				upgrades = {
+					tank_nsb_armor_upgrade = 7
+				}
+				icon = "GFX_SWE_MBT_4_medium"
+			}
+			GER = {
+				create_production_license = {
+					target = SWE
+					equipment = {
+						type = mbt_hull_1
+						version_name = "Leopard 2A6"
+					}
+					cost_factor = 0
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "No Step Back"
+				}
+				GER = {
+					has_country_flag = i_like_tanks_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = MBT_5
+				amount = 42
+				producer = GER
+			}
+			GER = {
+				create_production_license = {
+					target = SWE
+					equipment = {
+						type = MBT_5
+					}
+					cost_factor = 1
+				}
+			}
+		}
+	}
+}
+
+# SOV/USA DENIES OUR REQUEST
+country_event = {
+	id = Sweden_foci.2003
+	title = Sweden_foci.2003.t
+	desc = {
+		trigger = { 
+			USA = {
+				has_country_flag = i_like_tanks
+			}
+		}
+		text = Sweden_foci.2003.d1
+	}
+	desc = {
+		trigger = { 
+			SOV = {
+				has_country_flag = i_like_tanks
+			}
+		}
+		text = Sweden_foci.2003.d2
+	}
+	desc = {
+		trigger = { 
+			GER = {
+				has_country_flag = i_like_tanks
+			}
+		}
+		text = Sweden_foci.2003.d3
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.2003.o1
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.2003.o1 executed"
+	}
+}
+
+#Negotiate tank deals
+country_event = {
+	id = Sweden_foci.3
+	title = Sweden_foci.3.t
+	desc = Sweden_foci.3.d
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	##Accept Send Request
+	option = {
+		name = Sweden_foci.3.o1
+		trigger = { 
+			SWE = {
+				OR = {
+					has_idea = NATO_member
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3.o1 executed"
+		USA = { country_event = { id = Sweden_foci.3001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Sweden_foci.3.o2
+		trigger = { 
+			SWE = {
+				OR = {
+					is_in_faction_with = SOV 
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3.o2 executed"
+		SOV = { country_event = { id = Sweden_foci.3001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+	option = {
+		name = Sweden_foci.3.o3
+		trigger = { 
+			SWE = {
+				OR = {
+					is_in_faction_with = FRA 
+					is_in_faction = no
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3.o3 executed"
+		GER = { country_event = { id = Sweden_foci.3001 days = 1 } }
+
+		ai_chance = { base = 1 }
+	}
+
+	#Deny the Request/We Do not have the funds
+	option = {
+		name = Sweden_foci.3.o4
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3.o4 executed"
+		add_political_power = 50
+		add_war_support = -0.03
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { interest_rate > 7.999 }
+					has_idea = depression
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = Sweden_foci.3001
+	title = Sweden_foci.3001.t
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					is_in_faction_with = USA
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.3001.d1
+	}
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					is_in_faction_with = SOV 
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.3001.d2
+	}
+	desc = {
+		trigger = { 
+			Or = {
+				SWE = {
+					is_in_faction_with = FRA
+					is_in_faction = no
+				}
+			}
+		}
+		text = Sweden_foci.3001.d3
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.3001.o1 #no
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3001.o1 executed"
+		set_country_flag = i_like_helo
+		SWE = { country_event = { id = Sweden_foci.3003 days = 7 } }
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 2
+				THIS = { check_variable = { opinion@SWE < 11 } }
+			}
+		}
+	}
+
+	option = {
+		name = Sweden_foci.3001.o2 #yes
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3001.o2 executed"
+		SWE = { country_event = { id = Sweden_foci.3002 days = 7 } }
+		set_country_flag = i_like_helo_2
+		ai_chance = { base = 1 }
+	}
+}
+# SOV/USA ACCEPTS OUR REQUEST
+country_event = {
+	id = Sweden_foci.3002
+	title = Sweden_foci.3002.t
+	desc = {
+		trigger = { 
+			USA = {
+				has_country_flag = i_like_helo_2
+			}
+		}
+		text = Sweden_foci.3002.d1
+	}
+	desc = {
+		trigger = { 
+			SOV = {
+				has_country_flag = i_like_helo_2
+			}
+		}
+		text = Sweden_foci.3002.d2
+	}
+	desc = {
+		trigger = { 
+			FRA = {
+				has_country_flag = i_like_helo_2
+			}
+		}
+		text = Sweden_foci.3002.d3
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.3002.o1
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3002.o1 executed"
+		IF = {
+			limit = {
+				has_dlc = "No Step Back"
+				USA = {
+					has_country_flag = i_like_helo_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter_hull_0
+				variant_name = "AH-1 Cobra"
+				amount = 54
+				producer = USA
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter_hull_1
+				variant_name = "AH-64 A/D Apache Longbow"
+				amount = 12
+				producer = USA
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "No Step Back"
+				}
+				USA = {
+					has_country_flag = i_like_helo_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter1
+				amount = 54
+				producer = USA
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter3
+				amount = 12
+				producer = USA
+			}
+		}
+		IF = {
+			limit = {
+				has_dlc = "No Step Back"
+				SOV = {
+					has_country_flag = i_like_helo_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter_hull_1
+				variant_name = "Ka-50N"
+				amount = 64
+				producer = SOV
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "No Step Back"
+				}
+				SOV = {
+					has_country_flag = i_like_helo_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter2
+				amount = 64
+				producer = SOV
+			}
+		}
+		IF = {
+			limit = {
+				has_dlc = "No Step Back"
+				FRA = {
+					has_country_flag = i_like_helo_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter_hull_1
+				variant_name = "AS565 Panther"
+				amount = 65
+				producer = FRA
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					has_dlc = "No Step Back"
+				}
+				FRA = {
+					has_country_flag = i_like_helo_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = attack_helicopter3
+				amount = 65
+				producer = FRA
+			}
+		}
+	}
+}
+
+# SOV/USA DENIES OUR REQUEST
+country_event = {
+	id = Sweden_foci.3003
+	title = Sweden_foci.3003.t
+	desc = {
+		trigger = { 
+			USA = {
+				has_country_flag = i_like_helo
+			}
+		}
+		text = Sweden_foci.3003.d1
+	}
+	desc = {
+		trigger = { 
+			SOV = {
+				has_country_flag = i_like_helo
+			}
+		}
+		text = Sweden_foci.3003.d2
+	}
+	desc = {
+		trigger = { 
+			FRA = {
+				has_country_flag = i_like_helo
+			}
+		}
+		text = Sweden_foci.3003.d3
+	}
+	picture = GFX_fighter_jet
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.3003.o1
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.3003.o1 executed"
+	}
+}
+
