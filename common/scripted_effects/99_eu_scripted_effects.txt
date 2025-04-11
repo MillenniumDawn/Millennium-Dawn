@@ -2781,6 +2781,7 @@ on_startup_euu_action = {
 			}
 			set_variable = { global.EU_budget_min_call_rate = 1 }
 			set_EU_gdp = yes
+			EU_global_click_cost = yes
 			update_EU_budget_call_rate = yes
 			update_EU_average_gdp_lvl = yes
 			update_EU_average_eco_lvl = yes
@@ -3271,6 +3272,9 @@ update_EU_budget_call_rate = {
 		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
 		divide_variable = { THIS.EU_budget_contribution = 100 }
 		add_to_variable = { global.EU_total_budget = THIS.EU_budget_contribution }
+	}
+	for_each_scope_loop = { # Needs to be seperate for the total budget to sum up first
+		array = global.EU_member
 		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
 		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
 		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } #Weeks in a year
@@ -3281,6 +3285,31 @@ update_EU_budget_call_rate = {
 	multiply_variable = { global.EU_mff_total = 5 }
 
 	update_eu_dirty_variable = yes
+}
+
+EU_global_click_cost = {
+	# Global Call Rate Cost 10 per country
+	set_variable = { global.EU_10_per_member_cost = 10 }
+	multiply_variable = { global.EU_10_per_member_cost = global.EU_member_count }
+	# Negative version for add_political_power
+	set_variable = { global.EU_10_per_member_cost_minus = global.EU_10_per_member_cost }		
+	multiply_variable = { global.EU_10_per_member_cost_minus = -1 }
+	# Minimum Call Rate Cost 15 per country
+	set_variable = { global.EU_15_per_member_cost = 15 }
+	multiply_variable = { global.EU_15_per_member_cost = global.EU_member_count }
+	# Negative version for add_political_power
+	set_variable = { global.EU_15_per_member_cost_minus = global.EU_15_per_member_cost }
+	multiply_variable = { global.EU_15_per_member_cost_minus = -1 }
+}
+
+EU_country_call_rate_cost_calc = {
+	for_each_scope_loop = {
+		array = global.EU_member
+		set_variable = { THIS.EU_mff_country_cost = 1000 }
+		multiply_variable = { THIS.EU_mff_country_cost = THIS.EU_budget_ratio }
+		set_variable = { THIS.EU_mff_country_cost_minus = THIS.EU_mff_country_cost }
+		multiply_variable = { THIS.EU_mff_country_cost_minus = -1 }
+	}
 }
 
 set_EU_expenditure = {
