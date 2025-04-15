@@ -18,13 +18,18 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]:iranian_events.1.o1 executed"
 		add_political_power = -50
 		add_stability = -0.05
-		add_manpower = -1000
+		977 = {
+			add_manpower = -40000
+		}
 	}
 	option = { # Declare martial law until the situation calms down.
 		name = iranian_events.1.o2
 		log = "[GetDateText]: [This.GetName]:iranian_events.1.o2 executed"
 		add_political_power = -200
 		add_stability = 0.05
+		977 = {
+			add_manpower = -40000
+		}
 	}
 }
 news_event = {
@@ -209,7 +214,6 @@ country_event = {
 		modify_treasury_effect = yes
 		news_event = {
 			id = iranian_events.8
-			days = 0
 		}
 	}
 }
@@ -243,7 +247,6 @@ country_event = {
 		modify_treasury_effect = yes
 		news_event = {
 			id = iranian_events.10
-			days = 0
 		}
 	}
 }
@@ -282,7 +285,120 @@ country_event = {
 		set_country_flag = PER_development_plan_option_military
 	}
 }
+country_event = {
+	id = iranian_events.13 # Iran asks Iraq
+	title = iranian_events.13.t
+	desc = iranian_events.13.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
 
+	option = {
+		name = iranian_events.13.o1
+		log = "[GetDateText]: [This.GetName]:iranian_events.13.o1 executed"
+		if = {
+			limit = { PER = { has_country_flag = PER_ask_iraq_for_half_billion_weekly } }
+			custom_effect_tooltip = PER_half_billion_weekly_money_TT
+			PER = { set_country_flag = PER_iraq_accepted_to_pay_half_billion_weekly }
+			set_country_flag = IRQ_iraq_accepted_to_pay_half_billion_weekly
+		}
+		else_if = {
+			limit = { PER = { has_country_flag = PER_ask_iraq_for_one_billion_weekly } }
+			custom_effect_tooltip = PER_one_billion_weekly_money_TT
+			PER = { set_country_flag = PER_iraq_accepted_to_pay_one_billion_weekly }
+			set_country_flag = IRQ_iraq_accepted_to_pay_one_billion_weekly
+		}
+		else_if = {
+			limit = { PER = { has_country_flag = PER_ask_iraq_for_two_billion_weekly } }
+			custom_effect_tooltip = PER_two_billion_weekly_money_TT
+			PER = { set_country_flag = PER_iraq_accepted_to_pay_two_billion_weekly }
+			set_country_flag = IRQ_iraq_accepted_to_pay_two_billion_weekly
+		}
+		hidden_effect = { PER = { country_event = { id = iranian_events.54 } } }
+	}
+	option = {
+		name = iranian_events.13.o2
+		log = "[GetDateText]: [This.GetName]:iranian_events.13.o2 executed"
+		ai_chance = {
+			base = 0
+		}
+		custom_effect_tooltip = PER_iran_attack_iraq_wargoal_TT
+		hidden_effect = { PER = { country_event = { id = iranian_events.53 } } }
+	}
+}
+country_event = {
+	id = iranian_events.14 # Iraq refuses
+	title = iranian_events.14.t
+	desc = iranian_events.14.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.14.o1
+		log = "[GetDateText]: [This.GetName]:iranian_events.14.o1 executed"
+
+		create_wargoal = {
+			type = puppet_wargoal_focus
+			target = IRQ
+		}
+		add_opinion_modifier = {
+			target = IRQ
+			modifier = small_decrease
+		}
+	}
+}
+country_event = {
+	id = iranian_events.15 # Iraq accepts
+	title = iranian_events.15.t
+	desc = iranian_events.15.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.15.o1
+		log = "[GetDateText]: [This.GetName]:iranian_events.15.o1 executed"
+		if = {
+			limit = { has_country_flag = PER_ask_iraq_for_half_billion_weekly }
+			custom_effect_tooltip = PER_half_billion_weekly_income_TT
+			hidden_effect = { PER = { country_event = { id = iranian_events.55 days = 3486 } } }
+			hidden_effect = { IRQ = { country_event = { id = iranian_events.55 days = 3486 } } }
+		}
+		else_if = {
+			limit = { has_country_flag = PER_ask_iraq_for_one_billion_weekly }
+			custom_effect_tooltip = PER_one_billion_weekly_income_TT
+			hidden_effect = { PER = { country_event = { id = iranian_events.55 days = 1743 } } }
+			hidden_effect = { IRQ = { country_event = { id = iranian_events.55 days = 1743 } } }
+		}
+		else_if = {
+			limit = { has_country_flag = PER_ask_iraq_for_two_billion_weekly }
+			custom_effect_tooltip = PER_two_billion_weekly_income_TT
+			hidden_effect = { PER = { country_event = { id = iranian_events.55 days = 871 } } }
+			hidden_effect = { IRQ = { country_event = { id = iranian_events.55 days = 871 } } }
+		}
+		add_opinion_modifier = {
+			target = IRQ
+			modifier = small_increase
+		}
+	}
+}
+country_event = {
+	id = iranian_events.55 # Hidden effect to remove income or expense
+	is_triggered_only = yes
+
+	hidden = yes
+	timeout_days = 1
+	immediate = {
+		PER = {
+			clr_country_flag = PER_iraq_accepted_to_pay_half_billion_weekly
+			clr_country_flag = PER_iraq_accepted_to_pay_one_billion_weekly
+			clr_country_flag = PER_iraq_accepted_to_pay_two_billion_weekly
+		}
+		IRQ = {
+			clr_country_flag = IRQ_iraq_accepted_to_pay_half_billion_weekly
+			clr_country_flag = IRQ_iraq_accepted_to_pay_one_billion_weekly
+			clr_country_flag = IRQ_iraq_accepted_to_pay_two_billion_weekly
+		}
+	}
+}
 ### Iranian Presidental Elections Events ###
 country_event = { # Event to automatically choose presidents based on popularity and date
 	id = PER_election_events.1
@@ -297,6 +413,7 @@ country_event = { # Event to automatically choose presidents based on popularity
 			emerging_moderate_shiite_are_in_power = yes
 		}
 		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
 			has_country_flag = PER_election_enabled
 		}
 		OR = {
@@ -319,7 +436,6 @@ country_event = { # Event to automatically choose presidents based on popularity
 			}
 			country_event = {
 				id = PER_election_events.2
-				days = 0
 			}
 		}
 		else_if = { #9th Period
@@ -329,7 +445,6 @@ country_event = { # Event to automatically choose presidents based on popularity
 			}
 			country_event = {
 				id = PER_election_events.3
-				days = 0
 			}
 		}
 		else_if = { #10th Period
@@ -339,7 +454,6 @@ country_event = { # Event to automatically choose presidents based on popularity
 			}
 			country_event = {
 				id = PER_election_events.4
-				days = 0
 			}
 		}
 		else_if = { #11th Period
@@ -349,7 +463,6 @@ country_event = { # Event to automatically choose presidents based on popularity
 			}
 			country_event = {
 				id = PER_election_events.5
-				days = 0
 			}
 		}
 		else_if = { #12th Period
@@ -359,7 +472,6 @@ country_event = { # Event to automatically choose presidents based on popularity
 			}
 			country_event = {
 				id = PER_election_events.6
-				days = 0
 			}
 		}
 		else_if = { #13th Period
@@ -369,7 +481,6 @@ country_event = { # Event to automatically choose presidents based on popularity
 			}
 			country_event = {
 				id = PER_election_events.7
-				days = 0
 			}
 		}
 	}
@@ -396,6 +507,7 @@ country_event = { # 2001 Election Notification (Between Khatami and Tavakkoli)
 		tag = PER
 		date > 2001.3.1
 		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
 			has_country_flag = PER_presidency_abolished
 		}
 	}
@@ -462,6 +574,7 @@ country_event = { # 2005 Election Notification (Between Ahmadinejad and Rafsanja
 		date > 2005.3.1
 		NOT = {
 			has_country_flag = PER_presidency_abolished
+			has_country_flag = PER_turn_off_IR_stuff
 		}
 	}
 	fire_only_once = yes
@@ -528,6 +641,7 @@ country_event = { # 2009 Election Notification (Between Ahmadinejad and Mousavi)
 		date > 2009.3.1
 		NOT = {
 			has_country_flag = PER_presidency_abolished
+			has_country_flag = PER_turn_off_IR_stuff
 		}
 	}
 	fire_only_once = yes
@@ -593,6 +707,7 @@ country_event = { # 2013 Election Notification (Between Ghalibaf and Rouhani)
 		tag = PER
 		date > 2013.3.1
 		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
 			has_country_flag = PER_presidency_abolished
 		}
 	}
@@ -677,6 +792,9 @@ country_event = { # 2013 Election Notification (Qalibaf Withdraws from President
 	picture = GFX_ghalibaf_won_election
 	is_triggered_only = yes
 	timeout_days = 30
+	trigger = {
+		has_country_flag = PER_turn_off_IR_stuff
+	}
 	immediate = {
 		clr_country_flag = principalist_portrait_ghalibaf
 		set_country_flag = principalist_portrait_rezaee
@@ -705,6 +823,7 @@ country_event = { # 2017 Election Notification (Between Raisi and Rouhani)
 		}
 		NOT = {
 			has_country_flag = PER_presidency_abolished
+			has_country_flag = PER_turn_off_IR_stuff
 		}
 	}
 	fire_only_once = yes
@@ -770,6 +889,7 @@ country_event = { # 2021 Election Notification (Between Raisi and Hemmati)
 		date > 2021.3.1
 		NOT = {
 			has_country_flag = PER_presidency_abolished
+			has_country_flag = PER_turn_off_IR_stuff
 		}
 	}
 	fire_only_once = yes
@@ -837,6 +957,7 @@ country_event = { # 2025 Election Notification (Between Raisi and Pezeshkian)
 		date > 2025.3.1
 		NOT = {
 			has_country_flag = PER_presidency_abolished
+			has_country_flag = PER_turn_off_IR_stuff
 		}
 	}
 	fire_only_once = yes
@@ -886,6 +1007,11 @@ country_event = { # Khatami Elected as President 2001 (Reformists Won)
 	picture = GFX_khatami_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.8.a
@@ -908,7 +1034,11 @@ country_event = { # Yazdi Elected as President 2001 (Reformists Won)
 	desc = PER_election_events.81.d
 
 	is_triggered_only = yes
-
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 	option = {
 		name = PER_election_events.8.a
 		log = "[GetDateText]: [This.GetName]:PER_election_events.81.a executed"
@@ -933,6 +1063,11 @@ country_event = { # Tavakoli Elected as President 2001 (Principalists Won)
 	picture = GFX_tavakoli_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.9.a
@@ -956,6 +1091,11 @@ country_event = { # Rafsanjani Elected as President 2005 (Reformists Won)
 	picture = GFX_rafsanjani_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.10.a
@@ -977,6 +1117,12 @@ country_event = { # Kavakebian Elected as President 2005 (Reformists Won)
 	title = PER_election_events.101.t
 	desc = PER_election_events.101.d
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.101.a
@@ -1000,6 +1146,11 @@ country_event = { # Ahmadinejad Elected as President 2005 (Principalists Won)
 	picture = GFX_ahmadinejad_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.11.a
@@ -1023,6 +1174,11 @@ country_event = { # Mousavi Elected as President 2009 (Reformists Won)
 	picture = GFX_mousavi_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.12.a
@@ -1046,6 +1202,11 @@ country_event = { # Karroubi Elected as President 2009 (Reformists Won)
 	picture = GFX_mousavi_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.121.a
@@ -1069,6 +1230,11 @@ country_event = { # Ahmedinejad Elected as President 2009 (Principalists Won)
 	picture = GFX_ahmadinejad_won_election_second
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.13.a
@@ -1105,6 +1271,11 @@ country_event = { # Rouhani Elected as President 2013 (Reformists Won)
 	picture = GFX_rouhani_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.14.a
@@ -1128,6 +1299,12 @@ country_event = { # Ghalibaf Elected as President 2013 (Principalists Won)
 	picture = GFX_ghalibaf_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
+
 	option = {
 		name = PER_election_events.15.a
 		log = "[GetDateText]: [This.GetName]:PER_election_events.15.a executed"
@@ -1149,6 +1326,12 @@ country_event = { # Mashaei Elected as President 2013 (Principalists Won)
 	desc = PER_election_events.15.d
 	picture = GFX_ghalibaf_won_election
 	is_triggered_only = yes
+
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.151.a
@@ -1172,6 +1355,11 @@ country_event = { # Rezaee Elected as President 2013 (Principalists Won)
 	picture = GFX_rezaee_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.16.a
@@ -1195,6 +1383,11 @@ country_event = { # Rouhani Elected as President 2017 (Reformists Won)
 	picture = GFX_rouhani_won_election_second
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.17.a
@@ -1218,6 +1411,11 @@ country_event = { # Raisi Elected as President 2017 (Principalists Won)
 	picture = GFX_raisi_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.18.a
@@ -1241,6 +1439,11 @@ country_event = { # Bayadi Elected as President 2017 (Principalists Won)
 	picture = GFX_raisi_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.181.a
@@ -1264,6 +1467,11 @@ country_event = { # Hemmati Elected as President 2021 (Reformists Won)
 	picture = GFX_hemmati_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.19.a
@@ -1287,6 +1495,11 @@ country_event = { # Haghshenas Elected as President 2021 (Reformists Won)
 	picture = GFX_hemmati_won_election
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.191.a
@@ -1310,6 +1523,11 @@ country_event = { # Raisi Elected as President 2021 (Principalists Won)
 	picture = GFX_raisi_won_election_second
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.20.a
@@ -1334,6 +1552,11 @@ country_event = { # Raisi Elected as President 2025 (Principalists Won)
 	picture = GFX_raisi_won_election_second
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = {
 		name = PER_election_events.201.a
@@ -1358,6 +1581,12 @@ country_event = { # Pezeshkian Elected as President 2025 (Reformists Won)
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
+
 	option = {
 		name = PER_election_events.202.a
 		log = "[GetDateText]: [This.GetName]:PER_election_events.202.a executed"
@@ -1381,6 +1610,11 @@ country_event = { # TV Ads for Principalists
 	picture = GFX_politics_talks
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = { #Let's do this!
 		name = PER_election_events.22.a
@@ -1412,6 +1646,11 @@ country_event = { # TV Ads for Reformists
 	picture = GFX_politics_talks
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = { #Let's do this!
 		name = PER_election_events.23.a
@@ -1443,6 +1682,11 @@ country_event = { # Put Up Street Ads for Principalists
 	picture = GFX_politics_talks
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = { #Okay.
 		name = PER_election_events.24.a
@@ -1474,6 +1718,11 @@ country_event = { # Put Up Street Ads for Reformists
 	picture = GFX_politics_talks
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = { #Okay.
 		name = PER_election_events.25.a
@@ -1505,6 +1754,11 @@ country_event = { # Host Internet Ads for Principalists
 	picture = GFX_politics_talks
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = { #Sure, why not?
 		name = PER_election_events.26.a
@@ -1536,6 +1790,11 @@ country_event = { # Host Internet Ads for Reformists
 	picture = GFX_politics_talks
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = {
+			has_country_flag = PER_turn_off_IR_stuff
+		}
+	}
 
 	option = { #Sure, why not?
 		name = PER_election_events.27.a
@@ -1570,39 +1829,12 @@ country_event = { # 2009 Iranian election protests
 	option = { # Suppress them now!
 		name = PER_election_events.28.a
 		log = "[GetDateText]: [This.GetName]:PER_election_events.28.a executed"
-		custom_effect_tooltip = PER_harsh_protests_tt
-		add_ideas = PER_harsh_protests
+		custom_effect_tooltip = PER_may_start_protests2_TT
+		set_country_flag = PER_protests_ongoing
 		hidden_effect = {
-			remove_ideas = PER_harsh_protests
-			add_timed_idea = {
-				idea = PER_harsh_protests
-				days = 25
-			}
-		}
-	}
-	option = { # Let Principalists storm!
-		name = PER_election_events.28.b
-		log = "[GetDateText]: [This.GetName]:PER_election_events.28.b executed"
-		custom_effect_tooltip = PER_protests_tt
-		add_ideas = PER_protests
-		hidden_effect = {
-			remove_ideas = PER_protests
-			add_timed_idea = {
-				idea = PER_protests
-				days = 90
-			}
-		}
-	}
-	option = { # This will pass like the others...
-		name = PER_election_events.28.c
-		log = "[GetDateText]: [This.GetName]:PER_election_events.28.c executed"
-		custom_effect_tooltip = PER_peaceful_protests_tt
-		add_ideas = PER_peaceful_protests
-		hidden_effect = {
-			remove_ideas = PER_peaceful_protests
-			add_timed_idea = {
-				idea = PER_peaceful_protests
-				days = 130
+			news_event = {
+				id = iranian_events.230
+				days = 7
 			}
 		}
 	}
@@ -1640,7 +1872,6 @@ country_event = {
 		PER = { add_to_faction = ROOT }
 		news_event = {
 			id = axis_of_resistance_events.3
-			days = 0
 		}
 		PER = {
 			clr_country_flag = invited_syria
@@ -1660,7 +1891,6 @@ country_event = {
 		PER = {
 			country_event = {
 				id = axis_of_resistance_events.2
-				days = 0
 			}
 			clr_country_flag = invited_syria
 			clr_country_flag = invited_iraq
@@ -1764,7 +1994,6 @@ country_event = {
 		PER = {
 			news_event = {
 				id = axis_of_resistance_events.5
-				days = 0
 			}
 		}
 	}
@@ -2216,7 +2445,7 @@ country_event = {
 					set_province_controller = 3219
 					set_province_controller = 3795
 					set_province_controller = 1350
-			`		set_province_controller = 8123
+					set_province_controller = 8123
 					set_province_controller = 11295
 					set_province_controller = 10106
 					set_province_controller = 11369
@@ -4402,10 +4631,6 @@ country_event = {
 		}
 		else_if = {
 			limit = {
-				power_balance_value = {
-					id = PER_clergy_balance_of_power_category
-					value > -0.4
-				}
 				NOT = {
 					has_country_flag = PER_did_lib_2
 				}
@@ -5015,18 +5240,18 @@ country_event = {
 		# 	}
 		# 	activate_mission = PER_explosive_deterrent
 		# }
-		else_if = {
-			limit = {
-				NOT = {
-					has_country_flag = PER_did_ir_4
-					power_balance_value = {
-						id = PER_clergy_balance_of_power_category
-						value > 0.3
-					}
-				}
-			}
-			activate_mission = PER_a_return_to_the_past
-		}
+		# else_if = {
+		# 	limit = {
+		# 		NOT = {
+		# 			has_country_flag = PER_did_ir_4
+		# 			power_balance_value = {
+		# 				id = PER_clergy_balance_of_power_category
+		# 				value > 0.3
+		# 			}
+		# 		}
+		# 	}
+		# 	activate_mission = PER_a_return_to_the_past
+		# }
 		else_if = {
 			limit = {
 				NOT = {
@@ -5430,10 +5655,6 @@ country_event = {
 			limit = {
 				NOT = {
 					has_country_flag = PER_did_monarch_3
-					power_balance_value = {
-						id = PER_clergy_balance_of_power_category
-						value < -0.5
-					}
 					has_idea = economic_boom
 				}
 			}
@@ -6153,16 +6374,16 @@ country_event = {
 		hidden_effect = {
 			set_popularities = {
 				communism = 15
-				democratic = 30
-				nationalist = 15
-				neutrality = 40
+				democratic = 15
+				nationalist = 5
+				neutrality = 65
 			}
 		}
 		# Total: 30
 		set_variable = { party_pop_array^0 = 0.15 } #Western_Autocracy
-		set_variable = { party_pop_array^1 = 0.05 } #conservatism
+		set_variable = { party_pop_array^1 = 0.00 } #conservatism
 		set_variable = { party_pop_array^2 = 0.00 } #liberalism
-		set_variable = { party_pop_array^3 = 0.10 } #socialism
+		set_variable = { party_pop_array^3 = 0.00 } #socialism
 		# Total: 15
 		set_variable = { party_pop_array^4 = 0.05 } #Communist-State
 		set_variable = { party_pop_array^5 = 0.10 } #anarchist_communism
@@ -6174,43 +6395,23 @@ country_event = {
 		set_variable = { party_pop_array^10 = 0.00 } #Kingdom
 		set_variable = { party_pop_array^11 = 0.00 } #Caliphate
 		# Total: 40
-		set_variable = { party_pop_array^12 = 0.15 } #Neutral_Muslim_Brotherhood
+		set_variable = { party_pop_array^12 = 0.20 } #Neutral_Muslim_Brotherhood
 		set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
-		set_variable = { party_pop_array^14 = 0.15 } #Neutral_conservatism
+		set_variable = { party_pop_array^14 = 0.10 } #Neutral_conservatism
 		set_variable = { party_pop_array^15 = 0.00 } #oligarchism
-		set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+		set_variable = { party_pop_array^16 = 0.20 } #Neutral_Libertarian
 		set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
 		set_variable = { party_pop_array^18 = 0.10 } #neutral_Social
 		set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
 		# Total: 15
-		set_variable = { party_pop_array^20 = 0.15 } #Nat_Populism
-		set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
-		set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+		set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+		set_variable = { party_pop_array^21 = 0.02 } #Nat_Fascism
+		set_variable = { party_pop_array^22 = 0.03 } #Nat_Autocracy
 		set_variable = { party_pop_array^23 = 0.00 } #Monarchist
-		if = {
-			limit = {
-				has_country_flag = PER_peaceful_revolution
-			}
-			country_event = {
-				id = PER_civilwar.301
-			}
+		hidden_effect = {
 			country_event = {
 				id = PER_majlis.1
-				days = 2
-			}
-		}
-		if = {
-			limit = {
-				NOT = {
-					has_country_flag = PER_peaceful_revolution
-				}
-			}
-			country_event = {
-				id = PER_revolution.301
-			}
-			country_event = {
-				id = PER_majlis.1
-				days = 2
+				days = 12
 			}
 		}
 		ai_chance = {
@@ -9253,7 +9454,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: iranian_focus.4.b executed"
 		add_power_balance_value = {
 			id = PER_clergy_balance_of_power_category
-			value = -0.03
+			value = -0.05
 		}
 		ai_chance = {
 			base = 1
@@ -9317,8 +9518,11 @@ country_event = {
 	option = {
 		name = iranian_focus.6.a
 		log = "[GetDateText]: [This.GetName]: iranian_focus.6.a executed"
-		set_temp_variable = { PER_population_tax_income_multiplier_modifier_change = -0.05 }
-		update_PER_population_tax_income_multiplier_modifier = yes
+		set_temp_variable = { temp_productivity_change = -50 }
+		405 = { state_flat_productivity_change_effect = yes }
+		407 = { state_flat_productivity_change_effect = yes }
+		976 = { state_flat_productivity_change_effect = yes }
+		400 = { state_flat_productivity_change_effect = yes }
 		newline = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_small_medium_business_owners_opinion = yes
@@ -9330,11 +9534,8 @@ country_event = {
 	option = {
 		name = iranian_focus.6.b
 		log = "[GetDateText]: [This.GetName]: iranian_focus.6.b executed"
-		set_temp_variable = { temp_productivity_change = -50 }
-		405 = { state_flat_productivity_change_effect = yes }
-		407 = { state_flat_productivity_change_effect = yes }
-		976 = { state_flat_productivity_change_effect = yes }
-		400 = { state_flat_productivity_change_effect = yes }
+		set_temp_variable = { PER_population_tax_income_multiplier_modifier_change = -0.05 }
+		update_PER_population_tax_income_multiplier_modifier = yes
 		newline = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_small_medium_business_owners_opinion = yes
@@ -14240,7 +14441,7 @@ country_event = {
 	title = iranian_focus.137.t
 	desc = iranian_focus.137.d
 	is_triggered_only = yes
-	picture = GFX_civil_war_event_1
+	picture = GFX_artesh_protest
 
 	option = {
 		name = iranian_focus.137.a
@@ -14822,6 +15023,789 @@ country_event = { #They Deny!
 	}
 }
 
+country_event = {
+	id = iranian_focus.157
+	title = iranian_focus.157.t
+	desc = iranian_focus.157.d
+	picture = GFX_iran_tehran_parade
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.157.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.157.a executed"
+		army_experience = 25
+	}
+}
+
+country_event = {
+	id = iranian_focus.158
+	title = iranian_focus.158.t
+	desc = iranian_focus.158.d
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.158.a # FMI
+		log = "[GetDateText]: [This.GetName]:iranian_focus.158.a executed"
+		custom_effect_tooltip = PER_fmi_TT
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 16 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Ebrahim Yazdi"
+				picture = "ebrahim_yazdi.dds"
+				ideology = neutral_Social
+				traits = {
+					neutrality_neutral_Social
+					stubborn
+					career_politician
+				}
+			}
+			set_temp_variable = { party_index = 16 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = { # Green Path
+		name = iranian_focus.158.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.158.b executed"
+		custom_effect_tooltip = PER_gph_TT
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 12 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Mir-Hossein Mousavi"
+				picture = "mir_hossein_mousavi.dds"
+				ideology = Neutral_Muslim_Brotherhood
+				traits = {
+					writer
+					honest
+					geopolitical_thinker
+				}
+			}
+			set_temp_variable = { party_index = 12 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = { # National Front
+		name = iranian_focus.158.c
+		log = "[GetDateText]: [This.GetName]:iranian_focus.158.c executed"
+		custom_effect_tooltip = PER_nat_TT
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 14 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			create_country_leader = {
+				name = "Adib Boroumand"
+				picture = "adib_boroumand_new.dds"
+				ideology = Neutral_conservatism
+				traits = {
+					writer
+					neutrality_Neutral_conservatism
+					capable
+					honest
+				}
+			}
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.159
+	title = iranian_focus.159.t
+	desc = iranian_focus.159.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.159.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.159.a executed"
+		retire_character = PER_qasem_soleimani
+		newline = yes
+		add_stability = -0.10
+		hidden_effect = {
+			news_event = iranian_focus.161
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	option = {
+		name = iranian_focus.159.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.159.b executed"
+		retire_character = PER_qasem_soleimani
+		newline = yes
+		declare_war_on = {
+			target = USA
+			type = topple_government
+		}
+		hidden_effect = {
+			news_event = iranian_focus.161
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.160
+	title = iranian_focus.160.t
+	desc = iranian_focus.160.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.160.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.160.a executed"
+		PER = {
+			country_event = iranian_focus.159
+		}
+		newline = yes
+		add_stability = -0.10
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = iranian_focus.160.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.160.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+news_event = {
+	id = iranian_focus.161
+	title = iranian_focus.161.t
+	desc = iranian_focus.161.d
+	picture = GFX_qasem_soleimani_assassinated
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.161.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.161.a executed"
+
+		ai_chance = {
+			base = 10
+		}
+	}
+
+}
+
+country_event = {
+	id = iranian_focus.162
+	title = iranian_focus.162.t
+	desc = iranian_focus.162.d
+	picture = GFX_pazeshkpour_funeral
+	is_triggered_only = yes
+	trigger = {
+		nationalist_right_wing_populists_are_in_power = yes
+	}
+	option = {
+		name = iranian_focus.162.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.162.a executed"
+		create_country_leader = {
+			name = "Hojjat Kalashi"
+			picture = "hojjat_kalashi.dds"
+			ideology = Nat_Populism
+			traits = {
+				nationalist_Nat_Populism
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = iranian_focus.162.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.162.b executed"
+		create_country_leader = {
+			name = "Reza Kermani"
+			picture = "reza_kermani.dds"
+			ideology = Nat_Populism
+			traits = {
+				nationalist_Nat_Populism
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = iranian_focus.162.c
+		log = "[GetDateText]: [This.GetName]:iranian_focus.162.c executed"
+		create_country_leader = {
+			name = "Zahra Gholamipour"
+			picture = "gholamipour.dds"
+			ideology = Nat_Populism
+			traits = {
+				nationalist_Nat_Populism
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+}
+
+country_event = {
+	id = iranian_focus.163
+	title = iranian_focus.163.t
+	desc = iranian_focus.163.d
+	is_triggered_only = yes
+	picture = GFX_jaleeb_people
+	option = { # Give them Refuge from the Taliban
+		name = iranian_focus.163.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.163.a executed"
+		set_temp_variable = { PER_migration_rate_value_factor_change = 0.1 }
+		update_PER_migration_rate_value_factor = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = { # Let Them in, But Confiscate their Jaleebs!
+		name = iranian_focus.163.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.163.b executed"
+		set_temp_variable = { PER_foreign_influence_defense_modifier_change = 0.05 }
+		update_PER_foreign_influence_defense_modifier = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = { # Jalil Zandi Crashes!
+	id = iranian_focus.164
+	title = iranian_focus.164.t
+	desc = iranian_focus.164.d
+	is_triggered_only = yes
+	picture = GFX_car_crash
+	option = {
+		name = iranian_focus.164.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.164.a executed"
+		retire_character = PER_jalil_zandi
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = {
+		name = iranian_focus.164.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.164.b executed"
+		set_temp_variable = { PER_health_cost_change = 0.03 }
+		update_PER_healthcare_cost = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = { # Uptick in Sattelite Usage
+	id = iranian_focus.165
+	title = iranian_focus.165.t
+	desc = iranian_focus.165.d
+	is_triggered_only = yes
+
+	option = { # Leave them be
+		name = iranian_focus.165.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.165.a executed"
+		set_temp_variable = { PER_production_speed_internet_station_factor_change = 0.10 }
+		update_PER_production_speed_internet_station_factor = yes
+		newline = yes
+		set_temp_variable = { PER_drift_defence_factor_change = -0.05 }
+		update_PER_drift_defence_factor = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = { # Crack down!
+		name = iranian_focus.165.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.165.b executed"
+		set_temp_variable = { PER_drift_defence_factor_change = 0.05 }
+		update_PER_drift_defence_factor = yes
+		newline = yes
+		set_temp_variable = { PER_production_speed_internet_station_factor_change = -0.05 }
+		update_PER_production_speed_internet_station_factor = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = { # Bazaars in Trouble
+	id = iranian_focus.166
+	title = iranian_focus.166.t
+	desc = iranian_focus.166.d
+	is_triggered_only = yes
+
+	option = { # We can bail a few of them out
+		name = iranian_focus.166.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.166.a executed"
+		set_temp_variable = { PER_interest_rate_multiplier_modifier_change = 0.25 }
+		update_PER_interest_rate_multiplier_modifier = yes
+		newline = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_small_medium_business_owners_opinion = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = { # They can deal with it themselves
+		name = iranian_focus.166.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.166.b executed"
+		set_temp_variable = { PER_interest_rate_multiplier_modifier_change = -0.25 }
+		update_PER_interest_rate_multiplier_modifier = yes
+		newline = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_small_medium_business_owners_opinion = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.167
+	title = iranian_focus.167.t
+	desc = iranian_focus.167.d
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.167.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.167.a executed"
+		custom_effect_tooltip = PER_check_states_TT
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.168
+	title = iranian_focus.168.t
+	desc = iranian_focus.168.d
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_focus.168.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.168.a executed"
+		PER_saneei_change = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = {
+		name = iranian_focus.168.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.168.b executed"
+		PER_asadollah_change = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = {
+		name = iranian_focus.168.c
+		log = "[GetDateText]: [This.GetName]:iranian_focus.168.c executed"
+		custom_effect_tooltip = PER_second_ir_disbanded_TT
+		hidden_effect = {
+			retire_country_leader = yes
+			clr_country_flag = PER_second_ir
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.169
+	title = iranian_focus.169.t
+	desc = iranian_focus.169.d
+	is_triggered_only = yes
+
+	option = { # Tri Color
+		name = iranian_focus.169.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.169.a executed"
+		hidden_effect = {
+			drop_cosmetic_tag = yes
+			set_cosmetic_tag = PER_neutrality
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = { # Lion and Sun
+		name = iranian_focus.169.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.169.b executed"
+		hidden_effect = {
+			drop_cosmetic_tag = yes
+			set_cosmetic_tag = PER_AUTH_PAN
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = { # An Islamic Flag
+		name = iranian_focus.169.c
+		log = "[GetDateText]: [This.GetName]:iranian_focus.169.c executed"
+		hidden_effect = {
+			drop_cosmetic_tag = yes
+			set_cosmetic_tag = PER_AUTH
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = { # The Flower
+		name = iranian_focus.169.d1
+		log = "[GetDateText]: [This.GetName]:iranian_focus.169.d1 executed"
+		hidden_effect = {
+			drop_cosmetic_tag = yes
+			set_cosmetic_tag = PER_ARTESH_CONTROL
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.170
+	title = iranian_focus.170.t
+	desc = iranian_focus.170.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = iranian_focus.170.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.170.a executed"
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.171
+	title = iranian_focus.171.t
+	desc = iranian_focus.171.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = iranian_focus.171.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.171.a executed"
+		1146 = {
+			add_building_construction = {
+				type = nuclear_reactor
+				level = 1
+			}
+		}
+		newline = yes
+		set_temp_variable = { percent_change = 2.00 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = PER }
+		change_influence_percentage = yes
+		newline = yes
+		set_temp_variable = { treasury_change = -11.5 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+	option = {
+		name = iranian_focus.171.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.171.b executed"
+		set_temp_variable = { percent_change = 5 }
+		change_domestic_influence_percentage = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.173
+	title = iranian_focus.173.t
+	desc = iranian_focus.173.d
+	picture = GFX_politics_negotiations
+
+	is_triggered_only = yes
+
+	option = { # Accept
+
+		name = iranian_focus.173.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.173.a executed"
+		add_political_power = 25
+		PER = {
+			country_event = {
+				id = iranian_focus.174
+			}
+		}
+	}
+	option = { # Decline
+		ai_chance = {
+			base = 0
+		}
+		name = iranian_focus.173.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.173.b executed"
+		PER = {
+			country_event = {
+				id = iranian_focus.175
+			}
+		}
+	}
+}
+country_event = {
+	id = iranian_focus.174 # Accepted
+	title = iranian_focus.174.t
+	desc = iranian_focus.174.d
+	picture = GFX_message_signing
+
+	is_triggered_only = yes
+
+	option = {
+		add_political_power = 25
+		ai_chance = {
+			base = 1
+		}
+		name = iranian_focus.174.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.174.a executed"
+		TRK = {
+			add_opinion_modifier = {
+				target = PER
+				modifier = political_outreach
+			}
+		}
+		PER = {
+			add_opinion_modifier = {
+				target = TRK
+				modifier = political_outreach
+			}
+		}
+	}
+}
+country_event = {
+	id = iranian_focus.175 # Declined
+	title = iranian_focus.175.t
+	desc = iranian_focus.175.d
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		ai_chance = {
+			base = 1
+		}
+		name = iranian_focus.175.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.175.a executed"
+		# Delinced -> Ok then...
+	}
+}
+
+country_event = {
+	id = iranian_focus.176 # Iran being left unchecked
+	title = iranian_focus.176.t
+	desc = iranian_focus.176.d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = iranian_focus.176.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.176.a executed"
+		declare_war_on = {
+			target = PER
+			type = liberate_wargoal
+		}
+		hidden_effect = {
+			news_event = iranian_focus.177
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = {
+		name = iranian_focus.176.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.176.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+news_event = {
+	id = iranian_focus.177
+	title = iranian_focus.177.t
+	desc = iranian_focus.177.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	major = yes
+	picture = GFX_news_iraq_war3
+	option = {
+		name = iranian_focus.177.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.177.a executed"
+
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.178
+	title = iranian_focus.178.t
+	desc = iranian_focus.178.d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = iranian_focus.178.a # Support the judiciary
+		log = "[GetDateText]: [This.GetName]:iranian_focus.178.a executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_ulema_opinion = yes
+		if = {
+			limit = {
+				has_power_balance = {
+					id = PER_clergy_balance_of_power_category
+				}
+			}
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.03
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranian_focus.178.b # Support the liberal institutions
+		log = "[GetDateText]: [This.GetName]:iranian_focus.178.b executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_ulema_opinion = yes
+		if = {
+			limit = {
+				has_power_balance = {
+					id = PER_clergy_balance_of_power_category
+				}
+			}
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.03
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_focus.179 # Saeed Hajjarian Shot in Tehran!
+	title = iranian_focus.179.t
+	desc = iranian_focus.179.d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = iranian_focus.179.a
+		log = "[GetDateText]: [This.GetName]:iranian_focus.179.a executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
+		newline = yes
+		set_temp_variable = { PER_corruption_cost_change = -0.05 }
+		update_PER_corruption_cost = yes
+		if = {
+			limit = {
+				has_power_balance = {
+					id = PER_clergy_balance_of_power_category
+				}
+			}
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.03
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = iranian_focus.179.b
+		log = "[GetDateText]: [This.GetName]:iranian_focus.179.b executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		if = {
+			limit = {
+				has_power_balance = {
+					id = PER_clergy_balance_of_power_category
+				}
+			}
+			newline = yes
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.03
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
 # Protest Events
 
 # Khoy has fallen to protesters
@@ -14835,6 +15819,11 @@ country_event = {
 		NOT = {
 			has_country_flag = PER_khoy_fell_recently
 		}
+		NOT = {
+			1039 = {
+				has_state_flag = PER_locals_swayed
+			}
+		}
 	}
 	option = {
 		name = iranian_events.20.a
@@ -14842,6 +15831,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		1039 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -14851,11 +15852,16 @@ country_event = {
 	id = iranian_events.21
 	title = iranian_events.21.t
 	desc = iranian_events.21.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest3
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_west_azerbaijan_fell_recently
+		}
+		NOT = {
+			979 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -14865,6 +15871,18 @@ country_event = {
 		979 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -14873,11 +15891,16 @@ country_event = {
 	id = iranian_events.22
 	title = iranian_events.22.t
 	desc = iranian_events.22.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest4
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_azerbaijan_fell_recently
+		}
+		NOT = {
+			407 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -14887,6 +15910,18 @@ country_event = {
 		407 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -14895,11 +15930,16 @@ country_event = {
 	id = iranian_events.23
 	title = iranian_events.23.t
 	desc = iranian_events.23.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest5
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_kordestan_fell_recently
+		}
+		NOT = {
+			408 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -14909,6 +15949,18 @@ country_event = {
 		408 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -14917,11 +15969,16 @@ country_event = {
 	id = iranian_events.24
 	title = iranian_events.24.t
 	desc = iranian_events.24.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest5
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_kermanshah_fell_recently
+		}
+		NOT = {
+			1139 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -14931,6 +15988,18 @@ country_event = {
 		1139 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -14939,11 +16008,16 @@ country_event = {
 	id = iranian_events.25
 	title = iranian_events.25.t
 	desc = iranian_events.25.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest5
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_ilam_fell_recently
+		}
+		NOT = {
+			1138 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -14953,6 +16027,18 @@ country_event = {
 		1138 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -14961,11 +16047,16 @@ country_event = {
 	id = iranian_events.26
 	title = iranian_events.26.t
 	desc = iranian_events.26.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest5
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_khuzestan_fell_recently
+		}
+		NOT = {
+			399 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -14974,6 +16065,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		399 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -14989,6 +16092,11 @@ country_event = {
 		NOT = {
 			has_country_flag = PER_hamadan_fell_recently
 		}
+		NOT = {
+			1148 = {
+				has_state_flag = PER_locals_swayed
+			}
+		}
 	}
 	option = {
 		name = iranian_events.27.a
@@ -14996,6 +16104,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		1148 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15005,11 +16125,16 @@ country_event = {
 	id = iranian_events.28
 	title = iranian_events.28.t
 	desc = iranian_events.28.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest4
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_lorestan_fell_recently
+		}
+		NOT = {
+			406 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15019,6 +16144,18 @@ country_event = {
 		406 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15027,11 +16164,16 @@ country_event = {
 	id = iranian_events.29
 	title = iranian_events.29.t
 	desc = iranian_events.29.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest4
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_markazi_fell_recently
+		}
+		NOT = {
+			404 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15041,6 +16183,18 @@ country_event = {
 		404 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15049,11 +16203,16 @@ country_event = {
 	id = iranian_events.30
 	title = iranian_events.30.t
 	desc = iranian_events.30.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest4
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_qom_fell_recently
+		}
+		NOT = {
+			1144 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15063,6 +16222,18 @@ country_event = {
 		1144 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15071,11 +16242,16 @@ country_event = {
 	id = iranian_events.31
 	title = iranian_events.31.t
 	desc = iranian_events.31.d
-	picture = GFX_student_protest_iran
+	picture = GFX_tehran_protest
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_tehran_fell_recently
+		}
+		NOT = {
+			405 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15084,6 +16260,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		405 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15099,6 +16287,11 @@ country_event = {
 		NOT = {
 			has_country_flag = PER_semnan_fell_recently
 		}
+		NOT = {
+			1149 = {
+				has_state_flag = PER_locals_swayed
+			}
+		}
 	}
 	option = {
 		name = iranian_events.32.a
@@ -15106,6 +16299,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		1149 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15115,11 +16320,16 @@ country_event = {
 	id = iranian_events.33
 	title = iranian_events.33.t
 	desc = iranian_events.33.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest3
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_esfahan_fell_recently
+		}
+		NOT = {
+			976 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15129,6 +16339,18 @@ country_event = {
 		976 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15137,11 +16359,16 @@ country_event = {
 	id = iranian_events.34
 	title = iranian_events.34.t
 	desc = iranian_events.34.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest3
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_fars_fell_recently
+		}
+		NOT = {
+			400 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15151,6 +16378,18 @@ country_event = {
 		400 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15159,11 +16398,16 @@ country_event = {
 	id = iranian_events.35
 	title = iranian_events.35.t
 	desc = iranian_events.35.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest3
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_bushehr_fell_recently
+		}
+		NOT = {
+			1146 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15172,6 +16416,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		1146 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15187,6 +16443,11 @@ country_event = {
 		NOT = {
 			has_country_flag = PER_yazd_fell_recently
 		}
+		NOT = {
+			1147 = {
+				has_state_flag = PER_locals_swayed
+			}
+		}
 	}
 	option = {
 		name = iranian_events.36.a
@@ -15194,6 +16455,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		1147 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15203,11 +16476,16 @@ country_event = {
 	id = iranian_events.37
 	title = iranian_events.37.t
 	desc = iranian_events.37.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest4
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_gilan_fell_recently
+		}
+		NOT = {
+			1073 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15217,6 +16495,18 @@ country_event = {
 		1073 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15225,11 +16515,16 @@ country_event = {
 	id = iranian_events.38
 	title = iranian_events.38.t
 	desc = iranian_events.38.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest4
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_mazandaran_fell_recently
+		}
+		NOT = {
+			403 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15238,6 +16533,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		403 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15253,6 +16560,11 @@ country_event = {
 		NOT = {
 			has_country_flag = PER_golestan_fell_recently
 		}
+		NOT = {
+			1145 = {
+				has_state_flag = PER_locals_swayed
+			}
+		}
 	}
 	option = {
 		name = iranian_events.39.a
@@ -15260,6 +16572,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		1145 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15269,11 +16593,16 @@ country_event = {
 	id = iranian_events.40
 	title = iranian_events.40.t
 	desc = iranian_events.40.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest4
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_north_khorasan_fell_recently
+		}
+		NOT = {
+			1150 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15283,6 +16612,18 @@ country_event = {
 		1150 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15291,11 +16632,16 @@ country_event = {
 	id = iranian_events.41
 	title = iranian_events.41.t
 	desc = iranian_events.41.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest5
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_razavi_khorasan_fell_recently
+		}
+		NOT = {
+			402 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15305,6 +16651,18 @@ country_event = {
 		402 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15313,11 +16671,16 @@ country_event = {
 	id = iranian_events.42
 	title = iranian_events.42.t
 	desc = iranian_events.42.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest5
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_south_khorasan_fell_recently
+		}
+		NOT = {
+			1151 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15327,6 +16690,18 @@ country_event = {
 		1151 = {
 			set_state_flag = PER_locals_swayed
 		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
+		}
 	}
 }
 
@@ -15335,11 +16710,16 @@ country_event = {
 	id = iranian_events.43
 	title = iranian_events.43.t
 	desc = iranian_events.43.d
-	picture = GFX_student_protest_iran
+	picture = GFX_iran_protest5
 	is_triggered_only = yes
 	trigger = {
 		NOT = {
 			has_country_flag = PER_kerman_fell_recently
+		}
+		NOT = {
+			977 = {
+				has_state_flag = PER_locals_swayed
+			}
 		}
 	}
 	option = {
@@ -15348,6 +16728,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		977 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15363,6 +16755,11 @@ country_event = {
 		NOT = {
 			has_country_flag = PER_balochistan_fell_recently
 		}
+		NOT = {
+			401 = {
+				has_state_flag = PER_locals_swayed
+			}
+		}
 	}
 	option = {
 		name = iranian_events.44.a
@@ -15370,6 +16767,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		401 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15385,6 +16794,11 @@ country_event = {
 		NOT = {
 			has_country_flag = PER_hormuz_fell_recently
 		}
+		NOT = {
+			978 = {
+				has_state_flag = PER_locals_swayed
+			}
+		}
 	}
 	option = {
 		name = iranian_events.45.a
@@ -15392,6 +16806,18 @@ country_event = {
 		custom_effect_tooltip = PER_state_falls_TT
 		978 = {
 			set_state_flag = PER_locals_swayed
+		}
+		add_to_variable = { var = PER_protest_exhaustion value = 1 }
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.05
+			}
 		}
 	}
 }
@@ -15401,12 +16827,33 @@ country_event = {
 	id = iranian_events.200
 	title = iranian_events.200.t
 	desc = iranian_events.200.d
-	picture = GFX_iran_protests_failed_country
+	picture = GFX_iran_protest1
 	is_triggered_only = yes
 
 	option = {
 		name = iranian_events.200.a
 		log = "[GetDateText]: [This.GetName]:iranian_events.200.a executed"
+		hidden_effect = {
+			random_list = {
+				70 = {
+					add_to_variable = { var = PER_protest_exhaustion value = 1 }
+				}
+				30 = {
+					add_to_variable = { var = PER_protest_exhaustion value = -2 }
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.02
+			}
+		}
 	}
 }
 
@@ -15414,11 +16861,1382 @@ country_event = {
 	id = iranian_events.201
 	title = iranian_events.201.t
 	desc = iranian_events.201.d
-	picture = GFX_iran_protests_failed_country
+	picture = GFX_iran_protest2
 	is_triggered_only = yes
 
 	option = {
 		name = iranian_events.201.a
 		log = "[GetDateText]: [This.GetName]:iranian_events.201.a executed"
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = -0.01
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.202 # End of protests
+	title = iranian_events.202.t
+	desc = iranian_events.202.d
+	picture = GFX_iran_protest5
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.202.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.202.a executed"
+		clr_country_flag = PER_protests_ongoing
+		clear_variable = PER_protest_exhaustion
+		every_owned_state = {
+			clr_state_flag = PER_locals_swayed
+		}
+		if = {
+			limit = {
+				has_power_balance = {
+					id =  PER_clergy_balance_of_power_category
+				}
+			}
+			add_power_balance_value = {
+				id = PER_clergy_balance_of_power_category
+				value = 0.05
+			}
+		}
+	}
+}
+
+# I.R. collapse event chain
+country_event = {
+	id = iranian_events.220 # The Breaking Point
+	title = iranian_events.220.t
+	desc = iranian_events.220.d
+	picture = GFX_iran_revolution_small
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.220.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.220.a executed"
+		set_country_flag = PER_turn_off_IR_stuff
+		custom_effect_tooltip = PER_increase_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = 1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			if = {
+				limit = {
+					has_country_flag = PER_protests_ongoing
+				}
+				country_event = {
+					id = iranian_events.202
+					days = 1
+				}
+			}
+			remove_power_balance = {
+				id = PER_clergy_balance_of_power_category
+			}
+			country_event = {
+				id = iranian_events.221
+				days = 7
+			}
+		}
+	}
+
+	option = {
+		name = iranian_events.220.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.220.b executed"
+		set_country_flag = PER_turn_off_IR_stuff
+		custom_effect_tooltip = PER_decrease_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = -1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			remove_power_balance = {
+				id = PER_clergy_balance_of_power_category
+			}
+			country_event = {
+				id = iranian_events.221
+				days = 7
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.221 # Defections & Disloyalty
+	title = iranian_events.221.t
+	desc = iranian_events.221.d
+	picture = GFX_artesh_protest
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.221.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.221.a executed"
+		custom_effect_tooltip = PER_increase_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = 1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.222
+				days = 7
+			}
+		}
+	}
+
+	option = {
+		name = iranian_events.221.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.221.b executed"
+		custom_effect_tooltip = PER_decrease_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = -1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.222
+				days = 7
+			}
+		}
+	}
+}
+
+
+country_event = {
+	id = iranian_events.222 # A Fractured Parliament
+	title = iranian_events.222.t
+	desc = iranian_events.222.d
+	picture = GFX_event_civil_war_3
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.222.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.222.a executed"
+		custom_effect_tooltip = PER_increase_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = 1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			if = {
+				limit = {
+					date > 2009.1.1
+				}
+				country_event = {
+					id = iranian_events.224
+					days = 7
+				}
+			}
+			else = {
+				country_event = {
+					id = iranian_events.223
+					days = 7
+				}
+			}
+		}
+	}
+
+	option = {
+		name = iranian_events.222.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.222.b executed"
+		custom_effect_tooltip = PER_decrease_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = -1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			if = {
+				limit = {
+					date > 2009.1.1
+				}
+				country_event = {
+					id = iranian_events.224
+					days = 7
+				}
+			}
+			else = {
+				country_event = {
+					id = iranian_events.223
+					days = 7
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.223 # The Rise of Montazeri (Before 2009)
+	title = iranian_events.223.t
+	desc = iranian_events.223.d
+	picture = GFX_montazeri_event
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.223.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.223.a executed"
+		custom_effect_tooltip = PER_increase_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = 1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.225
+				days = 7
+			}
+		}
+	}
+
+	option = {
+		name = iranian_events.223.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.223.b executed"
+		custom_effect_tooltip = PER_decrease_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = -1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.225
+				days = 7
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.224 # The Formation of the Revolutionary Council (After 2009)
+	title = iranian_events.224.t
+	desc = iranian_events.224.d
+	picture = GFX_iran_nationalist_country
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.224.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.224.a executed"
+		set_country_flag = PER_rev_council
+		custom_effect_tooltip = PER_increase_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = 1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.225
+				days = 7
+			}
+		}
+	}
+
+	option = {
+		name = iranian_events.224.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.224.b executed"
+		set_country_flag = PER_rev_council
+		custom_effect_tooltip = PER_decrease_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = -1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.225
+				days = 7
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.225 # The Fall of Tehran
+	title = iranian_events.225.t
+	desc = iranian_events.225.d
+	picture = GFX_tehran_protest
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.225.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.225.a executed"
+		custom_effect_tooltip = PER_increase_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = 1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.226
+				days = 7
+			}
+		}
+	}
+
+	option = {
+		name = iranian_events.225.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.225.b executed"
+		custom_effect_tooltip = PER_decrease_volatility_TT
+		add_to_variable = { var = PER_revolution_volatility value = -1 }
+		clamp_variable = { var = PER_revolution_volatility min = 0 max = 50 }
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.226
+				days = 7
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.226 # The Dissolution of the Islamic Republic
+	title = iranian_events.226.t
+	desc = iranian_events.226.d
+	picture = GFX_regime_crumbles
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.226.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.226.a executed"
+		hidden_effect = {
+			set_cosmetic_tag = PER_free_republic
+			news_event = iranian_events.231
+			country_event = {
+				id = iranian_focus.169
+				days = 19
+			}
+			if = {
+				limit = {
+					has_country_flag = PER_rev_council
+				}
+				set_temp_variable = { party_index = 16 }
+				set_temp_variable = { party_popularity_increase = 0.35 }
+				set_temp_variable = { temp_outlook_increase = 0.35 }
+				add_relative_party_popularity = yes
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 16 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+				}
+				country_event = {
+					id = iranian_focus.158
+					days = 7
+				}
+				create_country_leader = {
+					name = "Revolutionary Council"
+					picture = "iranian_juntas.dds"
+					ideology = neutral_Social
+					traits = {
+						stubborn
+					}
+				}
+			}
+			else = {
+				set_temp_variable = { party_index = 13 }
+				set_temp_variable = { party_popularity_increase = 0.35 }
+				set_temp_variable = { temp_outlook_increase = 0.35 }
+				add_relative_party_popularity = yes
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 13 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+				}
+				create_country_leader = {
+					name = "Hossein-Ali Montazeri"
+					picture = "hossein_montazeri.dds"
+					ideology = Neutral_Autocracy
+					desc = "PER_montazeri_desc"
+					traits = {
+						neutrality_Neutral_Autocracy
+						zealous
+						cleric
+					}
+				}
+			}
+			add_ideas = PER_neutral_political_scene
+			clr_country_flag = generic_election_killswitch
+			clr_country_flag = party1_banned
+			clr_country_flag = party2_banned
+			clr_country_flag = party3_banned
+			clr_country_flag = party4_banned
+			clr_country_flag = party5_banned
+			set_country_flag = party9_banned
+			set_country_flag = party10_banned
+			clr_country_flag = party13_banned
+			clr_country_flag = party14_banned
+			clr_country_flag = party15_banned
+			clr_country_flag = party16_banned
+			clr_country_flag = party17_banned
+			clr_country_flag = party18_banned
+			clr_country_flag = party19_banned
+			clr_country_flag = party20_banned
+			clr_country_flag = party21_banned
+			clr_country_flag = party22_banned
+			clr_country_flag = party23_banned
+			clr_country_flag = party24_banned
+			country_event = {
+				id = PER_majlis.30
+				days = 16
+			}
+			HEZ = {
+				add_opinion_modifier = {
+					target = PER
+					modifier = danger_to_national_security
+				}
+			}
+			PER = {
+				add_opinion_modifier = {
+					target = HEZ
+					modifier = danger_to_national_security
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = SYR
+					modifier = resistance_axis
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = HEZ
+					modifier = resistance_axis
+				}
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = beirut_bombing
+				}
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = no_diplomatic_ties
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = USA
+					modifier = no_diplomatic_ties
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = USA
+					modifier = cia_coup_mossadeq
+				}
+			}
+			USA = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = iran_hostage_crisis
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = ISR
+					modifier = no_diplomatic_ties
+				}
+			}
+			ISR = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = no_diplomatic_ties
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = ISR
+					modifier = no_diplomatic_ties
+				}
+			}
+			ISR = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = ISR_Arab_Conflict
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = ISR
+					modifier = ISR_Arab_Conflict
+				}
+			}
+			ISR = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = death_to_israel_ISR
+				}
+			}
+			PER = {
+				remove_opinion_modifier = {
+					target = ISR
+					modifier = death_to_israel
+				}
+			}
+			ISR = {
+				remove_opinion_modifier = {
+					target = PER
+					modifier = no_diplomatic_ties
+				}
+			}
+			remove_ideas = PER_ahmadinejad_idea
+			remove_ideas = PER_ghalibaf_idea
+			remove_ideas = PER_hemmati_idea
+			remove_ideas = PER_khatami_idea
+			remove_ideas = PER_mousavi_idea
+			remove_ideas = PER_rafsanjani_idea
+			remove_ideas = PER_raisi_idea
+			remove_ideas = PER_rezaee_idea
+			remove_ideas = PER_rouhani_idea
+			remove_ideas = PER_tavakoli_idea
+			remove_ideas = the_holy_defence
+			HEZ = {
+				add_relation_modifier = {
+					target = IRI
+					modifier = generic_increased_military_support
+				}
+			}
+			SYR = {
+				add_relation_modifier = {
+					target = IRI
+					modifier = generic_increased_military_support
+				}
+			}
+			if = {
+				limit = { has_idea = faction_resistance_axis_member }
+				leave_faction = yes
+			}
+			remove_ideas = faction_resistance_axis_member
+			country_event = {
+				id = iranian_events.227
+				days = 5
+			}
+			if = {
+				limit = {
+					check_variable = {
+						PER_revolution_volatility > 2
+					}
+				}
+				country_event = {
+					id = iranian_events.228
+					days = 70
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.227 # IRGC Generals Flee to Lebanon
+	title = iranian_events.227.t
+	desc = iranian_events.227.d
+	picture = GFX_civil_war_event_4
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.227.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.227.a executed"
+		retire_character = PER_mostafa_izadi
+		retire_character = PER_mohammad_hejazi
+		retire_character = PER_mohammad_jafari
+		retire_character = PER_ali_najafi
+		retire_character = PER_qasem_soleimani
+		retire_character = PER_ali_fadavi
+		retire_character = PER_mohammad_bagheri
+		retire_character = PER_abdolrahim_mousavi
+		retire_character = PER_ali_shamkhani
+		retire_character = PER_amir_hajizadeh
+		delete_unit_template_and_units = {
+			division_template = "Niru-ye Daryayi Sepah-e Pasdaran"
+			disband = yes
+		}
+		delete_unit_template_and_units = {
+			division_template = "Niru-ye Qods-e Sepah-e Pasdaran"
+			disband = yes
+		}
+		delete_unit_template_and_units = {
+			division_template = "Lashkar-e Motorizeh Sepah-e Pasdaran"
+			disband = yes
+		}
+		delete_unit_template_and_units = {
+			division_template = "Lashkar-e Zerehiye Sepah-e Pasdaran"
+			disband = yes
+		}
+		delete_unit_template_and_units = {
+			division_template = "Lashkar-e Mekanizeh Sepah-e Pasdaran"
+			disband = yes
+		}
+		delete_unit_template_and_units = {
+			division_template = "Lashkar-e Komando-ye Sepah-e Pasdaran"
+			disband = yes
+		}
+		delete_unit_template_and_units = {
+			division_template = "Lashkar-e Havabord-e Sepah-e Pasdaran"
+			disband = yes
+		}
+		HEZ = {
+			set_country_flag = HEZ_IRGC_GENERALS
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.228 # Artesh Under Attack!
+	title = iranian_events.228.t
+	desc = iranian_events.228.d
+	picture = GFX_civil_war_event_1
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.228.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.228.a executed"
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.232
+				days = 30
+			}
+			news_event = iranian_events.229
+			create_dynamic_country = {
+				original_tag = PER
+				set_country_flag = PER_akhoond_flag
+				copy_tag = PER
+				set_cosmetic_tag = PER_mullahs_government
+				set_country_flag = is_IRAN
+				retire_country_leader = yes
+				set_popularities = {
+					communism = 94
+					democratic = 6
+				}
+				set_politics = {
+					ruling_party = communism
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+
+				start_politics_input = yes
+
+				### Party Popularities
+				set_variable = { party_pop_array^0 = 0.06 } #Western_Autocracy
+				set_variable = { party_pop_array^1 = 0.00 } #conservatism
+				set_variable = { party_pop_array^2 = 0.00 } #liberalism
+				set_variable = { party_pop_array^3 = 0.00 } #socialism
+				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+				set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+				set_variable = { party_pop_array^6 = 0 } #Conservative
+				set_variable = { party_pop_array^7 = 0 } #Autocracy
+				set_variable = { party_pop_array^8 = 0.47 } #Mod_Vilayat_e_Faqih -> Reformists
+				set_variable = { party_pop_array^9 = 0.47 } #Vilayat_e_Faqih -> Principalists
+				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+
+				### Ruling Party
+				add_to_array = { ruling_party = 6 }
+
+				startup_politics = yes
+				load_focus_tree = { tree = iran_focus keep_completed = yes }
+				create_country_leader = {
+					name = "Qasem Soleimani"
+					picture = "IRCG_Gen_Qasem_Soleimani.dds"
+					ideology = Autocracy
+					traits = {
+						guerrilla_leader
+						emerging_Vilayat_e_Faqih
+						IRGC_Member
+						geopolitical_thinker
+						sly
+						stubborn
+						anti_zionist
+					}
+				}
+			}
+			IRI = {
+				division_template = {
+					name = "Niru-ye Daryayi Sepah-e Pasdaran" #Sepah
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						L_Marine_Bat = { x = 0 y = 1 }
+						L_Marine_Bat = { x = 0 y = 2 }
+						L_Marine_Bat = { x = 0 y = 3 }
+						L_Marine_Bat = { x = 0 y = 4 }
+						L_Marine_Bat = { x = 1 y = 0 }
+						Arty_Bat = { x = 1 y = 1 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Niru-ye Qods-e Sepah-e Pasdaran" #Sepah
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 1 y = 0 }
+						Special_Forces = { x = 1 y = 1 }
+						Special_Forces = { x = 1 y = 2 }
+						Special_Forces = { x = 1 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
+						Special_Forces = { x = 2 y = 1 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Lashkar-e Motorizeh Sepah-e Pasdaran" #Sepah
+					regiments = {
+						Mot_Militia_Bat = { x = 0 y = 0 }
+						Mot_Militia_Bat = { x = 0 y = 1 }
+						Mot_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+						SP_Arty_Bat = { x = 1 y = 2 }
+					}
+					support = {
+						Mot_Recce_Comp = { x = 0 y = 0 }
+						H_Engi_Comp = { x = 0 y = 1 }
+						SP_AA_Battery = { x = 0 y = 2 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Lashkar-e Zerehiye Sepah-e Pasdaran" #Sepah
+					regiments = {
+						armor_Bat = { x = 0 y = 0 }
+						Arm_Inf_Bat = { x = 1 y = 0 }
+						Mot_Militia_Bat = { x = 1 y = 1 }
+						SP_Arty_Bat = { x = 1 y = 2 }
+						SP_AA_Bat = { x = 1 y = 3 }
+					}
+					support = {
+						Arm_Recce_Comp = { x = 0 y = 0 }
+						H_Engi_Comp = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Lashkar-e Mekanizeh Sepah-e Pasdaran" #Sepah
+					regiments = {
+						Mech_Inf_Bat = { x = 0 y = 0 }
+						Mot_Militia_Bat = { x = 0 y = 1 }
+						Mot_Militia_Bat = { x = 0 y = 2 }
+						SP_Arty_Bat = { x = 1 y = 0 }
+						SP_AA_Bat = { x = 1 y = 1 }
+						armor_Bat = { x = 2 y = 0 }
+					}
+					support = {
+						Mot_Recce_Comp = { x = 0 y = 0 }
+						L_Engi_Comp = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Lashkar-e Komando-ye Sepah-e Pasdaran" #Sepah
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						Special_Forces = { x = 0 y = 1 }
+						Special_Forces = { x = 0 y = 2 }
+						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 1 y = 0 }
+						SP_Arty_Bat = { x = 1 y = 1 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
+						#SP_AA_Battery = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Lashkar-e Havabord-e Sepah-e Pasdaran" #Sepah
+					regiments = {
+						Special_Forces = { x = 0 y = 0 }
+						L_Air_Inf_Bat = { x = 0 y = 1 }
+					}
+					support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+					}
+					priority = 2
+				}
+				transfer_state = 402
+				transfer_state = 1150
+				transfer_state = 1151
+				transfer_state = 1149
+				transfer_state = 977
+				transfer_state = 1147
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"Sepah-e Quds\" division_template = \"Niru-ye Qods-e Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"Tofangdarane Daryayee-ye Sepah\" division_template = \"Niru-ye Daryayi Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"23rd. Tip-e 'al-Mahdi'\" division_template = \"Lashkar-e Havabord-e Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"110th. Tip-e 'Salman'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"83rd. Tip-e 'Imam Sadiq'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"82nd. Tip-e 'Sahab Alamar'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"Tip-e 71st\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"Tip-e 71st\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"57th. Tip-e 'Abo-Fazl'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"44th. Tip-e 'Qamr Bani Hashem\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"44th. Tip-e 'Qamr Bani Hashem\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"42nd. Tip-e 'Ansar al-Rasool'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"32nd. Tip-e 'Ansar al-Hussein'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"29th. Tip-e 'Nabi Akram'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"18th. Tip-e 'al-Ghadir'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"29th. Tip-e 'Nabi Akram'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"12th. Tip-e 'Qaem al-Mohammed'\" division_template = \"Lashkar-e Motorizeh Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"60th. Tip-e 'Ammar Yasir'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"21st. Tip-e 'Imam Reza'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"20th. Tip-e 'Ramazan'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"25th. Lashkar-e 'Karbala'\" division_template = \"Lashkar-e Komando-ye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = IRI
+					}
+				}
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.300 # Commemorative Protests for 1999 Student Uprising
+	title = iranian_events.300.t
+	desc = iranian_events.300.d
+	picture = GFX_iran_student_protest1
+	is_triggered_only = yes
+	trigger = {
+		NOT = {
+			has_country_flag = PER_protests_ongoing
+		}
+	}
+	option = {
+		name = iranian_events.300.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.300.a executed"
+		set_temp_variable = { party_index = 9 }
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		add_relative_party_popularity = yes
+		set_temp_variable = { party_index = 8 }
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		add_relative_party_popularity = yes
+		newline = yes
+		add_stability = -0.05
+		ai_chance = {
+			base = 10
+		}
+	}
+	option = {
+		name = iranian_events.300.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.300.b executed"
+		custom_effect_tooltip = PER_may_start_protests_TT
+		405 = {
+			add_manpower = -54
+		}
+		hidden_effect = {
+			country_event = {
+				id = iranian_events.301
+				days = 10
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.301 # Commemorative Protests for 1999 Student Uprising
+	title = iranian_events.301.t
+	desc = iranian_events.301.d
+	picture = GFX_iranian_civ_war_country
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.301.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.301.a executed"
+		custom_effect_tooltip = PER_may_start_protests2_TT
+		set_country_flag = PER_protests_ongoing
+		hidden_effect = {
+			news_event = {
+				id = iranian_events.230
+				days = 7
+			}
+		}
+	}
+}
+
+news_event = {
+	id = iranian_events.229 # Iranian Civil War
+	title = iranian_events.229.t
+	desc = iranian_events.229.d
+	picture = GFX_civil_war_world
+	is_triggered_only = yes
+	major = yes
+	option = {
+		name = iranian_events.229.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.229.a executed"
+	}
+}
+
+news_event = {
+	id = iranian_events.230 # Major Protests in Iran
+	title = iranian_events.230.t
+	desc = iranian_events.230.d
+	picture = GFX_iran_revolution_world
+	is_triggered_only = yes
+	major = yes
+	option = {
+		name = iranian_events.230.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.230.a executed"
+	}
+}
+
+news_event = {
+	id = iranian_events.231 # The Islamic Republic Collapses
+	title = iranian_events.231.t
+	desc = iranian_events.231.d
+	picture = GFX_iranian_republic_world
+	is_triggered_only = yes
+	major = yes
+	option = {
+		name = iranian_events.231.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.231.a executed"
+	}
+}
+
+country_event = {
+	id = iranian_events.232 # The Central Government is Under Pressure
+	title = iranian_events.232.t
+	desc = iranian_events.232.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.232.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.232.a executed"
+		country_event = iranian_events.233
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = iranian_events.232.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.232.b executed"
+		country_event = iranian_events.234
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = iranian_events.232.c
+		log = "[GetDateText]: [This.GetName]:iranian_events.232.c executed"
+		country_event = iranian_events.235
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = iranian_events.232.d1
+		log = "[GetDateText]: [This.GetName]:iranian_events.232.d1 executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.233 # Internal Opposition Figures
+	title = iranian_events.233.t
+	desc = iranian_events.233.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.233.a # Ahmadinejad
+		log = "[GetDateText]: [This.GetName]:iranian_events.233.a executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 6 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+			create_country_leader = {
+				name = "Mahmoud Ahmadinejad"
+				picture = "ahmadinejad.dds"
+				ideology = Autocracy
+				traits = {
+					emerging_Autocracy
+					IRGC_Member
+					likeable
+					rash
+					zealous
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = iranian_events.233.b # Ghalibaf
+		log = "[GetDateText]: [This.GetName]:iranian_events.233.b executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 15 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 15 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = iranian_events.233.c # Mashaei
+		log = "[GetDateText]: [This.GetName]:iranian_events.233.c executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 21 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+			create_country_leader = {
+				name = "Artesh Directorate"
+				picture = "PER_joint_chief_staff.dds"
+				ideology = Autocracy
+				traits = {
+					nationalist_Nat_Autocracy
+					likeable
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = iranian_events.233.d1 # Artesh
+		log = "[GetDateText]: [This.GetName]:iranian_events.233.d1 executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 22 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.234 # Exiled Opposition Parties (Monarchists)
+	title = iranian_events.234.t
+	desc = iranian_events.234.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.234.a # Constitutionalist Party
+		log = "[GetDateText]: [This.GetName]:iranian_events.234.a executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 0 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = iranian_events.234.b # Pan Iranist Party
+		log = "[GetDateText]: [This.GetName]:iranian_events.234.b executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 20 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+			if = {
+				limit = {
+					date > 2011.1.1
+				}
+				create_country_leader = {
+					name = "Hojjat Kalashi"
+					picture = "hojjat_kalashi.dds"
+					ideology = Nat_Populism
+					traits = {
+						nationalist_Nat_Populism
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.235 # Exiled Opposition Parties (Leftists)
+	title = iranian_events.235.t
+	desc = iranian_events.235.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.235.a # MEK
+		log = "[GetDateText]: [This.GetName]:iranian_events.235.b executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 5 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = { # Communist Party
+		name = iranian_events.235.b
+		log = "[GetDateText]: [This.GetName]:iranian_events.235.b executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 19 }
+			update_government_coalition_strength = yes
+			set_coalition_drift = yes
+			set_ruling_leader = yes
+			set_leader = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 19 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			add_relative_party_popularity = yes
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_events.236 # IRGC Collapses
+	title = iranian_events.236.t
+	desc = iranian_events.236.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = iranian_events.236.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.236.b executed"
+
+		ai_chance = {
+			base = 1
+		}
 	}
 }
