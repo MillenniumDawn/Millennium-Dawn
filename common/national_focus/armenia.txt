@@ -1433,13 +1433,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_new_gov_builds executed"
 			add_political_power = -100
-			random_owned_controlled_state = {
-				add_building_construction = {
-					type = offices
-					level = 2
-					instant_build = yes
-				}
-			}
+			one_office_construction = yes
 			set_temp_variable = { percent_change = -5 }
 			change_domestic_influence_percentage = yes
 		}
@@ -2709,7 +2703,7 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_iron_fisting_oligs executed"
 			add_power_balance_value = {
 				id = ARM_soc_pac_bop
-				value = 0.05
+				value = 0.10
 				tooltip_side = ARM_soc_pac_bop_right_side
 			}
 			set_temp_variable = { temp_opinion = 25 }
@@ -2850,7 +2844,7 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_euro_dilemma executed"
 			add_power_balance_value = {
 				id = ARM_soc_pac_bop
-				value = -0.1
+				value = -0.05
 				tooltip_side = ARM_soc_pac_bop_left_side
 			}
 			country_event = arm_demirchyan.8
@@ -5570,15 +5564,19 @@ focus_tree = {
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = ARM }
 			change_influence_percentage = yes
-			SOV = {
-				release_puppet = ROOT
-				set_autonomy = {
-					target = ROOT
-					autonomy_state = autonomy_free
+			if = {
+				limit = {
+					is_subject_of = SOV
 				}
-				country_event = { id = arm_reaction.6 days = 2 }
+				add_autonomy_score = { value = 1500 }
 			}
-			add_political_power = -200
+			if = {
+				limit = {
+					is_in_faction_with = SOV
+				}
+				leave_faction = yes
+			}
+			add_political_power = -100
 		}
 		ai_will_do = {
 			base = 90
@@ -5817,6 +5815,29 @@ focus_tree = {
 					country_event = arme.188
 				}
 			}
+			custom_effect_tooltip = ARM_effect_if_they_accept_TT
+				effect_tooltip = {
+					add_equipment_to_stockpile = {
+						type = ifv_hull
+						amount = 150
+						producer = FROM
+					}
+					add_equipment_to_stockpile = {
+						type = mbt_hull
+						amount = 100
+						producer = FROM
+					}
+					add_equipment_to_stockpile = {
+						type = spart_hull
+						amount = 50
+						producer = FROM
+					}
+					add_equipment_to_stockpile = {
+						type = spaa_hull
+						amount = 20
+						producer = FROM
+					}
+				}
 		}
 		ai_will_do = {
 			base = 90
@@ -6463,56 +6484,10 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = ARM_hire_pmc_wagner
-		icon = SOV_wagner_soldier
-
-		x = -1
-		y = 6
-		relative_position_id = ARM_Tsarukyan
-
-		cost = 2
-
-		search_filters = { FOCUS_FILTER_ARMENIA_POLITIC }
-		prerequisite = { 
-			focus = ARM_freedom_for_pes
-			focus = ARM_monopoly
-		}
-
-		available = {
-			country_exists = SOV
-			NOT = {
-				has_war_with = SOV
-			}
-			OR = {
-				has_war_with = AZE
-				has_war_with = TUR
-			}
-			SOV = {
-				has_idea = SOV_wagner
-				NOT = {
-					has_government = democratic
-				}
-				has_opinion = {
-					target = ARM
-					value > 9
-				}
-			}
-			neutrality_neutral_oligarch_are_in_power = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus ARM_hire_pmc_wagner executed"
-			country_event = sov_gru.6
-		}
-		ai_will_do = {
-			base = 90
-		}
-	}
-	focus = {
 		id = ARM_create_pmc
 		icon = arm_chvk
 
-		x = 1
+		x = 0
 		y = 6
 		relative_position_id = ARM_Tsarukyan
 
@@ -7805,6 +7780,21 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			OR = {
+				country_exists = FRA
+				country_exists = GER
+				country_exists = ITA
+				country_exists = HLS
+			}
+		}
+
+		bypass = {
+			NOT = {
+				country_exists = FRA
+				country_exists = GER
+				country_exists = ITA
+				country_exists = HLS
+			}
 		}
 	
 		completion_reward = {
@@ -7848,11 +7838,24 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			country_exists = ENG
+			NOT = {
+				has_war_with = ENG
+			}
 		}
 		
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_our_old_realm executed"
 			ENG = { country_event = arm_empire.10 }
+			custom_effect_tooltip = ARM_effect_if_they_accept_TT
+				effect_tooltip = {
+					set_temp_variable = { treasury_change = 30 }
+					modify_treasury_effect = yes
+					add_opinion_modifier = {
+						target = ENG
+						modifier = declaration_of_friendship
+					}
+				}
 		}
 		ai_will_do = {
 			base = 90
@@ -7943,8 +7946,15 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
+			country_exists = ITA
 		}
 		
+		bypass = {
+			NOT = {
+				country_exists = ITA
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ARM_fate_of_italy executed"
 			custom_effect_tooltip = ARM_italy_armenian_union
@@ -12641,6 +12651,7 @@ focus_tree = {
 					}
 					country_event = arme.138
 				}
+				custom_effect_tooltip = ARM_armenia_eu_tt
 			}
 	
 			ai_will_do = {
@@ -12836,6 +12847,7 @@ focus_tree = {
 					}
 					country_event = arme.141
 				}
+				custom_effect_tooltip = ARM_armenia_eu_tt
 			}
 	
 			ai_will_do = {
@@ -13128,6 +13140,7 @@ focus_tree = {
 						custom_effect_tooltip = add_to_investment_array_tooltip_already_in
 					}
 				}
+				custom_effect_tooltip = ARM_armenia_eu_tt
 			}
 	
 			ai_will_do = {
@@ -13335,8 +13348,8 @@ focus_tree = {
 						target = ROOT
 						modifier = hosted_military_exercise
 					}
-					custom_effect_tooltip = armcis_infl
 				}
+				custom_effect_tooltip = armcis_infl
 			}
 	
 			ai_will_do = {
@@ -17005,7 +17018,7 @@ focus_tree = {
 						diplomatic_relation = {
 							country = ARM
 							relation = docking_rights
-							active = no
+							active = yes
 						}
 					}
 				}
