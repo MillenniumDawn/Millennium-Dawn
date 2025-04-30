@@ -9505,7 +9505,7 @@ focus_tree = {
 		prerequisite = { focus = HOL_economic_development_antilles }
 		mutually_exclusive = { focus = HOL_dutch_caribbean_federation }
 		available = {
-			has_western_aligned_government = yes 
+			has_western_aligned_government = yes
 			OR = {
 				owns_state = 49
 				NLA = {
@@ -9552,7 +9552,6 @@ focus_tree = {
 				country_event = HOL_military.104
 			}
 			newline = yes
-
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
 			modify_treasury_effect = yes
@@ -10550,6 +10549,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_rebuild_infrastructure_paramaribo"
+			activate_decision = HOL_sur_infrastructure_agreement
 		}
 
 		ai_will_do = {
@@ -10578,18 +10578,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_invest_suriname_resources"
-			random_owned_state = {
-				add_resource = {
-					type = oil
-					amount = 2
-				}
-			}
-			SUR = { country_event = HOL_politics.51 }
-			set_temp_variable = { int_investment_change  = 10 }
-			modify_international_investment_effect = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.15 }
-			modify_treasury_effect = yes
+			activate_decision = HOL_sur_resources_agreement
 		}
 
 		ai_will_do = {
@@ -10621,16 +10610,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_maritime_suriname_agreement"
-			SUR = {
-				swap_ideas = {
-					remove_idea = HOL_suriname_trade_agreement_idea2
-					add_idea = HOL_suriname_trade_agreement_idea3
-				}
-			}
-			swap_ideas = {
-				remove_idea = HOL_suriname_trade_agreement_idea2
-				add_idea = HOL_suriname_trade_agreement_idea3
-			}
+			activate_decision = HOL_sur_infrastructure_agreement
 		}
 
 		ai_will_do = {
@@ -10659,10 +10639,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_train_suriname_forces"
-			add_timed_idea = {
-				idea = HOL_suriname_training_program
-				days = 180
-			}
+			activate_decision = HOL_sur_training_agreement
 		}
 
 		ai_will_do = {
@@ -10684,6 +10661,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Paars"
 			add_ideas = HOL_Paars1
+			hidden_effect = {
+				country_event = {
+					id = HOL_politics.72
+					days = 120
+					random_days = 100
+				}
+			}
+
 		}
 
 		ai_will_do = {
@@ -10714,6 +10699,16 @@ focus_tree = {
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
 			modify_treasury_effect = yes
+			if = {
+				limit = {
+					NOT = { has_country_flag = HOL_paars_completed }
+					has_completed_focus = HOL_Royal_Wedding
+					has_completed_focus = HOL_UN_Mission_Ehtiopia
+					has_completed_focus = HOL_Gay
+				}
+				newline = yes
+				country_event = { id = HOL_politics.73 days = 14 }
+			}
 		}
 
 		ai_will_do = {
@@ -10736,6 +10731,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Royal_Wedding"
 			country_event = HOL_monarchy.01
+			if = {
+				limit = {
+					NOT = { has_country_flag = HOL_paars_completed }
+					has_completed_focus = HOL_Threats_Against_Politicians
+					has_completed_focus = HOL_UN_Mission_Ehtiopia
+					has_completed_focus = HOL_Gay
+				}
+				newline = yes
+				country_event = { id = HOL_politics.73 days = 14 }
+			}
 		}
 
 		ai_will_do = {
@@ -10769,6 +10774,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Royal_Wedding"
 			add_ideas = HOL_UN_Ethiopia
+			if = {
+				limit = {
+					NOT = { has_country_flag = HOL_paars_completed }
+					has_completed_focus = HOL_Threats_Against_Politicians
+					has_completed_focus = HOL_Royal_Wedding
+					has_completed_focus = HOL_Gay
+				}
+				newline = yes
+				country_event = { id = HOL_politics.73 days = 14 }
+			}
 		}
 
 		ai_will_do = {
@@ -10791,6 +10806,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Gay"
 			country_event = HOL_politics.01
+			if = {
+				limit = {
+					NOT = { has_country_flag = HOL_paars_completed }
+					has_completed_focus = HOL_Threats_Against_Politicians
+					has_completed_focus = HOL_Royal_Wedding
+					has_completed_focus = HOL_UN_Mission_Ehtiopia
+				}
+				newline = yes
+				country_event = { id = HOL_politics.73 days = 14 }
+			}
 		}
 
 		ai_will_do = {
@@ -10815,14 +10840,19 @@ focus_tree = {
 
 		available = {
 			western_liberals_are_in_power = yes
+			has_country_flag = HOL_Purple_elections_done
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_VVD"
 			if = {
-				limit = { has_idea =  HOL_Paars1 }
-				remove_ideas = HOL_Paars1
+				limit = { has_idea =  HOL_demissionaire_regering_idea }
+				remove_ideas = HOL_demissionaire_regering_idea
 			}
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -11955,20 +11985,21 @@ focus_tree = {
 
 		available = {
 			western_conservatism_are_in_power = yes
+			has_country_flag = HOL_Purple_elections_done
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_CDA"
 			if = {
-				limit = { has_idea =  HOL_Paars1 }
-				remove_ideas = HOL_Paars1
+				limit = { has_idea =  HOL_demissionaire_regering_idea }
+				remove_ideas = HOL_demissionaire_regering_idea
 			}
 			set_temp_variable = { rul_party_temp = 1 }
 			change_ruling_party_effect = yes
 			newline = yes
 			custom_effect_tooltip = HOL_Balkenende_tt
 			newline = yes
-
+			remove_ideas = HOL_demissionaire_regering_idea
 			hidden_effect = {
 				add_dynamic_modifier = {
 					modifier = HOL_Conservative_Society_Modifier
@@ -13214,13 +13245,14 @@ focus_tree = {
 
 		available = {
 			western_social_democrats_are_in_power = yes
+			has_country_flag = HOL_Purple_elections_done
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Melkert_Surprise"
 			if = {
-				limit = { has_idea =  HOL_Paars1 }
-				remove_ideas = HOL_Paars1
+				limit = { has_idea =  HOL_demissionaire_regering_idea }
+				remove_ideas = HOL_demissionaire_regering_idea
 			}
 			if = {
 				limit = { has_idea = labour_unions }
@@ -13231,6 +13263,7 @@ focus_tree = {
 			set_power_balance = {
 				id = HOL_pvda_balance_of_power_category
 			}
+			remove_ideas = HOL_demissionaire_regering_idea
 
 		}
 
@@ -15488,14 +15521,19 @@ focus_tree = {
 		available = {
 			nationalist_right_wing_populists_are_in_power = yes
 			has_country_flag = Pim_Fortuyn_Alive
+			has_country_flag = HOL_Purple_elections_done
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_LPF"
 			if = {
-				limit = { has_idea =  HOL_Paars1 }
-				remove_ideas = HOL_Paars1
+				limit = { has_idea =  HOL_demissionaire_regering_idea }
+				remove_ideas = HOL_demissionaire_regering_idea
 			}
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 
 		}
 
@@ -15525,7 +15563,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_direct_democracy"
 			add_ideas = HOL_democracy_reform1
 			newline = yes
-			set_temp_variable = { threshold_change = 0.03 }
+			set_temp_variable = { threshold_change = -0.03 }
 			modify_election_threshold = yes
 
 			newline = yes
@@ -15593,16 +15631,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_end_party_kartel"
 			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = -0.02 }
-			set_temp_variable = { temp_outlook_increase = -0.02 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
 			add_relative_party_popularity = yes
 			set_temp_variable = { party_index = 2 }
-			set_temp_variable = { party_popularity_increase = -0.02 }
-			set_temp_variable = { temp_outlook_increase = -0.02 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
 			add_relative_party_popularity = yes
 			set_temp_variable = { party_index = 3 }
-			set_temp_variable = { party_popularity_increase = -0.02 }
-			set_temp_variable = { temp_outlook_increase = -0.02 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
 			add_relative_party_popularity = yes
 
 		}
@@ -15701,8 +15739,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_public_sector_reform"
-			add_ideas = HOL_public_sector_reform_idea
-
+			add_timed_idea = {
+				idea = HOL_public_sector_reform_idea
+				days = 200
+			}
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -15733,8 +15773,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_more_police_force"
+			swap_ideas = {
+				remove_idea = HOL_DBB
+				add_idea = HOL_DBB2
+			}
+			newline = yes
 			increase_policing_budget = yes
-
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -15797,8 +15841,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_welfare_reform"
-			add_ideas = HOL_welfare_reform_idea
-
+			add_timed_idea = {
+				idea = HOL_welfare_reform_idea
+				days = 200
+			}
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -15839,7 +15885,9 @@ focus_tree = {
 				set_temp_variable = { temp_opinion = 15 }
 				change_small_medium_business_owners_opinion = yes
 			}
-
+			newline = yes
+			set_temp_variable = { temp_productivity_change = 15 }
+			flat_productivity_change_effect = yes
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -15892,7 +15940,16 @@ focus_tree = {
 				set_temp_variable = { temp_opinion = 5 }
 				change_small_medium_business_owners_opinion = yes
 			}
-
+			if = {
+				limit = { has_idea = maritime_industry }
+				set_temp_variable = { temp_opinion = 5 }
+				change_maritime_industry_opinion = yes
+			}
+			if = {
+				limit = { has_idea = defense_industry }
+				set_temp_variable = { temp_opinion = 5 }
+				change_defense_industry_opinion = yes
+			}
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -15919,14 +15976,13 @@ focus_tree = {
 		available = {
 			nationalist_right_wing_populists_are_in_power = yes
 			has_country_flag = Pim_Fortuyn_Alive
+			NOT = { has_idea = HOL_public_sector_reform_idea }
+			NOT = { has_idea = HOL_welfare_reform_idea }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_labor_market_liberalization"
-			remove_ideas = HOL_welfare_reform_idea
-			remove_ideas = HOL_public_sector_reform_idea
 			add_ideas = HOL_reformed_liberal_market
-
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -15962,7 +16018,6 @@ focus_tree = {
 			add_dynamic_modifier = {
 				modifier = HOL_nationalist_populism_modifier
 			}
-
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -16099,30 +16154,38 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_remove_windmills_solar_parks"
-			random_state = {
+			random_owned_state = {
+				remove_building = {
+					type = synthetic_refinery
+					level = 1
+				}
+				add_building_construction = {
+					type = fossil_powerplant
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				remove_building = {
+					type = synthetic_refinery
+					level = 1
+				}
+				add_building_construction = {
+					type = fossil_powerplant
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
 				remove_building = {
 					type = synthetic_refinery
 					level = 1
 				}
 			}
-			random_state = {
-				remove_building = {
-					type = synthetic_refinery
-					level = 1
-				}
-			}
-			random_state = {
-				remove_building = {
-					type = synthetic_refinery
-					level = 1
-				}
-			}
+			newline = yes
 			every_owned_state = {
 				add_extra_state_shared_building_slots = 2
 			}
-			two_random_fossil_fuel_powerplant = yes
-			two_random_fossil_fuel_powerplant = yes
-
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -16481,13 +16544,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_cut_down_government"
 			custom_effect_tooltip = HOL_change_lpfpvv_modifier_tt
 			set_temp_variable = {
-				HOL_bureaucracy_cost_multiplier_modifier_lpfpvv_change  = -0.02
+				HOL_bureaucracy_cost_multiplier_modifier_lpfpvv_change  = -0.15
 			}
 			HOL_modify_HOL_bureaucracy_cost_multiplier_modifier_lpfpvv_effect = yes
-			set_temp_variable = {
-				HOL_stability_factor_lpfpvv_change  = 0.02
-			}
-			HOL_modify_HOL_stability_factor_lpfpvv_effect = yes
 			newline = yes
 			remove_ideas = HOL_polder_model1
 
@@ -16522,11 +16581,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_cut_leftist_groups"
 			custom_effect_tooltip = HOL_change_lpfpvv_modifier_tt
 			set_temp_variable = {
-				HOL_communism_drift_lpfpvv_change  = -0.02
+				HOL_communism_drift_lpfpvv_change  = -0.05
 			}
 			HOL_modify_HOL_communism_drift_lpfpvv_effect = yes
 			set_temp_variable = {
-				HOL_bureaucracy_cost_multiplier_modifier_lpfpvv_change  = -0.02
+				HOL_bureaucracy_cost_multiplier_modifier_lpfpvv_change  = -0.05
 			}
 			HOL_modify_HOL_bureaucracy_cost_multiplier_modifier_lpfpvv_effect = yes
 			newline = yes
@@ -16640,7 +16699,6 @@ focus_tree = {
 				idea = HOL_celebrate_heroes
 				days = 365
 			}
-
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -16751,6 +16809,10 @@ focus_tree = {
 					remove_idea = HOL_Anti_Gay_Marriage
 					add_idea = HOL_Pro_Gay_Marriage3
 				}
+				newline = yes
+				set_temp_variable = { treasury_change = gdp_per_capita }
+				multiply_temp_variable = { treasury_change = -0.10 }
+				modify_treasury_effect = yes
 			}
 			else_if = {
 				limit = { has_idea = HOL_Pro_Gay_Marriage2 }
@@ -16758,6 +16820,10 @@ focus_tree = {
 					remove_idea = HOL_Pro_Gay_Marriage2
 					add_idea = HOL_Pro_Gay_Marriage3
 				}
+				newline = yes
+				set_temp_variable = { treasury_change = gdp_per_capita }
+				multiply_temp_variable = { treasury_change = -0.10 }
+				modify_treasury_effect = yes
 			}
 			else_if = {
 				limit = { has_idea = HOL_Pro_Gay_Marriage }
@@ -16765,12 +16831,14 @@ focus_tree = {
 					remove_idea = HOL_Pro_Gay_Marriage
 					add_idea = HOL_Pro_Gay_Marriage3
 				}
+				newline = yes
+				set_temp_variable = { treasury_change = gdp_per_capita }
+				multiply_temp_variable = { treasury_change = -0.10 }
+				modify_treasury_effect = yes
 			}
-
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
+			else = {
+				custom_effect_tooltip = HOL_pro_gay_anti_lgbtq_tt
+			}
 		}
 
 		ai_will_do = {
@@ -16796,14 +16864,19 @@ focus_tree = {
 		available = {
 			nationalist_right_wing_populists_are_in_power = yes
 			has_country_flag = HOL_Wilders_Party_Created
+			has_country_flag = HOL_Purple_elections_done
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_PVV"
 			if = {
-				limit = { has_idea =  HOL_Paars1 }
-				remove_ideas = HOL_Paars1
+				limit = { has_idea =  HOL_demissionaire_regering_idea }
+				remove_ideas = HOL_demissionaire_regering_idea
 			}
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
@@ -18104,7 +18177,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_sgp_religious_education_policy"
-			add_ideas = HOL_Riligious_education_policy
+			add_ideas = HOL_Religious_education_policy
 
 		}
 
@@ -18402,6 +18475,7 @@ focus_tree = {
 			neutrality_neutral_conservatism_are_in_coalition = yes
 			western_conservatism_are_in_power = yes
 			western_liberal_are_not_in_power_or_coalition = yes
+			western_socialism_are_not_in_power_or_coalition = yes
 			if = {
 			limit = {
 				has_country_flag = HOL_SGP_in_progress_flag
