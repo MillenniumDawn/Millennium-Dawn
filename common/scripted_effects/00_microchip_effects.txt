@@ -1,14 +1,31 @@
 microchip_startup = {
 	set_variable = { country_microchip_production_var = 0 }
-
+	set_variable = { country_microchip_producing_var = 0 }
 	add_dynamic_modifier = { modifier = microchip_production_modifier }
 }
 
 microchip_update = {
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = microchip_production_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = microchip_production_modifier }
+	}
+
 	#Gather total resources available / to be produced
 	set_temp_variable = { country_tech_remaining = resource@tungsten }
 	set_temp_variable = { country_rare_remaining = resource@chromium }
-	set_temp_variable = { country_microchip_produced = resource_produced@microchips }
+	set_temp_variable = { country_microchip_produced = 0 }
+	every_controlled_state = {
+		add_to_temp_variable = { PREV.country_microchip_produced = non_damaged_building_level@microchip_plant }
+	}
+	multiply_temp_variable = { country_microchip_produced = 4 }
+
+	set_variable = { country_microchip_producing_var = country_microchip_produced }
+
+	#set_temp_variable = { country_microchip_produced = resource_produced@microchips }
 
 	set_temp_variable = { country_microchip_reducer = 0 }
 
