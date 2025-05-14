@@ -5823,7 +5823,7 @@ generic_coalition_politics_decisions = {
 	}
 
 	#GLOBAL REACTION CONTENT
-	#ARMENIA DEMAND NACHICHEVAN FROM AZER
+	#ARMENIA DEMAND NAKHICHEVAN FROM AZER
 	GLOBAL_armenia_demand_nachi_azer = {
 		icon = GFX_decision_negotiate_icon
 		custom_cost_trigger = {
@@ -5834,6 +5834,7 @@ generic_coalition_politics_decisions = {
 		fire_only_once = yes
 
 		visible = { 
+			has_government = nationalist
 			original_tag = ARM
 			country_exists = AZE
 			AZE = {
@@ -6029,12 +6030,11 @@ generic_coalition_politics_decisions = {
 			original_tag = SOV
 			emerging_reactionaries_are_in_power = yes
 			country_exists = ARM
-			is_neighbor_of = ARM
 			ARM = {
 				owns_state = 1034
 				NOT = { is_subject_of = ARM }
 				NOT = { is_in_faction_with = ARM }
-				influence_higher_50 = yes
+				influence_higher_40 = yes
 				has_government = democratic
 			}
 		}
@@ -6075,7 +6075,7 @@ generic_coalition_politics_decisions = {
 				owns_state = 707
 				NOT = { is_subject_of = SOV }
 				NOT = { is_in_faction_with = SOV }
-				influence_higher_50 = yes
+				influence_higher_40 = yes
 				NOT = { has_country_flag = GLOBAL_arm_geo_resistance }
 			}
 		}
@@ -6116,7 +6116,7 @@ generic_coalition_politics_decisions = {
 				owns_state = 707
 				NOT = { is_subject_of = SOV }
 				NOT = { is_in_faction_with = SOV }
-				influence_higher_50 = yes
+				influence_higher_40 = yes
 				has_country_flag = GLOBAL_arm_geo_resistance
 			}
 		}
@@ -6157,7 +6157,7 @@ generic_coalition_politics_decisions = {
 				owns_state = 713
 				NOT = { is_subject_of = SOV }
 				NOT = { is_in_faction_with = SOV }
-				influence_higher_50 = yes
+				influence_higher_40 = yes
 				NOT = { has_country_flag = GLOBAL_arm_aze_resistance }
 			}
 		}
@@ -6198,7 +6198,7 @@ generic_coalition_politics_decisions = {
 				owns_state = 713
 				NOT = { is_subject_of = SOV }
 				NOT = { is_in_faction_with = SOV }
-				influence_higher_50 = yes
+				influence_higher_40 = yes
 				has_country_flag = GLOBAL_arm_aze_resistance
 			}
 		}
@@ -6372,6 +6372,60 @@ generic_coalition_politics_decisions = {
 		}
 		ai_will_do = {
 			factor = 1
+		}
+	}
+	#TURKEY ANNEX NAKHICHEVAN FROM AZER WHEN THEY PUPPET ARM
+	GLOBAL_turkey_annex_nachi_azer = {
+		icon = GFX_decision_negotiate_icon
+		custom_cost_trigger = {
+			has_political_power > 100
+		}
+		custom_cost_text = political_power_more_than_100
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = { 
+			original_tag = TUR
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			country_exists = AZE
+			AZE = {
+				influence_higher_40 = yes
+				owns_state = 711
+				is_subject_of = ARM
+			}
+			ARM = {
+				owns_state = 1036
+				owns_state = 1037
+				owns_state = 710
+			}
+			TUR = {
+				owns_state = 935
+				owns_state = 163
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GLOBAL_turkey_annex_nachi_azer"
+			add_political_power = -100
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_turkey_annex_nachi_azer"
+			transfer_state = 711
+			set_state_owner = 711
+			AZE = { country_event = SOV_Global.37 }
+			ARM = { country_event = SOV_Global.37 }
+			hidden_effect = {
+				set_temp_variable = { percent_change = -9 }
+				set_temp_variable = { tag_index = TUR }
+				set_temp_variable = { influence_target = AZE }
+				change_influence_percentage = yes
+			}
+		}
+		ai_will_do = {
+			factor = 0
 		}
 	}
 }
