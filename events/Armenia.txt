@@ -3863,11 +3863,8 @@ country_event = {
 		}
 	}
 	option = {
-		name = arme.86.a
+		name = arme.86.b
 		log = "[GetDateText]: [This.GetName]: arme.86.b executed"
-		ARM = {
-			country_event = arme.88
-		}
 		add_opinion_modifier = {
 			modifier = recent_actions_negative
 			target = ARM
@@ -3996,7 +3993,7 @@ country_event = {
 		}
 	}
 	option = {
-		name = arme.88.a
+		name = arme.88.b
 		log = "[GetDateText]: [This.GetName]: arme.88.b executed"
 		ARM = {
 			country_event = arme.90
@@ -12315,6 +12312,9 @@ country_event = {
 	option = {
 		name = arm_economic.2.a
 		log = "[GetDateText]: [This.GetName]: arm_economic.2.a executed"
+		trigger = {
+			has_idea = ARM_economy_ardshinbank_idea
+		}
 		set_temp_variable = {
 			percent_change = 4
 		}
@@ -13539,21 +13539,17 @@ country_event = {
 		name = arm_expansion.1.a
 		log = "[GetDateText]: [This.GetName]: arm_expansion.1.a executed"
 		ai_chance = {
-			base = 70
+			base = 30
 			modifier = {
-				factor = 3
+				factor = 30
 				OR = {
 					has_government = nationalist
 					has_government = communism
 				}
 			}
 			modifier = {
-				factor = 0.25
-				has_war = yes
-			}
-			modifier = {
-				factor = 0.5
-				GRE = { is_subject_of = FROM }
+				add = 30
+				GRE = { is_subject_of = ARM }
 			}
 		}
 		FROM = { country_event = { id = md4.17 hours = 3 } }
@@ -13569,15 +13565,15 @@ country_event = {
 		ai_chance = {
 			base = 30
 			modifier = {
-				factor = 0.33
+				add = -30
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
 			}
 			modifier = {
-				factor = 4
-				has_war = yes
+				add = 30
+				GRE = { is_subject_of = ARM }
 			}
 		}
 		FROM = { country_event = { id = md4.18 hours = 3 } }
@@ -13779,18 +13775,18 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 20
+			base = 1
 			modifier = {
-				factor = 0.5
+				add = 20
 				strength_ratio = {
-					tag = FROM
+					tag = ARM
 					ratio > 1
 				}
 			}
 			modifier = {
-				factor = 3
+				add = -20
 				strength_ratio = {
-					tag = FROM
+					tag = ARM
 					ratio < 1
 				}
 			}
@@ -13844,19 +13840,31 @@ country_event = {
 				type = take_claimed_state
 			}
 		}
+		if = {
+			limit = {
+				ARM = {
+					has_idea = ARM_armenian_foreign_legion_idea
+				}
+				TUR = {
+					owns_state = 935
+					owns_state = 163
+				}
+			}
+			ARM = { country_event = { id = arm_expansion.15 hours = 6 } }
+		}
 		ai_chance = {
-			base = 80
+			base = 1
 			modifier = {
-				factor = 2
+				add = -20
 				strength_ratio = {
-					tag = FROM
+					tag = ARM
 					ratio > 1
 				}
 			}
 			modifier = {
-				factor = 0.3
+				add = 20
 				strength_ratio = {
-					tag = FROM
+					tag = ARM
 					ratio < 1
 				}
 			}
@@ -14259,8 +14267,209 @@ country_event = {
 	option = {
 		name = arm_expansion.14.a
 		log = "[GetDateText]: [This.GetName]: arm_expansion.14.a executed"
+
+	}
+}
+
+country_event = {
+	id = arm_expansion.15
+	title = arm_expansion.15.t
+	desc = arm_expansion.15.d
+	picture = GFX_arm_west_armenia
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = arm_expansion.15.a
+		log = "[GetDateText]: [This.GetName]: arm_expansion.15.a executed"
 		ai_chance = {
-			base = 15
+			base = 1
+		}
+		TUR = {
+			country_event = arm_expansion.16
+		}
+	}
+
+	option = {
+		name = arm_expansion.15.b
+		log = "[GetDateText]: [This.GetName]: arm_expansion.15.b executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = arm_expansion.16
+	title = arm_expansion.16.t
+	desc = arm_expansion.16.d
+	picture = GFX_arm_west_armenia
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = arm_expansion.16.a
+		log = "[GetDateText]: [This.GetName]: arm_expansion.16.a executed"
+		hidden_effect = {
+			create_dynamic_country = {
+				original_tag = ARM
+				copy_tag = ARM
+				set_cosmetic_tag = ARM_west_armenia
+				transfer_state = 935
+				transfer_state = 163
+				set_state_owner = 935
+				set_state_owner = 163
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+				set_popularities = {
+					communism = 5
+					nationalist = 95
+				}
+				inherit_technology = ARM
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = {
+					ruling_party = 22
+				}
+				set_temp_variable = {
+					current_cons_popularity = party_pop_array^22
+				}
+				multiply_temp_variable = {
+					current_cons_popularity = 0.5
+				}
+				subtract_from_variable = {
+					party_pop_array^22 = current_cons_popularity
+				}
+				country_event = arm_expansion.17
+				country_event = arm_foreign_legion.3
+				add_ideas = {
+					stable_growth
+					eastern_church_arm
+					rampant_corruption
+					defence_04
+					edu_02
+					health_02
+					social_01
+					bureau_02
+					police_03
+					semi_consumption_economy
+					draft_army
+					volunteer_women
+					international_bankers
+					oligarchs
+					The_Clergy
+					officer_military_school
+					nuclear_energy
+					Lacks_International_Recognition
+			
+					# Armenian Unique
+					armenian_perseverance
+					ARM_diaspora_links
+					ARM_broken_economy
+				}
+				
+				#Influence system
+				init_influence = yes
+				set_variable = { domestic_influence_amount = 10 }
+				add_to_array = { influence_array = ARM.id }
+				add_to_array = { influence_array_val = 90 }
+				startup_influence = yes
+
+				declare_war_on = {
+					target = TUR
+					type = civil_war
+				}
+				add_civil_war_target = TUR
+				
+			}
+		}
+	}
+}
+
+country_event = {
+	id = arm_expansion.17
+	title = arm_expansion.17.t
+	desc = arm_expansion.17.d
+	picture = GFX_arm_west_armenia
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = arm_expansion.17.a
+		log = "[GetDateText]: [This.GetName]: arm_expansion.17.a executed"
+		if = {
+			limit = { 
+				ARM = {
+					OR = {
+						has_idea = ARM_national_guard_idea
+						has_idea = ARM_national_guard_idea1
+						has_idea = ARM_national_guard_idea2
+					}
+				}
+			}
+			division_template = {
+				name = "National Guard"
+				regiments = {
+					Militia_Bat = { x = 0 y = 0 }
+					Militia_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 1 y = 0 }
+					Militia_Bat = { x = 1 y = 1 }
+				}
+				support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
+					L_Engi_Comp = { x = 0 y = 1 }
+				}
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 1140 }
+				create_unit = {
+					division = "name = \"National Guard of West Armenia\" division_template = \"National Guard\" start_experience_factor = 0.1"
+					owner = ROOT
+				}
+			}
+		}
+		if = {
+			limit = { 
+				ARM = {
+					has_idea = ARM_militia_idea2
+				}
+			}
+			division_template = {
+				name = "Western Armenian Battalion"
+				regiments = {
+					Mot_Inf_Bat = { x = 0 y = 0 }
+					Mot_Inf_Bat = { x = 0 y = 1 }
+					Mot_Inf_Bat = { x = 0 y = 2 }
+					Arty_Bat = { x = 0 y = 3 }
+				}
+			
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
+				}
+			}
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 1140 }
+				create_unit = {
+					division = "name = \"Western Armenian Battalion\" division_template = \"Western Armenian Battalion\" start_experience_factor = 0.1"
+					owner = ROOT
+				}
+			}
+		}
+		add_autonomy_score = { value = -700 }
+		ARM = {
+			remove_ideas = ARM_turkey_compliance_idea
+			set_autonomy = {
+				target = ROOT
+				autonomous_state = autonomy_autonomous_state
+				end_wars = no
+				end_civil_wars = no
+			}
 		}
 	}
 }
