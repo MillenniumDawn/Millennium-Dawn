@@ -1530,6 +1530,7 @@ country_event = {
 	trigger = {
 		original_tag = NIG
 		NOT = { owns_state = 322 }
+		NOT = { has_war_with = CAM }
 	}
 
 	# Accept the ICJ's Decision
@@ -1539,10 +1540,12 @@ country_event = {
 		add_political_power = 150
 
 		add_opinion_modifier = { target = CAM modifier = NIG_accepted_the_icj_ruling }
-		reverse_add_opinion_modifier = { target = NIG modifier = NIG_accepted_the_icj_ruling }
+		reverse_add_opinion_modifier = { target = CAM modifier = NIG_accepted_the_icj_ruling }
+
+		remove_ideas = NIG_bakassi_occupation_idea
 
 		ai_chance = {
-			base = 25
+			base = 75
 			modifier = {
 				has_government = democratic
 				add = 10
@@ -1556,14 +1559,22 @@ country_event = {
 		name = nigeria_md.103.b
 		log = "[GetDateText]: [This.GetName]: nigeria_md.103.b executed"
 
+		add_named_threat = {
+			threat = 3
+			name = NIG_the_bakassi_peninsula
+		}
+
 		custom_effect_tooltip = NIG_the_bakassi_peninsula_tt
+
+		add_opinion_modifier = { target = CAM modifier = NIG_rejected_the_icj_ruling }
+		reverse_add_opinion_modifier = { target = CAM modifier = NIG_rejected_the_icj_ruling }
 
 		CAM = {
 			country_event = { id = nigeria_ambazonia.1 days = 5 }
 		}
 
 		ai_chance = {
-			base = 75
+			base = 25
 		}
 	}
 }
@@ -2042,8 +2053,7 @@ country_event = {
 		name = nigeria_ambazonia.1.a
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.1.a executed"
 
-		custom_effect_tooltip = nigeria_ambazonia.1.a_tt # TODO: add a custom tooltip for this explaining what could happen
-
+		custom_effect_tooltip = NIG_ambazonia.1.a_tt
 		NIG = {
 			country_event = { id = nigeria_ambazonia.4 days = 5 }
 		}
@@ -2055,7 +2065,7 @@ country_event = {
 		name = nigeria_ambazonia.1.b
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.1.b executed"
 
-		custom_effect_tooltip = nigeria_ambazonia.1.b_tt # TODO: add a custom tooltip for this explaining what could happen
+		custom_effect_tooltip = NIG_ambazonia.1.b_tt
 
 		NIG = {
 			country_event = { id = nigeria_ambazonia.2 days = 5 }
@@ -2068,11 +2078,11 @@ country_event = {
 		name = nigeria_ambazonia.1.c
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.1.c executed"
 
-		add_opinion_modifier = { target = CAM modifier = NIG_occupying_ambazonia }
+		add_opinion_modifier = { target = NIG modifier = NIG_occupying_ambazonia }
 		reverse_add_opinion_modifier = { target = NIG modifier = NIG_occupying_ambazonia }
 
 		NIG = {
-			transfer_state = 322
+			transfer_state = 322 # Given them Ambazonia
 
 			# Nigeria annexes Ambazonia on map
 			country_event = { id = nigeria_ambazonia.3 days = 5 }
@@ -2134,13 +2144,12 @@ country_event = {
 
 		effect_tooltip = {
 			transfer_state = 322
+
+			add_opinion_modifier = { target = CAM modifier = NIG_occupying_ambazonia }
+			reverse_add_opinion_modifier = { target = CAM modifier = NIG_occupying_ambazonia }
 		}
 
-		# TODO: Add a news event for this
-
-		NIG = {
-			news_event = { id = nigeria_ambazonia.x days = 5 }
-		}
+		news_event = { id = nigeria_ambazonia.7 days = 5 }
 	}
 }
 
@@ -2156,24 +2165,46 @@ country_event = {
 	}
 
 	# Accept Cameroon's Request
-	# Leads to: Ambazonia: Nigeria Concedes Bakassi
+	# Leads to: Ambazonia: Nigeria Defends Bakassi
 	option = {
 		name = nigeria_ambazonia.4.a
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.4.a executed"
 
-		NIG = {
-			country_event = { id = nigeria_ambazonia.6 days = 5 }
+		CAM = {
+			country_event = { id = nigeria_ambazonia.5 days = 5 }
+		}
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 10
+				strength_ratio = {
+					tag = CAM
+					ratio < 0.50
+				}
+			}
 		}
 	}
 
 	# Deny Cameroon's Request
-	# Leads to: Ambazonia: Nigeria Defends Bakassi
+	# Leads to: Ambazonia: Nigeria Concedes Bakassi
 	option = {
 		name = nigeria_ambazonia.4.b
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.4.b executed"
 
-		NIG = {
-			country_event = { id = nigeria_ambazonia.5 days = 5 }
+		CAM = {
+			country_event = { id = nigeria_ambazonia.6 days = 5 }
+		}
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				strength_ratio = {
+					tag = CAM
+					ratio > 1.25
+				}
+			}
 		}
 	}
 }
@@ -2190,14 +2221,27 @@ country_event = {
 	}
 
 	# Concede Bakassi
-	# Leads to: Ambazonia: Cammeroon Concedes Bakassi
+	# Leads to: Ambazonia: Cameroon Concedes Bakassi
 	option = {
 		name = nigeria_ambazonia.5.a
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.5.a executed"
+
+		NIG = {
+			transfer_state = 322
+		}
+
+		add_opinion_modifier = { target = NIG modifier = NIG_occupying_ambazonia }
+		reverse_add_opinion_modifier = { target = NIG modifier = NIG_occupying_ambazonia }
+
+		news_event = { id = nigeria_ambazonia.7 days = 5 }
+
+		ai_chance = {
+			base = 50
+		}
 	}
 
 	# Escalate the Conflict
-	# Leads to: Ambazonia: Nigeria Escalates Conflict
+	# Leads to: Ambazonia: Cameroon Escalates Conflict
 	option = {
 		name = nigeria_ambazonia.5.b
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.5.b executed"
@@ -2211,6 +2255,12 @@ country_event = {
 		NIG = {
 			# Set provinicial controller for Bakassi
 			set_province_controller = 10831
+		}
+
+		news_event = { id = nigeria_ambazonia.8 days = 5 }
+
+		ai_chance = {
+			base = 50
 		}
 	}
 }
@@ -2226,17 +2276,85 @@ country_event = {
 		original_tag = CAM
 	}
 
-	# Concede Bakassi
-	# Leads to: Ambazonia: Cammeroon Concedes Bakassi
+	# Bakassi is Rightfully Ours!
+	# Leads to: Ambazonia: Nigeria Withdraws from Ambazonia
 	option = {
 		name = nigeria_ambazonia.6.a
 		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.6.a executed"
+
+		news_event = { id = nigeria_ambazonia.9 days = 5 }
+	}
+}
+
+# Nigeria Annexes Ambazonia
+news_event = {
+	id = nigeria_ambazonia.7
+	title = nigeria_ambazonia.7.t
+	desc = nigeria_ambazonia.7.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = nigeria_ambazonia.7.a
+		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.7.a executed"
+
+	}
+}
+
+# The Second Ambazonian War
+news_event = {
+	id = nigeria_ambazonia.8
+	title = nigeria_ambazonia.8.t
+	desc = nigeria_ambazonia.8.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = nigeria_ambazonia.8.a
+		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.8.a executed"
+
+	}
+}
+
+# Nigeria Withdraws from Ambazonia
+news_event = {
+	id = nigeria_ambazonia.9
+	title = nigeria_ambazonia.9.t
+	desc = nigeria_ambazonia.9.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = nigeria_ambazonia.9.a
+		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.9.a executed"
+	}
+}
+
+# Ambazonia: Cameroon Concedes Bakassi
+country_event = {
+	id = nigeria_ambazonia.10
+	title = nigeria_ambazonia.10.t
+	desc = nigeria_ambazonia.10.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	trigger = {
+		original_tag = NIG
 	}
 
-	# Escalate the Conflict
-	# Leads to: Ambazonia: Nigeria Escalates Conflict
 	option = {
-		name = nigeria_ambazonia.6.b
-		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.6.b executed"
+		name = nigeria_ambazonia.10.a
+		log = "[GetDateText]: [This.GetName]: nigeria_ambazonia.10.a executed"
+
+		effect_tooltip = {
+			transfer_state = 322
+
+			add_opinion_modifier = { target = CAM modifier = NIG_occupying_ambazonia }
+			reverse_add_opinion_modifier = { target = CAM modifier = NIG_occupying_ambazonia }
+		}
+
+		news_event = { id = nigeria_ambazonia.7 days = 5 }
 	}
 }
