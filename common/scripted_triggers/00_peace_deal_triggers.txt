@@ -1,204 +1,657 @@
-PLPC_is_on = {
-	has_game_rule = {
-		rule = allow_player_led_PC
-		option = yes
-	}
-}
+# GAME RULE TRIGGERS
+	# PLAYER LED PEACE DEALS
+		PLPC_is_on = {
+			has_game_rule = {
+				rule = allow_player_led_PC
+				option = yes
+			}
+		}
+		PLPC_is_off = {
+			has_game_rule = {
+				rule = allow_player_led_PC
+				option = no
+			}
+		}
+	# CHAOTIC PEACE DEALS
+		CPC_is_on = {
+			has_game_rule = {
+				rule = allow_chaotic_PC
+				option = yes
+			}
+		}
+		CPC_is_off = {
+			has_game_rule = {
+				rule = allow_chaotic_PC
+				option = no
+			}
+		}
+# CONDITIONAL PEACE DEAL TRIGGERS
+	# AI SPECIFIC TRIGGERS
+		CPD_AI_will_offer_peace = { always = no }
+		# Just for display shit
+		CPD_AI_will_accept_calculation = {
+			# BASE ACCEPTANCE
+			set_temp_variable = { CPD_acceptance_temp = -50 }
 
-PLPC_is_off = {
-	has_game_rule = {
-		rule = allow_player_led_PC
-		option = no
-	}
-}
+			# OTHER CHECKS IN HERE
+			# ECONOMIC FACTORING
+				set_temp_variable = { CPD_IR_temp = var:THIS.interest_rate }
+				if = {
+					limit = { THIS = { has_active_mission = debt_default_main_mission } }
+					add_to_temp_variable = { CPD_IR_temp = 5 }
+				}
+				if = {
+					limit = { check_variable = { CPD_IR_temp > 14.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 10 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 12.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 8 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 9.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 6 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 7.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 4 }
+				}
+				else_if = {
+					limit = { check_variable = { CPD_IR_temp > 4.99 } }
+					add_to_temp_variable = { CPD_IR_temp = 2 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_IR_temp }
+			# WAR SUPPORT
+				set_temp_variable = { CPD_WS_temp = var:THIS.has_war_support }
+				multiply_temp_variable = { CPD_WS_temp = -200 }
+				round_temp_variable = CPD_WS_temp
+				add_to_temp_variable = { CPD_WS_temp = 101 }
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_WS_temp }
+			# RELATIVE STRENGTH
+				set_temp_variable = { CPD_RSB_temp = THIS.enemies_strength_ratio@ROOT }
+				multiply_temp_variable = { CPD_RSB_temp = 100 }
+				round_temp_variable = CPD_RSB_temp
+				subtract_from_temp_variable = { CPD_RSB_temp = 100 }
+				clamp_temp_variable = {
+					var = CPD_RSB_temp
+					max = 1000
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_RSB_temp }
+			# CLOSE TO SURRENDER
+				set_temp_variable = { CPD_SP_temp = var:THIS.surrender_progress }
+				multiply_temp_variable = { CPD_SP_temp = 200 }
+				round_temp_variable = CPD_SP_temp
+				subtract_from_temp_variable = { CPD_SP_temp = 100 }
+				clamp_temp_variable = {
+					var = CPD_SP_temp
+					min = 0
+					max = 100
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_SP_temp }
+			# BATTLES WON
+				set_temp_variable = { CPD_RBW_temp = ROOT.CPD_VP@PREV }
+				set_temp_variable = { CPD_TBW_temp = THIS.CPD_VP@ROOT }
+				subtract_from_temp_variable = { CPD_RBW_temp = CPD_TBW_temp }
+				round_temp_variable = CPD_RBW_temp
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_RBW_temp }
+			# POWER RANKING
+				if = {
+					limit = { THIS = { has_idea = superpower } }
+					set_temp_variable = { CPD_PR_temp = -60 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = great_power } }
+					set_temp_variable = { CPD_PR_temp = -45 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = large_power } }
+					set_temp_variable = { CPD_PR_temp = -30 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = regional_power } }
+					set_temp_variable = { CPD_PR_temp = -15 }
+				}
+				else_if = {
+					limit = { THIS = { has_idea = non_power } }
+					set_temp_variable = { CPD_PR_temp = 15 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_PR_temp }
+			# FACTION BACKING
+				if = {
+					limit = { THIS = { has_idea = NATO_member } }
+					add_to_temp_variable = { CPD_FB_temp = -25 }
+				}
+				if = {
+					limit = { THIS = { has_idea = CSTO_member } }
+					add_to_temp_variable = { CPD_FB_temp = -25 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_FB_temp }
 
-CPC_is_on = {
-	has_game_rule = {
-		rule = allow_chaotic_PC
-		option = yes
-	}
-}
+			# Time at War
+				set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
+				multiply_temp_variable = { months_at_war_tmp = 2 }
+				add_to_temp_variable = { CPD_acceptance_temp = months_at_war_tmp }
 
-CPC_is_off = {
-	has_game_rule = {
-		rule = allow_chaotic_PC
-		option = no
-	}
-}
-
+			# Cost of Peace Deal
+				set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
+				multiply_temp_variable = { v = -5 }
+				add_to_temp_variable = { CPD_acceptance_temp = v }
+		}
+		CPD_AI_will_accept = { # this is just for some display shit, will make this work later
+			CPD_AI_will_accept_calculation = yes
+			# FINAL CHECK
+			check_variable = { CPD_acceptance_temp > 0 }
+		}
+	# OTHER TRIGGERS
+		CPD_is_an_autonomy_allowed_to_receive_deal = {
+			custom_trigger_tooltip = {
+				tooltip = CPD_is_an_autonomy_allowed_to_receive_deal_TT
+				OR = {
+					# DEFAULT
+						has_autonomy_state = autonomy_associated_state
+					# DEFAULT - COLOURED
+						has_autonomy_state = autonomy_associated_state_colored
+					# CALIPHATE
+						has_autonomy_state = autonomy_terrorist_branch
+					# DANISH
+						has_autonomy_state = danish_crown_holding
+					# ISRAELI-PALESTINIAN
+						has_autonomy_state = autonomy_authority_of_palestine
+						has_autonomy_state = autonomy_authority_of_palestine_1
+						has_autonomy_state = autonomy_authority_of_palestine_2
+						has_autonomy_state = autonomy_provisional_security_of_gaza
+					# RUSSIAN
+						has_autonomy_state = autonomy_union_state
+					# UAR
+						has_autonomy_state = autonomy_uar_state
+				}
+			}
+		}
+		CPD_is_an_autonomy_allowed_to_send_deal = {
+			# Any new autonomies that are able to declare war/do things independently of the overlord country they should be added here
+			custom_trigger_tooltip = {
+				tooltip = CPD_is_an_autonomy_allowed_to_send_deal_TT
+				OR = {
+					# DEFAULT
+						has_autonomy_state = autonomy_associated_state
+						has_autonomy_state = autonomy_satellite_state
+					# DEFAULT - COLOURED
+						has_autonomy_state = autonomy_associated_state_colored
+						has_autonomy_state = autonomy_satellite_state_colored
+					# CALIPHATE
+						has_autonomy_state = autonomy_terrorist_branch
+					# DANISH
+						has_autonomy_state = danish_crown_holding
+					# IRAQI
+						has_autonomy_state = autonomy_fifty_first_state_iraq
+					# ISRAELI-PALESTINIAN
+						has_autonomy_state = autonomy_authority_of_palestine
+						has_autonomy_state = autonomy_authority_of_palestine_1
+						has_autonomy_state = autonomy_authority_of_palestine_2
+						has_autonomy_state = autonomy_provisional_security_of_gaza
+					# RUSSIAN
+						has_autonomy_state = autonomy_union_state
+					# TAJIK
+						has_autonomy_state = autonomy_irn_province
+						has_autonomy_state = TAJ_autonomy_administrative_region
+					# UAR
+						has_autonomy_state = autonomy_uar_state
+						has_autonomy_state = autonomy_uar_province
+						has_autonomy_state = autonomy_uar_regional_command
+				}
+			}
+		}
+		# NEEDED FOR MATH/LOC
+			CPD_calculate_province_cost = {
+				if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+					# COST MODIFIERS
+						if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_core_of = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 2 }
+						}
+						else_if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_claimed_by = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 1.5 }
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 2 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 4 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 3 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				if = {
+					limit = { is_owned_and_controlled_by = THIS.owner }
+					multiply_temp_variable = { CPD_VP_temp = 2 }
+				}
+				always = yes
+			}
+			CPD_calculate_province_cost_loc = {
+				if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+					# COST MODIFIERS
+						if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_core_of = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 2 }
+						}
+						else_if = {
+							limit = {
+								NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+								is_claimed_by = ROOT
+							}
+							divide_temp_variable = { CPD_VP_temp = 1.5 }
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 2 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 4 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
+					# COST CALCULATION
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						divide_temp_variable = { CPD_VP_temp = 3 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				if = {
+					limit = { is_owned_and_controlled_by = THIS.owner }
+					multiply_temp_variable = { CPD_VP_temp = 2 }
+				}
+				if = {
+					limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
+					if = {
+						limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+						multiply_temp_variable = { CPD_VP_temp = 1 }
+					}
+					else = { multiply_temp_variable = { CPD_VP_temp = -1 } }
+				}
+				else = {
+					if = {
+						limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+						multiply_temp_variable = { CPD_VP_temp = -1 }
+					}
+					else = { multiply_temp_variable = { CPD_VP_temp = 1 } }
+				}
+				always = yes
+			}
+			# CPD_cost_of_state_loc = {
+			# 	if = {
+			# 		limit = {
+			# 			OR = {
+			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+			# 				ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
+			# 				ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+			# 				ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
+			# 			}
+			# 		}
+			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
+			# 		multiply_temp_variable = { CPD_value_of_state_display = -1 }
+			# 	}
+			# 	else = {
+			# 		set_temp_variable = { CPD_value_of_state_display = CPD_value_of_state^num }
+			# 		multiply_temp_variable = { CPD_value_of_state_display = 1 }
+			# 	}
+			# }
+# FOR COUNTRY SPECIFIC PEACE DEALS WITH TOTAL WARS
+	# ERITREA
+		# unsure why it was commented out but will leave it as such
+		# until i remember wtf this was for, leave it be
+		#
+		# ERI_is_ethiopian_again = {
+		# 	if = {
+		# 		limit = {
+		# 			NOT = { has_global_flag = ETH_victory_ERI }
+		# 			ROOT = { original_tag = ERI }
+		# 			FROM = { original_tag = ETH }
+		# 		}
+		# 	}
+		# }
+	# LIBYA
+		LBA_was_original_state = {
+			OR = {
+				state = 391
+				state = 392
+				state = 393
+				state = 395
+				state = 396
+				state = 397
+				state = 579
+				state = 918
+				state = 919
+				state = 920
+				state = 1100
+				state = 1101
+			}
+		}
+		LBA_salafist_claim = {
+			OR = {
+				state = 85
+				state = 187
+				state = 327
+				state = 329
+				state = 330
+				state = 366
+				state = 370
+				state = 379
+				state = 381
+				state = 382
+				state = 394
+				state = 413
+				state = 1108
+				state = 1163
+				state = 1164
+				state = 1165
+				state = 1167
+			}
+		}
+	# NIGERIA
+		NIG_was_boko_haramed = {
+			OR = {
+				original_tag = BEN
+				original_tag = CAM
+				original_tag = CAR
+				original_tag = EGU
+				original_tag = NGR
+				original_tag = TOG
+			}
+		}
+		NIG_state_was_boko_haramed = {
+			OR = {
+				is_core_of = BEN
+				is_core_of = CAM
+				is_core_of = CAR
+				is_core_of = EGU
+				is_core_of = NGR
+				is_core_of = TOG
+			}
+		}
+	# NOVOROSSIYA
+		NOV_is_novorossiya_tag = {
+			OR = {
+				original_tag = CRM
+				original_tag = DPR
+				original_tag = HPR
+				original_tag = LPR
+				original_tag = NOV
+				original_tag = OPR
+			}
+		}
+		NOV_is_novorossiya_state = {
+			OR = {
+				state = 333
+				state = 693
+				state = 694
+				state = 695
+				state = 696
+				state = 1030
+				state = 1075
+				state = 1076
+				state = 1085
+				state = 1086
+				state = 1087
+			}
+		}
+	# PALESTINE
+		PAL_palestinian_state = {
+			OR = {
+				state = 204
+				state = 205
+				state = 206
+				state = 207
+				state = 208
+				state = 209
+			}
+		}
+	# SERBIA
+		SER_is_yugoslav_nation = {
+			OR = {
+				original_tag = BOS
+				original_tag = CRO
+				original_tag = FYR
+				original_tag = HZG
+				original_tag = KOS
+				original_tag = MNT
+				original_tag = RSK
+				original_tag = SLV
+				original_tag = VOJ
+			}
+		}
+		SER_is_yugoslav_state = {
+			OR = {
+				is_core_of = BOS
+				is_core_of = CRO
+				is_core_of = FYR
+				is_core_of = HZG
+				is_core_of = KOS
+				is_core_of = MNT
+				is_core_of = RSK
+				is_core_of = SLV
+				is_core_of = VOJ
+			}
+		}
+# MISCELLANEOUS TRIGGERS
 CPC_off_western = {
 	ROOT = { has_government = democratic }
 	FROM = { has_government = democratic }
 }
-
 CPC_off_emerging = {
 	ROOT = { has_government = communism }
 	FROM = { has_government = communism }
 }
-
 CPC_off_salafist = {
 	ROOT = { has_government = fascism }
 	FROM = { has_government = fascism }
 }
-
 CPC_off_non_aligned = {
 	ROOT = { has_government = neutrality }
 	FROM = { has_government = neutrality }
 }
-
 CPC_off_nationalist = {
 	ROOT = { has_government = nationalist }
 	FROM = { has_government = nationalist }
 }
 
-# ERI_is_ethiopian_again = {
-# 	if = {
-# 		limit = {
-# 			NOT = { has_global_flag = ETH_victory_ERI }
-# 			ROOT = { original_tag = ERI }
-# 			FROM = { original_tag = ETH }
-# 		}
-# 	}
-# }
-
-LBA_was_original_state = {
-	OR = {
-		state = 391
-		state = 392
-		state = 393
-		state = 395
-		state = 396
-		state = 397
-		state = 579
-		state = 918
-		state = 919
-		state = 920
-		state = 1100
-		state = 1101
-	}
-}
-
-LBA_salafist_claim = {
-	OR = {
-		state = 85
-		state = 187
-		state = 327
-		state = 329
-		state = 330
-		state = 366
-		state = 370
-		state = 379
-		state = 381
-		state = 382
-		state = 394
-		state = 413
-		state = 1108
-		state = 1163
-		state = 1164
-		state = 1165
-		state = 1167
-	}
-}
-
-NIG_was_boko_haramed = {
-	OR = {
-		original_tag = BEN
-		original_tag = CAM
-		original_tag = CAR
-		original_tag = EGU
-		original_tag = NGR
-		original_tag = TOG
-	}
-}
-
-NIG_state_was_boko_haramed = {
-	OR = {
-		is_core_of = BEN
-		is_core_of = CAM
-		is_core_of = CAR
-		is_core_of = EGU
-		is_core_of = NGR
-		is_core_of = TOG
-	}
-}
-
-NOV_is_novorossiya_tag = {
-	OR = {
-		original_tag = CRM
-		original_tag = DPR
-		original_tag = HPR
-		original_tag = LPR
-		original_tag = NOV
-		original_tag = OPR
-	}
-}
-
-NOV_is_novorossiya_state = {
-	OR = {
-		state = 333
-		state = 693
-		state = 694
-		state = 695
-		state = 696
-		state = 1030
-		state = 1075
-		state = 1076
-		state = 1085
-		state = 1086
-		state = 1087
-	}
-}
-
-PAL_palestinian_state = {
-	OR = {
-		state = 204
-		state = 205
-		state = 206
-		state = 207
-		state = 208
-		state = 209
-	}
-}
-
-SER_is_yugoslav_nation = {
-	OR = {
-		original_tag = BOS
-		original_tag = CRO
-		original_tag = FYR
-		original_tag = HZG
-		original_tag = KOS
-		original_tag = MNT
-		original_tag = RSK
-		original_tag = SLV
-		original_tag = VOJ
-	}
-}
-
-SER_is_yugoslav_state = {
-	OR = {
-		is_core_of = BOS
-		is_core_of = CRO
-		is_core_of = FYR
-		is_core_of = HZG
-		is_core_of = KOS
-		is_core_of = MNT
-		is_core_of = RSK
-		is_core_of = SLV
-		is_core_of = VOJ
-	}
-}
-
-SOV_fucked_around_and_found_out = {
+# Custom Civil War Trigger
+CPD_is_a_custom_civil_war = {
+	# Somalia
 	if = {
-		limit = {
-			NOT = {
-				has_game_rule = {
-					rule = rule_disable_nato
-					option = no
-				}
+		limit = { ROOT = { original_tag = SOM } }
+		NOT = {
+			OR = {
+				original_tag = JUB
+				original_tag = SNA
+				original_tag = SWS
 			}
-			ROOT = { original_tag = SOV }
-			FROM = { has_idea = NATO_member }
 		}
 	}
+	else_if = {
+		limit = { ROOT = { original_tag = JUB } }
+		NOT = {
+			OR = {
+				original_tag = SOM
+				original_tag = SNA
+				original_tag = SWS
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = SNA } }
+		NOT = {
+			OR = {
+				original_tag = SOM
+				original_tag = JUB
+				original_tag = SWS
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = SWS } }
+		NOT = {
+			OR = {
+				original_tag = SOM
+				original_tag = JUB
+				original_tag = SNA
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = LIB } }
+		NOT = {
+			OR = {
+				original_tag = LUR
+				original_tag = SIE
+				original_tag = GUI
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = LUR } }
+		NOT = {
+			OR = {
+				original_tag = AFR
+				original_tag = LIB
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = SIE } }
+		NOT = {
+			OR = {
+				original_tag = AFR
+				original_tag = LIB
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = GUI } }
+		NOT = {
+			OR = {
+				original_tag = AFR
+				original_tag = LIB
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = AFR } }
+		NOT = {
+			OR = {
+				original_tag = LUR
+				original_tag = SIE
+				original_tag = GUI
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = SUD } }
+		NOT = {
+			OR = {
+				original_tag = SSU
+				original_tag = DAR
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = SSU } }
+		NOT = {
+			OR = {
+				original_tag = SUD
+				original_tag = DAR
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = DAR } }
+		NOT = {
+			OR = {
+				original_tag = SUD
+				original_tag = SSU
+			}
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = TAL } }
+		NOT = {
+			original_tag = AFG
+		}
+	}
+	else_if = {
+		limit = { ROOT = { original_tag = AFG } }
+		NOT = {
+			original_tag = TAL
+		}
+	}
+
 }
