@@ -613,24 +613,24 @@
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
 	NDefines.NNavy.MIN_HIT_PROFILE_MULT = 0.1 -- largest hit profile penalty to hitting (higher value of the define makes ships easier to hit, i assume by reducing the penalty caused by small hit profile of target ship)
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
-		80.0,	-- big guns rest to defult, was 999
-		100.0,	-- torpedos  #anti ship guided weapons reset to default, was 50
-		45.0,	-- small guns result to default, was 20
+		45.0,	-- Anti-Ship Missiles
+		50.0,	-- torpedos
+		55.0,	-- Guns
 	}
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
-		1.0,	-- big guns	was 8, reset to default
-		4.0,	-- torpedos #anti ship guided weapons
-		1.0,	-- small guns was 3 reset to default
+		1.0,	-- Anti-Ship Missiles
+		4.0,	-- torpedos
+		1.0,	-- Guns
 	}
 
 	NDefines.NNavy.DEPTH_CHARGES_HIT_CHANCE_MULT = 1.5 -- multiplies hit chance of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_DAMAGE_MULT = 2 	-- multiplies damage of depth charges
-	NDefines.NNavy.DEPTH_CHARGES_HIT_PROFILE = 24.0	-- hit profile for depth charges
+	NDefines.NNavy.DEPTH_CHARGES_HIT_PROFILE = 24.0	-- hit profile for depth charges, default 100
 	NDefines.NNavy.CARRIER_STACK_PENALTY = 2
 	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.5
 	NDefines.NNavy.CARRIER_ONLY_COMBAT_ACTIVATE_TIME = 0 -- 0
-	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 6
-	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 8 -- 8
+	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 2 -- 6
+	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 4 -- 8
 	NDefines.NNavy.NAVAL_MINES_DECAY_AT_PEACE_TIME = 0.05 -- 0.25
 	NDefines.NNavy.ATTRITION_WHILE_MOVING_FACTOR = 2.5 -- 1.5
 	NDefines.NNavy.ATTRITION_DAMAGE_ORG = 0.03 -- 0.01
