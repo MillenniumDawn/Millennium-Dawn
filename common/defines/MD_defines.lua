@@ -527,8 +527,9 @@
 	NDefines.NNavy.COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8 -- -0.5
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_CHANCE = 0.85 -- 0.2
 	NDefines.NNavy.COMBAT_TORPEDO_CRITICAL_DAMAGE_MULT = 5.0 -- 2.0
-	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 1.6-- 1.6
-	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 1.6 -- 1.9
+	NDefines.NNavy.COMBAT_DAMAGE_RANDOMNESS = 0.75 -- 0.5, increased this number to decrease the amount of randomization in damage
+	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 1.6-- 1.6 -- 0.6
+	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 1.6 -- 1.9 -- 1
 	NDefines.NNavy.COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.75 -- 0.8
 	NDefines.NNavy.COMBAT_ESCAPING_SPEED_BALANCE = 0.9 -- 0.8
 	NDefines.NNavy.COMBAT_SHIP_SPEED_TO_FIELD_FACTOR = 0.15 -- 0.03
@@ -613,13 +614,13 @@
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
 	NDefines.NNavy.MIN_HIT_PROFILE_MULT = 0.1 -- largest hit profile penalty to hitting (higher value of the define makes ships easier to hit, i assume by reducing the penalty caused by small hit profile of target ship)
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
-		45.0,	-- Anti-Ship Missiles
-		50.0,	-- torpedos
-		55.0,	-- Guns
+		150.0,	-- Anti-Ship Missiles
+		145.0,	-- torpedos
+		200.0,	-- Guns
 	}
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
 		1.0,	-- Anti-Ship Missiles
-		4.0,	-- torpedos
+		3.0,	-- torpedos
 		1.0,	-- Guns
 	}
 
