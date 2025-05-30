@@ -1974,7 +1974,7 @@ focus_EU111_QMV_result = {
 				#adds state to the total merged states counter
 				add_to_temp_variable = { merged_states = 1 }
 				#Pulls and sets info if nation has intel agency
-				if = { limit = { has_intelligence_agency = yes} add_to_temp_variable = { has_agency_num = 1 } }
+				if = { limit = { has_intelligence_agency = yes } add_to_temp_variable = { has_agency_num = 1 } }
 
 				#Sets tax rates, stability, influence, and political party numbers
 				add_to_temp_variable = { corp_rate_hold = corporate_tax_rate }
@@ -2017,12 +2017,12 @@ focus_EU111_QMV_result = {
 
 				#Adds all missile system stuff here
 				if = { limit = { NOT = { tag = UOE } }
-					for_each_loop = {
-						array = missile_inventory_array
-						value = v
-						index = i
-						add_to_variable = { UOE.missile_inventory_array^i = missile_inventory_array^i }
-					}
+					# for_each_loop = {
+					# 	array = missile_inventory_array
+					# 	value = v
+					# 	index = i
+					# 	add_to_variable = { UOE.missile_inventory_array^i = missile_inventory_array^i }
+					# }
 					for_each_loop = {
 						array = GNSS_satellite_array
 						value = v
@@ -2041,12 +2041,12 @@ focus_EU111_QMV_result = {
 						index = i
 						add_to_variable = { UOE.SPY_satellite_array^i = SPY_satellite_array^i }
 					}
-					for_each_loop = {
-						array = nuclear_warhead_inventory_array
-						value = v
-						index = i
-						add_to_variable = { UOE.nuclear_warhead_inventory_array^i = nuclear_warhead_inventory_array^i }
-					}
+					# for_each_loop = {
+					# 	array = nuclear_warhead_inventory_array
+					# 	value = v
+					# 	index = i
+					# 	add_to_variable = { UOE.nuclear_warhead_inventory_array^i = nuclear_warhead_inventory_array^i }
+					# }
 					UOE = {
 						add_to_variable = { treasury = PREV.treasury }
 						add_to_variable = { debt = PREV.debt }
@@ -2406,6 +2406,16 @@ focus_EU111_QMV_result = {
 				divide_variable = { wahabi_ulema_opinion = 4 }
 				round_variable = wahabi_ulema_opinion
 
+				#Slow the economy, given the mass merger
+				#BALANCE & CHALLENGE, not realism
+				add_to_temp_variable = { eco_cycle_sel = -1 }
+
+				#clamp this one, since it goes to a min
+				clamp_temp_variable  = {
+					var = eco_cycle_sel
+					min = 0
+				}
+
 				if = { limit = { check_variable = { eco_cycle_sel = 0 } }
 					add_ideas = depression
 				}else_if = { limit = { check_variable = { eco_cycle_sel = 1 } }
@@ -2603,6 +2613,9 @@ focus_EU111_QMV_result = {
 					add_ideas = police_05
 				}
 
+				#Increase corruption by 1, to simulate the increasing corruption from a giant merge
+				#Since the if just dumps, no need to clamp
+				add_to_temp_variable = { corpt_sel = 1 }
 				if = { limit = { check_variable = { corpt_sel = 0 } }
 					add_ideas = negligible_corruption
 				}else_if = { limit = { check_variable = { corpt_sel = 1 } }
@@ -2779,6 +2792,8 @@ focus_EU111_QMV_result = {
 				set_variable = { UOE_energy_gain_var = -0.10 }
 				set_variable = { UOE_pop_energy_var = 0.15 }
 				set_variable = { UOE_pop_fuel_var = 0.15 }
+				set_variable = { UOE_market_income_var = -0.5 }
+				set_variable = { UOE_market_purchase_var = 0.5 }
 
 				set_temp_variable = { world_tension_var = 1 }
 				subtract_from_temp_variable = { world_tension_var = threat }
@@ -2794,7 +2809,7 @@ focus_EU111_QMV_result = {
 				add_dynamic_modifier = { modifier = UOE_economic_turmoil_modifier }
 				add_dynamic_modifier = { modifier = UOE_restructuring_military_modifier }
 				add_dynamic_modifier = { modifier = UOE_the_resource_crisis_modifier }
-				add_dynamic_modifier = { modifier = UOE_the_military_industrial_complex }
+				add_dynamic_modifier = { modifier = UOE_the_military_industrial_complex_modifier }
 
 				every_controlled_state = {
 					set_compliance = 25

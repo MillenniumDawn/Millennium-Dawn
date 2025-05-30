@@ -8128,7 +8128,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Further_Market_Spread"
-			add_ideas = UOE_spead_of_markets
+			add_ideas = UOE_spread_of_markets
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8402,7 +8402,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_The_Highway_through_Europe"
-			#TODO:Starts a mission that, upon completion, increase the infrastructure of every owned state by 1, with a running gdp cost until it is completed, but grants a big productivity buff when finished
+			#TODO:Starts a mission that, upon completion, increase the infrastructure of every owned state by 1
+			#Should include a running GDP cost
+			#Increase productivity when mission finishes
+			#If it fails, decrease stability
+			custom_effect_tooltip = highway_through_europe_tooltip
+
+			grab_current_highway_infra = yes
+
+			hidden_effect = {
+				activate_mission = UOE_highway_through_europe_mission
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8424,11 +8434,10 @@ focus_tree = {
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_High_Speed_Highways"
 			every_controlled_state = {
-				if = { limit = { infrastructure > 0 }
-					add_state_modifier = {
-						modifier = {
-							army_speed_factor_for_controller = 0.05
-						}
+				limit = { infrastructure > 0 }
+				add_state_modifier = {
+					modifier = {
+						army_speed_factor_for_controller = 0.05
 					}
 				}
 			}
@@ -8454,7 +8463,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Railway_Standardization"
 			add_timed_idea = {
 				idea = UOE_rapid_railway_growth
-				days = 450
+				days = 365
 			}
 		}
 
@@ -8462,7 +8471,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = UOE_North-to-South_Connection
+		id = UOE_North_to_South_Connection
 		icon = wip
 
 		x = 0
@@ -8475,8 +8484,11 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UOE_North-to-South_Connection"
-			#TODO: Add the railway production to this, adding N-S routes across europe
+			log = "[GetDateText]: [Root.GetName]: Focus UOE_North_to_South_Connection"
+			add_timed_idea = {
+				idea = UOE_rapid_railway_growth_2
+				days = 450
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8493,7 +8505,7 @@ focus_tree = {
 
 		cost = 10
         prerequisite = { focus = UOE_High_Speed_Highways }
-        prerequisite = { focus = UOE_North-to-South_Connection }
+        prerequisite = { focus = UOE_North_to_South_Connection }
 
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
@@ -8505,7 +8517,7 @@ focus_tree = {
 	}
 
 	focus = {
-		id = UOE_Military-Industrial_Complex
+		id = UOE_Military_Industrial_Complex
 		icon = wip
 
 		x = 8
@@ -8518,9 +8530,16 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus UOE_Military-Industrial_Complex"
+			log = "[GetDateText]: [Root.GetName]: Focus UOE_Military_Industrial_Complex"
 			set_country_flag = UOE_mil_indust_complex
 			custom_effect_tooltip = UOE_mil_ind_complex_tooltip
+
+			set_temp_variable = { temp_change = 0.25 }
+			UOE_market_income_change = yes
+			set_temp_variable = { temp_change = -0.25 }
+			UOE_market_purchase_change = yes
+			set_temp_variable = { temp_change = 0.15 }
+			UOE_mil_ind_complex_change = yes
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8533,10 +8552,10 @@ focus_tree = {
 		x = 2
 		y = 1
 
-		relative_position_id = UOE_Military-Industrial_Complex
+		relative_position_id = UOE_Military_Industrial_Complex
 
 		cost = 10
-        prerequisite = { focus = UOE_Military-Industrial_Complex }
+        prerequisite = { focus = UOE_Military_Industrial_Complex }
 
 		mutually_exclusive = { focus = UOE_Expand_EU_Designers }
 
@@ -8555,10 +8574,10 @@ focus_tree = {
 		x = -2
 		y = 1
 
-		relative_position_id = UOE_Military-Industrial_Complex
+		relative_position_id = UOE_Military_Industrial_Complex
 
 		cost = 10
-        prerequisite = { focus = UOE_Military-Industrial_Complex }
+        prerequisite = { focus = UOE_Military_Industrial_Complex }
 
 		mutually_exclusive = { focus = UOE_Invite_External_Companies }
 
@@ -8747,6 +8766,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Increase_Peacetime_Factory_Production"
+
+			set_temp_variable = { temp_change = 0.25 }
+			UOE_mil_ind_complex_change = yes
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8767,6 +8789,21 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Air_Defense_Program"
+
+			two_anti_air = yes
+			two_anti_air = yes
+			two_anti_air = yes
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+
+				add_timed_idea = {
+					idea = UOE_air_missile_defense_initiative
+					days = 365
+				}
+				one_rocket_site = yes
+				one_rocket_site = yes
+				one_rocket_site = yes
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8787,6 +8824,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_The_Concrete_Barrier"
+
+			add_ideas = UOE_the_concrete_barrier
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8807,6 +8846,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_Airbase_Production_Initative"
+
+			two_air_base = yes
+
+			add_timed_idea = {
+				idea = UOE_airbase_construction_initiative
+				days = 365
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -8829,6 +8875,11 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ALL }
         completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus UOE_The_European_Procurement_Commission"
+
+			set_temp_variable = { temp_change = 0.25 }
+			UOE_market_income_change = yes
+			set_temp_variable = { temp_change = -0.25 }
+			UOE_market_purchase_change = yes
 		}
 
 		ai_will_do = { factor = 1 }
