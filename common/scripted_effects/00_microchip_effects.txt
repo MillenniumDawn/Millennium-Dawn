@@ -20,7 +20,13 @@ microchip_update = {
 	set_temp_variable = { country_tech_remaining = resource@tungsten }
 	set_temp_variable = { country_rare_remaining = resource@chromium }
 
-	set_temp_variable = { country_microchip_produced = resource_produced@microchips }
+	#Starting produced needs to be set manually, else math has a seizure. Math will never be perfect, because it ignores all the stacked modifiers
+	#But I just don't care anymore, because I just want this to work, damnit
+	set_temp_variable = { country_microchip_produced = microchip_plant_total }
+	multiply_temp_variable = { country_microchip_produced = 16 }
+
+	set_temp_variable = { base_sat_reducer = country_microchip_produced }
+	multiply_temp_variable = { base_sat_reducer = var_GNSS_civ_local_resources_factor }
 
 	set_temp_variable = { country_microchip_reducer = 0 }
 
@@ -60,13 +66,15 @@ microchip_update = {
 			add_to_temp_variable = { country_microchip_reducer = country_tech_remaining }
 		}
 		set_variable = { country_microchip_production_var = country_microchip_reducer }
+		set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
+		multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
+		round_temp_variable = country_microchip_reducer_max
 		clamp_variable = {
 			var = country_microchip_production_var
 			min = 0
-			max = country_microchip_produced
+			max = country_microchip_reducer_max
 		}
-		#always keep at least 10% output, even if supply is strangled
-		if = { limit = { check_variable = { country_microchip_production_var = country_microchip_produced } } multiply_variable = { country_microchip_production_var = 0.9 } }
+		add_to_variable = { country_microchip_production_var = base_sat_reducer }
 	}else = {
 		#There should be no reduction here, because we have a surplus of all inputs
 		set_variable = { country_microchip_production_var = 0 }
@@ -80,7 +88,8 @@ composite_update = {
 	set_temp_variable = { country_rubber_remaining = resource@rubber }
 	set_temp_variable = { country_steel_remaining = resource@steel }
 
-	set_temp_variable = { country_composite_produced = resource_produced@composites }
+	set_temp_variable = { country_composite_produced = composite_plant_total }
+	multiply_temp_variable = { country_composite_produced = 8 }
 
 	set_temp_variable = { country_composite_reducer = 0 }
 
@@ -142,12 +151,15 @@ composite_update = {
 			add_to_temp_variable = { country_composite_reducer = country_steel_remaining }
 		}
 		set_variable = { country_composite_production_var = country_composite_reducer }
+		set_temp_variable = { country_composite_reducer_max = country_composite_produced }
+		multiply_temp_variable = { country_composite_reducer_max = 0.95 }
+		round_temp_variable = country_composite_reducer_max
+		#Clamp the max at -90% of production, this number can be adjusted
 		clamp_variable = {
 			var = country_composite_production_var
 			min = 0
-			max = country_composite_produced
+			max = country_composite_reducer_max
 		}
-		if = { limit = { check_variable = { country_composite_production_var = country_composite_produced } } multiply_variable = { country_composite_production_var = 0.9 } }
 	}else = {
 		#There should be no reduction here, because we have a surplus of all inputs
 		set_variable = { country_composite_production_var = 0 }
