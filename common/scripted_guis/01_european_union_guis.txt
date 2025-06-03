@@ -4657,13 +4657,13 @@ scripted_gui = {
 				}
 				THIS = { is_ai = yes }
 				ROOT = {
-					set_temp_variable = { base_pp_cost = 300 }
+					set_temp_variable = { base_pp_cost = 200 }
 					set_temp_variable = { pp_multipler = PREV.var_EUpopRatio }
 					multiply_temp_variable = { pp_multipler = 25 }
 					multiply_temp_variable = { base_pp_cost = pp_multipler }
 					clamp_temp_variable = {
 						var = base_pp_cost
-						max = 1000
+						max = 750
 					}
 					has_political_power > base_pp_cost
 				}
@@ -4690,13 +4690,11 @@ scripted_gui = {
 				ROOT = {
 					if = {
 						limit = {
-							AND = {
-								NOT = {
-									has_idea = EU_commission_president
-									has_idea = EU_council_president
-									has_idea = EU_parliament_president
-									influence_on_all_other_EU_members_3_percent = yes
-								}
+							NOT = {
+								has_idea = EU_commission_president
+								has_idea = EU_council_president
+								has_idea = EU_parliament_president
+								influence_on_all_other_EU_members_3_percent = yes
 							}
 						}
 						add_political_power = -500
@@ -5309,6 +5307,7 @@ scripted_gui = {
 						tooltip = dublin_II_tt
 						is_in_array = { global.EU_passed_votes = 403 }
 					}
+					NOT = { TUR = { has_idea = EU_member } }
 					has_global_flag = EUU_migrant_crisis_triggered
 				}
 				else_if = {
@@ -5539,8 +5538,6 @@ scripted_gui = {
 		effects = {
 			# Scrollbar Buttons
 			name_of_available_reform_button_click = {
-				set_global_flag = { flag = has_active_EU_flag days = 60 value = 2 }
-				set_global_flag = { flag = new_council_vote_delay days = 21 value = 1 }
 				set_variable = { global.current_active_agenda_disp = v }
 				set_variable = { global.active_MEP_Support = 0 }
 				# Notify all nations if not AI
@@ -5775,7 +5772,11 @@ scripted_gui = {
 							modifier = {
 								add = -10
 								date < 2000.6.1
-								political_power_daily < 4.0
+								OR = {
+									political_power_daily < 4.0
+									NOT = { has_idea = EU_commission_president }
+									NOT = { has_idea = EU_council_president }
+								}
 							}
 							# Historical AI Focus
 							modifier = {
@@ -5817,10 +5818,6 @@ scripted_gui = {
 								check_variable = { v = 101 }
 							}
 							# Killswitch
-							modifier = {
-								factor = 0
-
-							}
 							modifier = {
 								factor = 0
 								OR = {
