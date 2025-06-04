@@ -10170,11 +10170,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_global_vision }
 		available = {
-			USA = {
-				same_ideology = yes
-				exists = yes
-				war_with_us = no
-			}
+			USA = { has_western_aligned_government = yes }
 			has_western_aligned_government = yes
 		}
 
@@ -10221,11 +10217,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_dutch_american_friendship }
 		available = {
-			USA = {
-				same_ideology = yes
-				exists = yes
-				war_with_us = no
-			}
+			USA = { has_western_aligned_government = yes }
 			has_western_aligned_government = yes
 		}
 
@@ -10251,11 +10243,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_dutch_american_friendship }
 		available = {
-			USA = {
-				same_ideology = yes
-				exists = yes
-				war_with_us = no
-			}
+			USA = { has_western_aligned_government = yes }
 			has_western_aligned_government = yes
 		}
 		mutually_exclusive = { focus = HOL_LNG_cooperation }
@@ -10311,11 +10299,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_dutch_american_friendship }
 		available = {
-			USA = {
-				same_ideology = yes
-				exists = yes
-				war_with_us = no
-			}
+			USA = { has_western_aligned_government = yes }
 			has_western_aligned_government = yes
 		}
 		mutually_exclusive = { focus = HOL_ASML_partnership_USA }
@@ -10361,12 +10345,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_dutch_american_friendship }
 		available = {
-			USA = {
-				same_ideology = yes
-				has_idea = USA_war_on_terror
-				exists = yes
-				war_with_us = no
-			}
+			USA = { has_western_aligned_government = yes }
 			has_western_aligned_government = yes
 		}
 
@@ -23657,6 +23636,7 @@ focus_tree = {
 
 		available = {
 			nationalist_fascist_are_not_in_power = yes
+			nationalist > 0.1
 		}
 		bypass = {
 			nationalist_fascist_are_in_power = yes
@@ -24348,20 +24328,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_integrate_flemish_army"
-			BEL = {
-				transfer_units_fraction = {
-					target = HOL
-					size = 0.4
-					stockpile_ratio = 0.2
-					army_ratio = 0.5
-					air_ratio = 0.0
-					navy_ratio = 0.0
-					keep_unit_leaders_trigger = {
-						NOT = { has_trait = BEL_flemish_army_leader }
-					}
-				}
-			}
-
+			BEL = { country_event = HOL_NVU.8 }
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -24916,15 +24883,31 @@ focus_tree = {
 		cost = 10
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		prerequisite = { focus = HOL_claim_german_leadership }
+		prerequisite = {
+			focus = HOL_claim_german_leadership
+			focus = HOL_german_brotherhood_of_nations
+		}
 		bypass = { GER = { exists = no } }
 
 		available = {
-			nationalist_fascist_are_in_power = yes
-			strength_ratio = {
-				tag = GER
-				ratio = 2
+			OR = {
+				AND = {
+					nationalist_fascist_are_in_power = yes
+					strength_ratio = {
+						tag = GER
+						ratio = 2
+					}
+				}
+				AND = {
+					nationalist_fascist_are_in_power = yes
+					strength_ratio = {
+						tag = GER
+						ratio = 2
+					}
+					has_completed_focus = HOL_german_brotherhood_of_nations
+				}
 			}
+
 		}
 
 		completion_reward = {
@@ -25304,6 +25287,14 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_support_german_brothers }
 		mutually_exclusive = { focus = HOL_claim_german_leadership }
+		bypass = {
+			GER = {
+				OR = {
+					exists = no
+					is_subject = yes
+				}
+			}
+		}
 
 		available = {
 			nationalist_fascist_are_in_power = yes
@@ -25313,46 +25304,18 @@ focus_tree = {
 						target = HOL
 						value > 80
 					}
+					exists = yes
+					war_with_us = no
 				}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_german_brotherhood_of_nations"
-			create_faction = HOL_germanic_union
-			if = {
-				limit = {
-					GER = {
-						nationalist_fascist_are_in_power = yes
-						has_opinion = {
-							target = HOL
-							value > 80
-						}
-					}
-				}
-				HOL = {
-					add_to_faction = GER
-				}
+			GER = { country_event = HOL_NVU.11 }
+		}
 
-			}
-			else_if = {
-				limit = {
-					SWI = {
-						nationalist_fascist_are_in_power = yes
-						has_opinion = {
-							target = HOL
-							value > 80
-						}
-					}
-				}
-				HOL = {
-					add_to_faction = SWI
-				}
-			}
-
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
+		bypass_effect = {
+			create_faction = "Germanic Brotherhood of Nations"
 		}
 
 		ai_will_do = {
@@ -25374,21 +25337,22 @@ focus_tree = {
 
 		available = {
 			nationalist_fascist_are_in_power = yes
-			HOL = {
-				is_in_faction_with = GER
+			is_in_faction_with = GER
+			is_faction_leader = yes
+		}
+		bypass = {
+			GER = {
+				OR = {
+					exists = no
+					is_subject = yes
+				}
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_germanic_industrial_union"
-			every_other_country = {
-				limit = {
-					is_in_faction_with = HOL
-					nationalist_fascist_are_in_power = yes
-				}
-				add_ideas = HOL_germanic_union_member1
-			}
-
+			add_ideas = HOL_germanic_union_member1
+			GER = { country_event = HOL_NVU.14 }
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -25414,13 +25378,24 @@ focus_tree = {
 
 		available = {
 			nationalist_fascist_are_in_power = yes
-			HOL = {
-				is_in_faction_with = GER
+			is_in_faction_with = GER
+			is_faction_leader = yes
+		}
+		bypass = {
+			GER = {
+				OR = {
+					exists = no
+					is_subject = yes
+				}
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_germanic_infrastructure_efforts"
+			add_timed_idea = {
+			idea = HOL_germanic_union_infrastructure_efforts
+			days = 180
+			}
 			every_other_country = {
 				limit = { has_idea = HOL_germanic_union_member1 }
 				add_timed_idea = {
@@ -25428,7 +25403,6 @@ focus_tree = {
 					days = 180
 				}
 			}
-
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
@@ -25454,8 +25428,15 @@ focus_tree = {
 
 		available = {
 			nationalist_fascist_are_in_power = yes
-			HOL = {
-				is_in_faction_with = GER
+			is_in_faction_with = GER
+			is_faction_leader = yes
+		}
+		bypass = {
+			GER = {
+				OR = {
+					exists = no
+					is_subject = yes
+				}
 			}
 		}
 
@@ -25533,6 +25514,14 @@ focus_tree = {
 				}
 			}
 		}
+		bypass = {
+			AUS = {
+				OR = {
+					exists = no
+					is_subject = yes
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_invite_austria"
@@ -25542,7 +25531,6 @@ focus_tree = {
 			AUS = {
 				add_ideas = HOL_germanic_union_member1
 			}
-
 			newline = yes
 			set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.10 }
