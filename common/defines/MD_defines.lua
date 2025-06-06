@@ -1093,3 +1093,10 @@
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_POLICY_ATTACH_COST = 25		-- 25
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
+
+
+	--Ndefines for Air Combat Testing
+	NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_BOMBER = 10        -- Amount of planes we assign to intercept enemies en-route to a location
+    NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_FIGHTER = 10       -- Amount of planes we assign to intercept enemies en-route to a location
+    NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_SUPPORT = 10        -- Amount of planes we assign to intercept enemies en-route to a location
+	NDefines.NAir.INTERCEPTION_DISTANCE_SCALE = 150     -- At this many pixels of path length, full interception efficiency is applied to air missions. Lerp from 0.
