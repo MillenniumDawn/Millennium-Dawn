@@ -1096,7 +1096,8 @@
 
 
 	--Ndefines for Air Combat Testing
-	NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_BOMBER = 10        -- Amount of planes we assign to intercept enemies en-route to a location
-    NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_FIGHTER = 10       -- Amount of planes we assign to intercept enemies en-route to a location
-    NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_SUPPORT = 10        -- Amount of planes we assign to intercept enemies en-route to a location
+	-- NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_BOMBER = 10        -- Amount of planes we assign to intercept enemies en-route to a location
+    -- NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_FIGHTER = 10       -- Amount of planes we assign to intercept enemies en-route to a location
+    -- NDefines.NAir.ENEMY_PASSING_THROUGH_PLANES_PER_SUPPORT = 10        -- Amount of planes we assign to intercept enemies en-route to a location
 	NDefines.NAir.INTERCEPTION_DISTANCE_SCALE = 1     -- At this many pixels of path length, full interception efficiency is applied to air missions. Lerp from 0.
+	NDefines.NAir.INTERCEPTION_DAMAGE_SCALE = 0.6 -- Multiply the interception damage with this value. Works as a cap when interception distance is at maximum.
