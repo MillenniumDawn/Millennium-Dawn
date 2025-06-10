@@ -405,16 +405,15 @@ on_actions = {
 			}
 			if = { # IAI Victory
 				limit = {
+					IRQ = { has_war = no }
 					has_country_flag = IRQ_Islamic_Army_in_Iraq
 					NOT = {
 						country_exists = ISI
-						country_exists = IRQ
 						country_exists = GMC
 						country_exists = AWD
 						country_exists = NTR
 						country_exists = ATC
 						country_exists = HII
-						#country_exists = IAI
 					}
 				}
 				news_event = {
@@ -427,7 +426,6 @@ on_actions = {
 					annex_country = { target = NTR transfer_troops = yes }
 					annex_country = { target = ATC transfer_troops = yes }
 					annex_country = { target = HII transfer_troops = yes }
-					#annex_country = { target = IAI transfer_troops = yes }
 					drop_cosmetic_tag = yes
 					clr_country_flag = is_IRAQ
 					clr_country_flag = IRQ_Islamic_Army_in_Iraq
@@ -447,9 +445,9 @@ on_actions = {
 			if = { # Hamas of Iraq
 				limit = {
 					has_country_flag = IRQ_hamas_of_iraq
+					IRQ = { has_war = no }
 					NOT = {
 						country_exists = ISI
-						country_exists = IRQ
 						country_exists = GMC
 						country_exists = AWD
 						country_exists = NTR
@@ -527,10 +525,9 @@ on_actions = {
 			if = { # GMCIR
 				limit = {
 					has_country_flag = IRQ_GMCIR
+					IRQ = { has_war = no }
 					NOT = {
 						country_exists = ISI
-						country_exists = IRQ
-						#country_exists = GMC
 						country_exists = AWD
 						country_exists = NTR
 						country_exists = ATC
@@ -2679,11 +2676,9 @@ on_actions = {
 				if = {
 					limit = {
 						country_exists = PMR
-						PMR = { is_subject = no }
 						PMR = {
-							NOT = {
-								is_in_faction = yes
-							}
+							is_subject = no
+							NOT = { is_in_faction = yes }
 							has_war = no
 						}
 					}
@@ -2822,9 +2817,8 @@ on_actions = {
 	on_civil_war_end = {
 		effect = {
 			every_state = {
-				limit = {
-					has_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
-				}
+				limit = { has_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity } }
+
 				remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
 			}
 			if = {
@@ -2992,6 +2986,7 @@ on_actions = {
 						elections_allowed = yes
 					}
 				}
+
 				# Cartel Event
 				if = { limit = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
 					set_politics = {
@@ -2999,13 +2994,19 @@ on_actions = {
 						elections_allowed = no
 					}
 				}
-				#Recognition
-				remove_ideas = rival_government
-				remove_from_array = { global.rival_governments = THIS }
-				clr_country_flag = rival_government_@FROM
-				#CT
+				# Recognition
+				if = { limit = { has_idea = rival_government }
+					remove_ideas = rival_government
+				}
+				if = { limit = { has_country_flag = rival_government_@FROM }
+					clr_country_flag = rival_government_@FROM
+				}
+				if = { limit = { is_in_array = { global.rival_governments = THIS.id } }
+					remove_from_array = { global.rival_governments = THIS.id }
+				}
+				# Counter Terror
 				if = {
-					limit = { is_in_array = { global.ct_states = THIS } }
+					limit = { is_in_array = { global.ct_states = THIS.id } }
 					subtract_from_variable = { threat_level = 30 }
 					clamp_threat = yes
 				}
@@ -3149,11 +3150,16 @@ on_actions = {
 				}
 				calculate_abandon_coalition_threshold = yes
 				reform_expectance_from_situation = yes
+
+				set_variable = { undercover_agents_campania = 0 }
+				set_variable = { undercover_agents_calabria = 0 }
+				set_variable = { undercover_agents_puglia = 0 }
+				set_variable = { undercover_agents_sicily = 0 }
 			}
 
 			### for topbar without LaR
 			if = {
-					limit = {
+				limit = {
 					NOT = { has_dlc = "La Resistance" }
 				}
 				set_variable = { global.var_missiles_button_x = -57 }
@@ -3191,6 +3197,10 @@ on_actions = {
 				if = { limit = { check_variable = { gdp_total < 8 } }
 					divide_variable = { debt = 80 }
 				}
+
+				#Init protest variables, this should stop error spam
+				set_variable = { protest_strength = 0 }
+				set_variable = { protest_radicalisation = 0 }
 
 				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 				set_variable = { anti_bully_wars = 0 }
@@ -3317,6 +3327,13 @@ on_actions = {
 					is_arabic_nation = yes
 				}
 				country_event = { id = arab_spring.16 }
+			}
+
+			ISR = {
+				ISR_startup = yes
+			}
+			BOS = {
+				BOS_startup_effect = yes
 			}
 
 			log = "[GetDateText]: [This.GetName]: on_startup init completed"
