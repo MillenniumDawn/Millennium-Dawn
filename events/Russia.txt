@@ -1339,7 +1339,7 @@ country_event = {
 		set_temp_variable = { treasury_change = -10 }
 		modify_treasury_effect = yes
 		add_equipment_to_stockpile = {
-			type = spart_hull_0
+			type = medium_tank_artillery_chassis_0
 			variant_name = "TOS-1"
 			amount = 8
 		}
@@ -1438,7 +1438,7 @@ country_event = {
 		if = {
 			limit = { has_dlc = "No Step Back" }
 			add_equipment_to_stockpile = {
-				type = mbt_hull_0
+				type = medium_tank_chassis_0
 				amount = 100
 				producer = SOV
 			}
@@ -4170,16 +4170,16 @@ country_event = {
 		name = russia_governorate.20.o1
 		log = "[GetDateText]: [This.GetName]: russia_governorate.20.o1 executed"
 		ai_chance = {
-			base = 5
+			base = 50
 			modifier = {
-				has_government = nationalist
-				add = 90
+				has_government = democratic
+				add = -50
 			}
 			modifier = {
 				ARM = {
 					is_subject_of = SOV
 				}
-				add = 90
+				add = 50
 			}
 			modifier = {
 				ARM = {
@@ -4193,6 +4193,12 @@ country_event = {
 		}
 		SOV = {
 			country_event = { id = russia_governorate.21 }
+		}
+		if = {
+			limit = { 
+				NKR = { is_subject_of = ARM } 
+			}
+			ARM = { country_event = { id = russia_governorate.24 } }
 		}
 		ARM = {
 			set_country_flag = SOV_subject_agree
@@ -4210,17 +4216,9 @@ country_event = {
 		name = russia_governorate.20.o2
 		log = "[GetDateText]: [This.GetName]: russia_governorate.20.o2 executed"
 		ai_chance = {
-			base = 5
+			base = 0
 			modifier = {
 				has_government = democratic
-				add = 90
-			}
-			modifier = {
-				has_government = communism
-				add = 90
-			}
-			modifier = {
-				has_government = neutrality
 				add = 90
 			}
 		}
@@ -4237,18 +4235,14 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 5
+			base = 50
 			modifier = {
-				has_government = nationalist
-				add = 90
+				SOV = { is_ai = no }
+				add = 50
 			}
 			modifier = {
-				emerging_reactionaries_are_in_power = yes
-				add = 90
-			}
-			modifier = {
-				has_government = neutrality
-				add = 90
+				has_government = democratic
+				add = -50
 			}
 			modifier = {
 				ARM = {
@@ -4269,7 +4263,7 @@ country_event = {
 	id = russia_governorate.21
 	title = russia_governorate.21.t
 	desc = russia_governorate.21.d
-	picture = GFX_SOV_generic
+	picture = GFX_sov_empire_governorates
 
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -4292,7 +4286,7 @@ country_event = {
 	id = russia_governorate.22
 	title = russia_governorate.22.t
 	desc = russia_governorate.22.d
-	picture = GFX_SOV_generic
+	picture = GFX_sov_empire_governorates
 
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -4312,7 +4306,7 @@ country_event = {
 			}
 			SOV = {
 				create_wargoal = {
-					target = BLR
+					target = ARM
 					type = annex_everything
 				}
 			}
@@ -4325,7 +4319,7 @@ country_event = {
 	id = russia_governorate.23
 	title = russia_governorate.23.t
 	desc = russia_governorate.23.d
-	picture = GFX_SOV_generic
+	picture = GFX_union_state_more
 
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -4334,7 +4328,13 @@ country_event = {
 		name = russia_governorate.23.o1
 		log = "[GetDateText]: [This.GetName]: russia_governorate.23.o1 executed"
 		ai_chance = {
-			base = 50
+			base = 100
+		}
+		if = {
+			limit = { 
+				NKR = { is_subject_of = ARM } 
+			}
+			ARM = { country_event = { id = russia_governorate.24 } }
 		}
 		ARM = { set_country_flag = USR_armenia_create_union_state }
 		SOV = {
@@ -4361,7 +4361,7 @@ country_event = {
 		name = russia_governorate.23.o2
 		log = "[GetDateText]: [This.GetName]: russia_governorate.23.o2 executed"
 		ai_chance = {
-			base = 50
+			base = 0
 		}
 		if = {
 			limit = { ARM = { NOT = { is_subject_of = SOV } } }
@@ -4380,6 +4380,42 @@ country_event = {
 	}
 }
 
+#Artsakh Problem
+country_event = {
+	id = russia_governorate.24
+	title = russia_governorate.24.t
+	desc = russia_governorate.24.d
+	picture = GFX_win_armenian
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = russia_governorate.24.o1
+		log = "[GetDateText]: [This.GetName]: russia_governorate.24.o1 executed"
+		SOV = {
+			set_autonomy = {
+				target = NKR
+				autonomy_state = autonomy_autonomous_state
+				end_wars = no
+				end_civil_wars = no
+			}	
+		}
+	}
+	option = {
+		name = russia_governorate.24.o2
+		log = "[GetDateText]: [This.GetName]: russia_governorate.23.o2 executed"
+		set_autonomy = {
+			target = NKR
+			autonomy_state = autonomy_autonomous_state
+			end_wars = no
+			end_civil_wars = no
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
 
 
 ####Russian News----
@@ -4866,7 +4902,11 @@ news_event = {
 	picture = GFX_sov_dugindead_worldevent
 	major = yes
 	is_triggered_only = yes
-
+	trigger = {
+		SOV = {
+			has_government = democratic
+		}
+	}
 	option = {
 		name = russia_news.51.o1
 		log = "[GetDateText]: [This.GetName]: russia_news.51.o1 executed"
@@ -5474,7 +5514,7 @@ country_event = {
 		name = sov_other.22.a
 		log = "[GetDateText]: [This.GetName]: sov_other.22.a executed"
 		add_equipment_to_stockpile = {
-			type = spart_hull_0
+			type = medium_tank_artillery_chassis_0
 			variant_name = "M-1978"
 			amount = -1300
 		}
@@ -5507,7 +5547,7 @@ country_event = {
 		add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		add_equipment_to_stockpile = {
-			type = spart_hull_0
+			type = medium_tank_artillery_chassis_0
 			variant_name = "M-1978"
 			amount = 1100
 			producer = NKO
@@ -5542,7 +5582,7 @@ country_event = {
 		add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		add_equipment_to_stockpile = {
-			type = spart_hull_0
+			type = medium_tank_artillery_chassis_0
 			variant_name = "M-1978"
 			amount = 200
 			producer = NKO
@@ -5795,7 +5835,7 @@ country_event = {
 	id = sov_other.18
 	title = sov_other.18.t
 	desc = sov_other.18.d
-	picture = GFX_I_fucking_love_azerbaijan
+
 	is_triggered_only = yes
 
 	option = {
@@ -6543,7 +6583,7 @@ country_event = {
 		}
 		add_ideas = S0V_russian_sphere_idea
 		ai_chance = {
-			base = 10
+			base = 0
 			modifier = {
 				has_government = nationalist
 				factor = 90
@@ -6561,7 +6601,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.7.b"
 
 		ai_chance = {
-			base = 10
+			base = 0
 			modifier = {
 				has_government = democratic
 				factor = 90
@@ -6572,6 +6612,10 @@ country_event = {
 			}
 			modifier = {
 				has_government = communism
+				factor = 90
+			}
+			modifier = {
+				NOT = { is_in_faction_with = SOV }
 				factor = 90
 			}
 		}
@@ -12241,7 +12285,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-				has_completed_focus = SOV_economic_mts_expanding
+				has_completed_focus = SOV_economic_mts
 			}
 			SOV = {
 				set_temp_variable = { modify_capitalisation_mts = -0.470 }
@@ -12250,7 +12294,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-				has_completed_focus = SOV_economic_vtb_ipo
+				has_completed_focus = SOV_economic_vtb
 			}
 			SOV = {
 				set_temp_variable = { modify_capitalisation_vtb = -0.350 }
@@ -12308,7 +12352,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-				has_completed_focus = SOV_economic_mts_expanding
+				has_completed_focus = SOV_economic_mts
 			}
 			SOV = {
 				set_temp_variable = { modify_capitalisation_mts = -0.230 }
@@ -12317,7 +12361,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-				has_completed_focus = SOV_economic_vtb_ipo
+				has_completed_focus = SOV_economic_vtb
 			}
 			SOV = {
 				set_temp_variable = { modify_capitalisation_vtb = -0.350 }
@@ -12506,7 +12550,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-				has_completed_focus = SOV_economic_vtb_ipo
+				has_completed_focus = SOV_economic_vtb
 			}
 			SOV = {
 				set_temp_variable = { modify_capitalisation_vtb = -0.220 }
@@ -12573,7 +12617,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-				has_completed_focus = SOV_economic_vtb_ipo
+				has_completed_focus = SOV_economic_vtb
 			}
 			SOV = {
 				set_temp_variable = { modify_capitalisation_vtb = 0.170 }
@@ -12811,6 +12855,100 @@ country_event = {
 		add_relative_party_popularity = yes
 	}
 }
+
+#MTS
+country_event = {
+	id = sov_economic.43
+	title = sov_economic.43.t
+	desc = sov_economic.43.d
+	picture = GFX_sov_mts_cap
+
+	is_triggered_only = yes
+
+	option = {
+		name = sov_economic.43.a
+		log = "[GetDateText]: [This.GetName]: sov_economic.43.a executed"
+		SOV = {
+			set_temp_variable = { modify_capitalisation_mts = 0.25 }
+			modify_capitalisation_mts_support = yes
+		}
+
+	}
+}
+#Gazprom
+country_event = {
+	id = sov_economic.44
+	title = sov_economic.44.t
+	desc = sov_economic.44.d
+	picture = GFX_sov_gazprom_cap
+
+	is_triggered_only = yes
+
+	option = {
+		name = sov_economic.44.a
+		log = "[GetDateText]: [This.GetName]: sov_economic.44.a executed"
+		SOV = {
+			set_temp_variable = { modify_capitalisation_gazprom = 0.055 }
+			modify_capitalisation_gazprom_support = yes
+		}
+	}
+}
+#VTB
+country_event = {
+	id = sov_economic.45
+	title = sov_economic.45.t
+	desc = sov_economic.45.d
+	picture = GFX_sov_vtb_cap
+
+	is_triggered_only = yes
+
+	option = {
+		name = sov_economic.45.a
+		log = "[GetDateText]: [This.GetName]: sov_economic.45.a executed"
+		SOV = {
+			set_temp_variable = { modify_capitalisation_vtb = 0.035 }
+			modify_capitalisation_vtb_support = yes
+			country_event = sov_economic.45
+		}
+	}
+}
+#Rosneft
+country_event = {
+	id = sov_economic.46
+	title = sov_economic.46.t
+	desc = sov_economic.46.d
+	picture = GFX_sov_rosneft_cap
+
+	is_triggered_only = yes
+
+	option = {
+		name = sov_economic.46.a
+		log = "[GetDateText]: [This.GetName]: sov_economic.46.a executed"
+		SOV = {
+			set_temp_variable = { modify_capitalisation_rosneft = 0.051 }
+			modify_capitalisation_rosneft_support = yes
+		}
+	}
+}
+#Alrosa
+country_event = {
+	id = sov_economic.47
+	title = sov_economic.47.t
+	desc = sov_economic.47.d
+	picture = GFX_sov_alrosa_cap
+
+	is_triggered_only = yes
+
+	option = {
+		name = sov_economic.47.a
+		log = "[GetDateText]: [This.GetName]: sov_economic.47.a executed"
+		SOV = {
+			set_temp_variable = { modify_capitalisation_alrosa = 0.035 }
+			modify_capitalisation_alrosa_support = yes
+		}
+	}
+}
+
 
 
 #LIBERALS
@@ -14036,24 +14174,24 @@ country_event = {
 				}
 				priority = 2
 			}
-			693 = {
+			capital_scope = {
 				create_unit = {
-					division = "name = \"2nd Guards Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 0.8"
-					prioritize_location = 6474
+					division = "name = \"[Russia] 2nd Guards Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 1.0"
+					count = 1
 					owner = ROOT
 				}
 			}
-			671 = {
+			capital_scope = {
 				create_unit = {
-					division = "name = \"14th Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 0.8"
-					prioritize_location = 3668
+					division = "name = \"[Russia] 14th Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 1.0"
+					count = 1
 					owner = ROOT
 				}
 			}
-			671 = {
+			capital_scope = {
 				create_unit = {
-					division = "name = \"16th Guards Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 0.8"
-					prioritize_location = 6701
+					division = "name = \"[Russia] 16th Guards Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 1.0"
+					count = 1
 					owner = ROOT
 				}
 			}
@@ -14184,11 +14322,10 @@ country_event = {
 					}
 					priority = 2
 				}
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 1140 }
+				capital_scope = {
 					create_unit = {
-						division = "name = \"DSHRG Rusich\" division_template = \"DSHRG Rusich\" start_experience_factor = 1.0"
+						division = "name = \"[Russia] DSHRG Rusich\" division_template = \"DSHRG Rusich\" start_experience_factor = 1.0"
+						count = 1
 						owner = ROOT
 					}
 				}
@@ -14309,7 +14446,7 @@ country_event = {
 					limit = { ROOT = { has_full_control_of_state = PREV } }
 					prioritize = { 1140 }
 					create_unit = {
-						division = "name = \"DSHRG Rusich\" division_template = \"DSHRG Rusich\" start_experience_factor = 1.0"
+						division = "name = \"[Russia] DSHRG Rusich\" division_template = \"DSHRG Rusich\" start_experience_factor = 1.0"
 						owner = ROOT
 					}
 				}
