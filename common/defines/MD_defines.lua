@@ -207,7 +207,7 @@
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
 	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
 	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
-	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 20
+	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
 	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
@@ -248,7 +248,7 @@
 	NDefines.NProject.BREAKTHROUGH_DAILY_NUCLEAR_REACTOR_GAIN = 0       -- Amount in 1/100th percentage gained per nuclear reactor. E.g. 2 = 0.02% per nuclear reactor.
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 5.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
+	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 15.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
 	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
@@ -403,10 +403,11 @@
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
 	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
-	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.15 -- 0.1
-	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1 -- 2
-	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.01 -- 1
-	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.05 -- 0.01
+	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.05 -- vanilla 0.1
+	NDefines.NAir.ACCIDENT_CHANCE_RELIABILITY_MULT = 0.2 -- vanilla 2.0 Multiplier to accident chance per point of missing reliability.
+	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 0.5 -- vanilla 1.5
+	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.02 -- vanilla 0.1
+	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.007 -- vanill 0.007
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
@@ -484,6 +485,7 @@
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
 	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50
 	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10
+	NDefines.NAir.MAX_QUICK_WINGS_FOR_AIR_SUPERIORITY = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
 		1.0, -- CAS
@@ -800,7 +802,7 @@
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 
 	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 999						-- 20 #Now AI like big fleet
-	NDefines.NAI.MAX_DISTANCE_NALAV_INVASION = 400.0				-- 200.0
+	NDefines.NAI.MAX_DISTANCE_NAVAL_INVASION = 400.0				-- 200.0
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
 	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
 	NDefines.NAI.TRANSPORTS_PER_PARATROOPER = 10					-- 20
