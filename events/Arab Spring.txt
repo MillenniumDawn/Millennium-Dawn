@@ -264,40 +264,9 @@ country_event = {
 			set_variable = { party_pop_array^0 = 0 }
 			set_variable = { party_pop_array^7 = 0 }
 		}
-		set_country_flag = no_leader_change
-		if = { limit = { has_government = democratic }
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = yes
-			}
-		}
-		else_if = { limit = { has_government = communism }
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = yes
-			}
-		}
-		else_if = { limit = { has_government = fascism }
-			set_politics = {
-				ruling_party = fascism
-				elections_allowed = yes
-			}
-		}
-		else_if = { limit = { has_government = neutrality }
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
-		}
-		else_if = { limit = { has_government = nationalist }
-			set_politics = {
-				ruling_party = nationalist
-				elections_allowed = yes
-			}
-		}
-		clr_country_flag = no_leader_change
+		enable_elections_with_no_leader_change = yes
 
-		add_popularity = { ideology = neutrality popularity = 0.15 }
+		add_popularity = { ideology = neutrality popularity = 0.10 }
 		recalculate_party = yes
 
 		if = {
@@ -332,109 +301,31 @@ country_event = {
 		name = arab_spring.11.b
 		log = "[GetDateText]: [This.GetName]: arab_spring.11.b executed"
 		news_event = { id = arab_spring.14 }
-		if = {
-			limit = { tag = LBA }
-			if = {
-				limit = { check_variable = { arab_spring_mutiny = 0 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.1
-					states = { 395 396 }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny = 1 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.2
-					states = { 395 396 }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny = 2 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.3
-					states = { 395 396 }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny > 2 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.4
-					states = { 395 396 }
-				}
-			}
-			hidden_effect = {
-				#Recognition
-				add_to_array = { global.rival_governments = THIS }
-				set_country_flag = rival_government_GNA
-				random_country_with_original_tag = {
-					original_tag_to_check = LBA
-					limit = { has_government = neutrality }
-					GNA = {
-						ingame_startup_nations_effect = yes
-						annex_country = {
-							target = PREV
-							transfer_troops = yes
-						}
-						set_cosmetic_tag = GNA_NTC
-						every_state = {
-							limit = { is_core_of = ROOT }
-							add_core_of = GNA
-						}
-						load_oob = GNA_2000
-						#Recognition
-						add_to_array = { global.rival_governments = THIS }
-						set_country_flag = rival_government_LBA
-						add_ideas = rival_government
-					}
-				}
-				declare_war_on = {
-					target = GNA
-					type = annex_everything
-				}
-			}
-			add_named_threat = {
-				threat = 5
-				name = Libyan_Civil_War.threat
-			}
+
+		if = { limit = { check_variable = { arab_spring_mutiny = 0 } }
+			set_temp_variable = { arab_spring_mutiny_size = 0.1 }
 		}
 		else_if = {
+			limit = { check_variable = { arab_spring_mutiny = 1 } }
+			set_temp_variable = { arab_spring_mutiny_size = 0.2 }
+		}
+		else_if = {
+			limit = { check_variable = { arab_spring_mutiny = 2 } }
+			set_temp_variable = { arab_spring_mutiny_size = 0.3 }
+		}
+		else_if = {
+			limit = { check_variable = { arab_spring_mutiny > 2 } }
+			set_temp_variable = { arab_spring_mutiny_size = 0.4 }
+		}
+
+		if = {
 			limit = { tag = SYR }
-			if = {
-				limit = { check_variable = { arab_spring_mutiny = 0 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.1
-					states = { 184 185 571 }
-				}
+			start_civil_war = {
+				ideology = neutrality
+				size = arab_spring_mutiny_size
+				states = { 184 185 571 }
 			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny = 1 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.2
-					states = { 184 185 571 }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny = 2 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.3
-					states = { 184 185 571 }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny > 2 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.4
-					states = { 184 185 571 }
-				}
-			}
+
 			hidden_effect = {
 				#Recognition
 				add_to_array = { global.rival_governments = THIS }
@@ -500,35 +391,10 @@ country_event = {
 				}
 			}
 		}
-		else_if = {
-			limit = { NOT = { tag = SYR tag = LBA } }
-			if = {
-				limit = { check_variable = { arab_spring_mutiny = 0 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.3
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny = 1 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.4
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny = 2 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.5
-				}
-			}
-			else_if = {
-				limit = { check_variable = { arab_spring_mutiny > 2 } }
-				start_civil_war = {
-					ideology = neutrality
-					size = 0.6
-				}
+		else = {
+			start_civil_war = {
+				ideology = neutrality
+				size = arab_spring_mutiny_size
 			}
 		}
 
@@ -582,7 +448,6 @@ news_event = {
 				if = { limit = { FROM = { NOT = { original_tag = PAL } } } PAL = { country_event = { id = arab_spring.17 days = 28 } } }
 				if = { limit = { FROM = { NOT = { original_tag = IRQ } } } IRQ = { country_event = { id = arab_spring.17 days = 30 } } }
 				if = { limit = { FROM = { NOT = { original_tag = BHR } } } BHR = { country_event = { id = arab_spring.17 days = 32 } } }
-				if = { limit = { FROM = { NOT = { original_tag = LBA } } } LBA = { country_event = { id = arab_spring.17 days = 33 } } }
 				if = { limit = { FROM = { NOT = { original_tag = KUW } } } KUW = { country_event = { id = arab_spring.17 days = 37 } } }
 				if = { limit = { FROM = { NOT = { original_tag = MOR } } } MOR = { country_event = { id = arab_spring.17 days = 38 } } }
 				if = { limit = { FROM = { NOT = { original_tag = MAU } } } MAU = { country_event = { id = arab_spring.17 days = 43 } } }
