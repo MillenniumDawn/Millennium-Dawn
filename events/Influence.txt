@@ -287,28 +287,34 @@ country_event = {
 		# Returns Funds to the Influencer Nation
 		FROM = {
 			if = {
-				limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
+				limit = { PREV = { has_country_flag = sending_five_percent_of_gdp_@FROM } }
 
-				set_temp_variable = { temp_amount_gift_sum = five_gift_sum }
+				set_temp_variable = { temp_amount_gift_sum = PREV.five_gift_sum }
 				custom_effect_tooltip = economic_aid_influence_value_TT
 				add_to_variable = { treasury = temp_amount_gift_sum }
 			}
 			else_if = {
-				limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
+				limit = { PREV = { has_country_flag = sending_ten_percent_of_gdp_@FROM } }
 
-				set_temp_variable = { temp_amount_gift_sum = ten_gift_sum }
+				set_temp_variable = { temp_amount_gift_sum = PREV.ten_gift_sum }
 				custom_effect_tooltip = economic_aid_influence_value_TT
 				add_to_variable = { treasury = temp_amount_gift_sum }
 			}
 			else_if = {
-				limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
+				limit = { PREV = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM } }
 
-				set_temp_variable = { temp_amount_gift_sum = fifteen_gift_sum }
+				set_temp_variable = { temp_amount_gift_sum = PREV.fifteen_gift_sum }
 				custom_effect_tooltip = economic_aid_influence_value_TT
 				add_to_variable = { treasury = temp_amount_gift_sum }
 			}
+
 			country_event = { id = diplomatic_response.2 }
 		}
+
+		clr_country_flag = sending_five_percent_of_gdp_@PREV
+		clr_country_flag = sending_ten_percent_of_gdp_@PREV
+		clr_country_flag = sending_fifteen_percent_of_gdp_@PREV
+
 		ai_chance = {
 			base = 1
 			# If they have lower domestic influence trigger fight or flight
@@ -2440,6 +2446,76 @@ country_event = {
 	}
 }
 
+##Military Aid - NONAI Master Event
+country_event = {
+	id = influence.55
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event influence.55"
+		FROM = {
+			country_event = { id = influence.56 } #Choose how to ship equipment
+		}
+	}
+	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
+	desc = "Why you be triggering my events?"
+	hidden = yes
+	is_triggered_only = yes
+}
+
+#Send Military Supply to [THIS.GetName]
+country_event = {
+	id = influence.56
+	title = influence.56.t
+	desc = influence.56.d
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+
+	#Send a Shipment around on Target size power etc
+	option = {
+		name = influence.56.a
+		log = "[GetDateText]: [This.GetName]: influence.56.a executed"
+		trigger = {
+			PREV = {
+				tag = PER
+				has_equipment = { Inf_equipment > 250 }
+			}
+		}
+		PER_scripted_effect_update_palestine_arms_via_land = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = influence.56.b
+		log = "[GetDateText]: [This.GetName]: influence.56.b executed"
+		trigger = {
+			PREV = {
+				tag = PER
+				has_equipment = { Inf_equipment > 250 }
+			}
+			any_state = {
+				is_owned_by = FROM
+				is_coastal = yes
+			}
+		}
+		PER_scripted_effect_update_palestine_arms_via_sea = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#Maybe its better not
+	option = {
+		name = influence.56.c
+		log = "[GetDateText]: [This.GetName]: influence.56.c executed"
+
+		custom_effect_tooltip = influence.51.b_tt
+		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
 
 # Influence Master Event
 country_event = {
