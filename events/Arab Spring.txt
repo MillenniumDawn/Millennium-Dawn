@@ -4,9 +4,6 @@ add_namespace = arab_spring
 news_event = {
 	id = arab_spring.1
 	title = arab_spring.1.t
-
-	picture = GFX_news_arab_riot_police
-
 	desc = {
 		trigger = {
 			FROM = {
@@ -29,23 +26,29 @@ news_event = {
 		}
 		text = arab_spring.1.d_western
 	}
-
+	picture = GFX_news_arab_riot_police
 	is_triggered_only = yes
+	major = yes
 
 	# We Must Mitigate This Crisis!
 	option = {
 		trigger = { tag = FROM }
 		name = arab_spring.1.a
+		log = "[GetDateText]: [This.GetName]: arab_spring.1.a executed"
 		activate_mission_tooltip = arab_spring_protests_1
+
 		if = {
+			limit = { is_subject = yes }
+			OVERLORD = { country_event = { id = arab_spring.3 days = 1 } }
+		}
+		else_if = {
 			limit = { check_variable = { influence_array^0 = FRA } }
 			FRA = { country_event = { id = arab_spring.3 days = 1 } }
 		}
-		if = {
+		else_if = {
 			limit = { check_variable = { influence_array^0 = USA } }
 			USA = { country_event = { id = arab_spring.3 days = 1 } }
 		}
-		log = "[GetDateText]: [This.GetName]: arab_spring.1.a executed"
 	}
 
 	# The Winds of Change are Blowing in the Middle East...
@@ -54,32 +57,6 @@ news_event = {
 		name = arab_spring.1.b
 		log = "[GetDateText]: [This.GetName]: arab_spring.1.b executed"
 	}
-}
-
-# hidden trigger
-country_event = {
-	id = arab_spring.2
-
-	hidden = yes
-
-	trigger = {
-		check_variable = { arab_spring > 160 }
-		date > 2010.12.1
-		NOT = {
-			any_country = { has_country_flag = arab_spring_active }
-		}
-		NOT = {
-			is_in_array = { ruling_party = 12 }
-		}
-		has_war = no
-	}
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: arab_spring.2 executed"
-		set_country_flag = arab_spring_active
-		every_country = { news_event = { id = arab_spring.1 } }
-	}
-
-	mean_time_to_happen = { days = 2 }
 }
 
 # An Ally under Threat
@@ -92,12 +69,14 @@ country_event = {
 
 	is_triggered_only = yes
 
+	# We stand by our allies!
 	option = {
-		name = arab_spring.3.a #We stand by our allies!
-		FROM = { country_event = { id = arab_spring.4 days = 1 } }
+		name = arab_spring.3.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.3.a executed"
+		FROM = { country_event = { id = arab_spring.4 days = 1 } }
+
 		ai_chance = {
-			factor = 1
+			base = 1
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -105,12 +84,14 @@ country_event = {
 		}
 	}
 
+	# We refuse to stand in the way of democratic reform!
 	option = {
-		name = arab_spring.3.b #We refuse to stand in the way of democratic reform!
+		name = arab_spring.3.b
 		FROM = { country_event = { id = arab_spring.5 days = 1 } }
 		log = "[GetDateText]: [This.GetName]: arab_spring.3.b executed"
+
 		ai_chance = {
-			factor = 2
+			base = 2
 		}
 	}
 }
@@ -120,16 +101,14 @@ country_event = {
 	id = arab_spring.4
 	title = arab_spring.4.t
 	desc = arab_spring.4.d
-
 	picture = GFX_politics_talks
-
 	is_triggered_only = yes
 
 	# Their Support is Welcome.
 	option = {
 		name = arab_spring.4.a
-		add_political_power = 50
 		log = "[GetDateText]: [This.GetName]: arab_spring.4.a executed"
+		add_political_power = 75
 	}
 }
 
@@ -138,16 +117,14 @@ country_event = {
 	id = arab_spring.5
 	title = arab_spring.5.t
 	desc = arab_spring.5.d
-
 	picture = GFX_politics_talks
-
 	is_triggered_only = yes
 
 	# Betrayed in Our Time of Need...
 	option = {
 		name = arab_spring.5.a
-		add_political_power = -50
 		log = "[GetDateText]: [This.GetName]: arab_spring.5.a executed"
+		add_political_power = -75
 	}
 }
 
@@ -163,9 +140,7 @@ country_event = {
 		text = arab_spring.6.d2
 		trigger = { has_country_flag = arab_spring_civilian_clashes }
 	}
-
 	picture = GFX_politics_protest
-
 	is_triggered_only = yes
 
 	# The People Love [ROOT.GetLeader]!
@@ -177,13 +152,14 @@ country_event = {
 
 	# Tensions Mount...
 	option = {
-		trigger = { has_country_flag = arab_spring_civilian_clashes }
 		name = arab_spring.6.b
+		log = "[GetDateText]: [This.GetName]: arab_spring.6.b executed"
+		trigger = { has_country_flag = arab_spring_civilian_clashes }
+
 		clr_country_flag = arab_spring_civilian_clashes
 		custom_effect_tooltip = slight_strengthen_protests_tt
 		add_to_variable = { arab_spring = 10 }
 		add_manpower = -20
-		log = "[GetDateText]: [This.GetName]: arab_spring.6.b executed"
 	}
 }
 
@@ -203,8 +179,9 @@ country_event = {
 		check_variable = { the_military_opinion < 51 }
 	}
 
+	# Our authority grows weaker...
 	option = {
-		name = arab_spring.7.a #Our authority grows weaker...
+		name = arab_spring.7.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.7.a executed"
 		custom_effect_tooltip = slight_strengthen_protests_tt
 		add_to_variable = { arab_spring = 10 }
@@ -228,8 +205,9 @@ country_event = {
 		has_country_flag = arab_spring_active
 	}
 
+	# This does not reflect well on us...
 	option = {
-		name = arab_spring.8.a #This does not reflect well on us...
+		name = arab_spring.8.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.8.a executed"
 		custom_effect_tooltip = significantly_strengthen_protests_tt
 		add_to_variable = { arab_spring = 20 }
@@ -242,9 +220,7 @@ country_event = {
 	id = arab_spring.9
 	title = arab_spring.9.t
 	desc = arab_spring.9.d
-
 	picture = GFX_politics_protest
-
 	is_triggered_only = yes
 
 	# Will It Be Enough?
@@ -259,9 +235,7 @@ country_event = {
 	id = arab_spring.10
 	title = arab_spring.10.t
 	desc = arab_spring.10.d
-
 	picture = GFX_politics_protest
-
 	is_triggered_only = yes
 
 	# The Mob Will Never Be Satisfied...
@@ -278,16 +252,14 @@ country_event = {
 	id = arab_spring.11
 	title = arab_spring.11.t
 	desc = arab_spring.11.d
-
 	picture = GFX_politics_speak
-
 	is_triggered_only = yes
 
 	# We Must Accept Defeat...
 	option = {
 		name = arab_spring.11.a
-		every_country = { news_event = { id = arab_spring.12 } }
 		log = "[GetDateText]: [This.GetName]: arab_spring.11.a executed"
+		news_event = { id = arab_spring.12 }
 		hidden_effect = {
 			set_ruling_leader = yes
 			set_leader = yes
@@ -295,57 +267,41 @@ country_event = {
 			set_variable = { party_pop_array^7 = 0 }
 		}
 		set_country_flag = no_leader_change
-		if = {
-			limit = {
-				has_government = democratic
-			}
+		if = { limit = { has_government = democratic }
 			set_politics = {
 				ruling_party = democratic
 				elections_allowed = yes
 			}
 		}
-		else_if = {
-			limit = {
-				has_government = communism
-			}
+		else_if = { limit = { has_government = communism }
 			set_politics = {
 				ruling_party = communism
 				elections_allowed = yes
 			}
 		}
-		else_if = {
-			limit = {
-				has_government = fascism
-			}
+		else_if = { limit = { has_government = fascism }
 			set_politics = {
 				ruling_party = fascism
 				elections_allowed = yes
 			}
 		}
-		else_if = {
-			limit = {
-				has_government = neutrality
-			}
+		else_if = { limit = { has_government = neutrality }
 			set_politics = {
 				ruling_party = neutrality
 				elections_allowed = yes
 			}
 		}
-		else_if = {
-			limit = {
-				has_government = nationalist
-			}
+		else_if = { limit = { has_government = nationalist }
 			set_politics = {
 				ruling_party = nationalist
 				elections_allowed = yes
 			}
 		}
 		clr_country_flag = no_leader_change
-		add_popularity = {
-			ideology = neutrality
-			popularity = 0.25
-		}
+
+		add_popularity = { ideology = neutrality popularity = 0.15 }
 		recalculate_party = yes
+
 		if = {
 			limit = { has_idea = hybrid_regime_western }
 			remove_ideas = hybrid_regime_western
@@ -373,10 +329,11 @@ country_event = {
 		}
 	}
 
+	# We will never give up power!
 	option = {
-		name = arab_spring.11.b #We will never give up power!
-		every_country = { news_event = { id = arab_spring.14 } }
+		name = arab_spring.11.b
 		log = "[GetDateText]: [This.GetName]: arab_spring.11.b executed"
+		news_event = { id = arab_spring.14 }
 		if = {
 			limit = { tag = LBA }
 			if = {
@@ -645,8 +602,9 @@ country_event = {
 				}
 			}
 		}
+
 		ai_chance = {
-			factor = 1
+			base = 1
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -659,7 +617,7 @@ country_event = {
 	}
 }
 
-#Revolution Sweeps Regime from Power in [FROM.GetNameDef]
+# Revolution Sweeps Regime from Power in [FROM.GetNameDef]
 news_event = {
 	id = arab_spring.12
 	title = arab_spring.12.t
@@ -673,18 +631,16 @@ news_event = {
 	}
 	picture = GFX_news_arab_spring2
 	is_triggered_only = yes
+	major = yes
 
 	# Viva la Revolution!
 	option = {
 		trigger = { tag = FROM }
 		name = arab_spring.12.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.12.a executed"
-		if = {
-			limit = {
-				NOT = { has_global_flag = global_arab_spring }
-				has_start_date < 2016.01.01
-			}
-			set_global_flag = global_arab_spring
+		if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
+			set_global_flag = global_arab_spring_started
+
 			hidden_effect = {
 				if = { limit = { FROM = { NOT = { original_tag = TUN } } } TUN = { country_event = { id = arab_spring.17 days = 1 } } }
 				if = { limit = { FROM = { NOT = { original_tag = ALG } } } ALG = { country_event = { id = arab_spring.17 days = 1 } } }
@@ -704,7 +660,7 @@ news_event = {
 				if = { limit = { FROM = { NOT = { original_tag = LEB } } } LEB = { country_event = { id = arab_spring.17 days = 45 } } }
 				if = { limit = { FROM = { NOT = { original_tag = SAU } } } SAU = { country_event = { id = arab_spring.17 days = 57 } } }
 			}
-			every_country = { news_event = { id = arab_spring.13 days = 5 } }
+			news_event = { id = arab_spring.13 days = 5 }
 		}
 	}
 
@@ -730,6 +686,7 @@ news_event = {
 	desc = arab_spring.13.d
 	picture = GFX_news_arab_spring
 	is_triggered_only = yes
+	major = yes
 
 	# The Winds of Change are Blowing in the Middle East...
 	option = {
@@ -745,6 +702,7 @@ news_event = {
 	desc = arab_spring.14.d
 	picture = GFX_news_saleh_killed
 	is_triggered_only = yes
+	major = yes
 
 	# The Future of [FROM.GetNameDef] hangs in the Balance...
 	option = {
@@ -882,143 +840,6 @@ news_event = {
 	}
 }
 
-#hidden event to add arab spring buildup
-country_event = {
-	id = arab_spring.16
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		if = {
-			limit = { NOT = { has_country_flag = arab_spring_active has_global_flag = global_arab_spring } }
-			country_event = { id = arab_spring.16 days = 365 }
-		}
-		if = {
-			limit = { has_idea = police_05 }
-			add_to_variable = { arab_spring = 2 }
-		}
-
-		if = {
-			limit = {
-				has_idea = depression
-				check_variable = { gdp_per_capita < 15 }
-			}
-			add_to_variable = { arab_spring = 6 }
-		}
-		else_if = {
-			limit = {
-				has_idea = recession
-				check_variable = { gdp_per_capita < 15 }
-			}
-			add_to_variable = { arab_spring = 4 }
-		}
-		else_if = {
-			limit = {
-				has_idea = stagnation
-				check_variable = { gdp_per_capita < 15 }
-			}
-			add_to_variable = { arab_spring = 2 }
-		}
-
-		if = {
-			limit = {
-				OR = {
-					has_idea = social_01
-					has_idea = social_02
-					has_idea = social_03
-				}
-			}
-			add_to_variable = { arab_spring = 2 }
-		}
-
-		if = {
-			limit = {
-				OR = {
-					has_idea = paralyzing_corruption
-					has_idea = crippling_corruption
-				}
-			}
-			add_to_variable = { arab_spring = 6 }
-		}
-		else_if = {
-			limit = {
-				OR = {
-					has_idea = rampant_corruption
-					has_idea = unrestrained_corruption
-				}
-			}
-			add_to_variable = { arab_spring = 4 }
-		}
-		else_if = {
-			limit = {
-				has_idea = systematic_corruption
-				has_idea = widespread_corruption
-			}
-			add_to_variable = { arab_spring = 2 }
-		}
-
-		if = {
-			limit = {
-				tag = TUN
-				is_historical_focus_on = yes
-				is_in_array = { ruling_party = 0 }
-			}
-			add_to_variable = { arab_spring = 9 }
-		}
-		if = {
-			limit = {
-				tag = SYR
-				is_historical_focus_on = yes
-				is_in_array = { ruling_party = 7 }
-			}
-			add_to_variable = { arab_spring = 2 }
-		}
-		if = {
-			limit = {
-				tag = EGY
-				is_historical_focus_on = yes
-				is_in_array = { ruling_party = 0 }
-			}
-			add_to_variable = { arab_spring = 5 }
-		}
-		if = {
-			limit = {
-				tag = LBA
-				is_historical_focus_on = yes
-				is_in_array = { ruling_party = 7 }
-			}
-			add_to_variable = { arab_spring = 5 }
-		}
-		if = {
-			limit = {
-				OR = {
-					has_idea = shia_resistance_05
-					has_idea = shia_resistance_06
-					has_idea = shia_resistance_07
-					has_idea = shia_resistance_08
-					has_idea = shia_resistance_09
-					has_idea = shia_resistance_10
-				}
-			}
-			add_to_variable = { arab_spring = 2 }
-		}
-		if = {
-			limit = {
-				OR = {
-					AND = {
-						has_elections = yes
-						NOT = {
-							has_idea = hybrid_regime_emerging
-							has_idea = hybrid_regime_western
-						}
-					}
-					has_idea = elected_legislature
-				}
-			}
-			subtract_from_variable = { arab_spring = 4 }
-		}
-	}
-}
-
 # The Arab Spring Reaches [FROM.GetNameDef]
 country_event = {
 	id = arab_spring.17
@@ -1058,9 +879,7 @@ country_event = {
 		text = arab_spring.18.d1
 		trigger = { check_variable = { arab_spring < 1 } }
 	}
-
 	picture = GFX_politics_protest
-
 	is_triggered_only = yes
 
 	# Our Government is Still Standing
@@ -1112,13 +931,14 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		name = arab_spring.20.a #
+		name = arab_spring.20.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.20.a executed"
-		custom_effect_tooltip = overwhelmingly_weaken_protests_tt
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = FROM.id }
 		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
+
+		custom_effect_tooltip = overwhelmingly_weaken_protests_tt
 		subtract_from_variable = { arab_spring = 75 }
 
 		news_event = { id = arab_spring.22 days = 1 }

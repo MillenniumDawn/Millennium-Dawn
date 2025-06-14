@@ -1507,12 +1507,164 @@ on_actions = {
 				}
 				clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
 
+				# Arab Spring Section
+				if = {
+					limit = {
+						is_arabic_nation = yes
+						NOT = { has_global_flag = global_arab_spring_started }
+					}
+
+					every_country = {
+						limit = {
+							is_arabic_nation = yes
+						}
+
+						# Police Brutality Increases Arab Spring Likelihood
+						if = { limit = { has_idea = police_05 }
+							add_to_variable = { arab_spring = 2 }
+						}
+						else_if = {
+							limit = { has_idea = police_04 }
+							add_to_variable = { arab_spring = 1 }
+						}
+
+						# Economic Situation Increases Arab Spring Likelihood
+						if = {
+							limit = { check_variable = { gdp_per_capita < 15 } }
+							if = { limit = { has_idea = depression }
+								add_to_variable = { arab_spring = 6 }
+							}
+							else_if = { limit = { has_idea = recession }
+								add_to_variable = { arab_spring = 4 }
+							}
+							else_if = { limit = { has_idea = stagnation }
+								add_to_variable = { arab_spring = 2 }
+							}
+						}
+
+						# Social Unrest Increases Arab Spring Likelihood
+						if = {
+							limit = {
+								OR = {
+									has_idea = social_01
+									has_idea = social_02
+									has_idea = social_03
+								}
+							}
+							add_to_variable = { arab_spring = 2 }
+						}
+
+						# Corruption Increases Arab Spring Likelihood
+						if = {
+							limit = {
+								OR = {
+									has_idea = paralyzing_corruption
+									has_idea = crippling_corruption
+								}
+							}
+							add_to_variable = { arab_spring = 6 }
+						}
+						else_if = {
+							limit = {
+								OR = {
+									has_idea = rampant_corruption
+									has_idea = unrestrained_corruption
+								}
+							}
+							add_to_variable = { arab_spring = 4 }
+						}
+						else_if = {
+							limit = {
+								has_idea = systematic_corruption
+								has_idea = widespread_corruption
+							}
+							add_to_variable = { arab_spring = 2 }
+						}
+
+						# Historical Section
+						if = { limit = { is_historical_focus_on = yes }
+							if = {
+								limit = {
+									original_tag = TUN
+									is_in_array = { ruling_party = 0 }
+								}
+								add_to_variable = { arab_spring = 9 }
+							}
+							if = {
+								limit = {
+									original_tag = SYR
+									is_in_array = { ruling_party = 7 }
+								}
+								add_to_variable = { arab_spring = 2 }
+							}
+							if = {
+								limit = {
+									original_tag = EGY
+									is_in_array = { ruling_party = 0 }
+								}
+								add_to_variable = { arab_spring = 5 }
+							}
+							if = {
+								limit = {
+									original_tag = LBA
+									is_in_array = { ruling_party = 7 }
+								}
+								add_to_variable = { arab_spring = 5 }
+							}
+						}
+
+						# Shia Resistance Increases Arab Spring Likelihood
+						if = {
+							limit = {
+								OR = {
+									has_idea = shia_resistance_05
+									has_idea = shia_resistance_06
+									has_idea = shia_resistance_07
+									has_idea = shia_resistance_08
+									has_idea = shia_resistance_09
+									has_idea = shia_resistance_10
+								}
+							}
+							add_to_variable = { arab_spring = 2 }
+						}
+						if = {
+							limit = {
+								OR = {
+									AND = {
+										has_elections = yes
+										NOT = {
+											has_idea = hybrid_regime_emerging
+											has_idea = hybrid_regime_western
+										}
+									}
+									has_idea = elected_legislature
+								}
+							}
+							subtract_from_variable = { arab_spring = 4 }
+						}
+					}
+
+					random_country = {
+						limit = {
+							check_variable = { arab_spring > 160 }
+							date > 2008.1.1
+							NOT = { any_country = { has_country_flag = arab_spring_active } }
+							NOT = { is_in_array = { ruling_party = 12 } }
+							has_war = no
+						}
+
+						set_country_flag = arab_spring_active
+						news_event = { id = arab_spring.1 }
+					}
+				}
+
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 				}
+
 			}
 			productivity_growth_effect = yes
 
