@@ -3,6 +3,67 @@ microchip_startup = {
 	set_variable = { country_composite_production_var = 0 }
 	add_dynamic_modifier = { modifier = advanced_production_modifier }
 }
+
+#this auto-adds composites for nations that need only one building. This needs more work for nations that start w/ multiples
+composite_building_add = {
+	ingame_update_setup = yes
+	random_owned_controlled_state = {
+		add_building_construction = {
+			type = composite_plant
+			level = 1
+			instant_build = yes
+		}
+	}
+	ingame_update_setup = yes
+	if = { check_variable = { startup_composite_fac_needed > 0 } composite_building_add_multi = yes }
+}
+
+composite_building_add_multi = {
+	ingame_update_setup = yes
+	while_loop_effect = {
+		limit = {
+			check_variable = { startup_composite_fac_needed > 0 }
+		}
+		random_owned_controlled_state = {
+			add_building_construction = {
+				type = composite_plant
+				level = 1
+				instant_build = yes
+			}
+		}
+		add_to_variable = { startup_composite_fac_needed = -1 }
+	}
+	clear_variable = startup_composite_fac_needed
+	ingame_update_setup = yes
+}
+
+#debug script for grabbing all resources. Not used in code, but used to get this number on game start
+give_me_resources = {
+	set_variable = { global.steel = 0 }
+	set_variable = { global.aluminium = 0 }
+	set_variable = { global.oil = 0 }
+	set_variable = { global.tungsten = 0 }
+	set_variable = { global.chromium = 0 }
+	set_variable = { global.rubber = 0 }
+	set_variable = { global.microchips = 0 }
+	set_variable = { global.composites = 0 }
+
+	for_each_scope_loop = {
+		array = global.countries
+
+		add_to_variable = { global.steel = resource_produced@steel }
+		add_to_variable = { global.aluminium = resource_produced@aluminium }
+		add_to_variable = { global.oil = resource_produced@oil }
+		add_to_variable = { global.tungsten = resource_produced@tungsten }
+		add_to_variable = { global.chromium = resource_produced@chromium }
+		add_to_variable = { global.rubber = resource_produced@rubber }
+		add_to_variable = { global.microchips = resource_produced@microchips }
+		add_to_variable = { global.composites = resource_produced@composites }
+	}
+
+	log = "Steel Number: [?global.steel] n\\ Alum Number: [?global.aluminium] n\\ Oil Number: [?global.oil] n\\ Tech Metal Number: [?global.tungsten] n\\ Rare Metal Number: [?global.chromium] n\\ Rubber Number: [?global.rubber] n\\ Microchips Number: [?global.microchips] n\\ Composites Number: [?global.composites]"
+}
+
 #TODO: use the production modifier for microchips so that if you are starved of them, you can still do SOME production, even if the microchip production is 0
 #Simulates the bare minimum production off repurposing / scraps that would occur, even if you don't have large level nationwide production
 #Restrict this on the GNSS modifier; that should have no effect
