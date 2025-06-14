@@ -234,6 +234,7 @@ EU_voting_category = {
 							clr_country_flag = [PG_X]_influence
 							clr_country_flag = influence_PG
 							clr_global_flag_PG_X_support = yes
+							reset_MEP_support_party_x = yes
 							set_global_flag = focus_[EUXXX]_EP_approval
 							if = {
 								limit = { is_in_array = { array = global.EU_potential_votes value = global.current_active_agenda_disp } }
@@ -297,6 +298,7 @@ EU_voting_category = {
 							clr_country_flag = [PG_X]_influence
 							clr_country_flag = influence_PG
 							clr_global_flag_PG_X_support = yes
+							reset_MEP_support_party_x = yes
 							set_variable = { global.current_active_agenda_disp = 0 }
 							set_variable = { global.active_MEP_Support = 0 }
 							set_variable = { global.pass_vote_mission_ender = 0 }
@@ -2542,6 +2544,7 @@ EU_voting_category = {
 			update_EU_average_gdp_lvl = yes
 			update_EU_average_eco_lvl = yes
 			EU_global_click_cost = yes
+			reset_MEP_support_party_x = yes
 			set_variable = { global.EU_budget_draft_invested_PP = 0 }
 			every_country = {
 				limit = {
@@ -2549,12 +2552,13 @@ EU_voting_category = {
 				}
 				set_country_flag = EU_budget_draft
 			}
-			set_variable = { EU_budget_draft_control_value = 0 }
 			remove_mission = EU_budget_draft_preparations
-			activate_mission = EU_budget_draft_ongoing
 			if = {
 				limit = { has_idea = ECB_president }
 				activate_mission = EU_budget_draft_ongoing_president
+			}
+			else = {
+				activate_mission = EU_budget_draft_ongoing
 			}
 			update_eu_dirty_variable = yes
 		}
@@ -2579,7 +2583,6 @@ EU_voting_category = {
 			update_EU_budget_call_rate = yes
 			set_country_flag = focus_EU999_EP_agenda
 			set_country_flag = focus_on_EP_agenda
-		#	set_EU_budget_PG_support = yes
 			set_variable = { global.current_active_agenda_disp = 999 }
 			remove_mission = EU_budget_draft_ongoing
 			activate_mission = EU_budget_yearly_timer
@@ -2602,7 +2605,7 @@ EU_voting_category = {
 		complete_effect = { }
 
 		timeout_effect = {
-			set_EU_budget_PG_support = yes
+			assess_MEP_support_party_x = yes
 			remove_mission = EU_budget_draft_ongoing_president
 			activate_mission = EU_budget_yearly_timer
 		}
@@ -2658,7 +2661,13 @@ EU_voting_category = {
 			set_variable = { global.EU_budget_draft_invested_PP = 0 }
 			set_country_flag = EU_mff_draft
 			remove_mission = EU_mff_draft_preparations
-			activate_mission = EU_mff_draft_ongoing
+			if = {
+				limit = { has_idea = ECB_president }
+				activate_mission = EU_mff_draft_ongoing_president
+			}
+			else = {
+				activate_mission = EU_mff_draft_ongoing
+			}
 			update_eu_dirty_variable = yes
 		}
 
@@ -2682,11 +2691,35 @@ EU_voting_category = {
 			update_EU_budget_call_rate = yes
 			set_country_flag = focus_EU998_EP_agenda
 			set_country_flag = focus_on_EP_agenda
-			set_EU_mff_PG_support = yes
 			set_variable = { global.current_active_agenda_disp = 998 }
 			remove_mission = EU_mff_draft_ongoing
 			activate_mission = EU_mff_yearly_timer
 			activate_mission = EU_parliament_focus_EUXXX_approve
+		}
+
+		ai_will_do = { factor = 0 }
+	}
+
+	EU_mff_draft_ongoing_president = {
+		allowed = { always = yes }
+		available = { always = no }
+		activation = { always = no }
+		visible = { has_idea = EU_member }
+
+		days_mission_timeout = 28
+		selectable_mission = yes
+		fire_only_once = yes
+
+		complete_effect = { }
+
+		timeout_effect = {
+			set_EU_gdp = yes
+			update_EU_budget_call_rate = yes
+			set_country_flag = focus_EU998_EP_agenda
+			set_country_flag = focus_on_EP_agenda
+			assess_MEP_support_party_x = yes
+			set_variable = { global.current_active_agenda_disp = 998 }
+			remove_mission = EU_mff_draft_ongoing_president
 		}
 
 		ai_will_do = { factor = 0 }
