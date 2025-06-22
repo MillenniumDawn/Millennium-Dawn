@@ -207,7 +207,7 @@
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
 	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
 	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
-	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 1
+	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
 	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
@@ -403,10 +403,11 @@
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
 	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
-	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.15 -- 0.1
-	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1 -- 2
-	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.01 -- 1
-	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.05 -- 0.01
+	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.05 -- vanilla 0.1
+	NDefines.NAir.ACCIDENT_CHANCE_RELIABILITY_MULT = 0.2 -- vanilla 2.0 Multiplier to accident chance per point of missing reliability.
+	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 0.5 -- vanilla 1.5
+	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.02 -- vanilla 0.1
+	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.007 -- vanill 0.007
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
