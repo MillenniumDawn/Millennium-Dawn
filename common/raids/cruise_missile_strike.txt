@@ -29,7 +29,7 @@ types = {
 							has_idea = intervention_limited_interventionism
 						}
 						is_neighbor_of = FROM
-					}else_if = {
+					} else_if = {
 						limit = {
 							has_idea = intervention_regional_interventionism
 						}
@@ -53,6 +53,14 @@ types = {
 
 		# Can prepare
 		available = {
+			FROM = {
+				NOT = {
+					is_subject_of = ROOT
+				}
+				NOT = {
+					has_non_aggression_pact_with = ROOT
+				}
+			}
 			OR = {
 				has_war_with = FROM
 				hidden_trigger = {
@@ -163,7 +171,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -193,7 +201,7 @@ types = {
 					#if at war, increase the losses, varying based on raid success
 					if = {
 						limit = {
-							var:actor_country = { has_war_with = var:ROOT.victim_country}
+							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 1.5 }
 					}
@@ -238,26 +246,13 @@ types = {
 					}
 				}
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
-			    }
+					send_raid_event_to_victim = yes
+				}
 			}
 			limited_success = {
 				victim_effects = {
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 						set_temp_variable = { ROOT.aa_tgt = THIS.building_level@anti_air_building }
@@ -265,20 +260,7 @@ types = {
 						set_temp_variable = { ROOT.airbase_tgt = THIS.building_level@air_base }
 					}
 
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					add_to_temp_variable = { radar_mult = 0.5 }
 					multiply_temp_variable = { aa_defense = radar_mult }
@@ -362,7 +344,7 @@ types = {
 								text = {
 									damage_building = {
 										type = anti_air_building
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -373,7 +355,7 @@ types = {
 								text = {
 									damage_building = {
 										type = radar_station
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -384,7 +366,7 @@ types = {
 								text = {
 									damage_building = {
 										type = air_base
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -402,7 +384,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -433,7 +415,7 @@ types = {
 							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 1.25 }
-					}else = {
+					} else = {
 						#50% chance on dead planes here, since raid was a limited success
 						set_temp_variable_to_random = {
 							var = random_chance_on_dead_planes
@@ -476,7 +458,7 @@ types = {
 			success = {
 				victim_effects = {
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 						set_temp_variable = { ROOT.aa_tgt = THIS.building_level@anti_air_building }
@@ -484,20 +466,7 @@ types = {
 						set_temp_variable = { ROOT.airbase_tgt = THIS.building_level@air_base }
 					}
 
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					add_to_temp_variable = { radar_mult = 0.5 }
 					multiply_temp_variable = { aa_defense = radar_mult }
@@ -581,7 +550,7 @@ types = {
 								text = {
 									damage_building = {
 										type = anti_air_building
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -592,7 +561,7 @@ types = {
 								text = {
 									damage_building = {
 										type = radar_station
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -603,7 +572,7 @@ types = {
 								text = {
 									damage_building = {
 										type = air_base
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -621,7 +590,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -649,10 +618,10 @@ types = {
 					#if at war, increase the losses, varying based on raid success
 					if = {
 						limit = {
-							var:actor_country = { has_war_with = var:ROOT.victim_country}
+							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 1.15 }
-					}else = {
+					} else = {
 						#33% chance on dead planes here
 						set_temp_variable_to_random = {
 							var = random_chance_on_dead_planes
@@ -696,7 +665,7 @@ types = {
 			critical_success = {
 				victim_effects = {
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 						set_temp_variable = { ROOT.aa_tgt = THIS.building_level@anti_air_building }
@@ -708,20 +677,7 @@ types = {
 					multiply_temp_variable = { aa_defense = radar_mult }
 					multiply_temp_variable = { rocket_mult = radar_mult }
 
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					if = {
 						limit = {
@@ -801,7 +757,7 @@ types = {
 								text = {
 									damage_building = {
 										type = anti_air_building
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -812,7 +768,7 @@ types = {
 								text = {
 									damage_building = {
 										type = radar_station
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -823,7 +779,7 @@ types = {
 								text = {
 									damage_building = {
 										type = air_base
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -841,7 +797,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -869,10 +825,10 @@ types = {
 					#if at war, reduce the losses cause critical success rewards you
 					if = {
 						limit = {
-							var:actor_country = { has_war_with = var:ROOT.victim_country}
+							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 0.95 }
-					}else = {
+					} else = {
 						#randomize how many fewer planes lost due to critical success
 						set_temp_variable_to_random = {
 							var = random_chance_on_dead_planes
@@ -1079,6 +1035,14 @@ types = {
 
 		# Can prepare
 		available = {
+			FROM = {
+				NOT = {
+					is_subject_of = ROOT
+				}
+				NOT = {
+					has_non_aggression_pact_with = ROOT
+				}
+			}
 			OR = {
 				has_war_with = FROM
 				hidden_trigger = {
@@ -1182,7 +1146,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -1212,10 +1176,10 @@ types = {
 					#if at war, increase the losses, varying based on raid success
 					if = {
 						limit = {
-							var:actor_country = { has_war_with = var:ROOT.victim_country}
+							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 1.5 }
-					}else = {
+					} else = {
 						#66% chance on dead planes here, since raid was a failure
 						set_temp_variable_to_random = {
 							var = random_chance_on_dead_planes
@@ -1256,41 +1220,15 @@ types = {
 					}
 				}
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
-			    }
+					send_raid_event_to_victim = yes
+				}
 			}
 			limited_success = {
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 						set_temp_variable = { ROOT.rocket_site_tgt = THIS.building_level@rocket_site }
@@ -1345,7 +1283,7 @@ types = {
 								text = {
 									damage_building = {
 										type = rocket_site
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -1363,7 +1301,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -1391,10 +1329,10 @@ types = {
 					#if at war, increase the losses, varying based on raid success
 					if = {
 						limit = {
-							var:actor_country = { has_war_with = var:ROOT.victim_country}
+							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 1.25 }
-					}else = {
+					} else = {
 						#50% chance on dead planes here, since raid was a limited success
 						set_temp_variable_to_random = {
 							var = random_chance_on_dead_planes
@@ -1436,23 +1374,10 @@ types = {
 			}
 			success = {
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 						set_temp_variable = { ROOT.rocket_site_tgt = THIS.building_level@rocket_site }
@@ -1505,7 +1430,7 @@ types = {
 								text = {
 									damage_building = {
 										type = rocket_site
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -1523,7 +1448,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -1551,10 +1476,10 @@ types = {
 					#if at war, increase the losses, varying based on raid success
 					if = {
 						limit = {
-							var:actor_country = { has_war_with = var:ROOT.victim_country}
+							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 1.15 }
-					}else = {
+					} else = {
 						#33% chance on dead planes here
 						set_temp_variable_to_random = {
 							var = random_chance_on_dead_planes
@@ -1597,23 +1522,10 @@ types = {
 			}
 			critical_success = {
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 						set_temp_variable = { ROOT.rocket_site_tgt = THIS.building_level@rocket_site }
@@ -1666,7 +1578,7 @@ types = {
 								text = {
 									damage_building = {
 										type = rocket_site
-										damage = [DAM] # levels of damage
+										damage = [DAM]
 									}
 								}
 								DAM = "[?building_damage_by_missile]"
@@ -1684,7 +1596,7 @@ types = {
 					}
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -1712,10 +1624,10 @@ types = {
 					#if at war, reduce the losses cause critical success rewards you
 					if = {
 						limit = {
-							var:actor_country = { has_war_with = var:ROOT.victim_country}
+							var:actor_country = { has_war_with = var:ROOT.victim_country }
 						}
 						multiply_temp_variable = { raid_planes_lost = 0.95 }
-					}else = {
+					} else = {
 						#randomize how many fewer planes lost due to critical success
 						set_temp_variable_to_random = {
 							var = random_chance_on_dead_planes
@@ -1846,7 +1758,7 @@ types = {
 					}
 				}
 			}
-            modifier = {
+			modifier = {
 				factor = 0
 				has_war = yes
 				NOT = {
@@ -1902,6 +1814,17 @@ types = {
 		}
 		unit_model = {
 			type = equipment
+		}
+
+		available = {
+			FROM = {
+				NOT = {
+					is_subject_of = ROOT
+				}
+				NOT = {
+					has_non_aggression_pact_with = ROOT
+				}
+			}
 		}
 
 		# Specific Target is visible
@@ -2023,43 +1946,17 @@ types = {
 		success_levels = {
 			failure = {
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 				}
 				actor_effects = {
 				}
 			}
 			limited_success = {
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -2144,23 +2041,10 @@ types = {
 			}
 			success = {
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -2249,23 +2133,10 @@ types = {
 			}
 			critical_success = {
 				victim_effects = {
-					if = {
-						limit = {
-							NOT = { var:actor_country = { has_war_with = var:ROOT.victim_country } }
-						}
-						hidden_effect = {
-							var:actor_country = {
-								set_variable = { THIS.target_country = var:ROOT.victim_country }
-								set_variable = { THIS.actor_country = var:ROOT.hostile_country }
-								country_event = {
-									id = MD_raid.8
-								}
-							}
-						}
-					}
+					send_raid_event_to_victim = yes
 
 					var:target_state = {
-						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building}
+						set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 						set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
 						set_temp_variable = { ROOT.rocket_mult = THIS.non_damaged_building_level@rocket_site }
 					}
@@ -2460,7 +2331,7 @@ types = {
 					}
 				}
 			}
-            modifier = {
+			modifier = {
 				factor = 0
 				has_war = yes
 				NOT = {

@@ -1,4 +1,4 @@
-version="1.11.1"
+version="1.12.0"
 name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
@@ -10,8 +10,7 @@ tags={
 	"Balance"
 	"Fixes"
 }
-supported_version="1.15.*"
-picture = "thumbnail.png"
+supported_version="1.16.*"
 remote_file_id="2777392649"
 
 replace_path = "events"

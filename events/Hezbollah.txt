@@ -42,7 +42,7 @@ country_event = {
 				producer = LEB
 			}
 			add_equipment_to_stockpile = {
-				type = mbt_hull
+				type = medium_tank_chassis
 				amount = 100
 				producer = LEB
 			}
@@ -1127,19 +1127,20 @@ country_event = {
 	desc = hezbollah_events.29.d
 	picture = GFX_israeli_soldiers_injured
 	is_triggered_only = yes
+
 	option = {
 		name = hezbollah_events.29.o1
 		log = "[GetDateText]: [This.GetName]: hezbollah_events.29.o1 executed"
+
 		# Attacker is Israel
 		start_border_war = {
 			change_state_after_war = no
 			attacker = {
 				state = 205
 				num_provinces = 1
-				on_win = hezbollah_events.31
-				on_lose = hezbollah_events.30
+				on_win = hezbollah_events.30
+				on_lose = hezbollah_events.31
 				on_cancel = hezbollah_events.33
-				modifier = 0.1
 				dig_in_factor = 0
 				terrain_factor = 0
 			}
@@ -1151,6 +1152,7 @@ country_event = {
 				on_cancel = hezbollah_events.33
 			}
 		}
+
 		add_war_support = 0.1
 		add_stability = -0.05
 		add_political_power = 50
@@ -1210,6 +1212,12 @@ country_event = {
 	}
 	picture = GFX_abumahdi_nasrollah_soleimani_meet
 	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = ISR
+			original_tag = HEZ
+		}
+	}
 
 	option = {
 		name = hezbollah_events.30.o1
@@ -1242,7 +1250,9 @@ country_event = {
 			add_stability = -0.05
 		}
 		army_experience = 25
-		country_event = hezbollah_events.35
+		HEZ = {
+			country_event = hezbollah_events.35
+		}
 	}
 
 	option = {
@@ -1251,32 +1261,26 @@ country_event = {
 		trigger = {
 			original_tag = ISR
 		}
-		HEZ = {
-			add_equipment_to_stockpile = {
-				type = infantry_weapons
-				amount = 450
+		effect_tooltip = {
+			201 = { transfer_state_to = ISR }
+			ISR = {
+				army_experience = 50
+				add_war_support = 0.1
+				add_political_power = 100
+				add_stability = 0.15
+				army_experience = 50
 			}
-			add_equipment_to_stockpile = {
-				type = cnc_equipment
-				amount = 200
-			}
-			add_equipment_to_stockpile = {
-				type = Anti_tank_2
-				amount = 150
-			}
-			add_equipment_to_stockpile = {
-				type = Anti_air_2
-				amount = 150
+			if = {
+				limit = {
+					PER = {
+						has_idea = faction_resistance_axis_member
+					}
+				}
+				PER = {
+					country_event = hezbollah_events.32
+				}
 			}
 		}
-		army_experience = 50
-		ISR = {
-			add_war_support = -0.1
-			add_political_power = -200
-			add_stability = -0.05
-		}
-		army_experience = 25
-		country_event = hezbollah_events.35
 	}
 }
 # Hezbollah Loses the Border
@@ -1301,32 +1305,62 @@ country_event = {
 	option = {
 		name = hezbollah_events.31.o1
 		log = "[GetDateText]: [This.GetName]: hezbollah_events.31.o1 executed"
-		201 = { transfer_state_to = ISR }
-		ISR = {
-			army_experience = 50
-			add_war_support = 0.1
-			add_political_power = 100
-			add_stability = 0.15
-			army_experience = 50
-		}
 		if = {
-			limit = {
+			limit = { original_tag = ISR }
+			201 = { transfer_state_to = ISR }
+			ISR = {
+				army_experience = 50
+				add_war_support = 0.1
+				add_political_power = 100
+				add_stability = 0.15
+				army_experience = 50
+			}
+			if = {
+				limit = {
+					PER = {
+						has_idea = faction_resistance_axis_member
+					}
+				}
 				PER = {
-					has_idea = faction_resistance_axis_member
+					country_event = hezbollah_events.32
 				}
 			}
-			PER = {
-				country_event = hezbollah_events.32
+		}
+		else = {
+			effect_tooltip = {
+				201 = { transfer_state_to = ISR }
+				ISR = {
+					army_experience = 50
+					add_war_support = 0.1
+					add_political_power = 100
+					add_stability = 0.15
+					army_experience = 50
+				}
+				if = {
+					limit = {
+						PER = {
+							has_idea = faction_resistance_axis_member
+						}
+					}
+					PER = {
+						country_event = hezbollah_events.32
+					}
+				}
 			}
 		}
 	}
 }
+
+#hezbollah loses "game over for the player!", Iran can attack Israel
 country_event = {
-	id = hezbollah_events.32 #hezbollah loses "game over for the player!", Iran can attack Israel
+	id = hezbollah_events.32
 	title = hezbollah_events.32.t
 	desc = hezbollah_events.32.d
 	picture = GFX_hezbollahi_soldier_on_tank
 	is_triggered_only = yes
+	trigger = {
+		original_tag = PER
+	}
 
 	option = {
 		name = hezbollah_events.32.o1
@@ -1337,19 +1371,36 @@ country_event = {
 		}
 		add_stability = -0.10
 		add_war_support = 0.15
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 25
+				is_historical_focus_on = no
+			}
+		}
 	}
+
 	option = {
 		name = hezbollah_events.32.o2
 		log = "[GetDateText]: [This.GetName]: hezbollah_events.32.o2 executed"
-			add_political_power = -100
-			add_war_support = -0.05
+		add_political_power = -100
+		add_war_support = -0.05
+		add_stability = 0.05
+
 		ai_chance = {
 			base = 0
+			modifier = {
+				add = 25
+				is_historical_focus_on = yes
+			}
 		}
 	}
 }
+
+# A Strange Outcome...
 country_event = {
-	id = hezbollah_events.33 #draw!
+	id = hezbollah_events.33
 	title = hezbollah_events.33.t
 	desc = hezbollah_events.33.d
 	picture = GFX_un_soldier_lebanon
@@ -1358,16 +1409,31 @@ country_event = {
 	option = {
 		name = hezbollah_events.33.o1
 		log = "[GetDateText]: [This.GetName]: hezbollah_events.33.o1 executed"
-		HEZ = {
-			army_experience = 20
+		if = {
+			limit = { original_tag = ISR }
+			HEZ = {
+				army_experience = 50
+			}
+			ISR = {
+				army_experience = 50
+			}
 		}
-		ISR = {
-			army_experience = 20
+		else = {
+			effect_tooltip = {
+				HEZ = {
+					army_experience = 50
+				}
+				ISR = {
+					army_experience = 50
+				}
+			}
 		}
 	}
 }
+
+# Hidden event for making the border war last in 33 days
 country_event = {
-	id = hezbollah_events.34 # hidden event for making the border war last in 33 days
+	id = hezbollah_events.34
 	is_triggered_only = yes
 
 	hidden = yes
@@ -1381,12 +1447,17 @@ country_event = {
 		}
 	}
 }
+
+# After hezbollah wins the border war, the player can declare war on Israel with the help of Iran and syria
 country_event = {
-	id = hezbollah_events.35 #after hezbollah wins the border war, the player can declare war on Israel with the help of Iran and syria
+	id = hezbollah_events.35
 	title = hezbollah_events.35.t
 	desc = hezbollah_events.35.d
 	picture = GFX_quds_lana
 	is_triggered_only = yes
+	trigger = {
+		original_tag = HEZ
+	}
 
 	option = {
 		name = hezbollah_events.35.o1
@@ -1409,11 +1480,14 @@ country_event = {
 			base = 0
 		}
 	}
+
 	option = {
 		name = hezbollah_events.35.o2
 		log = "[GetDateText]: [This.GetName]: hezbollah_events.35.o2 executed"
 	}
 }
+
+# Iran and Syria Attack Israel
 country_event = {
 	id = hezbollah_events.36 #iran and syria attacking israel
 	title = hezbollah_events.36.t
@@ -1431,6 +1505,7 @@ country_event = {
 		add_war_support = 0.05
 		add_manpower = 20000
 	}
+
 	option = {
 		name = hezbollah_events.36.o2
 		log = "[GetDateText]: [This.GetName]: hezbollah_events.36.o2 executed"
