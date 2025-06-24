@@ -1,0 +1,3315 @@
+focus_tree = {
+	id = panama_focus
+	country = {
+		factor = 0
+		modifier = {
+			add = 10
+			tag = PAN
+		}
+	}
+	
+	focus = {
+		id = PAN_canal_zone_repatriation
+		icon = focus_BRA_reach_out_to_military_dem
+		x = 20
+		y = 0
+		cost = 5
+		completion_reward = {
+            log = "[GetDateText]: [Root.GetName]: Focus PAN_new_millennium"
+			country_event = { id = panama.10 hours = 12 }  # TODO
+		}		
+		ai_will_do = { factor = 100 }
+	}
+	
+	###########################
+	#      CANAL BRANCH       #
+	###########################
+	focus = {
+		id = PAN_canal_handover
+		icon = construction_engineering
+		# prerequisite = { focus = PAN_new_millennium }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 7
+		y = 1
+		cost = 2
+		completion_reward = {
+			# Unlock canal management decisions?
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_canal_handover"
+			add_political_power = 100
+			add_stability = 0.05
+			# 852 = {
+			# 	add_extra_state_shared_building_slots = 1
+			# 	add_building_construction = {
+			# 		type = dockyard
+			# 		level = 1
+			# 		instant_build = yes
+			# 	}
+			# }
+			# 853 = {
+			# 	add_extra_state_shared_building_slots = 1
+			# 	add_building_construction = {
+			# 		type = dockyard
+			# 		level = 1
+			# 		instant_build = yes
+			# 	}
+			# }
+			newline = yes
+			add_tech_bonus = {
+				name = PAN_tech_canal_third_set_of_locks
+				bonus = 0.15
+				uses = 2
+				category = CAT_industry
+			}
+		}
+	}
+	
+	focus = {
+		id = PAN_consolidate_canal_authority
+		icon = improve_relations_blue
+		prerequisite = { focus = PAN_canal_handover }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 5
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_consolidate_canal_authority"
+			swap_ideas = {
+				remove_idea = PAN_canal_authority
+				add_idea = PAN_canal_authority1
+			}
+		}
+	}
+	
+	focus = {
+		id = PAN_implement_water_sustainability_measures
+		icon = economic_water_supply
+		prerequisite = { focus = PAN_consolidate_canal_authority }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 5
+		y = 3
+		cost = 5
+		relative_position_id = PAN_water_sustainability
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_implement_water_sustainability_measures"
+			add_ideas = PAN_water_sustainability
+			# ingame_update_setup = yes
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = PAN_canal_expansion_project  # expand the canal: the third set of locks
+		icon = factory_complex
+		prerequisite = { focus = PAN_canal_handover }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 9
+		y = 2
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_canal_expansion_project"
+			custom_effect_tooltip = PAN_canal_expansion_project_tt
+			newline = yes
+			852 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = 0.02
+						local_resources = 0.1
+						state_production_speed_industrial_complex_factor = 0.06
+					}
+				}
+			}
+			newline = yes
+			853 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = 0.02
+						local_resources = 0.1
+						state_production_speed_industrial_complex_factor = 0.06
+					}
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = 0 }
+			# simulate the canal expansion project financing
+			if = {  # JAPAN
+				limit = {
+					AND = {
+						country_exists = JAP
+						JAP = { has_opinion = { target = PAN value > 49 } }
+					}
+				}
+				add_to_temp_variable = { treasury_change = 0.8 }
+				JAP = {
+					set_temp_variable = { int_investment_change = 0.8 }
+					modify_international_investment_effect = yes
+					set_temp_variable = { treasury_change = -0.8 }
+					modify_treasury_effect = yes
+					newline = yes
+				}
+			}
+			if = {  # USA
+				limit = {
+					AND = {
+						country_exists = USA
+						OR = {
+							USA = { has_opinion = { target = PAN value > 49 } }
+							has_completed_focus = PAN_deepen_military_collaboration
+						}
+					}
+				}
+				add_to_temp_variable = { treasury_change = 0.4 }
+				USA = {
+					set_temp_variable = { int_investment_change = 0.5 }
+					modify_international_investment_effect = yes
+					set_temp_variable = { treasury_change = -0.4 }
+					modify_treasury_effect = yes
+					newline = yes
+				}
+			}
+			if = {  # CHI
+				limit = {
+					AND = {
+						country_exists = CHI
+						has_completed_focus = PAN_sign_free_trade_agreement_with_china
+					}
+				}
+				add_to_temp_variable = { treasury_change = 0.4 }
+				CHI = {
+					set_temp_variable = { int_investment_change = 0.5 }
+					modify_international_investment_effect = yes
+					set_temp_variable = { treasury_change = -0.4 }
+					modify_treasury_effect = yes
+					newline = yes
+				}
+			}
+			if = {  # LATAM
+				limit = {
+					OR = {
+						has_completed_focus = PAN_deepening_latin_american_integration
+						any_country = { has_idea = PAN_mercosur_member_state }
+						is_in_faction_with = MEX
+						is_in_faction_with = BRA
+					}
+				}
+				set_temp_variable = { treasury_change = 0.4 }
+				every_country = {  # untested
+					limit = { has_idea = BRA_idea_mercosur_member_state }
+					set_temp_variable = { int_investment_change = 0.1 }
+					modify_international_investment_effect = yes
+					set_temp_variable = { treasury_change = -0.01 }
+					modify_treasury_effect = yes
+					newline = yes
+				}
+			}
+			# potentially add EU (BELGIUM, FRANCE, SPAIN)
+			add_ideas = PAN_canal_expansions
+			newline = yes
+			# total cost
+			subtract_from_temp_variable = { treasury_change = 5.25 }
+			modify_treasury_effect = yes
+		}
+	}
+	
+	focus = {
+		id = PAN_construct_the_atlantic_bridge
+		icon = factory_planning
+		prerequisite = { focus = PAN_canal_expansion_project }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 9
+		y = 3
+		cost = 10
+		completion_reward = {
+			add_tech_bonus = {
+				name = PAN_construct_the_atlantic_bridge
+				bonus = 0.15
+				uses = 2
+				category = CAT_construction_tech
+			}
+			newline = yes
+			852 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = 0.01
+						local_resources = 0.1
+						state_production_speed_industrial_complex_factor = 0.04
+					}
+				}
+			}
+			newline = yes
+			853 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = 0.01
+						local_resources = 0.1
+						state_production_speed_industrial_complex_factor = 0.04
+					}
+				}
+			}
+			newline = yes
+			if = {  # select construction company
+				limit = {
+					AND = {
+						country_exists = FRA
+						country_exists = SPR
+						country_exists = MEX
+						country_exists = BRA
+						country_exists = KOR
+						NOT = { FRA = { has_war_with = PAN } }
+						NOT = { SPR = { has_war_with = PAN } }
+						NOT = { MEX = { has_war_with = PAN } }
+						NOT = { BRA = { has_war_with = PAN } }
+						NOT = { KOR = { has_war_with = PAN } }
+					}
+				}
+				country_event = { id = panama.9 hours = 12 }
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -0.366 }
+			modify_treasury_effect = yes
+			newline = yes
+			swap_ideas = {
+				remove_idea = PAN_canal_expansions
+				add_idea = PAN_canal_expansions1
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_enhance_logistics_infrastructure
+		icon = fast_inovations
+		prerequisite = { focus = PAN_implement_water_sustainability_measures focus = PAN_construct_the_atlantic_bridge }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 7
+		y = 4
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_enhance_logistics_infrastructure"
+			add_tech_bonus = {
+				name = PAN_enhance_logistics_infrastructure
+				bonus = 0.2
+				uses = 2
+				category = CAT_ai
+				category = CAT_internet_tech
+			}
+			newline = yes
+			852 = {
+				add_building_construction = {
+					type = radar_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			853 = {
+				add_building_construction = {
+					type = radar_station
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_develop_intermodal_transport_hubs
+		icon = ferro_factory
+		prerequisite = { focus = PAN_enhance_logistics_infrastructure }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 7
+		y = 5
+		cost = 10
+		completion_reward = {
+			add_tech_bonus = {
+				name = PAN_tech_intermodal_transport_hubs
+				bonus = 0.15
+				uses = 2
+				category = CAT_computing_tech
+			}
+			newline = yes
+			852 = {
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			853 = {
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -1.76 }
+			modify_treasury_effect = yes
+			newline = yes
+			swap_ideas = {
+				remove_idea = PAN_canal_expansions1
+				add_idea = PAN_canal_expansions2
+			}
+		}
+	}
+	
+	###########################
+	#   REGIONAL DIPLOMACY    #
+	###########################
+	focus = {
+		id = PAN_a_voice_at_the_crossroads
+		icon = family
+		# prerequisite = { focus = PAN_new_millennium }
+		x = 15
+		y = 1
+		cost = 2
+		completion_reward = {
+			# As a newly sovereign nation at the turn of the century,
+			# Panama seeks to assert its influence as a regional
+			# pivot—strengthening bonds with Latin America, while establishing
+			# balanced partnerships with global powers.
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_a_voice_at_the_crossroads"
+			add_political_power = 100
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+		}
+	}
+	
+	### LATAM RELATIONS ###
+	focus = {
+		id = PAN_strengthen_ties_with_central_america
+		icon = improve_relations_green
+		prerequisite = { focus = PAN_a_voice_at_the_crossroads }
+		x = 12
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_strengthen_ties_with_central_america"
+			custom_effect_tooltip = PAN_strengthen_ties_with_central_america_tt
+			every_country = {
+				limit = {
+					AND = {
+						has_idea = PAN_idea_sica_member_state
+						has_opinion = { target = PAN value > 29 }
+					}
+				}
+				set_improved_trade_agreement = yes
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_latin_american_integration
+		icon = internationalism
+		prerequisite = { focus = PAN_strengthen_ties_with_central_america }
+		x = 11
+		y = 3
+		cost = 10
+		completion_reward = {
+			# Improve relations with major Latin American powers
+			COL = {
+				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			}
+			VEN = {
+				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			}
+			BRA = {
+				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_mesoamerica_integration_and_development_project
+		icon = befriend_central_america
+		prerequisite = { focus = PAN_latin_american_integration }
+		x = 11
+		y = 4
+		cost = 10
+		
+		completion_reward = {
+			# Improve relations with major Latin American powers
+			MEX = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			CUB = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			DOM = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+		}
+	}
+
+	focus = {
+		id = PAN_aladi
+		icon = treaty
+		prerequisite = { focus = PAN_strengthen_ties_with_central_america }
+		x = 13
+		y = 3
+		cost = 10
+		
+		completion_reward = {
+			# Improve relations with major Latin American powers
+			COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			VEN = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			BRA = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+		}
+	}
+
+
+	focus = {
+		id = PAN_mercosur_association
+		icon = accept_treaty
+		prerequisite = { focus = PAN_aladi }
+		x = 13
+		y = 4
+		cost = 10
+		
+		completion_reward = {
+			# Improve relations with major Latin American powers
+			COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			VEN = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			BRA = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+		}
+	}
+
+	focus = {
+		id = PAN_deepening_latin_american_integration
+		icon = accept_treaty
+		prerequisite = { focus = PAN_mesoamerica_integration_and_development_project focus = PAN_mercosur_association }
+		x = 12
+		y = 5
+		cost = 10
+		
+		completion_reward = {
+			# Improve relations with major Latin American powers
+			COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			VEN = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+			BRA = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+		}
+	}
+
+	# focus = {
+	# 	id = PAN_deepening_latin_american_integration
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_mesoamerica_integration_and_development_project focus = PAN_mercosur_association }
+	# 	x = 12
+	# 	y = 5
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# Improve relations with major Latin American powers
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 		VEN = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 		BRA = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_join_the_pacific_alliance
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_deepening_latin_american_integration }
+	# 	x = 11
+	# 	y = 6
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# Align with Mexico, Colombia, Peru, and Chile to promote regional economic integration.
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_host_regional_summits
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_deepening_latin_american_integration }
+	# 	x = 13
+	# 	y = 6
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# Align with Mexico, Colombia, Peru, and Chile to promote regional economic integration.
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_champion_regional_solidarity
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_join_the_pacific_alliance focus = PAN_host_regional_summits }
+	# 	x = 12
+	# 	y = 7
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# +10% Political Power gain. Improved relations with all Latin American nations.
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_revitalize_the_mesoamerica_project
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_champion_regional_solidarity }
+	# 	x = 11
+	# 	y = 8
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# +10% Political Power gain. Improved relations with all Latin American nations.
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_strengthen_the_contadora_legacy
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_revitalize_the_mesoamerica_project }
+	# 	x = 11
+	# 	y = 9
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# +10% Political Power gain. Improved relations with all Latin American nations.
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_pursue_full_membership_in_mercosur
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_champion_regional_solidarity }
+	# 	mutually_exclusive = { focus = PAN_revitalize_the_mesoamerica_project }
+	# 	x = 13
+	# 	y = 8
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# +10% Political Power gain. Improved relations with all Latin American nations.
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_lead_the_formation_of_comsur
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_pursue_full_membership_in_mercosur }
+	# 	x = 13
+	# 	y = 9
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		# +10% Political Power gain. Improved relations with all Latin American nations.
+	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
+	# 	}
+	# }
+
+	### US RELATIONS ###
+	focus = {
+		id = PAN_modernize_the_tpa_framework
+		icon = trade_with_america
+		prerequisite = { focus = PAN_a_voice_at_the_crossroads }
+		available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
+		x = 15
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_modernize_the_tpa_framework"
+			USA = {
+				add_opinion_modifier = { target = PAN modifier = PAN_strategic_partnership }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_strategic_partnership }
+			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			newline = yes
+			add_offsite_building = { type = industrial_complex level = 1 }
+			newline = yes
+			set_improved_trade_agreement = yes
+		}
+	}
+	
+	focus = {
+		id = PAN_central_america_regional_security_initiative
+		icon = american_government
+		prerequisite = { focus = PAN_modernize_the_tpa_framework }
+		available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
+		x = 15
+		y = 3
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_central_america_regional_security_initiative"
+			USA = {
+				add_opinion_modifier = { target = PAN modifier = PAN_carsi_operations }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_carsi_operations }
+				set_temp_variable = { treasury_change = -0.0365 }
+				modify_treasury_effect = yes
+			}
+			if = {
+				limit = { check_variable = { strength_of_cartels > 9 } }
+				newline = yes
+				set_temp_variable = { cart_strength_change = -10 }
+				set_temp_variable = { cart_influence_change = -10 }
+				modify_cartel_variables_effect = yes
+			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			newline = yes
+			add_idea = PAN_idea_carsi
+			newline = yes
+			set_temp_variable = { treasury_change = 0.0365 }
+			modify_treasury_effect = yes
+			increase_policing_budget = yes
+		}
+	}
+
+    ### CHINA RELATIONS ###
+	focus = {
+		id = PAN_join_the_belt_and_road_initiative
+		icon = blr_trade_agreement_china
+		prerequisite = { focus = PAN_a_voice_at_the_crossroads }
+		available = { AND = { country_exists = CHI CHI = { has_opinion = { target = PAN value > -1 } } } }
+		x = 17
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_join_the_belt_and_road_initiative"
+			CHI = {
+				set_temp_variable = { int_investment_change = 5 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+				newline = yes
+				add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
+				reverse_add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = 5 }
+			modify_treasury_effect = yes
+			newline = yes
+			set_temp_variable = { percent_change = 2.5 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.025 }
+			}
+		}
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = PAN_develop_strategic_infrastructure_projects
+		icon = blr_china_modernisation_railtrain
+		prerequisite = { focus = PAN_join_the_belt_and_road_initiative }
+		available = { AND = { country_exists = CHI CHI = { has_opinion = { target = PAN value > -1 } } } }
+		x = 17
+		y = 3
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_develop_strategic_infrastructure_projects"
+			CHI = {
+				set_temp_variable = { int_investment_change = 10 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = -10 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			newline = yes
+			# maybe move whats right below to its own idea
+			add_tech_bonus = {
+				name = PAN_belt_and_road_infrastructure
+				bonus = 0.45
+				uses = 2
+				category = Cat_infrastructure
+			}
+			newline = yes
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					instant_build = yes
+				}
+			}
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.025 }
+			}
+		}		
+	}
+
+    ### ALIGN WITH USA ###
+	focus = {
+		id = PAN_us_military_presence_agreement
+		icon = american_military_agreement
+		prerequisite = { focus = PAN_central_america_regional_security_initiative focus = PAN_develop_strategic_infrastructure_projects }
+        mutually_exclusive = { focus = PAN_sign_free_trade_agreement_with_china }
+		available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
+		available = {
+			NOT = {
+				emerging_communist_state_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		# 	OR = {
+		# 		western_autocrats_are_in_power_or_coalition = yes
+		# 		western_conservatism_are_in_power_or_coalition = yes
+		# 		western_liberal_are_in_power_or_coalition = yes
+		# 		western_socialism_are_in_power_or_coalition = yes
+		# 		neutrality_neutral_social_in_power_or_coalition = yes
+		# 	}
+		}
+		x = 15
+		y = 5
+		cost = 10
+		completion_reward = {  # kick off protests event
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_us_military_presence_agreement"
+			USA = {
+				add_opinion_modifier = { target = PAN modifier = PAN_us_alignment }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_us_alignment }
+			}
+			newline = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			add_popularity = { ideology = democratic popularity = -0.05 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.025 }
+			add_relative_party_popularity = yes
+			add_stability = -0.05
+			newline = yes
+			USA = {
+				diplomatic_relation = {
+					country = PAN
+					relation = military_access
+					active = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_implement_us_backed_economic_reforms
+		icon = united_states_dollar
+		prerequisite = { focus = PAN_us_military_presence_agreement }
+		available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
+		x = 15
+		y = 6
+		cost = 10		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_implement_us_backed_economic_reforms"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			newline = yes
+			swap_ideas = {
+				remove_idea = PAN_idea_usd_dollarization
+				add_idea = PAN_idea_usd_dollarization1
+			}
+			newline = yes
+			add_stability = 0.025
+		}
+	}
+
+	focus = {
+		id = PAN_promote_western_democratic_values
+		icon = democracy
+		prerequisite = { focus = PAN_implement_us_backed_economic_reforms }
+		available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
+		x = 15
+		y = 8
+		cost = 3
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_promote_western_democratic_values"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			newline = yes
+			add_idea = PAN_idea_western_alignment
+		}
+	}
+
+    ### ALIGN WITH CHINA ###
+	focus = {
+		id = PAN_sign_free_trade_agreement_with_china
+		icon = prc_sign
+		prerequisite = { focus = PAN_central_america_regional_security_initiative focus = PAN_develop_strategic_infrastructure_projects }
+        mutually_exclusive = { focus = PAN_deepen_military_collaboration }
+		x = 17
+		y = 5
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_sign_free_trade_agreement_with_china"
+			CHI = {
+				set_temp_variable = { int_investment_change = 7.65 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = -7.65 }
+				modify_treasury_effect = yes
+				newline = yes
+				add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
+				reverse_add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
+			}
+			newline = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			newline = yes
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = supply_node
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 1
+					instant_build = yes
+				}
+			}
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.05 }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_integrate_into_chinese_financial_systems
+		icon = control_yuan
+		prerequisite = { focus = PAN_sign_free_trade_agreement_with_china }
+		x = 17
+		y = 7
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_integrate_into_chinese_financial_systems"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			add_stability = 0.02
+			newline = yes
+			add_ideas = PAN_idea_yuan_anchoring
+		}
+	}
+
+	focus = {
+		id = PAN_adopt_chinese_technological_standards
+		icon = blr_research_with_china
+		prerequisite = { focus = PAN_integrate_into_chinese_financial_systems }
+		x = 17
+		y = 8
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_adopt_chinese_technological_standards"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = PAN }
+			change_influence_percentage = yes
+			newline = yes
+			add_ideas = PAN_idea_chinese_technological_standards
+		}
+	}
+
+	# focus = {
+	# 	id = PAN_neutrality_doctrine
+	# 	icon = accept_treaty
+	# 	prerequisite = { focus = PAN_us_relations focus = PAN_latin_american_integration }
+	# 	x = 13
+	# 	y = 3
+	# 	cost = 10
+	# 	completion_reward = {
+	# 		add_ideas = pan_armed_neutrality
+	# 		add_stability = 0.1
+	# 		add_political_power = 100
+	# 	}
+	# }
+	
+	###########################
+	#         ECONOMY         #
+	###########################
+	focus = {
+		id = PAN_establish_international_banking_center
+		icon = cash_grap
+		prerequisite = { focus = PAN_canal_zone_repatriation }
+		available = {
+			NOT = {
+				emerging_communist_state_are_in_coalition = yes
+				emerging_anarchist_communism_are_in_coalition = yes
+				neutrality_neutral_communism_are_in_coalition = yes							
+			}
+		}
+		x = 22
+		y = 1
+		cost = 10
+		completion_reward = {
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			add_ideas = PAN_idea_center_for_international_banking
+		}
+	}
+	
+	focus = {
+		id = PAN_enact_liberal_banking_laws
+		icon = liberalization_policies
+		prerequisite = { focus = PAN_establish_international_banking_center }
+		available = {
+			NOT = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 5 }
+				is_in_array = { ruling_party = 19 }
+			}
+		}
+		x = 20
+		y = 2
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_enact_liberal_banking_laws"
+			add_political_power = 100
+			newline = yes
+			if = {
+				set_temp_variable = { corp_change = -5 }
+				modify_corporate_tax_rate_effect = yes
+				newline = yes
+				limit = { has_idea = international_bankers }				
+				set_temp_variable = { temp_opinion = 10 }
+				change_international_bankers_opinion = yes
+			}
+			newline = yes
+		}
+	}
+	
+	focus = {
+		id = PAN_attract_foreign_financial_institutions
+		icon = money
+		prerequisite = { focus = PAN_establish_international_banking_center }
+		available = {
+			NOT = {
+				set_party_index_to_ruling_party = yes
+				party_index = 4
+				# ruling_party = 4
+				# is_in_array = { ruling_party = 4 }
+				# is_in_array = { ruling_party = 5 }
+				# is_in_array = { ruling_party = 19 }
+			}
+		}
+		x = 22
+		y = 2
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_attract_foreign_financial_institutions"
+			USA = { add_opinion_modifier = { target = PAN modifier = PAN_foreign_financial_ties } }
+			ENG = { add_opinion_modifier = { target = PAN modifier = PAN_foreign_financial_ties } }
+			GER = { add_opinion_modifier = { target = PAN modifier = PAN_foreign_financial_ties } }
+			BRA = { add_opinion_modifier = { target = PAN modifier = PAN_foreign_financial_ties } }
+			newline = yes
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			add_ideas = PAN_idea_switzerland_of_latin_america
+		}
+	}
+	
+	focus = {
+		id = PAN_promote_offshore_banking_services
+		icon = money_laundering
+		prerequisite = { focus = PAN_establish_international_banking_center }
+		# available = {
+		# 	NOT = {
+		# 		is_in_array = { ruling_party = 4 }
+		# 		is_in_array = { ruling_party = 5 }
+		# 		is_in_array = { ruling_party = 19 }
+		# 	}
+		# }
+		x = 24
+		y = 2
+		cost = 10
+		completion_reward = {
+			# increase relations with main EU players + US + others
+			SWI = { add_opinion_modifier = { target = PAN modifier = PAN_offshore_banking_hub } }
+			LUX = { add_opinion_modifier = { target = PAN modifier = PAN_offshore_banking_hub } }
+			SIN = { add_opinion_modifier = { target = PAN modifier = PAN_offshore_banking_hub } }
+			UAE = { add_opinion_modifier = { target = PAN modifier = PAN_offshore_banking_hub } }
+			newline = yes
+			add_stability = 0.05
+			newline = yes
+			add_offsite_building = { type = offices level = 1 }
+			swap_ideas = {
+				remove_idea = PAN_idea_center_for_international_banking
+				add_idea = PAN_idea_center_for_international_banking1
+			}
+		}
+	}
+	
+	# invisible until event in 2017 #
+	focus = {
+		id = PAN_implement_oecd_transparency_reforms
+		icon = radical_tax_reform
+		prerequisite = { focus = PAN_enact_liberal_banking_laws focus = PAN_attract_foreign_financial_institutions focus = PAN_promote_offshore_banking_services }
+		available = {
+			date > 2017.01.01
+		# 	NOT = {
+		# 		is_in_array = { ruling_party = 4 }
+		# 		is_in_array = { ruling_party = 5 }
+		# 		is_in_array = { ruling_party = 19 }
+		# 	}
+		}
+		# visible = {
+		# 	# event shot off for panama papers
+		# }
+		x = 22
+		y = 3
+		cost = 10
+		completion_reward = {
+			# add_ideas = pan_international_finance
+			decrease_corruption = yes
+		}
+	}
+
+	# focus = {
+	# 	id = PAN_expand_colón_free_trade_zone
+	# 	icon = production
+	# 	prerequisite = { focus = PAN_strengthen_financial_secrecy_laws focus = PAN_attract_foreign_financial_institutions focus = PAN_promote_offshore_banking_services }
+	# 	x = 22
+	# 	y = 5
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		add_ideas = pan_international_finance
+	# 		# Major economic bonuses
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_anti_drug_operations
+	# 	icon = GFX_focus_generic_military_mission
+	# 	prerequisite = { focus = PAN_internal_security }
+	# 	x = 31
+	# 	y = 2
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		add_stability = 0.05
+	# 		add_war_support = 0.05
+	# 		# US cooperation bonus if good relations
+	# 	}
+	# }
+	
+	# focus = {
+	# 	id = PAN_coast_guard_expansion
+	# 	icon = GFX_goal_generic_navy_doctrines_tactics
+	# 	prerequisite = { focus = PAN_internal_security }
+	# 	x = 31
+	# 	y = 3
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		navy_experience = 10
+	# 		add_equipment_to_stockpile = { type = destroyer_equipment_1 amount = 2 }
+	# 	}
+	# }
+
+	focus = {
+		id = PAN_nationalize_all_foreign_banks
+		icon = blr_nationalize_foreign_business
+		available = {
+			# set_party_index_to_ruling_party = yes
+			# party_index = 4
+			OR = {
+				is_in_array = { ruling_party = 4 }
+				is_in_array = { ruling_party = 5 }
+				is_in_array = { ruling_party = 19 }
+			}
+		# }
+		# visible = {
+		# 	is_in_array = { ruling_party = 4 }
+		# 	is_in_array = { ruling_party = 5 }
+		# 	is_in_array = { ruling_party = 19 }
+		}
+		x = 22
+		y = 4
+		cost = 5
+		completion_reward = {
+			if = { limit = { has_idea = PAN_idea_center_for_international_banking } remove_idea = PAN_idea_center_for_international_banking }
+			else = { limit = { has_idea = PAN_idea_center_for_international_banking1 } remove_idea = PAN_idea_center_for_international_banking1 }
+			newline = yes
+			if = { limit = { has_idea = PAN_idea_switzerland_of_latin_america } remove_idea = PAN_idea_center_for_international_banking }
+			if = {
+				limit = {
+					has_idea = PAN_idea_corruption_haven
+					# or event for it has kicked off????
+				}
+				remove_idea = PAN_idea_corruption_haven
+				# call event for end corruption
+			}
+			newline = yes
+			add_ideas = PAN_idea_center_for_international_banking
+		}
+	}
+
+	focus = {
+		id = PAN_expand_the_peoples_bank_of_panama
+		icon = blr_soviet_academy_of_sciences
+		prerequisite = { focus = PAN_nationalize_all_foreign_banks }
+		x = 20
+		y = 5
+		cost = 10
+		completion_reward = {
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			add_ideas = PAN_idea_center_for_international_banking
+		}
+	}
+
+	focus = {
+		id = PAN_establish_solidarity_credit_unions
+		icon = nuclear_energy
+		prerequisite = { focus = PAN_nationalize_all_foreign_banks }
+		x = 22
+		y = 5
+		cost = 10
+		completion_reward = {
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			add_ideas = PAN_idea_center_for_international_banking
+		}
+	}
+
+	focus = {
+		id = PAN_nationalize_agricultural_estates
+		icon = proletarian_solidarity
+		prerequisite = { focus = PAN_nationalize_all_foreign_banks }
+		x = 24
+		y = 5
+		cost = 10
+		completion_reward = {
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			if = {
+				limit = { has_idea = PAN_agricultural_reform }
+				swap_ideas = {
+					remove_idea = PAN_agricultural_reform
+					add_idea = PAN_agricultural_reform_batista
+				}
+			}
+			else_if = {
+				limit = { has_idea = PAN_agricultural_reform_batista }
+				swap_ideas = {
+					remove_idea = PAN_agricultural_reform_batista
+					add_idea = PAN_agricultural_reform_batista1
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_launch_five_year_plan
+		icon = five_year_plans2
+		prerequisite = { focus = PAN_expand_the_peoples_bank_of_panama focus = PAN_establish_solidarity_credit_unions focus = PAN_nationalize_agricultural_estates }
+		x = 22
+		y = 6
+		cost = 5
+		completion_reward = {
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			add_ideas = PAN_idea_center_for_international_banking
+		}
+	}
+
+	###########################
+	# GENERAL POLITICAL TREE  #
+	###########################
+	## MOSCOSO YEARS ##
+	focus = {
+		id = PAN_moscoso_administration
+		icon = partido_panamenista
+		prerequisite = { focus = PAN_canal_zone_repatriation }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 30
+		y = 1
+		cost = 2
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_moscoso_administration"
+			add_political_power = 100
+			increase_exports = yes
+		}
+	}
+
+	focus = {
+		id = PAN_let_us_work_together_for_panama
+		icon = economic_blue_print
+		prerequisite = { focus = PAN_moscoso_administration }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 26
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_let_us_work_together_for_panama"
+			increase_social_spending = yes
+			add_political_power = 75
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.050 }
+			set_temp_variable = { temp_outlook_increase = 0.050 }
+			add_relative_party_popularity = yes
+		}
+	}
+	
+	focus = {
+		id = PAN_rural_schools_and_basic_subsidies
+		icon = literacy_rate_improvment
+		prerequisite = { focus = PAN_let_us_work_together_for_panama }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 26
+		y = 3
+		cost = 5
+		completion_reward = {
+			add_ideas = PAN_rural_schools_and_basic_subsidies
+		}
+	}
+
+	focus = {
+		id = PAN_pause_privatization_program
+		icon = industrial_complexes
+		prerequisite = { focus = PAN_moscoso_administration }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 28
+		y = 2
+		cost = 3
+		completion_reward = {			
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_pause_privatization_program"
+			add_political_power = -50
+			set_temp_variable = { treasury_change = -0.50 }
+			modify_treasury_effect = yes
+			newline = yes
+			if = {
+				limit = { has_idea = PAN_panamanian_economy_moscoso }
+				swap_ideas = {
+					remove_idea = PAN_panamanian_economy_moscoso
+					add_idea = PAN_panamanian_economy_moscoso1
+				}
+			}
+			else = {
+				swap_ideas = {
+					remove_idea = PAN_panamanian_economy
+					add_idea = PAN_panamanian_economy_moscoso
+				}
+			}
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.025 }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_raise_protective_tariffs
+		icon = protectionism
+		prerequisite = { focus = PAN_pause_privatization_program }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 28
+		y = 3
+		cost = 2
+		completion_reward = {
+			add_political_power = 75
+			USA = { add_opinion_modifier = { target = PAN modifier = PAN_protectionism } }
+			newline = yes
+			if = {
+				limit = { has_idea = PAN_panamanian_economy_moscoso }
+				swap_ideas = {
+					remove_idea = PAN_panamanian_economy_moscoso
+					add_idea = PAN_panamanian_economy_moscoso1
+				}
+			}
+			else = {
+				swap_ideas = {
+					remove_idea = PAN_panamanian_economy
+					add_idea = PAN_panamanian_economy_moscoso
+				}
+			}
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.025 }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_rancher_and_grower_relief_fund 
+		icon = farming
+		prerequisite = { focus = PAN_moscoso_administration }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 34
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_rancher_and_grower_relief_fund"
+			add_political_power = 100
+			add_ideas = PAN_agricultural_reform
+			newline = yes
+			set_temp_variable = { treasury_change = -1.00 }
+			modify_treasury_effect = yes
+			newline = yes
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = agriculture_district
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_seasonal_nicaraguan_workers
+		icon = farming_sector
+		prerequisite = { focus = PAN_rancher_and_grower_relief_fund }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		bypass = { OR = { NIC = { has_war_with = PAN } NOT = { country_exists = NIC } } }
+		x = 34
+		y = 3
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_rancher_and_grower_relief_fund"
+			NIC = { country_event = { id = panama.13 days = 1 } }
+			custom_effect_tooltip = PAN_seasonal_nicaraguan_workers_tt
+			effect_tooltip = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = NIC.id }
+				set_temp_variable = { influence_target = PAN.id }
+				change_influence_percentage = yes
+				newline = yes
+				NIC = { random_owned_controlled_state = { add_manpower = -30000 } }
+				852 = { add_manpower = 30000 }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_create_anti_corruption_council
+		icon = focus_ARG_anti_corruption_policies
+		prerequisite = { focus = PAN_rural_schools_and_basic_subsidies focus = PAN_raise_protective_tariffs }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 27
+		y = 4
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_create_anti_corruption_council"
+			add_political_power = -75
+			decrease_corruption = yes
+			hidden_effect = {
+				add_popularity = { ideology = neutrality popularity = 0.025 }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_host_sica_summit
+		icon = improve_relations_blue
+		prerequisite = { focus = PAN_moscoso_administration }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 30
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_host_sica_summit"
+			every_country = {
+				limit = { has_idea = PAN_idea_sica_member_state }
+				add_opinion_modifier = { target = PAN modifier = PAN_opinion_sica_summit }
+				hidden_effect = {
+					reverse_add_opinion_modifier = { target = PAN modifier = PAN_opinion_sica_summit }
+					# Panama influences this country
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = THIS }
+					set_temp_variable = { influence_target = PAN }
+					change_influence_percentage = yes
+					# This country influences Panama
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = PAN }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_spanish_infrastructure_partnership
+		icon = economic_prosperity
+		prerequisite = { focus = PAN_host_sica_summit }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		bypass = { OR = { SPR = { has_war_with = PAN } NOT = { country_exists = SPR } } }
+		x = 30
+		y = 3
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_spanish_infrastructure_partnership"
+			SPR = { country_event = { id = panama.11 days = 1 } }
+			custom_effect_tooltip = PAN_spanish_infrastructure_partnership_tt
+			effect_tooltip = {
+				SPR = {
+					set_temp_variable = { treasury_change = -1.12 }
+					modify_treasury_effect = yes
+					set_temp_variable = { int_investment_change = 1.12 }
+					modify_international_investment_effect = yes
+				}
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = SPR.id }
+				set_temp_variable = { influence_target = PAN.id }
+				change_influence_percentage = yes
+				newline = yes
+				853 = {
+					add_extra_state_shared_building_slots = 2
+					add_building_construction = {
+						type = dockyard
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_strengthen_panama_us_security_ties
+		icon = american_republic
+		prerequisite = { focus = PAN_spanish_infrastructure_partnership }
+		available = {
+			has_country_leader = { name = "Mireya Moscoso" ruling_only = yes }
+			country_exists = USA
+			NOT = { has_war_with = USA }
+		}
+		x = 30
+		y = 4
+		cost = 3
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_strengthen_panama_us_security_ties"
+			add_timed_idea = {
+				idea = PAN_idea_environmental_protections
+				days = 730
+			}
+			add_country_leader_trait = panama_pro_us
+			hidden_effect = {
+				USA = {
+					add_opinion_modifier = { target = PAN modifier = PAN_strategic_partnership }
+					reverse_add_opinion_modifier = { target = PAN modifier = PAN_strategic_partnership }
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_taiwan_technology_agreement
+		icon = align_to_taiwan
+		prerequisite = { focus = PAN_strengthen_panama_us_security_ties }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 30
+		y = 5
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_taiwan_technology_agreement"
+			add_tech_bonus = {
+				name = PAN_tech_taiwan_tech_agreement
+				bonus = 0.15
+				uses = 2
+				category = CAT_ai
+			}
+			TAI = {
+				add_opinion_modifier = { target = PAN modifier = PAN_opinion_taiwan_tech_agreement }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_opinion_taiwan_tech_agreement }
+			}
+			CHI = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_taiwanese_leaning } }
+			hidden_effect = { add_country_leader_trait = panama_pro_taiwan }
+		}
+	}
+
+	focus = {
+		id = PAN_national_park_network
+		icon = protect_parks
+		prerequisite = { focus = PAN_moscoso_administration }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 32
+		y = 2
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_national_park_network"
+			set_variable = { PAN_tourism_1_effect = 0.2 }
+			# add_ideas = SPR_idea_tourist_industry_1
+		}
+	}
+
+	focus = {
+		id = PAN_recognize_native_land_rights
+		icon = concessions2
+		prerequisite = { focus = PAN_national_park_network }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 32
+		y = 3
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_recognize_native_land_rights"
+			add_political_power = 50
+			swap_ideas = {
+				remove_idea = PAN_idea_indigenous_inclusion
+				add_idea = PAN_idea_indigenous_inclusion1
+			}
+			newline = yes
+			852 = {
+				add_state_modifier = {
+					modifier = {
+						monthly_population = 0.035
+						# local_factories = 0.05
+						local_manpower = 0.05
+						local_supplies = 0.05
+						agriculture_district_worker_requirement_modifier = -0.025
+					}
+				}
+			}
+			853 = {
+				add_state_modifier = {
+					modifier = {
+						monthly_population = 0.035
+						# local_factories = 0.05
+						local_manpower = 0.05
+						local_supplies = 0.05
+						agriculture_district_worker_requirement_modifier = -0.05
+					}
+				}
+			}
+			hidden_effect = {
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.025 }
+				add_relative_party_popularity = yes
+				add_popularity = {
+					ideology = communism
+					popularity = 0.01
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_expand_native_development_programs
+		icon = refugees
+		prerequisite = { focus = PAN_recognize_native_land_rights }
+		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
+		x = 32
+		y = 4
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_expand_native_development_programs"
+			add_political_power = 150
+			swap_ideas = {
+				remove_idea = PAN_idea_indigenous_inclusion1
+				add_idea = PAN_idea_indigenous_inclusion2
+			}
+			newline = yes
+			852 = {
+				add_state_modifier = {
+					modifier = {
+						monthly_population = 0.05
+						local_factories = 0.1
+						local_manpower = 0.1
+						local_supplies = 0.1
+					}
+				}
+			}
+			853 = {
+				add_state_modifier = {
+					modifier = {
+						monthly_population = 0.05
+						local_factories = 0.1
+						local_manpower = 0.1
+						local_supplies = 0.1
+					}
+				}
+			}
+			hidden_effect = {
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.025 }
+				add_relative_party_popularity = yes
+				add_popularity = {
+					ideology = communism
+					popularity = 0.02
+				}
+			}
+		}
+	}
+
+	### 2004 ELECTION EVENT + FOCUS ###
+	focus = {
+		id = PAN_2004_election
+		icon = Election_graphics
+		# prerequisite = { focus = PAN_raise_protective_tariffs focus = PAN_create_anti_corruption_council }
+		available = { always = no }  # remove TODO # always = no
+		cancel = { date > 2003.12.31 } # change
+		x = 27
+		y = 5
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_2004_election"
+			# country_event = { id = panama.7 hours = 1 }
+			# add_ideas = pan_panamenista_governance
+			# +5 % stability, reduce corruption, but ‒10 political power on launch
+		}
+	}
+
+	### TORRIJOS WINS ###
+	# Social Democracy / Center-Left
+	focus = {
+		id = PAN_reviving_the_torrijos_legacy
+		icon = accept_treaty
+		prerequisite = { focus = PAN_2004_election }
+		available = { has_country_leader = { name = "Martín Torrijos" ruling_only = yes } }
+		x = 25
+		y = 6
+		cost = 1
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_reviving_the_torrijos_legacy"
+			add_political_power = 150
+		}
+	}
+
+	focus = {
+		id = PAN_democratic_revolutionary_party_prd_resurgence
+		icon = prd_panama
+		prerequisite = { focus = PAN_reviving_the_torrijos_legacy }
+		available = { has_country_leader = { name = "Martín Torrijos" ruling_only = yes } }
+		x = 25
+		y = 7
+		cost = 3
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_democratic_revolutionary_party_prd_resurgence"
+			add_political_power = 175
+			newline = yes
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.025 }
+			set_temp_variable = { temp_outlook_increase = 0.010 }
+			add_relative_party_popularity = yes
+		}
+	}
+
+	focus = {
+		id = PAN_social_welfare_expansion
+		icon = generic_healthcare
+		prerequisite = { focus = PAN_democratic_revolutionary_party_prd_resurgence }
+		available = { has_country_leader = { name = "Martín Torrijos" ruling_only = yes } }
+		x = 25
+		y = 8
+		cost = 5
+		completion_reward = {
+			add_political_power = 75
+			# increase_social_spending = yes
+			increase_healthcare_budget = yes
+			increase_education_budget = yes
+			swap_ideas = {
+				remove_idea = PAN_rural_schools_and_basic_subsidies
+				add_idea = PAN_rural_schools_and_basic_subsidies_torrijos
+			}
+		}
+	}
+
+	### MARTINELLI WINS ###
+	# Right-Wing Populism / Economic Liberalism
+	# The Businessman's Vision
+	focus = {
+		id = PAN_the_businessmans_vision
+		icon = cambio_democratico
+		prerequisite = { focus = PAN_2004_election }
+		available = {
+			has_country_leader = {
+				name = "Ricardo Martinelli"
+				ruling_only = yes
+			}
+		}
+		x = 27
+		y = 6
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_the_businessmans_vision"
+			add_political_power = 150
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.025 }
+			set_temp_variable = { temp_outlook_increase = 0.010 }
+			add_relative_party_popularity = yes
+		}
+	}
+
+	focus = {
+		id = PAN_pro_business_reforms
+		icon = accept_treaty
+		prerequisite = { focus = PAN_the_businessmans_vision }
+		x = 27
+		y = 7
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_pro_business_reforms"
+			increase_exports = yes
+			set_temp_variable = { corp_change = -5 }
+			modify_corporate_tax_rate_effect = yes
+			swap_ideas = {
+				remove_idea = PAN_panamanian_economy_moscoso
+				add_idea = PAN_panamanian_economy_martinelli
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_infrastructure_modernization
+		icon = infrastructure
+		prerequisite = { focus = PAN_pro_business_reforms }
+		x = 27
+		y = 8
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_infrastructure_modernization"
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			853 = {
+				add_building_construction = {
+					type = internet_station
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	### BATISTA WINS ###
+	# Communism / Far-Left - Rubén Darío Sousa Batista
+	# Workers of Panama, Unite!
+	focus = {
+		id = PAN_workers_of_panama_unite
+		icon = communism5
+		prerequisite = { focus = PAN_2004_election }
+		available = {
+			AND = {
+				has_country_leader = { name = "Rubén Darío Sousa Batista" ruling_only = yes }
+				has_government = communism
+			}
+		}
+		x = 29
+		y = 6
+		cost = 1
+		completion_reward = {
+			# set_party_index_to_ruling_party = yes
+			# set_temp_variable = { party_popularity_increase = 0.035 }
+			# set_temp_variable = { temp_outlook_increase = 0.020 }
+			# add_relative_party_popularity = yes
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_workers_of_panama_unite"
+			if = {
+				NOT = { USA = { has_government = communism } }
+				USA = {
+					add_opinion_modifier = { target = PAN modifier = PAN_communist_revolution }
+				}
+			}
+			add_to_variable = { party_pop_array^19 = 0.035 }
+			recalculate_party = yes
+			add_popularity = {
+				ideology = communism
+				popularity = 0.02
+			}
+			add_political_power = 100
+			add_stability = -0.05
+		}
+	}
+
+	focus = {
+		id = PAN_nationalization_of_key_industries
+		icon = communism4
+		prerequisite = { focus = PAN_workers_of_panama_unite }
+		x = 29
+		y = 7
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_nationalization_of_key_industries"
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+			if = {
+				limit = { NOT = { USA = { has_government = communism } } }
+				USA = { add_opinion_modifier = { target = PAN modifier = PAN_nationalization_of_industry } }
+			}
+			set_temp_variable = { corp_change = 10 }
+			modify_corporate_tax_rate_effect = yes
+			add_stability = -0.025
+			add_idea = PAN_nationalization_of_industry
+		}
+	}
+
+	focus = {
+		id = PAN_agrarian_reform_programs
+		icon = corn
+		prerequisite = { focus = PAN_nationalization_of_key_industries }
+		x = 29
+		y = 8
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_agrarian_reform_programs"
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = agriculture_district
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -0.75 }
+			modify_treasury_effect = yes
+			newline = yes
+			if = {
+				limit = { has_idea = PAN_agricultural_reform }
+				swap_ideas = {
+					remove_idea = PAN_agricultural_reform
+					add_idea = PAN_agricultural_reform_batista
+				}
+			}
+			else_if = {
+				limit = { has_idea = PAN_agricultural_reform_batista }
+				swap_ideas = {
+					remove_idea = PAN_agricultural_reform_batista
+					add_idea = PAN_agricultural_reform_batista1
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_alliance_with_socialist_nations
+		icon = accept_treaty
+		prerequisite = { focus = PAN_agrarian_reform_programs }
+		x = 29
+		y = 9
+		cost = 5
+		completion_reward = {
+			# if = { limit = { CHI = { has_government = communism } } add_to_array = { socialist_nations = CHI } }
+			# if = { limit = { BRA = { has_government = communism } } add_to_array = { socialist_nations = BRA } }
+			# if = { limit = { CUB = { has_government = communism } } add_to_array = { socialist_nations = CUB } }
+			# if = { limit = { VEN = { has_government = communism } } add_to_array = { socialist_nations = VEN } }
+			# if = { limit = { VIE = { has_government = communism } } add_to_array = { socialist_nations = VIE } }
+			# for_each_loop = {
+			# 	array = socialist_nations
+			# 	if = {
+			# 		limit = { country_exists = var:socialist_nations^i  }
+			# 		set_temp_variable = {  influence_target = socialist_nations^i  }
+			# 		change_influence_percentage = yes
+			# 		add_opinion_modifier = { target = PAN modifier = PAN_socialist_brotherhood }
+			# 	}
+			# }
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_alliance_with_socialist_nations"
+			add_popularity = { ideology = communism popularity = 0.05 }
+			every_country = {
+				limit = { has_government = communism }
+				add_opinion_modifier = { target = PAN modifier = PAN_socialist_brotherhood }
+			}
+		}
+	}
+
+	###########################
+	#        MILITARY         #
+	###########################
+	focus = {
+		id = PAN_defending_the_isthmus
+		icon = soliger_plain
+		# prerequisite = { focus = PAN_new_millennium }
+		x = 40
+		y = 1
+		cost = 2
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = PAN_constitutional_demilitarization
+				add_idea = PAN_constitutional_demilitarization1
+			}
+		}
+	}
+
+	### CONTINUE DEMILITARIZATION ###
+	focus = {
+		id = PAN_reaffirm_constitutional_demilitarization
+		icon = soldier_plain_white_flag
+		prerequisite = { focus = PAN_defending_the_isthmus }
+		mutually_exclusive = { focus = PAN_reestablishing_national_defense_forces }
+		x = 38
+		y = 2
+		cost = 3
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_reaffirm_constitutional_demilitarization"
+			swap_ideas = {
+				remove_idea = PAN_constitutional_demilitarization1
+				add_idea = PAN_constitutional_demilitarization2
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_enhance_public_security_forces
+		icon = police_siren
+		prerequisite = { focus = PAN_reaffirm_constitutional_demilitarization }
+		x = 38
+		y = 3
+		cost = 5		
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_enhance_public_security_forces"
+			swap_ideas = {
+				remove_idea = PAN_constitutional_demilitarization2
+				add_idea = PAN_constitutional_demilitarization3
+			}
+			newline = yes
+			increase_policing_budget = yes
+		}
+	}
+
+	focus = {
+		id = PAN_seek_regional_security_pacts
+		icon = diplomatic_treaty
+		prerequisite = { focus = PAN_enhance_public_security_forces }
+		custom_effect_tooltip = PAN_seek_regional_security_pacts_tt
+		x = 38
+		y = 4
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_seek_regional_security_pacts"
+			every_country = {
+				limit = {
+					AND = {
+						has_idea = PAN_idea_sica_member_state
+						has_opinion = { target = PAN value > 49 } # TODO 49
+					}
+				}
+				diplomatic_relation = {
+					country = PAN
+					relation = non_aggression_pact
+					active = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_establish_international_guarantees
+		icon = internationalism
+		prerequisite = { focus = PAN_seek_regional_security_pacts }
+		available = { is_subject = no NOT = { has_war_with = ANY } }
+		x = 38
+		y = 5
+		cost = 5
+		bypass = {
+			AND = {
+				NOT = { country_exists = MEX }
+				NOT = { country_exists = COL }
+				NOT = { country_exists = CUB }
+				NOT = { country_exists = VEN }
+			}
+		}
+		completion_reward = {
+			# if relations with MX and COL are high enough
+			# get guarantees + non agg pacts from each
+			# cuba + venezuela too
+			# needs tooltip to explain or it wont show
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_establish_international_guarantees"
+			add_to_array = { my_country_array = MEX }
+			add_to_array = { my_country_array = COL }
+			add_to_array = { my_country_array = CUB }
+			add_to_array = { my_country_array = VEN }
+			for_each_loop = {
+				array = my_country_array
+				# non-aggression pacts
+				if = {
+					limit = { country_exists = var:my_country_array^i }
+					var:my_country_array^i = {
+						if = {
+							limit = {
+								AND = {
+									has_opinion = { target = PAN value > 0 } # TODO 49
+								}
+							}
+							diplomatic_relation = {
+								country = THIS
+								relation = non_aggression_pact
+								active = yes
+							}
+						}
+					}
+				}
+				# guarantees TODO
+				# join factions TODO
+			}
+		}
+	}
+
+	### USA, CHINA, EU, OR NEUTRALITY ###
+	focus = {
+		id = PAN_go_with_the_usa
+		icon = align_to_america
+		available = {
+			AND = {
+				country_exists = USA
+				has_completed_focus = PAN_us_military_presence_agreement
+				is_in_faction = no
+				newline = yes
+				OR = {
+					# If USA is communist, block nationalist
+					AND = {
+						USA = { has_government = communism }
+						NOT = { has_government = nationalist }
+					}
+					# If USA is NOT communist, block communism
+					AND = {
+						NOT = { USA = { has_government = communism } }
+						NOT = {
+							emerging_communist_state_are_in_power = yes
+							emerging_anarchist_communism_are_in_power = yes
+							neutrality_neutral_communism_are_in_power = yes							
+						}
+					}
+				}
+			}
+		}
+		prerequisite = { focus = PAN_establish_international_guarantees }
+		mutually_exclusive = { focus = PAN_call_on_brazil focus = PAN_go_with_china }
+		x = 35
+		y = 6
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_go_with_the_usa"
+			USA = { give_guarantee = PAN }
+			# needs tooltip
+		}
+	}
+
+	focus = {
+		# if mercosur exists, ask to join - else get guarantee
+		id = PAN_call_on_brazil
+		icon = align_to_brazil
+		prerequisite = { focus = PAN_establish_international_guarantees }
+		mutually_exclusive = { focus = PAN_go_with_the_usa focus = PAN_go_with_china }
+		available = {
+			AND = {
+				country_exists = BRA
+				# has_completed_focus = PAN_deepen_military_collaboration
+				is_in_faction = no
+				newline = yes
+				OR = {
+					BRA = { has_opinion = { target = PAN value > 99 } }
+				}
+			}
+		}
+		bypass = { is_in_faction_with = BRA }
+		x = 38
+		y = 6
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_call_on_brazil"
+			BRA = {
+				if = {
+					limit = { BRA = { is_in_faction = yes } }
+					diplomatic_relation = {
+						country = PAN
+						relation = join_faction
+						active = yes
+					}
+				}
+				else = {
+					give_guarantee = PAN
+				}
+			}
+			# needs tooltip
+		}
+	}
+
+	focus = {
+		id = PAN_go_with_china
+		icon = align_to_china
+		prerequisite = { focus = PAN_establish_international_guarantees }
+		mutually_exclusive = { focus = PAN_call_on_brazil focus = PAN_call_on_brazil }
+		available = {
+			AND = {
+				country_exists = CHI
+				has_completed_focus = PAN_adopt_chinese_technological_standards
+				OR = {
+					AND = {
+						has_government = democratic
+						CHI = {
+							has_opinion = { target = PAN value > 199 }
+						}
+					}
+					AND = {
+						NOT = { has_government = democratic }
+						CHI = {
+							has_opinion = { target = PAN value > 1 } #149
+						}
+					}
+				}
+			}
+		}
+		x = 41
+		y = 6
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_go_with_china"
+			CHI = { give_guarantee = PAN }
+		}
+	}
+
+	### REMILITARIZATION ###
+	focus = {
+		id = PAN_reestablishing_national_defense_forces
+		icon = conscription
+		prerequisite = { focus = PAN_defending_the_isthmus }
+		mutually_exclusive = { focus = PAN_reaffirm_constitutional_demilitarization }
+		available = { 30_percent_government_popularity = yes }
+		x = 43
+		y = 2
+		cost = 5
+		completion_reward = {
+			# KICK OFF EVENT TOO? DROP PARTY POPULARITY?
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_reestablishing_national_defense_forces"
+			remove_idea = PAN_constitutional_demilitarization
+			add_idea = PAN_idea_remilitarization
+			newline = yes
+			# slightly worsen relations regional
+			COS = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_remilitarization } }
+			NIC = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_remilitarization } }
+			HON = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_remilitarization } }
+			newline = yes
+			increase_military_spending = yes
+			increase_conscription_effect = yes
+			hidden_effect = { set_country_flag = PAN_has_remilitarized }
+		}
+	}
+
+	focus = {
+		id = PAN_modernize_military_infrastructure
+		icon = industry_military
+		prerequisite = { focus = PAN_reestablishing_national_defense_forces }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 43
+		y = 3
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_modernize_military_infrastructure"			
+			add_tech_bonus = {
+				name = PAN_modernize_the_army
+				bonus = 0.3
+				uses = 3
+				category = CAT_inf
+			}
+			add_tech_bonus = {
+				name = PAN_modernize_equipment
+				bonus = 0.3
+				category = CAT_support_weapons
+				uses = 2
+			}
+			newline = yes
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			increase_military_spending = yes
+		}
+	}
+
+	focus = {
+		id = PAN_establish_military_academies
+		icon = military_academy
+		prerequisite = { focus = PAN_modernize_military_infrastructure }
+		x = 43
+		y = 4
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_establish_military_academies"
+			swap_ideas = {
+				remove_idea = PAN_idea_remilitarization
+				add_idea = PAN_idea_remilitarization1
+			}
+			newline = yes
+			increase_officer_training_level = yes
+		}
+	}
+
+	focus = {
+		id = PAN_assert_sovereign_defense_policy
+		icon = army_doctrine
+		prerequisite = { focus = PAN_establish_military_academies }
+		x = 43
+		y = 5
+		cost = 5		
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_assert_sovereign_defense_policy"
+			swap_ideas = {
+				remove_idea = PAN_idea_remilitarization1
+				add_idea = PAN_idea_remilitarization2
+			}
+			newline = yes
+			increase_intervention_law_effect = yes
+		}
+	}
+
+	# focus = {
+	# 	id = PAN_panama_solo
+	# 	icon = soldier
+	# 	prerequisite = { focus = PAN_assert_sovereign_defense_policy }
+	# 	mutually_exclusive = { focus = PAN_alliance }
+	# 	x = 41
+	# 	y = 6
+	# 	cost = 5
+	# 	completion_reward = {
+	# 		# tensions with neighbors
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = PAN_alliance
+	# 	icon = soldiers
+	# 	prerequisite = { focus = PAN_assert_sovereign_defense_policy }
+	# 	x = 43
+	# 	y = 6
+	# 	cost = 5
+	# 	completion_reward = {
+	# 		# create faction with chosen countries
+	# 	}
+	# }
+
+	focus = {
+		id = PAN_restructure_the_armed_forces
+		icon = mobilization_plan
+		prerequisite = { focus = PAN_assert_sovereign_defense_policy }
+		x = 43
+		y = 7
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_restructure_the_armed_forces"
+			every_country = {
+				limit = {
+					AND = { has_idea = PAN_idea_sica_member_state }
+					add_opinion_modifier = {
+						target = PAN
+						modifier = PAN_opinion_remilitarization
+					}
+				}
+			}
+			newline = yes
+			swap_ideas = {
+				remove_idea = PAN_idea_remilitarization2
+				add_idea = PAN_panamanian_army
+			}
+			newline = yes
+			increase_military_spending = yes
+		}
+	}
+
+	focus = {
+		id = PAN_appoint_jorge_miranda_molina
+		icon = appoint_jorge_miranda_molina
+		prerequisite = { focus = PAN_restructure_the_armed_forces }
+		x = 41
+		y = 8
+		cost = 5		
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_appoint_jorge_miranda_molina"
+			swap_ideas = {
+				remove_idea = PAN_panamanian_army
+				add_idea = PAN_panamanian_army_jorge
+			}
+			newline = yes
+			increase_military_spending = yes
+			increase_officer_training_level = yes
+			create_corps_commander = {
+				name = "Jorge Miranda Molina"
+				portrait_path = "gfx/leaders/PAN/jorge_miranda_molina.dds"
+				traits = { career_officer organizer }
+				skill = 3
+				attack_skill = 1
+				defense_skill = 2
+				planning_skill = 3
+				logistics_skill = 2
+			}
+			# hidden_effect = {
+				clr_country_flag = defence_increase_blocked
+				clr_country_flag = conscription_increase_blocked
+				clr_country_flag = intervention_increase_blocked
+				clr_country_flag = officer_training_increase_blocked
+				clr_country_flag = women_conscription_increase_blocked
+			# }
+		}
+	}
+
+	focus = {
+		id = PAN_reinstate_noriega
+		icon = reinstate_noriega
+		prerequisite = { focus = PAN_restructure_the_armed_forces }
+		mutually_exclusive = { focus = PAN_appoint_jorge_miranda_molina }
+		available = {
+			hidden_trigger = {
+				has_country_flag = PAN_imprisoned_noriega
+			}
+		}
+		x = 43
+		y = 8
+		cost = 5
+		completion_reward = {
+			# Triggers events related to internal dissent and potential international sanctions.
+			# noriega begins consolidating power, increases organization more
+			# begins giving speeches in public, increasing fascism support
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_reinstate_noriega"
+			USA = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_reinstated_noriega } }
+			newline = yes
+			swap_ideas = {
+				remove_idea = PAN_panamanian_army
+				add_idea = PAN_panamanian_army_noriega
+			}
+			newline = yes
+			add_popularity = { ideology = democratic popularity = -0.10 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.050 }
+			add_relative_party_popularity = yes
+			newline = yes
+			add_stability = -0.1
+			# increase_intervention_law_effect = yes
+			# increase_military_spending = yes
+			# increase_officer_training_level = yes
+			hidden_effect = {
+				country_event = { id = panama.3 hours = 12 }
+				# news_event = { id = panama.3 hours = 12 }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_revive_the_dignity_battalions
+		icon = coalition_army
+		prerequisite = { focus = PAN_reinstate_noriega }
+		x = 42
+		y = 9
+		cost = 10
+		# Reestablish the Dignity Battalions to suppress dissent and reinforce the regime's authority.
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_revive_the_dignity_battalions"
+			division_template = {
+				name = "Batallones de la Dignidad"
+				regiments = {
+					L_Inf_Bat = { x = 0 y = 0 }
+					L_Inf_Bat = { x = 0 y = 1 }
+					L_Inf_Bat = { x = 0 y = 2 }
+					L_Inf_Bat = { x = 0 y = 3 }
+
+					L_Inf_Bat = { x = 1 y = 0 }
+					L_Inf_Bat = { x = 1 y = 1 }
+					L_Inf_Bat = { x = 1 y = 2 }
+					L_Inf_Bat = { x = 1 y = 3 }
+				}
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
+				}
+				priority = 2
+			}
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_popularity = { ideology = democratic popularity = -0.01 }
+			add_stability = 0.05
+			newline = yes
+			swap_ideas = {
+				remove_idea = PAN_panamanian_army_noriega
+				add_idea = PAN_panamanian_army_noriega1
+			}
+			newline = yes
+			hidden_effect = {
+				853 = {
+					create_unit = {
+						division = "name = \"Batallones de la Dignidad\" division_template = \"Batallones de la Dignidad\" start_experience_factor = 0.5"
+						owner = PAN
+					}
+					create_unit = {
+						division = "name = \"Batallones de la Dignidad\" division_template = \"Batallones de la Dignidad\" start_experience_factor = 0.5"
+						owner = PAN
+					}
+					create_unit = {
+						division = "name = \"Batallones de la Dignidad\" division_template = \"Batallones de la Dignidad\" start_experience_factor = 0.5"
+						owner = PAN
+					}
+				}
+			}
+		}
+	}
+
+	# focus = {
+	# 	id = PAN_cultivate_the_noriega_legacy
+	# 	icon = focus_generic_military_dictatorship
+	# 	prerequisite = { focus = PAN_reinstate_noriega }
+	# 	x = 44
+	# 	y = 9
+	# 	cost = 5	
+	# 	completion_reward = {
+	# 		# +10% Fascism support
+	# 		# +5% Stability
+	# 	}
+	# }
+
+	focus = {
+		id = PAN_noriega_returns_to_power
+		icon = violent_coup
+		# prerequisite = { focus = PAN_revive_the_dignity_battalions focus = PAN_cultivate_the_noriega_legacy }
+		prerequisite = { focus = PAN_revive_the_dignity_battalions }
+		x = 43
+		y = 10
+		cost = 10
+		completion_reward = {
+			# coup - Manuel Noriega becomes the nation's leader
+			# Government type changes to a fascist dictatorship
+			# −15% Democratic support
+			# +10% Stability
+			# if = { limit = { NOT = { has_government = fascism } }
+			# 	add_popularity = {
+			# 		ideology = fascism
+			# 		popularity = 0.2
+			# 	}
+			# 	set_politics = {
+			# 		# change to military dictatorship
+			# 		ruling_party = 21
+			# 		elections_allowed = no
+			# 	}
+			# }
+			# else = {
+			# 	add_popularity = {
+			# 		ideology = fascism
+			# 		popularity = 0.15
+			# 	}
+			# }
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_noriega_returns_to_power"
+			set_politics = { ruling_party = nationalist elections_allowed = no }
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 22 }
+			update_government_coalition_strength = yes
+			add_relative_party_popularity = yes
+			create_country_leader = {
+				name = "Manuel Noriega"
+				picture = "manuel_noriega.dds"
+				desc = "MANUEL_NORIEGA_DESC"
+				ideology = Nat_Fascism
+				traits = {
+					emotional
+					dictator
+					army_general
+					stubborn
+					narcissist
+					panama_el_man
+				}
+				expire = "2017.5.7"
+			}
+			hidden_effect = {
+			# 	set_country_flag = no_leader_change
+			# 	clear_array = ruling_party
+			# 	clear_array = gov_coalition_array
+			# 	add_to_array = { ruling_party = 10 }
+			# 	update_government_coalition_strength = yes
+			# 	update_party_name = yes
+			# 	set_coalition_drift = yes
+			# 	set_temp_variable = { party_index = 10 }
+			# 	set_temp_variable = { party_popularity_increase = 0.10 }
+			# 	add_relative_party_popularity = yes
+			# 	set_temp_variable = { party_index = 11 }
+			# 	set_temp_variable = { party_popularity_increase = 0.10 }
+			# 	add_relative_party_popularity = yes
+			# 	set_ruling_leader = yes
+			# 	set_leader = yes
+			# 	clr_country_flag = no_leader_change
+				clr_country_flag = defence_increase_blocked
+				clr_country_flag = conscription_increase_blocked
+				clr_country_flag = intervention_increase_blocked
+				clr_country_flag = officer_training_increase_blocked
+				clr_country_flag = women_conscription_increase_blocked
+				news_event = { id = panama.4 hours = 12 }
+			# 	increase_economic_growth = yes
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_expand_military_infrastructure
+		icon = secret_police
+		prerequisite = { focus = PAN_revive_the_dignity_battalions focus = PAN_cultivate_the_noriega_legacy }
+		x = 43
+		y = 11
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_expand_military_infrastructure"
+			# +10% Military support
+			# +5% Fascism support
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	# focus = {
+	# 	id = PAN_suppress_political_opposition_and_destroy_drug_cartels
+	# 	icon = political_arrests
+	# 	prerequisite = { focus = PAN_noriega_returns_to_power }
+	# 	x = 41
+	# 	y = 11
+	# 	cost = 2
+	# 	completion_reward = {
+	# 		# −10% Democratic support
+	# 		# +5% Stability
+	# 	}
+	# }
+
+	focus = {
+		id = PAN_send_costa_rica_an_ultimatum
+		icon = ultimatum
+		prerequisite = { focus = PAN_noriega_returns_to_power }
+		x = 45
+		y = 11
+		cost = 3
+		completion_reward = {
+			# +10% Fascism support
+			# +5% Stability
+			# +10% War support
+			# gives justification for war against Nicaragua if they do not accept being a puppet
+			# temp for below - based on speeches idea
+			# +5% Political Power gain
+			# +5% Army experience
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_send_costa_rica_an_ultimatum"
+			# if = {
+			# 	AND = {
+			# 		limit = {
+			# 			COS = {
+			# 				limit = { is_in_faction = no }
+			# 			}
+			# 		}
+			# 	}
+			# }
+			add_state_claim = 850
+			add_state_claim = 851
+			# change to be event based later
+			# once I figure out to mimic costa rica
+			# making a good informed decision
+		}
+	}
+
+	focus = {
+		id = PAN_viva_la_republica_federal_de_centro_america
+		icon = demand_territory
+		prerequisite = { focus = PAN_suppress_political_opposition_and_destroy_drug_cartels focus = PAN_expand_military_infrastructure focus = PAN_send_costa_rica_an_ultimatum }
+		x = 42
+		y = 12
+		cost = 10
+		completion_reward = {
+			# get claims to annex on all central american nations
+			# COSTA RICA
+			# add_state_claim = {
+			# 	state = 850
+			# }
+			# add_state_claim = {
+			# 	state = 851
+			# }
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_viva_la_republica_federal_de_centro_america"
+			every_country = {
+				limit = {
+					AND = {
+						has_idea = PAN_idea_sica_member_state
+						NOT = { country = DOM }
+					}
+				}
+				every_owned_state = {
+					PAN = {
+						add_state_claim = THIS
+					}
+				}
+			}
+			# # NICARAGUA
+			# add_state_claim = 848
+			# add_state_claim = 849
+			# # HONDURAS
+			# add_state_claim = 846
+			# add_state_claim = 847
+			# # EL SALVADOR
+			# add_state_claim = 843
+			# add_state_claim = 844
+			# # GUATEMALA
+			# add_state_claim = 841
+			# add_state_claim = 842
+			# # BELIZE
+			# add_state_claim = 845
+		}
+	}
+
+	focus = {
+		id = PAN_reach_out_to_the_castros_and_chavez
+		icon = volunteer_alliance
+		prerequisite = { focus = PAN_suppress_political_opposition_and_destroy_drug_cartels focus = PAN_expand_military_infrastructure focus = PAN_send_costa_rica_an_ultimatum }
+		available = {
+			OR = {
+				AND = {
+					country_exists = CUB
+					OR = {
+						CUB = { has_government = communism }
+						CUB = { has_government = nationalist }
+					}
+				}
+				AND = {
+					country_exists = VEN
+					OR = {
+						VEN = { has_government = communism }
+						VEN = { has_government = nationalist }
+					}
+				}
+			}
+		}
+		x = 44
+		y = 12
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_reach_out_to_the_castros_and_chavez"
+			# either
+			# ask to join venezuela's faction, and invite cuba
+			if = {
+				limit = {
+					VEN = {
+						limit = { is_in_faction = yes }
+					}
+				}
+				diplomatic_relation = {
+					country = PAN
+					relation = join_faction
+					active = yes
+				}
+			}
+			# else = {
+			# 	# if alliance was taken before, then
+			# 	# or create one and invite both
+			# 	if = {
+			# 		has_completed_focus = PAN_alliance
+			# 	}
+
+			# }
+		}
+	}
+
+
+
+
+
+	################################
+
+# 	focus = {
+# 		id = PAN_prd_opposition
+# 		icon = GFX_focus_generic_military_mission
+# 		prerequisite = { focus = PAN_canal_handover }
+# 		mutually_exclusive = { focus = PAN_moscoso_administration }
+# 		x = 4
+# 		y = 2
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_political_power = 75
+# 			add_ideas = pan_prd_influence
+# 			# More populist, state-directed development
+# 		}
+# 	}
+	
+	# PANAMEÑISTA PATH
+	# focus = {
+	# 	id = PAN_free_market_consolidation
+	# 	icon = GFX_focus_generic_industry_1
+	# 	prerequisite = { focus = PAN_moscoso_administration }
+	# 	x = 6
+	# 	y = 3
+	# 	cost = 10
+		
+	# 	completion_reward = {
+	# 		add_ideas = pan_neoliberal_policies
+	# 		# Boost to private sector, foreign investment
+	# 	}
+	# }
+	
+# 	focus = {
+# 		id = PAN_anti_corruption_drive
+# 		icon = GFX_focus_generic_military_academy
+# 		prerequisite = { focus = PAN_free_market_consolidation }
+# 		x = 6
+# 		y = 4
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_stability = 0.1
+# 			add_political_power = 100
+# 			# Response to historical corruption allegations
+# 		}
+# 	}
+	
+# 	# PRD PATH  
+# 	focus = {
+# 		id = PAN_torrijos_legacy
+# 		icon = GFX_focus_generic_military_mission
+# 		prerequisite = { focus = PAN_prd_opposition }
+# 		x = 4
+# 		y = 3
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_ideas = pan_torrijos_populism
+# 			add_war_support = 0.05
+# 			# Honor Omar Torrijos' nationalist legacy
+# 		}
+# 	}
+		
+# 	# 2004 ELECTION CONSEQUENCES
+# 	focus = {
+# 		id = PAN_2004_transition
+# 		icon = GFX_focus_generic_diplomatic_treaty
+# 		prerequisite = { 
+# 			focus = PAN_anti_corruption_drive 
+# 			focus = PAN_social_development 
+# 		}
+# 		x = 5
+# 		y = 5
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_political_power = 100
+# 			# Historical transition to Martín Torrijos
+# 			remove_ideas = pan_panamenista_governance
+# 			remove_ideas = pan_prd_influence
+# 			add_ideas = pan_torrijos_administration
+# 		}
+# 	}
+	
+# 	# ALTERNATIVE IDEOLOGICAL PATHS
+	
+# 	# COMMUNIST PATH - Inspired by historical communist movements
+# 	focus = {
+# 		id = PAN_peoples_vanguard
+# 		icon = GFX_focus_generic_support_the_left_right
+# 		prerequisite = { focus = PAN_prd_opposition }
+# 		available = {
+# 			communism > 0.15
+# 		}
+# 		x = 2
+# 		y = 3
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_political_power = 50
+# 			add_popularity = { ideology = communism popularity = 0.05 }
+# 			add_ideas = pan_socialist_movement
+# 		}
+# 	}
+	
+# 	focus = {
+# 		id = PAN_workers_republic
+# 		icon = GFX_focus_generic_military_mission
+# 		prerequisite = { focus = PAN_peoples_vanguard }
+# 		available = {
+# 			communism > 0.30
+# 		}
+# 		x = 2
+# 		y = 4
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_political_power = 100
+# 			add_ideas = pan_revolutionary_state
+# 			# Radical redistribution of canal wealth
+# 		}
+# 	}
+	
+# 	focus = {
+# 		id = PAN_canal_peoples_ownership
+# 		icon = GFX_focus_generic_industry_2
+# 		prerequisite = { focus = PAN_workers_republic }
+# 		x = 2
+# 		y = 5
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_ideas = pan_socialist_canal
+# 			add_stability = 0.10
+# 			# Canal profits go directly to the people
+# 		}
+# 	}
+	
+# 	# FASCIST/AUTHORITARIAN PATH - Based on historical military tendencies
+# 	focus = {
+# 		id = PAN_military_nationalism
+# 		icon = GFX_focus_generic_military_academy
+# 		prerequisite = { focus = PAN_strongman_politics }
+# 		x = 8
+# 		y = 6
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			army_experience = 15
+# 			add_ideas = pan_militarist_state
+# 			add_war_support = 0.15
+# 		}
+# 	}
+	
+# 	focus = {
+# 		id = PAN_central_american_hegemony
+# 		icon = GFX_focus_generic_military_mission
+# 		prerequisite = { focus = PAN_military_nationalism }
+# 		x = 8
+# 		y = 7
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_ideas = pan_regional_ambitions
+# 			create_wargoal = {
+# 				type = puppet_wargoal_focus
+# 				target = COS
+# 			}
+# 			# Expansionist goals toward neighbors
+# 		}
+# 	}
+	
+# 	# DEMOCRATIC REFORM PATH - Enhanced democracy
+# 	focus = {
+# 		id = PAN_constitutional_reform
+# 		icon = GFX_focus_generic_diplomatic_treaty
+# 		prerequisite = { focus = PAN_anti_corruption_drive }
+# 		available = {
+# 			democratic > 0.60
+# 		}
+# 		x = 6
+# 		y = 5
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_political_power = 100
+# 			add_stability = 0.10
+# 			add_ideas = pan_strong_democracy
+# 		}
+# 	}
+	
+# 	focus = {
+# 		id = PAN_transparency_initiative
+# 		icon = GFX_focus_generic_self_management
+# 		prerequisite = { focus = PAN_constitutional_reform }
+# 		x = 6
+# 		y = 6
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_political_power = 150
+# 			add_stability = 0.15
+# 			# Major democratic legitimacy boost
+# 		}
+# 	}
+	
+# 	focus = {
+# 		id = PAN_martin_torrijos_era
+# 		icon = GFX_focus_generic_military_equipment
+# 		prerequisite = { focus = PAN_2004_transition }
+# 		available = {
+# 			NOT = { has_completed_focus = PAN_workers_republic }
+# 			NOT = { has_completed_focus = PAN_strongman_politics }
+# 		}
+# 		x = 5
+# 		y = 6
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_political_power = 150
+# 			add_stability = 0.05
+# 			# Torrijos was known for economic competence
+# 		}
+# 	}
+	
+# 	# LATE GAME FOCUSES
+# 	focus = {
+# 		id = PAN_regional_mediator
+# 		icon = GFX_focus_generic_diplomatic_treaty
+# 		prerequisite = { 
+# 			focus = PAN_neutrality_doctrine 
+# 			focus = PAN_interoceanic_hub 
+# 		}
+# 		available = {
+# 			OR = {
+# 				has_completed_focus = PAN_martin_torrijos_era
+# 				has_completed_focus = PAN_transparency_initiative
+# 			}
+# 		}
+# 		x = 11
+# 		y = 8
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_ideas = pan_diplomatic_mediator
+# 			add_political_power = 150
+# 		}
+# 	}
+	
+# 	focus = {
+# 		id = PAN_sustainable_development
+# 		icon = GFX_focus_generic_industry_1
+# 		prerequisite = { 
+# 			focus = PAN_financial_center 
+# 			focus = PAN_tourism_development 
+# 		}
+# 		available = {
+# 			NOT = { has_completed_focus = PAN_central_american_hegemony }
+# 		}
+# 		x = 20
+# 		y = 4
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_ideas = pan_green_economy
+# 			add_stability = 0.1
+# 		}
+# 	}
+# }
+
+	# Jorge Miranda Molina democratic general - currently head of police
+	# NORIEGA PATH
+	focus = {
+		id = PAN_request_extradition_of_noriega
+		icon = intelligence_exchange
+		# available = { has_completed_focus = 2004_election }
+		x = 50
+		y = 1
+		cost = 5
+		completion_reward = {
+			# available after 2004 election
+			# run event
+			# automatically bypass if date >= December 11, 2011
+			log = "[GetDateText]: [THIS.GetName]: focus PAN_request_extradition_of_noriega"
+			country_event = { id = panama.1  hours = 1 }
+		}
+	}
+
+	focus = {
+		id = PAN_NORIEGA_DIE
+		icon = intelligence_exchange
+		available = { has_completed_focus = PAN_request_extradition_of_noriega }
+		visible = { has_completed_focus = PAN_request_extradition_of_noriega }
+		x = 50
+		y = 3
+		cost = 5
+		completion_reward = {
+			# automatically bypass if date >= December 11, 2011
+			# log = "[GetDateText]: [THIS.GetName]: focus PAN_request_extradition_of_noriega"
+			country_event = { id = panama.5  hours = 1 }
+		}
+	}
+}
+
+
+# # NATIONAL SPIRITS/IDEAS
+# # File: common/ideas/panama.txt
+				
+# 		pan_armed_neutrality = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.15
+# 				justify_war_goal_time = 0.25
+# 				generate_wargoal_tension = 0.25
+# 			}
+# 		}
+		
+# 		pan_free_market_reforms = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				consumer_goods_factor = -0.05
+# 				production_speed_industrial_complex_factor = 0.10
+# 			}
+# 		}
+		
+# 		pan_banking_hub = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				political_power_gain = 0.15
+# 				consumer_goods_factor = -0.05
+# 			}
+# 		}
+		
+# 		pan_international_finance = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				political_power_gain = 0.25
+# 				consumer_goods_factor = -0.10
+# 				research_speed_factor = 0.05
+# 			}
+# 		}
+		
+# 		pan_panamenista_governance = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				consumer_goods_factor = -0.05
+# 				production_speed_industrial_complex_factor = 0.10
+# 				political_power_gain = 0.10
+# 			}
+# 		}
+		
+# 		pan_prd_influence = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.05
+# 				war_support_factor = 0.05
+# 				industrial_capacity_factory = 0.05
+# 			}
+# 		}
+		
+# 		pan_neoliberal_policies = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				consumer_goods_factor = -0.10
+# 				production_speed_industrial_complex_factor = 0.15
+# 				research_speed_factor = 0.05
+# 			}
+# 		}
+		
+# 		pan_torrijos_populism = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.10
+# 				war_support_factor = 0.10
+# 				political_power_gain = 0.05
+# 			}
+# 		}
+		
+# 		pan_social_programs = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.15
+# 				consumer_goods_factor = 0.05
+# 				political_power_gain = -0.05
+# 			}
+# 		}
+		
+# 		pan_socialist_movement = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.05
+# 				industrial_capacity_factory = 0.10
+# 				political_power_gain = -0.10
+# 			}
+# 		}
+		
+# 		pan_revolutionary_state = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				consumer_goods_factor = 0.10
+# 				production_speed_industrial_complex_factor = 0.20
+# 				stability_factor = -0.05
+# 				war_support_factor = 0.15
+# 			}
+# 		}
+		
+# 		pan_socialist_canal = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				consumer_goods_factor = -0.15
+# 				stability_factor = 0.20
+# 				industrial_capacity_factory = 0.15
+# 			}
+# 		}
+		
+# 		pan_authoritarian_order = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.10
+# 				war_support_factor = 0.10
+# 				political_power_gain = 0.15
+# 				democratic_drift = -0.02
+# 			}
+# 		}
+		
+# 		pan_militarist_state = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				army_core_defence_factor = 0.10
+# 				conscription_factor = 0.05
+# 				war_support_factor = 0.20
+# 				justify_war_goal_time = -0.25
+# 			}
+# 		}
+		
+# 		pan_regional_ambitions = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				army_core_attack_factor = 0.15
+# 				justify_war_goal_time = -0.50
+# 				generate_wargoal_tension = -0.25
+# 				war_support_factor = 0.10
+# 			}
+# 		}
+		
+# 		pan_strong_democracy = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.20
+# 				political_power_gain = 0.25
+# 				democratic_drift = 0.03
+# 				research_speed_factor = 0.05
+# 			}
+# 		}
+		
+# 		pan_bridge_of_world = {
+# 			allowed = { always = no }
+			
+# 			modifier = {
+# 				stability_factor = 0.20
+# 				political_power_gain = 0.30
+# 				consumer_goods_factor = -0.15
+# 				research_speed_factor = 0.10
+# 			}
+# 		}
+		
+# 	focus = {
+# 		id = PAN_bridge_of_the_world
+# 		icon = GFX_focus_generic_the_giant_wakes
+# 		prerequisite = { 
+# 			focus = PAN_regional_mediator 
+# 			focus = PAN_sustainable_development 
+# 		}
+# 		available = {
+# 			democratic > 0.50
+# 		}
+# 		x = 15
+# 		y = 9
+# 		cost = 10
+		
+# 		completion_reward = {
+# 			add_ideas = pan_bridge_of_world
+# 			add_political_power = 200
+# 			add_stability = 0.15
+# 			# Major diplomatic and economic bonuses
+# 		}
+# 	}
+	# }
+# }
+
+# OPINION MODIFIERS
+# File: common/opinion_modifiers/panama.txt
