@@ -245,12 +245,14 @@ PER_MEK_setup = {
 					is_fully_controlled_by = IRQ
 				}
 				transfer_state_to = TST
+				set_state_controller_to = PER
 			}
 			random_owned_controlled_state = {
 				prioritize = { 235 }
 				add_core_of = TST
 				transfer_state_to = TST
 				set_state_flag = TST_starting_state_setup
+				set_state_controller_to = PER
 			}
 			every_core_state = {
 				limit = {
@@ -258,6 +260,7 @@ PER_MEK_setup = {
 				}
 				#add_contested_owner = MNF
 				add_core_of = TST
+				set_state_controller_to = PER
 			}
 		}
 
@@ -327,6 +330,7 @@ PER_PMF_setup2 = {
 				add_core_of = TST
 				transfer_state_to = TST
 				transfer_state_to = TSS
+				set_state_controller_to = PER
 				
 			}
 		}
@@ -336,12 +340,14 @@ PER_PMF_setup2 = {
 					is_fully_controlled_by = PER
 				}
 				transfer_state_to = TSS
+				set_state_controller_to = PER
 			}
 			random_owned_controlled_state = {
 				prioritize = { 235 }
 				add_core_of = TSS
 				transfer_state_to = TSS
 				set_state_flag = MNF_starting_state_setup
+				set_state_controller_to = PER
 			}
 			every_core_state = {
 				limit = {
@@ -349,12 +355,13 @@ PER_PMF_setup2 = {
 				}
 				#add_contested_owner = MNF
 				add_core_of = TSS
+				set_state_controller_to = PER
 			}
 		}
 
 		PER = {
-			puppet = TSS
-			add_to_faction = TSS
+			#puppet = TSS
+			#add_to_faction = TSS
 		}
 		
 		TSS = {
@@ -369,12 +376,49 @@ PER_PMF_setup2 = {
 			become_exiled_in = { target = PER legitimacy = 25 }
 			every_owned_state  = {
 				limit = { has_state_flag = TSS_starting_state_setup }
-				set_state_controller_to = TST
 				set_state_controller_to = PER
 			}
-			#leave_faction = yes
-			#create_faction = MY_FACTION_NAME
+			leave_faction = yes
+			create_faction = MY_FACTION_NAME
+		}
+		TST = {
+			if = {
+				limit = { NOT = { has_war_with = PER } }
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+			}
+			add_civil_war_target = PER
+			become_exiled_in = { target = IRQ legitimacy = 25 }
+			every_owned_state  = {
+				limit = { has_state_flag = TST_starting_state_setup }
+				set_state_controller_to = PER
+			}
+			leave_faction = yes
+			create_faction = MY_FACTION_NAME
 		}
 		
+	}
+	PER = {
+		every_core_state = {
+			#
+			set_state_controller_to = PER
+			add_contested_owner = TSS
+			#transfer_state_to = PER
+			TSS = { 
+				declare_war_on = {
+					target = PER
+					type = civil_war
+				}
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { has_war_with = PER } }
+		declare_war_on = {
+			target = PER
+			type = civil_war
+		}
 	}
 }
