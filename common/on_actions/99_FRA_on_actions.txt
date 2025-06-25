@@ -46,6 +46,28 @@ on_actions = {
 				add_to_variable = { FRA.FRA_peoples_support = -0.1 }
 			}
 			clamp_variable = { var = FRA.FRA_peoples_support min = 0 max = 100 }
+			# building mission(s)
+			# this is the key part:
+			# use a scripted trigger to check factory count
+			if = {
+				limit = {  # can only occur once per game (?)
+					has_country_flag = FRA_timed_mission
+					has_completed_focus = FRA_begin_timed_mission
+				}
+				# hardcoded for testing, TODO
+				# set to foreach etc. in FRA.states_building_mission_array
+				54 = {
+					# set_temp_variable = { factories_now = THIS.building_level@industrial_complex }
+					# subtract_from_temp_variable = { factories_now = FRA.num_beginning_factories }
+					# playing with non-temp variable for tooltip
+					set_temp_variable = { FRA.factories_now = THIS.building_level@industrial_complex }
+					subtract_from_temp_variable = { FRA.factories_now = FRA.num_beginning_factories }
+					if = {
+						limit = { check_variable = { FRA.factories_now >= 5 } }
+						set_country_flag = FRA_buildings_built
+					}
+				}
+			}
 		}
 	}
 }
