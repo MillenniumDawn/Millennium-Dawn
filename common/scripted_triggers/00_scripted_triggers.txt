@@ -447,7 +447,8 @@ state_has_any_resource = {
 	}
 }
 
-country_can_be_reasonable_target_of_wargoal = { #Expected scopes: Target country is THIS, country getting wargoal is PREV
+#Expected scopes: Target country is THIS, country getting wargoal is PREV
+country_can_be_reasonable_target_of_wargoal = {
 	NOT = {
 		has_war_with = ROOT
 		is_in_faction_with = PREV
@@ -456,4 +457,24 @@ country_can_be_reasonable_target_of_wargoal = { #Expected scopes: Target country
 		has_non_aggression_pact_with = PREV
 		is_subject_of = PREV
 	}
+}
+
+# Effect: calculate_ai_interest
+# Purpose: Calculate the interest rate for the AI once they accept whatever cost they are given
+# Expected scopes: Country is THIS
+# Inputs:
+# - input_cost: The additional cost to incur
+# - interest_rate_check: The interest rate to check against
+calculate_ai_interest = {
+	# Even if the country has treasury, we want to add the input cost to the debt to ensure we are getting the right end interest rate
+	set_temp_variable = { debt_temp = debt }
+	add_to_temp_variable = { debt_temp = input_cost }
+
+	set_temp_variable = { interest_rate_temp = debt_temp }
+	divide_temp_variable = { interest_rate_temp = gdp_total }
+	multiply_temp_variable = { interest_rate_temp = 10 }
+
+	set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
+	add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
+	check_variable = { interest_rate_temp > interest_rate_check }
 }
