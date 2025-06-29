@@ -2,6 +2,7 @@
 add_namespace = anti_bully
 add_namespace = civil_war_debuff
 add_namespace = god_of_war_event
+add_namespace = world_war
 
 ################### WAR 1 ############################
 #Used just to trigger event 2, event 1 does not seem to work immediately via on action
@@ -481,5 +482,411 @@ country_event = {
 				}
 			}
 		}
+	}
+}
+
+# World War Game Rule
+
+country_event = {
+	id = world_war.1
+	title = world_war.1.t
+	desc = world_war.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = world_war.1.a
+		log = "[GetDateText]: [This.GetName]: world_war.1.a executed"
+		set_global_flag = world_war_china
+		set_global_flag = world_war_russia
+	}
+}
+
+# Event Chain
+
+country_event = {
+	id = world_war.2
+	title = world_war.2.t
+	desc = world_war.2.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_game_rule = {
+			rule = allow_enable_world_war
+			option = yes
+		}
+	}
+
+	option = {
+		name = world_war.2.a
+		log = "[GetDateText]: [This.GetName]: world_war.2.a executed"
+		USA = {
+			declare_war_on = {
+				target = CHI
+				type = liberate_wargoal
+			}
+		}
+		set_global_flag = world_war_china_start
+		give_guarantee = KOR
+		give_guarantee = JAP
+		give_guarantee = PHI
+		give_guarantee = ISR
+		hidden_effect = {
+			news_event = world_war.3
+			if = {
+				limit = {
+					country_exists = KOR
+					KOR = {
+						is_subject = no
+					}
+					NKO = {
+						OR = {
+							is_subject = no
+							is_subject_of = CHI
+						}
+					}
+				}
+				NKO = {
+					country_event = {
+						id = world_war.4
+						days = 10
+					}
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_global_flag = world_war_russia_start
+						}
+					}
+					SOV = {
+						country_event = {
+							id = world_war.9
+							days = 35
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = world_war.2.b
+		log = "[GetDateText]: [This.GetName]: world_war.2.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = world_war.4
+	title = world_war.4.t
+	desc = world_war.4.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_game_rule = {
+			rule = allow_enable_world_war
+			option = yes
+		}
+	}
+
+	option = {
+		name = world_war.4.a
+		log = "[GetDateText]: [This.GetName]: world_war.4.a executed"
+		declare_war_on = {
+			target = KOR
+			type = annex_everything
+		}
+		hidden_effect = {
+			JAP = {
+				country_event = world_war.6
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = world_war.4.b
+		log = "[GetDateText]: [This.GetName]: world_war.4.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = world_war.6
+	title = world_war.6.t
+	desc = world_war.6.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_game_rule = {
+			rule = allow_enable_world_war
+			option = yes
+		}
+	}
+
+	option = {
+		name = world_war.6.a
+		log = "[GetDateText]: [This.GetName]: world_war.6.a executed"
+		declare_war_on = {
+			target = NKO
+			type = topple_government
+		}
+		declare_war_on = {
+			target = CHI
+			type = topple_government
+		}
+		hidden_effect = {
+			news_event = world_war.5
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = world_war.6.b
+		log = "[GetDateText]: [This.GetName]: world_war.6.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = world_war.7
+	title = world_war.7.t
+	desc = world_war.7.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_game_rule = {
+			rule = allow_enable_world_war
+			option = yes
+		}
+	}
+
+	option = {
+		name = world_war.7.a
+		log = "[GetDateText]: [This.GetName]: world_war.7.a executed"
+		declare_war_on = {
+			target = SOV
+			type = topple_government
+		}
+		hidden_effect = {
+			news_event = world_war.8
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = world_war.7.b
+		log = "[GetDateText]: [This.GetName]: world_war.7.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = world_war.9
+	title = world_war.9.t
+	desc = world_war.9.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_game_rule = {
+			rule = allow_enable_world_war
+			option = yes
+		}
+	}
+
+	option = {
+		name = world_war.9.a
+		log = "[GetDateText]: [This.GetName]: world_war.9.a executed"
+		declare_war_on = {
+			target = UKR
+			type = topple_government
+		}
+		hidden_effect = {
+			PER = {
+				country_event = {
+					id = world_war.11
+					days = 20
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_global_flag = world_war_china_start
+					}
+				}
+				CHI = {
+					country_event = {
+						id = world_war.12
+						days = 10
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = world_war.9.b
+		log = "[GetDateText]: [This.GetName]: world_war.9.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = world_war.11
+	title = world_war.11.t
+	desc = world_war.11.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_game_rule = {
+			rule = allow_enable_world_war
+			option = yes
+		}
+	}
+
+	option = {
+		name = world_war.11.a
+		log = "[GetDateText]: [This.GetName]: world_war.11.a executed"
+		every_country = {
+			limit = {
+				has_idea = faction_resistance_axis_member
+			}
+			declare_war_on = {
+				target = ISR
+				type = topple_government
+			}
+		}
+		hidden_effect = {
+			news_event = world_war.10
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = world_war.11.b
+		log = "[GetDateText]: [This.GetName]: world_war.11.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = world_war.12
+	title = world_war.12.t
+	desc = world_war.12.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_game_rule = {
+			rule = allow_enable_world_war
+			option = yes
+		}
+	}
+
+	option = {
+		name = world_war.12.a
+		log = "[GetDateText]: [This.GetName]: world_war.12.a executed"
+		declare_war_on = {
+			target = TAI
+			type = topple_government
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = world_war.12.b
+		log = "[GetDateText]: [This.GetName]: world_war.12.b executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+
+# World Events
+
+news_event = {
+	id = world_war.3
+	title = world_war.3.t
+	desc = world_war.3.d
+	major = yes
+	is_triggered_only = yes
+	picture = GFX_united_states_army
+	option = {
+		name = world_war.3.a
+		log = "[GetDateText]: [This.GetName]: world_war.3.a executed"
+	}
+}
+
+news_event = {
+	id = world_war.5
+	title = world_war.5.t
+	desc = world_war.5.d
+	major = yes
+	is_triggered_only = yes
+	picture = GFX_CHI_chinese_soldiers_news
+	option = {
+		name = world_war.5.a
+		log = "[GetDateText]: [This.GetName]: world_war.5.a executed"
+	}
+}
+
+news_event = {
+	id = world_war.8
+	title = world_war.8.t
+	desc = world_war.8.d
+	major = yes
+	is_triggered_only = yes
+	picture = GFX_sov_nationalist_news14
+	option = {
+		name = world_war.8.a
+		log = "[GetDateText]: [This.GetName]: world_war.8.a executed"
+	}
+}
+
+news_event = {
+	id = world_war.10
+	title = world_war.10.t
+	desc = world_war.10.d
+	major = yes
+	is_triggered_only = yes
+	picture = GFX_civil_war_world
+	option = {
+		name = world_war.10.a
+		log = "[GetDateText]: [This.GetName]: world_war.10.a executed"
 	}
 }
