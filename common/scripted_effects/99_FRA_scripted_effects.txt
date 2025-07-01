@@ -34,3 +34,51 @@ FRA_nepad_cost_increase_cost_effect = {
 	add_to_variable = { FRA.FRA_nepad_sponsor_weekly_cost = temp_change }
 	custom_effect_tooltip = FRA_nepad_cost_increase_cost_effect_tt
 }
+
+FRA_sum_beginning_factories_in_array = {
+    set_temp_variable = { temp_factories = 0 }
+    for_each_loop = {
+        array = FRA.state_test
+        value = state_id
+        hidden_effect = {
+			# every_state
+            every_owned_state = {
+				if = {
+					limit = { check_variable = { THIS.id = state_id } }
+					add_to_temp_variable = { temp_factories = THIS.building_level@industrial_complex }
+				}
+                # add_to_temp_variable = { temp_factories = THIS.building_level@industrial_complex }
+            }
+        }
+    }
+    set_variable = { FRA.num_beginning_factories = temp_factories }
+}
+
+FRA_sum_current_factories_in_array = {
+    set_temp_variable = { temp_factories = 0 }
+    for_loop_effect = {
+        array = FRA.state_test
+        value = state_id
+        hidden_effect = {
+            every_owned_state = {
+                if = {
+                    limit = { check_variable = { THIS.id = state_id } }
+					# add_to_variable = { FRA.factories_now = THIS.building_level@industrial_complex }
+					add_to_temp_variable = { temp_factories = THIS.building_level@industrial_complex }
+                }
+            }
+        }
+    }
+	# if = {
+	# 	limit = { has_country_flag = test_flag }
+	# 	subtract_from_variable = { FRA.factories_now = FRA.num_beginning_factories }
+	# 	clr_country_flag = test_flag
+	# }
+	# subtract_from_variable = { temp_factories = FRA.num_beginning_factories }
+    # set_variable = { FRA.factories_now = temp_factories }
+
+    set_temp_variable = { temp_factories_built = temp_factories }
+    subtract_from_temp_variable = { temp_factories_built = FRA.num_beginning_factories }
+    set_variable = { FRA.factories_now = temp_factories_built }
+
+}
