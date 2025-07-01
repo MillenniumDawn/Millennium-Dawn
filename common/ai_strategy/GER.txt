@@ -2,12 +2,103 @@ GER_we_want_the_pumaifv = { #tell GER AI to research the 2015 IFV hull ahead of 
 	allowed = { original_tag = GER }
 	enable = {
 		country_exists = GER
-		NOT = { has_tech = afv_tech_3 }
+		NOT = { has_tech = mbt_tech_3 }
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = research_tech id = afv_tech_3 value = 100 }
+	ai_strategy = { type = research_tech id = mbt_tech_3 value = 100 }
 }
+
+#german forces in peace#
+German_garrisons_in_peace = {
+	allowed = { tag = GER }
+	enable = {
+		tag = GER
+		has_idea = NATO_member
+		OR = {
+			has_war = no
+			threat < 0.3
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = put_unit_buffers
+		ratio = 0.80
+		states = {
+			37 38 39 40 41 42 43 44 45 1080 539 972 545 964 967 966
+		}
+		subtract_fronts_from_need = no
+		subtract_invasions_from_need = no
+	}
+}
+
+#reduce stupidity#
+GER_reduce_Swiss_border_garrison = {
+	allowed = { original_tag = GER }
+	enable = {
+		original_tag = GER
+		OR = {
+			SWI = { has_government = democratic }
+			SWI = { has_government = neutrality }
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = front_unit_request
+		tag = SWI
+		value = -200
+	}
+}
+
+GER_reduce_Austria_border_garrison = {
+	allowed = { original_tag = GER }
+	enable = {
+		original_tag = GER
+		OR = {
+			AUS = { has_government = democratic }
+			AUS = { has_government = neutrality }
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = front_unit_request
+		tag = AUS
+		value = -200
+	}
+}
+
+###GER spy strategy###
+GER_spy_on_SOV = { #Spy on SOV, infiltrate Russian army
+	allowed = { original_tag = GER }
+	enable = {
+		GER = {
+			OR = {
+				western_conservatism_are_in_coalition = yes
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_coalition = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+				neutrality_neutral_green_are_in_coalition = yes
+				neutrality_neutral_green_are_in_power = yes
+			}
+		}
+		NOT = { SOV = { is_subject_of = GER } }
+	}
+	abort = {
+		OR = {
+			SOV = {
+				is_in_faction_with = GER
+			}
+			NOT = { country_exists = SOV }
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = SOV }
+	ai_strategy = { type = operative_operation value = 80 operation = operation_capture_cipher operation_target = SOV }
+}
+
 
 ###Building###
 GER_office_target = {
@@ -61,7 +152,7 @@ GER_Transatlantic = {
 	ai_strategy = { type = send_volunteers_desire id = "USA" value = 100 }
 }
 
-GER_support_baltics = {
+GER_support_baltics_lit = {
 	allowed = { original_tag = GER }
 	enable = {
 		has_idea = EU_member
@@ -74,10 +165,46 @@ GER_support_baltics = {
 				has_government = democratic
 				has_government = neutrality
 			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LIT" value = 70 }
+	ai_strategy = { type = protect id = "LIT" value = 80 }
+	ai_strategy = { type = support id = "LIT" value = 70 }
+}
+
+GER_support_baltics_lat = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_idea = EU_member
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
+		OR = {
 			LAT = {
 				has_government = democratic
 				has_government = neutrality
 			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "LAT" value = 70 }
+	ai_strategy = { type = protect id = "LAT" value = 80 }
+	ai_strategy = { type = support id = "LAT" value = 70 }
+}
+
+GER_support_baltics_est = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_idea = EU_member
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
+		OR = {
 			EST = {
 				has_government = democratic
 				has_government = neutrality
@@ -86,14 +213,8 @@ GER_support_baltics = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = befriend id = "LIT" value = 70 }
-	ai_strategy = { type = befriend id = "LAT" value = 70 }
 	ai_strategy = { type = befriend id = "EST" value = 70 }
-	ai_strategy = { type = protect id = "LIT" value = 80 }
-	ai_strategy = { type = protect id = "LAT" value = 80 }
 	ai_strategy = { type = protect id = "EST" value = 80 }
-	ai_strategy = { type = support id = "LIT" value = 70 }
-	ai_strategy = { type = support id = "LAT" value = 70 }
 	ai_strategy = { type = support id = "EST" value = 70 }
 }
 
