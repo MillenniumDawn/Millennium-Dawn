@@ -821,3 +821,45 @@ FRA_french_africa_decision_category = {
 	# 	}
 	# }
 }
+
+FRA_french_construction_decision_category = {
+    FRA_build_factories_mission = {
+		icon = political_actions
+        allowed = { original_tag = FRA }
+		available = { always = no }
+		fire_only_once = yes
+        days_mission_timeout = 25  # testing, TODO: -> 365
+        activation = {
+			AND = {
+				has_country_flag = FRA_timed_mission
+				has_completed_focus = FRA_reinvest_rural
+			}
+        }
+        timeout_effect = {
+			log = "[GetDateText]: [THIS.GetName]: focus FRA_build_factories_mission timeout"
+			# custom_effect_tooltip = FRA_build_factories_mission_fail_tt
+
+			if = {  # success
+				limit = {
+					check_variable = { FRA.factories_now > 4 }
+				}
+				add_stability = 0.075
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				add_relative_party_popularity = yes
+				add_timed_idea = {
+					idea = FRA_campaign_promises_kept_idea
+					days = 200
+				}
+			}
+			else = {  # failure
+				add_stability = -0.1
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.15 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+			}
+			clr_country_flag = FRA_timed_mission
+        }
+    }
+}
