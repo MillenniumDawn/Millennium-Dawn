@@ -171,6 +171,44 @@ FRA_BP_change = {
 	add_to_variable = { political_power_factor = temp_change }
 	force_update_dynamic_modifier = yes
 }
+FRA_sum_beginning_factories_in_array = {  # TODO: MISSION
+    set_temp_variable = { temp_factories = 0 }
+    for_each_loop = {
+        array = FRA.states_for_timed_mission
+        value = state_id
+        hidden_effect = {
+            every_owned_state = {
+				if = {
+                    # limit = { state = state_id }
+					limit = { check_variable = { THIS.id = state_id } }  # seems to work...?
+					add_to_temp_variable = { temp_factories = THIS.building_level@industrial_complex }
+				}
+                # add_to_temp_variable = { temp_factories = THIS.building_level@industrial_complex }
+            }
+        }
+    }
+    set_variable = { FRA.num_beginning_factories = temp_factories }
+}
+FRA_sum_current_factories_in_array = {  # TODO: MISSION
+    set_temp_variable = { temp_factories = 0 }
+    for_each_loop = {
+        array = FRA.states_for_timed_mission
+        value = state_id
+        hidden_effect = {
+            every_owned_state = {
+                if = {
+                    # limit = { check_variable = { THIS.id = state_id } }
+					limit = { state = state_id }
+					# add_to_variable = { FRA.factories_now = THIS.building_level@industrial_complex }
+					add_to_temp_variable = { temp_factories = THIS.building_level@industrial_complex }
+                }
+            }
+        }
+    }
+    set_temp_variable = { temp_factories_built = temp_factories }
+    subtract_from_temp_variable = { temp_factories_built = FRA.num_beginning_factories }
+    set_variable = { FRA.factories_now = temp_factories_built }
+}
 
 
 
