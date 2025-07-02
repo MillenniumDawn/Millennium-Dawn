@@ -12132,9 +12132,12 @@ country_event = {
 	id = CZE_monarchy_event.22
 	title = CZE_monarchy_event.22.t
 	desc = CZE_monarchy_event.22.d
-	#picture =
 
-	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		tag = CZE
+	}
 
 	option = {
 		name = CZE_monarchy_event.22.a
@@ -12143,7 +12146,7 @@ country_event = {
 		custom_effect_tooltip = CZE_SLO_monarchy_decisions_TT
 
 		ai_chance = {
-			base = 60
+			base = 80
 		}
 
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.a executed"
@@ -12152,14 +12155,12 @@ country_event = {
 	option = {
 		name = CZE_monarchy_event.22.b
 
-		SLO = {
-			country_event = { id = CZE_monarchy_event.23 days = 1}
-		}
+		SLO = { country_event = { id = CZE_monarchy_event.23 }}
 
 		custom_effect_tooltip = CZE_SLO_monarchy_TT
 
 		ai_chance = {
-			base = 40
+			base = 20
 		}
 
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.b executed"
@@ -12167,17 +12168,19 @@ country_event = {
 
 	#For debugging
 	option = {
-		name = CZE_monarchy_event.22.b
+		name = CZE_monarchy_event.22.c
 
-		remove_wargoal = {
-			type = all
-			target = SLO
+		CZE = {
+			remove_wargoal = {
+				type = all
+				target = SLO
+			}
 		}
 
 		custom_effect_tooltip = CZE_SLO_monarchy_TT
 
 		ai_chance = {
-			base = 40
+			base = 0
 		}
 
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.c executed"
@@ -12189,21 +12192,29 @@ country_event = {
 	id = CZE_monarchy_event.23
 	title = CZE_monarchy_event.23.t
 	desc = CZE_monarchy_event.23.d
-	#picture =
 
-	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SLO
+	}
 
 	# Accepted subjugation
 	option = {
 		name = CZE_monarchy_event.23.a
 
-		CZE = {
-			news_event = {id = CZE_monarchy_event.24}
-			annex_country = { target = SLO }
-		}
+		CZE = { country_event = { id = CZE_monarchy_event.26 }}
 
 		ai_chance = {
 			base = 50
+			modifier = {
+				add = 50
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0
+				has_government = communism
+			}
 		}
 
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.23.a executed"
@@ -12213,19 +12224,42 @@ country_event = {
 	option = {
 		name = CZE_monarchy_event.23.b
 
-		CZE = {
-			create_wargoal = {
-				type = annex_everything
-				target = SLO
-			}
-		}
-
+		CZE = { country_event = { id = CZE_monarchy_event.25 }}
 
 		ai_chance = {
 			base = 50
+			modifier = {
+				add = 50
+				has_government = communism
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
+			}
 		}
 
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.23.b executed"
+	}
+
+	#For debugging
+	option = {
+		name = CZE_monarchy_event.22.c
+
+		SLO = {
+			set_temp_variable = { rul_party_temp = 23}
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = nationalist
+			}
+		}
+
+		custom_effect_tooltip = CZE_SLO_monarchy_TT
+
+		ai_chance = {
+			base = 0
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.23.c executed"
 	}
 }
 
@@ -12235,11 +12269,64 @@ news_event = {
 	title = CZE_monarchy_event.24.t
 	desc = CZE_monarchy_event.24.d
 
-	fire_only_once = yes
+	is_triggered_only = yes
 
 	option = {
 		name = CZE_monarchy_event.24.a
 
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.24.b executed"
+	}
+}
+
+# CZE: SLO dont accept
+country_event = {
+	id = CZE_monarchy_event.25
+	title = CZE_monarchy_event.25.t
+	desc = CZE_monarchy_event.25.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_monarchy_event.25.a
+
+		CZE = {
+			create_wargoal = {
+				type = annex_everything
+				target = SLO
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.25.b executed"
+
+		ai_chance = { base = 100 }
+	}
+
+}
+
+# CZE event annexing SLO
+country_event = {
+	id = CZE_monarchy_event.26
+	title = CZE_monarchy_event.26.t
+	desc = CZE_monarchy_event.26.d
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = CZE }
+
+	option = {
+		name = CZE_monarchy_event.26.a
+
+		CZE = {
+			annex_country = { target = SLO }
+		}
+
+		news_event = { id = CZE_monarchy_event.24 days = 1}
+
+		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.26.a executed"
+
+		ai_chance = { base = 100 }
 	}
 }
