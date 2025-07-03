@@ -13,6 +13,7 @@ add_namespace = CZE_Army_2010
 add_namespace = CZE_Army_2020
 add_namespace = CZE_TV_Crisis
 add_namespace = CZE_monarchy_event
+add_namespace = CZE_SLO_monarchy_collaboration
 
 
 
@@ -12141,9 +12142,14 @@ country_event = {
 
 	option = {
 		name = CZE_monarchy_event.22.a
-		set_country_flag = CZE_SLO_collaboration
+		set_country_flag = CZE_SLO_monarchy_collaboration
 
 		custom_effect_tooltip = CZE_SLO_monarchy_decisions_TT
+
+		set_variable = {
+		var =  CZE_SLO_monarchy_collaboration_plus
+		value = 0
+	}
 
 		ai_chance = {
 			base = 80
@@ -12157,6 +12163,8 @@ country_event = {
 
 		SLO = { country_event = { id = CZE_monarchy_event.23 }}
 
+		clr_country_flag = CZE_SLO_monarchy_collaboration
+
 		custom_effect_tooltip = CZE_SLO_monarchy_TT
 
 		ai_chance = {
@@ -12166,22 +12174,14 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.b executed"
 	}
 
-	#For debugging
 	option = {
 		name = CZE_monarchy_event.22.c
 
-		CZE = {
-			remove_wargoal = {
-				type = all
-				target = SLO
-			}
+		trigger = {
+			has_variable = CZE_SLO_monarchy_collaboration_plus
 		}
 
-		custom_effect_tooltip = CZE_SLO_monarchy_TT
-
-		ai_chance = {
-			base = 0
-		}
+		set_country_flag = CZE_SLO_monarchy_collaboration
 
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.c executed"
 	}
@@ -12319,8 +12319,20 @@ country_event = {
 	option = {
 		name = CZE_monarchy_event.26.a
 
-		CZE = {
-			annex_country = { target = SLO }
+		if = {
+			limit = {
+				check_variable = { CZE_SLO_monarchy_collaboration_plus > 50}
+			}
+			annex_country = {
+				target = SLO
+				transfer_troops = yes
+			}
+			#add_core_of = SLO
+		}
+		else = {
+			annex_country = {
+				target = SLO
+			}
 		}
 
 		news_event = { id = CZE_monarchy_event.24 days = 1}
@@ -12328,5 +12340,196 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.26.a executed"
 
 		ai_chance = { base = 100 }
+	}
+}
+
+# Receive an investment proposal from CZE
+country_event = {
+	id = CZE_SLO_monarchy_collaboration.1
+	title = CZE_SLO_monarchy_collaboration.1.t
+	desc = CZE_SLO_monarchy_collaboration.1.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SLO
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_collaboration.1.a
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.2}}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.1.a executed"
+
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 30
+				SLO = { has_government = nationalist }
+			}
+		}
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_collaboration.1.b
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.3}}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.1.b executed"
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 0
+				SLO = { has_government = nationalist }
+			}
+		}
+	}
+}
+
+# Accepted :)
+country_event = {
+	id = CZE_SLO_monarchy_collaboration.2
+	title = CZE_SLO_monarchy_collaboration.2.t
+	desc = CZE_SLO_monarchy_collaboration.2.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_collaboration.2.a
+
+		SLO = {
+			one_random_industrial_complex = yes
+			one_random_synthetic_refinery = yes
+
+			set_temp_variable = { party_index = 23}
+			set_temp_variable = { party_popularity_increase = 0.1}
+			add_relative_party_popularity = yes
+
+			add_opinion_modifier = {
+				target = CZE
+				####TOCHANGE##########
+				modifier = CZE_czechia_turns_to_christian
+			}
+		}
+
+		CZE = {
+			set_temp_variable = { int_investment_change = 10 }
+			modify_international_investment_effect = yes
+
+
+			add_to_variable = {
+				var = CZE_SLO_monarchy_collaboration_plus
+				value = 33
+			}
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.2.a executed"
+	}
+}
+
+# Denied :(
+country_event = {
+	id = CZE_SLO_monarchy_collaboration.6
+	title = CZE_SLO_monarchy_collaboration.6.t
+	desc = CZE_SLO_monarchy_collaboration.6.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_collaboration.6.a
+
+		CZE = {
+			one_random_industrial_complex = yes
+			one_random_synthetic_refinery = yes
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.6.a executed"
+	}
+}
+
+country_event = {
+	id = CZE_SLO_monarchy_collaboration.3
+	title = CZE_SLO_monarchy_collaboration.3.t
+	desc = CZE_SLO_monarchy_collaboration.3.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SLO
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_collaboration.3.a
+
+		SLO = {army_experience = 20}
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.4}}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.2.a executed"
+	}
+
+	option = {
+
+		name = CZE_SLO_monarchy_collaboration.3.b
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.5}}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.2.a executed"
+	}
+}
+
+# Accepted :)
+country_event = {
+	id = CZE_SLO_monarchy_collaboration.4
+	title = CZE_SLO_monarchy_collaboration.4.t
+	desc = CZE_SLO_monarchy_collaboration.4.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_collaboration.4.a
+
+		army_experience = 20
+		add_to_variable = {
+			var = CZE_SLO_monarchy_collaboration_plus
+			value = 33
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.4.a executed"
+	}
+}
+
+# Denied :(
+country_event = {
+	id = CZE_SLO_monarchy_collaboration.5
+	title = CZE_SLO_monarchy_collaboration.5.t
+	desc = CZE_SLO_monarchy_collaboration.5.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_collaboration.5.a
+
+		army_experience = 30
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.5.a executed"
 	}
 }
