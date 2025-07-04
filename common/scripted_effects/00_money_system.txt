@@ -1041,7 +1041,10 @@ calculate_additional_income_rate = {
 		}
 		if = {
 			limit = { has_idea = SOV_otkos_army_idea }
-			set_variable = { additional_income_SOV_otkos_army_idea = 0.150 }
+			set_variable = { additional_income_SOV_otkos_army_idea = population_total }
+			multiply_variable = { additional_income_SOV_otkos_army_idea = 0.1 }	#Millions of people
+			multiply_variable = { additional_income_SOV_otkos_army_idea = 0.1 } #per million
+			multiply_variable = { additional_income_SOV_otkos_army_idea = 0.015 } #weekly
 			add_to_variable = { additional_income_rate = additional_income_SOV_otkos_army_idea }
 		}
 		#Gazprom Pipelines
@@ -3429,7 +3432,7 @@ calculate_resource_sale_rate = {
 	set_variable = { chromium_exports = resource_exported@chromium }
 	set_variable = { rubber_exports = resource_exported@rubber }
 
-	#Add up total
+	# Add up total
 	set_temp_variable = { resource_exports = oil_exports }
 	add_to_temp_variable = { resource_exports = steel_exports }
 	add_to_temp_variable = { resource_exports = aluminium_exports }
@@ -3437,8 +3440,28 @@ calculate_resource_sale_rate = {
 	add_to_temp_variable = { resource_exports = chromium_exports }
 	add_to_temp_variable = { resource_exports = rubber_exports }
 
+	# Check if we have subjects
+	if = { limit = { check_variable = { num_subjects > 0 } }
+		set_temp_variable = { CIC_from_subjects = 0 }
+		for_each_scope_loop = {
+			array = subjects
+			set_temp_variable = { cic_to_overlord_modifier = 1 }
+			subtract_from_temp_variable = { cic_to_overlord_modifier = modifier@cic_to_overlord_factor }
+
+			set_temp_variable = { cic_subject_industry_lost_total = 0 }
+			add_to_temp_variable = { cic_subject_industry_lost_total = num_of_civilian_factories }
+			divide_temp_variable = { cic_subject_industry_lost_total = cic_to_overlord_modifier }
+			multiply_temp_variable = { cic_subject_industry_lost_total = modifier@cic_to_overlord_factor }
+			round_temp_variable = cic_subject_industry_lost_total
+			add_to_temp_variable = { PREV.CIC_from_subjects = cic_subject_industry_lost_total }
+		}
+		round_temp_variable = CIC_from_subjects
+	}
+
 	#Don't give money for resources that are bought, as they already give CIC
 	set_temp_variable = { CIC_from_trade = num_of_civilian_factories }
+	subtract_from_temp_variable = { CIC_from_trade = CIC_from_subjects }
+
 	# Prevents
 	if = { limit = { has_country_flag = lease_civilian_factories_flag }
 		subtract_from_temp_variable = { CIC_from_trade = leased_civilian_factories }
