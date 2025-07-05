@@ -285,6 +285,377 @@ AGRI_give_tea_company_rights = {
 	else = { custom_effect_tooltip = AGRI_give_tea_company_rights_SOLD_TT }
 }
 
+# changes to the agricultural economy
+
+# seasonal changes to allocation/crop rotation
+# regional successes/failures due to "collected" weather patterns, which will allow for natural disasters
+# literacy affects caps for employment of developed economic buildings, with toggle for removing this due to country
+# content, lowest possible is 25%
+# low literacy increases cap of employment in commercial agricultural buildings up to 300%
+# low literacy also allows for a larger workforce broadly to represent children in the workforce
+# if there is no commercial agriculture then the amount of non commercial agriculture workers is increased to balance it out
+
+# giving rights to land will cap the selected crop type allocation by a set amount, with no way to go below that amount,
+# the amount taken will be a set amount per week but will reduce the total income from the agrarian economy idea
+# make the effect able to use various inputs for loc
+
+AGRI_sell_land_rights = {
+	if = {
+		limit = { AGRI_can_sell_land_rights = yes }
+		if = {
+			limit = { check_variable = { crop_type = cash } }
+			if = {
+				limit = {
+					var:nation_with_land = {
+						var:nation_with_industry = { NOT = { has_country_flag = AGRI_cash_rights@PREV } }
+					}
+				}
+				var:nation_with_land = {
+					set_country_flag = {
+						flag = AGRI_cash_rights_sold
+						value = 1
+						days = 360
+					}
+					var:nation_with_industry = {
+						hidden_effect = {
+							set_country_flag = {
+								flag = AGRI_cash_rights@PREV
+								value = 1
+								days = 360
+							}
+							var:nation_with_land = {
+								set_country_flag = {
+									flag = AGRI_cash_rights@PREV
+									value = 1
+									days = 360
+								}
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = AGRI_cash_crop_rights_SELLING_TT
+			}
+			else_if = {
+				limit = {
+					var:nation_with_land = {
+						var:nation_with_industry = { has_country_flag = AGRI_cash_rights@PREV }
+					}
+				}
+				var:nation_with_land = {
+					modify_country_flag = {
+						flag = AGRI_cash_rights_sold
+						days = 360
+					}
+					var:nation_with_industry = {
+						hidden_effect = {
+							modify_country_flag = {
+								flag = AGRI_cash_rights@PREV
+								days = 360
+							}
+							var:nation_with_land = {
+								modify_country_flag = {
+									flag = AGRI_cash_rights@PREV
+									days = 360
+								}
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = AGRI_cash_crop_rights_RENEWING_TT
+			}
+			add_to_variable = { AGRI_cash_crop_allocation = 1 }
+		}
+		if = {
+			limit = { check_variable = { crop_type = staple } }
+			if = {
+				limit = {
+					var:nation_with_land = {
+						var:nation_with_industry = { NOT = { has_country_flag = AGRI_staple_rights@PREV } }
+					}
+				}
+				var:nation_with_land = {
+					set_country_flag = {
+						flag = AGRI_staple_rights_sold
+						value = 1
+						days = 360
+					}
+					var:nation_with_industry = {
+						hidden_effect = {
+							set_country_flag = {
+								flag = AGRI_staple_rights@PREV
+								value = 1
+								days = 360
+							}
+							var:nation_with_land = {
+								set_country_flag = {
+									flag = AGRI_staple_rights@PREV
+									value = 1
+									days = 360
+								}
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = AGRI_staple_crop_rights_SELLING_TT
+			}
+			else_if = {
+				limit = {
+					var:nation_with_land = {
+						var:nation_with_industry = { has_country_flag = AGRI_staple_rights@PREV }
+					}
+				}
+				var:nation_with_land = {
+					modify_country_flag = {
+						flag = AGRI_staple_rights_sold
+						days = 360
+					}
+					var:nation_with_industry = {
+						hidden_effect = {
+							modify_country_flag = {
+								flag = AGRI_staple_rights@PREV
+								days = 360
+							}
+							var:nation_with_land = {
+								modify_country_flag = {
+									flag = AGRI_staple_rights@PREV
+									days = 360
+								}
+							}
+						}
+					}
+				}
+				custom_effect_tooltip = AGRI_staple_crop_rights_RENEWING_TT
+			}
+			add_to_variable = { AGRI_staple_crop_allocation = 1 }
+		}
+	}
+	else = { custom_effect_tooltip = AGRI_sell_land_rights_BLOCKED_TT }
+}
+
+# each allocation is "1"
+# the allocation math is dependant on a variable percentage that can change
+# the income is dependant on percentage allocated to the sold rights
+
+# that land rights income is then removed from the regular income, akin to how
+# resource exports work
+
+# VARIABLES TO MAKE
+	# 1, 2, 3, etc.
+	# cash crop allocation contracts
+	# staple crop allocation contracts
+
+	# percentage
+	# cash crop allocation contract increments
+	# staple crop allocation contract increments
+
+	# 3 digit 0.100 etc.
+	# allocation contract income amount (can do a modifier for this based on fopol things perhaps)
+
+	# 1, 2, 3, etc. probably double digits
+	# cash crop output		monthly
+	# staple crop output	monthly
+
+	# double digit integer
+	# cash crop prices
+	# staple crop prices
+# math mockup
+	# LITERACY
+	# literacy rate = 0.641 (64.1%)
+	# literacy production multiplier = 0.359 (35.9%)
+
+	# WORKER & PRODUCTION
+	# non commercial agriculture = 8.421
+	# nc agri prod modifier = 1.359 (35.9% illiteracy modifier)
+	# nc agri prod multiplier (default) = 1
+	# nc agri prod = 11.444
+	# commercial agriculture = 1.244
+	# c agri prod modifier = 1 (no modifier)
+	# c agri prod multiplier (default) = 1.5
+	# c agri prod = 1.866
+	# total agriculture sector = 9.665
+	# total agri prod = 13.310
+AGRI_update_agricultural_math = {
+	AGRI_update_production_calculations = yes
+	AGRI_update_allocation_calculations = yes
+	AGRI_update_price_calculations = yes
+}
+
+AGRI_update_production_calculations = {
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_production_calculations"
+	# TOTAL PRODUCTION MODIFIER
+	set_temp_variable = { AGRI_total_production_modifier_temp = 1 }
+	add_to_temp_variable = { AGRI_total_production_modifier_temp = modifier@AGRI_total_production_modifier }
+
+	# NON-COMMERCIAL PRODUCTION MODIFIER
+	set_temp_variable = { AGRI_noncom_production_modifier_temp = 1 }
+	add_to_temp_variable = { AGRI_noncom_production_modifier_temp = modifier@AGRI_noncom_production_modifier }
+	# NON-COMMERCIAL PRODUCTION MATH
+	set_temp_variable = { AGRI_noncom_crop_output_temp = agriculture_workers }
+	multiply_temp_variable = { AGRI_noncom_crop_output_temp = AGRI_noncom_production_modifier_temp }
+	multiply_temp_variable = { AGRI_noncom_crop_output_temp = AGRI_total_production_modifier_temp }
+	set_variable = { AGRI_crop_output_weekly_display_NONCOM = AGRI_noncom_crop_output_temp }
+	set_variable = { AGRI_crop_output_annual_display_NONCOM = AGRI_noncom_crop_output_temp }
+	multiply_variable = { AGRI_crop_output_annual_display_NONCOM = 52 }
+
+	# COMMERCIAL PRODUCTION MODIFIER
+	set_temp_variable = { AGRI_com_production_modifier_temp = 1 }
+	add_to_temp_variable = { AGRI_com_production_modifier_temp = modifier@AGRI_com_production_modifier }
+	# COMMERCIAL PRODUCTION MATH
+	set_temp_variable = { AGRI_com_crop_output_temp = workers_in_agriculture_district }
+	multiply_temp_variable = { AGRI_com_crop_output_temp = 1.5 }
+	multiply_temp_variable = { AGRI_com_crop_output_temp = AGRI_com_production_modifier_temp }
+	multiply_temp_variable = { AGRI_com_crop_output_temp = AGRI_total_production_modifier_temp }
+	set_variable = { AGRI_crop_output_weekly_display_COM = AGRI_com_crop_output_temp }
+	set_variable = { AGRI_crop_output_annual_display_COM = AGRI_com_crop_output_temp }
+	multiply_variable = { AGRI_crop_output_annual_display_COM = 52 }
+
+	# TOTAL PRODUCTION MATH
+	set_temp_variable = { AGRI_total_crop_output_temp = AGRI_noncom_crop_output_temp }
+	add_to_temp_variable = { AGRI_total_crop_output_temp = AGRI_com_crop_output_temp }
+	set_variable = { AGRI_crop_output_weekly_display_T = AGRI_total_crop_output_temp }
+	set_variable = { AGRI_crop_output_annual_display_T = AGRI_total_crop_output_temp }
+	multiply_variable = { AGRI_crop_output_annual_display_T = 52 }
+	log = "[GetDateText]: [ROOT.GetName]: Effect Completed: AGRI_update_production_calculations"
+}
+
+AGRI_update_allocation_calculations = {
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_allocation_calculations"
+	# CASH CROP
+	set_temp_variable = { AGRI_cash_crop_output_temp = AGRI_crop_output_weekly_display_T }
+	set_temp_variable = { AGRI_cash_crop_allocation_temp = AGRI_field_allocation^0 }
+	# subtracts the contracted land allocation from the regular income
+	subtract_from_temp_variable = { AGRI_cash_crop_allocation_temp = AGRI_cash_crop_land_rights_CON }
+	multiply_temp_variable = { AGRI_cash_crop_output_temp = AGRI_cash_crop_allocation_temp }
+	set_variable = { AGRI_crop_output_weekly_display_CASH = AGRI_cash_crop_output_temp }
+	set_variable = { AGRI_crop_output_annual_display_CASH = AGRI_cash_crop_output_temp }
+	multiply_variable = { AGRI_crop_output_annual_display_CASH = 52 }
+
+	# ILLICIT CROP
+	set_temp_variable = { AGRI_illicit_crop_output_temp = AGRI_crop_output_weekly_display_T }
+	set_temp_variable = { AGRI_illicit_crop_output_temp = AGRI_field_allocation^1 }
+	# subtracts the contracted land allocation from the regular income
+	subtract_from_temp_variable = { AGRI_illicit_crop_allocation_temp = AGRI_illicit_crop_land_rights_CON }
+	multiply_temp_variable = { AGRI_illicit_crop_output_temp = AGRI_illicit_crop_allocation_temp }
+	set_variable = { AGRI_crop_output_weekly_display_ILLICIT = AGRI_illicit_crop_output_temp }
+	set_variable = { AGRI_crop_output_annual_display_ILLICIT = AGRI_illicit_crop_output_temp }
+	multiply_variable = { AGRI_crop_output_annual_display_ILLICIT = 52 }
+
+	# STAPLE CROP
+	set_temp_variable = { AGRI_staple_crop_output_temp = AGRI_crop_output_weekly_display_T }
+	set_temp_variable = { AGRI_staple_crop_allocation_temp = AGRI_field_allocation^2 }
+	# subtracts the contracted land allocation from the regular income
+	subtract_from_temp_variable = { AGRI_staple_crop_allocation_temp = AGRI_staple_crop_land_rights_CON }
+	multiply_temp_variable = { AGRI_staple_crop_output_temp = AGRI_staple_crop_allocation_temp }
+	set_variable = { AGRI_crop_output_weekly_display_STAPLE = AGRI_staple_crop_output_temp }
+	set_variable = { AGRI_crop_output_annual_display_STAPLE = AGRI_staple_crop_output_temp }
+	multiply_variable = { AGRI_crop_output_annual_display_STAPLE = 52 }
+
+	# ALLOCATION POOL MATH
+	set_temp_variable = { AGRI_allocation_pool_temp = 1 }
+	subtract_from_temp_variable = { AGRI_allocation_pool_temp = AGRI_field_allocation^0 }
+	subtract_from_temp_variable = { AGRI_allocation_pool_temp = AGRI_field_allocation^1 }
+	subtract_from_temp_variable = { AGRI_allocation_pool_temp = AGRI_field_allocation^2 }
+	set_variable = { AGRI_allocation_pool = AGRI_allocation_pool_temp }
+
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_allocation_calculations"
+}
+
+AGRI_update_price_calculations = {
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_price_calculations"
+	# TOTAL CROP INCOME MODIFIER
+	set_temp_variable = { AGRI_total_income_modifier_temp = 1 }
+	add_to_temp_variable = { AGRI_total_income_modifier_temp = modifier@AGRI_total_income_modifier }
+
+	# CASH CROP INCOME MODIFIER
+	set_temp_variable = { AGRI_cash_income_modifier_temp = 1 }
+	add_to_temp_variable = { AGRI_cash_income_modifier_temp = modifier@AGRI_cash_income_modifier }
+	# CASH CROP INCOME MATH
+	set_temp_variable = { AGRI_cash_crop_income_temp = AGRI_crop_output_weekly_display_CASH }
+	multiply_temp_variable = { AGRI_cash_crop_income_temp = AGRI_crop_price^0 }
+	multiply_temp_variable = { AGRI_cash_crop_income_temp = AGRI_cash_income_modifier_temp }
+	multiply_temp_variable = { AGRI_cash_crop_income_temp = AGRI_total_income_modifier_temp }
+	divide_temp_variable = { AGRI_cash_crop_income_temp = 200 }
+	set_variable = { AGRI_crop_income_weekly_display_CASH = AGRI_cash_crop_income_temp }
+	set_variable = { AGRI_crop_income_annual_display_CASH = AGRI_cash_crop_income_temp }
+	multiply_variable = { AGRI_crop_income_annual_display_CASH = 52 }
+
+	# ILLICIT CROP INCOME MODIFIER
+	set_temp_variable = { AGRI_illicit_income_modifier_temp = 1 }
+	add_to_temp_variable = { AGRI_illicit_income_modifier_temp = modifier@AGRI_illicit_income_modifier }
+	# ILLICIT CROP INCOME MATH
+	set_temp_variable = { AGRI_illicit_crop_income_temp = AGRI_crop_output_weekly_display_STAPLE }
+	multiply_temp_variable = { AGRI_illicit_crop_income_temp = AGRI_crop_price^1 }
+	multiply_temp_variable = { AGRI_illicit_crop_income_temp = AGRI_illicit_income_modifier_temp }
+	multiply_temp_variable = { AGRI_illicit_crop_income_temp = AGRI_total_income_modifier_temp }
+	divide_temp_variable = { AGRI_illicit_crop_income_temp = 200 }
+	set_variable = { AGRI_crop_income_weekly_display_STAPLE = AGRI_illicit_crop_income_temp }
+	set_variable = { AGRI_crop_income_annual_display_STAPLE = AGRI_illicit_crop_income_temp }
+	multiply_variable = { AGRI_crop_income_annual_display_STAPLE = 52 }
+
+	# STAPLE CROP INCOME MODIFIER
+	set_temp_variable = { AGRI_staple_income_modifier_temp = 1 }
+	add_to_temp_variable = { AGRI_staple_income_modifier_temp = modifier@AGRI_staple_income_modifier }
+	# STAPLE CROP INCOME MATH
+	set_temp_variable = { AGRI_staple_crop_income_temp = AGRI_crop_output_weekly_display_STAPLE }
+	multiply_temp_variable = { AGRI_staple_crop_income_temp = AGRI_crop_price^2 }
+	multiply_temp_variable = { AGRI_staple_crop_income_temp = AGRI_staple_income_modifier_temp }
+	multiply_temp_variable = { AGRI_staple_crop_income_temp = AGRI_total_income_modifier_temp }
+	divide_temp_variable = { AGRI_staple_crop_income_temp = 200 }
+	set_variable = { AGRI_crop_income_weekly_display_STAPLE = AGRI_staple_crop_income_temp }
+	set_variable = { AGRI_crop_income_annual_display_STAPLE = AGRI_staple_crop_income_temp }
+	multiply_variable = { AGRI_crop_income_annual_display_STAPLE = 52 }
+
+	# TOTAL INCOME MATH
+	set_temp_variable = { AGRI_total_crop_income_temp = AGRI_crop_income_weekly_display_CASH }
+	add_to_temp_variable = { AGRI_total_crop_income_temp = AGRI_crop_income_weekly_display_STAPLE }
+	set_variable = { AGRI_crop_income_weekly_display_TOTAL = AGRI_total_crop_income_temp }
+	set_variable = { AGRI_crop_income_annual_display_TOTAL = AGRI_total_crop_income_temp }
+	multiply_variable = { AGRI_crop_income_annual_display_TOTAL = 52 }
+	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_price_calculations"
+}
+
+AGRI_bank_change = {
+	if = {
+		limit = { has_country_flag = AGRI_selected_CASH }
+		add_to_variable = { AGRI_banked_allocation_pool_CASH = AGRI_banked_pool_change }
+	}
+	if = {
+		limit = { has_country_flag = AGRI_selected_ILLICIT }
+		add_to_variable = { AGRI_banked_allocation_pool_ILLICIT = AGRI_banked_pool_change }
+	}
+	if = {
+		limit = { has_country_flag = AGRI_selected_STAPLE }
+		add_to_variable = { AGRI_banked_allocation_pool_STAPLE = AGRI_banked_pool_change }
+	}
+	custom_effect_tooltip = AGRI_bank_change_TT
+}
+
+AGRI_make_allocation_changes_from_bank = {
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_CASH > 0 } }
+		set_temp_variable = { AGRI_allocation_changes_CASH_temp = AGRI_banked_allocation_pool_CASH }
+		add_to_variable = { AGRI_field_allocation^0 = AGRI_allocation_changes_CASH_temp }
+		add_to_temp_variable = { AGRI_allocation_changes_temp = AGRI_allocation_changes_CASH_temp }
+	}
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_ILLICIT > 0 } }
+		set_temp_variable = { AGRI_allocation_changes_ILLICIT_temp = AGRI_banked_allocation_pool_ILLICIT }
+		add_to_variable = { AGRI_field_allocation^1 = AGRI_allocation_changes_ILLICIT_temp }
+		add_to_temp_variable = { AGRI_allocation_changes_temp = AGRI_allocation_changes_ILLICIT_temp }
+	}
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_STAPLE > 0 } }
+		set_temp_variable = { AGRI_allocation_changes_STAPLE_temp = AGRI_banked_allocation_pool_STAPLE }
+		add_to_variable = { AGRI_field_allocation^2 = AGRI_allocation_changes_STAPLE_temp }
+		add_to_temp_variable = { AGRI_allocation_changes_temp = AGRI_allocation_changes_STAPLE_temp }
+	}
+	subtract_from_variable = { AGRI_allocation_pool = AGRI_allocation_changes_temp }
+	custom_effect_tooltip = AGRI_make_allocation_changes_from_bank_TT
+}
+
+
+
+
 
 
 
