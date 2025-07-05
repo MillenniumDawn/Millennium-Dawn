@@ -1,5 +1,36 @@
 add_namespace = arab_spring
 
+# Protestors Have Taken to the Streets
+country_event = {
+	id = arab_spring.0
+	title = arab_spring.0.t
+	desc = arab_spring.0.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	option = {
+		name = arab_spring.0.a
+		log = "[GetDateText]: [This.GetName]: arab_spring.0.a executed"
+		activate_mission_tooltip = arab_spring_protests_1
+		if = { limit = { NOT = { has_country_flag = arab_spring_active } }
+			set_country_flag = arab_spring_active
+		}
+
+		if = {
+			limit = { is_subject = yes }
+			OVERLORD = { country_event = { id = arab_spring.3 days = 1 } }
+		}
+		else_if = {
+			limit = { NOT = { check_variable = { influence_array^0 = 0 } } }
+			var:influence_array^0 = {
+				country_event = { id = arab_spring.3 days = 1 }
+			}
+		}
+
+		news_event = { id = arab_spring.1 days = 3 }
+	}
+}
+
 # Protests Erupt Demanding [FROM.GetLeader]'s Resignation
 news_event = {
 	id = arab_spring.1
@@ -7,10 +38,7 @@ news_event = {
 	desc = {
 		trigger = {
 			FROM = {
-				NOT = {
-					check_variable = { influence_array^0 = FRA }
-					check_variable = { influence_array^0 = USA }
-				}
+				NOT = { var:influence_array^0 = { has_government = democratic } }
 			}
 		}
 		text = arab_spring.1.d
@@ -18,10 +46,7 @@ news_event = {
 	desc = {
 		trigger = {
 			FROM = {
-				OR = {
-					check_variable = { influence_array^0 = FRA }
-					check_variable = { influence_array^0 = USA }
-				}
+				var:influence_array^0 = { has_government = democratic }
 			}
 		}
 		text = arab_spring.1.d_western
@@ -35,23 +60,6 @@ news_event = {
 		trigger = { tag = FROM }
 		name = arab_spring.1.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.1.a executed"
-		activate_mission_tooltip = arab_spring_protests_1
-		if = { limit = { NOT = { has_country_flag = arab_spring_active } }
-			set_country_flag = arab_spring_active
-		}
-
-		if = {
-			limit = { is_subject = yes }
-			OVERLORD = { country_event = { id = arab_spring.3 days = 1 } }
-		}
-		else_if = {
-			limit = { check_variable = { influence_array^0 = FRA } }
-			FRA = { country_event = { id = arab_spring.3 days = 1 } }
-		}
-		else_if = {
-			limit = { check_variable = { influence_array^0 = USA } }
-			USA = { country_event = { id = arab_spring.3 days = 1 } }
-		}
 	}
 
 	# The Winds of Change are Blowing in the Middle East...
@@ -81,6 +89,40 @@ country_event = {
 		ai_chance = {
 			base = 1
 			modifier = {
+				add = 10
+				FROM = { is_subject_of = PREV }
+			}
+			# Commit if high influence and not democratic
+			modifier = {
+				factor = 1.25
+				FROM = {
+					OR = {
+						AND = {
+							check_variable = { influence_array^0 = PREV }
+							check_variable = { influence_array_val^0 > 39.99 }
+						}
+						AND = {
+							check_variable = { influence_array^1 = PREV }
+							check_variable = { influence_array_val^1 > 39.99 }
+						}
+					}
+				}
+			}
+			# Intervene if more interventionist
+			modifier = {
+				factor = 1.5
+				OR = {
+					has_idea = intervention_regional_interventionism
+					has_idea = intervention_global_interventionism
+					has_idea = intervention_neo_imperialism
+				}
+			}
+			# Less Chance to intervene if FROM is a player and difficulty is high
+			modifier = {
+				factor = 0.75
+				difficulty > 2
+			}
+			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
 			}
@@ -94,7 +136,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arab_spring.3.b executed"
 
 		ai_chance = {
-			base = 2
+			base = 5
+			modifier = {
+				add = 15
+				has_idea = intervention_local_security
+				FROM = { PREV_is_on_same_continent = no }
+			}
 		}
 	}
 }
@@ -111,7 +158,7 @@ country_event = {
 	option = {
 		name = arab_spring.4.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.4.a executed"
-		add_political_power = 75
+		add_political_power = 150
 	}
 }
 
@@ -127,7 +174,6 @@ country_event = {
 	option = {
 		name = arab_spring.5.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.5.a executed"
-		add_political_power = -75
 	}
 }
 
@@ -148,9 +194,9 @@ country_event = {
 
 	# The People Love [ROOT.GetLeader]!
 	option = {
-		trigger = { NOT = { has_country_flag = arab_spring_civilian_clashes } }
 		name = arab_spring.6.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.6.a executed"
+		trigger = { NOT = { has_country_flag = arab_spring_civilian_clashes } }
 	}
 
 	# Tensions Mount...
@@ -160,8 +206,9 @@ country_event = {
 		trigger = { has_country_flag = arab_spring_civilian_clashes }
 
 		clr_country_flag = arab_spring_civilian_clashes
-		custom_effect_tooltip = slight_strengthen_protests_tt
-		add_to_variable = { arab_spring = 10 }
+
+		set_temp_variable = { temp_strength = 10 }
+		change_arab_spring_strength = yes
 		add_manpower = -20
 	}
 }
@@ -184,8 +231,8 @@ country_event = {
 	option = {
 		name = arab_spring.7.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.7.a executed"
-		custom_effect_tooltip = slight_strengthen_protests_tt
-		add_to_variable = { arab_spring = 10 }
+		set_temp_variable = { temp_strength = 10 }
+		change_arab_spring_strength = yes
 		add_to_variable = { arab_spring_mutiny = 1 }
 		add_manpower = -500
 	}
@@ -240,8 +287,8 @@ country_event = {
 	option = {
 		name = arab_spring.10.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.10.a executed"
-		custom_effect_tooltip = slight_strengthen_protests_tt
-		add_to_variable = { arab_spring = 10 }
+		set_temp_variable = { temp_strength = 10 }
+		change_arab_spring_strength = yes
 	}
 }
 
@@ -269,18 +316,17 @@ country_event = {
 		add_popularity = { ideology = neutrality popularity = 0.10 }
 		recalculate_party = yes
 
-		if = {
-			limit = { has_idea = hybrid_regime_western }
+		if = { limit = { has_idea = hybrid_regime_western }
 			remove_ideas = hybrid_regime_western
 		}
-		if = {
-			limit = { has_idea = hybrid_regime_emerging }
+		if = { limit = { has_idea = hybrid_regime_emerging }
 			remove_ideas = hybrid_regime_emerging
 		}
 		country_event = { id = MD4_election_campaign.0 days = 7 }
+
 		if = {
 			limit = { original_tag = EGY }
-			set_country_flag = arab_spring_completed
+			set_country_flag = AS_arab_spring_completed
 		}
 
 		ai_chance = {
@@ -290,7 +336,6 @@ country_event = {
 				is_historical_focus_on = yes
 				OR = {
 					original_tag = SYR
-					original_tag = LBA
 				}
 			}
 		}
@@ -343,14 +388,14 @@ country_event = {
 							limit = { is_core_of = ROOT }
 							add_core_of = FSA
 						}
-						if = {
-							limit = { has_dlc = "No Step Back" }
+						if = { limit = { has_dlc = "No Step Back" }
 
 							load_oob = FSA_2000_nsb
+							else = {
+								load_oob = FSA_2000_nonnsb
+							}
 						}
-						else = {
-							load_oob = FSA_2000_nonnsb
-						}
+
 						#Recognition
 						add_to_array = { global.rival_governments = THIS }
 						set_country_flag = rival_government_SYR
@@ -367,8 +412,7 @@ country_event = {
 					NUS = {
 						set_cosmetic_tag = NUSRA
 						ingame_startup_nations_effect = yes
-						if = {
-							limit = { has_dlc = "No Step Back" }
+						if = { limit = { has_dlc = "No Step Back" }
 
 							load_oob = NUS_2000_nsb
 						}
@@ -401,12 +445,14 @@ country_event = {
 		ai_chance = {
 			base = 1
 			modifier = {
+				factor = 1.25
+				original_tag = SYR
+				# This is very important to the player as it unlocks ISIS as a follow-on.
+			}
+			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
-				NOT = {
-					original_tag = SYR
-					original_tag = LBA
-				}
+				NOT = { original_tag = SYR }
 			}
 		}
 	}
