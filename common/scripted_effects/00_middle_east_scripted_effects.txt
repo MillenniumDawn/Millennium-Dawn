@@ -281,7 +281,7 @@ IRQ_MNF_setup = {
 				set_state_controller_to = IRQ
 			}
 			leave_faction = yes
-			#create_faction = MY_FACTION_NAME
+			#create_faction = NULL
 		}
 	}
 }
@@ -311,12 +311,12 @@ syrian_civil_war_setup = {
 				set_temp_variable = { opposition_party_popularity = v }
 			}
 		}
-		#Set size for the civil war (2xpopularity)
-		multiply_temp_variable = { opposition_party_popularity = 5 }
+		#Set size for the civil war (2.5xpopularity)
+		multiply_temp_variable = { opposition_party_popularity = 2.5 }
 
 		clamp_temp_variable = {
 			var = opposition_party_popularity
-			min = 0
+			min = 0.5
 			max = 0.8
 		}
 
@@ -336,7 +336,7 @@ syrian_civil_war_setup = {
 						}
 					}
 					transfer_state_to = FSA
-					#add_dynamic_modifier = { modifier = PER_Houthi_offensive scope = FSA }
+					add_dynamic_modifier = { modifier = SYR_free_syrian_offensive scope = FSA days = 1500 }
 				}
 
 				set_province_controller = 6353
@@ -431,8 +431,20 @@ syrian_civil_war_setup = {
 				ai_update_build_units = yes
 				calculate_expected_spending = yes
 
-				#TEMP will change him depending
-				FSA_leader_setup_Riad_Al_Asaad = yes
+				activate_mission = FSA_defection_to_extremist
+				add_ideas = FSA_extremism1
+				add_ideas = FSA_death_over_humiliation
+
+				create_country_leader = {
+					name = "Burhan Ghalioun"
+					desc = ""
+					picture = "Burhan_Ghalioun.dds"
+					expire = "2050.1.1"
+					ideology = Neutral_Muslim_Brotherhood
+					traits = {
+						neutrality_Neutral_Muslim_Brotherhood
+					}
+				}
 
 				#FSA will control area around Idlib 
 				#1 if you take Idlib al nusra will break away and border war you for the city
@@ -626,276 +638,39 @@ al_nusra_setup = {
 	}
 }
 
-FSA_leader_setup_Riad_Al_Asaad = {
-	set_country_flag = FSA_leader_setup_Riad_Al_Asaad
+FSA_rise_in_extremism_effect = {
 	if = {
 		limit = {
-			western_autocrats_are_in_power = yes
+			has_idea = FSA_extremism4
 		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Western_Autocracy
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
+		al_nusra_setup = yes
+		set_country_flag = fought_extremist_flag #just fought them by letting them run havoc
+	}
+	else_if = {
+		limit = {
+			has_idea = FSA_extremism3
+		}
+		swap_ideas = {
+			remove_idea = FSA_extremism3
+			add_idea = FSA_extremism4
 		}
 	}
-
-	if = {
+	else_if = {
 		limit = {
-			western_conservatism_are_in_power = yes
+			has_idea = FSA_extremism2
 		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = conservatism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
+		swap_ideas = {
+			remove_idea = FSA_extremism2
+			add_idea = FSA_extremism3
 		}
 	}
-
-	if = {
+	else_if = {
 		limit = {
-			western_liberals_are_in_power = yes
+			has_idea = FSA_extremism1
 		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = liberalism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			western_social_democrats_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = socialism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			emerging_communist_state_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Communist-State
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			emerging_anarchist_communism_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = anarchist_communism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			emerging_reactionaries_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Conservative
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_muslim_brotherhood_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Neutral_Muslim_Brotherhood
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_autocracy_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Neutral_Autocracy
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_conservatism_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Neutral_conservatism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_oligarch_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = oligarchism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_libertarians_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Neutral_Libertarian
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_green_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Neutral_green
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_social_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = neutral_Social
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			neutrality_neutral_communism_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Neutral_Communism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			nationalist_right_wing_populists_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Nat_Populism
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			nationalist_military_junta_are_in_power = yes
-		}
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Nat_Autocracy
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
-		}
-	}
-
-	if = {
-		limit = {
-			nationalist_monarchists_are_in_power = yes
-		}
-		country_event = iranian_focus.128
-		create_country_leader = {
-			name = "Riad al-Asaad"
-			picture = "gfx/leaders/FSA/Riad_Al_Asaad.dds"
-			ideology = Monarchist
-			traits = {
-				neutrality_Neutral_Autocracy
-				military_career
-			}
+		swap_ideas = {
+			remove_idea = FSA_extremism1
+			add_idea = FSA_extremism2
 		}
 	}
 }
