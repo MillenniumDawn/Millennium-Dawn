@@ -153,18 +153,12 @@ increase_pop_gulf = {
 }
 
 decrease_pop_gulf = {
-	if = {
-		limit = {
-			original_tag = KUW
-		}
+	if = { limit = { original_tag = KUW }
 		capital_scope = {
 			add_manpower = -40000
 		}
 	}
-	if = {
-		limit = {
-			original_tag = OMA
-		}
+	else_if = { limit = { original_tag = OMA }
 		182 = {
 			add_manpower = -35000
 		}
@@ -175,10 +169,7 @@ decrease_pop_gulf = {
 			add_manpower = -5000
 		}
 	}
-	if = {
-		limit = {
-			original_tag = UAE
-		}
+	else_if = { limit = { original_tag = UAE }
 		180 = {
 			add_manpower = -40000
 		}
@@ -186,10 +177,7 @@ decrease_pop_gulf = {
 			add_manpower = -45000
 		}
 	}
-	if = {
-		limit = {
-			original_tag = SAU
-		}
+	else_if = { limit = { original_tag = SAU }
 		174 = {
 			add_manpower = -35000
 		}
@@ -501,196 +489,89 @@ syrian_civil_war_setup = {
 	}
 }
 
-al_nusra_setup = {
-	#Al Nusra (Syrian Civl War)
-	every_state = {
-		limit = { is_core_of = FSA }
-		add_core_of = NUS
-		remove_contested_owner = NUS
-	}
-
-	if = {
-		limit = {
-			FSA = {
-				controls_state = 190
+# Arab Spring Content
+AS_spawn_isis_into_game = {
+	hidden_effect = {
+		192 = { add_core_of = ISI }
+		release = ISI
+		192 = { add_core_of = SYR }
+		ISI = {
+			every_state = {
+				limit = {
+					OR = {
+						is_core_of = SYR
+						is_core_of = ROJ
+						is_core_of = IRQ
+					}
+				}
+				add_core_of = ISI
 			}
-		}
-		190 = {
-			set_state_controller_to = NUS
-			set_state_owner_to = NUS
-			add_contested_owner = FSA
-		}
-		
-	}
-	else_if = {
-		limit = {
-			any_state_in = {
-				strategic_region = 28
-				is_controlled_by = FSA
+			if = { limit = { has_dlc = "No Step Back" }
+
+				load_oob = ISI_2017_nsb
 			}
-		}
-		random_controlled_state = {
-			prioritize = { 190 191 }
-			set_state_controller_to = NUS
-			set_state_owner_to = NUS
-			add_contested_owner = FSA
-		}
-	}
-	else = {
-		annex_country = {
-			target = FSA
-			transfer_troops = yes
-		}
-		NUS = { change_tag_from = FSA }
-	}
-
-	#need to setup support based on FSA radical support amount if it ticks over a threshold
-
-	NUS = {
-		#Need IF statement: 
-		#set_cosmetic_tag = NUSRA
-
-		add_to_array = { global.rival_governments = SYR }
-		set_country_flag = rival_government_SYR
-
-		set_variable = { civilian_factory_employment_var = 1 }
-		set_variable = { naval_factory_employment_var = 1 }
-		set_variable = { military_factory_employment_var = 1 }
-		set_variable = { office_employment_var = 1 }
-		set_variable = { gdpc_converging_var = FSA.gdpc_converging_var }
-		inherit_technology = FSA
-		if = {
-			limit = {
-				NOT = { has_variable = domestic_influence_amount }
+			else = {
+				load_oob = ISI_2017_nonnsb
 			}
-			set_variable = { domestic_influence_amount = 100 }
-		}
-		if = {
-			limit = { NOT = { has_variable = corporate_tax_rate } }
-			set_variable = { var = corporate_tax_rate value = 20 }
-		}
-		if = {
-			limit = { NOT = { has_variable = population_tax_rate } }
-			set_variable = { var = population_tax_rate value = 20 }
-		}
-		ingame_init_investment_system = yes
-		init_auto_influence_array = yes
-		calculate_influence_percentage = yes #set alignment drifts from influence
-		startup_politics = yes
-		ingame_update_setup = yes 	#money system
-		setup_init_factions = yes 	#flags for int. factions
-		set_law_vars = yes 	#vars for change laws secondary effects
-		update_neighbors_effects = yes # Updates Neighbor Effects
-		economic_cycle_drift_popularity = yes #drift from neighbor
-		ai_update_build_units = yes
-		calculate_expected_spending = yes
-		set_variable = { civilian_factory_employment_var = 1 }
-		set_variable = { naval_factory_employment_var = 1 }
-		set_variable = { military_factory_employment_var = 1 }
-		set_variable = { office_employment_var = 1 }
-		set_variable = { gdpc_converging_var = FSA.gdpc_converging_var }
-		inherit_technology = FSA
-		if = {
-			limit = {
-				NOT = { has_variable = domestic_influence_amount }
+
+			if = { limit = { country_exists = FSA }
+				declare_war_on = {
+					target = FSA
+					type = annex_everything
+				}
 			}
-			set_variable = { domestic_influence_amount = 100 }
-		}
-		if = {
-			limit = { NOT = { has_variable = corporate_tax_rate } }
-			set_variable = { var = corporate_tax_rate value = 20 }
-		}
-		if = {
-			limit = { NOT = { has_variable = population_tax_rate } }
-			set_variable = { var = population_tax_rate value = 20 }
-		}
-		ingame_init_investment_system = yes
-		init_auto_influence_array = yes
-		calculate_influence_percentage = yes #set alignment drifts from influence
-		startup_politics = yes
-		ingame_update_setup = yes 	#money system
-		setup_init_factions = yes 	#flags for int. factions
-		set_law_vars = yes 	#vars for change laws secondary effects
-		update_neighbors_effects = yes # Updates Neighbor Effects
-		economic_cycle_drift_popularity = yes #drift from neighbor
-		ai_update_build_units = yes
-		calculate_expected_spending = yes
-
-		if = {
-			limit = { has_dlc = "No Step Back" }
-
-			load_oob = NUS_2000_nsb
-		}
-		else = {
-			load_oob = NUS_2000_nonnsb
-		}
-		#need to convert to SE
-
-		declare_war_on = {
-			target = SYR
-			type = civil_war
-		}
-		#need to make this a IF statement
-		#they need to expell the forces from idlib first (border war)
-		declare_war_on = {
-			target = FSA
-			type = civil_war
-		}
-		#need to make this a IF statement
-		declare_war_on = {
-			target = ISI
-			type = civil_war
-		}
-		add_civil_war_target = SYR
-		add_civil_war_target = FSA
-		add_civil_war_target = ISI
-
-		add_named_threat = {
-			threat = 5
-			name = Syrian_Civil_War.threat
-		}
-	}
-}
-
-FSA_rise_in_extremism_effect = {
-	if = {
-		limit = {
-			has_idea = FSA_extremism4
-		}
-		hidden_effect = { al_nusra_setup = yes }
-		effect_tooltip = { 
-			declare_war_on = {
-				target = NUS
-				type = annex_everything
+			if = { limit = { country_exists = NUS }
+				declare_war_on = {
+					target = NUS
+					type = annex_everything
+				}
 			}
-		}
-		set_country_flag = fought_extremist_flag #just fought them by letting them run havoc
-	}
-	else_if = {
-		limit = {
-			has_idea = FSA_extremism3
-		}
-		swap_ideas = {
-			remove_idea = FSA_extremism3
-			add_idea = FSA_extremism4
-		}
-	}
-	else_if = {
-		limit = {
-			has_idea = FSA_extremism2
-		}
-		swap_ideas = {
-			remove_idea = FSA_extremism2
-			add_idea = FSA_extremism3
-		}
-	}
-	else_if = {
-		limit = {
-			has_idea = FSA_extremism1
-		}
-		swap_ideas = {
-			remove_idea = FSA_extremism1
-			add_idea = FSA_extremism2
+			if = { limit = { country_exists = ROJ }
+				declare_war_on = {
+					target = ROJ
+					type = annex_everything
+				}
+			}
+			if = { limit = { country_exists = SYR }
+				declare_war_on = {
+					target = SYR
+					type = annex_everything
+				}
+			}
+			if = { limit = { country_exists = IRQ }
+				declare_war_on = {
+					target = IRQ
+					type = annex_everything
+				}
+			}
+			if = { limit = { country_exists = KUR }
+				declare_war_on = {
+					target = KUR
+					type = annex_everything
+				}
+			}
+			if = { limit = { country_exists = PUK }
+				declare_war_on = {
+					target = PUK
+					type = annex_everything
+				}
+			}
+			add_named_threat = {
+				threat = 5
+				name = ISIS.threat
+			}
+			every_country = {
+				limit = { no_jihadist_government = yes }
+				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no }
+				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no_trade }
+				# add_ai_strategy = { type = befriend id = "ISI" value = -200 }
+				# add_ai_strategy = { type = support id = "ISI" value = -200 }
+				# add_ai_strategy = { type = protect id = "ISI" value = -200 }
+				# add_ai_strategy = { type = send_volunteers_desire id = "ISI" value = -200 }
+				# add_ai_strategy = { type = contain id = "ISI" value = 200 }
+				# add_ai_strategy = { type = antagonize id = "ISI" value = 200 }
+				# # add_ai_strategy = { type = conquer id = "ISI" value = 200 }
+			}
 		}
 	}
 }
