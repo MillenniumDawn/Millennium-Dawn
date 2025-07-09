@@ -385,6 +385,21 @@ capitalisation_gazprom_calculate = {
 	##########OIL PROVINCE - FOREIGN PROVINCE###########
 	if = {
 		limit = {
+			OR = {
+				SOV = { owns_state = 709 }
+				ARM = { owns_state = 709 }
+			}
+			ARM = {
+				has_completed_focus = ARM_economy_gazprom
+			}
+		}
+		SOV = {
+			set_temp_variable = { modify_capitalisation_alrosa = 0.002 }
+			modify_capitalisation_alrosa_support = yes
+		}
+	}
+	if = {
+		limit = {
 			SOV = { owns_state = 718 }
 		}
 		SOV = {
@@ -1837,6 +1852,21 @@ capitalisation_mts_calculate = {
 	}
 	if = {
 		limit = {
+			OR = {
+				SOV = { owns_state = 709 }
+				ARM = { owns_state = 709 }
+			}
+			ARM = {
+				has_completed_focus = ARM_economy_mts
+			}
+		}
+		SOV = {
+			set_temp_variable = { modify_capitalisation_mts = 0.001 }
+			modify_capitalisation_mts_support = yes
+		}
+	}
+	if = {
+		limit = {
 			has_war = yes
 		}
 		SOV = {
@@ -1948,6 +1978,21 @@ modify_capitalisation_vtb_support = {
 }
 ###########CAPITALISAION COMPANIES - VTB CALCULATION EFFECT###########
 capitalisation_vtb_calculate = {
+	if = {
+		limit = {
+			OR = {
+				SOV = { owns_state = 709 }
+				ARM = { owns_state = 709 }
+			}
+			ARM = {
+				has_completed_focus = ARM_economy_vtb
+			}
+		}
+		SOV = {
+			set_temp_variable = { modify_capitalisation_vtb = 0.010 }
+			modify_capitalisation_vtb_support = yes
+		}
+	}
 	if = {
 		limit = {
 			OR = {
@@ -2322,6 +2367,21 @@ capitalisation_alrosa_calculate = {
 	}
 	if = {
 		limit = {
+			OR = {
+				SOV = { owns_state = 709 }
+				ARM = { owns_state = 709 }
+			}
+			ARM = {
+				has_completed_focus = ARM_economy_alrosa
+			}
+		}
+		SOV = {
+			set_temp_variable = { modify_capitalisation_alrosa = 0.003 }
+			modify_capitalisation_alrosa_support = yes
+		}
+	}
+	if = {
+		limit = {
 			neutrality_neutral_oligarch_are_in_power = yes
 		}
 		SOV = {
@@ -2454,12 +2514,15 @@ modify_republickill_support = {
 	}
 }
 modify_economic_support = {
-	add_to_variable = { economic = modify_economic }
-	custom_effect_tooltip = SOV_economic_tt
-	clamp_variable = {
-		var = economic
-		min = 0
-		max = 40
+	if = {
+		limit = { check_variable = { economic < 30 } }
+		add_to_variable = { economic = modify_economic }
+		custom_effect_tooltip = SOV_economic_tt
+		clamp_variable = {
+			var = economic
+			min = 0
+			max = 30
+		}
 	}
 }
 SOV_asteroids_farming_script = {
@@ -10238,9 +10301,241 @@ russia_leave_every_faction = {
 		}
 	}
 }
+###########WARSAW PACT - CHANGE GOVERNMENT IN GREECE###########
+warsaw_greece_change_gov = {
+	GRE = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = GRE }
+		change_influence_percentage = yes
+		if = {
+			limit = { has_idea = NATO_member }
+			NATO_leave = yes
+		}
+		if = {
+			limit = { NOT = { has_idea = NATO_member } }
+			leave_faction = yes
+		}
+		add_stability = -0.06
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+			set_temp_variable = { rul_party_temp = 4 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+		}
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.45 }
+		set_temp_variable = { temp_outlook_increase = 0.45 }
+		add_relative_party_popularity = yes
+		set_country_flag = warsaw_member_check
+		set_country_flag = warsaw_pact_reintegrate
+		country_event = sov_warsaw_pact.6
+		set_country_flag = sov_southern_front
+		add_ideas = SOV_warsaw_pact_idea
+		remove_ideas = Major_Non_NATO_Ally
+		leaving_EU = yes
+	}
+	news_event = {
+		hours = 1
+		id = sov_warsaw_pact.4
+	}
+	SOV = {
+		set_autonomy = {
+			target = GRE
+			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
+		}
+	}
+	country_event = sov_warsaw_pact.5
+	set_temp_variable = { treasury_change = -15 }
+	modify_treasury_effect = yes
+}
+###########WARSAW PACT - CHANGE GOVERNMENT IN VIETNAM###########
+warsaw_vietnam_change_gov = {
+	VIE = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = VIE }
+		change_influence_percentage = yes
+		if = {
+			limit = { has_idea = NATO_member }
+			NATO_leave = yes
+		}
+		if = {
+			limit = { NOT = { has_idea = NATO_member } }
+			leave_faction = yes
+		}
+		add_stability = -0.06
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+			set_temp_variable = { rul_party_temp = 4 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+		}
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.45 }
+		set_temp_variable = { temp_outlook_increase = 0.45 }
+		add_relative_party_popularity = yes
+		set_country_flag = warsaw_member_check
+		set_country_flag = warsaw_pact_reintegrate
+		country_event = sov_warsaw_pact.6
+		set_country_flag = sov_southern_front
+		add_ideas = SOV_warsaw_pact_idea
+		remove_ideas = Major_Non_NATO_Ally
+		leaving_EU = yes
+	}
+	news_event = {
+		hours = 1
+		id = sov_warsaw_pact.4
+	}
+	SOV = {
+		set_autonomy = {
+			target = VIE
+			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
+		}
+	}
+	country_event = sov_warsaw_pact.5
+	set_temp_variable = { treasury_change = -15 }
+	modify_treasury_effect = yes
+}
+###########WARSAW PACT - CHANGE GOVERNMENT IN MONGOLIA###########
+warsaw_mongolia_change_gov = {
+	MON = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = MON }
+		change_influence_percentage = yes
+		if = {
+			limit = { has_idea = NATO_member }
+			NATO_leave = yes
+		}
+		if = {
+			limit = { NOT = { has_idea = NATO_member } }
+			leave_faction = yes
+		}
+		add_stability = -0.06
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+			set_temp_variable = { rul_party_temp = 4 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+		}
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.45 }
+		set_temp_variable = { temp_outlook_increase = 0.45 }
+		add_relative_party_popularity = yes
+		set_country_flag = warsaw_member_check
+		set_country_flag = warsaw_pact_reintegrate
+		country_event = sov_warsaw_pact.6
+		set_country_flag = sov_southern_front
+		add_ideas = SOV_warsaw_pact_idea
+		remove_ideas = Major_Non_NATO_Ally
+		leaving_EU = yes
+	}
+	news_event = {
+		hours = 1
+		id = sov_warsaw_pact.4
+	}
+	SOV = {
+		set_autonomy = {
+			target = MON
+			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
+		}
+	}
+	country_event = sov_warsaw_pact.5
+	set_temp_variable = { treasury_change = -15 }
+	modify_treasury_effect = yes
+}
+###########WARSAW PACT - CHANGE GOVERNMENT IN FINLAND###########
+warsaw_finland_change_gov = {
+	FIN = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = FIN }
+		change_influence_percentage = yes
+		if = {
+			limit = { has_idea = NATO_member }
+			NATO_leave = yes
+		}
+		if = {
+			limit = { NOT = { has_idea = NATO_member } }
+			leave_faction = yes
+		}
+		add_stability = -0.06
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = 4 } } }
+			set_temp_variable = { rul_party_temp = 4 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+		}
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.45 }
+		set_temp_variable = { temp_outlook_increase = 0.45 }
+		add_relative_party_popularity = yes
+		set_country_flag = warsaw_member_check
+		set_country_flag = warsaw_pact_reintegrate
+		country_event = sov_warsaw_pact.6
+		set_country_flag = sov_southern_front
+		add_ideas = SOV_warsaw_pact_idea
+		remove_ideas = Major_Non_NATO_Ally
+		leaving_EU = yes
+	}
+	news_event = {
+		hours = 1
+		id = sov_warsaw_pact.4
+	}
+	SOV = {
+		set_autonomy = {
+			target = FIN
+			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
+		}
+	}
+	country_event = sov_warsaw_pact.5
+	set_temp_variable = { treasury_change = -15 }
+	modify_treasury_effect = yes
+}
 ###########WARSAW PACT - CHANGE GOVERNMENT IN POLAND###########
 warsaw_poland_change_gov = {
 	POL = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = POL }
@@ -10276,13 +10571,13 @@ warsaw_poland_change_gov = {
 		set_autonomy = {
 			target = POL
 			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
 		}
-		set_country_flag = Hide_wp_decisions_again1
 	}
 	country_event = sov_warsaw_pact.3
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
-	set_country_flag = renewed_relations_with_poland4
 }
 ###########WARSAW PACT - CREATION###########
 warsaw_pact_creation = {
@@ -10314,14 +10609,17 @@ warsaw_pact_creation = {
 			remove_idea = CSTO_member
 			add_idea = SOV_warsaw_pact_idea
 		}
-		set_country_flag = Hide_wp_decisions_again2
 	}
 	POL = { add_ideas = SOV_warsaw_pact_idea }
-	set_country_flag = renewed_relations_with_poland5
+	set_country_flag = warsaw_pact_starting
 }
 ###########WARSAW PACT - CHANGE GOVERNMENT IN BULGARIA###########
 warsaw_bulgaria_change_gov = {
 	BUL = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = BUL }
@@ -10364,17 +10662,21 @@ warsaw_bulgaria_change_gov = {
 		set_autonomy = {
 			target = BUL
 			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
 		}
-		set_country_flag = Hide_wp_decisions_again3
 	}
 	country_event = sov_warsaw_pact.5
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
-	set_country_flag = renewed_relations_with_bulgaria4
 }
 ###########WARSAW PACT - CHANGE GOVERNMENT IN ROMANIA###########
 warsaw_romania_change_gov = {
 	ROM = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = ROM }
@@ -10417,17 +10719,21 @@ warsaw_romania_change_gov = {
 		set_autonomy = {
 			target = ROM
 			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
 		}
-		set_country_flag = Hide_wp_decisions_again4
 	}
 	country_event = sov_warsaw_pact.5
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
-	set_country_flag = renewed_relations_with_romania
 }
 ###########WARSAW PACT - CHANGE GOVERNMENT IN HUNGARY###########
 warsaw_hungary_change_gov = {
 	HUN = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = HUN }
@@ -10471,17 +10777,21 @@ warsaw_hungary_change_gov = {
 		set_autonomy = {
 			target = HUN
 			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
 		}
-		set_country_flag = Hide_wp_decisions_again5
 	}
 	country_event = sov_warsaw_pact.5
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
-	set_country_flag = renewed_relations_with_hungaria
 }
 ###########WARSAW PACT - CHANGE GOVERNMENT IN ALBANIA###########
 warsaw_albania_change_gov = {
 	ALB = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = ALB }
@@ -10524,17 +10834,21 @@ warsaw_albania_change_gov = {
 		set_autonomy = {
 			target = ALB
 			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
 		}
-		set_country_flag = Hide_wp_decisions_again6
 	}
 	country_event = sov_warsaw_pact.5
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
-	set_country_flag = renewed_relations_with_albania
 }
 ###########WARSAW PACT - CHANGE GOVERNMENT IN CZECH AND SLOVAKIA###########
 warsaw_czech_slo_change_gov = {
 	CZE = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = CZE }
@@ -10576,10 +10890,15 @@ warsaw_czech_slo_change_gov = {
 		set_autonomy = {
 			target = CZE
 			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
 		}
-		set_country_flag = Hide_wp_decisions_again7
 	}
 	SLO = {
+		start_civil_war = {
+			ideology = democratic
+			size = 0.7
+		}
 		set_temp_variable = { percent_change = 4 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = SLO }
@@ -10621,8 +10940,9 @@ warsaw_czech_slo_change_gov = {
 		set_autonomy = {
 			target = SLO
 			autonomy_state = autonomy_warsaw
+			end_wars = no
+			end_civil_wars = no
 		}
-		set_country_flag = Hide_wp_decisions_again8
 	}
 	country_event = sov_warsaw_pact.5
 	set_temp_variable = { treasury_change = -15 }
@@ -11328,7 +11648,7 @@ rus_empire_gover_change_fin = {
 		set_country_flag = SOV_subject_agree
 		set_country_flag = SOV_subject_governorate
 		add_stability = -0.06
-		set_temp_variable = { percent_change = -25 }
+		set_temp_variable = { percent_change = 10 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = FIN }
 		change_influence_percentage = yes
@@ -11344,12 +11664,6 @@ rus_empire_gover_change_fin = {
 	}
 	set_temp_variable = { treasury_change = -25 }
 	modify_treasury_effect = yes
-	hidden_effect = {
-		set_temp_variable = { percent_change = -15 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = FIN }
-		change_influence_percentage = yes
-	}
 }
 ###########RUSSIAN EMPIRE - POLAND GOVERNMENT CHANGE###########
 rus_empire_gover_change_pol = {
@@ -11365,7 +11679,7 @@ rus_empire_gover_change_pol = {
 		set_country_flag = SOV_subject_agree
 		set_country_flag = SOV_subject_governorate
 		add_stability = -0.06
-		set_temp_variable = { percent_change = -25 }
+		set_temp_variable = { percent_change = 10 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = POL }
 		change_influence_percentage = yes
@@ -11383,12 +11697,6 @@ rus_empire_gover_change_pol = {
 	}
 	set_temp_variable = { treasury_change = -25 }
 	modify_treasury_effect = yes
-	hidden_effect = {
-		set_temp_variable = { percent_change = -15 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = POL }
-		change_influence_percentage = yes
-	}
 }
 ###########RUSSIAN EMPIRE - ARMENIA GOVERNMENT CHANGE###########
 rus_empire_gover_change_arm = {
@@ -11404,7 +11712,7 @@ rus_empire_gover_change_arm = {
 		set_country_flag = SOV_subject_agree
 		set_country_flag = SOV_subject_governorate
 		add_stability = -0.06
-		set_temp_variable = { percent_change = -25 }
+		set_temp_variable = { percent_change = 10 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = ARM }
 		change_influence_percentage = yes
@@ -11419,10 +11727,18 @@ rus_empire_gover_change_arm = {
 	set_temp_variable = { treasury_change = -12 }
 	modify_treasury_effect = yes
 	hidden_effect = {
-		set_temp_variable = { percent_change = -15 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = ARM }
-		change_influence_percentage = yes
+		ARM = {
+			if = {
+				limit = { NOT = { is_in_array = { ruling_party = 23 } } }
+				set_temp_variable = { rul_party_temp = 23 }
+				set_temp_variable = { enable_elections = 0 }
+				change_ruling_party_effect = yes
+			}
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			set_temp_variable = { temp_outlook_increase = 0.15 }
+			add_relative_party_popularity = yes
+		}
 	}
 }
 ###########RUSSIAN EMPIRE - GERMANY GOVERNMENT CHANGE###########
@@ -11438,10 +11754,6 @@ rus_empire_gover_change_ger = {
 				leave_faction = yes
 			}
 			add_stability = -0.02
-			set_temp_variable = { percent_change = -25 }
-			set_temp_variable = { tag_index = SOV }
-			set_temp_variable = { influence_target = GER }
-			change_influence_percentage = yes
 			SOV = {
 				puppet = GER
 			}
@@ -11535,7 +11847,7 @@ rus_empire_gover_change_ger = {
 			}
 			country_event = sov_nationalists.52
 		}
-		set_temp_variable = { percent_change = -15 }
+		set_temp_variable = { percent_change = 15 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = GER }
 		change_influence_percentage = yes
@@ -11555,7 +11867,7 @@ rus_empire_gover_change_mon = {
 		set_country_flag = SOV_subject_agree
 		set_country_flag = SOV_subject_governorate
 		add_stability = -0.06
-		set_temp_variable = { percent_change = -25 }
+		set_temp_variable = { percent_change = 10 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = MON }
 		change_influence_percentage = yes
@@ -11571,12 +11883,6 @@ rus_empire_gover_change_mon = {
 	}
 	set_temp_variable = { treasury_change = -12 }
 	modify_treasury_effect = yes
-	hidden_effect = {
-		set_temp_variable = { percent_change = -15 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = MON }
-		change_influence_percentage = yes
-	}
 }
 ###########RUSSIAN EMPIRE - CZECHIA GOVERNMENT CHANGE###########
 rus_empire_gover_change_cze = {
@@ -11592,7 +11898,7 @@ rus_empire_gover_change_cze = {
 		set_country_flag = SOV_subject_agree
 		set_country_flag = SOV_subject_governorate
 		add_stability = -0.06
-		set_temp_variable = { percent_change = -25 }
+		set_temp_variable = { percent_change = 10 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = CZE }
 		change_influence_percentage = yes
@@ -11610,12 +11916,6 @@ rus_empire_gover_change_cze = {
 	}
 	set_temp_variable = { treasury_change = -12 }
 	modify_treasury_effect = yes
-	hidden_effect = {
-		set_temp_variable = { percent_change = -15 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = CZE }
-		change_influence_percentage = yes
-	}
 }
 ###########RUSSIAN EMPIRE - SLOVAKIA GOVERNMENT CHANGE###########
 rus_empire_gover_change_slo = {
@@ -11631,7 +11931,7 @@ rus_empire_gover_change_slo = {
 		set_country_flag = SOV_subject_agree
 		set_country_flag = SOV_subject_governorate
 		add_stability = -0.06
-		set_temp_variable = { percent_change = -25 }
+		set_temp_variable = { percent_change = 10 }
 		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = SLO }
 		change_influence_percentage = yes
@@ -11647,12 +11947,6 @@ rus_empire_gover_change_slo = {
 	}
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
-	hidden_effect = {
-		set_temp_variable = { percent_change = -15 }
-		set_temp_variable = { tag_index = SOV }
-		set_temp_variable = { influence_target = SLO }
-		change_influence_percentage = yes
-	}
 }
 ###########ANTI WAGNER REBELLION###########
 second_civil_war_rus_start = {
@@ -12359,7 +12653,7 @@ jirik_kazak_kazah = {
 			limit = { KAZ = { owns_state = 718 } }
 			SOV = {
 				add_state_core = 718
-				transfer_state = 718
+				set_province_controller = 13008
 			}
 			if = {
 				limit = {
@@ -12368,7 +12662,6 @@ jirik_kazak_kazah = {
 				}
 				division_template = {
 					name = "Cossack Regiment"
-					is_locked = yes
 					regiments = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
@@ -12389,7 +12682,7 @@ jirik_kazak_kazah = {
 			limit = { KAZ = { owns_state = 719 } }
 			SOV = {
 				add_state_core = 719
-				transfer_state = 719
+				set_province_controller = 12427
 			}
 			if = {
 				limit = {
@@ -12398,7 +12691,6 @@ jirik_kazak_kazah = {
 				}
 				division_template = {
 					name = "Cossack Regiment"
-					is_locked = yes
 					regiments = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
@@ -12419,7 +12711,7 @@ jirik_kazak_kazah = {
 			limit = { KAZ = { owns_state = 715 } }
 			SOV = {
 				add_state_core = 715
-				transfer_state = 715
+				set_province_controller = 7708
 			}
 			if = {
 				limit = {
@@ -12428,7 +12720,6 @@ jirik_kazak_kazah = {
 				}
 				division_template = {
 					name = "Cossack Regiment"
-					is_locked = yes
 					regiments = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
@@ -12497,6 +12788,7 @@ fuck_ai_russia_passive = {
 			}
 		}
 		random_list = {
+			seed = random
 			10 = {
 				if = {
 					limit = { NOT = { is_in_array = { ruling_party = 2 } } }
@@ -14465,6 +14757,132 @@ SOV_soviet_republic_annex = {
 		add_political_power = -250
 		annex_country = { target = TRK transfer_troops = yes }
 		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+	}
+	if = {
+		limit = {
+			EST = {
+				is_subject_of = SOV
+				influence_higher_50 = yes
+				emerging_communist_state_are_in_power = yes
+			}
+			has_completed_focus = SOV_coup_major_post_soviet_countries
+			emerging_communist_state_are_in_power = yes
+			country_exists = EST
+		}
+		EST = {
+			every_owned_state = {
+				add_core_of = SOV
+			}
+		}
+		add_political_power = -250
+		annex_country = { target = EST transfer_troops = yes }
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+	}
+	if = {
+		limit = {
+			LAT = {
+				is_subject_of = SOV
+				influence_higher_50 = yes
+				emerging_communist_state_are_in_power = yes
+			}
+			has_completed_focus = SOV_coup_major_post_soviet_countries
+			emerging_communist_state_are_in_power = yes
+			country_exists = LAT
+		}
+		LAT = {
+			every_owned_state = {
+				add_core_of = SOV
+			}
+		}
+		add_political_power = -250
+		annex_country = { target = LAT transfer_troops = yes }
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+	}
+	if = {
+		limit = {
+			LIT = {
+				is_subject_of = SOV
+				influence_higher_50 = yes
+				emerging_communist_state_are_in_power = yes
+			}
+			has_completed_focus = SOV_coup_major_post_soviet_countries
+			emerging_communist_state_are_in_power = yes
+			country_exists = LIT
+		}
+		LIT = {
+			every_owned_state = {
+				add_core_of = SOV
+			}
+		}
+		add_political_power = -250
+		annex_country = { target = LIT transfer_troops = yes }
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+	}
+	if = {
+		limit = {
+			ABK = {
+				is_subject_of = SOV
+				influence_higher_50 = yes
+				emerging_communist_state_are_in_power = yes
+			}
+			has_completed_focus = SOV_coup_major_post_soviet_countries
+			emerging_communist_state_are_in_power = yes
+			country_exists = ABK
+		}
+		ABK = {
+			every_owned_state = {
+				add_core_of = SOV
+			}
+		}
+		add_political_power = -100
+		annex_country = { target = ABK transfer_troops = yes }
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+	}
+	if = {
+		limit = {
+			SOO = {
+				is_subject_of = SOV
+				influence_higher_50 = yes
+				emerging_communist_state_are_in_power = yes
+			}
+			has_completed_focus = SOV_coup_major_post_soviet_countries
+			emerging_communist_state_are_in_power = yes
+			country_exists = SOO
+		}
+		SOO = {
+			every_owned_state = {
+				add_core_of = SOV
+			}
+		}
+		add_political_power = -100
+		annex_country = { target = SOO transfer_troops = yes }
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+	}
+	if = {
+		limit = {
+			NKR = {
+				is_subject_of = SOV
+				influence_higher_50 = yes
+				emerging_communist_state_are_in_power = yes
+			}
+			has_completed_focus = SOV_coup_major_post_soviet_countries
+			emerging_communist_state_are_in_power = yes
+			country_exists = NKR
+		}
+		NKR = {
+			every_owned_state = {
+				add_core_of = SOV
+			}
+		}
+		add_political_power = -100
+		annex_country = { target = NKR transfer_troops = yes }
+		set_temp_variable = { treasury_change = -10 }
 		modify_treasury_effect = yes
 	}
 }
