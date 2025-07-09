@@ -12665,6 +12665,12 @@ country_event = {
 
 		BEL = { country_event = { id = CZE_AUS_monarchy_events.4 days = 1}}
 
+		ROOT = {
+			country_event = { id = CZE_AUS_monarchy_events.5 days = 1}
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
 		every_country = {
 			limit = {
 				capital_scope = { is_on_continent = europe }
@@ -12704,20 +12710,12 @@ country_event = {
 						NOT = {has_government = communism}
 						NOT = {has_government = fascism}
 					}
-					AND = {
-						original_tag = ENG
-						NOT = {has_government = communism}
-						NOT = {has_government = fascism}
-					}
 				}
 				NOT = { original_tag = CZE}
 				NOT = { original_tag = BEL}
 			}
 			country_event = { id = CZE_AUS_monarchy_events.5 }
 		}
-
-		set_temp_variable = { treasury_change = -2 }
-		modify_treasury_effect = yes
 
 		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.3.a executed"
 
@@ -12728,7 +12726,7 @@ country_event = {
 	option = {
 		name = CZE_AUS_monarchy_events.3.b
 
-		BEL = { country_event = { id = CZE_AUS_monarchy_events.5 days = 1}}
+		BEL = { country_event = { id = CZE_AUS_monarchy_events.6 days = 1}}
 
 		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.3.b executed"
 
@@ -12758,7 +12756,13 @@ country_event = {
 			BEL = { NOT = { has_government = communism}}
 		}
 
-		set_country_flag = CZE_BEL_plan
+		BEL = {set_country_flag = CZE_BEL_plan}
+		CZE = {set_country_flag = CZE_BEL_plan}
+
+		add_timed_idea = {
+			idea = CZE_future_of_monarchies
+			days = 180
+		}
 
 		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.4.a executed"
 
@@ -12777,7 +12781,7 @@ country_event = {
 			}
 		}
 
-		complete_national_focus = CZE_visit_belgium
+		CZE = {complete_national_focus = CZE_visit_belgium}
 
 		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.4.b executed"
 
@@ -12836,7 +12840,8 @@ country_event = {
 	option = {
 		name = CZE_AUS_monarchy_events.6.a
 
-		set_country_flag = CZE_BEL_plan
+		BEL = {set_country_flag = CZE_BEL_plan}
+		CZE = {set_country_flag = CZE_BEL_plan}
 
 		BEL = {
 			add_timed_idea = {
@@ -12927,9 +12932,14 @@ country_event = {
 	option = {
 		name = CZE_AUS_monarchy_events.9.a
 
-		set_temp_variable = { party_index = 23}
-		change_ruling_party_effect = yes
+		clear_array = ruling_party
+		add_to_array = { ruling_party = 23 }
+		set_politics = {
+			ruling_party = nationalist
+			elections_allowed = no
+		}
 
+		CZE = {
 		diplomatic_relation = {
 			country = AUS
 			relation = non_aggression_pact
@@ -12947,7 +12957,7 @@ country_event = {
 			relation = guarantee
 			active = yes
 		}
-
+	}
 		BEL = {
 			diplomatic_relation = {
 				country = AUS
@@ -12981,11 +12991,27 @@ country_event = {
 			}
 		}
 
+		news_event = { id = CZE_AUS_monarchy_events.13 days = 1}
+
 		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.9.a executed"
 
 		ai_chance = {
 			base = 50
 		}
+	}
+}
+
+news_event = {
+	id = CZE_AUS_monarchy_events.13
+	title = CZE_AUS_monarchy_events.13.t
+	desc = CZE_AUS_monarchy_events.13.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = CZE_AUS_monarchy_events.13.a
+
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.13.a executed"
 	}
 }
 
@@ -13001,7 +13027,11 @@ country_event = {
 		name = CZE_AUS_monarchy_events.10.a
 
 		trigger = {
-			AUS = { NOT = { has_government = nationalist }}
+			AUS = {
+				NOT = {
+					is_in_array = { ruling_party = 23}
+				}
+			}
 		}
 
 		add_ideas = CZE_AUS_payment_to_habsburgs
@@ -13076,9 +13106,9 @@ country_event = {
 		name = "A"
 
 		clear_array = ruling_party
-		add_to_array = { ruling_party = 11 }
+		add_to_array = { ruling_party = 23 }
 		set_politics = {
-			ruling_party = fascism
+			ruling_party = nationalist
 			elections_allowed = no
 		}
 	}
