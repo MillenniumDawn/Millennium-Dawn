@@ -714,3 +714,154 @@ GCC_show_supporters = {
 		YEM_GetNameWithFlag = yes
 	}
 }
+
+# Arab Spring Section
+
+# Effect: change_arab_spring_strength
+# Purpose: Change the strength of the Arab Spring protests
+# Parameters:
+# - temp_strength - The change in protest strength
+change_arab_spring_strength = {
+	custom_effect_tooltip = change_arab_spring_strength_tt
+	add_to_variable = { arab_spring = temp_strength }
+}
+
+# Effect: calculate_monthly_arab_spring_change
+# Purpose: Calculate the change in protest strength for the month
+calculate_monthly_arab_spring_change = {
+	set_variable = { arab_spring_change = 0 }
+	# Police Brutality Increases Arab Spring Likelihood
+	if = { limit = { has_idea = police_05 }
+		add_to_variable = { arab_spring_change = 2 }
+	}
+	else_if = {
+		limit = { has_idea = police_04 }
+		add_to_variable = { arab_spring_change = 1 }
+	}
+
+	# Economic Situation Increases Arab Spring Likelihood
+	if = {
+		limit = { check_variable = { gdp_per_capita < 15 } }
+		if = { limit = { has_idea = depression }
+			add_to_variable = { arab_spring_change = 6 }
+		}
+		else_if = { limit = { has_idea = recession }
+			add_to_variable = { arab_spring_change = 4 }
+		}
+		else_if = { limit = { has_idea = stagnation }
+			add_to_variable = { arab_spring_change = 2 }
+		}
+	}
+
+	# Social Unrest Increases Arab Spring Likelihood
+	if = {
+		limit = { has_idea = social_01 }
+		add_to_variable = { arab_spring_change = 3 }
+	}
+	else_if = {
+		limit = { has_idea = social_02 }
+		add_to_variable = { arab_spring_change = 2 }
+	}
+	else_if = {
+		limit = { has_idea = social_03 }
+		add_to_variable = { arab_spring_change = 1 }
+	}
+
+	# Corruption Increases Arab Spring Likelihood
+	if = { limit = { has_idea = paralyzing_corruption }
+		add_to_variable = { arab_spring_change = 6 }
+	}
+	else_if = { limit = { has_idea = crippling_corruption }
+		add_to_variable = { arab_spring_change = 5 }
+	}
+	else_if = { limit = { has_idea = rampant_corruption }
+		add_to_variable = { arab_spring_change = 4 }
+	}
+	else_if = { limit = { has_idea = unrestrained_corruption }
+		add_to_variable = { arab_spring_change = 3 }
+	}
+	else_if = { limit = { has_idea = systematic_corruption }
+		add_to_variable = { arab_spring_change = 2 }
+	}
+
+	# Historical Section
+	if = { limit = { is_historical_focus_on = yes }
+		if = {
+			limit = {
+				original_tag = TUN
+				is_in_array = { ruling_party = 0 }
+			}
+			add_to_variable = { arab_spring_change = 9 }
+		}
+		else_if = {
+			limit = {
+				original_tag = SYR
+				is_in_array = { ruling_party = 7 }
+			}
+			add_to_variable = { arab_spring_change = 2 }
+		}
+		else_if = {
+			limit = {
+				original_tag = EGY
+				is_in_array = { ruling_party = 0 }
+			}
+			add_to_variable = { arab_spring_change = 5 }
+		}
+		else_if = {
+			limit = {
+				original_tag = LBA
+				is_in_array = { ruling_party = 7 }
+				NOT = { has_country_flag = AS_disabled_arab_spring }
+			}
+			add_to_variable = { arab_spring_change = 5 }
+		}
+	}
+
+	# Shia Resistance Increases Arab Spring Likelihood
+	if = {
+		limit = {
+			OR = {
+				has_idea = shia_resistance_05
+				has_idea = shia_resistance_06
+				has_idea = shia_resistance_07
+				has_idea = shia_resistance_08
+				has_idea = shia_resistance_09
+				has_idea = shia_resistance_10
+			}
+		}
+		add_to_variable = { arab_spring_change = 2 }
+	}
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					has_elections = yes
+					OR = {
+						has_government = democratic
+						has_government = neutrality
+					}
+					NOT = {
+						has_idea = hybrid_regime_emerging
+						has_idea = hybrid_regime_western
+					}
+				}
+				has_idea = elected_legislature
+			}
+		}
+		subtract_from_variable = { arab_spring_change = 4 }
+	}
+	if = {
+		limit = {
+			NOT = { has_tech = internet1 }
+		}
+		subtract_from_variable = { arab_spring_change = 4 }
+	}
+}
+
+# Effect: increment_arab_spring_strength
+# Purpose: Increment the strength of the Arab Spring protests
+increment_arab_spring_strength = {
+	calculate_monthly_arab_spring_change = yes
+	set_temp_variable = { temp_strength = arab_spring_change }
+	change_arab_spring_strength = yes
+}
