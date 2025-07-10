@@ -45,7 +45,7 @@ mod = 'Millennium_Dawn'
 
 def main():
 	path = os.path.abspath(os.path.join(os.path.dirname(mod),'..'))
-	country_tag_list = createcountrytaglist()
+	# country_tag_list = createcountrytaglist()
 
 	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "))
 
