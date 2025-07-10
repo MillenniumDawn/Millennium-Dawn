@@ -7,7 +7,7 @@ country_event = {
 	id = jihadi.2
 	title = jihadi.2.t
 	desc = jihadi.2.d
-
+	is_triggered_only = yes
 	trigger = {
 		NOT = { has_government = fascism }
 		NOT = { has_country_flag = keep_saudi_aid }
@@ -19,22 +19,46 @@ country_event = {
 		fascism > 0.35
 	}
 
-	mean_time_to_happen = {
-		days = 350
-
-	}
-
+	# We Need the Saudi Aid
 	option = {
 		name = jihadi.2.a
 		log = "[GetDateText]: [This.GetName]: jihadi.2.a executed"
-		ai_chance = { factor = 25 }
 		set_country_flag = keep_saudi_aid
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = SAU.id }
+						check_variable = { influence_array_val^0 > 30 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = SAU.id }
+						check_variable = { influence_array_val^1 > 30 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = SAU.id }
+						check_variable = { influence_array_val^2 > 30 }
+					}
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { interest_rate > 9.50 }
+			}
+		}
 	}
 
+	# End the Saudi Aid
 	option = {
 		name = jihadi.2.b
 		log = "[GetDateText]: [This.GetName]: jihadi.2.b executed"
-		ai_chance = { factor = 75 }
 		remove_ideas = saudi_aid
+
+		ai_chance = {
+			base = 75
+		}
 	}
 }
