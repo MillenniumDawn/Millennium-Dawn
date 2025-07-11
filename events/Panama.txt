@@ -444,15 +444,15 @@ country_event = {
 }
 # CHINA ALIGNMENT - PROTESTS #
 country_event = {
-	id = panama.50
-	title = panama.50.t
-	desc = panama.50.d
+	id = panama.80
+	title = panama.80.t
+	desc = panama.80.d
 	is_triggered_only = yes
 	fire_only_once = yes
     picture = GFX_PAN_panama_china_flags
 	option = {
-		name = panama.50.a
-		log = "[GetDateText]: [This.GetName]: panama.50.a executed"
+		name = panama.80.a
+		log = "[GetDateText]: [This.GetName]: panama.80.a executed"
 		add_popularity = { ideology = nationalist popularity = 0.01 }
 		add_popularity = { ideology = neutrality popularity = 0.025 }
 		add_popularity = { ideology = communism popularity = 0.025 }
@@ -771,6 +771,150 @@ country_event = {
 		news_event = panama_news.1
 	}
 }
+# CENTRAL AMERICA + MEXICO gets this #
+country_event = {
+	id = panama.50
+	title = panama.50.t
+	desc = panama.50.d
+	is_triggered_only = no
+	# fire_only_once = no
+    picture = GFX_PAN_processing_plant_banana_plantation  # TODO: CHANGE
+	# trigger = { original_tag = NIC }
+	option = {  # accepts
+		name = panama.50.a
+		log = "[GetDateText]: [This.GetName]: panama.50.a executed"
+		# effect_tooltip = {
+		if = {
+			limit = { PAN = { has_trade_agreement_with_PREV_nation = yes } }
+			add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			reverse_add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+		}
+		else = {
+			set_temp_variable = { receiver_nation = THIS.id }
+			set_temp_variable = { sender_nation = PAN.id }
+			set_improved_trade_agreement = yes
+			newline = yes
+			add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			reverse_add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+		}
+		ai_chance = {
+			base = 1
+			modifier = { add = 1 has_opinion = { target = PAN value > 4 } }
+			modifier = { add = 5 has_opinion = { target = PAN value > 29 } }
+			modifier = { add = 10 has_opinion = { target = PAN value > 49 } }
+		}
+	}
+	option = {  # rejects
+		name = panama.50.b
+		log = "[GetDateText]: [This.GetName]: panama.50.b executed"
+		ai_chance = {
+			base = 1
+			modifier = { add = 5 has_opinion = { target = PAN value < 0 } }
+		}
+	}
+}
+# PAN_strengthen_colombia_border_cooperation - COL GETS THIS
+country_event = {
+	id = panama.51
+	title = panama.51.t
+	desc = panama.51.d
+	is_triggered_only = yes
+	fire_only_once = yes
+    picture = GFX_PAN_processing_plant_banana_plantation  # TODO: CHANGE
+	option = {  # accepts
+		name = panama.51.a
+		log = "[GetDateText]: [This.GetName]: panama.51.a executed"
+		effect_tooltip = {
+			add_timed_idea = {
+				idea = PAN_idea_darien_border_joint_security_operations
+				days = 90
+			}
+			if = {
+				limit = { check_variable = { strength_of_cartels > 4 } }
+				newline = yes
+				set_temp_variable = { cart_strength_change = -7 }
+				set_temp_variable = { cart_influence_change = -7 }
+				modify_cartel_variables_effect = yes
+			}
+		}
+		hidden_effect = { PAN = { country_event = { id = panama.52 days = 3 } } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 1 has_opinion = { target = PAN value > 4 } }
+			modifier = { add = 5 has_opinion = { target = PAN value > 14 } }
+			modifier = {
+				add = 10
+				OR = {
+					AND = {
+						has_opinion = { target = PAN value > 0 }
+						limit = { check_variable = { strength_of_cartels > 9 } }
+					}
+					has_opinion = { target = PAN value > 29 }
+				}
+			}
+		}
+	}
+	option = {  # rejects
+		name = panama.51.b
+		log = "[GetDateText]: [This.GetName]: panama.51.b executed"
+		hidden_effect = { PAN = { country_event = { id = panama.52 days = 3 } } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 5 has_opinion = { target = PAN value < 0 } }
+		}
+	}
+}
+# PAN_strengthen_colombia_border_cooperation - RECEIVE RESPONSE #
+country_event = {
+	id = panama.52
+	title = {  # accepts
+		text = panama.52.t1
+		trigger = { NIC = { has_country_flag = PAN_NIC_accepted_seasonal_workers } }
+	}
+	title = {  # rejects
+		text = panama.52.t2
+		trigger = { NIC = { NOT = { has_country_flag = PAN_NIC_accepted_seasonal_workers } } }
+	}
+	desc = {  # accepts
+		text = panama.52.d1
+		trigger = { NIC = { has_country_flag = PAN_NIC_accepted_seasonal_workers } }
+	}
+	desc = {  # rejects
+		text = panama.52.d2
+		trigger = { NIC = { NOT = { has_country_flag = PAN_NIC_accepted_seasonal_workers } } }
+	}
+	is_triggered_only = yes
+	fire_only_once = yes
+    picture = GFX_PAN_processing_plant_banana_plantation
+	option = {  # COL accepted
+		name = panama.52.a
+		log = "[GetDateText]: [This.GetName]: panama.52.a executed"
+		trigger = { NIC = { has_country_flag = PAN_NIC_accepted_seasonal_workers } }
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = NIC.id }
+		set_temp_variable = { influence_target = PAN.id }
+		change_influence_percentage = yes
+		newline = yes
+		NIC = { random_owned_controlled_state = { add_manpower = -30000 } }
+		852 = { add_manpower = 30000 }
+		hidden_effect = {
+			add_popularity = { ideology = communism popularity = 0.025 }
+			NIC = {
+				add_opinion_modifier = { target = PAN modifier = PAN_opinion_free_movement_of_labor }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_opinion_free_movement_of_labor }
+			}
+		}
+		ai_chance = { base = 1 }
+	}
+	option = {  # COL rejected
+		name = panama.14.b
+		log = "[GetDateText]: [This.GetName]: panama.52.b executed"
+		trigger = { NIC = { NOT = { has_country_flag = PAN_NIC_accepted_seasonal_workers } } }
+		hidden_effect = { add_opinion_modifier = { target = NIC modifier = PAN_opinion_rejected_our_proposal } }
+		ai_chance = { base = 1 }
+	}
+}
+
 ###########################
 #        NEWS EVENTS      #
 ###########################
