@@ -11,7 +11,7 @@ focus_tree = {
 	focus = {
 		id = PAN_canal_zone_repatriation
 		icon = focus_BRA_reach_out_to_military_dem
-		x = 20
+		x = 25
 		y = 0
 		cost = 5
 		completion_reward = {
@@ -87,7 +87,7 @@ focus_tree = {
 		prerequisite = { focus = PAN_consolidate_canal_authority }
 		available = { owns_state = 852 owns_state = 853 }
 		x = -2
-		y = 2
+		y = 3
 		relative_position_id = PAN_canal_handover
 		cost = 5
 		completion_reward = {
@@ -96,6 +96,87 @@ focus_tree = {
 			# ingame_update_setup = yes
 		}
 		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = PAN_construction_drive
+		icon = construction_engineering  # TODO: CHANGE
+		prerequisite = { focus = PAN_canal_handover }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 0
+		y = 1
+		relative_position_id = PAN_canal_handover
+		cost = 3
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_canal_handover"
+			add_political_power = 50
+			add_tech_bonus = {
+				name = PAN_construct_the_atlantic_bridge
+				bonus = 0.15
+				uses = 2
+				category = CAT_construction_tech
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_production_increase
+		icon = construction_engineering  # TODO: CHANGE
+		prerequisite = { focus = PAN_construction_drive }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 0
+		y = 2
+		relative_position_id = PAN_canal_handover
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_canal_handover"
+			add_political_power = 75
+			add_tech_bonus = {
+				name = PAN_construct_the_atlantic_bridge
+				bonus = 0.15
+				uses = 1
+				category = CAT_construction_tech
+			}
+			852 = {
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = 0.015
+						local_resources = 0.15
+						state_production_speed_industrial_complex_factor = 0.025
+					}
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_production_increase_2
+		icon = construction_engineering  # TODO: CHANGE
+		prerequisite = { focus = PAN_construction_drive }
+		available = { owns_state = 852 owns_state = 853 }
+		x = 0
+		y = 3
+		relative_position_id = PAN_canal_handover
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_canal_handover"
+			add_political_power = 75
+			add_tech_bonus = {
+				name = PAN_construct_the_atlantic_bridge
+				bonus = 0.15
+				uses = 1
+				category = CAT_construction_tech
+			}
+			853 = {
+				add_state_modifier = {
+					modifier = {
+						state_productivity_growth_modifier = 0.015
+						local_resources = 0.15
+						state_production_speed_industrial_complex_factor = 0.025
+					}
+				}
+			}
+		}
 	}
 
 	focus = {
@@ -228,17 +309,10 @@ focus_tree = {
 		prerequisite = { focus = PAN_canal_expansion_project }
 		available = { owns_state = 852 owns_state = 853 }
 		x = 2
-		y = 2
+		y = 3
 		relative_position_id = PAN_canal_handover
 		cost = 10
 		completion_reward = {
-			add_tech_bonus = {
-				name = PAN_construct_the_atlantic_bridge
-				bonus = 0.15
-				uses = 2
-				category = CAT_construction_tech
-			}
-			newline = yes
 			852 = {
 				add_building_construction = {
 					type = infrastructure
@@ -303,7 +377,7 @@ focus_tree = {
 		prerequisite = { focus = PAN_implement_water_sustainability_measures focus = PAN_construct_the_atlantic_bridge }
 		available = { owns_state = 852 owns_state = 853 }
 		x = 0
-		y = 3
+		y = 4
 		relative_position_id = PAN_canal_handover
 		cost = 5
 		completion_reward = {
@@ -339,7 +413,7 @@ focus_tree = {
 		prerequisite = { focus = PAN_enhance_logistics_infrastructure }
 		available = { owns_state = 852 owns_state = 853 }
 		x = 0
-		y = 4
+		y = 5
 		relative_position_id = PAN_canal_handover
 		cost = 10
 		completion_reward = {
@@ -429,9 +503,23 @@ focus_tree = {
 		relative_position_id = PAN_central_america_fta
 		cost = 5
 		completion_reward = {
-			custom_effect_tooltip = PAN_strengthen_ties_with_central_america_tt
-			newline = yes
 			MEX = { country_event = { id = panama.50 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = PAN_generic_agreement_tt
+			newline = yes
+			effect_tooltip = {
+				MEX = {
+					if = {
+						limit = { PAN = { has_trade_agreement_with_PREV_nation = yes } }
+						add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+					}
+					else = {
+						set_temp_variable = { receiver_nation = THIS.id }
+						set_temp_variable = { sender_nation = PAN.id }
+						set_improved_trade_agreement = yes
+					}
+				}
+			}
 		}
 	}
 
@@ -451,9 +539,23 @@ focus_tree = {
 		relative_position_id = PAN_central_america_fta
 		cost = 5
 		completion_reward = {
-			custom_effect_tooltip = PAN_strengthen_ties_with_central_america_tt
-			newline = yes
 			COL = { country_event = { id = panama.51 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = PAN_generic_agreement_tt
+			newline = yes
+			effect_tooltip = {
+				add_timed_idea = {
+					idea = PAN_idea_darien_border_joint_security_operations
+					days = 90
+				}
+				if = {
+					limit = { check_variable = { strength_of_cartels > 4 } }
+					newline = yes
+					set_temp_variable = { cart_strength_change = -7 }
+					set_temp_variable = { cart_influence_change = -7 }
+					modify_cartel_variables_effect = yes
+				}
+			}
 		}
 	}
 
@@ -462,22 +564,37 @@ focus_tree = {
 		icon = align_to_venezuela
 		prerequisite = { focus = PAN_central_america_fta }
 		bypass = {
-			OR = { NOT = { country_exists = VEN } has_war_with = VEN }
+			OR = {
+				NOT = { country_exists = VEN }
+				has_war_with = VEN
+			}
 		}
 		x = 2
 		y = 1
 		relative_position_id = PAN_central_america_fta
 		cost = 5
 		completion_reward = {
-			# send ven a request for oil deal
-			# if yes
-			# add new source of oil for PAN + VEN
-			VEN = {
-				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
-				# country_event = { panama.50 }
-			}
+			COL = { country_event = { id = panama.53 days = 1 } }
 			newline = yes
-			custom_effect_tooltip = PAN_strengthen_ties_with_central_america_tt
+			custom_effect_tooltip = PAN_generic_agreement_tt
+			newline = yes
+			effect_tooltip = {
+				set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+				853 = {
+					add_building_construction = {
+						type = fuel_silo
+						level = 2
+						instant_build = yes
+					}
+				}
+				newline = yes
+				VEN = {
+					set_temp_variable = { treasury_change = -0.05 }
+					modify_treasury_effect = yes
+					add_resource = { type = oil amount = 12 state = 916 }
+				}
+			}
 		}
 	}
 
@@ -494,8 +611,8 @@ focus_tree = {
 		cost = 5
 		completion_reward = {
 			ARG = {
-				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
-				# country_event = { panama.50 }
+				# add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+				country_event = { id = panama.55 days = 3 }
 			}
 			newline = yes
 			custom_effect_tooltip = PAN_strengthen_ties_with_central_america_tt
@@ -523,63 +640,86 @@ focus_tree = {
 		}
 	}
 
-	# focus = {
-	# 	id = PAN_deepening_latin_american_integration
-	# 	icon = accept_treaty
-	# 	prerequisite = { focus = PAN_mesoamerica_integration_and_development_project focus = PAN_mercosur_association }
-	# 	x = 12
-	# 	y = 5
-	# 	cost = 10
-		
-	# 	completion_reward = {
-	# 		# Improve relations with major Latin American powers
-	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
-	# 		VEN = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
-	# 		BRA = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
-	# 	}
-	# }
+	focus = {
+		id = PAN_join_iirsa_initiative
+		icon = accept_treaty  # TODO: CHANGE
+		prerequisite = { focus = PAN_sign_argentina_agriculture_coop focus = PAN_finalise_chile_fta_negotiations }
+		available = { BRA = { has_opinion = { target = PAN value > 14 } } }
+		bypass = { NOT = { country_exists = BRA } }
+		x = 0
+		y = 3
+		relative_position_id = PAN_central_america_fta
+		cost = 5
+		completion_reward = {
+			BRA = {
+				set_temp_variable = { int_investment_change = 2 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = 2 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			build_railway = {
+				level = 2
+				build_only_on_allied = yes
+				fallback = yes
+				path = { 4611 9710 1633 4624 }
+				start_province = 852
+				target_province = 852
+			}
+			hidden_effect = {
+				if = {  # improve with neighboring
+					limit = { country_exists = NIC }
+					NIC = {
+						add_opinion_modifier = { target = PAN modifier = PAN_infrastructural_initiatives }
+						reverse_add_opinion_modifier = { target = PAN modifier = PAN_infrastructural_initiatives }
+					}
+				}
+				BRA = {
+					add_opinion_modifier = { target = PAN modifier = PAN_infrastructural_initiatives }
+				}
+			}
+		}
+	}
 
-	# focus = {
-	# 	id = PAN_join_the_pacific_alliance
-	# 	icon = accept_treaty
-	# 	prerequisite = { focus = PAN_deepening_latin_american_integration }
-	# 	x = 11
-	# 	y = 6
-	# 	cost = 10
-		
-	# 	completion_reward = {
-	# 		# Align with Mexico, Colombia, Peru, and Chile to promote regional economic integration.
-	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
-	# 	}
-	# }
+	focus = {
+		id = PAN_host_acs_summit
+		icon = armenia_turizm
+		prerequisite = { focus = PAN_join_iirsa_initiative }
+		x = 0
+		y = 4
+		relative_position_id = PAN_central_america_fta
+		cost = 5
+		completion_reward = {
+			# IMPROVE RELATIONS WITH CARIBE???
+			if = {
+				limit = { has_idea = PAN_idea_tourist_industry_1 }
+				swap_ideas = {
+					remove_idea = PAN_idea_tourist_industry_2
+					add_idea = PAN_idea_tourist_industry_2
+				}
+				set_variable = { PAN_tourism_2_effect = 0.3 }
+			}
+			else = {
+				add_ideas = PAN_idea_tourist_industry_1
+				set_variable = { PAN_tourism_1_effect = 0.2 }
+			}
+		}
+	}
 
-	# focus = {
-	# 	id = PAN_host_regional_summits
-	# 	icon = accept_treaty
-	# 	prerequisite = { focus = PAN_deepening_latin_american_integration }
-	# 	x = 13
-	# 	y = 6
-	# 	cost = 10
-		
-	# 	completion_reward = {
-	# 		# Align with Mexico, Colombia, Peru, and Chile to promote regional economic integration.
-	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
-	# 	}
-	# }
-
-	# focus = {
-	# 	id = PAN_champion_regional_solidarity
-	# 	icon = accept_treaty
-	# 	prerequisite = { focus = PAN_join_the_pacific_alliance focus = PAN_host_regional_summits }
-	# 	x = 12
-	# 	y = 7
-	# 	cost = 10
-		
-	# 	completion_reward = {
-	# 		# +10% Political Power gain. Improved relations with all Latin American nations.
-	# 		COL = { add_opinion_modifier = { target = PAN modifier = pan_latin_brotherhood } }
-	# 	}
-	# }
+	focus = {
+		id = PAN_sign_mou_with_brazil
+		icon = brazil_foreign_companies
+		prerequisite = { focus = PAN_join_iirsa_initiative }
+		x = 0
+		y = 5
+		relative_position_id = PAN_central_america_fta
+		cost = 5
+		completion_reward = {
+			BRA = {
+				add_opinion_modifier = { target = PAN modifier = PAN_infrastructural_initiatives }
+			}
+		}
+	}
 
 	# focus = {
 	# 	id = PAN_revitalize_the_mesoamerica_project
@@ -639,340 +779,389 @@ focus_tree = {
 	# }
 
 	### US RELATIONS ###
-	# focus = {
-	# 	id = PAN_modernize_the_tpa_framework
-	# 	icon = trade_with_america
-	# 	prerequisite = { focus = PAN_a_voice_at_the_crossroads }
-	# 	available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
-	# 	x = 15
-	# 	y = 2
-	# 	cost = 5
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_modernize_the_tpa_framework"
-	# 		USA = {
-	# 			add_opinion_modifier = { target = PAN modifier = PAN_strategic_partnership }
-	# 			reverse_add_opinion_modifier = { target = PAN modifier = PAN_strategic_partnership }
-	# 		}
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = USA }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		newline = yes
-	# 		add_offsite_building = { type = industrial_complex level = 1 }
-	# 		newline = yes
-	# 		set_improved_trade_agreement = yes
-	# 	}
-	# }
+	focus = {
+		id = PAN_modernize_the_tpa_framework
+		icon = trade_with_america
+		prerequisite = { focus = PAN_a_voice_at_the_crossroads }
+		available = {
+			AND = {
+				country_exists = USA
+				USA = { has_opinion = { target = PAN value > 14 } }
+			}
+		}
+		x = 0
+		y = 1
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_modernize_the_tpa_framework"
+			USA = { add_opinion_modifier = { target = PAN modifier = PAN_strategic_partnership } }
+			# set_temp_variable = { percent_change = 2 }
+			# set_temp_variable = { tag_index = USA }
+			# set_temp_variable = { influence_target = PAN }
+			# change_influence_percentage = yes
+			# newline = yes
+			# add_offsite_building = { type = industrial_complex level = 1 }
+			# newline = yes
+			set_temp_variable = { receiver_nation = USA.id }
+			set_temp_variable = { sender_nation = PAN.id }
+			set_improved_trade_agreement = yes
+			hidden_effect = {
+				add_opinion_modifier = { target = USA modifier = PAN_strategic_partnership }
+			}
+		}
+	}
 	
-	# focus = {
-	# 	id = PAN_central_america_regional_security_initiative
-	# 	icon = american_government
-	# 	prerequisite = { focus = PAN_modernize_the_tpa_framework }
-	# 	available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
-	# 	x = 15
-	# 	y = 3
-	# 	cost = 10
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_central_america_regional_security_initiative"
-	# 		USA = {
-	# 			add_opinion_modifier = { target = PAN modifier = PAN_carsi_operations }
-	# 			reverse_add_opinion_modifier = { target = PAN modifier = PAN_carsi_operations }
-	# 			set_temp_variable = { treasury_change = -0.0365 }
-	# 			modify_treasury_effect = yes
-	# 		}
-	# 		if = {
-	# 			limit = { check_variable = { strength_of_cartels > 9 } }
-	# 			newline = yes
-	# 			set_temp_variable = { cart_strength_change = -10 }
-	# 			set_temp_variable = { cart_influence_change = -10 }
-	# 			modify_cartel_variables_effect = yes
-	# 		}
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = USA }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		newline = yes
-	# 		add_idea = PAN_idea_carsi
-	# 		newline = yes
-	# 		set_temp_variable = { treasury_change = 0.0365 }
-	# 		modify_treasury_effect = yes
-	# 		increase_policing_budget = yes
-	# 	}
-	# }
+	focus = {
+		id = PAN_central_america_regional_security_initiative
+		icon = american_government
+		prerequisite = { focus = PAN_modernize_the_tpa_framework }
+		available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
+		x = 0
+		y = 3
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_central_america_regional_security_initiative"
+			USA = {
+				add_opinion_modifier = { target = PAN modifier = PAN_carsi_operations }
+				set_temp_variable = { treasury_change = -0.0365 }
+				modify_treasury_effect = yes
+			}
+			if = {
+				limit = { check_variable = { strength_of_cartels > 9 } }
+				newline = yes
+				set_temp_variable = { cart_strength_change = -10 }
+				set_temp_variable = { cart_influence_change = -10 }
+				modify_cartel_variables_effect = yes
+			}
+			add_idea = PAN_idea_carsi
+			newline = yes
+			set_temp_variable = { treasury_change = 0.0365 }
+			modify_treasury_effect = yes
+			increase_policing_budget = yes
+			hidden_effect = {
+				add_opinion_modifier = { target = USA modifier = PAN_carsi_operations }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+			}
+		}
+	}
 
     # ### CHINA RELATIONS ###
-	# focus = {
-	# 	id = PAN_join_the_belt_and_road_initiative
-	# 	icon = blr_trade_agreement_china
-	# 	prerequisite = { focus = PAN_a_voice_at_the_crossroads }
-	# 	available = { AND = { country_exists = CHI CHI = { has_opinion = { target = PAN value > -1 } } } }
-	# 	x = 17
-	# 	y = 2
-	# 	cost = 5
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_join_the_belt_and_road_initiative"
-	# 		CHI = {
-	# 			set_temp_variable = { int_investment_change = 5 }
-	# 			modify_international_investment_effect = yes
-	# 			set_temp_variable = { treasury_change = -5 }
-	# 			modify_treasury_effect = yes
-	# 			newline = yes
-	# 			add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
-	# 			reverse_add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
-	# 		}
-	# 		newline = yes
-	# 		set_temp_variable = { treasury_change = 5 }
-	# 		modify_treasury_effect = yes
-	# 		newline = yes
-	# 		set_temp_variable = { percent_change = 2.5 }
-	# 		set_temp_variable = { tag_index = CHI }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		hidden_effect = {
-	# 			add_popularity = { ideology = communism popularity = 0.025 }
-	# 		}
-	# 	}
-	# 	ai_will_do = {
-	# 		base = 1
-	# 	}
-	# }
+	focus = {
+		id = PAN_join_the_belt_and_road_initiative
+		icon = blr_trade_agreement_china
+		prerequisite = { focus = PAN_a_voice_at_the_crossroads }
+		available = {
+			AND = {
+				country_exists = CHI
+				CHI = { has_opinion = { target = PAN value > -1 } }
+			}
+		}
+		x = 2
+		y = 1
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 5
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_join_the_belt_and_road_initiative"
+			CHI = {
+				set_temp_variable = { int_investment_change = 5 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+				add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = 5 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				add_opinion_modifier = { target = CHI modifier = belt_and_road_initiative }
+				add_popularity = { ideology = communism popularity = 0.025 }
+				set_temp_variable = { percent_change = 2.5 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
 
-	# focus = {
-	# 	id = PAN_develop_strategic_infrastructure_projects
-	# 	icon = blr_china_modernisation_railtrain
-	# 	prerequisite = { focus = PAN_join_the_belt_and_road_initiative }
-	# 	available = { AND = { country_exists = CHI CHI = { has_opinion = { target = PAN value > -1 } } } }
-	# 	x = 17
-	# 	y = 3
-	# 	cost = 10
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_develop_strategic_infrastructure_projects"
-	# 		CHI = {
-	# 			set_temp_variable = { int_investment_change = 10 }
-	# 			modify_international_investment_effect = yes
-	# 			set_temp_variable = { treasury_change = -10 }
-	# 			modify_treasury_effect = yes
-	# 		}
-	# 		newline = yes
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = CHI }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		newline = yes
-	# 		# maybe move whats right below to its own idea
-	# 		add_tech_bonus = {
-	# 			name = PAN_belt_and_road_infrastructure
-	# 			bonus = 0.45
-	# 			uses = 2
-	# 			category = Cat_infrastructure
-	# 		}
-	# 		newline = yes
-	# 		853 = {
-	# 			add_extra_state_shared_building_slots = 1
-	# 			add_building_construction = {
-	# 				type = industrial_complex
-	# 				level = 1
-	# 				instant_build = yes
-	# 			}
-	# 			add_building_construction = {
-	# 				type = naval_base
-	# 				level = 2
-	# 				instant_build = yes
-	# 			}
-	# 		}
-	# 		hidden_effect = {
-	# 			add_popularity = { ideology = communism popularity = 0.025 }
-	# 		}
-	# 	}		
-	# }
+	focus = {
+		id = PAN_develop_strategic_infrastructure_projects
+		icon = blr_china_modernisation_railtrain
+		prerequisite = { focus = PAN_join_the_belt_and_road_initiative }
+		available = {
+			AND = {
+				country_exists = CHI
+				CHI = { has_opinion = { target = PAN value > -1 } }
+			}
+		}
+		x = 2
+		y = 3
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_develop_strategic_infrastructure_projects"
+			CHI = {
+				set_temp_variable = { int_investment_change = 10 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = -10 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			# maybe move whats right below to its own idea
+			add_tech_bonus = {
+				name = PAN_belt_and_road_infrastructure
+				bonus = 0.45
+				uses = 2
+				category = Cat_infrastructure
+			}
+			newline = yes
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {  # move
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					instant_build = yes
+				}
+			}
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.025 }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+			}
+		}		
+	}
 
     ### ALIGN WITH USA ###
-	# focus = {
-	# 	id = PAN_us_military_presence_agreement
-	# 	icon = american_military_agreement
-	# 	prerequisite = { focus = PAN_central_america_regional_security_initiative focus = PAN_develop_strategic_infrastructure_projects }
-    #     mutually_exclusive = { focus = PAN_sign_free_trade_agreement_with_china }
-	# 	available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
-	# 	available = {
-	# 		NOT = {
-	# 			emerging_communist_state_are_in_power = yes
-	# 			emerging_anarchist_communism_are_in_power = yes
-	# 			neutrality_neutral_communism_are_in_power = yes
-	# 		}
-	# 	# 	OR = {
-	# 	# 		western_autocrats_are_in_power_or_coalition = yes
-	# 	# 		western_conservatism_are_in_power_or_coalition = yes
-	# 	# 		western_liberal_are_in_power_or_coalition = yes
-	# 	# 		western_socialism_are_in_power_or_coalition = yes
-	# 	# 		neutrality_neutral_social_in_power_or_coalition = yes
-	# 	# 	}
-	# 	}
-	# 	x = 15
-	# 	y = 5
-	# 	cost = 10
-	# 	completion_reward = {  # kick off protests event
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_us_military_presence_agreement"
-	# 		USA = {
-	# 			add_opinion_modifier = { target = PAN modifier = PAN_us_alignment }
-	# 			reverse_add_opinion_modifier = { target = PAN modifier = PAN_us_alignment }
-	# 		}
-	# 		newline = yes
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = USA }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		add_popularity = { ideology = democratic popularity = -0.05 }
-	# 		set_party_index_to_ruling_party = yes
-	# 		set_temp_variable = { party_popularity_increase = -0.025 }
-	# 		add_relative_party_popularity = yes
-	# 		add_stability = -0.05
-	# 		newline = yes
-	# 		USA = {
-	# 			diplomatic_relation = {
-	# 				country = PAN
-	# 				relation = military_access
-	# 				active = yes
-	# 			}
-	# 		}
-	# 		hidden_effect = { country_event = { panama.8 } }
-	# 	}
-	# }
+	focus = {
+		id = PAN_us_military_presence_agreement
+		icon = american_military_agreement
+		prerequisite = { focus = PAN_central_america_regional_security_initiative focus = PAN_develop_strategic_infrastructure_projects }
+        mutually_exclusive = { focus = PAN_sign_free_trade_agreement_with_china }
+		available = {
+			AND = {
+				country_exists = USA
+				USA = { has_opinion = { target = PAN value > -1 } }
+			}
+		}
+		available = {
+			NOT = {
+				emerging_communist_state_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+				neutrality_neutral_communism_are_in_power = yes
+			}
+		# 	OR = {
+		# 		western_autocrats_are_in_power_or_coalition = yes
+		# 		western_conservatism_are_in_power_or_coalition = yes
+		# 		western_liberal_are_in_power_or_coalition = yes
+		# 		western_socialism_are_in_power_or_coalition = yes
+		# 		neutrality_neutral_social_in_power_or_coalition = yes
+		# 	}
+		}
+		x = 0
+		y = 4
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_us_military_presence_agreement"
+			USA = { add_opinion_modifier = { target = PAN modifier = PAN_us_alignment } }
+			newline = yes
+			# MOVE BELOW TO EVENT
+			# add_popularity = { ideology = democratic popularity = -0.05 }
+			# set_party_index_to_ruling_party = yes
+			# set_temp_variable = { party_popularity_increase = -0.025 }
+			# add_relative_party_popularity = yes
+			# add_stability = -0.05
+			# newline = yes
+			USA = {  # move to event???
+				diplomatic_relation = {
+					country = PAN
+					relation = military_access
+					active = yes
+				}
+			}
+			hidden_effect = {
+				# kick off protests event
+				# country_event = { panama.8 }  # TODO - NEWS???
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+				add_opinion_modifier = { target = USA modifier = PAN_us_alignment }
+			}
+		}
+	}
 
-	# focus = {
-	# 	id = PAN_implement_us_backed_economic_reforms
-	# 	icon = united_states_dollar
-	# 	prerequisite = { focus = PAN_us_military_presence_agreement }
-	# 	available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
-	# 	x = 15
-	# 	y = 6
-	# 	cost = 10		
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_implement_us_backed_economic_reforms"
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = USA }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		newline = yes
-	# 		swap_ideas = {
-	# 			remove_idea = PAN_idea_usd_dollarization
-	# 			add_idea = PAN_idea_usd_dollarization1
-	# 		}
-	# 		newline = yes
-	# 		add_stability = 0.025
-	# 	}
-	# }
+	focus = {
+		id = PAN_implement_us_backed_economic_reforms
+		icon = united_states_dollar
+		prerequisite = { focus = PAN_us_military_presence_agreement }
+		available = {
+			AND = {
+				country_exists = USA
+				USA = { has_opinion = { target = PAN value > -1 } }
+			}
+		}
+		x = 0
+		y = 5
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 10		
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_implement_us_backed_economic_reforms"
+			add_stability = 0.025
+			newline = yes
+			swap_ideas = {
+				remove_idea = PAN_idea_usd_dollarization
+				add_idea = PAN_idea_usd_dollarization1
+			}
+			hidden_effect = {
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+			}
+		}
+	}
 
-	# focus = {
-	# 	id = PAN_promote_western_democratic_values
-	# 	icon = democracy
-	# 	prerequisite = { focus = PAN_implement_us_backed_economic_reforms }
-	# 	available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
-	# 	x = 15
-	# 	y = 8
-	# 	cost = 3
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_promote_western_democratic_values"
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = USA }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		newline = yes
-	# 		# add_idea = PAN_idea_western_alignment
-	# 		add_timed_idea = {
-	# 			idea = PAN_idea_western_alignment
-	# 			# idea = generic_western_boost_idea2
-	# 			days = 365
-	# 		}
-	# 		add_popularity = { ideology = democratic popularity = 0.05 }
-	# 		recalculate_party = yes
-	# 	}
-	# }
+	focus = {
+		id = PAN_promote_western_democratic_values
+		icon = democracy
+		prerequisite = { focus = PAN_implement_us_backed_economic_reforms }
+		available = { AND = { country_exists = USA USA = { has_opinion = { target = PAN value > -1 } } } }
+		x = 0
+		y = 6
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 3
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_promote_western_democratic_values"
+			# add_idea = PAN_idea_western_alignment
+			add_timed_idea = {
+				idea = PAN_idea_western_alignment
+				# idea = generic_western_boost_idea2
+				days = 365
+			}
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			recalculate_party = yes
+			hidden_effect = {
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+			}
+		}
+	}
 
-    # ### ALIGN WITH CHINA ###
-	# focus = {
-	# 	id = PAN_sign_free_trade_agreement_with_china
-	# 	icon = prc_sign
-	# 	prerequisite = { focus = PAN_central_america_regional_security_initiative focus = PAN_develop_strategic_infrastructure_projects }
-    #     mutually_exclusive = { focus = PAN_deepen_military_collaboration }
-	# 	x = 17
-	# 	y = 5
-	# 	cost = 10
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_sign_free_trade_agreement_with_china"
-	# 		CHI = {
-	# 			set_temp_variable = { int_investment_change = 7.65 }
-	# 			modify_international_investment_effect = yes
-	# 			set_temp_variable = { treasury_change = -7.65 }
-	# 			modify_treasury_effect = yes
-	# 			newline = yes
-	# 			add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
-	# 			reverse_add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
-	# 		}
-	# 		newline = yes
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = CHI }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		newline = yes
-	# 		852 = {
-	# 			add_extra_state_shared_building_slots = 1
-	# 			add_extra_state_shared_building_slots = 1
-	# 			add_building_construction = {
-	# 				type = supply_node
-	# 				level = 1
-	# 				instant_build = yes
-	# 			}
-	# 			add_building_construction = {
-	# 				type = naval_base
-	# 				level = 1
-	# 				instant_build = yes
-	# 			}
-	# 		}
-	# 		hidden_effect = {
-	# 			add_popularity = { ideology = communism popularity = 0.05 }
-	# 		}
-	# 	}
-	# }
+    ### ALIGN WITH CHINA ###
+	focus = {
+		id = PAN_sign_free_trade_agreement_with_china
+		icon = prc_sign
+		prerequisite = { focus = PAN_central_america_regional_security_initiative focus = PAN_develop_strategic_infrastructure_projects }
+        mutually_exclusive = { focus = PAN_deepen_military_collaboration }
+		x = 2
+		y = 4
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_sign_free_trade_agreement_with_china"
+			CHI = {
+				set_temp_variable = { int_investment_change = 7.65 }
+				modify_international_investment_effect = yes
+				set_temp_variable = { treasury_change = -7.65 }
+				modify_treasury_effect = yes
+				newline = yes
+				add_opinion_modifier = { target = PAN modifier = belt_and_road_initiative }
+			}
+			newline = yes
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {  # break out
+					type = supply_node
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 1
+					instant_build = yes
+				}
+			}
+			hidden_effect = {
+				# kick off event for USA anger if USA exists
+				add_popularity = { ideology = communism popularity = 0.05 }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+				add_opinion_modifier = { target = CHI modifier = belt_and_road_initiative }
+			}
+		}
+	}
 
-	# focus = {
-	# 	id = PAN_integrate_into_chinese_financial_systems
-	# 	icon = control_yuan
-	# 	prerequisite = { focus = PAN_sign_free_trade_agreement_with_china }
-	# 	x = 17
-	# 	y = 7
-	# 	cost = 10
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_integrate_into_chinese_financial_systems"
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = CHI }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		add_stability = 0.02
-	# 		newline = yes
-	# 		swap_ideas = {
-	# 			remove_idea = PAN_idea_usd_dollarization
-	# 			add_idea = PAN_idea_yuan_anchoring
-	# 		}
-	# 	}
-	# }
+	focus = {
+		id = PAN_integrate_into_chinese_financial_systems
+		icon = control_yuan
+		prerequisite = { focus = PAN_sign_free_trade_agreement_with_china }
+		x = 2
+		y = 5
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_integrate_into_chinese_financial_systems"
+			add_stability = 0.02
+			newline = yes
+			if = {
+				limit = { has_idea = PAN_idea_usd_dollarization }
+				remove_ideas = PAN_idea_usd_dollarization
+				add_ideas = PAN_idea_yuan_anchoring
+				# swap_ideas = {
+				# 	remove_idea = PAN_idea_usd_dollarization
+				# 	add_idea = PAN_idea_yuan_anchoring
+				# }
+			}
+			else = { add_ideas = PAN_idea_yuan_anchoring }
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.05 }
+				add_popularity = { ideology = neutrality popularity = 0.05 }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+			}
+		}
+	}
 
-	# focus = {
-	# 	id = PAN_adopt_chinese_technological_standards
-	# 	icon = blr_research_with_china
-	# 	prerequisite = { focus = PAN_integrate_into_chinese_financial_systems }
-	# 	x = 17
-	# 	y = 8
-	# 	cost = 10
-	# 	completion_reward = {
-	# 		log = "[GetDateText]: [Root.GetName]: Focus PAN_adopt_chinese_technological_standards"
-	# 		set_temp_variable = { percent_change = 2 }
-	# 		set_temp_variable = { tag_index = CHI }
-	# 		set_temp_variable = { influence_target = PAN }
-	# 		change_influence_percentage = yes
-	# 		newline = yes
-	# 		add_ideas = PAN_idea_chinese_technological_standards
-	# 	}
-	# }
+	focus = {
+		id = PAN_adopt_chinese_technological_standards
+		icon = blr_research_with_china
+		prerequisite = { focus = PAN_integrate_into_chinese_financial_systems }
+		x = 2
+		y = 6
+		relative_position_id = PAN_a_voice_at_the_crossroads
+		cost = 10
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus PAN_adopt_chinese_technological_standards"
+			add_ideas = PAN_idea_chinese_technological_standards
+			hidden_effect = {
+				add_popularity = { ideology = communism popularity = 0.05 }
+				add_popularity = { ideology = neutrality popularity = 0.05 }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = PAN }
+				change_influence_percentage = yes
+			}
+		}
+	}
 
 	# focus = {
 	# 	id = PAN_neutrality_doctrine
@@ -1002,7 +1191,7 @@ focus_tree = {
 				neutrality_neutral_communism_are_in_coalition = yes							
 			}
 		}
-		x = 22
+		x = 24
 		y = 1
 		cost = 10
 		completion_reward = {
@@ -1688,8 +1877,18 @@ focus_tree = {
 		cost = 5
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: focus PAN_national_park_network"
-			set_variable = { PAN_tourism_1_effect = 0.2 }
-			add_ideas = PAN_idea_tourist_industry_1
+			if = {
+				limit = { has_idea = PAN_idea_tourist_industry_1 }
+				swap_ideas = {
+					remove_idea = PAN_idea_tourist_industry_2
+					add_idea = PAN_idea_tourist_industry_2
+				}
+				set_variable = { PAN_tourism_2_effect = 0.3 }
+			}
+			else = {
+				add_ideas = PAN_idea_tourist_industry_1
+				set_variable = { PAN_tourism_1_effect = 0.2 }
+			}
 		}
 	}
 
@@ -2094,7 +2293,7 @@ focus_tree = {
 		id = PAN_defending_the_isthmus
 		icon = soliger_plain
 		# prerequisite = { focus = PAN_new_millennium }
-		x = 40
+		x = 50
 		y = 1
 		cost = 2
 		completion_reward = {
@@ -3210,7 +3409,7 @@ focus_tree = {
 		id = PAN_request_extradition_of_noriega
 		icon = intelligence_exchange
 		# available = { has_completed_focus = 2004_election }
-		x = 50
+		x = 60
 		y = 1
 		cost = 5
 		completion_reward = {
@@ -3227,7 +3426,7 @@ focus_tree = {
 		icon = intelligence_exchange
 		available = { has_completed_focus = PAN_request_extradition_of_noriega }
 		visible = { has_completed_focus = PAN_request_extradition_of_noriega }
-		x = 50
+		x = 60
 		y = 3
 		cost = 5
 		completion_reward = {

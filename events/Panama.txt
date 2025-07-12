@@ -837,6 +837,7 @@ country_event = {
 				modify_cartel_variables_effect = yes
 			}
 		}
+		set_country_flag = PAN_COL_accepted_darien_agreement
 		hidden_effect = { PAN = { country_event = { id = panama.52 days = 3 } } }
 		ai_chance = {
 			base = 1
@@ -869,19 +870,19 @@ country_event = {
 	id = panama.52
 	title = {  # accepts
 		text = panama.52.t1
-		trigger = { NIC = { has_country_flag = PAN_NIC_accepted_seasonal_workers } }
+		trigger = { COL = { has_country_flag = PAN_COL_accepted_darien_agreement } }
 	}
 	title = {  # rejects
 		text = panama.52.t2
-		trigger = { NIC = { NOT = { has_country_flag = PAN_NIC_accepted_seasonal_workers } } }
+		trigger = { COL = { NOT = { has_country_flag = PAN_COL_accepted_darien_agreement } } }
 	}
 	desc = {  # accepts
 		text = panama.52.d1
-		trigger = { NIC = { has_country_flag = PAN_NIC_accepted_seasonal_workers } }
+		trigger = { COL = { has_country_flag = PAN_COL_accepted_darien_agreement } }
 	}
 	desc = {  # rejects
 		text = panama.52.d2
-		trigger = { NIC = { NOT = { has_country_flag = PAN_NIC_accepted_seasonal_workers } } }
+		trigger = { COL = { NOT = { has_country_flag = PAN_COL_accepted_darien_agreement } } }
 	}
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -889,31 +890,257 @@ country_event = {
 	option = {  # COL accepted
 		name = panama.52.a
 		log = "[GetDateText]: [This.GetName]: panama.52.a executed"
-		trigger = { NIC = { has_country_flag = PAN_NIC_accepted_seasonal_workers } }
-		set_temp_variable = { percent_change = 1 }
-		set_temp_variable = { tag_index = NIC.id }
-		set_temp_variable = { influence_target = PAN.id }
-		change_influence_percentage = yes
-		newline = yes
-		NIC = { random_owned_controlled_state = { add_manpower = -30000 } }
-		852 = { add_manpower = 30000 }
+		trigger = { COL = { has_country_flag = PAN_COL_accepted_darien_agreement } }
+		add_timed_idea = {
+			idea = PAN_idea_darien_border_joint_security_operations
+			days = 90
+		}
+		if = {
+			limit = { check_variable = { strength_of_cartels > 4 } }
+			newline = yes
+			set_temp_variable = { cart_strength_change = -7 }
+			set_temp_variable = { cart_influence_change = -7 }
+			modify_cartel_variables_effect = yes
+		}
+		COL = {
+			add_timed_idea = {
+				idea = PAN_idea_darien_border_joint_security_operations
+				days = 90
+			}
+			if = {
+				limit = { check_variable = { strength_of_cartels > 4 } }
+				newline = yes
+				set_temp_variable = { cart_strength_change = -7 }
+				set_temp_variable = { cart_influence_change = -7 }
+				modify_cartel_variables_effect = yes
+			}
+		}
 		hidden_effect = {
-			add_popularity = { ideology = communism popularity = 0.025 }
-			NIC = {
-				add_opinion_modifier = { target = PAN modifier = PAN_opinion_free_movement_of_labor }
-				reverse_add_opinion_modifier = { target = PAN modifier = PAN_opinion_free_movement_of_labor }
+			COL = {
+				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+				clr_country_flag = PAN_COL_accepted_darien_agreement
 			}
 		}
 		ai_chance = { base = 1 }
 	}
 	option = {  # COL rejected
-		name = panama.14.b
+		name = panama.52.b
 		log = "[GetDateText]: [This.GetName]: panama.52.b executed"
-		trigger = { NIC = { NOT = { has_country_flag = PAN_NIC_accepted_seasonal_workers } } }
-		hidden_effect = { add_opinion_modifier = { target = NIC modifier = PAN_opinion_rejected_our_proposal } }
+		trigger = { COL = { NOT = { has_country_flag = PAN_NIC_accepted_seasonal_workers } } }
+		hidden_effect = { add_opinion_modifier = { target = COL modifier = PAN_opinion_rejected_our_proposal } }
 		ai_chance = { base = 1 }
 	}
 }
+# VENEZUELA OIL DEAL - GETS THIS - PAN_negotiate_venezuela_energy_deal
+country_event = {
+	id = panama.53
+	title = panama.53.t
+	desc = panama.53.d
+	is_triggered_only = yes
+	fire_only_once = yes
+    picture = GFX_PAN_processing_plant_banana_plantation  # TODO: CHANGE
+	option = {  # accepts
+		name = panama.53.a
+		log = "[GetDateText]: [This.GetName]: panama.53.a executed"
+		effect_tooltip = {
+			PAN = {
+				set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+				853 = {
+					add_building_construction = {
+						type = fuel_silo
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			newline = yes
+			add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			reverse_add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			set_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 12
+				state = 916
+			}
+		}
+		set_country_flag = PAN_VEN_energy_deal
+		hidden_effect = { PAN = { country_event = { id = panama.54 days = 3 } } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 1 has_opinion = { target = PAN value > 4 } }
+			modifier = { add = 5 has_opinion = { target = PAN value > 14 } }
+		}
+	}
+	option = {  # rejects
+		name = panama.53.b
+		log = "[GetDateText]: [This.GetName]: panama.53.b executed"
+		hidden_effect = { PAN = { country_event = { id = panama.54 days = 3 } } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 5 has_opinion = { target = PAN value < 0 } }
+		}
+	}
+}
+# VEN OIL DEAL - RECEIVE RESPONSE #
+country_event = {
+	id = panama.54
+	title = {  # accepts
+		text = panama.54.t1
+		trigger = { VEN = { has_country_flag = PAN_VEN_energy_deal } }
+	}
+	title = {  # rejects
+		text = panama.54.t2
+		trigger = { VEN = { NOT = { has_country_flag = PAN_VEN_energy_deal } } }
+	}
+	desc = {  # accepts
+		text = panama.54.d1
+		trigger = { VEN = { has_country_flag = PAN_VEN_energy_deal } }
+	}
+	desc = {  # rejects
+		text = panama.54.d2
+		trigger = { VEN = { NOT = { has_country_flag = PAN_VEN_energy_deal } } }
+	}
+	is_triggered_only = yes
+	fire_only_once = yes
+    picture = GFX_PAN_processing_plant_banana_plantation
+	option = {  # VEN accepted
+		name = panama.54.a
+		log = "[GetDateText]: [This.GetName]: panama.54.a executed"
+		trigger = { COL = { has_country_flag = PAN_COL_accepted_darien_agreement } }
+		set_temp_variable = { treasury_change = -0.05 }
+		modify_treasury_effect = yes
+		853 = {
+			add_building_construction = {
+				type = fuel_silo
+				level = 2
+				instant_build = yes
+			}
+		}
+		newline = yes
+		VEN = {
+			add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			reverse_add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+			set_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 12
+				state = 916
+			}
+		}
+		hidden_effect = {
+			VEN = {
+				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+				clr_country_flag = PAN_VEN_energy_deal
+			}
+		}
+		ai_chance = { base = 1 }
+	}
+	option = {  # VEN rejected
+		name = panama.54.b
+		log = "[GetDateText]: [This.GetName]: panama.54.b executed"
+		trigger = { VEN = { NOT = { has_country_flag = PAN_VEN_energy_deal } } }
+		hidden_effect = { add_opinion_modifier = { target = VEN modifier = PAN_opinion_rejected_our_proposal } }
+		ai_chance = { base = 1 }
+	}
+}
+# ARGENTINA GETS THIS - PAN_sign_argentina_agriculture_coop
+country_event = {
+	id = panama.55
+	title = panama.55.t
+	desc = panama.55.d
+	is_triggered_only = yes
+	fire_only_once = yes
+    picture = GFX_PAN_processing_plant_banana_plantation  # TODO: CHANGE
+	option = {  # accepts
+		name = panama.55.a
+		log = "[GetDateText]: [This.GetName]: panama.55.a executed"
+		effect_tooltip = {
+			PAN = {
+				add_ideas = PAN_argentinian_agricultural_advisors
+				set_temp_variable = { treasury_change = -0.025 }
+				modify_treasury_effect = yes
+			}
+			add_opinion_modifier = { target = ARG modifier = PAN_regional_cooperation }
+			reverse_add_opinion_modifier = { target = ARG modifier = PAN_regional_cooperation }
+			# pay argentina
+			set_temp_variable = { treasury_change = 0.025 }
+			modify_treasury_effect = yes
+		}
+		set_country_flag = PAN_ARG_agriculture_coop
+		hidden_effect = { PAN = { country_event = { id = panama.56 days = 3 } } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 1 has_opinion = { target = PAN value > 14 } }
+			modifier = { add = 5 has_opinion = { target = PAN value > 24 } }
+		}
+	}
+	option = {  # rejects
+		name = panama.55.b
+		log = "[GetDateText]: [This.GetName]: panama.55.b executed"
+		hidden_effect = { PAN = { country_event = { id = panama.56 days = 3 } } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 5 has_opinion = { target = PAN value < 9 } }
+		}
+	}
+}
+# ARGENTINA - RECEIVE RESPONSE #
+country_event = {
+	id = panama.56
+	title = {  # accepts
+		text = panama.56.t1
+		trigger = { ARG = { has_country_flag = PAN_ARG_agriculture_coop } }
+	}
+	title = {  # rejects
+		text = panama.56.t2
+		trigger = { ARG = { NOT = { has_country_flag = PAN_ARG_agriculture_coop } } }
+	}
+	desc = {  # accepts
+		text = panama.56.d1
+		trigger = { ARG = { has_country_flag = PAN_ARG_agriculture_coop } }
+	}
+	desc = {  # rejects
+		text = panama.56.d2
+		trigger = { ARG = { NOT = { has_country_flag = PAN_ARG_agriculture_coop } } }
+	}
+	is_triggered_only = yes
+	fire_only_once = yes
+    picture = GFX_PAN_processing_plant_banana_plantation
+	option = {  # ARG accepted
+		name = panama.56.a
+		log = "[GetDateText]: [This.GetName]: panama.56.a executed"
+		trigger = { ARG = { has_country_flag = PAN_ARG_agriculture_coop } }
+		PAN = {
+			add_ideas = PAN_argentinian_agricultural_advisors
+			set_temp_variable = { treasury_change = -0.025 }
+			modify_treasury_effect = yes
+		}
+		# pay argentina
+		set_temp_variable = { treasury_change = 0.025 }
+		modify_treasury_effect = yes
+		hidden_effect = {
+			ARG = {
+				add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+				reverse_add_opinion_modifier = { target = PAN modifier = PAN_regional_cooperation }
+				clr_country_flag = PAN_ARG_agriculture_coop
+			}
+		}
+		ai_chance = { base = 1 }
+	}
+	option = {  # ARG rejected
+		name = panama.56.b
+		log = "[GetDateText]: [This.GetName]: panama.56.b executed"
+		trigger = { ARG = { NOT = { has_country_flag = PAN_ARG_agriculture_coop } } }
+		hidden_effect = { add_opinion_modifier = { target = ARG modifier = PAN_ARG_agriculture_coop } }
+		ai_chance = { base = 1 }
+	}
+}
+
 
 ###########################
 #        NEWS EVENTS      #
