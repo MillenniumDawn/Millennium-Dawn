@@ -3,6 +3,7 @@
 
 import os, sys, fnmatch, re
 import time, requests
+from path_utils import clean_filepath
 
 startTime = time.time()
 
@@ -31,7 +32,7 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
 						if closingBraces > 0:
 							hasNoSpace = re.search(r'([^\s]+){|{([^\s]+)', line, re.M | re.I)  # If no space before or after brace
 							if hasNoSpace: #If regex finds open braces not styled correctly
-								print("WARNING: Missing a space before or after open brace at {0} Line number: {1}".format(filepath, lineNum))
+								print("WARNING: Missing a space before or after open brace at {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
 								warningErrors += 1
 				if "}" in line: #if there is an close brace in this line
 					hasComment = re.search(r'#.*[{}]+', line, re.M | re.I)  # If comment at the start or before {
@@ -44,13 +45,13 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
 						if openingBraces > 0:
 							hasNoSpace = re.search(r'([^\s]+)}|}([^\s]+)', line,re.M | re.I)   # If no space before or after brace
 							if hasNoSpace: #If regex finds open braces not styled correctly
-								print("WARNING: Missing a space before or after close brace at {0} Line number: {1}".format(filepath, lineNum))
+								print("WARNING: Missing a space before or after close brace at {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
 								warningErrors += 1
 				if "\"" in line: #if the line has a qoute
 					if (line.count('\"') % 2) !=0: #if there are an odd number of qoutes on this line
 						hasComment = re.search(r'#.*[\"]+', line, re.M | re.I)  # If comment at the start or before "
 						if not hasComment: #if there is no comment before the qoute
-							print("WARNING: Missing a quotation sign at {0} Line number: {1}".format(filepath,lineNum))
+							print("WARNING: Missing a quotation sign at {0} Line number: {1}".format(clean_filepath(filepath),lineNum))
 							warningErrors += 1
 
 				if "=" in line: #if the line has an equal sign
@@ -59,17 +60,17 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
 					equalSign = line.count('=') - line.count(' = ') - line.count(' =\n')
 
 					if (line.count('  =') > 0) or (line.count('=  ') > 0) :
-						print("WARNING: Two spaces before or after an equal sign at {0} Line number: {1}".format(filepath, lineNum))
+						print("WARNING: Two spaces before or after an equal sign at {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
 						equalSign = equalSign - line.count('  =') - line.count('=  ')
 						warningErrors += 1
 					if equalSign != 0: #if there are equal signs that aren't used correctly
-						print("WARNING: Missing a space before or after an equal sign at {0} Line number: {1}".format(filepath,lineNum))
+						print("WARNING: Missing a space before or after an equal sign at {0} Line number: {1}".format(clean_filepath(filepath),lineNum))
 						warningErrors += 1
 				if "    " in line: #if 4 spaces in the line
-					print("WARNING: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNum))
+					print("WARNING: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(clean_filepath(filepath),lineNum))
 					warningErrors += 1
 				if openBraces[0] <= -1:
-					print("ERROR: A possible missing curly brace {{ in file {} {{line {1}}}".format(filepath, lineNum))
+					print("ERROR: A possible missing curly brace {{ in file {} {{line {1}}}".format(clean_filepath(filepath), lineNum))
 					openBraces[0] = 0
 					fixedErrors += 1
 
@@ -117,7 +118,7 @@ def main():
 		try:
 			bad_count, warningErrors, message = check_basic_style(filename, bad_count, warningErrors, message)
 		except:
-			print(f"{filename} has a potentially broken curly brace or some other fixes...")
+			print(f"{clean_filepath(filename)} has a potentially broken curly brace or some other fixes...")
 			bad_count += 1
 
 	print("------\nChecked {0} files\nTotal Errors detected: {1}\nTotal Warnings detected: {2}".format(len(files_list), bad_count, warningErrors))
