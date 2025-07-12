@@ -13,8 +13,8 @@ add_namespace = CZE_Army_2010
 add_namespace = CZE_Army_2020
 add_namespace = CZE_TV_Crisis
 add_namespace = CZE_monarchy_event
-add_namespace = CZE_SLO_monarchy_collaboration
-add_namespace = CZE_AUS_monarchy_events
+add_namespace = CZE_SLO_monarchy_event
+add_namespace = CZE_AUS_monarchy_event
 add_namespace = CZE_HUN_monarchy_events
 
 
@@ -12134,286 +12134,11 @@ news_event = {
 
 }
 
-# Start the decisions to improve relations with SLO (see CZE_two_nations_one_crown focus)
-country_event = {
-	id = CZE_monarchy_event.22
-	title = CZE_monarchy_event.22.t
-	desc = CZE_monarchy_event.22.d
-
-	is_triggered_only = yes
-
-	trigger = {
-		tag = CZE
-	}
-
-	option = {
-		name = CZE_monarchy_event.22.a
-		set_country_flag = CZE_SLO_monarchy_collaboration
-
-		custom_effect_tooltip = CZE_SLO_monarchy_decisions_TT
-
-		set_variable = {
-		var =  CZE_SLO_monarchy_collaboration_plus
-		value = 0
-	}
-
-		ai_chance = {
-			base = 80
-		}
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.a executed"
-	}
-
-	option = {
-		name = CZE_monarchy_event.22.b
-
-		SLO = { country_event = { id = CZE_monarchy_event.23 }}
-
-		clr_country_flag = CZE_SLO_monarchy_collaboration
-
-		custom_effect_tooltip = CZE_SLO_monarchy_TT
-
-		ai_chance = {
-			base = 20
-		}
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.b executed"
-	}
-
-	option = {
-		name = CZE_monarchy_event.22.c
-
-		trigger = {
-			has_variable = CZE_SLO_monarchy_collaboration_plus
-		}
-
-		set_country_flag = CZE_SLO_monarchy_collaboration
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.22.c executed"
-	}
-}
-
-# Demand the annexation of SLO
-country_event = {
-	id = CZE_monarchy_event.23
-	title = CZE_monarchy_event.23.t
-	desc = CZE_monarchy_event.23.d
-
-	is_triggered_only = yes
-
-	trigger = {
-		tag = SLO
-	}
-
-	# Accepted subjugation
-	option = {
-		name = CZE_monarchy_event.23.a
-
-		CZE = { country_event = { id = CZE_monarchy_event.26 }}
-
-		ai_chance = {
-			base = 50
-			modifier = {
-				add = 50
-				has_government = nationalist
-			}
-			modifier = {
-				factor = 0
-				has_government = communism
-			}
-			modifier = {
-				add = CZE_SLO_monarchy_collaboration_plus
-			}
-		}
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.23.a executed"
-	}
-
-	# Denied subjugation
-	option = {
-		name = CZE_monarchy_event.23.b
-
-		CZE = { country_event = { id = CZE_monarchy_event.25 }}
-
-		ai_chance = {
-			base = 50
-			modifier = {
-				add = 50
-				has_government = communism
-			}
-			modifier = {
-				factor = 0
-				has_government = nationalist
-			}
-			modifier = {
-				add = -CZE_SLO_monarchy_collaboration_plus
-			}
-		}
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.23.b executed"
-	}
-
-	#For debugging
-	option = {
-		name = CZE_monarchy_event.23.c
-
-		SLO = {
-			set_temp_variable = { rul_party_temp = 23}
-			change_ruling_party_effect = yes
-			set_politics = {
-				ruling_party = nationalist
-			}
-		}
-
-		custom_effect_tooltip = CZE_SLO_monarchy_TT
-
-		ai_chance = {
-			base = 0
-		}
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.23.c executed"
-	}
-}
-
-# Anexation of SLO
-news_event = {
-	id = CZE_monarchy_event.24
-	title = CZE_monarchy_event.24.t
-	desc = CZE_monarchy_event.24.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = CZE_monarchy_event.24.a
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.24.b executed"
-	}
-}
-
-# CZE: SLO dont accept
-country_event = {
-	id = CZE_monarchy_event.25
-	title = CZE_monarchy_event.25.t
-	desc = CZE_monarchy_event.25.d
-
-	is_triggered_only = yes
-
-	trigger = {
-		original_tag = CZE
-	}
-
-	option = {
-		name = CZE_monarchy_event.25.a
-
-		CZE = {
-			create_wargoal = {
-				type = annex_everything
-				target = SLO
-			}
-		}
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.25.b executed"
-
-		ai_chance = { base = 100 }
-	}
-
-}
-
-################### CZE - SLO Monarchists events @@@@@@@@@@@@@@@@@@@@@@
-# CZE event annexing SLO
-country_event = {
-	id = CZE_monarchy_event.26
-	title = CZE_monarchy_event.26.t
-	desc = CZE_monarchy_event.26.d
-
-	is_triggered_only = yes
-
-	trigger = { original_tag = CZE }
-
-	option = {
-		name = CZE_monarchy_event.26.a
-
-		trigger = {
-			check_variable = { CZE_SLO_monarchy_collaboration_plus > 49}
-		}
-
-		annex_country = {
-			target = SLO
-		}
-
-		clear_variable = CZE_SLO_monarchy_collaboration_plus
-
-		news_event = { id = CZE_monarchy_event.24 days = 1}
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.26.a executed"
-
-		ai_chance = { base = 100 }
-	}
-
-	option = {
-		name = CZE_monarchy_event.26.b
-
-		trigger = {
-			check_variable = { CZE_SLO_monarchy_collaboration_plus > 50}
-		}
-
-		annex_country = {
-			target = SLO
-			transfer_troops = yes
-		}
-		ROOT = {
-			add_state_core = 119
-			add_state_core = 120
-		}
-
-		clear_variable = CZE_SLO_monarchy_collaboration_plus
-
-		news_event = { id = CZE_monarchy_event.24 days = 1}
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.26.b executed"
-
-		ai_chance = { base = 100 }
-	}
-}
-
-news_event = {
-	id = CZE_monarchy_event.27
-	title = CZE_monarchy_event.27.t
-	desc = CZE_monarchy_event.27.d
-
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	option = {
-		name = CZE_monarchy_event.27.a
-
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.27.a executed"
-
-	}
-}
-
-news_event = {
-	id = CZE_monarchy_event.28
-	title = CZE_monarchy_event.28.t
-	desc = CZE_monarchy_event.28.d
-
-	is_triggered_only = yes
-	fire_only_once = yes
-
-	option = {
-		name = CZE_monarchy_event.28.a
-
-
-		log = "[GetDateText]: [This.GetName]: CZE_monarchy_event.28.a executed"
-
-	}
-}
-
 # Receive an investment proposal from CZE as SLO
 country_event = {
-	id = CZE_SLO_monarchy_collaboration.1
-	title = CZE_SLO_monarchy_collaboration.1.t
-	desc = CZE_SLO_monarchy_collaboration.1.d
+	id = CZE_SLO_monarchy_event.1
+	title = CZE_SLO_monarchy_event.1.t
+	desc = CZE_SLO_monarchy_event.1.d
 
 	is_triggered_only = yes
 
@@ -12422,11 +12147,11 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_SLO_monarchy_collaboration.1.a
+		name = CZE_SLO_monarchy_event.1.a
 
-		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.2 days = 1}}
+		CZE = { country_event = { id = CZE_SLO_monarchy_event.2 days = 1}}
 
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.1.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.1.a executed"
 
 		ai_chance = {
 			base = 70
@@ -12438,11 +12163,11 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_SLO_monarchy_collaboration.1.b
+		name = CZE_SLO_monarchy_event.1.b
 
-		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.6 days = 1}}
+		CZE = { country_event = { id = CZE_SLO_monarchy_event.6 days = 1}}
 
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.1.b executed"
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.1.b executed"
 
 		ai_chance = {
 			base = 30
@@ -12456,9 +12181,9 @@ country_event = {
 
 # Accepted civilian investment
 country_event = {
-	id = CZE_SLO_monarchy_collaboration.2
-	title = CZE_SLO_monarchy_collaboration.2.t
-	desc = CZE_SLO_monarchy_collaboration.2.d
+	id = CZE_SLO_monarchy_event.2
+	title = CZE_SLO_monarchy_event.2.t
+	desc = CZE_SLO_monarchy_event.2.d
 
 	is_triggered_only = yes
 
@@ -12467,7 +12192,7 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_SLO_monarchy_collaboration.2.a
+		name = CZE_SLO_monarchy_event.2.a
 
 		119 = {
 			add_building_construction = {
@@ -12503,15 +12228,48 @@ country_event = {
 			}
 		}
 
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.2.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.2.a executed"
 	}
 }
 
-# Denied :(
+
+
 country_event = {
-	id = CZE_SLO_monarchy_collaboration.6
-	title = CZE_SLO_monarchy_collaboration.6.t
-	desc = CZE_SLO_monarchy_collaboration.6.d
+	id = CZE_SLO_monarchy_event.3
+	title = CZE_SLO_monarchy_event.3.t
+	desc = CZE_SLO_monarchy_event.3.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SLO
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.3.a
+
+		SLO = {army_experience = 20}
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_event.4}}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.2.a executed"
+	}
+
+	option = {
+
+		name = CZE_SLO_monarchy_event.3.b
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_event.5}}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.2.a executed"
+	}
+}
+
+# Accepted :)
+country_event = {
+	id = CZE_SLO_monarchy_event.4
+	title = CZE_SLO_monarchy_event.4.t
+	desc = CZE_SLO_monarchy_event.4.d
 
 	is_triggered_only = yes
 
@@ -12520,7 +12278,415 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_SLO_monarchy_collaboration.6.a
+		name = CZE_SLO_monarchy_event.4.a
+
+		army_experience = 20
+
+		add_to_variable = {
+			var = CZE_SLO_monarchy_collaboration_plus
+			value = 33
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.4.a executed"
+	}
+}
+
+# Denied :(
+country_event = {
+	id = CZE_SLO_monarchy_event.5
+	title = CZE_SLO_monarchy_event.5.t
+	desc = CZE_SLO_monarchy_event.5.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.5.a
+
+		army_experience = 30
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.5.a executed"
+	}
+}
+
+# Start the decisions to improve relations with SLO (see CZE_two_nations_one_crown focus)
+country_event = {
+	id = CZE_SLO_monarchy_event.7
+	title = CZE_SLO_monarchy_event.7.t
+	desc = CZE_SLO_monarchy_event.7.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.7.a
+		set_country_flag = CZE_SLO_monarchy_collaboration
+
+		custom_effect_tooltip = CZE_SLO_monarchy_decisions_TT
+
+		set_variable = {
+		var =  CZE_SLO_monarchy_collaboration_plus
+		value = 0
+	}
+
+		ai_chance = {
+			base = 80
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.7.a executed"
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.7.b
+
+		SLO = { country_event = { id = CZE_SLO_monarchy_event.8 }}
+
+		clr_country_flag = CZE_SLO_monarchy_collaboration
+
+		custom_effect_tooltip = CZE_SLO_monarchy_TT
+
+		ai_chance = {
+			base = 20
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.7.b executed"
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.7.c
+
+		trigger = {
+			has_variable = CZE_SLO_monarchy_collaboration_plus
+		}
+
+		set_country_flag = CZE_SLO_monarchy_collaboration
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.7.c executed"
+	}
+}
+
+# Demand the annexation of SLO
+country_event = {
+	id = CZE_SLO_monarchy_event.8
+	title = CZE_SLO_monarchy_event.8.t
+	desc = CZE_SLO_monarchy_event.8.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		tag = SLO
+	}
+
+	# Accepted subjugation
+	option = {
+		name = CZE_SLO_monarchy_event.8.a
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_event.11 }}
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 0
+				has_government = communism
+			}
+			modifier = {
+				add = CZE_SLO_monarchy_collaboration_plus
+			}
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.8.a executed"
+	}
+
+	# Denied subjugation
+	option = {
+		name = CZE_SLO_monarchy_event.8.b
+
+		CZE = { country_event = { id = CZE_SLO_monarchy_event.10 }}
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				has_government = communism
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
+			}
+			modifier = {
+				add = -CZE_SLO_monarchy_collaboration_plus
+			}
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.8.b executed"
+	}
+
+	#For debugging
+	option = {
+		name = CZE_SLO_monarchy_event.8.c
+
+		SLO = {
+			set_temp_variable = { rul_party_temp = 23}
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = nationalist
+			}
+		}
+
+		custom_effect_tooltip = CZE_SLO_monarchy_TT
+
+		ai_chance = {
+			base = 0
+		}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.8.c executed"
+	}
+}
+
+# Anexation of SLO
+news_event = {
+	id = CZE_SLO_monarchy_event.9
+	title = CZE_SLO_monarchy_event.9.t
+	desc = CZE_SLO_monarchy_event.9.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = CZE_SLO_monarchy_event.9.a
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.9.b executed"
+	}
+}
+
+# CZE: SLO dont accept
+country_event = {
+	id = CZE_SLO_monarchy_event.10
+	title = CZE_SLO_monarchy_event.10.t
+	desc = CZE_SLO_monarchy_event.10.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.10.a
+
+		CZE = {
+			create_wargoal = {
+				type = annex_everything
+				target = SLO
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.10.b executed"
+
+		ai_chance = { base = 100 }
+	}
+
+}
+
+country_event = {
+	id = CZE_SLO_monarchy_event.11
+	title = CZE_SLO_monarchy_event.11.t
+	desc = CZE_SLO_monarchy_event.11.d
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = CZE }
+
+	option = {
+		name = CZE_SLO_monarchy_event.11.a
+
+		trigger = {
+			check_variable = { CZE_SLO_monarchy_collaboration_plus < 49}
+		}
+
+		annex_country = {
+			target = SLO
+		}
+
+		clear_variable = CZE_SLO_monarchy_collaboration_plus
+
+		news_event = { id = CZE_SLO_monarchy_event.9 days = 1}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.11.a executed"
+
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.11.b
+
+		trigger = {
+			check_variable = { CZE_SLO_monarchy_collaboration_plus > 50}
+		}
+
+		annex_country = {
+			target = SLO
+			transfer_troops = yes
+		}
+		ROOT = {
+			add_state_core = 119
+			add_state_core = 120
+		}
+
+		clear_variable = CZE_SLO_monarchy_collaboration_plus
+
+		news_event = { id = CZE_SLO_monarchy_event.9 days = 1}
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.11.b executed"
+
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = CZE_SLO_monarchy_event.12
+	title = CZE_SLO_monarchy_event.12.t
+	desc = CZE_SLO_monarchy_event.12.d
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = CZE_SLO_monarchy_event.12.a
+
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.12.a executed"
+
+	}
+}
+
+news_event = {
+	id = CZE_SLO_monarchy_event.13
+	title = CZE_SLO_monarchy_event.13.t
+	desc = CZE_SLO_monarchy_event.13.d
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = CZE_SLO_monarchy_event.13.a
+
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.13.a executed"
+
+	}
+}
+
+### Events for the scalation if SLO join NATO
+
+# Adding the idea to avoid the AI calling enemies
+country_event = {
+	id = CZE_SLO_monarchy_event.14
+	title = CZE_SLO_monarchy_event.14.t
+	desc = CZE_SLO_monarchy_event.14.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = CZE_SLO_monarchy_event.14.a
+
+		SLO = { add_ideas = CZE_SLO_NATO_pressure }
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.14.a executed"
+	}
+}
+
+# Notifying CZE the end of their NATO unwilliness to join
+country_event = {
+	id = CZE_SLO_monarchy_event.15
+	title = CZE_SLO_monarchy_event.15.t
+	desc = CZE_SLO_monarchy_event.15.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = CZE_SLO_monarchy_event.15.a
+
+		news_event = { id = CZE_SLO_monarchy_event.16 }
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.15.a executed"
+	}
+}
+
+# Notifying about the NATO undercovered pressure
+news_event = {
+	id = CZE_SLO_monarchy_event.16
+	title = CZE_SLO_monarchy_event.16.t
+	desc = CZE_SLO_monarchy_event.16.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = CZE_SLO_monarchy_event.15.a
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.16.a executed"
+	}
+}
+
+# Event notifying the NATO unwilliness to join SLO
+country_event = {
+	id = CZE_SLO_monarchy_event.17
+	title = CZE_SLO_monarchy_event.17.t
+	desc = CZE_SLO_monarchy_event.17.d
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = CZE_SLO_monarchy_event.17.a
+
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.17.a executed"
+	}
+}
+
+
+#################### CZE - AUS monarchist events ###############################
+#Notifying AUS about the monarchist intromision, see "Austrian monarchists" focus
+country_event = {
+	id = CZE_AUS_monarchy_event.1
+	title = CZE_AUS_monarchy_event.1.t
+	desc = CZE_AUS_monarchy_event.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = CZE_AUS_monarchy_event.1.a
+
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.1.a executed"
+
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# Denied :(
+country_event = {
+	id = CZE_SLO_monarchy_event.6
+	title = CZE_SLO_monarchy_event.6.t
+	desc = CZE_SLO_monarchy_event.6.d
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CZE
+	}
+
+	option = {
+		name = CZE_SLO_monarchy_event.6.a
 
 		CZE = {
 			118 = {
@@ -12536,120 +12702,22 @@ country_event = {
 			}
 		}
 
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.6.a executed"
-	}
-}
-
-country_event = {
-	id = CZE_SLO_monarchy_collaboration.3
-	title = CZE_SLO_monarchy_collaboration.3.t
-	desc = CZE_SLO_monarchy_collaboration.3.d
-
-	is_triggered_only = yes
-
-	trigger = {
-		original_tag = SLO
-	}
-
-	option = {
-		name = CZE_SLO_monarchy_collaboration.3.a
-
-		SLO = {army_experience = 20}
-
-		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.4}}
-
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.2.a executed"
-	}
-
-	option = {
-
-		name = CZE_SLO_monarchy_collaboration.3.b
-
-		CZE = { country_event = { id = CZE_SLO_monarchy_collaboration.5}}
-
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.2.a executed"
-	}
-}
-
-# Accepted :)
-country_event = {
-	id = CZE_SLO_monarchy_collaboration.4
-	title = CZE_SLO_monarchy_collaboration.4.t
-	desc = CZE_SLO_monarchy_collaboration.4.d
-
-	is_triggered_only = yes
-
-	trigger = {
-		original_tag = CZE
-	}
-
-	option = {
-		name = CZE_SLO_monarchy_collaboration.4.a
-
-		army_experience = 20
-
-		add_to_variable = {
-			var = CZE_SLO_monarchy_collaboration_plus
-			value = 33
-		}
-
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.4.a executed"
-	}
-}
-
-# Denied :(
-country_event = {
-	id = CZE_SLO_monarchy_collaboration.5
-	title = CZE_SLO_monarchy_collaboration.5.t
-	desc = CZE_SLO_monarchy_collaboration.5.d
-
-	is_triggered_only = yes
-
-	trigger = {
-		original_tag = CZE
-	}
-
-	option = {
-		name = CZE_SLO_monarchy_collaboration.5.a
-
-		army_experience = 30
-
-		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_collaboration.5.a executed"
-	}
-}
-
-#################### CZE - AUS monarchist events ###############################
-#Notifying AUS about the monarchist intromision, see "Austrian monarchists" focus
-country_event = {
-	id = CZE_AUS_monarchy_events.1
-	title = CZE_AUS_monarchy_events.1.t
-	desc = CZE_AUS_monarchy_events.1.d
-
-	is_triggered_only = yes
-
-	option = {
-		name = CZE_AUS_monarchy_events.1.a
-
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.1.a executed"
-
-		ai_chance = {
-			base = 50
-		}
+		log = "[GetDateText]: [This.GetName]: CZE_SLO_monarchy_event.6.a executed"
 	}
 }
 
 #Notifying AUS about the monarchist intromision expansion
 country_event = {
-	id = CZE_AUS_monarchy_events.2
-	title = CZE_AUS_monarchy_events.2.t
-	desc = CZE_AUS_monarchy_events.2.d
+	id = CZE_AUS_monarchy_event.2
+	title = CZE_AUS_monarchy_event.2.t
+	desc = CZE_AUS_monarchy_event.2.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.2.a
+		name = CZE_AUS_monarchy_event.2.a
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.2.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.2.a executed"
 
 		ai_chance = {
 			base = 50
@@ -12659,19 +12727,19 @@ country_event = {
 
 # UK event see "Encourage British Royal Family support" focus
 country_event = {
-	id = CZE_AUS_monarchy_events.3
-	title = CZE_AUS_monarchy_events.3.t
-	desc = CZE_AUS_monarchy_events.3.d
+	id = CZE_AUS_monarchy_event.3
+	title = CZE_AUS_monarchy_event.3.t
+	desc = CZE_AUS_monarchy_event.3.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.3.a
+		name = CZE_AUS_monarchy_event.3.a
 
-		BEL = { country_event = { id = CZE_AUS_monarchy_events.4 days = 1}}
+		BEL = { country_event = { id = CZE_AUS_monarchy_event.4 days = 1}}
 
 		ROOT = {
-			country_event = { id = CZE_AUS_monarchy_events.5 days = 1}
+			country_event = { id = CZE_AUS_monarchy_event.5 days = 1}
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 		}
@@ -12719,21 +12787,21 @@ country_event = {
 				NOT = { original_tag = CZE}
 				NOT = { original_tag = BEL}
 			}
-			country_event = { id = CZE_AUS_monarchy_events.5 }
+			country_event = { id = CZE_AUS_monarchy_event.5 }
 		}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.3.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.3.a executed"
 
 		ai_chance = {
 			base = 50
 		}
 	}
 	option = {
-		name = CZE_AUS_monarchy_events.3.b
+		name = CZE_AUS_monarchy_event.3.b
 
-		BEL = { country_event = { id = CZE_AUS_monarchy_events.6 days = 1}}
+		BEL = { country_event = { id = CZE_AUS_monarchy_event.6 days = 1}}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.3.b executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.3.b executed"
 
 		ai_chance = {
 			base = 50
@@ -12744,9 +12812,9 @@ country_event = {
 
 #BEL event if the UK accepts
 country_event = {
-	id = CZE_AUS_monarchy_events.4
-	title = CZE_AUS_monarchy_events.4.t
-	desc = CZE_AUS_monarchy_events.4.d
+	id = CZE_AUS_monarchy_event.4
+	title = CZE_AUS_monarchy_event.4.t
+	desc = CZE_AUS_monarchy_event.4.d
 
 	is_triggered_only = yes
 
@@ -12755,7 +12823,7 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_AUS_monarchy_events.4.a
+		name = CZE_AUS_monarchy_event.4.a
 
 		trigger = {
 			BEL = { NOT = { has_government = communism}}
@@ -12769,7 +12837,7 @@ country_event = {
 			days = 180
 		}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.4.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.4.a executed"
 
 		ai_chance = {
 			base = 100
@@ -12778,7 +12846,7 @@ country_event = {
 
 	# Secret option for Belgium if communist
 	option = {
-		name = CZE_AUS_monarchy_events.4.b
+		name = CZE_AUS_monarchy_event.4.b
 
 		trigger = {
 			BEL = {
@@ -12788,7 +12856,7 @@ country_event = {
 
 		CZE = {complete_national_focus = CZE_visit_belgium}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.4.b executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.4.b executed"
 
 		ai_chance = {
 			base = 100
@@ -12799,14 +12867,14 @@ country_event = {
 
 # Generic event for all Monarchies in Europe
 country_event = {
-	id = CZE_AUS_monarchy_events.5
-	title = CZE_AUS_monarchy_events.5.t
-	desc = CZE_AUS_monarchy_events.5.d
+	id = CZE_AUS_monarchy_event.5
+	title = CZE_AUS_monarchy_event.5.t
+	desc = CZE_AUS_monarchy_event.5.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.5.a
+		name = CZE_AUS_monarchy_event.5.a
 
 		ROOT = {
 			add_timed_idea = {
@@ -12815,7 +12883,7 @@ country_event = {
 			}
 		}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.5.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.5.a executed"
 
 		ai_chance = {
 			base = 50
@@ -12823,9 +12891,9 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_AUS_monarchy_events.5.b
+		name = CZE_AUS_monarchy_event.5.b
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.5.b executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.5.b executed"
 
 		ai_chance = {
 			base = 50
@@ -12836,14 +12904,14 @@ country_event = {
 
 # BEL event if UK refuses
 country_event = {
-	id = CZE_AUS_monarchy_events.6
-	title = CZE_AUS_monarchy_events.6.t
-	desc = CZE_AUS_monarchy_events.6.d
+	id = CZE_AUS_monarchy_event.6
+	title = CZE_AUS_monarchy_event.6.t
+	desc = CZE_AUS_monarchy_event.6.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.6.a
+		name = CZE_AUS_monarchy_event.6.a
 
 		BEL = {set_country_flag = CZE_BEL_plan}
 		CZE = {set_country_flag = CZE_BEL_plan}
@@ -12855,7 +12923,7 @@ country_event = {
 			}
 		}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.6.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.6.a executed"
 
 		ai_chance = {
 			base = 50
@@ -12863,7 +12931,7 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_AUS_monarchy_events.6.b
+		name = CZE_AUS_monarchy_event.6.b
 
 		trigger = {
 			BEL = {
@@ -12873,7 +12941,7 @@ country_event = {
 
 		complete_national_focus = CZE_visit_belgium
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.6.b executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.6.b executed"
 
 		ai_chance = {
 			base = 50
@@ -12884,18 +12952,18 @@ country_event = {
 
 # BEL Event of the return of the Archduke, see focus "Initiate the return of the Archduke Lorenz"
 country_event = {
-	id = CZE_AUS_monarchy_events.7
-	title = CZE_AUS_monarchy_events.7.t
-	desc = CZE_AUS_monarchy_events.7.d
+	id = CZE_AUS_monarchy_event.7
+	title = CZE_AUS_monarchy_event.7.t
+	desc = CZE_AUS_monarchy_event.7.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.7.a
+		name = CZE_AUS_monarchy_event.7.a
 
-		country_event = { id = CZE_AUS_monarchy_events.8 days = 15}
+		country_event = { id = CZE_AUS_monarchy_event.8 days = 15}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.7.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.7.a executed"
 
 		ai_chance = {
 			base = 50
@@ -12905,20 +12973,20 @@ country_event = {
 
 # CZE event for preparing the return
 country_event = {
-	id = CZE_AUS_monarchy_events.8
-	title = CZE_AUS_monarchy_events.8.t
-	desc = CZE_AUS_monarchy_events.8.d
+	id = CZE_AUS_monarchy_event.8
+	title = CZE_AUS_monarchy_event.8.t
+	desc = CZE_AUS_monarchy_event.8.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.8.a
+		name = CZE_AUS_monarchy_event.8.a
 
 		set_country_flag = CZE_return_of_archduke
 
 		custom_effect_tooltip = CZE_return_of_archduke_TT
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.8.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.8.a executed"
 
 		ai_chance = {
 			base = 50
@@ -12928,14 +12996,14 @@ country_event = {
 
 # AUS event for the ascens to power of monarchist. see Kingdown of Austria focus
 country_event = {
-	id = CZE_AUS_monarchy_events.9
-	title = CZE_AUS_monarchy_events.9.t
-	desc = CZE_AUS_monarchy_events.9.d
+	id = CZE_AUS_monarchy_event.9
+	title = CZE_AUS_monarchy_event.9.t
+	desc = CZE_AUS_monarchy_event.9.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.9.a
+		name = CZE_AUS_monarchy_event.9.a
 
 		CZE = {
 		diplomatic_relation = {
@@ -13002,9 +13070,9 @@ country_event = {
 			}
 		}
 
-		news_event = { id = CZE_AUS_monarchy_events.13 days = 1}
+		news_event = { id = CZE_AUS_monarchy_event.13 days = 1}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.9.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.9.a executed"
 
 		ai_chance = {
 			base = 50
@@ -13013,29 +13081,29 @@ country_event = {
 }
 
 news_event = {
-	id = CZE_AUS_monarchy_events.13
-	title = CZE_AUS_monarchy_events.13.t
-	desc = CZE_AUS_monarchy_events.13.d
+	id = CZE_AUS_monarchy_event.13
+	title = CZE_AUS_monarchy_event.13.t
+	desc = CZE_AUS_monarchy_event.13.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.13.a
+		name = CZE_AUS_monarchy_event.13.a
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.13.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.13.a executed"
 	}
 }
 
 # AUS event for "Reach to the House of Habsburg-Lorraine" focus
 country_event = {
-	id = CZE_AUS_monarchy_events.10
-	title = CZE_AUS_monarchy_events.10.t
-	desc = CZE_AUS_monarchy_events.10.d
+	id = CZE_AUS_monarchy_event.10
+	title = CZE_AUS_monarchy_event.10.t
+	desc = CZE_AUS_monarchy_event.10.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.10.a
+		name = CZE_AUS_monarchy_event.10.a
 
 		trigger = {
 			AUS = {
@@ -13047,7 +13115,7 @@ country_event = {
 
 		add_ideas = CZE_AUS_payment_to_habsburgs
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.10.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.10.a executed"
 
 		ai_chance = {
 			base = 50
@@ -13055,13 +13123,13 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_AUS_monarchy_events.10.b
+		name = CZE_AUS_monarchy_event.10.b
 
 		trigger = {
 			AUS = { has_government = nationalist }
 		}
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.10.b executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.10.b executed"
 
 		ai_chance = {
 			base = 50
@@ -13069,7 +13137,7 @@ country_event = {
 	}
 
 	option = {
-		name = CZE_AUS_monarchy_events.10.c
+		name = CZE_AUS_monarchy_event.10.c
 
 		add_stability = -0.1
 
@@ -13079,7 +13147,7 @@ country_event = {
 		add_relative_party_popularity = yes
 
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.10.c executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.10.c executed"
 
 		ai_chance = {
 			base = 50
@@ -13089,18 +13157,18 @@ country_event = {
 }
 
 country_event = {
-	id = CZE_AUS_monarchy_events.11
-	title = CZE_AUS_monarchy_events.11.t
-	desc = CZE_AUS_monarchy_events.11.d
+	id = CZE_AUS_monarchy_event.11
+	title = CZE_AUS_monarchy_event.11.t
+	desc = CZE_AUS_monarchy_event.11.d
 
 	is_triggered_only = yes
 
 	option = {
-		name = CZE_AUS_monarchy_events.11.a
+		name = CZE_AUS_monarchy_event.11.a
 
 		add_ideas = CZE_AUS_cooperation_with_the_habsburgs
 
-		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_events.11.a executed"
+		log = "[GetDateText]: [This.GetName]: CZE_AUS_monarchy_event.11.a executed"
 
 		ai_chance = {
 			base = 50
@@ -13109,9 +13177,9 @@ country_event = {
 }
 
 country_event = {
-	id = CZE_AUS_monarchy_events.12
-	title = CZE_AUS_monarchy_events.12.t
-	desc= CZE_AUS_monarchy_events.12.d
+	id = CZE_AUS_monarchy_event.12
+	title = CZE_AUS_monarchy_event.12.t
+	desc= CZE_AUS_monarchy_event.12.d
 
 	is_triggered_only = yes
 
