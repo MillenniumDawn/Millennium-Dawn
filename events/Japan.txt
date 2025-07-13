@@ -8,6 +8,7 @@ add_namespace = mdmosjap_EDT
 add_namespace = mdmosjap_japannews
 add_namespace = mdmosjap_japannews_kato
 add_namespace = japan_foreign_policy
+add_namespace = JAP_territorial
 
 #----------------------------------------------------------------
 #Radicalism Events
@@ -10657,5 +10658,703 @@ country_event = {
 		name = japan_foreign_policy.54.1
 		log = "[GetDateText]: [Root.GetName]: japan_foreign_policy.54.1"
 		add_political_power = -25
+	}
+}
+
+#----------------------------------------------------------------
+#territorial disputes
+#----------------------------------------------------------------
+
+#Initiating Northern Territories Negotiations
+country_event = {
+	id = JAP_territorial.01
+	title = JAP_territorial.01.t
+	desc = JAP_territorial.01.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.01.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.01.oA executed"
+		SOV = { country_event = JAP_territorial.02 }
+		
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#[JAP.GetName] Requests Northern Territories Negotiations
+country_event = {
+	id = JAP_territorial.02
+	title = JAP_territorial.02.t
+	desc = JAP_territorial.02.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.02.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.01.oA executed"
+		1168 = { 
+			transfer_state_to = JAP
+		}
+		SOV = {
+			 remove_state_core = 1168 
+			 remove_opinion_modifier = {
+				target = JAP
+				modifier = minor_border_dispute
+			}
+		}
+		JAP = { 
+			remove_opinion_modifier = {
+				target = SOV
+				modifier = minor_border_dispute
+			}
+			country_event = {
+				id = JAP_territorial.03
+				days = 5
+			} 
+		}
+
+		ai_chance = {
+			base = 1
+
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = JAP
+					value > 25
+				}
+				has_opinion = {
+					target = JAP
+					value < 50
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				has_opinion = {
+					target = JAP
+					value > 49
+				}
+				has_opinion = {
+					target = JAP
+					value < 75
+				}
+			}
+
+			modifier = {
+				factor = 2.5
+				has_opinion = {
+					target = JAP
+					value > 74
+				}
+				has_opinion = {
+					target = JAP
+					value < 100
+				}
+			}
+
+			modifier = {
+				factor = 3.0
+				has_opinion = {
+					target = JAP
+					value > 99
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				sender_influence_higher_10 = yes
+			}
+
+			modifier = {
+				factor = 2.5
+				sender_influence_higher_15 = yes
+			}
+
+			modifier = {
+				factor = 3.0
+				sender_influence_higher_25 = yes
+			}
+		}
+		#opinion60,influence20 = 1.0*2.0*2.0*2.5 = 10.0 10.0/10.0+10 = 0.5
+		#opinion100,infuluence30 = 1.0*3.0*2.0*2.5*3.0 = 45.0 45.0/45.0+10 = 0.818
+	}
+
+	option = {
+		name = JAP_territorial.02.oB
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.01.oB executed"
+		add_political_power = -50
+		JAP = { 
+			country_event = {
+				id = JAP_territorial.04
+				days = 5
+			} 
+		}
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#Agreement on the Return of the Northern Territories
+country_event = {
+	id = JAP_territorial.03
+	title = JAP_territorial.03.t
+	desc = JAP_territorial.03.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.03.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.03.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#Northern Territories Negotiations Breakdown
+country_event = {
+	id = JAP_territorial.04
+	title = JAP_territorial.04.t
+	desc = JAP_territorial.04.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.04.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.04.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = JAP_renegotiation_territory
+		
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#Initiate Senkaku Negotiations with [CHI.GetName]
+country_event = {
+	id = JAP_territorial.05
+	title = JAP_territorial.05.t
+	desc = JAP_territorial.05.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.05.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.05.oA executed"
+		CHI = { country_event = JAP_territorial.06 }
+		
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#[JAP.GetName] Proposes Territorial Negotiations
+country_event = {
+	id = JAP_territorial.06
+	title = JAP_territorial.06.t
+	desc = JAP_territorial.06.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.06.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.06.oA executed"
+		939 = {
+			remove_claim_by = CHI
+		}
+		CHI = {
+			remove_opinion_modifier = {
+				target = JAP
+				modifier = minor_border_dispute
+			}
+		}
+		JAP = { 
+			remove_opinion_modifier = {
+				target = CHI
+				modifier = minor_border_dispute
+			}
+			country_event = {
+				id = JAP_territorial.07
+				days = 5
+			}  
+		}
+		
+		ai_chance = {
+			base = 1
+
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = JAP
+					value > 25
+				}
+				has_opinion = {
+					target = JAP
+					value < 50
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				has_opinion = {
+					target = JAP
+					value > 49
+				}
+				has_opinion = {
+					target = JAP
+					value < 75
+				}
+			}
+
+			modifier = {
+				factor = 2.5
+				has_opinion = {
+					target = JAP
+					value > 74
+				}
+				has_opinion = {
+					target = JAP
+					value < 100
+				}
+			}
+
+			modifier = {
+				factor = 3.0
+				has_opinion = {
+					target = JAP
+					value > 99
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				sender_influence_higher_10 = yes
+			}
+
+			modifier = {
+				factor = 2.5
+				sender_influence_higher_15 = yes
+			}
+
+			modifier = {
+				factor = 3.0
+				sender_influence_higher_25 = yes
+			}
+		}
+		#opinion60,influence20 = 1.0*2.0*2.0*2.5 = 10.0 10.0/10.0+10 = 0.5
+		#opinion100,infuluence30 = 1.0*3.0*2.0*2.5*3.0 = 45.0 45.0/45.0+10 = 0.818
+	}
+
+	option = {
+		name = JAP_territorial.06.oB
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.06.oB executed"
+		add_political_power = -50
+		JAP = { 
+			country_event = {
+				id = JAP_territorial.08
+				days = 5
+			}  
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#[CHI.GetName] Withdraws Senkaku Claim!
+country_event = {
+	id = JAP_territorial.07
+	title = JAP_territorial.07.t
+	desc = JAP_territorial.07.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.07.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.07.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#[CHI.GetName] Maintains Its Claim
+country_event = {
+	id = JAP_territorial.08
+	title = JAP_territorial.08.t
+	desc = JAP_territorial.08.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.08.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.08.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = JAP_renegotiation_territory
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#Initiate Senkaku Negotiations with [TAI.GetName]
+country_event = {
+	id = JAP_territorial.09
+	title = JAP_territorial.09.t
+	desc = JAP_territorial.09.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.09.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.09.oA executed"
+		TAI = { country_event = JAP_territorial.10 }
+		
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#[JAP.GetName] Proposes Territorial Negotiations
+country_event = {
+	id = JAP_territorial.10
+	title = JAP_territorial.10.t
+	desc = JAP_territorial.10.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.10.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.10.oA executed"
+		939 = {
+			remove_claim_by = TAI
+		}
+		TAI = {
+			remove_opinion_modifier = {
+				target = JAP
+				modifier = minor_border_dispute
+			}
+		}
+		JAP = { 
+			remove_opinion_modifier = {
+				target = TAI
+				modifier = minor_border_dispute
+			}
+			country_event = {
+				id = JAP_territorial.11
+				days = 5
+			}  
+		}
+		
+		ai_chance = {
+			base = 1
+
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = JAP
+					value > 25
+				}
+				has_opinion = {
+					target = JAP
+					value < 50
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				has_opinion = {
+					target = JAP
+					value > 49
+				}
+				has_opinion = {
+					target = JAP
+					value < 75
+				}
+			}
+
+			modifier = {
+				factor = 2.5
+				has_opinion = {
+					target = JAP
+					value > 74
+				}
+				has_opinion = {
+					target = JAP
+					value < 100
+				}
+			}
+
+			modifier = {
+				factor = 3.0
+				has_opinion = {
+					target = JAP
+					value > 99
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				sender_influence_higher_10 = yes
+			}
+
+			modifier = {
+				factor = 2.5
+				sender_influence_higher_15 = yes
+			}
+
+			modifier = {
+				factor = 3.0
+				sender_influence_higher_25 = yes
+			}
+		}
+		#opinion60,influence20 = 1.0*2.0*2.0*2.5 = 10.0 10.0/10.0+10 = 0.5
+		#opinion100,infuluence30 = 1.0*3.0*2.0*2.5*3.0 = 45.0 45.0/45.0+10 = 0.818
+	}
+
+	option = {
+		name = JAP_territorial.10.oB
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.10.oB executed"
+		add_political_power = -50
+		JAP = { 
+			country_event = {
+				id = JAP_territorial.12
+				days = 5
+			}  
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#[TAI.GetName] Withdraws Senkaku Claim!
+country_event = {
+	id = JAP_territorial.11
+	title = JAP_territorial.11.t
+	desc = JAP_territorial.11.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.11.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.11.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#[TAI.GetName] Refuses to Withdraw Claim
+country_event = {
+	id = JAP_territorial.12
+	title = JAP_territorial.12.t
+	desc = JAP_territorial.12.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.12.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.12.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = JAP_renegotiation_territory
+		
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#Initiate Takeshima Negotiations with [KOR.GetName]
+country_event = {
+	id = JAP_territorial.13
+	title = JAP_territorial.13.t
+	desc = JAP_territorial.13.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.13.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.13.oA executed"
+		KOR = { country_event = JAP_territorial.14 }
+		
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#[JAP.GetName] Proposes Negotiations on Dokdo
+country_event = {
+	id = JAP_territorial.14
+	title = JAP_territorial.14.t
+	desc = JAP_territorial.14.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.14.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.14.oA executed"
+		KOR = {
+			remove_opinion_modifier = {
+				target = JAP
+				modifier = minor_border_dispute
+			}
+		}
+		JAP = { 
+			remove_opinion_modifier = {
+				target = KOR
+				modifier = minor_border_dispute
+			}
+			country_event = {
+				id = JAP_territorial.15
+				days = 5
+			}  
+		}
+		
+		ai_chance = {
+			base = 1
+
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = JAP
+					value > 25
+				}
+				has_opinion = {
+					target = JAP
+					value < 50
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				has_opinion = {
+					target = JAP
+					value > 49
+				}
+				has_opinion = {
+					target = JAP
+					value < 75
+				}
+			}
+
+			modifier = {
+				factor = 2.5
+				has_opinion = {
+					target = JAP
+					value > 74
+				}
+				has_opinion = {
+					target = JAP
+					value < 100
+				}
+			}
+
+			modifier = {
+				factor = 3.0
+				has_opinion = {
+					target = JAP
+					value > 99
+				}
+			}
+
+			modifier = {
+				factor = 2.0
+				sender_influence_higher_10 = yes
+			}
+
+			modifier = {
+				factor = 2.5
+				sender_influence_higher_15 = yes
+			}
+
+			modifier = {
+				factor = 3.0
+				sender_influence_higher_25 = yes
+			}
+		}
+		#opinion60,influence20 = 1.0*2.0*2.0*2.5 = 10.0 10.0/10.0+10 = 0.5
+		#opinion100,infuluence30 = 1.0*3.0*2.0*2.5*3.0 = 45.0 45.0/45.0+10 = 0.818
+	}
+
+	option = {
+		name = JAP_territorial.14.oB
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.14.oB executed"
+		add_political_power = -50
+		JAP = { 
+			country_event = {
+				id = JAP_territorial.16
+				days = 5
+			}  
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+#[KOR.GetName] Agrees to Transfer Takeshima!
+country_event = {
+	id = JAP_territorial.15
+	title = JAP_territorial.15.t
+	desc = JAP_territorial.15.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.15.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.15.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#[KOR.GetName] Refuses Takeshima Negotiations
+country_event = {
+	id = JAP_territorial.16
+	title = JAP_territorial.16.t
+	desc = JAP_territorial.16.d
+	is_triggered_only = yes
+	
+	option = {
+		name = JAP_territorial.16.oA
+		log = "[GetDateText]: [This.GetName]: JAP_territorial.16.oA executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		set_temp_variable = { temp_outlook_increase = -0.05 }
+		add_relative_party_popularity = yes
+		custom_effect_tooltip = JAP_renegotiation_territory
+		
+		ai_chance = {
+			base = 1
+		}
 	}
 }
