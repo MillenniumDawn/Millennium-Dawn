@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os, sys, fnmatch
 import time
+from path_utils import clean_filepath
 
 #startTime = time.time()
 
@@ -50,14 +51,14 @@ def check_basic_style(filepath):
                         brackets_list.append('(')
                     elif (c == ')'):
                         if (len(brackets_list) > 0 and brackets_list[-1] in ['{', '[']):
-                            print("ERROR: Possible missing round bracket ')' detected at {0} Line number: {1}".format(filepath,lineNumber))
+                            print("ERROR: Possible missing round bracket ')' detected at {0} Line number: {1}".format(clean_filepath(filepath),lineNumber))
                             bad_count_file += 1
                         brackets_list.append(')')
                     elif (c == '['):
                         brackets_list.append('[')
                     elif (c == ']'):
                         if (len(brackets_list) > 0 and brackets_list[-1] in ['{', '(']):
-                            print("ERROR: Possible missing square bracket ']' detected at {0} Line number: {1}".format(filepath,lineNumber))
+                            print("ERROR: Possible missing square bracket ']' detected at {0} Line number: {1}".format(clean_filepath(filepath),lineNumber))
                             bad_count_file += 1
                         brackets_list.append(']')
                     elif (c == '{'):
@@ -65,26 +66,26 @@ def check_basic_style(filepath):
                     elif (c == '}'):
                         lastIsCurlyBrace = True
                         if (len(brackets_list) > 0 and brackets_list[-1] in ['(', '[']):
-                            print("ERROR: Possible missing curly brace '}}' detected at {0} Line number: {1}".format(filepath,lineNumber))
+                            print("ERROR: Possible missing curly brace '}}' detected at {0} Line number: {1}".format(clean_filepath(filepath),lineNumber))
                             bad_count_file += 1
                         brackets_list.append('}')
 
                     elif (c == ' '): # checking indent
                         indent_List.append('space')
                         if (len(indent_List) == 4):
-                            print("ERROR: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(filepath,lineNumber))
+                            print("ERROR: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(clean_filepath(filepath),lineNumber))
                             bad_count_file += 1
 
             indexOfCharacter += 1
 
         if brackets_list.count('[') != brackets_list.count(']'):
-            print("ERROR: A possible missing square bracket [ or ] in file {0} [ = {1} ] = {2}".format(filepath,brackets_list.count('['),brackets_list.count(']')))
+            print("ERROR: A possible missing square bracket [ or ] in file {0} [ = {1} ] = {2}".format(clean_filepath(filepath),brackets_list.count('['),brackets_list.count(']')))
             bad_count_file += 1
         if brackets_list.count('(') != brackets_list.count(')'):
-            print("ERROR: A possible missing round bracket ( or ) in file {0} ( = {1} ) = {2}".format(filepath,brackets_list.count('('),brackets_list.count(')')))
+            print("ERROR: A possible missing round bracket ( or ) in file {0} ( = {1} ) = {2}".format(clean_filepath(filepath),brackets_list.count('('),brackets_list.count(')')))
             bad_count_file += 1
         if brackets_list.count('{') != brackets_list.count('}'):
-            print("ERROR: A possible missing curly brace {{ or }} in file {0} {{ = {1} }} = {2}".format(filepath,brackets_list.count('{'),brackets_list.count('}')))
+            print("ERROR: A possible missing curly brace {{ or }} in file {0} {{ = {1} }} = {2}".format(clean_filepath(filepath),brackets_list.count('{'),brackets_list.count('}')))
             bad_count_file += 1
 
     return bad_count_file
