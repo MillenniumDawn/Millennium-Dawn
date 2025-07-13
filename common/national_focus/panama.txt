@@ -1182,6 +1182,7 @@ focus_tree = {
 	###########################
 	#         ECONOMY         #
 	###########################
+	# BANKING #
 	focus = {
 		id = PAN_establish_international_banking_center
 		icon = cash_grap
@@ -1193,7 +1194,7 @@ focus_tree = {
 				neutrality_neutral_communism_are_in_coalition = yes							
 			}
 		}
-		x = 24
+		x = 21
 		y = 1
 		cost = 10
 		completion_reward = {
@@ -1526,6 +1527,218 @@ focus_tree = {
 		}
 	}
 
+	# RESOURCES #
+	focus = {
+		id = PAN_securing_oil
+		icon = oil_green
+		prerequisite = { focus = PAN_canal_zone_repatriation }
+		x = 1
+		y = 1
+		relative_position_id = PAN_canal_zone_repatriation
+		cost = 5
+		completion_reward = {
+			set_temp_variable = { treasury_change = -1.75 }
+			modify_treasury_effect = yes
+			853 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_american_oil
+		icon = accept_treaty
+		prerequisite = { focus = PAN_securing_oil }
+		available = { has_completed_focus = PAN_us_military_presence_agreement }
+		mutually_exclusive = { focus = PAN_reach_out_to_russia }
+		bypass = {
+			NOT = { country_exists = USA }
+			has_war_with = USA
+		}
+		x = -1
+		y = 1
+		relative_position_id = PAN_securing_oil
+		cost = 5
+		completion_reward = {
+			USA = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_commercial_relations } }
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			852 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+				add_resource = { type = oil amount = 2 }
+			}
+			
+			hidden_effect = {
+				add_opinion_modifier = { target = USA modifier = PAN_opinion_commercial_relations }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_saudi_imports
+		icon = align_to_saudi_arabia
+		prerequisite = { focus = PAN_american_oil }
+		available = {
+			SAU = { has_opinion = { target = PAN value > 24 } }
+		}
+		bypass = {  # TODO TEST
+			NOT = { country_exists = SAU }
+			has_war_with = SAU
+		}
+		x = -1
+		y = 2
+		relative_position_id = PAN_securing_oil
+		cost = 5
+		completion_reward = {
+			SAU = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_commercial_relations } }
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			853 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+				add_resource = { type = oil amount = 2 }
+			}
+			
+			hidden_effect = {
+				add_opinion_modifier = { target = SAU modifier = PAN_opinion_commercial_relations }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_reach_out_to_russia
+		icon = align_to_russia
+		prerequisite = { focus = PAN_securing_oil }
+		available = {
+			SOV = { has_opinion = { target = PAN value > 14 } }
+		}
+		mutually_exclusive = { focus = PAN_american_oil }
+		bypass = {  # TODO TEST
+			NOT = { country_exists = SOV }
+			has_war_with = SOV
+		}
+		x = 1
+		y = 1
+		relative_position_id = PAN_securing_oil
+		cost = 5
+		completion_reward = {
+			SOV = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_commercial_relations } }
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 3
+				state = 852
+			}
+			
+			hidden_effect = {
+				add_opinion_modifier = { target = SOV modifier = PAN_opinion_commercial_relations }
+			}
+		}
+	}
+
+	focus = {
+		id = PAN_south_american_oil
+		icon = ven_oil
+		prerequisite = { focus = PAN_reach_out_to_russia }
+		available = {
+			VEN = { has_opinion = { target = PAN value > 14 } }
+		}
+		bypass = {  # TODO TEST
+			NOT = { country_exists = VEN }
+			has_war_with = VEN
+		}
+		x = 1
+		y = 2
+		relative_position_id = PAN_securing_oil
+		cost = 5
+		completion_reward = {
+			VEN = { add_opinion_modifier = { target = PAN modifier = PAN_opinion_commercial_relations } }
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			853 = {
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+				add_resource = { type = oil amount = 4 }
+			}
+			
+			hidden_effect = {
+				add_opinion_modifier = { target = VEN modifier = PAN_opinion_commercial_relations }
+			}
+		}
+	}
+
+	# internal investment
+	focus = {
+		id = PAN_homegrown_industry
+		icon = industry_civilian
+		prerequisite = { focus = PAN_canal_zone_repatriation }
+		x = 4
+		y = 1
+		relative_position_id = PAN_canal_zone_repatriation
+		cost = 7
+		completion_reward = {
+			add_political_power = 50
+			set_temp_variable = { percent_change = 2.5 }
+			change_domestic_influence_percentage = yes
+			newline = yes
+			852 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -6.5 }
+			modify_treasury_effect = yes			
+		}
+	}
+
+	focus = {
+		id = PAN_panama_city_construction
+		icon = construction_buldozer
+		prerequisite = { focus = PAN_canal_zone_repatriation }
+		x = 0
+		y = 1
+		relative_position_id = PAN_homegrown_industry
+		cost = 5
+		completion_reward = {
+			# add province 7617 railway, infra
+			add_political_power = 50
+			set_temp_variable = { percent_change = 2.5 }
+			change_domestic_influence_percentage = yes
+			newline = yes
+			853 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -6.5 }
+			modify_treasury_effect = yes			
+		}
+	}
+
+
 	###########################
 	# GENERAL POLITICAL TREE  #
 	###########################
@@ -1535,7 +1748,7 @@ focus_tree = {
 		icon = partido_panamenista
 		prerequisite = { focus = PAN_canal_zone_repatriation }
 		available = { has_country_leader = { name = "Mireya Moscoso" ruling_only = yes } }
-		x = 10
+		x = 12
 		y = 1
 		relative_position_id = PAN_canal_zone_repatriation
 		cost = 2
@@ -2480,8 +2693,8 @@ focus_tree = {
 		id = PAN_defending_the_isthmus
 		icon = soliger_plain
 		# prerequisite = { focus = PAN_new_millennium }
-		x = 50
-		y = 1
+		x = 10
+		y = 15
 		cost = 2
 		completion_reward = {
 			swap_ideas = {
