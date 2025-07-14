@@ -323,6 +323,51 @@ on_actions = {
 				}
 				country_event = { id = terror.14 }
 			}
+
+			# Arab Spring
+			if = { limit = { has_country_flag = arab_spring_active }
+				if = {
+					limit = {
+						has_country_flag = arab_spring_military_deployed
+					}
+					random_list = {
+						33 = {
+							modifier = {
+								factor = 0
+								check_variable = { the_military_opinion > 50 }
+							}
+							country_event = { id = arab_spring.7 days = 3 }
+						}
+						33 = {
+							country_event = { id = arab_spring.8 days = 3 }
+						}
+						33 = { }
+					}
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_global_flag = MEPP_peace_deal_signed }
+					PAL = { has_country_flag = peace_deal_accepted_@ROOT }
+					ISR = { has_country_flag = peace_deal_accepted_@ROOT }
+				}
+				country_event = { id = peace_plan.7 days = 1 random_days = 14 }
+			}
+
+			if = { limit = { has_idea = saudi_aid }
+				if = {
+					limit = {
+						NOT = { has_government = fascism }
+						NOT = { has_country_flag = keep_saudi_aid }
+						OR = {
+							has_idea = sunni
+							has_idea = sufi_islam
+						}
+						fascism > 0.35
+					}
+					country_event = { id = jihadi.2 days = 3 random_days = 14 }
+				}
+			}
 		}
 	}
 
@@ -1507,12 +1552,157 @@ on_actions = {
 				}
 				clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
 
+				# Arab Spring Buildup Section
+				every_country = {
+					limit = {
+						is_arabic_nation = yes
+						NOT = { has_country_flag = AS_arab_spring_completed } # DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
+					}
+
+					increment_arab_spring_strength = yes
+				}
+
+				## This section is just for the instance where someone just need to have it started
+				if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
+					random_country = {
+						limit = {
+							check_variable = { arab_spring > 199 }
+							date > 2010.1.1
+							NOT = { any_country = { has_country_flag = arab_spring_active } }
+							NOT = { is_in_array = { ruling_party = 12 } }
+							has_war = no
+						}
+
+						set_country_flag = arab_spring_active
+						random_list = {
+							90 = {
+								modifier = {
+									factor = 2
+									has_elections = yes
+									NOT = {
+										has_idea = hybrid_regime_emerging
+										has_idea = hybrid_regime_western
+									}
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring < 200 }
+								}
+							}
+							10 = {
+								modifier = {
+									factor = 1.25
+									date > 2011.1.1
+								}
+								modifier = {
+									factor = 1.5
+									date > 2012.1.1
+								}
+								modifier = {
+									factor = 1.75
+									date > 2013.1.1
+								}
+								modifier = {
+									factor = 2
+									date > 2014.1.1
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 225 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 250 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 275 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 300 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 400 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 500 }
+								}
+								modifier = {
+									factor = 2
+									check_variable = { arab_spring > 600 }
+								}
+								country_event = { id = arab_spring.0 days = 1 random_days = 15 }
+							}
+						}
+					}
+				}
+
+				# ISIS Spawns
+				if = {
+					limit = {
+						NOT = { has_global_flag = ISIL_declared }
+						has_global_flag = success_of_operation_iraqi_freedom
+						OR = {
+							check_variable = { global.month = 2 }
+							check_variable = { global.month = 4 }
+							check_variable = { global.month = 6 }
+							check_variable = { global.month = 8 }
+							check_variable = { global.month = 10 }
+							check_variable = { global.month = 12 }
+						}
+						SYR = {
+							OR = {
+								has_war_with = FSA
+								has_war_with = NUS
+							}
+						}
+						IRQ = { is_subject = no }
+					}
+
+					random_list = {
+						30 = {
+							modifier = {
+								factor = 1.25
+								date > 2011.1.1
+							}
+							modifier = {
+								factor = 1.5
+								date > 2012.1.1
+							}
+							modifier = {
+								factor = 1.75
+								date > 2013.1.1
+							}
+							modifier = {
+								factor = 2
+								date > 2014.1.1
+							}
+							modifier = {
+								factor = 2
+								SYR = { surrender_progress > 0.5 }
+							}
+							modifier = {
+								factor = 10
+								SYR = { has_country_flag = GAME_RULE_guarantee_islamic_state_spawn }
+							}
+							news_event = { id = arab_spring.15 }
+						}
+						70 = {
+							modifier = { factor = 0 date > 2015.1.1 }
+						}
+					}
+				}
+
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 				}
+
 			}
 			productivity_growth_effect = yes
 
