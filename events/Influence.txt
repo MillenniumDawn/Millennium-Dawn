@@ -173,8 +173,6 @@ country_event = {
 			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
 
 			set_temp_variable = { temp_amount_gift_sum = five_gift_sum }
-			custom_effect_tooltip = economic_aid_influence_value_TT
-			add_to_variable = { treasury = temp_amount_gift_sum }
 
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 2 }
@@ -187,8 +185,6 @@ country_event = {
 			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
 
 			set_temp_variable = { temp_amount_gift_sum = ten_gift_sum }
-			custom_effect_tooltip = economic_aid_influence_value_TT
-			add_to_variable = { treasury = temp_amount_gift_sum }
 
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 4 }
@@ -201,9 +197,6 @@ country_event = {
 			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
 
 			set_temp_variable = { temp_amount_gift_sum = fifteen_gift_sum }
-			custom_effect_tooltip = economic_aid_influence_value_TT
-			add_to_variable = { treasury = temp_amount_gift_sum }
-
 
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 6 }
@@ -212,6 +205,9 @@ country_event = {
 			change_influence_percentage = yes
 			add_opinion_modifier = { target = FROM modifier = given_gift_fifteen }
 		}
+
+		custom_effect_tooltip = economic_aid_influence_value_TT
+		add_to_variable = { treasury = temp_amount_gift_sum }
 
 		clr_country_flag = sending_five_percent_of_gdp_@FROM
 		clr_country_flag = sending_ten_percent_of_gdp_@FROM
@@ -287,28 +283,31 @@ country_event = {
 		# Returns Funds to the Influencer Nation
 		FROM = {
 			if = {
-				limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
+				limit = { PREV = { has_country_flag = sending_five_percent_of_gdp_@FROM } }
 
-				set_temp_variable = { temp_amount_gift_sum = five_gift_sum }
-				custom_effect_tooltip = economic_aid_influence_value_TT
-				add_to_variable = { treasury = temp_amount_gift_sum }
+				set_temp_variable = { temp_amount_gift_sum = PREV.five_gift_sum }
 			}
 			else_if = {
-				limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
+				limit = { PREV = { has_country_flag = sending_ten_percent_of_gdp_@FROM } }
 
-				set_temp_variable = { temp_amount_gift_sum = ten_gift_sum }
-				custom_effect_tooltip = economic_aid_influence_value_TT
-				add_to_variable = { treasury = temp_amount_gift_sum }
+				set_temp_variable = { temp_amount_gift_sum = PREV.ten_gift_sum }
 			}
 			else_if = {
-				limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
+				limit = { PREV = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM } }
 
-				set_temp_variable = { temp_amount_gift_sum = fifteen_gift_sum }
-				custom_effect_tooltip = economic_aid_influence_value_TT
-				add_to_variable = { treasury = temp_amount_gift_sum }
+				set_temp_variable = { temp_amount_gift_sum = PREV.fifteen_gift_sum }
 			}
+
+			custom_effect_tooltip = economic_aid_influence_value_TT
+			add_to_variable = { treasury = temp_amount_gift_sum }
+
 			country_event = { id = diplomatic_response.2 }
 		}
+
+		clr_country_flag = sending_five_percent_of_gdp_@FROM
+		clr_country_flag = sending_ten_percent_of_gdp_@FROM
+		clr_country_flag = sending_fifteen_percent_of_gdp_@FROM
+
 		ai_chance = {
 			base = 1
 			# If they have lower domestic influence trigger fight or flight
@@ -1820,8 +1819,8 @@ country_event = {
 		name = influence.52.b
 		trigger = {
 			OR = {
-				has_equipment = { apc_hull > 10 }
-				has_equipment = { ifv_hull > 10 }
+				has_equipment = { medium_tank_amphibious_chassis > 10 }
+				has_equipment = { medium_tank_flame_chassis > 10 }
 				has_equipment = { util_vehicle_equipment > 10 }
 			}
 		}
@@ -1829,40 +1828,40 @@ country_event = {
 		set_country_flag = forwarding_light_armor_vehicles
 		if = {
 			limit = {
-				has_equipment = { apc_hull > 10 }
+				has_equipment = { medium_tank_amphibious_chassis > 10 }
 			}
 			effect_tooltip = {
 				FROM = {
 					add_equipment_to_stockpile = {
 						amount = -10
-						type = apc_hull
+						type = medium_tank_amphibious_chassis
 						producer = PREV
 					}
 				}
 				FROM.FROM = { #Should be the targeted influencing nation
 					add_equipment_to_stockpile = {
 						amount = 10
-						type = apc_hull
+						type = medium_tank_amphibious_chassis
 					}
 				}
 			}
 		}
 		if = {
 			limit = {
-				has_equipment = { ifv_hull > 10 }
+				has_equipment = { medium_tank_flame_chassis > 10 }
 			}
 			effect_tooltip = {
 				FROM = {
 					add_equipment_to_stockpile = {
 						amount = -10
-						type = ifv_hull
+						type = medium_tank_flame_chassis
 						producer = PREV
 					}
 				}
 				FROM.FROM = { #Should be the targeted influencing nation
 					add_equipment_to_stockpile = {
 						amount = 10
-						type = ifv_hull
+						type = medium_tank_flame_chassis
 						producer = FROM
 					}
 				}
@@ -2051,32 +2050,32 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.53.b executed"
 		FROM = { clr_country_flag = forwarding_light_armor_vehicles }
 		if = {
-			limit = { FROM = { has_equipment = { apc_hull > 10 } } }
+			limit = { FROM = { has_equipment = { medium_tank_amphibious_chassis > 10 } } }
 			FROM = {
 				add_equipment_to_stockpile = {
 					amount = -10
-					type = apc_hull
+					type = medium_tank_amphibious_chassis
 					producer = PREV
 				}
 			}
 			add_equipment_to_stockpile = {
 				amount = 10
-				type = apc_hull
+				type = medium_tank_amphibious_chassis
 				producer = FROM
 			}
 		}
 		if = {
-			limit = { FROM = { has_equipment = { ifv_hull > 10 } } }
+			limit = { FROM = { has_equipment = { medium_tank_flame_chassis > 10 } } }
 			FROM = {
 				add_equipment_to_stockpile = {
 					amount = -10
-					type = ifv_hull
+					type = medium_tank_flame_chassis
 					producer = PREV
 				}
 			}
 			add_equipment_to_stockpile = {
 				amount = 10
-				type = ifv_hull
+				type = medium_tank_flame_chassis
 				producer = FROM
 			}
 		}
@@ -2226,7 +2225,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_0_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2248,7 +2247,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_1_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2270,7 +2269,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_2_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2292,7 +2291,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_3_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2314,7 +2313,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_4_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2336,7 +2335,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_5_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2358,7 +2357,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_6_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2380,7 +2379,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_7_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2402,7 +2401,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_8_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2424,7 +2423,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_9_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2440,6 +2439,76 @@ country_event = {
 	}
 }
 
+##Military Aid - NONAI Master Event
+country_event = {
+	id = influence.55
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event influence.55"
+		FROM = {
+			country_event = { id = influence.56 } #Choose how to ship equipment
+		}
+	}
+	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
+	desc = "Why you be triggering my events?"
+	hidden = yes
+	is_triggered_only = yes
+}
+
+#Send Military Supply to [THIS.GetName]
+country_event = {
+	id = influence.56
+	title = influence.56.t
+	desc = influence.56.d
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+
+	#Send a Shipment around on Target size power etc
+	option = {
+		name = influence.56.a
+		log = "[GetDateText]: [This.GetName]: influence.56.a executed"
+		trigger = {
+			PREV = {
+				tag = PER
+				has_equipment = { Inf_equipment > 250 }
+			}
+		}
+		PER_scripted_effect_update_palestine_arms_via_land = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = influence.56.b
+		log = "[GetDateText]: [This.GetName]: influence.56.b executed"
+		trigger = {
+			PREV = {
+				tag = PER
+				has_equipment = { Inf_equipment > 250 }
+			}
+			any_state = {
+				is_owned_by = FROM
+				is_coastal = yes
+			}
+		}
+		PER_scripted_effect_update_palestine_arms_via_sea = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#Maybe its better not
+	option = {
+		name = influence.56.c
+		log = "[GetDateText]: [This.GetName]: influence.56.c executed"
+
+		custom_effect_tooltip = influence.51.b_tt
+		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
 
 # Influence Master Event
 country_event = {
