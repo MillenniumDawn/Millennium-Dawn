@@ -9,9 +9,10 @@ add_namespace = mdmosjap_japannews
 add_namespace = mdmosjap_japannews_kato
 add_namespace = japan_foreign_policy
 add_namespace = JAP_territorial
+add_namespace = JAP_historical
 
 #----------------------------------------------------------------
-#submod historical events
+#historical events
 #----------------------------------------------------------------
 
 #Keizo Obuchi suffers a stroke
@@ -29,7 +30,7 @@ country_event = {
 	}
 	
 	immediate = {
-		hidden_effect = { country_event = { id = japan_classic.16 days = 4 } }
+		hidden_effect = { country_event = { id = japan_classic.16 days = 3 } }
 	}
 	
 	option = {	#Let's pray for the best
@@ -38,6 +39,199 @@ country_event = {
 		add_stability = -0.02
 	}
 }
+
+country_event = {
+	id = japan_classic.16
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.16" }
+	title = japan_classic.16.t
+	desc = japan_classic.16.d
+	# TODO:picture change
+	picture = GFX_yoshiro_mori
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			country_event = { id = japan_classic.18 days = 40 }
+			changepm_mdmosjap_JAP_summon_yoshiro_mori = yes
+		}
+	}
+	
+	option = {
+		name = japan_classic.16.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.16.o1 executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		add_relative_party_popularity = yes
+	}
+}
+
+#Yoshirō Mori's Emperor gaffe
+country_event = {
+	id = japan_classic.18
+	immediate = { log = "[GetDateText]: [Root.GetName]: event japan_classic.18" }
+	title = japan_classic.18.t
+	desc = japan_classic.18.d
+	# TODO:picture change
+	picture = GFX_yoshiro_mori
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_country_leader = { name = "Yoshiro Mori" }
+	}
+	
+	option = {	#What a fool!
+		name = japan_classic.18.o1
+		log = "[GetDateText]: [This.GetName]: japan_classic.18.o1 executed"
+		add_stability = -0.01
+		add_political_power = -10
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		add_relative_party_popularity = yes
+		ai_chance = { base = 90 }
+	}
+	
+	option = {	#Double down on his statement
+		name = japan_classic.18.o2
+		log = "[GetDateText]: [This.GetName]: japan_classic.18.o2 executed"
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.03
+		}
+		add_stability = -0.04
+		add_political_power = -25
+		ai_chance = { base = 10 }
+	}
+}
+
+#Ehime-Maru Disaster
+country_event = {
+	id = mdmosjap_japan.130210001
+	title = mdmosjap_japan.130210001.t
+	desc = mdmosjap_japan.130210001.d
+	#TODO picture
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	#action
+	option = {
+		name = mdmosjap_japan.130210001.oA
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.130210001.oA"
+		add_political_power = -10
+		ai_chance = {
+			base = 10
+			modifier = {
+				is_historical_focus_on = yes
+				has_country_leader = { name = "Yoshiro Mori" }	
+				factor = 0
+			}	
+		}
+	}
+	
+	#golf
+	option = {
+		name = mdmosjap_japan.130210001.oB
+		log = "[GetDateText]: [Root.GetName]: mdmosjap_japan.130210001.oB"
+		add_stability = -0.03
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		add_relative_party_popularity = yes
+		if = {
+			limit = { 
+				has_country_leader = {
+					 name = "Yoshiro Mori" 
+				}
+			}
+			set_country_flag = MDMOSJAP_PROGOLFER_MORI
+			custom_effect_tooltip = JAP_koizumi_appear_TT
+		}
+	
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = JAP_historical.20010426
+	title = JAP_historical.20010426.t
+	desc = JAP_historical.20010426.d
+	#TODO:picture 
+	is_triggered_only = yes
+	trigger = {
+		AND = {
+			has_country_leader = { name = "Yoshiro Mori" }	
+			has_country_flag = MDMOSJAP_PROGOLFER_MORI
+		}
+	}
+
+	option = {
+		name = JAP_historical.20010426.oA
+		log = "[GetDateText]: [This.GetName]: JAP_historical.20010426.oA executed"
+		create_country_leader = {
+			name = "Junichiro Koizumi"
+			picture = "junichiro_koizumi.dds"
+			ideology = conservatism
+			traits = {
+				western_conservatism
+				emotional
+				stubborn
+				mediafuror
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		add_relative_party_popularity = yes
+		set_country_flag = JAP_KOIZUMI_HISTRICAL_APPEARANCE
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = JAP_historical.20060926
+	title = JAP_historical.20060926.t
+	desc = JAP_historical.20060926.d
+	#TODO:picture 
+	is_triggered_only = yes
+	trigger = {
+		AND = {
+			has_country_leader = { name = "Junichiro Koizumi" }	
+			has_country_flag = JAP_KOIZUMI_HISTRICAL_APPEARANCE
+		}
+	}
+
+	option = {
+		name = JAP_historical.20060926.oA
+		log = "[GetDateText]: [This.GetName]: JAP_historical.20060926.oA executed"
+		create_country_leader = {
+			name = "Shinzo Abe"
+			picture = "Shinzo_Abe.dds"
+			ideology = conservatism
+			traits = { 
+				western_conservatism 
+				emotional 
+				zealous 
+				stubborn 
+				wgip 
+				antikorea 
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		add_relative_party_popularity = yes
+		set_country_flag = JAP_ABE_FIRST_HISTRICAL_APPEARANCE
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
 
 #----------------------------------------------------------------
 #Radicalism Events
