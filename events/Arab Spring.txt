@@ -27,7 +27,7 @@ country_event = {
 			}
 		}
 
-		news_event = { id = arab_spring.1 days = 3 }
+		news_event = arab_spring.1
 	}
 }
 
@@ -332,14 +332,24 @@ country_event = {
 		ai_chance = {
 			base = 1
 			modifier = {
-				factor = 0
+				factor = 2
+				original_tag = TUN
 				is_historical_focus_on = yes
-				original_tag = SYR
 			}
 			modifier = {
-				factor = 1.25
+				factor = 1.50
 				has_government = democratic
 				has_elections = yes
+			}
+			# Be Less Likely to have a civil war if the muting chance is too high
+			modifier = {
+				factor = 1.25
+				check_variable = { arab_spring_mutiny > 2 }
+			}
+			modifier = {
+				factor = 0
+				original_tag = SYR
+				is_historical_focus_on = yes
 			}
 		}
 	}
@@ -402,40 +412,84 @@ country_event = {
 						#Recognition
 						add_to_array = { global.rival_governments = THIS }
 						set_country_flag = rival_government_SYR
+
+						add_timed_idea = {
+							idea = FSA_rebel_fighting_spirit_idea
+							days = 365
+						}
+
+						capital_scope = {
+							create_unit = {
+								division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
+								prioritize_location = 1074
+								owner = FSA
+								count = 3
+							}
+							if = {
+								limit = { difficulty > 2 }
+								create_unit = {
+									division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
+									prioritize_location = 1074
+									owner = FSA
+									count = 3
+								}
+							}
+							if = {
+								limit = { difficulty > 3 }
+								create_unit = {
+									division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
+									prioritize_location = 1074
+									owner = FSA
+									count = 3
+								}
+							}
+						}
 					}
 				}
-				hidden_effect = {
-					190 = { add_core_of = NUS }
-					release = NUS
-					190 = { add_core_of = ROOT }
-					every_state = {
-						limit = { is_core_of = ROOT }
-						add_core_of = NUS
-					}
-					NUS = {
-						set_cosmetic_tag = NUSRA
-						ingame_startup_nations_effect = yes
-						if = { limit = { has_dlc = "No Step Back" }
 
-							load_oob = NUS_2000_nsb
-						}
-						else = {
-							load_oob = NUS_2000_nonnsb
-						}
+				190 = { add_core_of = NUS }
+				release = NUS
+				190 = { add_core_of = ROOT }
+				every_state = {
+					limit = { is_core_of = ROOT }
+					add_core_of = NUS
+				}
+				NUS = {
+					set_cosmetic_tag = NUSRA
+					ingame_startup_nations_effect = yes
+					if = { limit = { has_dlc = "No Step Back" }
+
+						load_oob = NUS_2000_nsb
+					}
+					else = {
+						load_oob = NUS_2000_nonnsb
+					}
+				}
+
+				if = {
+					limit = {
+						country_exists = FSA
+						NOT = { has_war_with = FSA }
 					}
 					declare_war_on = {
 						target = FSA
 						type = annex_everything
+					}
+				}
+				if = {
+					limit = {
+						country_exists = NUS
+						NOT = { has_war_with = NUS }
 					}
 					declare_war_on = {
 						target = NUS
 						type = annex_everything
 					}
 				}
-				add_named_threat = {
-					threat = 5
-					name = Syrian_Civil_War.threat
-				}
+			}
+			add_named_threat = {
+				threat = 5
+				name = Syrian_Civil_War.threat
 			}
 		}
 		else = {
@@ -458,6 +512,13 @@ country_event = {
 				OR = {
 					SYR = { has_country_flag = GAME_RULE_guarantee_syrian_historical_as_civil_war }
 					SYR = { has_country_flag = GAME_RULE_guarantee_islamic_state_spawn }
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_idea = hybrid_regime_western
+					has_idea = hybrid_regime_emerging
 				}
 			}
 			modifier = {
@@ -633,17 +694,22 @@ country_event = {
 	# We Must Mitigate This Crisis!
 	option = {
 		name = arab_spring.17.a
+		log = "[GetDateText]: [This.GetName]: arab_spring.17.a executed"
 		set_country_flag = arab_spring_active
 		activate_mission_tooltip = arab_spring_protests_1
+
 		if = {
-			limit = { check_variable = { influence_array^0 = FRA } }
-			FRA = { country_event = { id = arab_spring.3 days = 1 } }
+			limit = {
+				var:influence_array^0 = {
+					OR = {
+						has_idea = superpower
+						has_idea = great_power
+						has_idea = large_power
+					}
+				}
+			}
+			var:influence_array^0 = { country_event = { id = arab_spring.3 days = 1 } }
 		}
-		if = {
-			limit = { check_variable = { influence_array^0 = USA } }
-			USA = { country_event = { id = arab_spring.3 days = 1 } }
-		}
-		log = "[GetDateText]: [This.GetName]: arab_spring.17.a executed"
 	}
 }
 
@@ -672,10 +738,14 @@ country_event = {
 		add_relative_party_popularity = yes
 
 		add_political_power = 200
+
+		ai_chance = {
+			base = 1
+		}
 	}
 }
 
-#[FROM.GetLeader] Requests Peninsula Shield Intervention
+# [FROM.GetLeader] Requests Peninsula Shield Intervention
 country_event = {
 	id = arab_spring.19
 	title = arab_spring.19.t
@@ -693,6 +763,22 @@ country_event = {
 
 		ai_chance = {
 			base = 1
+			modifier = {
+				factor = 2
+				has_opinion = {
+					target = FROM
+					value > 100
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					check_variable = { influence_array^0 = FROM }
+					check_variable = { influence_array^1 = FROM }
+					check_variable = { influence_array^2 = FROM }
+					check_variable = { influence_array^3 = FROM }
+				}
+			}
 		}
 	}
 
@@ -704,6 +790,41 @@ country_event = {
 
 		ai_chance = {
 			base = 0
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = FROM
+					value < 50
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = FROM
+					value < 100
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					AND = {
+						FROM = { has_government = communism }
+						NOT = { has_government = communism }
+					}
+					AND = {
+						FROM = { has_government = fascism }
+						NOT = { has_government = fascism }
+					}
+					AND = {
+						FROM = { has_government = neutrality }
+						NOT = { has_government = neutrality }
+					}
+					AND = {
+						FROM = { has_government = nationalist }
+						NOT = { has_government = nationalist }
+					}
+				}
+			}
 		}
 	}
 }
