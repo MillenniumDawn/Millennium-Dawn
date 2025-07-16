@@ -821,3 +821,63 @@ FRA_french_africa_decision_category = {
 	# 	}
 	# }
 }
+
+# TODO: MISSION
+FRA_french_construction_decision_category = {  # rename
+    FRA_build_factories_mission = {  # rename
+		icon = political_actions  # change
+        allowed = { original_tag = FRA }
+		available = { always = no }
+		fire_only_once = yes  # change...?
+        days_mission_timeout = 25  # testing -> 365
+        activation = {  # modify focus or create individualized flags
+			AND = {
+				has_country_flag = FRA_timed_mission
+				# has_completed_focus = FRA_reinvest_rural
+				# lookup array_count in repo
+				# check_variable = { FRA.states_for_timed_mission^0 = 0 }
+				check_variable = { FRA.states_for_timed_mission^i > 1 }
+			}
+        }
+        timeout_effect = {
+			log = "[GetDateText]: [THIS.GetName]: focus FRA_build_factories_mission timeout"
+			# custom_effect_tooltip = FRA_build_factories_mission_fail_tt
+
+			if = {  # success
+				limit = {
+					check_variable = { FRA.factories_now > 4 }
+				}
+				newline = yes
+				add_stability = 0.075
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = 0.10 }
+				add_relative_party_popularity = yes
+				add_timed_idea = {
+					idea = FRA_campaign_promises_kept_idea
+					days = 200 # TODO: CHANGE?
+				}
+				# for reuse - move to function
+				hidden_effect = {
+					clear_variable = FRA.num_beginning_factories
+					clear_variable = FRA.factories_now
+					clear_array = FRA.states_for_timed_mission
+				}
+			}
+			else = {  # failure
+				newline = yes
+				add_stability = -0.1
+				set_party_index_to_ruling_party = yes
+				set_temp_variable = { party_popularity_increase = -0.15 }
+				add_relative_party_popularity = yes
+				add_political_power = -100
+				# for reuse - move to function
+				hidden_effect = {
+					clear_variable = FRA.num_beginning_factories
+					clear_variable = FRA.factories_now
+					clear_array = FRA.states_for_timed_mission
+				}
+			}
+			clr_country_flag = FRA_timed_mission
+        }
+    }
+}
