@@ -1,6 +1,7 @@
-#Author(s): Doolittle
+#Author(s): Doolittle, Angriest Bird
 scripted_gui = {
-	#button to actually open the UI
+
+	# Opens the actual international system GUI
 	open_the_international_scripted_gui = {
 		context_type = player_context
 		window_name = "IS_open_the_international_system_gui_window"
@@ -32,15 +33,25 @@ scripted_gui = {
 		}
 	}
 
-	# this will need three different windows currently, with room for expansion
-	# expansion will need to cover all the other needed systems
+	# We currently only have three tabs and as we continue to expand we have space for additional tabs
+	# Tabs:
+	# 1. Private Military Companies (PMCs)
+	# 2. Counter Terror
+	# 3. Statehood
 	international_systems_gui = {
 		context_type = player_context
 		window_name = "IS_main_background_window"
 
 		dirty = global.international_system_refresh_gui
-		ai_enabled = { always = no }
-		ai_test_interval = 96
+
+		ai_enabled = { always = yes }
+		ai_check = {
+			OR = {
+				has_political_power > 149
+				command_power > 49
+			}
+		}
+		ai_test_interval = 168
 		ai_max_weight_taken_per_test = 2
 
 		visible = {
@@ -52,16 +63,10 @@ scripted_gui = {
 
 		triggers = {
 			statehood_info_display_visible = {
-				OR = {
-					has_country_flag = state_menu_open
-					is_ai = yes
-				}
+				country_recognization_system_open = yes
 			}
 			switch_recog_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 			}
 			switch_recog_button_click_enabled = {
 				NOT = {
@@ -80,19 +85,31 @@ scripted_gui = {
 				}
 				meta_trigger = {
 					text = {
-						NOT = {
-							has_country_flag = rival_government_[stname]
+						custom_trigger_tooltip = {
+							tooltip = not_is_a_rival_government_tt
+							NOT = { has_country_flag = rival_government_[stname] }
 						}
 						OR = {
 							AND = {
-								NOT = { has_country_flag = Recognised_[stname] }
+								custom_trigger_tooltip = {
+									tooltip = not_recognized_this_nation_tt
+									NOT = { has_country_flag = Recognised_[stname] }
+								}
 								var:open_state = { has_idea = rival_government }
 							}
-							var:open_state = { has_country_flag = recognised_opponent_[stroot] }
+							var:open_state = {
+								custom_trigger_tooltip = {
+									tooltip = not_recognized_the_opponent_nation_tt
+									has_country_flag = recognised_opponent_[stroot]
+								}
+							}
 						}
 						any_country = {
 							exists = yes
-							has_country_flag = rival_government_[stname]
+							custom_trigger_tooltip = {
+								tooltip = is_a_rival_government_tt
+								has_country_flag = rival_government_[stname]
+							}
 						}
 					}
 					stname = "[?var:open_state.GetTag]"
@@ -100,20 +117,15 @@ scripted_gui = {
 				}
 			}
 			pressure_countries_recog_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 			}
 			ir_nation_sel_disp_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 			}
 			pressure_countries_recog_button_click_enabled = {
 				var:open_state = { has_idea = Lacks_International_Recognition }
 				country_exists = var:open_state
+				is_full_state = yes
 				meta_trigger = {
 					text = {
 						custom_trigger_tooltip = {
@@ -131,17 +143,11 @@ scripted_gui = {
 					limit = { original_tag = SWI }
 					has_completed_focus = SWI_join_the_united_nations
 				}
-				var:open_state = { has_idea = Lacks_International_Recognition }
-				country_exists = var:open_state
-				is_full_state = yes
 
 				has_political_power > 100
 			}
 			grant_recog_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 			}
 			grant_recog_button_click_enabled = {
 				var:open_state = { has_idea = Lacks_International_Recognition }
@@ -165,21 +171,16 @@ scripted_gui = {
 				has_political_power > 25
 			}
 			rescind_recog_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 			}
 			rescind_recog_button_click_enabled = {
 				var:open_state = { has_idea = Lacks_International_Recognition }
 				country_exists = var:open_state
+				is_full_state = yes
 				if = {
 					limit = { original_tag = SWI }
 					has_completed_focus = SWI_join_the_united_nations
 				}
-				var:open_state = { has_idea = Lacks_International_Recognition }
-				country_exists = var:open_state
-				is_full_state = yes
 				meta_trigger = {
 					text = {
 						custom_trigger_tooltip = {
@@ -202,36 +203,17 @@ scripted_gui = {
 							emerging_moderate_shiite_are_in_power = yes
 						}
 					}
-					has_country_flag = moved_ISR_embassy
 				}
-				country_exists = PAL
-				ISR = {
-					exists = yes
-					owns_state = 207
-				}
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				NOT = { has_country_flag = moved_ISR_embassy }
+				country_recognization_system_open = yes
 			}
 			move_embassy_ISR_button_click_enabled = {
-				NOT = {
-					original_tag = ISR
-					original_tag = PAL
-					AND = {
-						original_tag = HEZ
-						OR = {
-							emerging_hardline_shiite_are_in_power = yes
-							emerging_moderate_shiite_are_in_power = yes
-						}
-					}
-					has_country_flag = moved_ISR_embassy
-				}
 				country_exists = PAL
+				country_exists = ISR
 				ISR = {
-					exists = yes
 					owns_state = 207
 				}
+				NOT = { has_country_flag = moved_ISR_embassy }
 			}
 			remove_light_inf_button_visible = {
 				is_major_company = yes
@@ -376,10 +358,7 @@ scripted_gui = {
 			}
 
 			pmc_info_display_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = pmc_menu_open
-				}
+				pmc_system_open = yes
 			}
 
 			remove_sf_inf_button_click_enabled = {
@@ -403,10 +382,7 @@ scripted_gui = {
 				}
 			}
 			campaign_USA_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 				OR = {
 					has_idea = Lacks_International_Recognition
 					has_idea = rival_government
@@ -478,10 +454,7 @@ scripted_gui = {
 				has_political_power > 200
 			}
 			campaign_SOV_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 				OR = {
 					has_idea = Lacks_International_Recognition
 					has_idea = rival_government
@@ -566,10 +539,7 @@ scripted_gui = {
 				has_political_power > 200
 			}
 			campaign_CHI_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 				OR = {
 					has_idea = Lacks_International_Recognition
 					has_idea = rival_government
@@ -639,10 +609,7 @@ scripted_gui = {
 				has_political_power > 200
 			}
 			campaign_ENG_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 				OR = {
 					has_idea = Lacks_International_Recognition
 					has_idea = rival_government
@@ -714,10 +681,7 @@ scripted_gui = {
 				has_political_power > 200
 			}
 			campaign_FRA_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 				OR = {
 					has_idea = Lacks_International_Recognition
 					has_idea = rival_government
@@ -791,10 +755,7 @@ scripted_gui = {
 				has_political_power > 200
 			}
 			un_ascension_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = state_menu_open
-				}
+				country_recognization_system_open = yes
 				OR = {
 					has_idea = Lacks_International_Recognition
 					has_idea = rival_government
@@ -836,42 +797,24 @@ scripted_gui = {
 				has_political_power > 100
 			}
 			counterterror_info_display_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			counterterror_instruct_display_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 
 			# Counter Terror
 			ct_region_asia_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			ct_region_africa_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			ct_region_me_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			mor_promote_tolerant_islam_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			mor_promote_tolerant_islam_button_click_enabled = {
 				original_tag = MOR
@@ -888,10 +831,7 @@ scripted_gui = {
 				has_political_power > 50
 			}
 			oma_promote_tolerant_islam_button_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			oma_promote_tolerant_islam_button_click_enabled = {
 				original_tag = OMA
@@ -1034,27 +974,18 @@ scripted_gui = {
 					}
 					ctnation = "[?var:ct_state_selected.GetTag]"
 				}
-				if = {
-					limit = {
-						has_country_flag = ct_selected_me
-					}
+				if = { limit = { has_country_flag = ct_selected_me }
 					has_country_flag = middle_east_influencer
-				} else_if = {
-					limit = {
-						has_country_flag = ct_selected_africa
-					}
+				}
+				else_if = { limit = { has_country_flag = ct_selected_africa }
 					has_country_flag = africa_influencer
-				} else_if = {
-					limit = {
-						has_country_flag = ct_selected_asia
-					}
+				}
+				else_if = { limit = { has_country_flag = ct_selected_asia }
 					has_country_flag = asia_influencer
 				}
 				var:ct_state_selected = {
-					no_jihadist_government = yes
 					exists = yes
-				}
-				var:ct_state_selected = {
+					no_jihadist_government = yes
 					custom_trigger_tooltip = {
 						tooltip = not_a_main_nation
 						NOT = {
@@ -1068,8 +999,6 @@ scripted_gui = {
 							is_Caucasus = yes
 						}
 					}
-				}
-				var:ct_state_selected = {
 					is_top5_influencer_ct = yes
 				}
 				custom_trigger_tooltip = {
@@ -1131,28 +1060,16 @@ scripted_gui = {
 				}
 			}
 			ct_nation_sel_disp_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			ct_threat_disp_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			ct_rad_disp_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 			ct_nation_disp_visible = {
-				OR = {
-					is_ai = yes
-					has_country_flag = counterterror_open
-				}
+				counter_terror_system_open = yes
 			}
 		}
 
@@ -1186,10 +1103,7 @@ scripted_gui = {
 				clr_country_flag = pmc_menu_open
 				clr_country_flag = state_menu_open
 				set_country_flag = counterterror_open
-				if = {
-					limit = {
-						is_in_array = { array = global.asia_ct_states value = THIS }
-					}
+				if = { limit = { is_in_array = { array = global.asia_ct_states value = THIS } }
 					for_each_loop = {
 						array = global.asia_ct_states
 						value = v
@@ -1199,13 +1113,7 @@ scripted_gui = {
 					set_country_flag = ct_selected_asia
 					set_variable = { ct_state_selected = THIS }
 				}
-				if = {
-					limit = {
-						is_in_array = {
-							array = global.africa_ct_states
-							value = THIS
-						}
-					}
+				else_if = { limit = { is_in_array = { array = global.africa_ct_states value = THIS } }
 					for_each_loop = {
 						array = global.africa_ct_states
 						value = v
@@ -1215,13 +1123,7 @@ scripted_gui = {
 					set_country_flag = ct_selected_africa
 					set_variable = { ct_state_selected = THIS }
 				}
-				if = {
-					limit = {
-						is_in_array = {
-							array = global.middle_east_ct_states
-							value = THIS
-						}
-					}
+				else_if = { limit = { is_in_array = { array = global.middle_east_ct_states value = THIS } }
 					for_each_loop = {
 						array = global.middle_east_ct_states
 						value = v
@@ -1474,14 +1376,8 @@ scripted_gui = {
 					stname = "[?var:open_state.GetTag]"
 				}
 				var:open_state = {
-					add_opinion_modifier = {
-						modifier = withdrew_recognition
-						target = ROOT
-					}
-					subtract_from_variable = {
-						var = Granted_Recognition
-						value = 1
-					}
+					add_opinion_modifier = { modifier = withdrew_recognition target = ROOT }
+					subtract_from_variable = { var = Granted_Recognition value = 1 }
 					news_event = { id = recognition.3 }
 				}
 				update_international_system_gui = yes
@@ -1492,10 +1388,7 @@ scripted_gui = {
 					set_country_flag = Recognised_@FROM
 				}
 				var:open_state = {
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = recognises_us
-					}
+					add_opinion_modifier = { target = ROOT modifier = recognises_us }
 					if = {
 						limit = { original_tag = CHI }
 						CHI = {
@@ -1516,12 +1409,7 @@ scripted_gui = {
 						}
 					}
 					news_event = { id = recognition.5 }
-					meta_effect = {
-						text = {
-							clr_country_flag = recognised_opponent_[rname]
-						}
-						rname = "[?ROOT.GetTag]"
-					}
+					clr_country_flag = recognised_opponent_@ROOT
 				}
 				meta_effect = {
 					text = {
@@ -1734,13 +1622,14 @@ scripted_gui = {
 				log = "[GetDateText]: [This.GetName]: decision deploy_military_advisors executed"
 				add_command_power = -40
 				add_manpower = -150
-				meta_effect = {
-					text = {
-						set_country_flag = military_advisors_[ctnation]
+				var:ct_state_selected = {
+					hidden_effect = {
+						PREV = {
+							set_country_flag = military_advisors_@PREV
+						}
 					}
-					ctnation = "[?var:ct_state_selected.GetTag]"
+					add_to_variable = { foreign_advisors = 1 }
 				}
-				var:ct_state_selected = { add_to_variable = { foreign_advisors = 1 } }
 				custom_effect_tooltip = deploy_military_advisors_tt
 				update_international_system_gui = yes
 			}
@@ -1748,13 +1637,15 @@ scripted_gui = {
 				log = "[GetDateText]: [This.GetName]: decision withdraw_military_advisors executed"
 				add_command_power = -40
 				add_manpower = 150
-				meta_effect = {
-					text = {
-						clr_country_flag = military_advisors_[ctnation]
+
+				var:ct_state_selected = {
+					hidden_effect = {
+						PREV = {
+							clr_country_flag = military_advisors_@PREV
+						}
 					}
-					ctnation = "[?var:ct_state_selected.GetTag]"
+					subtract_from_variable = { foreign_advisors = 1 }
 				}
-				var:ct_state_selected = { subtract_from_variable = { foreign_advisors = 1 } }
 				custom_effect_tooltip = withdraw_military_advisors_tt
 				update_international_system_gui = yes
 			}
