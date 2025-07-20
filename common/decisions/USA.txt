@@ -543,21 +543,21 @@ USA_american_economic_decisions_category = {
 			add_stability = -0.08
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-			
+
 			custom_effect_tooltip = USA_domestic_policies_tooltip
 			set_temp_variable = { temp_change = -0.07 }
 			USA_change_domestic_political_power_change = yes
 
-			791 = { add_resource = { type = oil amount = 2 } }
-			790 = { add_resource = { type = oil amount = 2 } }
-			789 = { add_resource = { type = oil amount = 2 } }
-			788 = { add_resource = { type = oil amount = 2 } }
-			787 = { add_resource = { type = oil amount = 2 } }
-			786 = { add_resource = { type = oil amount = 2 } }
-			785 = { add_resource = { type = oil amount = 2 } }
-			784 = { add_resource = { type = oil amount = 2 } }
-			199 = { add_resource = { type = oil amount = 2 } }
-			800 = { add_resource = { type = oil amount = 2 } }
+			791 = { add_resource = { type = oil amount = 6 } }
+			790 = { add_resource = { type = oil amount = 6 } }
+			789 = { add_resource = { type = oil amount = 6 } }
+			788 = { add_resource = { type = oil amount = 6 } }
+			787 = { add_resource = { type = oil amount = 6 } }
+			786 = { add_resource = { type = oil amount = 6 } }
+			785 = { add_resource = { type = oil amount = 6 } }
+			784 = { add_resource = { type = oil amount = 6 } }
+			804 = { add_resource = { type = oil amount = 6 } }
+			800 = { add_resource = { type = oil amount = 6 } }
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = 0.03 }
 			add_relative_party_popularity = yes
@@ -3050,7 +3050,7 @@ USA_political_and_economic_reforms = {
 			USA_change_domestic_drift_defense_change = yes
 			set_temp_variable = { temp_change = -0.04 }
 			USA_change_domestic_democratic_drift_change = yes
-			
+
 			custom_effect_tooltip = USA_blank_space_tooltip
 			custom_effect_tooltip = USA_american_tax_code_tooltip
 			set_temp_variable = { temp_change = 0.03 }
@@ -3138,7 +3138,7 @@ USA_political_and_economic_reforms = {
 			USA_change_domestic_drift_defense_change = yes
 			set_temp_variable = { temp_change = -0.04 }
 			USA_change_domestic_democratic_drift_change = yes
-			
+
 			custom_effect_tooltip = USA_blank_space_tooltip
 			custom_effect_tooltip = USA_american_tax_code_tooltip
 			set_temp_variable = { temp_change = 0.03 }
@@ -3283,7 +3283,9 @@ USA_f35_program_decisions = {
 	USA_expansion_of_the_program = {
 		icon = GFX_decision_nato_f35_expansion_button
 		days_remove = 60
-
+		visible = {
+			original_tag = USA
+		}
 		fire_only_once = yes
 
 		remove_effect = {
@@ -3757,7 +3759,10 @@ USA_f35_program_decisions = {
 			}
 			modifier = {
 				PER = {
-					has_completed_focus = PER_the_third_development_plan
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
 				}
 				FROM = {
 					check_variable = { influence_array^0 = PER }
@@ -3797,7 +3802,10 @@ USA_f35_program_decisions = {
 			}
 			modifier = {
 				PER = {
-					has_completed_focus = PER_the_third_development_plan
+					OR = {
+						emerging_hardline_shiite_are_in_power = yes
+						emerging_moderate_shiite_are_in_power = yes
+					}
 				}
 				FROM = {
 					is_subject_of = PER
@@ -3824,6 +3832,166 @@ USA_f35_program_decisions = {
 					}
 				}
 				add = 5
+			}
+		}
+	}
+}
+
+# Iranian Sanction Decisions
+USA_iranian_sanctions = {
+	USA_increase_sanctions_on_iran = {
+
+		available = {
+			NOT = {
+				check_variable = { USA_iran_sanction_level > 4 }
+			}
+			NOT = {
+				has_country_flag = USA_sanctioned_PER_recently
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_increase_sanctions_on_iran"
+			add_to_variable = { var = USA_iran_sanction_level value = 1 }
+			clamp_variable = { var = USA_iran_sanction_level min = 0 max = 5 }
+			# Sanction Variables
+			PER = {
+				newline = yes
+				set_temp_variable = { PER_sanction_trade_opinion_factor_change = -0.1 }
+				update_PER_sanction_trade_opinion_factor = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_trade_laws_cost_factor_change = 0.1 }
+				update_PER_sanction_trade_laws_cost_factor = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_oil_export_multiplier_modifier_change = -0.1 }
+				update_PER_sanction_oil_export_multiplier_modifier = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_improve_relations_maintain_cost_factor_change = 0.1 }
+				update_PER_sanction_improve_relations_maintain_cost_factor = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_productivity_growth_modifier_change = -0.05 }
+				update_PER_sanction_productivity_growth_modifier = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_stability_factor_change = -0.05 }
+				update_PER_sanction_stability_factor = yes
+			}
+			PER = {
+				country_event = nuclear_iran.25
+			}
+			set_country_flag = {
+				flag = USA_sanctioned_PER_recently
+				days = 720
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				has_country_flag = PER_iran_misbehaved
+				add = 10
+			}
+		}
+	}
+	USA_decrease_sanctions_on_iran = {
+
+		available = {
+			NOT = {
+				has_country_flag = USA_sanctioned_PER_recently
+			}
+			NOT = {
+				check_variable = { USA_iran_sanction_level < 2 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_decrease_sanctions_on_iran"
+			add_to_variable = { var = USA_iran_sanction_level value = -1 }
+			clamp_variable = { var = USA_iran_sanction_level min = 0 max = 5 }
+			# Sanctions Variables
+			PER = {
+				newline = yes
+				set_temp_variable = { PER_sanction_trade_opinion_factor_change = 0.1 }
+				update_PER_sanction_trade_opinion_factor = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_trade_laws_cost_factor_change = -0.1 }
+				update_PER_sanction_trade_laws_cost_factor = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_oil_export_multiplier_modifier_change = 0.1 }
+				update_PER_sanction_oil_export_multiplier_modifier = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_improve_relations_maintain_cost_factor_change = -0.1 }
+				update_PER_sanction_improve_relations_maintain_cost_factor = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_productivity_growth_modifier_change = 0.05 }
+				update_PER_sanction_productivity_growth_modifier = yes
+				newline = yes
+				newline = yes
+				set_temp_variable = { PER_sanction_stability_factor_change = 0.05 }
+				update_PER_sanction_stability_factor = yes
+			}
+			PER = {
+				country_event = nuclear_iran.26
+			}
+			set_country_flag = {
+				flag = USA_sanctioned_PER_recently
+				days = 720
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				has_country_flag = PER_iran_behaves
+				add = 10
+			}
+			modifier = {
+				PER = {
+					has_government = democratic
+				}
+				add = 10
+			}
+		}
+	}
+
+	USA_lift_sanctions_on_iran = {
+
+		available = {
+			congress_medium_support_trigger = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_lift_sanctions_on_iran"
+			PER = {
+				country_event = nuclear_iran.29
+				remove_dynamic_modifier = {
+					modifier = PER_us_sanctions
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				has_country_flag = PER_iran_behaves
+				add = 10
+			}
+			modifier = {
+				has_opinion = {
+					target = PER
+					value > 19
+				}
+				add = 10
 			}
 		}
 	}
