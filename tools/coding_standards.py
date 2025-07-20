@@ -83,6 +83,7 @@ def check_event_for_logs(filepath):
 	hasLog = 0
 	optionFound = 0
 	optionName = ""
+	hasOtherDefinitions = 0
 
 	with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
 		content = file.readlines()
@@ -94,11 +95,15 @@ def check_event_for_logs(filepath):
 					optionFound = 1
 					optionLine = lineNum
 					hasLog = 0
+					hasOtherDefinitions = 0
 				if optionFound == 1:
 					if "name" in line and "=" in line:
 						hasName = re.search(r'name\s?=\s([a-zA-Z0-9-_.]+)', line, re.M | re.I)  # If it's a tag
 						if hasName:
 							optionName = hasName.group(1)
+					elif "=" in line and braces > 0 and "name" not in line and "log" not in line:
+						# Check for other definitions besides name and log
+						hasOtherDefinitions = 1
 					if "{" in line:
 						braces += line.count("{")
 
@@ -108,13 +113,20 @@ def check_event_for_logs(filepath):
 						braces = 0
 					if "}" in line:
 						braces -= line.count("}")
-					if braces == 0 and hasLog == 0:
+					if braces == 0 and hasLog == 0 and hasOtherDefinitions == 1:
 						print("WARNING: Event " + optionName + " doesn't have logging in {0} Line number: {1}".format(
 							clean_filepath(filepath), optionLine))
 						optionFound = 0
 						braces = 0
 						hasLog = 0
+						hasOtherDefinitions = 0
 						warning_count_file += 1
+					elif braces == 0:
+						# Reset for next option
+						optionFound = 0
+						braces = 0
+						hasLog = 0
+						hasOtherDefinitions = 0
 
 	return warning_count_file
 
