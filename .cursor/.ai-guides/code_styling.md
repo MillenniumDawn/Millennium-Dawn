@@ -143,6 +143,7 @@ country_event = {
 - Use proper logging in `on_add`
 - Structure modifiers clearly
 - Implement balanced effects
+- **Performance**: Remove unnecessary `allowed = { always = no }` statements as they add drag to performance - since `always = no` is the default behavior, these lines provide no functional benefit while consuming processing resources
 
 ### Example Idea Structure
 ```plaintext
