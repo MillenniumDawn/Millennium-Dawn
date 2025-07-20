@@ -162,14 +162,8 @@ focus_tree = {
 		cost = 10
 
 		allow_branch = {
-			NOT = {
-				has_completed_focus = POL_falanga
-			}
-		}
-		allow_branch = {
-			NOT = {
-				has_completed_focus = POL_stay_on_track
-			}
+			NOT = { has_completed_focus = POL_falanga }
+			NOT = { has_completed_focus = POL_stay_on_track }
 		}
 
 		prerequisite = {
@@ -6594,7 +6588,7 @@ focus_tree = {
 						special_type_slot_2 = smoke_launchers
 						special_type_slot_3 = wet_ammo_storage
 						special_type_slot_4 = tank_battlestation_4
-						special_type_slot_5 = reactive_armor_gen2
+						special_type_slot_6 = reactive_armor_gen2
 					}
 					upgrades = {
 						tank_nsb_armor_upgrade = 10
@@ -6622,7 +6616,7 @@ focus_tree = {
 						special_type_slot_2 = smoke_launchers
 						special_type_slot_3 = wet_ammo_storage
 						special_type_slot_4 = tank_battlestation_4
-						special_type_slot_5 = reactive_armor_gen2
+						special_type_slot_6 = reactive_armor_gen2
 					}
 					upgrades = {
 						tank_nsb_armor_upgrade = 8
@@ -8640,11 +8634,58 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_c_130_hercules"
 
-			add_tech_bonus = {
-				name = POL_c_130_hercules
-				bonus = 0.25
-				uses = 2
-				category = CAT_trans_plane
+			if = {
+				limit = {
+					has_dlc = "By Blood Alone"
+					USA = {
+						exists = yes
+						NOT = {
+							has_war_with = POL
+						}
+						has_opinion = { target = POL value > 49 }
+					}
+				}
+				create_equipment_variant = {
+					name = "C-130 Hercules"
+					type = large_plane_air_transport_airframe_1
+					parent_version = 0
+					modules = {
+						fixed_main_weapon_slot = weap_buff_transport
+						fixed_gun_slot = empty
+						engine_type_slot = engine_prop_quad_1
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_1
+						special_slot_type_3 = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+					}
+					obsolete = yes
+					icon = "gfx/interface/technologies/USA/AIR/C1.dds"
+					model = "USA_large_plane_air_transport_airframe_1_entity"
+					design_team = mio:POL_wzl_bydgoszcz_manufacturer
+				}
+			}
+			else_if = {
+				limit = {
+					has_dlc = "By Blood Alone"
+				}
+				add_tech_bonus = {
+					name = POL_c_130_hercules
+					bonus = 0.25
+					uses = 2
+					category = CAT_h_air
+				}
+				custom_effect_tooltip = POL_c_130_hercules_TT
+			}
+			else = {
+				add_tech_bonus = {
+					name = POL_c_130_hercules
+					bonus = 0.25
+					uses = 2
+					category = CAT_trans_plane
+				}
 			}
 
 			set_temp_variable = { treasury_change = -20 }
@@ -8950,12 +8991,22 @@ focus_tree = {
 	}
 
 	focus = {
-		id = POL_modernization_of_su25
-		icon = blr_su_25
+		id = POL_extend_mig29_fleet
+		icon = blr_mig_29
 		x = 4
 		y = 1
 		relative_position_id = POL_sily_powietrzne
 		cost = 7
+
+		available = {
+			SOV = {
+				exists = yes
+				NOT = {
+					has_war_with = POL
+				}
+				has_opinion = { target = POL value > 84 }
+			}
+		}
 
 		prerequisite = {
 			focus = POL_sily_powietrzne
@@ -8967,29 +9018,40 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus POL_modernization_of_su25"
+			log = "[GetDateText]: [Root.GetName]: Focus POL_extend_mig29_fleet"
 
 			if = {
 				limit = {
 					has_dlc = "By Blood Alone"
 				}
 				add_tech_bonus = {
-					name = POL_modernization_of_su25
-					bonus = 0.35
+					name = POL_extend_mig29_fleet
+					bonus = 0.1
 					uses = 1
 					category = CAT_medium_plane
+				}
+				add_equipment_to_stockpile = {
+					type = small_plane_airframe_2
+					amount = 25
+					variant_name = "MiG-29 Fulcrum"
+					producer = SOV
 				}
 			}
 			else = {
 				add_tech_bonus = {
-					name = POL_modernization_of_su25
-					bonus = 0.35
+					name = POL_extend_mig29_fleet
+					bonus = 0.1
 					uses = 1
 					category = CAT_cas
 				}
+				add_equipment_to_stockpile = {
+					type = MR_Fighter2
+					amount = 25
+					producer = SOV
+				}
 			}
 
-			set_temp_variable = { treasury_change = -18 }
+			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 		}
 
@@ -9001,11 +9063,11 @@ focus_tree = {
 		icon = close_air_support
 		x = 0
 		y = 1
-		relative_position_id = POL_modernization_of_su25
+		relative_position_id = POL_extend_mig29_fleet
 		cost = 5
 
 		prerequisite = {
-			focus = POL_modernization_of_su25
+			focus = POL_extend_mig29_fleet
 		}
 
 		search_filters = {
@@ -9021,7 +9083,7 @@ focus_tree = {
 					has_dlc = "By Blood Alone"
 				}
 				add_tech_bonus = {
-					name = POL_modernization_of_su25
+					name = POL_extend_mig29_fleet
 					bonus = 0.3
 					uses = 1
 					category = CAT_medium_plane
@@ -9029,7 +9091,7 @@ focus_tree = {
 			}
 			else = {
 				add_tech_bonus = {
-					name = POL_modernization_of_su25
+					name = POL_extend_mig29_fleet
 					bonus = 0.3
 					uses = 1
 					category = CAT_cas
@@ -9256,26 +9318,57 @@ focus_tree = {
 
 			if = {
 				limit = {
-					has_tech = Air_UAV1
+					has_dlc = "By Blood Alone"
 					NOT = {
-						has_tech = Air_UAV3
-						has_tech = Air_UAV4
+						has_tech = drone_1
 					}
 				}
 				set_technology = {
-					Air_UAV2 = 1
+					drone_1 = 1
+				}
+			}
+			else_if = {
+				limit = {
+					has_dlc = "By Blood Alone"
+					NOT = {
+						has_tech = drone_2
+					}
+					has_tech = awacs_2
+				}
+				set_technology = {
+					drone_2 = 1
+				}
+			}
+			else_if = {
+				limit = {
+					has_dlc = "By Blood Alone"
+				}
+				add_tech_bonus = {
+					name = POL_wb_warmate
+					bonus = 0.25
+					uses = 1
+					category = CAT_drones
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						has_tech = Air_UAV1
+					}
+				}
+				set_technology = {
+					Air_UAV1 = 1
 				}
 			}
 			else_if = {
 				limit = {
 					NOT = {
 						has_tech = Air_UAV2
-						has_tech = Air_UAV3
-						has_tech = Air_UAV4
 					}
+					has_tech = Air_UAV1
 				}
 				set_technology = {
-					Air_UAV1 = 1
+					Air_UAV2 = 1
 				}
 			}
 			else = {
@@ -9782,18 +9875,18 @@ focus_tree = {
 				add_equipment_to_stockpile = {
 					type = cv_medium_plane_airframe_2
 					variant_name = "F/A-18C Hornet"
-					amount = 100
-					producer = FRA
+					amount = 70
+					producer = USA
 				}
 			} else = {
 				add_equipment_to_stockpile = {
 					type = AS_Fighter2
-					amount = 100
+					amount = 70
 					producer = USA
 				}
 			}
 
-			set_temp_variable = { treasury_change = -20 }
+			set_temp_variable = { treasury_change = -14 }
 			modify_treasury_effect = yes
 		}
 
@@ -10645,7 +10738,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_government_influence_on_social_media"
-			add_ideas = POL_the_fourth_power_idea
+			sre_fourth_power = yes
 		}
 
 		ai_will_do = { factor = 30 }
@@ -11866,80 +11959,15 @@ focus_tree = {
 	}
 
 	focus = {
-		id = POL_alcm
-		icon = bombs3
-		x = 0
-		y = 1
-		relative_position_id = POL_nuclear_shelters
-		cost = 5
-
-		prerequisite = { focus = POL_nuclear_shelters }
-		mutually_exclusive = {
-			focus = POL_glcm
-			focus = POL_slcm
-		}
-
-		search_filters = {
-			FOCUS_FILTER_RESEARCH
-			FOCUS_FILTER_EXPENDITURE
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus POL_alcm"
-			add_tech_bonus = {
-				name = CAT_alcm
-				bonus = 0.1
-				uses = 2
-				category = CAT_alcm
-			}
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-		}
-
-		ai_will_do = { factor = 30 }
-	}
-
-	focus = {
-		id = POL_new_fighter_launchers
-		icon = advan_fighters
-		x = 0
-		y = 1
-		relative_position_id = POL_alcm
-		cost = 5
-
-		prerequisite = { focus = POL_alcm }
-
-		search_filters = {
-			FOCUS_FILTER_RESEARCH
-			FOCUS_FILTER_EXPENDITURE
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus POL_new_fighter_launchers"
-			add_tech_bonus = {
-				name = POL_new_fighter_launchers
-				bonus = 0.25
-				uses = 1
-				category = CAT_cm
-			}
-			set_temp_variable = { treasury_change = -25 }
-			modify_treasury_effect = yes
-		}
-
-		ai_will_do = { factor = 30 }
-	}
-
-	focus = {
 		id = POL_glcm
 		icon = KORNET
-		x = 2
+		x = 0
 		y = 1
 		relative_position_id = POL_nuclear_shelters
 		cost = 5
 
 		prerequisite = { focus = POL_nuclear_shelters }
 		mutually_exclusive = {
-			focus = POL_alcm
 			focus = POL_slcm
 		}
 
@@ -11980,78 +12008,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_tel_battery"
-			if = {
-				limit = {
-					NOT = {
-						has_tech = TEL_launched_missiles
-					}
-				}
-				add_tech_bonus = {
-					name = POL_tel_battery
-					bonus = 0.1
-					uses = 1
-					technology = TEL_launched_missiles
-				}
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						has_tech = TEL_3
-					}
-				}
-				add_tech_bonus = {
-					name = POL_tel_battery
-					bonus = 0.1
-					uses = 1
-					technology = TEL_3
-				}
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						has_tech = TEL_4
-					}
-				}
-				add_tech_bonus = {
-					name = POL_tel_battery
-					bonus = 0.1
-					uses = 1
-					technology = TEL_4
-				}
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						has_tech = TEL_5
-					}
-				}
-				add_tech_bonus = {
-					name = POL_tel_battery
-					bonus = 0.1
-					uses = 1
-					technology = TEL_5
-				}
-			}
-			else_if = {
-				limit = {
-					NOT = {
-						has_tech = TEL_6
-					}
-				}
-				add_tech_bonus = {
-					name = POL_tel_battery
-					bonus = 0.1
-					uses = 1
-					technology = TEL_6
-				}
-			}
-			else = {
-				add_tech_bonus = {
-					name = CAT_glcm
-					bonus = 0.1
-					uses = 1
-					category = CAT_glcm
-				}
+			add_tech_bonus = {
+				name = POL_tel_battery
+				bonus = 0.2
+				uses = 1
+				category = CAT_glcm
 			}
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
@@ -12063,14 +12024,13 @@ focus_tree = {
 	focus = {
 		id = POL_hypersonic_missiles
 		icon = attack_democracy4
-		x = 0
+		x = 1
 		y = 1
 		relative_position_id = POL_tel_battery
 		cost = 5
 
 		prerequisite = {
 			focus = POL_tel_battery
-			focus = POL_new_fighter_launchers
 			focus = POL_missile_submarines
 		}
 
@@ -12097,7 +12057,7 @@ focus_tree = {
 	focus = {
 		id = POL_slcm
 		icon = focus_rocketry
-		x = 4
+		x = 2
 		y = 1
 		relative_position_id = POL_nuclear_shelters
 		cost = 5
@@ -12105,7 +12065,6 @@ focus_tree = {
 		prerequisite = { focus = POL_nuclear_shelters }
 		mutually_exclusive = {
 			focus = POL_glcm
-			focus = POL_alcm
 		}
 
 		search_filters = {
@@ -12119,7 +12078,7 @@ focus_tree = {
 				name = CAT_slcm
 				bonus = 0.1
 				uses = 2
-				category = CAT_slcm
+				category = CAT_sam
 			}
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
@@ -12151,7 +12110,7 @@ focus_tree = {
 				}
 				add_tech_bonus = {
 					name = CAT_sub
-					bonus = 0.11
+					bonus = 0.2
 					uses = 1
 					category = CAT_sub
 				}
@@ -12174,9 +12133,9 @@ focus_tree = {
 	focus = {
 		id = POL_camouflage
 		icon = cryptologic_bomb
-		x = -2
-		y = 2
-		relative_position_id = POL_missile_submarines
+		x = 0
+		y = 1
+		relative_position_id = POL_hypersonic_missiles
 		cost = 5
 
 		prerequisite = {
@@ -12190,24 +12149,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_camouflage"
-			# add_tech_bonus = {
-			# 	name = POL_camouflage
-			# 	bonus = 0.11
-			# 	uses = 1
-			# 	technology = ICBM4_MIRV
-			# }
-			# add_tech_bonus = {
-			# 	name = POL_camouflage
-			# 	bonus = 0.11
-			# 	uses = 1
-			# 	technology = ICBM5_MIRV
-			# }
-			# add_tech_bonus = {
-			# 	name = POL_camouflage
-			# 	bonus = 0.11
-			# 	uses = 1
-			# 	technology = ICBM6_MIRV
-			# }
+			add_tech_bonus = {
+				name = POL_camouflage
+				bonus = 0.35
+				uses = 2
+				category = CAT_missile
+			}
 			set_temp_variable = { treasury_change = -26 }
 			modify_treasury_effect = yes
 		}
@@ -16344,7 +16291,7 @@ focus_tree = {
 		}
 
 		prerequisite = { focus = POL_continue_anti_corrpution }
-		bypass = { has_idea = police_05  }
+		bypass = { has_idea = police_05 }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 		completion_reward = {
@@ -17004,12 +16951,9 @@ focus_tree = {
 			CZE = {
 				NOT = {
 					is_subject = yes
+					has_war_with = POL
 				}
 				exists = yes
-				custom_trigger_tooltip = {
-					tooltip = POL_cze_gov_same_as_poland_TT
-					has_government = POL
-				}
 			}
 			NOT = {
 				has_completed_focus = POL_department_of_foreign_influence
@@ -17071,12 +17015,9 @@ focus_tree = {
 			SLO = {
 				NOT = {
 					is_subject = yes
+					has_war_with = POL
 				}
 				exists = yes
-				custom_trigger_tooltip = {
-					tooltip = POL_slo_gov_same_as_poland_TT
-					has_government = POL
-				}
 			}
 			OR = {
 				CZE = {
@@ -17127,12 +17068,9 @@ focus_tree = {
 			HUN = {
 				NOT = {
 					is_subject = yes
+					has_war_with = POL
 				}
 				exists = yes
-				custom_trigger_tooltip = {
-					tooltip = POL_hun_gov_same_as_poland_TT
-					has_government = POL
-				}
 			}
 			OR = {
 				CZE = {
@@ -18845,8 +18783,8 @@ focus_tree = {
 			mark_focus_tree_layout_dirty = yes
 		}
 
-		ai_will_do = { 
-			factor = 50 
+		ai_will_do = {
+			factor = 50
 			modifier = {
 				has_global_flag = POL_COMMUNISM_PATH
 				add = -50

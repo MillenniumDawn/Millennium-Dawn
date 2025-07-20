@@ -9,6 +9,10 @@ NATO_decisions = {
 		days_re_enable = 270
 
 		visible = {
+			NOT = {
+				has_country_flag = F35_blacklist
+			}
+			has_idea = Major_Non_NATO_Ally
 			USA = {
 				OR = {
 					has_country_flag = USA_open_f35_program_nato
@@ -234,6 +238,17 @@ NATO_decisions = {
 
 		available = {
 			has_government = democratic
+			if = {
+				limit = {
+					original_tag = SWI
+				}
+				NOT = {
+					OR = {
+						has_idea = SWI_swiss_neutrality
+						has_idea = SWI_swiss_neutrality2
+					}
+				}
+			}
 		}
 
 		visible = {
@@ -260,7 +275,7 @@ NATO_decisions = {
 		ai_will_do = {
 			base = 25
 			modifier = {
-				add = 150
+				add = 100
 				OR = {
 					AND = {
 						has_opinion = { target = USA value > 150 }
@@ -288,8 +303,9 @@ NATO_decisions = {
 					}
 				}
 			}
+			# Historical AI Section
 			modifier = {
-				add = 150
+				add = 100
 				OR = {
 					original_tag = LAT
 					original_tag = LIT
@@ -304,12 +320,15 @@ NATO_decisions = {
 					has_government = neutrality
 				}
 				OR = {
-					date > 2003.1.1
+					AND = {
+						date > 2003.1.1
+						is_historical_focus_on = yes
+					}
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 150
+				add = 100
 				OR = {
 					original_tag = ALB
 					original_tag = CRO
@@ -319,49 +338,104 @@ NATO_decisions = {
 					has_government = neutrality
 				}
 				OR = {
-					date > 2008.1.1
+					AND = {
+						date > 2008.1.1
+						is_historical_focus_on = yes
+					}
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 150
+				add = 100
 				original_tag = MNT
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
 				OR = {
-					date > 2016.1.1
+					AND = {
+						date > 2016.1.1
+						is_historical_focus_on = yes
+					}
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 150
+				add = 100
 				original_tag = FYR
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
 				OR = {
-					date > 2018.1.1
+					AND = {
+						date > 2018.1.1
+						is_historical_focus_on = yes
+					}
 					SOV = { has_added_tension_amount > 5 }
 				}
 			}
 			modifier = {
-				add = 150
+				add = 100
 				OR = {
 					original_tag = SWE
 					original_tag = FIN
 				}
 				OR = {
-					date > 2019.1.1
+					AND = {
+						date > 2019.1.1
+						is_historical_focus_on = yes
+					}
 					SOV = { has_added_tension_amount > 10 }
 					SOV = { has_war_with = UKR }
 				}
 			}
+			# Influence Section
+			modifier = {
+				add = 20
+				var:influence_array^0 = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				add = 15
+				var:influence_array^1 = {
+					has_idea = NATO_member
+				}
+			}
+			modifier = {
+				add = 10
+				var:influence_array^2 = {
+					has_idea = NATO_member
+				}
+			}
+			# Difficulty Modifier
+			modifier = {
+				add = 10
+				difficulty > 2
+			}
+			modifier = {
+				add = 10
+				difficulty > 3
+			}
+			# Reduce AI willingness to join if there is no tension
+			modifier = {
+				factor = 0.25
+				threat < 0.10
+			}
+			modifier = {
+				factor = 2
+				threat > 0.30
+			}
+			modifier = {
+				factor = 1.5
+				any_neighbor_country = {
+					has_war = yes
+				}
+			}
+			# Russia is at war with European democratic nations
 			modifier = {
 				factor = 2.5
-				# Russia is at war with European democratic nations
 				SOV = { NOT = { has_government = democratic } }
 				OR = {
 					SOV = { has_war_with = UKR }
@@ -375,40 +449,6 @@ NATO_decisions = {
 					SOV = { has_war_with = SOO }
 				}
 			}
-			# Hardcoded Section to Ensure they join
-			modifier = {
-				add = 40
-				var:influence_array^0 = {
-					has_idea = NATO_member
-				}
-			}
-			modifier = {
-				add = 30
-				var:influence_array^1 = {
-					has_idea = NATO_member
-				}
-			}
-			modifier = {
-				add = 15
-				var:influence_array^2 = {
-					has_idea = NATO_member
-				}
-			}
-			modifier = {
-				factor = 0
-				OR = {
-					has_government = nationalist
-					has_government = fascism
-				}
-			}
-			modifier = {
-				factor = 0
-				original_tag = SWI
-				OR = {
-					has_idea = SWI_swiss_neutrality
-					has_idea = SWI_swiss_neutrality2
-				}
-			}
 			# Microstates shouldn't join NATO. This is just pointless for them IMO
 			modifier = {
 				factor = 0
@@ -418,6 +458,49 @@ NATO_decisions = {
 					original_tag = MNC
 					original_tag = HLS
 					original_tag = MLT
+
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				NOT = {
+					OR = {
+						original_tag = ALB
+						original_tag = BEL
+						original_tag = BUL
+						original_tag = CAN
+						original_tag = CRO
+						original_tag = CZE
+						original_tag = DEN
+						original_tag = EST
+						original_tag = FIN
+						original_tag = FRA
+						original_tag = GER
+						original_tag = GRE
+						original_tag = HUN
+						original_tag = ICE
+						original_tag = ITA
+						original_tag = LAT
+						original_tag = LIT
+						original_tag = LUX
+						original_tag = MNT
+						original_tag = HOL
+						original_tag = FYR
+						original_tag = NOR
+						original_tag = POL
+						original_tag = POR
+						original_tag = ROM
+						original_tag = SLO
+						original_tag = SLV
+						original_tag = SWE
+						original_tag = SPR
+						original_tag = TUR
+						original_tag = ENG
+						original_tag = USA
+					}
 				}
 			}
 		}
