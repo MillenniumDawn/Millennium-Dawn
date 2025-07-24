@@ -1496,7 +1496,7 @@ GER_siemens_defence_electronics = {
 		icon = GFX_generic_mio_trait_icon_unique
 		special_trait_background = yes
 
-		position = { x = 0 y = 1 }
+		position = { x = 6 y = 0 }
 
 		organization_modifier = {
 			military_industrial_organization_task_capacity = 2
@@ -1542,17 +1542,18 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_multi_system_locomotive
-		name = GER_mio_trait_siemens_multi_system_locomotive
-		icon = GFX_generic_mio_trait_icon_production_capacity
+		token = GER_mio_trait_siemens_adaptive_signal_processor
+		name = GER_mio_trait_siemens_adaptive_signal_processor
+		icon = GFX_generic_mio_trait_icon_unique
 
 		position = { x = 0 y = 0 }
 
-		production_bonus = {
-			production_capacity_factor = 0.12
+		equipment_bonus = {
+			recovery = 0.10
+			reliability = 0.05
 		}
 
-		limit_to_equipment_type = { train_equipment }
+		limit_to_equipment_type = { cnc_equipment }
 
 		on_complete = {
 			if = {
@@ -1577,17 +1578,20 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_battery_design
-		name = GER_mio_trait_siemens_battery_design
-		icon = GFX_generic_mio_trait_icon_build_cost_ic
+		token = GER_mio_trait_siemens_high_performance_tsn
+		name = GER_mio_trait_siemens_high_performance_tsn
+		icon = GFX_generic_mio_trait_icon_maximum_speed
 
-		position = { x = 2 y = 0 }
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = { GER_mio_trait_siemens_adaptive_signal_processor }
 
 		equipment_bonus = {
-			build_cost_ic = -0.10
+			maximum_speed = 0.08
+			reliability = 0.03
 		}
 
-		limit_to_equipment_type = { train_equipment }
+		limit_to_equipment_type = { cnc_equipment }
 
 		on_complete = {
 			if = {
@@ -1612,17 +1616,55 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_smart_bogie
-		name = GER_mio_trait_siemens_smart_bogie
-		icon = GFX_generic_mio_trait_icon_efficiency_gain
+		token = GER_mio_trait_siemens_fault_tolerant_switch_fabric
+		name = GER_mio_trait_siemens_fault_tolerant_switch_fabric
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		position = { x = 2 y = 0 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+
+		equipment_bonus = {
+			reliability = 0.12
+		}
+
+		limit_to_equipment_type = { cnc_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_real_time_data_bus
+		name = GER_mio_trait_siemens_real_time_data_bus
+		icon = GFX_generic_mio_trait_icon_maximum_speed
 
 		position = { x = 4 y = 0 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
 
-		production_bonus = {
-			production_efficiency_gain_factor = 0.10
+		equipment_bonus = {
+			maximum_speed = 0.10
+			recovery = 0.05
 		}
 
-		limit_to_equipment_type = { train_equipment }
+		limit_to_equipment_type = { cnc_equipment }
 
 		on_complete = {
 			if = {
@@ -1647,23 +1689,20 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_signalling_hub
-		name = GER_mio_trait_siemens_signalling_hub
-		icon = GFX_generic_mio_trait_icon_build_cost_ic
+		token = GER_mio_trait_siemens_cyber_resilient_firmware
+		name = GER_mio_trait_siemens_cyber_resilient_firmware
+		icon = GFX_generic_mio_trait_icon_reliability
 
-		position = { x = 0 y = 1 }
-		relative_position_id = GER_mio_trait_siemens_battery_design
-		all_parents = { GER_mio_trait_siemens_battery_design GER_mio_trait_siemens_smart_bogie GER_mio_trait_siemens_multi_system_locomotive }
+		position = { x = 3 y = 1 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = { GER_mio_trait_siemens_real_time_data_bus GER_mio_trait_siemens_fault_tolerant_switch_fabric }
 
-		production_bonus = {
-			production_cost_factor = -0.10
+		equipment_bonus = {
+			reliability = 0.08
+			recovery = 0.03
 		}
 
-		available = {
-			GER = { has_tech = computing2 } #bevor was not exixting
-		}
-
-		limit_to_equipment_type = { train_equipment }
+		limit_to_equipment_type = { cnc_equipment }
 
 		on_complete = {
 			if = {
@@ -1688,56 +1727,13 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_ai_managed_rail_automation
-		name = GER_mio_trait_siemens_ai_managed_rail_automation
-		icon = GFX_generic_mio_trait_icon_efficiency_gain
+		token = GER_mio_trait_siemens_modular_plc
+		name = GER_mio_trait_siemens_modular_plc
+		icon = GFX_generic_mio_trait_icon_unique
 
-		position = { x = 0 y = 2 }
-		relative_position_id = GER_mio_trait_siemens_battery_design
-		all_parents = { GER_mio_trait_siemens_signalling_hub }
-
-		production_bonus = {
-			production_efficiency_gain_factor = 0.15
-		}
-
-		organization_modifier = {
-			military_industrial_organization_research_bonus = 0.05
-		}
-
-		available = {
-			GER = { has_tech = advanced_ai }
-		}
-
-		limit_to_equipment_type = { train_equipment }
-
-		on_complete = {
-			if = {
-				limit = {
-					check_variable = { free_trait_picks > 0 }
-				}
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = {
-				FROM = {
-					small_expenditure = yes
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-	trait = {
-		token = GER_mio_trait_siemens_adaptive_network
-		name = GER_mio_trait_siemens_adaptive_network
-		icon = GFX_generic_mio_trait_icon_soft_attack
-
-		position = { x = 6 y = 0 }
+		position = { x = 4 y = 2 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = {  GER_mio_trait_siemens_high_performance_tsn GER_mio_trait_siemens_cyber_resilient_firmware }
 
 		equipment_bonus = {
 			max_organisation = 0.15
@@ -1768,17 +1764,253 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_cyber_hardened_comms
-		name = GER_mio_trait_siemens_cyber_hardened_comms
+		token = GER_mio_trait_siemens_modular_design_philosophy
+		name = GER_mio_trait_siemens_modular_design_philosophy
+		icon = GFX_generic_mio_trait_icon_supply_consumption
+
+		position = { x = 4 y = 3 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = { GER_mio_trait_siemens_modular_plc }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 2
+		}
+
+		limit_to_equipment_type = { cnc_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_lean_circuit
+		name = GER_mio_trait_siemens_lean_circuit
+		icon = GFX_generic_mio_trait_icon_resources
+
+		position = { x = 0 y = 2 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = {  GER_mio_trait_siemens_high_performance_tsn GER_mio_trait_siemens_cyber_resilient_firmware }
+
+		production_bonus = {
+			production_resource_need_factor = -0.13
+		}
+
+		limit_to_equipment_type = { cnc_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_global_rd_synergy
+		name = GER_mio_trait_siemens_global_rd_synergy
+		icon = GFX_generic_mio_trait_icon_unique
+
+		position = { x = 1 y = 3 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = { GER_mio_trait_siemens_lean_circuit }
+
+		organization_modifier = {
+			research_speed_factor = 0.07
+		}
+
+		limit_to_equipment_type = { cnc_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_digital_twin_assembly
+		name = GER_mio_trait_siemens_digital_twin_assembly
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		position = { x = 2 y = 2 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = { GER_mio_trait_siemens_cyber_resilient_firmware }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.15
+		}
+
+		limit_to_equipment_type = { cnc_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_automated_quality_inspections
+		name = GER_mio_trait_siemens_automated_quality_inspections
 		icon = GFX_generic_mio_trait_icon_reliability
+
+		position = { x = 1 y = 4 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = { GER_mio_trait_siemens_global_rd_synergy GER_mio_trait_siemens_digital_twin_assembly }
+
+		equipment_bonus = {
+			reliability = 0.05
+		}
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.07
+			production_resource_penalty_factor = 0.05
+		}
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 2
+		}
+
+		limit_to_equipment_type = { cnc_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_digital_training_labs
+		name = GER_mio_trait_siemens_digital_training_labs
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+
+		position = { x = 3 y = 4 }
+		relative_position_id = GER_mio_trait_siemens_adaptive_signal_processor
+		all_parents = { GER_mio_trait_siemens_modular_design_philosophy GER_mio_trait_siemens_digital_twin_assembly }
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.50
+			military_industrial_organization_design_team_change_cost = -0.50
+		}
+
+		production_bonus = {
+			production_cost_factor = -0.05
+		}
+
+		limit_to_equipment_type = { cnc_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_additive_spare_part
+		name = GER_mio_trait_siemens_additive_spare_part
+		icon = GFX_generic_mio_trait_icon_production_capacity
 
 		position = { x = 8 y = 0 }
 
-		equipment_bonus = {
-			reliability = 0.10
+		production_bonus = {
+			production_capacity_factor = 0.20
 		}
 
-		limit_to_equipment_type = { cnc_equipment }
+		limit_to_equipment_type = { train_equipment }
 
 		on_complete = {
 			if = {
@@ -1803,18 +2035,19 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_mission_continuity_module
-		name = GER_mio_trait_siemens_mission_continuity_module
-		icon = GFX_generic_mio_trait_icon_defense
+		token = GER_mio_trait_siemens_on_demand_tooling
+		name = GER_mio_trait_siemens_on_demand_tooling
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
 
-		position = { x = 7 y = 1 }
-		all_parents = { GER_mio_trait_siemens_cyber_hardened_comms GER_mio_trait_siemens_adaptive_network }
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = { GER_mio_trait_siemens_additive_spare_part }
 
-		equipment_bonus = {
-			recovery = 0.08
+		production_bonus = {
+			production_efficiency_cap_factor = 0.10
 		}
 
-		limit_to_equipment_type = { cnc_equipment }
+		limit_to_equipment_type = { train_equipment }
 
 		on_complete = {
 			if = {
@@ -1839,23 +2072,64 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_accelerated_signal_processing
-		name = GER_mio_trait_siemens_accelerated_signal_processing
-		icon = GFX_generic_mio_trait_icon_maximum_speed
+		token = GER_mio_trait_siemens_composite_carbody
+		name = GER_mio_trait_siemens_composite_carbody
+		icon = GFX_generic_mio_trait_icon_resources
 
-		position = { x = 0 y = 1 }
-		relative_position_id = GER_mio_trait_siemens_mission_continuity_module
-		all_parents = { GER_mio_trait_siemens_mission_continuity_module }
+		position = { x = 1 y = 4 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = { GER_mio_trait_siemens_on_demand_tooling }
+
+		production_bonus = {
+			production_resource_need_factor = -0.12
+		}
+
+		limit_to_equipment_type = { train_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_ai_maintenance
+		name = GER_mio_trait_siemens_ai_maintenance
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = 0 y = 3 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = { GER_mio_trait_siemens_additive_spare_part }
 
 		available = {
 			GER = { has_tech = machine_learning }
 		}
 
-		equipment_bonus = {
-			maximum_speed = 0.07
+		production_bonus = {
+			production_resource_penalty_factor = -0.12
 		}
 
-		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			build_cost_ic = -0.15
+		}
+
+		limit_to_equipment_type = { train_equipment }
 
 		on_complete = {
 			if = {
@@ -1880,23 +2154,24 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_automated_threat_prio
-		name = GER_mio_trait_siemens_automated_threat_prio
-		icon = GFX_generic_mio_trait_icon_ap_attack
+		token = GER_mio_trait_siemens_vectron_platform
+		name = GER_mio_trait_siemens_vectron_platform
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
 
-		position = { x = -2 y = 2 }
-		relative_position_id = GER_mio_trait_siemens_mission_continuity_module
-		all_parents = { GER_mio_trait_siemens_accelerated_signal_processing }
-
-		available = {
-			GER = { has_tech = advanced_ai }
+		position = { x = 0 y = 6 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = {
+			GER_mio_trait_siemens_ai_maintenance
+			GER_mio_trait_siemens_regenrative_braking
+			GER_mio_trait_siemens_composite_carbody
+			GER_mio_trait_siemens_lean_logistics
 		}
 
-		equipment_bonus = {
-			ap_attack = 0.15
+		production_bonus = {
+			production_efficiency_cap_factor = 0.25
 		}
 
-		limit_to_equipment_type = { cnc_equipment }
+		limit_to_equipment_type = { train_equipment }
 
 		on_complete = {
 			if = {
@@ -1921,24 +2196,19 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_siemens_ai_powered_control_stations
-		name = GER_mio_trait_siemens_ai_powered_control_stations
-		icon = GFX_generic_mio_trait_icon_breakthrough
+		token = GER_mio_trait_siemens_modular_bogie
+		name = GER_mio_trait_siemens_modular_bogie
+		icon = GFX_generic_mio_trait_icon_resources
 
-		position = { x = 0 y = 2 }
-		relative_position_id = GER_mio_trait_siemens_mission_continuity_module
-		all_parents = { GER_mio_trait_siemens_accelerated_signal_processing }
+		position = { x = -1 y = 1 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = { GER_mio_trait_siemens_additive_spare_part }
 
-		available = {
-			GER = { has_tech = early_ai_robotics }
+		production_bonus = {
+			production_resource_need_factor = -0.15
 		}
 
-		equipment_bonus = {
-			breakthrough = 0.10
-			reliability = 0.15
-		}
-
-		limit_to_equipment_type = { cnc_equipment }
+		limit_to_equipment_type = { train_equipment }
 
 		on_complete = {
 			if = {
@@ -1963,21 +2233,93 @@ GER_siemens_defence_electronics = {
 		}
 	}
 	trait = {
-		token = GER_mio_trait_digital_twin
-		name = GER_mio_trait_digital_twin
-		icon = GFX_generic_mio_trait_icon_ap_attack
+		token = GER_mio_trait_siemens_regenrative_braking
+		name = GER_mio_trait_siemens_regenrative_braking
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
 
-		position = { x = 2 y = 2 }
-		relative_position_id = GER_mio_trait_siemens_mission_continuity_module
-		all_parents = { GER_mio_trait_siemens_accelerated_signal_processing }
+		position = { x = -2 y = 4 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = { GER_mio_trait_siemens_modular_bogie }
 
-		organization_modifier = {
-			military_industrial_organization_research_bonus = 0.08
-			military_industrial_organization_industrial_manufacturer_assign_cost = -0.20
-			military_industrial_organization_design_team_assign_cost = -0.20
+		production_bonus = {
+			production_efficiency_gain_factor = 0.08
 		}
 
-		limit_to_equipment_type = { cnc_equipment }
+		limit_to_equipment_type = { train_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_lean_logistics
+		name = GER_mio_trait_siemens_lean_logistics
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		position = { x = -8 y = 5 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = { GER_mio_trait_siemens_lean_circuit }
+
+		production_bonus = {
+			production_capacity_factor = 0.12
+		}
+
+		limit_to_equipment_type = { train_equipment }
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_siemens_digital_twin_optimization
+		name = GER_mio_trait_siemens_digital_twin_optimization
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		position = { x = -6 y = 6 }
+		relative_position_id = GER_mio_trait_siemens_additive_spare_part
+		all_parents = { GER_mio_trait_siemens_lean_logistics GER_mio_trait_siemens_digital_twin_assembly GER_mio_trait_siemens_digital_training_labs }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.15
+		}
+
+		limit_to_equipment_type = { train_equipment }
 
 		on_complete = {
 			if = {
