@@ -2425,7 +2425,7 @@ GER_mbda_deutschland = {
 		icon = GFX_generic_mio_trait_icon_unique
 		special_trait_background = yes
 
-		position = { x = 5 y = 0 }
+		position = { x = 0 y = 0 }
 
 		organization_modifier = {
 			military_industrial_organization_task_capacity = 2
@@ -2470,7 +2470,7 @@ GER_mbda_deutschland = {
 		name = GER_mio_trait_mbda_lightweight
 		icon = GFX_generic_mio_trait_icon_soft_attack
 
-		position = { x = 7 y = 0 }
+		position = { x = 1 y = 0 }
 
 		equipment_bonus = {
 			soft_attack = 0.10
@@ -2858,7 +2858,7 @@ GER_mbda_deutschland = {
 		name = GER_mio_trait_mbda_sam_bulk
 		icon = GFX_generic_mio_trait_icon_efficiency_cap
 
-		position = { x = 9 y = 0 }
+		position = { x = 3 y = 0 }
 
 		production_bonus = {
 			production_efficiency_gain_factor = 0.10
@@ -2895,7 +2895,7 @@ GER_mbda_deutschland = {
 		name = GER_mio_trait_mbda_sam_deep_shield
 		icon = GFX_generic_mio_trait_icon_air_defence
 
-		position = { x = 11 y = 0 }
+		position = { x = 5 y = 0 }
 
 		equipment_bonus = {
 			air_defence = 0.10
@@ -3027,7 +3027,7 @@ GER_mbda_deutschland = {
 		name = GER_mio_trait_mbda_rd_edge
 		icon = GFX_generic_mio_trait_icon_unique
 
-		position = { x = 15 y = 0 }
+		position = { x = 8 y = 0 }
 
 		organization_modifier = {
 			military_industrial_organization_research_bonus = 0.05
@@ -3452,8 +3452,6 @@ GER_rheinmetall_tank_manufacturer = {
 
 		}
 
-		limit_to_equipment_type = { medium_tank_chassis }
-
 		on_complete = {
 			FROM = {
 				medium_expenditure = yes
@@ -3605,26 +3603,564 @@ GER_diehl_defence_aircraft_manufacturer = {
 	name = GER_diehl_defence_aircraft_manufacturer
 
 	equipment_type = {
-		Missile
+		sam_missile_equipment
+		L_AT_Equipment
+		medium_tank_aa_chassis
 	}
 
 	research_categories = {
-		CAT_missile
+		CAT_sam
+		CAT_l_at
+		CAT_as_missiles
+		CAT_air_to_air_weapons
+		CAT_pds
+		CAT_naval_cannons
+		CAT_gnss
+		CAT_art_ammo
+	}
+
+	tree_header_text = {
+		text = "Integrated Air‑Defence Network"
+		x = 1
+	}
+	tree_header_text = {
+		text = "Precision Anti‑Tank Systems"
+		x = 5
+	}
+	tree_header_text = {
+		text = "Mobile Air‑Defence Platforms"
+		x = 9
 	}
 
 
 	initial_trait = {
 		name = GER_diehl_defence_aircraft_manufacturer_trait
 
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.15
+		}
+		production_bonus = {
+			production_efficiency_cap_factor = -0.15
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_extended_solid_motor
+		name = GER_mio_trait_diehl_extended_solid_motor
+		icon = GFX_generic_mio_trait_icon_air_range
+
+		position = { x = 1 y = 0 }
+
 		equipment_bonus = {
-			strategic_attack = 0.10
-			soft_attack = 0.10
-			hard_attack = 0.10
-			build_cost_ic = 0.10
+			air_range = 0.15
+			build_cost_ic = 0.05
+		}
+
+		limit_to_equipment_type = {
+			sam_missile_equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_dual_mode_seeker
+		name = GER_mio_trait_diehl_dual_mode_seeker
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		position = { x = -1 y = 1 }
+		relative_position_id = GER_mio_trait_diehl_extended_solid_motor
+		all_parents = { GER_mio_trait_diehl_extended_solid_motor }
+		mutually_exclusive = { GER_mio_trait_diehl_marine_grade_seeker }
+
+		equipment_bonus = {
+			air_attack = 0.10
+			air_agility = 0.08
+		}
+
+		limit_to_equipment_type = {
+			sam_missile_equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_marine_grade_seeker
+		name = GER_mio_trait_diehl_marine_grade_seeker
+		icon = GFX_generic_mio_trait_icon_naval_strike_attack
+
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_diehl_extended_solid_motor
+		all_parents = {
+			GER_mio_trait_diehl_extended_solid_motor
+		}
+		mutually_exclusive = { GER_mio_trait_diehl_dual_mode_seeker }
+
+		equipment_bonus = {
+			naval_strike_targetting = 0.12
+			reliability = 0.05
+		}
+
+		limit_to_equipment_type = {
+			sam_missile_equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_manufactured_propellant
+		name = GER_mio_trait_diehl_manufactured_propellant
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = 0 y = 2 }
+		relative_position_id = GER_mio_trait_diehl_extended_solid_motor
+		any_parent = {
+			GER_mio_trait_diehl_marine_grade_seeker
+			GER_mio_trait_diehl_dual_mode_seeker
+		}
+
+		equipment_bonus = {
+			reliability = 0.03
+			build_cost_ic = -0.08
+		}
+
+		limit_to_equipment_type = {
+			sam_missile_equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_compliance_cell
+		name = GER_mio_trait_diehl_compliance_cell
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+
+		position = { x = -1 y = 3 }
+		relative_position_id = GER_mio_trait_diehl_extended_solid_motor
+		any_parent = {
+			GER_mio_trait_diehl_marine_grade_seeker
+			GER_mio_trait_diehl_dual_mode_seeker
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_strategic_investment_pool
+		name = GER_mio_trait_diehl_strategic_investment_pool
+		icon = GFX_generic_mio_trait_icon_supply_consumption
+
+		position = { x = 1 y = 3 }
+		relative_position_id = GER_mio_trait_diehl_extended_solid_motor
+		any_parent = {
+			GER_mio_trait_diehl_marine_grade_seeker
+			GER_mio_trait_diehl_dual_mode_seeker
+		}
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.07
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_spare_part_fabrication
+		name = GER_mio_trait_diehl_spare_part_fabrication
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		position = { x = 0 y = 4 }
+		relative_position_id = GER_mio_trait_diehl_extended_solid_motor
+		all_parents = {
+			GER_mio_trait_diehl_compliance_cell
+			GER_mio_trait_diehl_strategic_investment_pool
 		}
 
 		production_bonus = {
-			production_resource_need_factor = 0.05
+			production_capacity_factor = 0.20
+			production_efficiency_gain_factor = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_energy_management_hub
+		name = GER_mio_trait_diehl_energy_management_hub
+		icon = GFX_generic_mio_trait_icon_resources
+
+		position = { x = 0 y = 5 }
+		relative_position_id = GER_mio_trait_diehl_extended_solid_motor
+		all_parents = {
+			GER_mio_trait_diehl_spare_part_fabrication
+		}
+
+		production_bonus = {
+			production_resource_penalty_factor = -0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_circular_design
+		name = GER_mio_trait_diehl_circular_design
+		icon = GFX_generic_mio_trait_icon_resources
+
+		position = { x = 4 y = 0 }
+
+		production_bonus = {
+			production_resource_need_factor = -0.12
+		}
+
+		limit_to_equipment_type = {
+			L_AT_Equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_joint_integration_team
+		name = GER_mio_trait_diehl_joint_integration_team
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+
+		position = { x = 2 y = 0 }
+		relative_position_id = GER_mio_trait_diehl_circular_design
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 2
+		}
+
+		limit_to_equipment_type = {
+			L_AT_Equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_tandem_heat
+		name = GER_mio_trait_diehl_tandem_heat
+		icon = GFX_generic_mio_trait_icon_soft_attack
+
+		position = { x = 0 y = 1 }
+		relative_position_id = GER_mio_trait_diehl_circular_design
+		all_parents = {
+			GER_mio_trait_diehl_circular_design
+			GER_mio_trait_diehl_joint_integration_team
+		}
+
+		equipment_bonus = {
+			soft_attack = 0.15
+			reliability = -0.05
+		}
+
+		limit_to_equipment_type = {
+			L_AT_Equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_infrared_seeker
+		name = GER_mio_trait_diehl_infrared_seeker
+		icon = GFX_generic_mio_trait_icon_hard_attack
+
+		position = { x = 2 y = 1 }
+		relative_position_id = GER_mio_trait_diehl_circular_design
+		all_parents = {
+			GER_mio_trait_diehl_circular_design
+			GER_mio_trait_diehl_joint_integration_team
+		}
+
+		equipment_bonus = {
+			hard_attack = 0.12
+		}
+
+		limit_to_equipment_type = {
+			L_AT_Equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_diehl_armor_penetrator
+		name = GER_mio_trait_diehl_armor_penetrator
+		icon = GFX_generic_mio_trait_icon_breakthrough
+
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_diehl_circular_design
+		all_parents = {
+			GER_mio_trait_diehl_circular_design
+			GER_mio_trait_diehl_joint_integration_team
+		}
+
+		equipment_bonus = {
+			breakthrough = 0.12
+			ap_attack = 0.05
+		}
+
+		limit_to_equipment_type = {
+			L_AT_Equipment
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
 		}
 	}
 }
