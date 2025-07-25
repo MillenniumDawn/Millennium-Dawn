@@ -1,3 +1,5 @@
+#Author(s): Borgers, TheGeneral
+
 ## MATERIAL DESIGNERS ##
 
 ## Borgers thoughts ##
@@ -9,8 +11,6 @@
 #artec - specialist for mulitfunktionality ifv, afv, light, aa, spart / increase production effecience, increase speed, reduce armor, output costs increase
 #Flensburger Fahrzeug - apc / cheeper then others reduce armor and breakthrogh
 #armored cars- good quality util, high armor, slow, expensive
-
-#maybe to mock droid - event about BMW present their new jeep for military, soldiers complain because it broke while in training and they need to do a 20km walk back (for US guys thats 12,4 miles or 333.333 racoons) you can decide to get them for the cool design or shit reliabity special, increased productions cost, but increased speed production cap increased
 
 GER_cg_haenel = {
 	allowed = { original_tag = GER }
@@ -47,6 +47,7 @@ GER_dynamit_nobel = {
 
 	equipment_type = {
 		L_AT_Equipment
+		H_AT_Equipment
 	}
 
 	research_categories = {
@@ -3366,6 +3367,40 @@ GER_Mercedes = {
 		}
 	}
 }
+GER_BMW = {
+	allowed = { original_tag = GER }
+
+	visible = {
+		hidden_trigger = {
+			GER = { has_country_flag = ger_bmw_unlocked }
+		}
+	}
+
+
+	icon = GFX_idea_BMW
+	name = GER_BMW
+	include = GER_generic_utility_vehicle_manufacturer
+
+	equipment_type = {
+		util_vehicle_equipment
+	}
+
+	research_categories = {
+		CAT_util
+	}
+
+	initial_trait = {
+		name = GER_BMW_trait
+
+		equipment_bonus = {
+			maximum_speed = 0.15
+			reliability = -0.25
+		}
+		production_bonus = {
+			production_cost_factor = 0.10
+		}
+	}
+}
 GER_rheinmetall_man = {
 	allowed = { original_tag = GER }
 	icon = GFX_idea_MAN
@@ -4618,6 +4653,1207 @@ GER_thyssenkrupp_marine_naval_manufacturer = {
 
 		organization_modifier = {
 			military_industrial_organization_size_up_requirement = -0.30
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_modular_stalth_hull
+		name = GER_mio_trait_thyssenkrupp_modular_stalth_hull
+		icon = GFX_generic_mio_trait_icon_surface_visibility
+		special_trait_background = yes
+
+		position = { x = 3 y = 0 }
+
+		available = {
+			if = {
+				limit = { has_dlc = "Man the Guns" }
+				OR = {
+					GER = { has_tech = stealth_frigate_hull_1 }
+					GER = { has_tech = stealth_corvette_hull_1 }
+				}
+			}
+			else = {
+				OR = {
+					GER = { has_tech = stealth_corvette_1 }
+					GER = { has_tech = stealth_frigate_1 }
+				}
+			}
+		}
+
+		equipment_bonus = {
+			surface_visibility = -0.10
+			armor_value = -0.03
+		}
+
+		limit_to_equipment_type = {
+			frigate
+			corvette
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_european_defense_collaboration
+		name = GER_mio_trait_european_defense_collaboration
+		icon = GFX_generic_mio_trait_icon_supply_consumption
+		special_trait_background = yes
+
+		position = { x = 5 y = 0 }
+
+		available = {
+			OR = {
+				GER = { has_idea = EU_member }
+				AND = {
+					FRA = {
+						has_opinion = {
+							target = GER
+							value > 100
+						}
+					}
+					NOR = {
+						has_opinion = {
+							target = GER
+							value > 100
+						}
+					}
+				}
+			}
+		}
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_integrated_network
+		name = GER_mio_trait_thyssenkrupp_integrated_network
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+
+		position = { x = 8 y = 0 }
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.08
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_naval_logistics_partnerships
+		name = GER_mio_trait_thyssenkrupp_naval_logistics_partnerships
+		icon = GFX_generic_mio_trait_icon_unique
+
+		position = { x = 0 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_network
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_integrated_network
+		}
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.50
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_eco_dry_dock
+		name = GER_mio_trait_thyssenkrupp_eco_dry_dock
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		position = { x = 0 y = 2 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_network
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_naval_logistics_partnerships
+		}
+
+		organization_modifier = {
+			military_industrial_organization_size_up_requirement = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		name = GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = 0 y = 3 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_network
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_eco_dry_dock
+		}
+
+		equipment_bonus = {
+			build_cost_ic = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_reinforced_keel_frame
+		name = GER_mio_trait_thyssenkrupp_reinforced_keel_frame
+		icon = GFX_generic_mio_trait_icon_armor_value
+
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		}
+
+		equipment_bonus = {
+			armor_value = 0.08
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_non_magnetic_steel
+		name = GER_mio_trait_thyssenkrupp_non_magnetic_steel
+		icon = GFX_generic_mio_trait_icon_sub_visibility
+
+		position = { x = 1 y = 3 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_reinforced_keel_frame
+		}
+
+		equipment_bonus = {
+			sub_visibility = -0.10
+			reliability = 0.03
+		}
+
+		limit_to_equipment_type = {
+			submarine
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_ultra_deep_operating
+		name = GER_mio_trait_thyssenkrupp_ultra_deep_operating
+		icon = GFX_generic_mio_trait_icon_sub_detection
+
+		position = { x = 1 y = 5 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_non_magnetic_steel
+		}
+
+		equipment_bonus = {
+			sub_detection = -0.10
+		}
+
+		limit_to_equipment_type = {
+			submarine
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_reinforced_bulkheads
+		name = GER_mio_trait_thyssenkrupp_reinforced_bulkheads
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		position = { x = 0 y = 2 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		}
+
+		equipment_bonus = {
+			max_strength = 0.08
+			reliability = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_corrosion_resistant
+		name = GER_mio_trait_thyssenkrupp_corrosion_resistant
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		position = { x = 0 y = 4 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_reinforced_bulkheads
+		}
+
+		equipment_bonus = {
+			reliability = 0.05
+			build_cost_ic = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_flexible_mission_bay
+		name = GER_mio_trait_thyssenkrupp_flexible_mission_bay
+		icon = GFX_generic_mio_trait_icon_armor_value
+
+		position = { x = -4 y = 2 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_network
+
+		equipment_bonus = {
+			naval_speed = 0.05
+			armor_value = 0.03
+		}
+
+		limit_to_equipment_type = {
+			corvette
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_compact_system_integration
+		name = GER_mio_trait_thyssenkrupp_compact_system_integration
+		icon = GFX_generic_mio_trait_icon_naval_range
+
+		position = { x = 0 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_flexible_mission_bay
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_flexible_mission_bay
+		}
+
+		equipment_bonus = {
+			naval_range = 0.05
+			naval_speed = 0.02
+		}
+
+		limit_to_equipment_type = {
+			corvette
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		name = GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		icon = GFX_generic_mio_trait_icon_anti_air_attack
+		position = { x = 0 y = 2 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_flexible_mission_bay
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_compact_system_integration
+			GER_mio_trait_thyssenkrupp_ai_combat_simulations
+			GER_mio_trait_thyssenkrupp_modular_shipbuilding
+		}
+
+		equipment_bonus = {
+			max_organisation = 0.10
+			air_attack = 0.03
+		}
+
+		limit_to_equipment_type = {
+			corvette
+			frigate
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_advanced_vls
+		name = GER_mio_trait_thyssenkrupp_advanced_vls
+		icon = GFX_generic_mio_trait_icon_hg_attack
+
+		position = { x = -1 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		}
+
+		equipment_bonus = {
+			hg_attack = 0.10
+			surface_visibility = 0.05
+		}
+
+		limit_to_equipment_type = {
+			frigate
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_electronic_warfare_dispensers
+		name = GER_mio_trait_electronic_warfare_dispensers
+		icon = GFX_generic_mio_trait_icon_defense
+
+		position = { x = 0 y = 2 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		}
+
+		equipment_bonus = {
+			defense = 0.05
+			surface_visibility = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_rheinmetall
+		name = GER_mio_trait_thyssenkrupp_rheinmetall
+		icon = GFX_generic_mio_trait_icon_anti_air_attack
+		special_trait_background = yes
+
+		position = { x = 1 y = 0 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		}
+
+		available = {
+			GER = {
+				mio:GER_rheinmetall_tank_manufacturer = {
+					has_mio_trait = GER_mio_trait_enhanced_fire_package
+				}
+			}
+		}
+
+		equipment_bonus = {
+			anti_air_attack = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_multi_role_torpedo
+		name = GER_mio_trait_thyssenkrupp_multi_role_torpedo
+		icon = GFX_generic_mio_trait_icon_torpedo_attack
+
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_integrated_combat_suite
+		}
+
+		equipment_bonus = {
+			torpedo_attack = 0.06
+			naval_torpedo_hit_chance_factor = 0.05
+		}
+
+		limit_to_equipment_type = {
+			submarine
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_quiet_cavitation_hull
+		name = GER_mio_trait_thyssenkrupp_quiet_cavitation_hull
+		icon = GFX_generic_mio_trait_icon_sub_visibility
+
+		position = { x = 1 y = 0 }
+
+		equipment_bonus = {
+			sub_visibility = -0.10
+		}
+
+		limit_to_equipment_type = {
+			submarine
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_fuel_cell_propulsion
+		name = GER_mio_trait_thyssenkrupp_fuel_cell_propulsion
+		icon = GFX_generic_mio_trait_icon_naval_range
+
+		position = { x = -1 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_quiet_cavitation_hull
+
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_quiet_cavitation_hull
+		}
+
+		equipment_bonus = {
+			naval_range = 0.08
+			fuel_consumption = -0.05
+		}
+
+		limit_to_equipment_type = {
+			submarine
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_high_speed_turbine
+		name = GER_mio_trait_thyssenkrupp_high_speed_turbine
+		icon = GFX_generic_mio_trait_icon_naval_speed
+
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_quiet_cavitation_hull
+
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_quiet_cavitation_hull
+		}
+
+		equipment_bonus = {
+			naval_speed = 0.07
+			fuel_consumption = 0.04
+		}
+
+		limit_to_equipment_type = {
+			corvette
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		name = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+
+		position = { x = -7 y = 2 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_integrated_network
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_fuel_cell_propulsion
+			GER_mio_trait_thyssenkrupp_high_speed_turbine
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_digitized_training
+		name = GER_mio_trait_thyssenkrupp_digitized_training
+		icon = GFX_generic_mio_trait_icon_unique
+
+		position = { x = -1 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		}
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.30
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_stealth_optimization
+		name = GER_mio_trait_thyssenkrupp_stealth_optimization
+		icon = GFX_generic_mio_trait_icon_surface_visibility
+
+		position = { x = 0 y = 3 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+
+		available = {
+			GER = {
+				is_special_project_completed = sp:sp_stealth_corvette
+				is_special_project_completed = sp:sp_stealth_frigate
+			}
+		}
+
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_digitized_training
+		}
+
+		equipment_bonus = {
+			surface_visibility = -0.05
+		}
+
+		limit_to_equipment_type = {
+			corvette
+			frigate
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_electric_propellor
+		name = GER_mio_trait_thyssenkrupp_electric_propellor
+		icon = GFX_generic_mio_trait_icon_fuel_consumption
+
+		position = { x = 0 y = 5 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_digitized_training
+		}
+
+		equipment_bonus = {
+			sub_visibility = -0.03
+			fuel_consumption = -0.05
+			maximum_speed = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_stealth_radar_integration
+		name = GER_mio_trait_thyssenkrupp_stealth_radar_integration
+		icon = GFX_generic_mio_trait_icon_surface_detection
+
+		position = { x = 0 y = 6 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_electric_propellor
+			GER_mio_trait_thyssenkrupp_corrosion_resistant
+		}
+
+		equipment_bonus = {
+			surface_visibility = -0.03
+			surface_detection = 0.07
+		}
+
+		limit_to_equipment_type = {
+			frigate
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_retractable_mast
+		name = GER_mio_trait_thyssenkrupp_retractable_mast
+		icon = GFX_generic_mio_trait_icon_detection
+
+		position = { x = -1 y = 7 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_stealth_radar_integration
+		}
+
+		equipment_bonus = {
+			surface_detection = 0.05
+			sub_visibility = -0.02
+		}
+
+		limit_to_equipment_type = {
+			submarine
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_adaptive_sonar
+		name = GER_mio_trait_thyssenkrupp_adaptive_sonar
+		icon = GFX_generic_mio_trait_icon_sub_detection
+
+		position = { x = 1 y = 7 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_stealth_radar_integration
+		}
+
+		equipment_bonus = {
+			sub_detection = 0.10
+		}
+
+		limit_to_equipment_type = {
+			submarine
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = GER_mio_trait_thyssenkrupp_ai_combat_simulations
+		name = GER_mio_trait_thyssenkrupp_ai_combat_simulations
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		position = { x = 1 y = 1 }
+		relative_position_id = GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		all_parents = {
+			GER_mio_trait_thyssenkrupp_naval_rd_pipeline
+		}
+
+		available = {
+			GER = { has_tech = machine_learning }
+		}
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
 		}
 	}
 }
