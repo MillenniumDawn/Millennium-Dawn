@@ -75,27 +75,27 @@ GER_dynamit_nobel = {
 		name = GER_dynamit_nobel_trait
 
 		equipment_bonus = {
-			ap_attack = 0.15
+			soft_attack = 0.15
 			defense = 0.10
-			ap_attack = 0.06
+			hard_attack = 0.10
 		}
 
 		organization_modifier = {
 			military_industrial_organization_research_bonus = 0.08
 		}
-		on_complete = {
-			if = {
-				limit = {
-					check_variable = { free_trait_picks > 0 }
-				}
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = {
-				FROM = {
-					small_expenditure = yes
-				}
-			}
-		}
+		#on_complete = {
+		#	if = {
+		#		limit = {
+		#			check_variable = { free_trait_picks > 0 }
+		#		}
+		#		add_to_variable = { free_trait_picks = -1 }
+		#	}
+		#	else = {
+		#		FROM = {
+		#			small_expenditure = yes
+		#		}
+		#	}
+		#}
 
 	}
 	trait = {
@@ -1563,7 +1563,7 @@ GER_siemens_defence_electronics = {
 		position = { x = 0 y = 0 }
 
 		equipment_bonus = {
-			recovery = 0.10
+			max_organisation = 0.10
 			reliability = 0.05
 		}
 
@@ -1675,7 +1675,7 @@ GER_siemens_defence_electronics = {
 
 		equipment_bonus = {
 			maximum_speed = 0.10
-			recovery = 0.05
+			max_organisation = 0.05
 		}
 
 		limit_to_equipment_type = { cnc_equipment }
@@ -1713,7 +1713,7 @@ GER_siemens_defence_electronics = {
 
 		equipment_bonus = {
 			reliability = 0.08
-			recovery = 0.03
+			max_organisation = 0.03
 		}
 
 		limit_to_equipment_type = { cnc_equipment }
@@ -1861,7 +1861,7 @@ GER_siemens_defence_electronics = {
 		all_parents = { GER_mio_trait_siemens_lean_circuit }
 
 		organization_modifier = {
-			research_speed_factor = 0.07
+			military_industrial_organization_task_capacity = 1
 		}
 
 		limit_to_equipment_type = { cnc_equipment }
@@ -4152,14 +4152,14 @@ GER_Eurofighter_aircraft_manufacturer = {
 	include = generic_fixed_wing_equipment_organization
 
 	equipment_type = {
-		mio_cat_eq_only_light_aircraft
-		mio_cat_eq_only_light_cv_aircraft
+		mio_cat_eq_only_medium_aircraft
+		mio_cat_eq_only_cv_medium_aircraft
 	}
 
 	research_categories = {
-		CAT_l_fighter
-		CAT_cv_l_s_fighter
-		CAT_cv_mr_fighter
+		CAT_mr_fighter
+		CAT_as_fighter
+		CAT_medium_plane
 	}
 
 	available = {
@@ -4182,62 +4182,82 @@ GER_Eurofighter_aircraft_manufacturer = {
 			air_attack = 0.1
 		}
 	}
-	trait = {
-		token = GER_mio_trait_thyssenkrupp_modular_stalth_hull
-		name = GER_mio_trait_thyssenkrupp_modular_stalth_hull
-		icon = GFX_generic_mio_trait_icon_surface_visibility
-		special_trait_background = yes
-
-		position = { x = 13 y = 0 }
-
-		available = {
-			if = {
-				limit = { has_dlc = "Man the Guns" }
-				OR = {
-					GER = { has_tech = stealth_frigate_hull_1 }
-					GER = { has_tech = stealth_corvette_hull_1 }
-				}
-			}
-			else = {
-				OR = {
-					GER = { has_tech = stealth_corvette_1 }
-					GER = { has_tech = stealth_frigate_1 }
-				}
-			}
-		}
-
-		equipment_bonus = {
-			surface_visibility = -0.10
-			armor_value = -0.03
-		}
-
-		limit_to_equipment_type = {
-			frigate
-			corvette
-		}
-
-		on_complete = {
-			if = {
-				limit = {
-					check_variable = { free_trait_picks > 0 }
-				}
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = {
-				FROM = {
-					small_expenditure = yes
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
+#	trait = {
+#		token = Eurofighter_increase_reliability
+#		name = Eurofighter_increase_reliability
+#		icon = GFX_generic_mio_trait_icon_reliability
+#
+#		position = { x = 2 y = 0 }
+#
+#		equipment_bonus = {
+#			reliability = 0.1
+#		}
+#
+#		on_complete = {
+#			if = {
+#				limit = {
+#					check_variable = { free_trait_picks > 0 }
+#				}
+#				add_to_variable = { free_trait_picks = -1 }
+#			}
+#			else = {
+#				FROM = {
+#					small_expenditure = yes
+#				}
+#			}
+#		}
+#
+#		ai_will_do = {
+#			factor = 20
+#			modifier = {
+#				factor = 0.1
+#				FROM = {
+#					num_of_military_factories < 10
+#				}
+#			}
+#		}
+#	}
+#	trait = {
+#		token = Eurofighter_increase_radar
+#		name = Eurofighter_increase_radar
+#		icon = GFX_generic_mio_trait_icon_reliability
+#
+#		position = { x = 0 y = 1 }
+#		relative_position_id = Eurofighter_increase_reliability
+#
+#		any_parent = { Eurofighter_increase_reliability }
+#		mutually_exclusive = { }
+#
+#		limit_to_equipment_type = { mio_cat_eq_only_as_fighters mio_cat_eq_only_mr_fighters  mio_cat_eq_only_cas_fighters }
+#
+#		equipment_bonus = {
+#			reliability = 0.1
+#		}
+#
+#		on_complete = {
+#			if = {
+#				limit = {
+#					check_variable = { free_trait_picks > 0 }
+#				}
+#				add_to_variable = { free_trait_picks = -1 }
+#			}
+#			else = {
+#				FROM = {
+#					small_expenditure = yes
+#				}
+#			}
+#		}
+#
+#		ai_will_do = {
+#			factor = 20
+#			modifier = {
+#				factor = 0.1
+#				FROM = {
+#					num_of_military_factories < 10
+#				}
+#			}
+#		}
+#	}
 }
 
 GER_diehl_defence_aircraft_manufacturer = {
