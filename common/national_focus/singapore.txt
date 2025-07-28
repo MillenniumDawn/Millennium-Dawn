@@ -743,11 +743,7 @@ focus_tree = {
 			swap_ideas = {
 				remove_idea = SIN_entrepot_trade_expanded_2
 				add_idea = SIN_entrepot_trade_expanded_3
-			}
-			add_offsite_building = {
-				type = dockyard
-				level = 1
-			}			
+			}		
 			set_temp_variable = { treasury_change = -7.50 }
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = 5 }
@@ -1340,11 +1336,6 @@ focus_tree = {
 				add_idea = SIN_energy_efforts_5_idea
 			}			
 
-			add_offsite_building = {
-				type = offices
-				level = 1
-			}	
-
 			747 = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -1695,11 +1686,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_EDU_education_collaboration_with_western_nation"
 			set_temp_variable = { temp_productivity_change = 150 }
-			flat_productivity_change_effect = yes
-			add_offsite_building = {
-				type = offices
-				level = 1
-			}				
+			flat_productivity_change_effect = yes			
 			add_tech_bonus = {
 				name = CAT_missile
 				bonus = 0.25
@@ -1791,11 +1778,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_EDU_education_collaboration_with_eastern_nation"
 			set_temp_variable = { temp_productivity_change = 150 }
-			flat_productivity_change_effect = yes
-			add_offsite_building = {
-				type = offices
-				level = 1
-			}				
+			flat_productivity_change_effect = yes				
 			swap_ideas = {
 				remove_idea = SIN_education_efforts_3_idea
 				add_idea = SIN_education_efforts_4_idea
@@ -3889,8 +3872,8 @@ focus_tree = {
 		id = SIN_world_diplomacy_effort
 		icon = internationalism
 
-		x = 0
-		y = 10
+		x = 14
+		y = 12
 
 		cost = 1.5 # 10 days
 
@@ -7072,12 +7055,12 @@ focus_tree = {
 		}
 	}
 
-	##Foreign Diplomacy
+	##Foreign Trade & Infestment
 	focus = {
 		id = SIN_singapore_south_east_asia
 		icon = trade_with_singapore
 
-		x = 58
+		x = 60
 		y = 0
 
 		cost = 4
@@ -7302,8 +7285,20 @@ focus_tree = {
 					NOT = { original_tag = SIN }
 				}
 				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+				change_influence_percentage = yes								
 			}
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = ASEAN_Member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { receiver_nation = THIS.id }
+				set_temp_variable = { sender_nation = SIN.id }
+				set_improved_trade_agreement = yes
+				SIN_calculate_singaporean_trade_agreements = yes	
+			}			
 		}
 
 		ai_will_do = {
@@ -7909,8 +7904,8 @@ focus_tree = {
 		id = SIN_pressure_the_japanese
 		icon = deadly_deal
 
-		x = -4
-		y = 5
+		x = 4
+		y = 4
 		relative_position_id = SIN_singapore_south_east_asia
 
 		cost = 7.86
@@ -7931,8 +7926,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 
-		prerequisite = { focus = SIN_japanese_free_trade_agreement }
-		prerequisite = { focus = SIN_strong_arm_the_asean }
+		prerequisite = { focus = SIN_dictate_trade_agreements }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_pressure_the_japanese"
 			set_temp_variable = { treasury_change = JAP.int_investments }
@@ -7967,7 +7961,9 @@ focus_tree = {
 		cost = 7.86
 
 		available = {
-			is_subject = no
+			is_subject = no	
+			has_war = no
+			has_idea = SIN_global_investment_go_brrrt_one_idea
 			NOT = {
 				has_idea = intervention_isolation
 				has_idea = intervention_neo_imperialism
@@ -7981,7 +7977,10 @@ focus_tree = {
 		prerequisite = { focus = SIN_singaporean_trade_influence }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_global_investment"
-			add_ideas = SIN_global_investment_go_brrrt_one_idea
+			swap_ideas = {
+				remove_idea = SIN_global_investment_go_brrrt_one_idea
+				add_idea = SIN_global_investment_go_brrrt_two_idea
+			}	
 		}
 
 		ai_will_do = {
@@ -7989,18 +7988,445 @@ focus_tree = {
 		}
 	}
 
+	###Invest to Africa Nation
+	focus = {
+		id = SIN_gi_invest_to_africa_nation
+		icon = align_to_african_union
+
+		x = -2
+		y = 1
+		relative_position_id = SIN_global_investment
+
+		cost = 20 # 140 days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = { has_idea = non_power }
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = LBA
+				has_war_with = EGY
+				has_war_with = ETH
+				has_war_with = SAF
+				has_war_with = KEN
+				has_war_with = SUD
+				has_war_with = NIG
+				has_war_with = MAU
+				any_allied_country = {
+					has_war_with = LBA
+					has_war_with = EGY
+					has_war_with = ETH
+					has_war_with = SAF
+					has_war_with = KEN
+					has_war_with = SUD
+					has_war_with = NIG
+					has_war_with = MAU
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = LBA }
+				NOT = { is_embargoed_by = EGY }
+				NOT = { is_embargoed_by = ETH }
+				NOT = { is_embargoed_by = SAF }
+				NOT = { is_embargoed_by = KEN }
+				NOT = { is_embargoed_by = SUD }
+				NOT = { is_embargoed_by = NIG }
+				NOT = { is_embargoed_by = MAU }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_global_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_gi_invest_to_africa_nation"
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = OAU_member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { receiver_nation = THIS.id }
+				set_temp_variable = { sender_nation = SIN.id }
+				set_improved_trade_agreement = yes
+				SIN_calculate_singaporean_trade_agreements = yes	
+			}	
+			add_offsite_building = {
+				type = offices
+				level = 1
+			}				
+			215 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}	
+			233 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			242 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			275 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}			
+			337 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			set_temp_variable = { percent_change = 1 }
+			every_country = {
+				limit = {
+					OR = {
+						is_neighbor_of = SIN
+						has_idea = OAU_Member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				set_temp_variable = { percent_change = 3.5 }
+			}			
+			set_temp_variable = { treasury_change = -85 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 70 }
+			modify_international_investment_effect = yes							
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	###Invest to Europian Union Country
+	focus = {
+		id = SIN_gi_invest_to_europian_union_country
+		icon = align_to_europe
+
+		x = 0
+		y = 1
+		relative_position_id = SIN_global_investment
+
+		cost = 20 # 140 days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = { has_idea = non_power }
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = IRE
+				has_war_with = ENG
+				has_war_with = POR
+				has_war_with = SPR
+				has_war_with = FRA
+				has_war_with = BEL
+				has_war_with = HOL
+				has_war_with = GER
+				has_war_with = DEN
+				has_war_with = SWE
+				has_war_with = POL
+				has_war_with = CZE
+				has_war_with = ITA
+				has_war_with = ROM	
+				has_war_with = TUR							
+				any_allied_country = {
+					has_war_with = IRE
+					has_war_with = ENG
+					has_war_with = POR
+					has_war_with = SPR
+					has_war_with = FRA
+					has_war_with = BEL
+					has_war_with = HOL
+					has_war_with = GER
+					has_war_with = DEN
+					has_war_with = SWE
+					has_war_with = POL
+					has_war_with = CZE
+					has_war_with = ITA
+					has_war_with = ROM
+					has_war_with = TUR
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = SPR }
+				NOT = { is_embargoed_by = ENG }
+				NOT = { is_embargoed_by = FRA }
+				NOT = { is_embargoed_by = GER }
+				NOT = { is_embargoed_by = ITA }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_global_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_gi_invest_to_europian_union_country"
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = EU_member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { receiver_nation = THIS.id }
+				set_temp_variable = { sender_nation = SIN.id }
+				set_improved_trade_agreement = yes
+				SIN_calculate_singaporean_trade_agreements = yes	
+			}
+			add_offsite_building = {
+				type = offices
+				level = 1
+			}				
+			86 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}	
+			55 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			51 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			46 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}			
+			1080 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			4 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			34 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}			
+			80 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			943 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			150 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			set_temp_variable = { percent_change = 1 }
+			every_country = {
+				limit = {
+					OR = {
+						is_neighbor_of = SIN
+						has_idea = EU_Member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}							
+			set_temp_variable = { treasury_change = -250 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 225 }
+			modify_international_investment_effect = yes							
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	###Invest to CSTO Nation
+	focus = {
+		id = SIN_gi_invest_to_csto_nation
+		icon = align_to_csto
+		x = 2
+		y = 1
+		relative_position_id = SIN_global_investment
+
+		cost = 20 # 140 days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = { has_idea = non_power }
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = SOV
+				any_allied_country = {
+					has_war_with = SOV
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = SOV }
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = SOV }
+				SOV = { is_subject = yes }
+				SOV = { is_subject_of = SIN }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_global_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_gi_invest_to_csto_nation"
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = CSTO_member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { receiver_nation = THIS.id }
+				set_temp_variable = { sender_nation = SIN.id }
+				set_improved_trade_agreement = yes
+				SIN_calculate_singaporean_trade_agreements = yes	
+			}
+			add_offsite_building = {
+				type = offices
+				level = 1
+			}				
+			644 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}	
+			1187 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}	
+			716 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}	
+			709 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}	
+			720 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}				
+			}
+			set_temp_variable = { percent_change = 1 }		
+			every_country = {
+				limit = {
+					OR = {
+						is_neighbor_of = SIN
+						has_idea = CSTO_Member
+					}
+					NOT = { original_tag = SIN }
+				}
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}							
+			set_temp_variable = { treasury_change = -95 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 90 }
+			modify_international_investment_effect = yes							
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	##Regional Investment
 	focus = {
 		id = SIN_regional_investment
 		icon = money
 
-		x = -1
-		y = 6
+		x = -6
+		y = 5
 		relative_position_id = SIN_singapore_south_east_asia
 
 		cost = 7.86
 
 		available = {
-			is_subject = no
+			is_subject = no	
+			has_war = no
 			NOT = {
 				has_idea = intervention_isolation
 				has_idea = intervention_neo_imperialism
@@ -8009,13 +8435,274 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = SIN_global_investment }
+		prerequisite = { focus = SIN_strong_arm_the_asean }
+		prerequisite = { focus = SIN_singaporean_trade_influence }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_regional_investment"
-			swap_ideas = {
-				remove_idea = SIN_global_investment_go_brrrt_one_idea
-				add_idea = SIN_global_investment_go_brrrt_two_idea
+			add_ideas = SIN_global_investment_go_brrrt_one_idea
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	###Invest to Malaysia
+	focus = {
+		id = SIN_ri_invest_to_malaysia
+		icon = align_to_malaysia
+
+		x = -2
+		y = 1
+		relative_position_id = SIN_regional_investment
+
+		cost = 2.90 # 20 days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
 			}
+			NOT = {
+				has_war_with = MAY
+				any_allied_country = {
+					has_war_with = MAY
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = MAY }
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = MAY }
+				MAY = { is_subject = yes }
+				MAY = { is_subject_of = SIN }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_regional_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_ri_invest_to_malaysia"
+			set_temp_variable = { receiver_nation = MAY.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes	
+			add_offsite_building = {
+				type = industrial_complex
+				level = 1
+			}	
+			528 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}
+			527 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}			
+			build_railway = {
+				level = 4
+				path = { 12299 4424 3328 4412 6015 }
+			}	
+			set_temp_variable = { influence_target = MAY.id }
+			set_temp_variable = { percent_change = 3.5 }
+			set_temp_variable = { sender_nation = SIN.id }
+			change_influence_percentage = yes		
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 22 }
+			modify_international_investment_effect = yes							
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	###Invest to Indonesia
+	focus = {
+		id = SIN_ri_invest_to_indonesia
+		icon = align_to_indonesia
+
+		x = 0
+		y = 1
+		relative_position_id = SIN_regional_investment
+
+		cost = 2.90 # 20 days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = IND
+				any_allied_country = {
+					has_war_with = IND
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = IND }
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = IND }
+				IND = { is_subject = yes }
+				IND = { is_subject_of = SIN }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_regional_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_ri_invest_to_indonesia"
+			set_temp_variable = { receiver_nation = IND.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes	
+			add_offsite_building = {
+				type = industrial_complex
+				level = 1
+			}	
+			631 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+			}		
+			634 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}				
+			add_building_construction = {
+				type = naval_base
+				province = 7381
+				level = 1
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = naval_base
+				province = 1413
+				level = 1
+				instant_build = yes
+			}
+			add_building_construction = {
+				type = naval_base
+				province = 4608
+				level = 1
+				instant_build = yes
+			}
+			set_temp_variable = { influence_target = IND.id }
+			set_temp_variable = { percent_change = 3.5 }
+			set_temp_variable = { sender_nation = SIN.id }
+			change_influence_percentage = yes				
+			set_temp_variable = { treasury_change = -22 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 20 }
+			modify_international_investment_effect = yes						
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	###Invest to Thailand
+	focus = {
+		id = SIN_ri_invest_to_thailand
+		icon = align_to_thailand
+
+		x = 2
+		y = 1
+		relative_position_id = SIN_regional_investment
+
+		cost = 2.90 # 20 days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = SIA
+				any_allied_country = {
+					has_war_with = SIA
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = SIA }
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = SIA }
+				SIA = { is_subject = yes }
+				SIA = { is_subject_of = SIN }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_regional_investment }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_ri_invest_to_thailand"
+			set_temp_variable = { receiver_nation = SIA.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+			add_offsite_building = {
+				type = industrial_complex
+				level = 1
+			}	
+			508 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}				
+			}			
+			add_building_construction = {
+				type = naval_base
+				province = 4608
+				level = 3
+				instant_build = yes
+			}	
+			set_temp_variable = { influence_target = SIA.id }
+			set_temp_variable = { percent_change = 3.5 }
+			set_temp_variable = { sender_nation = SIN.id }
+			change_influence_percentage = yes							
+			set_temp_variable = { treasury_change = -22.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 20 }
+			modify_international_investment_effect = yes						
 		}
 
 		ai_will_do = {
@@ -8027,14 +8714,16 @@ focus_tree = {
 		id = SIN_expand_foreign_reserve
 		icon = generic_banks
 
-		x = 1
-		y = 6
+		x = 6
+		y = 5
 		relative_position_id = SIN_singapore_south_east_asia
 
 		cost = 7.86
 
 		available = {
-			is_subject = no
+			is_subject = no	
+			has_war = no
+			has_idea = SIN_global_investment_go_brrrt_two_idea
 			NOT = {
 				has_idea = intervention_isolation
 				has_idea = intervention_neo_imperialism
@@ -8043,9 +8732,17 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		prerequisite = { focus = SIN_global_investment }
+		prerequisite = { focus = SIN_strong_arm_the_asean }
+		prerequisite = { focus = SIN_japanese_free_trade_agreement }
+		prerequisite = { focus = SIN_usa_singaporean_agreements }
+		prerequisite = { focus = SIN_singaporean_trade_influence }
+		prerequisite = { focus = SIN_pressure_the_japanese }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_expand_foreign_reserve"
+			swap_ideas = {
+				remove_idea = SIN_global_investment_go_brrrt_two_idea
+				add_idea = SIN_global_investment_go_brrrt_three_idea
+			}			
 			add_political_power = -75
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = 0.05 }
@@ -8062,6 +8759,150 @@ focus_tree = {
 		}
 	}
 
+	####Invest To United States
+	focus = {
+		id = SIN_efr_invest_to_america
+		icon = align_to_america
+
+		x = -1
+		y = 1
+		relative_position_id = SIN_expand_foreign_reserve
+
+		cost = 10 #70 Days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = USA
+				any_allied_country = {
+					has_war_with = USA
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = USA }
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = USA }
+				USA = { is_subject = yes }
+				USA = { is_subject_of = SIN }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_expand_foreign_reserve }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_efr_invest_to_america"
+			set_temp_variable = { receiver_nation = USA.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+			add_offsite_building = {
+				type = offices
+				level = 1
+			}	
+			769 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}			
+			}			
+			set_temp_variable = { influence_target = USA.id }
+			set_temp_variable = { percent_change = 1.5 }
+			set_temp_variable = { sender_nation = SIN.id }
+			change_influence_percentage = yes	
+			set_temp_variable = { treasury_change = -450 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 400 }
+			modify_international_investment_effect = yes						
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	#### Make Gold Reserve in Swiss
+	focus = {
+		id = SIN_efr_invest_to_swiss
+		icon = goal_JAP_japan_swiss_act
+
+		x = 1
+		y = 1
+		relative_position_id = SIN_expand_foreign_reserve
+
+		cost = 10 #70 Days
+
+		available = {
+			is_subject = no	
+			has_war = no
+			NOT = {
+				has_idea = intervention_isolation
+				has_idea = intervention_neo_imperialism
+			}
+			NOT = {
+				has_war_with = SWI
+				any_allied_country = {
+					has_war_with = SWI
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { is_embargoed_by = SWI }
+			}
+		}
+		bypass = {
+			OR = {
+				NOT = { country_exists = SWI }
+				SWI = { is_subject = yes }
+				SWI = { is_subject_of = SIN }
+			}
+		}
+
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_DIPLOMACY }
+
+		prerequisite = { focus = SIN_expand_foreign_reserve }
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_efr_invest_to_swiss"
+			set_temp_variable = { receiver_nation = SWI.id }
+			set_temp_variable = { sender_nation = SIN.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
+			add_offsite_building = {
+				type = offices
+				level = 1
+			}	
+			74 = {
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}			
+			}			
+			set_temp_variable = { influence_target = SWI.id }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { sender_nation = SIN.id }
+			change_influence_percentage = yes	
+			set_temp_variable = { treasury_change = -850 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 800 }
+			modify_international_investment_effect = yes						
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
 	#########################################
 	###Singapore Land Availability Problem###
 	#########################################
@@ -8070,8 +8911,8 @@ focus_tree = {
 		id = SIN_reform_singapore_urban_redevelopment_authority
 		icon = SIN_reform_singapore_urban_redevelopment_authority
 
-		x = 68
-		y = 0
+		x = 0
+		y = 10
 
 		cost = 7.14 # 50 days
 
@@ -8654,10 +9495,6 @@ focus_tree = {
 					level = 2
 					instant_build = yes
 				}
-				build_railway = {
-					level = 1
-					path = { 12299 4424 }
-				}
 			}
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
@@ -9005,10 +9842,6 @@ focus_tree = {
 					type = synthetic_refinery
 					level = 1
 					instant_build = yes
-				}
-				build_railway = {
-					level = 1
-					path = { 12299 4424 }
 				}
 			}
 			set_temp_variable = { treasury_change = -7.5 }
