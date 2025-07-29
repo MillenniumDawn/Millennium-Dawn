@@ -299,6 +299,9 @@ country_event = {
 	desc = arab_spring.11.d
 	picture = GFX_politics_speak
 	is_triggered_only = yes
+	immediate = {
+		set_country_flag = AS_arab_spring_completed
+	}
 
 	# We Must Accept Defeat...
 	option = {
@@ -316,6 +319,11 @@ country_event = {
 		add_popularity = { ideology = neutrality popularity = 0.10 }
 		recalculate_party = yes
 
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		set_temp_variable = { temp_outlook_increase = -0.10 }
+		add_relative_party_popularity = yes
+
 		if = { limit = { has_idea = hybrid_regime_western }
 			remove_ideas = hybrid_regime_western
 		}
@@ -323,11 +331,6 @@ country_event = {
 			remove_ideas = hybrid_regime_emerging
 		}
 		country_event = { id = MD4_election_campaign.0 days = 7 }
-
-		if = {
-			limit = { original_tag = EGY }
-			set_country_flag = AS_arab_spring_completed
-		}
 
 		ai_chance = {
 			base = 1
@@ -374,6 +377,12 @@ country_event = {
 		else_if = {
 			limit = { check_variable = { arab_spring_mutiny > 2 } }
 			set_temp_variable = { arab_spring_mutiny_size = 0.4 }
+		}
+
+		if = { limit = { check_variable = { arab_spring > 200 } }
+			set_temp_variable = { arab_spring_protest_size = arab_spring }
+			divide_temp_variable = { arab_spring_protest_size = 10000 } # Normalizes to the nearest thousandth
+			add_to_temp_variable = { arab_spring_mutiny_size = arab_spring_protest_size }
 		}
 
 		if = {
@@ -423,24 +432,24 @@ country_event = {
 								division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
 								prioritize_location = 1074
 								owner = FSA
-								count = 3
+								count = 2
 							}
 							if = {
-								limit = { difficulty > 2 }
+								limit = { SYR = { is_ai = no } difficulty > 2 }
 								create_unit = {
 									division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
 									prioritize_location = 1074
 									owner = FSA
-									count = 3
+									count = 2
 								}
 							}
 							if = {
-								limit = { difficulty > 3 }
+								limit = { SYR = { is_ai = no } difficulty > 3 }
 								create_unit = {
 									division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
 									prioritize_location = 1074
 									owner = FSA
-									count = 3
+									count = 2
 								}
 							}
 						}
@@ -839,11 +848,12 @@ country_event = {
 		name = arab_spring.18.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.18.a executed"
 		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.10 }
-		set_temp_variable = { temp_outlook_increase = -0.10 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		set_temp_variable = { temp_outlook_increase = 0.04 }
 		add_relative_party_popularity = yes
 
 		add_political_power = 200
+		set_country_flag = AS_arab_spring_completed
 
 		ai_chance = {
 			base = 1
