@@ -3297,1174 +3297,1383 @@ focus_tree = {
 	}
 
 	#----------------------------------------------------------------
+	#New diplomacy Tree
+	#----------------------------------------------------------------
+
+	focus = {
+	id = JAP_diplomacy
+	#TODO icon
+
+	x = 45
+	y = 4
+	
+	cost = 5
+
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus JAP_diplomacy"
+		add_political_power = 50
+	}
+
+	ai_will_do = {
+		base = 10
+	}
+}
+
+
+focus = {
+	id = JAP_friendship_asean
+	#TODO icon
+
+	x = -8
+	y = 1
+	relative_position_id = JAP_diplomacy
+
+	cost = 10
+
+	prerequisite = { focus = JAP_diplomacy }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+	
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus JAP_friendship_asean"
+		every_country = {
+			limit = { has_idea = ASEAN_member }
+			add_opinion_modifier = {
+				target = JAP
+				modifier = diplomatic_proximity
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+	}
+}
+
+focus = {
+	id = JAP_chiang_mai
+	#TODO icon
+
+	x = 0
+	y = 1
+	relative_position_id = JAP_friendship_asean
+
+	cost = 10
+
+	prerequisite = { focus = JAP_friendship_asean }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus JAP_chiang_mai"
+		every_country = {
+			limit = { has_idea = ASEAN_member }
+			add_ideas = JAP_chiang_mai_initiative
+			add_opinion_modifier = {
+				target = JAP
+				modifier = diplomatic_support
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+	}
+}
+
+focus = {
+	id = JAP_quantitative_oda
+	#TODO icon
+
+	x = -1
+	y = 1
+	relative_position_id = JAP_chiang_mai
+
+	cost = 10
+
+	prerequisite = { focus = JAP_chiang_mai }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus JAP_quantitative_oda"
+		every_country = {
+			limit = { has_idea = ASEAN_member }
+			add_timed_idea = {
+				idea = JAP_quantitative_oda_idea
+				days = 730
+			}
+			set_temp_variable = { percent_change = 2.5 }
+			set_temp_variable = { tag_index = JAP }
+			set_temp_variable = { influence_target = THIS }
+			change_influence_percentage = yes
+			if = {
+				limit = { 
+					NOT = {
+						has_opinion_modifier = development_aid 
+					} 
+				}
+				add_opinion_modifier = {
+				target = JAP
+				modifier = development_aid
+				}
+			}
+		}
+		set_temp_variable = { treasury_change = -35.00 } #3.5*10 ASEAN members*Infrastructure
+		modify_treasury_effect = yes
+	}
+
+	ai_will_do = {
+		base = 10
+	}
+}
+
+focus = {
+	id = JAP_qualitative_oda
+	#TODO icon
+
+	x = 1
+	y = 1
+	relative_position_id = JAP_chiang_mai
+
+	cost = 10
+
+	prerequisite = { focus = JAP_chiang_mai }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus JAP_qualitative_oda"
+		every_country = {
+			limit = { has_idea = ASEAN_member }
+			add_ideas = JAP_qualitative_oda_idea
+			set_temp_variable = { percent_change = 2.5 }
+			set_temp_variable = { tag_index = JAP }
+			set_temp_variable = { influence_target = THIS }
+			change_influence_percentage = yes
+			if = {
+				limit = { 
+					NOT = {
+						has_opinion_modifier = development_aid 
+					} 
+				}
+				add_opinion_modifier = {
+				target = JAP
+				modifier = development_aid
+				}
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+	}
+}
+
+focus = {
+	id = JAP_security_south_china_sea
+	#TODO icon
+
+	x = 0
+	y = 2
+	relative_position_id = JAP_chiang_mai
+
+	cost = 10
+
+	prerequisite = { focus = JAP_quantitative_oda }
+	prerequisite = { focus = JAP_qualitative_oda }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus JAP_security_south_china_sea"
+		every_country = {
+			limit = { has_idea = ASEAN_member }
+			add_ideas = JAP_security_south_china_sea_idea
+			set_temp_variable = { percent_change = 2.5 }
+			set_temp_variable = { tag_index = JAP }
+			set_temp_variable = { influence_target = THIS }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = JAP
+				modifier = trade_security
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+	}
+}
+
+
+
+	#----------------------------------------------------------------
 	#FOREIGN POLICY
 	#----------------------------------------------------------------
 	#Review Official Development Assistance Charter
-	focus = {
-		id = JAP_odac
-		icon = focus_BRA_reach_out_to_military_dem
-		x = 45
-		y = 4
-		cost = 10
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_odac executed"
-			set_temp_variable = { percent_change = 5 }
-			change_domestic_influence_percentage = yes
-			country_event = Japan.100005000
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Relations with China
-	focus = {
-		id = JAP_china_relations
-		icon = goal_JAP_diplomacy_asia
-		x = -9
-		y = 1
-		cost = 10
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_odac
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_china_relations executed"
-			add_opinion_modifier = {
-				target = CHI
-				modifier = minor_improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = CHI
-				modifier = minor_improve_trade
-			}
-			add_opinion_modifier = {
-				target = TAI
-				modifier = minor_improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = TAI
-				modifier = minor_improve_trade
-			}
-			add_opinion_modifier = {
-				target = CHI
-				modifier = diplomatic_proximity
-			}
-			reverse_add_opinion_modifier = {
-				target = CHI
-				modifier = diplomatic_proximity
-			}
-			add_opinion_modifier = {
-				target = TAI
-				modifier = diplomatic_proximity
-			}
-			reverse_add_opinion_modifier = {
-				target = TAI
-				modifier = diplomatic_proximity
-			}
-			country_event = { id = japan_foreign_policy.6 }
-
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Relations with Africa
-	focus = {
-		id = JAP_africa_relations
-		icon = africa2
-		x = -3
-		y = 1
-		cost = 10
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_odac
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_africa_relations executed"
-			every_other_country = {
-				limit = {
-					AND = {
-						OR = {
-							is_african_nation = yes
-						}
-						NOT = { has_war_with = JAP }
-					}
-				}
-				add_opinion_modifier = {
-					target = JAP
-					modifier = minor_improve_trade
-				}
-				reverse_add_opinion_modifier = {
-					target = JAP
-					modifier = minor_improve_trade
-				}
-				add_opinion_modifier = {
-					target = JAP
-					modifier = diplomatic_proximity
-				}
-				reverse_add_opinion_modifier = {
-					target = JAP
-					modifier = diplomatic_proximity
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Algerian Gas
-	focus = {
-		id = JAP_algeria_gas
-		icon = develop_algeria
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_africa_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_africa_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_algeria_gas executed"
-			ALG = {
-				country_event = { id = japan_foreign_policy.40 }
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = JAP_djibouti_base
-		icon = german_djibuti_naval_base
-		x = 2
-		y = 1
-		cost = 10
-		relative_position_id = JAP_africa_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_africa_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_djibouti_base executed"
-			DJI = {
-				country_event = { id = japan_foreign_policy.35 }
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = JAP_angola_friend
-		icon = grab_angola
-		x = -2
-		y = 1
-		cost = 10
-		relative_position_id = JAP_africa_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_africa_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_djibouti_base executed"
-			AGL = {
-				country_event = { id = japan_foreign_policy.37 }
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = JAP_egypt_friend
-		icon = egypt_money
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_angola_friend
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_angola_friend
-			focus = JAP_algeria_gas
-			focus = JAP_djibouti_base
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_egypt_friend executed"
-			EGY = {
-				country_event = { id = japan_foreign_policy.43 }
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = JAP_kenya_invest
-		icon = coat_kenya
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_algeria_gas
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_angola_friend
-			focus = JAP_algeria_gas
-			focus = JAP_djibouti_base
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_kenya_invest executed"
-			KEN = {
-				country_event = { id = japan_foreign_policy.46 }
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = JAP_nigeria_export
-		icon = align_to_nigeria
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_djibouti_base
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_angola_friend
-			focus = JAP_algeria_gas
-			focus = JAP_djibouti_base
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_nigeria_export executed"
-			NIG = {
-				country_event = { id = japan_foreign_policy.49 }
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = JAP_somalia_initiative
-		icon = align_to_somalia
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_kenya_invest
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_egypt_friend
-			focus = JAP_kenya_invest
-			focus = JAP_nigeria_export
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_nigeria_export executed"
-			SOM = {
-				country_event = { id = japan_foreign_policy.52 }
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Which China?
-	focus = {
-		id = JAP_taiwan_relations
-		icon = chinese_united_front
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_china_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_china_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_taiwan_relations executed"
-			country_event = { id = japan_foreign_policy.14 }
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#How Close?
-	focus = {
-		id = JAP_china_proximity
-		icon = goal_JAP_chinese_island_chain
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_taiwan_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_taiwan_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_china_proximity executed"
-			if = { #Friends with China
-				limit = {
-					CHI = {
-						has_opinion = {
-							target = JAP
-							value > 50
-						}
-					}
-				}
-				set_temp_variable = { party_index = 6 } #Emerging Conservative
-				set_temp_variable = { party_popularity_increase = 0.08 }
-				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
-				# TODO: Custom effect tooltip
-			}
-			if = { #Friends with Taiwan
-				limit = {
-					TAI = {
-						has_opinion = {
-							target = JAP
-							value > 50
-						}
-					}
-				}
-				add_political_power = 50
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
-				# TODO: Custom effect tooltip
-			}
-			if = { #Enemies with China
-				limit = {
-					CHI = {
-						has_opinion = {
-							target = JAP
-							value < -30
-						}
-					}
-				}
-				add_political_power = 100
-				set_temp_variable = { party_index = 0 } #Western Autocrats
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				add_relative_party_popularity = yes
-				add_popularity = { ideology = nationalist popularity = 0.03 }
-				# TODO: Custom effect tooltip
-			}
-			if = { #Enemies with Taiwan
-				limit = {
-					TAI = {
-						has_opinion = {
-							target = JAP
-							value < -30
-						}
-					}
-				}
-				add_war_support = 0.05
-				set_temp_variable = { party_index = 0 } #Communist-State
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				add_relative_party_popularity = yes
-				# TODO: Custom effect tooltip
-			}
-			# TODO: Unlocks decision: “Formalize national ownership of Senkaku Islands”
-			# TODO: Unlocks decision: “Begin talks to transfer the Senkaku Islands to ROC”
-			# TODO: Unlocks decision: “Begin talks to transfer the Senkaku Islands to PRC”
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Relations with Korea
-	focus = {
-		id = JAP_south_korea_relations
-		icon = goal_JAP_jap_kor_alliance
-		x = -7
-		y = 1
-		cost = 10
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_odac
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_south_korea_relations executed"
-			add_opinion_modifier = {
-				target = KOR
-				modifier = minor_improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = KOR
-				modifier = minor_improve_trade
-			}
-			add_opinion_modifier = {
-				target = KOR
-				modifier = diplomatic_proximity
-			}
-			reverse_add_opinion_modifier = {
-				target = KOR
-				modifier = diplomatic_proximity
-			}
-			JAP = { country_event = japan_foreign_policy.6 }
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#The Other Korea
-	focus = {
-		id = JAP_north_korea_relations
-		icon = goal_JAP_jap_nko_alliance
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_south_korea_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_south_korea_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_north_korea_relations executed"
-			add_opinion_modifier = {
-				target = NKO
-				modifier = diplomatic_proximity
-			}
-			reverse_add_opinion_modifier = {
-				target = NKO
-				modifier = diplomatic_proximity
-			}
-			JAP = { country_event = Japan.100010000 }
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Friends or Foes?
-	focus = {
-		id = JAP_korean_proximity
-		icon = goal_JAP_attack_korea_by_japan
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_north_korea_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_north_korea_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_korean_proximity executed"
-			if = { #Friends with South Korea
-				limit = {
-					KOR = {
-						has_opinion = {
-							target = JAP
-							value > 50
-						}
-					}
-				}
-				set_party_index_to_ruling_party = yes
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { party_index = 2 } #Western Liberals
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				add_relative_party_popularity = yes
-				# TODO: Custom effect tooltip
-			}
-			if = { #Friends with North Korea
-				limit = {
-					NKO = {
-						has_opinion = {
-							target = JAP
-							value > 50
-						}
-					}
-				}
-				add_political_power = 150
-				add_popularity = { ideology = neutrality popularity = 0.05 }
-				# TODO: Custom effect tooltip
-			}
-			if = { #Enemies with South Korea
-				limit = {
-					KOR = {
-						has_opinion = {
-							target = JAP
-							value < -30
-						}
-					}
-				}
-				add_political_power = 100
-				set_temp_variable = { party_index = 0 } #Western Autocrats
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				add_relative_party_popularity = yes
-				add_popularity = { ideology = nationalist popularity = 0.05 }
-				# TODO: Custom effect tooltip
-			}
-			if = { #Enemies with North Korea
-				limit = {
-					NKO = {
-						has_opinion = {
-							target = JAP
-							value < -30
-						}
-					}
-				}
-				add_war_support = 0.08
-				# TODO: Custom effect tooltip
-			}
-			# TODO: Unlocks decision: “Abandon Liancourt Rocks Claim”
-			# TODO: Unlocks decision: “Provoke Korean Nationalism”
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Sovereignty Discussions
-	focus = {
-		id = JAP_sovereignty_agreement
-		icon = asia
-		x = 1
-		y = 1
-		cost = 10
-		relative_position_id = JAP_china_proximity
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_china_proximity
-			focus = JAP_korean_proximity
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_sovereignty_agreement executed"
-			# TODO: CHI, TAI, KOR, NKO, JAP event: "Joint Resolution Against Foreign Interference"
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Relations with USA
-	focus = {
-		id = JAP_usa_relations
-		icon = goal_JAP_diplomacy_panamerica
-		x = 1
-		y = 1
-		cost = 10
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_odac
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_usa_relations executed"
-			add_opinion_modifier = {
-				target = USA
-				modifier = minor_improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = USA
-				modifier = minor_improve_trade
-			}
-			add_opinion_modifier = {
-				target = USA
-				modifier = diplomatic_proximity
-			}
-			reverse_add_opinion_modifier = {
-				target = USA
-				modifier = diplomatic_proximity
-			}
-			JAP = { country_event = japan_foreign_policy.12}
-			# TODO: idea "International Trade Productivity" 365 days
-		}
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Counter-Terrorism Consultation
-	focus = {
-		id = JAP_counter_terror_agreement
-		icon = USA_diplomatic_corps
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_usa_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_usa_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_counter_terror_agreement executed"
-			country_event = Japan.100005200 # Maritime Security Act
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Equal Partnership?
-	focus = {
-		id = JAP_usa_partnership
-		icon = goal_JAP_alliance_JAP_USA
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_counter_terror_agreement
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_counter_terror_agreement
-		}
-
-		bypass = {
-			USA = {
-				OR = {
-					exists = no
-					NOT = {
-						has_government = democratic
-					}
-					is_subject = yes
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_usa_partnership executed"
-			if = { #Allies with USA
-				limit = {
-					USA = {
-						has_opinion = {
-							target = JAP
-							value > 80
-						}
-					}
-				}
-				add_political_power = 150
-				add_stability = 0.03
-				set_temp_variable = { percent_change = 10 }
-				set_temp_variable = { tag_index = USA }
-				set_temp_variable = { influence_target = JAP }
-				change_influence_percentage = yes
-				set_temp_variable = { party_index = 2 } #Western Autocrats
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				add_relative_party_popularity = yes
-				set_temp_variable = { party_index = 2 } #Emerging Conservatives
-				set_temp_variable = { party_popularity_increase = -0.05 }
-				add_relative_party_popularity = yes
-				# TODO: Custom effect tooltip
-			}
-			if = { #Comfortable with USA (not exclusive with allies with USA)
-				limit = {
-					USA = {
-						has_opinion = {
-							target = JAP
-							value > -1
-						}
-					}
-				}
-				add_political_power = 50
-				add_popularity = { ideology = democratic popularity = 0.05 }
-				# TODO: Custom effect tooltip
-			}
-			if = { #Rivals with USA
-				limit = {
-					USA = {
-						has_opinion = {
-							target = JAP
-							value < 0
-						}
-					}
-				}
-				add_political_power = 100
-				add_stability = -0.02
-				set_temp_variable = { percent_change = 5 }
-				change_domestic_influence_percentage = yes
-				add_popularity = { ideology = nationalist popularity = 0.08 }
-				# TODO: Custom effect tooltip
-			}
-			JAP = { country_event = japan_foreign_policy.18}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Issue of Okinawa Bases
-	focus = {
-		id = JAP_usa_bases
-		icon = goal_JAP_okinawa_in_japan
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_usa_partnership
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_usa_partnership
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_usa_bases executed"
-			# TODO: event "Debate over USFJ Okinawa Bases"
-			# TODO: decision "Start Marine Base Decommissioning Talks"
-			# TODO: decision "Relocate USMC Base to Henoko Bay"
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Relations with SEA
-	focus = {
-		id = JAP_sea_relations
-		icon = molotov_ribbentrop_pact
-		x = 3
-		y = 1
-		cost = 10
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_odac
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_sea_relations executed"
-			every_other_country = {
-				limit = {
-					AND = {
-						OR = {
-							is_SE_Asia = yes
-						}
-						NOT = { has_war_with = JAP }
-					}
-				}
-				add_opinion_modifier = {
-					target = JAP
-					modifier = minor_improve_trade
-				}
-				reverse_add_opinion_modifier = {
-					target = JAP
-					modifier = minor_improve_trade
-				}
-				add_opinion_modifier = {
-					target = JAP
-					modifier = diplomatic_proximity
-				}
-				reverse_add_opinion_modifier = {
-					target = JAP
-					modifier = diplomatic_proximity
-				}
-			}
-			# TODO: event "Free Trade Area of the Asia-Pacific (SEA)"
-			JAP = { country_event = Japan.100005013 }
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Kuril Issue
-	focus = {
-		id = JAP_approach_russia
-		icon = question_of_ownership_of_kuril_islands
-		x = 6
-		y = 1
-		cost = 3
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-		prerequisite = {
-			focus = JAP_odac
-		}
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_approach_russia executed"
-			country_event = japan_foreign_policy.31
-			custom_effect_tooltip = jap_kur_tt
-		}
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	focus = {
-		id = JAP_Iran_Japan_partnership
-		icon = goal_JAP_azadegan
-		x = 5
-		y = 2
-		cost = 5
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_DIPLOMACY }
-		available = { PER = { has_opinion = { target = JAP value > 9 } } }
-		prerequisite = {
-			focus = JAP_approach_russia
-		}
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_Iran_Japan_partnership executed"
-			PER = {
-				country_event = japan_foreign_policy.288
-			}
-			custom_effect_tooltip = JAP_effect_if_they_accept_TT
-			effect_tooltip = {
-				set_temp_variable = { treasury_change = -4.00 }
-				modify_treasury_effect = yes
-				random_owned_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = fossil_powerplant
-						level = 1
-						instant_build = yes
-					}
-					add_resource = {
-						type = oil
-						amount = 2
-					}
-				}
-				custom_effect_tooltip = egy_petr_tt
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Russia_japan_partnership
-	focus = {
-		id = JAP_Russia_japan_partnership
-		icon = goal_JAP_sakhalin_ii
-		x = 7
-		y = 2
-		cost = 5
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_DIPLOMACY }
-		available = { SOV = { has_opinion = { target = JAP value > 9 } } }
-		prerequisite = {
-			focus = JAP_approach_russia
-		}
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_Russia_japan_partnership executed"
-			PER = {
-				country_event = japan_foreign_policy.288
-			}
-			custom_effect_tooltip = JAP_effect_if_they_accept_TT
-			effect_tooltip = {
-				set_temp_variable = { treasury_change = -4.00 }
-				modify_treasury_effect = yes
-				random_owned_state = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = fossil_powerplant
-						level = 1
-						instant_build = yes
-					}
-					add_resource = {
-						type = oil
-						amount = 2
-					}
-				}
-				custom_effect_tooltip = egy_petr_tt
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#India_strategic_relations
-	focus = {
-		id = JAP_india_japan_relat
-		icon = align_to_india
-		x = 6
-		y = 3
-		cost = 10
-		relative_position_id = JAP_odac
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_approach_russia
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_india_japan_relat executed"
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-		#India_strategic_militar
-		focus = {
-			id = JAP_india_japan_defense
-			icon = SpecOps_ind
-			x = 5
-			y = 4
-			cost = 10
-			relative_position_id = JAP_odac
-			search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-			prerequisite = {
-				focus = JAP_india_japan_relat
-			}
-
-			completion_reward = {
-				log = "[GetDateText]: [This.GetName]: focus JAP_india_japan_relat executed"
-			}
-
-			ai_will_do = {
-			base = 10
-		}
-		}
-
-		#JAP_influence_cis
-		focus = {
-			id = JAP_influence_cis
-			icon = cis_union
-			x = 7
-			y = 4
-			cost = 10
-			relative_position_id = JAP_odac
-			search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-			prerequisite = {
-				focus = JAP_Russia_japan_partnership
-			}
-
-			completion_reward = {
-				log = "[GetDateText]: [This.GetName]: focus JAP_india_japan_relat executed"
-			}
-
-			ai_will_do = {
-			base = 10
-		}
-		}
-
-	#Developmental Support
-	focus = {
-		id = JAP_sea_development
-		icon = trade_with_japan
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_sea_relations
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_sea_relations
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_sea_development executed"
-			JAP = { country_event = japan_foreign_policy.3 }
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Friends Overseas
-	focus = {
-		id = JAP_sea_friendship
-		icon = oceania
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_sea_development
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_sea_development
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_sea_friendship executed"
-			set_temp_variable = { total_award = 0 }
-			every_other_country = {
-				limit = {
-					AND = {
-						OR = {
-							is_SE_Asia = yes
-							is_oceania_nation = yes
-						}
-						NOT = { has_war_with = JAP }
-						OR = {
-							has_opinion = {
-								target = JAP
-								value > 49
-							}
-								JAP = {
-									has_opinion = {
-									target = THIS
-									value > 49
-								}
-							}
-						}
-					}
-				}
-				ROOT = {
-					add_to_temp_variable = { total_award = 20 }
-				}
-				# TODO: event "Close Japanese Ties" just to notify the applicable countries of their bonus
-			}
-			add_political_power = total_award
-			# TODO: create scripted tooltip
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Stance on China?
-	focus = {
-		id = JAP_sea_china_stance
-		icon = goal_JAP_attack_red_china
-		x = 0
-		y = 1
-		cost = 10
-		relative_position_id = JAP_sea_friendship
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_sea_friendship
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_sea_china_stance executed"
-			every_other_country = {
-				limit = {
-					AND = {
-						OR = {
-							is_SE_Asia = yes
-						}
-						NOT = { has_war_with = JAP }
-					}
-				}
-				set_temp_variable = { percent_change = 5 }
-				change_domestic_influence_percentage = yes
-				# TODO: event "Japan Advocates For Us" just to notify the applicable countries of their bonus
-			}
-			add_political_power = 50
-			# TODO: decision "Rally Asia Against PRC's Aggression"
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
-
-	#Reformed Foreign Ministry
-	focus = {
-		id = JAP_foreign_reformed
-		icon = diplomacy
-		x = -2
-		y = 1
-		cost = 10
-		relative_position_id = JAP_sovereignty_agreement
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
-
-		prerequisite = {
-			focus = JAP_sovereignty_agreement
-			focus = JAP_historical_apology
-		}
-		prerequisite = {
-			focus = JAP_usa_bases
-		}
-		prerequisite = {
-			focus = JAP_sea_china_stance
-		}
-		prerequisite = {
-			focus = JAP_india_japan_defense
-		}
-		prerequisite = {
-			focus = JAP_influence_cis
-		}
-		prerequisite = {
-			focus = JAP_somalia_initiative
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [This.GetName]: focus JAP_foreign_reformed executed"
-			# TODO: idea "Japanese Diplomacy" 365 days
-			# TODO: decision "Advance Decommissioning US Bases"
-			# TODO: decision "Reject the Chinese Market!"
-			# TODO: decision "Display Permanent Foreign Policy Spirits Together"
-			# TODO: decision "Display Permanent Foreign Policy Spirits Separately"
-		}
-
-		ai_will_do = {
-			base = 10
-		}
-	}
+	# focus = {
+	# 	id = JAP_odac
+	# 	icon = focus_BRA_reach_out_to_military_dem
+	# 	x = 45
+	# 	y = 4
+	# 	cost = 10
+	# 	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_odac executed"
+	# 		set_temp_variable = { percent_change = 5 }
+	# 		change_domestic_influence_percentage = yes
+	# 		country_event = Japan.100005000
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Relations with China
+	# focus = {
+	# 	id = JAP_china_relations
+	# 	icon = goal_JAP_diplomacy_asia
+	# 	x = -9
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_odac
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_china_relations executed"
+	# 		add_opinion_modifier = {
+	# 			target = CHI
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = CHI
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		add_opinion_modifier = {
+	# 			target = TAI
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = TAI
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		add_opinion_modifier = {
+	# 			target = CHI
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = CHI
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		add_opinion_modifier = {
+	# 			target = TAI
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = TAI
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		country_event = { id = japan_foreign_policy.6 }
+
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Relations with Africa
+	# focus = {
+	# 	id = JAP_africa_relations
+	# 	icon = africa2
+	# 	x = -3
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_odac
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_africa_relations executed"
+	# 		every_other_country = {
+	# 			limit = {
+	# 				AND = {
+	# 					OR = {
+	# 						is_african_nation = yes
+	# 					}
+	# 					NOT = { has_war_with = JAP }
+	# 				}
+	# 			}
+	# 			add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = minor_improve_trade
+	# 			}
+	# 			reverse_add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = minor_improve_trade
+	# 			}
+	# 			add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = diplomatic_proximity
+	# 			}
+	# 			reverse_add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = diplomatic_proximity
+	# 			}
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Algerian Gas
+	# focus = {
+	# 	id = JAP_algeria_gas
+	# 	icon = develop_algeria
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_africa_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_africa_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_algeria_gas executed"
+	# 		ALG = {
+	# 			country_event = { id = japan_foreign_policy.40 }
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = JAP_djibouti_base
+	# 	icon = german_djibuti_naval_base
+	# 	x = 2
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_africa_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_africa_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_djibouti_base executed"
+	# 		DJI = {
+	# 			country_event = { id = japan_foreign_policy.35 }
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = JAP_angola_friend
+	# 	icon = grab_angola
+	# 	x = -2
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_africa_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_africa_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_djibouti_base executed"
+	# 		AGL = {
+	# 			country_event = { id = japan_foreign_policy.37 }
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = JAP_egypt_friend
+	# 	icon = egypt_money
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_angola_friend
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_angola_friend
+	# 		focus = JAP_algeria_gas
+	# 		focus = JAP_djibouti_base
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_egypt_friend executed"
+	# 		EGY = {
+	# 			country_event = { id = japan_foreign_policy.43 }
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = JAP_kenya_invest
+	# 	icon = coat_kenya
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_algeria_gas
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_angola_friend
+	# 		focus = JAP_algeria_gas
+	# 		focus = JAP_djibouti_base
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_kenya_invest executed"
+	# 		KEN = {
+	# 			country_event = { id = japan_foreign_policy.46 }
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = JAP_nigeria_export
+	# 	icon = align_to_nigeria
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_djibouti_base
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_angola_friend
+	# 		focus = JAP_algeria_gas
+	# 		focus = JAP_djibouti_base
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_nigeria_export executed"
+	# 		NIG = {
+	# 			country_event = { id = japan_foreign_policy.49 }
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = JAP_somalia_initiative
+	# 	icon = align_to_somalia
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_kenya_invest
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_egypt_friend
+	# 		focus = JAP_kenya_invest
+	# 		focus = JAP_nigeria_export
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_nigeria_export executed"
+	# 		SOM = {
+	# 			country_event = { id = japan_foreign_policy.52 }
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Which China?
+	# focus = {
+	# 	id = JAP_taiwan_relations
+	# 	icon = chinese_united_front
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_china_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_china_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_taiwan_relations executed"
+	# 		country_event = { id = japan_foreign_policy.14 }
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #How Close?
+	# focus = {
+	# 	id = JAP_china_proximity
+	# 	icon = goal_JAP_chinese_island_chain
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_taiwan_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_taiwan_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_china_proximity executed"
+	# 		if = { #Friends with China
+	# 			limit = {
+	# 				CHI = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value > 50
+	# 					}
+	# 				}
+	# 			}
+	# 			set_temp_variable = { party_index = 6 } #Emerging Conservative
+	# 			set_temp_variable = { party_popularity_increase = 0.08 }
+	# 			set_temp_variable = { temp_outlook_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Friends with Taiwan
+	# 			limit = {
+	# 				TAI = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value > 50
+	# 					}
+	# 				}
+	# 			}
+	# 			add_political_power = 50
+	# 			set_party_index_to_ruling_party = yes
+	# 			set_temp_variable = { party_popularity_increase = 0.05 }
+	# 			set_temp_variable = { temp_outlook_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Enemies with China
+	# 			limit = {
+	# 				CHI = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value < -30
+	# 					}
+	# 				}
+	# 			}
+	# 			add_political_power = 100
+	# 			set_temp_variable = { party_index = 0 } #Western Autocrats
+	# 			set_temp_variable = { party_popularity_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			add_popularity = { ideology = nationalist popularity = 0.03 }
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Enemies with Taiwan
+	# 			limit = {
+	# 				TAI = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value < -30
+	# 					}
+	# 				}
+	# 			}
+	# 			add_war_support = 0.05
+	# 			set_temp_variable = { party_index = 0 } #Communist-State
+	# 			set_temp_variable = { party_popularity_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		# TODO: Unlocks decision: “Formalize national ownership of Senkaku Islands”
+	# 		# TODO: Unlocks decision: “Begin talks to transfer the Senkaku Islands to ROC”
+	# 		# TODO: Unlocks decision: “Begin talks to transfer the Senkaku Islands to PRC”
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Relations with Korea
+	# focus = {
+	# 	id = JAP_south_korea_relations
+	# 	icon = goal_JAP_jap_kor_alliance
+	# 	x = -7
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_odac
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_south_korea_relations executed"
+	# 		add_opinion_modifier = {
+	# 			target = KOR
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = KOR
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		add_opinion_modifier = {
+	# 			target = KOR
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = KOR
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		JAP = { country_event = japan_foreign_policy.6 }
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #The Other Korea
+	# focus = {
+	# 	id = JAP_north_korea_relations
+	# 	icon = goal_JAP_jap_nko_alliance
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_south_korea_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_south_korea_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_north_korea_relations executed"
+	# 		add_opinion_modifier = {
+	# 			target = NKO
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = NKO
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		JAP = { country_event = Japan.100010000 }
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Friends or Foes?
+	# focus = {
+	# 	id = JAP_korean_proximity
+	# 	icon = goal_JAP_attack_korea_by_japan
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_north_korea_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_north_korea_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_korean_proximity executed"
+	# 		if = { #Friends with South Korea
+	# 			limit = {
+	# 				KOR = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value > 50
+	# 					}
+	# 				}
+	# 			}
+	# 			set_party_index_to_ruling_party = yes
+	# 			set_temp_variable = { party_popularity_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			set_temp_variable = { party_index = 2 } #Western Liberals
+	# 			set_temp_variable = { party_popularity_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Friends with North Korea
+	# 			limit = {
+	# 				NKO = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value > 50
+	# 					}
+	# 				}
+	# 			}
+	# 			add_political_power = 150
+	# 			add_popularity = { ideology = neutrality popularity = 0.05 }
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Enemies with South Korea
+	# 			limit = {
+	# 				KOR = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value < -30
+	# 					}
+	# 				}
+	# 			}
+	# 			add_political_power = 100
+	# 			set_temp_variable = { party_index = 0 } #Western Autocrats
+	# 			set_temp_variable = { party_popularity_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			add_popularity = { ideology = nationalist popularity = 0.05 }
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Enemies with North Korea
+	# 			limit = {
+	# 				NKO = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value < -30
+	# 					}
+	# 				}
+	# 			}
+	# 			add_war_support = 0.08
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		# TODO: Unlocks decision: “Abandon Liancourt Rocks Claim”
+	# 		# TODO: Unlocks decision: “Provoke Korean Nationalism”
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Sovereignty Discussions
+	# focus = {
+	# 	id = JAP_sovereignty_agreement
+	# 	icon = asia
+	# 	x = 1
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_china_proximity
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_china_proximity
+	# 		focus = JAP_korean_proximity
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_sovereignty_agreement executed"
+	# 		# TODO: CHI, TAI, KOR, NKO, JAP event: "Joint Resolution Against Foreign Interference"
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Relations with USA
+	# focus = {
+	# 	id = JAP_usa_relations
+	# 	icon = goal_JAP_diplomacy_panamerica
+	# 	x = 1
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_odac
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_usa_relations executed"
+	# 		add_opinion_modifier = {
+	# 			target = USA
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = USA
+	# 			modifier = minor_improve_trade
+	# 		}
+	# 		add_opinion_modifier = {
+	# 			target = USA
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		reverse_add_opinion_modifier = {
+	# 			target = USA
+	# 			modifier = diplomatic_proximity
+	# 		}
+	# 		JAP = { country_event = japan_foreign_policy.12}
+	# 		# TODO: idea "International Trade Productivity" 365 days
+	# 	}
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Counter-Terrorism Consultation
+	# focus = {
+	# 	id = JAP_counter_terror_agreement
+	# 	icon = USA_diplomatic_corps
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_usa_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_usa_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_counter_terror_agreement executed"
+	# 		country_event = Japan.100005200 # Maritime Security Act
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Equal Partnership?
+	# focus = {
+	# 	id = JAP_usa_partnership
+	# 	icon = goal_JAP_alliance_JAP_USA
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_counter_terror_agreement
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_counter_terror_agreement
+	# 	}
+
+	# 	bypass = {
+	# 		USA = {
+	# 			OR = {
+	# 				exists = no
+	# 				NOT = {
+	# 					has_government = democratic
+	# 				}
+	# 				is_subject = yes
+	# 			}
+	# 		}
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_usa_partnership executed"
+	# 		if = { #Allies with USA
+	# 			limit = {
+	# 				USA = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value > 80
+	# 					}
+	# 				}
+	# 			}
+	# 			add_political_power = 150
+	# 			add_stability = 0.03
+	# 			set_temp_variable = { percent_change = 10 }
+	# 			set_temp_variable = { tag_index = USA }
+	# 			set_temp_variable = { influence_target = JAP }
+	# 			change_influence_percentage = yes
+	# 			set_temp_variable = { party_index = 2 } #Western Autocrats
+	# 			set_temp_variable = { party_popularity_increase = 0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			set_temp_variable = { party_index = 2 } #Emerging Conservatives
+	# 			set_temp_variable = { party_popularity_increase = -0.05 }
+	# 			add_relative_party_popularity = yes
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Comfortable with USA (not exclusive with allies with USA)
+	# 			limit = {
+	# 				USA = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value > -1
+	# 					}
+	# 				}
+	# 			}
+	# 			add_political_power = 50
+	# 			add_popularity = { ideology = democratic popularity = 0.05 }
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		if = { #Rivals with USA
+	# 			limit = {
+	# 				USA = {
+	# 					has_opinion = {
+	# 						target = JAP
+	# 						value < 0
+	# 					}
+	# 				}
+	# 			}
+	# 			add_political_power = 100
+	# 			add_stability = -0.02
+	# 			set_temp_variable = { percent_change = 5 }
+	# 			change_domestic_influence_percentage = yes
+	# 			add_popularity = { ideology = nationalist popularity = 0.08 }
+	# 			# TODO: Custom effect tooltip
+	# 		}
+	# 		JAP = { country_event = japan_foreign_policy.18}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Issue of Okinawa Bases
+	# focus = {
+	# 	id = JAP_usa_bases
+	# 	icon = goal_JAP_okinawa_in_japan
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_usa_partnership
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_usa_partnership
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_usa_bases executed"
+	# 		# TODO: event "Debate over USFJ Okinawa Bases"
+	# 		# TODO: decision "Start Marine Base Decommissioning Talks"
+	# 		# TODO: decision "Relocate USMC Base to Henoko Bay"
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Relations with SEA
+	# focus = {
+	# 	id = JAP_sea_relations
+	# 	icon = molotov_ribbentrop_pact
+	# 	x = 3
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_odac
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_sea_relations executed"
+	# 		every_other_country = {
+	# 			limit = {
+	# 				AND = {
+	# 					OR = {
+	# 						is_SE_Asia = yes
+	# 					}
+	# 					NOT = { has_war_with = JAP }
+	# 				}
+	# 			}
+	# 			add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = minor_improve_trade
+	# 			}
+	# 			reverse_add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = minor_improve_trade
+	# 			}
+	# 			add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = diplomatic_proximity
+	# 			}
+	# 			reverse_add_opinion_modifier = {
+	# 				target = JAP
+	# 				modifier = diplomatic_proximity
+	# 			}
+	# 		}
+	# 		# TODO: event "Free Trade Area of the Asia-Pacific (SEA)"
+	# 		JAP = { country_event = Japan.100005013 }
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Kuril Issue
+	# focus = {
+	# 	id = JAP_approach_russia
+	# 	icon = question_of_ownership_of_kuril_islands
+	# 	x = 6
+	# 	y = 1
+	# 	cost = 3
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+	# 	prerequisite = {
+	# 		focus = JAP_odac
+	# 	}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_approach_russia executed"
+	# 		country_event = japan_foreign_policy.31
+	# 		custom_effect_tooltip = jap_kur_tt
+	# 	}
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# focus = {
+	# 	id = JAP_Iran_Japan_partnership
+	# 	icon = goal_JAP_azadegan
+	# 	x = 5
+	# 	y = 2
+	# 	cost = 5
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_DIPLOMACY }
+	# 	available = { PER = { has_opinion = { target = JAP value > 9 } } }
+	# 	prerequisite = {
+	# 		focus = JAP_approach_russia
+	# 	}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_Iran_Japan_partnership executed"
+	# 		PER = {
+	# 			country_event = japan_foreign_policy.288
+	# 		}
+	# 		custom_effect_tooltip = JAP_effect_if_they_accept_TT
+	# 		effect_tooltip = {
+	# 			set_temp_variable = { treasury_change = -4.00 }
+	# 			modify_treasury_effect = yes
+	# 			random_owned_state = {
+	# 				add_extra_state_shared_building_slots = 1
+	# 				add_building_construction = {
+	# 					type = fossil_powerplant
+	# 					level = 1
+	# 					instant_build = yes
+	# 				}
+	# 				add_resource = {
+	# 					type = oil
+	# 					amount = 2
+	# 				}
+	# 			}
+	# 			custom_effect_tooltip = egy_petr_tt
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Russia_japan_partnership
+	# focus = {
+	# 	id = JAP_Russia_japan_partnership
+	# 	icon = goal_JAP_sakhalin_ii
+	# 	x = 7
+	# 	y = 2
+	# 	cost = 5
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY FOCUS_FILTER_DIPLOMACY }
+	# 	available = { SOV = { has_opinion = { target = JAP value > 9 } } }
+	# 	prerequisite = {
+	# 		focus = JAP_approach_russia
+	# 	}
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_Russia_japan_partnership executed"
+	# 		PER = {
+	# 			country_event = japan_foreign_policy.288
+	# 		}
+	# 		custom_effect_tooltip = JAP_effect_if_they_accept_TT
+	# 		effect_tooltip = {
+	# 			set_temp_variable = { treasury_change = -4.00 }
+	# 			modify_treasury_effect = yes
+	# 			random_owned_state = {
+	# 				add_extra_state_shared_building_slots = 1
+	# 				add_building_construction = {
+	# 					type = fossil_powerplant
+	# 					level = 1
+	# 					instant_build = yes
+	# 				}
+	# 				add_resource = {
+	# 					type = oil
+	# 					amount = 2
+	# 				}
+	# 			}
+	# 			custom_effect_tooltip = egy_petr_tt
+	# 		}
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #India_strategic_relations
+	# focus = {
+	# 	id = JAP_india_japan_relat
+	# 	icon = align_to_india
+	# 	x = 6
+	# 	y = 3
+	# 	cost = 10
+	# 	relative_position_id = JAP_odac
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_approach_russia
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_india_japan_relat executed"
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# 	#India_strategic_militar
+	# 	focus = {
+	# 		id = JAP_india_japan_defense
+	# 		icon = SpecOps_ind
+	# 		x = 5
+	# 		y = 4
+	# 		cost = 10
+	# 		relative_position_id = JAP_odac
+	# 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 		prerequisite = {
+	# 			focus = JAP_india_japan_relat
+	# 		}
+
+	# 		completion_reward = {
+	# 			log = "[GetDateText]: [This.GetName]: focus JAP_india_japan_relat executed"
+	# 		}
+
+	# 		ai_will_do = {
+	# 		base = 10
+	# 	}
+	# 	}
+
+	# 	#JAP_influence_cis
+	# 	focus = {
+	# 		id = JAP_influence_cis
+	# 		icon = cis_union
+	# 		x = 7
+	# 		y = 4
+	# 		cost = 10
+	# 		relative_position_id = JAP_odac
+	# 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 		prerequisite = {
+	# 			focus = JAP_Russia_japan_partnership
+	# 		}
+
+	# 		completion_reward = {
+	# 			log = "[GetDateText]: [This.GetName]: focus JAP_india_japan_relat executed"
+	# 		}
+
+	# 		ai_will_do = {
+	# 		base = 10
+	# 	}
+	# 	}
+
+	# #Developmental Support
+	# focus = {
+	# 	id = JAP_sea_development
+	# 	icon = trade_with_japan
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_sea_relations
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_sea_relations
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_sea_development executed"
+	# 		JAP = { country_event = japan_foreign_policy.3 }
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Friends Overseas
+	# focus = {
+	# 	id = JAP_sea_friendship
+	# 	icon = oceania
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_sea_development
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_sea_development
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_sea_friendship executed"
+	# 		set_temp_variable = { total_award = 0 }
+	# 		every_other_country = {
+	# 			limit = {
+	# 				AND = {
+	# 					OR = {
+	# 						is_SE_Asia = yes
+	# 						is_oceania_nation = yes
+	# 					}
+	# 					NOT = { has_war_with = JAP }
+	# 					OR = {
+	# 						has_opinion = {
+	# 							target = JAP
+	# 							value > 49
+	# 						}
+	# 							JAP = {
+	# 								has_opinion = {
+	# 								target = THIS
+	# 								value > 49
+	# 							}
+	# 						}
+	# 					}
+	# 				}
+	# 			}
+	# 			ROOT = {
+	# 				add_to_temp_variable = { total_award = 20 }
+	# 			}
+	# 			# TODO: event "Close Japanese Ties" just to notify the applicable countries of their bonus
+	# 		}
+	# 		add_political_power = total_award
+	# 		# TODO: create scripted tooltip
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Stance on China?
+	# focus = {
+	# 	id = JAP_sea_china_stance
+	# 	icon = goal_JAP_attack_red_china
+	# 	x = 0
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_sea_friendship
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_sea_friendship
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_sea_china_stance executed"
+	# 		every_other_country = {
+	# 			limit = {
+	# 				AND = {
+	# 					OR = {
+	# 						is_SE_Asia = yes
+	# 					}
+	# 					NOT = { has_war_with = JAP }
+	# 				}
+	# 			}
+	# 			set_temp_variable = { percent_change = 5 }
+	# 			change_domestic_influence_percentage = yes
+	# 			# TODO: event "Japan Advocates For Us" just to notify the applicable countries of their bonus
+	# 		}
+	# 		add_political_power = 50
+	# 		# TODO: decision "Rally Asia Against PRC's Aggression"
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
+
+	# #Reformed Foreign Ministry
+	# focus = {
+	# 	id = JAP_foreign_reformed
+	# 	icon = diplomacy
+	# 	x = -2
+	# 	y = 1
+	# 	cost = 10
+	# 	relative_position_id = JAP_sovereignty_agreement
+	# 	search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
+
+	# 	prerequisite = {
+	# 		focus = JAP_sovereignty_agreement
+	# 		focus = JAP_historical_apology
+	# 	}
+	# 	prerequisite = {
+	# 		focus = JAP_usa_bases
+	# 	}
+	# 	prerequisite = {
+	# 		focus = JAP_sea_china_stance
+	# 	}
+	# 	prerequisite = {
+	# 		focus = JAP_india_japan_defense
+	# 	}
+	# 	prerequisite = {
+	# 		focus = JAP_influence_cis
+	# 	}
+	# 	prerequisite = {
+	# 		focus = JAP_somalia_initiative
+	# 	}
+
+	# 	completion_reward = {
+	# 		log = "[GetDateText]: [This.GetName]: focus JAP_foreign_reformed executed"
+	# 		# TODO: idea "Japanese Diplomacy" 365 days
+	# 		# TODO: decision "Advance Decommissioning US Bases"
+	# 		# TODO: decision "Reject the Chinese Market!"
+	# 		# TODO: decision "Display Permanent Foreign Policy Spirits Together"
+	# 		# TODO: decision "Display Permanent Foreign Policy Spirits Separately"
+	# 	}
+
+	# 	ai_will_do = {
+	# 		base = 10
+	# 	}
+	# }
 
 	#----------------------------------------------------------------
 	#DEFENSE
