@@ -775,6 +775,15 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_CRM_naval }
 		}
 	}
+	#Bolivia
+	if = {
+		limit = { original_tag = BOL }
+		if = {
+			limit = { OR = { has_idea = BOL_tourism has_idea = BOL_tourism2 } }
+			set_variable = { additional_income_BOL_tourism = 0.50 }
+			add_to_variable = { additional_income_rate = additional_income_BOL_tourism }
+		}
+	}
 	#Yugra
 	if = {
 		limit = { original_tag = KHM }
@@ -3602,7 +3611,15 @@ update_display = {
 	add_to_variable = { display_expense = education_gain }
 	add_to_variable = { display_expense = health_gain }
 	add_to_variable = { display_expense = welfare_gain }
-	add_to_variable = { display_expense = debt_rate }
+	if = {
+		limit = {
+			NOT = {
+				has_active_mission = cheap_loan_from_the_imf_mission
+				has_country_flag = paused_debt_repayment
+			}
+		}
+		add_to_variable = { display_expense = debt_rate }
+	}
 	add_to_variable = { display_expense = additional_expenses_rate }
 	add_to_variable = { display_expense = border_control_gain }
 
@@ -3640,6 +3657,18 @@ update_display = {
 	set_variable = { potential_income = display_income }
 	if = { limit = { has_country_flag = int_reinvestment_flag }
 		add_to_variable = { potential_income = int_investments_rate }
+	}
+
+	# Adjust Potential Expense to Include the Debt Rate
+	set_variable = { potential_expense = display_expense }
+	if = {
+		limit = {
+			OR = {
+				has_active_mission = cheap_loan_from_the_imf_mission
+				has_country_flag = paused_debt_repayment
+			}
+		}
+		add_to_variable = { potential_expense = debt_rate }
 	}
 
 	set_variable = { treasury_rate = display_income }
