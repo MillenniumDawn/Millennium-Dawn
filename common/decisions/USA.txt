@@ -4361,6 +4361,9 @@ USA_foreign_policy = {
 		available = {
 			has_idea = NATO_member
 			is_faction_leader = yes
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
 		}
 
 		complete_effect = {
@@ -4408,6 +4411,23 @@ USA_foreign_policy = {
 					emerging_reactionaries_are_in_power = yes
 				}
 			}
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+				}
+				network_strength = {
+					target = BLR
+					value > 45
+				}
+			}
+			else = {
+				BLR = {
+					influence_higher_15 = yes
+				}
+			}
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
 		}
 
 		complete_effect = {
@@ -4418,20 +4438,285 @@ USA_foreign_policy = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_belarus_reauthorization_act"
 			clr_country_flag = USA_doing_decision
-			every_country = {
-				limit = {
-					has_idea = NATO_member
+			BLR = {
+				if = {
+					limit = { check_variable = { influence_array^0 = USA } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^0 }
 				}
-				country_event = {
-					id = department_of_state.28
-					days = 2
+				else_if = {
+					limit = { check_variable = { influence_array^1 = USA } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^1 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^2 = USA } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^2 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^3 = USA } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^3 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^4 = USA } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^4 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^5 = USA } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^5 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^6 = USA } }
+					set_temp_variable = { iran_influence_percentage = influence_array_val^6 }
+				}
+				else = { set_temp_variable = { iran_influence_percentage = 0 } }
+				set_temp_variable = { blr_domestic_influence_var = domestic_influence_amount }
+				set_temp_variable = { blr_democratic_outlook_percentage = party_popularity@democratic }
+				multiply_temp_variable = { blr_democratic_outlook_percentage = 100 }
+				set_temp_variable = { blr_not_democratic_popularity = 100 }
+				subtract_from_temp_variable = { blr_not_democratic_popularity = blr_democratic_outlook_percentage }
+
+				#Chances
+
+				#Coup
+				set_temp_variable = { coup_chance = 0 }
+				add_to_temp_variable = { coup_chance = iran_influence_percentage }
+				add_to_temp_variable = { coup_chance = 30 }
+
+				#Civil War
+				set_temp_variable = { civil_war_chance = 0 }
+				add_to_temp_variable = { civil_war_chance = 30 } #Makes civil war easier.
+				add_to_temp_variable = { civil_war_chance = blr_democratic_outlook_percentage }
+				add_to_temp_variable = { coup_chance = iran_influence_percentage }
+
+				#Nothing happens
+				set_temp_variable = { fail_chance = 0 }
+				add_to_temp_variable = { fail_chance = blr_not_democratic_popularity }
+				add_to_temp_variable = { fail_chance = blr_domestic_influence_var }
+				add_to_temp_variable = { fail_chance = -50 } #Makes civil war easier.
+			}
+			random_list = {
+				coup_chance = {
+					custom_effect_tooltip = USA_blr_coup_TT
+					hidden_effect = {
+
+						BLR = {
+							set_politics = {
+								ruling_party = democratic
+								elections_allowed = no
+							}
+							set_political_party = {
+								ideology = democratic
+								popularity = 100
+							}
+							set_temp_variable = { party_index = 1 }
+							set_temp_variable = { party_popularity_increase = 1.00 }
+							add_relative_party_popularity = yes
+
+							set_temp_variable = { rul_party_temp = 1 }
+							change_ruling_party_effect = yes
+
+							create_country_leader = {
+								name = "Anatolij Lebiedko"
+								picture = "anatoly_lebedko.dds"
+								ideology = conservatism
+								traits = {
+									western_conservatism career_politician pro_american
+								}
+							}
+
+							set_temp_variable = { percent_change = 10.00 }
+							set_temp_variable = { tag_index = USA }
+							set_temp_variable = { influence_target = BLR }
+							change_influence_percentage = yes
+						}
+					}
+				}
+				civil_war_chance = {
+					custom_effect_tooltip = USA_blr_civilwar_TT
+					hidden_effect = {
+						create_dynamic_country = {
+							original_tag = BLR
+							set_country_flag = BLR_liberation_tag
+							copy_tag = BLR
+							set_cosmetic_tag = USA_BLR_STATE
+							set_country_flag = disable_different_country_flag
+							set_popularities = {
+								democratic = 100
+							}
+							set_politics = {
+								ruling_party = democratic
+								last_election = "1997.6.8"
+								election_frequency = 48
+								elections_allowed = no
+							}
+							start_politics_input = yes
+							ingame_startup_nations_effect = yes
+							### Party Popularities
+							set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+							set_variable = { party_pop_array^1 = 1.00 } #conservatism
+							set_variable = { party_pop_array^2 = 0.00 } #liberalism
+							set_variable = { party_pop_array^3 = 0.00 } #socialism
+							set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+							set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+							set_variable = { party_pop_array^6 = 0.00 } #Conservative
+							set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+							set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+							set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+							set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+							set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+							set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+							set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+							set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+							set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+							set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+							set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+							set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+							set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+							set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+							set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+							set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+							set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+							### Ruling Party
+							add_to_array = { ruling_party = 1 }
+							startup_politics = yes
+							# Leader
+							create_country_leader = {
+								name = "Anatolij Lebiedko"
+								picture = "anatoly_lebedko.dds"
+								ideology = conservatism
+								traits = {
+									western_conservatism career_politician pro_american
+								}
+							}
+							load_focus_tree = { tree = belorussia_focus keep_completed = yes }
+						}
+						702 = { transfer_state_to = BLG }
+						1093 = { transfer_state_to = BLG }
+						BLG = {
+							division_template = {
+								name = "Narodnaya Dyviziya"
+								priority = 0
+								template_counter = 0
+								regiments = {
+									Militia_Bat = { x = 0 y = 0 }
+									Militia_Bat = { x = 0 y = 1 }
+									Militia_Bat = { x = 0 y = 2 }
+									Militia_Bat = { x = 0 y = 3 }
+									Militia_Bat = { x = 0 y = 4 }
+								}
+								support = {
+									L_Recce_Comp = { x = 0 y = 0 }
+								}
+							}
+							702 = {
+								create_unit = {
+									division = "name = \"1st. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 3393
+								}
+								create_unit = {
+									division = "name = \"2nd. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 14537
+								}
+								create_unit = {
+									division = "name = \"3rd. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 6413
+								}
+							}
+							1093 = {
+								create_unit = {
+									division = "name = \"4th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 3392
+								}
+								create_unit = {
+									division = "name = \"5th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 9304
+								}
+								create_unit = {
+									division = "name = \"6th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 535
+								}
+								create_unit = {
+									division = "name = \"7th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 535
+								}
+							}
+							BLG = {
+								declare_war_on = {
+									target = BLR
+									type = civil_war
+								}
+							}
+						}
+					}
 				}
 			}
 			newline = yes
-			custom_effect_tooltip = USA_bolstering_nato_TT
+			custom_effect_tooltip = USA_belarus_decision_TT
 			newline = yes
-			set_temp_variable = { treasury_change = -150 }
-			modify_treasury_effect = yes
+			hidden_effect = {
+				if = {
+					limit = {
+						BLR = {
+							has_idea = CSTO_member
+							is_in_faction_with = SOV
+						}
+					}
+					BLR = {
+						leave_faction = yes
+						set_country_flag = BLR_was_in_CSTO
+					}
+				}
+				SOV = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLR
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLR
+						modifier = generic_increased_military_support
+					}
+				}
+				USA = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLG
+						modifier = generic_increased_military_support
+					}
+				}
+				POL = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLG
+						modifier = generic_increased_military_support
+					}
+				}
+				FRA = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLG
+						modifier = generic_increased_military_support
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
