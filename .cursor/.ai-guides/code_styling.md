@@ -2,6 +2,10 @@
 
 ## Focus Trees
 
+The following section delineates a stylization guide for Millennium Dawn and coding best practices for the Hearts of Iron IV feature "Focus Trees".
+
+[Link to Focus Tree Modding Wiki](https://hoi4.paradoxwikis.com/National_focus_modding)
+
 ### Best Practices
 - Use `relative_position_id` for focus alignment and tree positioning
 - Implement logging in completion rewards: `log = "[GetDateText]: [Root.GetName]: Focus TAG_your_focus"`
@@ -10,13 +14,30 @@
 - Always include `ai_will_do` with historical game and game options checks
 - Maintain consistent spacing (1 line between elements)
 - Create balanced focus trees without clear military/economy/political branches
-- Add search filters for focuses
-- Remove unused/commented code
-- Utilize scripted effects and tooltips
+- Add search filters for all focuses
+- Remove non-used code or commented out code if there is not intention to return to the tree section
+- Utilize and review scripted effects and triggers where applicable
 - Use variables instead of magic numbers
-- Implement starting ideas that weaken nations, resolvable through focus trees/decisions
+- Implement starting ideas that weaken nations, resolvable through focus trees/decisions.
+  - This ensures there is a possible goal or focus to strive for to give the game some type of depth and consistency
 - Limit permanent effects to 5, use timed ideas for additional effects
 - Balance focus trees for flavor, not overpowering nations
+
+### Millennium Dawn Specific Code Styling Requirements
+- The focus tree file should start with one of the following requirements:
+  - 00_<name> for system requirements. This should only be reserved for specific contexts such as the titlebar_styles.txt file
+  - 01/02/03/04_<name> for shared or joint focus tress such as the European Union or the African Union
+  - 05_<name> for country specific focus trees
+  - NOTE: The number does not mean anything, but it helps the team understand and forces a specific load order for focus trees. I.e. we can load all of the shared ones, but we cannot load country specific ones
+- The ID of a focus should be the first line of the focus. It should also follow the standard `<TAG>_focus_name_here` pattern
+- The icon should be second line of the of the focus
+- The X and Y coordinates should be the next section of the focus tree definitions
+- `relative_position_id` should be defined after the x and y coordinates
+- `allow_branch` should be defined before `prerequisite` as it determines whether a focus branch is available in the first place (think of this like allowed)
+- `prerequisite` and `mutually_exclusive` should be grouped together as they pertain to the section of the tree delineating structure of the focus tree
+- `available`, `bypass` and `cancel` should be grouped together as these are specific to the triggers of a focus tree and as such should be grouped together
+- `select_effect`, `completion_reward` and `bypass_effect` should be grouped together as these are specific to the effects of a focus tree
+- `ai_will_do` is and always should be the last definition of the focus tree
 
 ### Example Focus Tree Structure
 ```plaintext
@@ -36,35 +57,51 @@ focus_tree = {
 
     continuous_focus_position = { x = 2350 y = 1200 }
 }
+```
 
+```plaintext
 focus = {
-    id = SER_free_market_capitalism
-    icon = blr_market_economy
+	id = SER_free_market_capitalism
+	icon = blr_market_economy
 
-    x = 5
-    y = 3
-    relative_position_id = SER_free_elections
+	x = 5
+	y = 3
+	relative_position_id = SER_free_elections
 
-    cost = 5
-    prerequisite = { focus = SER_western_approach }
-    search_filters = { FOCUS_FILTER_POLITICAL }
+	cost = 5
 
-    available = {
-        western_liberals_are_in_power = yes
-    }
+	# allow_branch = { }
+	prerequisite = { focus = SER_western_approach }
+	# mutually_exclusive = { }
+	search_filters = { FOCUS_FILTER_POLITICAL }
 
-    completion_reward = {
-        log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
-        add_ideas = SER_free_market_idea
-    }
+	available = {
+		western_liberals_are_in_power = yes
+	}
+	# bypass = { }
+	# cancel = { }
 
-    ai_will_do = {
-        base = 1
-    }
+	# will_lead_to_war_with = TAG -- Only needed if you are giving a nation a war goal or preparing for conflict with another nation
+
+	# complete_tooltip = { } -- This is not needed unless you want a specific thing always displayed
+	# select_effect = { }
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
+		add_ideas = SER_free_market_idea
+	}
+	# bypass_effect = { }
+
+	ai_will_do = {
+		base = 1
+	}
 }
 ```
 
 ## Decisions
+
+The following section delineates a stylization guide for the Millennium Dawn and coding best practices for the Hearts of Iron IV features Decisions/Missions.
+
+[Link to Decision/Modding Wiki](https://hoi4.paradoxwikis.com/Decision_modding)
 
 ### Best Practices
 - Use `fire_only_once` only when necessary
