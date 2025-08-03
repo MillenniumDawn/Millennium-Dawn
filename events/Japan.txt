@@ -12858,13 +12858,13 @@ country_event = {
     option = {
         name = JAP_diplomacy.05.a
         log = "[GetDateText]: [This.GetName]: JAP_diplomacy.05.a executed"
-        CHI = {
-			country_event = JAP_diplomacy.06
-		}
 		KOR = {
 			country_event = JAP_diplomacy.06
 		}
-
+        CHI = {
+			country_event = { id = JAP_diplomacy.07 days = 1 }
+		}
+		
         ai_chance = {
             base = 1
         }
@@ -12881,30 +12881,11 @@ country_event = {
     option = {
         name = JAP_diplomacy.06.a
         log = "[GetDateText]: [This.GetName]: JAP_diplomacy.06.a executed"
-		if = {
-			limit ={
-				original_tag = CHI
-			} 
-			JAP = {
-				country_event = JAP_diplomacy.07 days = 3
-				c
-			}
-			CHI = {
-				add_ideas = JAP_chi_kor_intellectual_platform
-			}
+		JAP = {
+			set_country_flag = "JAP_kor_accept_intellectual_platform"
 		}
-		else_if = {
-			limit ={
-				original_tag = KOR
-			} 
-			JAP = {
-				country_event = JAP_diplomacy.07 days = 3
-				set_country_flag = "JAP_kor_accept_intellectual_platform"
-			}
-			KOR = {
-				add_ideas = JAP_chi_kor_intellectual_platform
-				set_country_flag = "KOR_jap_accept_intellectual_platform"
-			}
+		KOR = {
+			set_country_flag = "KOR_jap_accept_intellectual_platform"
 		}
 
         ai_chance = {
@@ -12916,10 +12897,6 @@ country_event = {
         name = JAP_diplomacy.06.b
         log = "[GetDateText]: [This.GetName]: JAP_diplomacy.06.b executed"
 		add_political_power = -50
-		JAP = {
-				country_event = JAP_diplomacy.08 days = 3
-		}
-
         ai_chance = {
             base = 0
         }
@@ -12933,16 +12910,31 @@ country_event = {
     #picture
     is_triggered_only = yes
 
+	immediate = {
+		country_event = { 
+			id = JAP_diplomacy.10
+			days = 1
+		}
+	}
+	
     option = {
         name = JAP_diplomacy.07.a
         log = "[GetDateText]: [This.GetName]: JAP_diplomacy.07.a executed"
-        add_ideas = JAP_chi_kor_intellectual_platform
-		set_temp_variable = { treasury_change = gdp_total }
-		multiply_temp_variable = { treasury_change = -0.01 }
-		modify_treasury_effect = yes
+		JAP = {
+			set_country_flag = "JAP_chi_accept_intellectual_platform"
+		}
 
         ai_chance = {
             base = 1
+        }
+    }
+
+	option = {
+        name = JAP_diplomacy.07.b
+        log = "[GetDateText]: [This.GetName]: JAP_diplomacy.07.b executed"
+		add_political_power = -50
+        ai_chance = {
+            base = 0
         }
     }
 }
@@ -12957,11 +12949,67 @@ country_event = {
     option = {
         name = JAP_diplomacy.08.a
         log = "[GetDateText]: [This.GetName]: JAP_diplomacy.08.a executed"
+        add_ideas = JAP_chi_kor_intellectual_platform
+		KOR = {
+			add_ideas = JAP_chi_kor_intellectual_platform
+		}
+		CHI = {
+			add_ideas = JAP_chi_kor_intellectual_platform
+		}
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.01 }
+		modify_treasury_effect = yes
 
         ai_chance = {
             base = 1
         }
     }
+}
+
+country_event = {
+    id = JAP_diplomacy.09
+    title = JAP_diplomacy.09.t
+    desc = JAP_diplomacy.09.d
+    #picture
+    is_triggered_only = yes
+
+    option = {
+        name = JAP_diplomacy.09.a
+        log = "[GetDateText]: [This.GetName]: JAP_diplomacy.09.a executed"
+
+        ai_chance = {
+            base = 1
+        }
+    }
+}
+
+country_event = {
+    id = JAP_diplomacy.10
+    hidden = yes
+	is_triggered_only = yes
+
+    immediate = {
+		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.10 executed"
+
+		JAP = {
+			if = {
+				limit = {
+					has_country_flag = JAP_kor_accept_intellectual_platform
+					has_country_flag = JAP_chi_accept_intellectual_platform
+				}
+				country_event = { 
+					id = JAP_diplomacy.08
+					days = 3
+				}
+			}
+			else = {
+				country_event = { 
+					id = JAP_diplomacy.09 
+					days = 3
+				}
+			}
+		}
+	}   
 }
 
 news_event = {
