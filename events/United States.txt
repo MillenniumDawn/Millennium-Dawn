@@ -22917,16 +22917,25 @@ country_event = {
 			target = ESB
 			type = puppet_wargoal_focus
 		}
+		news_event = {
+			id = department_of_state.36
+			days = 2
+		}
 		ai_chance = {
 			base = 15
 		}
 	}
 	option = {
 		name = department_of_state.35.b
-		log = "[GetDateText]: [This.GetName]: department_of_state.35.a executed"
-
+		log = "[GetDateText]: [This.GetName]: department_of_state.35.b executed"
+		add_political_power = 100
+		add_stability = 0.05
 		ai_chance = {
-			base = 15
+			base = 0
+			modifier = {
+				add = 100
+				has_government = democratic
+			}
 		}
 	}
 }
@@ -22937,7 +22946,7 @@ news_event = { # China Declares Eastern Siberia As A Core Interest
 	desc = department_of_state.36.d
 	is_triggered_only = yes
 	major = yes
-	picture = GFX_CHI_chinese_soldiers_news
+	picture = GFX_chinese_sibieria
 	option = { # Okay
 		name = department_of_state.36.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.36.a executed"
@@ -22947,7 +22956,179 @@ news_event = { # China Declares Eastern Siberia As A Core Interest
 	}
 }
 
+country_event = { # NATO Convening To Reform Russia
+	id = department_of_state.37
+	title = department_of_state.37.t
+	desc = department_of_state.37.d
+	is_triggered_only = yes
+	option = {
+		name = department_of_state.37.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.37.a executed"
+		# Send country event to all Russian tags
+		SOV = {
+			country_event = {
+				id = department_of_state.3800
+				days = 5
+			}
+		}
+		every_country = {
+			limit = {
+				original_tag = SOV
+				is_subject = yes
+			}
+			country_event = department_of_state.38
+		}
+		every_core_state = {
+			limit = {
+				is_core_of = SOV
+				NOT = {
+					is_core_of = ESB
+					is_core_of = CSB
+				}
+			}
+			add_core_of = NRU
+		}
+		create_dynamic_country = {
+			original_tag = RUS
+			set_country_flag = RUS_NATO_mandate
+			copy_tag = RUS
+			set_cosmetic_tag = NATO_russian_state
+			set_country_flag = disable_different_country_flag
+			set_popularities = {
+				democratic = 100
+			}
+			set_politics = {
+				ruling_party = democratic
+				last_election = "1997.6.8"
+				election_frequency = 48
+				elections_allowed = no
+			}
+			start_politics_input = yes
+			ingame_startup_nations_effect = yes
+			### Party Popularities
+			set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+			set_variable = { party_pop_array^1 = 1.00 } #conservatism
+			set_variable = { party_pop_array^2 = 0.00 } #liberalism
+			set_variable = { party_pop_array^3 = 0.00 } #socialism
+			set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+			set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+			set_variable = { party_pop_array^6 = 0.00 } #Conservative
+			set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+			set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+			set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+			set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+			set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+			set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+			set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+			set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+			set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+			set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+			set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+			set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+			set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+			set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+			set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+			set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+			set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+			### Ruling Party
+			add_to_array = { ruling_party = 1 }
+			startup_politics = yes
+			# Leader
+			create_country_leader = {
+				name = "Transitional Administration of Russia"
+				picture = "anatoly_lebedko.dds"
+				ideology = conservatism
+				traits = {
+					western_conservatism
+					career_politician
+					pro_american
+				}
+			}
+			load_focus_tree = { tree = generic_focus keep_completed = yes }
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
 
+country_event = {
+	id = department_of_state.38
+	title = department_of_state.38.t
+	desc = department_of_state.38.d
+	is_triggered_only = yes
+	option = {
+		name = department_of_state.38.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.38.a executed"
+		ROOT = {
+			OVERLORD = {
+				country_event = {
+					id = department_of_state.39
+					days = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+country_event = { # Event for SOV tag only
+	id = department_of_state.3800
+	title = department_of_state.3800.t
+	desc = department_of_state.3800.d
+	is_triggered_only = yes
+	option = {
+		name = department_of_state.3800.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.3800.a executed"
+		NRU = {
+			annex_country = {
+				target = ROOT
+			}
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+country_event = {
+	id = department_of_state.39
+	title = department_of_state.39.t
+	desc = department_of_state.39.d
+	is_triggered_only = yes
+	option = { # Surrender Russian Puppets
+		name = department_of_state.39.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.39.a executed"
+		hidden_effect = {
+			NRU = {
+				annex_country = {
+					target = FROM
+				}
+			}
+			every_controlled_state = {
+				limit = {
+					is_core_of = SOV
+					is_controlled_by = ROOT
+				}
+				transfer_state_to = NRU
+			}
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+
+	option = { # Don't Surrender Russian Puppets
+		name = department_of_state.39.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.39.b executed"
+		
+		ai_chance = {
+			base = 0
+		}
+	}
+}
 
 # Iraq war related events
 
