@@ -21,23 +21,75 @@ def get_tags(rootDir):
 	return tags
 
 
+def hasFocusFormat(focus_id):
+	"""Check if focus ID follows the correct format TAG_focus_name"""
+	return re.match(r'^[A-Z]{3}_[a-zA-Z0-9_-]+$', focus_id, re.M | re.U) is not None
+
+
 def checkFocuses(filepath):
 	error_count_file = 0
-	lineNum = 0;
+	lineNum = 0
 	with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
 		content = file.readlines()
+		braces = 0
+		current_focus_id = ""
+		has_search_filters = False
+		in_focus_block = False
+		in_completion_reward = False
+		in_focus_tree = False
+		found_focus_id = False
+
 		for line in content:
 			lineNum += 1
-			if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
-				if "id =" in line or "id=" in line:
-					hasFocus = re.match(r'[ \t]+id\s?=\s?([A-za-z0-9-?_?]+)', line, re.M | re.I)  # If it's a tag
+			if not line.startswith("#") and line.strip():  # If the line doesn't start with a comment or blank
+				if "{" in line:
+					braces += line.count("{")
+				if "}" in line:
+					braces -= line.count("}")
+
+				# Track focus_tree blocks (exclude tree-level IDs)
+				if "focus_tree" in line and "{" in line:
+					in_focus_tree = True
+				elif in_focus_tree and braces == 0:
+					in_focus_tree = False
+
+				# Track completion_reward blocks
+				if "completion_reward" in line and "{" in line:
+					in_completion_reward = True
+				elif in_completion_reward and braces == 0:
+					in_completion_reward = False
+
+				# Track focus blocks
+				if "focus" in line and "{" in line:
+					in_focus_block = True
+					found_focus_id = False
+					has_search_filters = False
+				elif in_focus_block and braces == 0:
+					in_focus_block = False
+					current_focus_id = ""
+					found_focus_id = False
+
+				# Check for focus ID (only first one in focus block, exclude completion_reward and focus_tree)
+				if in_focus_block and not in_completion_reward and not in_focus_tree and not found_focus_id and ("id =" in line or "id=" in line):
+					hasFocus = re.match(r'[ \t]+id\s?=\s?([A-za-z0-9-?_?]+)', line, re.M | re.I)
 					if hasFocus:
-						#print(hasFocus.group(1))
-						hasFocusFormet = re.match(r'[ \t]+id\s?=\s?([A-Z]{3}_[a-z0-9_-]+)', line, re.M | re.U )  # If it's a tag
-						#if not hasFocusFormet:
-							#print("ERROR: " + hasFocus.group(1) + " is formatted incorrectly, must be TAG_focus_name  {0} Line number: {1}".format(filepath, lineNum ))
-							#print(hasFocus.group(1))
-							#error_count_file +=1
+						current_focus_id = hasFocus.group(1)
+						found_focus_id = True
+
+						# Check focus format
+						if not hasFocusFormat(current_focus_id):
+							print("WARNING: " + current_focus_id + " is formatted incorrectly, must be TAG_focus_name in {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
+							error_count_file += 1
+
+				# Check for search_filters within focus block
+				if in_focus_block and braces > 0:
+					if "search_filters" in line:
+						has_search_filters = True
+
+					# If we're exiting a focus block and it doesn't have search_filters
+					if braces == 0 and in_focus_block and not has_search_filters and found_focus_id:
+						print("WARNING: Focus " + current_focus_id + " doesn't have search_filters defined in {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
+						error_count_file += 1
 
 	return error_count_file
 
