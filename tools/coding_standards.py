@@ -27,7 +27,7 @@ def hasFocusFormat(focus_id):
 
 
 def checkFocuses(filepath):
-	error_count_file = 0
+	warning_count_file = 0
 	lineNum = 0
 	with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
 		content = file.readlines()
@@ -59,12 +59,21 @@ def checkFocuses(filepath):
 				elif in_completion_reward and braces == 0:
 					in_completion_reward = False
 
+				# Check for search_filters within focus block (do this first)
+				if in_focus_block:
+					if "search_filters" in line:
+						has_search_filters = True
+
 				# Track focus blocks
 				if "focus" in line and "{" in line:
 					in_focus_block = True
 					found_focus_id = False
 					has_search_filters = False
 				elif in_focus_block and braces == 0:
+					# We're exiting the focus block
+					if found_focus_id and not has_search_filters:
+						print("WARNING: Focus " + current_focus_id + " doesn't have search_filters defined in {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
+						warning_count_file += 1
 					in_focus_block = False
 					current_focus_id = ""
 					found_focus_id = False
@@ -79,19 +88,9 @@ def checkFocuses(filepath):
 						# Check focus format
 						if not hasFocusFormat(current_focus_id):
 							print("WARNING: " + current_focus_id + " is formatted incorrectly, must be TAG_focus_name in {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
-							error_count_file += 1
+							warning_count_file += 1
 
-				# Check for search_filters within focus block
-				if in_focus_block and braces > 0:
-					if "search_filters" in line:
-						has_search_filters = True
-
-					# If we're exiting a focus block and it doesn't have search_filters
-					if braces == 0 and in_focus_block and not has_search_filters and found_focus_id:
-						print("WARNING: Focus " + current_focus_id + " doesn't have search_filters defined in {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
-						error_count_file += 1
-
-	return error_count_file
+	return warning_count_file
 
 
 def check_ideas(filepath):
@@ -464,7 +463,7 @@ def main():
 	for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/national_focus' + '/'):
 		for filename in fnmatch.filter(filenames, '*.txt'):
 			if filename != "generic.txt":
-				error_count = error_count + checkFocuses(os.path.join(root, filename))
+				warning_count = warning_count + checkFocuses(os.path.join(root, filename))
 				files_list.append(os.path.join(root, filename))
 
 	# for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
