@@ -23088,54 +23088,31 @@ country_event = { # NATO Convening To Reform Russia
 						is_core_of = CSB
 					}
 				}
-				add_core_of = NRU
+				add_core_of = RUS
 			}
-			create_dynamic_country = {
-				original_tag = RUS
-				set_country_flag = RUS_NATO_mandate
-				copy_tag = RUS
+
+			RUS = {
+				country_event = {
+					id = department_of_state.38001
+					days = 3
+				}
 				set_cosmetic_tag = RUS_RFOR
 				set_country_flag = disable_different_country_flag
-				set_popularities = {
-					democratic = 100
-				}
 				set_politics = {
 					ruling_party = democratic
-					last_election = "1997.6.8"
-					election_frequency = 48
-					elections_allowed = no
+					elections_allowed = yes
 				}
-				start_politics_input = yes
-				ingame_startup_nations_effect = yes
-				### Party Popularities
-				set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
-				set_variable = { party_pop_array^1 = 1.00 } #conservatism
-				set_variable = { party_pop_array^2 = 0.00 } #liberalism
-				set_variable = { party_pop_array^3 = 0.00 } #socialism
-				set_variable = { party_pop_array^4 = 0.00 } #Communist-State
-				set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
-				set_variable = { party_pop_array^6 = 0.00 } #Conservative
-				set_variable = { party_pop_array^7 = 0.00 } #Autocracy
-				set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
-				set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
-				set_variable = { party_pop_array^10 = 0.00 } #Kingdom
-				set_variable = { party_pop_array^11 = 0.00 } #Caliphate
-				set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
-				set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
-				set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
-				set_variable = { party_pop_array^15 = 0.00 } #oligarchism
-				set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
-				set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
-				set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
-				set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
-				set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
-				set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
-				set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
-				set_variable = { party_pop_array^23 = 0.00 } #Monarchist
-				### Ruling Party
-				add_to_array = { ruling_party = 1 }
-				startup_politics = yes
-				# Leader
+				set_political_party = {
+					ideology = democratic
+					popularity = 100
+				}
+				set_temp_variable = { party_index = 1 }
+				set_temp_variable = { party_popularity_increase = 1.00 }
+				add_relative_party_popularity = yes
+
+				set_temp_variable = { rul_party_temp = 1 }
+				change_ruling_party_effect = yes
+
 				create_country_leader = {
 					name = "Stabilisation Force Of Russia"
 					picture = "gfx/leaders/SOV/RUS_nato_admin.dds"
@@ -23144,7 +23121,6 @@ country_event = { # NATO Convening To Reform Russia
 						western_conservatism
 					}
 				}
-				load_focus_tree = { tree = generic_focus keep_completed = yes }
 			}
 		}
 		ai_chance = {
@@ -23153,9 +23129,9 @@ country_event = { # NATO Convening To Reform Russia
 	}
 	option = { # Okay
 		name = department_of_state.37.b
-		log = "[GetDateText]: [This.GetName]: department_of_state.36.a executed"
+		log = "[GetDateText]: [This.GetName]: department_of_state.37.b executed"
 		ai_chance = {
-			base = 15
+			base = 0
 		}
 	}
 }
@@ -23191,7 +23167,17 @@ country_event = { # Event for SOV tag only
 	option = {
 		name = department_of_state.3800.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.3800.a executed"
-		NRU = {
+		every_core_state = {
+			limit = {
+				is_core_of = SOV
+				NOT = {
+					is_core_of = ESB
+					is_core_of = CSB
+				}
+			}
+			add_core_of = RUS
+		}
+		RUS = {
 			annex_country = {
 				target = ROOT
 			}
@@ -23202,6 +23188,21 @@ country_event = { # Event for SOV tag only
 				target = CHU
 			}
 		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+country_event = { # Event for RUS tag only
+	id = department_of_state.38001
+	title = department_of_state.38001.t
+	desc = department_of_state.38001.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	option = {
+		name = department_of_state.38001.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.38001.a executed"
 		every_core_state = {
 			limit = {
 				is_core_of = SOV
@@ -23210,11 +23211,98 @@ country_event = { # Event for SOV tag only
 					is_core_of = CSB
 				}
 			}
-			add_core_of = NRU
+			add_core_of = RUS
 			remove_core_of = SOV
 		}
-		hidden_effect = {
-			if = {
+		if = {
+			limit = {
+				USA = {
+					has_idea = NATO_member
+				}
+			}
+			USA = {
+				add_to_faction = RUS
+			}
+			RUS = {
+				add_ideas = NATO_member
+			}
+		}
+		if = {
+			limit = {
+				USA = {
+					has_idea = NATO_member
+				}
+			}
+			USA = {
+				add_to_faction = RUS
+				add_to_faction = YAM
+				add_to_faction = MOV
+			}
+			RUS = { add_ideas = NATO_member }
+			YAM = { add_ideas = NATO_member }
+			MOV = { add_ideas = NATO_member }
+		}
+		else_if = {
+			limit = {
+				GER = {
+					has_idea = NATO_member
+				}
+			}
+			GER = {
+				add_to_faction = RUS
+				add_to_faction = YAM
+				add_to_faction = MOV
+			}
+			RUS = { add_ideas = NATO_member }
+			YAM = { add_ideas = NATO_member }
+			MOV = { add_ideas = NATO_member }
+		}
+		else_if = {
+			limit = {
+				FRA = {
+					has_idea = NATO_member
+				}
+			}
+			FRA = {
+				add_to_faction = RUS
+				add_to_faction = YAM
+				add_to_faction = MOV
+			}
+			RUS = { add_ideas = NATO_member }
+			YAM = { add_ideas = NATO_member }
+			MOV = { add_ideas = NATO_member }
+		}
+		else_if = {
+			limit = {
+				ENG = {
+					has_idea = NATO_member
+				}
+			}
+			ENG = {
+				add_to_faction = RUS
+				add_to_faction = YAM
+				add_to_faction = MOV
+			}
+			RUS = { add_ideas = NATO_member }
+			YAM = { add_ideas = NATO_member }
+			MOV = { add_ideas = NATO_member }
+		}
+		else_if = {
+			limit = {
+				POL = {
+					has_idea = NATO_member
+				}
+			}
+			POL = {
+				add_to_faction = RUS
+				add_to_faction = YAM
+				add_to_faction = MOV
+			}
+			RUS = { add_ideas = NATO_member }
+			YAM = { add_ideas = NATO_member }
+			MOV = { add_ideas = NATO_member }
+		}
+					if = {
 				limit = {
 					676 = {
 						OR = {
@@ -23227,7 +23315,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23249,7 +23337,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23271,7 +23359,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23293,7 +23381,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23315,7 +23403,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23337,7 +23425,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23359,7 +23447,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23383,7 +23471,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23405,7 +23493,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23427,7 +23515,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23449,7 +23537,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23472,7 +23560,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23494,7 +23582,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23516,7 +23604,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23538,7 +23626,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23560,7 +23648,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23582,7 +23670,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23605,7 +23693,7 @@ country_event = { # Event for SOV tag only
 									}
 								}
 							}
-							is_controlled_by = NRU
+							is_controlled_by = RUS
 						}
 					}
 				}
@@ -23618,7 +23706,7 @@ country_event = { # Event for SOV tag only
 			if = {
 				limit = {
 					647 = {
-						is_controlled_by = NRU
+						is_controlled_by = RUS
 					}
 				}
 				647 = {
@@ -23809,7 +23897,7 @@ country_event = { # Event for SOV tag only
 				add_relative_party_popularity = yes
 			}
 
-			NRU = { 
+			RUS = { 
 				set_autonomy = {
 					target = TAT
 					autonomy_state = autonomy_satellite_state_colored
@@ -23852,95 +23940,6 @@ country_event = { # Event for SOV tag only
 				set_temp_variable = { temp_outlook_increase = 1 }
 				add_relative_party_popularity = yes
 			}
-			if = {
-				limit = {
-					USA = {
-						has_idea = NATO_member
-					}
-				}
-				USA = {
-					add_to_faction = NRU
-				}
-				NRU = {
-					add_ideas = NATO_member
-				}
-			}
-			if = {
-				limit = {
-					USA = {
-						has_idea = NATO_member
-					}
-				}
-				USA = {
-					add_to_faction = NRU
-					add_to_faction = YAM
-					add_to_faction = MOV
-				}
-				NRU = { add_ideas = NATO_member }
-				YAM = { add_ideas = NATO_member }
-				MOV = { add_ideas = NATO_member }
-			}
-			else_if = {
-				limit = {
-					GER = {
-						has_idea = NATO_member
-					}
-				}
-				GER = {
-					add_to_faction = NRU
-					add_to_faction = YAM
-					add_to_faction = MOV
-				}
-				NRU = { add_ideas = NATO_member }
-				YAM = { add_ideas = NATO_member }
-				MOV = { add_ideas = NATO_member }
-			}
-			else_if = {
-				limit = {
-					FRA = {
-						has_idea = NATO_member
-					}
-				}
-				FRA = {
-					add_to_faction = NRU
-					add_to_faction = YAM
-					add_to_faction = MOV
-				}
-				NRU = { add_ideas = NATO_member }
-				YAM = { add_ideas = NATO_member }
-				MOV = { add_ideas = NATO_member }
-			}
-			else_if = {
-				limit = {
-					ENG = {
-						has_idea = NATO_member
-					}
-				}
-				ENG = {
-					add_to_faction = NRU
-					add_to_faction = YAM
-					add_to_faction = MOV
-				}
-				NRU = { add_ideas = NATO_member }
-				YAM = { add_ideas = NATO_member }
-				MOV = { add_ideas = NATO_member }
-			}
-			else_if = {
-				limit = {
-					POL = {
-						has_idea = NATO_member
-					}
-				}
-				POL = {
-					add_to_faction = NRU
-					add_to_faction = YAM
-					add_to_faction = MOV
-				}
-				NRU = { add_ideas = NATO_member }
-				YAM = { add_ideas = NATO_member }
-				MOV = { add_ideas = NATO_member }
-			}
-		}
 		ai_chance = {
 			base = 15
 		}
@@ -23957,7 +23956,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: department_of_state.39.a executed"
 		hidden_effect = {
 			news_event = department_of_state.41
-			NRU = {
+			RUS = {
 				annex_country = {
 					target = FROM
 				}
@@ -23967,7 +23966,7 @@ country_event = {
 					is_core_of = SOV
 					is_controlled_by = ROOT
 				}
-				transfer_state_to = NRU
+				transfer_state_to = RUS
 			}
 		}
 		ai_chance = {
@@ -24013,7 +24012,7 @@ news_event = { # NATO Establishes The Russian Stabilisation Force (RUSFOR)
 		name = department_of_state.41.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.41.a executed"
 		hidden_effect = {
-			NRU = { set_capital = { state = 644 } }
+			RUS = { set_capital = { state = 644 } }
 		}
 		ai_chance = {
 			base = 15
@@ -24100,7 +24099,7 @@ country_event = { # Internation Pressure Builds Up
 			}
 			every_owned_state = {
 				limit = {
-					is_core_of = NRU
+					is_core_of = RUS
 					NOT = {
 						is_core_of = CSB
 						is_core_of = ESB
@@ -24112,7 +24111,7 @@ country_event = { # Internation Pressure Builds Up
 					}
 				}
 				THIS = {
-					transfer_state_to = NRU
+					transfer_state_to = RUS
 				}
 			}
 			every_owned_state = {
