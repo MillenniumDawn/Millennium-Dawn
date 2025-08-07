@@ -5055,6 +5055,58 @@ news_event = {
 	}
 }
 
+country_event = {
+	id = Sweden_foci.50
+	title = Sweden_foci.50.t
+	desc = Sweden_foci.50.d
+	picture = GFX_SWE_military_meeting
+	is_triggered_only = yes
+
+	option = {#yes
+		name = Sweden_foci.50.a
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.50.a executed"
+		set_temp_variable = { percent_change = -5 }
+			change_domestic_influence_percentage = yes
+		add_command_power = -10
+		if = { 
+			limit = {
+				NOT = {
+					DEN = {
+						has_completed_focus = DEN_formalize_nordefco
+					}
+				}
+			}
+		add_ideas = SWE_idea_nordefco
+		}
+		ai_chance = { base = 1 }
+	}
+	option = {#no
+		name = Sweden_foci.50.b
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.50.b executed"
+		set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+		add_command_power = 10
+		news_event = {
+			id = Sweden_foci.51
+		}
+		#ai_chance = { base = 1 }
+	}
+}
+
+news_event = {
+	id = Sweden_foci.51
+	title = Sweden_foci.51.t
+	desc = Sweden_foci.51.d
+	picture = GFX_Nordea_bank
+
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_foci.51.b
+		log = "[GetDateText]: [This.GetName]: Sweden_foci.51.b executed"
+	}
+}
+
 
 ### news events ###
 
@@ -5106,6 +5158,17 @@ news_event = {
 	option = {
 		name = Sweden_news.3.o1
 		log = "[GetDateText]: [This.GetName]: Sweden_news.3.o1 executed"
+		If = {
+			limit = {
+				has_idea = SWE_idea_nordefco
+			}
+			every_country = {
+				limit = {
+					has_idea = SWE_idea_nordefco
+				}
+				give_guarantee = yes
+			}
+		}
 	}
 }
 
@@ -5446,7 +5509,113 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: Sweden_news.31.a executed"
 	}
 }
+#state visit + friendship
 
+country_event = {
+	id = Sweden_news.32
+	title = Sweden_news.32.t
+	desc = Sweden_news.32.d
+	picture = GFX_SWE_Royals
+
+	is_triggered_only = yes
+
+	option = { #shine in royal glory
+		name = Sweden_news.32.a
+		log = "[GetDateText]: [This.GetName]: Sweden_news.32.a executed"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = SWE }
+				set_temp_variable = { influence_target = FROM }
+				change_influence_percentage = yes
+		SWE = {
+			news_event = { id = Sweden_news.33 days = 1 }
+			set_temp_variable = { SWE_modify_royal_acceptance = 5 }
+			SWE_modify_royal_acceptance = yes
+		}
+	}
+	option = { #we need to negotiate
+		name = Sweden_news.32.b
+		log = "[GetDateText]: [This.GetName]: Sweden_news.32.b executed"
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = SWE }
+				set_temp_variable = { influence_target = FROM }
+				change_influence_percentage = yes
+		SWE = {
+			news_event = { id = Sweden_news.34 days = 1 }
+		}
+	}
+}
+news_event = {
+	id = Sweden_news.33
+	title = Sweden_news.33.t
+	desc = Sweden_news.33.d
+	picture = GFX_SWE_staatsbesuch
+
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_news.33.a
+		log = "[GetDateText]: [This.GetName]: Sweden_news.33.a executed"
+		set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			add_relative_party_popularity = yes
+		add_opinion_modifier = {
+			target = FROM
+			modifier = declaration_of_friendship
+		}
+		reverse_add_opinion_modifier = {
+			target = FROM
+			modifier = declaration_of_friendship
+		}
+	}
+}
+news_event = {
+	id = Sweden_news.34
+	title = Sweden_news.34.t
+	desc = Sweden_news.34.d
+	picture = GFX_SWE_staatsbesuch
+
+	is_triggered_only = yes
+
+	option = {
+		name = Sweden_news.34.a
+		log = "[GetDateText]: [This.GetName]: Sweden_news.34.a executed"
+		set_temp_variable = { int_investment_change = FROM.gdp_per_capita }
+			multiply_temp_variable = { int_investment_change = 0.09 }
+			modify_international_investment_effect = yes
+		set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			set_temp_variable = { temp_outlook_increase = 0.01 }
+			add_relative_party_popularity = yes
+		add_opinion_modifier = {
+			target = FROM
+			modifier = declaration_of_friendship
+		}
+		reverse_add_opinion_modifier = {
+			target = FROM
+			modifier = declaration_of_friendship
+		}
+	}
+}
 
 
 ### Forsvarsbeslutet ###
@@ -5941,6 +6110,7 @@ country_event = {
 		set_temp_variable = { treasury_change = gdp_per_capita }
 			multiply_temp_variable = { treasury_change = -0.08 }
 			modify_treasury_effect = yes
+		block_defence_change = yes
 	}
 	option = { # no
 		name = Sweden_Forsvarsbeslutet.10.b
@@ -5951,6 +6121,7 @@ country_event = {
 			add_relative_party_popularity = yes
 		SWE = { country_event = { id = Sweden_news.11 days = 7 } }
 		set_country_flag = SWE_no_f20
+		block_defence_change = yes
 	}
 }
 
