@@ -2414,98 +2414,70 @@ CZE_prague_conference_decision_ongoing = {
 }
 
 CZE_intel_bonus_effect = {
-	if = {
-		limit = { has_dlc = "La Resistance" }
-		set_temp_variable = {
-		var = temp_intel_strength
-			value = -0.01
-		}
+	hidden_effect = {
+		if = {
+			limit = { has_dlc = "La Resistance" }
+			set_temp_variable = {
+				var = CZE_intel_strength
+				value = -0.01
+			}
 
-		set_temp_variable = {
-			var = temp_cap_operative
-			value = 2
-		}
+			every_operative = {
+				limit = { check_variable = {THIS.operation_country = HUN }}
 
-		for_each_loop = {
-			array = operatives
-			break = temp_cap_operative
-			if = {
-				limit = { var:v = {
-					check_variable = { operation_country = HUN }
-				}}
 				add_to_temp_variable = {
-					var = temp_intel_strength
-					value = -0.01
-				}
-				subtract_from_temp_variable = {
-					var = temp_cap_operative
-					value = 1
+					var = CZE_intel_strength
+					value = -0.02
 				}
 			}
-		}
 
-		set_temp_variable = {
-			var = temp_cap_operative
-			value = 2
-		}
-
-		HUN = {
-			for_each_loop = {
-				array = operatives
-				break = temp_cap_operative
-				if = {
-					limit = { var:v = {
-					check_variable = { operation_country = HUN }
-				}}
+			HUN = {
+				every_operative = {
+					limit = {
+						check_variable = { THIS.operation_country = HUN }
+					}
 					add_to_temp_variable = {
-						var = temp_intel_strength
+						var = CZE_intel_strength
 						value = 0.02
 					}
-				if = {
-					limit = { check_variable = { temp_cap_operative = 1}}
-					add_to_temp_variable = {
-						var = temp_intel_strength
-						value = -0.03
-						}
-					}
+				}
+			}
 
-					subtract_from_temp_variable = {
-						var = temp_cap_operative
-						value = 1
+			if = {
+				limit = {
+					network_strength = {
+						target = HUN
+						value > 50
 					}
+				}
+	
+				add_to_temp_variable = {
+					var = CZE_intel_strength
+					value = -0.02
+				}
+
+			}
+	
+			else_if = {
+				limit = {
+					network_strength = {
+						target = HUN
+						value > 0
+					}
+				}
+					
+				add_to_temp_variable = {
+					var = CZE_intel_strength
+					value = -0.01
 				}
 			}
 		}
 
-		if = {
-			limit = {
-				network_strength = {
-					target = HUN
-					value > 50
-				}
+		else = {
+			set_temp_variable = {
+				var = CZE_intel_strength
+				val = -0.03
 			}
-			add_to_temp_variable = {
-				var = temp_intel_strength
-				value = 0.02
-			}
-		}
-		else_if = {
-			limit = {
-				network_strength = {
-					target = HUN
-					value > 0
-					}
-				}
-			add_to_temp_variable = {
-				var = temp_intel_strength
-				value = 0.01
-			}
-		}
-
-		HUN = {
-			set_temp_variable = { party_index = 14}
-			set_temp_variable = { party_popularity_increase = temp_intel_strength}
-			add_relative_party_popularity = yes
 		}
 	}
 }
