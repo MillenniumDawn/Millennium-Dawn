@@ -4045,7 +4045,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 100
+		days_remove = 365
 
 		available = {
 			country_exists = CHI
@@ -4082,7 +4082,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 100
+		days_remove = 365
 
 		available = {
 			country_exists = SOV
@@ -4119,7 +4119,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 90
+		days_remove = 120
 
 		visible = {
 			SOM = {
@@ -4175,7 +4175,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 35
+		days_remove = 70
 
 		visible = {
 			SUD = {
@@ -4272,7 +4272,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 100
+		days_remove = 365
 
 		available = {
 			country_exists = BRA
@@ -4316,7 +4316,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 100
+		days_remove = 365
 
 		available = {
 			country_exists = GEO
@@ -4356,7 +4356,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 100
+		days_remove = 365
 
 		available = {
 			has_idea = NATO_member
@@ -4399,7 +4399,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 100
+		days_remove = 365
 
 		available = {
 			BLR = {
@@ -4737,7 +4737,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 100
+		days_remove = 365
 
 		available = {
 			country_exists = JAP
@@ -4778,7 +4778,7 @@ USA_foreign_policy = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 70
+		days_remove = 365
 
 		available = {
 			country_exists = SAU
@@ -4815,9 +4815,6 @@ USA_foreign_policy = {
 			}
 			newline = yes
 			custom_effect_tooltip = USA_arming_saud_TT
-			newline = yes
-			set_temp_variable = { treasury_change = -30 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -4825,55 +4822,150 @@ USA_foreign_policy = {
 		}
 	}
 
-	USA_stability_in_libya = {
+	USA_fighting_little_green_men = {
 		icon = GFX_decision_generic_operation
 		fire_only_once = yes
 
-		days_remove = 70
+		days_remove = 365
 
 		available = {
 			NOT = {
 				has_country_flag = USA_doing_decision
 			}
-			country_exists = LBA
-			LBA = {
-				emerging_autocracy_are_in_power = yes
+			country_exists = SOV
+			SOV = {
+				is_subject = no
+			}
+			country_exists = PMR
+			country_exists = MLV
+			MLV = {
+				is_subject = no
 			}
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_a_strong_east"
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_fighting_little_green_men"
 			set_country_flag = USA_doing_decision
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_a_strong_east"
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_fighting_little_green_men"
 			clr_country_flag = USA_doing_decision
-			if = {
-				limit = {
-					LBA = {
-						emerging_autocracy_are_in_power = yes
-					}
-				}
-				create_wargoal = {
-					target = LBA
-					type = puppet_wargoal_focus
+			set_temp_variable = { percent_change = -10 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = UKR }
+			change_influence_percentage = yes
+			newline = yes
+			UKR = {
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.15
 				}
 			}
-			else_if = {
-				limit = {
-					LBA = {
-						has_civil_war = yes
-					}
+			newline = yes
+			MLV = {
+				country_event = {
+					id = department_of_state.55
+					days = 1
 				}
-				# Send assistance to the other sides
 			}
-			# If LBA has no war, then give aid to all sides and try to broker a new state
 			newline = yes
-			custom_effect_tooltip = USA_arming_saud_TT
+			custom_effect_tooltip = USA_backing_moldova_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_push_iran = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = PER
+			PER = {
+				NOT = {
+					has_government = democratic
+					is_subject_of = USA
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_push_iran"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_push_iran"
+			clr_country_flag = USA_doing_decision
+			set_country_flag = USA_pressured_iran
+			PER = {
+				country_event = {
+					id = department_of_state.59
+					days = 1
+				}
+				newline = yes
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+				newline = yes
+				decrease_economic_growth = yes
+			}
 			newline = yes
-			set_temp_variable = { treasury_change = -30 }
-			modify_treasury_effect = yes
+			custom_effect_tooltip = USA_pressuring_iran_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+	# Next 4 Decisions, 2016 - 2020
+	USA_two_percent = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = PER
+			PER = {
+				NOT = {
+					has_government = democratic
+					is_subject_of = USA
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_two_percent"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_two_percent"
+			clr_country_flag = USA_doing_decision
+			every_country = {
+				limit = {
+					has_idea = NATO_member
+				}
+				country_event = {
+					id = department_of_state.60
+					days = 2
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_2_percent_TT
 		}
 
 		ai_will_do = {
