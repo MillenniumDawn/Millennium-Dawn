@@ -1413,9 +1413,9 @@ calculate_additional_income_rate = {
 	#Comoros
 	if = { limit = { original_tag = COM }
 		if = {
-			limit = { has_idea = COM_export_vanil }
-			set_variable = { COM_export_vanil_income = 0.08 }
-			add_to_variable = { additional_income_rate = COM_export_vanil_income }
+			limit = { has_idea = COM_export_vanilla_idea }
+			set_variable = { COM_export_vanilla_idea_income = 0.08 }
+			add_to_variable = { additional_income_rate = COM_export_vanilla_idea_income }
 		}
 	}
 	# Gulf
@@ -3930,29 +3930,7 @@ update_state_variables = {
 
 #Calculate GDP/C
 calculate_gdp = {
-	# Calculate Last Quarter's GDP
-	if = {
-		limit = {
-			NOT = { has_country_flag = calculated_quarterly_gdp }
-			OR = {
-				check_variable = { global.month = 3 }
-				check_variable = { global.month = 6 }
-				check_variable = { global.month = 9 }
-				check_variable = { global.month = 12 }
-			}
-		}
-		set_temp_variable = { last_quarter_gdp_total_temp = last_quarter_gdp_total }
-		set_temp_variable = { this_quarter_gdp_total_temp = gdp_total }
-
-		set_variable = { last_quarter_gdp_growth_rate = this_quarter_gdp_total_temp }
-		divide_variable = { last_quarter_gdp_growth_rate = last_quarter_gdp_total_temp }
-		add_to_variable = { last_quarter_gdp_growth_rate = -1 }
-		clamp_variable = { var = last_quarter_gdp_growth_rate min = -1 }
-
-		set_variable = { last_quarter_gdp_total = gdp_total }
-		add_to_array = { quarterly_gdp_growth_rate = last_quarter_gdp_growth_rate }
-		set_country_flag = { flag = calculated_quarterly_gdp days = 85 value = 1 }
-	}
+	calculate_quarterly_gdp = yes
 
 	# Reset the Gross Domestic Payment
 	set_variable = { var = gdp_total value = 0 }
@@ -3975,45 +3953,52 @@ calculate_gdp = {
 	# Primary Sector
 	# Employment in the Resource Sector
 	set_variable = { resource_sector_workers = total_resource_amount }
-	multiply_variable = { resource_sector_workers = 100 } #in thousands
-	set_temp_variable = { resource_sector_workers_multiplier = 1 }
-	add_to_temp_variable = { resource_sector_workers_multiplier = modifier@resource_sector_workers_modifier }
-	multiply_variable = { resource_sector_workers = resource_sector_workers_multiplier }
+	multiply_variable = { resource_sector_workers = 100 }
+	set_temp_variable = { mult = 1 }
+	add_to_temp_variable = { mult = modifier@resource_sector_workers_modifier }
+	multiply_variable = { resource_sector_workers = mult }
 	divide_variable = { resource_sector_workers = gdpc_converging_var }
-	# Number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
-	multiply_variable = { resource_sector_workers = 0.001 } #from thousands to milions
-	set_temp_variable = { max_resource_workers = workforce_total }
-	multiply_temp_variable = { max_resource_workers = 0.75 } #percentage cap to resource workers
-	subtract_from_temp_variable = { workforce_total = max_resource_workers }
-	set_variable = { resource_sector_worker_fulfillment = max_resource_workers }
+	multiply_variable = { resource_sector_workers = 0.001 }
+
+	set_temp_variable = { max_workers = workforce_total }
+	multiply_temp_variable = { max_workers = 0.75 }
+
+	subtract_from_temp_variable = { workforce_total = max_workers }
+
+	set_variable = { resource_sector_worker_fulfillment = max_workers }
 	divide_variable = { resource_sector_worker_fulfillment = resource_sector_workers }
 	clamp_variable = { var = resource_sector_worker_fulfillment min = 0 max = 1 }
-	set_variable = { resource_sector_worker_fulfillment_var = -1 }
-	add_to_variable = { resource_sector_worker_fulfillment_var = resource_sector_worker_fulfillment }
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = resources_manpower_fulfillment_modifier } } }
+
+	set_variable = { resource_sector_worker_fulfillment_var = resource_sector_worker_fulfillment }
+
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = resources_manpower_fulfillment_modifier } } }
 		add_dynamic_modifier = { modifier = resources_manpower_fulfillment_modifier }
 	}
-	if = { limit = { check_variable = { resource_sector_workers > max_resource_workers } }
-		set_variable = { resource_sector_workers = max_resource_workers }
+
+	if = {
+		limit = { check_variable = { resource_sector_workers > max_workers } }
+		set_variable = { resource_sector_workers = max_workers }
 	}
-	subtract_from_temp_variable = { max_resource_workers = resource_sector_workers }
-	add_to_temp_variable = { workforce_total = max_resource_workers }
-	# Calculates GDP from the reosurce sector
+
+	subtract_from_temp_variable = { max_workers = resource_sector_workers }
+	add_to_temp_variable = { workforce_total = max_workers }
+
 	set_temp_variable = { gdp_from_resource_sector = total_resource_amount }
-	multiply_temp_variable = { gdp_from_resource_sector = 0.5 } #gdp per resource, currently flat will look to improve it based on fluctuating price maybe
-	set_temp_variable = { gdp_from_resource_sector_multiplier = 1 }
-	add_to_temp_variable = { gdp_from_resource_sector_multiplier = modifier@gdp_from_resource_sector_modifier }
-	multiply_temp_variable = { gdp_from_resource_sector = gdp_from_resource_sector_multiplier }
-	set_temp_variable = { gdp_from_resource_sector_tech_multiplier = 1 }
-	add_to_temp_variable = { gdp_from_resource_sector_tech_multiplier = modifier@local_resources_factor }
-	multiply_temp_variable = { gdp_from_resource_sector = gdp_from_resource_sector_tech_multiplier }
+	multiply_temp_variable = { gdp_from_resource_sector = 0.5 }  # GDP per resource
+
+	set_temp_variable = { gdp_mult = 1 }
+	add_to_temp_variable = { gdp_mult = modifier@gdp_from_resource_sector_modifier }
+	multiply_temp_variable = { gdp_from_resource_sector = gdp_mult }
+
+	set_temp_variable = { tech_mult = 1 }
+	add_to_temp_variable = { tech_mult = modifier@local_resources_factor }
+	multiply_temp_variable = { gdp_from_resource_sector = tech_mult }
 
 	# Employment in Subsitence Agriculture
 	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
-	clamp_temp_variable = {
-		var = temp_gdp_per_capita
-		min = agriculture_workers_threshold_control
-	}
+	clamp_temp_variable = { var = temp_gdp_per_capita min = agriculture_workers_threshold_control }
+
 	if = {
 		limit = { check_variable = { gdpc_converging_var < 1.3 } }
 		set_temp_variable = { agriculture_workers_percentage = gdpc_converging_var }
@@ -4025,168 +4010,179 @@ calculate_gdp = {
 		set_temp_variable = { agriculture_workers_percentage = agriculture_workers_threshold_control }
 		multiply_temp_variable = { agriculture_workers_percentage = 0.9 }
 		divide_temp_variable = { agriculture_workers_percentage = temp_gdp_per_capita }
+
 		set_temp_variable = { agriculture_workers_percentage_multiplier = agriculture_workers_threshold_control }
 		multiply_temp_variable = { agriculture_workers_percentage_multiplier = -1 }
 		divide_temp_variable = { agriculture_workers_percentage_multiplier = temp_gdp_per_capita }
 		add_to_temp_variable = { agriculture_workers_percentage_multiplier = 2 }
+
 		multiply_temp_variable = { agriculture_workers_percentage = agriculture_workers_percentage_multiplier }
 
-		# Modifiers to the Subsistence Agricultural Workers Percentage
-		set_temp_variable = { agriculture_workers_perc_modifier = modifier@agriculture_workers_modifier }
-		add_to_temp_variable = { agriculture_workers_perc_modifier = 1 }
+		set_temp_variable = { agriculture_workers_perc_modifier = 1 }
+		add_to_temp_variable = { agriculture_workers_perc_modifier = modifier@agriculture_workers_modifier }
 		multiply_temp_variable = { agriculture_workers_percentage = agriculture_workers_perc_modifier }
-		# just in case there are very very low gdp/c
+
+		# Clamp to realistic bounds
 		clamp_temp_variable = { var = agriculture_workers_percentage min = 0.0 max = 0.9 }
 	}
 
-	# Set the Base Subsistence Agriculture Worker Total
 	set_variable = { agriculture_workers = workforce_total }
 	multiply_variable = { agriculture_workers = agriculture_workers_percentage }
+
 	set_variable = { gdp_from_agriculture = agriculture_workers }
-	set_temp_variable = { agriculture_gdp_generation = 1 }
-	multiply_temp_variable = { agriculture_gdp_generation = temp_gdp_per_capita } #good approx of base agricolture productivity (bilions of gdp/milions of workers)
+	set_temp_variable = { agriculture_gdp_generation = temp_gdp_per_capita } # base productivity
 	set_temp_variable = { agri_productivity_multiplier = 1 }
-	add_to_temp_variable = { agri_productivity_multiplier = modifier@agricolture_productivity_modifier } #from techs and content
+	add_to_temp_variable = { agri_productivity_multiplier = modifier@agricolture_productivity_modifier }
 	multiply_temp_variable = { agriculture_gdp_generation = agri_productivity_multiplier }
-	multiply_variable = { gdp_from_agriculture = agriculture_gdp_generation } #multiplies workers * gdp generated per worker
-	multiply_variable = { gdp_from_agriculture = 1.337 } #control factor
+
+	multiply_variable = { gdp_from_agriculture = agriculture_gdp_generation }
+	multiply_variable = { gdp_from_agriculture = 1.337 }
 	subtract_from_temp_variable = { workforce_total = agriculture_workers }
 
 	# Factories & Offices Employment
-	set_temp_variable = { workers_per_civ_fac = 0.345 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
-	set_temp_variable = { workers_per_mil_fac = 0.025 }
-	set_temp_variable = { workers_per_dockyard = 0.025 }
-	set_temp_variable = { workers_per_office = 0.630 }
-	set_temp_variable = { workers_per_agriculture_district = 0.250 }
-
+	# Common GDP per capita setup
 	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
 	clamp_temp_variable = { var = temp_gdp_per_capita min = 1 }
 
-	set_temp_variable = { mil_facs_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@mil_facs_worker_requirement_modifier }
-	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = mil_facs_worker_requirement_multiplier min = 0.10 }
+	# Worker per building base values (in millions)
+	set_temp_variable = { workers_per_civ_fac_base = 0.345 }
+	set_temp_variable = { workers_per_mil_fac_base = 0.025 }
+	set_temp_variable = { workers_per_dockyard_base = 0.025 }
+	set_temp_variable = { workers_per_office_base = 0.630 }
+	set_temp_variable = { workers_per_agriculture_district_base = 0.250 }
 
-	multiply_temp_variable = { workers_per_mil_fac = mil_facs_worker_requirement_multiplier }
+	# Military Factories
+	set_temp_variable = { mil_mult = 1 }
+	add_to_temp_variable = { mil_mult = modifier@mil_facs_worker_requirement_modifier }
+	add_to_temp_variable = { mil_mult = modifier@buildings_worker_requirement_modifier }
+	clamp_temp_variable = { var = mil_mult min = 0.10 }
+
+	set_temp_variable = { workers_per_mil_fac = workers_per_mil_fac_base }
+	multiply_temp_variable = { workers_per_mil_fac = mil_mult }
+
 	set_variable = { workers_per_mil_fac_display = workers_per_mil_fac }
 	multiply_variable = { workers_per_mil_fac_display = 1000 }
 
-	set_temp_variable = { max_workers_in_mil_facs = military_fac }
-	multiply_temp_variable = { max_workers_in_mil_facs = workers_per_mil_fac }
-	set_variable = { workers_in_mil_facs = max_workers_in_mil_facs }
-	clamp_variable = {
-		var = workers_in_mil_facs
-		max = workforce_total
-	}
+	set_temp_variable = { max_workers_mil = military_fac }
+	multiply_temp_variable = { max_workers_mil = workers_per_mil_fac }
+	set_variable = { workers_in_mil_facs = max_workers_mil }
+	clamp_variable = { var = workers_in_mil_facs max = workforce_total }
 	multiply_variable = { workers_in_mil_facs = military_factory_employment_var }
+
 	set_variable = { military_factories_manpower_fulfillment = workers_in_mil_facs }
-	divide_variable = { military_factories_manpower_fulfillment = max_workers_in_mil_facs }
+	divide_variable = { military_factories_manpower_fulfillment = max_workers_mil }
 	subtract_from_temp_variable = { workforce_total = workers_in_mil_facs }
 	if = { limit = { check_variable = { military_fac = 0 } }
 		set_variable = { military_factories_manpower_fulfillment = 1 }
 	}
 
-	multiply_temp_variable = { workers_per_dockyard = mil_facs_worker_requirement_multiplier }
+	# Dockyards (reuses mil_mult)
+	set_temp_variable = { workers_per_dockyard = workers_per_dockyard_base }
+	multiply_temp_variable = { workers_per_dockyard = mil_mult }
+
 	set_variable = { workers_per_dockyard_display = workers_per_dockyard }
 	multiply_variable = { workers_per_dockyard_display = 1000 }
 
-	set_temp_variable = { max_workers_in_dockyards = dockyard_fac }
-	multiply_temp_variable = { max_workers_in_dockyards = workers_per_dockyard }
-	set_variable = { workers_in_dockyards = max_workers_in_dockyards }
-	clamp_variable = {
-		var = workers_in_dockyards
-		max = workforce_total
-	}
+	set_temp_variable = { max_workers_dock = dockyard_fac }
+	multiply_temp_variable = { max_workers_dock = workers_per_dockyard }
+	set_variable = { workers_in_dockyards = max_workers_dock }
+	clamp_variable = { var = workers_in_dockyards max = workforce_total }
 	multiply_variable = { workers_in_dockyards = naval_factory_employment_var }
+
 	set_variable = { naval_factories_manpower_fulfillment = workers_in_dockyards }
-	divide_variable = { naval_factories_manpower_fulfillment = max_workers_in_dockyards }
+	divide_variable = { naval_factories_manpower_fulfillment = max_workers_dock }
 	subtract_from_temp_variable = { workforce_total = workers_in_dockyards }
 	if = { limit = { check_variable = { dockyard_fac = 0 } }
 		set_variable = { naval_factories_manpower_fulfillment = 1 }
 	}
 
-	set_temp_variable = { worker_requirement_gdp_multiplier = 3 }
-	divide_temp_variable = { worker_requirement_gdp_multiplier = temp_gdp_per_capita }
-	add_to_temp_variable = { worker_requirement_gdp_multiplier = 1 }
-	set_variable = { workers_requirement_gdp_multiplier_display = worker_requirement_gdp_multiplier }
-	multiply_temp_variable = { workers_per_civ_fac = worker_requirement_gdp_multiplier }
-	multiply_temp_variable = { workers_per_office = worker_requirement_gdp_multiplier }
-	multiply_temp_variable = { workers_per_agriculture_district = worker_requirement_gdp_multiplier }
+	# GDP Worker Requirement Multiplier
+	set_temp_variable = { gdp_mult = 3 }
+	divide_temp_variable = { gdp_mult = temp_gdp_per_capita }
+	add_to_temp_variable = { gdp_mult = 1 }
+	set_variable = { workers_requirement_gdp_multiplier_display = gdp_mult }
 
-	set_temp_variable = { civ_facs_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
-	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 }
+	# Apply to civ, office, agriculture bases
+	multiply_temp_variable = { workers_per_civ_fac_base = gdp_mult }
+	multiply_temp_variable = { workers_per_office_base = gdp_mult }
+	multiply_temp_variable = { workers_per_agriculture_district_base = gdp_mult }
 
-	multiply_temp_variable = { workers_per_civ_fac = civ_facs_worker_requirement_multiplier }
+	# Civilian Factories
+	set_temp_variable = { civ_mult = 1 }
+	add_to_temp_variable = { civ_mult = modifier@civ_facs_worker_requirement_modifier }
+	add_to_temp_variable = { civ_mult = modifier@buildings_worker_requirement_modifier }
+	clamp_temp_variable = { var = civ_mult min = 0.10 }
+
+	set_temp_variable = { workers_per_civ_fac = workers_per_civ_fac_base }
+	multiply_temp_variable = { workers_per_civ_fac = civ_mult }
+
 	set_variable = { workers_per_civ_fac_display = workers_per_civ_fac }
 	multiply_variable = { workers_per_civ_fac_display = 1000 }
 
-	set_temp_variable = { max_workers_in_civ_facs = industrial_complex_total }
-	multiply_temp_variable = { max_workers_in_civ_facs = workers_per_civ_fac }
-	set_variable = { workers_in_civ_facs = max_workers_in_civ_facs }
-	clamp_variable = {
-		var = workers_in_civ_facs
-		max = workforce_total
-	}
+	set_temp_variable = { max_workers_civ = industrial_complex_total }
+	multiply_temp_variable = { max_workers_civ = workers_per_civ_fac }
+	set_variable = { workers_in_civ_facs = max_workers_civ }
+	clamp_variable = { var = workers_in_civ_facs max = workforce_total }
 	multiply_variable = { workers_in_civ_facs = civilian_factory_employment_var }
+
 	set_variable = { civilian_factories_manpower_fulfillment = workers_in_civ_facs }
-	divide_variable = { civilian_factories_manpower_fulfillment = max_workers_in_civ_facs }
+	divide_variable = { civilian_factories_manpower_fulfillment = max_workers_civ }
 	subtract_from_temp_variable = { workforce_total = workers_in_civ_facs }
 	if = { limit = { check_variable = { industrial_complex_total = 0 } }
 		set_variable = { civilian_factories_manpower_fulfillment = 1 }
 	}
 
-	set_temp_variable = { offices_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@offices_worker_requirement_modifier }
-	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = offices_worker_requirement_multiplier min = 0.10 }
+	# Offices
+	set_temp_variable = { office_mult = 1 }
+	add_to_temp_variable = { office_mult = modifier@offices_worker_requirement_modifier }
+	add_to_temp_variable = { office_mult = modifier@buildings_worker_requirement_modifier }
+	clamp_temp_variable = { var = office_mult min = 0.10 }
 
-	multiply_temp_variable = { workers_per_office = offices_worker_requirement_multiplier }
+	set_temp_variable = { workers_per_office = workers_per_office_base }
+	multiply_temp_variable = { workers_per_office = office_mult }
+
 	set_variable = { workers_per_office_display = workers_per_office }
 	multiply_variable = { workers_per_office_display = 1000 }
 
-	set_temp_variable = { max_workers_in_offices = office_park_total }
-	multiply_temp_variable = { max_workers_in_offices = workers_per_office }
-	set_variable = { workers_in_offices = max_workers_in_offices }
-	clamp_variable = {
-		var = workers_in_offices
-		max = workforce_total
-	}
+	set_temp_variable = { max_workers_office = office_park_total }
+	multiply_temp_variable = { max_workers_office = workers_per_office }
+	set_variable = { workers_in_offices = max_workers_office }
+	clamp_variable = { var = workers_in_offices max = workforce_total }
 	multiply_variable = { workers_in_offices = office_employment_var }
+
 	set_variable = { offices_manpower_fulfillment = workers_in_offices }
-	divide_variable = { offices_manpower_fulfillment = max_workers_in_offices }
+	divide_variable = { offices_manpower_fulfillment = max_workers_office }
 	subtract_from_temp_variable = { workforce_total = workers_in_offices }
 	if = { limit = { check_variable = { office_park_total = 0 } }
 		set_variable = { offices_manpower_fulfillment = 1 }
 	}
 
-	set_temp_variable = { agriculture_district_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@agriculture_district_worker_requirement_modifier }
-	add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = agriculture_district_worker_requirement_multiplier min = 0.10 }
+	# Agriculture Districts
+	set_temp_variable = { agri_mult = 1 }
+	add_to_temp_variable = { agri_mult = modifier@agriculture_district_worker_requirement_modifier }
+	add_to_temp_variable = { agri_mult = modifier@buildings_worker_requirement_modifier }
+	clamp_temp_variable = { var = agri_mult min = 0.10 }
 
-	multiply_temp_variable = { workers_per_agriculture_district = agriculture_district_worker_requirement_multiplier }
+	set_temp_variable = { workers_per_agriculture_district = workers_per_agriculture_district_base }
+	multiply_temp_variable = { workers_per_agriculture_district = agri_mult }
+
 	set_variable = { workers_per_agriculture_district_display = workers_per_agriculture_district }
 	multiply_variable = { workers_per_agriculture_district_display = 1000 }
 
-	set_temp_variable = { max_workers_in_agriculture_district = agriculture_district_total }
-	multiply_temp_variable = { max_workers_in_agriculture_district = workers_per_agriculture_district }
-
-	set_variable = { workers_in_agriculture_district = max_workers_in_agriculture_district }
-	clamp_variable = {
-		var = workers_in_agriculture_district
-		max = workforce_total
-	}
+	set_temp_variable = { max_workers_agri = agriculture_district_total }
+	multiply_temp_variable = { max_workers_agri = workers_per_agriculture_district }
+	set_variable = { workers_in_agriculture_district = max_workers_agri }
+	clamp_variable = { var = workers_in_agriculture_district max = workforce_total }
 	multiply_variable = { workers_in_agriculture_district = agriculture_district_employment_var }
+
 	set_variable = { agriculture_district_manpower_fulfillment = workers_in_agriculture_district }
-	divide_variable = { agriculture_district_manpower_fulfillment = max_workers_in_agriculture_district }
+	divide_variable = { agriculture_district_manpower_fulfillment = max_workers_agri }
 	subtract_from_temp_variable = { workforce_total = workers_in_agriculture_district }
 	if = { limit = { check_variable = { agriculture_district_total = 0 } }
 		set_variable = { agriculture_district_manpower_fulfillment = 1 }
 	}
 
-	# Average Worker Fulfillment
+	# Average Worker Fulfillment (used for dynamic modifier)
 	set_variable = { average_worker_fulfillment = civilian_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = military_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = naval_factories_manpower_fulfillment }
@@ -4299,25 +4295,40 @@ calculate_gdp = {
 	multiply_temp_variable = { productivity_calculations_var = 0.001 }
 	multiply_variable = { gdp_total = productivity_calculations_var }
 
-	#sets a minimum gdp
+	# Set a minimum GDP
 	clamp_variable = { var = gdp_total min = 0.1 }
 	set_variable = { gdp_per_capita = gdp_total }
 	divide_variable = { gdp_per_capita = population_total_m }
-	# set_temp_variable = { low_gdp_c_correction = 1 }
-	# divide_temp_variable = { low_gdp_c_correction = gdp_per_capita }
-	# divide_temp_variable = { low_gdp_c_correction = gdp_per_capita }
-	# clamp_temp_variable = {
-		# var = low_gdp_c_correction
-		# max = 1
-		# min = 0
-	# }
-	# add_to_variable = { gdp_per_capita = low_gdp_c_correction }
-	# set_temp_variable = { gdp_display = population_total_m }
-	# multiply_temp_variable = { gdp_display = gdp_per_capita }
-	# set_variable = { gdp_total = gdp_display }
 
 	calculate_gdp_modifiers = yes
 	force_update_dynamic_modifier = yes
+}
+
+# Function: calculate_quarterly_gdp
+# Purpose: This calculates the quarterly GDP growth rate and stores it in the quarterly_gdp_growth_rate array
+calculate_quarterly_gdp = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = calculated_quarterly_gdp }
+			OR = {
+				check_variable = { global.month = 3 }
+				check_variable = { global.month = 6 }
+				check_variable = { global.month = 9 }
+				check_variable = { global.month = 12 }
+			}
+		}
+		set_temp_variable = { last_quarter_gdp_total_temp = last_quarter_gdp_total }
+		set_temp_variable = { this_quarter_gdp_total_temp = gdp_total }
+
+		set_variable = { last_quarter_gdp_growth_rate = this_quarter_gdp_total_temp }
+		divide_variable = { last_quarter_gdp_growth_rate = last_quarter_gdp_total_temp }
+		add_to_variable = { last_quarter_gdp_growth_rate = -1 }
+		clamp_variable = { var = last_quarter_gdp_growth_rate min = -1 }
+
+		set_variable = { last_quarter_gdp_total = gdp_total }
+		add_to_array = { quarterly_gdp_growth_rate = last_quarter_gdp_growth_rate }
+		set_country_flag = { flag = calculated_quarterly_gdp days = 85 value = 1 }
+	}
 }
 
 # Enable/Disable Personal Tax Rate Change
@@ -4637,31 +4648,48 @@ productivity_growth_display_effect = {
 	update_employment_productivity_output_dynamic_modifier = yes
 }
 
+# Function: update_employment_productivity_output_dynamic_modifier
+# Purpose: This function updates the employment productivity output dynamic modifier
 update_employment_productivity_output_dynamic_modifier = {
-
-	# productivity (P) and employment level (E) are supposed to behave as multiplicative factors of factories outputs (O)
-	# (Outputs being counstruction speed for civilian factories, military output for mils and dockyard output for docks)
-	# So if B is the base output and M the ingame modifier (production_speed_buildings_factor in the case of construction speed, for example)
-	# The equation is O = B * (1 + M) * P * E
-	# Unfortunately the game code doesn't allow such a direct multiplication to occur
-	# Instead it is only possible to change the value of M by adding more bonuses or maluses so M = ( S + X )
-	# Where S is the sum of all ingame modifiers (from laws, techs, national content, etc) and X the value we need to determine
-	# Therefore the following calcutions exist to determine the value of X that satisfy the following equation:
-	# B * (1 + S) * P * E = B * (1 + S + X)
-	# B is simplified out so P * E * (1 + S) -1 -S = X
-	# We group the -1: P * E * (1 + S) -1 * (1 + S) = X
-	# And finally group the (1 + S): X = (1 + S) * (P*E - 1)
-	# This value of X we found is then applied to a dynamic modifier
+	#######################################
+	#   O = B × (1 + M) × P × E
+	#
+	# Where:
+	#   B = Base output (e.g., base construction speed)
+	#   M = Game’s built-in total modifier from techs/laws/etc.
+	#   P = Overall productivity factor
+	#   E = Employment factor (manpower fulfillment)
+	#
+	# Problem:
+	# The game does not allow multiplying (P × E) directly into O.
+	# We can only modify M by adding a bonus/malus X:
+	#   M_new = S + X
+	#   S = sum of existing modifiers
+	#
+	# Derivation:
+	#   B × (1 + S) × P × E = B × (1 + S + X)
+	#   → (1 + S) × P × E = 1 + S + X
+	#   → X = (1 + S) × (P × E − 1)
+	#
+	# This script calculates X for each factory type and applies it via a dynamic modifier.
+	#######################################
 
 	set_temp_variable = { preexisting_construction_speed_output_var = construction_speed_output_var }
 	set_temp_variable = { preexisting_military_factories_output_var = military_factories_output_var }
 	set_temp_variable = { preexisting_dockyards_output_var = dockyards_output_var }
 	set_temp_variable = { preexisting_agriculture_district_output_var = agriculture_district_output_var }
-	set_temp_variable = { productivity_calculations_var = overall_productivity }
-	multiply_temp_variable = { productivity_calculations_var = 0.001 }
 
+	set_temp_variable = { productivity_calculations_var = overall_productivity }
+	multiply_temp_variable = { productivity_calculations_var = 0.001 }   # scale appropriately
+
+	# === FACTORY-TYPE ADJUSTMENT TEMPLATE ===
+	# Each block:
+	#   1. Calculates E (employment factor) considering 100% fulfillment for external factories.
+	#   2. Multiplies P × E.
+	#   3. Applies X = (1+S) × (P×E − 1).
+
+	# --- Civilian Factories ---
 	set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
 	set_temp_variable = { factories_from_other_sources = num_of_civilian_factories }
 	subtract_from_temp_variable = { factories_from_other_sources = industrial_complex_total }
 	multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
@@ -4670,14 +4698,14 @@ update_employment_productivity_output_dynamic_modifier = {
 
 	set_variable = { construction_speed_output_var = productivity_calculations_var }
 	multiply_variable = { construction_speed_output_var = civilian_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { construction_speed_output_var = -1 } #to be used as malus in the dynamic modifier
+	add_to_variable = { construction_speed_output_var = -1 }
 	set_temp_variable = { sum_of_construction_speed_modifiers = modifier@production_speed_buildings_factor }
 	subtract_from_temp_variable = { sum_of_construction_speed_modifiers = preexisting_construction_speed_output_var }
 	add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
 	multiply_variable = { construction_speed_output_var = sum_of_construction_speed_modifiers }
 
+	# --- Military Factories ---
 	set_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
 	set_temp_variable = { mil_factories_from_other_sources = num_of_military_factories }
 	subtract_from_temp_variable = { mil_factories_from_other_sources = military_fac }
 	multiply_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_fac }
@@ -4686,14 +4714,14 @@ update_employment_productivity_output_dynamic_modifier = {
 
 	set_variable = { military_factories_output_var = productivity_calculations_var }
 	multiply_variable = { military_factories_output_var = military_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { military_factories_output_var = -1 } #to be used as malus in the dynamic modifier
+	add_to_variable = { military_factories_output_var = -1 }
 	set_temp_variable = { sum_of_military_output_modifiers = modifier@industrial_capacity_factory }
 	subtract_from_temp_variable = { sum_of_military_output_modifiers = preexisting_military_factories_output_var }
 	add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
 	multiply_variable = { military_factories_output_var = sum_of_military_output_modifiers }
 
+	# --- Dockyards ---
 	set_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
 	set_temp_variable = { nav_factories_from_other_sources = num_of_naval_factories }
 	subtract_from_temp_variable = { nav_factories_from_other_sources = dockyard_fac }
 	multiply_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = dockyard_fac }
@@ -4702,15 +4730,15 @@ update_employment_productivity_output_dynamic_modifier = {
 
 	set_variable = { dockyards_output_var = productivity_calculations_var }
 	multiply_variable = { dockyards_output_var = naval_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { dockyards_output_var = -1 } #to be used as malus in the dynamic modifier
+	add_to_variable = { dockyards_output_var = -1 }
 	set_temp_variable = { sum_of_dockyard_output_modifiers = modifier@industrial_capacity_dockyard }
 	subtract_from_temp_variable = { sum_of_dockyard_output_modifiers = preexisting_dockyards_output_var }
 	add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
 	multiply_variable = { dockyards_output_var = sum_of_dockyard_output_modifiers }
 
-	# Agricultural District Section
+	# --- Agriculture District ---
 	set_variable = { agriculture_district_output_var = productivity_calculations_var }
-	add_to_variable = { agriculture_district_output_var = -1 } #to be used as malus in the dynamic modifier
+	add_to_variable = { agriculture_district_output_var = -1 }
 	set_temp_variable = { sum_of_agriculture_district_var_modifiers = modifier@production_speed_agriculture_district_factor }
 	subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
 	add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
