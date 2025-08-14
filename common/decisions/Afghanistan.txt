@@ -606,6 +606,7 @@ Afghanistan_pashtunistan_decisions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove afg_claims_advance_to_the_sea"
+			add_command_power = -20
 			start_border_war = {
 				change_state_after_war = no
 				attacker = {
@@ -667,6 +668,7 @@ Afghanistan_pashtunistan_decisions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove afg_claims_advance_into_tribal_areas"
+			add_command_power = -20
 			start_border_war = {
 				change_state_after_war = no
 				attacker = {
@@ -728,6 +730,7 @@ Afghanistan_pashtunistan_decisions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove afg_claims_clear_tribal_areas"
+			add_command_power = -20
 			start_border_war = {
 				change_state_after_war = no
 				attacker = {
@@ -789,6 +792,7 @@ Afghanistan_pashtunistan_decisions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove afg_claims_invade_peshawar"
+			add_command_power = -20
 			start_border_war = {
 				change_state_after_war = no
 				attacker = {
@@ -2184,6 +2188,8 @@ Taliban_insurgency_category = {
 				add_stability = 0.01
 				set_temp_variable = { taliban_strength_decrease = 5 }
 				decrease_taliban_strength = yes
+				add_to_variable = { var = taliban_attack_strength value = -0.05 }
+				clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 			}
 		}
 
@@ -2289,9 +2295,6 @@ Taliban_insurgency_category = {
 
 		visible = {
 			tag = AFG
-			NOT = {
-				country_exists = TAL
-			}
 			has_country_flag = afg_active_taliban_insurgency
 		}
 
@@ -2416,6 +2419,9 @@ Taliban_insurgency_category = {
 		days_remove = 15
 
 		remove_effect = {
+			annex_country = {
+				target = TAL
+			}
 			clear_variable = taliban_strength
 			clr_country_flag = afg_active_taliban_insurgency
 			set_country_flag = afg_taliban_insurgency_eliminated
@@ -2461,6 +2467,838 @@ Taliban_insurgency_category = {
 
 		ai_will_do = {
 			factor = 100
+		}
+	}
+}
+
+# New Taliban Insurgency System
+AFG_tal_insurgency_new = {
+	AFG_debug_decision = {
+		icon = GFX_decision_Decision_tree_smol
+
+		#cost = 50
+
+		visible = {
+			is_ai = no
+		}
+
+		available = {
+			is_ai = no
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_debug_decision"
+			annex_country = {
+				target = TAL
+			}
+			if = {
+				limit = {
+					tag = AFG
+					NOT = { country_exists = TAL }
+					NOT = { has_global_flag = Afghanistan_Civil_War_Over }
+				}
+				#Civil war is over
+				set_global_flag = Afghanistan_Civil_War_Over
+
+				#Clear core status
+				409 = {
+					remove_core_of = AFG
+					remove_core_of = TAL
+				}
+				410 = {
+					remove_core_of = AFG
+					remove_core_of = TAL
+				}
+				411 = {
+					remove_core_of = AFG
+					remove_core_of = TAL
+				}
+				412 = {
+					remove_core_of = AFG
+					remove_core_of = TAL
+				}
+				414 = {
+					remove_core_of = AFG
+					remove_core_of = TAL
+				}
+				415 = {
+					remove_core_of = AFG
+					remove_core_of = TAL
+				}
+				1207 = {
+					transfer_state_to = TAL
+				}
+				# 594 = {
+				# 	transfer_state_to = TAL
+				# }
+				#Make the winner Afghanistan
+				drop_cosmetic_tag = yes
+				if = {
+					limit = { has_idea = Non_State_Actor }
+					remove_ideas = Non_State_Actor
+				}
+				if = {
+					limit = { has_idea = rival_government }
+					remove_ideas = rival_government
+				}
+				add_state_core = 409
+				add_state_core = 410
+				add_state_core = 411
+				add_state_core = 412
+				add_state_core = 414
+				add_state_core = 415
+				set_capital = { state = 414 }
+				subtract_from_variable = { threat_level = 30 }
+				clamp_threat = yes
+
+				#Start of Taliban Insurgency
+				if = {
+					limit = {
+						original_tag = AFG
+					}
+					set_temp_variable = { taliban_strength_increase = 35 }
+					increase_taliban_strength = yes
+					add_to_variable = { var = taliban_attack_strength value = 0.35 }
+					clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
+					country_event = {
+						id = TalibanInsurgency.0
+						days = 1
+					}
+				}
+
+				AFG = { news_event = { id = AfghanistanNews.1 hours = 6 } }
+			}
+			complete_national_focus = AFG_Anjuman_Pass
+			complete_national_focus = AFG_Shura_system
+			complete_national_focus = AFG_Appeal_to_Washington_for_support
+			complete_national_focus = AFG_CIA_Predator_surveillance_drones
+			complete_national_focus = AFG_Heirs_o_the_Mujahideen
+			complete_national_focus = AFG_IMU_Countermeasures
+			complete_national_focus = AFG_Massoud_s_MiG_and_Sukho
+			complete_national_focus = AFG_Massoud_s_MiG_and_Sukho
+			complete_national_focus = AFG_Return_of_Dostum
+			complete_national_focus = AFG_local_military_pressure
+			complete_national_focus = AFG_Russian_Air_lift
+			complete_national_focus = AFG_Assault_on_Mazar_i_Sharif
+			complete_national_focus = AFG_The_Francesc_Vendrell_Talks
+			complete_national_focus = AFG_Mil_Mi_24_Gunships
+			complete_national_focus = AFG_technical_specialists
+			complete_national_focus = AFG_The_Lions_Guard
+			complete_national_focus = AFG_Mission_to_Tehran
+			complete_national_focus = AFG_Take_command_of_Rabbanis_Feyzabad_forces
+			complete_national_focus = AFG_Training_of_local_police_officers
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove AFG_debug_decision"
+
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+	# TALIBAN SPECIFIC DECISIONS
+	TAL_move_into_tribal_areas = {
+		fire_only_once = yes
+		custom_cost_trigger = {
+			command_power > 40
+		}
+
+		custom_cost_text = command_power_more_than_40
+
+		days_remove = 50
+
+		cancel_trigger = {
+			has_country_flag = PAK_objected
+		}
+
+		available = {
+			NOT = {
+				has_war_with = PAK
+			}
+		}
+
+		visible = {
+			original_tag = TAL
+			594 = {
+				is_owned_and_controlled_by = PAK
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAL_move_into_tribal_areas"
+			hidden_effect = {
+				add_command_power = -40
+			}
+			PAK = {
+				country_event = {
+					id = AfghanistanBorderWars.3
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TAL_move_into_tribal_areas"
+			594 = {
+				transfer_state_to = TAL
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	TAL_construct_the_safed_koh_system = {
+		fire_only_once = yes
+		cost = 50
+		days_remove = 1
+
+		visible = {
+			original_tag = TAL
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAL_move_into_tribal_areas"
+			1207 = {
+				add_building_construction = {
+					type = supply_node
+					level = 1
+					province = 16283
+				}
+				add_dynamic_modifier = {
+					modifier = AFG_safed_koh_supply_network
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	# Border Wars (Shared)
+	TAL_1207_attack_1154 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			original_tag = TAL
+			1207 = {
+				is_owned_by = ROOT
+			}
+			NOT = {
+				1154 = {
+					is_owned_and_controlled_by = ROOT
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAL_1207_attack_1154"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Taliban Forces
+					state = 1207
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Afghan Forces
+					state = 1154
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			hidden_effect = {
+				set_border_war_data = {
+					attacker = 1207
+					defender = 1154
+					defender_modifier = AFG.taliban_attack_strength
+				}
+			}
+			set_country_flag = TAL_attacking_1154
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	TAL_1207_attack_1208 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			original_tag = TAL
+			1207 = {
+				is_owned_by = ROOT
+			}
+			NOT = {
+				1208 = {
+					is_owned_and_controlled_by = ROOT
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAL_1207_attack_1208"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Taliban Forces
+					state = 1207
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Afghan Forces
+					state = 1208
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			hidden_effect = {
+				set_border_war_data = {
+					attacker = 1207
+					defender = 1208
+					attacker_modifier = AFG.taliban_attack_strength
+				}
+			}
+			set_country_flag = TAL_attacking_1208
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	TAL_1152_attack_415 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			original_tag = TAL
+			1152 = {
+				is_owned_by = ROOT
+			}
+			NOT = {
+				415 = {
+					is_owned_and_controlled_by = ROOT
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAL_1152_attack_415"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Taliban Forces
+					state = 1152
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Afghan Forces
+					state = 415
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			hidden_effect = {
+				set_border_war_data = {
+					attacker = 1207
+					defender = 1208
+					attacker_modifier = AFG.taliban_attack_strength
+				}
+			}
+			set_country_flag = TAL_attacking_415
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	AFG_414_attack_1207 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			414 = {
+				is_owned_by = ROOT
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_414_attack_1207"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Afghan Forces
+					state = 414
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Taliban Forces
+					state = 1207
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			set_border_war_data = {
+				attacker = 414
+				defender = 1207
+				defender_modifier = AFG.taliban_attack_strength
+			}
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	AFG_414_attack_1208 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			original_tag = AFG
+			1208 = {
+				is_owned_by = TAL
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_414_attack_1208"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Afghan Forces
+					state = 414
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Taliban Forces
+					state = 1208
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			set_country_flag = AFG_attacking_1208
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	AFG_414_attack_1154 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			original_tag = AFG
+			1154 = {
+				is_owned_by = TAL
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_414_attack_1154"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Afghan Forces
+					state = 414
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Taliban Forces
+					state = 1154
+					num_provinces = 1
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			set_country_flag = AFG_attacking_1154
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	AFG_415_attack_1152 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			original_tag = AFG
+			1152 = {
+				is_owned_by = TAL
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_415_attack_1152"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Afghan Forces
+					state = 415
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Taliban Forces
+					state = 1154
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			set_country_flag = AFG_attacking_1152
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	AFG_412_attack_415 = {
+
+		custom_cost_trigger = {
+			command_power > 20
+		}
+
+		custom_cost_text = command_power_more_than_20
+
+		days_re_enable = 50
+
+		available = {
+			NOT = {
+				has_country_flag = AFG_doing_border_raid
+			}
+		}
+
+		visible = {
+			original_tag = AFG
+			415 = {
+				is_owned_by = TAL
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_412_attack_415"
+			add_command_power = -20
+			start_border_war = {
+				change_state_after_war = no
+				attacker = { # Afghan Forces
+					state = 412
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.7 # Afghan Victory
+					on_lose = AfghanistanBorderWars.8 # Taliban Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+				defender = { # Taliban Forces
+					state = 415
+					num_provinces = 3
+					on_win = AfghanistanBorderWars.8 # Taliban Victory
+					on_lose = AfghanistanBorderWars.7 # Afghan Victory
+					on_cancel = AfghanistanBorderWars.9 # Draw
+				}
+			}
+			set_country_flag = AFG_attacking_415
+			set_country_flag = AFG_doing_border_raid
+		}
+
+		remove_effect = {
+			clr_country_flag = AFG_doing_border_raid
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	# Taliban Take-Over Decisions
+	TAL_begin_insurgency_in_rigestan = {
+
+		fire_only_once = yes
+
+		visible = {
+			original_tag = TAL
+			1152 = {
+				NOT = {
+					is_controlled_by = TAL
+				}
+			}
+			1208 = {
+				is_controlled_by = TAL
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAL_begin_insurgency_in_rigestan"
+			1152 = {
+				transfer_state_to = TAL
+				add_core_of = TAL
+				create_unit = {
+					division = "name = \"8th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+					prioritize_location = 5020
+				}
+				create_unit = {
+					division = "name = \"9th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+					prioritize_location = 4949
+				}
+				create_unit = {
+					division = "name = \"10th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+					prioritize_location = 1948
+				}
+				create_unit = {
+					division = "name = \"11th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+					prioritize_location = 2101
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	TAL_begin_war_again = {
+
+		visible = {
+			original_tag = TAL
+			USA = {
+				NOT = {
+					has_idea = USA_afghan_mission_cost
+				}
+			}
+			date > 2012.1.1
+		}
+
+		available = {
+			check_variable = {
+				taliban_strength > 0.19
+			}
+		}
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAL_begin_war_again"
+			AFG = {
+				set_country_flag = AFG_new_war
+			}
+			declare_war_on = {
+				target = AFG
+				type = annex_everything
+			}
+			division_template = {
+				name = "Da Zayi Lawa Taleban Kommandoyi"
+
+				regiments = {
+					Special_Forces = { x = 0 y = 0 }
+					Special_Forces = { x = 0 y = 1 }
+				}
+				support = {
+					L_Recce_Comp = { x = 0 y = 0 }
+				}
+				priority = 2
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name = \"1st. Da Zayi Lawa Taleban Kommandoyi\" division_template = \"Da Zayi Lawa Taleban Kommandoyi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"2nd. Da Zayi Lawa Taleban Kommandoyi\" division_template = \"Da Zayi Lawa Taleban Kommandoyi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"3rd. Da Zayi Lawa Taleban Kommandoyi\" division_template = \"Da Zayi Lawa Taleban Kommandoyi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"4th. Da Zayi Lawa Taleban Kommandoyi\" division_template = \"Da Zayi Lawa Taleban Kommandoyi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"5th. Da Zayi Lawa Taleban Kommandoyi\" division_template = \"Da Zayi Lawa Taleban Kommandoyi\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"12th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"13th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"14th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+				create_unit = {
+					division = "name = \"15th. Da Zayi Milisho Lawa Taleban\" division_template = \"Da Zayi Milisho Lawa Taleban\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+					owner = TAL
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
 		}
 	}
 }
