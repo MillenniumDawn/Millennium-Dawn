@@ -2787,6 +2787,8 @@ country_event = {
 		set_country_flag = Rheinmetall_Takeover_Allowed
 		clr_country_flag = hol_stork_independant
 		unlock_military_industrial_organization_tooltip = mio:HOL_Rheinmetall_Netherlands_armor_manufacturer
+		newline = yes
+		custom_effect_tooltip = HOL_military.064_tt
 		ai_chance = {
 			base = 60
 			modifier = {
@@ -5434,35 +5436,47 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		tag = HOL
-		date > 2002.03.01
-		date < 2002.03.31
 		has_country_flag = Pim_Fortuyn_alive
 	}
 
 	option = {
 		name = HOL_politics.02.a
 		log = "[GetDateText]: [This.GetName]: HOL_politics.02.a executed"
-		random_list = {
-			80 = {
-				hidden_effect = {
-					country_event = {
-						id = HOL_politics.03
-						days = 90
-						random_days = 14
+		hidden_effect = {
+			if = {
+				limit = { has_idea = HOL_DBB }
+				random_list = {
+					20 = {
+						country_event = {
+							id = HOL_politics.03
+							days = 90
+							random_days = 14
+						}
+					}
+					80 = {
+						country_event = {
+							id = HOL_politics.04
+							days = 90
+							random_days = 14
+						}
 					}
 				}
-				modifier = {
-					factor = 0.5
-					has_idea = HOL_DBB
-				}
 			}
-			20 = {
-				hidden_effect = {
-					country_event = {
-						id = HOL_politics.04
-						days = 90
-						random_days = 14
+			else = {
+				random_list = {
+					80 = {
+						country_event = {
+							id = HOL_politics.03
+							days = 90
+							random_days = 14
+						}
+					}
+					20 = {
+						country_event = {
+							id = HOL_politics.04
+							days = 90
+							random_days = 14
+						}
 					}
 				}
 			}
@@ -12238,13 +12252,27 @@ country_event = {
 	trigger = {
 		has_country_flag = {
 			flag = HOL_beatrix_abdication_announced
-			days > 92
+			days = 92
 		}
 	}
 
 	option = {
 		name = HOL_common_event.2.a
 		log = "[GetDateText]: [This.GetName]: HOL_common_event.2.a executed"
+		if = {
+			limit = { has_country_leader = HOL_beatrix_country_leader }
+			kill_country_leader = yes
+			create_country_leader = {
+				name = "Willem-Alexander der Nederlanden"
+				id = HOL_willem_country_leader
+				picture = "willem_alexander.dds"
+				ideology = Monarchist
+				traits = {
+					nationalist_Monarchist
+					military_career
+				}
+			}
+		}
 		add_ideas = HOL_willem_alexander
 		clr_country_flag = HOL_beatrix_abdication_announced
 		set_country_flag = HOL_willem_alexander_inaugurated
