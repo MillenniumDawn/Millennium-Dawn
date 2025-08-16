@@ -244,6 +244,12 @@ on_actions = {
 			}
 			if = {
 				limit = {
+					FROM = { has_idea = faction_seato_alliance }
+				}
+				add_ideas = faction_seato_alliance
+			}
+			if = {
+				limit = {
 					FROM = { has_idea = faction_imperial_bloc_alliance }
 				}
 				add_ideas = faction_imperial_bloc_alliance
@@ -300,6 +306,12 @@ on_actions = {
 			}
 			if = {
 				limit = {
+					has_idea = faction_seato_alliance
+				}
+				FROM = { add_ideas = faction_seato_alliance }
+			}
+			if = {
+				limit = {
 					has_idea = faction_imperial_bloc_alliance
 				}
 				FROM = { add_ideas = faction_imperial_bloc_alliance }
@@ -350,6 +362,10 @@ on_actions = {
 				remove_ideas = faction_imperial_bloc_alliance
 			}
 			if = {
+				limit = { has_idea = faction_seato_alliance }
+				remove_ideas = faction_seato_alliance
+			}
+			if = {
 				limit = { has_idea = faction_brics_alliance }
 				remove_ideas = faction_brics_alliance
 			}
@@ -373,6 +389,81 @@ on_actions = {
 	# ROOT is capitulated country, FROM is winner
 	on_capitulation = {
 		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = SOV }
+				}
+				FROM = {
+					country_event = {
+						id = department_of_state.42
+						days = 2
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					ROOT = { original_tag = ESB }
+					FROM = { original_tag = CHI }
+				}
+				ESB = {
+					set_cosmetic_tag = ESB_chinese_puppet
+				}
+			}
+
+			if = {
+				limit = {
+					ROOT = { original_tag = SOV }
+					country_exists = CHI
+					NOT = {
+						CHI = {
+							is_subject = yes
+						}
+					}
+					547 = { # Checking to see if China controls Beijing
+						is_owned_and_controlled_by = CHI
+					}
+				}
+				CHI = {
+					country_event = {
+						id = department_of_state.35
+						days = 20
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					ROOT = { original_tag = GEO }
+					FROM = { original_tag = SOV }
+				}
+				every_country = {
+					limit = {
+						has_country_flag = georgian_conflict
+					}
+					remove_mission = GEO_the_conflict
+					clr_country_flag = georgian_conflict
+				}
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = BLR }
+					FROM = { original_tag = BLG }
+				}
+				SOV = {
+					country_event = department_of_state.31
+				}
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = BLG }
+					FROM = { original_tag = BLR }
+					BLR = {
+						has_country_flag = BLR_was_in_CSTO
+					}
+				}
+				BLR = { add_to_faction = SOV }
+			}
 			if = {
 				limit = {
 					original_tag = SAU
@@ -741,6 +832,9 @@ on_actions = {
 			if = {
 				limit = {
 					has_country_flag = IRQ_war_with_america
+					ROOT = {
+						original_tag = IRQ
+					}
 				}
 				IRQ = {
 					country_event = {
@@ -816,6 +910,16 @@ on_actions = {
 							AZE_karabakh_defeat
 						}
 					}
+				}
+			}
+
+			if = {
+				limit = {
+					has_global_flag = MD_RULE_OPTION_ANNEX
+				}
+				country_event = {
+					id = annex_game_rule.3
+					days = 2
 				}
 			}
 
@@ -3114,11 +3218,6 @@ on_actions = {
 				if = { limit = { has_dlc = "La Resistance" has_variable = cyber_targets^0 }
 					log = "[GetDateText]: [THIS.GetName]: Cleared Cyber Targets Array due to having the LAR DLC"
 					clear_array = cyber_targets
-				}
-
-				# 2017 State Category Evaluation
-				if = { limit = { has_start_date > 2016.1.1 }
-					state_init_setup_2017 = yes
 				}
 
 				# Implemented Cartel Nations

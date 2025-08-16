@@ -264,7 +264,7 @@ on_actions = {
 					}
 				}
 
-				state_init_setup_2017 = yes
+				state_init_setup = yes
 				set_country_flag = { flag = on_yearly_done days = 350 value = 1 }
 			}
 			#Yemen Clean Up
@@ -1073,6 +1073,12 @@ on_actions = {
 					remove_core_of = AFG
 					remove_core_of = TAL
 				}
+				1207 = {
+					transfer_state_to = TAL
+				}
+				# 594 = {
+				# 	transfer_state_to = TAL
+				# }
 				#Make the winner Afghanistan
 				drop_cosmetic_tag = yes
 				if = {
@@ -1100,6 +1106,8 @@ on_actions = {
 					}
 					set_temp_variable = { taliban_strength_increase = 35 }
 					increase_taliban_strength = yes
+					add_to_variable = { var = taliban_attack_strength value = 0.35 }
+					clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 					country_event = {
 						id = TalibanInsurgency.0
 						days = 1
@@ -1411,7 +1419,6 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					has_start_date < 2017.1.1
 					tag = AGL
 					NOT = { country_exists = UNI }
 					NOT = { has_global_flag = Angola_Civil_War_Over }
@@ -1457,7 +1464,6 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					has_start_date < 2017.1.1
 					tag = UNI
 					NOT = { country_exists = AGL }
 					NOT = { has_global_flag = Angola_Civil_War_Over }
@@ -2082,7 +2088,7 @@ on_actions = {
 					add_to_variable = { SPR_galician_protest_chance_modifier = SPR_galician_opinion_negative }
 					divide_variable = { SPR_galician_protest_chance_modifier = 10 }
 					round_variable = SPR_galician_protest_chance_modifier
-					add_to_variable = { SPR_galician_protest_chance_factor = SPR_basque_protest_chance_modifier }
+					add_to_variable = { SPR_galician_protest_chance_factor = SPR_galician_protest_chance_factor }
 				}
 
 				set_variable = { SPR_catalonian_support_chance_factor = 1 }
@@ -2103,7 +2109,7 @@ on_actions = {
 					add_to_variable = { SPR_catalonian_protest_chance_modifier = SPR_catalonian_opinion_negative }
 					divide_variable = { SPR_catalonian_protest_chance_modifier = 10 }
 					round_variable = SPR_catalonian_protest_chance_modifier
-					add_to_variable = { SPR_catalonian_protest_chance_factor = SPR_basque_protest_chance_modifier }
+					add_to_variable = { SPR_catalonian_protest_chance_factor = SPR_catalonian_protest_chance_factor }
 				}
 
 				set_variable = { SPR_andalucian_support_chance_factor = 1 }
@@ -2124,12 +2130,33 @@ on_actions = {
 					add_to_variable = { SPR_andalucian_protest_chance_modifier = SPR_andalucian_opinion_negative }
 					divide_variable = { SPR_andalucian_protest_chance_modifier = 10 }
 					round_variable = SPR_andalucian_protest_chance_modifier
-					add_to_variable = { SPR_andalucian_protest_chance_factor = SPR_basque_protest_chance_modifier }
+					add_to_variable = { SPR_andalucian_protest_chance_factor = SPR_andalucian_protest_chance_factor }
+				}
+
+				set_variable = { SPR_canarios_support_chance_factor = 1 }
+				set_variable = { SPR_canarios_protest_chance_factor = 1 }
+
+				if = { limit = { check_variable = { SPR_culture_opinion^4 > 50 } }
+					set_variable = { SPR_canarios_support_chance_modifier = SPR_culture_opinion^4 }
+					add_to_variable = { SPR_canarios_support_chance_modifier = -50 }
+					divide_variable = { SPR_canarios_support_chance_modifier = 10 }
+					round_variable = SPR_canarios_support_chance_modifier
+					add_to_variable = { SPR_canarios_support_chance_factor = SPR_canarios_support_chance_modifier }
+
+				}
+				if = { limit = { check_variable = { SPR_culture_opinion^4 < 50 } }
+					set_variable = { SPR_canarios_protest_chance_modifier = 50 }
+					set_variable = { SPR_canarios_opinion_below_50 = SPR_culture_opinion^1 }
+					multiply_variable = { SPR_canarios_opinion_negative = -1 }
+					add_to_variable = { SPR_canarios_protest_chance_modifier = SPR_canarios_opinion_negative }
+					divide_variable = { SPR_canarios_protest_chance_modifier = 10 }
+					round_variable = SPR_canarios_protest_chance_modifier
+					add_to_variable = { SPR_canarios_protest_chance_factor = SPR_canarios_protest_chance_factor }
 				}
 
 				# Random List to Choose the Culture Group
 				random_list = {
-					15 = {
+					10 = {
 						modifier = {
 							factor = 0
 							SPR = { owns_state = 88 }
@@ -2160,7 +2187,7 @@ on_actions = {
 							}
 						}
 					}
-					15 = {
+					10 = {
 						modifier = {
 							factor = 0
 							if = { limit = { SPR = { owns_state = 944 } }
@@ -2188,7 +2215,7 @@ on_actions = {
 							}
 						}
 					}
-					15 = {
+					10 = {
 						modifier = {
 							factor = 0
 							SPR = { owns_state = 86 }
@@ -2217,13 +2244,37 @@ on_actions = {
 							}
 						}
 					}
-					15 = {
+					10 = {
 						modifier = {
 							factor = 0
 							SPR = { owns_state = 93 }
 							93 = { NOT = { is_core_of = CAT } }
 						}
 						# Andalucians
+						random_list = {
+							50 = {
+								# support event
+								modifier = {
+									factor = SPR_andalucian_support_chance_factor
+								}
+								country_event = { id = spain.20 random_days = 60 }
+							}
+							50 = {
+								#protest event
+								modifier = {
+									factor = SPR_andalucian_protest_chance_factor
+								}
+								country_event = { id = spain.21 random_days = 60 }
+							}
+						}
+					}
+					10 = {
+						modifier = {
+							factor = 0
+							SPR = { owns_state = 95 }
+							95 = { NOT = { is_core_of = CNR } }
+						}
+						# Canarios
 						random_list = {
 							50 = {
 								# support event
@@ -2515,6 +2566,22 @@ on_actions = {
 				}
 				ROM = {
 					country_event = romania_politics.62
+				}
+			}
+		}
+	}
+
+	on_monthly_BOL = {
+		effect = {
+			if = {
+				limit = {
+					check_variable = { BOL_mestizo_support < 15 }
+					emerging_anarchist_communism_are_in_power = yes
+					not = { has_country_flag = BOL_mestizo_support_flag }
+				}
+				BOL = {
+					set_country_flag = BOL_mestizo_support_flag
+					country_event = bolivia_ethnic.1
 				}
 			}
 		}
