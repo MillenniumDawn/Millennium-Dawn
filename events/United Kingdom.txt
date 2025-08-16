@@ -1,6 +1,789 @@
 ﻿add_namespace = United_Kingdom
+add_namespace = britain_md
 add_namespace = United_Kingdom_News
+add_namespace = britain_news
+add_namespace = uk
+add_namespace = ENG_moon
+add_namespace = ENG_mars
+add_namespace = ENG_Asteroid_Mining
+add_namespace = ENG_Asteroid_Mining_news
+add_namespace = ENG_Mobile_Fires_Platorm_Program
+add_namespace = ENG_Mobile_Fires_Platorm_Program_news
+add_namespace = ENG_Army_Specialization
+add_namespace = ENG_Army_Specialization_news
+add_namespace = ENG_Darthsmouth_Naval_College_Event
+add_namespace = ENG_Darthsmouth_Naval_College_Event_news
+add_namespace = ENG_JEF
+add_namespace = ENG_JEF_news
+add_namespace = ENG_Typhoon_Debate_Event
+add_namespace = ENG_Typhoon_Debate_Event_news
+add_namespace = ENG_US_UK_Figher_Collaboration
+add_namespace = britain_news
+add_namespace = britain_md
+add_namespace = devolution
+########################## Asteroid Mining Event Chain #########################
+#Launching the Asteroid Mining Initiative
+country_event = {
+	id = ENG_Asteroid_Mining.8
+	title = ENG_Asteroid_Mining.t
+	desc = ENG_Asteroid_Mining.d
+	picture = GFX_trump_announcement
+	fire_only_once = yes
+	is_triggered_only = yes
 
+	option = { #Just need to wait for an asteroid...
+		name = ENG_Asteroid_Mining.8.a
+		log = "[GetDateText]: [This.GetName]: ENG_Asteroid_Mining.8.a executed"
+		hidden_effect = {
+			country_event = {
+				id = ENG_Asteroid_Mining.9
+				days = 10
+				random_hours = 4800
+			}
+		}
+		news_event = ENG_Asteroid_Mining_news.2
+		custom_effect_tooltip = asteroid_mining_wait_period_tt
+	}
+}
+#Asteroid Spotted
+country_event = {
+	id = ENG_Asteroid_Mining.9
+	title = ENG_Asteroid_Mining.9.t
+	desc = ENG_Asteroid_Mining.9.d
+	picture = GFX_asteroid
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Let's get that baby into orbit
+		name = ENG_Asteroid_Mining.9.a
+		log = "[GetDateText]: [This.GetName]: ENG_Asteroid_Mining.9.a executed"
+		hidden_effect = {
+			country_event = {
+				id = ENG_Asteroid_Mining.10
+				days = 50
+				random_hours = 1200
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_spotted_tt
+	}
+}
+#Asteroid in Orbit
+country_event = {
+	id = ENG_Asteroid_Mining.10
+	title = ENG_Asteroid_Mining.t
+	desc = ENG_Asteroid_Mining.d
+	picture = GFX_asteroid_in_orbit
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Mining shall begin
+		name = ENG_Asteroid_Mining.10.a
+		log = "[GetDateText]: [This.GetName]: ENG_Asteroid_Mining.10.a executed"
+		hidden_effect = {
+			country_event = {
+				id = ENG_Asteroid_Mining.11
+				days = 100
+				random_hours = 2400
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_orbit_tt
+		add_to_variable = { asteroid_mining_rate = 2 } #It's set here so the next event's localization isn't screwed up
+		add_to_variable = { global.asteroid_mining_rate = 2 }
+	}
+}
+#Profits from Mining Start Pouring in
+country_event = {
+	id = ENG_Asteroid_Mining.11
+	title = ENG_Asteroid_Mining.11.t
+	desc = ENG_Asteroid_Mining.11.d
+	picture = GFX_asteroid_in_orbit
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Huzzah!
+		name = ENG_Asteroid_Mining.11.a
+		log = "[GetDateText]: [This.GetName]: ENG_Asteroid_Mining.11.a executed"
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
+		capital_scope = {
+			add_resource = {
+				type = tungsten
+				amount = 1
+			}
+			add_resource = {
+				type = steel
+				amount = 2
+			}
+		}
+		add_to_variable = { global.asteroid_mineral_count = 100 }
+		custom_effect_tooltip = asteroid_mining_mined_tt
+		add_to_variable = { treasury = asteroid_mining_rate }
+		custom_effect_tooltip = asteroid_mining_revenue_tt
+		set_country_flag = asteroid_mining
+		news_event = donald_trump_news.3
+	}
+}
+#Profits from Asteroid Mining
+country_event = {
+	id = ENG_Asteroid_Mining.12
+	title = ENG_Asteroid_Mining.12.t
+	desc = ENG_Asteroid_Mining.12.d
+	picture = GFX_asteroid_in_orbit
+
+	is_triggered_only = yes
+
+	option = { #Excellent!
+		name = ENG_Asteroid_Mining.a
+		log = "[GetDateText]: [This.GetName]: ENG_Asteroid_Mining.12.a executed"
+		if = {
+			limit = {
+				check_variable = {
+					var = global.asteroid_mineral_count
+					value = asteroid_mining_rate
+					compare = greater_than_or_equals
+				}
+			}
+			custom_effect_tooltip = asteroid_mining_mined_tt
+			add_to_variable = { treasury = asteroid_mining_rate }
+			subtract_from_variable = { global.asteroid_mineral_count = asteroid_mining_rate }
+			custom_effect_tooltip = asteroid_mining_revenue_tt
+		}
+		else = {
+			custom_effect_tooltip = asteroid_mining_not_enough_tt
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					NOT = { has_global_flag = asteroid_mining_start }
+				}
+				set_global_flag = asteroid_mining_start
+				every_country = {
+					limit = {
+						num_of_factories > 40
+					}
+					country_event = { days = 20 id = ENG_Asteroid_Mining.13 }
+				}
+			}
+		}
+	}
+}
+#Potential for Asteroid Mining
+country_event = {
+	id = ENG_Asteroid_Mining.13
+	title = ENG_Asteroid_Mining.13.t
+	desc = ENG_Asteroid_Mining.13.d
+	picture = GFX_asteroid_in_orbit
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Invest in Asteroid Mining
+		name = ENG_Asteroid_Mining.13.a
+		log = "[GetDateText]: [This.GetName]: ENG_Asteroid_Mining.13.a executed"
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+		add_to_variable = { asteroid_mining_rate = 1 }
+		add_to_variable = { global.asteroid_mining_rate = 1 }
+		capital_scope = {
+			add_resource = {
+				type = steel
+				amount = 1
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_opportunity_tt
+		set_country_flag = asteroid_mining
+		set_global_flag = asteroid_mining
+	}
+	option = { #Too expensive and a waste of our time!
+		name = ENG_Asteroid_Mining.13.b
+		log = "[GetDateText]: [This.GetName]: ENG_Asteroid_Mining.13.b executed"
+	}
+}
+########################## Moon And Space Event Chain #########################
+#Moon Outpost
+country_event = {
+	id = ENG_moon.1
+	title = ENG_moon.1.t
+	desc = ENG_moon.1.d
+	picture = GFX_ENG_generic 
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_moon.1.a
+		log = "[GetDateText]: [This.GetName]: ENG_moon.1.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_moon.2 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Moonbase Alpha
+country_event = {
+	id = ENG_moon.2
+	title = ENG_moon.2.t
+	desc = ENG_moon.2.d
+	picture = GFX_moonbase_construction
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Science!
+		name = ENG_moon.2.a
+		log = "[GetDateText]: [This.GetName]: ENG_moon.2.a executed"
+		add_political_power = 50
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+	}
+}
+
+#Colony Progresses
+country_event = {
+	id = ENG_moon.3
+	title = ENG_moon.3.t
+	desc = ENG_moon.3.d
+	picture = GFX_moonbase_construction
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #We're good at being pioneers
+		name = ENG_moon.3.a
+		log = "[GetDateText]: [This.GetName]: ENG_moon.3.a executed"
+		add_political_power = 20
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+		swap_ideas = {
+			remove_idea = continued_space_efforts5
+			add_idea = continued_space_efforts6
+		}
+	}
+}
+
+#Crisis on the Moon
+country_event = {
+	id = ENG_moon.4
+	title = ENG_moon.4.t
+	desc = ENG_moon.4.d
+	picture = GFX_moonbase
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Send emergency aid!
+		name = ENG_moon.4.a
+		log = "[GetDateText]: [This.GetName]: ENG_moon.4.a executed"
+		add_political_power = -75
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+	}
+	option = { #Abandon the project. It's not meant for us
+		name = ENG_moon.4.b
+		log = "[GetDateText]: [This.GetName]: ENG_moon.4.b executed"
+		add_political_power = -125
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			country_event = { id = ENG_moon.2 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Colony Progresses Further
+country_event = {
+	id = ENG_moon.5
+	title = ENG_moon.5.t
+	desc = ENG_moon.5.d
+	picture = GFX_moonbase_construction
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Life continues on
+		name = ENG_moon.5.a
+		log = "[GetDateText]: [This.GetName]: ENG_moon.5.a executed"
+		add_political_power = 30
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+		swap_ideas = {
+			remove_idea = continued_space_efforts6
+			add_idea = continued_space_efforts7
+		}
+	}
+}
+
+#Another Crisis on the Moon
+country_event = {
+	id = ENG_moon.6
+	title = ENG_moon.6.t
+	desc = ENG_moon.6.d
+	picture = GFX_moonbase
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Send more emergency aid!
+		name = ENG_moon.6.a
+		log = "[GetDateText]: [This.GetName]: ENG_moon.6.a executed"
+		add_political_power = -100
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+	}
+	option = { #We can't continue doing things like this.
+		name = ENG_moon.6.b
+		log = "[GetDateText]: [This.GetName]: ENG_moon.6.b executed"
+		add_political_power = -150
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			country_event = { id = ENG_moon.5 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Moonbase Beta
+country_event = {
+	id = ENG_moon.7
+	title = ENG_moon.7.t
+	desc = ENG_moon.7.d
+	picture = GFX_moonbase
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Huzzah!
+		name = ENG_moon.7.a
+		log = "[GetDateText]: [This.GetName]: ENG_moon.7.a executed"
+		add_political_power = 150
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		add_relative_party_popularity = yes
+		swap_ideas = {
+			remove_idea = continued_space_efforts7
+			add_idea = continued_space_efforts8
+		}
+		custom_effect_tooltip = moonbase_chain_end_tt
+	}
+}
+
+
+#Rover Mars Mission
+country_event = {
+	id = ENG_mars.1
+	title = ENG_mars.1.t
+	desc = ENG_mars.1.d
+	picture = GFX_mars_mission
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.1.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.1.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.2 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Mars Colony Event Chain
+#Launch
+country_event = {
+	id = ENG_mars.2
+	title = ENG_mars.2.t
+	desc = ENG_mars.2.d
+	picture = GFX_mars_colony_2
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.2.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.2.a executed"
+		hidden_effect = {
+		random_list = {
+			60 = {
+			hidden_effect = {
+			country_event = { id = ENG_mars.3 days = 20 random_hours = 480 }
+					}
+				}
+			40 = {
+			hidden_effect = {
+			country_event = { id = ENG_mars.6 days = 20 random_hours = 480 }
+					}
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.3
+	title = ENG_mars.3.t
+	desc = ENG_mars.3.d
+	picture = GFX_mars_colony_3
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #
+		name = ENG_mars.3.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.3.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.4 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.4
+	title = ENG_mars.4.t
+	desc = ENG_mars.4.d
+	picture = GFX_mars_colony_4
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.4.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.4.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.5 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.5
+	title = ENG_mars.5.t
+	desc = ENG_mars.5.d
+	picture = GFX_mars_colony_5
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.5.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.5.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.8 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.6
+	title = ENG_mars.6.t
+	desc = ENG_mars.6.d
+	picture = GFX_mars_colony_6
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.6.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.6.1.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.7 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.7
+	title = ENG_mars.7.t
+	desc = ENG_mars.7.d
+	picture = GFX_mars_colony_7
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.7.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.7.1.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.8 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.8
+	title = ENG_mars.8.t
+	desc = ENG_mars.8.d
+	picture = GFX_mars_colony_8
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.8.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.8.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.9 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.9
+	title = ENG_mars.9.t
+	desc = ENG_mars.9.d
+	picture = GFX_mars_colony_9
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.9.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.9.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.10 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.10
+	title = ENG_mars.10.t
+	desc = ENG_mars.10.d
+	picture = GFX_mars_colony_10
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.10.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.10.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.11 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.11
+	title = ENG_mars.11.t
+	desc = ENG_mars.11.d
+	picture = GFX_mars_colony_11
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.11.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.11.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.12 days = 20 random_hours = 480 }
+		}
+	}
+
+}
+country_event = {
+	id = ENG_mars.12
+	title = ENG_mars.12.t
+	desc = ENG_mars.12.d
+	picture = GFX_mars_colony_12
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Evacuate
+		name = ENG_mars.12.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.12.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.13 days = 20 random_hours = 480 }
+		}
+	}
+	option = { #Fix Base
+		name = ENG_mars.12.b
+		log = "[GetDateText]: [This.GetName]: ENG_mars.12.b executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.14 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.13
+	title = ENG_mars.13.t
+	desc = ENG_mars.13.d
+	picture = GFX_mars_colony_13
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.13.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.13.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.2 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.14
+	title = ENG_mars.14.t
+	desc = ENG_mars.14.d
+	picture = GFX_mars_colony_14
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.14.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.14.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.15 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.15
+	title = ENG_mars.15.t
+	desc = ENG_mars.15.d
+	picture = GFX_mars_colony_15
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = ENG_mars.15.a
+		set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		log = "[GetDateText]: [This.GetName]: ENG_mars.15.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.16 days = 20 random_hours = 480 }
+		}
+	}
+	option = { #No
+		name = ENG_mars.15.b
+		log = "[GetDateText]: [This.GetName]: ENG_mars.15.b executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.17 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.16
+	title = ENG_mars.16.t
+	desc = ENG_mars.16.d
+	picture = GFX_mars_colony_16
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.16.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.16.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.18 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.17
+	title = ENG_mars.17.t
+	desc = ENG_mars.17.d
+	picture = GFX_mars_colony_17
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.17.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.17.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_mars.15 days = 120 random_hours = 3200 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.18
+	title = ENG_mars.18.t
+	desc = ENG_mars.18.d
+	picture = GFX_mars_colony_18
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.18.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.18.a executed"
+		hidden_effect = {
+			set_country_flag = mars_city_building_completed
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.19
+	title = ENG_mars.19.t
+	desc = ENG_mars.19.d
+	picture = GFX_mars_colony_19
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.19.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.19.a executed"
+		hidden_effect = {
+			add_political_power = 100
+			country_event = { id = ENG_mars.20 days = 720 random_hours = 16384 }
+		}
+	}
+}
+country_event = {
+	id = ENG_mars.20
+	title = ENG_mars.20.t
+	desc = ENG_mars.20.d
+	picture = GFX_mars_colony_20
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_mars.20.a
+		log = "[GetDateText]: [This.GetName]: ENG_mars.20.a executed"
+		hidden_effect = {
+			add_political_power = 200
+		}
+	}
+}
+########################## Foreign Policies #########################
 #Future of the Falklands
 country_event = {
 	id = United_Kingdom.1
@@ -55,5 +838,606 @@ news_event = {
 	option = {
 		name = United_Kingdom_News.1.a
 		log = "[GetDateText]: [This.GetName]: United_Kingdom_News.1.a executed"
+	}
+}
+########################## Political #########################
+
+########################## Economy #########################
+
+########################## Military #########################
+country_event = {
+	id = ENG_Mobile_Fires_Platorm_Program.1
+	title = Mobile_Fires_Platorm_Program.1.t
+	desc = Mobile_Fires_Platorm_Program.1.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+option = {
+	name = ENG_Mobile_Fires_Platorm_Program.1.a
+	log = "[GetDateText]: [This.GetName]: ENG_Mobile_Fires_Platorm_Program.1.a executed"
+	ai_chance = {
+		base = 90
+	}
+		set_temp_variable = { temp_opinion = 10 }
+		change_defense_industry_opinion = yes
+		add_ideas = ENG_Archer_Artillery_Alliance
+		SWE = {
+			add_opinion_modifier = {
+				target = ENG
+				modifier = ENG_Archer_Alliance
+			}
+		}
+		ENG = {
+			add_opinion_modifier = {
+				target = SWE
+				modifier = ENG_Archer_Alliance
+			}
+		}
+	}
+	option = {
+		name = ENG_Mobile_Fires_Platorm_Program.1.b
+		log = "[GetDateText]: [This.GetName]: ENG_Mobile_Fires_Platorm_Program.1.b executed"
+		ai_chance = {
+			base = 90
+		}
+			KOR = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_K9A1_Order
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = ENG_K9A1_Order
+				}
+			}
+		}
+	option = {
+		name = ENG_Mobile_Fires_Platorm_Program.1.c
+		log = "[GetDateText]: [This.GetName]: ENG_Mobile_Fires_Platorm_Program.1.c executed"
+		ai_chance = {
+			base = 90
+		}
+			GER = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_Boxer_Development
+				}
+			}
+			GER = {
+				add_opinion_modifier = {
+					target = HOL
+					modifier = ENG_Boxer_Development
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_Boxer_Development
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = GER
+					modifier = ENG_Boxer_Development
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = GER
+					modifier = ENG_Boxer_Development
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = HOL
+					modifier = ENG_Boxer_Development
+				}
+			}
+		}
+	option = {
+		name = ENG_Mobile_Fires_Platorm_Program.1.e
+		log = "[GetDateText]: [This.GetName]: ENG_Mobile_Fires_Platorm_Program.1.e executed"
+		ai_chance = {
+			base = 90
+		}
+			FRA = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_Archer_Alliance
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = FRA
+					modifier = ENG_Archer_Alliance
+				}
+			}
+		}
+}
+country_event = {
+	id = ENG_JEF.1
+	title = ENG_JEF.1.t
+	desc = ENG_JEF.1.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_JEF.1.a
+		log = "[GetDateText]: [This.GetName]: ENG_JEF.1.a executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
+		air_experience = 25
+		army_experience = 25
+		navy_experience = 25
+		ENG = { country_event = ENG_JEF.2 }
+	}
+	option = {
+		name = ENG_JEF.1.b
+		log = "[GetDateText]: [This.GetName]: ENG_JEF.1.b executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value < 50
+				}
+			}
+		}
+		ENG = { country_event = ENG_JEF.3 }
+		}
+	}
+country_event = {
+	id = ENG_JEF.2
+	title = ENG_JEF.2.t
+	desc = ENG_JEF.2.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_JEF.2.a
+		log = "[GetDateText]: [This.GetName]: ENG_JEF.2.a executed"
+		air_experience = 25
+		army_experience = 25
+		navy_experience = 25
+	}
+}
+country_event = {
+	id = ENG_JEF.3
+	title = ENG_JEF.3.t
+	desc = ENG_JEF.3.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_JEF.3.a
+		log = "[GetDateText]: [This.GetName]: ENG_JEF.3.a executed"
+	}
+}
+country_event = {
+	id = ENG_Darthsmouth_Naval_College_Event.1
+	title = ENG_Darthsmouth_Naval_College_Event.1.t
+	desc = ENG_Darthsmouth_Naval_College_Event.1.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_Darthsmouth_Naval_College_Event.1.a
+		log = "[GetDateText]: [This.GetName]: ENG_Darthsmouth_Naval_College_Event.1.a executed"
+		swap_ideas = {
+			remove_idea = ENG_Royal_Navy_Idea1
+			add_idea = ENG_Royal_Navy_Idea2
+		}
+	}
+	option = {
+		name = ENG_Darthsmouth_Naval_College_Event.1.b
+		log = "[GetDateText]: [This.GetName]: ENG_Darthsmouth_Naval_College_Event.1.b executed"
+		swap_ideas = {
+			remove_idea = ENG_Royal_Navy_Idea1
+			add_idea = ENG_Royal_Navy_Idea3
+		}
+	}
+}
+country_event = {
+	id = ENG_Army_Specialization.1
+	title = ENG_Army_Specialization.t
+	desc = ENG_Army_Specialization.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_Army_Specialization.a
+		log = "[GetDateText]: [This.GetName]: ENG_Army_Specialization.a executed"
+		add_timed_idea = {
+			idea = ENG_Army_Specialization_Army
+			days = 3600
+		}
+	}
+	option = {
+		name = ENG_Army_Specialization.b
+		log = "[GetDateText]: [This.GetName]: ENG_Army_Specialization.b executed"
+		add_timed_idea = {
+			idea = ENG_Army_Specialization_Air
+			days = 3600
+		}
+	}
+	option = {
+		name = ENG_Army_Specialization.c
+		log = "[GetDateText]: [This.GetName]: ENG_Army_Specialization.c executed"
+		add_timed_idea = {
+			idea = ENG_Army_Specialization_Navy
+			days = 3600
+		}
+	}
+	option = {
+		name = ENG_Army_Specialization.e
+		log = "[GetDateText]: [This.GetName]: ENG_Army_Specialization.e executed"
+		add_timed_idea = {
+			idea = ENG_Army_Specialization_Staff
+			days = 3600
+		}
+	}
+}
+country_event = {
+	id = ENG_Typhoon_Debate_Event.1
+	title = ENG_Typhoon_Debate_Event.t
+	desc = ENG_Typhoon_Debate_Event.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_Typhoon_Debate_Event.a
+		log = "[GetDateText]: [This.GetName]: ENG_Typhoon_Debate_Event.a executed"
+		add_timed_idea = {
+			idea = ENG_Typhoon_Debate1
+			days = 360
+		}
+		set_temp_variable = { treasury_change = -15}
+		modify_treasury_effect = yes
+	}
+	option = {
+		name = ENG_Typhoon_Debate_Event.b
+		log = "[GetDateText]: [This.GetName]: ENG_Typhoon_Debate_Event.b executed"
+		add_tech_bonus = {
+			name = ENG_Typhoon_Bonus
+			uses = 1
+			bonus = 0.25
+			category = Cat_FIGHTER
+		}
+		set_temp_variable = { treasury_change = -8}
+		modify_treasury_effect = yes
+	}
+	option = {
+		name = ENG_Typhoon_Debate_Event.c
+		log = "[GetDateText]: [This.GetName]: ENG_Typhoon_Debate_Event.c executed"
+		add_equipment_to_stockpile = {
+			type = medium_plane_fighter_airframe_2
+			amount = -100
+		}
+		set_temp_variable = { treasury_change = 12}
+		modify_treasury_effect = yes
+	}
+}
+country_event = {
+	id = ENG_US_UK_Figher_Collaboration.1
+	title = ENG_US_UK_Figher_Collaboration.1.t
+	desc = ENG_US_UK_Figher_Collaboration.1.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_US_UK_Figher_Collaboration.1.a
+		log = "[GetDateText]: [This.GetName]: ENG_US_UK_Figher_Collaboration.1.a executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
+		USA = {
+			add_ideas = ENG_Homegrown_Innovation_US1
+			set_temp_variable = { treasury_change = -15}
+			modify_treasury_effect = yes
+		}
+		ENG = {
+		set_temp_variable = { treasury_change = 15}
+		modify_treasury_effect = yes
+		country_event = ENG_US_UK_Figher_Collaboration.3
+		}
+	}
+	option = {
+		name = ENG_US_UK_Figher_Collaboration.1.b
+		log = "[GetDateText]: [This.GetName]: ENG_US_UK_Figher_Collaboration.1.b executed"
+		ENG = { country_event = ENG_US_UK_Figher_Collaboration.4 }
+	}
+}
+country_event = {
+	id = ENG_US_UK_Figher_Collaboration.2
+	title = ENG_US_UK_Figher_Collaboration.2.t
+	desc = ENG_US_UK_Figher_Collaboration.2.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_US_UK_Figher_Collaboration.2.a
+		log = "[GetDateText]: [This.GetName]: ENG_US_UK_Figher_Collaboration.2.a executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
+		USA = {
+			add_ideas = ENG_Joint_Strike_Fighter_Project_US1
+			set_temp_variable = { treasury_change = -15}
+			modify_treasury_effect = yes
+		}
+		ENG = {
+		set_temp_variable = { treasury_change = 15}
+		modify_treasury_effect = yes
+		country_event = ENG_US_UK_Figher_Collaboration.3
+		}
+	}
+	option = {
+		name = ENG_US_UK_Figher_Collaboration.2.b
+		log = "[GetDateText]: [This.GetName]: ENG_US_UK_Figher_Collaboration.2.b executed"
+		ENG = { country_event = ENG_US_UK_Figher_Collaboration.4 }
+	}
+}
+country_event = {
+	id = ENG_US_UK_Figher_Collaboration.3
+	title = ENG_US_UK_Figher_Collaboration.3.t
+	desc = ENG_US_UK_Figher_Collaboration.3.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_US_UK_Figher_Collaboration.3.a
+		log = "[GetDateText]: [This.GetName]: ENG_US_UK_Figher_Collaboration.3.a executed"
+	}
+}
+country_event = {
+	id = ENG_US_UK_Figher_Collaboration.4
+	title = ENG_US_UK_Figher_Collaboration.4.t
+	desc = ENG_US_UK_Figher_Collaboration.4.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_US_UK_Figher_Collaboration.4.a
+		log = "[GetDateText]: [This.GetName]: ENG_US_UK_Figher_Collaboration.4.a executed"
+	}
+}
+#The Future of the NHS
+country_event = {
+	id = britain_md.1
+	title = britain_md.1.t
+	desc = britain_md.1.d
+	picture = GFX_ENG_generic
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.1.a
+		log = "[GetDateText]: [This.GetName]: britain_md.1.a executed"
+		add_ideas = ENG_idea_expanded_nhs
+		add_stability = 0.03
+		add_popularity = {
+			ideology = democratic
+			popularity = 0.02
+		}
+		add_popularity = {
+			ideology = communism
+			popularity = 0.02
+		}
+		recalculate_party = yes
+		increase_healthcare_budget = yes
+	}
+
+	option = {
+		name = britain_md.1.b
+		log = "[GetDateText]: [This.GetName]: britain_md.1.b executed"
+		add_ideas = ENG_idea_privatized_nhs
+		add_popularity = {
+			ideology = communism
+			popularity = 0.03
+		}
+		add_popularity = {
+			ideology = nationalist
+			popularity = 0.02
+		}
+		recalculate_party = yes
+		if = {
+			limit = { has_idea = health_06 }
+			swap_ideas = {
+				add_idea = health_04
+				remove_idea = health_06
+			}
+		}
+		else_if = {
+			limit = { has_idea = health_05 }
+			swap_ideas = {
+				add_idea = health_04
+				remove_idea = health_05
+			}
+		}
+		else = {
+			decrease_healthcare_budget = yes
+		}
+	}
+}
+
+
+# # # # # # # # # # # # DEVOLUTION DO NOT TOUCH # # # # # # # # # # # #
+# # # # # # # # ## # # # TOUCH ME PLEASE # # # # # # # # # # # #
+# The Constituents Want to Further Devolve Matters
+# TODO: AI WEIGHTING & GAME RULE FOR DEVOLUTION
+country_event = {
+	id = devolution.1
+	title = devolution.1.t
+	desc = devolution.1.d
+	picture = GFX_france_mcdonalds_bombing
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.1" }
+
+	# Okay, Fine
+	option = {
+		name = devolution.1.a
+		log = "[GetDateText]: [This.GetName]: devolution.1.a executed"
+		ENG_lower_dependence_1 = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto them
+	option = {
+		name = devolution.1.b
+		log = "[GetDateText]: [This.GetName]: devolution.1.b executed"
+		ENG_increase_agitation_2 = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Show Ne the Individual Bills
+	option = {
+		name = devolution.1.c
+		log = "[GetDateText]: [This.GetName]: devolution.1.c executed"
+		country_event = {
+			id = devolution.2
+			days = 1
+		}
+		country_event = {
+			id = devolution.3
+			days = 2
+		}
+		country_event = {
+			id = devolution.4
+			days = 3
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Scotland Bill
+
+country_event = {
+	id = devolution.2
+	title = devolution.2.t
+	desc = devolution.2.d
+	picture = GFX_france_mcdonalds_bombing
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.2" }
+
+	# Okay, Fine
+	option = {
+		name = devolution.2.a
+		log = "[GetDateText]: [This.GetName]: devolution.2.a executed"
+		# Lower dependency on Scotland
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.2.b
+		log = "[GetDateText]: [This.GetName]: devolution.2.b executed"
+		# Increases agitation on Scotland
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Northern Ireland Bill
+
+country_event = {
+	id = devolution.3
+	title = devolution.3.t
+	desc = devolution.3.d
+	picture = GFX_france_mcdonalds_bombing
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.3" }
+
+	# Okay, Fine
+	option = {
+		name = devolution.3.a
+		log = "[GetDateText]: [This.GetName]: devolution.3.a executed"
+		# Lower dependency on NI
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.3.b
+		log = "[GetDateText]: [This.GetName]: devolution.3.b executed"
+		# Increases agitation on NI
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Wales
+
+country_event = {
+	id = devolution.4
+	title = devolution.4.t
+	desc = devolution.4.d
+	picture = GFX_france_mcdonalds_bombing
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.4" }
+
+	# Okay, Fine
+	option = {
+		name = devolution.4.a
+		log = "[GetDateText]: [This.GetName]: devolution.4.a executed"
+		# Lower dependency on Wales
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.4.b
+		log = "[GetDateText]: [This.GetName]: devolution.4.b executed"
+		# Increases agitation on Wales
+		ai_chance = {
+			base = 1
+		}
 	}
 }
