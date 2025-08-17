@@ -244,6 +244,12 @@ on_actions = {
 			}
 			if = {
 				limit = {
+					FROM = { has_idea = faction_seato_alliance }
+				}
+				add_ideas = faction_seato_alliance
+			}
+			if = {
+				limit = {
 					FROM = { has_idea = faction_imperial_bloc_alliance }
 				}
 				add_ideas = faction_imperial_bloc_alliance
@@ -300,6 +306,12 @@ on_actions = {
 			}
 			if = {
 				limit = {
+					has_idea = faction_seato_alliance
+				}
+				FROM = { add_ideas = faction_seato_alliance }
+			}
+			if = {
+				limit = {
 					has_idea = faction_imperial_bloc_alliance
 				}
 				FROM = { add_ideas = faction_imperial_bloc_alliance }
@@ -350,6 +362,10 @@ on_actions = {
 				remove_ideas = faction_imperial_bloc_alliance
 			}
 			if = {
+				limit = { has_idea = faction_seato_alliance }
+				remove_ideas = faction_seato_alliance
+			}
+			if = {
 				limit = { has_idea = faction_brics_alliance }
 				remove_ideas = faction_brics_alliance
 			}
@@ -373,6 +389,81 @@ on_actions = {
 	# ROOT is capitulated country, FROM is winner
 	on_capitulation = {
 		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = SOV }
+				}
+				FROM = {
+					country_event = {
+						id = department_of_state.42
+						days = 2
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					ROOT = { original_tag = ESB }
+					FROM = { original_tag = CHI }
+				}
+				ESB = {
+					set_cosmetic_tag = ESB_chinese_puppet
+				}
+			}
+
+			if = {
+				limit = {
+					ROOT = { original_tag = SOV }
+					country_exists = CHI
+					NOT = {
+						CHI = {
+							is_subject = yes
+						}
+					}
+					547 = { # Checking to see if China controls Beijing
+						is_owned_and_controlled_by = CHI
+					}
+				}
+				CHI = {
+					country_event = {
+						id = department_of_state.35
+						days = 20
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					ROOT = { original_tag = GEO }
+					FROM = { original_tag = SOV }
+				}
+				every_country = {
+					limit = {
+						has_country_flag = georgian_conflict
+					}
+					remove_mission = GEO_the_conflict
+					clr_country_flag = georgian_conflict
+				}
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = BLR }
+					FROM = { original_tag = BLG }
+				}
+				SOV = {
+					country_event = department_of_state.31
+				}
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = BLG }
+					FROM = { original_tag = BLR }
+					BLR = {
+						has_country_flag = BLR_was_in_CSTO
+					}
+				}
+				BLR = { add_to_faction = SOV }
+			}
 			if = {
 				limit = {
 					original_tag = SAU
@@ -741,6 +832,9 @@ on_actions = {
 			if = {
 				limit = {
 					has_country_flag = IRQ_war_with_america
+					ROOT = {
+						original_tag = IRQ
+					}
 				}
 				IRQ = {
 					country_event = {
@@ -816,6 +910,16 @@ on_actions = {
 							AZE_karabakh_defeat
 						}
 					}
+				}
+			}
+
+			if = {
+				limit = {
+					has_global_flag = MD_RULE_OPTION_ANNEX
+				}
+				country_event = {
+					id = annex_game_rule.3
+					days = 2
 				}
 			}
 
@@ -1140,128 +1244,6 @@ on_actions = {
 					#LAWS
 					set_variable = { gdp_per_capita = FROM.gdp_per_capita }
 					set_variable = { gdpc_converging_var = FROM.gdpc_converging_var }
-					update_budget_laws_for_FROM_nation = yes
-
-					if = { limit = { FROM = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { FROM = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { FROM = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { FROM = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { FROM = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { FROM = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { FROM = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { FROM = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { FROM = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { FROM = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { FROM = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { FROM = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { FROM = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { FROM = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { FROM = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { FROM = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { FROM = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { FROM = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { FROM = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { FROM = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { FROM = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { FROM = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { FROM = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { FROM = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { FROM = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { FROM = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { FROM = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { FROM = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { FROM = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { FROM = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
 
 					### Internal factions
 					if = { limit = { FROM = { has_idea = small_medium_business_owners } }
@@ -1375,33 +1357,8 @@ on_actions = {
 					}
 
 					#copy leader throughput
-					set_variable = { Western_Autocracy_leader = FROM.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = FROM.conservatism_leader?0 }
-					set_variable = { liberalism_leader = FROM.liberalism_leader?0 }
-					set_variable = { socialism_leader = FROM.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = FROM.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = FROM.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = FROM.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = FROM.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = FROM.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = FROM.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = FROM.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = FROM.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = FROM.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = FROM.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = FROM.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = FROM.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = FROM.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = FROM.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = FROM.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = FROM.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = FROM.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = FROM.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = FROM.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = FROM.Monarchist_leader?0 }
+					set_temp_variable = { nation_to_copy_from = FROM.id }
+					copy_subideolgy_leader_throughput = yes
 
 					calculate_influence_percentage = yes #set alignment drifts from influence
 					ingame_update_setup = yes 	#money system
@@ -3263,11 +3220,6 @@ on_actions = {
 					clear_array = cyber_targets
 				}
 
-				# 2017 State Category Evaluation
-				if = { limit = { has_start_date > 2016.1.1 }
-					state_init_setup_2017 = yes
-				}
-
 				# Implemented Cartel Nations
 				if = { limit = { is_cartel_nation = yes }
 					calculate_cartel_penalty = yes
@@ -3338,33 +3290,12 @@ on_actions = {
 
 				# Starting MIO Sizes
 				every_country = {
-					# Calculate Starting MIO Size
 					calculate_starting_mio_size = yes
 				}
 
 				USA = {
 					USA_starting_mio_size = yes
 				}
-			}
-
-			#Arab Spring
-			every_country = {
-				limit = {
-					if = {
-						limit = { has_start_date > 2016.01.01 }
-						NOT = {
-							original_tag = GNA
-							original_tag = GNC
-							original_tag = HOR
-							original_tag = SYR
-							original_tag = EGY
-							original_tag = TUN
-						}
-					}
-					NOT = { original_tag = HEZ }
-					is_arabic_nation = yes
-				}
-				country_event = { id = arab_spring.16 }
 			}
 
 			ISR = {
@@ -3919,33 +3850,8 @@ on_actions = {
 							add_ideas = chaebols
 						}
 						#copy leader throughput
-						set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-						set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-						set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-						set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-						set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-						set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-						set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-						set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-						set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-						set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-						set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-						set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-						set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-						set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-						set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-						set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-						set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-						set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-						set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-						set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-						set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-						set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-						set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-						set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
+						set_temp_variable = { nation_to_copy_from = PREV.id }
+						copy_subideolgy_leader_throughput = yes
 
 						calculate_influence_percentage = yes #set alignment drifts from influence
 						ingame_update_setup = yes 	#money system

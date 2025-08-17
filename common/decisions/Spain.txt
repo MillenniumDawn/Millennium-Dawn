@@ -586,14 +586,14 @@ SPR_the_regions_of_spain = {
 		is_good = no
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission complete_effect SPR_basque_revolt_against_spain_mission"
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect SPR_andalucia_revolt_against_spain_mission"
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.01 }
 			add_relative_party_popularity = yes
 			add_political_power = 25
 		}
 		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_basque_revolt_against_spain_mission"
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_andalucia_revolt_against_spain_mission"
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = -0.075 }
 			add_relative_party_popularity = yes
@@ -743,11 +743,90 @@ SPR_the_regions_of_spain = {
 	}
 
 	## Canarios Shit
+	SPR_canarios_revolt_against_spain_mission = {
+		visible = {
+			owns_state = 95
+			95 = { is_core_of = CNR }
+			NOT = { has_country_flag = CNR_revolted_against_spain }
+		}
+		activation = {
+			CNR = { NOT = { has_war_with = SPR } }
+			check_variable = { SPR_culture_opinion^4 < 21 }
+			NOT = { CNR = { is_subject_of = SPR } }
+			95 = { is_core_of = CNR }
+			NOT = { has_country_flag = CNR_revolted_against_spain }
+		}
+		available = {
+			owns_state = 95
+			OR = {
+				NOT = { 95 = { is_core_of = CNR } }
+				CNR = { is_subject_of = CNR }
+				custom_trigger_tooltip = {
+					tooltip = SPR_canarios_opinion_above_20_tt
+					check_variable = { SPR_culture_opinion^4 > 20 }
+				}
+			}
+		}
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 95
+			}
+		}
+
+		days_mission_timeout = 100
+		is_good = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect SPR_canarios_revolt_against_spain_mission"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+			add_political_power = 25
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_canarios_revolt_against_spain_mission"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.075 }
+			add_relative_party_popularity = yes
+			set_country_flag = CNR_revolted_against_spain
+			CNR = {
+				set_country_flag = CNR_revolted_against_spain
+				transfer_state = 95
+				inherit_technology = SPR
+				division_template = {
+					name = "Canarian Infantry"
+					is_locked = yes
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						L_Inf_Bat = { x = 0 y = 2 }
+						L_Inf_Bat = { x = 0 y = 3 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
+						L_Recce_Comp = { x = 0 y = 1 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1st Canarian Company\" division_template = \"Canarian Infantry\" start_experience_factor = 0.5"
+						owner = CNR
+					}
+				}
+				declare_war_on = {
+					target = SPR
+					type = take_core_state
+					generator = { 95 }
+				}
+			}
+		}
+	}
+
 	SPR_canarios_targeted_subsidies_decision = {
 		allowed = { original_tag = SPR }
 		visible = {
 			owns_state = 95
-			95 = { is_core_of = SPA }
+			95 = { is_core_of = CNR }
 		}
 
 		available = {
