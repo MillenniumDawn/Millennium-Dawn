@@ -51,7 +51,10 @@ scripted_gui = {
 			#Take debt
 			debt_bg_click = {
 				if = {
-					limit = { check_variable = { interest_rate < 20 } }
+					limit = {
+						check_variable = { interest_rate < 20 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+					}
 					add_to_variable = { treasury = 1 }
 					add_to_variable = { debt = 1.01 }
 					ingame_update_setup = yes
@@ -62,7 +65,10 @@ scripted_gui = {
 			}
 			debt_bg_control_click = {
 				if = {
-					limit = { check_variable = { interest_rate < 20 } }
+					limit = {
+						check_variable = { interest_rate < 20 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+					}
 					add_to_variable = { treasury = 10 }
 					add_to_variable = { debt = 10.1 }
 					ingame_update_setup = yes
@@ -73,7 +79,10 @@ scripted_gui = {
 			}
 			debt_bg_shift_click = {
 				if = {
-					limit = { check_variable = { interest_rate < 20 } }
+					limit = {
+						check_variable = { interest_rate < 20 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+					}
 					add_to_variable = { treasury = 100 }
 					add_to_variable = { debt = 101 }
 					ingame_update_setup = yes
@@ -87,6 +96,7 @@ scripted_gui = {
 					limit = {
 						check_variable = { interest_rate < 20 }
 						check_variable = { gdp_total > 1499 }
+						NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 					}
 					add_to_variable = { treasury = 1000 }
 					add_to_variable = { debt = 1010 }
@@ -502,21 +512,21 @@ scripted_gui = {
 		context_type = selected_country_context
 
 		window_name = "diplo_treasury_container"
-		parent_window_token = selected_country_view
+		parent_window_token = selected_country_view_diplomacy
 
 	}
 	int_investments_dip = {
 		context_type = selected_country_context
 
 		window_name = "diplo_int_investments_container"
-		parent_window_token = selected_country_view
+		parent_window_token = selected_country_view_diplomacy
 
 	}
 	debt_dip = {
 		context_type = selected_country_context
 
 		window_name = "diplo_debt_container"
-		parent_window_token = selected_country_view
+		parent_window_token = selected_country_view_diplomacy
 
 	}
 	tax_rate_dip = {
@@ -1244,27 +1254,21 @@ scripted_gui = {
 			# This action reduces employment in this building type
 			military_factory_employment_button_right_click = {
 				if = {
-					limit = {
-						check_variable = { military_factory_employment_var = 0 }
-					}
-				}
-				else = {
-					add_to_variable = { military_factory_employment_var = -0.05 }
+					limit = { NOT = { check_variable = { military_factory_employment_var = 0 } } }
+					subtract_from_variable = { military_factory_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = military_factory_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# This action increases employment in this building type
 			military_factory_employment_button_click = {
 				if = {
-					limit = {
-						check_variable = { military_factory_employment_var = 1 }
-					}
-				}
-				else = {
+					limit = { NOT = { check_variable = { military_factory_employment_var = 1 } } }
 					add_to_variable = { military_factory_employment_var = 0.05 }
 					add_political_power = -20
 				}
+				clamp_variable = { var = military_factory_employment_var min = 0 max = 1 }
 				ingame_update_setup = yes
 			}
 			# - Civilian Factories Employent
