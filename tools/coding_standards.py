@@ -2,6 +2,7 @@
 import os, sys, fnmatch, re
 import time
 import requests
+from path_utils import clean_filepath
 
 startTime = time.time()
 
@@ -20,29 +21,80 @@ def get_tags(rootDir):
 	return tags
 
 
+def hasFocusFormat(focus_id):
+	"""Check if focus ID follows the correct format TAG_focus_name"""
+	return re.match(r'^[A-Z]{3}_[a-zA-Z0-9_-]+$', focus_id, re.M | re.U) is not None
+
+
 def checkFocuses(filepath):
-	bad_count_file = 0
-	lineNum = 0;
+	warning_count_file = 0
+	lineNum = 0
 	with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
 		content = file.readlines()
+		braces = 0
+		current_focus_id = ""
+		has_search_filters = False
+		in_focus_block = False
+		in_completion_reward = False
+		in_focus_tree = False
+		found_focus_id = False
+
 		for line in content:
 			lineNum += 1
-			if not line.startswith("#") or line.startswith(""):  # If the line doesn't start with a comment or blank
-				if "id =" in line or "id=" in line:
-					hasFocus = re.match(r'[ \t]+id\s?=\s?([A-za-z0-9-?_?]+)', line, re.M | re.I)  # If it's a tag
-					if hasFocus:
-						#print(hasFocus.group(1))
-						hasFocusFormet = re.match(r'[ \t]+id\s?=\s?([A-Z]{3}_[a-z0-9_-]+)', line, re.M | re.U )  # If it's a tag
-						#if not hasFocusFormet:
-							#print("ERROR: " + hasFocus.group(1) + " is formatted incorrectly, must be TAG_focus_name  {0} Line number: {1}".format(filepath, lineNum ))
-							#print(hasFocus.group(1))
-							#bad_count_file +=1
+			if not line.startswith("#") and line.strip():  # If the line doesn't start with a comment or blank
+				if "{" in line:
+					braces += line.count("{")
+				if "}" in line:
+					braces -= line.count("}")
 
-	return bad_count_file
+				# Track focus_tree blocks (exclude tree-level IDs)
+				if "focus_tree" in line and "{" in line:
+					in_focus_tree = True
+				elif in_focus_tree and braces == 0:
+					in_focus_tree = False
+
+				# Track completion_reward blocks
+				if "completion_reward" in line and "{" in line:
+					in_completion_reward = True
+				elif in_completion_reward and braces == 0:
+					in_completion_reward = False
+
+				# Check for search_filters within focus block (do this first)
+				if in_focus_block:
+					if "search_filters" in line:
+						has_search_filters = True
+
+				# Track focus blocks
+				if "focus" in line and "{" in line:
+					in_focus_block = True
+					found_focus_id = False
+					has_search_filters = False
+				elif in_focus_block and braces == 0:
+					# We're exiting the focus block
+					if found_focus_id and not has_search_filters:
+						print("WARNING: Focus " + current_focus_id + " doesn't have search_filters defined in {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
+						warning_count_file += 1
+					in_focus_block = False
+					current_focus_id = ""
+					found_focus_id = False
+
+				# Check for focus ID (only first one in focus block, exclude completion_reward and focus_tree)
+				if in_focus_block and not in_completion_reward and not in_focus_tree and not found_focus_id and ("id =" in line or "id=" in line):
+					hasFocus = re.match(r'[ \t]+id\s?=\s?([A-za-z0-9-?_?]+)', line, re.M | re.I)
+					if hasFocus:
+						current_focus_id = hasFocus.group(1)
+						found_focus_id = True
+
+						# Check focus format
+						if not hasFocusFormat(current_focus_id):
+							print("WARNING: " + current_focus_id + " is formatted incorrectly, must be TAG_focus_name in {0} Line number: {1}".format(clean_filepath(filepath), lineNum))
+							warning_count_file += 1
+
+	return warning_count_file
 
 
 def check_ideas(filepath):
-	bad_count_file = 0
+	error_count_file = 0
 	lineNum = 0
 	pdxIdeaCode = ["allowed", "modifier", "country", "allowed_civil_war", "OR", "AND", "ideas", "NOT", "CANCEL",
 					"on_add", "available", "ai_will_do", "rule", "do_effect"]
@@ -67,21 +119,22 @@ def check_ideas(filepath):
 						if not countryIdea and not genericIdea:
 							print("ERROR: " + hasIdea.group(
 								1) + " is formatted incorrectly, must be TAG_idea_name or generic_idea_name {0} Line number: {1}".format(
-								filepath, lineNum))
-							bad_count_file +=1
+								clean_filepath(filepath), lineNum))
+							error_count_file +=1
 							#print(hasFocus.group(1))
 							#print("wrong: " + hasIdea.group(1))
 				if "}" in line:
 					braces -=1
 
-	return bad_count_file
+	return error_count_file
 
 def check_event_for_logs(filepath):
-	bad_count_file = 0
+	warning_count_file = 0
 	lineNum = 0
 	hasLog = 0
 	optionFound = 0
 	optionName = ""
+	hasOtherDefinitions = 0
 
 	with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
 		content = file.readlines()
@@ -93,11 +146,15 @@ def check_event_for_logs(filepath):
 					optionFound = 1
 					optionLine = lineNum
 					hasLog = 0
+					hasOtherDefinitions = 0
 				if optionFound == 1:
 					if "name" in line and "=" in line:
 						hasName = re.search(r'name\s?=\s([a-zA-Z0-9-_.]+)', line, re.M | re.I)  # If it's a tag
 						if hasName:
 							optionName = hasName.group(1)
+					elif "=" in line and braces > 0 and "name" not in line and "log" not in line:
+						# Check for other definitions besides name and log
+						hasOtherDefinitions = 1
 					if "{" in line:
 						braces += line.count("{")
 
@@ -107,18 +164,25 @@ def check_event_for_logs(filepath):
 						braces = 0
 					if "}" in line:
 						braces -= line.count("}")
-					if braces == 0 and hasLog == 0:
-						print("ERROR: Event " + optionName + " doesn't have logging {0} Line number: {1}".format(
-							filepath, optionLine))
+					if braces == 0 and hasLog == 0 and hasOtherDefinitions == 1:
+						print("WARNING: Event " + optionName + " doesn't have logging in {0} Line number: {1}".format(
+							clean_filepath(filepath), optionLine))
 						optionFound = 0
 						braces = 0
 						hasLog = 0
-						bad_count_file += 1
+						hasOtherDefinitions = 0
+						warning_count_file += 1
+					elif braces == 0:
+						# Reset for next option
+						optionFound = 0
+						braces = 0
+						hasLog = 0
+						hasOtherDefinitions = 0
 
-	return bad_count_file
+	return warning_count_file
 
 def check_Flags(filepath):
-	bad_count_file = 0
+	error_count_file = 0
 	lineNum = 0
 
 	with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
@@ -144,9 +208,9 @@ def check_Flags(filepath):
 							simpleFlagFormat = re.search(r'([a-z_]+_flag\s?=\s?)([A-Z0-9]{1}([a-z0-9]+)?_[A-Z0-9]{1}([a-z0-9]+)?)(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?(_[A-Z0-9]{1}([a-z0-9]+)?)?$', line, re.M | re.I)
 							if not hasSimpleFlag:
 								print("ERROR: " + hasSimpleFlag.group(
-									1) + " is formatted incorrectly, must be The_Flags_Name {0} Line number: {1}".format(
-									filepath, lineNum))
-								bad_count_file += 1
+									1) + " is formatted incorrectly, must be The_Flags_Name in {0} Line number: {1}".format(
+									clean_filepath(filepath), lineNum))
+								error_count_file += 1
 							else:
 								if "global_flag" in line:
 									globalFlags.append(hasSimpleFlag.group(1))
@@ -165,15 +229,15 @@ def check_Flags(filepath):
 						if not advFlagFormat:
 							print("ERROR: " + hasAdvFlag2.group(
 								1) + " is formatted incorrectly, must be The_Flags_Name {0} Line number: {1}".format(
-								filepath, lineNum))
-							bad_count_file += 1
+								clean_filepath(filepath), lineNum))
+							error_count_file += 1
 						else:
 							if isGlobalFlag ==1:
 								globalFlags.append(hasSimpleFlag.group(1))
 								isGlobalFlag = 0
 							else:
 								countryFlags.append(hasSimpleFlag.group(1))
-	return bad_count_file, globalFlags, countryFlags
+	return error_count_file, globalFlags, countryFlags
 
 def findPdxSyntax(filename):
 	with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
@@ -376,7 +440,8 @@ def main():
 	files_list = []
 	nation_focus_files = []
 	idea_files = []
-	bad_count = 0
+	error_count = 0
+	warning_count = 0
 	tags = []
 
 
@@ -398,19 +463,19 @@ def main():
 	for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/national_focus' + '/'):
 		for filename in fnmatch.filter(filenames, '*.txt'):
 			if filename != "generic.txt":
-				bad_count = bad_count + checkFocuses(os.path.join(root, filename))
+				warning_count = warning_count + checkFocuses(os.path.join(root, filename))
 				files_list.append(os.path.join(root, filename))
 
 	# for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
 	#     for filename in fnmatch.filter(filenames, '*.txt'):
-	#         bad_count = bad_count + check_ideas(os.path.join(root, filename))
+	#         error_count = error_count + check_ideas(os.path.join(root, filename))
 	#         files_list.append(os.path.join(root, filename))
 
 
 	#for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
 		#for filename in fnmatch.filter(filenames, '*.txt'):
 			#temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-			#bad_count += temp
+			#error_count += temp
 			#globalFlags += temp1
 			#countryFlags += temp1
 	#for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
@@ -422,12 +487,12 @@ def main():
 	#for root, dirnames, filenames in os.walk(rootDir + '/' + 'history/'):
 		#for filename in fnmatch.filter(filenames, '*.txt'):
 			# temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-			# bad_count += temp
+			# error_count += temp
 			# globalFlags += temp1
 			# countryFlags += temp1
 	for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
 		for filename in fnmatch.filter(filenames, '*.txt'):
-			bad_count = bad_count + check_event_for_logs(os.path.join(root, filename))
+			warning_count = warning_count + check_event_for_logs(os.path.join(root, filename))
 			files_list.append(os.path.join(root, filename))
 
 	# for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
@@ -446,15 +511,20 @@ def main():
 	#       files_list.append(os.path.join(root, filename))
 
 	# for filename in files_list:
-	#    bad_count = bad_count + check_basic_style(filename)
+	#    error_count = error_count + check_basic_style(filename)
 
-	print("------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count))
-	message += "------\nChecked {0} files\nErrors detected: {1}".format(len(files_list), bad_count) + "\n"
+	total_issues = error_count + warning_count
+	print("------\nChecked {0} files\nErrors detected: {1}\nWarnings detected: {2}\nTotal issues: {3}".format(len(files_list), error_count, warning_count, total_issues))
+	message += "------\nChecked {0} files\nErrors detected: {1}\nWarnings detected: {2}\nTotal issues: {3}".format(len(files_list), error_count, warning_count, total_issues) + "\n"
 
-	if (bad_count == 0):
+	if (error_count == 0 and warning_count == 0):
 		print("File validation PASSED")
 		message += "File validation PASSED\n"
 		postResults = False
+	elif (error_count == 0 and warning_count > 0):
+		print("File validation PASSED WITH WARNINGS")
+		message += "File validation PASSED WITH WARNINGS\n"
+		postResults = True
 	else:
 		print("File validation FAILED")
 		message += "File validation FAILED\n"
@@ -488,7 +558,7 @@ def main():
 	except:
 		print("Couldn't post results to gitlab")
 
-	return bad_count
+	return total_issues
 
 
 if __name__ == "__main__":
