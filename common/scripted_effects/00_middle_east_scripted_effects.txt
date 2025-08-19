@@ -181,6 +181,302 @@ decrease_pop_gulf = {
 	}
 }
 
+IRQ_MNF_setup = {
+	hidden_effect = {
+		create_dynamic_country = {
+			original_tag = IRQ
+			copy_tag = IRQ
+			
+			set_country_flag = IRQ_MNF
+			set_cosmetic_tag = IRQ_MNF
+
+			set_politics = { ruling_party = democratic elections_allowed = no }
+			set_political_party = { ideology = democratic popularity = 100 }
+			set_variable = { party_pop_array^0 = 1 }
+			start_politics_input = yes
+			add_to_array = { ruling_party = 0 }
+			startup_politics = yes
+			ingame_startup_nations_effect = yes
+
+			declare_war_on = { target = IRQ type = civil_war }
+			add_ideas = {
+				Non_State_Actor
+				sunni
+				widespread_corruption
+				intervention_neo_imperialism
+				defence_09
+				edu_01
+				health_01
+				social_01
+				police_05
+				bureau_01
+				partial_draft_army
+				no_women_in_military
+				officer_basic_training
+			}
+		}
+
+		IRQ = {
+			every_owned_state = {
+				limit = {
+					is_fully_controlled_by = USA
+				}
+				transfer_state_to = MNF
+			}
+			171 = {
+				transfer_state_to = MNF
+				set_state_flag = MNF_starting_state_setup
+			}
+		}
+
+		USA = {
+			puppet = MNF
+			add_to_faction = MNF
+		}
+
+		every_country = {
+			limit = {
+				has_country_flag = can_send_mnf_volunteers
+			}
+			country_event = {
+				id = iraqi_MNF.3
+				days = 1
+			}
+		}
+
+		MNF = {
+			create_country_leader = {
+				name = "David D. McKiernan"
+				picture = "USA_David_McKiernan.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					military_career
+					pro_american
+				}
+			}
+		}
+
+		MNF = {
+			if = {
+				limit = { NOT = { has_war_with = IRQ } }
+				declare_war_on = {
+					target = IRQ
+					type = civil_war
+				}
+			}
+			add_civil_war_target = IRQ
+			become_exiled_in = { target = USA legitimacy = 25 }
+			171 = {
+				set_state_controller_to = IRQ
+			}
+			leave_faction = yes
+			#create_faction = NULL
+		}
+	}
+}
+
+syrian_civil_war_setup = {
+	SYR = {
+		set_temp_variable = { opposition_party_index = 0 }
+		set_temp_variable = { opposition_party_popularity = 0 }
+		for_each_loop = {
+			array = party_pop_array
+			value = v
+			index = i
+			break = break
+			if = {
+				limit = {
+					check_variable = { v > opposition_party_popularity }
+					NOT = { is_in_array = { ruling_party = i } }
+					NOT = { is_in_array = { gov_coalition_array = i } }
+					NOT = {
+						check_variable = { i = 8 }
+						check_variable = { i = 9 }
+						check_variable = { i = 10 }
+						check_variable = { i = 11 }
+					}
+				}
+				set_temp_variable = { opposition_party_index = i }
+				set_temp_variable = { opposition_party_popularity = v }
+			}
+		}
+		#Set size for the civil war (2.5xpopularity)
+		multiply_temp_variable = { opposition_party_popularity = 2.5 }
+
+		clamp_temp_variable = {
+			var = opposition_party_popularity
+			min = 0.5
+			max = 0.8
+		}
+
+		hidden_effect = {
+			SYR = {
+				every_state = {
+					limit = { is_core_of = SYR }
+					add_core_of = FSA
+				}
+				every_owned_state = {
+					limit = {
+						OR = {
+							state = 566
+							state = 190
+							state = 184
+							state = 575
+						}
+					}
+					transfer_state_to = FSA
+					add_dynamic_modifier = { modifier = SYR_free_syrian_offensive scope = FSA days = 1500 }
+				}
+
+				set_province_controller = 6353
+				set_province_controller = 3053
+
+				transfer_units_fraction = {
+					target = FSA
+					size = opposition_party_popularity
+				}
+			}
+			FSA = {
+				if = {
+					limit = {
+						check_variable = { opposition_party_index < 4 }
+					}
+					set_politics = {
+						ruling_party = democratic
+						elections_allowed = no
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { opposition_party_index > 3 }
+						check_variable = { opposition_party_index < 10 }
+					}
+					set_politics = {
+						ruling_party = communism
+						elections_allowed = no
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { opposition_party_index > 11 }
+						check_variable = { opposition_party_index < 20 }
+					}
+					set_politics = {
+						ruling_party = neutrality
+						elections_allowed = no
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { opposition_party_index > 19 }
+					}
+					set_politics = {
+						ruling_party = nationalist
+						elections_allowed = no
+					}
+				}
+				
+				add_to_array = { global.rival_governments = THIS }
+				set_country_flag = rival_government_SYR
+
+				set_global_flag = FSA_free_syrian_army_active_flag
+
+				set_temp_variable = { rul_party_temp = opposition_party_index }
+				change_ruling_party_effect = yes
+
+				set_temp_variable = { rul_party_temp = opposition_party_index }
+				change_ruling_party_effect = yes
+				set_cosmetic_tag = NULL
+
+				set_variable = { civilian_factory_employment_var = 1 }
+				set_variable = { naval_factory_employment_var = 1 }
+				set_variable = { military_factory_employment_var = 1 }
+				set_variable = { office_employment_var = 1 }
+				set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
+				inherit_technology = PREV
+				if = {
+					limit = {
+						NOT = { has_variable = domestic_influence_amount }
+					}
+					set_variable = { domestic_influence_amount = 100 }
+				}
+				if = {
+					limit = { NOT = { has_variable = corporate_tax_rate } }
+					set_variable = { var = corporate_tax_rate value = 20 }
+				}
+				if = {
+					limit = { NOT = { has_variable = population_tax_rate } }
+					set_variable = { var = population_tax_rate value = 20 }
+				}
+				ingame_init_investment_system = yes
+				init_auto_influence_array = yes
+				calculate_influence_percentage = yes #set alignment drifts from influence
+				startup_politics = yes
+				ingame_update_setup = yes 	#money system
+				setup_init_factions = yes 	#flags for int. factions
+				set_law_vars = yes 	#vars for change laws secondary effects
+				update_neighbors_effects = yes # Updates Neighbor Effects
+				economic_cycle_drift_popularity = yes #drift from neighbor
+				ai_update_build_units = yes
+				calculate_expected_spending = yes
+
+				activate_mission = FSA_defection_to_extremist
+				add_ideas = FSA_extremism1
+				add_ideas = FSA_death_over_humiliation
+
+				create_country_leader = {
+					name = "Burhan Ghalioun"
+					desc = ""
+					picture = "Burhan_Ghalioun.dds"
+					expire = "2050.1.1"
+					ideology = Neutral_Muslim_Brotherhood
+					traits = {
+						neutrality_Neutral_Muslim_Brotherhood
+					}
+				}
+
+				#FSA will control area around Idlib 
+				#1 if you take Idlib al nusra will break away and border war you for the city
+				#2 they break away via mechanic
+				# a bit of both need to see map changes to see if kal will make idlib it's own city
+				#4 MAYBE have al nusra at war in exile till on map so it can use its units (they keep a decision to steal it if the FSA takes it) but they have to go to war with the FSA
+				#5 if the south fall you can play them in exile and you can also play the south if the north fall or all goes to turkish puppet
+
+				if = {
+					limit = { has_dlc = "No Step Back" }
+
+					load_oob = FSA_2000_nsb
+				}
+				else = {
+					load_oob = FSA_2000_nonnsb
+				}
+				#need to convert to SE
+
+				if = {
+					limit = {
+						controls_state = 190
+					}
+					190 = {
+						add_contested_owner = NUS
+					}
+				}
+
+				declare_war_on = {
+					target = SYR
+					type = civil_war
+				}
+				add_civil_war_target = SYR
+				
+				add_named_threat = {
+					threat = 5
+					name = Syrian_Civil_War.threat
+				}
+			}
+		}
+	}
+}
+
 # Arab Spring Content
 AS_spawn_isis_into_game = {
 	hidden_effect = {
