@@ -588,42 +588,153 @@ AGRI_update_price_calculations = {
 	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_price_calculations"
 }
 
+debug_array_configuration = {
+	clear_array = AGRI_field_allocation_temp
+	clear_array = AGRI_field_allocation
+
+	add_to_array = { AGRI_field_allocation = 0 } # NO CROPS = 0
+	add_to_array = { AGRI_field_allocation = 0.490 } # CASH = 1
+	add_to_array = { AGRI_field_allocation = 0 } # ILLICIT = 2
+	add_to_array = { AGRI_field_allocation = 0.510 } # STAPLE = 3
+}
+
+enable_pooling_change = {
+	clear_array = AGRI_field_allocation_temp
+	# Create a temporary to store the changes you need
+	for_each_loop = {
+		array = AGRI_field_allocation
+		add_to_array = { AGRI_field_allocation_temp = v }
+	}
+}
+
 AGRI_bank_cash_changes = {
-	add_to_variable = { AGRI_banked_allocation_pool_CASH_TEMP = AGRI_banked_pool_change }
-	if = {
-		limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP > 0 } }
+	set_temp_variable = { num_crop_types = 3 }
+
+	set_temp_variable = { temp_permanent_changes = 0.02 }
+	set_temp_variable = { crop_type_selected = 1 }
+
+	for_each_loop = {
+		array = AGRI_field_allocation
+		log = "Crop Type: [?i] - [?v]"
+	}
+
+	# Crop Type 0 means there is unallocated land that needs to be allocated first
+	if = { limit = { check_variable = { AGRI_field_allocation^0 > 0 } }
+		subtract_from_variable = { AGRI_field_allocation^0 = temp_permanent_changes }
+		add_to_variable = { AGRI_field_allocation^crop_type_selected = temp_permanent_changes }
+	}
+	else = {
+		# Subtract 1 from the number of crop types to get the number of crop types that need to be adjusted (if we have 3 crop types, we need to adjust 2 others)
+		subtract_from_temp_variable = { num_crop_types = 1 }
+
+		# Add to the selected crop type
+		add_to_variable = { AGRI_field_allocation^crop_type_selected = temp_permanent_changes }
+
+		# Check if each crop type has field allocation
+		for_each_loop = {
+			array = AGRI_field_allocation
+			if = {
+				limit = {
+					NOT = { check_variable = { i = 0 } }
+					NOT = { check_variable = { i = crop_type_selected } }
+				}
+				if = {
+					limit = { NOT = { check_variable = { v = 0 } } }
+					add_to_temp_variable = { crop_has_value = 1 }
+				}
+			}
+		}
+
+		# Check if we have multiple crop types that have field allocation
 		if = {
 			limit = {
-				NOT = { check_variable = { AGRI_allocation_pool > 0 } }
-				# OR = {
-				# 	check_variable = { AGRI_allocation_pool = 0 }
-				# 	check_variable = { AGRI_allocation_pool < 0 }
-				# }
+				check_variable = { crop_has_value > 1 }
 			}
-			clamp_variable = {
-				var = AGRI_banked_allocation_pool_CASH_TEMP
-				max = AGRI_cash_allocation_TEMP
-			}
-		}
-		set_variable = { AGRI_banked_CASH_checker_POSITIVE = AGRI_banked_allocation_pool_CASH_TEMP }
-	}
-	if = {
-		limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP < 0 } }
-		set_temp_variable = { AGRI_cash_allocation_TEMP = AGRI_field_allocation^2 }
-		multiply_temp_variable = { AGRI_cash_allocation_TEMP = -1 }
-		if = {
-			limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP < AGRI_cash_allocation_TEMP } }
-			clamp_variable = {
-				var = AGRI_banked_allocation_pool_CASH_TEMP
-				min = AGRI_cash_allocation_TEMP
+			# Calculate the loss per crop type if we have 3 crop types, we need to adjust 2 others
+			set_temp_variable = { crop_type_loss = temp_permanent_changes }
+			divide_temp_variable = { crop_type_loss = num_crop_types }
+			multiply_temp_variable = { crop_type_loss = -1 }
+
+			for_each_loop = {
+				array = AGRI_field_allocation
+				if = {
+					limit = {
+						NOT = { check_variable = { i = 0 } }
+						NOT = { check_variable = { i = crop_type_selected } }
+					}
+					add_to_variable = { AGRI_field_allocation^i = crop_type_loss }
+					clamp_variable = { var = AGRI_field_allocation^i min = 0 max = 1 }
+				}
 			}
 		}
-		set_variable = { AGRI_banked_CASH_checker_NEGATIVE = AGRI_banked_allocation_pool_CASH_TEMP }
-		multiply_variable = { AGRI_banked_CASH_checker_NEGATIVE = -1 }
+		else = {
+			# Since we only have three crop types, and one has been selected, one does not have any allocation, just subtract it from the third (sorry bread)
+			for_each_loop = {
+				array = AGRI_field_allocation
+				if = {
+					limit = {
+						NOT = { check_variable = { i = 0 } }
+						NOT = { check_variable = { i = crop_type_selected } }
+					}
+					if = {
+						limit = { NOT = { check_variable = { v = 0 } } }
+						set_temp_variable = { crop_to_reduce = i }
+					}
+				}
+			}
+
+			set_temp_variable = { crop_type_loss = temp_permanent_changes }
+			multiply_temp_variable = { crop_type_loss = -1 }
+
+			add_to_variable = { AGRI_field_allocation^crop_to_reduce = crop_type_loss }
+			clamp_variable = { var = AGRI_field_allocation^crop_to_reduce min = 0 max = 1 }
+		}
+
 	}
-	set_variable = { AGRI_banked_allocation_pool_CASH = AGRI_banked_allocation_pool_CASH_TEMP }
-	AGRI_temporary_allocation_bank_changes = yes
-	custom_effect_tooltip = AGRI_bank_cash_change_TT
+
+	for_each_loop = {
+		array = AGRI_field_allocation
+		log = "After changes: Crop Type: [?i] - [?v]"
+	}
+
+
+
+	# add_to_variable = { AGRI_banked_allocation_pool_CASH_TEMP = AGRI_banked_pool_change }
+
+	# if = {
+	# 	limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP > 0 } }
+	# 	if = {
+	# 		limit = {
+	# 			NOT = { check_variable = { AGRI_allocation_pool > 0 } }
+	# 			# OR = {
+	# 			# 	check_variable = { AGRI_allocation_pool = 0 }
+	# 			# 	check_variable = { AGRI_allocation_pool < 0 }
+	# 			# }
+	# 		}
+	# 		clamp_variable = {
+	# 			var = AGRI_banked_allocation_pool_CASH_TEMP
+	# 			max = AGRI_cash_allocation_TEMP
+	# 		}
+	# 	}
+	# 	set_variable = { AGRI_banked_CASH_checker_POSITIVE = AGRI_banked_allocation_pool_CASH_TEMP }
+	# }
+	# if = {
+	# 	limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP < 0 } }
+	# 	set_temp_variable = { AGRI_cash_allocation_TEMP = AGRI_field_allocation^2 }
+	# 	multiply_temp_variable = { AGRI_cash_allocation_TEMP = -1 }
+	# 	if = {
+	# 		limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP < AGRI_cash_allocation_TEMP } }
+	# 		clamp_variable = {
+	# 			var = AGRI_banked_allocation_pool_CASH_TEMP
+	# 			min = AGRI_cash_allocation_TEMP
+	# 		}
+	# 	}
+	# 	set_variable = { AGRI_banked_CASH_checker_NEGATIVE = AGRI_banked_allocation_pool_CASH_TEMP }
+	# 	multiply_variable = { AGRI_banked_CASH_checker_NEGATIVE = -1 }
+	# }
+	# set_variable = { AGRI_banked_allocation_pool_CASH = AGRI_banked_allocation_pool_CASH_TEMP }
+	# AGRI_temporary_allocation_bank_changes = yes
+	# custom_effect_tooltip = AGRI_bank_cash_change_TT
 }
 
 AGRI_bank_illicit_changes = {
@@ -779,9 +890,10 @@ AGRI_startup_effect = {
 
 AGRI_startup_allocation = {
 	BEN = {
-		add_to_array = { AGRI_field_allocation = 0.490 } # CASH = 0
-		add_to_array = { AGRI_field_allocation = 0 } # ILLICIT = 1
-		add_to_array = { AGRI_field_allocation = 0.510 } # STAPLE = 2
+		add_to_array = { AGRI_field_allocation = 0 } # NO CROPS = 0
+		add_to_array = { AGRI_field_allocation = 0.490 } # CASH = 1
+		add_to_array = { AGRI_field_allocation = 0 } # ILLICIT = 2
+		add_to_array = { AGRI_field_allocation = 0.510 } # STAPLE = 3
 	}
 	BUR = {
 		add_to_array = { AGRI_field_allocation = 0.797 } # CASH = 0
