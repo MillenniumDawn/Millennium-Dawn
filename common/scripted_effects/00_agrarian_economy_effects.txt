@@ -589,18 +589,163 @@ AGRI_update_price_calculations = {
 }
 
 AGRI_bank_cash_changes = {
-	add_to_variable = { AGRI_banked_allocation_pool_CASH = AGRI_banked_pool_change }
+	add_to_variable = { AGRI_banked_allocation_pool_CASH_TEMP = AGRI_banked_pool_change }
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP > 0 } }
+		if = {
+			limit = {
+				NOT = { check_variable = { AGRI_allocation_pool > 0 } }
+				# OR = {
+				# 	check_variable = { AGRI_allocation_pool = 0 }
+				# 	check_variable = { AGRI_allocation_pool < 0 }
+				# }
+			}
+			clamp_variable = {
+				var = AGRI_banked_allocation_pool_CASH_TEMP
+				max = AGRI_cash_allocation_TEMP
+			}
+		}
+		set_variable = { AGRI_banked_CASH_checker_POSITIVE = AGRI_banked_allocation_pool_CASH_TEMP }
+	}
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP < 0 } }
+		set_temp_variable = { AGRI_cash_allocation_TEMP = AGRI_field_allocation^2 }
+		multiply_temp_variable = { AGRI_cash_allocation_TEMP = -1 }
+		if = {
+			limit = { check_variable = { AGRI_banked_allocation_pool_CASH_TEMP < AGRI_cash_allocation_TEMP } }
+			clamp_variable = {
+				var = AGRI_banked_allocation_pool_CASH_TEMP
+				min = AGRI_cash_allocation_TEMP
+			}
+		}
+		set_variable = { AGRI_banked_CASH_checker_NEGATIVE = AGRI_banked_allocation_pool_CASH_TEMP }
+		multiply_variable = { AGRI_banked_CASH_checker_NEGATIVE = -1 }
+	}
+	set_variable = { AGRI_banked_allocation_pool_CASH = AGRI_banked_allocation_pool_CASH_TEMP }
+	AGRI_temporary_allocation_bank_changes = yes
 	custom_effect_tooltip = AGRI_bank_cash_change_TT
 }
 
 AGRI_bank_illicit_changes = {
-	add_to_variable = { AGRI_banked_allocation_pool_ILLICIT = AGRI_banked_pool_change }
+	add_to_variable = { AGRI_banked_allocation_pool_ILLICIT_TEMP = AGRI_banked_pool_change }
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_ILLICIT_TEMP > 0 } }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { AGRI_allocation_pool = 0 }
+					check_variable = { AGRI_allocation_pool < 0 }
+				}
+			}
+			clamp_variable = {
+				var = AGRI_banked_allocation_pool_ILLICIT_TEMP
+				max = AGRI_illicit_allocation_TEMP
+			}
+		}
+		set_variable = { AGRI_banked_ILLICIT_checker_POSITIVE = AGRI_banked_allocation_pool_ILLICIT_TEMP }
+	}
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_ILLICIT_TEMP < 0 } }
+		set_temp_variable = { AGRI_illicit_allocation_TEMP = AGRI_field_allocation^2 }
+		multiply_temp_variable = { AGRI_illicit_allocation_TEMP = -1 }
+		if = {
+			limit = { check_variable = { AGRI_banked_allocation_pool_ILLICIT_TEMP < AGRI_illicit_allocation_TEMP } }
+			clamp_variable = {
+				var = AGRI_banked_allocation_pool_ILLICIT_TEMP
+				min = AGRI_illicit_allocation_TEMP
+			}
+		}
+		set_variable = { AGRI_banked_ILLICIT_checker_NEGATIVE = AGRI_banked_allocation_pool_ILLICIT_TEMP }
+		multiply_variable = { AGRI_banked_ILLICIT_checker_NEGATIVE = -1 }
+	}
+	set_variable = { AGRI_banked_allocation_pool_ILLICIT = AGRI_banked_allocation_pool_ILLICIT_TEMP }
+	AGRI_temporary_allocation_bank_changes = yes
 	custom_effect_tooltip = AGRI_bank_illicit_change_TT
 }
 
 AGRI_bank_staple_changes = {
-	add_to_variable = { AGRI_banked_allocation_pool_STAPLE = AGRI_banked_pool_change }
+	add_to_variable = { AGRI_banked_allocation_pool_STAPLE_TEMP = AGRI_banked_pool_change }
+	log = "[?THIS.AGRI_banked_allocation_pool_STAPLE_TEMP|3]"
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_STAPLE_TEMP > 0 } }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { AGRI_allocation_pool = 0 }
+					check_variable = { AGRI_allocation_pool < 0 }
+				}
+			}
+			clamp_variable = {
+				var = AGRI_banked_allocation_pool_STAPLE_TEMP
+				max = AGRI_staple_allocation_TEMP
+			}
+			log = "adding this amount would cause overflow, clamping"
+		}
+		set_variable = { AGRI_banked_STAPLE_checker_POSITIVE = AGRI_banked_allocation_pool_STAPLE_TEMP }
+		log = "[?THIS.AGRI_banked_STAPLE_checker_POSITIVE|3]"
+	}
+	if = {
+		limit = { check_variable = { AGRI_banked_allocation_pool_STAPLE_TEMP < 0 } }
+		set_temp_variable = { AGRI_staple_allocation_TEMP = AGRI_field_allocation^2 }
+		multiply_temp_variable = { AGRI_staple_allocation_TEMP = -1 }
+		if = {
+			limit = { check_variable = { AGRI_banked_allocation_pool_STAPLE_TEMP < AGRI_staple_allocation_TEMP } }
+			clamp_variable = {
+				var = AGRI_banked_allocation_pool_STAPLE_TEMP
+				min = AGRI_staple_allocation_TEMP
+			}
+		}
+		set_variable = { AGRI_banked_STAPLE_checker_NEGATIVE = AGRI_banked_allocation_pool_STAPLE_TEMP }
+		multiply_variable = { AGRI_banked_STAPLE_checker_NEGATIVE = -1 }
+	}
+	set_variable = { AGRI_banked_allocation_pool_STAPLE = AGRI_banked_allocation_pool_STAPLE_TEMP }
+	AGRI_temporary_allocation_bank_changes = yes
 	custom_effect_tooltip = AGRI_bank_staple_change_TT
+}
+
+AGRI_debug_clear = {
+	clear_variable = AGRI_banked_allocation_pool_CASH
+	clear_variable = AGRI_banked_allocation_pool_CASH_TEMP
+	clear_variable = AGRI_banked_CASH_checker_NEGATIVE
+	clear_variable = AGRI_banked_CASH_checker_POSITIVE
+
+	clear_variable = AGRI_banked_allocation_pool_ILLICIT
+	clear_variable = AGRI_banked_allocation_pool_ILLICIT_TEMP
+	clear_variable = AGRI_banked_ILLICIT_checker_NEGATIVE
+	clear_variable = AGRI_banked_ILLICIT_checker_POSITIVE
+
+	clear_variable = AGRI_banked_allocation_pool_STAPLE
+	clear_variable = AGRI_banked_allocation_pool_STAPLE_TEMP
+	clear_variable = AGRI_banked_STAPLE_checker_NEGATIVE
+	clear_variable = AGRI_banked_STAPLE_checker_POSITIVE
+}
+
+AGRI_debug_allocation_REMOVE = {
+	set_variable = { AGRI_field_allocation^0 = 0.250 }
+	set_variable = { AGRI_field_allocation^1 = 0.250 }
+	set_variable = { AGRI_field_allocation^2 = 0.250 }
+	set_variable = { AGRI_unallocated_land = 0.250 }
+	AGRI_temporary_allocation_bank_changes = yes
+}
+
+AGRI_temporary_allocation_bank_changes = {
+	if = {
+		limit = { NOT = { check_variable = { AGRI_banked_allocation_pool_CASH = 0 } } }
+		set_temp_variable = { AGRI_allocation_changes_CASH_temp = AGRI_banked_allocation_pool_CASH }
+		subtract_from_temp_variable = { AGRI_allocation_changes_temp = AGRI_allocation_changes_CASH_temp }
+	}
+	if = {
+		limit = { NOT = { check_variable = { AGRI_banked_allocation_pool_ILLICIT = 0 } } }
+		set_temp_variable = { AGRI_allocation_changes_ILLICIT_temp = AGRI_banked_allocation_pool_ILLICIT }
+		subtract_from_temp_variable = { AGRI_allocation_changes_temp = AGRI_allocation_changes_ILLICIT_temp }
+	}
+	if = {
+		limit = { NOT = { check_variable = { AGRI_banked_allocation_pool_STAPLE = 0 } } }
+		set_temp_variable = { AGRI_allocation_changes_STAPLE_temp = AGRI_banked_allocation_pool_STAPLE }
+		subtract_from_temp_variable = { AGRI_allocation_changes_temp = AGRI_allocation_changes_STAPLE_temp }
+	}
+	add_to_temp_variable = { AGRI_allocation_changes_temp = AGRI_unallocated_land }
+	set_variable = { AGRI_allocation_pool = AGRI_allocation_changes_temp }
 }
 
 AGRI_make_allocation_changes_from_bank = {
@@ -964,9 +1109,6 @@ AGRI_startup_narcostates = {
 		set_country_flag = AGRI_narcostate_allowed
 	}
 }
-
-
-
 
 # AGRI_drought_check = {
 # 	if = {
