@@ -3713,10 +3713,6 @@ election_EU_Parliament = {
 		add_to_variable = { global.MEP_Total = THIS.MEP_Total }
 	}
 
-	set_variable = { global.MEP_Majority = global.MEP_Total }
-	divide_variable = { global.MEP_Majority = 2 }
-	add_to_variable = { global.MEP_Majority = 1 }
-
 	### check political groups
 	for_each_loop = {
 		array = global.EU_parl_party_number
@@ -3729,6 +3725,7 @@ election_EU_Parliament = {
 				divide_variable = { global.MEP_Ratio_PG_party_[p_n] = global.MEP_Total }
 				add_to_array = { global.MEP_PG_array^[p_n] = global.MEP_PG_party_[p_n] }
 				set_variable = { global.PI_PG_party_[p_n] = global.MEP_PG_party_[p_n] }
+			#	add_to_variable = { global.MEP_Total = global.MEP_party_[p_n3] }
 			}
 			p_n = "[?p_number]"
 		}
@@ -3737,15 +3734,19 @@ election_EU_Parliament = {
 	set_variable = { global.MEP_Total = 0 } # Recalculate to account for more roundings
 	for_each_loop = {
 		array = global.EU_parl_party_number
-		set_variable = { p_number = global.EU_parl_party_number^i }
+		set_variable = { p_number2 = global.EU_parl_party_number^i }
 
 		meta_effect = {
 			text = {
-				add_to_variable = { global.MEP_Total = global.MEP_PG_party_[p_n] }
+				add_to_variable = { global.MEP_Total = global.MEP_PG_party_[p_n2] }
 			}
-			p_n = "[?p_number]"
+			p_n2 = "[?p_number2]"
 		}
 	}
+
+	set_variable = { global.MEP_Majority = global.MEP_Total }
+	divide_variable = { global.MEP_Majority = 2 }
+	add_to_variable = { global.MEP_Majority = 1 }
 	
 }
 
@@ -3784,17 +3785,57 @@ election_EU_Parliament_in_member_state = {
 	### MEP per subideology
 	for_each_loop = {
 		array = global.EU_parl_party_number
-		set_variable = { p_number2 = global.EU_parl_party_number^i }
+		set_variable = { p_number3 = global.EU_parl_party_number^i }
 
 		meta_effect = {
 			text = {
-				set_variable = { THIS.MEP_party_[p_n2] = party_pop_array^[p_n2] }
-				multiply_variable = { THIS.MEP_party_[p_n2] = THIS.MEP_Total }
-				round_variable = THIS.MEP_party_[p_n2]
-				add_to_variable = { global.MEP_PG_party_[p_n2] = THIS.MEP_party_[p_n2] }
-				add_to_variable = { global.MEP_Total = THIS.MEP_party_[p_n2] }
+				set_variable = { THIS.MEP_party_[p_n3] = party_pop_array^[p_n3] }
+				multiply_variable = { THIS.MEP_party_[p_n3] = THIS.MEP_Total }
+				round_variable = THIS.MEP_party_[p_n3]
+				add_to_variable = { global.MEP_PG_party_[p_n3] = THIS.MEP_party_[p_n3] }
+			#	add_to_variable = { global.MEP_Total = THIS.MEP_party_[p_n3] }
 			}
-			p_n2 = "[?p_number2]"
+			p_n3 = "[?p_number3]"
+		}
+	}
+	set_variable = { THIS.MEP_Total = 0 }
+	### MEP per subideology # Recalc for roundings
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number4 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				add_to_variable = { THIS.MEP_Total = THIS.MEP_party_[p_n4] }
+			}
+			p_n4 = "[?p_number4]"
+		}
+	}
+	# Reclamp
+	if = {
+		limit = {
+			focus_EU701_accepted = yes
+			focus_EU104_accepted = yes
+		}
+		clamp_temp_variable = { 
+			var = temp1
+			min = 8
+			max = 100
+		}
+	}
+	else_if = {
+		limit = { focus_EU104_accepted = yes }
+		clamp_temp_variable = { 
+			var = temp1
+			min = 6
+			max = 96
+		}
+	}
+	else = {
+		clamp_temp_variable = { 
+			var = temp1
+			min = 5
+			max = 99
 		}
 	}
 	
