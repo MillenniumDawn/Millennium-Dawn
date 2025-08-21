@@ -3,6 +3,7 @@ post_balkan_war_categories = {
 	get_active_in_balkans = {
 
 		visible = {
+			country_exists = KOS
 			OR = {
 				original_tag = ENG
 				original_tag = ITA
@@ -16,18 +17,22 @@ post_balkan_war_categories = {
 				original_tag = TUR
 				original_tag = DEN
 				original_tag = CAN
-				original_tag = SOV
-				has_idea = CSTO_member
 			}
 			NOT = {
-					has_country_flag = balkan_activity
-				}
+				has_country_flag = balkan_activity
+			}
 		}
 
-		cost = 50
+		cost = 250
 		icon = political_actions
 
 		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
@@ -39,175 +44,563 @@ post_balkan_war_categories = {
 		}
 	}
 
-    test = {
-
-		visible = {
-			OR = {
-				original_tag = ENG
-				original_tag = ITA
-				original_tag = GER
-				original_tag = HOL
-				original_tag = IRE
-				original_tag = SPR
-				original_tag = ROM
-				original_tag = SWE
-				original_tag = USA
-				original_tag = TUR
-				original_tag = DEN
-				original_tag = CAN
-				original_tag = SOV
-				has_idea = CSTO_member
-			}
-		}
-
-		cost = 50
-		icon = political_actions
-
-		fire_only_once = yes
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
-			set_temp_variable = { modify_balkan_Forces_status = 500 }
-			balkan_Forces_status = yes
-		}
-
-		ai_will_do = {
-			factor = 100
-		}
-	}
-
 	retreat_from_balkans = {
 
 		visible = {
+			country_exists = KOS
 			has_country_flag = balkan_activity	
 		}
 
-		cost = 50
+		available = {
+			check_variable = { balkan_Forces_status = 1000 }
+		}
+
+		cost = 250
 		icon = political_actions
 
 		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
 			clr_country_flag = balkan_activity
-			if = {
-				limit = { ROOT = { has_military_access_to = ALB } }
-				ROOT = {
-					diplomatic_relation = {
-						country = ALB
-						relation = military_access
-						active = no
+			clr_country_flag = balkan_major
+			clear_variable = balkan_Forces_status
+			add_manpower = 1000
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	increase_deployment = {
+
+		visible = {
+			country_exists = KOS
+			has_country_flag = balkan_activity
+			has_country_flag = balkan_major
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KFOR_units_TT
+				KOS = {
+					NOT = {
+						check_variable = { balkan_Forces_status > 44999 }
 					}
 				}
 			}
-			if = {
-				limit = { ALB = { is_guaranteed_by = ROOT } }
-				ROOT = {
-					diplomatic_relation = {
-						country = ALB
-						relation = guarantee
-						active = no
-					}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					#has_decision = increase_deployment
+					has_decision = decrease_deployment
+					has_decision = guarantee_country
+					has_decision = western_influence
+					has_decision = increase_deployment_small
+					has_decision = decrease_deployment_small
+					has_decision = welcome_refugees
+					has_decision = start_rebuild
 				}
 			}
-			if = {
-				limit = { ROOT = { has_military_access_to = BOS } }
-				ROOT = {
-					diplomatic_relation = {
-						country = BOS
-						relation = military_access
-						active = no
-					}
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			ROOT = {
+				set_temp_variable = { modify_balkan_Forces_status = 1000 }
+				balkan_Forces_status = yes
+				add_manpower = -1000
+			}
+			hidden_effect = {
+				KOS = {
+					set_temp_variable = { modify_balkan_Forces_status = 1000 }
+					balkan_Forces_status = yes
 				}
 			}
-			if = {
-				limit = { BOS = { is_guaranteed_by = ROOT } }
+			
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	decrease_deployment = {
+
+		visible = {
+			country_exists = KOS
+			has_country_flag = balkan_activity
+			has_country_flag = balkan_major
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KFOR_units2_TT
 				ROOT = {
-					diplomatic_relation = {
-						country = BOS
-						relation = guarantee
-						active = no
-					}
+					check_variable = { balkan_Forces_status > 999 }
 				}
 			}
-			if = {
-				limit = { ROOT = { has_military_access_to = KOS } }
-				ROOT = {
-					diplomatic_relation = {
-						country = KOS
-						relation = military_access
-						active = no
-					}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = increase_deployment
+					#has_decision = decrease_deployment
+					has_decision = guarantee_country
+					has_decision = western_influence
+					has_decision = increase_deployment_small
+					has_decision = decrease_deployment_small
+					has_decision = welcome_refugees
+					has_decision = start_rebuild
 				}
 			}
-			if = {
-				limit = { KOS = { is_guaranteed_by = ROOT } }
-				ROOT = {
-					diplomatic_relation = {
-						country = KOS
-						relation = guarantee
-						active = no
-					}
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			ROOT = {
+				set_temp_variable = { modify_balkan_Forces_status = -1000 }
+				balkan_Forces_status = yes
+				add_manpower = 1000
+			}
+			hidden_effect = {
+				KOS = {
+					set_temp_variable = { modify_balkan_Forces_status = -1000 }
+					balkan_Forces_status = yes
 				}
 			}
-			if = {
-				limit = { ROOT = { has_military_access_to = CRO } }
-				ROOT = {
-					diplomatic_relation = {
-						country = CRO
-						relation = military_access
-						active = no
-					}
+			
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	guarantee_country = {
+
+		visible = {
+			country_exists = KOS
+			any_country = {
+				has_country_flag = balkan_activity
+				has_country_flag = balkan_major
+			}
+		}
+
+		available = {
+			any_other_country = {
+				OR = {
+					is_justifying_wargoal_against = KOS
+					has_wargoal_against = KOS
+					has_war_with = KOS
 				}
 			}
-			if = {
-				limit = { CRO = { is_guaranteed_by = ROOT } }
-				ROOT = {
-					diplomatic_relation = {
-						country = CRO
-						relation = guarantee
-						active = no
-					}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = increase_deployment
+					has_decision = decrease_deployment
+					#has_decision = guarantee_country
+					has_decision = western_influence
+					has_decision = increase_deployment_small
+					has_decision = decrease_deployment_small
+					has_decision = welcome_refugees
+					has_decision = start_rebuild
 				}
 			}
-			if = {
-				limit = { ROOT = { has_military_access_to = FYR } }
-				ROOT = {
-					diplomatic_relation = {
-						country = FYR
-						relation = military_access
-						active = no
-					}
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			give_guarantee = KOS
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	
+	western_influence = {
+
+		visible = {
+			country_exists = KOS
+			has_country_flag = balkan_activity
+			has_country_flag = balkan_major
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = increase_deployment
+					has_decision = decrease_deployment
+					has_decision = guarantee_country
+					#has_decision = western_influence
+					has_decision = increase_deployment_small
+					has_decision = decrease_deployment_small
+					has_decision = welcome_refugees
+					has_decision = start_rebuild
 				}
 			}
-			if = {
-				limit = { FYR = { is_guaranteed_by = ROOT } }
-				ROOT = {
-					diplomatic_relation = {
-						country = FYR
-						relation = guarantee
-						active = no
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			KOS = {
+				set_temp_variable = { percent_change = 2 }
+				change_domestic_influence_percentage = yes
+				if = {
+					limit = {
+						check_variable = {
+						KOS_albania > 0.2
+						}
 					}
+					custom_effect_tooltip = KOS_clamp_unity
+					add_to_variable = { var = KOS_albania value = -0.02 }
+				}
+				if = {
+					limit = {
+						check_variable = {
+						KOS_serbs > 0.2
+						}
+					}
+					custom_effect_tooltip = KOS_serb_opinion
+					add_to_variable = { var = KOS_serbs value = -0.02 }
 				}
 			}
-			if = {
-				limit = { ROOT = { has_military_access_to = SER } }
-				ROOT = {
-					diplomatic_relation = {
-						country = SER
-						relation = military_access
-						active = no
+			ROOT = {
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = ROOT }
+				set_temp_variable = { influence_target = KOS }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	
+	increase_deployment_small = {
+
+		visible = {
+			country_exists = KOS
+			has_country_flag = balkan_activity
+			NOT = {
+				has_country_flag = balkan_major
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KFOR_units3_TT
+				KOS = {
+					NOT = {
+						check_variable = { balkan_Forces_status > 44999 }
 					}
 				}
-			}
-			if = {
-				limit = { SER = { is_guaranteed_by = ROOT } }
 				ROOT = {
-					diplomatic_relation = {
-						country = SER
-						relation = guarantee
-						active = no
+					check_variable = { balkan_Forces_status < 1500 }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = increase_deployment
+					has_decision = decrease_deployment
+					has_decision = guarantee_country
+					has_decision = western_influence
+					#has_decision = increase_deployment_small
+					has_decision = decrease_deployment_small
+					has_decision = welcome_refugees
+					has_decision = start_rebuild
+				}
+			}
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			ROOT = {
+				set_temp_variable = { modify_balkan_Forces_status = 500 }
+				balkan_Forces_status = yes
+				add_manpower = -500
+				if = {
+					Limit = {
+						check_variable = { balkan_Forces_status = 500 }
 					}
+					set_country_flag = balkan_activity_1
+					clr_country_flag = balkan_activity_2
+					clr_country_flag = balkan_activity_3
+				}
+				if = {
+					Limit = {
+						check_variable = { balkan_Forces_status = 1000 }
+					}
+					clr_country_flag = balkan_activity_1
+					set_country_flag = balkan_activity_2
+					clr_country_flag = balkan_activity_3
+				}
+				if = {
+					Limit = {
+						check_variable = { balkan_Forces_status = 1500 }
+					}
+					clr_country_flag = balkan_activity_1
+					clr_country_flag = balkan_activity_2
+					set_country_flag = balkan_activity_3
+				}
+			}
+			hidden_effect = {
+				KOS = {
+					set_temp_variable = { modify_balkan_Forces_status = 500 }
+					balkan_Forces_status = yes
+				}
+			}
+			
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	decrease_deployment_small = {
+
+		visible = {
+			country_exists = KOS
+			has_country_flag = balkan_activity
+			NOT = {
+				has_country_flag = balkan_major
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = KFOR_units2_TT
+				ROOT = {
+					check_variable = { balkan_Forces_status > 1500 }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = increase_deployment
+					has_decision = decrease_deployment
+					has_decision = guarantee_country
+					has_decision = western_influence
+					has_decision = increase_deployment_small
+					#has_decision = decrease_deployment_small
+					has_decision = welcome_refugees
+					has_decision = start_rebuild
+				}
+			}
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			ROOT = {
+				set_temp_variable = { modify_balkan_Forces_status = -500 }
+				balkan_Forces_status = yes
+				add_manpower = 500
+			}
+			hidden_effect = {
+				KOS = {
+					set_temp_variable = { modify_balkan_Forces_status = -500 }
+					balkan_Forces_status = yes
+				}
+			}
+			
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	welcome_refugees = {
+
+		visible = {
+			country_exists = KOS
+			has_country_flag = balkan_activity	
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = increase_deployment
+					has_decision = decrease_deployment
+					has_decision = guarantee_country
+					has_decision = western_influence
+					has_decision = increase_deployment_small
+					has_decision = decrease_deployment_small
+					#has_decision = welcome_refugees
+					has_decision = start_rebuild
+				}
+			}
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			random_owned_state = {
+				add_manpower = 1000
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	start_rebuild = {
+
+		visible = {
+			country_exists = KOS
+			has_country_flag = balkan_activity	
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = increase_deployment
+					has_decision = decrease_deployment
+					has_decision = guarantee_country
+					has_decision = western_influence
+					has_decision = increase_deployment_small
+					has_decision = decrease_deployment_small
+					has_decision = welcome_refugees
+					#has_decision = start_rebuild
+				}
+			}
+		}
+
+		days_remove = 120
+
+		days_re_enable = 250
+		icon = political_actions
+
+		fire_only_once = yes
+
+		highlight_states = {
+			highlight_state_targets = {
+				state = 113
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision infiltrate_hezbollah"
+			random_list = {
+				20 = {
+
+				}
+				20 = {
+					
+				}
+				20 = {
+					
+				}
+				20 = {
+					
+				}
+				20 = {
+					
 				}
 			}
 		}
@@ -216,4 +609,5 @@ post_balkan_war_categories = {
 			factor = 100
 		}
 	}
+
 }
