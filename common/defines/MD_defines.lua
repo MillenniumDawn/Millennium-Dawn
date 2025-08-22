@@ -145,7 +145,7 @@
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
 	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 60 -- 30
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 45 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -874,7 +874,7 @@
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 25
-	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 5.0
+	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 2.5 -- Reduced from 5 to 2.5/originally was 10 but caused issues with the AI being unable to use their planes on missions
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
 
 	NDefines.NAI.TRADEABLE_FACTORIES_FRACTION = 0.80 -- Updated from 0.80

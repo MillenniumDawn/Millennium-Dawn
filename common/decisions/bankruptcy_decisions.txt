@@ -7,6 +7,15 @@ bankruptcy_decisions = {
 
 	bankruptcy_cheap_loans_from_imf = {
 		icon = GFX_decision_bancru_imf_button
+
+		cost = 50
+
+		visible = {
+			NOT = {
+				has_active_mission = cheap_loan_from_the_imf_mission
+				has_country_flag = paused_debt_repayment
+			}
+		}
 		available = {
 			is_full_state = yes
 			has_added_tension_amount < 5
@@ -23,29 +32,19 @@ bankruptcy_decisions = {
 				tooltip = interest_rate_lower_than_15
 				check_variable = { interest_rate < 15 }
 			}
+			custom_trigger_tooltip = {
+				tooltip = potential_expenses_higher_than_potential_income_tt
+				check_variable = { potential_expense > potential_income }
+			}
 		}
 
-		modifier = {
-			interest_rate_multiplier_modifier = -2
-		}
-
-		days_remove = 360
-
-		days_re_enable = 180
+		days_re_enable = 365
 
 		complete_effect = {
-			if = { limit = { is_ai = yes }
-				add_political_power = -50
-			}
-			else = {
-				add_political_power = -100
-			}
-			set_temp_variable = { debt_addition = debt }
-			multiply_temp_variable = { debt_addition = 0.05 }
-			round_temp_variable = debt_addition
-			add_to_variable = { debt = debt_addition }
 			custom_effect_tooltip = cheap_loans_from_imf_tt
 			ingame_update_setup = yes
+
+			activate_mission = cheap_loan_from_the_imf_mission
 		}
 
 		ai_will_do = {
@@ -217,7 +216,7 @@ bankruptcy_decisions = {
 			set_variable = { debt_bailout = debt_bailout_temp }
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_second_biggest_influencer_tt
-			var:FROM.influence_array^1 = { country_event = { id = bankruptcy.2 hours = 3  } }
+			var:FROM.influence_array^1 = { country_event = { id = bankruptcy.2 hours = 3 } }
 		}
 
 		ai_will_do = {
@@ -283,7 +282,7 @@ bankruptcy_decisions = {
 			set_variable = { debt_bailout = debt_bailout_temp }
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_neighbour_tt
-			FROM = { country_event = { id = bankruptcy.3 hours = 3  } }
+			FROM = { country_event = { id = bankruptcy.3 hours = 3 } }
 		}
 
 		ai_will_do = {
@@ -331,7 +330,7 @@ bankruptcy_decisions = {
 			set_variable = { debt_bailout = debt_bailout_temp }
 			round_variable = debt_bailout
 			custom_effect_tooltip = bankruptcy_seek_bailout_from_overlord_tt
-			overlord = { country_event = { id = bankruptcy.5 hours = 3  } }
+			overlord = { country_event = { id = bankruptcy.5 hours = 3 } }
 		}
 		ai_will_do = {
 			factor = 800
@@ -942,6 +941,114 @@ bankruptcy_decisions = {
 					has_war = yes
 				}
 			}
+		}
+	}
+
+	cheap_loan_from_the_imf_mission = {
+		icon = GFX_decision_bancru_collapse_button
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = potential_expenses_are_less_than_potential_income_tt
+				check_variable = { potential_expense < potential_income }
+			}
+		}
+
+		activation = {
+			always = no
+		}
+
+		is_good = no
+
+		days_mission_timeout = 365
+
+		timeout_effect = {
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
+			add_relative_party_popularity = yes
+			random_owned_state = {
+				limit = {
+					OR = {
+						industrial_complex > 1
+						arms_factory > 1
+						offices > 1
+					}
+				}
+				random_list = {
+					33 = {
+						modifier = {
+							factor = 0
+							industrial_complex < 1
+						}
+						remove_building = {
+							type = industrial_complex
+							level = 1
+						}
+					}
+					33 = {
+						modifier = {
+							factor = 0
+							arms_factory < 1
+						}
+						remove_building = {
+							type = arms_factory
+							level = 1
+						}
+					}
+					33 = {
+						modifier = {
+							factor = 0
+							offices < 1
+						}
+						remove_building = {
+							type = offices
+							level = 1
+						}
+					}
+				}
+			}
+
+			activate_mission = cheap_loan_from_the_imf_mission
+
+			if = { limit = { has_idea = IMF_failed_to_balance_budget }
+				hidden_effect = {
+					remove_ideas = IMF_failed_to_balance_budget
+				}
+				add_timed_idea = {
+					idea = IMF_failed_to_balance_budget_1
+					days = 365
+				}
+			}
+			else_if = { limit = { has_idea = IMF_failed_to_balance_budget_1 }
+				hidden_effect = {
+					remove_ideas = IMF_failed_to_balance_budget_1
+				}
+				add_timed_idea = {
+					idea = IMF_failed_to_balance_budget_2
+					days = 365
+				}
+			}
+			else_if = {
+				limit = { has_idea = IMF_failed_to_balance_budget_2 }
+				modify_timed_idea = {
+					idea = IMF_failed_to_balance_budget_2
+					days = 365
+				}
+			}
+			else = {
+				add_timed_idea = {
+					idea = IMF_failed_to_balance_budget
+					days = 365
+				}
+			}
+		}
+
+		complete_effect = {
+			add_political_power = 150
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 		}
 	}
 }
