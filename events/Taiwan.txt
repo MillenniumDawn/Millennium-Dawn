@@ -69,16 +69,41 @@ country_event = {
 	trigger = {
 		tag = TAI
 		date > 2000.1.1
-		date < 2001.1.1
+		date < 2000.1.18
+		has_country_leader = {
+				name = "Lee Teng-hui"
+				ruling_only = yes
+			}
 	}
 
 	option = {
 		name = taiwan.3.a
+		ai_chance = {
+			base = 90
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 100
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: taiwan.3.a executed"
 		set_politics = {
 			ruling_party = democratic
 			elections_allowed = yes
 		}
+		add_to_variable = { liberalism_leader = 1 }
+		hidden_effect = { kill_country_leader = yes }
+		create_country_leader = {
+				name = "Chen Shui-bian"
+				picture = "Chen_Shui-bian.dds"
+				ideology = liberalism
+				expire = "2008.5.20"
+				traits = {
+					western_liberalism
+					rash
+					pro_american
+					pro_independence_taiwan
+				}
+			}
 	}
 	option = {
 		name = taiwan.3.b
@@ -538,20 +563,20 @@ country_event = {
 
 	option = {
 		name = taiwan.13.a
-		log = "[GetDateText]: [This.GetName]: taiwan.13.a executed"
 		add_political_power = -50
 		ai_chance = {
 			base = 10
 		}
+		log = "[GetDateText]: [This.GetName]: taiwan.13.a executed"
 	}
-	option = {
-		name = taiwan.13.b
-		log = "[GetDateText]: [This.GetName]: taiwan.13.b executed"
+  option = {
+	name = taiwan.13.b
 		random_list = {
 			30 = { country_event = { days = 1 id = taiwan.14 } }
 			70 = { country_event = { days = 1 id = taiwan.15 } }
 		}
-	}
+	log = "[GetDateText]: [This.GetName]: taiwan.13.b executed"
+  }
 }
 
 # Taoyuan Flight Attendants Union strike - sucessful
@@ -615,10 +640,6 @@ country_event = {
 	picture = GFX_CHI_beijing
 	is_triggered_only = yes
 	fire_only_once = yes
-	trigger = {
-		original_tag = TAI
-	}
-
 	option = {
 		name = taiwan.17.a
 		log = "[GetDateText]: [This.GetName]: taiwan.17.a executed"
@@ -650,10 +671,379 @@ country_event = {
 	option = {
 		name = taiwan.17.d1
 		log = "[GetDateText]: [This.GetName]: taiwan.17.d1 executed"
+
 	}
 }
 
+# Taiwan Democratic Uprising
+country_event = {
+	id = taiwan.18
+	title = taiwan.18.t
+	desc = taiwan.18.d
+	picture = GFX_internal_conflict
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = taiwan.18.a
+		TAI = {
+		start_civil_war = {
+		ruling_party = nationalist
+		ideology = var:current_party_ideology_group
+		size = 0.8
+		capital = 598
+		states = { 
+	  598 599 430 1109
+	}
+	} }
+	log = "[GetDateText]: [This.GetName]: taiwan.18.a executed"
+	}
+}
 
+# ROC recover mainland
+country_event = {
+	id = taiwan.19
+	title = taiwan.19.t
+	desc = taiwan.19.d
+	picture = GFX_TAI_roc
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+	
+	option = {
+		name = taiwan.19.a
+		swap_ideas = {
+		remove_idea = partially_recognized_state	
+		add_idea = p5_member }
+		set_country_flag = TAI_roc_recover_mainland
+		log = "[GetDateText]: [This.GetName]: taiwan.19.a executed"
+		}
+}
+
+# Taiwan back to china
+country_event = {
+	id = taiwan.20
+	title = taiwan.20.t
+	desc = taiwan.20.d
+	picture = GFX_CHI_generic
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = taiwan.20.a
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 100
+				TAI = {
+					has_opinion = {
+						target = CHI
+						value < 74
+					}
+				}
+			}
+		}
+		CHI = { 
+			complete_national_focus = CHI_Establish_Taiwan_SAR
+			}
+		log = "[GetDateText]: [This.GetName]: taiwan.20.a executed"
+		}
+	option = {		
+		name = taiwan.20.b
+		ai_chance = {
+			base = 0
+		}
+		CHI = { annex_country = {
+		 target = TAI
+			transfer_troops = yes
+			}
+			complete_national_focus = CHI_End_of_ROC
+			change_tag_from = ROOT 
+		}
+		log = "[GetDateText]: [This.GetName]: taiwan.20.b executed"
+	}
+	option = {		
+		name = taiwan.20.c
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 100
+				MON = {
+					has_opinion = {
+						target = CHI
+						value > 74
+					}
+				}
+			}
+		}
+		CHI = { annex_country = {
+		 target = TAI
+			transfer_troops = yes
+			}
+			complete_national_focus = CHI_End_of_ROC
+		}
+		log = "[GetDateText]: [This.GetName]: taiwan.20.b executed"
+	}
+}
+
+# US Navy Seven Fleet Cross Taiwan Strait
+country_event = {
+	id = taiwan.21
+	title = taiwan.21.t
+	desc = taiwan.21.d
+	picture = GFX_usn_seven_fleet
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+	
+	option = {
+		name = taiwan.21.a
+		add_stability = 0.05
+		hidden_effect = {
+		CHI = { country_event = china.61 } }
+		log = "[GetDateText]: [This.GetName]: taiwan.21.a executed"
+	}
+}
+
+# Allow gay marriages
+country_event = {
+	id = taiwan.22
+	title = taiwan.22.t
+	desc = taiwan.22.d
+	picture = GFX_TAI_gay_pride
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = taiwan.22.a
+		add_ideas = TAI_gay_marriage
+		add_political_power = -25
+		log = "[GetDateText]: [This.GetName]: taiwan.22.a executed"
+	}
+}
+
+# USA Claim Taiwan Strait Policy 
+country_event = {
+	id = taiwan.23
+	title = taiwan.23.t
+	desc = taiwan.23.d
+	picture = GFX_USA_generic
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+	
+	option = {
+		name = taiwan.23.a
+		add_war_support = 0.1
+		set_global_flag = usa_intervene_taiwan
+		log = "[GetDateText]: [This.GetName]: taiwan.23.a executed"
+	}
+
+}
+
+#puppet Philippine demand
+country_event = {
+	id = taiwan.24
+	title = taiwan.24.t
+	desc = taiwan.24.d
+	picture = GFX_TAI_roc
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = { #Yes
+		name = taiwan.24.a
+		log = "[GetDateText]: [This.GetName]: taiwan.24.a executed"
+		TAI = { puppet = PHI }
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 80
+				TAI = { num_divisions > 60 }
+			}
+		}
+	}
+	option = { #No
+		name = taiwan.24.b
+		log = "[GetDateText]: [This.GetName]: taiwan.24.b executed"
+		TAI = { create_wargoal = {
+				target = PHI
+				type = puppet_wargoal_focus
+				}
+			}
+		ai_chance = {
+			base = 75
+		}
+	}
+}
+
+#puppet Malaysia demand
+country_event = {
+	id = taiwan.25
+	title = taiwan.25.t
+	desc = taiwan.25.d
+	picture = GFX_TAI_roc
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = { #Yes
+		name = taiwan.25.a
+		log = "[GetDateText]: [This.GetName]: taiwan.25.a executed"
+		TAI = { puppet = MAY }
+		TAI = { puppet = BRU }
+		TAI = { puppet = SIN }
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 80
+				TAI = { num_divisions > 60 }
+			}
+		}
+	}
+	option = { #No
+		name = taiwan.25.b
+		log = "[GetDateText]: [This.GetName]: taiwan.25.b executed"
+		TAI = { create_wargoal = {
+				target = MAY
+				type = puppet_wargoal_focus
+				}
+			}
+		TAI = { create_wargoal = {
+				target = BRU
+				type = puppet_wargoal_focus
+				}
+			}
+		TAI = { create_wargoal = {
+				target = SIN
+				type = puppet_wargoal_focus
+				}
+			}
+		ai_chance = {
+			base = 75
+		}
+	}
+}
+
+#puppet Vietnam demand
+country_event = {
+	id = taiwan.26
+	title = taiwan.26.t
+	desc = taiwan.26.d
+	picture = GFX_TAI_roc
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = { #Yes
+		name = taiwan.26.a
+		log = "[GetDateText]: [This.GetName]: taiwan.26.a executed"
+		TAI = { puppet = VIE }
+		TAI = { puppet = LAO }
+		TAI = { puppet = CBD }
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 80
+				TAI = { num_divisions > 60 }
+			}
+		}
+	}
+	option = { #No
+		name = taiwan.26.b
+		log = "[GetDateText]: [This.GetName]: taiwan.26.b executed"
+		TAI = { create_wargoal = {
+				target = VIE
+				type = puppet_wargoal_focus
+				}
+			}
+		TAI = { create_wargoal = {
+				target = LAO
+				type = puppet_wargoal_focus
+				}
+			}
+		TAI = { create_wargoal = {
+				target = CBD
+				type = puppet_wargoal_focus
+				}
+			}
+		ai_chance = {
+			base = 75
+		}
+	}
+}
+
+#puppet Thailand demand
+country_event = {
+	id = taiwan.27
+	title = taiwan.27.t
+	desc = taiwan.27.d
+	picture = GFX_TAI_roc
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = { #Yes
+		name = taiwan.27.a
+		log = "[GetDateText]: [This.GetName]: taiwan.27.a executed"
+		TAI = { puppet = SIA }
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 80
+				TAI = { num_divisions > 60 }
+			}
+		}
+	}
+	option = { #No
+		name = taiwan.27.b
+		log = "[GetDateText]: [This.GetName]: taiwan.27.b executed"
+		TAI = { create_wargoal = {
+				target = SIA
+				type = puppet_wargoal_focus
+				}
+			}
+		ai_chance = {
+			base = 75
+		}
+	}
+}
+
+#puppet Indonesia demand
+country_event = {
+	id = taiwan.28
+	title = taiwan.28.t
+	desc = taiwan.28.d
+	picture = GFX_TAI_roc
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = { #Yes
+		name = taiwan.28.a
+		log = "[GetDateText]: [This.GetName]: taiwan.28.a executed"
+		TAI = { puppet = IND }
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 80
+				TAI = { num_divisions > 60 }
+			}
+		}
+	}
+	option = { #No
+		name = taiwan.28.b
+		log = "[GetDateText]: [This.GetName]: taiwan.28.b executed"
+		TAI = { create_wargoal = {
+				target = IND
+				type = puppet_wargoal_focus
+				}
+			}
+		ai_chance = {
+			base = 75
+		}
+	}
+}
 ###Taiwan regular news events
 
 #CSSTA passed
@@ -667,7 +1057,7 @@ news_event = {
 	fire_only_once = yes
 
 	is_triggered_only = yes
-
+	
 	major = yes
 
 	option = {
@@ -687,7 +1077,7 @@ news_event = {
 	fire_only_once = yes
 
 	is_triggered_only = yes
-
+	
 	major = yes
 
 	option = {
@@ -705,7 +1095,7 @@ news_event = {
 	picture = GFX_news_generic_soldiers
 
 	is_triggered_only = yes
-
+	
 	major = yes
 
 	option = {
@@ -729,7 +1119,7 @@ news_event = {
 	picture = GFX_news_generic_soldiers
 
 	is_triggered_only = yes
-
+	
 	major = yes
 
 	option = {
@@ -747,7 +1137,7 @@ news_event = {
 	picture = GFX_news_generic_soldiers
 
 	is_triggered_only = yes
-
+	
 	major = yes
 
 	option = {
@@ -772,7 +1162,7 @@ news_event = {
 	picture = GFX_news_crime_fighting
 
 	is_triggered_only = yes
-
+	
 	major = yes
 
 	option = {
