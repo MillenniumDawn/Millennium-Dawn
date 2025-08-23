@@ -8,14 +8,6 @@ is_available_to_collaboration_government = { # occupied_countries.1 should be up
 	}
 }
 
-countries_with_custom_ship_companies = {
-	original_tag = AST
-}
-
-countries_with_naval_manufacturer = {
-	original_tag = AST
-}
-
 no_building_slots = {
 	custom_trigger_tooltip = {
 		tooltip = TT_NO_BUILDING_SLOTS
@@ -121,38 +113,10 @@ max_1_building_slots = {
 }
 
 # Actively Signed Trade Agreements
-has_more_than_one_trade_agreement = {
+has_more_than_num_trade_agreement = {
 	custom_trigger_tooltip = {
 		tooltip = more_than_1_signed_trade_agreement
-		check_variable = { signed_trade_agreements > 0  }
-	}
-}
-
-has_more_than_two_trade_agreement = {
-	custom_trigger_tooltip = {
-		tooltip = more_than_1_signed_trade_agreement
-		check_variable = { signed_trade_agreements > 1  }
-	}
-}
-
-has_more_than_three_trade_agreement = {
-	custom_trigger_tooltip = {
-		tooltip = more_than_1_signed_trade_agreement
-		check_variable = { signed_trade_agreements > 2  }
-	}
-}
-
-has_more_than_four_trade_agreement = {
-	custom_trigger_tooltip = {
-		tooltip = more_than_1_signed_trade_agreement
-		check_variable = { signed_trade_agreements > 3  }
-	}
-}
-
-has_more_than_five_trade_agreement = {
-	custom_trigger_tooltip = {
-		tooltip = more_than_5_signed_trade_agreement
-		check_variable = { signed_trade_agreements > 4  }
+		check_variable = { signed_trade_agreements > num_agreement }
 	}
 }
 
@@ -175,25 +139,316 @@ has_at_least_regional_power_status = {
 			has_idea = superpower
 		}
 	}
-}
 
+}
 has_at_least_major_power_status = {
 	custom_trigger_tooltip = {
 		tooltip = has_at_least_major_power_status_tt
 		OR = {
 			has_idea = large_power
-			has_idea = great_power
 			has_idea = superpower
-		}
+			has_idea = great_power
 	}
+		}
 }
 
 has_at_least_great_power_status = {
 	custom_trigger_tooltip = {
 		tooltip = has_at_least_great_power_status_tt
 		OR = {
-			has_idea = great_power
 			has_idea = superpower
+			has_idea = great_power
+		}
+	}
+}
+
+#State scope
+is_controlled_by_ROOT_or_subject = {
+	custom_trigger_tooltip = {
+		tooltip = is_controlled_by_ROOT_or_subject
+		CONTROLLER = {
+			OR = {
+				tag = ROOT
+				is_subject_of = ROOT
+			}
+		}
+	}
+}
+
+is_not_controlled_by_ROOT_or_subject = {
+	custom_trigger_tooltip = {
+		tooltip = is_not_controlled_by_ROOT_or_subject
+		CONTROLLER = {
+			NOT = {
+				OR = {
+					tag = ROOT
+					is_subject_of = ROOT
+				}
+			}
+		}
+	}
+}
+
+#Country scope
+is_free_or_subject_of_root = {
+	OR = {
+		is_subject = no
+		is_subject_of = ROOT
+	}
+}
+
+#State scope
+is_controlled_by_ROOT_or_ally = {
+	custom_trigger_tooltip = {
+		tooltip = is_controlled_by_ROOT_or_ally
+		CONTROLLER = {
+			OR = {
+				tag = ROOT
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+		}
+	}
+}
+
+has_large_ally_not_pick_closed_economy = {
+	any_of_scopes = {
+		array = faction_members
+
+		NOT = { tag = PREV }
+		num_of_military_factories > 30
+	}
+}
+
+owns_or_subject_of = {
+	custom_trigger_tooltip = {
+		tooltip = owns_or_subject_of_tt
+		owner = {
+			OR = {
+				tag = ROOT
+				is_subject_of = ROOT
+			}
+		}
+	}
+}
+
+controls_or_subject_of = {
+	custom_trigger_tooltip = {
+		tooltip = controls_or_subject_of_tt
+		controller = {
+			OR = {
+				tag = ROOT
+				is_subject_of = ROOT
+			}
+		}
+	}
+}
+
+has_same_ideology = {
+	custom_trigger_tooltip = {
+		tooltip = has_same_ideology_tt
+		OR = {
+			AND = {
+				has_government = democratic
+				ROOT = { has_government = democratic }
+			}
+			AND = {
+				has_government = fascism
+				ROOT = { has_government = fascism }
+			}
+			AND = {
+				has_government = communism
+				ROOT = { has_government = communism }
+			}
+			AND = {
+				has_government = neutrality
+				ROOT = { has_government = neutrality }
+			}
+		}
+	}
+}
+
+is_major_not_original_tag_root = {
+	is_major = yes
+	hidden_trigger = {
+		NOT = { original_tag = ROOT }
+	}
+}
+
+has_war_with_non_exiled_country = {
+	custom_trigger_tooltip = {
+		tooltip = has_war_with_non_exiled_country_tt
+		has_war = yes
+		any_enemy_country = {
+			is_government_in_exile = no
+		}
+	}
+
+}
+
+is_at_peace_exiled_countries_excluded = {
+	custom_trigger_tooltip = {
+		tooltip = is_at_peace_exiled_countries_excluded_tt
+		NOT = {
+			any_enemy_country = {
+				is_government_in_exile = no
+			}
+		}
+	}
+}
+
+#State scope
+state_is_fully_controlled_by_ROOT_or_subject = {
+	custom_trigger_tooltip = {
+		tooltip = state_is_fully_controlled_by_ROOT_or_subject_tt
+		OR = {
+			is_fully_controlled_by = ROOT
+			controller = {
+				is_subject_of = ROOT
+				has_full_control_of_state = PREV
+			}
+		}
+	}
+}
+
+#State scope
+state_is_fully_controlled_by_ROOT_subject_or_faction_member = {
+	custom_trigger_tooltip = {
+		tooltip = state_is_fully_controlled_by_ROOT_subject_or_faction_member_tt
+		OR = {
+			is_fully_controlled_by = ROOT
+			controller = {
+				OR = {
+					is_subject_of = ROOT
+					is_in_faction_with = ROOT
+				}
+				has_full_control_of_state = PREV
+			}
+		}
+	}
+}
+
+can_ROOT_get_wargoal_on_THIS = {
+	exists = yes
+	NOT = { is_in_faction_with = ROOT }
+	NOT = { is_subject_of = ROOT }
+}
+
+is_border_conflict_defender_vs_FROM = {
+	has_variable = ROOT.defender_state_vs_@FROM
+}
+
+has_not_initiated_border_incident_with_FROM = {
+	custom_trigger_tooltip = {
+		tooltip = not_initiated_border_incident_with_FROM
+		NOT = {
+			any_state = {
+				check_variable = { FROM.defender_state_vs_@PREV = id }
+			}
+		}
+	}
+}
+
+has_not_initiated_border_incident_with_ROOT = {
+	custom_trigger_tooltip = {
+		tooltip = not_initiated_border_incident_with_ROOT
+		NOT = {
+			any_state = {
+				check_variable = { ROOT.defender_state_vs_@PREV = id }
+			}
+		}
+	}
+}
+
+#State scope
+has_ROOT_at_least_1_div_in_current_state_scope = {
+	custom_trigger_tooltip = {
+		tooltip = at_least_one_division_in_state
+		ROOT = { divisions_in_state = { state = PREV size > 0 } }
+	}
+}
+
+has_specialist_level_trigger = {
+	skill > 5
+	skill < 6
+}
+
+has_expert_level_trigger = {
+	skill > 6
+	skill < 7
+}
+
+has_genius_level_trigger = {
+	skill > 7
+}
+
+state_has_any_resource = {
+	OR = {
+		has_resources_amount = {
+			resource = oil
+			amount > 0
+		}
+		has_resources_amount = {
+			resource = aluminium
+			amount > 0
+		}
+		has_resources_amount = {
+			resource = rubber
+			amount > 0
+		}
+		has_resources_amount = {
+			resource = tungsten
+			amount > 0
+		}
+		has_resources_amount = {
+			resource = steel
+			amount > 0
+		}
+		has_resources_amount = {
+			resource = chromium
+			amount > 0
+		}
+	}
+}
+
+#Expected scopes: Target country is THIS, country getting wargoal is PREV
+country_can_be_reasonable_target_of_wargoal = {
+	NOT = {
+		has_war_with = ROOT
+		is_in_faction_with = PREV
+		has_guaranteed = PREV
+		is_guaranteed_by = PREV
+		has_non_aggression_pact_with = PREV
+		is_subject_of = PREV
+	}
+}
+
+# Effect: calculate_ai_interest
+# Purpose: Calculate the interest rate for the AI once they accept whatever cost they are given
+# Expected scopes: Country is THIS
+# Inputs:
+# - input_cost: The additional cost to incur
+# - interest_rate_check: The interest rate to check against
+calculate_ai_interest = {
+	# Even if the country has treasury, we want to add the input cost to the debt to ensure we are getting the right end interest rate
+	set_temp_variable = { debt_temp = debt }
+	add_to_temp_variable = { debt_temp = input_cost }
+
+	set_temp_variable = { interest_rate_temp = debt_temp }
+	divide_temp_variable = { interest_rate_temp = gdp_total }
+	multiply_temp_variable = { interest_rate_temp = 10 }
+
+	set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
+	add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
+	check_variable = { interest_rate_temp > interest_rate_check }
+}
+Is_Muslim_Country = {
+	ROOT = {
+		OR = {
+			has_idea = sunni
+			has_idea = shia
+			has_idea = ibadi
+			has_idea = sufi_islam
 		}
 	}
 }

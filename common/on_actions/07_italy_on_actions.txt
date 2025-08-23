@@ -47,6 +47,7 @@ on_actions = {
 				limit = {
 					has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
 				}
+				reform_expectance_from_situation = yes
 				add_to_variable = { ruling_subparty_drift_store = drift_switch_var_base }
 			}
 			if = {
@@ -107,11 +108,11 @@ on_actions = {
 			recalculate_party = yes
 			if = { #infiltrations_var increase state construction time
 				limit = { has_idea = ITA_mafia }
-					update_police_effectivness = yes
+					update_police_effectiveness = yes
 					mafia_event_counters = yes
 					pizzo_decisions_effect = yes
 					multiply_variable = { lega_weekly_drift_store = party_popularity@neutrality }
-					multiply_variable = { lega_weekly_drift_store = 0.07 }
+					multiply_variable = { lega_weekly_drift_store = 0.035 } #halved for balanced
 					add_to_variable = { party_pop_array^14 = lega_weekly_drift_store }
 					set_variable = { lega_weekly_drift_store = 0 }
 					83 = {
@@ -198,10 +199,58 @@ on_actions = {
 				}
 				lsp_popularity_effect = yes
 			}
+
+			# Mafia Sabotages
+			if = {
+				limit = {
+					NOT = { has_country_flag = ITA_mafia_sabotages_1 }
+					has_country_flag = ITA_attacked_hideouts
+					any_owned_state = {
+						industrial_complex > 0
+					}
+					any_owned_state = {
+						infrastructure > 0
+					}
+				}
+				random_list = {
+					50 = {
+						country_event = { id = italy_md.28 days = 3 random_days = 3 }
+					}
+					50 = { }
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = ITA_mafia_sabotages_2 }
+					has_country_flag = ITA_deployed_army_against_mafia
+					any_owned_state = {
+						arms_factory > 0
+					}
+					any_owned_state = {
+						industrial_complex > 0
+					}
+				}
+				random_list = {
+					50 = {
+						country_event = { id = italy_md.29 days = 3 random_days = 3 }
+					}
+					50 = { }
+				}
+			}
 		}
 	}
 	on_monthly_ITA = {
 		effect = {
+			if = {
+				limit = {
+					has_dynamic_modifier = {
+						modifier = ITA_ageing_population
+					}
+				}
+				set_temp_variable = { ageing_population_drift = modifier@ITA_ageing_population_drift_modifier }
+				multiply_temp_variable = { ageing_population_drift = 0.1 }
+				add_to_variable = { ITA_ageing_population_var = ageing_population_drift }
+			}
 			if = {
 				limit = {
 					has_idea = ITA_euro_partners_debt_assurances
@@ -241,6 +290,8 @@ on_actions = {
 						check_variable = { reform_expectance_from_situation_counter > 11 }
 					}
 					reform_expectance_from_situation = yes
+					#add the final value of the changes to the reform expectance variable
+					subtract_from_variable = { drift_switch_var_base = reform_expectance_drift_display_var }
 					set_variable = { reform_expectance_from_situation_counter = 0 }
 				}
 				reforme_expectance_government_change_update = yes

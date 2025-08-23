@@ -381,11 +381,6 @@ AI_get_dockyard_score = {
 	}
 }
 
-temp_test = {
-	754 = {
-		AI_get_infrastructure_score = yes
-	}
-}
 # Building Type 4: Infrastructure
 AI_get_infrastructure_score = {
 	if = { limit = { free_building_slots = { building = infrastructure size > 0  include_locked = no } }
@@ -766,6 +761,9 @@ AI_edge_case_calculations = {
 	if = { limit = { has_state_flag = currently_encouraged_investments }
 		add_to_temp_variable = { AI_score = 20 }
 	}
+	if = { limit = { has_state_flag = HOL_autonomy_economic_zone }
+		add_to_temp_variable = { AI_score = 20 }
+	}
 }
 
 AI_country_selection_calculation = {
@@ -790,6 +788,10 @@ AI_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
 	if = { limit = { has_country_flag = trade_agreement@PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	if = {
+		limit = { has_country_flag = mutual_investment_treaty_@PREV }
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
 	# Check if one of the projects in the other one is there
@@ -933,6 +935,14 @@ AI_country_selection_calculation = {
 		}
 		add_to_temp_variable = { AI_country_score = 30 }
 	}
+
+	set_temp_variable_to_random = {
+		var = randomizer_country_score
+		min = 25
+		max = 75
+		integer = yes
+	}
+	subtract_from_temp_variable = { AI_country_score = randomizer_country_score }
 
 	# Multipliers
 	set_temp_variable = { AC_score_modifier = 1 }

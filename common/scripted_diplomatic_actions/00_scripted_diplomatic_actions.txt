@@ -460,7 +460,15 @@ scripted_diplomatic_actions = {
 			set_variable = { ROOT.assuming_debt_value = THIS.debt }
 			multiply_variable = { ROOT.assuming_debt_value = 0.25 }
 
-			ROOT = { set_variable = { pending_assume_debt_offer = PREV.id } }
+			ROOT = {
+				set_variable = { pending_assume_debt_offer = PREV.id }
+				if = {
+					limit = {
+						is_ai = yes
+					}
+					set_country_flag = { flag = AI_recently_sent_debt_assumption_offer_@PREV value = 1 days = 90 }
+				}
+			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect diplo_action_assume_debt"
@@ -799,6 +807,7 @@ scripted_diplomatic_actions = {
 			modifier = {
 				factor = 0
 				OR = {
+					ROOT = { NOT = { has_country_flag = AI_recently_sent_debt_assumption_offer_@PREV } }
 					ROOT = { NOT = { check_variable = { pending_assume_debt_offer = 0 } } }
 					ROOT = { check_variable = { interest_rate > 8 } }
 					ROOT = { has_political_power < 250 }
@@ -1309,7 +1318,6 @@ scripted_diplomatic_actions = {
 				THIS = { is_subject_of = ROOT }
 				ROOT = { has_subject = PREV }
 				ROOT = { has_country_flag = overlord_subsidies }
-				THIS = { OVERLORD = { tag = ROOT } }
 			}
 		}
 

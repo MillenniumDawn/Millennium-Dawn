@@ -7,7 +7,7 @@ country_event = {
 	id = md4.1
 	title = md4.1.t
 	desc = md4.1.d
-	picture = GFX_report_event_generic_read_write
+	picture = GFX_negotiations
 
 	immediate = {
 		hidden_effect = {
@@ -43,7 +43,7 @@ country_event = {
 		hidden_effect = {
 			set_country_flag = fta_applicant@ROOT
 			FROM = { set_country_flag = fta_inviter@ROOT }
-			news_event = { id = news.1 hours = 12 }
+			#news_event = { id = news.1 hours = 12 }
 		}
 	}
 
@@ -67,7 +67,7 @@ country_event = {
 	title = md4.2.t
 	desc = md4.2.d
 
-	picture = GFX_report_event_generic_sign_treaty2
+	picture = GFX_negotiations
 
 	is_triggered_only = yes
 
@@ -83,7 +83,7 @@ country_event = {
 	title = md4.3.t
 	desc = md4.3.d
 
-	picture = GFX_report_event_generic_read_write
+	picture = GFX_negotiations
 
 	is_triggered_only = yes
 
@@ -1569,5 +1569,99 @@ country_event = {
 			target = FROM
 			type = annex_everything
 		}
+	}
+}
+
+# EAEU Integration Proposal
+
+country_event = {
+	id = md4.21
+	title = md4.21.t
+	desc = md4.21.d
+	picture = GFX_eastern_europe
+
+	immediate = {
+		hidden_effect = {
+			save_event_target_as = eaeu_applicant
+			FROM = {
+				save_event_target_as = eaeu_inviter
+			}
+		}
+	}
+
+	is_triggered_only = yes
+
+	option = { #Agree
+		name = md4.21.a
+		log = "[GetDateText]: [This.GetName]: md4.21.a executed"
+		ai_chance = {
+			base = 100
+		}
+		FROM = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = free_trade_agreement
+			}
+			country_event = { id = md4.22 hours = 6 }
+		}
+		add_opinion_modifier = {
+			target = FROM
+			modifier = free_trade_agreement
+		}
+		FROM = {
+			add_ideas = EUR_idea_eacu_cooperation
+		}
+		set_temp_variable = { receiver_nation = ROOT.id }
+		set_temp_variable = { sender_nation = FROM.id }
+		set_improved_trade_agreement = yes
+		hidden_effect = {
+			set_country_flag = eaeu_applicant@ROOT
+			FROM = { set_country_flag = eaeu_inviter@ROOT }
+		}
+	}
+
+	option = { #Refuse
+		name = md4.21.b
+		log = "[GetDateText]: [This.GetName]: md4.21.b executed"
+		ai_chance = { factor = 0 }
+		FROM = {
+			country_event = { id = md4.23 hours = 6 }
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = insult
+			}
+		}
+	}
+}
+
+# ROOT signed EAEU Integration
+country_event = {
+	id = md4.22
+	title = md4.22.t
+	desc = md4.22.d
+
+	picture = GFX_eastern_europe
+
+	is_triggered_only = yes
+
+	option = {
+		name = md4.2.a
+		log = "[GetDateText]: [This.GetName]: md4.22.a executed"
+	}
+}
+
+# ROOT refused to sign EAEU Integration
+country_event = {
+	id = md4.23
+	title = md4.23.t
+	desc = md4.23.d
+
+	picture = GFX_eastern_europe
+
+	is_triggered_only = yes
+
+	option = {
+		name = md4.23.a
+		log = "[GetDateText]: [This.GetName]: md4.23.a executed"
 	}
 }

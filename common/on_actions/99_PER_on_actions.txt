@@ -1,31 +1,89 @@
 on_actions = {
+	on_state_control_changed = {
+		effect = {
+			if = {
+				limit = {
+					FROM.FROM = { state = 557 }
+					NOT = { has_global_flag = PER_iraqi_falling }
+				}
+				if = {
+					limit = {
+						original_tag = ISI
+					}
+					PER = { set_global_flag = PER_iraqi_falling }
+					ISI = {
+						country_event = { id = axis_of_resistance_events.29 hours = 0 }
+						set_country_flag = IRQ_anbar_tribal_council_trigger
+					}
+				}
+			}
+		}
+	}
 	on_weekly_PER = {
 		effect = {
 			if = {
 				limit = {
-					country_exists = PER
-					has_country_flag = PER_artesh_coup
-					NOT = {
-						has_country_flag = PER_irgc_destroyed
+					has_country_flag = PER_protests_ongoing
+					check_variable = {
+						PER_protest_exhaustion > 19
 					}
 				}
-				PER_random_events_insurgents = yes
-			}
-			if = {	#Capping maximum IRGC strength at 100
-				limit = { check_variable = { PER_insurgent_strength > 100 } }
-				set_variable = { PER_insurgent_strength = 100 }
-			}
-			if = {	#Capping maximum IRGC strength at 0
-				limit = { check_variable = { PER_insurgent_strength < 0 } }
-				set_variable = { PER_insurgent_strength = 0 }
-			}
-			if = { #IRGC insurgency
-				limit = {
-					check_variable = { PER_insurgent_strength > 99 }
+				random_list = {
+					30 = {
+						country_event = iranian_events.202
+					}
+					70 = {
+						# Nothing happens
+					}
 				}
-				PER = {
-					country_event = {
-						id = iran_md.9
+			}
+			if = {
+				limit = {
+					has_country_flag = PER_protests_ongoing
+				}
+				if = { # Protests are not tired
+					limit = {
+						check_variable = {
+							PER_protest_exhaustion < 10
+						}
+					}
+					random_list = {
+						70 = {
+							PER_trigger_protest = yes
+						}
+						30 = {
+							# Nothing happens
+						}
+					}
+				}
+				else_if = { # Protests are tired
+					limit = {
+						check_variable = {
+							PER_protest_exhaustion > 15
+						}
+					}
+					random_list = {
+						20 = {
+							PER_trigger_protest = yes
+						}
+						80 = {
+							# Nothing happens
+						}
+					}
+				}
+				else_if = { # Protests are starting to tire
+					limit = {
+						check_variable = {
+							PER_protest_exhaustion > 9
+						}
+					}
+					random_list = {
+						40 = {
+							PER_trigger_protest = yes
+						}
+						60 = {
+							# Nothing happens
+						}
 					}
 				}
 			}
@@ -33,11 +91,566 @@ on_actions = {
 	}
 	on_monthly_PER = {
 		effect = {
+			# Neutral Oriented Foreign Policy
+			if = {
+				limit = {
+					has_idea = PER_neutral_political_scene
+				}
+				random_list = {
+					50 = {
+						PER_neutral_politics = yes
+					}
+					50 = {
+						# Nothing happens
+					}
+				}
+			}
+
+			# Baath 1920 faction
+			if = {
+				limit = {
+					country_exists = NTR
+					country_exists = IRS
+					NOT = {
+						#country_exists = ISI
+						has_global_flag = NTR_IRS_stop_fighting
+						has_global_flag = IRQ_hamas_of_iraq
+					}
+				}
+				set_global_flag = NTR_IRS_stop_fighting
+				NTR = { country_event = { id = axis_of_resistance_events.35 days = 71 hours = 4 } }
+			}
+			if = {
+				limit = {
+					NTR = { num_of_controlled_states > 3 }
+					NOT = {
+						country_exists = HII
+						has_global_flag = IRQ_hamas_of_iraq
+						has_global_flag = IRQ_hamas_of_iraq
+					}
+				}
+				set_global_flag = IRQ_hamas_of_iraq
+				country_event = { id = axis_of_resistance_events.27 hours = 0 }
+			}
+			if = {
+				limit = {
+					ISI = { num_of_controlled_states > 3 }
+					country_exists = ISI
+					NOT = {
+						country_exists = IAI
+						country_exists = IRS
+						ISI = { has_country_flag = IRQ_IAI_spawn_trigger }
+					}
+				}
+				#need to fix something before i want this to run
+				#ISI = { country_event = { id = axis_of_resistance_events.25 hours = 0 } }
+				ISI = { set_country_flag = IRQ_IAI_spawn_trigger }
+			}
+			#Palestine Uprising
+			#GAZA
+			if = {
+				limit = {
+					HAM = {
+						neutrality_neutral_muslim_brotherhood_are_not_in_power = yes
+						check_variable = { hamas_arms_value > 1100 }
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.13
+					days = 0
+				}
+				HAM = {
+					set_country_flag = PER_PAL_coup
+					end_puppet = HAM
+					set_temp_variable = { rul_party_temp = 12 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = neutrality elections_allowed = no }
+					set_temp_variable = { party_index = 12 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Al-Qassam Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Kata'ib al-Shama\" division_template = \"Al-Qassam Brigades\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+							owner = HAM
+							count = 1
+						}
+						create_unit = {
+							division = "name = \"Kata'ib Gaza\" division_template = \"Al-Qassam Brigades\" start_experience_factor = 0.3 start_equipment_factor = 0.2"
+							owner = HAM
+							count = 1
+						}
+						create_unit = {
+							division = "name = \"Kata'ib Khan Younis\" division_template = \"Al-Qassam Brigades\" start_experience_factor = 0.3 start_equipment_factor = 0.4"
+							owner = HAM
+							count = 1
+						}
+						create_unit = {
+							division = "name = \"Kata'ib Rafah\" division_template = \"Al-Qassam Brigades\" start_experience_factor = 0.3 start_equipment_factor = 0.2"
+							owner = HAM
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			else_if = {
+				limit = {
+					HAM = {
+						emerging_communist_state_are_not_in_power = yes
+						check_variable = {
+							PFLP_arms_value > 1100
+						}
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.15
+					days = 0
+				}
+				HAM = {
+					set_country_flag = PER_PAL_coup
+					end_puppet = HAM
+					set_temp_variable = { rul_party_temp = 4 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = communism elections_allowed = no }
+					set_temp_variable = { party_index = 4 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Al-Quds Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Mot_Militia_Bat = { x = 1 y = 0 }
+							Mot_Militia_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Al-Quds Brigades\" division_template = \"Al-Quds Brigades\" start_experience_factor = 0.3 start_equipment_factor = 1.0"
+							owner = HAM
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			else_if = {
+				limit = {
+					HAM = {
+						emerging_communist_state_are_not_in_power = yes
+						check_variable = {
+							PRC_arms_value > 1100
+						}
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.16
+					days = 0
+				}
+				HAM = {
+					set_country_flag = PER_PAL_coup
+					end_puppet = HAM
+					set_temp_variable = { rul_party_temp = 8 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = communism elections_allowed = no }
+					set_temp_variable = { party_index = 8 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Abu Ali Mustafa Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Abu Ali Mustafa Brigades\" division_template = \"Abu Ali Mustafa Brigades\" start_experience_factor = 0.3 start_equipment_factor = 1.0"
+							owner = HAM
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			else_if = {
+				limit = {
+					HAM = {
+						emerging_communist_state_are_not_in_power = yes
+						check_variable = {
+							PIJ_arms_value > 1100
+						}
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.14
+					days = 0
+				}
+				HAM = {
+					set_country_flag = PER_PAL_coup
+					end_puppet = HAM
+					set_temp_variable = { rul_party_temp = 9 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = communism elections_allowed = no }
+					set_temp_variable = { party_index = 9 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Al-Nasser Salah al-Deen Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Mot_Militia_Bat = { x = 1 y = 0 }
+							Mot_Militia_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Al-Nasser Salah al-Deen Brigades\" division_template = \"Al-Nasser Salah al-Deen Brigades\" start_experience_factor = 0.3 start_equipment_factor = 0.7"
+							owner = HAM
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = {
+					HAM = {
+						NOT = { has_country_flag = weapons_given_out }
+						OR = {
+							emerging_communist_state_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+							neutrality_neutral_muslim_brotherhood_are_in_power = yes
+						}
+					}
+				}
+				HAM = {
+					set_country_flag = weapons_given_out
+					clr_country_flag = military_supply_target
+					add_equipment_to_stockpile = {
+						amount = arms_hard_varible
+						type = Inf_equipment
+						producer = PER
+					}
+					add_equipment_to_stockpile = {
+						amount = 50
+						type = L_AT_Equipment
+						producer = PER
+					}
+					add_equipment_to_stockpile = {
+						amount = 50
+						type = AA_Equipment
+						producer = PER
+					}
+				}
+				PER = { add_to_faction = HAM }
+			}
+			#West Bank
+			if = {
+				limit = {
+					PAL = {
+						neutrality_neutral_muslim_brotherhood_are_not_in_power = yes
+						check_variable = { hamas_arms_value > 1100 }
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.13
+					days = 0
+				}
+				PAL = {
+					set_country_flag = PER_PAL_coup
+					end_puppet = PAL
+					set_temp_variable = { rul_party_temp = 12 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = neutrality elections_allowed = no }
+					set_temp_variable = { party_index = 12 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Al-Qassam Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Al-Qassam Brigades\" division_template = \"Al-Qassam Brigades\" start_experience_factor = 0.4 start_equipment_factor = 1.0"
+							owner = PAL
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			else_if = {
+				limit = {
+					PAL = {
+						emerging_communist_state_are_not_in_power = yes
+						check_variable = {
+							PFLP_arms_value > 1100
+						}
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.15
+					days = 0
+				}
+				PAL = {
+					end_puppet = PAL
+					set_temp_variable = { rul_party_temp = 4 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = communism elections_allowed = no }
+					set_temp_variable = { party_index = 4 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Al-Quds Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Mot_Militia_Bat = { x = 1 y = 0 }
+							Mot_Militia_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Al-Quds Brigades\" division_template = \"Al-Quds Brigades\" start_experience_factor = 0.3 start_equipment_factor = 1.0"
+							owner = PAL
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			else_if = {
+				limit = {
+					PAL = {
+						emerging_communist_state_are_not_in_power = yes
+						check_variable = {
+							PRC_arms_value > 1100
+						}
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.16
+					days = 0
+				}
+				PAL = {
+					end_puppet = PAL
+					set_temp_variable = { rul_party_temp = 8 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = communism elections_allowed = no }
+					set_temp_variable = { party_index = 8 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Abu Ali Mustafa Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Abu Ali Mustafa Brigades\" division_template = \"Abu Ali Mustafa Brigades\" start_experience_factor = 0.3 start_equipment_factor = 1.0"
+							owner = PAL
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			else_if = {
+				limit = {
+					PAL = {
+						emerging_communist_state_are_not_in_power = yes
+						check_variable = {
+							PIJ_arms_value > 1100
+						}
+					}
+				}
+				news_event = {
+					id = axis_of_resistance_events.14
+					days = 0
+				}
+				PAL = {
+					end_puppet = PAL
+					set_temp_variable = { rul_party_temp = 9 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					set_politics = { ruling_party = communism elections_allowed = no }
+					set_temp_variable = { party_index = 9 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+					division_template = {
+						name = "Al-Nasser Salah al-Deen Brigades"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+							L_Inf_Bat = { x = 0 y = 1 }
+							L_Inf_Bat = { x = 0 y = 2 }
+							L_Inf_Bat = { x = 0 y = 3 }
+							Mot_Militia_Bat = { x = 1 y = 0 }
+							Mot_Militia_Bat = { x = 1 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 0 }
+						}
+						support = {
+							armor_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+						}
+					}
+					capital_scope = {
+						create_unit = {
+							division = "name = \"Al-Nasser Salah al-Deen Brigades\" division_template = \"Al-Nasser Salah al-Deen Brigades\" start_experience_factor = 0.3 start_equipment_factor = 0.7"
+							owner = PAL
+							count = 1
+						}
+					}
+					set_temp_variable = { percent_change = 8 }
+					set_temp_variable = { tag_index = PER }
+					set_temp_variable = { influence_target = PAL }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = {
+					PAL = {
+						NOT = { has_country_flag = weapons_given_out }
+						OR = {
+							emerging_communist_state_are_in_power = yes
+							emerging_moderate_shiite_are_in_power = yes
+							emerging_hardline_shiite_are_in_power = yes
+							neutrality_neutral_muslim_brotherhood_are_in_power = yes
+						}
+					}
+				}
+				PAL = {
+					set_country_flag = weapons_given_out
+					clr_country_flag = military_supply_target
+					add_equipment_to_stockpile = {
+						amount = arms_hard_varible
+						type = Inf_equipment
+						producer = PER
+					}
+					add_equipment_to_stockpile = {
+						amount = 50
+						type = L_AT_Equipment
+						producer = PER
+					}
+					add_equipment_to_stockpile = {
+						amount = 50
+						type = AA_Equipment
+						producer = PER
+					}
+				}
+				PER = { add_to_faction = PAL }
+			}
+
 			# For Election
 			if = {
 				limit = {
 					NOT = {
-						has_country_flag = in_civil_war_iran
+						has_country_flag = PER_majles_abolished
 					}
 					check_variable = {
 						PER_election_var > 0
@@ -49,7 +662,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = {
-						has_country_flag = in_civil_war_iran
+						has_country_flag = PER_majles_abolished
 					}
 					check_variable = {
 						PER_election_var = 0
@@ -65,7 +678,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = {
-						has_country_flag = in_civil_war_iran
+						has_country_flag = PER_majles_abolished
 					}
 					check_variable = {
 						PER_election_var > 0
@@ -77,7 +690,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = {
-						has_country_flag = in_civil_war_iran
+						has_country_flag = PER_majles_abolished
 					}
 					check_variable = {
 						PER_session_var = 0
@@ -88,6 +701,54 @@ on_actions = {
 				country_event = {
 					id = PER_majlis.2
 				}
+			}
+			# Jordan Shale Oil
+			if = {
+				limit = {
+					JOR = {
+						has_country_flag = JOR_agreed_oil_shale
+					}
+					check_variable = {
+						PER_shale_contract < 120
+					}
+				}
+				add_to_variable = { var = PER_shale_contract value = 1 }
+				clamp_variable = { var = PER_shale_contract min = 0 max = 120 }
+			}
+			if = {
+				limit = {
+					JOR = {
+						has_country_flag = JOR_agreed_oil_shale
+					}
+					check_variable = {
+						PER_shale_contract = 120
+					}
+				}
+				PER = {
+					country_event = iranian_focus.17
+				}
+				JOR = {
+					country_event = iranian_focus.17
+				}
+			}
+			# Basij Fervor stuff
+			if = {
+				limit = {
+					has_country_flag = PER_basij_fervor_decisions
+					NOT = {
+						has_country_flag = PER_basij_variable_stop
+					}
+				}
+				add_to_variable = { var = islamic_propaganda_status value = 5 }
+				clamp_variable = { var = islamic_propaganda_status min = 0 max = 100 }
+			}
+			if = {
+				limit = {
+					has_country_flag = PER_basij_fervor_decisions
+					has_country_flag = PER_basij_fervor_drain
+				}
+				add_to_variable = { var = islamic_propaganda_status value = -10 }
+				clamp_variable = { var = islamic_propaganda_status min = 0 max = 100 }
 			}
 		}
 	}

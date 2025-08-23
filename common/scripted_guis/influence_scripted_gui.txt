@@ -17,16 +17,17 @@ scripted_gui = {
 			opt_coup_button = { image = "[select_coup_button]" }
 			opt_economic_exploitation_button = { image = "[select_economic_exploitation_button]" }
 			opt_make_puppet_button = { image = "[select_make_puppet_button]" }
+			opt_military_supply_button = { image = "[select_military_supply_button]" }
 		}
 
 		triggers = {
 			# Column 1:
 			# Auto Spread
 			opt_influence_action_button_click_enabled = {
-				if = { 
+				if = {
 					limit = {
 						ROOT = {
-							original_tag = ISR 
+							original_tag = ISR
 						}
 					}
 					NOT = {
@@ -68,8 +69,6 @@ scripted_gui = {
 			}
 
 			opt_aid_button_click_enabled = {
-				#our country is a top 7 influencer
-				is_influencer = yes
 				#selected country have lower GDP/C than us
 				custom_trigger_tooltip = {
 					set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
@@ -131,9 +130,46 @@ scripted_gui = {
 				ERI_is_not_transitional_government = yes
 			}
 
+			opt_military_supply_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = opt_military_supply_button_TT
+					ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+				}
+				ROOT = { has_political_power > 1 }
+				ROOT = { tag = PER }
+				#Our Country is a top 7 influencer
+				is_influencer = yes
+				ERI_is_not_transitional_government = yes
+			}
+
 			opt_manipulate_politics_button_click_enabled = {
-				is_top3_thirty_influencer = yes
-				ROOT = { has_political_power > 99 }
+				if = {
+					limit = {
+						ROOT = {
+							original_tag = PER
+							has_completed_focus = PER_puppeteer_iraqi_politcs
+							OR = {
+								emerging_hardline_shiite_are_in_power = yes
+								emerging_moderate_shiite_are_in_power = yes
+							}
+						}
+						PREV = { original_tag = IRQ }
+					}
+					is_top3_twenty_influencer = yes
+					ROOT = { has_political_power > 49 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { original_tag = PER }
+						PREV = { original_tag = AFG }
+					}
+					is_top3_twenty_influencer = yes
+					ROOT = { has_political_power > 1 }
+				}
+				else = {
+					is_top3_thirty_influencer = yes
+					ROOT = { has_political_power > 99 }
+				}
 				custom_trigger_tooltip = {
 					tooltip = influence_manipulate_politics_TT
 					ROOT = { NOT = { has_country_flag = recently_manipulated_politics@PREV } }
@@ -197,6 +233,11 @@ scripted_gui = {
 			opt_coup_button_visible = { NOT = { tag = ROOT } }
 			opt_economic_exploitation_button_visible = { NOT = { tag = ROOT } }
 			opt_make_puppet_button_visible = { NOT = { tag = ROOT } }
+			opt_military_supply_button_visible = {
+				NOT = { tag = ROOT }
+				ROOT = { has_country_flag = military_supply_sender }
+				PREV = { has_country_flag = military_supply_target }
+			}
 		}
 
 		effects = {
@@ -273,6 +314,19 @@ scripted_gui = {
 				}
 			}
 
+			# Send Military Supply
+			# Weapons that are sent to overthrow a nation
+			opt_military_supply_button_click = {
+				ROOT = { # Player Nation
+					PREV = {
+						country_event = { id = influence.55 }
+						ROOT = {
+							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
+						}
+					}
+				}
+			}
+
 			# Target Selected Nation's Influencers:
 			# It allows us to target one of their influencer
 			opt_target_other_button_click = {
@@ -316,6 +370,8 @@ scripted_gui = {
 					set_temp_variable = { var_pop = 0.08 }
 				}
 
+				set_temp_variable = { manipulate_politics_pp_cost = -100 }
+
 				set_temp_variable = { modifier = 1 }
 				add_to_temp_variable = { modifier = ROOT.modifier@foreign_influence_modifier }
 				set_temp_variable = { influence_defense_change = modifier@foreign_influence_defense_modifier }
@@ -328,17 +384,81 @@ scripted_gui = {
 					min = 0.01
 					max = 0.15
 				}
+				if = {
+					limit = {
+						ROOT = {
+							original_tag = PER
+							has_completed_focus = PER_puppeteer_iraqi_politcs
+							OR = {
+								emerging_hardline_shiite_are_in_power = yes
+								emerging_moderate_shiite_are_in_power = yes
+							}
+						}
+						PREV = { original_tag = IRQ }
+					}
+					add_to_temp_variable = { var_pop = -0.05 }
+					add_to_temp_variable = { manipulate_politics_pp_cost = 50 }
+					set_temp_variable = { party_index = 6 }
+					set_temp_variable = { party_popularity_increase = var_pop }
+					set_temp_variable = { temp_outlook_increase = var_pop }
+					add_relative_party_popularity = yes
 
-				set_temp_variable = { party_index = ROOT.ruling_party^0 }
-				set_temp_variable = { party_popularity_increase = var_pop }
-				set_temp_variable = { temp_outlook_increase = var_pop }
-				add_relative_party_popularity = yes
+					add_to_temp_variable = { var_pop = -0.02 }
+					set_temp_variable = { party_index = 8 }
+					set_temp_variable = { party_popularity_increase = var_pop }
+					set_temp_variable = { temp_outlook_increase = var_pop }
+					add_relative_party_popularity = yes
 
-				# Reduce by -10%
-				set_temp_variable = { percent_change = -10 }
-				set_temp_variable = { tag_index = ROOT.id }
-				set_temp_variable = { influence_target = PREV.id }
-				change_influence_percentage = yes
+					# Reduce by -10%
+					set_temp_variable = { percent_change = -5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = PREV.id }
+					change_influence_percentage = yes
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							original_tag = PER
+							has_completed_focus = PER_puppeteer_iraqi_politcs
+							OR = {
+								emerging_hardline_shiite_are_in_power = yes
+								emerging_moderate_shiite_are_in_power = yes
+							}
+						}
+						PREV = { original_tag = AFG }
+					}
+					add_to_temp_variable = { var_pop = -0.05 }
+					add_to_temp_variable = { manipulate_politics_pp_cost = 50 }
+					set_temp_variable = { party_index = 8 }
+					set_temp_variable = { party_popularity_increase = var_pop }
+					set_temp_variable = { temp_outlook_increase = var_pop }
+					add_relative_party_popularity = yes
+
+					add_to_temp_variable = { var_pop = -0.02 }
+					set_temp_variable = { party_index = 9 }
+					set_temp_variable = { party_popularity_increase = var_pop }
+					set_temp_variable = { temp_outlook_increase = var_pop }
+					add_relative_party_popularity = yes
+
+					# Reduce by -10%
+					set_temp_variable = { percent_change = -5 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = PREV.id }
+					change_influence_percentage = yes
+				}
+				else = {
+					set_temp_variable = { party_index = ROOT.ruling_party^0 }
+					set_temp_variable = { party_popularity_increase = var_pop }
+					set_temp_variable = { temp_outlook_increase = var_pop }
+					add_relative_party_popularity = yes
+
+					# Reduce by -10%
+					set_temp_variable = { percent_change = -10 }
+					set_temp_variable = { tag_index = ROOT.id }
+					set_temp_variable = { influence_target = PREV.id }
+					change_influence_percentage = yes
+				}
+
 				# Reduce Relations if different gov
 				if = { limit = { NOT = { is_same_government = yes } }
 					add_opinion_modifier = { target = ROOT modifier = supported_opposition }
@@ -346,7 +466,7 @@ scripted_gui = {
 
 				ROOT = {
 					set_country_flag = { flag = recently_manipulated_politics@PREV days = 28 value = 1 }
-					add_political_power = -100
+					add_political_power = manipulate_politics_pp_cost
 				}
 			}
 			opt_coup_button_click = {
@@ -410,7 +530,7 @@ scripted_gui = {
 					text = {
 						add_timed_idea = {
 							idea = tribute_idea_[ROOTTAG]
-							days = 90
+							days = 180
 						}
 					}
 					ROOTTAG = "[ROOT.GetTag]"
@@ -419,13 +539,13 @@ scripted_gui = {
 				add_political_power = -75
 
 				#remove 10% influence
-				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { percent_change = -5 }
 				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = PREV.id }
 				change_influence_percentage = yes
 
 				#Timer until next exploit
-				set_country_flag = { flag = country_exploited value = 1 days = 90 }
+				set_country_flag = { flag = country_exploited value = 1 days = 180 }
 				#opinions
 				add_opinion_modifier = { target = ROOT modifier = exploited_us }
 				every_neighbor_country = {

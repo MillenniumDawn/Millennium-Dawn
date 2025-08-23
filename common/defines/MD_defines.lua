@@ -28,20 +28,20 @@
 	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 1
 	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 7
 	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
-	NDefines.NDiplomacy.TENSION_STATE_VALUE = 3.25
+	NDefines.NDiplomacy.TENSION_STATE_VALUE = 3.60 -- 4 as of v1.11.1
 	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
-	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 10
-	NDefines.NDiplomacy.TENSION_CB_WAR = 3.75
+	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 11.5 -- 13 as of v1.11.1
+	NDefines.NDiplomacy.TENSION_CB_WAR = 4.25 -- 5 as of v1.11.1
 	NDefines.NDiplomacy.TENSION_PUPPET = 1.5 -- Reduced from 2.0
 	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
-	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.25  -- Reduced from 0.50
-	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.025						-- Each months tension decays this much
+	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.30  -- Reduced from 0.50
+	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.02						-- Each months tension decays this much
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MIN = 0 					-- Timed tension scale won't decrease under this value
 	NDefines.NDiplomacy.TENSION_GUARANTEE = -10
-	NDefines.NDiplomacy.TENSION_PEACE_FACTOR = 0.25					-- scale of the amount of tension (from war declaration) reduced when peace is completed.
+	NDefines.NDiplomacy.TENSION_PEACE_FACTOR = 0.15					-- scale of the amount of tension (from war declaration) reduced when peace is completed.
 	NDefines.NDiplomacy.TENSION_CAPITULATE = 0
 	NDefines.NDiplomacy.TENSION_WAR_REPARATION = 0
 	NDefines.NDiplomacy.TENSION_FACTION_JOIN = 2
@@ -145,7 +145,7 @@
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
 	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 60 -- 30
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 45 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -168,7 +168,7 @@
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
 	NDefines.NCountry.FUEL_LEASE_CONVOY_RATIO = 0.00005 -- 0.0005
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
-	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.006 --0.015 in vanilla, reduced from the 0.01 in MD to accommodate for the migration system
+	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.007 --0.015 in vanilla, reduced from the 0.01 in MD to accommodate for the migration system
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
@@ -207,7 +207,7 @@
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
 	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
 	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
-	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 20
+	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
 	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
@@ -248,7 +248,7 @@
 	NDefines.NProject.BREAKTHROUGH_DAILY_NUCLEAR_REACTOR_GAIN = 0       -- Amount in 1/100th percentage gained per nuclear reactor. E.g. 2 = 0.02% per nuclear reactor.
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 5.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
+	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 15.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
 	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
@@ -403,10 +403,11 @@
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
 	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
-	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.15 -- 0.1
-	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1 -- 2
-	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.01 -- 1
-	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.05 -- 0.01
+	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.05 -- vanilla 0.1
+	NDefines.NAir.ACCIDENT_CHANCE_RELIABILITY_MULT = 0.2 -- vanilla 2.0 Multiplier to accident chance per point of missing reliability.
+	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 0.5 -- vanilla 1.5
+	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.02 -- vanilla 0.1
+	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.007 -- vanill 0.007
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
@@ -484,6 +485,7 @@
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
 	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50
 	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10
+	NDefines.NAir.MAX_QUICK_WINGS_FOR_AIR_SUPERIORITY = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
 		1.0, -- CAS
@@ -630,7 +632,6 @@
 	NDefines.NNavy.LEADER_EXPERIENCE_SCALE = 2 -- 1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT = 0.01 -- 0.1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT_FROM_AIR = 0.1 -- 0.1
-	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.25 -- 0.5
 	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.1 -- 0.25
@@ -801,7 +802,7 @@
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 
 	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 999						-- 20 #Now AI like big fleet
-	NDefines.NAI.MAX_DISTANCE_NALAV_INVASION = 400.0				-- 200.0
+	NDefines.NAI.MAX_DISTANCE_NAVAL_INVASION = 400.0				-- 200.0
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
 	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
 	NDefines.NAI.TRANSPORTS_PER_PARATROOPER = 10					-- 20
@@ -857,9 +858,6 @@
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
 	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
-	-- NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
-	-- NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
-	-- NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 0				-- 3 is vanilla, updated this from 8 to 20 for more AI production control
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
@@ -872,13 +870,13 @@
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.30 					-- countries will exit fuel saving mode if they have more fuel ratio than this
 	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 5	-- Limit of CAS wings requested by enemy armies
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
+
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 25
-	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
-	NDefines.NAI.STR_BOMB_MIN_EXCORT_PLANES = 200
+	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 2.5 -- Reduced from 5 to 2.5/originally was 10 but caused issues with the AI being unable to use their planes on missions
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
-	NDefines.NAI.NAVAL_MIN_EXCORT_PLANES = 0 --Updated AI Air prioties
+
 	NDefines.NAI.TRADEABLE_FACTORIES_FRACTION = 0.80 -- Updated from 0.80
 	NDefines.NAI.DIPLOMACY_CREATE_FACTION_FACTOR = 1.25 --0.75 in Vanilla		-- Factor for AI desire to create a new faction. Val < 1.0 makes it less likely to create than to join.
 	NDefines.NAI.DIPLOMACY_FACTION_WRONG_IDEOLOGY_PENALTY = 60 -- AI penalty for diplomatic faction acitons between nations of different ideologies

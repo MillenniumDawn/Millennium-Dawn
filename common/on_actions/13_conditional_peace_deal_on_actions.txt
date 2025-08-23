@@ -1,0 +1,104 @@
+on_actions = {
+	# TODO: Make this functional since the AI should offer peace deals at some point but there's no reason to hold onto this until that's done.
+	# Yes, the AI evaluates peace deals effectively when the player offers it to them.
+	# on_weekly = {
+	# 	effect = {
+	# 		if = {
+	# 			limit = {
+	# 				has_country_flag = CPD_AI_wants_peace
+	# 				# ai has to have the flag that tells them they want to not
+	# 				# be at war anymore
+	# 				OR = {
+	# 					var:CPD_AI_wants_peace_with = { NOT = { CPD_AI_will_offer_peace = yes } }
+	# 					NOT = { has_war_with = var:CPD_AI_wants_peace_with }
+	# 					# ^obviously shouldn't be a valid trigger if they're no longer at war
+	# 				}
+	# 			}
+	# 			clr_country_flag = CPD_AI_wants_peace
+	# 			clear_variable = CPD_AI_wants_peace_with
+	# 			CPD_reset_built_peace_deal = yes
+	# 		}
+	# 		if = {
+	# 			limit = {
+	# 				is_ai = yes
+	# 				has_war = yes
+	# 				NOT = { has_country_flag = CPD_AI_wants_peace }
+	# 			}
+	# 			random_enemy_country = {
+	# 				limit = { CPD_AI_will_offer_peace = yes }
+	# 				CPD_reset_built_peace_deal = yes
+	# 				CPD_AI_build_peace_deal = yes
+	# 				# ^need to make this effect still
+	# 				ROOT = {
+	# 					set_country_flag = CPD_AI_wants_peace
+	# 					set_variable = { CPD_AI_wants_peace_with = PREV }
+	# 				}
+	# 			}
+	# 		}
+	# 	}
+	# }
+
+	on_capitulation = {
+		effect = {
+			if = {
+				limit = { is_in_faction = yes }
+				random_country = {
+					limit = {
+						is_in_faction_with = ROOT
+						is_faction_leader = yes
+						has_war_with = FROM
+					}
+					set_temp_variable = { CPD_VP_temp = FROM.CPD_VP@ROOT }
+					divide_temp_variable = { CPD_VP_temp = 2 }
+					round_temp_variable = CPD_VP_temp
+					add_to_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
+				}
+			}
+			set_temp_variable = { CPD_VP_total = 0 }
+			every_owned_state = {
+				limit = { is_controlled_by = FROM }
+				add_to_temp_variable = { CPD_VP_total = THIS.state_strategic_value }
+			}
+			divide_temp_variable = { CPD_VP_total = 2 }
+			round_temp_variable = CPD_VP_total
+			add_to_variable = { FROM.CPD_VP@ROOT = CPD_VP_total }
+		}
+	}
+
+	on_war_relation_added = {
+		effect = {
+			set_variable = { CPD_VP@FROM = 0 }
+			set_variable = { FROM.CPD_VP@ROOT = 0 }
+		}
+	}
+
+	on_nuke_drop = { # talk to other vis a vis possible integration
+		effect = { add_to_variable = { CPD_VP@FROM.owner = 500 } }
+	}
+
+	on_state_control_changed = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { has_war_with = FROM }
+				}
+				set_temp_variable = { CPD_SVP = FROM.FROM.state_strategic_value }
+				set_temp_variable = { CPD_VP_total = 0 }
+				ROOT = {
+					every_enemy_country = {
+						add_to_temp_variable = { CPD_VP_total = num_armies_in_state@FROM.FROM }
+						set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
+						divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
+						multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
+						add_to_variable = { CPD_VP@FROM = CPD_VP_temp }
+						subtract_from_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
+						clamp_variable = {
+							var = FROM.CPD_VP@THIS
+							min = 0
+						}
+					}
+				}
+			}
+		}
+	}
+}

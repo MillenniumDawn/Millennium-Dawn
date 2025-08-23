@@ -1,15 +1,68 @@
-RAJ_ordnance_factories_organization_materiel_manufacturer = {
+
+
+###Navy###
+
+#RAJ_cochin_shipyard_naval_manufacturer = {
+#	allowed = { original_tag = RAJ }
+#	icon = GFX_idea_Cochin_Shipyard_RAJ
+#	name = RAJ_cochin_shipyard_naval_manufacturer
+#	include = generic_naval_light_equipment_organization
+#}
+
+RAJ_Garden_reach_naval_manufacturer = {
 	allowed = { original_tag = RAJ }
-	icon = GFX_idea_Ordnance_Factories_Organization_RAJ
-	name = RAJ_ordnance_factories_organization_materiel_manufacturer
-	include = generic_infantry_equipment_organization
+	icon = GFX_idea_RAJ_garden_reach_shipbuilders
+	name = RAJ_Garden_reach_naval_manufacturer
+	include = generic_naval_equipment_organization
+
 }
 
-RAJ_ordnance_factories_organization_tank_manufacturer = {
+RAJ_goa_shipyard_naval_manufacturer = {
 	allowed = { original_tag = RAJ }
-	icon = GFX_idea_Ordnance_Factories_Organization_RAJ
-	name = RAJ_ordnance_factories_organization_tank_manufacturer
-	include = generic_tank_equipment_organization
+	icon = GFX_idea_Goa_Shipyard_RAJ
+	name = RAJ_goa_shipyard_naval_manufacturer
+	include = generic_small_naval_Manufacturer
+}
+
+RAJ_naval_docyard_visakhapatnam_naval_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_Naval_dockyard
+	name = RAJ_naval_docyard_visakhapatnam_naval_manufacturer
+	include = generic_sub_equipment_organization
+
+	initial_trait = {
+		name = generic_mio_initial_trait_md_sub_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_task_capacity = -1
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.03
+		}
+
+		equipment_bonus = {
+			sub_visibility = -0.05
+		}
+	}
+}
+
+###vehicle###
+
+RAJ_mahindra_defence_vehicle_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_Mahindra
+	name = RAJ_mahindra_defence_vehicle_manufacturer
+	include = GER_generic_AFV_manufacturer
+}
+
+RAJ_Ashok_leyland_vehicle_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_Ashok_leyland
+	name = RAJ_Ashok_leyland_vehicle_manufacturer
+	include = GER_generic_AFV_manufacturer
+
 }
 
 RAJ_tata_motors_tank_manufacturer = {
@@ -19,44 +72,730 @@ RAJ_tata_motors_tank_manufacturer = {
 	include = generic_tank_equipment_organization
 }
 
+###allround Production###
+
+RAJ_ordnance_factories_board_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_ordonance_factory_board
+	name = RAJ_ordnance_factories_board_manufacturer
+	include = generic_infantry_equipment_organization
+
+	initial_trait = {
+		name = generic_mio_initial_trait_infantry_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_task_capacity = 1
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.03
+		}
+	}
+}
+
+RAJ_ordnance_factories_board_Tank_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_ordonance_factory_board
+	name = RAJ_ordnance_factories_board_Tank_manufacturer
+	include = generic_specialized_tank_organization
+
+	initial_trait = {
+		name = generic_mio_initial_trait_infantry_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_task_capacity = 1
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.03
+		}
+	}
+}
+
+RAJ_Larsen_toubro_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_Larsen_Toubro
+	name = RAJ_Larsen_toubro_manufacturer
+	include = generic_sub_equipment_organization
+
+	equipment_type = {
+		missile_submarine
+		attack_submarine
+		submarine
+		cnc_equipment
+		artillery_equipment
+	}
+	research_categories = { CAT_sub CAT_naval_misc CAT_artillery CAT_cnc }
+
+	initial_trait = {
+		name = generic_mio_initial_trait_md_naval_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_improve_software
+		name = generic_mio_inf_trait_inf_rel
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		position = { x = 12 y = 0 }
+
+		equipment_bonus = {
+			reliability = 0.05
+			max_organisation = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_cnc_frequency_hopping
+		name = generic_cnc_frequency_hopping
+		icon = GFX_generic_mio_trait_icon_defense
+
+		any_parent = { generic_mio_cnc_improve_software }
+
+		position = { x = 0 y = 1 }
+		relative_position_id = generic_mio_cnc_improve_software
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			defense = 0.1
+			breakthrough = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_satcom
+		name = generic_mio_cnc_satcom
+		icon = GFX_generic_mio_trait_icon_soft_attack
+
+		any_parent = { generic_mio_cnc_improve_software }
+
+		position = { x = -2 y = 1 }
+		relative_position_id = generic_mio_cnc_improve_software
+
+		limit_to_equipment_type = { cnc_equipment CAT_artillery }
+		equipment_bonus = {
+			soft_attack = 0.05
+			max_organisation = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_vehicle_based_c2
+		name = generic_mio_vehicle_based_c2
+		icon = GFX_generic_mio_trait_icon_hard_attack
+
+		any_parent = { generic_mio_cnc_satcom }
+		mutually_exclusive = { generic_mio_cnc_wearable_c2 }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_cnc_satcom
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			hard_attack = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_wearable_c2
+		name = generic_mio_cnc_wearable_c2
+		icon = GFX_generic_mio_trait_icon_soft_attack
+
+		any_parent = { generic_mio_cnc_satcom }
+		mutually_exclusive = { generic_mio_vehicle_based_c2 }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_cnc_satcom
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			soft_attack = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_Digital_battlefield
+		name = generic_mio_cnc_Digital_battlefield
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		any_parent = { generic_mio_cnc_improve_software }
+
+		position = { x = 2 y = 1 }
+		relative_position_id = generic_mio_cnc_improve_software
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			breakthrough = -0.05
+			defense = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_UAV_direct_integration
+		name = generic_mio_cnc_UAV_direct_integration
+		icon = GFX_generic_mio_trait_icon_hard_attack
+
+		any_parent = { generic_mio_cnc_Digital_battlefield }
+		mutually_exclusive = { generic_mio_cnc_more_security }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_cnc_Digital_battlefield
+
+		limit_to_equipment_type = { cnc_equipment CAT_artillery }
+		equipment_bonus = {
+			breakthrough = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_more_security
+		name = generic_mio_cnc_more_security
+		icon = GFX_generic_mio_trait_icon_soft_attack
+
+		any_parent = { generic_mio_cnc_Digital_battlefield }
+		mutually_exclusive = { generic_mio_cnc_UAV_direct_integration }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_cnc_Digital_battlefield
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			defense = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_deployable_tactical_operation_center
+		name = generic_mio_cnc_deployable_tactical_operation_center
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		any_parent = { generic_mio_cnc_more_security generic_mio_cnc_UAV_direct_integration }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_cnc_UAV_direct_integration
+
+		equipment_bonus = {
+			ap_attack = 0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_automated_date_fusion
+		name = generic_mio_cnc_automated_date_fusion
+		icon = GFX_generic_mio_trait_icon_ap_attack
+
+		any_parent = { generic_mio_cnc_deployable_tactical_operation_center generic_mio_cnc_integrated_voice_and_date_network }
+
+		position = { x = 0 y = 3 }
+		relative_position_id = generic_cnc_frequency_hopping
+
+		limit_to_equipment_type = { cnc_equipment CAT_artillery }
+		equipment_bonus = {
+			reliability = 0.1
+			max_organisation = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_integrated_voice_and_date_network
+		name = generic_mio_cnc_integrated_voice_and_date_network
+		icon = GFX_generic_mio_trait_icon_breakthrough
+
+		any_parent = { generic_mio_vehicle_based_c2 generic_mio_cnc_wearable_c2 }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_vehicle_based_c2
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			defense = 0.5
+			breakthrough = 0.5
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_cnc_org
+		name = generic_mio_inf_cnc_org
+		icon = GFX_generic_mio_trait_icon_unique
+
+		any_parent = { generic_mio_cnc_automated_date_fusion generic_mio_cnc_automated_date_fusion }
+		mutually_exclusive = { generic_mio_inf_cnc_rel }
+
+		position = { x = -1 y = 1 }
+		relative_position_id = generic_mio_cnc_automated_date_fusion
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			max_organisation = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_inf_cnc_rel
+		name = generic_mio_inf_cnc_rel
+		icon = GFX_generic_mio_trait_icon_resources
+
+		any_parent = { generic_mio_cnc_automated_date_fusion }
+		mutually_exclusive = { generic_mio_inf_cnc_org }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_cnc_automated_date_fusion
+
+		limit_to_equipment_type = { cnc_equipment }
+		equipment_bonus = {
+			reliability = 0.1
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.2
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = generic_mio_cnc_electronic_counter_measures
+		name = generic_mio_cnc_electronic_counter_measures
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		any_parent = { generic_mio_inf_cnc_rel generic_mio_inf_cnc_org }
+
+		position = { x = 1 y = 1 }
+		relative_position_id = generic_mio_inf_cnc_org
+
+		limit_to_equipment_type = { cnc_equipment CAT_artillery }
+		equipment_bonus = {
+			defense = 0.2
+			max_organisation = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+}
+
+###Tank###
+
+RAJ_heavy_vehicle_factory_tank_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_Heavy_vehicle_factory
+	name = RAJ_heavy_vehicle_factory_tank_manufacturer
+	include = generic_tank_equipment_organization
+
+	initial_trait = {
+		name = generic_mio_initial_trait_md_tank_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.03
+		}
+	}
+}
+
+RAJ_DRDO_tank_manufacturer = {
+	allowed = { original_tag = RAJ }
+	icon = GFX_idea_RAJ_DRDO
+	name = RAJ_DRDO_tank_manufacturer
+	include = generic_specialized_tank_organization
+
+	initial_trait = {
+		name = generic_mio_initial_trait_md_specialized_tank_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		equipment_bonus = {
+			armor_value = 0.05
+			maximum_speed = 0.03
+		}
+	}
+}
+
+###airforce###
+
 RAJ_hindustan_aeronautics_aircraft_manufacturer = {
 	allowed = { original_tag = RAJ }
 	icon = GFX_idea_Hindustan_Aeronautics_RAJ
 	name = RAJ_hindustan_aeronautics_aircraft_manufacturer
-	include = generic_air_equipment_organization
+	include = generic_fixed_wing_and_helicopter_equipment_organization
+
+	initial_trait = {
+		name = generic_mio_initial_trait_light_aircraft_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		equipment_bonus = {
+			air_range = 0.05
+			air_defence = 0.05
+		}
+	}
 }
 
-RAJ_hindustan_aeronautics_tank_manufacturer = {
+RAJ_aeronautical_development_manufacturer = {
 	allowed = { original_tag = RAJ }
-	icon = GFX_idea_Hindustan_Aeronautics_RAJ
-	name = RAJ_hindustan_aeronautics_tank_manufacturer
-	include = generic_specialized_helicopter_organization
+	icon = GFX_idea_RAJ_ADA
+	name = RAJ_aeronautical_development_manufacturer
+	include = generic_fixed_wing_equipment_organization
+
+	equipment_type = {
+		mio_cat_eq_only_light_aircraft
+		mio_cat_eq_only_light_cv_aircraft
+		mio_cat_eq_only_medium_aircraft
+		mio_cat_eq_only_cv_medium_aircraft
+		mio_cat_eq_only_large_aircraft
+	}
+
+	initial_trait = {
+		name = generic_mio_initial_trait_fixed_wing_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = -1
+		}
+
+		equipment_bonus = {
+			reliability = 0.05
+			air_range = 0.05
+		}
+	}
 }
 
-RAJ_cochin_shipyard_naval_manufacturer = {
+###Material###
+
+RAJ_Bharat_forge_material_manufacture = {
 	allowed = { original_tag = RAJ }
-	icon = GFX_idea_Cochin_Shipyard_RAJ
-	name = RAJ_cochin_shipyard_naval_manufacturer
-	include = generic_naval_light_equipment_organization
+	icon = GFX_idea_RAJ_Bharat_Forge
+	name = RAJ_Bharat_forge_material_manufacture
+	include = generic_aa_at_equipment_organization
+
+	initial_trait = {
+		name = generic_mio_initial_trait_at_aa_manufacturer
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = -2
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.03
+			production_efficiency_gain_factor = 0.05
+		}
+	}
 }
 
-RAJ_mazagon_dock_limited_naval_manufacturer = {
-	allowed = { original_tag = RAJ }
-	icon = GFX_idea_Mazagon_Dock_Limited_RAJ
-	name = RAJ_mazagon_dock_limited_naval_manufacturer
-	include = generic_naval_equipment_organization
-}
-
-RAJ_goa_shipyard_naval_manufacturer = {
-	allowed = { original_tag = RAJ }
-	icon = GFX_idea_Goa_Shipyard_RAJ
-	name = RAJ_goa_shipyard_naval_manufacturer
-	include = generic_naval_equipment_organization
-}
-
-RAJ_mazagon_dock_limited_naval_manufacturer2 = {
-	allowed = { original_tag = RAJ }
-	icon = GFX_idea_Goa_Shipyard_RAJ
-	name = RAJ_mazagon_dock_limited_naval_manufacturer2
-	include = generic_sub_equipment_organization
-}

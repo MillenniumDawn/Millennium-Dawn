@@ -1,12 +1,16 @@
-version="1.11.1"
+version="1.12.1"
 name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"
 	"Events"
 	"Graphics"
+	"Map"
+	"National Focuses"
+	"Balance"
+	"Fixes"
 }
-supported_version="1.15.*"
+supported_version="1.16.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
 path="mod/Millennium_Dawn"
