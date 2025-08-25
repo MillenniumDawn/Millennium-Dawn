@@ -1,12 +1,20 @@
 EH_electric_traps_category = {
+	
+
 	EH_set_up_electric_trap = {
-		icon = GFX_decision_boost # This probably needs own icon
+		icon = GFX_decision_fixes_button # This probably needs own icon
 		days_remove = 7
 
 		state_target = yes
 
 		on_map_mode = map_only
-
+        highlight_states = {
+	    	highlight_states_trigger = {
+	    		has_state_flag = EH_electric_trap_enabled_flag
+	    	}
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
 		target_trigger = {
             FROM = {
                 is_controlled_by = ROOT
@@ -27,12 +35,20 @@ EH_electric_traps_category = {
 		}
 	}
     EH_remove_electric_trap = {
-		icon = GFX_decision_boost # This probably needs own icon
+		icon = GFX_decision_message_decline_button # This probably needs own icon
 		days_remove = 7
 
 		state_target = yes
 
 		on_map_mode = map_only
+
+		highlight_states = {
+	    	highlight_states_trigger = {
+	    		has_state_flag = EH_electric_trap_enabled_flag
+	    	}
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
 
 		target_trigger = {
             FROM = {
@@ -69,12 +85,20 @@ EH_electric_traps_category = {
 		}
 	}
     EH_activate_electric_trap = {
-        icon = GFX_decision_boost # This probably needs own icon
+        icon = GFX_decision_fire # This probably needs own icon
         days_remove = 10
 
         state_target = yes
 
         on_map_mode = map_only
+
+        highlight_states = {
+	    	highlight_states_trigger = {
+	    		has_state_flag = EH_electric_trap_enabled_flag
+	    	}
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
 
         target_trigger = {
             FROM = {
@@ -99,13 +123,30 @@ EH_electric_traps_category = {
         }
 
         complete_effect = {
-            # Effects for nation
+            if = {
+                limit = {
+                    NOT = {
+                        has_dynamic_modifier = {
+                            modifier = EH_electric_trap_country_effects_idea
+                        }
+                    }
+                }
+                hidden_effect = {
+                    add_dynamic_modifier = {
+                        modifier = EH_electric_trap_country_effects_idea
+                    }
+                }
+            }
+            add_to_variable = { EH_electric_trap_energy_use_var = 0.1 }
+            custom_effect_tooltip = EH_electric_trap_energy_use_TT
             FROM = {
                 set_state_flag = EH_electric_trap_active_flag
             }
         }
 
         remove_effect = {
+            # Effects for country
+            add_to_variable = { EH_electric_trap_energy_use_var = -0.1 }
             FROM = {
                 # Effects for state
                 set_state_flag = {
@@ -113,7 +154,7 @@ EH_electric_traps_category = {
                     days = 15
                     value = 1
                 }
-                clr_country_flag = EH_electric_trap_active_flag
+                clr_state_flag = EH_electric_trap_active_flag
             }
         }
     }
