@@ -1,8 +1,7 @@
 EH_electric_traps_category = {
 	EH_set_up_electric_trap = {
 		icon = GFX_decision_boost # This probably needs own icon
-		days_remove = 5
-		cost = 1
+		days_remove = 7
 
 		state_target = yes
 
@@ -27,10 +26,51 @@ EH_electric_traps_category = {
 			}
 		}
 	}
+    EH_remove_electric_trap = {
+		icon = GFX_decision_boost # This probably needs own icon
+		days_remove = 7
+
+		state_target = yes
+
+		on_map_mode = map_only
+
+		target_trigger = {
+            FROM = {
+                is_controlled_by = ROOT
+                has_state_flag = EH_electric_trap_enabled_flag
+            }
+        }
+
+		visible = {
+			FROM = {
+				has_state_flag = EH_electric_trap_set_up_flag
+			}
+		}
+
+        available = {
+            FROM = {
+                NOT = {
+                    has_state_flag = EH_electric_trap_active_flag
+                }
+            }
+        }
+
+        complete_effect = {
+            FROM = {
+                set_state_flag = EH_electric_trap_removing_flag
+            }
+        }
+
+		remove_effect = {
+			FROM = {
+				clr_state_flag = EH_electric_trap_set_up_flag
+                clr_state_flag = EH_electric_trap_removing_flag
+			}
+		}
+	}
     EH_activate_electric_trap = {
         icon = GFX_decision_boost # This probably needs own icon
         days_remove = 10
-        cost = 1
 
         state_target = yes
 
@@ -53,6 +93,7 @@ EH_electric_traps_category = {
             FROM = {
                 NOT = {
                     has_state_flag = EH_electric_trap_cooldown
+                    has_state_flag = EH_electric_trap_removing_flag
                 }
             }
         }
@@ -60,7 +101,7 @@ EH_electric_traps_category = {
         complete_effect = {
             # Effects for nation
             FROM = {
-                # Effects for state
+                set_state_flag = EH_electric_trap_active_flag
             }
         }
 
@@ -72,6 +113,7 @@ EH_electric_traps_category = {
                     days = 15
                     value = 1
                 }
+                clr_country_flag = EH_electric_trap_active_flag
             }
         }
     }
