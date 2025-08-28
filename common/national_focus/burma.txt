@@ -1,3888 +1,1064 @@
-﻿# Author(s): Manchu Yu
+﻿# All focus positions are WIP ignore it all being weird I couldn't do it all today as well as undefined events I need to finish
+## STARTER FOCUS
 focus_tree = {
-	id = burma_focus
-	country = {
-		factor = 0
-		modifier = { tag = BRM add = 20 }
-	}
-	continuous_focus_position = { x = 0 y = 1500 }
-
-	# Political Focuses
-	focus = {
-		id = BRM_address_the_democracy_question
-		icon = treaty2
-
-		x = 9
-		y = 0
-
-		cost = 6.8
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_address_the_democracy_question"
-			add_political_power = 150
-			add_stability = 0.05
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 2
-				check_variable = { interest_rate > 6 }
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_the_new_economic_boom
-		icon = economic_prosperity2
-		x = 0
-		y = 2
-		relative_position_id = BRM_address_the_democracy_question
-
-		cost = 6.8
-
-		prerequisite = {
-			focus = BRM_reject_the_way_for_civilian_rule
-			focus = BRM_pave_the_way_for_civilian_rule
-		}
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
-			increase_economic_growth = yes
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.05 }
-			modify_treasury_effect = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 8
-				check_variable = { interest_rate > 6 }
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_loan_refactoring
-		icon = economic_prosperity2
-		x = 0
-		y = 3
-		relative_position_id = BRM_address_the_democracy_question
-
-		cost = 6.8
-
-		prerequisite = { focus = BRM_the_new_economic_boom }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		available = {
-			gdp_debt_ratio_higher_80 = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
-			set_temp_variable = { debt_change = debt }
-			multiply_temp_variable = { debt_change = -0.20 }
-			clamp_temp_variable = { var = debt_change max = 0 min = -100 }
-			modify_debt_effect = yes
-			add_timed_idea = { idea = BRM_loan_refactoring_idea days = 365 }
-		}
-
-		ai_will_do = {
-			base = 1
-			modifier = {
-				factor = 5
-				check_variable = { interest_rate > 8 }
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_pave_the_way_for_civilian_rule
-		icon = support_democracy
-		x = -5
-		y = 1
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 8.6
-
-		prerequisite = { focus = BRM_address_the_democracy_question }
-		mutually_exclusive = { focus = BRM_reject_the_way_for_civilian_rule }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_pave_the_way_for_civilian_rule"
-			add_stability = 0.05
-			add_popularity = { ideology = communism popularity = 0.05 }
-			add_popularity = { ideology = democratic popularity = 0.05 }
-			recalculate_party = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				factor = 8
-				check_variable = { interest_rate > 6 }
-			}
-			modifier = {
-				factor = 1.5
-				is_historical_focus_on = yes
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_reject_the_way_for_civilian_rule
-		icon = entente
-		x = 5
-		y = 1
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 8.6
-
-		prerequisite = { focus = BRM_address_the_democracy_question }
-		mutually_exclusive = { focus = BRM_pave_the_way_for_civilian_rule }
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INFLUENCE }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_reject_the_way_for_civilian_rule"
-			add_stability = -0.05
-			add_popularity = { ideology = nationalist popularity = 0.05 }
-			recalculate_party = yes
-			set_temp_variable = { percent_change = 8 }
-			change_domestic_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_propose_the_2008_constitution
-		icon = treaty3
-		x = -5
-		y = 2
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = { focus = BRM_pave_the_way_for_civilian_rule }
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_propose_the_2008_constitution"
-			if = { limit = { BRM = { has_start_date < 2016.01.01 } }
-				news_event = { id = Burma_News.1 days = 2 random_hours = 4 }
-			}
-
-			add_popularity = { ideology = neutrality popularity = 0.05 }
-			recalculate_party = yes
-
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_priesthood_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_release_opposition_figures
-		icon = pro_immigration2
-		x = -5
-		y = 3
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_propose_the_2008_constitution
-		}
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
-		available = {
-			if = {
-				limit = { is_ai = no }
-				NOT = {
-					has_country_leader = {
-						name = "Than Shwe"
-					}
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_release_opposition_figures"
-			if = {
-				limit = {
-					BRM = {
-						has_start_date < 2016.01.01
-					}
-				}
-				news_event = {
-					id = Burma_News.2
-					days = 2
-					random_hours = 4
-				}
-			}
-			add_political_power = 100
-			GCC_open_nation_level_up = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_relax_media_censorship
-		icon = liberal_press
-		x = -7
-		y = 3
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_propose_the_2008_constitution }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
-
-		available = {
-			if = {
-				limit = { is_ai = no }
-				NOT = {
-					has_country_leader = {
-						name = "Than Shwe"
-					}
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_relax_media_censorship"
-			add_political_power = 50
-			GCC_open_nation_level_up = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_allow_labour_strikes_and_unions
-		icon = industry_democratic
-		x = -3
-		y = 3
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_propose_the_2008_constitution }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH FOCUS_FILTER_INTERNAL_FACTION }
-
-		available = {
-			if = {
-				limit = { is_ai = no }
-				NOT = {
-					has_country_leader = {
-						name = "Than Shwe"
-					}
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_allow_labour_strikes_and_unions"
-			add_political_power = 50
-			GCC_open_nation_level_up = yes
-			set_temp_variable = { temp_change = 5 }
-			change_labour_unions_opinion = yes
-			change_communist_cadres_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_cede_power_to_the_nld
-		icon = democracy3
-		x = -5
-		y = 4
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = { focus = BRM_allow_labour_strikes_and_unions }
-		prerequisite = { focus = BRM_relax_media_censorship }
-		prerequisite = { focus = BRM_release_opposition_figures }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-		available = {
-			if = {
-				limit = { is_ai = no }
-				NOT = {
-					has_country_leader = {
-						name = "Than Shwe"
-					}
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_cede_power_to_the_nld"
-
-			if = { limit = { has_start_date < 2016.01.01 }
-				news_event = { id = Burma_News.3 days = 2 random_hours = 4 }
-			}
-
-			add_stability = 0.1
-			set_temp_variable = { rul_party_temp = 16 }
-			set_temp_variable = { change_leader_temp = 1 }
-			change_ruling_party_effect = yes
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
-
-			if = { limit = { has_idea = Reduced_Western_Sanctions }
-				remove_ideas = Reduced_Western_Sanctions
-			}
-			else_if = { limit = { has_idea = Western_Sanctions }
-				swap_ideas = {
-					remove_idea = Western_Sanctions
-					add_idea = Reduced_Western_Sanctions
-				}
-			}
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_promote_civilian_enterprises
-		icon = industry_civilian
-		x = -3
-		y = 5
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_cede_power_to_the_nld }
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
-		available = {
-			has_elections = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_promote_civilian_enterprises"
-			add_ideas = BRM_promote_civilian_enterprises_research_boost
-			set_temp_variable = { treasury_change = -24 }
-			modify_treasury_effect = yes
-			504 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = offices
-					level = 1
-					instant_build = yes
-				}
-			}
-			502 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = offices
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_limit_promotion_of_social_liberties
-		icon = political_pressure_blue
-		x = -5
-		y = 5
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_cede_power_to_the_nld }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_limit_promotion_of_social_liberties"
-			add_political_power = 50
-			GCC_open_nation_level_up = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_end_isolationism
-		icon = global_community
-		x = -7
-		y = 5
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_cede_power_to_the_nld }
-		search_filters = { FOCUS_FILTER_STABILITY }
-		available = {
-			has_elections = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_end_isolationism"
-			add_stability = 0.02
-			set_temp_variable = { percent_change = 3 }
-			change_domestic_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_revisit_the_rohingya_issue
-		icon = islamophobia
-		x = -11
-		y = 4
-		cost = 7.86
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_revisit_the_rohingya_issue"
-			add_political_power = 100
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_the_path_of_intolerance
-		icon = war4
-		x = -1
-		y = 1
-		relative_position_id = BRM_revisit_the_rohingya_issue
-		cost = 7.86
-
-		prerequisite = { focus = BRM_revisit_the_rohingya_issue }
-		mutually_exclusive = { focus = BRM_the_path_of_tolerance }
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_the_path_of_intolerance"
-			add_popularity = { ideology = nationalist popularity = 0.10 }
-			recalculate_party = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_the_path_of_tolerance
-		icon = diplomatic_treaty
-		x = 1
-		y = 1
-		relative_position_id = BRM_revisit_the_rohingya_issue
-		cost = 7.86
-
-		prerequisite = { focus = BRM_revisit_the_rohingya_issue }
-		mutually_exclusive = { focus = BRM_the_path_of_intolerance }
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_the_path_of_tolerance"
-			add_popularity = { ideology = neutrality popularity = 0.10 }
-			recalculate_party = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_support_buddhist_nationalists
-		icon = buddhism
-		x = -1
-		y = 2
-		relative_position_id = BRM_revisit_the_rohingya_issue
-		cost = 7.86
-
-		prerequisite = { focus = BRM_the_path_of_intolerance }
-
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_support_buddhist_nationalists"
-			add_stability = -0.05
-			add_war_support = 0.05
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_expel_the_rohingya
-		icon = refugees
-		x = -1
-		y = 3
-		relative_position_id = BRM_revisit_the_rohingya_issue
-		cost = 8.6
-
-		prerequisite = { focus = BRM_support_buddhist_nationalists }
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_expel_the_rohingya"
-			500 = {
-				add_manpower = -800000
-			}
-			492 = {
-				add_manpower = 800000
-			}
-			every_country = {
-				limit = {
-					NOT = { tag = BRM }
-					OR = {
-						has_government = democratic
-						has_idea = sunni
-						has_idea = shia
-						has_idea = ibadi
-					}
-				}
-				add_opinion_modifier = { target = ROOT modifier = expelled_rohingya }
-			}
-			BAN = {
-				add_opinion_modifier = { target = ROOT modifier = rohingya_bangladesh }
-			}
-			remove_ideas = Rohingya_Crisis
-			if = {
-				limit = {
-					has_idea = Western_Sanctions
-					NOT = { has_idea = Massive_International_Sanctions }
-				}
-				swap_ideas = {
-					remove_idea = Western_Sanctions
-					add_idea = Massive_International_Sanctions
-				}
-			}
-			if = {
-				limit = {
-					has_idea = Reduced_Western_Sanctions
-					NOT = { has_idea = Massive_International_Sanctions }
-				}
-				swap_ideas = {
-					remove_idea = Reduced_Western_Sanctions
-					add_idea = Massive_International_Sanctions
-				}
-			}
-			set_temp_variable = { temp_opinion = 10 }
-			change_the_priesthood_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_announce_the_china_myanmar_economic_corridor
-		icon = intelligence_exchange
-		x = -12
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_end_isolationism }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		available = {
-			has_war = no
-			has_full_control_of_state = 505
-			has_full_control_of_state = 502
-			CHI = { has_completed_focus = CHI_Belt_and_Road_Initiative }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_announce_the_china_myanmar_economic_corridor"
-			505 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
-			}
-			502 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
-			}
-			CHI = {
-				set_temp_variable = { treasury_change = -14 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_affirm_religious_tolerance
-		icon = sunni_politics
-		x = 1
-		y = 2
-		relative_position_id = BRM_revisit_the_rohingya_issue
-		cost = 7.86
-
-		prerequisite = { focus = BRM_the_path_of_tolerance }
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_WAR_SUPPORT }
-
-		available = {
-			NOT = { has_idea = Buddhism_Official }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_affirm_religious_tolerance"
-			add_stability = 0.05
-			add_war_support = -0.05
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_reform_the_1982_citizenship_law
-		icon = pass_legislation
-		x = 1
-		y = 3
-		relative_position_id = BRM_revisit_the_rohingya_issue
-		cost = 15
-
-		prerequisite = { focus = BRM_affirm_religious_tolerance }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		available = {
-			70_percent_government_popularity = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_reform_the_1982_citizenship_law"
-			remove_ideas = Rohingya_Crisis
-			if = {
-				limit = {
-					has_idea = Reduced_Western_Sanctions
-				}
-				remove_ideas = Reduced_Western_Sanctions
-			}
-			if = {
-				limit = {
-					has_idea = Western_Sanctions
-				}
-				swap_ideas = {
-					remove_idea = Western_Sanctions
-					add_idea = Reduced_Western_Sanctions
-				}
-			}
-			every_country = {
-				limit = {
-					NOT = { tag = BRM }
-					has_government = democratic
-				}
-				add_opinion_modifier = { target = ROOT modifier = gave_the_rohingya_citizenship }
-			}
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_priesthood_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_increase_trade_with_asean
-		icon = trade
-		x = -14
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_end_isolationism }
-
-		available = {
-			NOT = { has_idea = Massive_International_Sanctions }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_trade_with_asean"
-			every_country = {
-				limit = {
-					NOT = { tag = BRM }
-					has_idea = ASEAN_Member
-				}
-				add_opinion_modifier = { target = ROOT modifier = improve_trade }
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_request_western_development_aid
-		icon = money
-		x = -16
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_end_isolationism }
-		search_filters = { FOCUS_FILTER_EXPENDITURE }
-
-		available = {
-			NOT = { has_idea = Massive_International_Sanctions }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_request_western_development_aid"
-			set_temp_variable = { treasury_change = 30 }
-			modify_treasury_effect = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_encourage_investment_from_western_firms
-		icon = oil_trade
-		x = -16
-		y = 7
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_request_western_development_aid }
-		search_filters = { FOCUS_FILTER_RESOURCE }
-		available = {
-			has_war = no
-			has_full_control_of_state = 504
-			NOT = { has_idea = Massive_International_Sanctions }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_encourage_investment_from_western_firms"
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			504 = {
-				add_resource = {
-					type = oil
-					amount = 8
-				}
-			}
-			set_temp_variable = { temp_opinion = 5 }
-			change_fossil_fuel_industry_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_reach_out_to_the_US_for_military_protection
-		icon = align_to_america
-		x = -16
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_encourage_investment_from_western_firms }
-		prerequisite = { focus = BRM_reform_the_1982_citizenship_law }
-		mutually_exclusive = { focus = BRM_improve_security_cooperation_with_asean }
-		mutually_exclusive = { focus = BRM_establish_a_military_partnership_with_china }
-
-		available = {
-			NOT = { is_in_faction_with = CHI }
-			CHI = {
-				influence_less_20 = yes
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_reach_out_to_the_US_for_military_protection"
-			USA = {
-				country_event = {
-					id = Burma.1
-					days = 2
-					random_hours = 2
-				}
-			}
-			CHI = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation_with_the_us
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				OR = {
-					is_historical_focus_on = no
-					AND = {
-						check_variable = { influence_array^0 = CHI }
-						check_variable = { influence_array_val^0 > 29.999 }
-					}
-					AND = {
-						check_variable = { influence_array^1 = CHI }
-						check_variable = { influence_array_val^1 > 29.999 }
-					}
-					AND = {
-						check_variable = { influence_array^2 = CHI }
-						check_variable = { influence_array_val^2 > 29.999 }
-					}
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_become_a_major_non_nato_ally
-		icon = small_arms_west
-		x = -16
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = { focus = BRM_reach_out_to_the_US_for_military_protection }
-		search_filters = { FOCUS_FILTER_RESEARCH }
-		available = {
-			NOT = { is_in_faction_with = CHI }
-			CHI = { influence_less_20 = yes }
-			USA = { has_guaranteed = BRM }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_become_a_major_non_nato_ally"
-			hidden_effect = { add_ideas = Major_Non_NATO_Ally }
-			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = USA.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_encourage_investment_from_asean_firms
-		icon = production
-		x = -14
-		y = 7
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_increase_trade_with_asean }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		available = {
-			has_war = no
-			NOT = { has_idea = Massive_International_Sanctions }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_encourage_investment_from_asean_firms"
-			two_random_industrial_complex = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_improve_security_cooperation_with_asean
-		icon = align_to_asean
-		x = -14
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_encourage_investment_from_asean_firms }
-		mutually_exclusive = { focus = BRM_reach_out_to_the_US_for_military_protection }
-		mutually_exclusive = { focus = BRM_establish_a_military_partnership_with_china }
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		available = {
-			NOT = { is_in_faction_with = CHI }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_security_cooperation_with_asean"
-			add_ideas = BRM_improve_security_cooperation_with_asean_research_boost
-			every_country = {
-				limit = {
-					NOT = { tag = BRM }
-					has_idea = ASEAN_Member
-				}
-					add_opinion_modifier = {
-						target = BRM
-						modifier = Military_Partnership
-					}
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				OR = {
-					is_historical_focus_on = no
-					check_variable = { chinese_aggression > 10 }
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_push_for_mutual_defence_agreements_between_asean_states
-		icon = treaty
-		x = -14
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = {
-			focus = BRM_improve_security_cooperation_with_asean
-		}
-
-		available = {
-			NOT = { is_in_faction_with = CHI }
-			OR = {
-				CHI = {
-					has_added_tension_amount > 0
-				}
-				threat > 0.2
-			}
-			CHI = { influence_less_20 = yes }
-			USA = { influence_less_20 = yes }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_push_for_mutual_defence_agreements_between_asean_states"
-			every_country = {
-				limit = {
-					NOT = { tag = BRM }
-					has_idea = ASEAN_Member
-				}
-				country_event = {
-					id = Burma.4
-					days = 1
-					random_hours = 3
-				}
-			}
-			hidden_effect = {
-				country_event = {
-					id = Burma.10
-					days = 5
-				}
-			}
-			set_country_flag = ASEAN_defence_treaty
-			custom_effect_tooltip = 11_ASEAN_defence_tt
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_encourage_investment_from_chinese_firms
-		icon = infrastructure
-		x = -12
-		y = 7
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_announce_the_china_myanmar_economic_corridor }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		available = {
-			has_war = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_encourage_investment_from_chinese_firms"
-			random_owned_controlled_state = {
-				add_building_construction = {
-					type = infrastructure
-					level = 4
-					instant_build = yes
-				}
-			}
-			CHI = {
-				set_temp_variable = { treasury_change = -14 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_establish_a_military_partnership_with_china
-		icon = align_to_china
-		x = -12
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_encourage_investment_from_chinese_firms }
-		mutually_exclusive = { focus = BRM_reach_out_to_the_US_for_military_protection }
-		mutually_exclusive = { focus = BRM_improve_security_cooperation_with_asean }
-
-		available = {
-			NOT = { is_in_faction_with = USA }
-			USA = { influence_less_20 = yes }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_establish_a_military_partnership_with_china"
-			CHI = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = military_partnership
-				}
-			}
-			BRM = {
-				add_opinion_modifier = {
-					target = CHI
-					modifier = military_partnership
-				}
-			}
-			custom_effect_tooltip = 11_special_ops_tt
-			division_template = {
-				name = "Special Operations Command"
-				priority = 2
-
-				regiments = {
-					special_forces = { x = 0 y = 0 }
-					special_forces = { x = 0 y = 1 }
-					special_forces = { x = 1 y = 0 }
-					special_forces = { x = 1 y = 1 }
-				}
-			}
-			hidden_effect = {
-				504 = {
-					create_unit = { division = "name = \"1st Special Operations Command\" division_template = \"Special Operations Command\" start_experience_factor = 5"  owner = BRM }
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				OR = {
-					is_historical_focus_on = no
-					AND = {
-						check_variable = { influence_array^0 = USA }
-						check_variable = { influence_array_val^0 > 29.999 }
-					}
-					AND = {
-						check_variable = { influence_array^1 = USA }
-						check_variable = { influence_array_val^1 > 29.999 }
-					}
-					AND = {
-						check_variable = { influence_array^2 = USA }
-						check_variable = { influence_array_val^2 > 29.999 }
-					}
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_join_the_shanghai_pact
-		icon = dragon
-		x = -12
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = { focus = BRM_establish_a_military_partnership_with_china }
-
-		available = {
-			NOT = { is_in_faction_with = USA }
-			USA = { influence_less_20 = yes }
-			CHI = { is_faction_leader = yes }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_join_the_shanghai_pact"
-			CHI = { country_event = { days = 1 id = Burma.14 } }
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_undermine_the_influence_of_the_tatmadaw
-		icon = liberalism
-		x = -5
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_limit_promotion_of_social_liberties }
-		prerequisite = { focus = BRM_end_isolationism }
-		prerequisite = { focus = BRM_promote_civilian_enterprises }
-		mutually_exclusive = { focus = BRM_accept_the_role_of_the_tatmadaw }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH FOCUS_FILTER_STABILITY }
-
-		available = {
-			has_war = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_undermine_the_influence_of_the_tatmadaw"
-			news_event = {
-				id = Burma_News.4
-				days = 1
-				random_hours = 3
-			}
-
-			add_ideas = Struggle_for_power
-			GCC_open_nation_level_up = yes
-			set_temp_variable = { temp_opinion = -10 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_accept_the_role_of_the_tatmadaw
-		icon = authoritarian_democracy2
-		x = -1
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_limit_promotion_of_social_liberties }
-		prerequisite = { focus = BRM_end_isolationism }
-		prerequisite = { focus = BRM_promote_civilian_enterprises }
-		mutually_exclusive = { focus = BRM_undermine_the_influence_of_the_tatmadaw }
-
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_accept_the_role_of_the_tatmadaw"
-			add_stability = 0.1
-
-			set_temp_variable = { temp_opinion = 10 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_suppress_critics_of_the_military
-		icon = generic_controlled_press
-		x = 0
-		y = 7
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_accept_the_role_of_the_tatmadaw focus = BRM_establish_direct_military_rule }
-
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_suppress_critics_of_the_military"
-			add_popularity = { ideology = neutrality popularity = -0.05 }
-			recalculate_party = yes
-
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_military_opinion = yes
-			GCC_censored_nation_level_up = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_pursue_rapprochement_with_rebel_groups
-		icon = dangerous_deal
-		x = -2
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		mutually_exclusive = {
-			focus = BRM_crush_the_rebel_groups
-		}
-
-		prerequisite = {
-			focus = BRM_undermine_the_influence_of_the_tatmadaw focus = BRM_accept_the_role_of_the_tatmadaw
-		}
-
-		search_filters = { FOCUS_FILTER_STABILITY }
-
-		available = {
-			has_war = no
-			NOT = { has_idea = Buddhism_Official }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_pursue_rapprochement_with_rebel_groups"
-			add_stability = 0.02
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_begin_calls_for_constitutional_revision
-		icon = dangerous_laws
-		x = -5
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_undermine_the_influence_of_the_tatmadaw }
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
-
-		available = {
-			has_elections = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_begin_calls_for_constitutional_revision"
-			add_political_power = 100
-			set_temp_variable = { temp_opinion = -10 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_target_the_corruption_of_military_enterprises
-		icon = gunpoint_diplomacy
-		x = -9
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_undermine_the_influence_of_the_tatmadaw }
-		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INTERNAL_FACTION }
-		available = {
-			has_elections = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_target_the_corruption_of_military_enterprises"
-			decrease_corruption = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_mobilize_the_workers
-		icon = industry_communist2
-		x = -10
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_target_the_corruption_of_military_enterprises
-		}
-
-		prerequisite = {
-			focus = BRM_begin_calls_for_constitutional_revision
-		}
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		available = {
-			has_civil_war = no
-			has_elections = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_mobilize_the_workers"
-			add_political_power = 100
-			add_stability = -0.02
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_mobilize_the_students
-		icon = university
-		x = -8
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_begin_calls_for_constitutional_revision
-		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		available = {
-			has_civil_war = no
-			has_elections = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_mobilize_the_students"
-			add_political_power = 100
-			add_stability = -0.02
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_mobilize_the_monks
-		icon = buddhism
-		x = -6
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_begin_calls_for_constitutional_revision
-		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		available = {
-			has_civil_war = no
-			has_elections = yes
-			if = {
-				limit = { has_idea = the_priesthood }
-				the_priesthood_at_least_enthusiastic_opinion = yes
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_mobilize_the_monks"
-			add_political_power = 100
-			add_stability = -0.02
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_priesthood_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_mobilize_the_ethnic_minorities
-		icon = mobilize_the_ethnic_minorities
-		x = -4
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_begin_calls_for_constitutional_revision }
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = BRM_pursue_rapprochement_with_rebel_groups
-		}
-
-		available = {
-			has_war = no
-			has_elections = yes
-			NOT = { has_idea = Buddhism_Official }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_mobilize_the_ethnic_minorities"
-			add_political_power = 100
-			add_stability = -0.02
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_launch_talks_on_a_new_constitution
-		icon = launch_talks_on_the_constiution
-		x = -7
-		y = 10
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_mobilize_the_monks
-		}
-
-		prerequisite = {
-			focus = BRM_mobilize_the_ethnic_minorities
-		}
-
-		prerequisite = {
-			focus = BRM_mobilize_the_workers
-		}
-
-		prerequisite = {
-			focus = BRM_mobilize_the_students
-		}
-
-		available = {
-			has_civil_war = no
-			has_elections = yes
-			if = {
-				limit = { has_government = democratic }
-				democratic > 0.75
-			}
-			if = {
-				limit = { has_government = communism }
-				communism > 0.75
-			}
-			if = {
-				limit = { has_government = neutrality }
-				neutrality > 0.75
-			}
-			if = {
-				limit = { has_government = nationalist }
-				nationalist > 0.75
-			}
-		}
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_launch_talks_on_a_new_constitution"
-			add_political_power = 100
-			drop_cosmetic_tag = yes
-			if = {
-				limit = {
-					has_completed_focus = BRM_establish_a_federated_state
-				}
-				set_cosmetic_tag = BRM_Burma_federation
-				clr_country_flag = dynamic_flag
-			}
-			else = {
-				set_cosmetic_tag = BRM_burma
-				clr_country_flag = dynamic_flag
-			}
-			GCC_open_nation_level_up = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_end_the_role_of_the_tatmadaw_in_politics
-		icon = deadly_deal
-		x = -7
-		y = 11
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = {
-			focus = BRM_launch_talks_on_a_new_constitution
-		}
-		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESEARCH FOCUS_FILTER_STABILITY }
-		available = {
-			has_war = no
-			has_elections = yes
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_end_the_role_of_the_tatmadaw_in_politics"
-			country_event = {
-				id = Burma.5
-				days = 2
-				random_hours = 3
-			}
-
-			remove_ideas = {
-				Struggle_for_power
-				A_Political_Military
-			}
-
-			add_stability = 0.1
-			GCC_open_nation_level_up = yes
-			}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_affirm_protections_of_minority_culture_and_language
-		icon = sunni_government
-		x = -2
-		y = 10
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_pursue_rapprochement_with_rebel_groups
-		}
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		available = {
-			has_war = no
-			NOT = { has_idea = Buddhism_Official }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_affirm_protections_of_minority_culture_and_language"
-			add_political_power = 50
-			add_ideas = { multi_ethnic_state_idea }
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_promise_autonomy
-		icon = break_free
-		x = -2
-		y = 11
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_affirm_protections_of_minority_culture_and_language }
-		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_STABILITY }
-		available = {
-			has_war = no
-			NOT = { has_idea = Buddhism_Official }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_promise_autonomy"
-			add_stability = 0.02
-			set_temp_variable = { percent_change = -2 }
-			set_temp_variable = { tag_index = BRM.id }
-			set_temp_variable = { influence_target = KAC }
-			change_influence_percentage = yes
-			set_temp_variable = { tag_index = BRM.id }
-			set_temp_variable = { influence_target = KAR }
-			change_influence_percentage = yes
-			set_temp_variable = { tag_index = BRM.id }
-			set_temp_variable = { influence_target = SHN }
-			change_influence_percentage = yes
-			set_temp_variable = { tag_index = BRM.id }
-			set_temp_variable = { influence_target = NHN }
-			change_influence_percentage = yes
-			set_temp_variable = { tag_index = BRM.id }
-			set_temp_variable = { influence_target = WAA }
-			change_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_establish_a_federated_state
-		icon = self_management
-		x = -2
-		y = 12
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_promise_autonomy
-		}
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-		available = {
-			has_war = no
-			NOT = { has_idea = Buddhism_Official }
-			KAC = {
-				influence_higher_25 = yes
-			}
-			KAR = {
-				influence_higher_25 = yes
-			}
-			SHN = {
-				influence_higher_25 = yes
-			}
-			NHN = {
-				influence_higher_25 = yes
-			}
-			WAA = {
-				influence_higher_25 = yes
-			}
-			custom_trigger_tooltip = {
-				tooltip = 11_BRM_NCA_tt
-				BRM = { has_idea = Nationwide_Ceasefire_Agreement }
-				if = {
-					limit = { country_exists = KAC }
-					KAC = { has_idea = Nationwide_Ceasefire_Agreement }
-				}
-				if = {
-					limit = { country_exists = KAR }
-					KAR = { has_idea = Nationwide_Ceasefire_Agreement }
-				}
-				if = {
-					limit = { country_exists = SHN }
-					SHN = { has_idea = Nationwide_Ceasefire_Agreement }
-				}
-				if = {
-					limit = { country_exists = NHN }
-					NHN = { has_idea = Nationwide_Ceasefire_Agreement }
-				}
-				if = {
-					limit = { country_exists = WAA }
-					WAA = { has_idea = Nationwide_Ceasefire_Agreement }
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_establish_a_federated_state"
-			news_event = {
-				id = Burma_News.6
-				days = 1
-				random_hours = 3
-			}
-			if = {
-				limit = {
-					has_completed_focus = BRM_launch_talks_on_a_new_constitution
-				}
-				set_cosmetic_tag = BRM_Burma_federation
-				clr_country_flag = dynamic_flag
-			}
-			else = {
-				set_cosmetic_tag = BRM_Myanmar_federation
-				clr_country_flag = dynamic_flag
-			}
-			if = {
-				limit = {
-					has_global_flag = GAME_RULE_allow_colored_puppets
-				}
-				BRM = {
-					set_autonomy = {
-						target = KAC
-						autonomy_state = autonomy_autonomous_state_colored
-					}
-					set_autonomy = {
-						target = KAR
-						autonomy_state = autonomy_autonomous_state_colored
-					}
-					set_autonomy = {
-						target = SHN
-						autonomy_state = autonomy_autonomous_state_colored
-					}
-					set_autonomy = {
-						target = NHN
-						autonomy_state = autonomy_autonomous_state_colored
-					}
-					set_autonomy = {
-						target = WAA
-						autonomy_state = autonomy_autonomous_state_colored
-					}
-				}
-			}
-			else = {
-				BRM = {
-					set_autonomy = {
-						target = KAC
-						autonomy_state = autonomy_autonomous_state
-					}
-					set_autonomy = {
-						target = KAR
-						autonomy_state = autonomy_autonomous_state
-					}
-					set_autonomy = {
-						target = SHN
-						autonomy_state = autonomy_autonomous_state
-					}
-					set_autonomy = {
-						target = NHN
-						autonomy_state = autonomy_autonomous_state
-					}
-					set_autonomy = {
-						target = WAA
-						autonomy_state = autonomy_autonomous_state
-					}
-				}
-			}
-			hidden_effect = {
-				KAC = {
-					set_cosmetic_tag = KAC_federation
-					clr_country_flag = dynamic_flag
-				}
-				KAR = {
-					set_cosmetic_tag = KAR_federation
-					clr_country_flag = dynamic_flag
-				}
-				SHN = {
-					set_cosmetic_tag = SHN_federation
-					clr_country_flag = dynamic_flag
-				}
-				NHN = {
-					set_cosmetic_tag = NHN_federation
-					clr_country_flag = dynamic_flag
-				}
-				WAA = {
-					set_cosmetic_tag = WAA_federation
-					clr_country_flag = dynamic_flag
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_crush_the_rebel_groups
-		icon = war
-		x = 1
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		mutually_exclusive = { focus = BRM_pursue_rapprochement_with_rebel_groups }
-		prerequisite = { focus = BRM_accept_the_role_of_the_tatmadaw focus = BRM_establish_direct_military_rule }
-
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
-
-		available = {
-			CHI = { influence_less_20 = yes }
-		}
-
-		bypass = {
-			NOT = {
-				country_exists = KAC
-				country_exists = KAR
-				country_exists = SHN
-				country_exists = NHN
-				country_exists = WAA
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_crush_the_rebel_groups"
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.05
-			}
-			recalculate_party = yes
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_crackdown_on_protests
-		icon = political_arrests2
-		x = 5
-		y = 2
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_reject_the_way_for_civilian_rule }
-
-		available = {
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_crackdown_on_protests"
-			news_event = {
-				id = Burma_News.7
-				days = 2
-				random_hours = 3
-			}
-			every_country = {
-				limit = {
-					has_government = democratic
-				}
-				add_opinion_modifier = { target = BRM modifier = crackdown_on_protests }
-			}
-			add_ideas = Anti_tatmadaw_sentiment
-			add_manpower = -1000
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_priesthood_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_imprison_opposition_figures
-		icon = anti_immigration2
-		x = 3
-		y = 2
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_reject_the_way_for_civilian_rule }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-		available = {
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_imprison_opposition_figures"
-			swap_ideas = {
-				remove_idea = GCC_censored_nation_01
-				add_idea = GCC_censored_nation_03
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_leave_asean
-		icon = renounce_treaty
-		x = 7
-		y = 2
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_reject_the_way_for_civilian_rule }
-		search_filters = { FOCUS_FILTER_INFLUENCE }
-		available = {
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_leave_asean"
-			remove_ideas = ASEAN_member
-			every_other_country = {
-				limit = {
-					NOT = { tag = BRM }
-					has_idea = ASEAN_Member
-				}
-				add_opinion_modifier = { target = BRM modifier = left_ASEAN }
-				remove_opinion_modifier = { target = BRM modifier = asean_relations }
-			}
-			every_country = {
-				limit = { has_opinion_modifier = asean_plus_three_relations }
-				remove_opinion_modifier = { target = BRM modifier = asean_plus_three_relations }
-			}
-			set_temp_variable = { percent_change = 5 }
-			change_domestic_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_establish_direct_military_rule
-		icon = military_mission
-		x = 5
-		y = 3
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_crackdown_on_protests }
-		prerequisite = { focus = BRM_imprison_opposition_figures }
-		prerequisite = { focus = BRM_leave_asean }
-
-		available = {
-			has_elections = no
-			has_stability > 0.25
-			if = { limit = { is_ai = no }
-				has_idea = police_05
-			}
-		}
-
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_establish_direct_military_rule"
-			remove_ideas = Democracy_Movement
-			if = {
-				limit = {
-					has_idea = Western_Sanctions
-					NOT = { has_idea = Massive_International_Sanctions }
-				}
-				swap_ideas = {
-					remove_idea = Western_Sanctions
-					add_idea = Massive_International_Sanctions
-				}
-			}
-			if = {
-				limit = {
-					has_idea = Reduced_Western_Sanctions
-					NOT = { has_idea = Massive_International_Sanctions }
-				}
-				swap_ideas = {
-					remove_idea = Reduced_Western_Sanctions
-					add_idea = Massive_International_Sanctions
-				}
-			}
-			add_stability = 0.1
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_affirm_the_superiority_of_authoritarian_capitalism
-		icon = authoritarian_democracy
-		x = 3
-		y = 4
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_establish_direct_military_rule }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-		available = {
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_affirm_the_superiority_of_authoritarian_capitalism"
-			add_ideas = State_led_economy
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_increase_the_tatmadaws_role_in_the_economy
-		icon = money
-		x = 3
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_affirm_the_superiority_of_authoritarian_capitalism }
-		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INDUSTRY }
-		available = {
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_the_tatmadaws_role_in_the_economy"
-			three_random_industrial_complex = yes
-			increase_corruption = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_construct_military_industries
-		icon = industry_military
-		x = 3
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_increase_the_tatmadaws_role_in_the_economy }
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-		available = {
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_construct_military_industries"
-			two_random_arms_factory = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_proclaim_a_permanent_end_to_ceasefire_initiatives
-		icon = war2_green
-		x = 1
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_crush_the_rebel_groups
-		}
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
-		available = {
-			NOT = {
-				has_idea = Nationwide_Ceasefire_Agreement
-			}
-		}
-
-		bypass = {
-			NOT = {
-				country_exists = KAC
-				country_exists = KAR
-				country_exists = SHN
-				country_exists = NHN
-				country_exists = WAA
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_proclaim_a_permanent_end_to_ceasefire_initiatives"
-			news_event = {
-				id = Burma_News.5
-				days = 1
-				random_hours = 3
-			}
-			add_war_support = 0.1
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_strike_the_karen
-		icon = attack_karen
-		x = 0
-		y = 10
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_proclaim_a_permanent_end_to_ceasefire_initiatives
-		}
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-		available = {
-			has_war = no
-		}
-
-		bypass = {
-			NOT = {
-				country_exists = KAR
-			}
-		}
-		will_lead_to_war_with = KAR
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_karen"
-			create_wargoal = { type = annex_everything target = KAR }
-			add_timed_idea = { idea = The_Anti_Karen_Offensive days = 365 }
-			hidden_effect = {
-				SIA = { give_military_access = KAR }
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_strike_the_kachin
-		icon = attack_kachin
-		x = 2
-		y = 10
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_proclaim_a_permanent_end_to_ceasefire_initiatives }
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-		available = {
-			has_war = no
-		}
-
-		bypass = {
-			NOT = {
-				country_exists = KAC
-			}
-		}
-		will_lead_to_war_with = KAC
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_kachin"
-			create_wargoal = { type = annex_everything target = KAC }
-			add_timed_idea = { idea = The_Anti_Kachin_Offensive days = 365 }
-			hidden_effect = {
-				CHI = { give_military_access = KAC }
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_strike_the_shan
-		icon = attack_shan
-		x = 4
-		y = 10
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_proclaim_a_permanent_end_to_ceasefire_initiatives }
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-		available = {
-			has_war = no
-		}
-
-		bypass = {
-			NOT = { OR = {
-					country_exists = SHN
-					country_exists = NHN
-					}
-			}
-		}
-		will_lead_to_war_with = SHN
-		will_lead_to_war_with = NHN
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_the_shan"
-			create_wargoal = { type = annex_everything target = SHN }
-			create_wargoal = { type = annex_everything target = NHN }
-			add_timed_idea = { idea = The_Anti_Shan_Offensive days = 365 }
-			hidden_effect = {
-				SIA = { give_military_access = SHN }
-				SIA = { give_military_access = NHN }
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_turn_on_the_united_wa_state_army
-		icon = war_against_wa
-		x = 2
-		y = 11
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_strike_the_kachin }
-		prerequisite = { focus = BRM_strike_the_karen }
-		prerequisite = { focus = BRM_strike_the_shan }
-
-		available = {
-			has_war = no
-			CHI = { influence_less_20 = yes }
-		}
-
-		bypass = {
-			NOT = {
-				country_exists = WAA
-			}
-		}
-		will_lead_to_war_with = WAA
-
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_turn_on_the_united_wa_state_army"
-			create_wargoal = { type = annex_everything target = WAA }
-			add_timed_idea = { idea = The_Anti_Wa_Offensive days = 365 }
-			CHI = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = attacked_UWSA
-				}
-			}
-			hidden_effect = {
-				SIA = { give_military_access = WAA }
-				CHI = { give_military_access = WAA }
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_internal_colonialism
-		icon = colonial_crackdown
-		x = 2
-		y = 12
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_turn_on_the_united_wa_state_army
-		}
-		search_filters = { FOCUS_FILTER_RESOURCE }
-		available = {
-			has_full_control_of_state = 496
-			has_full_control_of_state = 501
-			has_full_control_of_state = 498
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_internal_colonialism"
-			set_temp_variable = { treasury_change = -4 }
-			modify_treasury_effect = yes
-			496 = {
-				add_resource = {
-					type = tungsten
-					amount = 6
-				}
-			}
-			501 = {
-				add_resource = {
-					type = tungsten
-					amount = 2
-				}
-			}
-			498 = {
-				add_resource = {
-					type = tungsten
-					amount = 2
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_proclaim_an_end_to_the_insurgency
-		icon = align_to_myanmar2
-		x = 0
-		y = 13
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_establish_a_federated_state focus = BRM_internal_colonialism
-		}
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_POLITICAL FOCUS_FILTER_RESOURCE FOCUS_FILTER_STABILITY }
-		available = {
-			has_war = no
-			NOT = { has_idea = Rohingya_Crisis }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_proclaim_an_end_to_the_insurgency"
-			every_country = {
-				limit = {
-					OR = { original_tag = BRM original_tag = KAC original_tag = KAR original_tag = SHN original_tag = NHN original_tag = WAA }
-				}
-				remove_ideas = Ethnic_Insurgencies
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_distract_attentions_abroad
-		icon = aristocratic_funding
-		x = 7
-		y = 4
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_establish_direct_military_rule }
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		available = {
-			has_civil_war = no
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_distract_attentions_abroad"
-			add_popularity = { ideology = nationalist popularity = 0.05 }
-			recalculate_party = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_reject_foreign_interference
-		icon = refuse_treaty
-		x = 7
-		y = 5
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_distract_attentions_abroad }
-		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-		available = {
-			has_elections = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_reject_foreign_interference"
-			add_political_power = 100
-			add_stability = 0.1
-			set_temp_variable = { percent_change = 3 }
-			change_domestic_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_promote_anti_thai_rhetoric
-		icon = irredentism
-		x = 6
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_reject_foreign_interference }
-
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_promote_anti_thai_rhetoric"
-			add_war_support = 0.1
-			SIA = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = anti_thai_rhetoric
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_criticize_chinas_meddling
-		icon = stage_asia
-		x = 8
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_reject_foreign_interference }
-		mutually_exclusive = { focus = BRM_seek_closer_ties_to_china }
-
-		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL }
-
-		available = {
-			OR = {
-				any_country = {
-					has_idea = Chinese_Involvement
-				}
-				any_country = {
-					has_idea = Low_Chinese_Involvement
-				}
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_criticize_chinas_meddling"
-			add_political_power = 100
-			CHI = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = criticized_us
-				}
-			}
-			set_temp_variable = { percent_change = 5 }
-			change_domestic_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_provoke_clashes_on_the_thai_border
-		icon = border_war
-		x = 6
-		y = 7
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_promote_anti_thai_rhetoric }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_provoke_clashes_on_the_thai_border"
-			add_war_support = 0.15
-			add_political_power = 50
-			SIA = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = provoked_border_clashes
-				}
-			}
-			add_threat = 5
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_strike_our_age_old_enemy
-		icon = war2_green
-		x = 6
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_provoke_clashes_on_the_thai_border }
-
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-		will_lead_to_war_with = SIA
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_strike_our_age_old_enemy"
-			create_wargoal = { type = puppet_wargoal_focus target = SIA }
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_undermine_chinese_influence_in_the_border_regions
-		icon = war_in_asia
-		x = 8
-		y = 7
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_criticize_chinas_meddling }
-
-		available = {
-			CHI = { influence_less_20 = yes }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_undermine_chinese_influence_in_the_border_regions"
-			every_other_country = {
-				limit = {
-					has_idea = Chinese_Involvement
-				}
-				swap_ideas = {
-					remove_idea = Chinese_Involvement
-					add_idea = Disrupted_Chinese_Involvement
-				}
-			}
-			every_other_country = {
-				limit = {
-					has_idea = Low_Chinese_Involvement
-				}
-				swap_ideas = {
-					remove_idea = Low_Chinese_Involvement
-					add_idea = Disrupted_Chinese_Involvement
-				}
-			}
-			CHI = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = the_secret_war
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_ultimatum_to_china
-		icon = attack_china
-		x = 8
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_undermine_chinese_influence_in_the_border_regions }
-
-		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
-		available = {
-			CHI = { influence_less_20 = yes }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_ultimatum_to_china"
-			add_war_support = 0.2
-			CHI = {
-				country_event = {
-					id = Burma.11
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_achieve_acceptance_of_military_rule
-		icon = burma_authoritarianism
-		x = 7
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_construct_military_industries
-		}
-
-		prerequisite = {
-			focus = BRM_reject_foreign_interference
-		}
-
-		prerequisite = {
-			focus = BRM_secure_chinese_assistance_in_crushing_dissent focus = BRM_ultimatum_to_china
-		}
-
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_MANPOWER FOCUS_FILTER_STABILITY FOCUS_FILTER_WAR_SUPPORT }
-
-		available = {
-			has_civil_war = no
-			nationalist > 0.5
-			has_stability > 0.4
-			if = {
-				limit = { has_idea = the_priesthood }
-				the_priesthood_at_least_indifferent_opinion = yes
-			}
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_achieve_acceptance_of_military_rule"
-			remove_ideas = Anti_tatmadaw_sentiment
-			set_temp_variable = { temp_opinion = 10 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_seek_closer_ties_to_china
-		icon = align_to_china
-		x = 10
-		y = 6
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_establish_direct_military_rule }
-		mutually_exclusive = { focus = BRM_criticize_chinas_meddling }
-
-		available = {
-			has_war = no
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_seek_closer_ties_to_china"
-			add_opinion_modifier = { target = CHI modifier = treaty_of_friendship }
-			reverse_add_opinion_modifier = { target = BRM modifier = treaty_of_friendship }
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = CHI.id }
-			set_temp_variable = { influence_target = BRM.id }
-			change_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_promote_chinese_investment
-		icon = economic_prosperity2
-		x = 10
-		y = 7
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 10
-
-		prerequisite = { focus = BRM_seek_closer_ties_to_china }
-
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-
-		available = {
-			has_war = no
-			has_full_control_of_state = 505
-			has_full_control_of_state = 504
-			has_full_control_of_state = 502
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_promote_chinese_investment"
-			505 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
-			}
-			504 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
-			}
-			502 = {
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
-			}
-			CHI = {
-				set_temp_variable = { treasury_change = -21 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_secure_chinese_assistance_in_crushing_dissent
-		icon = secret_police
-		x = 10
-		y = 8
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = { focus = BRM_promote_chinese_investment }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_secure_chinese_assistance_in_crushing_dissent"
-			GCC_censored_nation_level_up = yes
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = CHI.id }
-			set_temp_variable = { influence_target = BRM.id }
-			change_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_give_china_preferential_trade_agreements
-		icon = trade_with_china
-		x = 10
-		y = 9
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = { focus = BRM_secure_chinese_assistance_in_crushing_dissent }
-		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_give_china_preferential_trade_agreements"
-			every_country = {
-				limit = {
-					NOT = {
-						tag = BRM
-						tag = CHI
-					}
-				}
-				add_opinion_modifier = { target = ROOT modifier = chinese_preferential_trade_exclusion }
-			}
-
-			set_temp_variable = { percent_change = 4 }
-			set_temp_variable = { tag_index = CHI.id }
-			set_temp_variable = { influence_target = BRM.id }
-			change_influence_percentage = yes
-
-			add_opinion_modifier = { target = CHI modifier = chinese_preferential_trade }
-			reverse_add_opinion_modifier = { target = CHI modifier = chinese_preferential_trade }
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_request_chinese_protection
-		icon = peoples_liberation_army
-		x = 10
-		y = 10
-		relative_position_id = BRM_address_the_democracy_question
-		cost = 15
-
-		prerequisite = { focus = BRM_give_china_preferential_trade_agreements }
-
-		available = {
-			NOT = { is_in_faction_with = USA }
-			USA = { influence_less_20 = yes }
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_request_chinese_protection"
-			CHI = {
-				country_event = {
-					id = Burma.7
-					days = 2
-					random_hours = 3
-				}
-			}
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = CHI.id }
-			set_temp_variable = { influence_target = BRM }
-			change_influence_percentage = yes
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_focus_on_the_tatmadaw
-		icon = tatmadaw
-		x = 28
-		y = 0
-		cost = 7.86
-
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_focus_on_the_tatmadaw"
-			add_political_power = 75
-			army_experience = 100
-			air_experience = 100
-			navy_experience = 100
-
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_inward_orientation
-		icon = combined_arms
-		x = -3
-		y = 1
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = { focus = BRM_focus_on_the_tatmadaw }
-		search_filters = { FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_inward_orientation"
-			add_stability = 0.05
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_defend_our_borders
-		icon = defense
-		x = -6
-		y = 2
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = { focus = BRM_inward_orientation }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_defend_our_borders"
-			add_ideas = Fortress_Myanmar
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_fortify_the_bangladeshi_border
-		icon = city_fort
-		x = -7
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_defend_our_borders
-		}
-
-		available = {
-			has_full_control_of_state = 500
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_fortify_the_bangladeshi_border"
-			custom_effect_tooltip = 11_FortifyBangladesh_tt
-			hidden_effect = {
-				every_owned_state = {
-					limit = {
-						any_neighbor_state = {
-							is_owned_by = BAN
-						}
-					}
-					add_building_construction = {
-						type = bunker
-						level = 3
-						instant_build = yes
-						province = {
-							all_provinces = yes
-							limit_to_border = yes
-						}
-					}
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_fortify_the_thai_border
-		icon = military_fort2
-		x = -7
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_fortify_the_bangladeshi_border
-		}
-
-		available = {
-			has_full_control_of_state = 501
-			has_full_control_of_state = 503
-			has_full_control_of_state = 497
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_fortify_the_thai_border"
-			custom_effect_tooltip = 11_FortifyThai_tt
-			hidden_effect = {
-				every_owned_state = {
-					limit = {
-						any_neighbor_state = {
-							is_owned_by = SIA
-						}
-					}
-					add_building_construction = {
-						type = bunker
-						level = 3
-						instant_build = yes
-						province = {
-							all_provinces = yes
-							limit_to_border = yes
-						}
-					}
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_fortify_the_indian_border
-		icon = military_fort
-		x = -5
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_defend_our_borders
-		}
-
-		available = {
-			has_full_control_of_state = 499
-			has_full_control_of_state = 496
-			has_full_control_of_state = 505
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_fortify_the_indian_border"
-			custom_effect_tooltip = 11_FortifyIndia_tt
-			hidden_effect = {
-				every_owned_state = {
-					limit = {
-						any_neighbor_state = {
-							is_owned_by = RAJ
-						}
-					}
-					add_building_construction = {
-						type = bunker
-						level = 3
-						instant_build = yes
-						province = {
-							all_provinces = yes
-							limit_to_border = yes
-						}
-					}
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_fortify_the_chinese_border
-		icon = small_arms4
-		x = -5
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_fortify_the_indian_border
-		}
-
-		available = {
-			has_full_control_of_state = 496
-			has_full_control_of_state = 497
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_fortify_the_chinese_border"
-			custom_effect_tooltip = 11_FortifyChina_tt
-			hidden_effect = {
-				every_owned_state = {
-					limit = {
-						any_neighbor_state = {
-							is_owned_by = CHI
-						}
-					}
-					add_building_construction = {
-						type = bunker
-						level = 3
-						instant_build = yes
-						province = {
-							all_provinces = yes
-							limit_to_border = yes
-						}
-					}
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_improve_domestic_designs
-		icon = examine_foreign_small_arms
-		x = -3
-		y = 2
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_inward_orientation
-		}
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_domestic_designs"
-			add_tech_bonus = {
-				name = infantry_bonus
-				bonus = 0.2
-				uses = 1
-				category = CAT_inf_wep
-			}
-
-			add_tech_bonus = {
-				name = armor_bonus
-				bonus = 0.2
-				uses = 1
-				category = CAT_tanks
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_ma_rifle_series
-		icon = small_arms_east
-		x = -3
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 10
-
-		prerequisite = {
-			focus = BRM_improve_domestic_designs
-		}
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_ma_rifle_series"
-			add_tech_bonus = {
-				name = infantry_bonus
-				bonus = 0.5
-				uses = 1
-				category = CAT_inf_wep
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_confirm_the_dominance_of_the_army
-		icon = small_arms2
-		x = -1
-		y = 2
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 5
-
-		prerequisite = { focus = BRM_inward_orientation }
-		mutually_exclusive = { focus = BRM_strengthen_the_other_arms }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_confirm_the_dominance_of_the_army"
-			army_experience = 100
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_improve_our_army_doctrine
-		icon = army_doctrine
-		x = -1
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = {
-			focus = BRM_confirm_the_dominance_of_the_army
-		}
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_our_army_doctrine"
-			add_doctrine_cost_reduction = {
-				name = BRM_improve_our_army_doctrine
-				category = CAT_land_doctrine
-				uses = 2
-				cost_reduction = 0.5
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_bolster_officer_training
-		icon = general_staff
-		x = -1
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = {
-			focus = BRM_improve_our_army_doctrine
-		}
-
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_bolster_officer_training"
-			increase_officer_training_level = yes
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_improve_counter_insurgency_techniques
-		icon = infiltration
-		x = -1
-		y = 5
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = {
-			focus = BRM_bolster_officer_training
-		}
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_counter_insurgency_techniques"
-			add_doctrine_cost_reduction = {
-				name = BRM_improve_counter_insurgency_techniques
-				category = CAT_land_doctrine
-				uses = 1
-				cost_reduction = 0.2
-			}
-			add_tech_bonus = {
-				name = infantry_bonus
-				bonus = 0.20
-				uses = 1
-				category = CAT_inf_wep
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_outward_orientation
-		icon = conscription
-		x = 5
-		y = 1
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 7.86
-
-		prerequisite = { focus = BRM_focus_on_the_tatmadaw }
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_outward_orientation"
-			add_war_support = 0.05
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_strengthen_the_other_arms
-		icon = skull
-		x = 2
-		y = 2
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 5
-
-		prerequisite = { focus = BRM_outward_orientation }
-		mutually_exclusive = { focus = BRM_confirm_the_dominance_of_the_army }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_strengthen_the_other_arms"
-			navy_experience = 50
-			air_experience = 50
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_bolster_the_navy
-		icon = navy
-		x = 1
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = { focus = BRM_strengthen_the_other_arms }
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_bolster_the_navy"
-			add_ideas = Bolster_The_Navy
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_improve_our_naval_doctrine
-		icon = naval_doctrine
-		x = 1
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = { focus = BRM_bolster_the_navy }
-
-		search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_NAVY_XP }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_our_naval_doctrine"
-			navy_experience = 75
-			add_doctrine_cost_reduction = {
-				cost_reduction = 0.25
-				name = BRM_improve_our_naval_doctrine
-				category = CAT_naval_doctrine
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_construct_naval_bases
-		icon = naval_dockyard
-		x = 1
-		y = 5
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = { focus = BRM_improve_our_naval_doctrine }
-		search_filters = { FOCUS_FILTER_NAVY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_construct_naval_bases"
-			set_temp_variable = { treasury_change = -4.5 }
-			modify_treasury_effect = yes
-			504 = {
-				add_building_construction = {
-					type = naval_base
-					level = 2
-					instant_build = yes
-					province = 7408
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-			modifier = {
-				factor = 0
-				OR = {
-					has_active_mission = bankruptcy_incoming_collapse
-					check_variable = { interest_rate > 10.00 }
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_construct_ports
-		icon = navy2
-		x = 1
-		y = 6
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = { focus = BRM_construct_naval_bases }
-		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_construct_ports"
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect = yes
-			504 = {
-				add_building_construction = {
-					type = dockyard
-					level = 2
-					instant_build = yes
-				}
-				add_extra_state_shared_building_slots = 2
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_bolster_the_air_force
-		icon = air_force
-		x = 3
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = { focus = BRM_strengthen_the_other_arms }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_bolster_the_air_force"
-			add_ideas = Bolster_The_Airforce
-		}
-
-		ai_will_do = {
-			factor = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-		}
-	}
-
-	focus = {
-		id = BRM_improve_our_air_doctrine
-		icon = air_doctrine
-		x = 3
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = {
-			focus = BRM_bolster_the_air_force
-		}
-
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_AIR_XP }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_improve_our_air_doctrine"
-			air_experience = 75
-			add_doctrine_cost_reduction = {
-				name = BRM_improve_our_air_doctrine
-				category = CAT_air_doctrine
-				uses = 1
-				cost_reduction = 0.5
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_construct_air_bases
-		icon = air_defense
-		x = 3
-		y = 5
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = {
-			focus = BRM_improve_our_air_doctrine
-		}
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_construct_air_bases"
-			505 = {
-				add_building_construction = {
-					type = air_base
-					level = 2
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_cooperate_with_foreign_powers
-		icon = intelligence_exchange
-		x = 8
-		y = 2
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 7.86
-
-		prerequisite = { focus = BRM_outward_orientation }
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_cooperate_with_foreign_powers"
-			add_political_power = 100
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_increase_cooperation_with_asean
-		icon = align_to_asean
-		x = 7
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 5
-
-		prerequisite = { focus = BRM_cooperate_with_foreign_powers }
-		mutually_exclusive = { focus = BRM_increase_cooperation_with_china }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_cooperation_with_asean"
-			CHI = {
-				add_opinion_modifier = {
-					target = BRM
-					modifier = cooperation_with_asean
-				}
-			}
-			every_other_country = {
-				limit = {
-					NOT = { tag = BRM }
-					has_idea = ASEAN_Member
-				}
-				add_opinion_modifier = { target = BRM modifier = cooperation }
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_singaporean_armour
-		icon = tanks
-		x = 7
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 8.6
-
-		prerequisite = { focus = BRM_increase_cooperation_with_asean }
-		search_filters = { FOCUS_FILTER_EQUIPMENT }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_singaporean_armour"
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
-			if = {
-				limit = { has_dlc = "No Step Back" }
-				add_equipment_to_stockpile = {
-					type = medium_tank_flame_chassis
-					amount = 20
-					producer = SIN
-				}
-			}
-			else = {
-				add_equipment_to_stockpile = {
-					type = IFV_4
-					amount = 20
-					producer = SIN
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-
-	focus = {
-		id = BRM_increase_cooperation_with_china
-		icon = align_to_china
-		x = 5
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-		cost = 5
-
-		prerequisite = { focus = BRM_cooperate_with_foreign_powers }
-		mutually_exclusive = { focus = BRM_increase_cooperation_with_asean }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_cooperation_with_china"
-			CHI = {
-				add_opinion_modifier = { target = BRM modifier = cooperation }
-			}
-			every_country = {
-				limit = {
-					NOT = { tag = BRM }
-					has_idea = ASEAN_Member
-				}
-				add_opinion_modifier = { target = BRM modifier = cooperation_with_china }
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_chinese_air_power
-		icon = modern_fighter
-		x = 5
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-
-		cost = 8.6
-
-		prerequisite = { focus = BRM_increase_cooperation_with_china }
-
-		search_filters = { FOCUS_FILTER_EQUIPMENT }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_chinese_air_power"
-			set_temp_variable = { treasury_change = -10 }
-			modify_treasury_effect = yes
-			if = {
-				limit = { has_dlc = "By Blood Alone" }
-				add_equipment_to_stockpile = {
-					type = medium_plane_fighter_airframe_2
-					variant_name = "J-11"
-					amount = 10
-					producer = CHI
-				}
-			} else = {
-				add_equipment_to_stockpile = {
-					type = AS_Fighter2
-					amount = 10
-					producer = CHI
-				}
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_increase_cooperation_with_south_korea
-		icon = align_to_south_korea
-		x = 9
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-
-		cost = 5
-
-		prerequisite = { focus = BRM_cooperate_with_foreign_powers }
-		mutually_exclusive = { focus = BRM_increase_cooperation_with_north_korea }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_cooperation_with_south_korea"
-			KOR = {
-				add_opinion_modifier = { target = BRM modifier = cooperation }
-			}
-			NKO = {
-				add_opinion_modifier = { target = BRM modifier = cooperation_with_the_south }
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_increase_cooperation_with_north_korea
-		icon = align_to_north_korea
-		x = 11
-		y = 3
-		relative_position_id = BRM_focus_on_the_tatmadaw
-
-		cost = 5
-
-		prerequisite = { focus = BRM_cooperate_with_foreign_powers }
-		mutually_exclusive = { focus = BRM_increase_cooperation_with_south_korea }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_increase_cooperation_with_north_korea"
-			NKO = {
-				add_opinion_modifier = { target = BRM modifier = cooperation }
-			}
-			KOR = {
-				add_opinion_modifier = { target = BRM modifier = cooperation_with_the_north }
-			}
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-	}
-
-	focus = {
-		id = BRM_south_korean_naval_power
-		icon = navy3
-
-		x = 9
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-
-		cost = 8.6
-
-		prerequisite = { focus = BRM_increase_cooperation_with_south_korea }
-		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_south_korean_naval_power"
-			add_tech_bonus = {
-				name = naval_bonus
-				bonus = 0.25
-				uses = 3
-				category = CAT_frigate
-			}
-			add_tech_bonus = {
-				name = naval_bonus
-				bonus = 0.25
-				uses = 3
-				category = CAT_corvette
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
-	focus = {
-		id = BRM_north_korean_missiles
-		icon = rocketry
-
-		x = 11
-		y = 4
-		relative_position_id = BRM_focus_on_the_tatmadaw
-
-		cost = 8.6
-
-		prerequisite = { focus = BRM_increase_cooperation_with_north_korea }
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus BRM_north_korean_missiles"
-			add_tech_bonus = {
-				name = BRM_north_korean_missiles
-				bonus = 0.25
-				uses = 2
-				category = CAT_l_at
-			}
-			add_tech_bonus = {
-				name = BRM_north_korean_missiles
-				bonus = 0.25
-				uses = 2
-				category = CAT_l_aa
-			}
-			add_tech_bonus = {
-				name = BRM_north_korean_missiles
-				bonus = 0.25
-				uses = 2
-				category = CAT_arty
-			}
-		}
-	}
+   id = brm_focus
+    country = {
+        factor = 0
+        modifier = {
+            add = 20
+            original_tag = BRM
+        }
+    }
+
+    continuous_focus_position = { x = 1000 y = 100 }
+
+    focus = {
+        id = BRM_A_Nation_at_the_Crossroads
+        icon = GFX_goal_generic_demand_territory
+        x = 0
+        y = 0
+        cost = 70
+        completion_reward = {
+            add_political_power = 25
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+## MILITARY BRANCH ##
+
+    focus = {
+        id = BRM_Reform_the_Tatmadaw
+        icon = GFX_goal_generic_construct_military
+        x = -20
+        y = 2
+        prerequisite = { focus = BRM_A_Nation_at_the_Crossroads }
+        cost = 70
+        completion_reward = {
+            add_army_experience = 50
+            custom_effect_tooltip = reform_tatmadaw_branch_tt
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Embrace_Reformist_Vision
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Reform_the_Tatmadaw }
+        cost = 70
+        completion_reward = {
+            add_political_power = 25
+            add_stability = 0.015
+            custom_effect_tooltip = unlock_reformist_decisions_tt
+        # Still defining all the events and modifiers so nothing yet
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Professional_Army_Model
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Embrace_Reformist_Vision }
+        cost = 70
+        completion_reward = {
+            add_division_organization = 4
+            add_tech_bonus = {
+                bonus = -0.10
+                uses = 1
+                category = land_doctrine
+            }
+            add_training_time_factor = 0.05
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Increase_ASEAN_Cooperation
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Professional_Army_Model }
+        cost = 70
+        completion_reward = {
+        # Still defining all the events and modifiers so nothing yet
+                   }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Pursue_Western_Military_Cooperation
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Increase_ASEAN_Cooperation }
+        cost = 70
+        completion_reward = {
+            custom_effect_tooltip = nato_opinion_tt
+            custom_effect_tooltip = unlock_western_coop_tt
+            add_research_speed_factor = 0.05
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Joint_ASEAN_Exercises
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Pursue_Western_Military_Cooperation }
+        prerequisite = { focus = BRM_Reconcile_With_The_West }
+        cost = 70
+        completion_reward = {
+        # Still defining all the events so nothing yet
+            custom_effect_tooltip = fire_asean_exercises_event_tt
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Western_Trained_Units
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Joint_ASEAN_Exercises }
+        cost = 70
+        completion_reward = {
+          # Still defining all the events so nothing yet
+            custom_effect_tooltip = spawn_joint_task_units_tt
+            add_manpower = 2000
+            add_treasury = -4750000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Demilitarization_of_Politics
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Joint_ASEAN_Exercises }
+        cost = 70
+        completion_reward = {
+            remove_ideas = militarized_politics
+       # Will make sure I get the right spirit definition when I am able to
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Build_New_Training_Centers
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Embrace_Reformist_Vision }
+        cost = 70
+        completion_reward = {
+            add_army_experience = 10
+            add_recruitable_population_factor = 0.005
+            add_training_time_factor = 0.0
+            add_treasury = -2500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Streamline_Logistics
+        icon = GFX_goal_generic_construct_military
+        x = -22
+        y = 8
+        prerequisite = { focus = BRM_Build_New_Training_Centers }
+        cost = 70
+        completion_reward = {
+            add_timed_idea = {
+                idea = logistics_drive
+                days = 365
+    }
+    add_supply_radius_factor = 0.03
+    add_treasury = -2000000000
+>>>>>>> Stashed changes
 }
+ai_will_do = { factor = 1 }
+
+    focus = {
+        id = BRM_Reconcile_With_The_West
+        icon = GFX_goal_generic_construct_military
+        x = -22
+        y = 10
+        prerequisite = { focus = BRM_Streamline_Logistics }
+        cost = 70
+        completion_reward = {
+            remove_ideas = sanctioned_economy
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Improved_Designs
+        icon = GFX_goal_generic_construct_military
+        x = 0
+        y = 2
+        prerequisite = { focus = BRM_A_Nation_at_the_Crossroads }
+        cost = 70
+        completion_reward = {
+            add_tech_bonus = {
+                bonus = 0.05
+                uses = 1
+                category = infantry_weapons
+            }
+            add_tech_bonus = {
+                bonus = 0.05
+                uses = 1
+                category = armor
+            }
+            add_equipment_bonus = {
+                type = infantry_equipment
+                reliability = 0.05
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Ground_Effort
+        icon = GFX_goal_generic_construct_military
+        x = 0
+        y = 4
+        prerequisite = { focus = BRM_Improved_Designs }
+        cost = 70
+        completion_reward = {
+            add_army_experience = 15
+            add_equipment_bonus = {
+                type = infantry_equipment
+                attack = 0.05
+            }
+            add_entrenchment_speed = 0.03
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Revive_the_Yangon_Arsenal
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Ground_Effort }
+        cost = 70
+        completion_reward = {
+            add_building_construction = {
+                type = arms_factory
+                level = 1
+                province = yangon
+            }
+            add_building_slot = {
+                province = yangon
+                amount = 1
+            }
+            add_temporary_buff = yangon_arsenal_efficiency
+            add_equipment_to_stockpile = {
+                type = infantry_equipment
+                amount = 1000
+            }
+            add_treasury = -8500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Expand_Domestic_Production_Capability
+        icon = GFX_goal_generic_construct_military
+        x = 0
+        y = 8
+        prerequisite = { focus = BRM_Revive_the_Yangon_Arsenal }
+        cost = 70
+        completion_reward = {
+            add_military_factory_output = 0.10
+        # Unfinished effect I didn't have time
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Adopt_Combined_Arms_Warfare
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Expand_Domestic_Production_Capability }
+        cost = 70
+        completion_reward = {
+            add_national_spirit = combined_arms_doctrine
+        # Again haven't defined the spirit/event/whatever I pasted this under
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_COIN_Tactics_Development
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Expand_Domestic_Production_Capability }
+        cost = 70
+        completion_reward = {
+        # putting this here to remind me I need to finish this 
+            add_division_recovery_rate = 0.05
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Fortify_The_Eastern_Borders
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_COIN_Tactics_Development }
+        OR = {
+            prerequisite = { focus = BRM_Adopt_Combined_Arms_Warfare }
+        }
+        cost = 70
+        completion_reward = {
+            add_fort = {
+                province = # WIP
+                amount = 2
+            }
+            add_treasury = -1000000000
+            if = {
+                limit = {
+                    has_completed_focus = BRM_Fortify_The_Eastern_Borders
+                    has_completed_focus = BRM_Fortify_The_Western_Borders
+                    has_completed_focus = BRM_Fortify_The_Northern_Borders
+                }
+                add_national_spirit = secure_borders 
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Fortify_The_Western_Borders
+        icon = GFX_goal_generic_construct_military
+        x = 0
+        y = 12
+        prerequisite = { focus = BRM_COIN_Tactics_Development }
+        OR = {
+            prerequisite = { focus = BRM_Adopt_Combined_Arms_Warfare }
+        }
+        cost = 70
+        completion_reward = {
+            add_fort = {
+                province = # WIP
+                amount = 2
+            }
+            add_treasury = -1000000000
+            if = {
+                limit = {
+                    has_completed_focus = BRM_Fortify_The_Eastern_Borders
+                    has_completed_focus = BRM_Fortify_The_Western_Borders
+                    has_completed_focus = BRM_Fortify_The_Northern_Borders
+                }
+                add_national_spirit = secure_borders 
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Fortify_The_Northern_Borders
+        icon = GFX_goal_generic_construct_military
+        x = 4
+        y = 12
+        prerequisite = { focus = BRM_COIN_Tactics_Development }
+        OR = {
+            prerequisite = { focus = BRM_Adopt_Combined_Arms_Warfare }
+        }
+        cost = 70
+        completion_reward = {
+            add_fort = {
+                province = # WIP
+                amount = 2
+            }
+            add_treasury = -1000000000
+            if = {
+                limit = {
+                    has_completed_focus = BRM_Fortify_The_Eastern_Borders
+                    has_completed_focus = BRM_Fortify_The_Western_Borders
+                    has_completed_focus = BRM_Fortify_The_Northern_Borders
+                }
+                add_national_spirit = secure_borders 
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Rekindle_the_Navy
+        icon = GFX_goal_generic_construct_military
+        x = 8
+        y = 2
+        prerequisite = { focus = BRM_Improved_Designs }
+        cost = 70
+        completion_reward = {
+            add_timed_idea = {
+                idea = # WIP
+                days = 365
+            }
+            add_navy_experience = 25
+            add_dockyard = 1
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Improve_Naval_Doctrine
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Rekindle_the_Navy }
+        cost = 70
+        completion_reward = {
+            add_tech_bonus = {
+                bonus = -0.10
+                uses = 1
+                category = naval_doctrine
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Blue_Water_Ambitions
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Improve_Naval_Doctrine }
+        cost = 70
+        completion_reward = {
+            add_tech_bonus = {
+                bonus = 0.10
+                uses = 1
+                category = capital_ship
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Coastal_Defence_Doctrine
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Improve_Naval_Doctrine }
+        cost = 70
+        completion_reward = {
+            add_coastal_fort = {
+                province = coastal_1
+                amount = 2
+            }
+            add_coastal_fort = {
+                province = coastal_2
+                amount = 2
+            }
+            add_tech_bonus = {
+                bonus = 0.10
+                uses = 1
+                category = frigate
+            }
+            add_tech_bonus = {
+                bonus = 0.10
+                uses = 1
+                category = corvette
+            }
+            add_treasury = -200000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Fleet_Infrastructure_Expansion
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Blue_Water_Ambitions }
+        prerequisite = { focus = BRM_Coastal_Defence_Doctrine }
+        cost = 70
+        completion_reward = {
+            add_building_slot = {
+                province = navy_base_1
+                amount = 2
+            }
+            add_dockyard = 2
+            add_national_spirit = bolster_the_navy
+            add_treasury = -17000000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Airforce_Reform
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Improved_Designs }
+        cost = 70
+        completion_reward = {
+            add_air_experience = 25
+            add_tech_bonus = {
+                bonus = -0.10
+                uses = 1
+                category = air_doctrine
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Enhance_Pilot_Training
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Airforce_Reform }
+        cost = 70
+        completion_reward = {
+            add_air_wing_xp_gain_factor = 0.12
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Expand_Airbase_Infrastructure
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Enhance_Pilot_Training }
+        cost = 70
+        completion_reward = {
+            add_air_base = {
+                province = # WIP
+                amount = 2
+            }
+            add_building_slot = {
+                province = # WIP
+                amount = 2
+            }
+            add_treasury = -7000000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Air_Production_Focus
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Enhance_Pilot_Training }
+        cost = 70
+        completion_reward = {
+            add_national_spirit = air_industry_push
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Advanced_Airframe_Research
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Air_Production_Focus }
+        mutually_exclusive = { focus = BRM_A_Fifty_Cent_Air_Force }
+        cost = 70
+        completion_reward = {
+            add_tech_bonus = {
+                bonus = 0.12
+                uses = 1
+                category = airframe
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_A_Fifty_Cent_Air_Force
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Expand_Airbase_Infrastructure }
+        mutually_exclusive = { focus = BRM_Advanced_Airframe_Research }
+        cost = 70
+        completion_reward = {
+            add_national_spirit = affordable_airforce
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Bolster_Air_Defenses
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Advanced_Airframe_Research }
+        prerequisite = { focus = BRM_Expand_Airbase_Infrastructure }
+        OR = {
+            prerequisite = { focus = BRM_A_Fifty_Cent_Air_Force } 
+        }
+        cost = 70
+        completion_reward = {
+            add_national_spirit = bolster_air_defenses
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Centralize_Power
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Reform_the_Tatmadaw }
+        mutually_exclusive = { focus = BRM_Embrace_Reformist_Vision }
+        cost = 70
+        completion_reward = {
+            add_war_support = 0.05
+            add_stability = 0.05         
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Leverage_Regional_Unrest
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Centralize_Power }
+        cost = 70
+        completion_reward = {
+            add_political_power = 75
+            add_popularity = {
+                ideology = nationalist
+                amount = 0.05
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Universal_Conscription_Law
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Leverage_Regional_Unrest }
+        cost = 70
+        completion_reward = {
+            add_recruitable_population_factor = 0.06
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Form_Regional_Battalions
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Leverage_Regional_Unrest }
+        cost = 70
+        completion_reward = {
+        # Effect in progress
+            custom_effect_tooltip = # WIP
+            add_manpower = 5000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Militarized_Education_System
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Universal_Conscription_Law }
+        prerequisite = { focus = BRM_Form_Regional_Battalions }
+        cost = 70
+        completion_reward = {
+            add_training_time_factor = -0.06
+            add_army_experience_gain = 0.05
+            add_recruitable_population_factor = 0.005
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Cooperation_with_the_East
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Militarized_Education_System }
+        cost = 70
+        completion_reward = {
+            custom_effect_tooltip = unlock_china_russia_arms_purchase_tt
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Procure_Eastern_Investment
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Militarized_Education_System }
+        cost = 70
+        completion_reward = {
+            custom_effect_tooltip = fire_eastern_investment_chain_tt
+            add_arms_conversion_speed = 0.10
+            add_influence = {
+                country = CHI
+                amount = 0.05
+            }
+            add_opinion = {
+                country = USA
+                amount = -10
+            }
+            add_temporary_buff = foreign_military_contractors
+            add_treasury = -2500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_A_Formidable_Tatmadaw
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Cooperation_with_the_East }
+        prerequisite = { focus = BRM_Procure_Eastern_Investment }
+        cost = 70
+        completion_reward = {
+            add_national_spirit = reforged_tatmadaw
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Chinese_Cooperation
+        icon = GFX_goal_generic_construct_military
+        x = WIP
+        y = WIP
+        prerequisite = { focus = BRM_Cooperation_with_the_East }
+        mutually_exclusive = { focus = BRM_Russian_Cooperation }
+        cost = 70
+        completion_reward = {
+            add_opinion = {
+                country = CHI
+                amount = 15
+            }
+            add_opinion = {
+                country = ROC
+                amount = -10
+            }
+            custom_effect_tooltip = minus_5_asean_opinion_tt
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_Chinese_tanks
+        icon = GFX_goal_generic_construct_military
+        x = 8
+        y = 16
+        prerequisite = { focus = BRM_Chinese_Cooperation }
+        mutually_exclusive = { focus = BRM_Order_QBZ-95s }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = chi_tank
+                amount = 100
+            }
+            add_treasury = -6500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_QBZ-95s
+        icon = GFX_goal_generic_construct_military
+        x = 10
+        y = 16
+        prerequisite = { focus = BRM_Chinese_Cooperation }
+        mutually_exclusive = { focus = BRM_Order_Chinese_tanks }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = chi_rifle
+                amount = 5000
+            }
+            add_treasury = -2500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_Chinese_Helicopters
+        icon = GFX_goal_generic_construct_military
+        x = 9
+        y = 18
+        prerequisite = { focus = BRM_Order_Chinese_tanks }
+        prerequisite = { focus = BRM_Order_QBZ-95s }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = chi_heli
+                amount = 45
+            }
+            add_treasury = -4500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Russian_Cooperation
+        icon = GFX_goal_generic_construct_military
+        x = 12
+        y = 14
+        prerequisite = { focus = BRM_Cooperation_with_the_East }
+        mutually_exclusive = { focus = BRM_Chinese_Cooperation }
+        cost = 70
+        completion_reward = {
+            add_opinion = {
+                country = SOV
+                amount = 15
+            }
+            add_opinion = {
+                country = FIN
+                amount = -10
+            }
+            add_opinion = {
+                country = LIT
+                amount = -10
+            }
+            add_opinion = {
+                country = LAT
+                amount = -10
+            }
+            add_opinion = {
+                country = EST
+                amount = -10
+            }
+            add_opinion = {
+                country = POL
+                amount = -10
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_T90s
+        icon = GFX_goal_generic_construct_military
+        x = 12
+        y = 16
+        prerequisite = { focus = BRM_Russian_Cooperation }
+        mutually_exclusive = { focus = BRM_Order_SU-30s }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = rus_t90
+                amount = 100
+            }
+            add_treasury = -5500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_SU-30s
+        icon = GFX_goal_generic_construct_military
+        x = 14
+        y = 16
+        prerequisite = { focus = BRM_Russian_Cooperation }
+        mutually_exclusive = { focus = BRM_Order_T90s }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = rus_su30
+                amount = 50
+            }
+            add_treasury = -15000000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_Russian_Missiles
+        icon = GFX_goal_generic_construct_military
+        x = 13
+        y = 18
+        prerequisite = { focus = BRM_Order_T90s }
+        prerequisite = { focus = BRM_Order_SU-30s }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = rus_glcm
+                amount = 100
+            }
+            add_equipment_to_stockpile = {
+                type = rus_sam
+                amount = 150
+            }
+            add_treasury = -7500000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Japanese_Cooperation
+        icon = GFX_goal_generic_construct_military
+        x = 16
+        y = 14
+        prerequisite = { focus = BRM_Pursue_Western_Military_Cooperation }
+        mutually_exclusive = { focus = BRM_Western_Cooperation }
+        cost = 70
+        completion_reward = {
+            add_opinion = {
+                country = JAP
+                amount = 15
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_F-2s
+        icon = GFX_goal_generic_construct_military
+        x = 16
+        y = 16
+        prerequisite = { focus = BRM_Japanese_Cooperation }
+        mutually_exclusive = { focus = BRM_Order_Japanese_Destroyers }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = jap_f2
+                amount = 50
+            }
+            add_treasury = -17000000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_Type_90s
+        icon = GFX_goal_generic_construct_military
+        x = 16
+        y = 18
+        prerequisite = { focus = BRM_Order_Japanese_Destroyers }
+        prerequisite = { focus = BRM_Order_F-2s }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = jap_type90
+                amount = 100
+            }
+            add_treasury = -6750000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_Japanese_Destroyers
+        icon = GFX_goal_generic_construct_military
+        x = 18
+        y = 16
+        prerequisite = { focus = BRM_Japanese_Cooperation }
+        mutually_exclusive = { focus = BRM_Order_F-2s }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = jap_destroyer
+                amount = 2
+            }
+            add_treasury = -16750000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Western_Cooperation
+        icon = GFX_goal_generic_construct_military
+        x = 20
+        y = 14
+        prerequisite = { focus = BRM_Pursue_Western_Military_Cooperation }
+        mutually_exclusive = { focus = BRM_Japanese_Cooperation }
+        cost = 70
+        completion_reward = {
+            custom_effect_tooltip = add_nato_opinion_tt
+            add_opinion = {
+                country = IRN
+                amount = -10
+            }
+            add_opinion = {
+                country = PRC
+                amount = -10
+            }
+            add_opinion = {
+                country = RUS
+                amount = -10
+            }
+            add_opinion = {
+                country = PAK
+                amount = -10
+            }
+            add_opinion = {
+                country = NK
+                amount = -10
+            }
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Order_Abrams_Tanks
+        icon = GFX_goal_generic_construct_military
+        x = 20
+        y = 16
+        prerequisite = { focus = BRM_Western_Cooperation }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = usa_abrams
+                amount = 115
+            }
+            add_treasury = -7350000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Buy_G36_Rifles
+        icon = GFX_goal_generic_construct_military
+        x = 22
+        y = 16
+        prerequisite = { focus = BRM_Western_Cooperation }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = ger_g36
+                amount = 5000
+            }
+            add_treasury = -2650000000
+        }
+        ai_will_do = { factor = 1 }
+    }
+
+    focus = {
+        id = BRM_Eurofighters_For_Myanmar
+        icon = GFX_goal_generic_construct_military
+        x = 21
+        y = 18
+        prerequisite = { focus = BRM_Order_Abrams_Tanks }
+        prerequisite = { focus = BRM_Buy_G36_Rifles }
+        cost = 70
+        completion_reward = {
+            add_equipment_to_stockpile = {
+                type = eurofighter
+                amount = 40
+            }
+            add_treasury = -16500000000
+        }
+        ai_will_do = { factor = 1 }
