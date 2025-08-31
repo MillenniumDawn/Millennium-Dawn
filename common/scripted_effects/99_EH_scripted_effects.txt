@@ -1,18 +1,20 @@
 EH_drone_mission_calculations_effect = {
-    # Drones (temp_num_of_drones needs to be passed into the function)
-    set_temp_variable = { drone_success_chance = temp_num_of_drones }
-    multiply_temp_variable = { drone_success_chance = 0.07 }
+    # Drones
+    set_variable = { EH_drone_success_chance = EH_selected_drones_var }
+    multiply_variable = { EH_drone_success_chance = 0.06 }
 
     # Air Intel
-    set_temp_variable = { temp_air_intel = air_intel@ALN }
-    multiply_temp_variable = { temp_air_intel = 0.65 }
-    add_to_temp_variable = { drone_success_chance = temp_air_intel }
+    set_variable = { EH_temp_air_intel = air_intel@SOV }
+    multiply_variable = { EH_temp_air_intel = 0.55 }
+    add_to_variable = { EH_drone_success_chance = EH_temp_air_intel }
 
-    set_temp_variable = { drone_failure_chance = 100 }
-    subtract_from_temp_variable = { drone_failure_chance = drone_success_chance }
+    set_variable = { EH_drone_failure_chance = 100 }
+    subtract_from_variable = { EH_drone_failure_chance = EH_drone_success_chance }
+}
 
+EH_drone_mission_effect = {
     random_list = {
-        drone_success_chance = {
+        EH_drone_success_chance = {
             # Success
             add_intel = {
                 target = ALN
@@ -21,15 +23,18 @@ EH_drone_mission_calculations_effect = {
             }
             add_war_support = 0.1
             set_country_flag = EH_country_succeeded_in_drone_mission_flag # Important further in the lore
+            clear_variable = EH_drone_success_chance
+            clear_variable = EH_drone_failure_chance
+            clear_variable = EH_temp_air_intel
         }
-        drone_failure_chance = {
+        EH_drone_failure_chance = {
             # Failure
-            set_temp_variable = { temp_drones_lost = temp_num_of_drones }
-            multiply_temp_variable = { temp_drones_lost = -1 }
+            set_temp_variable = { EH_temp_drones_lost = EH_selected_drones_var }
+            multiply_temp_variable = { EH_temp_drones_lost = -1 }
 
             add_equipment_to_stockpile = {
                 type = Air_UAV_equipment
-                amount = temp_drones_lost
+                amount = EH_temp_drones_lost
             }
         }
     }
