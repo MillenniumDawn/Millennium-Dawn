@@ -1,0 +1,35 @@
+EH_drone_mission_calculations_effect = {
+    # Drones (temp_num_of_drones needs to be passed into the function)
+    set_temp_variable = { drone_success_chance = temp_num_of_drones }
+    multiply_temp_variable = { drone_success_chance = 0.05 }
+
+    # Air Intel
+    set_temp_variable = { temp_air_intel = air_intel@ALN }
+    multiply_temp_variable = { temp_air_intel = 0.8 }
+    add_to_temp_variable = { drone_success_chance = temp_air_intel }
+
+    set_temp_variable = { drone_failure_chance = 100 }
+    subtract_from_temp_variable = { drone_failure_chance = drone_success_chance }
+
+    random_list = {
+        drone_success_chance = {
+            # Success
+            add_intel = {
+                target = ALN
+                army_intel = 15
+                airforce_intel = 15
+            }
+            # TO-DO more effects
+        }
+        drone_failure_chance = {
+            # Failure
+            set_temp_variable = { temp_drones_lost = temp_num_of_drones }
+            multiply_temp_variable = { temp_drones_lost = -1 }
+
+            add_equipment_to_stockpile = {
+                type = Air_UAV_equipment
+                amount = temp_drones_lost
+            }
+        }
+    }
+}
