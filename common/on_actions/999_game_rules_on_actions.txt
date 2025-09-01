@@ -246,8 +246,31 @@ on_actions = {
 					remove_ideas = NATO_member
 					remove_ideas = Major_Non_NATO_Ally
 				}
-				USA = { dismantle_faction = yes }
+				USA = {
+					dismantle_faction = yes
+					clear_array = global.nato_member
+				}
 				set_global_flag = GAME_RULE_nato_disabled
+			}
+
+			# Disable CSTO
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_disable_csto
+						option = yes
+					}
+				}
+				every_country = {
+					limit = { has_idea = CSTO_member }
+					remove_ideas = CSTO_member
+					remove_from_tech_sharing_group = CSTO_Tech_Share
+				}
+				SOV = {
+					dismantle_faction = yes
+					clear_array = global.CSTO_member
+				}
+				set_global_flag = GAME_RULE_csto_disabled
 			}
 
 			# Allow cheat decisions
@@ -1356,8 +1379,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_very_easy_difficulty
-				set_variable = { global.player_energy_gain_modifier = 0.50 }
-				set_variable = { global.player_energy_use_modifier = -0.50 }
+				every_country = {
+					limit = { is_ai = no }
+					add_ideas = player_energy_very_easy_difficulty
+				}
 			}
 			if = {
 				limit = {
@@ -1367,8 +1392,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_easy_difficulty
-				set_variable = { global.player_energy_gain_modifier = 0.25 }
-				set_variable = { global.player_energy_use_modifier = -0.25 }
+				every_country = {
+					limit = { is_ai = no }
+					add_ideas = player_energy_easy_difficulty
+				}
 			}
 			if = {
 				limit = {
@@ -1387,8 +1414,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_hard_difficulty
-				set_variable = { global.player_energy_gain_modifier = -0.25 }
-				set_variable = { global.player_energy_use_modifier = 0.25 }
+				every_country = {
+					limit = { is_ai = no }
+					add_ideas = player_energy_hard_difficulty
+				}
 			}
 			if = {
 				limit = {
@@ -1398,8 +1427,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_very_hard_difficulty
-				set_variable = { global.player_energy_gain_modifier = -0.50 }
-				set_variable = { global.player_energy_use_modifier = 0.50 }
+				every_country = {
+					limit = { is_ai = no }
+					add_ideas = player_energy_very_hard_difficulty
+				}
 			}
 
 			# AI Energy Difficulty
@@ -1411,8 +1442,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_ai_very_easy_difficulty
-				set_variable = { global.ai_energy_gain_modifier = 0.50 }
-				set_variable = { global.ai_energy_use_modifier = -0.50 }
+				every_country = {
+					limit = { is_ai = yes }
+					add_ideas = ai_energy_very_easy_difficulty
+				}
 			}
 			if = {
 				limit = {
@@ -1422,8 +1455,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_ai_easy_difficulty
-				set_variable = { global.ai_energy_gain_modifier = 0.25 }
-				set_variable = { global.ai_energy_use_modifier = -0.25 }
+				every_country = {
+					limit = { is_ai = yes }
+					add_ideas = ai_energy_easy_difficulty
+				}
 			}
 			if = {
 				limit = {
@@ -1442,8 +1477,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_ai_hard_difficulty
-				set_variable = { global.ai_energy_gain_modifier = -0.25 }
-				set_variable = { global.ai_energy_use_modifier = 0.25 }
+				every_country = {
+					limit = { is_ai = yes }
+					add_ideas = ai_energy_hard_difficulty
+				}
 			}
 			if = {
 				limit = {
@@ -1453,8 +1490,10 @@ on_actions = {
 					}
 				}
 				set_global_flag = GAME_RULE_energy_ai_very_hard_difficulty
-				set_variable = { global.ai_energy_gain_modifier = -0.50 }
-				set_variable = { global.ai_energy_use_modifier = 0.50 }
+				every_country = {
+					limit = { is_ai = yes }
+					add_ideas = ai_energy_very_hard_difficulty
+				}
 			}
 
 			# Enable Help GUI
@@ -1621,6 +1660,24 @@ on_actions = {
 					}
 				}
 				set_variable = { global.monthly_internal_faction_tick_rate = 0.75 }
+			}
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_md_annex
+						option = yes
+					}
+				}
+				set_global_flag = MD_RULE_OPTION_ANNEX
+			}
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = rule_disable_muslim_brotherhood_civil_war
+						option = yes
+					}
+				}
+				set_global_flag = GAME_RULE_disable_muslim_brotherhood
 			}
 
 			#
@@ -2010,6 +2067,68 @@ on_actions = {
 					set_global_flag = SAU_SHIA_REVIVAL_FOCUS_PATH
 				}
 			}
+			HOL = {
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = HOL_ai_behavior
+							option = RANDOM
+						}
+					}
+					random_list = {
+						25 = { set_global_flag = HOL_POPULIST_AI_FOCUS  }
+						25 = { set_global_flag = HOL_VOC_AI_FOCUS  }
+						25 = { set_global_flag = HOL_WIC_AI_FOCUS  }
+						25 = { set_global_flag = HOL_NVU_AI_FOCUS  }
+					}
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = HOL_ai_behavior
+							option = HOL_DEMOCRATIC_RULE
+						}
+					}
+					set_global_flag = HOL_DEMOCRATIC_AI_FOCUS
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = HOL_ai_behavior
+							option = HOL_POPULIST_RULE
+						}
+					}
+					set_global_flag = HOL_POPULIST_AI_FOCUS
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = HOL_ai_behavior
+							option = HOL_MONARCHY_VOC_RULE
+						}
+					}
+					set_global_flag = HOL_VOC_AI_FOCUS
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = HOL_ai_behavior
+							option = HOL_MONARCHY_WIC_RULE
+						}
+					}
+					set_global_flag = HOL_WIC_AI_FOCUS
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = HOL_ai_behavior
+							option = HOL_NVU_RULE
+						}
+					}
+					set_global_flag = HOL_NVU_AI_FOCUS
+				}
+			}
+
 			BOS = {
 				if = {
 					limit = {
