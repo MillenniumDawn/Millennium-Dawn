@@ -180,8 +180,8 @@ EH_electric_traps_category = {
 
 EH_research_sites_category = {
     EH_setup_research_site = {
-        icon = GFX_decision_generic_research # This probably needs own icon
-        days_remove = 30
+        icon = GFX_decision_generic_research
+        days_remove = 50
 
         available = {
             EH_any_controlled_state_1500_to_any_portal = yes
@@ -189,6 +189,18 @@ EH_research_sites_category = {
                 tooltip = EH_research_sites_limit_TT
                 check_variable = { EH_research_sites_constructed_var < 10 }
             }
+        }
+
+        complete_effect = {
+            set_temp_variable = { treasury_change = -15 }
+            if = {
+                limit = {
+                    has_country_flag = EH_research_sites_anti_air_installed_flag
+                }
+                subtract_from_temp_variable = { treasury_change = 5 }
+            }
+            modify_treasury_effect = yes
+            custom_effect_tooltip = EH_research_sites_cost_TT
         }
 
         remove_effect = {
@@ -206,6 +218,29 @@ EH_research_sites_category = {
                 }
             }
             custom_effect_tooltip = EH_add_research_site_TT
+        }
+    }
+
+    EH_install_anti_air_weapons = {
+        icon = GFX_decision_generic_anti_air
+        days_remove = 60
+        fire_only_once = yes
+
+        available = {
+            EH_any_controlled_state_1500_to_any_portal = yes
+        }
+
+        complete_effect = {
+            set_temp_variable = { treasury_change = -5 }
+            multiply_temp_variable = { treasury_change = EH_research_sites_constructed_var }
+			modify_treasury_effect = yes
+            custom_effect_tooltip = EH_research_sites_anti_air_TT
+            set_country_flag = EH_research_sites_anti_air_installed_flag
+        }
+
+        remove_effect = {
+            add_to_variable = { EH_research_sites_protection_var = 25 }
+            custom_effect_tooltip = EH_research_sites_anti_air_installed_TT
         }
     }
 }
