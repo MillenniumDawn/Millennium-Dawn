@@ -1,4 +1,8 @@
-import os, sys, fnmatch, re
+#!/usr/bin/env python3
+import fnmatch
+import os
+import re
+import sys
 import time
 
 ######################
@@ -13,40 +17,41 @@ files = []
 # Finds all files
 
 
-for root, dirnames, filenames in os.walk(rootDir + '/' + 'history' + '/countries' + '/'):
-    for filename in fnmatch.filter(filenames, '*.txt'):
-         files.append(os.path.join(root, filename))
+for root, dirnames, filenames in os.walk(
+    rootDir + "/" + "history" + "/countries" + "/"
+):
+    for filename in fnmatch.filter(filenames, "*.txt"):
+        files.append(os.path.join(root, filename))
 
 ideas = []
-seen = set( )
+seen = set()
 
 ######################
 # Finds all ideas that exist
 
 for F in files:
-    file = open(F, "r",encoding="utf-8")
+    file = open(F, "r", encoding="utf-8")
     setupfound = False
     donefound = False
     ideasfound = False
     for line in file:
         # print(line)
         line.strip()
-        if(line == "}\n"):
+        if line == "}\n":
             setupfound = False
             donefound = False
-        if(line == "\t}\n"):
+        if line == "\t}\n":
             ideasfound = False
-        if((setupfound == True or donefound == True) and ideasfound == True):
-            if(line not in seen):
+        if (setupfound == True or donefound == True) and ideasfound == True:
+            if line not in seen:
                 seen.add(line)
                 ideas.append(line)
-        if(line == "\ufeff2000.1.1 = {\n"):
+        if line == "\ufeff2000.1.1 = {\n":
             setupfound = True
-        if(line == "2017.1.1 = {\n"):
+        if line == "2017.1.1 = {\n":
             donefound = True
-        if(line == "\tadd_ideas = {\n"):
+        if line == "\tadd_ideas = {\n":
             ideasfound = True
-
 
     file.close()
 
@@ -112,7 +117,13 @@ for idea in ideas:
         women.append(idea)
     elif "intervention" in idea:
         intervention.append(idea)
-    elif "growth" in idea or "boom" in idea or "stagnation" in idea or "recession" in idea or "depression" in idea:
+    elif (
+        "growth" in idea
+        or "boom" in idea
+        or "stagnation" in idea
+        or "recession" in idea
+        or "depression" in idea
+    ):
         growth.append(idea)
     elif "cartel" in idea:
         cartel.append(idea)
@@ -124,9 +135,16 @@ for idea in ideas:
         unions.append(idea)
     elif "meeting" in idea:
         meetings.append(idea)
-    elif "economy" in idea and "opium" not in idea: # there is an Opium Economy idea which is not part of trade
+    elif (
+        "economy" in idea and "opium" not in idea
+    ):  # there is an Opium Economy idea which is not part of trade
         trade.append(idea)
-    elif "theocracy" in idea or "state_religion" in idea or "secular" in idea or "atheist" in idea:
+    elif (
+        "theocracy" in idea
+        or "state_religion" in idea
+        or "secular" in idea
+        or "atheist" in idea
+    ):
         religion.append(idea)
     elif "law" in idea or "hybrid" in idea or "tribalism" in idea:
         law.append(idea)
@@ -140,9 +158,33 @@ for idea in ideas:
 
 # So now to the editing
 
-categories = [gdp,tax_cost,pop,corruption,growth,defence,edu,health,social,bureau,police,army,women,intervention,officers,press,law,unions,meetings,religion,trade,borders,parties,cartel]
+categories = [
+    gdp,
+    tax_cost,
+    pop,
+    corruption,
+    growth,
+    defence,
+    edu,
+    health,
+    social,
+    bureau,
+    police,
+    army,
+    women,
+    intervention,
+    officers,
+    press,
+    law,
+    unions,
+    meetings,
+    religion,
+    trade,
+    borders,
+    parties,
+    cartel,
+]
 # dict = {"gdp": "","tax_cost": "","pop": "","corruption": "","growth": "","defence": "","edu": "","health": "","social": "","bureau": "","police": "","army": "","women": "","intervention": "",
-
 
 
 for F in files:
@@ -157,7 +199,7 @@ for F in files:
     ######################
     # Reads File
 
-    file = open(F, "r",encoding="utf-8")
+    file = open(F, "r", encoding="utf-8")
 
     ######################
     # Used to keep track of location within file
@@ -165,8 +207,7 @@ for F in files:
     setupfound = False
     donefound = False
     ideasfound = False
-    removefound = False;
-
+    removefound = False
 
     found = False
     # i = 0
@@ -175,51 +216,53 @@ for F in files:
     for line in file:
         # print(line)
         line.strip()
-        if(line == "}\n"):
+        if line == "}\n":
             setupfound = False
             donefound = False
-        if(line == "\t}\n"):
+        if line == "\t}\n":
             ideasfound = False
-        if("}" in line):
+        if "}" in line:
             removefound = False
-        if(donefound == True and "remove_ideas = {" in line):
-            print(F) #Because of how I progammed it it messes up countries that already have remove_ideas thing :(
+        if donefound == True and "remove_ideas = {" in line:
+            print(
+                F
+            )  # Because of how I progammed it it messes up countries that already have remove_ideas thing :(
             removefound = True
 
         ######################
         # Copies Ideas within 2000 add_ideas = {} in values/others
 
-        if(setupfound == True and ideasfound == True):
+        if setupfound == True and ideasfound == True:
             for cat in categories:
                 for idea in cat:
-                    if(line == idea):
+                    if line == idea:
                         values.append(line)
                         # init_values.append(line)
                         indexed.append(categories.index(cat))
             for idea in other:
-                if (line == idea):
+                if line == idea:
                     others.append(line)
                     # init_values.append(line)
 
         ######################
         # Copies Ideas within 2017 add_ideas = {} in late_values and in values (if no newer value was provided in 2000) and in others if they dont already exist
 
-        if(donefound == True and ideasfound == True):
+        if donefound == True and ideasfound == True:
 
             for cat in categories:
                 for c in cat:
-                    if(line == c):
-                        if(categories.index(cat) not in indexed):
+                    if line == c:
+                        if categories.index(cat) not in indexed:
                             values.append(line)
                             indexed.append(categories.index(cat))
                             found = True
                         late_values.append(line)
-            if(found == True):
+            if found == True:
                 found = False
             else:
                 for idea in other:
-                    if (line == idea):
-                        if(line not in others):
+                    if line == idea:
+                        if line not in others:
                             others.append(line)
                         late_values.append(line)
 
@@ -227,7 +270,7 @@ for F in files:
         # Puts (almost) all line in a List so it can write them later
         # Ignores the add_ideas and remove_ideas things
 
-        if(ideasfound == False and not (donefound == True and removefound == True)):
+        if ideasfound == False and not (donefound == True and removefound == True):
             File.append(line)
             # print(line)
 
@@ -237,14 +280,14 @@ for F in files:
         #####     removefound = True
         # Was at the beggining of the file so the actual "remove_ideas = {" line will NOT be added in the file, while add_ideas will
 
-        if(line == "\ufeff2000.1.1 = {\n"):
+        if line == "\ufeff2000.1.1 = {\n":
             setupfound = True
-        if(line == "2017.1.1 = {\n"):
+        if line == "2017.1.1 = {\n":
             donefound = True
-        if(line == "\tadd_ideas = {\n"):
+        if line == "\tadd_ideas = {\n":
             ideasfound = True
             # if(j<ints):
-                # ints = j
+            # ints = j
 
         # j = j+1
 
@@ -252,7 +295,7 @@ for F in files:
 
     # print(indexed)
 
-    #print(File)
+    # print(File)
 
     # categories = [gdp,tax_cost,pop,corruption,growth,defence,edu,health,social,bureau,police,army,women,intervention]
 
@@ -260,54 +303,54 @@ for F in files:
     # Checks if any necessary values are missing
     # Could be used to assign defaults as well
 
-    if(0 not in indexed):
+    if 0 not in indexed:
         values.append("\t\t### No GDP laws added\n")
-    if(1 not in indexed):
+    if 1 not in indexed:
         values.append("\t\t### No Tax_cost laws added!!\n")
         # print(F)
-    if(2 not in indexed):
+    if 2 not in indexed:
         values.append("\t\t### No POP laws added\n")
-    if(3 not in indexed):
+    if 3 not in indexed:
         values.append("\t\t### No corruption laws added\n")
-    if(4 not in indexed):
+    if 4 not in indexed:
         values.append("\t\t### No GROWTH laws added\n")
-    if(5 not in indexed):
+    if 5 not in indexed:
         values.append("\t\t### No defence laws added\n")
-    if(6 not in indexed):
+    if 6 not in indexed:
         values.append("\t\t### No edu laws added\n")
-    if(7 not in indexed):
+    if 7 not in indexed:
         values.append("\t\t### No health laws added\n")
-    if(8 not in indexed):
+    if 8 not in indexed:
         values.append("\t\t### No social laws added\n")
-    if(9 not in indexed):
+    if 9 not in indexed:
         values.append("\t\t### No bureau laws added\n")
-    if(10 not in indexed):
+    if 10 not in indexed:
         values.append("\t\t### No police laws added\n")
-    if(11 not in indexed):
+    if 11 not in indexed:
         values.append("\t\t### No army laws added\n")
-    if(12 not in indexed):
+    if 12 not in indexed:
         values.append("\t\t### No women army laws added\n")
-    if(13 not in indexed):
+    if 13 not in indexed:
         values.append("\t\t### No intervention laws added\n")
-    if(14 not in indexed):
+    if 14 not in indexed:
         values.append("\t\t### No officer laws added\n")
-    if(15 not in indexed):
+    if 15 not in indexed:
         values.append("\t\t### No press laws added\n")
-    if(16 not in indexed):
+    if 16 not in indexed:
         values.append("\t\t### No law laws added\n")
-    if(17 not in indexed):
+    if 17 not in indexed:
         values.append("\t\t### No unions laws added\n")
-    if(18 not in indexed):
+    if 18 not in indexed:
         values.append("\t\t### No meetings laws added\n")
-    if(19 not in indexed):
+    if 19 not in indexed:
         values.append("\t\t### No religion laws added\n")
-    if(20 not in indexed):
+    if 20 not in indexed:
         values.append("\t\t### No trade laws added\n")
-    if(21 not in indexed):
+    if 21 not in indexed:
         values.append("\t\t### No borders laws added\n")
-    if(22 not in indexed):
+    if 22 not in indexed:
         values.append("\t\t### No party laws added\n")
-# categories = [gdp,tax_cost,pop,corruption,growth,defence,edu,health,social,bureau,police,army,women,intervention,officers,press,law,unions,meetings,religion,trade,cartel]
+    # categories = [gdp,tax_cost,pop,corruption,growth,defence,edu,health,social,bureau,police,army,women,intervention,officers,press,law,unions,meetings,religion,trade,cartel]
 
     # print(values)
     # print(others)
@@ -318,7 +361,7 @@ for F in files:
     ######################
     # Wites the File from scratch
 
-    file = open(F, "w",encoding="utf-8")
+    file = open(F, "w", encoding="utf-8")
     donefound = False
     ideasfound = False
     for line in File:
@@ -328,7 +371,7 @@ for F in files:
         ######################
         # adds the 2000 ideas
 
-        if(donefound == False and ideasfound == True):
+        if donefound == False and ideasfound == True:
             # print("#####")
             # print(F)
             # print(values)
@@ -345,22 +388,22 @@ for F in files:
         ######################
         # adds the 2017 ideas
 
-        if(donefound == True and ideasfound == True):
+        if donefound == True and ideasfound == True:
             # print("Hi")
             for val in late_values:
-                if((val not in values) and (val not in others)):
-                    if("###" not in val):
+                if (val not in values) and (val not in others):
+                    if "###" not in val:
                         file.write(val)
                         # print("hi")
             ideasfound = False
 
-        if("2017.1.1 = {" in line):
+        if "2017.1.1 = {" in line:
             donefound = True
             # print("done")
-        if("add_ideas = {" in line):
+        if "add_ideas = {" in line:
             ideasfound = True
             # print("ideas")
-        if("}" in line):
+        if "}" in line:
             ideasfound = False
             # print("##")
 
@@ -368,23 +411,21 @@ for F in files:
         # Again, order is imprtant; This gets written before the "add_ideas = {" line
         # It writes the remove_ideas part
 
-        if(donefound == True and ideasfound == True):
+        if donefound == True and ideasfound == True:
             file.write("\tremove_ideas = {\n")
             for val in values:
-                if(val not in late_values):
-                    if("###" not in val):
+                if val not in late_values:
+                    if "###" not in val:
                         file.write(val)
             for val in others:
-                if(val not in late_values):
-                    if("###" not in val):
+                if val not in late_values:
+                    if "###" not in val:
                         file.write(val)
             file.write("\t}\n")
 
         file.write(line)
 
-
     file.close()
-
 
     values.clear()
     others.clear()
@@ -431,7 +472,6 @@ for F in files:
 # print(intervention)
 # print(industries)
 # print(other)
-
 
 
 # print(ideas)
