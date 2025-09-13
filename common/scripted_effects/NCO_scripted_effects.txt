@@ -71,12 +71,12 @@ NCO_select_company_effect = {
 
         add_to_array = {
 			array = NCO_country_selected_companies_income_from_factory
-			value = 0.2
+			value = 0.3
 			index = selected_companies_num_temp
 		}
         add_to_array = {
 			array = NCO_country_selected_companies_expenses_from_factory
-			value = 0.1
+			value = 0.15
 			index = selected_companies_num_temp
 		}
 
@@ -195,6 +195,123 @@ NCO_remove_company_by_slot_effect = {
     }
 }
 
+# NCO_company_change_money
+# Required Input: nco_company_money_to_change (float)
+# Required Input: nco_company_money_to_change_slot (int)
+# Purpose: Change company money on slot nco_company_money_to_change_slot
+NCO_company_change_money_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { nco_company_money_to_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { NCO_country_selected_companies_money^nco_company_money_to_change_slot = nco_company_money_to_change }
+        add_to_variable = { NCO_country_selected_companies_value^nco_company_money_to_change_slot = nco_company_money_to_change }
+    }
+}
+
+# NCO_company_change_money
+# Required Input: nco_company_factory_amount_change (int)
+# Required Input: nco_company_factory_amount_change_slot (int)
+# Purpose: Change company factories on slot nco_company_factory_amount_change_slot
+NCO_company_change_factory_amount_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { nco_company_factory_amount_change_slot > -1 }
+            }
+        }
+
+        set_temp_variable = { company_value_to_change_temp = nco_company_factory_amount_change }
+        multiply_temp_variable = { company_value_to_change_temp = 5 }
+    
+        add_to_variable = { NCO_country_selected_companies_factories^nco_company_factory_amount_change_slot = nco_company_factory_amount_change }
+        add_to_variable = { NCO_country_selected_companies_value^nco_company_factory_amount_change_slot = company_value_to_change_temp }
+    }
+}
+
+# NCO_company_change_value
+# Required Input: nco_company_value_change (float)
+# Required Input: nco_company_value_change_slot (int)
+# Purpose: Change company value on slot nco_company_value_change_slot
+NCO_company_change_value_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { nco_company_value_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { NCO_country_selected_companies_value^nco_company_value_change_slot = nco_company_value_change }
+    }
+}
+
+# NCO_company_change_additional_income
+# Required Input: nco_company_additional_income_change (float)
+# Required Input: nco_company_additional_income_change_slot (int)
+# Purpose: Change company additional income on slot nco_company_additional_income_change_slot
+NCO_company_change_additional_income_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { nco_company_additional_income_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { NCO_country_selected_companies_additional_income^nco_company_additional_income_change_slot = nco_company_additional_income_change }
+    }
+}
+
+# NCO_company_change_additional_expenses
+# Required Input: nco_company_additional_expenses_change (float)
+# Required Input: nco_company_additional_expenses_change_slot (int)
+# Purpose: Change company additional expenses on slot nco_company_additional_expenses_change_slot
+NCO_company_change_additional_expenses_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { nco_company_additional_expenses_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { NCO_country_selected_companies_additional_expenses^nco_company_additional_expenses_change_slot = nco_company_additional_expenses_change }
+    }
+}
+
+# NCO_company_change_factory_income
+# Required Input: nco_company_factory_income_change (float)
+# Required Input: nco_company_factory_income_change_slot (int)
+# Purpose: Change company factory income on slot nco_company_factory_income_change_slot
+NCO_company_change_factory_income_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { nco_company_factory_income_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { NCO_country_selected_companies_income_from_factory^nco_company_factory_income_change_slot = nco_company_factory_income_change }
+    }
+}
+
+# NCO_company_change_factory_expenses
+# Required Input: nco_company_factory_expenses_change (float)
+# Required Input: nco_company_factory_expenses_change_slot (int)
+# Purpose: Change company factory expenses on slot nco_company_factory_expenses_change_slot
+NCO_company_change_factory_expenses_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { nco_company_factory_expenses_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { NCO_country_selected_companies_expenses_from_factory^nco_company_factory_expenses_change_slot = nco_company_factory_expenses_change }
+    }
+}
+
 NCO_update_companies_variables_effect = {
     if = {
         limit = {
@@ -218,7 +335,8 @@ NCO_update_companies_variables_effect = {
 
             set_variable = { NCO_country_selected_companies_expenses^i = company_expenses_temp }
 
-            set_temp_variable = { company_new_money = company_money_to_change }
+            set_temp_variable = { company_money_to_change = NCO_country_selected_companies_income^i }
+            subtract_from_temp_variable = { company_money_to_change = NCO_country_selected_companies_expenses^i }
             
             set_variable = { NCO_country_selected_companies_revenue^i = company_money_to_change }
         }
