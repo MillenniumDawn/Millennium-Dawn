@@ -145,7 +145,7 @@ def main():
         filename="pythontools.log", format="%(asctime)s %(message)s", filemode="w"
     )
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     logger.info("Validating Basic Style - Secondary Check")
     message = "Validating Basic Style - Secondary Check\n"
