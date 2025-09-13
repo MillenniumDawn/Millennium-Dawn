@@ -1,0 +1,122 @@
+# Pre-commit configuration for Millennium Dawn HOI4 mod
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  # Built-in pre-commit hooks for basic file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Check for common issues
+      - id: trailing-whitespace
+        exclude: '\.txt$|\.mod$'  # Exclude mod files which might need specific formatting
+      - id: end-of-file-fixer
+        exclude: '\.txt$|\.mod$'
+      # Only validate YAML syntax for English localization files
+      - id: check-yaml
+        files: 'localisation/english/.*\.yml$'
+      - id: check-json
+        files: '\.json$'
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=10000']  # Prevent files larger than 10MB
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+
+      # Text encoding and format checks (exclude localization files)
+      - id: check-byte-order-marker
+        exclude: 'localisation/.*\.yml$'  # Localization files NEED BOM
+      - id: fix-encoding-pragma
+        args: [--remove]
+        exclude: 'localisation/.*\.yml$'
+
+      # Python-specific checks for tools directory
+      - id: check-ast
+        files: '\.py$'
+      - id: debug-statements
+        files: '\.py$'
+      - id: name-tests-test
+        files: 'tools/.*test.*\.py$'
+
+  # Python code formatting and linting for tools directory
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        files: '^tools/.*\.py$'
+        args: [--line-length=88]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        files: '^tools/.*\.py$'
+        args: [--profile=black]
+
+  # Custom hooks for HOI4 mod-specific validation
+  - repo: local
+    hooks:
+      # Existing Millennium Dawn quality assurance tools
+      - id: md-basic-style-check
+        name: MD Basic Style Check
+        entry: python tools/check_basic_style.py
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+
+      - id: md-basic-style-check-2
+        name: MD Basic Style Check 2 (Advanced)
+        entry: python tools/check_basic_style_2.py
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+        args: ["dummy_token"]
+
+      - id: md-coding-standards
+        name: MD Coding Standards
+        entry: python tools/coding_standards.py
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+        args: ["dummy_token"]
+
+      # Validate English localization files have UTF-8 with BOM
+      - id: validate-localization-encoding
+        name: Validate HOI4 localization UTF-8 with BOM
+        entry: python tools/validate_localization_encoding.py
+        language: system
+        files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
+        pass_filenames: true
+
+      # Auto-fix UTF-8 BOM for English localization files (optional)
+      - id: fix-localization-encoding
+        name: Auto-fix HOI4 localization UTF-8 BOM
+        entry: python tools/validate_localization_encoding.py --fix
+        language: system
+        files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
+        pass_filenames: true
+
+      # Validate .mod file UTF-8 encoding
+      - id: check-mod-file-encoding
+        name: Check .mod file UTF-8 encoding
+        entry: python tools/validate_mod_encoding.py
+        language: system
+        files: '\.mod$'
+        pass_filenames: true
+
+# Configuration for specific hooks
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
