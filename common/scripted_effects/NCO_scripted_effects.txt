@@ -1,19 +1,22 @@
 # NCO_select_company
 # Required Input: nco_selected_company (int)
 # Purpose: Add the nco_selected_company to companys list
-NCO_select_company_effect = {
-    set_temp_variable = { selected_companies_num_temp = NCO_country_selected_companies^num }
-
+NCO_select_company_effect = {    
     if = {
         limit = {
-            check_variable = { selected_companies_num_temp < 3 }
+            check_variable = { NCO_country_selected_companies^num < MD_cnc_companies_slots^num  }
         }
+
+        set_temp_variable = { selected_companies_num_temp = NCO_country_selected_companies^num }
+
+        set_variable = { MD_cnc_companies_slots^selected_companies_num_temp = nco_selected_company }
 
         add_to_array = {
 		    array = NCO_country_selected_companies
 			value = nco_selected_company
 			index = selected_companies_num_temp
 		}
+
 		add_to_array = {
 			array = NCO_country_selected_companies_type
 			value = NCO_companies_type^nco_selected_company
@@ -116,12 +119,36 @@ NCO_select_company_effect = {
 # Required Input: nco_slot_to_remove (int)
 # Purpose: Remove company on slot nco_slot_to_remove
 NCO_remove_company_by_slot_effect = {
+    set_temp_variable = { occupied_slots_temp = NCO_country_selected_companies^num }
+    subtract_from_temp_variable = { occupied_slots_temp = 1 }
+
     if = {
         limit = {
             AND = {
                 check_variable = { nco_slot_to_remove > -1 }
+                check_variable = { nco_slot_to_remove < occupied_slots_temp }
             }
         }
+
+        set_temp_variable = { slots_to_move_temp = MD_cnc_companies_slots^num }
+        add_to_temp_variable = { slots_to_move_temp = 1 }
+        subtract_from_temp_variable = { slots_to_move_temp = nco_slot_to_remove }
+
+        set_variable = { MD_cnc_companies_slots^nco_slot_to_remove = -1 }
+
+        for_loop_effect = {
+            start = nco_slot_to_remove
+            end = slots_to_move_temp
+            value = i
+
+            set_temp_variable = { next_temp = i }
+            add_to_temp_variable = { next_temp = 1 }
+
+            MD_cnc_companies_slots^i = MD_cnc_companies_slots^next_temp
+        }
+        
+        add_to_temp_variable = { next_temp = 1 }
+        set_variable = { MD_cnc_companies_slots^next_temp = -1 }
 
         add_to_array = {
 			array = NCO_country_avaibles_companies
@@ -132,6 +159,7 @@ NCO_remove_company_by_slot_effect = {
             array = NCO_country_selected_companies
             index = nco_slot_to_remove
         }
+        
         remove_from_array = {
             array = NCO_country_selected_companies_type
             index = nco_slot_to_remove
@@ -373,6 +401,9 @@ NCO_update_companies_upkeep_effect = {
             add_to_temp_variable = { company_new_money = NCO_country_selected_companies_money^i }
 
             set_variable = { NCO_country_selected_companies_revenue^i = company_money_to_change }
+
+            # remove part of income based taxes
+            # set additional income to country base on tax (corporate)
 
             if = {
                 limit = {
