@@ -1,0 +1,294 @@
+scripted_gui = {
+	companies_selecting_bar = {
+		window_name = "companies_selecting_bar"
+        context_type = player_context
+		parent_window_token = politics_tab
+
+		properties = {
+            companies_button_slot_0 = {
+				image = "[NCO_company_icon_slot_0]"
+			}
+			companies_button_slot_1 = {
+				image = "[NCO_company_icon_slot_1]"
+			}
+			companies_button_slot_2 = {
+				image = "[NCO_company_icon_slot_2]"
+			}
+		}
+
+		effects = {
+            companies_button_slot_0_click = {
+                if = {
+                    limit = {
+                        check_variable = { NCO_country_selected_companies^0 < 1 }
+                    }
+                    set_variable = { opened_companies_window = 0 }
+                }
+                else = {
+                    set_variable = { opened_company_window = 0 }
+                }
+            }
+
+            companies_button_slot_1_click = {
+                if = {
+                    limit = {
+                        check_variable = { NCO_country_selected_companies^1 < 1 }
+                    }
+                    set_variable = { opened_companies_window = 1 }
+                }
+                else = {
+                    set_variable = { opened_company_window = 1 }
+                }
+            }
+
+            companies_button_slot_2_click = {
+                if = {
+                    limit = {
+                        check_variable = { NCO_country_selected_companies^2 < 1 }
+                    }
+                    set_variable = { opened_companies_window = 2 }
+                }
+                else = {
+                    set_variable = { opened_company_window = 2 }
+                }
+            }
+		}
+	}
+
+    companies_selecting_window = {
+		window_name = "companies_selecting_window"
+        context_type = player_context
+
+        visible = {
+			ROOT = {
+				OR = {
+					is_ai = yes
+					check_variable = { opened_companies_window > -1 }
+				}
+			}
+		}
+
+		properties = {
+			avaible_companies_grid_item_icon = {
+				image = "[NCO_icon_of_company]"
+			}
+		}
+
+        dynamic_lists = {
+            avaible_companies_grid = {
+                array = NCO_country_avaibles_companies
+                entry_container = "avaible_companies_grid_item"
+            }
+        }
+
+		triggers = {
+			avaible_companies_select_click_enabled = {
+				set_temp_variable = { company_cost_temp = GLOBAL.NCO_companies_cost^v }
+				multiply_temp_variable = { company_cost_temp = NCO_company_cost_modifer } 
+				
+				check_variable = { political_power > company_cost_temp }
+			}
+		}
+
+		effects = {
+			avaible_companies_select_click = {
+				set_temp_variable = { nco_selected_company = v }
+				NCO_select_company_effect = yes
+
+				remove_from_array = {
+					array = NCO_country_avaibles_companies
+					index = i
+				}
+
+				set_variable = { opened_companies_window = -1 }
+			}
+
+			close_click = {
+                set_variable = { opened_companies_window = -1 }
+            }
+		}
+	}
+
+    company_detail_window = {
+		window_name = "company_detail_window"
+        context_type = player_context
+
+        visible = {
+			ROOT = {
+				OR = {
+					is_ai = yes
+					check_variable = { opened_company_window > -1 }
+				}
+			}
+		}
+
+		properties = {
+			comapny_detail_icon = {
+				image = "[NCO_icon_of_company_detail]"
+			}
+		}
+
+        dynamic_lists = {
+        }
+
+		triggers = {
+			country_action_1_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			country_action_2_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			country_action_3_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			country_action_4_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			company_action_1_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+
+			company_action_2_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+
+			company_action_3_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+			company_action_4_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+
+			# TODO CREATE COOLDOWN FOR MODERNIZE AND TV COMMERCIAL
+			company_action_1_click_enabled = {
+				AND = {
+					check_variable = { NCO_country_selected_companies_expenses_from_factory^opened_company_window > 0 }
+					check_variable = { NCO_country_selected_companies_money^opened_company_window > 0.249 }
+				}
+			}
+
+			company_action_2_click_enabled = {
+				AND = {
+					check_variable = { NCO_country_selected_companies_money^opened_company_window > 0.499 }
+				}
+			}
+
+			COUNT_action_3_click_enabled = {
+				check_variable = { NCO_country_selected_companies_money^opened_company_window > 0.999 }
+			}
+
+			company_action_4_click_enabled = {
+				check_variable = { NCO_country_selected_companies_money^opened_company_window > 1.999 }
+			}
+
+			country_action_1_click_enabled = {
+				AND = {
+					check_variable = { political_power > 99 }
+				}
+			}
+
+			country_action_2_click_enabled = {
+			}
+
+			country_action_3_click_enabled = {
+			}
+
+			country_action_4_click_enabled = {
+			}
+		}
+
+		effects = {
+			company_action_switch_page_company_click = {
+				clr_country_flag = country_actions_ui
+			}
+
+			company_action_switch_page_country_click = {
+				set_country_flag = country_actions_ui
+			}
+			
+			company_action_1_click = {
+                subtract_from_variable = { NCO_country_selected_companies_money^opened_company_window = 0.25 }
+
+				subtract_from_variable = { NCO_country_selected_companies_expenses_from_factory^opened_company_window = 0.015 }
+				NCO_update_companies_upkeep_effect = yes
+			}
+
+			company_action_2_click = {
+                subtract_from_variable = { NCO_country_selected_companies_money^opened_company_window = 0.5 }
+				
+				add_to_variable = { NCO_country_selected_companies_income_from_factory^opened_company_window = 0.02 }
+				NCO_update_companies_upkeep_effect = yes
+			}
+
+			company_action_3_click = {
+                subtract_from_variable = { NCO_country_selected_companies_money^opened_company_window = 1 }
+
+				add_to_variable = { NCO_country_selected_companies_additional_income^opened_company_window = 0.1 }
+				add_to_variable = { NCO_country_selected_companies_value^opened_company_window = 1.5 }
+				NCO_update_companies_upkeep_effect = yes
+			}
+
+			company_action_4_click = {
+                subtract_from_variable = { NCO_country_selected_companies_money^opened_company_window = 2 }
+
+				add_to_variable = { NCO_country_selected_companies_factories^opened_company_window = 1 }
+				add_to_variable = { NCO_country_selected_companies_value^opened_company_window = 2 }
+				NCO_update_companies_upkeep_effect = yes
+			}
+
+			country_action_1_click = {
+       			ROOT = { add_political_power = -100 }
+
+				add_to_variable = { NCO_country_selected_companies_additional_income^opened_company_window = 0.05 }
+			}
+
+			country_action_2_click = {
+				set_temp_variable = { treasury_change = -1.0 }
+				modify_treasury_effect = yes
+
+				add_to_variable = { NCO_country_selected_companies_money^opened_company_window = 1 }
+			}
+
+			country_action_3_click = {
+				set_temp_variable = { treasury_change = -2.5 }
+				modify_treasury_effect = yes
+				
+				add_to_variable = { NCO_country_selected_companies_money^opened_company_window = 2 }
+			}
+
+			country_action_4_click = {
+				set_temp_variable = { treasury_change = -5.0 }
+				modify_treasury_effect = yes
+
+				add_to_variable = { NCO_country_selected_companies_money^opened_company_window = 4 }
+			}
+
+			company_type_1_upgrade_1_btn_click = {
+                set_variable = { opened_company_window = -1 }
+            }
+
+			remove_click = {
+				set_temp_variable = { nco_slot_to_remove = opened_company_window }
+				NCO_remove_company_by_slot_effect = yes
+
+				set_variable = { opened_company_window = -1 }
+			}
+
+			close_click = {
+                set_variable = { opened_company_window = -1 }
+            }
+		}
+	}
+}
