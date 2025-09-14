@@ -3,7 +3,7 @@ SWE_estonia_is_protected = { # If Estonia is protected, do not attack.
 	enable = {
 		OR = {
 			has_wargoal_against = EST
-			has_completed_focus = SWE_offer_province_status_to_estonia
+			has_completed_focus = SWE_unification_baltiska
 		}
 		EST = {
 			OR = { # Check if EST is member of major bloc, or is too strong on its own to attack
@@ -29,7 +29,7 @@ SWE_finland_is_protected = { # If Finland is protected, do not attack.
 	enable = {
 		OR = {
 			has_wargoal_against = FIN
-			has_completed_focus = SWE_tillbaka_till_riket
+			has_completed_focus = SWE_rikshalvan_reunited
 		}
 		FIN = {
 			OR = {
@@ -43,7 +43,6 @@ SWE_finland_is_protected = { # If Finland is protected, do not attack.
 		}
 		NOT = {
 			SWE = {
-				has_completed_focus = SWE_ally_the_kaiser
 				is_in_faction_with = GER
 			}
 		}
@@ -77,7 +76,7 @@ SWE_prepare_to_attack_FIN = {
 				has_war = no
 				OR = {
 					has_wargoal_against = FIN
-					has_completed_focus = SWE_tillbaka_till_riket
+					has_completed_focus = SWE_rikshalvan_reunited
 				}
 			}
 		}
@@ -100,7 +99,7 @@ SWE_prepare_to_attack_estonia = {
 				has_war = no
 				OR = {
 					has_wargoal_against = EST
-					has_completed_focus = SWE_offer_province_status_to_estonia
+					has_completed_focus = SWE_unification_baltiska
 				}
 			}
 		}
@@ -299,4 +298,90 @@ SWE_support_bosnian_against_rsk = {
 		id = BOS
 		value = 200
 	}
+}
+
+SWE_dont_like_russia = {
+	allowed = { original_tag = GER }
+	enable = {
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
+		country_exists = SOV
+		SOV = {
+			has_government = communism
+			has_government = nationalist
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "SOV" value = 80 }
+}
+SWE_spy_on_SOV = { #Spy on SOV, infiltrate Russian army
+	allowed = { original_tag = SWE }
+	enable = {
+		NOT = { SOV = { is_subject_of = SWE } }
+	}
+	abort = {
+		OR = {
+			SOV = {
+				is_in_faction_with = SWE
+			}
+			NOT = { country_exists = SOV }
+		}
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = SOV }
+	ai_strategy = { type = operative_operation value = 80 operation = operation_capture_cipher operation_target = SOV } #
+	ai_strategy = { type = operative_operation value = 80 operation = operation_infiltrate_armed_forces_navy operation_target = SOV }
+}
+SWE_like_scandianvians = {
+	allowed = { original_tag = SWE }
+	enable = {
+		has_idea = EU_member
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "DEN" value = 70 }
+	ai_strategy = { type = support id = "DEN" value = 70 }
+	ai_strategy = { type = befriend id = "NOR" value = 70 }
+	ai_strategy = { type = support id = "NOR" value = 70 }
+	ai_strategy = { type = befriend id = "FIN" value = 70 }
+	ai_strategy = { type = support id = "FIN" value = 70 }
+}
+SWE_Neutrality = {
+	allowed = { original_tag = SWE }
+	enable = {
+		threat < 0.5
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = alliance id = "USA" value = -100 }
+	ai_strategy = { type = alliance id = "SOV" value = -100 }
+	ai_strategy = { type = alliance id = "CHI" value = -100 }
+	ai_strategy = { type = alliance id = "GER" value = -100 }
+}
+SWE_end_Neutrality = {
+	allowed = { original_tag = SWE }
+	enable = {
+		threat > 0.5
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = alliance id = "USA" value = 100 }
+	ai_strategy = { type = alliance id = "SOV" value = -100 }
+	ai_strategy = { type = alliance id = "CHI" value = -100 }
+	ai_strategy = { type = alliance id = "GER" value = 100 }
 }
