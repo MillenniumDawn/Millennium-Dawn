@@ -1,4 +1,4 @@
-name: Millennium Dawn Coding Validation & Fixing
+name: Code Standards & Validation
 
 on:
   pull_request:
@@ -11,6 +11,7 @@ env:
   INPUT_RULES: 'https://github.com/Kaiserreich/cwtools-hoi4-config.git'
   INPUT_RULESREF: 'master'
   INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   coding-standards:
@@ -49,9 +50,7 @@ jobs:
 
     - uses: cwtools/cwtools-action@v1.1.0
       with:
-        game: hoi4
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required, secret is automatically set by github
+        game: ${{ env.INPUT_GAME }}
 
     - name: Upload CWTools output
       uses: actions/upload-artifact@v4
@@ -138,8 +137,6 @@ jobs:
 
     - name: Create Release
       uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
