@@ -40,7 +40,7 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 - `ai_will_do` is and always should be the last definition of the focus tree
 
 ### Example Focus Tree Structure
-```plaintext
+```python
 focus_tree = {
     id = greece_focus
 
@@ -59,7 +59,7 @@ focus_tree = {
 }
 ```
 
-```plaintext
+```python
 focus = {
 	id = SER_free_market_capitalism
 	icon = blr_market_economy
