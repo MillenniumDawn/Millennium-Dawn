@@ -1,0 +1,457 @@
+# MD_cac_select_company
+# Required Input: cac_selected_company (int)
+# Purpose: Add the cac_selected_company to companys list
+MD_cac_select_company_effect = {    
+    if = {
+        limit = {
+            check_variable = { MD_cac_country_selected_companies^num < MD_cac_companies_slots^num  }
+        }
+
+        set_temp_variable = { selected_companies_num_temp = MD_cac_country_selected_companies^num }
+
+        set_variable = { MD_cac_companies_slots^selected_companies_num_temp = cac_selected_company }
+
+        add_to_array = {
+		    array = MD_cac_country_selected_companies
+			value = cac_selected_company
+			index = selected_companies_num_temp
+		}
+
+		add_to_array = {
+			array = MD_cac_country_selected_companies_type
+			value = MD_cac_companies_type^cac_selected_company
+			index = selected_companies_num_temp
+		}
+
+        add_to_array = {
+			array = MD_cac_country_selected_companies_size
+			value = 0
+			index = selected_companies_num_temp
+		}
+
+        # Economy
+        add_to_array = {
+			array = MD_cac_country_selected_companies_money
+			value = 1
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_country_selected_companies_value
+			value = 11
+			index = selected_companies_num_temp
+		}
+
+        add_to_array = {
+			array = MD_cac_country_selected_companies_revenue
+			value = 0.0
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_country_selected_companies_income
+			value = 0.0
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_country_selected_companies_expenses
+			value = 0.0
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_country_selected_companies_income_taxes
+			value = 0.0
+			index = selected_companies_num_temp
+		}
+
+        add_to_array = {
+			array = MD_cac_country_selected_companies_factories
+			value = 1
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_country_selected_companies_income_from_factory
+			value = 0.5
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_country_selected_companies_expenses_from_factory
+			value = 0.25
+			index = selected_companies_num_temp
+		}
+
+        add_to_array = {
+			array = MD_cac_country_selected_companies_additional_income
+			value = 0
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_country_selected_companies_additional_expenses
+			value = 0
+			index = selected_companies_num_temp
+		}
+
+        # company modifiers
+        add_to_array = {
+			array = MD_cac_company_modifier_political_power_factor
+			value = -0.05
+			index = selected_companies_num_temp
+		}
+        add_to_array = {
+			array = MD_cac_company_modifier_consumer_goods_factor
+			value = 0
+			index = selected_companies_num_temp
+		}
+
+		set_temp_variable = { company_cost_temp = -1 }
+		subtract_from_temp_variable = { company_cost_temp = modifier@companies_cost_modifier }
+		multiply_temp_variable = { company_cost_temp = GLOBAL.MD_cac_companies_cost^v }
+
+        ROOT = { add_political_power = var:company_cost_temp }
+
+        log = "Selected company in [THIS.GetName]: slot-[?i] company_id-[?cac_selected_company]"
+
+        MD_cac_update_companies_variables_effect = yes
+    }
+}
+
+# MD_cac_remove_company_by_slot
+# Required Input: cac_slot_to_remove (int)
+# Purpose: Remove company on slot cac_slot_to_remove
+MD_cac_remove_company_by_slot_effect = {
+    set_temp_variable = { occupied_slots_temp = MD_cac_country_selected_companies^num }
+    subtract_from_temp_variable = { occupied_slots_temp = 1 }
+
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_slot_to_remove > -1 }
+                check_variable = { cac_slot_to_remove < occupied_slots_temp }
+            }
+        }
+
+        set_temp_variable = { slots_to_move_temp = MD_cac_companies_slots^num }
+        add_to_temp_variable = { slots_to_move_temp = 1 }
+        subtract_from_temp_variable = { slots_to_move_temp = cac_slot_to_remove }
+
+        set_variable = { MD_cac_companies_slots^cac_slot_to_remove = -1 }
+
+        for_loop_effect = {
+            start = cac_slot_to_remove
+            end = slots_to_move_temp
+            value = i
+
+            set_temp_variable = { next_temp = i }
+            add_to_temp_variable = { next_temp = 1 }
+
+            MD_cac_companies_slots^i = MD_cac_companies_slots^next_temp
+        }
+        
+        add_to_temp_variable = { next_temp = 1 }
+        set_variable = { MD_cac_companies_slots^next_temp = -1 }
+
+        add_to_array = {
+			array = MD_cac_country_avaibles_companies
+			value = MD_cac_country_selected_companies^cac_slot_to_remove
+		}
+
+        remove_from_array = {
+            array = MD_cac_country_selected_companies
+            index = cac_slot_to_remove
+        }
+        
+        remove_from_array = {
+            array = MD_cac_country_selected_companies_type
+            index = cac_slot_to_remove
+        }
+        remove_from_array = {
+            array = MD_cac_country_selected_companies_size
+            index = cac_slot_to_remove
+        }
+        remove_from_array = {
+            array = MD_cac_country_selected_companies_development_points
+            index = cac_slot_to_remove
+        }
+        remove_from_array = {
+            array = MD_cac_country_selected_companies_development_xp
+            index = cac_slot_to_remove
+        }
+        remove_from_array = {
+            array = MD_cac_country_selected_companies_factories
+            index = cac_slot_to_remove
+        }
+        remove_from_array = {
+            array = MD_cac_country_selected_companies_additional_factories
+            index = cac_slot_to_remove
+        }
+
+        if = {
+            limit = {
+                check_variable = { cac_slot_to_remove = 0 }
+            }
+
+            clear_array = MD_cac_country_selected_companies_upgrades_slot_0
+        }
+        else = {
+            if = {
+                limit = {
+                    check_variable = { cac_slot_to_remove = 1 }
+                }
+
+                clear_array = MD_cac_country_selected_companies_upgrades_slot_1
+            }
+            else = {
+                if = {
+                    limit = {
+                        check_variable = { cac_slot_to_remove = 2 }
+                    }
+
+                    clear_array = MD_cac_country_selected_companies_upgrades_slot_2
+                }
+            }
+        }
+
+        # company modifiers
+        remove_from_array = {
+            array = MD_cac_company_modifier_political_power_factor
+            index = cac_slot_to_remove
+        }
+        remove_from_array = {
+            array = MD_cac_company_modifier_consumer_goods_factor
+            index = cac_slot_to_remove
+        }
+    }
+}
+
+# MD_cac_company_change_money
+# Required Input: cac_company_money_to_change (float)
+# Required Input: cac_company_money_to_change_slot (int)
+# Purpose: Change company money on slot cac_company_money_to_change_slot
+MD_cac_company_change_money_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_company_money_to_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { MD_cac_country_selected_companies_money^cac_company_money_to_change_slot = cac_company_money_to_change }
+        add_to_variable = { MD_cac_country_selected_companies_value^cac_company_money_to_change_slot = cac_company_money_to_change }
+    }
+}
+
+# MD_cac_company_change_factory_amount
+# Required Input: cac_company_factory_amount_change (int)
+# Required Input: cac_company_factory_amount_change_slot (int)
+# Purpose: Change company factories on slot cac_company_factory_amount_change_slot
+MD_cac_company_change_factory_amount_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_company_factory_amount_change_slot > -1 }
+            }
+        }
+
+        set_temp_variable = { company_value_to_change_temp = cac_company_factory_amount_change }
+        multiply_temp_variable = { company_value_to_change_temp = 10 }
+    
+        add_to_variable = { MD_cac_country_selected_companies_factories^cac_company_factory_amount_change_slot = cac_company_factory_amount_change }
+        add_to_variable = { MD_cac_country_selected_companies_value^cac_company_factory_amount_change_slot = company_value_to_change_temp }
+    }
+}
+
+# MD_cac_company_change_value
+# Required Input: cac_company_value_change (float)
+# Required Input: cac_company_value_change_slot (int)
+# Purpose: Change company value on slot cac_company_value_change_slot
+MD_cac_company_change_value_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_company_value_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { MD_cac_country_selected_companies_value^cac_company_value_change_slot = cac_company_value_change }
+    }
+}
+
+# MD_cac_company_change_additional_income
+# Required Input: cac_company_additional_income_change (float)
+# Required Input: cac_company_additional_income_change_slot (int)
+# Purpose: Change company additional income on slot cac_company_additional_income_change_slot
+MD_cac_company_change_additional_income_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_company_additional_income_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { MD_cac_country_selected_companies_additional_income^cac_company_additional_income_change_slot = cac_company_additional_income_change }
+    }
+}
+
+# MD_cac_company_change_additional_expenses
+# Required Input: cac_company_additional_expenses_change (float)
+# Required Input: cac_company_additional_expenses_change_slot (int)
+# Purpose: Change company additional expenses on slot cac_company_additional_expenses_change_slot
+MD_cac_company_change_additional_expenses_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_company_additional_expenses_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { MD_cac_country_selected_companies_additional_expenses^cac_company_additional_expenses_change_slot = cac_company_additional_expenses_change }
+    }
+}
+
+# MD_cac_company_change_factory_income
+# Required Input: cac_company_factory_income_change (float)
+# Required Input: cac_company_factory_income_change_slot (int)
+# Purpose: Change company factory income on slot cac_company_factory_income_change_slot
+MD_cac_company_change_factory_income_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_company_factory_income_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { MD_cac_country_selected_companies_income_from_factory^cac_company_factory_income_change_slot = cac_company_factory_income_change }
+    }
+}
+
+# MD_cac_company_change_factory_expenses
+# Required Input: cac_company_factory_expenses_change (float)
+# Required Input: cac_company_factory_expenses_change_slot (int)
+# Purpose: Change company factory expenses on slot cac_company_factory_expenses_change_slot
+MD_cac_company_change_factory_expenses_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_company_factory_expenses_change_slot > -1 }
+            }
+        }
+    
+        add_to_variable = { MD_cac_country_selected_companies_expenses_from_factory^cac_company_factory_expenses_change_slot = cac_company_factory_expenses_change }
+    }
+}
+
+MD_cac_update_companies_variables_effect = {
+    if = {
+        limit = {
+            check_variable = { MD_cac_country_selected_companies^num > 0 }
+        }
+
+        for_loop_effect = {
+            start = 0
+            end = MD_cac_country_selected_companies^num
+            value = i
+
+            set_temp_variable = { company_income_temp = MD_cac_country_selected_companies_factories^i }
+            multiply_temp_variable = { company_income_temp = MD_cac_country_selected_companies_income_from_factory^i }
+            add_to_temp_variable = { company_income_temp = MD_cac_country_selected_companies_additional_income^i }
+
+            set_variable = { MD_cac_country_selected_companies_income^i = company_income_temp }
+
+            set_temp_variable = { company_expenses_temp = MD_cac_country_selected_companies_factories^i }
+            multiply_temp_variable = { company_expenses_temp = MD_cac_country_selected_companies_expenses_from_factory^i }
+            add_to_temp_variable = { company_expenses_temp = MD_cac_country_selected_companies_additional_expenses^i }
+
+            set_variable = { MD_cac_country_selected_companies_expenses^i = company_expenses_temp }
+
+            # taxes :(
+            set_variable = { MD_cac_country_selected_companies_income_taxes^i = MD_cac_country_selected_companies_income^i }
+
+            set_temp_variable = { corporate_tax_rate_in_float_temp = corporate_tax_rate }
+            divide_temp_variable = { corporate_tax_rate_in_float_temp = 100 }
+
+            multiply_variable = { MD_cac_country_selected_companies_income_taxes^i = corporate_tax_rate_in_float_temp }
+            
+            set_temp_variable = { company_money_to_change = MD_cac_country_selected_companies_income^i }
+            subtract_from_temp_variable = { company_money_to_change = MD_cac_country_selected_companies_expenses^i }
+            subtract_from_temp_variable = { company_money_to_change = MD_cac_country_selected_companies_income_taxes^i }
+
+            set_temp_variable = { company_new_money = company_money_to_change }
+            add_to_temp_variable = { company_new_money = MD_cac_country_selected_companies_money^i }
+
+            set_variable = { MD_cac_country_selected_companies_revenue^i = company_money_to_change }
+        }
+    }
+}
+
+MD_cac_update_companies_upkeep_effect = {
+    if = {
+        limit = {
+            check_variable = { MD_cac_country_selected_companies^num > 0 }
+        }
+
+        for_loop_effect = {
+            start = 0
+            end = MD_cac_country_selected_companies^num
+            value = i
+
+            set_temp_variable = { company_income_temp = MD_cac_country_selected_companies_factories^i }
+            multiply_temp_variable = { company_income_temp = MD_cac_country_selected_companies_income_from_factory^i }
+            add_to_temp_variable = { company_income_temp = MD_cac_country_selected_companies_additional_income^i }
+
+            set_temp_variable = { company_income_modifier = 1 }
+            add_to_temp_variable = { company_income_modifier = modifier@companies_income_modifier }
+            multiply_temp_variable = { company_income_temp = company_income_modifier }
+
+            set_variable = { MD_cac_country_selected_companies_income^i = company_income_temp }
+
+            set_temp_variable = { company_expenses_temp = MD_cac_country_selected_companies_factories^i }
+            multiply_temp_variable = { company_expenses_temp = MD_cac_country_selected_companies_expenses_from_factory^i }
+            add_to_temp_variable = { company_expenses_temp = MD_cac_country_selected_companies_additional_expenses^i }
+            
+            set_temp_variable = { company_expenses_modifier = 1 }
+            add_to_temp_variable = { company_expenses_modifier = modifier@companies_expenses_modifier }
+            multiply_temp_variable = { company_expenses_temp = company_expenses_modifier }
+
+            set_variable = { MD_cac_country_selected_companies_expenses^i = company_expenses_temp }
+
+            set_temp_variable = { company_money_to_change = MD_cac_country_selected_companies_income^i }
+            subtract_from_temp_variable = { company_money_to_change = MD_cac_country_selected_companies_expenses^i }
+
+            # taxes :(
+            set_variable = { MD_cac_country_selected_companies_income_taxes^i = company_money_to_change }
+
+            set_temp_variable = { corporate_tax_rate_in_float_temp = corporate_tax_rate }
+            divide_temp_variable = { corporate_tax_rate_in_float_temp = 100 }
+
+            multiply_variable = { MD_cac_country_selected_companies_income_taxes^i = corporate_tax_rate_in_float_temp }
+
+            if = {
+                limit = {
+                    check_variable = { MD_cac_country_selected_companies_income_taxes^i < 0 }
+                }
+                
+                set_variable = { MD_cac_country_selected_companies_income_taxes^i = 0 }
+            }
+            
+            subtract_from_temp_variable = { company_money_to_change = MD_cac_country_selected_companies_income_taxes^i }
+
+            set_temp_variable = { company_new_money = company_money_to_change }
+            add_to_temp_variable = { company_new_money = MD_cac_country_selected_companies_money^i }
+
+            set_variable = { MD_cac_country_selected_companies_revenue^i = company_money_to_change }
+
+            if = {
+                limit = {
+                    check_variable = { company_new_money < 0 }
+                }
+
+                set_variable = { MD_cac_country_selected_companies_money^i = 0 }
+
+                # there will be event what we doing now with company
+                # add_to_variable = { MD_cac_country_selected_companies_value^i = company_money_to_change }
+            }
+            else = {
+                add_to_variable = { MD_cac_country_selected_companies_money^i = company_money_to_change }
+                add_to_variable = { MD_cac_country_selected_companies_value^i = company_money_to_change }
+            }
+        }
+    }
+}
