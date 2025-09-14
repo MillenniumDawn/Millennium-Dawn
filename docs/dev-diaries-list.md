@@ -1,7 +1,14 @@
-## Dev Diary Lists
+---
+layout: default
+title: "Dev Diaries"
+permalink: /dev-diaries-list/
+---
+
+# Dev Diary Lists
 
 <details><summary>v1.11 Dev Diaries</summary>
- - [Dev Diary #52: Special Projects, Performances, Raids and Missiles](https://docs.google.com/document/d/1TeHUY7SBIVW2HOhaXEme1y1-UzFocmiMmvNAPMJMnCk/edit?usp=sharing)
+
+- [Dev Diary #52: Special Projects, Performances, Raids and Missiles](https://docs.google.com/document/d/1TeHUY7SBIVW2HOhaXEme1y1-UzFocmiMmvNAPMJMnCk/edit?usp=sharing)
 
 </details>
 

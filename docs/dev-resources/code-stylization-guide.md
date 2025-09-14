@@ -40,7 +40,7 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 - `ai_will_do` is and always should be the last definition of the focus tree
 
 ### Example Focus Tree Structure
-```plaintext
+```python
 focus_tree = {
     id = greece_focus
 
@@ -59,7 +59,7 @@ focus_tree = {
 }
 ```
 
-```plaintext
+```python
 focus = {
 	id = SER_free_market_capitalism
 	icon = blr_market_economy
@@ -110,7 +110,7 @@ The following section delineates a stylization guide for the Millennium Dawn and
 - Implement proper AI behavior
 
 ### Example Decision Structure
-```plaintext
+```python
 URA_world_opr = {
     allowed = { original_tag = URA }
     icon = GFX_decision_sovfed_button
@@ -150,7 +150,7 @@ URA_world_opr = {
 - Structure events with clear options and effects
 
 ### Example Event Structure
-```plaintext
+```python
 country_event = {
     id = france_md.504
     title = france_md.504.t
@@ -183,7 +183,7 @@ country_event = {
 - **Performance**: Remove unnecessary `allowed = { always = no }` statements as they add drag to performance - since `always = no` is the default behavior, these lines provide no functional benefit while consuming processing resources
 
 ### Example Idea Structure
-```plaintext
+```python
 BRA_idea_higher_minimun_wage_1 = {
     name = BRA_idea_higher_minimun_wage
     allowed_civil_war = { always = yes }
@@ -214,14 +214,14 @@ BRA_idea_higher_minimun_wage_1 = {
 - Keep simple checks on one line when appropriate
 
 ### Subideology Localization Format
-```plaintext
+```python
 TAG.conservatism: "£PARTY_ICON (ABBRV) - NAME OF PARTY"
 TAG.conservatism_icon: "£PARTY_ICON"
 TAG.conservatism_desc: "(Dominant Ideology of the Party) - NAME OF PARTY (NAME OF LANGUAGES IN ALL NATIVE LANGUAGES FOR THE COUNTRY, ABBRV)\n\n(Description)"
 ```
 
 Example:
-```plaintext
+```python
 MOR.conservatism: "£MOR_NRI (RNI) - National Rally of Independents"
 MOR.conservatism_icon: "£MOR_NRI"
 MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (Arabic: Altajamue Alwataniu Lil'ahrar, French: Rassemblement National des Indépendants, Standard Moroccan Tamazight: Agraw Anamur y Insimann, RNI)\n\nNominally a social-democratic party, the party often cooperates with other parties with liberal orientation and is heavily described as pro-business and liberal. Formed in 1978 by then-Prime Minister Ahmed Osman the party has consistently remained a major player in Moroccan politics. Furthermore, the party is a national observer of the Liberal International and is affiliated with the Africa Liberal Network and the European People's Party."

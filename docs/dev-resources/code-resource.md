@@ -918,14 +918,14 @@ List of Subideology Slots:
 ***THE HOW TO***
 
 To start you need to define the political party in the MD_subideology_parties_l_english.yml. Here we are using Armenia as our example. Please keep the same stylization here, where you only replace conservatism with the given ideologies.
-![image](uploads/bcd0cb5e0f20b461d2ffbe604743138d/image.png)
+![image](../uploads/bcd0cb5e0f20b461d2ffbe604743138d/image.png)
 
 The next place is to implement the icons in ``interface/MD_parties_icons.gfx``. You must first save your party icons in .dds format in ``gfx/texticons/parties_icons/{tag}``. This is where the image of the icon is stored. You then move onto ``interface/MD_parties_icons.gfx`` and implement them following the thousands of other spriteType examples.
 
-![image](uploads/da9d2d599503f617b72967537ab5992b/image.png)
+![image](../uploads/da9d2d599503f617b72967537ab5992b/image.png)
 
 Once you have completed that portion it is now time to move on to the implementation of the localization keys. From here, we move to the file ``common/scripted_localisation/subideology_scripted_localisation.txt``. There are three places you need to add for the individual localization keys. The first is {subideology}_L which is the party's title with its icon. The second is {subideology}_L_desc where the description is stored, and finally, {subideology}_L_icon where the icon is stored.
-![image](uploads/78c7fc6dd04e08c7baa33af2c132b0f1/image.png)
+![image](../uploads/78c7fc6dd04e08c7baa33af2c132b0f1/image.png)
 
 If you have done these steps correctly your parties should now be correctly displayed in the game. You can give these any kind of conditional if you want dynamics. ARM, SPR, and FRA all have examples of doing this dynamically using other triggers.
 

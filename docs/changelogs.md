@@ -1,3 +1,10 @@
+---
+layout: default
+title: "Changelogs"
+description: "Changelogs for Millennium Dawn: A Modern Day Mod"
+---
+
+
 ### Purpose of this Page
 
 This page is a list of all MD's changelogs from our documentation. In case you were looking to pull up stuff from forever ago.
