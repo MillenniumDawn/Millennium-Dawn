@@ -9,7 +9,7 @@
 
 ### Coding Section
 - [ ] Focus tree layout is transferred to hoi4
-  - This can be either via [Croc's Focus Tree Tool](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/Croc%27s-focus-tree-tool) or via manually scripting it
+  - This can be either via [Croc's Focus Tree Tool](focus-tree-tool) or via manually scripting it
 - [ ] Focus tree completion rewards are set (create stubs if decisions/ideas are mentioned)
 - [ ] National Ideas are created
 - [ ] National Decisions are created
@@ -39,7 +39,7 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 - [ ] Complete at least one singular playtest before presenting it to the playtesters
 - [ ] Run a performance check on your content
 - [ ] Draft is reported as done to lead dev and confirmed to be ready for testing
-- [ ] Verify all effects match up with the standards in [MD Code Resource](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/Home/MD-Code-Resource)
+- [ ] Verify all effects match up with the standards in [MD Code Resource](code-resource)
 
 ### Playtest Phase
 - [ ] Tester task is written and provided to the playtesters

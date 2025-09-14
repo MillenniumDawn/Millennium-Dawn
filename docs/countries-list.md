@@ -1,3 +1,9 @@
+---
+layout: default
+title: "List of Countries"
+permalink: /countries-list/
+---
+
 The following countries are playable in Millennium Dawn: Modern Day Mod:
 
 ## Unique Focus Trees

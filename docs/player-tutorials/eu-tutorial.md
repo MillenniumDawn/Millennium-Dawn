@@ -1,9 +1,10 @@
 The following guide is an updated guide to the European Union in Millennium Dawn.
 
 # Table of Contents
-- [Chapter 1 - The European Union](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/European-Union-Tutorial#chapter-1---the-european-union)
-  - [Chapter 1.1 - The European Union in Millennium Dawn](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/European-Union-Tutorial?edit=true#chapter-11---the-european-union-in-millennium-dawn)
-  - [Chapter 1.2 - The European Institutions](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/European-Union-Tutorial?edit=true#chapter-12---the-european-institutions)
+- [Table of Contents](#table-of-contents)
+- [Chapter 1 - The European Union](#chapter-1---the-european-union)
+- [Chapter 1.1 - The European Union in Millennium Dawn](#chapter-11---the-european-union-in-millennium-dawn)
+- [Chapter 1.2 - The European Institutions](#chapter-12---the-european-institutions)
 
 # Chapter 1 - The European Union
 

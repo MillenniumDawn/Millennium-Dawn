@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Troubleshooting Guide"
+permalink: /troubleshooting-guide/
+---
+
 # Troubleshooting Guide
 
 1. Remove the ugc_2777392649.mod file from the mod folder in ``Documents / Paradox Interactive / Hearts Of Iron IV``
