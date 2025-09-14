@@ -10,4 +10,4 @@ How to use:
 - follow commands, enter loc folder (your_mod/localisation most likely), use command from the list
 - output will be in folder in file named output.txt, it is overwritten every time app is launched so do 1 run at time
 
-Archive: [loctool.zip](uploads/19aff295fad2a9e736f658e60168f653/loctool.zip)
+Archive: [loctool.zip](../uploads/19aff295fad2a9e736f658e60168f653/loctool.zip)

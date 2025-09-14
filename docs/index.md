@@ -29,10 +29,10 @@ Further, it offers a new and unique economic system, a new political system, nat
 </details>
 
 <details>
-<summary>Team Resources</summary>
+<summary>Developer/Team Resources</summary>
 
-- [Knowledge Based Resources](/knowledge-based-resources)
-- [MD Code Resource](/Home/MD-Code-Resource)
+- [Knowledge Based Resources](/dev-resources/knowledge-based-resources)
+- [MD Code Resource](/dev-resources/code-resource)
 - [How to get setup with Gitlab & Github](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs/edit?usp=sharing)
 - [Politics list](https://docs.google.com/spreadsheets/d/1nv8FgVKC5xVwZyKaFjXsqF37P8LyKU8UvzxFkZnnT_o/edit?usp=sharing)
 - [Help! I get an "Authentication failed" error when trying to clone the repo!](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/guides/authentication-failed-cloning-repo)
@@ -43,8 +43,9 @@ Further, it offers a new and unique economic system, a new political system, nat
 <details>
 <summary>Open-Source Resources</summary>
 
-- [Croc's focus tree tool](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/Croc%27s-focus-tree-tool)
-- [Croc's localization tool](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/Crocs-Localisation-tool)
+- [Focus Tree Tool](/dev-resources/focus-tree-tool)
+- [Localization Tool](/dev-resources/localization-tool)
+- [Logging Tool](/dev-resources/logging-tool)
 
 </details>
 

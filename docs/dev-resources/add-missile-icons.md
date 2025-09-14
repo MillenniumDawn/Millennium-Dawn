@@ -1,3 +1,5 @@
+This page is now deprecated as of MD v1.11.0.
+
 ## How to Add Missile Icons
 
 1. Add the dds files for your missile icons in ``gfx/interface/scripted_gui/missiles/models/TAG``
